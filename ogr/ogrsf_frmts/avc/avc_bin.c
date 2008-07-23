@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_bin.c,v 1.28 2006/06/14 16:31:28 daniel Exp $
+ * $Id: avc_bin.c,v 1.30 2008/07/23 20:51:38 dmorissette Exp $
  *
  * Name:     avc_bin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -27,6 +27,106 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
+ **********************************************************************
+ *
+ * $Log: avc_bin.c,v $
+ * Revision 1.30  2008/07/23 20:51:38  dmorissette
+ * Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
+ * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
+ *
+ * Revision 1.29  2006/08/17 18:56:42  dmorissette
+ * Support for reading standalone info tables (just tables, no coverage
+ * data) by pointing AVCE00ReadOpen() to the info directory (bug 1549).
+ *
+ * Revision 1.28  2006/06/14 16:31:28  daniel
+ * Added support for AVCCoverPC2 type (bug 1491)
+ *
+ * Revision 1.27  2005/06/03 03:49:58  daniel
+ * Update email address, website url, and copyright dates
+ *
+ * Revision 1.26  2004/02/28 06:35:49  warmerda
+ * Fixed AVCBinReadObject() index support to use 'x' or 'X' for index
+ * depending on the case of the original name.
+ * Fixed so that PC Arc/Info coverages with the extra 256 byte header work
+ * properly when using indexes to read them.
+ *   http://bugzilla.remotesensing.org/show_bug.cgi?id=493
+ *
+ * Revision 1.25  2004/02/11 05:49:44  daniel
+ * Added support for deleted flag in arc.dir (bug 2332)
+ *
+ * Revision 1.24  2002/08/27 15:26:06  daniel
+ * Removed C++ style comments for IRIX compiler (GDAL bug 192)
+ *
+ * Revision 1.23  2002/04/16 20:04:24  daniel
+ * Use record size while reading ARC, PAL, CNT to skip junk bytes. (bug940)
+ *
+ * Revision 1.22  2002/03/18 19:03:37  daniel
+ * Fixed AVCBinReadObject() for PAL objects (bug 848)
+ *
+ * Revision 1.21  2002/02/14 22:54:13  warmerda
+ * added polygon and table support for random reading
+ *
+ * Revision 1.20  2002/02/13 20:35:24  warmerda
+ * added AVCBinReadObject
+ *
+ * Revision 1.19  2001/11/25 22:01:23  daniel
+ * Fixed order of args to AVCRawBinFSeek() in _AVCBinReadNextTableRec()
+ *
+ * Revision 1.18  2000/10/16 16:16:20  daniel
+ * Accept TXT files in AVCCoverWeird that use both PC or V7 TXT structure
+ *
+ * Revision 1.17  2000/09/26 20:21:04  daniel
+ * Added AVCCoverPC write
+ *
+ * Revision 1.16  2000/09/22 19:45:20  daniel
+ * Switch to MIT-style license
+ *
+ * Revision 1.15  2000/09/20 15:09:34  daniel
+ * Check for DAT/NIT fnames sometimes truncated to 8 chars in weird coverages
+ *
+ * Revision 1.14  2000/06/05 21:38:53  daniel
+ * Handle precision field > 1000 in cover file header as meaning double prec.
+ *
+ * Revision 1.13  2000/05/29 15:31:30  daniel
+ * Added Japanese DBCS support
+ *
+ * Revision 1.12  2000/02/14 17:22:36  daniel
+ * Check file signature (9993 or 9994) when reading header.
+ *
+ * Revision 1.11  2000/02/02 04:24:52  daniel
+ * Support double precision "weird" coverages
+ *
+ * Revision 1.10  2000/01/10 02:54:10  daniel
+ * Added read support for "weird" coverages
+ *
+ * Revision 1.9  2000/01/07 07:11:51  daniel
+ * Added support for reading PC Coverage TXT files
+ *
+ * Revision 1.8  1999/12/24 07:38:10  daniel
+ * Added missing DBFClose()
+ *
+ * Revision 1.7  1999/12/24 07:18:34  daniel
+ * Added PC Arc/Info coverages support
+ *
+ * Revision 1.6  1999/08/23 18:17:16  daniel
+ * Modified AVCBinReadListTables() to return INFO fnames for DeleteCoverage()
+ *
+ * Revision 1.5  1999/05/11 01:49:08  daniel
+ * Simple changes required by addition of coverage write support
+ *
+ * Revision 1.4  1999/03/03 18:42:53  daniel
+ * Fixed problem with INFO table headers (arc.dir) that sometimes contain an
+ * invalid number of records.
+ *
+ * Revision 1.3  1999/02/25 17:01:53  daniel
+ * Added support for 16 bit integers in INFO tables (type=50, size=2)
+ *
+ * Revision 1.2  1999/02/25 03:41:28  daniel
+ * Added TXT, TX6/TX7, RXP and RPL support
+ *
+ * Revision 1.1  1999/01/29 16:28:52  daniel
+ * Initial revision
+ *
  **********************************************************************/
 
 #include "avc.h"
@@ -1210,10 +1310,10 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
 
     numCharsToRead = ((int)(psTxt->numChars + 3)/4)*4;
     if (psTxt->pszText == NULL ||
-        ((int)(strlen(psTxt->pszText)+3)/4)*4 < numCharsToRead )
+        ((int)(strlen((char*)psTxt->pszText)+3)/4)*4 < numCharsToRead )
     {
-        psTxt->pszText = (char*)CPLRealloc(psTxt->pszText,
-                                           (numCharsToRead+1)*sizeof(char));
+        psTxt->pszText = (GByte*)CPLRealloc(psTxt->pszText,
+                                            (numCharsToRead+1)*sizeof(char));
     }
 
     AVCRawBinReadString(psFile, numCharsToRead, psTxt->pszText);
@@ -1364,10 +1464,10 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     psTxt->numChars = MIN(psTxt->numChars, numCharsToRead);
 
     if (psTxt->pszText == NULL ||
-        ((int)(strlen(psTxt->pszText)+3)/4)*4 < numCharsToRead )
+        ((int)(strlen((char*)psTxt->pszText)+3)/4)*4 < numCharsToRead )
     {
-        psTxt->pszText = (char*)CPLRealloc(psTxt->pszText,
-                                           (numCharsToRead+5)*sizeof(char));
+        psTxt->pszText = (GByte*)CPLRealloc(psTxt->pszText,
+                                            (numCharsToRead+5)*sizeof(char));
     }
 
 
@@ -1514,7 +1614,7 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
 
     /* Arc/Info Table name 
      */
-    AVCRawBinReadString(psFile, 32, psArcDir->szTableName);
+    AVCRawBinReadString(psFile, 32, (GByte *)psArcDir->szTableName);
     psArcDir->szTableName[32] = '\0';
 
     if (AVCRawBinEOF(psFile))
@@ -1522,7 +1622,7 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
 
     /* "ARC####" basename for .DAT and .NIT files
      */
-    AVCRawBinReadString(psFile, 8, psArcDir->szInfoFile);
+    AVCRawBinReadString(psFile, 8, (GByte *)psArcDir->szInfoFile);
     psArcDir->szInfoFile[7] = '\0';
     for (i=6; i>0 && psArcDir->szInfoFile[i]==' '; i--)
         psArcDir->szInfoFile[i] = '\0';
@@ -1537,7 +1637,7 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
 
     AVCRawBinFSeek(psFile, 10, SEEK_CUR);     /* Skip 10 bytes */
     
-    AVCRawBinReadBytes(psFile, 2, psArcDir->szExternal);
+    AVCRawBinReadBytes(psFile, 2, (GByte *)psArcDir->szExternal);
     psArcDir->szExternal[2] = '\0';
 
     AVCRawBinFSeek(psFile, 300, SEEK_CUR);  /* Skip the remaining 300 bytes */
@@ -1560,7 +1660,7 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
  **********************************************************************/
 int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
 {
-    AVCRawBinReadString(psFile, 16, psField->szName);
+    AVCRawBinReadString(psFile, 16, (GByte *)psField->szName);
     psField->szName[16] = '\0';
 
     if (AVCRawBinEOF(psFile))
@@ -1580,7 +1680,7 @@ int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
     psField->v12       = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
     psField->v13       = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
 
-    AVCRawBinReadString(psFile, 16, psField->szAltName);   /* Always Blank ? */
+    AVCRawBinReadString(psFile, 16, (GByte *)psField->szAltName);   /* Always Blank ? */
     psField->szAltName[16] = '\0';
 
     AVCRawBinFSeek(psFile, 56, SEEK_CUR);             /* Skip 56 bytes */
@@ -1704,6 +1804,13 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
 
     if (ppapszArcDatFiles)
         *ppapszArcDatFiles = NULL;
+
+    /*----------------------------------------------------------------- 
+     * For AVCCoverV7Tables type we do not look for tables for a specific
+     * coverage, we return all tables from the info dir.
+     *----------------------------------------------------------------*/
+    if (eCoverType == AVCCoverV7Tables)
+        pszCoverName = NULL;
 
     /*----------------------------------------------------------------- 
      * All tables that belong to a given coverage have their name starting
@@ -1853,7 +1960,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
         {
             /* Read the relative file path, and remove trailing spaces.
              */
-            AVCRawBinReadBytes(hFile, 80, sTableDef.szDataFile);
+            AVCRawBinReadBytes(hFile, 80, (GByte *)sTableDef.szDataFile);
             sTableDef.szDataFile[80] = '\0';
 
             for(i = strlen(sTableDef.szDataFile)-1;
@@ -2030,7 +2137,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
             pasFieldDef[i].nType1*10 == AVC_FT_FIXNUM )
         {
             psFile->cur.pasFields[i].pszStr = 
-                (char*)CPLCalloc(pasFieldDef[i].nSize+1, sizeof(char));
+                (GByte*)CPLCalloc(pasFieldDef[i].nSize+1, sizeof(char));
         }
     }
 
@@ -2345,7 +2452,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
             pasFieldDef[iField].nType1*10 == AVC_FT_FIXNUM )
         {
             psFile->cur.pasFields[iField].pszStr = 
-                (char*)CPLCalloc(pasFieldDef[iField].nSize+1, sizeof(char));
+                (GByte*)CPLCalloc(pasFieldDef[iField].nSize+1, sizeof(GByte));
         }
     }
 
@@ -2405,7 +2512,7 @@ int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex,
             const char *pszValue;
             pszValue = DBFReadStringAttribute(hDBFFile, 
                                               *piRecordIndex, i);
-            strncpy(pasFields[i].pszStr, pszValue, pasDef[i].nSize);
+            strncpy((char*)pasFields[i].pszStr, pszValue, pasDef[i].nSize);
             pasFields[i].pszStr[pasDef[i].nSize] = '\0';
         }
         else if (nType == AVC_FT_BININT && pasDef[i].nSize == 4)
