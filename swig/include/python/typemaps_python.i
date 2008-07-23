@@ -106,7 +106,7 @@
     resultobj = 0;
   }
   if (resultobj == 0) {
-    resultobj = PyInt_FromLong( 0 );
+    resultobj = PyInt_FromLong( $1 );
   }
 }
 
