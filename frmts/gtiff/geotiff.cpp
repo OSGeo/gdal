@@ -3782,13 +3782,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     {
         int nColorMode;
 
-        if ( !TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode ) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Cannot get TIFFTAG_JPEGCOLORMODE tag." );
-            return CE_Failure;
-        }
-        if( nColorMode != JPEGCOLORMODE_RGB )
+        if ( !TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode ) ||
+              nColorMode != JPEGCOLORMODE_RGB )
             TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
     }
 
