@@ -105,9 +105,8 @@
     Py_DECREF(resultobj);
     resultobj = 0;
   }
-  if (resultobj == 0) {
-    resultobj = PyInt_FromLong( $1 );
-  }
+  
+  resultobj = PyInt_FromLong( $1 );
 }
 
 %fragment("CreateTupleFromDoubleArray","header") %{
