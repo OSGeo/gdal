@@ -1879,6 +1879,8 @@ GTiffDataset::GTiffDataset()
     pabyBlockBuf = NULL;
     hTIFF = NULL;
     bNewDataset = FALSE;
+    bMetadataChanged = FALSE;
+    bGeoTIFFInfoChanged = FALSE;
     bCrystalized = TRUE;
     poColorTable = NULL;
     bNoDataSet = FALSE;
@@ -3772,7 +3774,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     {
         int nColorMode;
 
-        TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
+        if ( !TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Cannot get TIFFTAG_JPEGCOLORMODE tag." );
+            return CE_Failure;
+        }
         if( nColorMode != JPEGCOLORMODE_RGB )
             TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
     }
