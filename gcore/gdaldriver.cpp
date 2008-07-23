@@ -1136,7 +1136,9 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
                      pszKey);
             CPLFree(pszKey);
             bRet = FALSE;
-            break;
+
+            papszCreationOptions ++;
+            continue;
         }
         const char* pszType = CPLGetXMLValue(psChildNode, "type", NULL);
         if (pszType != NULL)
@@ -1185,7 +1187,6 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
                              "'%s' is an unexpected value for %s creation option of type float.",
                              pszValue, pszKey);
                     bRet = FALSE;
-                    break;
                 }
             }
             else if (EQUAL(pszType, "BOOLEAN"))
@@ -1197,7 +1198,6 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
                              "'%s' is an unexpected value for %s creation option of type boolean.",
                              pszValue, pszKey);
                     bRet = FALSE;
-                    break;
                 }
             }
             else if (EQUAL(pszType, "STRING-SELECT"))
@@ -1223,7 +1223,6 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
                              "'%s' is an unexpected value for %s creation option of type string-select.",
                              pszValue, pszKey);
                     bRet = FALSE;
-                    break;
                 }
             }
             else if (EQUAL(pszType, "STRING"))
