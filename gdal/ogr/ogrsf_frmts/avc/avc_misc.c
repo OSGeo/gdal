@@ -27,6 +27,39 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
+ **********************************************************************
+ *
+ * $Log: avc_misc.c,v $
+ * Revision 1.9  2005/06/03 03:49:59  daniel
+ * Update email address, website url, and copyright dates
+ *
+ * Revision 1.8  2004/08/31 21:00:20  warmerda
+ * Applied Carl Anderson's patch to reduce the amount of stating while
+ * trying to discover filename "case" on Unix in AVCAdjustCaseSensitiveFilename.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=314
+ *
+ * Revision 1.7  2001/11/25 21:38:01  daniel
+ * Remap '\\' to '/' in AVCAdjustCaseSensitiveFilename() on Unix.
+ *
+ * Revision 1.6  2001/11/25 21:15:23  daniel
+ * Added hack (AVC_MAP_TYPE40_TO_DOUBLE) to map type 40 fields bigger than 8
+ * digits to double precision as we generate E00 output (bug599)
+ *
+ * Revision 1.5  2000/09/26 20:21:04  daniel
+ * Added AVCCoverPC write
+ *
+ * Revision 1.4  2000/09/22 19:45:21  daniel
+ * Switch to MIT-style license
+ *
+ * Revision 1.3  2000/01/10 02:53:21  daniel
+ * Added AVCAdjustCaseSensitiveFilename() and AVCFileExists()
+ *
+ * Revision 1.2  1999/08/23 18:24:27  daniel
+ * Fixed support for attribute fields of type 40
+ *
+ * Revision 1.1  1999/05/11 02:34:46  daniel
+ * Initial revision
+ *
  **********************************************************************/
 
 #include "avc.h"

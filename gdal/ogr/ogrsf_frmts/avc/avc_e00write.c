@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00write.c,v 1.20 2006/06/27 18:38:43 dmorissette Exp $
+ * $Id: avc_e00write.c,v 1.21 2008/07/23 20:51:38 dmorissette Exp $
  *
  * Name:     avc_e00write.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
@@ -28,6 +28,74 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
+ **********************************************************************
+ *
+ * $Log: avc_e00write.c,v $
+ * Revision 1.21  2008/07/23 20:51:38  dmorissette
+ * Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
+ * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
+ *
+ * Revision 1.20  2006/06/27 18:38:43  dmorissette
+ * Cleaned up E00 reading (bug 1497, patch from James F.)
+ *
+ * Revision 1.19  2006/06/14 16:31:28  daniel
+ * Added support for AVCCoverPC2 type (bug 1491)
+ *
+ * Revision 1.18  2006/03/02 22:46:26  daniel
+ * Accept empty subclass names for TX6/TX7 sections (bug 1261)
+ *
+ * Revision 1.17  2005/06/03 03:49:59  daniel
+ * Update email address, website url, and copyright dates
+ *
+ * Revision 1.16  2002/08/27 15:46:15  daniel
+ * Applied fix made in GDAL/OGR by 'aubin' (moved include ctype.h after avc.h)
+ *
+ * Revision 1.15  2002/04/16 21:19:10  daniel
+ * Use VSIRmdir()
+ *
+ * Revision 1.14  2002/03/18 19:00:44  daniel
+ * Use VSIMkdir() and not VSIMkDir()
+ *
+ * Revision 1.13  2002/02/18 21:16:33  warmerda
+ * modified to use VSIMkDir
+ *
+ * Revision 1.12  2001/05/23 15:23:17  daniel
+ * Remove trailing '/' in info directory path when creating the info dir.
+ *
+ * Revision 1.11  2000/09/26 20:21:04  daniel
+ * Added AVCCoverPC write
+ *
+ * Revision 1.10  2000/09/22 19:45:21  daniel
+ * Switch to MIT-style license
+ *
+ * Revision 1.9  2000/05/29 22:47:39  daniel
+ * Made validation on new coverage name more flexible.
+ *
+ * Revision 1.8  2000/05/29 15:31:31  daniel
+ * Added Japanese DBCS support
+ *
+ * Revision 1.7  2000/02/14 17:19:53  daniel
+ * Accept '-' cahracter in new coverage name
+ *
+ * Revision 1.6  2000/01/10 02:57:44  daniel
+ * Little changes to accomodate read support for "weird" coverages
+ *
+ * Revision 1.5  1999/12/24 07:18:34  daniel
+ * Added PC Arc/Info coverages support
+ *
+ * Revision 1.4  1999/08/26 17:36:36  daniel
+ * Avoid overwriting arc.dir on Windows... happened only when several
+ * coverages are created by the same process on Windows.
+ *
+ * Revision 1.3  1999/08/23 18:23:35  daniel
+ * Added AVCE00DeleteCoverage()
+ *
+ * Revision 1.2  1999/05/17 16:23:36  daniel
+ * Added AVC_DEFAULT_PREC + more cover name validation in AVCE00WriteOpen().
+ *
+ * Revision 1.1  1999/05/11 02:34:46  daniel
+ * Initial revision
+ *
  **********************************************************************/
 
 #include "cpl_vsi.h"
@@ -864,8 +932,8 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
             if (unlink(pszFname) != 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO, 
-                         "Failed deleting %s%s: %s", 
-                         pszCoverPath, papszFiles[i], strerror);
+                         "Failed deleting %s%s", 
+                         pszCoverPath, papszFiles[i]);
                 nStatus = -1;
                 break;
             }
@@ -897,8 +965,8 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
                  unlink(pszFname) != 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO, 
-                         "Failed deleting %s%s: %s", 
-                         pszInfoPath, papszFiles[i], strerror);
+                         "Failed deleting %s%s", 
+                         pszInfoPath, papszFiles[i]);
                 nStatus = -1;
                 break;
             }
@@ -909,8 +977,8 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
                  unlink(pszFname) != 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO, 
-                         "Failed deleting %s%s: %s", 
-                         pszInfoPath, papszFiles[i], strerror);
+                         "Failed deleting %s%s", 
+                         pszInfoPath, papszFiles[i]);
                 nStatus = -1;
                 break;
             }
@@ -931,7 +999,7 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
     {
 #ifndef AVC_IGNORE_RMDIR_ERROR
         CPLError(CE_Failure, CPLE_FileIO, 
-                 "Failed deleting directory %s: %s", pszCoverPath, strerror);
+                 "Failed deleting directory %s", pszCoverPath);
         nStatus = -1;
 #endif
     }

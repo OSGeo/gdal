@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc.h,v 1.22 2006/06/27 18:38:43 dmorissette Exp $
+ * $Id: avc.h,v 1.25 2008/07/23 20:51:38 dmorissette Exp $
  *
  * Name:     avc.h
  * Project:  Arc/Info Vector coverage (AVC) BIN<->E00 conversion library
@@ -30,6 +30,17 @@
  **********************************************************************
  *
  * $Log: avc.h,v $
+ * Revision 1.25  2008/07/23 20:51:38  dmorissette
+ * Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
+ * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
+ *
+ * Revision 1.24  2006/08/17 20:09:45  dmorissette
+ * Update for 2.0.0 release
+ *
+ * Revision 1.23  2006/08/17 18:56:42  dmorissette
+ * Support for reading standalone info tables (just tables, no coverage
+ * data) by pointing AVCE00ReadOpen() to the info directory (bug 1549).
+ *
  * Revision 1.22  2006/06/27 18:38:43  dmorissette
  * Cleaned up E00 reading (bug 1497, patch from James F.)
  *
@@ -115,7 +126,7 @@ CPL_C_START
 /*---------------------------------------------------------------------
  * Current version of the AVCE00 library... always useful!
  *--------------------------------------------------------------------*/
-#define AVC_VERSION "2.0.0-dev (2006-06-16)"
+#define AVC_VERSION "2.0.0 (2006-08-17)"
 
 
 /* Coverage precision
@@ -165,7 +176,8 @@ typedef enum
     AVCCoverV7,
     AVCCoverPC,
     AVCCoverPC2,   /* Unknown version... hybrid between V7 and PC !!! */
-    AVCCoverWeird  /* Unknown version... hybrid between V7 and PC !!! */
+    AVCCoverWeird, /* Unknown version... hybrid between V7 and PC !!! */
+    AVCCoverV7Tables /* Standalone tables, only an info directory     */
 } AVCCoverType;
 
 /* Enum for byte ordering
@@ -290,7 +302,7 @@ typedef struct AVCTxt_t
     double      dV2;    /* ??? */
     double      dV3;    /* ??? */
 
-    char        *pszText;
+    GByte       *pszText; /* Needs to be unsigned char for DBCS */
 
     AVCVertex   *pasVertices;
 }AVCTxt;
@@ -373,7 +385,7 @@ typedef struct AVCField_t
     GInt32      nInt32;
     float       fFloat;
     double      dDouble;
-    char        *pszStr;
+    GByte       *pszStr;
 }AVCField;
 
 /*---------------------------------------------------------------------
@@ -668,14 +680,14 @@ void        AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead,
                                 GByte *pBuf);
 
 void        AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
-                                GByte *pBuf);
+                                const GByte *pBuf);
 void        AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value);
 void        AVCRawBinWriteInt32(AVCRawBinFile *psFile, GInt32 n32Value);
 void        AVCRawBinWriteFloat(AVCRawBinFile *psFile, float fValue);
 void        AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue);
 void        AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite);
 void        AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize, 
-                                       const char *pszString);
+                                       const GByte *pszString);
 
 /*---------------------------------------------------------------------
  * Functions related to reading the binary coverage files
