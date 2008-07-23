@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, char **papszTO,
-                      char **papszCreateOptions, GDALDataType eDT );
+                      char ***ppapszCreateOptions, GDALDataType eDT );
 
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
 static double	       dfXRes=0.0, dfYRes=0.0;
@@ -380,7 +380,7 @@ int main( int argc, char ** argv )
     if( hDstDS == NULL )
     {
         hDstDS = GDALWarpCreateOutput( papszSrcFiles, pszDstFilename,pszFormat,
-                                       papszTO, papszCreateOptions, 
+                                       papszTO, &papszCreateOptions, 
                                        eOutputType );
         bCreateOutput = TRUE;
 
@@ -660,8 +660,23 @@ int main( int argc, char ** argv )
 
             GDALClose( hDstDS );
             GDALClose( hSrcDS );
-        
+
+            /* The warped VRT will clean itself the transformer used */
+            /* So we have only to destroy the hGenImgProjArg if we */
+            /* have wrapped it inside the hApproxArg */
+            if (pfnTransformer == GDALApproxTransform)
+            {
+                if( hGenImgProjArg != NULL )
+                    GDALDestroyGenImgProjTransformer( hGenImgProjArg );
+            }
+
+            GDALDestroyWarpOptions( psWO );
+
+            CPLFree( pszDstFilename );
             CSLDestroy( argv );
+            CSLDestroy( papszSrcFiles );
+            CSLDestroy( papszWarpOptions );
+            CSLDestroy( papszTO );
     
             GDALDumpOpenDatasets( stderr );
         
@@ -729,7 +744,7 @@ int main( int argc, char ** argv )
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, char **papszTO, 
-                      char **papszCreateOptions, GDALDataType eDT )
+                      char ***ppapszCreateOptions, GDALDataType eDT )
 
 
 {
@@ -770,15 +785,15 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         exit( 1 );
     }
 
-    GDALValidateCreationOptions(hDriver, papszCreateOptions);
+    GDALValidateCreationOptions(hDriver, *ppapszCreateOptions);
 
 /* -------------------------------------------------------------------- */
 /*      For virtual output files, we have to set a special subclass     */
 /*      of dataset to create.                                           */
 /* -------------------------------------------------------------------- */
     if( bVRT )
-        papszCreateOptions = 
-            CSLSetNameValue( papszCreateOptions, "SUBCLASS", 
+        *ppapszCreateOptions = 
+            CSLSetNameValue( *ppapszCreateOptions, "SUBCLASS", 
                              "VRTWarpedDataset" );
 
 /* -------------------------------------------------------------------- */
@@ -1048,7 +1063,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         printf( "Creating output file that is %dP x %dL.\n", nPixels, nLines );
 
     hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines, 
-                         nDstBandCount, eDT, papszCreateOptions );
+                         nDstBandCount, eDT, *ppapszCreateOptions );
     
     if( hDstDS == NULL )
     {
