@@ -80,11 +80,21 @@ def tiff_ovr_1():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
 
     src_ds = gdal.Open('data/mfloat32.vrt')
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     gdaltest.tiff_drv.CreateCopy( 'tmp/mfloat32.tif', src_ds,
                                   options = ['INTERLEAVE=PIXEL'] )
     src_ds = None
 
     ds = gdal.Open( 'tmp/mfloat32.tif' )
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     err = ds.BuildOverviews( overviewlist = [2, 4] )
 
     if err != 0:
@@ -105,6 +115,11 @@ def tiff_ovr_2():
 
     src_ds = gdal.Open( 'tmp/mfloat32.tif' )
 
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+
     ret = tiff_ovr_check(src_ds)
 
     src_ds = None
@@ -119,6 +134,10 @@ def tiff_ovr_3():
     os.unlink( 'tmp/mfloat32.tif.ovr' )
 
     src_ds = gdal.Open( 'tmp/mfloat32.tif', gdal.GA_Update )
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
 
     err = src_ds.BuildOverviews( overviewlist = [2, 4] )
     if err != 0:
@@ -145,6 +164,11 @@ def tiff_ovr_4():
     shutil.copyfile( 'data/oddsize_1bit2b.tif', 'tmp/ovr4.tif' )
 
     wrk_ds = gdal.Open('tmp/ovr4.tif',gdal.GA_Update)
+    
+    if wrk_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     wrk_ds.BuildOverviews( 'AVERAGE_BIT2GRAYSCALE', overviewlist = [2,4] )
     wrk_ds = None
 
@@ -203,6 +227,11 @@ def tiff_ovr_5():
     shutil.copyfile( 'data/nodata_byte.tif', 'tmp/ovr5.tif' )
 
     wrk_ds = gdal.Open('tmp/ovr5.tif',gdal.GA_ReadOnly)
+    
+    if wrk_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     wrk_ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
 
     cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -226,6 +255,11 @@ def tiff_ovr_6():
     gdal.SetConfigOption('USE_RRD', 'YES')
     
     wrk_ds = gdal.Open('tmp/ovr6.tif',gdal.GA_Update)
+    
+    if wrk_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     wrk_ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
     
     gdal.SetConfigOption('USE_RRD', oldOption)
@@ -257,6 +291,11 @@ def tiff_ovr_7():
     # This dataset is a black&white chessboard, index 0 is black, index 1 is white.
     # In nearest resampling, we are expecting a uniform black image.
     ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     ds.BuildOverviews( 'NEAREST', overviewlist = [2] )
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -282,6 +321,11 @@ def tiff_ovr_8():
     # So the result of averaging (0,0,0) and (255,255,255) is (127,127,127), which is
     # index 2. So the result of the averaging is a uniform grey image.
     ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -309,6 +353,11 @@ def tiff_ovr_9():
     gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
 
     ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
 
     gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
@@ -333,13 +382,26 @@ def tiff_ovr_9():
 def tiff_ovr_10():
 
     src_ds = gdal.Open('data/rgbsmall.tif', gdal.GA_ReadOnly)
+    
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr10.tif', src_ds, options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR' ] )
     src_ds = None
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to apply JPEG compression.' )
+        return 'fail'
 
     ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
 
     ds = None
     ds = gdal.Open('tmp/ovr10.tif', gdal.GA_ReadOnly)
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open copy of test dataset.' )
+        return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 5700
