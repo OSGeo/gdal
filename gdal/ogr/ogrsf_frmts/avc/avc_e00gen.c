@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00gen.c,v 1.17 2006/06/14 15:01:33 daniel Exp $
+ * $Id: avc_e00gen.c,v 1.18 2008/07/23 20:51:38 dmorissette Exp $
  *
  * Name:     avc_e00gen.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -27,6 +27,67 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
+ **********************************************************************
+ *
+ * $Log: avc_e00gen.c,v $
+ * Revision 1.18  2008/07/23 20:51:38  dmorissette
+ * Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
+ * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
+ *
+ * Revision 1.17  2006/06/14 15:01:33  daniel
+ * Remove any embeded '\0' from data line in AVCE00GenTableRec()
+ *
+ * Revision 1.16  2005/06/03 03:49:58  daniel
+ * Update email address, website url, and copyright dates
+ *
+ * Revision 1.15  2004/08/19 17:48:20  warmerda
+ * Avoid uninitialized variable warnings.
+ *
+ * Revision 1.14  2001/11/25 21:15:23  daniel
+ * Added hack (AVC_MAP_TYPE40_TO_DOUBLE) to map type 40 fields bigger than 8
+ * digits to double precision as we generate E00 output (bug599)
+ *
+ * Revision 1.13  2001/11/19 20:39:48  daniel
+ * Change to correctly format 0-arc PAL records, so that they have a
+ * single "filler" arc record
+ *
+ * Revision 1.12  2000/09/26 20:21:04  daniel
+ * Added AVCCoverPC write
+ *
+ * Revision 1.11  2000/09/22 19:45:20  daniel
+ * Switch to MIT-style license
+ *
+ * Revision 1.10  2000/02/04 04:54:03  daniel
+ * Fixed warnings
+ *
+ * Revision 1.9  2000/02/03 07:21:02  daniel
+ * TXT/TX6 with string longer than 80 chars: split string in 80 chars chunks
+ *
+ * Revision 1.8  2000/02/02 04:28:00  daniel
+ * Fixed support of TX6/RXP/RPL coming from "weird" coverages
+ *
+ * Revision 1.7  1999/08/23 18:20:49  daniel
+ * Fixed support for attribute fields type 40
+ *
+ * Revision 1.6  1999/05/17 16:19:39  daniel
+ * Made sure ACVE00GenTableRec() removes all spaces at the end of a
+ * table record line (it used to leave one space)
+ *
+ * Revision 1.5  1999/05/11 02:08:17  daniel
+ * Simple changes related to the addition of coverage write support.
+ *
+ * Revision 1.4  1999/03/03 02:06:38  daniel
+ * Properly handle 8 bytes floats inside single precision tables.
+ *
+ * Revision 1.3  1999/02/25 17:01:58  daniel
+ * Added support for 16 bit integers in INFO tables (type=50, size=2)
+ *
+ * Revision 1.2  1999/02/25 04:17:51  daniel
+ * Added TXT, TX6/TX7, RXP and RPL support + some minor changes
+ *
+ * Revision 1.1  1999/01/29 16:28:52  daniel
+ * Initial revision
+ *
  **********************************************************************/
 
 #include "avc.h"
@@ -876,7 +937,7 @@ const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
         numLines = (psTxt->numChars-1)/80 + 1;
         iLine = numLines - (psInfo->numItems - psInfo->iCurItem);
 
-        if ((int)strlen(psTxt->pszText) > (iLine*80))
+        if ((int)strlen((char*)psTxt->pszText) > (iLine*80))
             sprintf(psInfo->pszBuf, "%-.80s", psTxt->pszText + (iLine*80) );
         else 
             psInfo->pszBuf[0] = '\0';
@@ -1013,7 +1074,7 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
         numLines = (psTxt->numChars-1)/80 + 1;
         iLine = numLines - (psInfo->numItems - psInfo->iCurItem);
 
-        if ((int)strlen(psTxt->pszText) > (iLine*80))
+        if ((int)strlen((char*)psTxt->pszText) > (iLine*80))
             sprintf(psInfo->pszBuf, "%-.80s", psTxt->pszText + (iLine*80) );
         else 
             psInfo->pszBuf[0] = '\0';
@@ -1269,7 +1330,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
                  */
                 nLen = AVCPrintRealValue(pszBuf2, AVC_DOUBLE_PREC,
                                          AVCFileTABLE,
-                                         atof(pasFields[i].pszStr));
+                                         atof((char*)pasFields[i].pszStr));
                 pszBuf2 += nLen;
             }
 #endif
@@ -1282,7 +1343,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
                 pszBuf2[0] = '\0';
                 nLen = AVCPrintRealValue(pszBuf2, AVC_SINGLE_PREC, 
                                        AVCFileTABLE,
-                                       atof(pasFields[i].pszStr));
+                                         atof((char*)pasFields[i].pszStr));
                 pszBuf2 += nLen;
             }
             else if (nType == AVC_FT_BININT && nSize == 4)

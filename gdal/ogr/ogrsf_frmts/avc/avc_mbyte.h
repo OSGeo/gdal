@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_mbyte.h,v 1.3 2005/06/03 03:49:59 daniel Exp $
+ * $Id: avc_mbyte.h,v 1.4 2008/07/23 20:51:38 dmorissette Exp $
  *
  * Name:     avc.h
  * Project:  Arc/Info Vector coverage (AVC) BIN<->E00 conversion library
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: avc_mbyte.h,v $
+ * Revision 1.4  2008/07/23 20:51:38  dmorissette
+ * Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
+ * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
+ *
  * Revision 1.3  2005/06/03 03:49:59  daniel
  * Update email address, website url, and copyright dates
  *
@@ -79,13 +83,13 @@ typedef struct AVCDBCSInfo_t
 AVCDBCSInfo *AVCAllocDBCSInfo();
 void AVCFreeDBCSInfo(AVCDBCSInfo *psInfo);
 int AVCGetDBCSCodePage();
-GBool AVCE00DetectEncoding(AVCDBCSInfo *psDBCSInfo, const char *pszLine);
-const char *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
-                                  const char *pszLine,
-                                  int nMaxOutputLen);
-const char *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
-                                     const char *pszLine,
-                                     int nMaxOutputLen);
+GBool AVCE00DetectEncoding(AVCDBCSInfo *psDBCSInfo, const GByte *pszLine);
+const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
+                                   const GByte *pszLine,
+                                   int nMaxOutputLen);
+const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
+                                      const GByte *pszLine,
+                                      int nMaxOutputLen);
 
 CPL_C_END
 

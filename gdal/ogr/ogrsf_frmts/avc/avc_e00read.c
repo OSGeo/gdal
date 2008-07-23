@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00read.c,v 1.21 2006/06/27 18:38:43 dmorissette Exp $
+ * $Id: avc_e00read.c,v 1.23 2006/08/17 19:51:01 dmorissette Exp $
  *
  * Name:     avc_e00read.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -29,10 +29,87 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
+ **********************************************************************
+ *
+ * $Log: avc_e00read.c,v $
+ * Revision 1.23  2006/08/17 19:51:01  dmorissette
+ * #include <unistd.h> to solve warning on 64 bit platforms (bug 1461)
+ *
+ * Revision 1.22  2006/08/17 18:56:42  dmorissette
+ * Support for reading standalone info tables (just tables, no coverage
+ * data) by pointing AVCE00ReadOpen() to the info directory (bug 1549).
+ *
+ * Revision 1.21  2006/06/27 18:38:43  dmorissette
+ * Cleaned up E00 reading (bug 1497, patch from James F.)
+ *
+ * Revision 1.20  2006/06/27 18:06:34  dmorissette
+ * Applied patch for EOP processing from James F. (bug 1497)
+ *
+ * Revision 1.19  2006/06/16 11:48:11  daniel
+ * New functions to read E00 files directly as opposed to translating to
+ * binary coverage. Used in the implementation of E00 read support in OGR.
+ * Contributed by James E. Flemer. (bug 1497)
+ *
+ * Revision 1.18  2006/06/14 16:31:28  daniel
+ * Added support for AVCCoverPC2 type (bug 1491)
+ *
+ * Revision 1.17  2005/06/03 03:49:58  daniel
+ * Update email address, website url, and copyright dates
+ *
+ * Revision 1.16  2004/07/14 18:49:50  daniel
+ * Fixed leak when trying to open something that's not a coverage (bug513)
+ *
+ * Revision 1.15  2002/08/27 15:46:15  daniel
+ * Applied fix made in GDAL/OGR by 'aubin' (moved include ctype.h after avc.h)
+ *
+ * Revision 1.14  2000/09/22 19:45:21  daniel
+ * Switch to MIT-style license
+ *
+ * Revision 1.13  2000/05/29 15:31:31  daniel
+ * Added Japanese DBCS support
+ *
+ * Revision 1.12  2000/02/14 17:21:01  daniel
+ * Made more robust for corrupted or invalid files in cover directory
+ *
+ * Revision 1.11  2000/02/02 04:26:04  daniel
+ * Support reading TX6/TX7/RXP/RPL files in weird coverages
+ *
+ * Revision 1.10  2000/01/10 02:56:30  daniel
+ * Added read support for "weird" coverages
+ *
+ * Revision 1.9  2000/01/07 07:12:49  daniel
+ * Added support for reading PC Coverage TXT files
+ *
+ * Revision 1.8  1999/12/24 07:41:08  daniel
+ * Check fname length before testing for extension in AVCE00ReadFindCoverType()
+ *
+ * Revision 1.7  1999/12/24 07:18:34  daniel
+ * Added PC Arc/Info coverages support
+ *
+ * Revision 1.6  1999/08/26 17:22:18  daniel
+ * Use VSIFopen() instead of fopen() directly
+ *
+ * Revision 1.5  1999/08/23 18:21:41  daniel
+ * New syntax for AVCBinReadListTables()
+ *
+ * Revision 1.4  1999/05/11 02:10:01  daniel
+ * Free psInfo struct inside AVCE00ReadClose()
+ *
+ * Revision 1.3  1999/04/06 19:43:26  daniel
+ * Added E00 coverage path in EXP 0  header line
+ *
+ * Revision 1.2  1999/02/25 04:19:01  daniel
+ * Added TXT, TX6/TX7, RXP and RPL support + other minor changes
+ *
+ * Revision 1.1  1999/01/29 16:28:52  daniel
+ * Initial revision
+ *
  **********************************************************************/
 
 #ifdef WIN32
 #  include <direct.h>   /* getcwd() */
+#else
+#  include <unistd.h>   /* getcwd() */
 #endif
 
 #include "avc.h"
@@ -226,7 +303,8 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
      * PC Coverages have their info tables in the same direcotry as 
      * the coverage files.
      *----------------------------------------------------------------*/
-    if ((psInfo->eCoverType == AVCCoverV7 &&
+    if (((psInfo->eCoverType == AVCCoverV7 || 
+          psInfo->eCoverType == AVCCoverV7Tables) &&
          ! AVCFileExists(psInfo->pszInfoPath, "arc.dir") ) ||
          (psInfo->eCoverType == AVCCoverWeird &&
          ! AVCFileExists(psInfo->pszInfoPath, "arcdr9") ) )
@@ -526,7 +604,8 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
 {
     int         i, nLen;
     GBool       bFoundAdfFile=FALSE, bFoundArcFile=FALSE, 
-                bFoundTableFile=FALSE, bFoundDbfFile=FALSE;
+                bFoundTableFile=FALSE, bFoundDbfFile=FALSE,
+                bFoundArcDirFile=FALSE;
 
     /*-----------------------------------------------------------------
      * Scan the list of files, looking for well known filenames.
@@ -558,6 +637,10 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
                  EQUAL(papszCoverDir[i], "tic") )
         {
             bFoundTableFile = TRUE;
+        }
+        else if (EQUAL(papszCoverDir[i], "arc.dir") )
+        {
+            bFoundArcDirFile = TRUE;
         }
 
     }
@@ -596,6 +679,14 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
      *----------------------------------------------------------------*/
     if (bFoundAdfFile)
         return AVCCoverV7;
+
+    /*-----------------------------------------------------------------
+     * Standalone info tables.
+     * We were pointed at the "info" directory. We'll treat this as
+     * a coverage with just info tables.
+     *----------------------------------------------------------------*/
+    if (bFoundArcDirFile)
+        return AVCCoverV7Tables;
 
     return AVCCoverTypeUnknown;
 }
@@ -1135,6 +1226,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
      *----------------------------------------------------------------*/
     papszTables = papszFiles = NULL;
     if (psInfo->eCoverType == AVCCoverV7 || 
+        psInfo->eCoverType == AVCCoverV7Tables || 
         psInfo->eCoverType == AVCCoverWeird)
     {
         /*-------------------------------------------------------------
