@@ -107,6 +107,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_AddBand) AddBand;
 
 %rename (_GetPaletteInterpretation) GetPaletteInterpretation;
+%rename (_GetHistogram) GetHistogram;
 
 %rename (_SetColorEntry) SetColorEntry;
 
@@ -505,6 +506,27 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	$Geo::GDAL::RasterAttributeTable::BANDS{$r} = $self;
 	return $r;
     }
+    sub GetHistogram {
+	my $self = shift;
+	my %defaults = (Min => -0.5,
+			Max => 255.5,
+			Buckets => 256, 
+			IncludeOutOfRange => 0,
+			ApproxOK => 0,
+			Progress => undef,
+			ProgressData => undef);
+	my %params = @_;
+	for (keys %params) {
+	    croak "unknown parameter: $_" unless exists $defaults{$_};
+	}
+	for (keys %defaults) {
+	    $params{$_} = $defaults{$_} unless defined $params{$_};
+	}
+	my $h = _GetHistogram($self, $params{Min}, $params{Max}, $params{Buckets},
+			      $params{IncludeOutOfRange}, $params{ApproxOK},
+			      $params{Progress}, $params{ProgressData});
+	return @$h if $h;
+    }
     sub Contours {
 	my $self = shift;
 	my %defaults = (DataSource => undef,
@@ -632,6 +654,23 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     sub GetTypeOfCol {
 	my($self, $col) = @_;
 	$FIELD_TYPE_INT2STRING{_GetTypeOfCol($self, $col)};
+    }
+    sub Columns {
+	my $self = shift;
+	my %columns;
+	if (@_) { # create columns
+	    %columns = @_;
+	    for my $name (keys %columns) {
+		$self->CreateColumn($name, $columns{$name}{Type}, $columns{$name}{Usage});
+	    }
+	}
+	%columns = ();
+	for my $c (0..$self->GetColumnCount-1) {
+	    my $name = $self->GetNameOfCol($c);
+	    $columns{$name}{Type} = $self->GetTypeOfCol($c);
+	    $columns{$name}{Usage} = $self->GetUsageOfCol($c);
+	}
+	return %columns;
     }
     sub CreateColumn {
 	my($self, $name, $type, $usage) = @_;

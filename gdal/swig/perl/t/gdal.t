@@ -62,6 +62,16 @@ if (0) {
     my $g = $dataset->GetRasterBand(1);
     my $b = $dataset->GetRasterBand(1);
 
+    my $histogram;
+    eval {
+	@histogram = $b->GetHistogram();
+    };
+    ok($#histogram == 255, 'Histogram');
+    eval {
+	@histogram = $b->GetHistogram(Min=>0, Max=>100, Buckets=>20);
+    };
+    ok($#histogram == 19, 'Histogram with parameters');
+
     my @out;
     eval {
 	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
