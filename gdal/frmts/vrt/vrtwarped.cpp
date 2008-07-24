@@ -953,6 +953,35 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr VRTWarpedRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                     void * pImage )
+
+{
+    CPLErr eErr;
+    VRTWarpedDataset *poWDS = (VRTWarpedDataset *) poDS;
+
+    /* This is a bit tricky. In the case we are warping a VRTWarpedDataset */
+    /* with a destination alpha band, IWriteBlock can be called on that alpha */
+    /* band by GDALWarpDstAlphaMasker */
+    /* We don't need to do anything since the data will be kept in the block */
+    /* cache by VRTWarpedRasterBand::IReadBlock */
+    if (poWDS->poWarper->GetOptions()->nDstAlphaBand == nBand)
+    {
+        eErr = CE_None;
+    }
+    else
+    {
+        /* Otherwise, call the superclass method, that will fail of course */
+        eErr = VRTRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage);
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                              XMLInit()                               */
 /************************************************************************/
 
