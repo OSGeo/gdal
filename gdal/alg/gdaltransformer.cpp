@@ -1844,7 +1844,11 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
     }
     
     if( pfnBaseTransform == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot get base transform for approx transformer." );
         return NULL;
+    }
     else
     {
         void *pApproxCBData = GDALCreateApproxTransformer( pfnBaseTransform,
