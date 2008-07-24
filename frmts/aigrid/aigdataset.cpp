@@ -445,7 +445,9 @@ void AIGDataset::ReadRAT()
               case AVC_FT_CHAR:
               case AVC_FT_FIXNUM:
               {
-                  CPLString osStrValue = pasFields[iField].pszStr;
+                  // XXX - I bet mloskot would like to see const_cast + static_cast :-)
+                  const char* pszTmp = (const char*)(pasFields[iField].pszStr);
+                  CPLString osStrValue( pszTmp );
                   poRAT->SetValue( iRecord-1, iField, osStrValue.Trim() );
               }
               break;
