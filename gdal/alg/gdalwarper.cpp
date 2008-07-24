@@ -490,6 +490,8 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     CPLErr eErr;
     GDALRasterBandH hAlphaBand = GDALGetRasterBand( psWO->hSrcDS, 
                                                     psWO->nSrcAlphaBand );
+    if (hAlphaBand == NULL)
+        return CE_Failure;
 
     eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize, 
                          pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
@@ -547,6 +549,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
     GDALRasterBandH hAlphaBand = 
         GDALGetRasterBand( psWO->hDstDS, psWO->nDstAlphaBand );
+    if (hAlphaBand == NULL)
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Read alpha case.						*/
