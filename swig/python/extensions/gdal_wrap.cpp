@@ -3530,13 +3530,9 @@ SWIGINTERN int GDALRasterBandShadow_GetMaskFlags(GDALRasterBandShadow *self){
 SWIGINTERN CPLErr GDALRasterBandShadow_CreateMaskBand(GDALRasterBandShadow *self,int nFlags){
       return GDALCreateMaskBand( self, nFlags );
   }
-SWIGINTERN CPLErr GDALRasterBandShadow_GetHistogram(GDALRasterBandShadow *self,double dfMin=-0.5,double dfMax=255.5,int nBuckets=255,int bIncludeOutOfRange=0,int bApproxOk=1,GDALProgressFunc callback=NULL,void *callback_data=NULL){
-
-   int* panHistogram = (int *) CPLCalloc(sizeof(int),nBuckets);
-    CPLErr err;
-    CPLErrorReset();
-
-    err = GDALGetRasterHistogram(  self, 
+SWIGINTERN CPLErr GDALRasterBandShadow_GetHistogram(GDALRasterBandShadow *self,double dfMin=-0.5,double dfMax=255.5,int nBuckets=256,int *panHistogram=NULL,int bIncludeOutOfRange=0,int bApproxOk=1,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+    CPLErrorReset(); 
+    CPLErr err = GDALGetRasterHistogram(  self, 
                                 dfMin,
                                 dfMax,
                                 nBuckets,
@@ -10779,16 +10775,17 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double arg2 = (double) -0.5 ;
   double arg3 = (double) 255.5 ;
-  int arg4 = (int) 255 ;
-  int arg5 = (int) 0 ;
-  int arg6 = (int) 1 ;
-  GDALProgressFunc arg7 = (GDALProgressFunc) NULL ;
-  void *arg8 = (void *) NULL ;
+  int arg4 = (int) 256 ;
+  int *arg5 = (int *) NULL ;
+  int arg6 = (int) 0 ;
+  int arg7 = (int) 1 ;
+  GDALProgressFunc arg8 = (GDALProgressFunc) NULL ;
+  void *arg9 = (void *) NULL ;
   CPLErr result;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -10796,12 +10793,10 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   int ecode2 = 0 ;
   double val3 ;
   int ecode3 = 0 ;
-  int val4 ;
-  int ecode4 = 0 ;
-  int val5 ;
-  int ecode5 = 0 ;
   int val6 ;
   int ecode6 = 0 ;
+  int val7 ;
+  int ecode7 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -10810,6 +10805,9 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject * obj5 = 0 ;
   PyObject * obj6 = 0 ;
   PyObject * obj7 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "dfMin",(char *) "dfMax",(char *) "nBuckets",(char *) "bIncludeOutOfRange",(char *) "bApproxOk",(char *) "callback",(char *) "callback_data", NULL 
+  };
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
   PyProgressData *psProgressInfo;
@@ -10817,7 +10815,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
-  if (!PyArg_ParseTuple(args,(char *)"O|OOOOOOO:Band_GetHistogram",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOOOOO:Band_GetHistogram",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetHistogram" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
@@ -10838,25 +10836,24 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
     arg3 = static_cast< double >(val3);
   }
   if (obj3) {
-    ecode4 = SWIG_AsVal_int(obj3, &val4);
-    if (!SWIG_IsOK(ecode4)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Band_GetHistogram" "', argument " "4"" of type '" "int""'");
-    } 
-    arg4 = static_cast< int >(val4);
+    {
+      /* %typemap(in) int nBuckets, int* panHistogram -> list hobujunk*/
+      arg5 = (int *) CPLCalloc(sizeof(int),arg4);
+    }
   }
   if (obj4) {
-    ecode5 = SWIG_AsVal_int(obj4, &val5);
-    if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Band_GetHistogram" "', argument " "5"" of type '" "int""'");
-    } 
-    arg5 = static_cast< int >(val5);
-  }
-  if (obj5) {
-    ecode6 = SWIG_AsVal_int(obj5, &val6);
+    ecode6 = SWIG_AsVal_int(obj4, &val6);
     if (!SWIG_IsOK(ecode6)) {
       SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "Band_GetHistogram" "', argument " "6"" of type '" "int""'");
     } 
     arg6 = static_cast< int >(val6);
+  }
+  if (obj5) {
+    ecode7 = SWIG_AsVal_int(obj5, &val7);
+    if (!SWIG_IsOK(ecode7)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "Band_GetHistogram" "', argument " "7"" of type '" "int""'");
+    } 
+    arg7 = static_cast< int >(val7);
   }
   if (obj6) {
     {
@@ -10870,7 +10867,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
           SWIG_POINTER_EXCEPTION | 0 );
         
         if ( cbfunction == GDALTermProgress ) {
-          arg7 = GDALTermProgress;
+          arg8 = GDALTermProgress;
         } else {
           if (!PyFunction_Check(obj6)) {
             PyErr_SetString( PyExc_RuntimeError, 
@@ -10878,7 +10875,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
             SWIG_fail;
           }
           psProgressInfo->psPyCallback = obj6;
-          arg7 = PyProgressProxy;
+          arg8 = PyProgressProxy;
         }
         
       }
@@ -10890,12 +10887,12 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
       /* %typemap(in) ( void* callback_data=NULL)  */
       
       psProgressInfo->psPyCallbackData = obj7 ;
-      arg8 = psProgressInfo;
+      arg9 = psProgressInfo;
       
     }
   }
   {
-    result = (CPLErr)GDALRasterBandShadow_GetHistogram(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+    result = (CPLErr)GDALRasterBandShadow_GetHistogram(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -10905,6 +10902,27 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
+    /* %typemap(out) int nBuckets, int* panHistogram -> list hobujunk*/
+    int *integerarray = arg5;
+    if ( integerarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      resultobj = PyList_New( arg4 );
+      for ( int i = 0; i < arg4; ++i ) {
+        PyObject *o =  PyInt_FromLong( integerarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+  }
+  {
+    /* %typemap(freearg) (int nBuckets, int* panHistogram)*/
+    if ( arg5 ) {
+      CPLFree( arg5 );
+    }
+  }
+  {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
     
     CPLFree(psProgressInfo);
@@ -10912,6 +10930,12 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int nBuckets, int* panHistogram)*/
+    if ( arg5 ) {
+      CPLFree( arg5 );
+    }
+  }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
     
@@ -12693,6 +12717,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
         SWIG_fail;
       }
       rawobjectpointer = (GDALRasterBandShadow*) sobj->ptr;
+      /* FIXME remove this when Frank confirms this typemap works */
       int v = GDALGetRasterBandXSize(rawobjectpointer);
       arg3[i] = rawobjectpointer;
       
@@ -14366,7 +14391,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_GetMaskBand", _wrap_Band_GetMaskBand, METH_VARARGS, NULL},
 	 { (char *)"Band_GetMaskFlags", _wrap_Band_GetMaskFlags, METH_VARARGS, NULL},
 	 { (char *)"Band_CreateMaskBand", _wrap_Band_CreateMaskBand, METH_VARARGS, NULL},
-	 { (char *)"Band_GetHistogram", _wrap_Band_GetHistogram, METH_VARARGS, NULL},
+	 { (char *)"Band_GetHistogram", (PyCFunction) _wrap_Band_GetHistogram, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Band_swigregister", Band_swigregister, METH_VARARGS, NULL},
 	 { (char *)"new_ColorTable", (PyCFunction) _wrap_new_ColorTable, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"delete_ColorTable", _wrap_delete_ColorTable, METH_VARARGS, NULL},

@@ -83,6 +83,7 @@ GRA_NearestNeighbour = _gdalconst.GRA_NearestNeighbour
 GRA_Bilinear = _gdalconst.GRA_Bilinear
 GRA_Cubic = _gdalconst.GRA_Cubic
 GRA_CubicSpline = _gdalconst.GRA_CubicSpline
+GRA_Lanczos = _gdalconst.GRA_Lanczos
 GPI_Gray = _gdalconst.GPI_Gray
 GPI_RGB = _gdalconst.GPI_RGB
 GPI_CMYK = _gdalconst.GPI_CMYK
