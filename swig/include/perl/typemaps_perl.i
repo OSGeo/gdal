@@ -88,7 +88,7 @@
 }
 %typemap(out) IF_ERROR_RETURN_NONE
 {
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
+  /* %typemap(out) IF_ERROR_RETURN_NONE (do not return the error code) */
 }
 
 /*
@@ -176,6 +176,30 @@ CreateArrayFromStringArray( char **first ) {
   /* %typemap(argout) (int *nLen, const int **pList) */
   $result = CreateArrayFromIntArray( *($2), *($1) );
   argvi++;
+}
+
+%typemap(in,numinputs=1) (int len, int *output)
+{
+  /* %typemap(in,numinputs=1) (int len, int *output) */
+  $1 = SvIV($input);
+}
+%typemap(check) (int len, int *output)
+{
+  /* %typemap(check) (int len, int *output) */
+  if ($1 < 1) $1 = 1; /* stop idiocy */
+  $2 = (int *)CPLMalloc( $1 * sizeof(int) );
+    
+}
+%typemap(argout,fragment="CreateArrayFromIntArray") (int len, int *output)
+{
+  /* %typemap(argout) (int len, int *output) */
+  $result = CreateArrayFromIntArray( $2, $1 );
+  argvi++;
+}
+%typemap(freearg) (int len, int *output)
+{
+  /* %typemap(freearg) (int len, int *output) */
+  CPLFree($2);
 }
 
 %typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList)
