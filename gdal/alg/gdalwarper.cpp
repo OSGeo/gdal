@@ -589,10 +589,22 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
         for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
             pafMask[iPixel] = (int) (pafMask[iPixel] * 255.1);
         
-        // Read data.
+        // Write data.
+
+        /* The VRT warper will pass destination sizes that may exceed */
+        /* the size of the raster for the partial blocks at the right */
+        /* and bottom of the band. So let's adjust the size */
+        int nDstXSize = nXSize;
+        if (nXOff + nXSize > GDALGetRasterXSize(hAlphaBand))
+            nDstXSize = GDALGetRasterXSize(hAlphaBand) - nXOff;
+        int nDstYSize = nYSize;
+        if (nYOff + nYSize > GDALGetRasterYSize(hAlphaBand))
+            nDstYSize = GDALGetRasterYSize(hAlphaBand) - nYOff;
+
         eErr = GDALRasterIO( hAlphaBand, GF_Write, 
-                             nXOff, nYOff, nXSize, nYSize, 
-                             pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+                             nXOff, nYOff, nDstXSize, nDstYSize, 
+                             pafMask, nDstXSize, nDstYSize, GDT_Float32,
+                             0, sizeof(float) * nXSize );
         return eErr;
     }
 }
