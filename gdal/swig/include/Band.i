@@ -258,22 +258,24 @@ public:
       return GDALCreateMaskBand( self, nFlags );
   }
 
- 
-#ifndef SWIGCSHARP
+#if defined(SWIGCSHARP)
+%apply (int inout[ANY]) {int *panHistogram};
+#elif defined(SWIGPERL)
+%apply (int len, int *output) {(int nBuckets, int *panHistogram)};
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
+#else
 %feature( "kwargs" ) GetHistogram;
+#endif
   CPLErr GetHistogram( double dfMin=-0.5,
                      double dfMax=255.5,
-                     int nBuckets=255,
+                     int nBuckets=256,
                      int *panHistogram = NULL,
                      int bIncludeOutOfRange = 0,
                      int bApproxOk = 1,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL ) {
-
-    CPLErr err;
-    CPLErrorReset();
-
-    err = GDALGetRasterHistogram(  self, 
+    CPLErrorReset(); 
+    CPLErr err = GDALGetRasterHistogram(  self, 
                                 dfMin,
                                 dfMax,
                                 nBuckets,
@@ -284,32 +286,17 @@ public:
                                 callback_data);
     return err;
   }
+#if defined(SWIGCSHARP)
+%clear int *panHistogram;
+#elif defined(SWIGPERL)
+%clear (int nBuckets, int *panHistogram);
+%clear (CPLErr);
+#endif
 
-#else
-%apply (int inout[ANY]) {int *panHistogram};
-    CPLErr GetHistogram( double dfMin=-0.5,
-                     double dfMax=255.5,
-                     int nBuckets=255, int *panHistogram = NULL,
-                     int bIncludeOutOfRange = 0,
-                     int bApproxOk = 1,
-                     GDALProgressFunc callback = NULL,
-                     void* callback_data=NULL ) {
-       return GDALGetRasterHistogram(  self, 
-                                dfMin,
-                                dfMax,
-                                nBuckets,
-                                panHistogram,
-                                bIncludeOutOfRange,
-                                bApproxOk,
-                                callback, 
-                                callback_data);
-    }
-    %clear int *panHistogram;
-#endif /* SWIGCSHARP */
 /* NEEDED */
 /* ReadAsArray */
 /* WriteArray */
-/* GetHistogram */
+/* GetDefaultHistogram */
 /* GetStatistics */
 /* SetStatistics */
 /* ComputeStatistics */
