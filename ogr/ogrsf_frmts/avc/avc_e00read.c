@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00read.c,v 1.24 2008/07/24 13:49:20 dmorissette Exp $
+ * $Id: avc_e00read.c,v 1.25 2008/07/24 20:34:12 dmorissette Exp $
  *
  * Name:     avc_e00read.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: avc_e00read.c,v $
+ * Revision 1.25  2008/07/24 20:34:12  dmorissette
+ * Fixed VC++ WIN32 build problems in GDAL/OGR environment
+ * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2500)
+ *
  * Revision 1.24  2008/07/24 13:49:20  dmorissette
  * Fixed GCC compiler warning (GDAL ticket #2495)
  *
@@ -109,13 +113,13 @@
  *
  **********************************************************************/
 
+#include "avc.h"
+
 #ifdef WIN32
 #  include <direct.h>   /* getcwd() */
 #else
 #  include <unistd.h>   /* getcwd() */
 #endif
-
-#include "avc.h"
 
 #include <ctype.h>      /* toupper() */
 
