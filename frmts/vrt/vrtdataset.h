@@ -131,6 +131,8 @@ class CPL_DLL VRTWarpedDataset : public VRTDataset
     int               nBlockYSize;
     GDALWarpOperation *poWarper;
 
+    friend class VRTWarpedRasterBand;
+
 public:
     int               nOverviewCount;
     VRTWarpedDataset  **papoOverviews;
@@ -306,6 +308,7 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
 
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
