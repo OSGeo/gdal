@@ -632,6 +632,19 @@
 ## @method $ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef)
 # @return $buf
 
+## @method @GetHistogram(%parameters)
+# Compute raster histogram
+# @param Min the lower bound, default is -0.5
+# @param Max the upper bound, default is 255.5
+# @param Buckets the number of buckets in the histogram, default is 256
+# @param IncludeOutOfRange whether to use $histogram[0] and
+# $histogram[$#histogram] for out of range values, default is false; the bucket size
+# is (Max-Min) / Buckets if this is false and (Max-Min) / (Buckets-2) if this is true
+# @param ApproxOK if histogram can be computed from overviews, default is false
+# @param Progress an optional progress function, the default is undef
+# @param ProgressData data for the progress function, the default is undef
+# @return a list which contains the count of values in each bucket
+
 ## @method FlushCache()
 
 ## @method Geo::GDAL::ColorTable ColorTable($ColorTable)
@@ -770,6 +783,12 @@
 # @param count
 
 ## @method $GetRowCount()
+
+## @method %Columns(%columns)
+# A get/set method for the columns of the RAT
+# @param columns optional, a the keys are column names and the values are anonymous
+# hashes with keys Type and Usage
+# @return a hash similar to the optional input parameter
 
 ## @method CreateColumn($name, $type, $usage)
 # @param name
