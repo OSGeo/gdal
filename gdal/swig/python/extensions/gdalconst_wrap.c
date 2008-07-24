@@ -3104,6 +3104,7 @@ SWIGEXPORT void SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GRA_Bilinear",SWIG_From_int((int)(GRA_Bilinear)));
   SWIG_Python_SetConstant(d, "GRA_Cubic",SWIG_From_int((int)(GRA_Cubic)));
   SWIG_Python_SetConstant(d, "GRA_CubicSpline",SWIG_From_int((int)(GRA_CubicSpline)));
+  SWIG_Python_SetConstant(d, "GRA_Lanczos",SWIG_From_int((int)(GRA_Lanczos)));
   SWIG_Python_SetConstant(d, "GPI_Gray",SWIG_From_int((int)(GPI_Gray)));
   SWIG_Python_SetConstant(d, "GPI_RGB",SWIG_From_int((int)(GPI_RGB)));
   SWIG_Python_SetConstant(d, "GPI_CMYK",SWIG_From_int((int)(GPI_CMYK)));
