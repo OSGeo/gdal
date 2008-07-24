@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00read.c,v 1.23 2006/08/17 19:51:01 dmorissette Exp $
+ * $Id: avc_e00read.c,v 1.24 2008/07/24 13:49:20 dmorissette Exp $
  *
  * Name:     avc_e00read.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: avc_e00read.c,v $
+ * Revision 1.24  2008/07/24 13:49:20  dmorissette
+ * Fixed GCC compiler warning (GDAL ticket #2495)
+ *
  * Revision 1.23  2006/08/17 19:51:01  dmorissette
  * #include <unistd.h> to solve warning on 64 bit platforms (bug 1461)
  *
@@ -971,7 +974,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
     }
 
     pszEXPPath = CPLStrdup(CPLSPrintf("EXP  0 %s%-.*s.E00", szCWD,
-                                      strlen(psInfo->pszCoverPath)-1,
+                                      (int)strlen(psInfo->pszCoverPath)-1,
                                       psInfo->pszCoverPath));
     pcTmp = pszEXPPath;
     for( ; *pcTmp != '\0'; pcTmp++)
