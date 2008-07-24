@@ -173,6 +173,16 @@ def warp_10():
 
     return tst.testOpen()
 
+def warp_11():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'rgbsmall_dstalpha.vrt', 4, 30658)
+
+    return tst.testOpen()
+
 
 ###############################################################################
 
@@ -186,7 +196,8 @@ gdaltest_list = [
     #warp_7,
     #warp_8,
     warp_9,
-    #warp_10
+    #warp_10,
+    warp_11
     ]
 
 if __name__ == '__main__':
