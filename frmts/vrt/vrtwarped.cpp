@@ -648,6 +648,14 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     poWarper = new GDALWarpOperation();
 
     eErr = poWarper->Initialize( psWO );
+    if( eErr != CE_None)
+    {
+/* -------------------------------------------------------------------- */
+/*      We are responsible for cleaning up the transformer outselves.   */
+/* -------------------------------------------------------------------- */
+        if( psWO->pTransformerArg != NULL )
+            GDALDestroyTransformer( psWO->pTransformerArg );
+    }
 
     GDALDestroyWarpOptions( psWO );
     if( eErr != CE_None )
