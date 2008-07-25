@@ -115,7 +115,26 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
         return CE_Failure;
     }
 
-    eErr = poParent->ReadBlock( nXBlockOff, nYBlockOff, pabySrc );
+
+    int nXSizeRequest = nBlockXSize;
+    if (nXBlockOff * nBlockXSize + nBlockXSize > nRasterXSize)
+        nXSizeRequest = nRasterXSize - nXBlockOff * nBlockXSize;
+    int nYSizeRequest = nBlockYSize;
+    if (nYBlockOff * nBlockYSize + nBlockYSize > nRasterYSize)
+        nYSizeRequest = nRasterYSize - nYBlockOff * nBlockYSize;
+
+    if (nXSizeRequest != nBlockXSize || nYSizeRequest != nBlockYSize)
+    {
+        /* memset the whole buffer to avoid Valgrind warnings in case we can't */
+        /* fetch a full block */
+        memset(pabySrc, 0, GDALGetDataTypeSize(eWrkDT)/8 * nBlockXSize * nBlockYSize );
+    }
+
+    eErr = poParent->RasterIO( GF_Read,
+                               nXBlockOff * nBlockXSize, nYBlockOff * nBlockYSize,
+                               nXSizeRequest, nYSizeRequest,
+                               pabySrc, nXSizeRequest, nYSizeRequest,
+                               eWrkDT, 0, nBlockXSize * (GDALGetDataTypeSize(eWrkDT)/8) );
     if( eErr != CE_None )
         return eErr;
 
