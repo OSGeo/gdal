@@ -120,6 +120,20 @@ public:
 };
 
 /************************************************************************/
+/*                        GetProjLibraryName()                          */
+/************************************************************************/
+
+static const char* GetProjLibraryName()
+{
+    const char *pszLibName = LIBNAME;
+#if !defined(WIN32CE)
+    if( CPLGetConfigOption("PROJSO",NULL) != NULL )
+        pszLibName = CPLGetConfigOption("PROJSO",NULL);
+#endif
+    return pszLibName;
+}
+
+/************************************************************************/
 /*                          LoadProjLibrary()                           */
 /************************************************************************/
 
@@ -128,17 +142,14 @@ static int LoadProjLibrary()
 {
     CPLMutexHolderD( &hPROJMutex );
     static int  bTriedToLoad = FALSE;
-    const char *pszLibName = LIBNAME;
+    const char *pszLibName;
     
     if( bTriedToLoad )
         return( pfn_pj_transform != NULL );
 
     bTriedToLoad = TRUE;
 
-#if !defined(WIN32CE)
-    if( CPLGetConfigOption("PROJSO",NULL) != NULL )
-        pszLibName = CPLGetConfigOption("PROJSO",NULL);
-#endif
+    pszLibName = GetProjLibraryName();
 
 #ifdef PROJ_STATIC
     pfn_pj_init = pj_init;
@@ -281,7 +292,7 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Unable to load PROJ.4 library (%s), creation of\n"
                   "OGRCoordinateTransformation failed.",
-                  LIBNAME );
+                  GetProjLibraryName() );
         return NULL;
     }
 
