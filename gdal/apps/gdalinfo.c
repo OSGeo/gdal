@@ -49,7 +49,7 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 void Usage()
 
 {
-    printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]\n"
+    printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
             "                [-noct] [-checksum] [-mdd domain]* datasetname\n" );
     exit( 1 );
 }
@@ -71,6 +71,7 @@ int main( int argc, char ** argv )
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
     int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
     int                 bShowColorTable = TRUE, bComputeChecksum = FALSE;
+    int                 bReportHistograms = FALSE;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL, **papszFileList;
     const char  *pszProjection = NULL;
@@ -104,6 +105,8 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i], "-mm") )
             bComputeMinMax = TRUE;
+        else if( EQUAL(argv[i], "-hist") )
+            bReportHistograms = TRUE;
         else if( EQUAL(argv[i], "-stats") )
         {
             bStats = TRUE;
@@ -447,6 +450,26 @@ int main( int argc, char ** argv )
                     dfMin, dfMax, dfMean, dfStdDev );
         }
 
+        if( bReportHistograms )
+        {
+            int nBucketCount, *panHistogram = NULL;
+
+            eErr = GDALGetDefaultHistogram( hBand, &dfMin, &dfMax, 
+                                            &nBucketCount, &panHistogram, 
+                                            TRUE, GDALTermProgress, NULL );
+            if( eErr == CE_None )
+            {
+                int iBucket;
+
+                printf( "  %d buckets from %g to %g:\n  ",
+                        nBucketCount, dfMin, dfMax );
+                for( iBucket = 0; iBucket < nBucketCount; iBucket++ )
+                    printf( "%d ", panHistogram[iBucket] );
+                printf( "\n" );
+                CPLFree( panHistogram );
+            }
+        }
+
         if ( bComputeChecksum)
         {
             printf( "  Checksum=%d\n",
@@ -625,7 +648,7 @@ int main( int argc, char ** argv )
             }
         }
 
-        if( GDALGetDefaultRAT( hBand ) != NULL )
+        if( bShowMetadata && GDALGetDefaultRAT( hBand ) != NULL )
         {
             GDALRasterAttributeTableH hRAT = GDALGetDefaultRAT( hBand );
             
