@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# $Id$
+#
 # mkgdaldist.sh - prepares GDAL source distribution package
 #
 if [ $# -lt 1 ] ; then
@@ -89,7 +91,7 @@ cd ${CWD}
 #
 # Generate SWIG interface for C#
 #
-echo "* Generating SWIG interfaces..."
+echo "* Generating SWIG C# interfaces..."
 CWD=${PWD}
 cd gdal/swig/csharp
 ./mkinterface.sh
