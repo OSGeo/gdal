@@ -977,10 +977,15 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    if( pbSuccess )
-        *pbSuccess = poGDS->bNoDataSet;
+    if( poGDS->bNoDataSet )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
 
-    return poGDS->dfNoDataValue;
+        return poGDS->dfNoDataValue;
+    }
+    else
+        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
 
 /************************************************************************/
