@@ -42,9 +42,9 @@ CPL_CVSID("$Id$");
 
 #ifdef FRMT_ecw
 
-static unsigned char jpc_header[] = {0xff,0x4f};
-static unsigned char jp2_header[] = 
-{0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
+static const unsigned char jpc_header[] = {0xff,0x4f};
+static const unsigned char jp2_header[] = 
+    {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
 
 static void *hECWDatasetMutex = NULL;
 static int    bNCSInitialized = FALSE;
@@ -338,11 +338,11 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Default line and pixel spacing if needed.                       */
 /* -------------------------------------------------------------------- */
-    if( nLineSpace == 0 )
-        nLineSpace = nBufXSize;
+    if ( nPixelSpace == 0 )
+        nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
 
-    if( nPixelSpace == 0 )
-        nPixelSpace = 1;
+    if ( nLineSpace == 0 )
+        nLineSpace = nPixelSpace * nBufXSize;
 
 /* -------------------------------------------------------------------- */
 /*      Can we perform direct loads, or must we load into a working     */
