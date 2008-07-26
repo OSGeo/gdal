@@ -556,6 +556,22 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 };
 
 /* ******************************************************************** */
+/*                  GDALNoDataValuesMaskBand                            */
+/* ******************************************************************** */
+
+class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
+{
+    double      *padfNodataValues;
+
+  protected:
+    virtual CPLErr IReadBlock( int, int, void * );
+
+  public:
+                GDALNoDataValuesMaskBand( GDALDataset * );
+    virtual     ~GDALNoDataValuesMaskBand();
+};
+
+/* ******************************************************************** */
 /*                             GDALOpenInfo                             */
 /*                                                                      */
 /*      Structure of data about dataset for open functions.             */
