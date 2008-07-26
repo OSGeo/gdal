@@ -4002,6 +4002,59 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check for NODATA_VALUES metadata.                               */
+/* -------------------------------------------------------------------- */
+    if (poDS != NULL)
+    {
+        const char* pszNoDataValues = poDS->GetMetadataItem("NODATA_VALUES");
+        if (pszNoDataValues != NULL)
+        {
+            char** papszNoDataValues = CSLTokenizeStringComplex(pszNoDataValues, " ", FALSE, FALSE);
+
+            /* Make sure we have as many values as bands */
+            if (CSLCount(papszNoDataValues) == poDS->GetRasterCount() && poDS->GetRasterCount() != 0)
+            {
+                CSLDestroy(papszNoDataValues);
+
+                /* Make sure that all bands have the same data type */
+                /* This is cleraly not a fundamental condition, just a condition to make implementation */
+                /* easier. */
+                int i;
+                GDALDataType eDT = GDT_Unknown;
+                for(i=0;i<poDS->GetRasterCount();i++)
+                {
+                    if (i == 0)
+                        eDT = poDS->GetRasterBand(1)->GetRasterDataType();
+                    else if (eDT != poDS->GetRasterBand(i + 1)->GetRasterDataType())
+                    {
+                        break;
+                    }
+                }
+                if (i == poDS->GetRasterCount())
+                {
+                    nMaskFlags = GMF_NODATA | GMF_PER_DATASET;
+                    poMask = new GDALNoDataValuesMaskBand ( poDS );
+                    bOwnMask = true;
+                    return poMask;
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "All bands should have the same type in order the NODATA_VALUES metadata item to be used as a mask.");
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "NODATA_VALUES metadata item doesn't have the same number of values as the number of bands.\n"
+                        "Ignoring it for mask.");
+            }
+
+            CSLDestroy(papszNoDataValues);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for nodata case.                                          */
 /* -------------------------------------------------------------------- */
     int bHaveNoData;
