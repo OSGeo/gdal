@@ -757,6 +757,39 @@ def mask_18():
     return mask_and_ovr(4)
 
 ###############################################################################
+# Test NODATA_VALUES mask
+
+def mask_19():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    ds = gdal.Open('data/test_nodatavalues.tif')
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET + gdal.GMF_NODATA:
+        gdaltest.post_reason( 'did not get expected mask flags' )
+        print ds.GetRasterBand(1).GetMaskFlags()
+        return 'fail'
+
+    msk = ds.GetRasterBand(1).GetMaskBand()
+    cs = msk.Checksum()
+    expected_cs = 11043
+
+    if cs != expected_cs:
+        gdaltest.post_reason( 'Did not get expected checksum' )
+        print cs
+        return 'fail'
+
+    msk = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 
@@ -778,7 +811,8 @@ gdaltest_list = [
     mask_15,
     mask_16,
     mask_17,
-    mask_18]
+    mask_18,
+    mask_19]
 
 if __name__ == '__main__':
 
