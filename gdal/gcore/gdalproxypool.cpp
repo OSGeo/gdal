@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalproxypool.cpp $
+ * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  A dataset and raster band classes that differ the opening of the
@@ -31,6 +31,7 @@
 #include "gdal_proxy.h"
 #include "cpl_multiproc.h"
 
+CPL_CVSID("$Id$");
 
 /* ******************************************************************** */
 /*                         GDALDatasetPool                              */

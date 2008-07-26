@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalctexpander.cpp $
+ * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Expand a dataset with a paletted band into several bands for each
@@ -29,6 +29,8 @@
  ****************************************************************************/
 
 #include "gdalctexpander.h"
+
+CPL_CVSID("$Id$");
 
 /* ******************************************************************** */
 /*                    GDALCTExpandedBand                               */
