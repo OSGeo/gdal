@@ -45,6 +45,7 @@ typedef enum
 static CPLErr
 GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight, 
                         float * pafChunk,
+                        GByte * pabyChunkNodataMask,
                         int nChunkXOff, int nChunkXSize,
                         int nChunkYOff, int nChunkYSize,
                         GDALRasterBand * poOverview,
@@ -152,6 +153,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; iDstLine++ )
     {
         float *pafSrcScanline;
+        GByte *pabySrcScanlineNodataMask;
         int   nSrcYOff, nSrcYOff2 = 0, iDstPixel;
 
         nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
@@ -180,6 +182,10 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         }
 
         pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+        if (pabyChunkNodataMask != NULL)
+            pabySrcScanlineNodataMask = pabyChunkNodataMask + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+        else
+            pabySrcScanlineNodataMask = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
@@ -226,7 +232,15 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                         for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                         {
                             val = pafSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize];
-                            if (bHasNoData == FALSE || val != fNoDataValue)
+                            if (pabySrcScanlineNodataMask)
+                            {
+                                if (pabySrcScanlineNodataMask[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize])
+                                {
+                                    dfTotal += val;
+                                    nCount++;
+                                }
+                            }
+                            else
                             {
                                 dfTotal += val;
                                 nCount++;
@@ -240,7 +254,6 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     }
                     else
                     {
-                        CPLAssert( nCount > 0 );
                         if( nCount == 0 )
                             pafDstScanline[iDstPixel - nDstXOff] = 0.0;
                         else
@@ -677,6 +690,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /*      Setup one horizontal swath to read from the raw buffer.         */
 /* -------------------------------------------------------------------- */
     float *pafChunk;
+    GByte *pabyChunkNodataMask = NULL;
 
     poSrcBand->GetBlockSize( &nFRXBlockSize, &nFRYBlockSize );
     
@@ -690,12 +704,24 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     else
         eType = GDT_Float32;
 
+    /* If we have a nodata mask and we are doing something more complicated */
+    /* than nearest neighbouring, we have to fetch to nodata mask */ 
+    int bUseNoDataMask = (!EQUALN(pszResampling,"NEAR",4) &&
+                          (poSrcBand->GetMaskFlags() & GMF_ALL_VALID) == 0);
+
     nWidth = poSrcBand->GetXSize();
     pafChunk = (float *) 
         VSIMalloc((GDALGetDataTypeSize(eType)/8) * (nFullResYChunk + 1) * nWidth ); // needed for gaussian option
-
-    if( pafChunk == NULL )
+    if (bUseNoDataMask)
     {
+        pabyChunkNodataMask = (GByte *) 
+            (GByte*) VSIMalloc( (nFullResYChunk + 1) * nWidth ); // needed for gaussian option
+    }
+
+    if( pafChunk == NULL || (bUseNoDataMask && pabyChunkNodataMask == NULL))
+    {
+        CPLFree(pafChunk);
+        CPLFree(pabyChunkNodataMask);
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Out of memory in GDALRegenerateOverviews()." );
 
@@ -703,6 +729,26 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     }
 
     fNoDataValue = (float) poSrcBand->GetNoDataValue(&bHasNoData);
+    if (!bHasNoData)
+    {
+        if (!EQUALN(pszResampling,"NEAR",4) && poSrcBand->GetDataset() != NULL)
+        {
+            const char* pszNoDataValues = poSrcBand->GetDataset()->GetMetadataItem("NODATA_VALUES");
+            if (pszNoDataValues)
+            {
+                char** papszNoDataValues = CSLTokenizeStringComplex(pszNoDataValues, " ", FALSE, FALSE);
+
+                /* Make sure we have as many values as bands */
+                if (CSLCount(papszNoDataValues) == poSrcBand->GetDataset()->GetRasterCount() &&
+                    poSrcBand->GetDataset()->GetRasterCount() != 0)
+                {
+                    fNoDataValue = (float)atof(papszNoDataValues[poSrcBand->GetBand() - 1]);
+                    bHasNoData = TRUE;
+                }
+                CSLDestroy(papszNoDataValues);
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image operating on chunks.                            */
@@ -741,6 +787,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             poSrcBand->RasterIO( GF_Read, 0, nChunkYOff, nWidth, widthHelp, 
                                  pafChunk, nWidth, widthHelp, eType,
                                  0, 0 );
+            if (bUseNoDataMask)
+                poSrcBand->GetMaskBand()->RasterIO( GF_Read, 0, nChunkYOff, nWidth, widthHelp, 
+                                                    pabyChunkNodataMask, nWidth, widthHelp, GDT_Byte,
+                                                    0, 0 );
         } else {
 			
             if( nFullResYChunk + nChunkYOff > poSrcBand->GetYSize() )
@@ -749,6 +799,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             /* read chunk */
             poSrcBand->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
                                  pafChunk, nWidth, nFullResYChunk, eType,
+                                 0, 0 );
+            if (bUseNoDataMask)
+                poSrcBand->GetMaskBand()->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
+                                 pabyChunkNodataMask, nWidth, nFullResYChunk, GDT_Byte,
                                  0, 0 );
         }
 
@@ -781,6 +835,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             if( eType == GDT_Float32 )
                 GDALDownsampleChunk32R(nWidth, poSrcBand->GetYSize(), 
                                        pafChunk,
+                                       pabyChunkNodataMask,
                                        0, nWidth,
                                        nChunkYOff, nFullResYChunk,
                                        papoOvrBands[iOverview], pszResampling,
@@ -793,6 +848,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     }
 
     VSIFree( pafChunk );
+    VSIFree( pabyChunkNodataMask );
     
 /* -------------------------------------------------------------------- */
 /*      Renormalized overview mean / stddev if needed.                  */
@@ -927,6 +983,40 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
     nSrcWidth = papoSrcBands[0]->GetXSize();
     nSrcHeight = papoSrcBands[0]->GetYSize();
 
+    /* If we have a nodata mask and we are doing something more complicated */
+    /* than nearest neighbouring, we have to fetch to nodata mask */ 
+    int bUseNoDataMask = (!EQUALN(pszResampling,"NEAR",4) &&
+                          (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0);
+
+    int* pabHasNoData = (int*)CPLMalloc(nBands * sizeof(int));
+    float* pafNoDataValue = (float*)CPLMalloc(nBands * sizeof(float));
+
+    for(iBand=0;iBand<nBands;iBand++)
+    {
+        pabHasNoData[iBand] = FALSE;
+        pafNoDataValue[iBand] = (float) papoSrcBands[iBand]->GetNoDataValue(&pabHasNoData[iBand]);
+        if (!pabHasNoData[iBand])
+        {
+            if (!EQUALN(pszResampling,"NEAR",4) && papoSrcBands[iBand]->GetDataset() != NULL)
+            {
+                const char* pszNoDataValues = papoSrcBands[iBand]->GetDataset()->GetMetadataItem("NODATA_VALUES");
+                if (pszNoDataValues)
+                {
+                    char** papszNoDataValues = CSLTokenizeStringComplex(pszNoDataValues, " ", FALSE, FALSE);
+
+                    /* Make sure we have as many values as bands */
+                    if (CSLCount(papszNoDataValues) == papoSrcBands[iBand]->GetDataset()->GetRasterCount() &&
+                        papoSrcBands[iBand]->GetDataset()->GetRasterCount() != 0)
+                    {
+                        pafNoDataValue[iBand] = (float)atof(papszNoDataValues[papoSrcBands[iBand]->GetBand() - 1]);
+                        pabHasNoData[iBand] = TRUE;
+                    }
+                    CSLDestroy(papszNoDataValues);
+                }
+            }
+        }
+    }
+
     /* Second pass to do the real job ! */
     double dfCurPixelCount = 0;
     for(iOverview=0;iOverview<nOverviews;iOverview++)
@@ -954,10 +1044,21 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         int nFullResYChunk = (nDstBlockYSize * nSrcHeight) / nDstHeight;
 
         float** papafChunk = (float**) CPLMalloc(nBands * sizeof(void*));
+        GByte* pabyChunkNoDataMask = NULL;
         for(iBand=0;iBand<nBands;iBand++)
         {
             papafChunk[iBand] = (float*) VSIMalloc3(nFullResXChunk, nFullResYChunk, sizeof(float));
             if( papafChunk[iBand] == NULL )
+            {
+                CPLError( CE_Failure, CPLE_OutOfMemory,
+                        "GDALRegenerateOverviewsMultiBand: Out of memory." );
+                return CE_Failure;
+            }
+        }
+        if (bUseNoDataMask)
+        {
+            pabyChunkNoDataMask = (GByte*) VSIMalloc2(nFullResXChunk, nFullResYChunk);
+            if( pabyChunkNoDataMask == NULL )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
                         "GDALRegenerateOverviewsMultiBand: Out of memory." );
@@ -1007,19 +1108,31 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                                          GDT_Float32, 0, 0 );
                 }
 
+                if (bUseNoDataMask)
+                {
+                    GDALRasterBand* poSrcBand;
+                    if (iSrcOverview == -1)
+                        poSrcBand = papoSrcBands[0];
+                    else
+                        poSrcBand = papapoOverviewBands[0][iSrcOverview];
+                    poSrcBand->GetMaskBand()->RasterIO( GF_Read,
+                                                        nChunkXOff, nChunkYOff,
+                                                        nXCount, nYCount, 
+                                                        pabyChunkNoDataMask,
+                                                        nXCount, nYCount,
+                                                        GDT_Byte, 0, 0 );
+                }
+
                 /* Compute the resulting overview block */
                 for(iBand=0;iBand<nBands;iBand++)
                 {
-                    int bHasNoData = FALSE;
-                    float fNoDataValue = (float) papoSrcBands[iBand]->GetNoDataValue(&bHasNoData);
-
-
                     GDALDownsampleChunk32R(nSrcWidth, nSrcHeight,
                                         papafChunk[iBand],
+                                        pabyChunkNoDataMask,
                                         nChunkXOff, nXCount,
                                         nChunkYOff, nYCount,
                                         papapoOverviewBands[iBand][iOverview], pszResampling,
-                                        bHasNoData, fNoDataValue, /*poColorTable*/ NULL);
+                                        pabHasNoData[iBand], pafNoDataValue[iBand], /*poColorTable*/ NULL);
                 }
             }
 
@@ -1033,8 +1146,12 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
             papapoOverviewBands[iBand][iOverview]->FlushCache();
         }
         CPLFree(papafChunk);
+        CPLFree(pabyChunkNoDataMask);
 
     }
+
+    CPLFree(pabHasNoData);
+    CPLFree(pafNoDataValue);
 
     pfnProgress( 1.0, NULL, pProgressData );
 

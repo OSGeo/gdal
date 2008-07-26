@@ -40,6 +40,10 @@ CPL_CVSID("$Id$");
 
 #define TIFFTAG_GDAL_METADATA  42112
 
+CPL_C_START
+void    GTiffOneTimeInit();
+CPL_C_END
+
 /************************************************************************/
 /*                         GTIFFWriteDirectory()                        */
 /*                                                                      */
@@ -162,6 +166,14 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
         }
     }
 
+    const char* pszNoDataValues = poBaseDS->GetMetadataItem("NODATA_VALUES");
+    if (pszNoDataValues)
+    {
+        CPLString osItem;
+        osItem.Printf( "<Item name=\"NODATA_VALUES\">%s</Item>", pszNoDataValues );
+        osMetadata += osItem;
+    }
+
     if( !EQUAL(osMetadata,"<GDALMetadata>") )
         osMetadata += "</GDALMetadata>";
     else
@@ -187,6 +199,8 @@ GTIFFBuildOverviews( const char * pszFilename,
 
     if( nBands == 0 || nOverviews == 0 )
         return CE_None;
+
+    GTiffOneTimeInit();
 
 /* -------------------------------------------------------------------- */
 /*      Verify that the list of bands is suitable for emitting in       */
