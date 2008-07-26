@@ -2,7 +2,7 @@
 
 include ../../GDALmake.opt
 
-ifndef $(PYTHON)
+ifndef PYTHON
         PYTHON=python
 endif
 
