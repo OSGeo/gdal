@@ -17,8 +17,8 @@
 /*
  * double *val, int*hasval, is a special contrived typemap used for
  * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset, GetScale methods.
- * In the python bindings, the variable hasval is tested.  If it is 0 (is, the value
- * is not set in the raster band) then Py_None is returned.  If is is != 0, then
+ * the variable hasval is tested.  If it is false (is, the value
+ * is not set in the raster band) then undef is returned.  If is is != 0, then
  * the value is coerced into a long and returned.
  */
 %typemap(in,numinputs=0) (double *val, int *hasval) ( double tmpval, int tmphasval ) {
@@ -33,6 +33,7 @@
     sv_setnv($result, *$1);
   argvi++;
 }
+
 %typemap(out) GIntBig
 {
   /* %typemap(out) GIntBig */
