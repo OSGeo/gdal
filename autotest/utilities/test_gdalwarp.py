@@ -500,12 +500,61 @@ def test_gdalwarp_18():
     return 'success'
 
 ###############################################################################
+# Test -et 0 which is a special case
+
+def test_gdalwarp_19():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp19.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp19.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test -of VRT -et 0 which is a special case
+
+def test_gdalwarp_20():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -of VRT -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp20.vrt').read()
+
+    ds = gdal.Open('tmp/testgdalwarp20.vrt')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
-    for i in range(18):
+    for i in range(20):
         try:
             os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
+        except:
+            pass
+        try:
+            os.remove('tmp/testgdalwarp' + str(i+1) + '.vrt')
         except:
             pass
         try:
@@ -514,11 +563,6 @@ def test_gdalwarp_cleanup():
             pass
     try:
         os.remove('tmp/testgdalwarp_gcp.tif')
-    except:
-        pass
-
-    try:
-        os.remove('tmp/testgdalwarp16.vrt')
     except:
         pass
 
@@ -544,6 +588,8 @@ gdaltest_list = [
     test_gdalwarp_16,
     test_gdalwarp_17,
     test_gdalwarp_18,
+    test_gdalwarp_19,
+    test_gdalwarp_20,
     test_gdalwarp_cleanup
     ]
 
