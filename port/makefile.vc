@@ -23,6 +23,7 @@ OBJ	=	cpl_conv.obj \
                 cpl_hash_set.obj \
                 cplkeywordparser.obj \
 		cpl_recode_stub.obj \
+		cpl_quad_tree.obj \
 		$(ODBC_OBJ) 
 
 LIB	=	cpl.lib
