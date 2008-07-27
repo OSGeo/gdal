@@ -111,6 +111,11 @@ def get_gdaltindex_path():
 
 ###############################################################################
 # 
+def get_gdal_grid_path():
+    return get_cli_utility_path('gdal_grid')
+
+###############################################################################
+# 
 def get_ogrinfo_path():
     return get_cli_utility_path('ogrinfo')
 
