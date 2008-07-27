@@ -484,7 +484,7 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
                             dfXMin + dfDeltaX * (nXOffset + nXRequest),
                             dfYMin + dfDeltaY * nYOffset,
                             dfYMin + dfDeltaY * (nYOffset + nYRequest),
-                            nXRequest, nBlockYSize, eType, pData,
+                            nXRequest, nYRequest, eType, pData,
                             GDALScaledProgress, pScaledProgress );
 
             GDALRasterIO( hBand, GF_Write, nXOffset, nYOffset,
