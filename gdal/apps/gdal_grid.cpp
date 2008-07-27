@@ -335,9 +335,9 @@ static CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
 
 static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
                           GUInt32 nXSize, GUInt32 nYSize, int nBand,
-                          int bIsXExtentSet, int bIsYExtentSet,
-                          double dfXMin, double dfXMax,
-                          double dfYMin, double dfYMax,
+                          int& bIsXExtentSet, int& bIsYExtentSet,
+                          double& dfXMin, double& dfXMax,
+                          double& dfYMin, double& dfYMax,
                           const char *pszBurnAttribute,
                           GDALDataType eType,
                           GDALGridAlgorithm eAlgorithm, void *pOptions,
@@ -409,12 +409,14 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     {
         dfXMin = *std::min_element(adfX.begin(), adfX.end());
         dfXMax = *std::max_element(adfX.begin(), adfX.end());
+        bIsXExtentSet = TRUE;
     }
 
     if ( !bIsYExtentSet )
     {
         dfYMin = *std::min_element(adfY.begin(), adfY.end());
         dfYMax = *std::max_element(adfY.begin(), adfY.end());
+        bIsYExtentSet = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -468,18 +470,26 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
                                           (double)++nBlock / nBlockCount,
                                           pfnProgress, NULL );
 
+            int nXRequest = nBlockXSize;
+            if (nXOffset + nXRequest > nXSize)
+                nXRequest = nXSize - nXOffset;
+
+            int nYRequest = nBlockYSize;
+            if (nYOffset + nYRequest > nYSize)
+                nYRequest = nYSize - nYOffset;
+
             GDALGridCreate( eAlgorithm, pOptions,
                             adfX.size(), &(adfX[0]), &(adfY[0]), &(adfZ[0]),
                             dfXMin + dfDeltaX * nXOffset,
-                            dfXMin + dfDeltaX * (nXOffset + nBlockXSize),
+                            dfXMin + dfDeltaX * (nXOffset + nXRequest),
                             dfYMin + dfDeltaY * nYOffset,
-                            dfYMin + dfDeltaY * (nYOffset + nBlockYSize),
-                            nBlockXSize, nBlockYSize, eType, pData,
+                            dfYMin + dfDeltaY * (nYOffset + nYRequest),
+                            nXRequest, nBlockYSize, eType, pData,
                             GDALScaledProgress, pScaledProgress );
 
             GDALRasterIO( hBand, GF_Write, nXOffset, nYOffset,
-                          nBlockXSize, nBlockYSize, pData,
-                          nBlockXSize, nBlockYSize, eType, 0, 0 );
+                          nXRequest, nYRequest, pData,
+                          nXRequest, nYRequest, eType, 0, 0 );
 
             GDALDestroyScaledProgress( pScaledProgress );
         }
