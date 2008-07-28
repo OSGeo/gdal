@@ -1373,35 +1373,82 @@ if test "$HAVE_MRSID" != "no" ; then
   OPT_GDAL_FORMATS="mrsid $OPT_GDAL_FORMATS"
 fi
 
+
+dnl ---------------------------------------------------------------------------
+dnl Enable MSG format if EUMETSAT Wavelet Transform Software
+dnl available in the local tree
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(bsb,[  --without-bsb         Disable BSB format (legal issues pending)],,)
+AC_ARG_WITH([msg],
+	    AS_HELP_STRING([--with-msg[=ARG]],
+	       [Enable MSG driver (ARG=yes or no)]),,)
 
+HAVE_MSG=no
+HAVE_EUMETSATWT=no
+
+if test "x$with_msg" = "xyes" ; then 
+    AC_MSG_CHECKING([for EUMETSAT Wavelet Transformation Software])
+
+    if test -d "frmts/msg/PublicDecompWT" -a \
+        -f "frmts/msg/PublicDecompWT/COMP/Inc/CImage.h"; then
+        HAVE_EUMETSATWT=yes
+    else
+        HAVE_EUMETSATWT=no
+    fi
+    AC_MSG_RESULT([$HAVE_EUMETSATWT])
+fi
+
+AC_MSG_CHECKING([for MSG])
+
+if test "x$with_msg" = "xyes" -o "x$with_msg" = "x" \
+    -a "x$HAVE_EUMETSATWT" = "xyes"; then 
+    OPT_GDAL_FORMATS="msg $OPT_GDAL_FORMATS"
+    HAVE_MSG=yes
+    AC_MSG_RESULT([enabled])
+else
+    HAVE_MSG=no
+    AC_MSG_RESULT([not requested])
+fi
+
+
+dnl ---------------------------------------------------------------------------
+dnl Check for BSB in the local tree.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([bsb],
+	    AS_HELP_STRING([--without-bsb],
+	       [Disable BSB driver (legal issues pending]),,)
+
+AC_MSG_CHECKING([for BSB])
 if test "$with_bsb" = yes -o x"$with_bsb" = x ; then
-  echo checking for BSB ... enabled
-  OPT_GDAL_FORMATS="bsb $OPT_GDAL_FORMATS"
+    OPT_GDAL_FORMATS="bsb $OPT_GDAL_FORMATS"
+    AC_MSG_RESULT([enabled])
 else
-  echo checking for BSB ... disabled by user
+    AC_MSG_RESULT([disabled by user])
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl Check for grib in the local tree.
+dnl Check for GRIB in the local tree.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(grib,[  --without-grib        Disable GRIB format],,)
+AC_ARG_WITH([grib],
+	    AS_HELP_STRING([--without-grib],
+	       [Disable GRIB driver]),,)
 
+AC_MSG_CHECKING([for GRIB])
 if test "$with_grib" = yes -o x"$with_grib" = x ; then
-  echo checking for GRIB ... enabled
-  OPT_GDAL_FORMATS="grib $OPT_GDAL_FORMATS"
-  HAVE_GRIB=yes
+    OPT_GDAL_FORMATS="grib $OPT_GDAL_FORMATS"
+    HAVE_GRIB=yes
+    AC_MSG_RESULT([enabled])
 else
-  echo checking for GRIB ... disabled by user
-  HAVE_GRIB=no
+    HAVE_GRIB=no
+    AC_MSG_RESULT([disabled by user])
 fi
+
 
 dnl ---------------------------------------------------------------------------
 
-AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
+AC_SUBST([OPT_GDAL_FORMATS], [$OPT_GDAL_FORMATS])
 
 dnl ---------------------------------------------------------------------------
 
@@ -2255,6 +2302,7 @@ else
 fi
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
+LOC_MSG([  MSG support:               ${HAVE_MSG}])
 LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
