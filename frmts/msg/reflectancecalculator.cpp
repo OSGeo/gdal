@@ -28,8 +28,9 @@
  ******************************************************************************/
 
 #include "reflectancecalculator.h"
-
-#include <math.h>
+#include <cmath>
+#include <cstdlib>
+using namespace std;
 
 #define M_PI        3.14159265358979323846
 
