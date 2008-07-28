@@ -5,9 +5,10 @@
  * Purpose:  Implementation of quadtree building and searching functions.
  *           Derived from shapelib and mapserver implementations
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *           Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 1999-2008, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +34,17 @@
 
 #include "cpl_port.h"
 
+/**
+ * \file cpl_quad_tree.h
+ *
+ * Quad tree implementation.
+ *
+ * A quadtree is a tree data structure in which each internal node
+ * has up to four children. Quadtrees are most often used to partition
+ * a two dimensional space by recursively subdividing it into four
+ * quadrants or regions
+ */
+
 CPL_C_START
 
 /* Types */
@@ -43,16 +55,41 @@ typedef struct {
 
 typedef struct _CPLQuadTree CPLQuadTree;
 
-typedef void (*CPLQuadTreeGetBoundsFunc)(const void* feature, CPLRectObj* pBounds);
+typedef void         (*CPLQuadTreeGetBoundsFunc)(const void* hFeature, CPLRectObj* pBounds);
+typedef int          (*CPLQuadTreeForeachFunc)(void* pElt, void* pUserData);
+typedef void         (*CPLQuadTreeDumpFeatureFunc)(const void* hFeature, int nIndentLevel, void* pUserData);
 
 /* Functions */
 
-CPLQuadTree CPL_DLL  *CPL_CreateTree(int numfeatures, void** features,
-                                     CPLQuadTreeGetBoundsFunc get_bound_func,
-                                     CPLRectObj* pGlobalBounds, int maxdepth);
-void        CPL_DLL   CPL_DestroyTree(CPLQuadTree *tree);
-void        CPL_DLL **CPL_SearchTree(CPLQuadTree *tree, CPLRectObj* pAoi, int* pnFeatureCount);
-void        CPL_DLL   CPL_TreeTrim(CPLQuadTree *tree);
+CPLQuadTree CPL_DLL  *CPLQuadTreeCreate(const CPLRectObj* pGlobalBounds,
+                                        CPLQuadTreeGetBoundsFunc pfnGetBounds);
+void        CPL_DLL   CPLQuadTreeDestroy(CPLQuadTree *hQuadtree);
+
+void        CPL_DLL   CPLQuadTreeSetBucketCapacity(CPLQuadTree *hQuadtree,
+                                                   int nBucketCapacity);
+int         CPL_DLL   CPLQuadTreeGetAdvisedMaxDepth(int nExpectedFeatures);
+void        CPL_DLL   CPLQuadTreeSetMaxDepth(CPLQuadTree *hQuadtree,
+                                             int nMaxDepth);
+
+void        CPL_DLL   CPLQuadTreeInsert(CPLQuadTree *hQuadtree,
+                                        void* hFeature);
+
+void        CPL_DLL **CPLQuadTreeSearch(const CPLQuadTree *hQuadtree,
+                                        const CPLRectObj* pAoi,
+                                        int* pnFeatureCount);
+
+void        CPL_DLL   CPLQuadTreeForeach(const CPLQuadTree *hQuadtree,
+                                         CPLQuadTreeForeachFunc pfnForeach,
+                                         void* pUserData);
+
+void        CPL_DLL   CPLQuadTreeDump(const CPLQuadTree *hQuadtree,
+                                      CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
+                                      void* pUserData);
+void        CPL_DLL   CPLQuadTreeGetStats(const CPLQuadTree *hQuadtree,
+                                          int* pnFeatureCount,
+                                          int* pnNodeCount,
+                                          int* pnMaxDepth,
+                                          int* pnMaxBucketCapacity);
 
 CPL_C_END
 
