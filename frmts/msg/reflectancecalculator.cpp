@@ -1,10 +1,8 @@
-// reflectancecalculator.cpp: implementation of the ReflectanceCalculator class.
-//
-//////////////////////////////////////////////////////////////////////
-
 /******************************************************************************
+ * $Id$
  *
- * Purpose:  Calculate reflectance values from radiance, for visual bands.
+ * Purpose:  Implementation of ReflectanceCalculator class. Calculate
+ *           reflectance values from radiance, for visual bands.
  * Author:   Bas Retsios, retsios@itc.nl
  *
  ******************************************************************************

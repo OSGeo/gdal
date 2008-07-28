@@ -1,10 +1,8 @@
-// xritheaderparser.cpp: implementation of the XRITHeaderParser class.
-//
-//////////////////////////////////////////////////////////////////////
-
 /******************************************************************************
+ * $Id$
  *
- * Purpose:  Parse the header of the combined XRIT header/data files.
+ * Purpose:  Implementation of XRITHeaderParser class. Parse the header
+ *           of the combined XRIT header/data files.
  * Author:   Bas Retsios, retsios@itc.nl
  *
  ******************************************************************************
