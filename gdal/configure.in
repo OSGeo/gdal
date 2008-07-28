@@ -698,6 +698,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select a libgeotiff library to use.
 dnl ---------------------------------------------------------------------------
 
+GEOTIFF_INCLUDE=
 AC_ARG_WITH(geotiff,[  --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)],,)
 
 if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
@@ -711,10 +712,21 @@ if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
   fi
 
   if test "$GEOTIFF_SETTING" = "external" ; then   
+
+    dnl Now search for headers
+    if test -r /usr/include/geotiff.h ; then
+      GEOTIFF_INCLUDE=
+    elif test -r /usr/include/geotiff/geotiff.h ; then
+      GEOTIFF_INCLUDE="-I/usr/include/geotiff"
+    fi
+
     LIBS="-lgeotiff $LIBS"
     echo "using pre-installed libgeotiff."
+
   else
+
     echo "using internal GeoTIFF code."
+
   fi
 
 elif test "$with_geotiff" = "internal" ; then
@@ -749,6 +761,7 @@ else
 fi
 
 AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
+AC_SUBST(GEOTIFF_INCLUDE,$GEOTIFF_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
 dnl Select a JPEG Library to use, or disable driver.
