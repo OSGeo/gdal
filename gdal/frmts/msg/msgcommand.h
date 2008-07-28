@@ -1,10 +1,8 @@
-// msgcommand.h: interface for the msgcommand class.
-//
-//////////////////////////////////////////////////////////////////////
-
 /******************************************************************************
+ * $Id$
  *
- * Purpose:  Parse the src_dataset string that is meant for the MSG driver.
+ * Purpose:  Interface of MSGCommand class. Parse the src_dataset string
+ *           that is meant for the MSG driver.
  * Author:   Bas Retsios, retsios@itc.nl
  *
  ******************************************************************************

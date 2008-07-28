@@ -1,10 +1,7 @@
-// xritheaderparser.h: interface for the XRITHeaderParser class.
-//
-//////////////////////////////////////////////////////////////////////
-
 /******************************************************************************
  *
- * Purpose:  Parse the header of the combined XRIT header/data files.
+ * Purpose:  Interface of XRITHeaderParser class. Parse the header of
+ *           the combined XRIT header/data files.
  * Author:   Bas Retsios, retsios@itc.nl
  *
  ******************************************************************************

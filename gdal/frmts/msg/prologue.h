@@ -1,10 +1,8 @@
-// prologue.h: interface for the prologue class.
-//
-//////////////////////////////////////////////////////////////////////
-
 /******************************************************************************
+ * $Id$
  *
- * Purpose:  Parse the prologue of one repeat cycle and keep the interesting info.
+ * Purpose:  Interface of Prologue class. Parse the prologue of one repeat
+ *           cycle and keep the interesting info.
  * Author:   Bas Retsios, retsios@itc.nl
  *
  ******************************************************************************
