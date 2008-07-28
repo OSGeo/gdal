@@ -1,10 +1,8 @@
-// msgcommand.cpp: implementation of the MSGCommand class.
-//
-//////////////////////////////////////////////////////////////////////
-
 /******************************************************************************
+ * $Id$
  *
- * Purpose:  Parse the src_dataset string that is meant for the MSG driver.
+ * Purpose:  Implementation of MSGCommand class. Parse the src_dataset
+ *           string that is meant for the MSG driver.
  * Author:   Bas Retsios, retsios@itc.nl
  *
  ******************************************************************************
@@ -44,13 +42,13 @@
 
 #define min(a,b) (((a)<(b))?(a):(b))
 
-MSGCommand::MSGCommand()
-: sRootFolder("")
-, sTimeStamp("")
-, cDataConversion('N')
-, iNrCycles(1)
-, iStep(1)
-, fUseTimestampFolder(true)
+MSGCommand::MSGCommand() :
+    cDataConversion('N'),
+    iNrCycles(1),
+    sRootFolder(""),
+    sTimeStamp(""),
+    iStep(1),
+    fUseTimestampFolder(true)
 {
   for (int i = 0; i < 12; ++i)
     channel[i] = 0;
@@ -461,3 +459,4 @@ std::string MSGCommand::sPrologueFileName(int iSatellite, int iSequence)
     sprintf(sRet, "%sH-000-MSG%d__-MSG%d________-_________-PRO______-%s-__", sRootFolder.c_str(), iSatellite, iSatellite, siThCycle.c_str());
   return sRet;
 }
+

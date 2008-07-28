@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  MSG Driver
  * Purpose:  GDALDataset driver for MSG translator for read support.
@@ -42,7 +43,9 @@ CPL_C_END
 /*                            MSGRasterBand                             */
 /************************************************************************/
 
+class MSGDataset;
 class ReflectanceCalculator;
+
 class MSGRasterBand : public GDALRasterBand
 {
   friend class MSGDataset;
