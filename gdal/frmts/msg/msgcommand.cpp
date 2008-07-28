@@ -29,6 +29,8 @@
 
 
 #include "msgcommand.h"
+#include <cstdlib>
+using namespace std;
 
 #ifdef _WIN32
 #define PATH_SEP '\\'
