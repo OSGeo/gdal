@@ -33,14 +33,25 @@ General Public License as published by the Free Software Foundation.
 
 <p>Download the Eumetsat library for wavelet decompression. This is a
 file named PublicDecompWT.zip. Extract the content in a subdirectory with
-the same name (under frmts/msg). If you are building with Visual Studio
+the same name (under frmts/msg).</p>
+
+<p>If you are building with Visual Studio
 6.0, extract the .vc makefiles for the PublicDecompWT from the file
-PublicDecompWTMakefiles.zip. If you build using the GNUMakefile and you
-find that some adjustments are needed in the makefile and/or the msg
+PublicDecompWTMakefiles.zip.</p>
+
+<p>If you build using the GNUMakefile, use <em>--with-msg</em> option to enable MSG driver:</p>
+
+<pre>./configure --with-msg</pre>
+
+<p>If find that some adjustments are needed in the makefile and/or the msg
 source files, please "commit" them. The Eumetsat library promises to be
 "platform indepentent", but as we are working with Microsoft Windows
 and Visual Studio 6.0, we did not have the facilities to check if the
 rest of the msg driver is. Furthermore, apply steps 4 to 7 from the <a href="http://www.gdal.org/gdal_drivertut.html">GDAL Driver Implementation Tutorial</a>, section "Adding Driver to GDAL Tree".
+</p>
+
+<p>MSG Wiki page is available at <a href="http://trac.osgeo.org/gdal/wiki/MSG">http://trac.osgeo.org/gdal/wiki/MSG</a>.
+It's dedicated to document building and usage hints
 </p>
 
 <h2>Specification of Source Dataset</h2>
