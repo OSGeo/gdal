@@ -23241,19 +23241,25 @@ echo "$as_me: error: MrSID JPEG2000 support requested, but this is incompatible 
    { (exit 1); exit 1; }; }
     fi
 
-    if test "x$with_jp2mrsid" = "x" -a "$HAVE_KAKADU" = "no" \
-            -a -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then
-      with_jp2mrsid=yes
-    fi
-    if test "x$with_jp2mrsid" = "xyes" \
-            -a ! -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then
-      { { echo "$as_me:$LINENO: error: MrSID JPEG2000 support requested, but libltikdu.a not found." >&5
+    MRSID_KAKADU_LIB=no
+    if test "$HAVE_KAKADU" = "no" ; then
+      if test x"$with_jp2mrsid" = x"" -o x"$with_jp2mrsid" = x"yes" ; then
+        if test -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then
+          with_jp2mrsid=yes
+          MRSID_KAKADU_LIB=-lltikdu
+        elif test -r $with_mrsid/3rd-party/lib/Release/liblt_kakadu.a ; then
+          with_jp2mrsid=yes
+          MRSID_KAKADU_LIB=-llt_kakadu
+        else
+          { { echo "$as_me:$LINENO: error: MrSID JPEG2000 support requested, but libltikdu.a not found." >&5
 echo "$as_me: error: MrSID JPEG2000 support requested, but libltikdu.a not found." >&2;}
    { (exit 1); exit 1; }; }
+        fi
+      fi
     fi
 
     if test "x$with_jp2mrsid" = "xyes" ; then
-      MRSID_LIBS="$MRSID_LIBS -lltikdu"
+      MRSID_LIBS="$MRSID_LIBS $MRSID_KAKADU_LIB"
       MRSID_FLAGS="-DMRSID_J2K $MRSID_FLAGS"
       { echo "$as_me:$LINENO: result: enabled" >&5
 echo "${ECHO_T}enabled" >&6; }
@@ -26111,7 +26117,7 @@ fi
 
   else
 
-    LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
+    LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
     { echo "$as_me:$LINENO: checking for pj_init in -lproj" >&5
 echo $ECHO_N "checking for pj_init in -lproj... $ECHO_C" >&6; }
 if test "${ac_cv_lib_proj_pj_init+set}" = set; then
@@ -26184,7 +26190,7 @@ fi
 
       unset ac_cv_lib_proj_pj_init
 
-      LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
+      LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
       { echo "$as_me:$LINENO: checking for pj_init in -lproj" >&5
 echo $ECHO_N "checking for pj_init in -lproj... $ECHO_C" >&6; }
 if test "${ac_cv_lib_proj_pj_init+set}" = set; then
