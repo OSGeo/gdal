@@ -80,7 +80,8 @@ static const OGRStyleParamId asStyleSymbol[] =
     {OGRSTSymbolPerp,"dp",TRUE,OGRSTypeDouble},
     {OGRSTSymbolOffset,"di",TRUE,OGRSTypeDouble},
     {OGRSTSymbolPriority,"l",FALSE,OGRSTypeInteger},
-    {OGRSTSymbolFontName,"f",FALSE,OGRSTypeString}
+    {OGRSTSymbolFontName,"f",FALSE,OGRSTypeString},
+    {OGRSTSymbolOColor,"o",FALSE,OGRSTypeString}
 };
 
 static const OGRStyleParamId asStyleLabel[] =
