@@ -388,7 +388,8 @@ typedef enum ogr_style_tool_param_symbol_id
     OGRSTSymbolOffset   = 8,
     OGRSTSymbolPriority = 9,
     OGRSTSymbolFontName = 10,
-    OGRSTSymbolLast     = 11
+    OGRSTSymbolOColor   = 11,
+    OGRSTSymbolLast     = 12
               
 } OGRSTSymbolParam;
 
