@@ -58,6 +58,8 @@ Version 2.0-dev (CVS)
 - Add text outline color support (halo background in MapInfo) (bug 1921)
 
 - Add font text styles support (bold, italic, etc.) (bug 1922)
+
+- Added Font Point styles support (halo, border) (bug 1925)
  
 
 Version 1.7.0-beta1 (2007-02-29)
@@ -921,5 +923,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.216 2008/07/21 16:04:58 dmorissette Exp $
+$Id: HISTORY.TXT,v 1.217 2008/07/29 13:06:16 aboudreault Exp $
 ------------
