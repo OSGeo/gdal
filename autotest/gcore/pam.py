@@ -182,6 +182,19 @@ def pam_5():
     return 'success'
 
 ###############################################################################
+# Verify we can read nodata values from .aux files (#2505)
+#
+def pam_6():
+
+    ds = gdal.Open( 'data/f2r23.tif' )
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason( 'did not get expect .aux sourced nodata.' )
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def pam_cleanup():
@@ -198,6 +211,7 @@ gdaltest_list = [
     pam_3,
     pam_4,
     pam_5,
+    pam_6,
     pam_cleanup ]
 
 if __name__ == '__main__':
