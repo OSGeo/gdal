@@ -349,6 +349,8 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
         {return GetParamStr(OGRSTSymbolFontName,bDefault);}
     void SetFontName(const char *pszFontName)
         {SetParamStr(OGRSTSymbolFontName,pszFontName);}
+    const char *OColor(GBool &bDefault){return GetParamStr(OGRSTSymbolOColor,bDefault);}
+    void SetOColor(const char *pszColor){SetParamStr(OGRSTSymbolOColor,pszColor);}
 
     /*****************************************************************/
     
