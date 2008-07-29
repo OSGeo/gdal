@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.91 2008/07/21 19:23:03 aboudreault Exp $
+ * $Id: mitab_feature.cpp,v 1.92 2008/07/29 13:06:17 aboudreault Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.92  2008/07/29 13:06:17  aboudreault
+ * Added Font Point styles support (halo, border) (bug 1925)
+ *
  * Revision 1.91  2008/07/21 19:23:03  aboudreault
  * Fixed another small error with expanded text.
  *
@@ -1472,7 +1475,24 @@ const char *TABFontPoint::GetStyleString()
 {
     if (m_pszStyleString == NULL)
     {
-        m_pszStyleString = CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
+        /* Get the SymbolStyleString, and add the outline Color 
+           (halo/border in MapInfo Symbol terminology) */
+        char *pszSymbolStyleString = CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
+        int nStyleStringlen = strlen(pszSymbolStyleString);
+        pszSymbolStyleString[nStyleStringlen-1] = '\0';
+
+        const char *outlineColor;
+        if (m_nFontStyle & 16)
+            outlineColor = ",o:#000000";
+        else if (m_nFontStyle & 512)
+            outlineColor = ",o:#ffffff";
+        else
+            outlineColor = "";
+
+        m_pszStyleString = CPLStrdup(CPLSPrintf("%s%s)",
+                                                pszSymbolStyleString,
+                                                outlineColor));
+        CPLFree(pszSymbolStyleString);
     }
 
     return m_pszStyleString;
