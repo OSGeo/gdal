@@ -377,7 +377,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         eErr = ((VRTSource *)papoSources[iSource])->RasterIO
 	    (nXOff, nYOff, nXSize, nYSize, 
 	     pBuffers[iSource], nBufXSize, nBufYSize, 
-	     eSrcType, 0, 0);
+	     eSrcType, GDALGetDataTypeSize( eSrcType ) / 8,
+             (GDALGetDataTypeSize( eSrcType ) / 8) * nBufXSize);
     }
 
     /* ---- Apply pixel function ---- */
