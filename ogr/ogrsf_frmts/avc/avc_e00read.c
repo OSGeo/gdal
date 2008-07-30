@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00read.c,v 1.26 2008/07/30 16:17:46 dmorissette Exp $
+ * $Id: avc_e00read.c,v 1.28 2008/07/30 19:22:18 dmorissette Exp $
  *
  * Name:     avc_e00read.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -32,6 +32,15 @@
  **********************************************************************
  *
  * $Log: avc_e00read.c,v $
+ * Revision 1.28  2008/07/30 19:22:18  dmorissette
+ * Move detection of EXP header directly in AVCE00ReadOpenE00() and use
+ * VSIFGets() instead of CPLReadLine() to avoid problem with huge one line
+ * files (GDAL/OGR ticket #1989)
+ *
+ * Revision 1.27  2008/07/30 18:35:53  dmorissette
+ * Avoid scanning the whole E00 input file in AVCE00ReadOpenE00() if the
+ * file does not start with an EXP line (GDAL/OGR ticket 1989)
+ *
  * Revision 1.26  2008/07/30 16:17:46  dmorissette
  * Detect compressed E00 input files and refuse to open them instead of
  * crashing (bug 1928, GDAL/OGR ticket 2513)
@@ -399,6 +408,7 @@ AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName)
     VSIStatBuf       sStatBuf;
     FILE             *fp;
     char             *p;
+    char             szHeader[10];
 
     CPLErrorReset();
 
@@ -416,8 +426,21 @@ AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName)
         return NULL;
     }
 
-    if (NULL == (fp = fopen(pszE00FileName, "r")))
+    if (NULL == (fp = VSIFOpen(pszE00FileName, "r")))
         return NULL;
+
+    /*-----------------------------------------------------------------
+     * Make sure the file starts with a "EXP  0" or "EXP  1" header
+     *----------------------------------------------------------------*/
+    if (VSIFGets(szHeader, 5, fp) == NULL || !EQUALN("EXP ", szHeader, 4) )
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed, 
+                 "This does not look like a E00 file: does not start with "
+                 "a EXP header." );
+        VSIFClose(fp);
+        return NULL;
+    }
+    VSIRewind(fp);
 
     /*-----------------------------------------------------------------
      * Alloc the AVCE00ReadE00Ptr handle
@@ -542,7 +565,7 @@ void AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead)
 
     if (psRead->hFile)
     {
-        fclose(psRead->hFile);
+        VSIFClose(psRead->hFile);
         psRead->hFile = 0;
     }
 
@@ -1340,10 +1363,10 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
     {
         if (bFirstLine)
         {
-            /* Look for the first non-empty line, trying to detect compressed
-             * E00 files. If the file is compressed, the first line of data
-             * should be 79 or 80 characters long and contain several '~' 
-             * characters.
+            /* Look for the first non-empty line, after the EXP header,
+             * trying to detect compressed E00 files. If the file is 
+             * compressed, the first line of data should be 79 or 80 chars
+             * long and contain several '~' characters.
              */
             int nLen = strlen(pszLine);
             if (nLen == 0 || EQUALN("EXP ", pszLine, 4))
