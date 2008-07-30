@@ -341,7 +341,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     /* ---- Get pixel function for band ---- */
     pfnPixelFunc = VRTDerivedRasterBand::GetPixelFunction(this->pszFuncName);
     if (pfnPixelFunc == NULL) {
-	CPLError( CE_Fatal, CPLE_IllegalArg, 
+	CPLError( CE_Failure, CPLE_IllegalArg, 
 		  "VRTDerivedRasterBand::IRasterIO:" \
 		  "Derived band pixel function '%s' not registered.\n",
 		  this->pszFuncName);
@@ -364,7 +364,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
             for (ii = 0; ii < iSource; ii++) {
                 free(pBuffers[iSource]);
 	    }
-	    CPLError( CE_Fatal, CPLE_OutOfMemory, 
+	    CPLError( CE_Failure, CPLE_OutOfMemory, 
 		      "VRTDerivedRasterBand::IRasterIO:" \
 		      "Out of memory allocating %d bytes.\n",
 		      nPixelSpace * nBufXSize * nBufYSize);
