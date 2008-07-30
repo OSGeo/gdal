@@ -18,6 +18,9 @@ Version 2.0.1 (CVS):
 - Detect compressed E00 input files and refuse to open them instead of
   crashing (bug 1928, GDAL/OGR ticket 2513)
 
+- Avoid scanning the whole E00 input file in AVCE00ReadOpenE00() if the file
+  does not start with an EXP line (GDAL/OGR ticket 1989)
+
 
 Version 2.0.0 (2006-08-17):
 ---------------------------
@@ -296,4 +299,4 @@ know problems.
 
 
 ---------
-$Id: HISTORY.TXT,v 1.31 2008/07/30 16:17:46 dmorissette Exp $
+$Id: HISTORY.TXT,v 1.32 2008/07/30 18:35:53 dmorissette Exp $
