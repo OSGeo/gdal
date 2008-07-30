@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00read.c,v 1.25 2008/07/24 20:34:12 dmorissette Exp $
+ * $Id: avc_e00read.c,v 1.26 2008/07/30 16:17:46 dmorissette Exp $
  *
  * Name:     avc_e00read.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: avc_e00read.c,v $
+ * Revision 1.26  2008/07/30 16:17:46  dmorissette
+ * Detect compressed E00 input files and refuse to open them instead of
+ * crashing (bug 1928, GDAL/OGR ticket 2513)
+ *
  * Revision 1.25  2008/07/24 20:34:12  dmorissette
  * Fixed VC++ WIN32 build problems in GDAL/OGR environment
  * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2500)
@@ -1329,10 +1333,40 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
     const char *pszName = 0;
     void       *obj;
     int        iSect = 0;
+    GBool      bFirstLine = TRUE;
 
     while (CPLGetLastErrorNo() == 0 &&
             (pszLine = CPLReadLine(psRead->hFile) ) != NULL )
     {
+        if (bFirstLine)
+        {
+            /* Look for the first non-empty line, trying to detect compressed
+             * E00 files. If the file is compressed, the first line of data
+             * should be 79 or 80 characters long and contain several '~' 
+             * characters.
+             */
+            int nLen = strlen(pszLine);
+            if (nLen == 0 || EQUALN("EXP ", pszLine, 4))
+                continue;  /* Skip empty and EXP header lines */
+            else if ( (nLen == 79 || nLen == 80) &&
+                      strchr(pszLine, '~') != NULL )
+            {
+                /* Looks like a compressed file. Just log an error and return.
+                 * The caller should reject the file because it contains 0 
+                 * sections 
+                 */
+                CPLError(CE_Failure, CPLE_OpenFailed, 
+                         "This looks like a compressed E00 file and cannot be "
+                         "processed directly. You may need to uncompress it "
+                         "first using the E00compr library or the e00conv "
+                         "program." );
+                return;  
+            }
+
+            /* All seems fine. Continue with normal processing */
+            bFirstLine = FALSE;
+        }
+
         obj = _AVCE00ReadNextLineE00(psRead, pszLine);
 
         if (obj)
