@@ -239,7 +239,6 @@ def tiff_write_5():
 
 ###############################################################################
 # Test a mixture of reading and writing on a DEFLATE compressed file.
-# Expected to fail (properly) with older libtiff versions (<=3.8.2 for sure)
 
 def tiff_write_6():
 
@@ -274,13 +273,14 @@ def tiff_write_6():
 ###############################################################################
 # Test a mixture of reading and writing on a LZW compressed file.
 # Will cause older libtiff versions (<=3.8.2 for sure) to crash, so skip it
-# if previous test failed
+# if BigTIFF is not supported (this is a sign of an older libtiff...)
 
 def tiff_write_7():
 
-    if gdaltest.tiff_write_6_failed:
-        gdaltest.post_reason( 'skipped because of failure in tiff_write_6.' )
-        return 'fail'
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
 
     options= [ 'TILED=YES', 'COMPRESS=LZW', 'PREDICTOR=2' ]
     ds = gdaltest.tiff_drv.Create( 'tmp/test_7.tif', 200, 200, 1,
