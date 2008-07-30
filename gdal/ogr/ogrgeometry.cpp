@@ -1454,6 +1454,71 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
     }
 }
 
+/************************************************************************/
+/*                       OGRMergeGeometryTypes()                        */
+/************************************************************************/
+
+/**
+ * Find common geometry type.
+ *
+ * Given two geometry types, find the most specific common
+ * type.  Normally used repeatedly with the geometries in a
+ * layer to try and establish the most specific geometry type
+ * that can be reported for the layer.
+ *
+ * NOTE: wkbUnknown is the "worst case" indicating a mixture of
+ * geometry types with nothing in common but the base geometry
+ * type.  wkbNone should be used to indicate that no geometries
+ * have been encountered yet, and means the first geometry
+ * encounted will establish the preliminary type.
+ * 
+ * @param eMain the first input geometry type.
+ * @param eExtra the second input geometry type.
+ *
+ * @return the merged geometry type.
+ */
+
+OGRwkbGeometryType 
+OGRMergeGeometryTypes( OGRwkbGeometryType eMain,
+                       OGRwkbGeometryType eExtra )
+
+{
+    int n25DFlag = 0;
+    OGRwkbGeometryType eFMain = wkbFlatten(eMain);
+    OGRwkbGeometryType eFExtra = wkbFlatten(eExtra);
+        
+    if( eFMain != eMain || eFExtra != eExtra )
+        n25DFlag = wkb25DBit;
+
+    if( eFMain == wkbUnknown || eFExtra == wkbUnknown )
+        return (OGRwkbGeometryType) (((int) wkbUnknown) | n25DFlag);
+
+    if( eFMain == wkbNone )
+        return eExtra;
+
+    if( eFExtra == wkbNone )
+        return eMain;
+
+    if( eFMain == eFExtra )
+        return (OGRwkbGeometryType) (((int) eFMain) | n25DFlag);
+
+    // Both are geometry collections.
+    if( (eFMain == wkbGeometryCollection
+         || eFMain == wkbMultiPoint
+         || eFMain == wkbMultiLineString
+         || eFMain == wkbMultiPolygon)
+        && (eFExtra == wkbGeometryCollection
+            || eFExtra == wkbMultiPoint
+            || eFExtra == wkbMultiLineString
+            || eFMain == wkbMultiPolygon) )
+    {
+        return (OGRwkbGeometryType) (((int) wkbGeometryCollection) | n25DFlag);
+    }
+
+    // Nothing apparently in common.
+    return (OGRwkbGeometryType) (((int) wkbUnknown) | n25DFlag);
+}
+
 /**
  * \fn void OGRGeometry::flattenTo2D();
  *
