@@ -172,6 +172,8 @@ typedef enum
 #define ogrZMarker 0x21125711
 
 const char CPL_DLL * OGRGeometryTypeToName( OGRwkbGeometryType eType );
+OGRwkbGeometryType CPL_DLL OGRMergeGeometryTypes( OGRwkbGeometryType eMain,
+                                                  OGRwkbGeometryType eExtra );
 
 typedef enum 
 {
