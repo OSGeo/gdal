@@ -2299,6 +2299,8 @@ void GTiffDataset::FlushCache()
     pabyBlockBuf = NULL;
     nLoadedBlock = -1;
     bLoadedBlockDirty = FALSE;
+
+    TIFFFlush( hTIFF );
 }
 
 /************************************************************************/
