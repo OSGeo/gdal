@@ -2350,7 +2350,7 @@ CPLErr GTiffDataset::IBuildOverviews(
         return CE_Failure;
     }
 
-    Crystalize();
+    SetDirectory();
 
     TIFFFlush( hTIFF );
 
