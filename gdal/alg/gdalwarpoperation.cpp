@@ -772,6 +772,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
                                             hThread2Mutex, NULL, NULL };
     int iChunk;
     double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
+    CPLErr eErr = CE_None;
 
     for( iChunk = 0; iChunk < nChunkListCount+1; iChunk++ )
     {
@@ -825,16 +826,29 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 
             CPLDebug( "GDAL", "Finished chunk %d.", iChunk-1 );
 
-            CPLErr eErr = (CPLErr) (long) papThreadDataList[iThread*3+2];
+            eErr = (CPLErr) (long) papThreadDataList[iThread*3+2];
 
             if( eErr != CE_None )
-                return eErr;
-        }            
+                break;
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Wait for all threads to complete.                               */
+    /* -------------------------------------------------------------------- */
+    int iThread;
+    for(iThread = 0; iThread < 2; iThread ++)
+    {
+        while( papThreadDataList[iThread*3+1] != NULL )
+        {
+            if( CPLAcquireMutex( papThreadDataList[iThread*3+0], 1.0 ) )
+                CPLReleaseMutex( papThreadDataList[iThread*3+0] );
+        }
     }
 
     WipeChunkList();
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
