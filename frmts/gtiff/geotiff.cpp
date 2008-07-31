@@ -618,6 +618,8 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
             poBlock = poGDS->GetRasterBand(iOtherBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff);
+            if (poBlock == NULL)
+                return CE_Failure;
             poBlock->DropLock();
         }
     }
