@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id:$
+// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general CPL features.
@@ -201,7 +201,7 @@ namespace tut
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetFind(set, (const void*)i) == TRUE);
+            ensure(CPLHashSetLookup(set, (const void*)i) == (const void*)i);
         }
 
         int sum = 0;
