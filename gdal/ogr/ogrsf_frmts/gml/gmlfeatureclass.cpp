@@ -47,6 +47,8 @@ GMLFeatureClass::GMLFeatureClass( const char *pszName )
     m_pszExtraInfo = NULL;
     m_bHaveExtents = FALSE;
     m_nFeatureCount = -1; // unknown
+
+    m_nGeometryType = 0; // wkbUnknown
 }
 
 /************************************************************************/
@@ -265,6 +267,11 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
     if( strlen( pszGPath ) > 0 )
         SetGeometryElement( pszGPath );
 
+    if( CPLGetXMLValue( psRoot, "GeometryType", NULL ) != NULL )
+    {
+        SetGeometryType( atoi(CPLGetXMLValue( psRoot, "GeometryType", NULL )) );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect dataset specific info.                                  */
 /* -------------------------------------------------------------------- */
@@ -371,6 +378,14 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     if( GetGeometryElement() != NULL && strlen(GetGeometryElement()) > 0 )
         CPLCreateXMLElementAndValue( psRoot, "GeometryElementPath", 
                                      GetGeometryElement() );
+    
+    if( GetGeometryType() != 0 /* wkbUnknown */ )
+    {
+        char szValue[128];
+
+        sprintf( szValue, "%d", GetGeometryType() );
+        CPLCreateXMLElementAndValue( psRoot, "GeometryType", szValue );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write out dataset specific information.                         */
