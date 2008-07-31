@@ -3453,7 +3453,8 @@ int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
 #ifndef BIGTIFF_SUPPORT
-    if( poOpenInfo->pabyHeader[2] == 43 && poOpenInfo->pabyHeader[3] == 0 )
+    if( (poOpenInfo->pabyHeader[2] == 0x2B && poOpenInfo->pabyHeader[3] == 0) ||
+        (poOpenInfo->pabyHeader[2] == 0 && poOpenInfo->pabyHeader[3] == 0x2B) )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "This is a BigTIFF file.  BigTIFF is not supported by this\n"
@@ -3481,38 +3482,17 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     TIFF	*hTIFF;
 
 /* -------------------------------------------------------------------- */
+/*      Check if it looks like a TIFF file.                             */
+/* -------------------------------------------------------------------- */
+    if (!Identify(poOpenInfo))
+        return NULL;
+
+/* -------------------------------------------------------------------- */
 /*      We have a special hook for handling opening a specific          */
 /*      directory of a TIFF file.                                       */
 /* -------------------------------------------------------------------- */
     if( EQUALN(poOpenInfo->pszFilename,"GTIFF_DIR:",10) )
         return OpenDir( poOpenInfo );
-
-/* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/    
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 2 )
-        return NULL;
-
-    if( (poOpenInfo->pabyHeader[0] != 'I' || poOpenInfo->pabyHeader[1] != 'I')
-        && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
-        return NULL;
-
-#ifndef BIGTIFF_SUPPORT
-    if( poOpenInfo->pabyHeader[2] == 43 && poOpenInfo->pabyHeader[3] == 0 )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "This is a BigTIFF file.  BigTIFF is not supported by this\n"
-                  "version of GDAL and libtiff." );
-        return NULL;
-    }
-#endif
-
-    if( (poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0)
-        && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0)
-        && (poOpenInfo->pabyHeader[2] != 0x2B || poOpenInfo->pabyHeader[3] != 0)
-        && (poOpenInfo->pabyHeader[3] != 0x2B || poOpenInfo->pabyHeader[2] != 0))
-        return NULL;
 
     GTiffOneTimeInit();
 
