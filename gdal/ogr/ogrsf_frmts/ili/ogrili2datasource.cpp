@@ -131,7 +131,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
             szHeader[nLen] = '\0';
 
         if( szHeader[0] != '<' 
-            && strstr(szHeader,"interlis.ch/INTERLIS2") == NULL )
+            || strstr(szHeader,"interlis.ch/INTERLIS2") == NULL )
         { // "www.interlis.ch/INTERLIS2.2"
             VSIFClose( fp );
             CSLDestroy( filenames );
