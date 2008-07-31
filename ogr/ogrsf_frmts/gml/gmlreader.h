@@ -95,6 +95,8 @@ class CPL_DLL GMLFeatureClass
     double      m_dfYMin;
     double      m_dfYMax;
 
+    int         m_nGeometryType;
+
 public:
             GMLFeatureClass( const char *pszName = "" );
            ~GMLFeatureClass();
@@ -127,6 +129,9 @@ public:
                             double dFYMin, double dfYMax );
     int         GetExtents( double *pdfXMin, double *pdfXMax, 
                             double *pdFYMin, double *pdfYMax );
+
+    int         GetGeometryType() const { return m_nGeometryType; }
+    void        SetGeometryType( int nNewType ) { m_nGeometryType = nNewType; }
 
     CPLXMLNode *SerializeToXML();
     int         InitializeFromXML( CPLXMLNode * );
