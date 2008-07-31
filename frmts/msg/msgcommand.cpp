@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-
 #include "msgcommand.h"
 #include <cstdlib>
 using namespace std;
@@ -61,23 +60,24 @@ MSGCommand::~MSGCommand()
 
 }
 
-std::string MSGCommand::sTrimSpaces(std::string str)
+std::string MSGCommand::sTrimSpaces(std::string const& str)
 {
-  int iStart = 0;
+  std::string::size_type iStart = 0;
 
   while ((iStart < str.length()) && (str[iStart] == ' '))
     ++iStart;
 
-  int iLength = str.length() - iStart;
+  std::string::size_type iLength = str.length() - iStart;
+
   while ((iLength > 0) && (str[iStart + iLength - 1] == ' '))
     --iLength;
 
   return str.substr(iStart, iLength);
 }
 
-std::string MSGCommand::sNextTerm(std::string str, int & iPos)
+std::string MSGCommand::sNextTerm(std::string const& str, int & iPos)
 {
-  int iOldPos = iPos;
+  std::string::size_type iOldPos = iPos;
   iPos = str.find(',', iOldPos);
   iPos = min(iPos, str.find(')', iOldPos));
   if (iPos > iOldPos)
@@ -91,7 +91,7 @@ std::string MSGCommand::sNextTerm(std::string str, int & iPos)
     return "";
 }
 
-bool fTimeStampCorrect(std::string sTimeStamp)
+bool fTimeStampCorrect(std::string const& sTimeStamp)
 {
   if (sTimeStamp.length() != 12)
     return false;
@@ -105,7 +105,7 @@ bool fTimeStampCorrect(std::string sTimeStamp)
   return true;
 }
 
-std::string MSGCommand::parse(std::string command_line)
+std::string MSGCommand::parse(std::string const& command_line)
 {
   // expected:
   // MSG(folder,timestamp,channel,in_same_folder,data_conversion,nr_cycles,step)
@@ -274,7 +274,7 @@ int MSGCommand::iNrStrips(int iChannel)
     return 0;
 }
 
-int MSGCommand::iChannel(std::string sChannel)
+int MSGCommand::iChannel(std::string const& sChannel)
 {
   if (sChannel.compare("VIS006___") == 0)
     return 1;
