@@ -95,17 +95,19 @@ def warp_3():
     return tst.testOpen()
 
 def warp_4():
-
+ 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
-
+ 
     test = gdalnumeric.LoadFile( 'data/utmsmall_cubicspline.vrt' )
     ref = gdalnumeric.LoadFile( 'data/utmsmall_cubicspline.tiff' )
-
-    if Numeric.alltrue(Numeric.fabs(test-ref) <= threshold_byte):
+ 
+    ary = Numeric.fabs(test - ref)
+    if Numeric.alltrue(ary <= threshold_byte):
         return 'success'
     else:
+        gdaltest.post_reason( 'Test failed on matrix values <= %f with matrix =\n%s' % (threshold_byte, str(ary)) )
         return 'fail'
 
 def warp_5():
