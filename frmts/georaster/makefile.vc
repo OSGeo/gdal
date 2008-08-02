@@ -1,0 +1,32 @@
+GDAL_ROOT = ..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ = geor_dataset.obj \
+      geor_driver.obj \
+      geor_band.obj \
+      orcl_oci.obj \
+      orcl_geor.obj
+
+EXTRAFLAGS = $(OCI_INCLUDE)
+
+default: $(OBJ)
+	xcopy /D  /Y *.obj ..\o
+	cd ..
+
+fastread:
+	cl $(OPTFLAGS) fastread.c $(OCI_INCLUDE) $(OCI_LIB)
+	
+clean:
+	-del *.obj
+        -del *.dll
+        -del *.exp
+        -del *.ilk
+        -del *.lib
+        -del *.pdb
+	cd ..
+
+plugin:	gdal_GEOR.dll
+
+gdal_GEOR.dll: $(OBJ)
+	link /nologo /dll /debug /out:gdal_GEOR.dll $(OBJ) $(GDALLIB) $(OCI_LIB)
