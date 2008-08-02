@@ -107,7 +107,7 @@ def warp_4():
     if Numeric.alltrue(ary <= threshold_byte):
         return 'success'
     else:
-        gdaltest.post_reason( 'Test failed on matrix values <= %f with matrix =\n%s' % (threshold_byte, str(ary)) )
+        gdaltest.post_reason( 'Logical AND on matrix values failed. Expected values <= %f in matrix with min=%f and max=%f' % (threshold_byte, Numeric.amin(ary), Numeric.amax(ary)) )
         return 'fail'
 
 def warp_5():
