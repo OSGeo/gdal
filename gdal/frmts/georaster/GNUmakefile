@@ -1,10 +1,10 @@
 include ../../GDALmake.opt
 
-OBJ		=	geor_driver.o \
-			geor_dataset.o \
-			geor_band.o \
-			orcl_oci.o \
-			orcl_geor.o
+OBJ		=	georaster_driver.o \
+			georaster_dataset.o \
+			georaster_rasterband.o \
+			oci_wrapper.o \
+			georaster_wrapper.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
 
