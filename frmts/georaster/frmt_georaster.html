@@ -1,0 +1,72 @@
+<html>
+	<head>
+		<title>RST --- Idrisi Raster Format</title>
+	</head>
+	<body bgcolor="#ffffff">
+		<h1>Oracle Spatial GeoRaster (DRAFT)</h1>
+		<P class="MsoNormal">
+			This driver supports reading and writing data in Oracle Spatial (10g&nbsp;or 
+			later) Object-Relational format. The Oracle Spatial GeoRaster driver is not 
+			normally built into GDAL, but may be built in on platforms where the Oracle 
+			client libraries are available.
+		</P>
+		<P>
+		When opening a database, it's name should be specified in the form:
+		<P>
+		georaster:&lt;user&gt;,&lt;pwd&gt;,[db],[table],[column],[where]
+		<P>
+		or
+		<P>georaster:&lt;user&gt;,&lt;pwd&gt;,[db],&lt;rdt&gt;,&lt;rid&gt;</P>
+		<P>Where:</P>
+		<P>user = Oracle server user's name login</P>
+		<P>pwd = user passord</P>
+		<P>db = Oracle server identification (optional, uses user's default)</P>
+		<P>table = name of a GeoRaster table (table that contains GeoRaster columns)</P>
+		<P>column = name of a table's column wich data type is MDSYS.SDO_GEORASTER</P>
+		<P>where = a simple where clause to identify one ore multiples GeoRaster</P>
+		<P>rtd = name of an raster data table</P>
+		<P>rid = numeric identification of one GeoRaster (must be unique on rtd)</P>
+		<P>The separator characters could be one of ",/@:" in combined use.</P>
+		<P>Examples:</P>
+		<P>geor:scott,tiger,demodb,table,column,id=1</P>
+		<P>"georaster:scott/tiger@demodb,table,column,gain&gt;10"</P>
+		<P>"georaster:scott/tiger@demodb,table,column,city=london"</P>
+		<P>georaster:scott,tiger,,rdt_10$,10</P>
+		<P>geor:scott/tiger,,rdt_10$,10</P>
+		<H3>Creation Options</H3>
+		<UL>
+			<LI>
+				<B>OVERWRITE</B>: This may be "YES" or "ON" to alow&nbsp;existing GeoRaster to 
+				be overwritten
+				<P></P>
+			<LI>
+				.<STRONG>BLOCKXSIZE</STRONG>: The number of pixel columns on&nbsp;raster block.
+				<P></P>
+			<LI>
+				.<STRONG>BLOCKYSIZE</STRONG>: The number of pixel&nbsp;rows on&nbsp;raster 
+				block.
+				<P></P>
+			</LI>
+			<LI>
+				.<STRONG>BLOCKBSIZE</STRONG>: The number of bands&nbsp;on&nbsp;raster block.
+				<P></P>
+			</LI>
+			<LI>
+				.<STRONG>INTERLEAVE</STRONG>: Band interleaving mode, BAND, LINE, PIXEL for 
+				band sequential, Line or Pixel interleaving. Note that Oracle Spatial accepts 
+				LINE and PIXEL interleaving mode for single band raster datasets.
+				<P></P>
+			</LI>
+			<LI>
+				.<STRONG>DESCRIPTION</STRONG>: A simple description of a newly created table in 
+				SQL sintax. If the table already exist, this create option will be ignored.
+				<P></P>
+			</LI>
+			<LI>
+				.<STRONG>INSERT</STRONG>: A simple SQL insert/values clause to informe the 
+				driver what values to fill up when inserting a new row on the table.
+				<P></P>
+			</LI>
+		</UL>
+	</body>
+</html>
