@@ -2,11 +2,11 @@ GDAL_ROOT = ..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-OBJ = geor_dataset.obj \
-      geor_driver.obj \
-      geor_band.obj \
-      orcl_oci.obj \
-      orcl_geor.obj
+OBJ = oci_wrapper.obj \
+      georaster_dataset.obj \
+      georaster_driver.obj \
+      georaster_rasterband.obj \
+      georaster_wrapper.obj
 
 EXTRAFLAGS = $(OCI_INCLUDE)
 
