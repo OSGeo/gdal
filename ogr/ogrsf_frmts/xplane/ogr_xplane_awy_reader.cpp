@@ -289,24 +289,29 @@ static int EqualAirwayIntersectionFeatureFunc(const void* _feature1, const void*
 /*                      OGRXPlaneAirwayHashDouble()                     */
 /************************************************************************/
 
-static unsigned long OGRXPlaneAirwayHashDouble(double* pdfVal)
+static unsigned long OGRXPlaneAirwayHashDouble(const double& dfVal)
 {
-    unsigned int* pnValue = (unsigned int*)pdfVal;
-    return pnValue[0] ^ pnValue[1];
+    /* To make a long story short, we must copy the double into */
+    /* an array in order to respect C strict-aliasing rule */
+    /* We can't directly cast into an unsigned int* */
+    /* See #2521 for the longer version */
+    unsigned int anValue[2];
+    memcpy(anValue, &dfVal, sizeof(double));
+    return anValue[0] ^ anValue[1];
 }
 
 /************************************************************************/
-/*               HastAirwayIntersectionFeatureFunc                      */
+/*               HashAirwayIntersectionFeatureFunc                      */
 /************************************************************************/
 
-static unsigned long HastAirwayIntersectionFeatureFunc(const void* _feature)
+static unsigned long HashAirwayIntersectionFeatureFunc(const void* _feature)
 {
     OGRFeature* feature = (OGRFeature*)_feature;
     OGRPoint* point = (OGRPoint*) feature->GetGeometryRef();
     unsigned long hash = CPLHashSetHashStr((unsigned char*)feature->GetFieldAsString(0));
-    double x = point->getX();
-    double y = point->getY();
-    return hash ^ OGRXPlaneAirwayHashDouble(&x) ^ OGRXPlaneAirwayHashDouble(&y);
+    const double x = point->getX();
+    const double y = point->getY();
+    return hash ^ OGRXPlaneAirwayHashDouble(x) ^ OGRXPlaneAirwayHashDouble(y);
 }
 
 /************************************************************************/
@@ -329,7 +334,7 @@ OGRXPlaneAirwayIntersectionLayer::OGRXPlaneAirwayIntersectionLayer() : OGRXPlane
     OGRFieldDefn oFieldName("name", OFTString );
     poFeatureDefn->AddFieldDefn( &oFieldName );
 
-    poSet = CPLHashSetNew(HastAirwayIntersectionFeatureFunc,
+    poSet = CPLHashSetNew(HashAirwayIntersectionFeatureFunc,
                           EqualAirwayIntersectionFeatureFunc,
                           FreeAirwayIntersectionFeatureFunc);
 }
@@ -379,7 +384,7 @@ void OGRXPlaneAirwayIntersectionLayer::ResetReading()
     if (poReader)
     {
         CPLHashSetDestroy(poSet);
-        poSet = CPLHashSetNew(HastAirwayIntersectionFeatureFunc,
+        poSet = CPLHashSetNew(HashAirwayIntersectionFeatureFunc,
                               EqualAirwayIntersectionFeatureFunc,
                               FreeAirwayIntersectionFeatureFunc);
     }
