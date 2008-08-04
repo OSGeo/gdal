@@ -1,72 +1,305 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-	<head>
-		<title>RST --- Idrisi Raster Format</title>
-	</head>
-	<body bgcolor="#ffffff">
-		<h1>Oracle Spatial GeoRaster (DRAFT)</h1>
-		<P class="MsoNormal">
-			This driver supports reading and writing data in Oracle Spatial (10g&nbsp;or 
-			later) Object-Relational format. The Oracle Spatial GeoRaster driver is not 
-			normally built into GDAL, but may be built in on platforms where the Oracle 
-			client libraries are available.
-		</P>
-		<P>
-		When opening a database, it's name should be specified in the form:
-		<P>
-		georaster:&lt;user&gt;,&lt;pwd&gt;,[db],[table],[column],[where]
-		<P>
-		or
-		<P>georaster:&lt;user&gt;,&lt;pwd&gt;,[db],&lt;rdt&gt;,&lt;rid&gt;</P>
-		<P>Where:</P>
-		<P>user = Oracle server user's name login</P>
-		<P>pwd = user passord</P>
-		<P>db = Oracle server identification (optional, uses user's default)</P>
-		<P>table = name of a GeoRaster table (table that contains GeoRaster columns)</P>
-		<P>column = name of a table's column wich data type is MDSYS.SDO_GEORASTER</P>
-		<P>where = a simple where clause to identify one ore multiples GeoRaster</P>
-		<P>rtd = name of an raster data table</P>
-		<P>rid = numeric identification of one GeoRaster (must be unique on rtd)</P>
-		<P>The separator characters could be one of ",/@:" in combined use.</P>
-		<P>Examples:</P>
-		<P>geor:scott,tiger,demodb,table,column,id=1</P>
-		<P>"georaster:scott/tiger@demodb,table,column,gain&gt;10"</P>
-		<P>"georaster:scott/tiger@demodb,table,column,city=london"</P>
-		<P>georaster:scott,tiger,,rdt_10$,10</P>
-		<P>geor:scott/tiger,,rdt_10$,10</P>
-		<H3>Creation Options</H3>
-		<UL>
-			<LI>
-				<B>OVERWRITE</B>: This may be "YES" or "ON" to alow&nbsp;existing GeoRaster to 
+<head>
+<title>GeoRaster --- Oracle Spatial GeoRaster</title>
+</head>
+<body bgcolor="#ffffff">
+<h1>Oracle Spatial GeoRaster</h1>
+<p>
+This driver supports reading and writing data in Oracle Spatial (10g or 
+later) Object-Relational format. The Oracle Spatial GeoRaster driver is optionally 
+built as a GDAL plugin, but it requires Oracle client libraries.
+</p>
+<p>
+When opening a GeoRaster, it's name should be specified in the form:
+</p>
+<p style="font-family: Courier New,Courier,monospace;">
+		georaster:&lt;user&gt;,&lt;pwd&gt;,[db],[table],[column],[where]<br>
+
+georaster:&lt;user&gt;,&lt;pwd&gt;,[db],&lt;rdt&gt;,&lt;rid&gt;</p>
+
+
+
+		
+<p>Where:</p>
+
+
+
+		
+
+
+		
+
+
+		
+
+
+		
+
+
+		
+
+
+		
+
+
+		
+
+
+		
+<p style="font-family: Courier New,Courier,monospace;">user &nbsp; = Oracle server user's name login<br>
+
+pwd &nbsp; &nbsp;= user password<br>
+
+db &nbsp; &nbsp; = Oracle server identification (optional, uses default if it is blank)<br>
+
+table &nbsp;= name of a GeoRaster table (table that contains&nbsp;GeoRaster columns)<br>
+
+column = name of a column&nbsp;data type&nbsp;MDSYS.SDO_GEORASTER<br>
+
+where &nbsp;= a simple where clause to identify one or multiples GeoRaster<br>
+
+rtd &nbsp; &nbsp;= name of an raster data table<br>
+
+rid &nbsp; &nbsp;= numeric identification of one GeoRaster (must be unique on rtd)</p>
+
+
+
+		
+<p>The separator between the above fields can be any combination of those 
+characters
+ (",","/","@", ":").</p>
+
+
+
+		
+<p>Examples:</p>
+
+
+
+		
+
+
+		
+
+
+		
+
+
+		
+
+
+		
+<p style="font-family: Courier New,Courier,monospace;">geor:scott,tiger,demodb,table,column,id=1<br>
+
+"georaster:scott/tiger@demodb,table,column,gain&gt;10"<br>
+
+"georaster:scott/tiger@demodb,table,column,city=london"<br>
+
+georaster:scott,tiger,,rdt_10$,10<br>
+
+geor:scott/tiger,,rdt_10$,10</p>
+
+
+
+		
+<h3>Browsing the database for GeoRasters
+
+
+	
+
+
+
+	
+	
+
+
+	
+
+
+
+
+<br>
+
+</h3>
+
+<p>By providing some basic information the
+GeoRaster driver is capable of listing the existing rasters stored on
+the server:</p>
+
+To&nbsp;list all the GeoRaster table
+on the server that belongs to that user name and database:
+<p><font face="Courier, monospace">%
+gdalinfo georasters:scott/tiger@db1</font></p>
+
+To list&nbsp;all the GeoRaster
+columns on that table:
+<p><font face="Courier, monospace">%
+gdalinfo georasters:scott/tiger@db1,table_name</font>
+</p>
+
+<p>That will list all the GeoRaster 
+existing on that table.
+</p>
+
+<p><font face="Courier, monospace">%
+gdalinfo georasters:scott/tiger@db1,table_name,georaster_column</font>
+</p>
+
+<p>That will list all the GeoRaster 
+existing on that table occording to a Where clause.
+</p>
+
+<p><font face="Courier, monospace">%
+gdalinfo georasters:scott/tiger@db1,table_name,georaster_column,city='Brasilia'</font>
+</p>
+
+Note that the result of those queries
+are returned&nbsp;as GDAL metadata sub-datasets, e.g.:
+
+<p><font face="Courier, monospace">%
+gdalinfo georaster:scott/tiger<br>
+
+Driver:
+GeoRaster/Oracle Spatial GeoRaster<br>
+
+Subdatasets:</span></font><br>
+
+<span style="background: transparent none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-origin: initial; -moz-background-inline-policy: initial;"><font face="Courier, monospace">SUBDATASET_1_NAME=georaster:scott,tiger,,LANDSAT<br>
+
+SUBDATASET_1_DESC=Table:LANDSAT<br>
+
+SUBDATASET_2_NAME=georaster:scott,tiger,,GDAL_IMPORT<br>
+
+SUBDATASET_2_DESC=Table:GDAL_IMPORT</font></span></p>
+
+<h3>Creation Options</h3>
+
+
+
+		
+<ul>
+
+
+
+			<li>
+				<b>OVERWRITE</b>: This may be "YES" or "ON" to alow&nbsp;existing GeoRaster to 
 				be overwritten
-				<P></P>
-			<LI>
-				.<STRONG>BLOCKXSIZE</STRONG>: The number of pixel columns on&nbsp;raster block.
-				<P></P>
-			<LI>
-				.<STRONG>BLOCKYSIZE</STRONG>: The number of pixel&nbsp;rows on&nbsp;raster 
+
+			</li>
+
+
+  <li>
+				.<strong>BLOCKXSIZE</strong>: The number of pixel columns on&nbsp;raster block.
+
+			</li>
+
+
+  <li>
+				.<strong>BLOCKYSIZE</strong>: The number of pixel&nbsp;rows on&nbsp;raster 
 				block.
-				<P></P>
-			</LI>
-			<LI>
-				.<STRONG>BLOCKBSIZE</STRONG>: The number of bands&nbsp;on&nbsp;raster block.
-				<P></P>
-			</LI>
-			<LI>
-				.<STRONG>INTERLEAVE</STRONG>: Band interleaving mode, BAND, LINE, PIXEL for 
-				band sequential, Line or Pixel interleaving. Note that Oracle Spatial accepts 
-				LINE and PIXEL interleaving mode for single band raster datasets.
-				<P></P>
-			</LI>
-			<LI>
-				.<STRONG>DESCRIPTION</STRONG>: A simple description of a newly created table in 
-				SQL sintax. If the table already exist, this create option will be ignored.
-				<P></P>
-			</LI>
-			<LI>
-				.<STRONG>INSERT</STRONG>: A simple SQL insert/values clause to informe the 
-				driver what values to fill up when inserting a new row on the table.
-				<P></P>
-			</LI>
-		</UL>
-	</body>
+
+			</li>
+
+
+
+			
+
+			<li>
+				.<strong>BLOCKBSIZE</strong>: The number of bands&nbsp;on&nbsp;raster block.</li>
+
+
+
+			<li>.<strong>INTERLEAVE</strong>: Band interleaving mode, BAND, LINE, PIXEL for 
+				band sequential, Line or Pixel interleaving.&nbsp;</li>
+
+
+
+			<li>.<strong>DESCRIPTION</strong>: A simple description of a newly created table in 
+				SQL sintax. If the table already exist, this create option will be ignored.</li>
+
+  <li>.<strong>INSERT</strong>: A simple SQL insert/values clause to informe the 
+				driver what values to fill up when inserting a new row on the table.</li>
+
+
+
+		
+</ul>
+
+
+
+
+	
+
+
+<h3>Importing GeoRaster</h3>
+
+
+
+<p style="margin-bottom: 0in;">During the process of importing rastet
+into a GeoRaster it is possible to give the driver a simple SQL table
+definition and also a SQL insert/values clause to informe the driver
+about the table to be create and the values to be added to the new
+create row. The following example does that:</p>
+
+
+
+
+
+<p style="margin-bottom: 0in;"><font face="Courier, monospace">%
+gdal_translate <u>-of georaster</u> landsat_1.tif&nbsp;georaster:scott/tiger,,landsat,scene
+\<br>
+
+&nbsp; -co
+"DESCRIPTION=(ID NUMBER, SITE VARCHAR2(45), SCENE
+MDSYS.SDO_GEORASTER)" \<br>
+
+&nbsp; -co "INSERT=VALUES(1,'West fields',
+*)"</font></p>
+
+
+
+<p style="margin-bottom: 0in;">If the table "landsat" exist, the option
+"DESCRIPTION" is ignored. The asterix "*" on the INSERT option indicate
+where is the GeoRaster column that will be update. The driver can only
+update one GeoRaster column per run of gdal_translate. Oracle create
+default names and values for RDT and RID during the initialization of
+the SDO_GEORASTER object but user are also able to specify a name and
+value of their choice.</p>
+
+<p style="margin-bottom: 0in;"><font face="Courier, monospace">%
+gdal_translate <u>-of georaster</u> landsat_1.tif&nbsp;georaster:scott/tiger,,landsat,scene
+\<br>
+&nbsp; -co "INSERT=VALUES(10,'Main building',
+*)" \<br>
+&nbsp; -co "RDT=ST_RDT_10" -co "RID=10"</font></p>
+
+
+
+<p style="margin-bottom: 0in;">If no information is given about where
+to store the raster the driver will create (if doesn't exist already)
+a default table named GDAL_IMPORT with just one GeoRaster column
+named RASTER, example:</p>
+
+
+<p style="margin-bottom: 0in;"><font face="Courier, monospace">%
+gdal_translate -of georaster input.tif &ldquo;geor:scott/tiger@dbdemo&rdquo;</font><br>
+
+</p>
+
+<h3>Exporting GreoRaster</h3>
+
+A GeoRaster can be identified by a Where clause or by a pair RDT &amp; RID:<br>
+
+<br>
+
+<span style="font-family: Courier New,Courier,monospace;">% gdal_translate -of gtiff geor:scott/tiger@dbdemo,landsat,scene,id=54 output.tif<br>
+
+</span><span style="font-family: Courier New,Courier,monospace;">% gdal_translate -of gtiff geor:scott/tiger@dbdemo,st_rdt_1,130 output.tif<br>
+<br>
+
+<br>
+
+</span>
+</body>
 </html>
