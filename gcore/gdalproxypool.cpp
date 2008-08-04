@@ -48,6 +48,7 @@ static void* CacheMutex = NULL;
 typedef struct _CacheEntry CacheEntry;
 struct _CacheEntry
 {
+    GIntBig pid;
     char* fileName;
     GDALDataset* ds;
 
@@ -112,11 +113,14 @@ GDALDataset* GDALDatasetPool::_GetDataset(const char* fileName, GDALAccess eAcce
     CacheEntry* cur = firstEntry;
     CacheEntry* lastEntry = cur;
     CacheEntry* prevEntry = NULL;
+    GIntBig cur_pid = CPLGetPID();
+
     while(cur)
     {
         CacheEntry* next = cur->next;
 
-        if (strcmp(cur->fileName, fileName) == 0)
+        if (strcmp(cur->fileName, fileName) == 0 &&
+            cur->pid == cur_pid)
         {
             if (cur != firstEntry)
             {
@@ -163,6 +167,7 @@ GDALDataset* GDALDatasetPool::_GetDataset(const char* fileName, GDALAccess eAcce
     }
 
     cur->fileName = CPLStrdup(fileName);
+    cur->pid = cur_pid;
     cur->ds = (GDALDataset*) GDALOpen(fileName, eAccess);
     return cur->ds;
 }
