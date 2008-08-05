@@ -185,6 +185,74 @@ def warp_11():
 
     return tst.testOpen()
 
+# Test warping an empty RGBA with bilinear resampling
+def warp_12():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/empty.tif', 20, 20, 4)
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(0)
+    ds.GetRasterBand(4).Fill(0)
+    ds = None
+
+    # The alpha channel must be empty
+    tst = gdaltest.GDALTest( 'VRT', 'empty_rb.vrt', 4, 0)
+
+    ret = tst.testOpen()
+
+    gdaltest.tiff_drv.Delete('tmp/empty.tif')
+
+    return ret
+
+# Test warping an empty RGBA with cubic resampling
+def warp_13():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/empty.tif', 20, 20, 4)
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(0)
+    ds.GetRasterBand(4).Fill(0)
+    ds = None
+
+    # The alpha channel must be empty
+    tst = gdaltest.GDALTest( 'VRT', 'empty_rc.vrt', 4, 0)
+
+    ret = tst.testOpen()
+
+    gdaltest.tiff_drv.Delete('tmp/empty.tif')
+
+    return ret
+
+# Test warping an empty RGBA with cubic spline resampling
+def warp_14():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/empty.tif', 20, 20, 4)
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(0)
+    ds.GetRasterBand(4).Fill(0)
+    ds = None
+
+    # The alpha channel must be empty
+    tst = gdaltest.GDALTest( 'VRT', 'empty_rcs.vrt', 4, 0)
+
+    ret = tst.testOpen()
+
+    gdaltest.tiff_drv.Delete('tmp/empty.tif')
+
+    return ret
 
 ###############################################################################
 
@@ -199,7 +267,10 @@ gdaltest_list = [
     #warp_8,
     warp_9,
     #warp_10,
-    warp_11
+    warp_11,
+    warp_12,
+    warp_13,
+    warp_14
     ]
 
 if __name__ == '__main__':
