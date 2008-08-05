@@ -40,16 +40,6 @@ try:
 except ImportError:
     import gdal
 
-try:
-    import numpy as Numeric
-except ImportError:
-    import Numeric
-
-try:
-    from osgeo import gdal_array as gdalnumeric
-except ImportError:
-    import gdalnumeric
-
 import gdaltest
 
 ###############################################################################
@@ -65,14 +55,18 @@ def warp_1():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
-
-    test = gdalnumeric.LoadFile( 'data/utmsmall_near.vrt' )
-    ref = gdalnumeric.LoadFile( 'data/utmsmall_near.tiff' )
-
-    if Numeric.alltrue(Numeric.fabs(test-ref) <= threshold_byte):
-        return 'success'
-    else:
+    
+    ds = gdal.Open( 'data/utmsmall_near.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_near.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
         return 'fail'
+
+    return 'success'
 
 def warp_2():
 
@@ -99,16 +93,18 @@ def warp_4():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_cubicspline.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_cubicspline.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
  
-    test = gdalnumeric.LoadFile( 'data/utmsmall_cubicspline.vrt' )
-    ref = gdalnumeric.LoadFile( 'data/utmsmall_cubicspline.tiff' )
- 
-    ary = Numeric.fabs(test - ref)
-    if Numeric.alltrue(ary <= threshold_byte):
-        return 'success'
-    else:
-        gdaltest.post_reason( 'Logical AND on matrix values failed. Expected values <= %f in matrix with min=%f and max=%f' % (threshold_byte, Numeric.amin(ary), Numeric.amax(ary)) )
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
         return 'fail'
+
+    return 'success'
 
 def warp_5():
 
@@ -156,14 +152,18 @@ def warp_9():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         return 'skip'
-
-    test = gdalnumeric.LoadFile( 'data/utmsmall_ds_cubicspline.vrt' )
-    ref = gdalnumeric.LoadFile( 'data/utmsmall_ds_cubicspline.tiff' )
-
-    if Numeric.alltrue(Numeric.fabs(test-ref) <= threshold_byte):
-        return 'success'
-    else:
+    
+    ds = gdal.Open( 'data/utmsmall_ds_cubicspline.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_ds_cubicspline.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
         return 'fail'
+
+    return 'success'
 
 def warp_10():
 

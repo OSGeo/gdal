@@ -30,7 +30,6 @@
 
 import sys
 import os
-import struct
 
 sys.path.append( '../pymod' )
 
@@ -273,33 +272,6 @@ def test_gdalwarp_10():
     return 'success'
 
 ###############################################################################
-# Compare the values of the pixels
-
-def test_gdalwarp_compare_ds(ds1, ds2):
-    data1 = ds1.GetRasterBand(1).ReadRaster(0, 0, 40, 40)
-    byte_array1 = struct.unpack('B' * 40 * 40, data1)
-
-    data2 = ds2.GetRasterBand(1).ReadRaster(0, 0, 40, 40)
-    byte_array2 = struct.unpack('B' * 40 * 40, data2)
-
-    maxdiff = 0
-    ndiffs = 0
-    for i in range(40*40):
-        diff = byte_array1[i] - byte_array2[i]
-        if diff != 0:
-            ndiffs = ndiffs + 1
-            if abs(diff) > maxdiff:
-                maxdiff = abs(diff)
-                print "Diff at pixel %d : %d" % (i, diff)
-            elif ndiffs < 10:
-                print "Diff at pixel %d : %d" % (i, diff)
-    if maxdiff != 0:
-        print "Max diff : %d" % (maxdiff)
-        print "Number of diffs : %d" % (ndiffs)
-
-    return maxdiff
-
-###############################################################################
 # Test -rb
 
 def test_gdalwarp_11():
@@ -313,7 +285,7 @@ def test_gdalwarp_11():
         return 'fail'
 
     ref_ds = gdal.Open('ref_data/testgdalwarp11.tif')
-    maxdiff = test_gdalwarp_compare_ds(ds, ref_ds)
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ref_ds = None
 
     if maxdiff > 1:
@@ -339,7 +311,7 @@ def test_gdalwarp_12():
         return 'fail'
 
     ref_ds = gdal.Open('ref_data/testgdalwarp12.tif')
-    maxdiff = test_gdalwarp_compare_ds(ds, ref_ds)
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ref_ds = None
 
     if maxdiff > 1:
@@ -365,7 +337,7 @@ def test_gdalwarp_13():
         return 'fail'
 
     ref_ds = gdal.Open('ref_data/testgdalwarp13.tif')
-    maxdiff = test_gdalwarp_compare_ds(ds, ref_ds)
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ref_ds = None
 
     if maxdiff > 1:
@@ -391,7 +363,7 @@ def test_gdalwarp_14():
         return 'fail'
 
     ref_ds = gdal.Open('ref_data/testgdalwarp14.tif')
-    maxdiff = test_gdalwarp_compare_ds(ds, ref_ds)
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ref_ds = None
 
     if maxdiff > 1:
