@@ -898,3 +898,34 @@ def download_file(url, filename, download_size = -1):
                 return False
         else:
             return False
+
+###############################################################################
+# Compare the values of the pixels
+
+def compare_ds(ds1, ds2):
+    import struct
+
+    width = ds1.RasterXSize
+    height = ds1.RasterYSize
+    data1 = ds1.GetRasterBand(1).ReadRaster(0, 0, width, height)
+    byte_array1 = struct.unpack('B' * width * height, data1)
+
+    data2 = ds2.GetRasterBand(1).ReadRaster(0, 0, width, height)
+    byte_array2 = struct.unpack('B' * width * height, data2)
+
+    maxdiff = 0
+    ndiffs = 0
+    for i in range(width*height):
+        diff = byte_array1[i] - byte_array2[i]
+        if diff != 0:
+            ndiffs = ndiffs + 1
+            if abs(diff) > maxdiff:
+                maxdiff = abs(diff)
+                print "Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff)
+            elif ndiffs < 10:
+                print "Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff)
+    if maxdiff != 0:
+        print "Max diff : %d" % (maxdiff)
+        print "Number of diffs : %d" % (ndiffs)
+
+    return maxdiff
