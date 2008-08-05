@@ -8,7 +8,7 @@ of open source, easy to compile and integrate C++ code.<p>
 
 <h2>ISO 8211 Background</h2>
 
-The <a href="http://starship.python.net/crew/tibs/iso8211/faq.html">ISO 8211
+The <a href="http://py-iso8211.sourceforge.net/tibbs/faq.html">ISO 8211
 FAQ</a> has some good background on ISO 8211 formatted files.  I will briefly
 introduce it here, with reference to the library classes representing
 the components.<p>
@@ -91,7 +91,7 @@ simple use of ISO8211Lib.<p>
 Home Page</a> contains tutorials and some code by Dr. Alfred A.
 Brooks, one of the originators of the 8211 standard.<p>
 
-<li> The <a href="http://starship.skyport.net/crew/tibs/iso8211/iso8211.html">
+<li> The <a href="http://py-iso8211.sourceforge.net/tibbs/iso8211.html">
 ISO/IEC 8211 Home Page</a> has some python code for parsing 8211 files, and
 some other useful background.<p>
 
