@@ -645,6 +645,44 @@ bool GeoRasterWrapper::CreateDataTable()
 
 bool GeoRasterWrapper::CreateDataRows()
 {
+    nTotalColumnBlocks  = (int) ( nRasterColumns / nColumnBlockSize );
+    nTotalRowBlocks     = (int) ( nRasterRows    / nRowBlockSize );
+    nTotalBandBlocks    = (int) ( nRasterBands   / nBandBlockSize );
+
+    nTotalColumnBlocks += ( nRasterColumns % nColumnBlockSize ) == 0 ? 0 : 1;
+    nTotalRowBlocks    += ( nRasterRows    % nRowBlockSize )    == 0 ? 0 : 1;
+    nTotalBandBlocks   += ( nRasterBands   % nBandBlockSize )   == 0 ? 0 : 1;
+
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf( 
+        "DECLARE\n"
+        "  STM VARCHAR2(1024);\n"
+        "  X   NUMBER;\n"
+        "  Y   NUMBER;\n"
+        "  W   NUMBER := %d;\n"
+        "  H   NUMBER := %d;\n"
+        "  BB  NUMBER := %d;\n"
+        "  RB  NUMBER := %d;\n"
+        "  CB  NUMBER := %d;\n"
+        "BEGIN\n"
+        "  STM := 'INSERT INTO %s VALUES (:1,0,:2-1,:3-1,:4-1,\n"
+        "    SDO_GEOMETRY(2003, NULL, NULL, SDO_ELEM_INFO_ARRAY(1, 1003, 3),\n"
+        "    SDO_ORDINATE_ARRAY(:5,:6,:7-1,:8-1)), EMPTY_BLOB() )';\n"
+        "  FOR b IN 1..BB LOOP\n"
+        "    Y := 0;\n"
+        "    FOR r IN 1..RB LOOP\n"
+        "      X := 0;\n"
+        "      FOR c IN 1..CB LOOP\n"
+        "        EXECUTE IMMEDIATE STM USING %d, b, r, c, Y, X, (Y+H), (X+W);\n"
+        "        X := X + W;\n"
+        "      END LOOP;\n"
+        "      Y := Y + H;\n"
+        "    END LOOP;\n"
+        "  END LOOP;\n"
+        "END;",
+        nColumnBlockSize, nRowBlockSize,
+        nTotalBandBlocks, nTotalRowBlocks, nTotalColumnBlocks,
+        pszDataTable, nRasterId ) );
+/*
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf( 
         "DECLARE\n"
         "  GR sdo_georaster;\n"
@@ -656,12 +694,12 @@ bool GeoRasterWrapper::CreateDataRows()
         "END;",
         pszColumn, pszTable, pszWhere,
         pszTable, pszColumn, pszWhere ) );
-
+*/
     if( ! poStmt->Execute() )
     {
         ObjFree_nt( poStmt );
         CPLError( CE_Failure, 
-            CPLE_AppDefined, "Failure to do changeCellValue " );
+            CPLE_AppDefined, "Failure to create data rows on %s ", pszDataTable );
         return false;
     }
 
@@ -1363,11 +1401,7 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
         nCurrentXOffset = nXOffset;
         nCurrentYOffset = nYOffset;
 
-        if( ! poStmtIO->ReadBlob( pahLocator[nBlock],
-                                  pabyBlockBuf, nBlockBytes ) )
-        {
-            return false;
-        }
+        poStmtIO->ReadBlob( pahLocator[nBlock], pabyBlockBuf, nBlockBytes );
     }
 
     GByte *pabyOutBuf = (GByte *) pData;
