@@ -48,19 +48,17 @@ GeoRasterDriver::GeoRasterDriver()
  * \brief Create a OWConnection object and store it in a list
  *
  * The georaster driver keeps the connection with the Oracle database
- * server for as long it leaves. Consequent GeoRasterDataset instance 
- * can re-use the existing conncetion as long it used the same 
- * database, same user name and password. 
+ * server for as long it leaves. Following GeoRasterDataset instance 
+ * can re-use the existing connection as long it used the same 
+ * database, same user name and password.
  *
- * If a requested connection does not exist on the list yet than a new
- * OWConnection will be instanciated, added to the list and returned to
- * the caller.
+ * The georaster driver will keep a list of all the successful 
+ * connections so, when connection is requested and it does not exist
+ * on the list a new one will be instantiated, added to the list and 
+ * returned to the caller.
  *
- * All connection will be disconnect when the GeoRasterDriver is destroyed.
+ * All connection will be destroyed when the GeoRasterDriver is destroyed.
  *
- * Licenses issues must be concern of the application developer. it might
- * be necessary to destroy the driver when a new database is selected and the
- * user doesn't have license for more than one connection at the same time.
  ****/
 
 OWConnection* GeoRasterDriver::GetConnection( const char* pszUserIn,
