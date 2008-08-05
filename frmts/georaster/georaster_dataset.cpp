@@ -338,7 +338,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     char* pszDescription        = NULL;
 
-    if( ! poGRW->pszTable )
+    if( poGRW->pszTable )
     {
         pszFetched = CSLFetchNameValue( papszOptions, "DESCRIPTION" );
 
