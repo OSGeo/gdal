@@ -2161,6 +2161,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
+            int bHasFoundDensity = FALSE;
             
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
@@ -2214,6 +2215,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                 if( dfBandDensity == 0.0 )
                     continue;
 
+                bHasFoundDensity = TRUE;
+
 /* -------------------------------------------------------------------- */
 /*      We have a computed value from the source.  Now apply it to      */
 /*      the destination pixel.                                          */
@@ -2222,6 +2225,9 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                                   dfBandDensity, dfValueReal, dfValueImag );
 
             }
+
+            if (!bHasFoundDensity)
+              continue;
 
 /* -------------------------------------------------------------------- */
 /*      Update destination density/validity masks.                      */
