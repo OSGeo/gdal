@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -139,6 +140,26 @@ def hfa_write_nd_invalid():
     return 'success'
 
 ###############################################################################
+# Test updating .rrd overviews in place (#2524).
+
+def hfa_update_overviews():
+
+
+    shutil.copyfile( 'data/small_ov.img', 'tmp/small.img' )
+    shutil.copyfile( 'data/small_ov.rrd', 'tmp/small.rrd' )
+
+    ds = gdal.Open( 'tmp/small.img', gdal.GA_Update )
+    result = ds.BuildOverviews( overviewlist = [2] )
+    print result
+    if result != 0:
+        gdaltest.post_reason( 'BuildOverviews() failed.' )
+        return 'fail'
+
+    gdal.GetDriverByName('HFA').Delete( 'tmp/small.img' )
+
+    return 'success'
+
+###############################################################################
 # Get the driver, and verify a few things about it. 
 
 init_list = [ \
@@ -156,7 +177,8 @@ init_list = [ \
 gdaltest_list = [ hfa_write_desc,
                   hfa_write_4bit,
                   hfa_write_4bit_compressed,
-                  hfa_write_nd_invalid]
+                  hfa_write_nd_invalid,
+                  hfa_update_overviews ]
 
 # full set of tests for normal mode.
 
