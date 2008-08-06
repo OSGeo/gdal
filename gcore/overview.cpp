@@ -775,8 +775,12 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      It can be important to flush out data to overviews.             */
 /* -------------------------------------------------------------------- */
-    for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
-        papoOvrBands[iOverview]->FlushCache();
+    for( int iOverview = 0; 
+         eErr == CE_None && iOverview < nOverviewCount; 
+         iOverview++ )
+    {
+        eErr = papoOvrBands[iOverview]->FlushCache();
+    }
 
     if (eErr == CE_None)
         pfnProgress( 1.0, NULL, pProgressData );
