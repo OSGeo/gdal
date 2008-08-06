@@ -931,13 +931,15 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 /* -------------------------------------------------------------------- */
 /*      Is the target block dirty?  If so we need to write it.          */
 /* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
+
     if( poBlock == NULL )
         return CE_None;
 
     poBlock->Detach();
 
     if( poBlock->GetDirty() )
-        poBlock->Write();
+        eErr = poBlock->Write();
 
 /* -------------------------------------------------------------------- */
 /*      Deallocate the block;                                           */
@@ -945,7 +947,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
     poBlock->DropLock();
     delete poBlock;
 
-    return( CE_None );
+    return eErr;
 }
 
 /************************************************************************/
