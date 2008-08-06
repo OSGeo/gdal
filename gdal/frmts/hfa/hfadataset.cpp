@@ -1398,9 +1398,34 @@ HFADataset::~HFADataset()
 {
     FlushCache();
 
-    if( hHFA != NULL )
-        HFAClose( hHFA );
+/* -------------------------------------------------------------------- */
+/*      Destroy the raster bands if they exist.  We forcably clean      */
+/*      them up now to avoid any effort to write to them after the      */
+/*      file is closed.                                                 */
+/* -------------------------------------------------------------------- */
+    int i;
 
+    for( i = 0; i < nBands && papoBands != NULL; i++ )
+    {
+        if( papoBands[i] != NULL )
+            delete papoBands[i];
+    }
+
+    CPLFree( papoBands );
+    papoBands = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Close the file                                                  */
+/* -------------------------------------------------------------------- */
+    if( hHFA != NULL )
+    {
+        HFAClose( hHFA );
+        hHFA = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
     CPLFree( pszProjection );
     if( nGCPCount > 0 )
         GDALDeinitGCPs( 36, asGCPList );
