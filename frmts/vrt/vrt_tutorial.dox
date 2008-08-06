@@ -665,4 +665,13 @@ CPLErr TestFunction(void **papoSources, int nSources, void *pData,
 }
 \endcode
 
+
+\section gdal_vrttut_mt Multi-threading issues
+
+When using VRT datasets in a multi-threading environment, you should be careful
+to open the VRT dataset by the thread that will use it afterwards. The reason for that
+is that the VRT dataset uses GDALOpenShared when opening the underlying datasets. So,
+if you open twice the same VRT dataset by the same thread, both VRT datasets will share
+the same handles to the underlying datasets.
+
 */
