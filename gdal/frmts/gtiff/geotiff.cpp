@@ -3394,8 +3394,6 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
     if( TIFFCurrentDirOffset(hTIFF) == nNewOffset )
         return TRUE;
 
-    CPLDebug( "GTiff", "SetDirectory(%15.0f)",(double) nNewOffset );
-
     if( GetAccess() == GA_Update )
         TIFFFlush( hTIFF );
     
