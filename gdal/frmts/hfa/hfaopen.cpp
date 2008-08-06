@@ -300,15 +300,16 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
 /* -------------------------------------------------------------------- */
     char	*pszDependent;
     FILE	*fp;
+    const char* pszMode = psBase->eAccess == HFA_Update ? "r+b" : "rb";
 
     pszDependent = CPLStrdup(
         CPLFormFilename( psBase->pszPath, pszFilename, NULL ) );
 
-    fp = VSIFOpenL( pszDependent, "rb" );
+    fp = VSIFOpenL( pszDependent, pszMode );
     if( fp != NULL )
     {
         VSIFCloseL( fp );
-        psBase->psDependent = HFAOpen( pszDependent, "rb" );
+        psBase->psDependent = HFAOpen( pszDependent, pszMode );
     }
 
     CPLFree( pszDependent );
