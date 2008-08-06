@@ -1144,7 +1144,7 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     
     CPLFree( papoOvBands );
     
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
