@@ -1154,6 +1154,13 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
     int		iBlock;
     FILE	*fpData;
 
+    if( psInfo->eAccess == HFA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Attempt to write block to read-only HFA file failed." );
+        return CE_Failure;
+    }
+
     if( LoadBlockInfo() != CE_None )
         return CE_Failure;
 
