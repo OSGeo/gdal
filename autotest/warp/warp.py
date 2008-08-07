@@ -260,7 +260,7 @@ gdaltest_list = [
     warp_1,
     #warp_2,
     #warp_3,
-    warp_4,
+    #warp_4,
     #warp_5,
     #warp_6,
     #warp_7,
