@@ -160,6 +160,22 @@ def hfa_update_overviews():
     return 'success'
 
 ###############################################################################
+# Test writing high frequency data (#2525).
+
+def hfa_bug_2525():
+    drv = gdal.GetDriverByName('HFA')
+    ds = drv.Create('tmp/test_hfa.img', 64, 64, 1, gdal.GDT_UInt16, options = [ 'COMPRESSED=YES'] )
+    import struct
+    data = struct.pack('H' * 64, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535)
+    for i in range(64):
+        ds.GetRasterBand(1).WriteRaster( 0, i, 64, 1, data)
+    ds = None
+
+    drv.Delete( 'tmp/test_hfa.img' )
+
+    return 'success'
+
+###############################################################################
 # Get the driver, and verify a few things about it. 
 
 init_list = [ \
@@ -178,7 +194,8 @@ gdaltest_list = [ hfa_write_desc,
                   hfa_write_4bit,
                   hfa_write_4bit_compressed,
                   hfa_write_nd_invalid,
-                  hfa_update_overviews ]
+                  hfa_update_overviews,
+                  hfa_bug_2525 ]
 
 # full set of tests for normal mode.
 
