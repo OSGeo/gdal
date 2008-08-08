@@ -22588,9 +22588,9 @@ else
 fi
 
 
-  if test "$HDF_LIB_NAME" = "missing" ; then
-    { { echo "$as_me:$LINENO: error: HDF4 support requested with arg $with_hdf4, but neither hdf4 nor mfhdf lib found" >&5
-echo "$as_me: error: HDF4 support requested with arg $with_hdf4, but neither hdf4 nor mfhdf lib found" >&2;}
+  if test "$HDF5_LIB_NAME" = "missing" ; then
+    { { echo "$as_me:$LINENO: error: HDF5 support requested with arg $with_hdf5, but no hdf5 lib found" >&5
+echo "$as_me: error: HDF5 support requested with arg $with_hdf5, but no hdf5 lib found" >&2;}
    { (exit 1); exit 1; }; }
   fi
 
