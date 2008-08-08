@@ -1495,19 +1495,19 @@ const char *OGRStyleTool::GetParamStr(const OGRStyleParamId &sStyleParam ,
         return sStyleValue.pszValue;
       case OGRSTypeDouble:
         if (sStyleParam.bGeoref)
-          return CPLString().Printf("%f",ComputeWithUnit(sStyleValue.dfValue,
+          return CPLSPrintf("%f",ComputeWithUnit(sStyleValue.dfValue,
                                                  sStyleValue.eUnit));
         else
-          return CPLString().Printf("%f",sStyleValue.dfValue);
+          return CPLSPrintf("%f",sStyleValue.dfValue);
                             
       case OGRSTypeInteger:
         if (sStyleParam.bGeoref)
-          return CPLString().Printf("%d",ComputeWithUnit(sStyleValue.nValue,
+          return CPLSPrintf("%d",ComputeWithUnit(sStyleValue.nValue,
                                                  sStyleValue.eUnit));
         else
-          return CPLString().Printf("%d",sStyleValue.nValue);
+          return CPLSPrintf("%d",sStyleValue.nValue);
       case OGRSTypeBoolean:
-        return CPLString().Printf("%d",sStyleValue.nValue);
+        return CPLSPrintf("%d",sStyleValue.nValue);
       default:
         bValueIsNull = TRUE;
         return NULL;
