@@ -6141,8 +6141,8 @@ void GDALRegister_GTiff()
                  szOptionalCompressItems,
 "   </Option>"
 "   <Option name='PREDICTOR' type='int' description='Predictor Type'/>"
-"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100, default 75.'/>"
-"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9, default 6.'/>"
+"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>"
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>"
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
 "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
 "       <Value>BAND</Value>"
