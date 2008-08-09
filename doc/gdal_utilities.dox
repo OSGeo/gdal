@@ -96,6 +96,12 @@ option (though escaping all the quotes in WKT is quite challenging). <p>
 format in their ArcGIS product (ArcGIS .prj files), and these may be used
 in a similar manner to WKT files, but the filename should be prefixed with
 <b>ESRI::</b>.  For example <b>"ESRI::NAD 1927 StatePlane Wyoming West FIPS 4904.prj"</b>. <p>
+
+<li> <i>Spatial References from URLs</i>: For example
+http://spatialreference.org/ref/user/north-pacific-albers-conic-equal-area/.
+See <a href="http://hobu.biz/2007/12/13/importing-spatial-references-from-urls-in-gdal-15">this blog entry</a>
+for more reference. <p>
+
 </ul>
 </dd>
 </dl>
@@ -540,7 +546,8 @@ format specific documentation for legal creation options for each format.
 </dl>
 
 Mosaicing into an existing output file is supported if the output file 
-already exists. 
+already exists. The spatial extent of the existing file will not
+be modified to accomodate new data, so you may have to remove it in that case.
 
 <p>
 \section wexample EXAMPLE
@@ -771,7 +778,7 @@ Frank Warmerdam <warmerdam@pobox.com>
 *******************************************************************************
 /*! \page rgb2pct rgb2pct.py
 
-converts an image into a pseudo-colored image
+Convert a 24bit RGB image to 8bit paletted
 
 \section rsynopsis SYNOPSIS
 
@@ -810,7 +817,7 @@ Frank Warmerdam <warmerdam@pobox.com>
 *******************************************************************************
 /*! \page pct2rgb pct2rgb.py
 
-converts an image into a pseudo-colored image
+Convert an 8bit paletted image to 24bit RGB
 
 \section psynopsis SYNOPSIS
 
@@ -838,6 +845,8 @@ created.</dd>
 
 NOTE: pct2rgb.py is a Python script, and will only work if GDAL was built
 with Python support.
+
+The new '-expand rgb|rgba' option of gdal_translate obsoletes that utility.
 
 \if man
 \section pauthor AUTHORS
