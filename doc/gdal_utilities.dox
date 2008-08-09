@@ -261,7 +261,7 @@ converts raster data between different formats
 gdal_translate [--help-general]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-       [-of format] [-b band] [-expand={rgb|rgba}]
+       [-of format] [-b band] [-expand {rgb|rgba}]
        [-outsize xsize[%] ysize[%]]
        [-scale [src_min src_max [dst_min dst_max]]]
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
