@@ -790,6 +790,78 @@ def mask_19():
     return 'success'
 
 ###############################################################################
+# Extensive test of nodata mask for all data types
+
+def mask_20():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    types = [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+              gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
+              gdal.GDT_CFloat32, gdal.GDT_CFloat64 ]
+
+    nodatavalue = [ 1, -1, 1, -1, 1, 0.5, 0.5, 0.5, 0.5 ]
+
+    drv = gdal.GetDriverByName('GTiff')
+    for i in range(len(types)):
+        ds = drv.Create('tmp/mask20.tif', 1, 1, 1, types[i])
+        ds.GetRasterBand(1).Fill(nodatavalue[i])
+        ds.GetRasterBand(1).SetNoDataValue(nodatavalue[i])
+
+        if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_NODATA:
+            gdaltest.post_reason( 'did not get expected mask flags for type %s' % gdal.GetDataTypeName(types[i]) )
+            return 'fail'
+
+        msk = ds.GetRasterBand(1).GetMaskBand()
+        if msk.Checksum() != 0:
+            gdaltest.post_reason( 'did not get expected mask checksum for type %s : %d' % (gdal.GetDataTypeName(types[i]), msk.Checksum()) )
+            return 'fail'
+
+        ds = None
+        drv.Delete('tmp/mask20.tif')
+
+    return 'success'
+
+###############################################################################
+# Extensive test of NODATA_VALUES mask for all data types
+
+def mask_21():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    types = [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+              gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
+              gdal.GDT_CFloat32, gdal.GDT_CFloat64 ]
+
+    nodatavalue = [ 1, -1, 1, -1, 1, 0.5, 0.5, 0.5, 0.5 ]
+
+    drv = gdal.GetDriverByName('GTiff')
+    for i in range(len(types)):
+        ds = drv.Create('tmp/mask21.tif', 1, 1, 3, types[i])
+        md = {}
+        md['NODATA_VALUES'] = '%f %f %f' % (nodatavalue[i], nodatavalue[i], nodatavalue[i])
+        ds.SetMetadata(md)
+        ds.GetRasterBand(1).Fill(nodatavalue[i])
+        ds.GetRasterBand(2).Fill(nodatavalue[i])
+        ds.GetRasterBand(3).Fill(nodatavalue[i])
+
+        if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET + gdal.GMF_NODATA:
+            gdaltest.post_reason( 'did not get expected mask flags for type %s' % gdal.GetDataTypeName(types[i]) )
+            return 'fail'
+
+        msk = ds.GetRasterBand(1).GetMaskBand()
+        if msk.Checksum() != 0:
+            gdaltest.post_reason( 'did not get expected mask checksum for type %s : %d' % (gdal.GetDataTypeName(types[i]), msk.Checksum()) )
+            return 'fail'
+
+        ds = None
+        drv.Delete('tmp/mask21.tif')
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 
@@ -812,7 +884,9 @@ gdaltest_list = [
     mask_16,
     mask_17,
     mask_18,
-    mask_19]
+    mask_19,
+    mask_20,
+    mask_21]
 
 if __name__ == '__main__':
 
