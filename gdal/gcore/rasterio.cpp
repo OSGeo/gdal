@@ -99,6 +99,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     poBlock->MarkDirty();
                 
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                if( pabySrcBlock == NULL )
+                {
+                    poBlock->DropLock();
+                    return CE_Failure;
+                }
             }
 
             nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
@@ -289,104 +294,166 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Compute stepping increment.                                     */
 /* -------------------------------------------------------------------- */
-    double      dfSrcX, dfSrcY, dfSrcXInc, dfSrcYInc;
-//    int         iSrcX;
-    
+    double dfSrcXInc, dfSrcYInc;
     dfSrcXInc = nXSize / (double) nBufXSize;
     dfSrcYInc = nYSize / (double) nBufYSize;
 
-/* -------------------------------------------------------------------- */
-/*      Loop over buffer computing source locations.                    */
-/* -------------------------------------------------------------------- */
+
 //    printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 3\n", 
 //            nXOff, nYOff, nXSize, nYSize, 
 //            (int) eRWFlag );
-
-    for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
+    if (eRWFlag == GF_Write)
     {
-        size_t   iBufOffset, iSrcOffset;
-        
-        dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
-        iSrcY = (int) dfSrcY;
+/* -------------------------------------------------------------------- */
+/*    Write case                                                        */
+/*    Loop over raster window computing source locations in the buffer. */
+/* -------------------------------------------------------------------- */
+        int iDstX, iDstY;
+        GByte* pabyDstBlock = NULL;
 
-        iBufOffset = (size_t)iBufYOff * nLineSpace;
-        
-        for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++ )
+        for( iDstY = nYOff; iDstY < nYOff + nYSize; iDstY ++)
         {
-            dfSrcX = (iBufXOff+0.5) * dfSrcXInc + nXOff;
-            
-            iSrcX = (int) dfSrcX;
+            size_t   iBufOffset, iDstOffset;
+            iBufYOff = (int)((iDstY - nYOff) / dfSrcYInc);
 
-/* -------------------------------------------------------------------- */
-/*      Ensure we have the appropriate block loaded.                    */
-/* -------------------------------------------------------------------- */
-            if( iSrcX < nLBlockX * nBlockXSize
-                || iSrcX >= (nLBlockX+1) * nBlockXSize
-                || iSrcY < nLBlockY * nBlockYSize
-                || iSrcY >= (nLBlockY+1) * nBlockYSize )
+            for( iDstX = nXOff; iDstX < nXOff + nXSize; iDstX ++)
             {
-                nLBlockX = iSrcX / nBlockXSize;
-                nLBlockY = iSrcY / nBlockYSize;
+                iBufXOff = (int)((iDstX - nXOff) / dfSrcXInc);
+                iBufOffset = (size_t)iBufYOff * nLineSpace + iBufXOff * nPixelSpace;
 
-                int bJustInitialize = 
-                    eRWFlag == GF_Write
-                    && nYOff <= nLBlockY * nBlockYSize
-                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
-                    && nXOff <= nLBlockX * nBlockXSize
-                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
-
-                if( poBlock != NULL )
-                    poBlock->DropLock();
-
-                poBlock = GetLockedBlockRef( nLBlockX, nLBlockY, 
-                                             bJustInitialize );
-                if( poBlock == NULL )
+    /* -------------------------------------------------------------------- */
+    /*      Ensure we have the appropriate block loaded.                    */
+    /* -------------------------------------------------------------------- */
+                if( iDstX < nLBlockX * nBlockXSize
+                    || iDstX >= (nLBlockX+1) * nBlockXSize
+                    || iDstY < nLBlockY * nBlockYSize
+                    || iDstY >= (nLBlockY+1) * nBlockYSize )
                 {
-                    return( CE_Failure );
+                    nLBlockX = iDstX / nBlockXSize;
+                    nLBlockY = iDstY / nBlockYSize;
+
+                    int bJustInitialize = 
+                           nYOff <= nLBlockY * nBlockYSize
+                        && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                        && nXOff <= nLBlockX * nBlockXSize
+                        && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+
+                    if( poBlock != NULL )
+                        poBlock->DropLock();
+
+                    poBlock = GetLockedBlockRef( nLBlockX, nLBlockY, 
+                                                bJustInitialize );
+                    if( poBlock == NULL )
+                    {
+                        return( CE_Failure );
+                    }
+
+                    poBlock->MarkDirty();
+
+                    pabyDstBlock = (GByte *) poBlock->GetDataRef();
+                    if( pabyDstBlock == NULL )
+                    {
+                        poBlock->DropLock();
+                        return CE_Failure;
+                    }
                 }
 
-                if( eRWFlag == GF_Write )
-                    poBlock->MarkDirty();
-                
-                pabySrcBlock = (GByte *) poBlock->GetDataRef();
-                if( pabySrcBlock == NULL )
+    /* -------------------------------------------------------------------- */
+    /*      Copy over this pixel of data.                                   */
+    /* -------------------------------------------------------------------- */
+                iDstOffset = ((size_t)iDstX - (size_t)nLBlockX*nBlockXSize
+                    + ((size_t)iDstY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+
+                if( eDataType == eBufType )
                 {
-                    poBlock->DropLock();
-                    return CE_Failure;
+                    memcpy( pabyDstBlock + iDstOffset, 
+                            ((GByte *) pData) + iBufOffset, nBandDataSize );
+                }
+                else
+                {
+                    /* type to type conversion ... ouch, this is expensive way
+                    of handling single words */
+
+                    GDALCopyWords( ((GByte *) pData) + iBufOffset, eBufType, 0,
+                                pabyDstBlock + iDstOffset, eDataType, 0,
+                                1 );
                 }
             }
-
+        }
+    }
+    else
+    {
+        double      dfSrcX, dfSrcY;
 /* -------------------------------------------------------------------- */
-/*      Copy over this pixel of data.                                   */
+/*      Read case                                                       */
+/*      Loop over buffer computing source locations.                    */
 /* -------------------------------------------------------------------- */
-            iSrcOffset = ((size_t)iSrcX - (size_t)nLBlockX*nBlockXSize
-                + ((size_t)iSrcY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+        for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
+        {
+            size_t   iBufOffset, iSrcOffset;
 
-            if( eDataType == eBufType )
+            dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
+            iSrcY = (int) dfSrcY;
+
+            iBufOffset = (size_t)iBufYOff * nLineSpace;
+
+            for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++ )
             {
-                if( eRWFlag == GF_Read )
+                dfSrcX = (iBufXOff+0.5) * dfSrcXInc + nXOff;
+
+                iSrcX = (int) dfSrcX;
+
+    /* -------------------------------------------------------------------- */
+    /*      Ensure we have the appropriate block loaded.                    */
+    /* -------------------------------------------------------------------- */
+                if( iSrcX < nLBlockX * nBlockXSize
+                    || iSrcX >= (nLBlockX+1) * nBlockXSize
+                    || iSrcY < nLBlockY * nBlockYSize
+                    || iSrcY >= (nLBlockY+1) * nBlockYSize )
+                {
+                    nLBlockX = iSrcX / nBlockXSize;
+                    nLBlockY = iSrcY / nBlockYSize;
+
+                    if( poBlock != NULL )
+                        poBlock->DropLock();
+
+                    poBlock = GetLockedBlockRef( nLBlockX, nLBlockY, 
+                                                 FALSE );
+                    if( poBlock == NULL )
+                    {
+                        return( CE_Failure );
+                    }
+
+                    pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                    if( pabySrcBlock == NULL )
+                    {
+                        poBlock->DropLock();
+                        return CE_Failure;
+                    }
+                }
+
+    /* -------------------------------------------------------------------- */
+    /*      Copy over this pixel of data.                                   */
+    /* -------------------------------------------------------------------- */
+                iSrcOffset = ((size_t)iSrcX - (size_t)nLBlockX*nBlockXSize
+                    + ((size_t)iSrcY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+
+                if( eDataType == eBufType )
+                {
                     memcpy( ((GByte *) pData) + iBufOffset,
                             pabySrcBlock + iSrcOffset, nBandDataSize );
+                }
                 else
-                    memcpy( pabySrcBlock + iSrcOffset, 
-                            ((GByte *) pData) + iBufOffset, nBandDataSize );
-            }
-            else
-            {
-                /* type to type conversion ... ouch, this is expensive way
-                   of handling single words */
-                
-                if( eRWFlag == GF_Read )
+                {
+                    /* type to type conversion ... ouch, this is expensive way
+                    of handling single words */
                     GDALCopyWords( pabySrcBlock + iSrcOffset, eDataType, 0,
-                                   ((GByte *) pData) + iBufOffset, eBufType, 0,
-                                   1 );
-                else
-                    GDALCopyWords( ((GByte *) pData) + iBufOffset, eBufType, 0,
-                                   pabySrcBlock + iSrcOffset, eDataType, 0,
-                                   1 );
-            }
+                                ((GByte *) pData) + iBufOffset, eBufType, 0,
+                                1 );
+                }
 
-            iBufOffset += nPixelSpace;
+                iBufOffset += nPixelSpace;
+            }
         }
     }
 
