@@ -596,8 +596,6 @@ static int ProxyMain( int argc, char ** argv )
         exit( 1 );
     }
 
-    GDALValidateCreationOptions(hDriver, papszCreateOptions);
-
 /* -------------------------------------------------------------------- */
 /*      The short form is to CreateCopy().  We use this if the input    */
 /*      matches the whole dataset.  Eventually we should rewrite        */

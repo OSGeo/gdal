@@ -141,6 +141,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     QuietDelete( pszFilename );
 
+    GDALValidateCreationOptions( this, papszParmList);
 /* -------------------------------------------------------------------- */
 /*      Proceed with creation.                                          */
 /* -------------------------------------------------------------------- */
@@ -545,6 +546,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     QuietDelete( pszFilename );
 
+    GDALValidateCreationOptions( this, papszOptions);
 /* -------------------------------------------------------------------- */
 /*      If the format provides a CreateCopy() method use that,          */
 /*      otherwise fallback to the internal implementation using the     */
