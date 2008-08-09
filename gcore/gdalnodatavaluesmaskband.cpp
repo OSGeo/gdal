@@ -94,10 +94,13 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
         break;
 
       case GDT_UInt16:
-      case GDT_Int16:
-      case GDT_Int32:
       case GDT_UInt32:
         eWrkDT = GDT_UInt32;
+        break;
+
+      case GDT_Int16:
+      case GDT_Int32:
+        eWrkDT = GDT_Int32;
         break;
 
       case GDT_Float32:
@@ -205,6 +208,32 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
               for(iBand=0;iBand<nBands;iBand++)
               {
                   if( ((GUInt32 *)pabySrc)[i + iBand * nBlockOffsetPixels] == panNoData[iBand] )
+                      nCountNoData ++;
+              }
+              if (nCountNoData == nBands)
+                  ((GByte *) pImage)[i] = 0;
+              else
+                  ((GByte *) pImage)[i] = 255;
+          }
+
+          CPLFree(panNoData);
+      }
+      break;
+
+      case GDT_Int32:
+      {
+          GInt32* panNoData = (GInt32*) CPLMalloc(nBands * sizeof(GInt32));
+          for(iBand=0;iBand<nBands;iBand++)
+          {
+              panNoData[iBand] = (GInt32)padfNodataValues[iBand];
+          }
+
+          for( i = nBlockXSize * nBlockYSize - 1; i >= 0; i-- )
+          {
+              int nCountNoData = 0;
+              for(iBand=0;iBand<nBands;iBand++)
+              {
+                  if( ((GInt32 *)pabySrc)[i + iBand * nBlockOffsetPixels] == panNoData[iBand] )
                       nCountNoData ++;
               }
               if (nCountNoData == nBands)
