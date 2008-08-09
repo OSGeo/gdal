@@ -1134,7 +1134,16 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
         {
             if (EQUAL(psChildNode->pszValue, "OPTION"))
             {
-                if (EQUAL(CPLGetXMLValue(psChildNode, "name", ""), pszKey) ||
+                const char* pszOptionName = CPLGetXMLValue(psChildNode, "name", "");
+                /* For option names terminated by wildcard (NITF BLOCKA option names for example) */
+                if (strlen(pszOptionName) > 0 &&
+                    pszOptionName[strlen(pszOptionName) - 1] == '*' &&
+                    EQUALN(pszOptionName, pszKey, strlen(pszOptionName) - 1))
+                {
+                    break;
+                }
+
+                if (EQUAL(pszOptionName, pszKey) ||
                     EQUAL(CPLGetXMLValue(psChildNode, "alias", ""), pszKey))
                 {
                     break;
@@ -1241,7 +1250,17 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
             }
             else if (EQUAL(pszType, "STRING"))
             {
-                /* Nothing to check */
+                const char* pszMaxSize = CPLGetXMLValue(psChildNode, "maxsize", NULL);
+                if (pszMaxSize != NULL)
+                {
+                    if ((int)strlen(pszValue) > atoi(pszMaxSize))
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                             "'%s' is of size %d, whereas maximum size for %s creation option is %d.",
+                             pszValue, strlen(pszValue), pszKey, atoi(pszMaxSize));
+                        bRet = FALSE;
+                    }
+                }
             }
             else
             {
