@@ -785,8 +785,6 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         exit( 1 );
     }
 
-    GDALValidateCreationOptions(hDriver, *ppapszCreateOptions);
-
 /* -------------------------------------------------------------------- */
 /*      For virtual output files, we have to set a special subclass     */
 /*      of dataset to create.                                           */
