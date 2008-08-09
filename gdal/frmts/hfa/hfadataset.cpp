@@ -3411,13 +3411,15 @@ void GDALRegister_HFA()
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
-"   <Option name='BLOCKSIZE' type='integer' description='tile width/height (32-2048)'/>"
+"   <Option name='BLOCKSIZE' type='integer' description='tile width/height (32-2048)' default='64'/>"
 "   <Option name='USE_SPILL' type='boolean' description='Force use of spill file'/>"
-"   <Option name='COMPRESSED' alias='COMPRESS' type='boolean' description='compress blocks, default NO'/>"
+"   <Option name='COMPRESSED' alias='COMPRESS' type='boolean' description='compress blocks'/>"
 "   <Option name='PIXELTYPE' type='string' description='By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
 "   <Option name='AUX' type='boolean' description='Create an .aux file'/>"
-"   <Option name='IGNOREUTM' type='boolean' description='Ignore UTM when selecting coordinate system - will use Transverse Mercator, default NO'/>"
+"   <Option name='IGNOREUTM' type='boolean' description='Ignore UTM when selecting coordinate system - will use Transverse Mercator. Only used for Create() method'/>"
 "   <Option name='NBITS' type='integer' description='Create file with special sub-byte data type (1/2/4)'/>"
+"   <Option name='STATISTICS' type='boolean' description='Generate statistics and a histogram'/>"
+"   <Option name='DEPENDENT_FILE' type='string' description='Name of dependent file (must not have absolute path)'/>"
 "</CreationOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
