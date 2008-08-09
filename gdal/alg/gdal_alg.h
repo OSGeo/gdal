@@ -69,6 +69,16 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
                       GDALProgressFunc pfnProgress, 
                       void * pProgressArg );
 
+CPLErr CPL_DLL CPL_STDCALL
+GDALFillNodata( GDALRasterBandH hTargetBand, 
+                GDALRasterBandH hMaskBand,
+                double dfMaxSearchDist, 
+                int bConicSearch, 
+                int nSmoothingIterations,
+                char **papszOptions,
+                GDALProgressFunc pfnProgress, 
+                void * pProgressArg );
+
 /*
  * Warp Related.
  */
