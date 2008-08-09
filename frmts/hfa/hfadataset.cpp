@@ -3413,7 +3413,7 @@ void GDALRegister_HFA()
 "<CreationOptionList>"
 "   <Option name='BLOCKSIZE' type='integer' description='tile width/height (32-2048)'/>"
 "   <Option name='USE_SPILL' type='boolean' description='Force use of spill file'/>"
-"   <Option name='COMPRESSED' type='boolean' description='compress blocks, default NO'/>"
+"   <Option name='COMPRESSED' alias='COMPRESS' type='boolean' description='compress blocks, default NO'/>"
 "   <Option name='PIXELTYPE' type='string' description='By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
 "   <Option name='AUX' type='boolean' description='Create an .aux file'/>"
 "   <Option name='IGNOREUTM' type='boolean' description='Ignore UTM when selecting coordinate system - will use Transverse Mercator, default NO'/>"

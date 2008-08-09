@@ -1132,7 +1132,8 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
         {
             if (EQUAL(psChildNode->pszValue, "OPTION"))
             {
-                if (EQUAL(CPLGetXMLValue(psChildNode, "name", ""), pszKey))
+                if (EQUAL(CPLGetXMLValue(psChildNode, "name", ""), pszKey) ||
+                    EQUAL(CPLGetXMLValue(psChildNode, "alias", ""), pszKey))
                 {
                     break;
                 }
