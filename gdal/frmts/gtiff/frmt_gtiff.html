@@ -10,6 +10,10 @@
 Most forms of TIFF and GeoTIFF files are supported by GDAL for reading, and
 somewhat less varieties can be written.<p>
 
+When built with internal libtiff or with libtiff >= 4.0, GDAL also supports
+reading and writing BigTIFF files (evolution of the TIFF format to support files
+larger than 4 GB).</p>
+
 Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
 CInt16, CInt32, CFloat32 and CFloat64 are supported for
 reading and writing.  
