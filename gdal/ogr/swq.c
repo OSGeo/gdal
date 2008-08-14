@@ -174,6 +174,8 @@ static char *swq_token( const char *expression, char **next, int *is_literal )
                 expression++;
             else if( *expression == '\\' && expression[1] == '\'' )
                 expression++;
+            else if( *expression == '\'' && expression[1] == '\'' )
+                expression++;
             else if( *expression == '"' )
             {
                 expression++;
