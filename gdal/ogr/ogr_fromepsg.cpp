@@ -1387,6 +1387,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 
       case 9804:
       case 9805: /* NOTE: treats 1SP and 2SP cases the same */
+      case 9841: /* Mercator 1SP (Spherical) */
         poSRS->SetMercator( OGR_FP( NatOriginLat ), OGR_FP( NatOriginLong ),
                             OGR_FP( NatOriginScaleFactor ), 
                             OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
