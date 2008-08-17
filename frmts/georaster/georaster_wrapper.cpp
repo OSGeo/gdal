@@ -53,11 +53,11 @@ GeoRasterWrapper::GeoRasterWrapper()
     nTotalBandBlocks    = 0;
     nCellSize           = 0;
     nCellSizeGDAL       = 0;
-    dfXCoefficient[0]   = 0;
+    dfXCoefficient[0]   = 1;
     dfXCoefficient[1]   = 0;
-    dfXCoefficient[2]   = 1;
+    dfXCoefficient[2]   = 0;
     dfYCoefficient[0]   = 0;
-    dfYCoefficient[1]   = -1;
+    dfYCoefficient[1]   = 1;
     dfYCoefficient[2]   = 0;
     pszCellDepth        = NULL;
     pahLocator          = NULL;
@@ -74,6 +74,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     szInterleaving[3]   = '\0';
     bIOInitialized      = false;
     bBlobInitialized    = false;
+    bFlushMetadata      = true;
     nSRID               = 0;
 }
 
@@ -139,7 +140,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID,
     //  ---------------------------------------------------------------
 
     GeoRasterDriver* poDriver = NULL;
-    
+
     poDriver = (GeoRasterDriver*) GDALGetDriverByName( "GeoRaster" );
 
     if( ! poDriver )
@@ -316,11 +317,15 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID,
 }
 
 //  ---------------------------------------------------------------------------
-//                                                                CreateTable()
+//                                                                 Initialize()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::CreateTable( const char* pszDescription )
+bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
 {
+    //  -------------------------------------------------------------------
+    //  New table description
+    //  -------------------------------------------------------------------
+
     char szDescription[OWTEXT];
 
     if ( pszDescription  )
@@ -334,50 +339,9 @@ bool GeoRasterWrapper::CreateTable( const char* pszDescription )
     }
 
     //  -------------------------------------------------------------------
-    //  If GeoRaster table doesn't exist, create it.
+    //  Insert parameters
     //  -------------------------------------------------------------------
 
-    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
-        "DECLARE\n"
-        "  C_TABLE_NAME VARCHAR2(50) := UPPER(:1);\n"
-        "  V_TABLE_NAME VARCHAR2(50);\n"
-        "  CURSOR C1 IS SELECT TABLE_NAME\n"
-        "     FROM ALL_TABLES WHERE TABLE_NAME = C_TABLE_NAME;\n"
-        "BEGIN\n"
-        "  OPEN C1;\n"
-        "  FETCH C1 INTO V_TABLE_NAME;\n"
-        "  IF C1%%NOTFOUND THEN\n"
-        "    EXECUTE IMMEDIATE\n"
-        "      'CREATE TABLE %s %s';\n"
-        "      SDO_GEOR_UTL.createDMLTrigger(:1, :2);\n"
-        "  END IF;\n"
-        "  CLOSE C1;\n"
-        "END;", pszTable, szDescription ) );
-
-    CPLDebug("GEOR","%s-%s", pszTable, pszColumn );
-
-    poStmt->Bind( pszTable );
-    poStmt->Bind( pszColumn );
-
-    if( ! poStmt->Execute() )
-    {
-        ObjFree_nt( poStmt );
-        CPLError( CE_Failure, 
-            CPLE_AppDefined, "Failure to create table (%s)", pszTable );
-        return false;
-    }
-
-    delete poStmt;
-
-    return true;
-}
-
-//  ---------------------------------------------------------------------------
-//                                                                CreateBlank()
-//  ---------------------------------------------------------------------------
-
-bool GeoRasterWrapper::CreateBlank( const char* pszInsert )
-{
     char szInsert[OWTEXT];
     char szRDT[OWNAME];
     char szRID[OWCODE];
@@ -394,7 +358,7 @@ bool GeoRasterWrapper::CreateBlank( const char* pszInsert )
 
     if( pszDataTable )
     {
-        strcpy( szRDT, pszDataTable );
+        strcpy( szRDT, CPLSPrintf( "'%s'", pszDataTable ) );
     }
     else
     {
@@ -410,241 +374,99 @@ bool GeoRasterWrapper::CreateBlank( const char* pszInsert )
         strcpy( szRID, "NULL" );
     }
 
-    if( nRasterBands == 1 )
+    if( poConnection->GetVersion() < 11 )
     {
-        strcpy( szInsert, OWReplaceToken( szValues, '*', CPLSPrintf(
-            "SDO_GEOR.createBlank(20001, SDO_NUMBER_ARRAY(0, 0), "
-            "SDO_NUMBER_ARRAY(%d, %d), 0, %s, %s)",
-            nRasterRows, nRasterColumns, szRDT, szRID ) ) );
-    }
-    else
-    {
-        strcpy( szInsert, OWReplaceToken( szValues, '*', CPLSPrintf(
-            "SDO_GEOR.createBlank(21001, SDO_NUMBER_ARRAY(0, 0, 0), "
-            "SDO_NUMBER_ARRAY(%d, %d, %d), 0, %s, %s)", 
-            nRasterRows, nRasterColumns, nRasterBands, szRDT, szRID ) ) );
-    }
-
-    //  -----------------------------------------------------------
-    //  Insert row with a GeoRaster
-    //  -----------------------------------------------------------
-
-    char szBindRDT[OWNAME];
-    int  nBindRID = 0;
-
-    szBindRDT[0]  = '\0';
-
-    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf( 
-        "DECLARE\n"
-        "  GR SDO_GEORASTER;\n"
-        "BEGIN\n"
-        "  INSERT INTO %s %s\n"
-        "    RETURNING %s INTO GR;\n"
-        "  SELECT GR.RASTERDATATABLE INTO :1 FROM DUAL;\n"
-        "  SELECT GR.RASTERID        INTO :2 FROM DUAL;\n"
-        "END;", 
-        pszTable, szInsert, pszColumn ) );
-
-    poStmt->Bind( szBindRDT );
-    poStmt->Bind( &nBindRID );
-
-    if( ! poStmt->Execute() )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failure to insert a row" );
-        ObjFree_nt( poStmt );
-        return false;
-    }
-
-    delete poStmt;
-
-    //  -----------------------------------------------------------
-    //  Re-assign attributes
-    //  -----------------------------------------------------------
-
-    CPLFree_nt( pszDataTable );
-    CPLFree_nt( pszWhere );
-
-    pszDataTable    = CPLStrdup( szBindRDT );
-    nRasterId       = nBindRID;
-    pszWhere        = CPLStrdup( CPLSPrintf( 
-        "T.%s.RasterDataTable = '%s' AND T.%s.RasterId = %d",
-        pszColumn, pszDataTable, pszColumn, nRasterId ) );
-
-    return true;
-}
-
-//  ---------------------------------------------------------------------------
-//                                                                  SetFormat()
-//  ---------------------------------------------------------------------------
-
-bool GeoRasterWrapper::ChangeFormat( const char* pszBlockSize,
-                                     const char* pszInterleaving,
-                                     const char* pszCellDepth,
-                                     const char* pszPyramid,
-                                     const char* pszCompression )
-{
-    char szParam[OWTEXT];
-
-    if( pszCellDepth )
-    {
-        strcpy( szParam, CPLSPrintf( "cellDepth=%s", pszCellDepth ) );
-    }
-
-// Interleaving
-
-    if( pszInterleaving )
-    {
-        if( EQUAL( pszInterleaving, "BAND" ) )
+        if( nRasterBands == 1 )
         {
-            strcpy( szParam, CPLSPrintf( "%s interleaving=BSQ", szParam ) );
-        }
-        if( EQUAL( pszInterleaving, "LINE" ) )
-        {
-            strcpy( szParam, CPLSPrintf( "%s interleaving=BIL", szParam ) );
-        }
-        if( EQUAL( pszInterleaving, "PIXEL" ) )
-        {
-            strcpy( szParam, CPLSPrintf( "%s interleaving=BIP", szParam ) );
-        }
-    }
-
-// Pyramid
-
-    if( pszPyramid )
-    {
-        strcpy( szParam, 
-            CPLSPrintf( "%s pyramid=%s", szParam, pszPyramid ) );
-    }
-    else
-    {
-        strcpy( szParam, CPLSPrintf( "%s pyramid=FALSE", szParam ) );
-    }
-
-// Compression
-
-    if( pszCompression )
-    {
-        strcpy( szParam, 
-            CPLSPrintf( "%s compression=%s", szParam, pszCompression ) );
-    }
-    else
-    {
-        strcpy( szParam, CPLSPrintf( "%s compression=NONE", szParam ) );
-    }
-
-// BlockSize
-
-    if( pszBlockSize )
-    {
-        strcpy( szParam, 
-            CPLSPrintf( "blockSize=%s %s", pszBlockSize, szParam ) );
-
-    }
-    else
-    {
-        if ( nRasterBands == 1 )
-        {
-            strcpy( szParam, CPLSPrintf( 
-                "blockSize=(256, 256) %s", szParam ) );
-        }
-        else if ( nRasterBands == 3 )
-        {
-            strcpy( szParam, CPLSPrintf( 
-                "blockSize=(256, 256, %d) %s", nRasterBands, szParam ) );
+            strcpy( szInsert, OWReplaceToken( szValues, '*', CPLSPrintf(
+                "SDO_GEOR.createBlank(20001, \n"
+                "  SDO_NUMBER_ARRAY(0, 0), \n"
+                "  SDO_NUMBER_ARRAY(%d, %d), 0, %s, %s)",
+                nRasterRows, nRasterColumns, szRDT, szRID ) ) );
         }
         else
         {
-            strcpy( szParam, CPLSPrintf( 
-                "blockSize=(256, 256, 1) %s", szParam ) );
+            strcpy( szInsert, OWReplaceToken( szValues, '*', CPLSPrintf(
+                "SDO_GEOR.createBlank(21001, \n"
+                "  SDO_NUMBER_ARRAY(0, 0, 0), \n"
+                "  SDO_NUMBER_ARRAY(%d, %d, %d), 0, %s, %s)", 
+                nRasterRows, nRasterColumns, nRasterBands, szRDT, szRID ) ) );
+        }
+    }
+    else
+    {
+        strcpy( szInsert, OWReplaceToken( szValues, '*', CPLSPrintf(
+            "SDO_GEOR.init(%s, %s)", szRDT, szRID ) ) );
+    }
+
+    //  -----------------------------------------------------------
+    //  Storage parameters
+    //  -----------------------------------------------------------
+
+    nColumnBlockSize = nColumnBlockSize == 0 ? 255 : nColumnBlockSize;
+    nRowBlockSize    = nRowBlockSize    == 0 ? 255 : nRowBlockSize;
+    nBandBlockSize   = nBandBlockSize   == 0 ? 
+        ( nRasterBands == 3 ? 1 : nRasterBands ) : nBandBlockSize;
+
+    char szFormat[OWTEXT];
+
+    if( poConnection->GetVersion() < 11 )
+    {
+        if( nRasterBands == 1 )
+        {
+            strcpy( szFormat, CPLSPrintf( 
+                "blockSize=(%d, %d) "
+                "cellDepth=%s "
+                "interleaving=%s "
+                "pyramid=FALSE",
+                nColumnBlockSize, nRowBlockSize,
+                pszCellDepth, 
+                szInterleaving ) );
+        }
+        else
+        {
+            strcpy( szFormat, CPLSPrintf(
+                "blockSize=(%d, %d, %d) "
+                "cellDepth=%s "
+                "interleaving=%s "
+                "pyramid=FALSE",
+                nColumnBlockSize, nRowBlockSize, nBandBlockSize,
+                pszCellDepth, 
+                szInterleaving ) );
+        }
+    }
+    else
+    {
+        if( nRasterBands == 1 )
+        {
+            strcpy( szFormat, CPLSPrintf(
+                "20001, '"
+                "dimSize=(%d,%d) "
+                "blockSize=(%d,%d) "
+                "cellDepth=%s "
+                "interleaving=%s "
+                "'",
+                nRasterRows, nRasterColumns, 
+                nColumnBlockSize, nRowBlockSize,
+                pszCellDepth, 
+                szInterleaving ) );
+        }
+        else
+        {
+            strcpy( szFormat, CPLSPrintf(
+                "21001, '"
+                "dimSize=(%d,%d,%d) "
+                "blockSize=(%d,%d,%d) "
+                "cellDepth=%s "
+                "interleaving=%s "
+                "'",
+                nRasterRows, nRasterColumns, nRasterBands, 
+                nColumnBlockSize, nRowBlockSize, nBandBlockSize,
+                pszCellDepth, 
+                szInterleaving ) );
         }
     }
 
-    //  -----------------------------------------------------------
-    //  Change GeoRaster Storage Parameters
-    //  -----------------------------------------------------------
-
-    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf( 
-        "DECLARE\n"
-        "  GR1 sdo_georaster;\n"
-        "  GR2 sdo_georaster;\n"
-        "BEGIN\n"
-        "  SELECT %s INTO GR2 FROM %s T WHERE %s FOR UPDATE;\n"
-        "  SELECT %s INTO GR1 FROM %s T WHERE %s;\n"
-        "  SDO_GEOR.changeFormatCopy(GR1, '%s', GR2);\n"
-        "  UPDATE %s T SET %s = GR2 WHERE %s;\n"
-        "  COMMIT;\n"
-        "END;",
-        pszColumn, pszTable, pszWhere,
-        pszColumn, pszTable, pszWhere, szParam,
-        pszTable, pszColumn, pszWhere ) );
-
-    if( ! poStmt->Execute() )
-    {
-        ObjFree_nt( poStmt );
-        CPLError( CE_Failure, 
-            CPLE_AppDefined, "Failure to set storage parameters" );
-        return false;
-    }
-
-    delete poStmt;
-
-    return true;
-}
-
-//  ---------------------------------------------------------------------------
-//                                                      CreateRasterDataTable()
-//  ---------------------------------------------------------------------------
-
-bool GeoRasterWrapper::CreateDataTable()
-{
-//  If Raster Data Table doesn't exist, create it.
-//  If it exist, delete the rows with the same RasterID.
-
-    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
-        "DECLARE\n"
-        "  C_TABLE_NAME VARCHAR2(50) := UPPER('%s');\n"
-        "  V_TABLE_NAME VARCHAR2(50);\n"
-        "  CURSOR C1 IS SELECT TABLE_NAME\n"
-        "    FROM ALL_TABLES WHERE TABLE_NAME = C_TABLE_NAME;\n"
-        "BEGIN\n"
-        "  OPEN C1;\n"
-        "  FETCH C1 INTO V_TABLE_NAME;\n"
-        "  IF C1%%NOTFOUND THEN\n"
-        "    EXECUTE IMMEDIATE\n"
-        "      'CREATE TABLE %s OF MDSYS.SDO_RASTER\n"
-        "        (PRIMARY KEY (RASTERID,\n"
-        "                  PYRAMIDLEVEL,\n"
-        "                  BANDBLOCKNUMBER,\n"
-        "                  ROWBLOCKNUMBER,\n"
-        "                  COLUMNBLOCKNUMBER))\n"
-        "         LOB(RASTERBLOCK) STORE AS (NOCACHE NOLOGGING)';\n"
-        "  ELSE\n"
-        "    EXECUTE IMMEDIATE\n"
-        "      'DELETE FROM C1 WHERE RASTERID = %d';\n"
-        "  END IF;\n"
-        "  CLOSE C1;\n"
-        "END;", 
-        pszDataTable, pszDataTable, nRasterId ) );
-
-    if( ! poStmt->Execute() )
-    {
-        delete poStmt;
-        CPLError( CE_Failure, 
-            CPLE_AppDefined, "Failure to create raster data table " );
-        return false;
-    }
-
-    delete poStmt;
-
-    return true;
-}
-
-//  ---------------------------------------------------------------------------
-//                                                             CreateDataRows()
-//  ---------------------------------------------------------------------------
-
-bool GeoRasterWrapper::CreateDataRows()
-{
     nTotalColumnBlocks  = (int) ( nRasterColumns / nColumnBlockSize );
     nTotalRowBlocks     = (int) ( nRasterRows    / nRowBlockSize );
     nTotalBandBlocks    = (int) ( nRasterBands   / nBandBlockSize );
@@ -653,55 +475,197 @@ bool GeoRasterWrapper::CreateDataRows()
     nTotalRowBlocks    += ( nRasterRows    % nRowBlockSize )    == 0 ? 0 : 1;
     nTotalBandBlocks   += ( nRasterBands   % nBandBlockSize )   == 0 ? 0 : 1;
 
-    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf( 
+    //  -------------------------------------------------------------------
+    //  Create Georaster Table if needed
+    //  -------------------------------------------------------------------
+
+    OWStatement* poStmt;
+
+    char* pszUser = CPLStrdup( poConnection->GetUser() );
+
+    poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
-        "  STM VARCHAR2(1024);\n"
-        "  X   NUMBER;\n"
-        "  Y   NUMBER;\n"
-        "  W   NUMBER := %d;\n"
-        "  H   NUMBER := %d;\n"
-        "  BB  NUMBER := %d;\n"
-        "  RB  NUMBER := %d;\n"
-        "  CB  NUMBER := %d;\n"
+        "  TAB VARCHAR2(68)  := UPPER(:1);\n"
+        "  COL VARCHAR2(68)  := UPPER(:2);\n"
+        "  USR VARCHAR2(68)  := UPPER(:3);\n"
+        "  CNT NUMBER        := 0;\n"
         "BEGIN\n"
-        "  STM := 'INSERT INTO %s VALUES (:1,0,:2-1,:3-1,:4-1,\n"
+        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
+        "    WHERE TABLE_NAME = :1 AND OWNER = :2 ' INTO CNT USING TAB, USR;\n"
+        "  IF CNT = 0 THEN\n"
+        "    EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
+        "    SDO_GEOR_UTL.createDMLTrigger( TAB,  COL );\n"
+        "  END IF;\n"
+        "END;", szDescription ) );
+
+    poStmt->Bind( pszTable );
+    poStmt->Bind( pszColumn );
+    poStmt->Bind( pszUser );
+
+    if( ! poStmt->Execute() )
+    {
+        ObjFree_nt( poStmt );
+        CPLFree_nt( pszUser );
+        CPLError( CE_Failure, CPLE_AppDefined, "Create Table Error!" );
+        return false;
+    }
+
+    CPLFree_nt( pszUser );
+
+    delete poStmt;
+
+    //  -----------------------------------------------------------
+    //  Create RTD if needed and insert GeoRaster
+    //  -----------------------------------------------------------
+
+    char szBindRDT[OWNAME] = "";
+    int  nBindRID = 0;
+
+    if( ! ( poConnection->GetVersion() < 11 ) )
+    {
+        poStmt = poConnection->CreateStatement( CPLSPrintf(
+            "DECLARE\n"
+            "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
+            "  COL  VARCHAR2(68)    := UPPER(:2);\n"
+            "  USR  VARCHAR2(68)    := UPPER(:3);\n"
+            "  CNT  NUMBER          := 0;\n"
+            "  GR1  SDO_GEORASTER   := NULL;\n"
+            "BEGIN\n"
+            "  INSERT INTO %s %s\n"
+            "    RETURNING %s INTO GR1;\n"
+            "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
+            "  SELECT GR1.RASTERID        INTO :rid FROM DUAL;\n"
+            "\n"
+            "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES WHERE \n"
+            "    TABLE_NAME = :1 AND OWNER = :2' INTO CNT USING :rdt, USR;\n"
+            "  IF CNT = 0 THEN\n"
+            "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
+            "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
+            "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
+            "      LOB(RASTERBLOCK) STORE AS (NOCACHE NOLOGGING)';\n"
+            "  END IF;\n"
+            "\n"
+            "  SDO_GEOR.createTemplate(GR1, %s, null, 'TRUE');\n"
+            "  UPDATE %s T SET %s = GR1     WHERE"
+            "    T.%s.RasterDataTable = :rdt AND"
+            "    T.%s.RasterId = :rid;\n"
+            "END;\n",
+            pszTable, szInsert, pszColumn, szFormat,
+            pszTable, pszColumn, pszColumn, pszColumn  ) );
+
+        poStmt->Bind( pszTable );
+        poStmt->Bind( pszColumn );
+        poStmt->Bind( poConnection->GetServer() );
+        poStmt->BindName( ":rdt", szBindRDT );
+        poStmt->BindName( ":rid", &nBindRID );
+
+        if( ! poStmt->Execute() )
+        {
+            ObjFree_nt( poStmt );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                "Failure to initialize GeoRaster" );
+            return false;
+        }
+        CPLFree_nt( pszDataTable );
+        pszDataTable = CPLStrdup( szBindRDT );
+        nRasterId    = nBindRID;
+
+        delete poStmt;
+
+        return true;
+    }
+
+    //  -----------------------------------------------------------
+    //  Procedure for Server version older than 11
+    //  -----------------------------------------------------------
+
+    poStmt = poConnection->CreateStatement( CPLSPrintf(
+        "DECLARE\n"
+        "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
+        "  COL  VARCHAR2(68)    := UPPER(:2);\n"
+        "  USR  VARCHAR2(68)    := UPPER(:3);\n"
+        "  W    NUMBER          := :4;\n"
+        "  H    NUMBER          := :5;\n"
+        "  BB   NUMBER          := :6;\n"
+        "  RB   NUMBER          := :7;\n"
+        "  CB   NUMBER          := :8;\n"
+        "  CNT  NUMBER          := 0;\n"
+        "  X    NUMBER          := 0;\n"
+        "  Y    NUMBER          := 0;\n"
+        "  GR1  SDO_GEORASTER   := NULL;\n"
+        "  GR2  SDO_GEORASTER   := NULL;\n"
+        "  STM  VARCHAR2(1024)  := '';\n"
+        "BEGIN\n"
+        "  INSERT INTO %s %s\n"
+        "    RETURNING %s INTO GR1;\n"
+        "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
+        "  SELECT GR1.RASTERID        INTO :rid FROM DUAL;\n"
+        "\n"
+        "  SELECT %s INTO GR2 FROM %s T WHERE"
+        "    T.%s.RasterDataTable = :rdt AND"
+        "    T.%s.RasterId = :rid FOR UPDATE;\n"
+        "  SELECT %s INTO GR1 FROM %s T WHERE"
+        "    T.%s.RasterDataTable = :rdt AND"
+        "    T.%s.RasterId = :rid;\n"
+        "  SDO_GEOR.changeFormatCopy(GR1, '%s', GR2);\n"
+        "  UPDATE %s T SET %s = GR2     WHERE"
+        "    T.%s.RasterDataTable = :rdt AND"
+        "    T.%s.RasterId = :rid;\n"
+        "\n"
+        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES WHERE \n"
+        "    TABLE_NAME = :1 AND OWNER = :2' INTO CNT USING :rdt, USR;\n"
+        "  IF CNT = 0 THEN\n"
+        "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
+        "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
+        "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
+        "      LOB(RASTERBLOCK) STORE AS (NOCACHE NOLOGGING)';\n"
+        "  END IF;\n"
+        "\n"
+        "  STM := 'INSERT INTO '||:rdt||' VALUES (:1,0,:2-1,:3-1,:4-1,\n"
         "    SDO_GEOMETRY(2003, NULL, NULL, SDO_ELEM_INFO_ARRAY(1, 1003, 3),\n"
-        "    SDO_ORDINATE_ARRAY(:5,:6,:7-1,:8-1)), EMPTY_BLOB() )';\n"
+        "    SDO_ORDINATE_ARRAY(:5,:6,:7-1,:8-1)), EMPTY_BLOB() )';\n\n"
         "  FOR b IN 1..BB LOOP\n"
         "    Y := 0;\n"
         "    FOR r IN 1..RB LOOP\n"
         "      X := 0;\n"
         "      FOR c IN 1..CB LOOP\n"
-        "        EXECUTE IMMEDIATE STM USING %d, b, r, c, Y, X, (Y+H), (X+W);\n"
+        "        EXECUTE IMMEDIATE STM USING :rid, b, r, c, Y, X, (Y+H), (X+W);\n"
         "        X := X + W;\n"
         "      END LOOP;\n"
         "      Y := Y + H;\n"
         "    END LOOP;\n"
         "  END LOOP;\n"
         "END;",
-        nColumnBlockSize, nRowBlockSize,
-        nTotalBandBlocks, nTotalRowBlocks, nTotalColumnBlocks,
-        pszDataTable, nRasterId ) );
-/*
-    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf( 
-        "DECLARE\n"
-        "  GR sdo_georaster;\n"
-        "BEGIN\n"
-        "  SELECT %s INTO GR FROM %s T WHERE %s FOR UPDATE;\n"
-        "  SDO_GEOR.changeCellValue( GR, sdo_number_array(0, 0, 1, 1), '0', 1);\n"
-        "  UPDATE %s T SET %s = GR WHERE %s;\n"
-        "  COMMIT;\n"
-        "END;",
-        pszColumn, pszTable, pszWhere,
-        pszTable, pszColumn, pszWhere ) );
-*/
+        pszTable,
+        szInsert,
+        pszColumn,
+        pszColumn, pszTable, pszColumn, pszColumn,
+        pszColumn, pszTable, pszColumn, pszColumn, szFormat,
+        pszTable, pszColumn, pszColumn, pszColumn  ) );
+
+    poStmt->Bind( pszTable );
+    poStmt->Bind( pszColumn );
+    poStmt->Bind( poConnection->GetServer() );
+    poStmt->Bind( &nColumnBlockSize );
+    poStmt->Bind( &nRowBlockSize );
+    poStmt->Bind( &nTotalBandBlocks );
+    poStmt->Bind( &nTotalRowBlocks );
+    poStmt->Bind( &nTotalColumnBlocks );
+    poStmt->BindName( ":rdt", szBindRDT );
+    poStmt->BindName( ":rid", &nBindRID );
+
     if( ! poStmt->Execute() )
     {
         ObjFree_nt( poStmt );
-        CPLError( CE_Failure, 
-            CPLE_AppDefined, "Failure to create data rows on %s ", pszDataTable );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "Failure to initialize GeoRaster" );
         return false;
     }
+
+    CPLFree_nt( pszDataTable );
+
+    pszDataTable = CPLStrdup( szBindRDT );
+    nRasterId    = nBindRID;
 
     delete poStmt;
 
@@ -709,11 +673,18 @@ bool GeoRasterWrapper::CreateDataRows()
 }
 
 //  ---------------------------------------------------------------------------
-//                                                              SetExtentSRID()
+//                                                            SetGeoReference()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::SetGeoReference()
+bool GeoRasterWrapper::SetGeoReference( int nSRIDIn )
 {
+    if( nSRIDIn == 0 )
+    {
+        return false;
+    }
+
+    nSRID = nSRIDIn;
+
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  GR sdo_georaster;\n"
@@ -745,6 +716,45 @@ bool GeoRasterWrapper::SetGeoReference()
 
     delete poStmt;
 
+    return true;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                              AddToSRSTable()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::AddToSRSTable( char* pszWKT, char* pszName )
+{
+/*
+    int nCode = 0;
+
+    OWStatement* poStmt = poConnection->CreateStatement(
+        "DECLARE\n"
+        "  WKT  VARCHAR2(2048)  := :wkt;\n"
+        "  NAM  VARCHAR2(256)   := :nam;\n"
+        "  COD  NUMBER          := :cod;\n"
+        "BEGIN\n"
+        "  EXECUTE IMMEDIATE 'SELECT SRID FROM MDSYS.CS_SRS WHERE WKTEXT = :1' INTO COD USING WKT;\n"
+        "  IF COD = 0 THEN\n"
+        "    EXECUTE IMMEDIATE 'SELECT MAX(SRID) FROM MDSYS.CS_SRS' INTO COD;\n"
+        "    COD := COD + 1;\n"
+        "    INSERT INTO CS_SRS (CS_NAME, SRID, WKTEXT ) VALUES (NAM, COD, WKT);\n"
+        "  END IF;\n"
+        "END;" );
+
+    poStmt->BindName( ":wkt", pszWKT );
+    poStmt->BindName( ":nam", pszName );
+    poStmt->BindName( ":cod", &nCode );
+
+    if( ! poStmt->Execute() )
+    {
+        ObjFree_nt( poStmt );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failure to update SRID" );
+        return false;
+    }
+
+    delete poStmt;
+*/
     return true;
 }
 
@@ -847,22 +857,22 @@ void GeoRasterWrapper::GetRasterInfo( char* pszXML )
     //  Get blocking
     //  -------------------------------------------------------------------
 
-    nRowBlockSize       = atoi( CPLGetXMLValue( phMetadata, 
+    nRowBlockSize       = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.rowBlockSize", "0" ) );
 
-    nColumnBlockSize    = atoi( CPLGetXMLValue( phMetadata,  
+    nColumnBlockSize    = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.columnBlockSize", "0" ) );
 
-    nBandBlockSize      = atoi( CPLGetXMLValue( phMetadata,  
+    nBandBlockSize      = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.bandBlockSize", "-1" ) );
 
-    nTotalColumnBlocks  = atoi( CPLGetXMLValue( phMetadata,  
+    nTotalColumnBlocks  = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.totalColumnBlocks","0") );
 
-    nTotalRowBlocks     = atoi( CPLGetXMLValue( phMetadata,  
+    nTotalRowBlocks     = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.totalRowBlocks", "0" ) );
 
-    nTotalBandBlocks    = atoi( CPLGetXMLValue( phMetadata,  
+    nTotalBandBlocks    = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.blocking.totalBandBlocks", "1" ) );
 
     if( nBandBlockSize == -1 )
@@ -884,7 +894,7 @@ void GeoRasterWrapper::GetRasterInfo( char* pszXML )
 
     nCellSize           /= 8;
 
-    eType               = OWGetDataType( pszCellDepth );
+    GDALDataType eType  = OWGetDataType( pszCellDepth );
 
     nCellSizeGDAL       = GDALGetDataTypeSize( eType ) / 8;
 
@@ -995,16 +1005,15 @@ bool GeoRasterWrapper::GetImageExtent( double *padfTransform )
 //                                                              GetStatistics()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::GetStatistics( double dfMin,
+bool GeoRasterWrapper::GetStatistics( int nBand,
+                                      double dfMin,
                                       double dfMax,
                                       double dfMean,
-                                      double dfStdDev,
-                                      int nBand )
+                                      double dfStdDev )
 {
     int n = 1;
 
-    CPLXMLNode *phSubLayer = CPLGetXMLNode( phMetadata, 
-        "layerInfo.subLayer" );
+    CPLXMLNode *phSubLayer = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
 
     for( n = 1 ; phSubLayer ; phSubLayer = phSubLayer->psNext, n++ )
     {
@@ -1026,6 +1035,46 @@ bool GeoRasterWrapper::GetStatistics( double dfMin,
 
             return true;
         }
+    }
+    return false;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                              SetStatistics()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::SetStatistics( double dfMin,
+                                      double dfMax,
+                                      double dfMean,
+                                      double dfStdDev,
+                                      int nBand )
+{
+    InitializeLayersNode();
+
+    int n = 1;
+
+    CPLXMLNode* phSubLayer = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
+
+    for( n = 1 ; phSubLayer ; phSubLayer = phSubLayer->psNext, n++ )
+    {
+        if( n != nBand )
+        {
+            continue;
+        }
+
+        CPLXMLNode* psSDaset = CPLGetXMLNode( phSubLayer, "statisticDataset" );
+
+        if( psSDaset == NULL )
+        {
+            psSDaset = CPLCreateXMLNode( phSubLayer, CXT_Element, 
+                "statisticDataset" );
+        }
+
+        CPLCreateXMLElementAndValue( psSDaset,"MIM", CPLSPrintf("%f",dfMin));
+        CPLCreateXMLElementAndValue( psSDaset,"MAX", CPLSPrintf("%f",dfMax));
+        CPLCreateXMLElementAndValue( psSDaset,"MEAN",CPLSPrintf("%f",dfMean));
+        CPLCreateXMLElementAndValue( psSDaset,"STD", CPLSPrintf("%f",dfStdDev));
+        return true;
     }
     return false;
 }
@@ -1057,6 +1106,34 @@ bool GeoRasterWrapper::HasColorTable( int nBand )
 }
 
 //  ---------------------------------------------------------------------------
+//                                                        InitializeLayersNode()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterWrapper::InitializeLayersNode()
+{
+    CPLXMLNode *pslInfo  = CPLGetXMLNode( phMetadata, "layerInfo" );
+    CPLXMLNode *psSLayer = CPLGetXMLNode( pslInfo,    "subLayer" );
+
+    if( psSLayer != NULL )
+    {
+        return;
+    }
+
+    int n = 1;
+
+    for( n = 0 ; n < nRasterBands; n++ )
+    {
+        psSLayer = CPLCreateXMLNode( pslInfo, CXT_Element, "subLayer" );
+        CPLCreateXMLElementAndValue( psSLayer, "layerNumber", 
+            CPLSPrintf( "%d", n + 1 ) );
+        CPLCreateXMLElementAndValue( psSLayer, "layerDimensionOrdinate",
+            CPLSPrintf( "%d", n ) );
+        CPLCreateXMLElementAndValue( psSLayer, "layerID",
+            CPLSPrintf( "subLayer%d", n + 1 ) );
+    }
+}
+
+//  ---------------------------------------------------------------------------
 //                                                              GetColorTable()
 //  ---------------------------------------------------------------------------
 
@@ -1064,8 +1141,7 @@ void GeoRasterWrapper::GetColorTable( int nBand, GDALColorTable* poCT )
 {
     GDALColorEntry oEntry;
 
-    CPLXMLNode *psLayers;
-    CPLXMLNode *psColors;
+    CPLXMLNode* psLayers;
 
     int n = 1;
 
@@ -1078,17 +1154,17 @@ void GeoRasterWrapper::GetColorTable( int nBand, GDALColorTable* poCT )
             continue;
         }
 
-        psColors    = CPLGetXMLNode( psLayers, "colorMap.colors.cell" );
+        CPLXMLNode* psColors = CPLGetXMLNode( psLayers, "colorMap.colors.cell" );
 
         int iColor = 0;
 
         for(  ; psColors; psColors = psColors->psNext )
         {
-            iColor    = (short) atoi( CPLGetXMLValue( psColors, "value", "0" ) );
-            oEntry.c1 = (short) atoi( CPLGetXMLValue( psColors, "red",   "0" ) );
-            oEntry.c2 = (short) atoi( CPLGetXMLValue( psColors, "green", "0" ) );
-            oEntry.c3 = (short) atoi( CPLGetXMLValue( psColors, "blue",  "0" ) );
-            oEntry.c4 = (short) atoi( CPLGetXMLValue( psColors, "alpha", "0" ) );
+            iColor    = (short) atoi( CPLGetXMLValue( psColors, "value","0"));
+            oEntry.c1 = (short) atoi( CPLGetXMLValue( psColors, "red",  "0"));
+            oEntry.c2 = (short) atoi( CPLGetXMLValue( psColors, "green","0"));
+            oEntry.c3 = (short) atoi( CPLGetXMLValue( psColors, "blue", "0"));
+            oEntry.c4 = (short) atoi( CPLGetXMLValue( psColors, "alpha","0"));
             poCT->SetColorEntry( iColor, &oEntry );
         }
         break;
@@ -1101,65 +1177,59 @@ void GeoRasterWrapper::GetColorTable( int nBand, GDALColorTable* poCT )
 
 void GeoRasterWrapper::SetColorTable( int nBand, GDALColorTable* poCT )
 {
-    GDALColorEntry oEntry;
+    InitializeLayersNode();
 
-    CPLXMLNode *psLayers;
-    CPLXMLNode *psColors;
+    GDALColorEntry oEntry;
 
     int n = 1;
 
-    psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
+    CPLXMLNode* phSubLayer = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
 
-    for( ; psLayers; psLayers = psLayers->psNext, n++ )
+    for( n = 1 ; phSubLayer ; phSubLayer = phSubLayer->psNext, n++ )
     {
         if( n != nBand )
         {
             continue;
         }
 
-        psColors    = CPLGetXMLNode( psLayers, "colorMap.colors.cell" );
+        CPLXMLNode* psCMap = CPLGetXMLNode( phSubLayer, "colorMap" );
+
+        if( psCMap == NULL )
+        {
+            psCMap = CPLCreateXMLNode( phSubLayer, CXT_Element, "colorMap" );
+        }
+
+        CPLXMLNode* psColor = CPLGetXMLNode( psCMap, "colors" );
+
+        // ------------------------------------------------
+        // Clean existing colors entry (RGB color table)
+        // ------------------------------------------------
+
+        if( psColor != NULL )
+        {
+            CPLRemoveXMLChild( psCMap, psColor );
+            CPLDestroyXMLNode( psColor );
+        }
+
+        psColor = CPLCreateXMLNode( psCMap, CXT_Element, "colors" );
 
         int iColor = 0;
 
-        for(  ; psColors; psColors = psColors->psNext )
+        for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
         {
-            iColor    = (short) atoi( CPLGetXMLValue( psColors, "value", "0" ) );
-            oEntry.c1 = (short) atoi( CPLGetXMLValue( psColors, "red",   "0" ) );
-            oEntry.c2 = (short) atoi( CPLGetXMLValue( psColors, "green", "0" ) );
-            oEntry.c3 = (short) atoi( CPLGetXMLValue( psColors, "blue",  "0" ) );
-            oEntry.c4 = (short) atoi( CPLGetXMLValue( psColors, "alpha", "0" ) );
-            poCT->SetColorEntry( iColor, &oEntry );
+            poCT->GetColorEntryAsRGB( iColor, &oEntry );
+
+            CPLXMLNode* psCell = CPLCreateXMLNode( psColor, CXT_Element, "cell" );
+
+            CPLSetXMLValue( psCell, "#value", CPLSPrintf("%d", iColor) );
+            CPLSetXMLValue( psCell, "#blue",  CPLSPrintf("%d", oEntry.c3) );
+            CPLSetXMLValue( psCell, "#red",   CPLSPrintf("%d", oEntry.c1) );
+            CPLSetXMLValue( psCell, "#green", CPLSPrintf("%d", oEntry.c2) );
+            CPLSetXMLValue( psCell, "#alpha", CPLSPrintf("%d", oEntry.c4) );
         }
+
         break;
     }
-}
-
-//  ---------------------------------------------------------------------------
-//                                                             InitializeBlob()
-//  ---------------------------------------------------------------------------
-
-bool GeoRasterWrapper::InitializeBlob()
-{
-    CPLDebug("GEOR", "Initialize, SetGeoreference(), nSRID=%d", nSRID );
-
-    if( nSRID > 0 )
-    {
-        if( ! SetGeoReference() )
-        {
-           return false;
-        }
-    }
-
-    CPLDebug("GEOR", "Initialize, CreateDataRows()");
-
-    if( ! CreateDataRows() )
-    {
-       return false;
-    }
-
-    bBlobInitialized = true;
-
-    return true;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1252,7 +1322,7 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
     }
 
     if ( nCurrentXOffset != nXOffset ||
-         nCurrentYOffset != nYOffset )
+        nCurrentYOffset != nYOffset )
     {
         nCurrentXOffset = nXOffset;
         nCurrentYOffset = nYOffset;
@@ -1357,11 +1427,11 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
 
     if( ! bIOInitialized )
     {
+        FlushMetadata();
         InitializeIO();
-        InitializeBlob();
     }
 
-    if ( nCurrentBandBlock != nBandBlock )
+    if ( nCurrentBandBlock != nBandBlock ) //TODO: Optimize for multi-band
     {
         nCurrentBandBlock = nBandBlock;
         nCurrentXOffset = -1;
@@ -1395,13 +1465,18 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
         }
     }
 
-    if ( nCurrentXOffset != nXOffset ||
-         nCurrentYOffset != nYOffset )
+    if( nBandBlockSize > 1 )
     {
-        nCurrentXOffset = nXOffset;
-        nCurrentYOffset = nYOffset;
+        if ( nCurrentXOffset != nXOffset ||
+             nCurrentYOffset != nYOffset )
+        {
+            nCurrentXOffset = nXOffset;
+            nCurrentYOffset = nYOffset;
 
-        poStmtIO->ReadBlob( pahLocator[nBlock], pabyBlockBuf, nBlockBytes );
+            CPLDebug("READING","Block=%d,Band=%d", nBlock, nBand);
+
+            poStmtIO->ReadBlob( pahLocator[nBlock], pabyBlockBuf, nBlockBytes );
+        }
     }
 
     GByte *pabyOutBuf = (GByte *) pData;
@@ -1505,10 +1580,130 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
 }
 
 //  ---------------------------------------------------------------------------
+//                                                                  GetNoData()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::GetNoData( double* pdfNoDataValue )
+{
+    if( EQUAL( CPLGetXMLValue( phMetadata,
+        "rasterInfo.NODATA", "NONE" ), "NONE" ) )
+    {
+        return false;
+    }
+
+    *pdfNoDataValue = atof( CPLGetXMLValue( phMetadata,
+        "rasterInfo.NODATA", "0.0" ) );
+
+    return true;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                             SetNoDataValue()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::SetNoData( double dfNoDataValue )
+{
+    CPLXMLNode* psRInfo = CPLGetXMLNode( phMetadata, "rasterInfo" );
+    CPLXMLNode* psNData = CPLGetXMLNode( psRInfo, "NODATA");
+
+    if( psNData )
+    {
+        CPLRemoveXMLChild( psRInfo, psNData );
+        CPLDestroyXMLNode( psNData );
+    }
+
+    psNData = CPLCreateXMLElementAndValue( psRInfo, "NODATA",
+        CPLSPrintf( "%f", dfNoDataValue ) );
+
+    return ( psNData != NULL );
+}
+
+//  ---------------------------------------------------------------------------
+//                                                              FlushMetadata()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::FlushMetadata()
+{
+    if( ! bFlushMetadata )
+    {
+        return true;
+    }
+
+    bFlushMetadata = false;
+
+    //  --------------------------------------------------------------------
+    //  Change the isBlank setting left by SDO_GEOR.createBlank() to 'false'
+    //  --------------------------------------------------------------------
+
+    CPLXMLNode* psOInfo = CPLGetXMLNode( phMetadata, "objectInfo" );
+
+    CPLSetXMLValue( psOInfo,  "isBlank", "false" );
+
+    CPLXMLNode* psNode  = CPLGetXMLNode( psOInfo, "blankCellValue" );
+
+    if( psNode != NULL )
+    {
+        CPLRemoveXMLChild( psOInfo, psNode );
+        CPLDestroyXMLNode( psNode );
+    }
+
+    const char* pszRed   = "1";
+    const char* pszGreen = "1";
+    const char* pszBlue  = "1";
+
+    if( ( nRasterBands == 3 ) && ( EQUAL( pszCellDepth, "8BIT_U") ) &&
+        ( ! HasColorTable( 1 ) ) && 
+        ( ! HasColorTable( 2 ) ) && 
+        ( ! HasColorTable( 3 ) ) )
+    {
+        pszRed   = "1";
+        pszGreen = "2";
+        pszBlue  = "3";
+    }
+
+    CPLCreateXMLElementAndValue( psOInfo, "defaultRed",   pszRed );
+    CPLCreateXMLElementAndValue( psOInfo, "defaultGreen", pszGreen );
+    CPLCreateXMLElementAndValue( psOInfo, "defaultBlue",  pszBlue );
+
+    //  --------------------------------------------------------------------
+    //  Update the Metadata directly from the XML text
+    //  --------------------------------------------------------------------
+
+    char* pszXML = CPLSerializeXMLTree( phMetadata );
+
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
+        "DECLARE\n"
+        "  GR sdo_georaster;\n"
+        "BEGIN\n"
+        "  SELECT %s INTO GR FROM %s T WHERE %s FOR UPDATE;\n"
+        "  GR.metadata := XMLTYPE(:1);\n"
+        "  UPDATE %s T SET %s = GR WHERE %s;\n"
+        "  COMMIT;\n"
+        "END;", 
+        pszColumn, pszTable, pszWhere,
+        pszTable, pszColumn, pszWhere ) );
+
+    poStmt->Bind( pszXML, strlen( pszXML ) + 1);
+
+    if( ! poStmt->Execute() )
+    {
+        CPLFree_nt( pszXML );
+        ObjFree_nt( poStmt );
+        return false;
+    }
+
+    CPLFree_nt( pszXML );
+
+    delete poStmt;
+
+    return true;
+}
+
+//  ---------------------------------------------------------------------------
 //                                                                      Flush()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterWrapper::Flush()
+bool GeoRasterWrapper::Flush()
 {
-//TODO: update sdo_georaster.metadata
+    return FlushMetadata();
 }

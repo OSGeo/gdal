@@ -69,6 +69,7 @@ bool CheckError( sword nStatus, OCIError* hError );
 
 const GDALDataType  OWGetDataType( const char* pszCellDepth );
 const char*         OWSetDataType( const GDALDataType eType );
+int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );
 bool                OWIsNumeric( const char *pszText );
 const char*         OWReplaceToken( const char* pszBaseString, 
@@ -219,6 +220,8 @@ private:
     OCISvcCtx*          hSvcCtx;
     OCIDescribe*        hDescribe;
 
+    int                 nVersion;
+
     bool                bSuceeded;
 
     char*               pszUser; 
@@ -243,6 +246,7 @@ public:
     char*               GetUser() { return pszUser; };
     char*               GetPassword() { return pszPassword; };
     char*               GetServer() { return pszServer; };
+    int                 GetVersion () { return nVersion; };
 };
 
 /***************************************************************************/
@@ -297,7 +301,7 @@ public:
                             int nIterations );
     void                BindName( char* pszName, int* pnData );
     void                BindName( char* pszName, char* pszData, 
-                            int nSize );
+                            int nSize = OWNAME );
     void                BindName( char* pszName, 
                             OCILobLocator** pphLocator );
     static void         Free( OCILobLocator** ppphLocator,

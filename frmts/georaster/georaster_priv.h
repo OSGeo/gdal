@@ -139,16 +139,17 @@ private:
     double              dfMean;
     double              dfStdDev;
     bool                bValidStats;
+    double              dfNoData;
 
 public:
 
     virtual double      GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr      SetNoDataValue( double dfNoDataValue );
     virtual double      GetMinimum( int* pbSuccess = NULL );
-    virtual double      GetMaximum( int* pbSuccess = NULL );    
+    virtual double      GetMaximum( int* pbSuccess = NULL ); 
     virtual GDALColorTable* 
                         GetColorTable();
-    virtual CPLErr      SetColorTable( GDALColorTable *poColorTable ); 
+    virtual CPLErr      SetColorTable( GDALColorTable *poInColorTable ); 
     virtual GDALColorInterp   
                         GetColorInterpretation();
     virtual CPLErr      IReadBlock( int nBlockXOff, int nBlockYOff, 
@@ -176,12 +177,6 @@ public:
 
 private:
 
-    bool                InitializeIO();
-    bool                bIOInitialized;
-
-    bool                InitializeBlob();
-    bool                bBlobInitialized;
-
     OCILobLocator**     pahLocator;
     int                 nBandBlock;
     int                 nBlockCount;
@@ -198,25 +193,28 @@ private:
     int                 nPyraLevel;
     int                 nCellSize;
     int                 nCellSizeGDAL;
-    char*               pszCellDepth;
+
+    bool                bIOInitialized;
+    bool                bBlobInitialized;
+    bool                bFlushMetadata;
+
+    void                InitializeLayersNode();
+    bool                InitializeIO();
+    bool                FlushMetadata();
 
 public:
 
-    static GeoRasterWrapper* 
+    static GeoRasterWrapper*
                         Open( const char* pszStringID, GDALAccess eAccess );
-    bool                CreateTable( const char* pszDescription );
-    bool                CreateBlank( const char* pszInsert );
-    bool                ChangeFormat( const char *pszBlockSize,
-                            const char* pszInterleaving,
-                            const char* pszCellDepth,
-                            const char* pszPyramid,
-                            const char* pszCompression );
-    bool                CreateDataTable();
-    bool                CreateDataRows();
+    bool                Create( char* pszDescription, char* pszInsert );
     void                GetRasterInfo( char* pszXML );
     bool                GetImageExtent( double *padfTransform );
-    bool                GetStatistics( 
+    bool                GetStatistics( int nBand,
                             double dfMin,
+                            double dfMax,
+                            double dfMean,
+                            double dfStdDev );
+    bool                SetStatistics( double dfMin, 
                             double dfMax,
                             double dfMean,
                             double dfStdDev,
@@ -224,7 +222,8 @@ public:
     bool                HasColorTable( int nBand );
     void                GetColorTable( int nBand, GDALColorTable* poCT );
     void                SetColorTable( int nBand, GDALColorTable* poCT );
-    bool                SetGeoReference();
+    bool                SetGeoReference( int nSRIDIn );
+    bool                AddToSRSTable( char* pszWKT, char* pszName );
     char*               GetWKText( int nSRIDin, bool bCode = true );
     bool                GetBandBlock( 
                             int nBand, 
@@ -236,7 +235,9 @@ public:
                             int nXOffset, 
                             int nYOffset, 
                             void* pData );
-    void                Flush();
+    bool                GetNoData( double* pdfNoDataValue );
+    bool                SetNoData( double dfNoDataValue );
+    bool                Flush();
 
 public:
 
@@ -250,13 +251,13 @@ public:
 
     int                 nSRID;
     CPLXMLNode*         phMetadata;
+    char*               pszCellDepth;
 
     int                 nRasterColumns;
     int                 nRasterRows;
     int                 nRasterBands;
 
     char                szInterleaving[4];
-    GDALDataType        eType;
     bool                bIsReferenced;
 
     double              dfXCoefficient[3];
@@ -274,4 +275,3 @@ public:
     int                 iDefaultGreenBand;
     int                 iDefaultBlueBand;
 };
-
