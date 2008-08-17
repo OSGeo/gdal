@@ -46,6 +46,7 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS, int nBand )
     nBlockYSize         = poGeoRaster->nRowBlockSize;
     nBlocksPerColumn    = poGeoRaster->nTotalColumnBlocks;
     nBlocksPerRow       = poGeoRaster->nTotalRowBlocks;
+    dfNoData            = 0.0;
     bValidStats         = false;
 }
 
@@ -164,11 +165,23 @@ GDALColorTable *GeoRasterRasterBand::GetColorTable()
 //                                                              SetColorTable()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterRasterBand::SetColorTable( GDALColorTable *poColorTable )
+CPLErr GeoRasterRasterBand::SetColorTable( GDALColorTable *poInColorTable )
 {
-    poColorTable = NULL;
+    if( poInColorTable == NULL )
+    {
+        return CE_None;
+    }
 
-    //TODO:
+    if( poInColorTable->GetColorEntryCount() == 0 )
+    {
+        return CE_None;
+    }
+
+    delete poColorTable;
+
+    poColorTable = poInColorTable->Clone();
+
+    poGeoRaster->SetColorTable( nBand, poColorTable );
 
     return CE_None;
 }
@@ -200,16 +213,16 @@ double GeoRasterRasterBand::GetMaximum( int *pbSuccess )
 //  ---------------------------------------------------------------------------
 
 CPLErr GeoRasterRasterBand::GetStatistics( int bApproxOK, int bForce,
-                                double *pdfMin, double *pdfMax, 
-                                double *pdfMean, double *pdfStdDev )
+                                           double *pdfMin, double *pdfMax,
+                                           double *pdfMean, double *pdfStdDev )
 {
     (void) bForce;
     (void) bApproxOK;
 
     if( ! bValidStats )
     {
-        bValidStats = poGeoRaster->GetStatistics( 
-                          dfMin, dfMax, dfMean, dfStdDev, nBand );
+        bValidStats = poGeoRaster->GetStatistics( nBand,
+                                           dfMin, dfMax, dfMean, dfStdDev );
     }
 
     if( bValidStats )
@@ -229,14 +242,16 @@ CPLErr GeoRasterRasterBand::GetStatistics( int bApproxOK, int bForce,
 //                                                              SetStatistics()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterRasterBand::SetStatistics( double dfMin, double dfMax, 
-                                double dfMean, double dfStdDev )
+CPLErr GeoRasterRasterBand::SetStatistics( double dfMin, double dfMax,
+                                           double dfMean, double dfStdDev )
 {
     dfMin       = dfMin;
     dfMax       = dfMax;
     dfMean      = dfMax;
     dfStdDev    = dfStdDev;
     bValidStats = true;
+
+    poGeoRaster->SetStatistics( dfMin, dfMax, dfMean, dfStdDev, nBand );
 
     return CE_None;
 }
@@ -247,24 +262,12 @@ CPLErr GeoRasterRasterBand::SetStatistics( double dfMin, double dfMax,
 
 double GeoRasterRasterBand::GetNoDataValue( int *pbSuccess )
 {
-    *pbSuccess = false;
-
-    //TODO:
-
-/*
-    double dfNoData = 0.0;
-
     if( pbSuccess )
     {
-        *pbSuccess = poGDS->poMetadata->GetNoData( &dfNoData );
-
-        if( *pbSuccess )
-        {
-            return dfNoData;
-        }
+        *pbSuccess = (int) poGeoRaster->GetNoData( &dfNoData );
     }
-*/
-    return 0.0;
+
+    return dfNoData;
 }
 
 //  ---------------------------------------------------------------------------
@@ -273,9 +276,7 @@ double GeoRasterRasterBand::GetNoDataValue( int *pbSuccess )
 
 CPLErr GeoRasterRasterBand::SetNoDataValue( double dfNoDataValue )
 {
-    //TODO:
-/*
-    poGDS->poMetadata->SetNoData( dfNoDataValue );
-*/
+    poGeoRaster->SetNoData( dfNoDataValue );
+
     return CE_None;
 }

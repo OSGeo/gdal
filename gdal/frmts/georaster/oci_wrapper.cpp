@@ -117,6 +117,21 @@ OWConnection::OWConnection( const char* pszUserIn,
     }
 
     // ------------------------------------------------------
+    //  Get Server Version
+    // ------------------------------------------------------
+
+    char szVersionTxt[OWTEXT];
+
+    OCIServerVersion ( 
+        hSvcCtx,
+        hError,
+        (text*) szVersionTxt,
+        (ub4) OWTEXT,
+        (ub1) OCI_HTYPE_SVCCTX );
+
+    nVersion = OWParseServerVersion( szVersionTxt );
+
+    // ------------------------------------------------------
     //  Initialize/Describe types
     // ------------------------------------------------------
 
@@ -130,7 +145,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     hNumArrayTDO    = DescribeType( SDO_NUMBER_ARRAY );
     hGeometryTDO    = DescribeType( SDO_GEOMETRY );
     hColormapTDO    = DescribeType( SDO_COLORMAP );
-    hGeoRasterTDO = DescribeType( SDO_GEORASTER );
+    hGeoRasterTDO   = DescribeType( SDO_GEORASTER );
 }
 
 OWConnection::~OWConnection()
@@ -300,7 +315,7 @@ OWStatement::~OWStatement()
 
 bool OWStatement::Execute( int nRows )
 {
-    CPLDebug("GEOR","Execute:\n--%s\n--", pszStatement );
+    CPLDebug("GEOR","Execute:\n%s\n", pszStatement );
 
     sword nStatus = OCIStmtExecute( poConnect->hSvcCtx, 
         hStmt, 
@@ -1009,6 +1024,46 @@ const char* OWReplaceToken( const char* pszBaseString, char cToken,
 }
 
 /*****************************************************************************/
+/*                     Parse Value after a Hint on a string                  */
+/*****************************************************************************/
+
+int OWParseValue( const char* pszText, const char* pszHint, int nOffset )
+{
+    if( pszText == NULL ) return 0;
+
+    int i       = 0;
+    int nCode   = 0;
+    int nCount  = 0;
+
+    char **papszTokens = CSLTokenizeString2( pszText, " .",
+        CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
+
+    nCount = CSLCount( papszTokens );
+
+    for( i = 0; i < nCount; i++ )
+    {
+        if( EQUAL( papszTokens[i], pszHint ) && ( i + nOffset ) < nCount )
+        {
+            nCode = atoi( papszTokens[i + nOffset] );
+            break;
+        }
+    }
+
+    CSLDestroy( papszTokens );
+
+    return nCode;
+}
+
+/*****************************************************************************/
+/*                            Parse Release Version                          */
+/*****************************************************************************/
+
+int OWParseServerVersion( const char* pszText )
+{
+    return OWParseValue( pszText, "Release", 1 );
+}
+
+/*****************************************************************************/
 /*                            Parse EPSG Codes                               */
 /*****************************************************************************/
 
@@ -1021,29 +1076,7 @@ const char* OWReplaceToken( const char* pszBaseString, char cToken,
 
 int OWParseEPSG( const char* pszText )
 {
-    if( pszText == NULL ) return 0;
-
-    int i       = 0;
-    int nCode   = 0;
-    int nCount  = 0;
-
-    char **papszTokens = CSLTokenizeString2( pszText, " ()",
-        CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
-
-    nCount = CSLCount( papszTokens );
-
-    for( i = 0; i < nCount; i++ )
-    {
-        if( EQUAL( papszTokens[i], "EPSG" ) && ( i + 2 ) < nCount )
-        {
-            nCode = atoi( papszTokens[i + 2] );
-            break;
-        }
-    }
-
-    CSLDestroy( papszTokens );
-
-    return nCode;
+    return OWParseValue( pszText, "EPSG", 2 );
 }
 
 /*****************************************************************************/
