@@ -106,15 +106,14 @@ CPLErr LCPDataset::GetGeoTransform( double * padfTransform )
     CPL_LSBPTR64(&dfSouth);
     CPL_LSBPTR64(&dfCellX);
     CPL_LSBPTR64(&dfCellY);
-            
+
     padfTransform[0] = dfWest;
     padfTransform[3] = dfNorth;
     padfTransform[1] = dfCellX;
     padfTransform[2] = 0.0;
-        
+
     padfTransform[4] = 0.0;
     padfTransform[5] = -1 * dfCellY;
-
 
     return CE_None;
 }
