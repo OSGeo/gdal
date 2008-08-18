@@ -782,9 +782,15 @@ def nitf_online_7():
         colorInterpretations = [ gdal.GCI_Undefined, gdal.GCI_Undefined, gdal.GCI_RedBand, gdal.GCI_BlueBand, gdal.GCI_Undefined, gdal.GCI_GreenBand ]
 
         for i in range(6):
-            if ds.GetRasterBand(i+1).Checksum() != checksums[i]:
+            cs = ds.GetRasterBand(i+1).Checksum()
+            if cs != checksums[i]:
+                gdaltest.post_reason( 'got checksum %d for image %s' \
+                                      % (cs, file) )
                 return 'fail'
+            
             if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != colorInterpretations[i]:
+                gdaltest.post_reason( 'got wrong color interp for image %s' \
+                                      % file )
                 return 'fail'
         ds = None
 
@@ -898,6 +904,20 @@ def nitf_online_11():
 
 
 ###############################################################################
+# Test 12 bit uncompressed image.
+
+def nitf_online_12():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/bugs/i_3430a.ntf', 'i_3430a.ntf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/i_3430a.ntf', 1, 38647,
+                             filename_absolute = 1 )
+
+    return tst.testOpen()
+
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -973,6 +993,7 @@ gdaltest_list = [
     nitf_online_9,
     nitf_online_10,
     nitf_online_11,
+    nitf_online_12,
     nitf_cleanup ]
 
 if __name__ == '__main__':
