@@ -189,6 +189,8 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
         eDataType = GDT_Int16;
     else if( psImage->nBitsPerSample == 16 )
         eDataType = GDT_UInt16;
+    else if( psImage->nBitsPerSample == 12 )
+        eDataType = GDT_UInt16;
     else if( psImage->nBitsPerSample == 32 
              && EQUAL(psImage->szPVType,"SI") )
         eDataType = GDT_Int32;
@@ -281,6 +283,8 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
 
     if( psImage->nBitsPerSample == 1 )
         SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
+    if( psImage->nBitsPerSample == 12 )
+        SetMetadataItem( "NBITS", "12", "IMAGE_STRUCTURE" );
 }
 
 /************************************************************************/
@@ -356,6 +360,39 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         
         return CE_None;
     }
+
+/* -------------------------------------------------------------------- */
+/*      if data type is 12 bit, we expand to 16bit.                     */
+/* -------------------------------------------------------------------- */
+    if( nBlockResult == BLKREAD_OK && psImage->nBitsPerSample == 12 )
+    {
+        int nPixelCount = psImage->nBlockWidth * psImage->nBlockHeight;
+        int i;
+        GByte *pabyImage = (GByte *) pImage;
+        GUInt16 *panImage = (GUInt16 *) pImage;
+
+        for( i = nPixelCount-1; i >= 0; i-- )
+        {
+            if( i % 2 == 0 )
+            {
+                int iOffset = i*3 / 2;
+
+                panImage[i] = pabyImage[iOffset] 
+                    + (pabyImage[iOffset+1] & 0xf0) * 16;
+            }
+            else
+            {
+                int iOffset = i*3 / 2;
+
+                panImage[i] = (pabyImage[iOffset] & 0x0f) * 16
+                    + (pabyImage[iOffset+1] & 0xf0) / 16
+                    + (pabyImage[iOffset+1] & 0x0f) * 256;
+            }
+        }
+        
+        return CE_None;
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Return result.                                                  */
@@ -1017,6 +1054,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( psImage != NULL 
         && psImage->nBitsPerSample != 1
+        && psImage->nBitsPerSample != 12
         && (psImage->nBitsPerSample < 8 || psImage->nBitsPerSample % 8 != 0) )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
