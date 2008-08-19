@@ -705,6 +705,28 @@ def hfa_proName():
 
     return result
 
+
+###############################################################################
+# Read a compressed file where no block has been written (#2523)
+
+def hfa_read_empty_compressed():
+
+    drv = gdal.GetDriverByName('HFA')
+    ds = drv.Create('tmp/emptycompressed.img', 64, 64, 1, options = [ 'COMPRESSED=YES' ] )
+    ds = None
+
+    ds = gdal.Open('tmp/emptycompressed.img')
+    if ds.GetRasterBand(1).Checksum() != 0:
+        result = 'fail'
+    else:
+        result = 'success'
+
+    ds = None
+
+    drv.Delete( 'tmp/emptycompressed.img' )
+
+    return result
+
 ###############################################################################
 #
 
@@ -730,7 +752,8 @@ gdaltest_list = [
     hfa_rotated_read,
     hfa_rotated_write,
     hfa_vsimem,
-    hfa_proName
+    hfa_proName,
+    hfa_read_empty_compressed
     ]
 
 if __name__ == '__main__':
