@@ -218,6 +218,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     char *pszCleanCopy;
 
 /* -------------------------------------------------------------------- */
+/*      Clear any existing definition.                                  */
+/* -------------------------------------------------------------------- */
+    Clear();
+
+/* -------------------------------------------------------------------- */
 /*      Strip any newlines or other "funny" stuff that might occur      */
 /*      if this string just came from reading a file.                   */
 /* -------------------------------------------------------------------- */
