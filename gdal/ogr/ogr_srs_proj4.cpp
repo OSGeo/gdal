@@ -220,11 +220,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
-    if( GetRoot() != NULL )
-    {
-        delete poRoot;
-        poRoot = NULL;
-    }
+    Clear();
 
 /* -------------------------------------------------------------------- */
 /*      Strip any newlines or other "funny" stuff that might occur      */

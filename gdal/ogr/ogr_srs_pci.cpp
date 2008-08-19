@@ -348,6 +348,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                                            double *padfPrjParams )
 
 {
+    Clear();
+
     if( pszProj == NULL )
         return OGRERR_CORRUPT_DATA;
 
