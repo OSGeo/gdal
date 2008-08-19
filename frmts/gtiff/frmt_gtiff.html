@@ -86,6 +86,9 @@ will have a photometric interpretation of MIN_IS_WHITE.  Files with
 pseudo-color tables, or GCPs can currently only be created when creating from 
 an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).<p>
 
+Note that the GeoTIFF format does not support parametric description of datums,
+so TOWGS84 parameters in coordinate systems are lost in GeoTIFF format.<p>
+
 <h3>Creation Options</h3>
 
 <ul>
