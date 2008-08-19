@@ -955,7 +955,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*      If the block isn't valid, we just return all zeros, and an	*/
 /*	indication of success.                        			*/
 /* -------------------------------------------------------------------- */
-    if( !panBlockFlag[iBlock] & BFLG_VALID )
+    if( (panBlockFlag[iBlock] & BFLG_VALID) == 0 )
     {
         NullBlock( pData );
         return( CE_None );
