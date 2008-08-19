@@ -364,6 +364,8 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                                                 double *padfPrjParams )
 
 {
+    Clear();
+
 /* -------------------------------------------------------------------- */
 /*      Use safe defaults if projection parameters are not supplied.    */
 /* -------------------------------------------------------------------- */

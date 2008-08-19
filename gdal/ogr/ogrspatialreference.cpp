@@ -186,6 +186,11 @@ void OGRSpatialReference::Clear()
         delete poRoot;
 
     poRoot = NULL;
+
+    bNormInfoSet = FALSE;
+    dfFromGreenwich = 1.0;
+    dfToMeter = 1.0;
+    dfToDegrees = 1.0;
 }
 
 /************************************************************************/
@@ -610,10 +615,7 @@ OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
 
 {
-    if( poRoot != NULL )
-        delete poRoot;
-
-    bNormInfoSet = FALSE;
+    Clear();
 
     poRoot = new OGR_SRSNode();
 
