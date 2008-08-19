@@ -539,7 +539,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     if( psImage->chIMODE == 'S' )
     {
         psImage->nPixelOffset = psImage->nWordSize;
-        psImage->nLineOffset = psImage->nBlockWidth * psImage->nPixelOffset;
+        psImage->nLineOffset = 
+            ((GIntBig) psImage->nBlockWidth * psImage->nBitsPerSample) / 8;
         psImage->nBlockOffset = psImage->nLineOffset * psImage->nBlockHeight;
         psImage->nBandOffset = psImage->nBlockOffset * psImage->nBlocksPerRow 
             * psImage->nBlocksPerColumn;
@@ -547,28 +548,32 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     else if( psImage->chIMODE == 'P' )
     {
         psImage->nPixelOffset = psImage->nWordSize * psImage->nBands;
-        psImage->nLineOffset = psImage->nBlockWidth * psImage->nPixelOffset;
+        psImage->nLineOffset = 
+            ((GIntBig) psImage->nBlockWidth * psImage->nBitsPerSample * psImage->nBands) / 8;
         psImage->nBandOffset = psImage->nWordSize;
         psImage->nBlockOffset = psImage->nLineOffset * psImage->nBlockHeight;
     }
     else if( psImage->chIMODE == 'R' )
     {
         psImage->nPixelOffset = psImage->nWordSize;
-        psImage->nBandOffset = psImage->nBlockWidth * psImage->nPixelOffset;
+        psImage->nBandOffset = 
+            ((GIntBig) psImage->nBlockWidth * psImage->nBitsPerSample) / 8;
         psImage->nLineOffset = psImage->nBandOffset * psImage->nBands;
         psImage->nBlockOffset = psImage->nLineOffset * psImage->nBlockHeight;
     }
     else if( psImage->chIMODE == 'B' )
     {
         psImage->nPixelOffset = psImage->nWordSize;
-        psImage->nLineOffset = psImage->nBlockWidth * psImage->nPixelOffset;
+        psImage->nLineOffset = 
+            ((GIntBig) psImage->nBlockWidth * psImage->nBitsPerSample) / 8;
         psImage->nBandOffset = psImage->nBlockHeight * psImage->nLineOffset;
         psImage->nBlockOffset = psImage->nBandOffset * psImage->nBands;
     }
     else
     {
         psImage->nPixelOffset = psImage->nWordSize;
-        psImage->nLineOffset = psImage->nBlockWidth * psImage->nPixelOffset;
+        psImage->nLineOffset = 
+            ((GIntBig) psImage->nBlockWidth * psImage->nBitsPerSample) / 8;
         psImage->nBandOffset = psImage->nBlockHeight * psImage->nLineOffset;
         psImage->nBlockOffset = psImage->nBandOffset * psImage->nBands;
     }
@@ -1046,15 +1051,20 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
 /*      Figure out how big the working buffer will need to be.          */
 /* -------------------------------------------------------------------- */
-    nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
-        + psImage->nPixelOffset * (psImage->nBlockWidth-1)
-        + psImage->nWordSize;
+    if( psImage->nBitsPerSample != psImage->nWordSize * 8 )
+        nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
+            + (psImage->nBitsPerSample * (psImage->nBlockWidth) + 7) / 8;
+    else
+        nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
+            + psImage->nPixelOffset * (psImage->nBlockWidth - 1)
+            + psImage->nWordSize;
 
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
 /* -------------------------------------------------------------------- */
     if( psImage->nWordSize == psImage->nPixelOffset
-        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset 
+        && (psImage->nBitsPerSample * psImage->nBlockWidth + 7) / 8
+           == psImage->nLineOffset 
         && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M'
         && psImage->chIMODE != 'P' )
     {
@@ -1072,9 +1082,10 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         else
         {
 #ifdef CPL_LSB
-            NITFSwapWords( pData, psImage->nWordSize, 
-                           psImage->nBlockWidth * psImage->nBlockHeight, 
-                           psImage->nWordSize );
+            if( psImage->nWordSize == 8 * psImage->nBitsPerSample )
+                NITFSwapWords( pData, psImage->nWordSize, 
+                               psImage->nBlockWidth * psImage->nBlockHeight, 
+                               psImage->nWordSize );
 #endif
 
             return BLKREAD_OK;
@@ -1153,7 +1164,8 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Unable to read %d byte block from %d.", 
-                      sizeof(abyVQCoded), psImage->panBlockStart[iFullBlock] );
+                      (int) sizeof(abyVQCoded), 
+                      psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
         }
         
