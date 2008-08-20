@@ -1114,6 +1114,7 @@ void JPGDataset::Restart()
         sDInfo.out_color_space = JCS_RGB;
     nLoadedScanline = -1;
     jpeg_start_decompress( &sDInfo );
+    bHasDoneJpegStartDecompress = TRUE;
 }
 
 /************************************************************************/
