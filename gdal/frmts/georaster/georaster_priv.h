@@ -30,7 +30,7 @@
 
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "gdal_pam.h"
+#include "gdal_rat.h"
 #include "oci_wrapper.h"
 #include "ogr_spatialref.h"
 #include "cpl_minixml.h"
@@ -134,12 +134,15 @@ private:
 
     GeoRasterWrapper*   poGeoRaster;
     GDALColorTable*     poColorTable;
+    GDALRasterAttributeTable*
+                        poDefaultRAT;
     double              dfMin;
     double              dfMax;
     double              dfMean;
     double              dfStdDev;
     bool                bValidStats;
     double              dfNoData;
+    char*               pszVATName;
 
 public:
 
@@ -161,6 +164,8 @@ public:
     virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
                             double* pdfMin, double* pdfMax, 
                             double* pdfMean, double* pdfStdDev );
+    virtual const       GDALRasterAttributeTable *GetDefaultRAT();
+    virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable * );
 };
 
 //  ---------------------------------------------------------------------------
@@ -184,11 +189,11 @@ private:
     int                 nBlockBytesGDAL;
     int                 nBandBytes;
     GByte*              pabyBlockBuf;
-    OWStatement*        poStmtIO;
+    OWStatement*        poStmtRead;
+    OWStatement*        poStmtWrite;
 
     int                 nCurrentBandBlock;
-    int                 nCurrentXOffset;
-    int                 nCurrentYOffset;
+    int                 nCurrentBlock;
 
     int                 nPyraLevel;
     int                 nCellSize;
@@ -207,7 +212,7 @@ public:
     static GeoRasterWrapper*
                         Open( const char* pszStringID, GDALAccess eAccess );
     bool                Create( char* pszDescription, char* pszInsert );
-    void                GetRasterInfo( char* pszXML );
+    void                GetRasterInfo( void );
     bool                GetImageExtent( double *padfTransform );
     bool                GetStatistics( int nBand,
                             double dfMin,
@@ -223,7 +228,6 @@ public:
     void                GetColorTable( int nBand, GDALColorTable* poCT );
     void                SetColorTable( int nBand, GDALColorTable* poCT );
     bool                SetGeoReference( int nSRIDIn );
-    bool                AddToSRSTable( char* pszWKT, char* pszName );
     char*               GetWKText( int nSRIDin, bool bCode = true );
     bool                GetBandBlock( 
                             int nBand, 
@@ -237,7 +241,7 @@ public:
                             void* pData );
     bool                GetNoData( double* pdfNoDataValue );
     bool                SetNoData( double dfNoDataValue );
-    bool                Flush();
+    CPLXMLNode*         GetMetadata() { return phMetadata; };
 
 public:
 
