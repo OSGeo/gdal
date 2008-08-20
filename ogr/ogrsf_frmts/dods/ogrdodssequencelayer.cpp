@@ -992,8 +992,8 @@ int OGRDODSIsFloatInvalid( const float * pfValToCheck )
     else 
         return FALSE;
 #else
-    if( pabyValToCheck[3] & 0x7f == 0x7f 
-        && pabyValToCheck[2] & 0x80 == 0x80 )
+    if( (pabyValToCheck[3] & 0x7f) == 0x7f 
+        && (pabyValToCheck[2] & 0x80) == 0x80 )
         return TRUE;
     else 
         return FALSE;
@@ -1014,8 +1014,8 @@ int OGRDODSIsDoubleInvalid( const double * pdfValToCheck )
     const unsigned char *pabyValToCheck = (unsigned char *) pdfValToCheck;
 
 #if CPL_IS_LSB == 0 
-    if( pabyValToCheck[0] & 0x7f == 0x7f 
-        && pabyValToCheck[1] & 0xf0 == 0xf0 )
+    if( (pabyValToCheck[0] & 0x7f) == 0x7f 
+        && (pabyValToCheck[1] & 0xf0) == 0xf0 )
         return TRUE;
     else 
         return FALSE;
