@@ -87,7 +87,7 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
     //  Parse arguments
     //  -------------------------------------------------------------------
 
-    char **papszParam = CSLTokenizeString2( 
+    char **papszParam = CSLTokenizeString2(
                             strstr( pszFilename, ":" ) + 1, 
                             ID_SEPARATORS, 
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
@@ -187,7 +187,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  Assign GeoRaster information
     //  -------------------------------------------------------------------
 
-    if( poGRW->phMetadata != NULL )
+    if( poGRW->GetMetadata() != NULL )
     {
         poGRD->nRasterXSize  = poGRW->nRasterColumns;
         poGRD->nRasterYSize  = poGRW->nRasterRows;
@@ -301,7 +301,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     const char* pszFetched = "";
 
-    if( poGRW->phMetadata != NULL )
+    if( poGRW->GetMetadata() != NULL )
     {
         //  ---------------------------------------------------------------
         //  Overwriting an existing GeoRaster
@@ -568,61 +568,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     int iYBlock  = 0;
     int nBlockCols = 0;
     int nBlockRows = 0;
-/*
-    for( int iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++ )
-    {
-        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand );
-        GDALRasterBand *poDstBand = poGRD->GetRasterBand( iBand );
-
-        CPLErr eErr = CE_None;
-
-        for( iYOffset = 0, iYBlock = 0;
-             iYOffset < nYSize;
-             iYOffset += nBlockYSize, iYBlock++ )
-        {
-            for( iXOffset = 0, iXBlock = 0;
-                 iXOffset < nXSize;
-                 iXOffset += nBlockXSize, iXBlock++ )
-            {
-                nBlockCols = MIN( nBlockXSize, nXSize - iXOffset );
-                nBlockRows = MIN( nBlockYSize, nYSize - iYOffset );
-
-                eErr = poSrcBand->RasterIO( GF_Read,
-                    iXOffset, iYOffset,
-                    nBlockCols, nBlockRows, pData,
-                    nBlockCols, nBlockRows, eType, 0, 0 );
-
-                if( eErr != CE_None )
-                {
-                    return NULL;
-                }
-
-                eErr = poDstBand->RasterIO( GF_Write,
-                    iXOffset, iYOffset,
-                    nBlockCols, nBlockRows, pData,
-                    nBlockCols, nBlockRows, eType, 0, 0 );
-
-                if( eErr != CE_None )
-                {
-                    return NULL;
-                }
-
-                if( ( eErr == CE_None ) && ( ! pfnProgress(
-                    ( iYOffset + 1 ) / (double) nYSize, NULL, pProgressData ) ) )
-                {
-                    eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_UserInterrupt,
-                        "User terminated CreateCopy()" );
-                }
-            }
-        }
-    }
- *
- *TODO: optimize for interleave, change GeoRasterWrapper::GetBlock to reduce reading/write.
- */
     CPLErr eErr = CE_None;
-
-//  int nBands = poSrcDS->GetRasterCount();
 
     for( iYOffset = 0, iYBlock = 0;
          iYOffset < nYSize;
@@ -668,7 +614,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
             }
         }
     }
-/**/
+
     CPLFree( pData );
 
     // --------------------------------------------------------------------
@@ -827,8 +773,6 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 void GeoRasterDataset::FlushCache()
 {
-    poGeoRaster->Flush();
-
     GDALDataset::FlushCache();
 }
 
@@ -910,18 +854,19 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         poSRS2->SetAngularUnits( "Decimal Degree", 0.0174532925199433 );
     }
 
+    CPLFree_nt( pszWKT );
+
     if( poSRS2->exportToWkt( &pszWKT ) != OGRERR_NONE )
     {
         delete poSRS2;
         return CE_Failure;
     }
 
-    if( poGeoRaster->AddToSRSTable( pszWKT, 
-        (char*) poSRS2->GetRoot()->GetChild(0)->GetValue() ) )
-    {
-       delete poSRS2;
-       return CE_None;
-    }
+    //TODO: Try to find a correspondent WKT on the server
+
+    CPLDebug("GEORASTER","WKT:%s", pszWKT);
+
+    CPLFree_nt( pszWKT );
 
     delete poSRS2;
 
@@ -947,6 +892,8 @@ char **GeoRasterDataset::GetMetadata( const char *pszDomain )
 CPLErr GeoRasterDataset::Delete( const char* pszFilename )
 {
     (void) pszFilename;
+
+    //TODO: Should I?
 
     return CE_None;
 }

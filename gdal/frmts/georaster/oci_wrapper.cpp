@@ -150,19 +150,13 @@ OWConnection::OWConnection( const char* pszUserIn,
 
 OWConnection::~OWConnection()
 {
-    if( hDescribe )
-    {
-        OCIHandleFree( (dvoid*) hDescribe, (ub4) OCI_HTYPE_DESCRIBE);
-    }
+    OCIHandleFree( (dvoid*) hDescribe, (ub4) OCI_HTYPE_DESCRIBE);
 
-    if( hSvcCtx )
-    {
-        OCILogoff( hSvcCtx, hError );
+    OCILogoff( hSvcCtx, hError );
 
-        OCIHandleFree( (dvoid*) hSvcCtx, (ub4) OCI_HTYPE_SVCCTX);
-        OCIHandleFree( (dvoid*) hError, (ub4) OCI_HTYPE_ERROR);
-        OCIHandleFree( (dvoid*) hEnv, (ub4) OCI_HTYPE_ENV);
-    }
+    OCIHandleFree( (dvoid*) hSvcCtx, (ub4) OCI_HTYPE_SVCCTX);
+    OCIHandleFree( (dvoid*) hError, (ub4) OCI_HTYPE_ERROR);
+    OCIHandleFree( (dvoid*) hEnv, (ub4) OCI_HTYPE_ENV);
 
     CPLFree_nt( pszUser );
     CPLFree_nt( pszPassword );
@@ -315,7 +309,7 @@ OWStatement::~OWStatement()
 
 bool OWStatement::Execute( int nRows )
 {
-    CPLDebug("GEOR","Execute:\n%s\n", pszStatement );
+    CPLDebug("PL/SQL","\n%s\n", pszStatement );
 
     sword nStatus = OCIStmtExecute( poConnect->hSvcCtx, 
         hStmt, 
