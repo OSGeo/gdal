@@ -81,6 +81,47 @@ def tiff_read_off():
     return 'success'
 
 
+###############################################################################
+# Test reading a CMYK tiff as RGBA image
+
+def tiff_read_cmyk_rgba():
+
+    ds = gdal.Open('data/rgbsmall_cmyk.tif')
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if not md.has_key('SOURCE_COLOR_SPACE') or md['SOURCE_COLOR_SPACE'] != 'CMYK':
+        print 'bad value for IMAGE_STRUCTURE[SOURCE_COLOR_SPACE]'
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_RedBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 23303:
+        print 'Expected checksum = %d. Got = %d' % (23303, ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a CMYK tiff as a raw image
+
+def tiff_read_cmyk_raw():
+
+    ds = gdal.Open('GTIFF_RAW:data/rgbsmall_cmyk.tif')
+
+    if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 29430:
+        print 'Expected checksum = %d. Got = %d' % (29430, ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -88,6 +129,8 @@ for item in init_list:
 	sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
 gdaltest_list.append( (tiff_read_off) )
+gdaltest_list.append( (tiff_read_cmyk_rgba) )
+gdaltest_list.append( (tiff_read_cmyk_raw) )
 
 if __name__ == '__main__':
 
