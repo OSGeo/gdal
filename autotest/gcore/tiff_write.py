@@ -1543,6 +1543,78 @@ def tiff_write_48():
     return 'success'
 
 
+###############################################################################
+# Test copying a CMYK TIFF into another CMYK TIFF
+
+def tiff_write_49():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    # We open the source as RAW to get the CMYK bands
+    src_ds = gdal.Open( 'GTIFF_RAW:data/rgbsmall_cmyk.tif' )
+
+    new_ds = gdal.GetDriverByName("GTiff").CreateCopy('tmp/tiff_write_49.tif', src_ds, options = [ 'PHOTOMETRIC=CMYK' ])
+
+    # At this point, for the purpose of the copy, the dataset will have been opened as RAW
+    if new_ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        return 'fail'
+
+    new_ds = None
+
+    new_ds = gdal.Open('GTIFF_RAW:tmp/tiff_write_49.tif')
+
+    for i in range(4):
+        if new_ds.GetRasterBand(i + 1).Checksum() != src_ds.GetRasterBand(i + 1).Checksum():
+            gdaltest.post_reason( 'Didnt get expected checksum ')
+            return 'fail'
+
+    src_ds = None
+    new_ds = None
+
+    drv.Delete( 'tmp/tiff_write_49.tif' )
+
+    return 'success'
+
+
+###############################################################################
+# Test creating a CMYK TIFF from another CMYK TIFF
+
+def tiff_write_50():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    # We open the source as RAW to get the CMYK bands
+    src_ds = gdal.Open( 'GTIFF_RAW:data/rgbsmall_cmyk.tif' )
+
+    new_ds = gdal.GetDriverByName("GTiff").Create('tmp/tiff_write_50.tif', src_ds.RasterXSize, src_ds.RasterYSize, 4, options = [ 'PHOTOMETRIC=CMYK' ])
+    for i in range(4):
+        data = src_ds.GetRasterBand(i+1).ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
+        new_ds.GetRasterBand(i+1).WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+
+    if new_ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        return 'fail'
+
+    new_ds = None
+
+    new_ds = gdal.Open('GTIFF_RAW:tmp/tiff_write_50.tif')
+
+    for i in range(4):
+        if new_ds.GetRasterBand(i + 1).Checksum() != src_ds.GetRasterBand(i + 1).Checksum():
+            gdaltest.post_reason( 'Didnt get expected checksum ')
+            return 'fail'
+
+    src_ds = None
+    new_ds = None
+
+    drv.Delete( 'tmp/tiff_write_50.tif' )
+
+    return 'success'
+
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -1597,6 +1669,8 @@ gdaltest_list = [
     tiff_write_46,
     tiff_write_47,
     tiff_write_48,
+    tiff_write_49,
+    tiff_write_50,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
