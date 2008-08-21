@@ -175,7 +175,7 @@ class GTiffDataset : public GDALPamDataset
     virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *, 
                                     GDALProgressFunc, void * );
 
-    CPLErr	   OpenOffset( TIFF *, toff_t nDirOffset, int, GDALAccess );
+    CPLErr	   OpenOffset( TIFF *, toff_t nDirOffset, int, GDALAccess, int bAllowRGBAInterface = TRUE);
 
     static GDALDataset *OpenDir( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -389,6 +389,17 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
             else
                 eBandInterp = GCI_Undefined;
         }
+    }
+    else if( poDS->nPhotometric == PHOTOMETRIC_SEPARATED )
+    {
+        if( nBand == 1 )
+            eBandInterp = GCI_CyanBand;
+        else if( nBand == 2 )
+            eBandInterp = GCI_MagentaBand;
+        else if( nBand == 3 )
+            eBandInterp = GCI_YellowBand;
+        else
+            eBandInterp = GCI_BlackBand;
     }
     else if( poDS->nPhotometric == PHOTOMETRIC_MINISBLACK && nBand == 1 )
         eBandInterp = GCI_GrayIndex;
@@ -3435,11 +3446,19 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
 int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
+    const char  *pszFilename = poOpenInfo->pszFilename;
+    if( EQUALN(pszFilename,"GTIFF_RAW:", strlen("GTIFF_RAW:")) )
+    {
+        pszFilename += strlen("GTIFF_RAW:");
+        GDALOpenInfo oOpenInfo( pszFilename, poOpenInfo->eAccess );
+        return Identify(&oOpenInfo);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      We have a special hook for handling opening a specific          */
 /*      directory of a TIFF file.                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(poOpenInfo->pszFilename,"GTIFF_DIR:",10) )
+    if( EQUALN(pszFilename,"GTIFF_DIR:",strlen("GTIFF_DIR:")) )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -3481,6 +3500,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     TIFF	*hTIFF;
+    int          bAllowRGBAInterface = TRUE;
+    const char  *pszFilename = poOpenInfo->pszFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Check if it looks like a TIFF file.                             */
@@ -3488,11 +3509,17 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo))
         return NULL;
 
+    if( EQUALN(pszFilename,"GTIFF_RAW:", strlen("GTIFF_RAW:")) )
+    {
+        bAllowRGBAInterface = FALSE;
+        pszFilename +=  strlen("GTIFF_RAW:");
+    }
+
 /* -------------------------------------------------------------------- */
 /*      We have a special hook for handling opening a specific          */
 /*      directory of a TIFF file.                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(poOpenInfo->pszFilename,"GTIFF_DIR:",10) )
+    if( EQUALN(pszFilename,"GTIFF_DIR:",strlen("GTIFF_DIR:")) )
         return OpenDir( poOpenInfo );
 
     GTiffOneTimeInit();
@@ -3501,9 +3528,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_ReadOnly )
-	hTIFF = VSI_TIFFOpen( poOpenInfo->pszFilename, "r" );
+	hTIFF = VSI_TIFFOpen( pszFilename, "r" );
     else
-        hTIFF = VSI_TIFFOpen( poOpenInfo->pszFilename, "r+" );
+        hTIFF = VSI_TIFFOpen( pszFilename, "r+" );
     
     if( hTIFF == NULL )
         return( NULL );
@@ -3514,10 +3541,10 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     GTiffDataset 	*poDS;
 
     poDS = new GTiffDataset();
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetDescription( pszFilename );
 
     if( poDS->OpenOffset( hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE,
-                          poOpenInfo->eAccess ) != CE_None )
+                          poOpenInfo->eAccess, bAllowRGBAInterface ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -3526,12 +3553,12 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, pszFilename );
     
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetDescription( pszFilename );
     poDS->TryLoadXML();
     poDS->ApplyPamInfo();
 
@@ -3611,13 +3638,21 @@ void GTiffDataset::ApplyPamInfo()
 GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !EQUALN(poOpenInfo->pszFilename,"GTIFF_DIR:",10) )
+    int bAllowRGBAInterface = TRUE;
+    const char* pszFilename = poOpenInfo->pszFilename;
+    if( EQUALN(pszFilename,"GTIFF_RAW:", strlen("GTIFF_RAW:")) )
+    {
+        bAllowRGBAInterface = FALSE;
+        pszFilename += strlen("GTIFF_RAW:");
+    }
+
+    if( !EQUALN(pszFilename,"GTIFF_DIR:",strlen("GTIFF_DIR:")) )
         return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Split out filename, and dir#/offset.                            */
 /* -------------------------------------------------------------------- */
-    const char *pszFilename = poOpenInfo->pszFilename + 10;
+    pszFilename += strlen("GTIFF_DIR:");
     int        bAbsolute = FALSE;
     toff_t     nOffset;
     
@@ -3686,7 +3721,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
                   "Opening a specific TIFF directory is not supported in update mode. Switching to read-only" );
     }
 
-    if( poDS->OpenOffset( hTIFF, nOffset, FALSE, GA_ReadOnly ) != CE_None )
+    if( poDS->OpenOffset( hTIFF, nOffset, FALSE, GA_ReadOnly, bAllowRGBAInterface ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -3707,7 +3742,8 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn, 
-				 int bBaseIn, GDALAccess eAccess )
+				 int bBaseIn, GDALAccess eAccess,
+                                 int bAllowRGBAInterface)
 
 {
     uint32	nXSize, nYSize;
@@ -3772,6 +3808,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     {
         int nColorMode;
 
+        SetMetadataItem( "SOURCE_COLOR_SPACE", "YCbCr", "IMAGE_STRUCTURE" );
         if ( !TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode ) ||
               nColorMode != JPEGCOLORMODE_RGB )
             TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
@@ -3812,10 +3849,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the RGBA interface?                    */
 /* -------------------------------------------------------------------- */
-    if( !bTreatAsBitmap && !(nBitsPerSample > 8) 
+    if( bAllowRGBAInterface &&
+        !bTreatAsBitmap && !(nBitsPerSample > 8) 
         && (nPhotometric == PHOTOMETRIC_CIELAB ||
             nPhotometric == PHOTOMETRIC_LOGL ||
             nPhotometric == PHOTOMETRIC_LOGLUV ||
+            nPhotometric == PHOTOMETRIC_SEPARATED ||
             ( nPhotometric == PHOTOMETRIC_YCBCR 
               && nCompression != COMPRESSION_JPEG )) )
     {
@@ -3823,6 +3862,27 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 
         if( TIFFRGBAImageOK( hTIFF, szMessage ) == 1 )
         {
+            const char* pszSourceColorSpace = NULL;
+            switch (nPhotometric)
+            {
+                case PHOTOMETRIC_CIELAB:
+                    pszSourceColorSpace = "CIELAB";
+                    break;
+                case PHOTOMETRIC_LOGL:
+                    pszSourceColorSpace = "LOGL";
+                    break;
+                case PHOTOMETRIC_LOGLUV:
+                    pszSourceColorSpace = "LOGLUV";
+                    break;
+                case PHOTOMETRIC_SEPARATED:
+                    pszSourceColorSpace = "CMYK";
+                    break;
+                case PHOTOMETRIC_YCBCR:
+                    pszSourceColorSpace = "YCbCr";
+                    break;
+            }
+            if (pszSourceColorSpace)
+                SetMetadataItem( "SOURCE_COLOR_SPACE", pszSourceColorSpace, "IMAGE_STRUCTURE" );
             bTreatAsRGBA = TRUE;
             nBands = 4;
         }
@@ -5496,10 +5556,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      PAM facilities.                                                 */
 /* -------------------------------------------------------------------- */
     GTiffDataset *poDS;
+    CPLString osFileName("GTIFF_RAW:");
 
-    poDS = (GTiffDataset *) GDALOpen( pszFilename, GA_Update );
+    osFileName += pszFilename;
+
+    poDS = (GTiffDataset *) GDALOpen( osFileName, GA_Update );
     if( poDS == NULL )
-        poDS = (GTiffDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+        poDS = (GTiffDataset *) GDALOpen( osFileName, GA_ReadOnly );
 
     if ( poDS == NULL )
     {
