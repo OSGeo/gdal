@@ -2942,6 +2942,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         char **papszMD = poMDMD->GetMetadata( papszDomainList[iDomain] );
         int iItem;
 
+        if( EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") )
+            continue; // ignored
         if( EQUAL(papszDomainList[iDomain], "RPC") )
             continue; // handled elsewhere
 
@@ -3184,7 +3186,8 @@ void GTiffDataset::PushMetadataToPam()
 
             if( EQUAL(papszDomainList[iDomain],"RPC")
                 || EQUAL(papszDomainList[iDomain],"IMD") 
-                || EQUAL(papszDomainList[iDomain],"_temporary_") )
+                || EQUAL(papszDomainList[iDomain],"_temporary_")
+                || EQUAL(papszDomainList[iDomain],"IMAGE_STRUCTURE") )
                 continue;
 
             papszMD = CSLDuplicate(papszMD);
