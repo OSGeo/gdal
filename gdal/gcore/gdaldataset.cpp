@@ -473,15 +473,19 @@ int CPL_STDCALL GDALGetRasterYSize( GDALDatasetH hDataset )
 GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 
 {
-    if( nBandId < 1 || nBandId > nBands )
+    if ( papoBands )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
-                  nBandId );
-        return NULL;
+        if( nBandId < 1 || nBandId > nBands )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
+                      nBandId );
+            return NULL;
+        }
+        else
+            return( papoBands[nBandId-1] );
     }
-    else
-        return( papoBands[nBandId-1] );
+    return NULL;
 }
 
 /************************************************************************/
