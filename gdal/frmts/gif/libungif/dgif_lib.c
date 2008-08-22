@@ -940,6 +940,14 @@ int DGifSlurp(GifFileType *GifFile)
 		    return(GIF_ERROR);
 
 		sp = &GifFile->SavedImages[GifFile->ImageCount-1];
+                if( (double) sp->ImageDesc.Width 
+                    * (double) sp->ImageDesc.Height > 100000000.0 )
+                {
+                    /* for GDAL we prefer to not process very large images. */
+                    /* http://trac.osgeo.org/gdal/ticket/2542 */
+                    return D_GIF_ERR_DATA_TOO_BIG;
+                }
+
 		ImageSize = sp->ImageDesc.Width * sp->ImageDesc.Height;
 
 		sp->RasterBits
