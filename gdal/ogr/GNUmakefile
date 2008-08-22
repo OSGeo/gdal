@@ -11,6 +11,10 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
 
+ifeq ($(OGR_ENABLED),yes)
+CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
+endif
+
 CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS)
 
 default:	lib

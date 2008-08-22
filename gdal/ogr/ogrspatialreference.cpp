@@ -201,11 +201,7 @@ OGRSpatialReference &
 OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
 
 {
-    if( poRoot != NULL )
-    {
-        delete poRoot;
-        poRoot = NULL;
-    }
+    Clear();
     
     if( oSource.poRoot != NULL )
         poRoot = oSource.poRoot->Clone();
@@ -5797,3 +5793,55 @@ OGRErr OSRSetAxes( OGRSpatialReferenceH hSRS,
                                                     eYAxisOrientation );
 }
 
+/************************************************************************/
+/*                         exportToMICoordSys()                         */
+/*                                                                      */
+/*      Translate to a mapinfo style CoordSys definition.               */
+/************************************************************************/
+
+#ifdef HAVE_MITAB
+char CPL_DLL *MITABSpatialRef2CoordSys( OGRSpatialReference * );
+OGRSpatialReference CPL_DLL * MITABCoordSys2SpatialRef( const char * );
+#endif
+
+OGRErr OGRSpatialReference::exportToMICoordSys( char **ppszResult ) const
+
+{
+#ifdef HAVE_MITAB
+    *ppszResult = MITABSpatialRef2CoordSys( (OGRSpatialReference *) this );
+    if( *ppszResult != NULL && strlen(*ppszResult) > 0 )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+#else
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "MITAB not available, CoordSys support disabled." );
+
+    return OGRERR_UNSUPPORTED_OPERATION;
+#endif    
+}
+
+/************************************************************************/
+/*                        importFromMICoordSys()                        */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::importFromMICoordSys( const char *pszCoordSys )
+
+{
+#ifdef HAVE_MITAB
+    OGRSpatialReference *poResult = MITABCoordSys2SpatialRef( pszCoordSys );
+
+    if( poResult == NULL )
+        return OGRERR_FAILURE;
+    
+    *this = *poResult;
+    delete poResult;
+
+    return OGRERR_NONE;
+#else
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "MITAB not available, CoordSys support disabled." );
+
+    return OGRERR_UNSUPPORTED_OPERATION;
+#endif    
+}
