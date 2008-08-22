@@ -8,7 +8,7 @@ GDAL_ROOT = 	..
 !INCLUDE ..\nmake.opt
 
 !IFDEF INCLUDE_OGR_FRMTS
-EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED
+EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED -DHAVE_MITAB
 !ENDIF
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
