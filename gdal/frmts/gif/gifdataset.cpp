@@ -366,6 +366,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     GifFileType 	*hGifFile;
     FILE                *fp;
+    int                  nGifErr;
 
     fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     if( fp == NULL )
@@ -383,14 +384,24 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( DGifSlurp( hGifFile ) != GIF_OK )
+    nGifErr = DGifSlurp( hGifFile );
+
+    if( nGifErr != GIF_OK )
     {
         VSIFCloseL( fp );
         DGifCloseFile(hGifFile);
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "DGifSlurp() failed for %s.\n"
-                  "Perhaps the gif file is corrupt?\n",
-                  poOpenInfo->pszFilename );
+
+        if( nGifErr == D_GIF_ERR_DATA_TOO_BIG )
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "DGifSlurp() failed for %s because it was too large.\n"
+                      "Due to limitations of the GDAL GIF driver we deliberately avoid\n"
+                      "opening large GIF files (larger than 100 megapixels).",
+                      poOpenInfo->pszFilename );
+        else
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "DGifSlurp() failed for %s.\n"
+                      "Perhaps the gif file is corrupt?\n",
+                      poOpenInfo->pszFilename );
 
         return NULL;
     }
