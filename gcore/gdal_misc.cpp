@@ -37,11 +37,6 @@ CPL_CVSID("$Id$");
 
 #include "ogr_spatialref.h"
 
-#ifdef HAVE_MITAB
-// from mitab component.
-OGRSpatialReference * MITABCoordSys2SpatialRef( const char * pszCoordSys );
-#endif
-
 /************************************************************************/
 /*                           __pure_virtual()                           */
 /*                                                                      */
@@ -978,21 +973,10 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
                  && EQUAL(papszTok[0],"CoordSys") 
                  && ppszWKT != NULL )
         {
-#ifdef HAVE_MITAB
-            OGRSpatialReference *poSRS = NULL;
+            OGRSpatialReference oSRS;
             
-            poSRS = MITABCoordSys2SpatialRef( papszLines[iLine] );
-            if( poSRS != NULL )
-            {
-                poSRS->exportToWkt( ppszWKT );
-                delete poSRS;
-            }
-
-#else
-            CPLDebug( "GDAL", "GDALLoadTabFile(): Found `%s',\n"
-                 "but GDALLoadTabFile() not configured with MITAB callout.",
-                      papszLines[iLine] );
-#endif
+            if( oSRS.importFromMICoordSys( papszLines[iLine] ) == OGRERR_NONE )
+                oSRS.exportToWkt( ppszWKT );
         }
         else if( EQUAL(papszTok[0],"Units") 
                  && CSLCount(papszTok) > 1 

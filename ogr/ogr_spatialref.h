@@ -164,6 +164,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToPanorama( long *, long *, long *, long *,
                                   double * ) const;
     OGRErr      exportToERM( char *pszProj, char *pszDatum, char *pszUnits );
+    OGRErr      exportToMICoordSys( char ** ) const;
     
     OGRErr      importFromWkt( char ** );
     OGRErr      importFromProj4( const char * );
@@ -183,6 +184,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromERM( const char *pszProj, const char *pszDatum,
                                const char *pszUnits );
     OGRErr      importFromUrl( const char * );
+    OGRErr      importFromMICoordSys( const char * );
     
     OGRErr      morphToESRI();
     OGRErr      morphFromESRI();

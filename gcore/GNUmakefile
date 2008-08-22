@@ -16,10 +16,6 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 # against static libraries becomes more complicated because of the odd
 # call out.
 
-ifeq ($(OGR_ENABLED),yes)
-CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
-endif
-
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING)
 
 default:	$(OBJ)
