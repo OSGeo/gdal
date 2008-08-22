@@ -1082,7 +1082,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         else
         {
 #ifdef CPL_LSB
-            if( psImage->nWordSize == 8 * psImage->nBitsPerSample )
+            if( psImage->nWordSize * 8 == psImage->nBitsPerSample )
                 NITFSwapWords( pData, psImage->nWordSize, 
                                psImage->nBlockWidth * psImage->nBlockHeight, 
                                psImage->nWordSize );
