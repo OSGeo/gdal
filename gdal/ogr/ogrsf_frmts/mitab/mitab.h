@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.115 2008/07/21 14:09:41 aboudreault Exp $
+ * $Id: mitab.h,v 1.116 2008/08/22 16:14:19 fwarmerdam Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.116  2008/08/22 16:14:19  fwarmerdam
+ * export spatialref/coordsys transformers
+ *
  * Revision 1.115  2008/07/21 14:09:41  aboudreault
  * Add font text styles support (bold, italic, etc.) (bug 1922)
  *
@@ -1848,10 +1851,15 @@ class TABDebugFeature: public TABFeature
 
 /* -------------------------------------------------------------------- */
 /*      Some stuff related to spatial reference system handling.        */
+/*                                                                      */
+/*      In GDAL we make use of the coordsys transformation from         */
+/*      other places (sometimes even from plugins), so we               */
+/*      deliberately export these two functions from the DLL.           */
 /* -------------------------------------------------------------------- */
 
-char *MITABSpatialRef2CoordSys( OGRSpatialReference * );
-OGRSpatialReference * MITABCoordSys2SpatialRef( const char * );
+char CPL_DLL *MITABSpatialRef2CoordSys( OGRSpatialReference * );
+OGRSpatialReference CPL_DLL * MITABCoordSys2SpatialRef( const char * );
+
 GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
                                   double &dXMin, double &dYMin,
                                   double &dXMax, double &dYMax );
