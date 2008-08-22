@@ -61,6 +61,8 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 
+using namespace libdap;
+
 CPL_CVSID("$Id$");
 
 CPL_C_START
