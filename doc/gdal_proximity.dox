@@ -59,10 +59,6 @@ be assigned either the nodata value, or 65535.   Distance is interpreted in pixe
 Specify a nodata value to use for the destination proximity raster.
 </dd>
 
-<dt> <b>-nodata</b> <i>n</i>:</dt><dd>
-Specify a nodata value to use for the destination proximity raster.
-</dd>
-
 <dt> <b>-fixed-buf-val</b> <i>n</i>:</dt><dd>
 Specify a value to be applied to all pixels that are within the -maxdist of target pixels (including the target pixels) instead of a distance value.
 </dd>
