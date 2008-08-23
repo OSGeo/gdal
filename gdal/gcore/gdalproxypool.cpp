@@ -842,7 +842,8 @@ GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand()
 
 void GDALProxyPoolRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
 {
-    ((GDALProxyPoolDataset*)poDS)->UnrefUnderlyingDataset(poUnderlyingRasterBand->GetDataset());
+    if (poUnderlyingRasterBand)
+        ((GDALProxyPoolDataset*)poDS)->UnrefUnderlyingDataset(poUnderlyingRasterBand->GetDataset());
 }
 
 /************************************************************************/
