@@ -639,12 +639,14 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     if( pfnProgress )
     {
-        printf( "\nOuput dataset (georaster:%s,%s,%s,%s,%d)\n",
+        printf( "\nOuput dataset: (georaster:%s,%s,%s,%s,%d) on %s,%s\n",
         poGRD->poGeoRaster->poConnection->GetUser(),
         poGRD->poGeoRaster->poConnection->GetPassword(),
         poGRD->poGeoRaster->poConnection->GetServer(),
         poGRD->poGeoRaster->pszDataTable,
-        poGRD->poGeoRaster->nRasterId );
+        poGRD->poGeoRaster->nRasterId,
+        poGRD->poGeoRaster->pszTable,
+        poGRD->poGeoRaster->pszColumn );
     }
 
     return poGRD;
