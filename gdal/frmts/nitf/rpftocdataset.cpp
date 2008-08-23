@@ -238,7 +238,15 @@ class RPFTOCProxyRasterDataSet : public GDALProxyPoolDataset
             return noDataValue;
         }
 
-        GDALDataset* GetUnderlyingDataset() { return GDALProxyPoolDataset::GetUnderlyingDataset(); }
+        GDALDataset* RefUnderlyingDataset()
+        {
+            return GDALProxyPoolDataset::RefUnderlyingDataset();
+        }
+
+        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset)
+        {
+            GDALProxyPoolDataset::UnrefUnderlyingDataset(poUnderlyingDataset);
+        }
 
         void SetReferenceColorTable(GDALColorTable* colorTableRef) { this->colorTableRef = colorTableRef;}
 
@@ -329,11 +337,12 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     CPLErr ret;
     RPFTOCProxyRasterDataSet* proxyDS = (RPFTOCProxyRasterDataSet*)poDS;
-    GDALDataset* ds = proxyDS->GetUnderlyingDataset();
+    GDALDataset* ds = proxyDS->RefUnderlyingDataset();
     if (ds)
     {
         if (proxyDS->SanityCheckOK(ds) == FALSE)
         {
+            proxyDS->UnrefUnderlyingDataset(ds);
             return CE_Failure;
         }
 
@@ -410,6 +419,8 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
     else
         ret = CE_Failure;
 
+    proxyDS->UnrefUnderlyingDataset(ds);
+
     return ret;
 }
 
@@ -470,11 +481,12 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     CPLErr ret;
     RPFTOCProxyRasterDataSet* proxyDS = (RPFTOCProxyRasterDataSet*)poDS;
-    GDALDataset* ds = proxyDS->GetUnderlyingDataset();
+    GDALDataset* ds = proxyDS->RefUnderlyingDataset();
     if (ds)
     {
         if (proxyDS->SanityCheckOK(ds) == FALSE)
         {
+            proxyDS->UnrefUnderlyingDataset(ds);
             return CE_Failure;
         }
 
@@ -515,6 +527,8 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
         ret = CE_Failure;
+
+    proxyDS->UnrefUnderlyingDataset(ds);
 
     return ret;
 }

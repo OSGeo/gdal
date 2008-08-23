@@ -56,8 +56,6 @@ static void *hDLMutex = NULL;
 /* Not thread-safe. See GDALGetOpenDatasets */
 static GDALDataset** ppDatasets = NULL;
 
-
-
 unsigned long GDALSharedDatasetHashFunc(const void* elt)
 {
     SharedDatasetCtxt* psStruct = (SharedDatasetCtxt*) elt;
@@ -79,6 +77,44 @@ void GDALSharedDatasetFreeFunc(void* elt)
     CPLFree(psStruct->pszDescription);
     CPLFree(psStruct);
 }
+
+
+/************************************************************************/
+/* Functions shared between gdalproxypool.cpp and gdaldataset.cpp */
+/************************************************************************/
+
+void** GDALGetphDLMutex();
+void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
+GIntBig GDALGetResponsiblePIDForCurrentThread();
+
+/* The open-shared mutex must be used by the ProxyPool too */
+void** GDALGetphDLMutex()
+{
+    return &hDLMutex;
+}
+
+/* The current thread will act in the behalf of the thread of PID responsiblePID */
+void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID)
+{
+    GIntBig* pResponsiblePID = (GIntBig*) CPLGetTLS(CTLS_RESPONSIBLEPID);
+    if (pResponsiblePID == NULL)
+    {
+        pResponsiblePID = (GIntBig*) CPLMalloc(sizeof(GIntBig));
+        CPLSetTLS(CTLS_RESPONSIBLEPID, pResponsiblePID, TRUE);
+    }
+    *pResponsiblePID = responsiblePID;
+}
+
+/* Get the PID of the thread that the current thread will act in the behalf of */
+/* By default : the current thread acts in the behalf of itself */
+GIntBig GDALGetResponsiblePIDForCurrentThread()
+{
+    GIntBig* pResponsiblePID = (GIntBig*) CPLGetTLS(CTLS_RESPONSIBLEPID);
+    if (pResponsiblePID == NULL)
+        return CPLGetPID();
+    return *pResponsiblePID;
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -156,7 +192,8 @@ GDALDataset::~GDALDataset()
     // we don't want to report destruction of datasets that 
     // were never really open.
     if( nBands != 0 || !EQUAL(GetDescription(),"") )
-        CPLDebug( "GDAL", "GDALClose(%s)", GetDescription() );
+        CPLDebug( "GDAL", "GDALClose(%s, this=%p) (pid=%d, responsiblePID=%d)", GetDescription(), this,
+                  (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
 
 /* -------------------------------------------------------------------- */
 /*      Remove dataset from the "open" dataset list.                    */
@@ -170,7 +207,7 @@ GDALDataset::~GDALDataset()
         {
             SharedDatasetCtxt* psStruct;
             SharedDatasetCtxt sStruct;
-            sStruct.nPID = CPLGetPID();
+            sStruct.nPID = GDALGetResponsiblePIDForCurrentThread();
             sStruct.eAccess = eAccess;
             sStruct.pszDescription = (char*) GetDescription();
             psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
@@ -971,7 +1008,7 @@ void GDALDataset::MarkAsShared()
 
     bShared = TRUE;
 
-    GIntBig nPID = CPLGetPID();
+    GIntBig nPID = GDALGetResponsiblePIDForCurrentThread();
     SharedDatasetCtxt* psStruct;
 
     /* Insert the dataset in the set of shared opened datasets */
@@ -1881,8 +1918,9 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
                 poDS->poDriver = poDriver;
 
             
-            CPLDebug( "GDAL", "GDALOpen(%s) succeeds as %s.",
-                      pszFilename, poDriver->GetDescription() );
+            CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
+                      pszFilename, poDS, poDriver->GetDescription(),
+                      (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
 
             return (GDALDatasetH) poDS;
         }
@@ -1947,7 +1985,7 @@ GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 
         if (phSharedDatasetSet != NULL)
         {
-            GIntBig nThisPID = CPLGetPID();
+            GIntBig nThisPID = GDALGetResponsiblePIDForCurrentThread();
             SharedDatasetCtxt* psStruct;
             SharedDatasetCtxt sStruct;
 

@@ -35,6 +35,7 @@
 #ifdef __cplusplus
 
 #include "gdal_priv.h"
+#include "cpl_hash_set.h"
 
 /* ******************************************************************** */
 /*                        GDALProxyDataset                              */
@@ -43,7 +44,8 @@
 class CPL_DLL GDALProxyDataset : public GDALDataset
 {
     protected:
-        virtual GDALDataset *GetUnderlyingDataset() = 0;
+        virtual GDALDataset *RefUnderlyingDataset() = 0;
+        virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset);
 
         virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
@@ -96,7 +98,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
 class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 {
     protected:
-        virtual GDALRasterBand* GetUnderlyingRasterBand() = 0;
+        virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
+        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
 
         virtual CPLErr IReadBlock( int, int, void * );
         virtual CPLErr IWriteBlock( int, int, void * );
@@ -182,18 +185,30 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 /*                     GDALProxyPoolDataset                             */
 /* ******************************************************************** */
 
+typedef struct _GDALProxyPoolCacheEntry GDALProxyPoolCacheEntry;
 class     GDALProxyPoolRasterBand;
 
 class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
 {
     private:
+        GIntBig          responsiblePID;
+
         char            *pszProjectionRef;
         double           adfGeoTransform[6];
         int              bHasSrcProjection;
         int              bHasSrcGeoTransform;
+        char            *pszGCPProjection;
+        char           **papszFileList;
+        int              nGCPCount;
+        GDAL_GCP        *pasGCPList;
+        CPLHashSet      *metadataSet;
+        CPLHashSet      *metadataItemSet;
+
+        GDALProxyPoolCacheEntry* cacheEntry;
 
     protected:
-        virtual GDALDataset *GetUnderlyingDataset();
+        virtual GDALDataset *RefUnderlyingDataset();
+        virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset);
 
         friend class     GDALProxyPoolRasterBand;
 
@@ -214,22 +229,118 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
         virtual CPLErr GetGeoTransform( double * );
         virtual CPLErr SetGeoTransform( double * );
 
+        /* Special behaviour for the following methods : they return a pointer */
+        /* data type, that must be cached by the proxy, so it doesn't become invalid */
+        /* when the underlying object get closed */
+        virtual char      **GetMetadata( const char * pszDomain  );
+        virtual const char *GetMetadataItem( const char * pszName,
+                                            const char * pszDomain  );
+
+        virtual void *GetInternalHandle( const char * pszRequest );
+        virtual char      **GetFileList(void);
+
+        virtual const char *GetGCPProjection();
+        virtual const GDAL_GCP *GetGCPs();
 };
 
 /* ******************************************************************** */
 /*                  GDALProxyPoolRasterBand                             */
 /* ******************************************************************** */
 
+class GDALProxyPoolOverviewRasterBand;
+class GDALProxyPoolMaskBand;
 
 class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
 {
+    private:
+        CPLHashSet      *metadataSet;
+        CPLHashSet      *metadataItemSet;
+        char            *pszUnitType;
+        char           **papszCategoryNames;
+        GDALColorTable  *poColorTable;
+
+        int                               nSizeProxyOverviewRasterBand;
+        GDALProxyPoolOverviewRasterBand **papoProxyOverviewRasterBand;
+        GDALProxyPoolMaskBand            *poProxyMaskBand;
+
+        void Init();
+
     protected:
-        virtual GDALRasterBand* GetUnderlyingRasterBand();
+        virtual GDALRasterBand* RefUnderlyingRasterBand();
+        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
+
+        friend class GDALProxyPoolOverviewRasterBand;
+        friend class GDALProxyPoolMaskBand;
 
     public:
         GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS, int nBand,
                                 GDALDataType eDataType,
                                 int nBlockXSize, int nBlockYSize);
+        GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS,
+                                GDALRasterBand* poUnderlyingRasterBand);
+        ~GDALProxyPoolRasterBand();
+
+        /* Special behaviour for the following methods : they return a pointer */
+        /* data type, that must be cached by the proxy, so it doesn't become invalid */
+        /* when the underlying object get closed */
+        virtual char      **GetMetadata( const char * pszDomain  );
+        virtual const char *GetMetadataItem( const char * pszName,
+                                            const char * pszDomain  );
+        virtual char **GetCategoryNames();
+        virtual const char *GetUnitType();
+        virtual GDALColorTable *GetColorTable();
+        virtual GDALRasterBand *GetOverview(int);
+        virtual GDALRasterBand *GetRasterSampleOverview( int nDesiredSamples); // TODO
+        virtual GDALRasterBand *GetMaskBand();
+
+};
+
+/* ******************************************************************** */
+/*                  GDALProxyPoolOverviewRasterBand                     */
+/* ******************************************************************** */
+
+class GDALProxyPoolOverviewRasterBand : public GDALProxyPoolRasterBand
+{
+    private:
+        GDALProxyPoolRasterBand *poMainBand;
+        int                      nOverviewBand;
+
+        GDALRasterBand          *poUnderlyingMainRasterBand;
+        int                      nRefCountUnderlyingMainRasterBand;
+
+    protected:
+        virtual GDALRasterBand* RefUnderlyingRasterBand();
+        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
+
+    public:
+        GDALProxyPoolOverviewRasterBand(GDALProxyPoolDataset* poDS,
+                                        GDALRasterBand* poUnderlyingOverviewBand,
+                                        GDALProxyPoolRasterBand* poMainBand,
+                                        int nOverviewBand);
+        ~GDALProxyPoolOverviewRasterBand();
+};
+
+/* ******************************************************************** */
+/*                      GDALProxyPoolMaskBand                           */
+/* ******************************************************************** */
+
+class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
+{
+    private:
+        GDALProxyPoolRasterBand *poMainBand;
+
+        GDALRasterBand          *poUnderlyingMainRasterBand;
+        int                      nRefCountUnderlyingMainRasterBand;
+
+    protected:
+        virtual GDALRasterBand* RefUnderlyingRasterBand();
+        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
+
+    public:
+        GDALProxyPoolMaskBand(GDALProxyPoolDataset* poDS,
+                              GDALRasterBand* poUnderlyingMaskBand,
+                              GDALProxyPoolRasterBand* poMainBand);
+        ~GDALProxyPoolMaskBand();
 };
 
 #endif
