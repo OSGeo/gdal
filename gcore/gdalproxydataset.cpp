@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 retType GDALProxyDataset::methodName argList \
 { \
     retType ret; \
-    GDALDataset* poUnderlyingDataset = GetUnderlyingDataset(); \
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset(); \
     if (poUnderlyingDataset) \
     { \
         ret = poUnderlyingDataset->methodName argParams; \
@@ -49,6 +49,7 @@ retType GDALProxyDataset::methodName argList \
     { \
         ret = retErrValue; \
     } \
+    UnrefUnderlyingDataset(poUnderlyingDataset); \
     return ret; \
 }
 
@@ -77,7 +78,7 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,
 
 void  GDALProxyDataset::FlushCache()
 {
-    GDALDataset* poUnderlyingDataset = GetUnderlyingDataset();
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
     if (poUnderlyingDataset)
         poUnderlyingDataset->FlushCache();
 }
@@ -117,6 +118,13 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT, nBandCount, panBandList, papszOptions))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlags ), (nFlags))
 
+/************************************************************************/
+/*                    UnrefUnderlyingDataset()                        */
+/************************************************************************/
+
+void GDALProxyDataset::UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset)
+{
+}
 
 /* ******************************************************************** */
 /*                        GDALProxyRasterBand                           */
@@ -127,7 +135,7 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlags ), (nFl
 retType GDALProxyRasterBand::methodName argList \
 { \
     retType ret; \
-    GDALRasterBand* poSrcBand = GetUnderlyingRasterBand(); \
+    GDALRasterBand* poSrcBand = RefUnderlyingRasterBand(); \
     if (poSrcBand) \
     { \
         ret = poSrcBand->methodName argParams; \
@@ -136,6 +144,7 @@ retType GDALProxyRasterBand::methodName argList \
     { \
         ret = retErrValue; \
     } \
+    UnrefUnderlyingRasterBand(poSrcBand); \
     return ret; \
 }
 
@@ -254,3 +263,11 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultRAT,
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL, GetMaskBand, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlags ), (nFlags))
+
+/************************************************************************/
+/*                 UnrefUnderlyingRasterBand()                        */
+/************************************************************************/
+
+void GDALProxyRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
+{
+}
