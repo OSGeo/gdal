@@ -81,6 +81,7 @@ void  GDALProxyDataset::FlushCache()
     GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
     if (poUnderlyingDataset)
         poUnderlyingDataset->FlushCache();
+    UnrefUnderlyingDataset(poUnderlyingDataset);
 }
 
 D_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))
