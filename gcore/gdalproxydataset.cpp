@@ -44,12 +44,12 @@ retType GDALProxyDataset::methodName argList \
     if (poUnderlyingDataset) \
     { \
         ret = poUnderlyingDataset->methodName argParams; \
+        UnrefUnderlyingDataset(poUnderlyingDataset); \
     } \
     else \
     { \
         ret = retErrValue; \
     } \
-    UnrefUnderlyingDataset(poUnderlyingDataset); \
     return ret; \
 }
 
@@ -80,8 +80,10 @@ void  GDALProxyDataset::FlushCache()
 {
     GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
     if (poUnderlyingDataset)
+    {
         poUnderlyingDataset->FlushCache();
-    UnrefUnderlyingDataset(poUnderlyingDataset);
+        UnrefUnderlyingDataset(poUnderlyingDataset);
+    }
 }
 
 D_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))
@@ -140,12 +142,12 @@ retType GDALProxyRasterBand::methodName argList \
     if (poSrcBand) \
     { \
         ret = poSrcBand->methodName argParams; \
+        UnrefUnderlyingRasterBand(poSrcBand); \
     } \
     else \
     { \
         ret = retErrValue; \
     } \
-    UnrefUnderlyingRasterBand(poSrcBand); \
     return ret; \
 }
 
