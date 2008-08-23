@@ -33,6 +33,16 @@
 
 CPL_CVSID("$Id$");
 
+/* Functions shared between gdalproxypool.cpp and gdaldataset.cpp */
+void** GDALGetphDLMutex();
+void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
+GIntBig GDALGetResponsiblePIDForCurrentThread();
+
+/* We *must* share the same mutex as the gdaldataset.cpp file, as we are */
+/* doing GDALOpen() calls that can indirectly call GDALOpenShared() on */
+/* an auxiliary dataset ... */
+/* Then we could get dead-locks in multi-threaded use case */
+
 /* ******************************************************************** */
 /*                         GDALDatasetPool                              */
 /* ******************************************************************** */
@@ -42,36 +52,41 @@ CPL_CVSID("$Id$");
 
 class GDALDatasetPool;
 static GDALDatasetPool* singleton = NULL;
-static int refCount = 0;
-static void* CacheMutex = NULL;
 
-typedef struct _CacheEntry CacheEntry;
-struct _CacheEntry
+struct _GDALProxyPoolCacheEntry
 {
-    GIntBig pid;
-    char* fileName;
-    GDALDataset* ds;
+    GIntBig       responsiblePID;
+    char         *pszFileName;
+    GDALDataset  *poDS;
+    int           refCount;
 
-    CacheEntry* next;
+    GDALProxyPoolCacheEntry* prev;
+    GDALProxyPoolCacheEntry* next;
 };
 
 class GDALDatasetPool
 {
     private:
+        int refCount;
         int maxSize;
         int currentSize;
-        CacheEntry* firstEntry;
+        GDALProxyPoolCacheEntry* firstEntry;
+        GDALProxyPoolCacheEntry* lastEntry;
 
         /* Caution : to be sure that we don't run out of entries, size must be at */
         /* least greater or equal than the maximum number of threads */
         GDALDatasetPool(int maxSize);
         ~GDALDatasetPool();
-        GDALDataset* _GetDataset(const char* fileName, GDALAccess eAccess);
+        GDALProxyPoolCacheEntry* _RefDataset(const char* pszFileName, GDALAccess eAccess);
+
+        void ShowContent();
+        void CheckLinks();
 
     public:
         static void Ref();
         static void Unref();
-        static GDALDataset* GetDataset(const char* fileName, GDALAccess eAccess);
+        static GDALProxyPoolCacheEntry* RefDataset(const char* pszFileName, GDALAccess eAccess);
+        static void UnrefDataset(GDALProxyPoolCacheEntry* cacheEntry);
 };
 
 
@@ -84,6 +99,8 @@ GDALDatasetPool::GDALDatasetPool(int maxSize)
     this->maxSize = maxSize;
     currentSize = 0;
     firstEntry = NULL;
+    lastEntry = NULL;
+    refCount = 0;
 }
 
 /************************************************************************/
@@ -92,84 +109,175 @@ GDALDatasetPool::GDALDatasetPool(int maxSize)
 
 GDALDatasetPool::~GDALDatasetPool()
 {
-    CacheEntry* cur = firstEntry;
+    GDALProxyPoolCacheEntry* cur = firstEntry;
+    GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
     while(cur)
     {
-        CacheEntry* next = cur->next;
-        CPLFree(cur->fileName);
-        if (cur->ds)
-            GDALClose(cur->ds);
+        GDALProxyPoolCacheEntry* next = cur->next;
+        CPLFree(cur->pszFileName);
+        CPLAssert(cur->refCount == 0);
+        if (cur->poDS)
+        {
+            GDALSetResponsiblePIDForCurrentThread(cur->responsiblePID);
+            GDALClose(cur->poDS);
+        }
         CPLFree(cur);
         cur = next;
+    }
+    GDALSetResponsiblePIDForCurrentThread(responsiblePID);
+}
+
+/************************************************************************/
+/*                            ShowContent()                             */
+/************************************************************************/
+
+void GDALDatasetPool::ShowContent()
+{
+    GDALProxyPoolCacheEntry* cur = firstEntry;
+    int i = 0;
+    while(cur)
+    {
+        printf("[%d] pszFileName=%s, refCount=%d, responsiblePID=%d\n",
+               i, cur->pszFileName, cur->refCount, (int)cur->responsiblePID);
+        i++;
+        cur = cur->next;
     }
 }
 
 /************************************************************************/
-/*                            _GetDataset()                             */
+/*                             CheckLinks()                             */
 /************************************************************************/
 
-GDALDataset* GDALDatasetPool::_GetDataset(const char* fileName, GDALAccess eAccess)
+void GDALDatasetPool::CheckLinks()
 {
-    CacheEntry* cur = firstEntry;
-    CacheEntry* lastEntry = cur;
-    CacheEntry* prevEntry = NULL;
-    GIntBig cur_pid = CPLGetPID();
+    GDALProxyPoolCacheEntry* cur = firstEntry;
+    int i = 0;
+    while(cur)
+    {
+        if (cur != firstEntry)
+            CPLAssert(cur->prev->next == cur);
+        if (cur != lastEntry)
+            CPLAssert(cur->next->prev == cur);
+        i++;
+        if (cur->next == NULL)
+            CPLAssert(cur == lastEntry);
+        cur = cur->next;
+    }
+    CPLAssert(i == currentSize);
+}
+
+/************************************************************************/
+/*                            _RefDataset()                             */
+/************************************************************************/
+
+GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName, GDALAccess eAccess)
+{
+    GDALProxyPoolCacheEntry* cur = firstEntry;
+    GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
+    GDALProxyPoolCacheEntry* lastEntryWithZeroRefCount = NULL;
 
     while(cur)
     {
-        CacheEntry* next = cur->next;
+        GDALProxyPoolCacheEntry* next = cur->next;
 
-        if (strcmp(cur->fileName, fileName) == 0 &&
-            cur->pid == cur_pid)
+        if (strcmp(cur->pszFileName, pszFileName) == 0 &&
+            cur->responsiblePID == responsiblePID)
         {
             if (cur != firstEntry)
             {
-                prevEntry->next = cur->next;
+                /* Move to begin */
+                if (cur->next)
+                    cur->next->prev = cur->prev;
+                else
+                    lastEntry = cur->prev;
+                cur->prev->next = cur->next;
+                cur->prev = NULL;
+                firstEntry->prev = cur;
                 cur->next = firstEntry;
                 firstEntry = cur;
+
+#ifdef DEBUG_PROXY_POOL
+                CheckLinks();
+#endif
             }
-            return cur->ds;
+
+            cur->refCount ++;
+            return cur;
         }
 
-        if (next)
-        {
-            prevEntry = cur;
-            lastEntry = next;
-        }
+        if (cur->refCount == 0)
+            lastEntryWithZeroRefCount = cur;
+
         cur = next;
     }
 
     if (currentSize == maxSize)
     {
-        CPLAssert(lastEntry);
-        CPLFree(lastEntry->fileName);
-        if (lastEntry->ds)
-            GDALClose(lastEntry->ds);
+        if (lastEntryWithZeroRefCount == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many threads are running for the current value of the dataset pool size (%d).\n"
+                     "or too many proxy datasets are opened in a cascaded way.\n"
+                     "Try increasing GDAL_MAX_DATASET_POOL_SIZE.", maxSize);
+            return NULL;
+        }
 
-        prevEntry->next = NULL;
-        cur = lastEntry;
-        cur->next = firstEntry;
-        firstEntry = cur;
+        CPLFree(lastEntryWithZeroRefCount->pszFileName);
+        lastEntryWithZeroRefCount->pszFileName = NULL;
+        if (lastEntryWithZeroRefCount->poDS)
+        {
+            /* Close by pretending we are the thread that GDALOpen'ed this */
+            /* dataset */
+            GDALSetResponsiblePIDForCurrentThread(lastEntryWithZeroRefCount->responsiblePID);
+            GDALClose(lastEntryWithZeroRefCount->poDS);
+            lastEntryWithZeroRefCount->poDS = NULL;
+            GDALSetResponsiblePIDForCurrentThread(responsiblePID);
+        }
+
+        /* Recycle this entry for the to-be-openeded dataset and */
+        /* moves it to the top of the list */
+        if (lastEntryWithZeroRefCount->prev)
+            lastEntryWithZeroRefCount->prev->next = lastEntryWithZeroRefCount->next;
+        else
+            CPLAssert(0);
+        if (lastEntryWithZeroRefCount->next)
+            lastEntryWithZeroRefCount->next->prev = lastEntryWithZeroRefCount->prev;
+        else
+        {
+            CPLAssert(lastEntryWithZeroRefCount == lastEntry);
+            lastEntry->prev->next = NULL;
+            lastEntry = lastEntry->prev;
+        }
+        lastEntryWithZeroRefCount->prev = NULL;
+        lastEntryWithZeroRefCount->next = firstEntry;
+        firstEntry->prev = lastEntryWithZeroRefCount;
+        cur = firstEntry = lastEntryWithZeroRefCount;
+#ifdef DEBUG_PROXY_POOL
+        CheckLinks();
+#endif
     }
     else
     {
-        cur = (CacheEntry*) CPLMalloc(sizeof(CacheEntry));
-        cur->next = NULL;
-        if (lastEntry)
-            lastEntry->next = cur;
-        else
-        {
-            CPLAssert(firstEntry == NULL);
-            firstEntry = cur;
-        }
-
+        /* Prepend */
+        cur = (GDALProxyPoolCacheEntry*) CPLMalloc(sizeof(GDALProxyPoolCacheEntry));
+        if (lastEntry == NULL)
+            lastEntry = cur;
+        cur->prev = NULL;
+        cur->next = firstEntry;
+        if (firstEntry)
+            firstEntry->prev = cur;
+        firstEntry = cur;
         currentSize ++;
+#ifdef DEBUG_PROXY_POOL
+        CheckLinks();
+#endif
     }
 
-    cur->fileName = CPLStrdup(fileName);
-    cur->pid = cur_pid;
-    cur->ds = (GDALDataset*) GDALOpen(fileName, eAccess);
-    return cur->ds;
+    cur->pszFileName = CPLStrdup(pszFileName);
+    cur->responsiblePID = responsiblePID;
+    cur->refCount = 1;
+    cur->poDS = (GDALDataset*) GDALOpen(pszFileName, eAccess);
+    return cur;
 }
 
 /************************************************************************/
@@ -178,7 +286,7 @@ GDALDataset* GDALDatasetPool::_GetDataset(const char* fileName, GDALAccess eAcce
 
 void GDALDatasetPool::Ref()
 {
-    CPLMutexHolderD( &CacheMutex );
+    CPLMutexHolderD( GDALGetphDLMutex() );
     if (singleton == NULL)
     {
         int maxSize = atoi(CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100"));
@@ -186,7 +294,7 @@ void GDALDatasetPool::Ref()
             maxSize = 100;
         singleton = new GDALDatasetPool(maxSize);
     }
-    refCount++;
+    singleton->refCount++;
 }
 
 /************************************************************************/
@@ -195,9 +303,14 @@ void GDALDatasetPool::Ref()
 
 void GDALDatasetPool::Unref()
 {
-    CPLMutexHolderD( &CacheMutex );
-    refCount--;
-    if (refCount == 0)
+    CPLMutexHolderD( GDALGetphDLMutex() );
+    if (! singleton)
+    {
+        CPLAssert(0);
+        return;
+    }
+    singleton->refCount--;
+    if (singleton->refCount == 0)
     {
         delete singleton;
         singleton = NULL;
@@ -205,15 +318,90 @@ void GDALDatasetPool::Unref()
 }
 
 /************************************************************************/
-/*                           GetDataset()                               */
+/*                           RefDataset()                               */
 /************************************************************************/
 
-GDALDataset* GDALDatasetPool::GetDataset(const char* fileName, GDALAccess eAccess)
+GDALProxyPoolCacheEntry* GDALDatasetPool::RefDataset(const char* pszFileName, GDALAccess eAccess)
 {
-    CPLMutexHolderD( &CacheMutex );
-    if (! singleton) return NULL;
-    return singleton->_GetDataset(fileName, eAccess);
+    CPLMutexHolderD( GDALGetphDLMutex() );
+    return singleton->_RefDataset(pszFileName, eAccess);
 }
+
+/************************************************************************/
+/*                       UnrefDataset()                                 */
+/************************************************************************/
+
+void GDALDatasetPool::UnrefDataset(GDALProxyPoolCacheEntry* cacheEntry)
+{
+    CPLMutexHolderD( GDALGetphDLMutex() );
+    cacheEntry->refCount --;
+}
+
+CPL_C_START
+
+typedef struct
+{
+    char* pszDomain;
+    char** papszMetadata;
+} GetMetadataElt;
+
+static
+unsigned long hash_func_get_metadata(const void* _elt)
+{
+    GetMetadataElt* elt = (GetMetadataElt*) _elt;
+    return CPLHashSetHashStr(elt->pszDomain);
+}
+
+static
+int equal_func_get_metadata(const void* _elt1, const void* _elt2)
+{
+    GetMetadataElt* elt1 = (GetMetadataElt*) _elt1;
+    GetMetadataElt* elt2 = (GetMetadataElt*) _elt2;
+    return CPLHashSetEqualStr(elt1->pszDomain, elt2->pszDomain);
+}
+
+static
+void free_func_get_metadata(void* _elt)
+{
+    GetMetadataElt* elt = (GetMetadataElt*) _elt;
+    CPLFree(elt->pszDomain);
+    CSLDestroy(elt->papszMetadata);
+}
+
+
+typedef struct
+{
+    char* pszName;
+    char* pszDomain;
+    char* pszMetadataItem;
+} GetMetadataItemElt;
+
+static
+unsigned long hash_func_get_metadata_item(const void* _elt)
+{
+    GetMetadataItemElt* elt = (GetMetadataItemElt*) _elt;
+    return CPLHashSetHashStr(elt->pszName) ^ CPLHashSetHashStr(elt->pszDomain);
+}
+
+static
+int equal_func_get_metadata_item(const void* _elt1, const void* _elt2)
+{
+    GetMetadataItemElt* elt1 = (GetMetadataItemElt*) _elt1;
+    GetMetadataItemElt* elt2 = (GetMetadataItemElt*) _elt2;
+    return CPLHashSetEqualStr(elt1->pszName, elt2->pszName) &&
+           CPLHashSetEqualStr(elt1->pszDomain, elt2->pszDomain);
+}
+
+static
+void free_func_get_metadata_item(void* _elt)
+{
+    GetMetadataItemElt* elt = (GetMetadataItemElt*) _elt;
+    CPLFree(elt->pszName);
+    CPLFree(elt->pszDomain);
+    CPLFree(elt->pszMetadataItem);
+}
+
+CPL_C_END
 
 /* ******************************************************************** */
 /*                     GDALProxyPoolDataset                             */
@@ -234,6 +422,8 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
     this->eAccess = eAccess;
 
     this->bShared = bShared;
+
+    this->responsiblePID = GDALGetResponsiblePIDForCurrentThread();
 
     if (pszProjectionRef)
     {
@@ -260,6 +450,14 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
         adfGeoTransform[5] = 1;
         bHasSrcGeoTransform = FALSE;
     }
+
+    pszGCPProjection = NULL;
+    papszFileList = NULL;
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    metadataSet = NULL;
+    metadataItemSet = NULL;
+    cacheEntry = NULL;
 }
 
 /************************************************************************/
@@ -269,6 +467,17 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
 GDALProxyPoolDataset::~GDALProxyPoolDataset()
 {
     CPLFree(pszProjectionRef);
+    CPLFree(pszGCPProjection);
+    CSLDestroy(papszFileList);
+    if (nGCPCount)
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+    if (metadataSet)
+        CPLHashSetDestroy(metadataSet);
+    if (metadataItemSet)
+        CPLHashSetDestroy(metadataItemSet);
 
     GDALDatasetPool::Unref();
 }
@@ -283,14 +492,40 @@ void GDALProxyPoolDataset::AddSrcBandDescription( GDALDataType eDataType, int nB
 }
 
 /************************************************************************/
-/*                    GetUnderlyingDataset()                            */
+/*                    RefUnderlyingDataset()                            */
 /************************************************************************/
 
-GDALDataset* GDALProxyPoolDataset::GetUnderlyingDataset()
+GDALDataset* GDALProxyPoolDataset::RefUnderlyingDataset()
 {
-    return GDALDatasetPool::GetDataset(GetDescription(), eAccess);
+    /* We pretend that the current thread is responsiblePID, that is */
+    /* to say the thread that created that GDALProxyPoolDataset object. */
+    /* This is for the case when a GDALProxyPoolDataset is created by a */
+    /* thread and used by other threads. These other threads, when doing actual */
+    /* IO, will come there and potentially open the underlying dataset. */
+    /* By doing this, they can indirectly call GDALOpenShared() on .aux file */
+    /* for example. So this call to GDALOpenShared() must occur as if it */
+    /* was done by the creating thread, otherwise it will not be correctly closed afterwards... */
+    /* To make a long story short : this is necessary when warping with ChunkAndWarpMulti */
+    /* a VRT of GeoTIFFs that have associated .aux files */
+    GIntBig curResponsiblePID = GDALGetResponsiblePIDForCurrentThread();
+    GDALSetResponsiblePIDForCurrentThread(responsiblePID);
+    cacheEntry = GDALDatasetPool::RefDataset(GetDescription(), eAccess);
+    GDALSetResponsiblePIDForCurrentThread(curResponsiblePID);
+    return (cacheEntry) ? cacheEntry->poDS : NULL;
 }
 
+/************************************************************************/
+/*                    UnrefUnderlyingDataset()                        */
+/************************************************************************/
+
+void GDALProxyPoolDataset::UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset)
+{
+    if (cacheEntry)
+    {
+        CPLAssert(cacheEntry->poDS == poUnderlyingDataset);
+        GDALDatasetPool::UnrefDataset(cacheEntry);
+    }
+}
 
 /************************************************************************/
 /*                        SetProjection()                               */
@@ -342,6 +577,136 @@ CPLErr GDALProxyPoolDataset::GetGeoTransform( double * padfGeoTransform )
 }
 
 /************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char      **GDALProxyPoolDataset::GetMetadata( const char * pszDomain  )
+{
+    if (metadataSet == NULL)
+        metadataSet = CPLHashSetNew(hash_func_get_metadata,
+                                    equal_func_get_metadata,
+                                    free_func_get_metadata);
+
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
+
+    char** papszUnderlyingMetadata = poUnderlyingDataset->GetMetadata(pszDomain);
+
+    GetMetadataElt* pElt = (GetMetadataElt*) CPLMalloc(sizeof(GetMetadataElt));
+    pElt->pszDomain = (pszDomain) ? CPLStrdup(pszDomain) : NULL;
+    pElt->papszMetadata = CSLDuplicate(papszUnderlyingMetadata);
+    CPLHashSetInsert(metadataSet, pElt);
+
+    UnrefUnderlyingDataset(poUnderlyingDataset);
+
+    return pElt->papszMetadata;
+}
+
+/************************************************************************/
+/*                        GetMetadataItem()                             */
+/************************************************************************/
+
+const char *GDALProxyPoolDataset::GetMetadataItem( const char * pszName,
+                                                   const char * pszDomain  )
+{
+    if (metadataItemSet == NULL)
+        metadataItemSet = CPLHashSetNew(hash_func_get_metadata_item,
+                                        equal_func_get_metadata_item,
+                                        free_func_get_metadata_item);
+
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
+
+    const char* pszUnderlyingMetadataItem =
+            poUnderlyingDataset->GetMetadataItem(pszName, pszDomain);
+
+    GetMetadataItemElt* pElt = (GetMetadataItemElt*) CPLMalloc(sizeof(GetMetadataItemElt));
+    pElt->pszName = (pszName) ? CPLStrdup(pszName) : NULL;
+    pElt->pszDomain = (pszDomain) ? CPLStrdup(pszDomain) : NULL;
+    pElt->pszMetadataItem = (pszUnderlyingMetadataItem) ? CPLStrdup(pszUnderlyingMetadataItem) : NULL;
+    CPLHashSetInsert(metadataItemSet, pElt);
+
+    UnrefUnderlyingDataset(poUnderlyingDataset);
+
+    return pElt->pszMetadataItem;
+}
+
+/************************************************************************/
+/*                      GetInternalHandle()                             */
+/************************************************************************/
+
+void *GDALProxyPoolDataset::GetInternalHandle( const char * pszRequest)
+{
+    CPLError(CE_Warning, CPLE_AppDefined,
+             "GetInternalHandle() cannot be safely called on a proxy pool dataset\n"
+             "as the returned value may be invalidated at any time.\n");
+    return GDALProxyDataset::GetInternalHandle(pszRequest);
+}
+
+/************************************************************************/
+/*                         GetFileList()                                */
+/************************************************************************/
+
+char      **GDALProxyPoolDataset::GetFileList(void)
+{
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
+
+    CSLDestroy(papszFileList);
+    papszFileList = NULL;
+
+    char** papszUnderlyingFileList = poUnderlyingDataset->GetFileList();
+    if (papszUnderlyingFileList)
+        papszFileList = CSLDuplicate(papszUnderlyingFileList);
+
+    UnrefUnderlyingDataset(poUnderlyingDataset);
+
+    return papszFileList;
+}
+
+/************************************************************************/
+/*                     GetGCPProjection()                               */
+/************************************************************************/
+
+const char *GDALProxyPoolDataset::GetGCPProjection()
+{
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
+
+    CPLFree(pszGCPProjection);
+    pszGCPProjection = NULL;
+
+    const char* pszUnderlyingGCPProjection = poUnderlyingDataset->GetGCPProjection();
+    if (pszUnderlyingGCPProjection)
+        pszGCPProjection = CPLStrdup(pszUnderlyingGCPProjection);
+
+    UnrefUnderlyingDataset(poUnderlyingDataset);
+
+    return pszGCPProjection;
+}
+
+/************************************************************************/
+/*                            GetGCPs()                                 */
+/************************************************************************/
+
+const GDAL_GCP *GDALProxyPoolDataset::GetGCPs()
+{
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
+
+    if (nGCPCount)
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+        pasGCPList = NULL;
+    }
+
+    const GDAL_GCP* pasUnderlyingGCPList = poUnderlyingDataset->GetGCPs();
+    nGCPCount = poUnderlyingDataset->GetGCPCount();
+    if (nGCPCount)
+        pasGCPList = GDALDuplicateGCPs(nGCPCount, pasUnderlyingGCPList );
+
+    UnrefUnderlyingDataset(poUnderlyingDataset);
+
+    return pasGCPList;
+}
+
+/************************************************************************/
 /*                     GDALProxyPoolDatasetCreate()                     */
 /************************************************************************/
 
@@ -380,7 +745,7 @@ void GDALProxyPoolDatasetAddSrcBandDescription( GDALProxyPoolDatasetH hProxyPool
 }
 
 /* ******************************************************************** */
-/*                    GDALProxyPoolRasterBand                           */
+/*                    GDALProxyPoolRasterBand()                         */
 /* ******************************************************************** */
 
 GDALProxyPoolRasterBand::GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS, int nBand,
@@ -394,17 +759,369 @@ GDALProxyPoolRasterBand::GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS, int
     this->nRasterYSize = poDS->GetRasterYSize();
     this->nBlockXSize  = nBlockXSize;
     this->nBlockYSize  = nBlockYSize;
+
+    Init();
 }
 
+/* ******************************************************************** */
+/*                    GDALProxyPoolRasterBand()                         */
+/* ******************************************************************** */
+
+GDALProxyPoolRasterBand::GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS,
+                                                 GDALRasterBand* poUnderlyingRasterBand)
+{
+    this->poDS         = poDS;
+    this->nBand        = poUnderlyingRasterBand->GetBand();
+    this->eDataType    = poUnderlyingRasterBand->GetRasterDataType();
+    this->nRasterXSize = poUnderlyingRasterBand->GetXSize();
+    this->nRasterYSize = poUnderlyingRasterBand->GetYSize();
+    poUnderlyingRasterBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+    Init();
+}
+
+/* ******************************************************************** */
+ /*                                  Init()                             */
+/* ******************************************************************** */
+
+void GDALProxyPoolRasterBand::Init()
+{
+    metadataSet = NULL;
+    metadataItemSet = NULL;
+    pszUnitType = NULL;
+    papszCategoryNames = NULL;
+    poColorTable = NULL;
+
+    nSizeProxyOverviewRasterBand = 0;
+    papoProxyOverviewRasterBand = NULL;
+    poProxyMaskBand = NULL;
+}
+
+/* ******************************************************************** */
+/*                   ~GDALProxyPoolRasterBand()                         */
+/* ******************************************************************** */
+GDALProxyPoolRasterBand::~GDALProxyPoolRasterBand()
+{
+    if (metadataSet)
+        CPLHashSetDestroy(metadataSet);
+    if (metadataItemSet)
+        CPLHashSetDestroy(metadataItemSet);
+    CPLFree(pszUnitType);
+    CSLDestroy(papszCategoryNames);
+    if (poColorTable)
+        delete poColorTable;
+
+    int i;
+    for(i=0;i<nSizeProxyOverviewRasterBand;i++)
+    {
+        if (papoProxyOverviewRasterBand[i])
+            delete papoProxyOverviewRasterBand[i];
+    }
+    CPLFree(papoProxyOverviewRasterBand);
+    if (poProxyMaskBand)
+        delete poProxyMaskBand;
+}
+
+
 /************************************************************************/
-/*                  GetUnderlyingRasterBand()                           */
+/*                  RefUnderlyingRasterBand()                           */
 /************************************************************************/
 
-GDALRasterBand* GDALProxyPoolRasterBand::GetUnderlyingRasterBand()
+GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand()
 {
-    GDALDataset* poUnderlyingDataset = ((GDALProxyPoolDataset*)poDS)->GetUnderlyingDataset();
+    GDALDataset* poUnderlyingDataset = ((GDALProxyPoolDataset*)poDS)->RefUnderlyingDataset();
     if (poUnderlyingDataset == NULL)
         return NULL;
 
     return poUnderlyingDataset->GetRasterBand(nBand);
+}
+
+/************************************************************************/
+/*                  UnrefUnderlyingRasterBand()                       */
+/************************************************************************/
+
+void GDALProxyPoolRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
+{
+    ((GDALProxyPoolDataset*)poDS)->UnrefUnderlyingDataset(poUnderlyingRasterBand->GetDataset());
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char      **GDALProxyPoolRasterBand::GetMetadata( const char * pszDomain  )
+{
+    if (metadataSet == NULL)
+        metadataSet = CPLHashSetNew(hash_func_get_metadata,
+                                    equal_func_get_metadata,
+                                    free_func_get_metadata);
+
+    GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand();
+
+    char** papszUnderlyingMetadata = poUnderlyingRasterBand->GetMetadata(pszDomain);
+
+    GetMetadataElt* pElt = (GetMetadataElt*) CPLMalloc(sizeof(GetMetadataElt));
+    pElt->pszDomain = (pszDomain) ? CPLStrdup(pszDomain) : NULL;
+    pElt->papszMetadata = CSLDuplicate(papszUnderlyingMetadata);
+    CPLHashSetInsert(metadataSet, pElt);
+
+    UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+
+    return pElt->papszMetadata;
+}
+
+/************************************************************************/
+/*                        GetMetadataItem()                             */
+/************************************************************************/
+
+const char *GDALProxyPoolRasterBand::GetMetadataItem( const char * pszName,
+                                                   const char * pszDomain  )
+{
+    if (metadataItemSet == NULL)
+        metadataItemSet = CPLHashSetNew(hash_func_get_metadata_item,
+                                        equal_func_get_metadata_item,
+                                        free_func_get_metadata_item);
+
+    GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand();
+
+    const char* pszUnderlyingMetadataItem =
+            poUnderlyingRasterBand->GetMetadataItem(pszName, pszDomain);
+
+    GetMetadataItemElt* pElt = (GetMetadataItemElt*) CPLMalloc(sizeof(GetMetadataItemElt));
+    pElt->pszName = (pszName) ? CPLStrdup(pszName) : NULL;
+    pElt->pszDomain = (pszDomain) ? CPLStrdup(pszDomain) : NULL;
+    pElt->pszMetadataItem = (pszUnderlyingMetadataItem) ? CPLStrdup(pszUnderlyingMetadataItem) : NULL;
+    CPLHashSetInsert(metadataItemSet, pElt);
+
+    UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+
+    return pElt->pszMetadataItem;
+}
+
+/* ******************************************************************** */
+/*                       GetCategoryNames()                             */
+/* ******************************************************************** */
+
+char **GDALProxyPoolRasterBand::GetCategoryNames()
+{
+    GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand();
+
+    CSLDestroy(papszCategoryNames);
+    papszCategoryNames = NULL;
+
+    char** papszUnderlyingCategoryNames = poUnderlyingRasterBand->GetCategoryNames();
+    if (papszUnderlyingCategoryNames)
+        papszCategoryNames = CSLDuplicate(papszUnderlyingCategoryNames);
+
+    UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+
+    return papszCategoryNames;
+}
+
+/* ******************************************************************** */
+/*                           GetUnitType()                              */
+/* ******************************************************************** */
+
+const char *GDALProxyPoolRasterBand::GetUnitType()
+{
+    GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand();
+
+    CPLFree(pszUnitType);
+    pszUnitType = NULL;
+
+    const char* pszUnderlyingUnitType = poUnderlyingRasterBand->GetUnitType();
+    if (pszUnderlyingUnitType)
+        pszUnitType = CPLStrdup(pszUnderlyingUnitType);
+
+    UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+
+    return pszUnitType;
+}
+
+/* ******************************************************************** */
+/*                          GetColorTable()                             */
+/* ******************************************************************** */
+
+GDALColorTable *GDALProxyPoolRasterBand::GetColorTable()
+{
+    GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand();
+
+    if (poColorTable)
+        delete poColorTable;
+    poColorTable = NULL;
+
+    GDALColorTable* poUnderlyingColorTable = poUnderlyingRasterBand->GetColorTable();
+    if (poUnderlyingColorTable)
+        poColorTable = poUnderlyingColorTable->Clone();
+
+    UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+
+    return poColorTable;
+}
+
+/* ******************************************************************** */
+/*                           GetOverview()                              */
+/* ******************************************************************** */
+
+GDALRasterBand *GDALProxyPoolRasterBand::GetOverview(int nOverviewBand)
+{
+    if (nOverviewBand >= 0 && nOverviewBand < nSizeProxyOverviewRasterBand)
+    {
+        if (papoProxyOverviewRasterBand[nOverviewBand])
+            return papoProxyOverviewRasterBand[nOverviewBand];
+    }
+
+    GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand();
+    GDALRasterBand* poOverviewRasterBand = poUnderlyingRasterBand->GetOverview(nOverviewBand);
+    if (poOverviewRasterBand == NULL)
+    {
+        UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+        return NULL;
+    }
+
+    if (nOverviewBand >= nSizeProxyOverviewRasterBand)
+    {
+        int i;
+        papoProxyOverviewRasterBand = (GDALProxyPoolOverviewRasterBand**)
+                CPLRealloc(papoProxyOverviewRasterBand,
+                        sizeof(GDALProxyPoolOverviewRasterBand*) * (nOverviewBand + 1));
+        for(i=nSizeProxyOverviewRasterBand; i<nOverviewBand + 1;i++)
+            papoProxyOverviewRasterBand[i] = NULL;
+        nSizeProxyOverviewRasterBand = nOverviewBand + 1;
+    }
+
+    papoProxyOverviewRasterBand[nOverviewBand] =
+            new GDALProxyPoolOverviewRasterBand((GDALProxyPoolDataset*)poDS,
+                                                poOverviewRasterBand,
+                                                this, nOverviewBand);
+
+    UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+
+    return papoProxyOverviewRasterBand[nOverviewBand];
+}
+
+/* ******************************************************************** */
+/*                     GetRasterSampleOverview()                        */
+/* ******************************************************************** */
+
+GDALRasterBand *GDALProxyPoolRasterBand::GetRasterSampleOverview( int nDesiredSamples)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "GDALProxyPoolRasterBand::GetRasterSampleOverview : not implemented yet");
+    return NULL;
+}
+
+/* ******************************************************************** */
+/*                           GetMaskBand()                              */
+/* ******************************************************************** */
+
+GDALRasterBand *GDALProxyPoolRasterBand::GetMaskBand()
+{
+    if (poProxyMaskBand)
+        return poProxyMaskBand;
+
+    GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand();
+    GDALRasterBand* poMaskBand = poUnderlyingRasterBand->GetMaskBand();
+
+    poProxyMaskBand =
+            new GDALProxyPoolMaskBand((GDALProxyPoolDataset*)poDS,
+                                       poMaskBand,
+                                       this);
+
+    UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+
+    return poProxyMaskBand;
+}
+
+/* ******************************************************************** */
+/*             GDALProxyPoolOverviewRasterBand()                        */
+/* ******************************************************************** */
+
+GDALProxyPoolOverviewRasterBand::GDALProxyPoolOverviewRasterBand(GDALProxyPoolDataset* poDS,
+                                                                 GDALRasterBand* poUnderlyingOverviewBand,
+                                                                 GDALProxyPoolRasterBand* poMainBand,
+                                                                 int nOverviewBand) :
+        GDALProxyPoolRasterBand(poDS, poUnderlyingOverviewBand)
+{
+    this->poMainBand = poMainBand;
+    this->nOverviewBand = nOverviewBand;
+
+    poUnderlyingMainRasterBand = NULL;
+    nRefCountUnderlyingMainRasterBand = 0;
+}
+
+/* ******************************************************************** */
+/*                  ~GDALProxyPoolOverviewRasterBand()                  */
+/* ******************************************************************** */
+
+GDALProxyPoolOverviewRasterBand::~GDALProxyPoolOverviewRasterBand()
+{
+    CPLAssert(nRefCountUnderlyingMainRasterBand == 0);
+}
+
+/* ******************************************************************** */
+/*                    RefUnderlyingRasterBand()                         */
+/* ******************************************************************** */
+
+GDALRasterBand* GDALProxyPoolOverviewRasterBand::RefUnderlyingRasterBand()
+{
+    poUnderlyingMainRasterBand = poMainBand->RefUnderlyingRasterBand();
+    nRefCountUnderlyingMainRasterBand ++;
+    return poUnderlyingMainRasterBand->GetOverview(nOverviewBand);
+}
+
+/* ******************************************************************** */
+/*                  UnrefUnderlyingRasterBand()                         */
+/* ******************************************************************** */
+
+void GDALProxyPoolOverviewRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
+{
+    poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
+    nRefCountUnderlyingMainRasterBand --;
+}
+
+
+/* ******************************************************************** */
+/*                     GDALProxyPoolMaskBand()                          */
+/* ******************************************************************** */
+
+GDALProxyPoolMaskBand::GDALProxyPoolMaskBand(GDALProxyPoolDataset* poDS,
+                                             GDALRasterBand* poUnderlyingMaskBand,
+                                             GDALProxyPoolRasterBand* poMainBand) :
+        GDALProxyPoolRasterBand(poDS, poUnderlyingMaskBand)
+{
+    this->poMainBand = poMainBand;
+
+    poUnderlyingMainRasterBand = NULL;
+    nRefCountUnderlyingMainRasterBand = 0;
+}
+
+/* ******************************************************************** */
+/*                          ~GDALProxyPoolMaskBand()                    */
+/* ******************************************************************** */
+
+GDALProxyPoolMaskBand::~GDALProxyPoolMaskBand()
+{
+    CPLAssert(nRefCountUnderlyingMainRasterBand == 0);
+}
+
+/* ******************************************************************** */
+/*                    RefUnderlyingRasterBand()                         */
+/* ******************************************************************** */
+
+GDALRasterBand* GDALProxyPoolMaskBand::RefUnderlyingRasterBand()
+{
+    poUnderlyingMainRasterBand = poMainBand->RefUnderlyingRasterBand();
+    nRefCountUnderlyingMainRasterBand ++;
+    return poUnderlyingMainRasterBand->GetMaskBand();
+}
+
+/* ******************************************************************** */
+/*                  UnrefUnderlyingRasterBand()                         */
+/* ******************************************************************** */
+
+void GDALProxyPoolMaskBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
+{
+    poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
+    nRefCountUnderlyingMainRasterBand --;
 }
