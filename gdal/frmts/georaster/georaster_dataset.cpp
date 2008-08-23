@@ -712,7 +712,7 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     // Try to interpreter the WKT text
     // --------------------------------------------------------------------
 
-    char* pszWKText = poGeoRaster->GetWKText( poGeoRaster->nSRID );
+    char* pszWKText = CPLStrdup( poGeoRaster->GetWKText( poGeoRaster->nSRID ) );
 
     if( oSRS.importFromWkt( &pszWKText ) != OGRERR_NONE || 
         oSRS.GetRoot() == NULL )
