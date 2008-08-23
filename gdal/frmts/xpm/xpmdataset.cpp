@@ -100,6 +100,9 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    if (poOpenInfo->fp == NULL)
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Read the whole file into a memory strings.                      */
 /* -------------------------------------------------------------------- */
