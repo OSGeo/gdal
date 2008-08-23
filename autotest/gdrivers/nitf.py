@@ -680,6 +680,15 @@ def nitf_33():
 
     return nitf_check_created_file(32498, 42602, 38982)
 
+
+###############################################################################
+# Test CreateCopy() of a 16bit image with tiling
+
+def nitf_34():
+
+    tst = gdaltest.GDALTest( 'NITF', 'n43.dt0', 1, 49187, options = [ 'BLOCKSIZE=64' ] )
+    return tst.testCreateCopy( )
+
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
@@ -982,6 +991,7 @@ gdaltest_list = [
     nitf_31,
     nitf_32,
     nitf_33,
+    nitf_34,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
