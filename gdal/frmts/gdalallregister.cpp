@@ -289,6 +289,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_MSGN();
 #endif
 
+#ifdef FRMT_msg
+    GDALRegister_MSG();
+#endif
+
 #ifdef FRMT_idrisi
     GDALRegister_IDRISI();
 #endif
@@ -388,6 +392,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_blx
     GDALRegister_BLX();
+#endif
+
+#ifdef FRMT_pgchip
+    GDALRegister_PGCHIP();
 #endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
