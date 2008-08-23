@@ -355,6 +355,20 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         pszInsert               = CPLStrdup( pszFetched );
     }
 
+    pszFetched = CSLFetchNameValue( papszOptions, "RDT" );
+
+    if( pszFetched )
+    {
+        poGRW->pszDataTable     = CPLStrdup( pszFetched );
+    }
+
+    pszFetched = CSLFetchNameValue( papszOptions, "RID" );
+
+    if( pszFetched )
+    {
+        poGRW->nRasterId        = atoi( pszFetched );
+    }
+
     pszFetched = CSLFetchNameValue( papszOptions, "BLOCKXSIZE" );
 
     if( pszFetched )
