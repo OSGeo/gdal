@@ -100,17 +100,20 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     {
         const char *pszToken = papszTokens[iField];
         int bAllNumeric = TRUE;
-        
-        while( *pszToken != '\0' && bAllNumeric )
-        {
-            if( *pszToken != '.' && *pszToken != '-'
-                && (*pszToken < '0' || *pszToken > '9') )
-                bAllNumeric = FALSE;
-            pszToken++;
-        }
 
-        if( bAllNumeric )
-            bHasFieldNames = FALSE;
+        if (*pszToken != '\0')
+        {
+            while( *pszToken != '\0' && bAllNumeric )
+            {
+                if( *pszToken != '.' && *pszToken != '-'
+                    && (*pszToken < '0' || *pszToken > '9') )
+                    bAllNumeric = FALSE;
+                pszToken++;
+            }
+
+            if( bAllNumeric )
+                bHasFieldNames = FALSE;
+        }
     }
 
     if( !bHasFieldNames )
@@ -140,22 +143,26 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     for( iField = 0; iField < nFieldCount; iField++ )
     {
-        char *pszFieldName;
+        char *pszFieldName = NULL;
         char szFieldNameBuffer[100];
 
         if( bHasFieldNames )
         {
             pszFieldName = papszTokens[iField];
-            
+
             // trim white space. 
             while( *pszFieldName == ' ' )
                 pszFieldName++;
 
             while( pszFieldName[0] != '\0' 
-                   && pszFieldName[strlen(pszFieldName)-1] == ' ' )
+                && pszFieldName[strlen(pszFieldName)-1] == ' ' )
                 pszFieldName[strlen(pszFieldName)-1] = '\0';
+
+            if (*pszFieldName == '\0')
+                pszFieldName = NULL;
         }
-        else
+
+        if (pszFieldName == NULL)
         {
             pszFieldName = szFieldNameBuffer;
             sprintf( szFieldNameBuffer, "field_%d", iField+1 );
