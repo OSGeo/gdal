@@ -43,12 +43,24 @@ init_list = [ \
     ('4bit_pal.bmp', 1, 2587, None),
     ('8bit_pal.bmp', 1, 4672, None)]
 
+
+def bmp_online_1():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/bmp/8bit_pal_rle.bmp', '8bit_pal_rle.bmp'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'BMP', 'tmp/cache/8bit_pal_rle.bmp', 1, 17270, filename_absolute = 1 )
+
+    return tst.testOpen()
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'BMP', item[0], item[1], item[2] )
     if ut is None:
 	print( 'BMP tests skipped' )
 	sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
+
+gdaltest_list.append( bmp_online_1 )
 
 if __name__ == '__main__':
 
