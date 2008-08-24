@@ -870,9 +870,9 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         poSRS2->SetAngularUnits( "Decimal Degree", 0.0174532925199433 );
     }
 
-    CPLFree_nt( pszWKT );
+    char* pszCloneWKT = NULL;
 
-    if( poSRS2->exportToWkt( &pszWKT ) != OGRERR_NONE )
+    if( poSRS2->exportToWkt( &pszCloneWKT ) != OGRERR_NONE )
     {
         delete poSRS2;
         return CE_Failure;
@@ -880,9 +880,9 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     //TODO: Try to find a correspondent WKT on the server
 
-    CPLDebug("GEORASTER","WKT:%s", pszWKT);
+    CPLDebug("GEORASTER","WKT:%s", pszCloneWKT);
 
-    CPLFree_nt( pszWKT );
+    CPLFree_nt( pszCloneWKT );
 
     delete poSRS2;
 
@@ -1067,7 +1067,7 @@ void CPL_DLL GDALRegister_GEOR()
 "  <Option name='INTERLEAVE'    type='string'  description='{BAND,PIXEL,LINE} or {BSQ,BIP,BIL}'/>"
 "  <Option name='SRID'          type='int'     description='Overwrite EPSG projection code'/>"
 "  <Option name='RDT'           type='string'  description='Specify a Raster Data Table name'/>"
-"  <Option name='RID'           type='string'  description='Specify a RasterId numeric value'/>"
+"  <Option name='RID'           type='int'     description='Specify a RasterId numeric value'/>"
 "</CreationOptionList>" );
         poDriver->pfnOpen       = GeoRasterDataset::Open;
         poDriver->pfnCreate     = GeoRasterDataset::Create;
