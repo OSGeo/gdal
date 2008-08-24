@@ -32,4 +32,4 @@ plugin:	$(PLUGIN_DLL)
 $(PLUGIN_DLL): $(OBJ)
 	link /dll /out:$(PLUGIN_DLL) $(OBJ) \
 		$(GDALLIB) $(ECWLIB)
-	if exist gdal_ECW.dll.manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
