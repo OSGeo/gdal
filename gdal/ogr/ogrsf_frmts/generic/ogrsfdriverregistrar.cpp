@@ -534,6 +534,14 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver )
     {
         if( poDriver == papoDrivers[iDriver] )
             return;
+
+        /* Same name but different pointer. Likely a second call to OGRRegisterAll() */
+        /* We delete the new driver */
+        if (EQUAL(poDriver->GetName(), papoDrivers[iDriver]->GetName()))
+        {
+            delete poDriver;
+            return;
+        }
     }                                                   
 
 /* -------------------------------------------------------------------- */
