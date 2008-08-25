@@ -167,6 +167,7 @@ class VSIGZipHandle : public VSIVirtualHandle
     virtual int       Close();
 
     VSIGZipHandle*    Duplicate();
+    void              CloseBaseHandle();
 };
 
 /************************************************************************/
@@ -207,6 +208,17 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
     }
 
     return poHandle;
+}
+
+/************************************************************************/
+/*                     CloseBaseHandle()                                */
+/************************************************************************/
+
+void  VSIGZipHandle::CloseBaseHandle()
+{
+    if (poBaseHandle)
+        VSIFCloseL((FILE*)poBaseHandle);
+    poBaseHandle = NULL;
 }
 
 /************************************************************************/
@@ -305,7 +317,8 @@ VSIGZipHandle::~VSIGZipHandle()
     }
     CPLFree(pszOptionalFileName);
 
-    VSIFCloseL((FILE*)poBaseHandle);
+    if (poBaseHandle)
+        VSIFCloseL((FILE*)poBaseHandle);
 }
 
 /************************************************************************/
@@ -902,6 +915,9 @@ void VSIGZipFilesystemHandler::CacheLastStatedFile( const char *pszFilename,
         delete poHandleLastStateFile;
 
     poHandleLastStateFile = poHandle;
+    /* There's no use in keeping the base handle open for that cached */
+    /* VSIGZipHandle object */
+    poHandle->CloseBaseHandle();
     pszLastStatedFileName = CPLStrdup(pszFilename);
     memcpy(&statBuf, pStatBuf, sizeof(VSIStatBufL));
 }
