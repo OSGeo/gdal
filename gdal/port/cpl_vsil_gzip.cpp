@@ -74,7 +74,6 @@
 */
 
 
-
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
@@ -82,6 +81,8 @@
 
 #include <zlib.h>
 #include "cpl_minizip_unzip.h"
+
+CPL_CVSID("$Id $");
 
 #define Z_BUFSIZE 65536  /* original size is 16384 */
 static int const gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
@@ -1547,7 +1548,7 @@ char** VSIZipFilesystemHandler::ReadDir( const char *pszDirname )
             (fileName[lenInZipSubDir] == '/' || fileName[lenInZipSubDir] == '\\') &&
             fileName[lenInZipSubDir + 1] != 0)
         {
-            char* slash = strchr(fileName + lenInZipSubDir + 1, '/');
+            const char* slash = strchr(fileName + lenInZipSubDir + 1, '/');
             if (slash == NULL)
                 slash = strchr(fileName + lenInZipSubDir + 1, '\\');
             if (slash == NULL || slash[1] == 0)
