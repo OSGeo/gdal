@@ -102,9 +102,9 @@ public:
     ~VSIFileManager();
 
     static VSIFilesystemHandler *GetHandler( const char * );
-    static void                InstallHandler( std::string osPrefix, 
+    static void                InstallHandler( const std::string& osPrefix, 
                                                VSIFilesystemHandler * );
-    static void                RemoveHandler( std::string osPrefix );
+    static void                RemoveHandler( const std::string& osPrefix );
 };
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */
