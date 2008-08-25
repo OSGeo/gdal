@@ -588,7 +588,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         if (offset < Z_BUFSIZE) size = (int)offset;
 
         int read_size = Read(outbuf, 1, (uInt)size);
-        if (read_size <= 0) {
+        if (read_size == 0) {
             CPL_VSIL_GZ_RETURN_MINUS_ONE();
             return -1L;
         }
@@ -632,7 +632,7 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
     if  (z_err == Z_DATA_ERROR || z_err == Z_ERRNO)
     {
         CPL_VSIL_GZ_RETURN_MINUS_ONE();
-        return -1;
+        return 0;
     }
     if  (z_err == Z_STREAM_END)
     {
@@ -760,7 +760,7 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
             (z_err == Z_DATA_ERROR || z_err == Z_ERRNO))
     {
         CPL_VSIL_GZ_RETURN_MINUS_ONE();
-        return -1;
+        return 0;
     }
     if (ENABLE_DEBUG)
         CPLDebug("GZIP", "Read return %d (z_err=%d, z_eof=%d)",
@@ -792,7 +792,7 @@ uLong VSIGZipHandle::getLong ()
 size_t VSIGZipHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 {
     CPLError(CE_Failure, CPLE_NotSupported, "VSIFWriteL is not supported on GZip streams\n");
-    return -1;
+    return 0;
 }
 
 /************************************************************************/
