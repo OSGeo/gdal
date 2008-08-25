@@ -75,7 +75,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     bIOInitialized      = false;
     bBlobInitialized    = false;
     bFlushMetadata      = false;
-    nSRID               = 0;
+    nSRID               = -1;
 }
 
 //  ---------------------------------------------------------------------------
@@ -102,11 +102,8 @@ GeoRasterWrapper::~GeoRasterWrapper()
 //                                                                       Open()
 //  ---------------------------------------------------------------------------
 
-GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID,
-                                          GDALAccess eAccess )
+GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
 {
-    (void) eAccess;
-
     //  -------------------------------------------------------------------
     //  Parse arguments
     //  -------------------------------------------------------------------
@@ -167,7 +164,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID,
     //  Assign parameters from Identification string
     //  -------------------------------------------------------------------
 
-    switch( nArgc) 
+    switch( nArgc ) 
     {
     case 6:
         poGRW->pszTable       = CPLStrdup( papszParam[3] );
@@ -700,20 +697,17 @@ bool GeoRasterWrapper::SetGeoReference( int nSRIDIn )
 //                                                                  GetWKText()
 //  ---------------------------------------------------------------------------
 
-char* GeoRasterWrapper::GetWKText( int nSRIDin, bool bCode )
+char* GeoRasterWrapper::GetWKText( int nSRIDin )
 {
     char szWKText[OWTEXT];
-    char szWKTcls[OWTEXT];
 
     OWStatement* poStmt = poConnection->CreateStatement(
-        "SELECT WKTEXT,\n"
-        "SELECT REGEXP_REPLACE(WKTEXT, '\\(EPSG [A-Z]+ [0-9]+\\)', '')\n"
+        "SELECT WKTEXT\n"
         "FROM   MDSYS.CS_SRS\n"
         "WHERE  SRID = :1 AND WKTEXT IS NOT NULL" );
 
     poStmt->Bind( &nSRIDin );
     poStmt->Define( szWKText,  OWTEXT );
-    poStmt->Define( szWKTcls, OWTEXT );
 
     if( poStmt->Execute() == false ||
         poStmt->Fetch()   == false )
@@ -724,14 +718,7 @@ char* GeoRasterWrapper::GetWKText( int nSRIDin, bool bCode )
 
     delete poStmt;
 
-    if( bCode )
-    {
-        return CPLStrdup( szWKText );
-    }
-    else
-    {
-        return CPLStrdup( szWKTcls );
-    }
+    return CPLStrdup( szWKText );
 }
 
 //  ---------------------------------------------------------------------------
