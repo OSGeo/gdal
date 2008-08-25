@@ -691,8 +691,7 @@ void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
 
 void VSIInstallMemFileHandler()
 {
-    VSIFileManager::InstallHandler( std::string("/vsimem/"), 
-                                    new VSIMemFilesystemHandler );
+    VSIFileManager::InstallHandler( "/vsimem/", new VSIMemFilesystemHandler );
 }
 
 /************************************************************************/

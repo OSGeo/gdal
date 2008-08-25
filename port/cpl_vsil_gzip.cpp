@@ -1109,8 +1109,7 @@ char** VSIGZipFilesystemHandler::ReadDir( const char *pszDirname )
 
 void VSIInstallGZipFileHandler(void)
 {
-    VSIFileManager::InstallHandler( std::string("/vsigzip/"), 
-                                    new VSIGZipFilesystemHandler );
+    VSIFileManager::InstallHandler( "/vsigzip/", new VSIGZipFilesystemHandler );
 }
 
 
@@ -1584,6 +1583,5 @@ char** VSIZipFilesystemHandler::ReadDir( const char *pszDirname )
 
 void VSIInstallZipFileHandler(void)
 {
-    VSIFileManager::InstallHandler( std::string("/vsizip/"), 
-                                    new VSIZipFilesystemHandler() );
+    VSIFileManager::InstallHandler( "/vsizip/", new VSIZipFilesystemHandler() );
 }
