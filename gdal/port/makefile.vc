@@ -24,7 +24,7 @@ OBJ	=	cpl_conv.obj \
                 cplkeywordparser.obj \
 		cpl_recode_stub.obj \
 		cpl_quad_tree.obj \
-		cpl_vsil_gzip.obj
+		cpl_vsil_gzip.obj \
 		$(ODBC_OBJ) 
 
 LIB	=	cpl.lib
