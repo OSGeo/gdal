@@ -30,6 +30,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
+#include <string>
 
 CPL_CVSID("$Id$");
 
@@ -625,7 +626,7 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
 /*                           InstallHandler()                           */
 /************************************************************************/
 
-void VSIFileManager::InstallHandler( std::string osPrefix,
+void VSIFileManager::InstallHandler( const std::string& osPrefix,
                                      VSIFilesystemHandler *poHandler )
 
 {

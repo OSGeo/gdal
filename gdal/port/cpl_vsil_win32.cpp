@@ -505,8 +505,7 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
 void VSIInstallLargeFileHandler()
 
 {
-    VSIFileManager::InstallHandler( CPLString(""), 
-                                    new VSIWin32FilesystemHandler );
+    VSIFileManager::InstallHandler( "", new VSIWin32FilesystemHandler );
 }
 
 #endif /* def WIN32 */
