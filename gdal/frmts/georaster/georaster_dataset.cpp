@@ -43,6 +43,7 @@ bool    OWIsNumeric( const char *pszText );
 GeoRasterDataset::GeoRasterDataset()
 {
     bGeoTransform       = false;
+    bForcedSRID         = false;
     poGeoRaster         = NULL;
     papszSubdatasets    = NULL;
     adfGeoTransform[0]  = 0.0;
@@ -93,6 +94,11 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
 
     int nArgc = CSLCount( papszParam );
+
+    if( EQUAL( papszParam[nArgc-1], "" ) )
+    {
+        nArgc = 99;
+    }
 
     //  -------------------------------------------------------------------
     //  Check mandatory arguments
@@ -159,8 +165,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  Create a GeoRaster wrapper object
     //  -------------------------------------------------------------------
 
-    GeoRasterWrapper* poGRW = GeoRasterWrapper::Open( poOpenInfo->pszFilename, 
-                                           poOpenInfo->eAccess );
+    GeoRasterWrapper* poGRW = GeoRasterWrapper::Open(poOpenInfo->pszFilename);
 
     if( ! poGRW )
     {
@@ -434,17 +439,6 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         return NULL;
     }
 
-    //  ----------------------------------------------------------------- --
-    //  Load aditional options
-    //  -------------------------------------------------------------------
-
-    pszFetched = CSLFetchNameValue( papszOptions, "SRID" );
-
-    if( pszFetched )
-    {
-        poGRW->SetGeoReference( atoi( pszFetched ) );
-    }
-
     //  -------------------------------------------------------------------
     //  Pepare a identification string
     //  -------------------------------------------------------------------
@@ -459,16 +453,30 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRW->nRasterId ) );
 
     //  -------------------------------------------------------------------
-    //  Finalize Dataset
+    //  Load the GeoRaster (that will load the metadata)
     //  -------------------------------------------------------------------
 
     delete poGRD;
+
+    poGRD = (GeoRasterDataset*) GDALOpen( szStringId, GA_Update );
+
+    //  -------------------------------------------------------------------
+    //  Load aditional options (that will update the metadata)
+    //  -------------------------------------------------------------------
+
+    pszFetched = CSLFetchNameValue( papszOptions, "SRID" );
+
+    if( pszFetched )
+    {
+        poGRD->bForcedSRID = true; /* ignore others methods */
+        poGRD->poGeoRaster->SetGeoReference( atoi( pszFetched ) );
+    }
 
     //  -------------------------------------------------------------------
     //  Return a new Dataset
     //  -------------------------------------------------------------------
 
-    return (GeoRasterDataset*) GDALOpen( szStringId, GA_Update );
+    return (GDALDataset*) poGRD;
 }
 
 //  ---------------------------------------------------------------------------
@@ -514,7 +522,10 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     poGRD->SetGeoTransform( adfTransform );
 
-    poGRD->SetProjection( poSrcDS->GetProjectionRef() );
+    if( ! poGRD->bForcedSRID ) /* forced by create option SRID */
+    {
+        poGRD->SetProjection( poSrcDS->GetProjectionRef() );
+    }
 
     // --------------------------------------------------------------------
     //      Copy information to the raster bands
@@ -639,14 +650,14 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     if( pfnProgress )
     {
-        printf( "\nOuput dataset: (georaster:%s,%s,%s,%s,%d) on %s,%s\n",
-        poGRD->poGeoRaster->poConnection->GetUser(),
-        poGRD->poGeoRaster->poConnection->GetPassword(),
-        poGRD->poGeoRaster->poConnection->GetServer(),
-        poGRD->poGeoRaster->pszDataTable,
-        poGRD->poGeoRaster->nRasterId,
-        poGRD->poGeoRaster->pszTable,
-        poGRD->poGeoRaster->pszColumn );
+        printf( "\nOuput dataset: (georaster:%s,%s,%s,%s,%d) on %s,%s",
+            poGRD->poGeoRaster->poConnection->GetUser(),
+            poGRD->poGeoRaster->poConnection->GetPassword(),
+            poGRD->poGeoRaster->poConnection->GetServer(),
+            poGRD->poGeoRaster->pszDataTable,
+            poGRD->poGeoRaster->nRasterId,
+            poGRD->poGeoRaster->pszTable,
+            poGRD->poGeoRaster->pszColumn );
     }
 
     return poGRD;
@@ -687,7 +698,6 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
 
 const char* GeoRasterDataset::GetProjectionRef( void )
 {
-
     if( ! poGeoRaster->bIsReferenced )
     {
         return NULL;
@@ -701,7 +711,7 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     OGRSpatialReference oSRS;
 
     // --------------------------------------------------------------------
-    // Try to interpreter the EPSG code
+    // Try to interprete the EPSG code
     // --------------------------------------------------------------------
 
     if( oSRS.importFromEPSG( poGeoRaster->nSRID ) == OGRERR_NONE )
@@ -719,11 +729,8 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     if( oSRS.importFromWkt( &pszWKText ) != OGRERR_NONE || 
         oSRS.GetRoot() == NULL )
     {
-        CPLFree_nt( pszWKText );
         return FALSE;
     }
-
-    CPLFree_nt( pszWKText );
 
     // --------------------------------------------------------------------
     // Try to extract EPGS authority codes
@@ -818,7 +825,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 {
     OGRSpatialReference oSRS;
 
-    char*  pszWKT  = CPLStrdup( pszProjString );
+    char* pszWKT = CPLStrdup( pszProjString );
 
     OGRErr eOGRErr = oSRS.importFromWkt( &pszWKT );
 
