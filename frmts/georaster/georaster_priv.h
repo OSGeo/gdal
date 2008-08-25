@@ -80,6 +80,7 @@ private:
 
     GeoRasterWrapper*   poGeoRaster;
     bool                bGeoTransform;
+    bool                bForcedSRID;
     char*               pszSpatialRef;
     char**              papszSubdatasets;
     double              adfGeoTransform[6];
@@ -210,7 +211,7 @@ private:
 public:
 
     static GeoRasterWrapper*
-                        Open( const char* pszStringID, GDALAccess eAccess );
+                        Open( const char* pszStringID );
     bool                Create( char* pszDescription, char* pszInsert );
     void                GetRasterInfo( void );
     bool                GetImageExtent( double *padfTransform );
@@ -228,7 +229,7 @@ public:
     void                GetColorTable( int nBand, GDALColorTable* poCT );
     void                SetColorTable( int nBand, GDALColorTable* poCT );
     bool                SetGeoReference( int nSRIDIn );
-    char*               GetWKText( int nSRIDin, bool bCode = true );
+    char*               GetWKText( int nSRIDin );
     bool                GetBandBlock( 
                             int nBand, 
                             int nXOffset, 
