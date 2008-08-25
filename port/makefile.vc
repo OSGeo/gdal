@@ -24,6 +24,7 @@ OBJ	=	cpl_conv.obj \
                 cplkeywordparser.obj \
 		cpl_recode_stub.obj \
 		cpl_quad_tree.obj \
+		cpl_vsil_gzip.obj
 		$(ODBC_OBJ) 
 
 LIB	=	cpl.lib
@@ -32,8 +33,10 @@ GDAL_ROOT = ..
 
 !INCLUDE ..\nmake.opt
 
+EXTRAFLAGS	= 	 -I..\frmts\zlib
+
 !IFDEF CURL_INC
-EXTRAFLAGS =	-DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
