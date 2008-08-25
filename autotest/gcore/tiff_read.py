@@ -140,6 +140,32 @@ def tiff_read_gzip():
 
     return 'success'
 
+###############################################################################
+# Read a .tif.zip file (with explicit filename)
+
+def tiff_read_zip_1():
+
+    ds = gdal.Open('/vsizip/./data/byte.tif.zip/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Read a .tif.zip file (with implicit filename)
+
+def tiff_read_zip_2():
+
+    ds = gdal.Open('/vsizip/./data/byte.tif.zip')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            return 'fail'
+    ds = None
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -150,6 +176,8 @@ gdaltest_list.append( (tiff_read_off) )
 gdaltest_list.append( (tiff_read_cmyk_rgba) )
 gdaltest_list.append( (tiff_read_cmyk_raw) )
 gdaltest_list.append( (tiff_read_gzip) )
+gdaltest_list.append( (tiff_read_zip_1) )
+gdaltest_list.append( (tiff_read_zip_2) )
 
 if __name__ == '__main__':
 
