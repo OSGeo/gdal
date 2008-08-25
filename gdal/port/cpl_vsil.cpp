@@ -584,6 +584,7 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallLargeFileHandler();
         VSIInstallMemFileHandler();
         VSIInstallGZipFileHandler();
+        VSIInstallZipFileHandler();
     }
     
     return poManager;
