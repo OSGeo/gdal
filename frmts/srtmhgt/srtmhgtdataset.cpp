@@ -262,10 +262,7 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
-  if(strlen(fileName) != 11)
-    return FALSE;
-
-  if(EQUAL(&fileName[7], ".hgt") == 0)
+  if( strlen(fileName) < 11 || !EQUALN(&fileName[7], ".hgt", 4) )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -331,10 +328,13 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
     CPLError(CE_Failure, CPLE_OpenFailed, "VSIFOpenL(%s) failed unexpectedly in srtmhgtdataset.cpp", poOpenInfo->pszFilename);
     return NULL;
   }
-  
-  VSIFSeekL(poDS->fpImage, 0, SEEK_END);
-  int size = VSIFTellL(poDS->fpImage);
-  int numPixels = (size == 25934402) ? 3601 : /* 2884802 */ 1201;
+
+  VSIStatBufL fileStat;
+  if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
+  {
+      return NULL;
+  }
+  int numPixels = (fileStat.st_size == 25934402) ? 3601 : /* 2884802 */ 1201;
 
   poDS->eAccess = poOpenInfo->eAccess;
 #ifdef CPL_LSB
