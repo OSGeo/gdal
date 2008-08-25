@@ -917,7 +917,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( G_get_cellhd( papszCells[0], papszMapsets[0], &(poDS->sCellInfo) ) != 0 ) {
 	CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot open raster header");
-	/* TODO: delete poDS ? */
+	delete poDS;
 	return NULL;
     }
 
@@ -940,6 +940,8 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 	projinfo = G_get_projinfo();
 	projunits = G_get_projunits();
         poDS->pszProjection = GPJ_grass_to_wkt ( projinfo, projunits, 0, 0);
+        G_free_key_value(projinfo);
+        G_free_key_value(projunits);
     }
 
 /* -------------------------------------------------------------------- */
@@ -952,12 +954,16 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 	if ( !rb->valid ) {
 	    CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot open raster band %d", iBand);
-	    // TODO: delete poDS ?
+	    delete rb;
+	    delete poDS;
 	    return NULL;
 	}
 
         poDS->SetBand( iBand+1, rb );
     }
+
+    CSLDestroy(papszCells);
+    CSLDestroy(papszMapsets);
 
     return poDS;
 }
