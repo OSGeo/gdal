@@ -723,7 +723,7 @@ success.
  the capability is available for this object.
 
  <ul>
-  <li> <b>ODsCreateLayer</b>: True if this datasource can create new layers.<p>
+  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -748,7 +748,7 @@ success.
  or not the capability is available for this object.
 
  <ul>
-  <li> <b>ODsCreateLayer</b>: True if this datasource can create new layers.
+  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.
   <p>
  </ul>
 
@@ -797,7 +797,7 @@ specific.
 	OGRLayer *poLayer;
         char     *papszOptions;
 
-	if( !poDS->TestCapability( ODsCreateLayer ) )
+	if( !poDS->TestCapability( ODsCCreateLayer ) )
         {
 	    ...
         }
@@ -852,7 +852,7 @@ http://www.gdal.org/ogr/ogr_formats.html
 	OGRLayerH *hLayer;
         char     *papszOptions;
 
-	if( OGR_DS_TestCapability( hDS, ODsCreateLayer ) )
+	if( OGR_DS_TestCapability( hDS, ODsCCreateLayer ) )
         {
 	    ...
         }
