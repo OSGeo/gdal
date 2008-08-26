@@ -1056,6 +1056,12 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         CPLFree(projectionRef);
         RPFTOCFree(toc);
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+        ds->SetDescription( pszFilename );
+        ds->TryLoadXML();
+
         return ds;
     }
     else
