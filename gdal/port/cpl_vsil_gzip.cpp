@@ -1142,6 +1142,7 @@ typedef struct
     char* fileName;
     int   uncompressed_size;
     unz_file_pos file_pos;
+    int   bIsDir;
 } ZIPEntry;
 
 typedef struct
@@ -1172,7 +1173,7 @@ public:
     virtual char   **ReadDir( const char *pszDirname );
 
     const ZIPContent* GetContentOfZip(const char* zipFilename);
-    char* SplitFilename(const char *pszFilename, const char** ppszZipInFileName);
+    char* SplitFilename(const char *pszFilename, CPLString &osZipInFileName);
     unzFile OpenZIPFile(const char* zipFilename, const char* zipInFileName);
     int FindFileInZip(const char* zipFilename, const char* zipInFileName, const ZIPEntry** zipEntry);
 };
@@ -1245,6 +1246,14 @@ const ZIPContent* VSIZipFilesystemHandler::GetContentOfZip(const char* zipFilena
         content->entries = (ZIPEntry*)CPLRealloc(content->entries, sizeof(ZIPEntry) * (content->nEntries + 1));
         content->entries[content->nEntries].fileName = CPLStrdup(fileName);
         content->entries[content->nEntries].uncompressed_size = file_info.uncompressed_size;
+        content->entries[content->nEntries].bIsDir =
+                strlen(fileName) > 0 &&
+                (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\');
+        if (content->entries[content->nEntries].bIsDir)
+        {
+            /* Remove trailing slash */
+            content->entries[content->nEntries].fileName[strlen(fileName)-1] = 0;
+        }
         cpl_unzGetFilePos(unzF, &(content->entries[content->nEntries].file_pos));
         if (ENABLE_DEBUG)
             CPLDebug("ZIP", "[%d] %s : %d bytes", content->nEntries+1,
@@ -1291,10 +1300,10 @@ int VSIZipFilesystemHandler::FindFileInZip(const char* zipFilename,
 /************************************************************************/
 
 char* VSIZipFilesystemHandler::SplitFilename(const char *pszFilename,
-                                             const char** ppszZipInFileName)
+                                             CPLString &osZipInFileName)
 {
     int i = 0;
-    pszFilename += 8; /* skip /vsizip/ */
+    pszFilename += strlen("/vsizip/");
     while(pszFilename[i])
     {
         if (EQUALN(pszFilename + i, ".zip", 4))
@@ -1308,13 +1317,19 @@ char* VSIZipFilesystemHandler::SplitFilename(const char *pszFilename,
             {
                 if (!VSI_ISDIR(statBuf.st_mode))
                 {
-                    if (ppszZipInFileName)
+                    if (pszFilename[i + 4] != 0)
+                        osZipInFileName = pszFilename + i + 5;
+                    else
+                        osZipInFileName = "";
+
+                    /* Remove trailing slash */
+                    if (strlen(osZipInFileName))
                     {
-                        if (pszFilename[i + 4] != 0)
-                            *ppszZipInFileName = pszFilename + i + 5;
-                        else
-                            *ppszZipInFileName = NULL;
+                        char lastC = osZipInFileName[strlen(osZipInFileName) - 1];
+                        if (lastC == '\\' || lastC == '/')
+                            osZipInFileName[strlen(osZipInFileName) - 1] = 0;
                     }
+
                     return zipFilename;
                 }
             }
@@ -1339,7 +1354,7 @@ unzFile VSIZipFilesystemHandler::OpenZIPFile(const char* zipFilename,
         return NULL;
     }
 
-    if (zipInFileName == NULL)
+    if (zipInFileName == NULL || strlen(zipInFileName) == 0)
     {
         if (cpl_unzGoToFirstFile(unzF) != UNZ_OK)
         {
@@ -1376,9 +1391,10 @@ unzFile VSIZipFilesystemHandler::OpenZIPFile(const char* zipFilename,
     else
     {
         const ZIPEntry* zipEntry = NULL;
-        if (FindFileInZip(zipFilename, zipInFileName, &zipEntry) == FALSE)
+        if (FindFileInZip(zipFilename, zipInFileName, &zipEntry) == FALSE ||
+            zipEntry->bIsDir == TRUE)
         {
-             cpl_unzClose(unzF);
+            cpl_unzClose(unzF);
             return NULL;
         }
         cpl_unzGoToFilePos(unzF, (unz_file_pos*)&(zipEntry->file_pos));
@@ -1394,10 +1410,26 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
                                                  const char *pszAccess)
 {
     char* zipFilename;
-    const char* zipInFileName = NULL;
-    zipFilename = SplitFilename(pszFilename, &zipInFileName);
+    CPLString osZipInFileName;
+
+    if (strchr(pszAccess, 'w') != NULL ||
+        strchr(pszAccess, '+') != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Only read-only mode is supported for /vsizip");
+        return NULL;
+    }
+
+    zipFilename = SplitFilename(pszFilename, osZipInFileName);
     if (zipFilename == NULL)
         return NULL;
+
+    unzFile unzF = OpenZIPFile(zipFilename, osZipInFileName);
+    if (unzF == NULL)
+    {
+        CPLFree(zipFilename);
+        return NULL;
+    }
 
     VSIFilesystemHandler *poFSHandler = 
         VSIFileManager::GetHandler( zipFilename);
@@ -1405,17 +1437,11 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
     VSIVirtualHandle* poVirtualHandle =
         poFSHandler->Open( zipFilename, "rb" );
 
+    CPLFree(zipFilename);
+    zipFilename = NULL;
+
     if (poVirtualHandle == NULL)
     {
-        CPLFree(zipFilename);
-        return NULL;
-    }
-
-    unzFile unzF = OpenZIPFile(zipFilename, zipInFileName);
-    CPLFree(zipFilename);
-    if (unzF == NULL)
-    {
-        VSIFCloseL((FILE*)poVirtualHandle);
         return NULL;
     }
 
@@ -1444,8 +1470,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
 
 int VSIZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf )
 {
-    const char* zipInFileName = NULL;
-    char* zipFilename = SplitFilename(pszFilename, &zipInFileName);
+    CPLString osZipInFileName;
+    char* zipFilename = SplitFilename(pszFilename, osZipInFileName);
     if (zipFilename == NULL)
         return -1;
     VSIFilesystemHandler *poFSHandler = 
@@ -1454,12 +1480,13 @@ int VSIZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBu
     /* In the case of .zip file, getting the uncompressed size is "free" */
     if (ret == 0)
     {
-        if (zipInFileName)
+        if (strlen(osZipInFileName) != 0)
         {
-            if (ENABLE_DEBUG) CPLDebug("ZIP", "Looking for %s %s\n", zipFilename, zipInFileName);
+            if (ENABLE_DEBUG) CPLDebug("ZIP", "Looking for %s %s\n",
+                                       zipFilename, osZipInFileName.c_str());
 
             const ZIPEntry* zipEntry = NULL;
-            if (FindFileInZip(zipFilename, zipInFileName, &zipEntry) == FALSE)
+            if (FindFileInZip(zipFilename, osZipInFileName, &zipEntry) == FALSE)
             {
                 ret = -1;
             }
@@ -1467,11 +1494,13 @@ int VSIZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBu
             {
                 /* Patching st_size with uncompressed file size */
                 pStatBuf->st_size = zipEntry->uncompressed_size;
+                if (zipEntry->bIsDir)
+                    pStatBuf->st_mode = S_IFDIR;
             }
         }
         else
         {
-            unzFile unzF = OpenZIPFile(zipFilename, zipInFileName);
+            unzFile unzF = OpenZIPFile(zipFilename, NULL);
             if (unzF)
             {
                 cpl_unzOpenCurrentFile(unzF);
@@ -1538,11 +1567,11 @@ int VSIZipFilesystemHandler::Rmdir( const char *pszDirname )
 
 char** VSIZipFilesystemHandler::ReadDir( const char *pszDirname )
 {
-    const char* inZipSubDir = NULL;
-    char* zipFilename = SplitFilename(pszDirname, &inZipSubDir);
+    CPLString osInZipSubDir;
+    char* zipFilename = SplitFilename(pszDirname, osInZipSubDir);
     if (zipFilename == NULL)
         return NULL;
-    int lenInZipSubDir = (inZipSubDir) ? strlen(inZipSubDir) : 0;
+    int lenInZipSubDir = strlen(osInZipSubDir);
 
     char **papszDir = NULL;
     
@@ -1559,8 +1588,8 @@ char** VSIZipFilesystemHandler::ReadDir( const char *pszDirname )
     {
         const char* fileName = content->entries[i].fileName;
         /* Only list entries at the same level of inZipSubDir */
-        if (inZipSubDir != NULL &&
-            strncmp(fileName, inZipSubDir, lenInZipSubDir) == 0 &&
+        if (lenInZipSubDir != 0 &&
+            strncmp(fileName, osInZipSubDir, lenInZipSubDir) == 0 &&
             (fileName[lenInZipSubDir] == '/' || fileName[lenInZipSubDir] == '\\') &&
             fileName[lenInZipSubDir + 1] != 0)
         {
@@ -1581,10 +1610,10 @@ char** VSIZipFilesystemHandler::ReadDir( const char *pszDirname )
                 CPLFree(tmpFileName);
             }
         }
-        else if (inZipSubDir == NULL &&
-                    strchr(fileName, '/') == NULL &&
-                    strchr(fileName, '\\') == NULL)
+        else if (lenInZipSubDir == 0 &&
+                 strchr(fileName, '/') == NULL && strchr(fileName, '\\') == NULL)
         {
+            /* Only list toplevel files and directories */
             if (ENABLE_DEBUG) CPLDebug("ZIP", "Add %s as in directory %s\n", fileName, pszDirname);
             papszDir = CSLAddString(papszDir, fileName);
         }
