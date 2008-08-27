@@ -134,6 +134,19 @@ def mem_2():
 
     return 'success'
 
+###############################################################################
+# Test creating a MEM dataset with the "MEM:::" name
+
+def mem_3():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.Create( 'MEM:::', 1, 1, 1 )
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 
 ###############################################################################
 # cleanup
@@ -146,6 +159,7 @@ def mem_cleanup():
 gdaltest_list = [
     mem_1,
     mem_2,
+    mem_3,
     mem_cleanup ]
   
 
