@@ -603,17 +603,24 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         double      *padfBurnValues;
         OGRLayer    *poLayer = (OGRLayer *) pahLayers[iLayer];
 
+        if ( !poLayer )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Layer element number %d is NULL, skipping.\n", iLayer );
+            continue;
+        }
+
         if ( pszBurnAttribute )
         {
             iBurnField =
                 poLayer->GetLayerDefn()->GetFieldIndex( pszBurnAttribute );
             if ( iBurnField == -1 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Warning, CPLE_AppDefined, 
                           "Failed to find field %s on layer %s, skipping.\n",
                           pszBurnAttribute, 
                           poLayer->GetLayerDefn()->GetName() );
-                return CE_Failure;
+                continue;
             }
         }
         else
@@ -632,6 +639,15 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             bNeedToFreeTransformer = TRUE;
 
             OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
+            if ( !poSRS )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Failed to fetch spatial reference on layer %s "
+                          "to build transformer, skipping.\n",
+                          poLayer->GetLayerDefn()->GetName() );
+                continue;
+            }
+
             poSRS->exportToWkt( &pszProjection );
 
             pTransformArg = 
