@@ -281,7 +281,7 @@ GDALRATGetUsageOfCol( GDALRasterAttributeTableH hRAT, int iCol )
  *
  * @param iCol the column index (zero based).
  *
- * @return color type or GFT_Integer if the column index is illegal.
+ * @return column type or GFT_Integer if the column index is illegal.
  */
 
 GDALRATFieldType GDALRasterAttributeTable::GetTypeOfCol( int iCol ) const
