@@ -207,6 +207,9 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
 	    poSRS = new OGRSpatialReference ( srsWkt );
 	    CPLFree ( srsWkt );
 	}
+
+        G_free_key_value(projinfo);
+        G_free_key_value(projunits);
     }
 }
 
