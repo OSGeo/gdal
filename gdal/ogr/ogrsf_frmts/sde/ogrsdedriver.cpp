@@ -63,8 +63,6 @@ OGRDataSource *OGRSDEDriver::Open( const char * pszFilename,
 
     if( bUpdate )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "SDE Driver doesn't support update." );
         return NULL;
     }
     
