@@ -108,6 +108,21 @@ def ogr_oci_2():
     return 'success'
 
 ###############################################################################
+# Helper method to reverse ring winding.  This is needed because the 
+# winding direction in shapefiles, and in Oracle is opposite for polygons.
+
+def reverse_rings( poly ):
+
+    for i_ring in range(poly.GetGeometryCount()):
+        ring = poly.GetGeometryRef(i_ring)
+        v_count = ring.GetPointCount()
+        for i_vert in range(v_count/2):
+            i_other = v_count - i_vert - 1
+            p1 = (ring.GetX(i_vert),ring.GetY(i_vert),ring.GetZ(i_vert))
+            ring.SetPoint(i_vert,ring.GetX(i_other),ring.GetY(i_other),ring.GetZ(i_other))
+            ring.SetPoint(i_other,p1[0],p1[1],p1[2])
+	
+###############################################################################
 # Verify that stuff we just wrote is still OK.
 
 def ogr_oci_3():
@@ -125,13 +140,21 @@ def ogr_oci_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.oci_lyr.GetNextFeature()
 
+	reverse_rings(orig_feat.GetGeometryRef())
+
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
                                           max_error = 0.000000001 ) != 0:
+            print 'expected:', orig_feat.GetGeometryRef().ExportToWkt()
+            print 'got:', read_feat.GetGeometryRef().ExportToWkt()
             return 'fail'
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
+                print 'expected:'
+                print orig_feat.DumpReadable()
+                print 'got:'
+                print read_feat.DumpReadable()
                 return 'fail'
 
         read_feat.Destroy()
