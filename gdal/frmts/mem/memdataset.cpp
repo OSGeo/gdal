@@ -809,6 +809,16 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                               Delete()                               */
+/************************************************************************/
+
+CPLErr MEMDataset::Delete(const char* fileName)
+{
+    /* Null implementation, so that people can Delete("MEM:::") */
+    return CE_None;
+}
+
+/************************************************************************/
 /*                          GDALRegister_MEM()                          */
 /************************************************************************/
 
@@ -829,6 +839,7 @@ void GDALRegister_MEM()
 
         poDriver->pfnOpen = MEMDataset::Open;
         poDriver->pfnCreate = MEMDataset::Create;
+        poDriver->pfnDelete = MEMDataset::Delete;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
