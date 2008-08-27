@@ -79,7 +79,6 @@ class CPL_DLL MEMDataset : public GDALDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
-    static CPLErr       Delete(const char* fileName); /* Don't do anything ! */
 };
 
 /************************************************************************/
