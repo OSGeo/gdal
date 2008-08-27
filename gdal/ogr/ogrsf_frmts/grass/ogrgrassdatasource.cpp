@@ -58,6 +58,7 @@ OGRGRASSDataSource::OGRGRASSDataSource()
     pszMap = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    bOpened = FALSE;
 }
 
 /************************************************************************/
@@ -74,6 +75,9 @@ OGRGRASSDataSource::~OGRGRASSDataSource()
     if ( pszLocation ) CPLFree( pszLocation );
     if ( pszMapset ) CPLFree( pszMapset );
     if ( pszMap ) CPLFree( pszMap );
+    
+    if (bOpened)
+        Vect_close(&map);
 }
 
 /************************************************************************/
@@ -210,6 +214,8 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 	    CPLRealloc( papoLayers,  sizeof(OGRGRASSLayer *) * (nLayers+1) );
 	papoLayers[nLayers++] = poLayer;
     }
+    
+    bOpened = TRUE;
     
     return TRUE;
 }

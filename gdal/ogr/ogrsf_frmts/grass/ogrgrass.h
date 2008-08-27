@@ -154,6 +154,8 @@ class OGRGRASSDataSource : public OGRDataSource
 
     struct Map_info 	map;
     int                 nLayers;
+    
+    int                 bOpened;
 
     static bool SplitPath ( char *, char **, char **, char **, char ** );
 };
