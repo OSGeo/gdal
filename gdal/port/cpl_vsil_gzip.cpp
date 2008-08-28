@@ -492,7 +492,9 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         }
         else if (whence == SEEK_END)
         {
-            if (offset > 0 || -offset > compressed_size)
+            /* Commented test : because vsi_l_offset is unsigned (for the moment) */
+            /* so no way to seek backward. See #1590 */
+            if (offset > 0 /*|| -offset > compressed_size*/)
             {
                 CPL_VSIL_GZ_RETURN_MINUS_ONE();
                 return -1L;
