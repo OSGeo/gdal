@@ -113,8 +113,7 @@ void OGROCILayer::ResetReading()
 OGRFeature *OGROCILayer::GetNextFeature()
 
 {
-
-    for( ; TRUE; )
+    while( TRUE )
     {
         OGRFeature      *poFeature;
 
@@ -345,68 +344,40 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
 /* -------------------------------------------------------------------- */
     OGRGeometryCollection *poCollection = NULL;
     OGRPolygon *poPolygon = NULL;
+    OGRGeometry *poParent = NULL;
 
     if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_POLYGON) )
-        poPolygon = new OGRPolygon();
+        poParent = poPolygon = new OGRPolygon();
     else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_COLLECTION) )
-        poCollection = new OGRGeometryCollection();
+        poParent = poCollection = new OGRGeometryCollection();
     else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_MULTIPOINT) )
-        poCollection = new OGRMultiPoint();
+        poParent = poCollection = new OGRMultiPoint();
     else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_MULTILINESTRING) )
-        poCollection = new OGRMultiLineString();
+        poParent = poCollection = new OGRMultiLineString();
     else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_MULTIPOLYGON) )
-        poCollection = new OGRMultiPolygon();
+        poParent = poCollection = new OGRMultiPolygon();
 
 /* ==================================================================== */
 /*      Loop over the component elements.                               */
 /* ==================================================================== */
-    ub4   nNextStartOrdinal = 1;
-
     for( int iElement = 0; iElement < nElemCount; iElement += 3 )
     {
-        boolean bExists;
-        OCINumber *hNumber;
-        ub4       nInterpretation, nEType;
-        int       nStartOrdinal = nNextStartOrdinal;
+        int       nInterpretation, nEType;
+        int       nStartOrdinal, nElemOrdCount;
 
-/* -------------------------------------------------------------------- */
-/*      Get the details about element from the elem_info array.         */
-/* -------------------------------------------------------------------- */
-        OCICollGetElem(poSession->hEnv, poSession->hError, 
-                       (OCIColl *)(hLastGeom->sdo_elem_info), 
-                       (sb4)(iElement+1), (boolean *)&bExists, 
-                       (dvoid **)&hNumber, NULL );
-        OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4), 
-                       OCI_NUMBER_UNSIGNED, (dvoid *) &nEType );
-        
-        OCICollGetElem(poSession->hEnv, poSession->hError, 
-                       (OCIColl *)(hLastGeom->sdo_elem_info), 
-                       (sb4)(iElement+2), (boolean *)&bExists, 
-                       (dvoid **)&hNumber, NULL );
-        OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4), 
-                       OCI_NUMBER_UNSIGNED, (dvoid *) &nInterpretation );
-
-        if( iElement < nElemCount-3 )
-        {
-            OCICollGetElem(poSession->hEnv, poSession->hError, 
-                           (OCIColl *)(hLastGeom->sdo_elem_info), 
-                           (sb4)(iElement+3), (boolean *)&bExists, 
-                           (dvoid **)&hNumber,NULL);
-            OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4), 
-                           OCI_NUMBER_UNSIGNED, (dvoid *) &nNextStartOrdinal );
-        }
-        else
-            nNextStartOrdinal = nOrdCount+1;
+        LoadElementInfo( iElement, nElemCount, nOrdCount, 
+                         &nEType, &nInterpretation, 
+                         &nStartOrdinal, &nElemOrdCount );
 
 /* -------------------------------------------------------------------- */
 /*      Translate this element.                                         */
 /* -------------------------------------------------------------------- */
         OGRGeometry *poGeom;
 
-        poGeom = TranslateGeometryElement( nGType, nDimension, 
+        poGeom = TranslateGeometryElement( &iElement, nGType, nDimension, 
                                            nEType, nInterpretation,
-                                           nStartOrdinal - 1, 
-                                           nNextStartOrdinal - nStartOrdinal );
+                                           nStartOrdinal - 1, nElemOrdCount );
+
         if( poGeom == NULL )
             return NULL;
 
@@ -457,12 +428,12 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
                     poPolygon = new OGRPolygon();
                 }
                 
-				if( poPolygon != NULL )
+                if( poPolygon != NULL )
                     poPolygon->addRingDirectly( (OGRLinearRing *) poGeom );
-				else
-				{
-					CPLAssert( poPolygon != NULL );
-				}
+                else
+                {
+                    CPLAssert( poPolygon != NULL );
+                }
             }
             else
                 poCollection->addGeometryDirectly( poGeom );
@@ -483,18 +454,78 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
 }
 
 /************************************************************************/
+/*                          LoadElementInfo()                           */
+/*                                                                      */
+/*      Fetch the start ordinal, count, EType and interpretation        */
+/*      values for a particular element.                                */
+/************************************************************************/
+
+int 
+OGROCILayer::LoadElementInfo( int iElement, int nElemCount, int nTotalOrdCount,
+                              int *pnEType, int *pnInterpretation, 
+                              int *pnStartOrdinal, int *pnElemOrdCount )
+
+{
+    OGROCISession      *poSession = poDS->GetSession();
+    boolean bExists;
+    OCINumber *hNumber;
+/* -------------------------------------------------------------------- */
+/*      Get the details about element from the elem_info array.         */
+/* -------------------------------------------------------------------- */
+    OCICollGetElem(poSession->hEnv, poSession->hError, 
+                   (OCIColl *)(hLastGeom->sdo_elem_info), 
+                   (sb4)(iElement+0), (boolean *)&bExists, 
+                   (dvoid **)&hNumber, NULL );
+    OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4), 
+                   OCI_NUMBER_UNSIGNED, (dvoid *) pnStartOrdinal );
+        
+    OCICollGetElem(poSession->hEnv, poSession->hError, 
+                   (OCIColl *)(hLastGeom->sdo_elem_info), 
+                   (sb4)(iElement+1), (boolean *)&bExists, 
+                   (dvoid **)&hNumber, NULL );
+    OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4), 
+                   OCI_NUMBER_UNSIGNED, (dvoid *) pnEType );
+        
+    OCICollGetElem(poSession->hEnv, poSession->hError, 
+                   (OCIColl *)(hLastGeom->sdo_elem_info), 
+                   (sb4)(iElement+2), (boolean *)&bExists, 
+                   (dvoid **)&hNumber, NULL );
+    OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4), 
+                   OCI_NUMBER_UNSIGNED, (dvoid *) pnInterpretation );
+
+    if( iElement < nElemCount-3 )
+    {
+        ub4 nNextStartOrdinal;
+
+        OCICollGetElem(poSession->hEnv, poSession->hError, 
+                       (OCIColl *)(hLastGeom->sdo_elem_info), 
+                       (sb4)(iElement+3), (boolean *)&bExists, 
+                       (dvoid **)&hNumber,NULL);
+        OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4), 
+                       OCI_NUMBER_UNSIGNED, (dvoid *) &nNextStartOrdinal );
+
+        *pnElemOrdCount = nNextStartOrdinal - *pnStartOrdinal;
+    }
+    else
+        *pnElemOrdCount = nTotalOrdCount - *pnStartOrdinal + 1;
+
+    return TRUE;
+}
+                              
+
+/************************************************************************/
 /*                      TranslateGeometryElement()                      */
 /************************************************************************/
 
 OGRGeometry *
-OGROCILayer::TranslateGeometryElement( int nGType, int nDimension,
+OGROCILayer::TranslateGeometryElement( int *piElement, 
+                                       int nGType, int nDimension,
                                        int nEType, int nInterpretation, 
-                                       int nStartOrdinal, int nOrdCount )
+                                       int nStartOrdinal, int nElemOrdCount )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Handle line strings.  For now we treat line strings of          */
-/*      curves as if they were simple point line strings.               */
+/*      Handle simple point.                                            */
 /* -------------------------------------------------------------------- */
     if( nEType == 1 && nInterpretation == 1 )
     {
@@ -511,16 +542,15 @@ OGROCILayer::TranslateGeometryElement( int nGType, int nDimension,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle line strings.  For now we treat line strings of          */
-/*      curves as if they were simple point line strings.               */
+/*      Handle multipoint.                                              */
 /* -------------------------------------------------------------------- */
-    else if( nEType == 1 )
+    else if( nEType == 1 && nInterpretation > 1 )
     {
         OGRMultiPoint *poMP = new OGRMultiPoint();
         double dfX, dfY, dfZ = 0.0;
         int i;
 
-        CPLAssert( nInterpretation == nOrdCount / nDimension );
+        CPLAssert( nInterpretation == nElemOrdCount / nDimension );
 
         for( i = 0; i < nInterpretation; i++ )
         {
@@ -534,13 +564,21 @@ OGROCILayer::TranslateGeometryElement( int nGType, int nDimension,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle line strings.  For now we treat line strings of          */
-/*      curves as if they were simple point line strings.               */
+/*      Discard orientations for oriented points.                       */
 /* -------------------------------------------------------------------- */
-    else if( nEType == 2 )
+    else if( nEType == 1 && nInterpretation == 0 )
+    {
+        CPLDebug( "OCI", "Ignoring orientations for oriented points." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle line strings consisting of straight segments.            */
+/* -------------------------------------------------------------------- */
+    else if( nEType == 2 && nInterpretation == 1 )
     {
         OGRLineString *poLS = new OGRLineString();
-        int nPointCount = nOrdCount / nDimension, i;
+        int nPointCount = nElemOrdCount / nDimension, i;
 
         poLS->setNumPoints( nPointCount );
 
@@ -557,13 +595,43 @@ OGROCILayer::TranslateGeometryElement( int nGType, int nDimension,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle polygon rings.                                           */
+/*      Handle line strings consisting of circular arcs.                */
 /* -------------------------------------------------------------------- */
-    else if( nEType % 1000 == 3 
-             && (nInterpretation == 1 || nInterpretation == 2 ) )
+    else if( nEType == 2 && nInterpretation == 2 )
+    {
+        OGRLineString *poLS = new OGRLineString();
+        int nPointCount = nElemOrdCount / nDimension, i;
+        
+        for( i = 0; i < nPointCount-2; i += 2 )
+        {
+            double dfStartX, dfStartY, dfStartZ = 0.0; 
+            double dfMidX, dfMidY, dfMidZ = 0.0;
+            double dfEndX, dfEndY, dfEndZ = 0.0; 
+
+            GetOrdinalPoint( i*nDimension + nStartOrdinal, nDimension, 
+                             &dfStartX, &dfStartY, &dfStartZ );
+            GetOrdinalPoint( (i+1)*nDimension + nStartOrdinal, nDimension, 
+                             &dfMidX, &dfMidY, &dfMidZ );
+            GetOrdinalPoint( (i+2)*nDimension + nStartOrdinal, nDimension, 
+                             &dfEndX, &dfEndY, &dfEndZ );
+
+            OGROCIStrokeArcToOGRGeometry_Points( dfStartX, dfStartY, 
+                                                 dfMidX, dfMidY,
+                                                 dfEndX, dfEndY,
+                                                 6.0, FALSE, poLS );
+        }
+
+        return poLS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle polygon rings.  Treat curves as if they were             */
+/*      linestrings.                                                    */
+/* -------------------------------------------------------------------- */
+    else if( nEType % 1000 == 3 && nInterpretation == 1 )
     {
         OGRLinearRing *poLS = new OGRLinearRing();
-        int nPointCount = nOrdCount / nDimension, i;
+        int nPointCount = nElemOrdCount / nDimension, i;
 
         poLS->setNumPoints( nPointCount );
 
@@ -574,6 +642,36 @@ OGROCILayer::TranslateGeometryElement( int nGType, int nDimension,
             GetOrdinalPoint( i*nDimension + nStartOrdinal, nDimension, 
                              &dfX, &dfY, &dfZ );
             poLS->setPoint( i, dfX, dfY, dfZ );
+        }
+
+        return poLS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle polygon rings made of circular arcs.                     */
+/* -------------------------------------------------------------------- */
+    else if( nEType % 1000 == 3 && nInterpretation == 2 )
+    {
+        OGRLineString *poLS = new OGRLinearRing();
+        int nPointCount = nElemOrdCount / nDimension, i;
+        
+        for( i = 0; i < nPointCount-2; i += 2 )
+        {
+            double dfStartX, dfStartY, dfStartZ = 0.0; 
+            double dfMidX, dfMidY, dfMidZ = 0.0;
+            double dfEndX, dfEndY, dfEndZ = 0.0; 
+
+            GetOrdinalPoint( i*nDimension + nStartOrdinal, nDimension, 
+                             &dfStartX, &dfStartY, &dfStartZ );
+            GetOrdinalPoint( (i+1)*nDimension + nStartOrdinal, nDimension, 
+                             &dfMidX, &dfMidY, &dfMidZ );
+            GetOrdinalPoint( (i+2)*nDimension + nStartOrdinal, nDimension, 
+                             &dfEndX, &dfEndY, &dfEndZ );
+
+            OGROCIStrokeArcToOGRGeometry_Points( dfStartX, dfStartY, 
+                                                 dfMidX, dfMidY,
+                                                 dfEndX, dfEndY,
+                                                 6.0, FALSE, poLS );
         }
 
         return poLS;
@@ -602,6 +700,110 @@ OGROCILayer::TranslateGeometryElement( int nGType, int nDimension,
         poLS->setPoint( 4, dfX1, dfY1, dfZ1 );
 
         return poLS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle circle definitions ... translate into a linear ring.     */
+/* -------------------------------------------------------------------- */
+    else if( nEType % 100 == 3 && nInterpretation == 4 )
+    {
+        OGRLinearRing *poLS = new OGRLinearRing();
+        double dfX1, dfY1, dfZ1 = 0.0;
+        double dfX2, dfY2, dfZ2 = 0.0;
+        double dfX3, dfY3, dfZ3 = 0.0;
+        
+        GetOrdinalPoint( nStartOrdinal, nDimension, 
+                         &dfX1, &dfY1, &dfZ1 );
+        GetOrdinalPoint( nStartOrdinal + nDimension, nDimension, 
+                         &dfX2, &dfY2, &dfZ2 );
+        GetOrdinalPoint( nStartOrdinal + nDimension*2, nDimension, 
+                         &dfX3, &dfY3, &dfZ3 );
+
+        OGROCIStrokeArcToOGRGeometry_Points( dfX1, dfY1, 
+                                             dfX2, dfY2,
+                                             dfX3, dfY3, 
+                                             6.0, TRUE, poLS );
+
+        return poLS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle compound line strings and polygon rings.                 */
+/*                                                                      */
+/*      This is quite complicated since we need to consume several      */
+/*      following elements, and merge the resulting geometries.         */
+/* -------------------------------------------------------------------- */
+    else if( nEType == 4  || nEType % 100 == 5 )
+    {
+        int nSubElementCount = nInterpretation;
+        OGRLineString *poLS, *poElemLS;
+        int nElemCount, nTotalOrdCount;
+        OGROCISession      *poSession = poDS->GetSession();
+        
+        if( nEType == 4 )
+            poLS = new OGRLineString();
+        else 
+            poLS = new OGRLinearRing();
+
+        if( poSession->Failed( 
+            OCICollSize( poSession->hEnv, poSession->hError, 
+                         (OCIColl *)(hLastGeom->sdo_elem_info), &nElemCount),
+            "OCICollSize(sdo_elem_info)" ) )
+            return NULL;
+        
+        if( poSession->Failed( 
+            OCICollSize( poSession->hEnv, poSession->hError, 
+                         (OCIColl*)(hLastGeom->sdo_ordinates),&nTotalOrdCount),
+            "OCICollSize(sdo_ordinates)" ) )
+            return NULL;
+
+        for( *piElement += 3; nSubElementCount-- > 0;  *piElement += 3 )
+        {
+            LoadElementInfo( *piElement, nElemCount, nTotalOrdCount, 
+                             &nEType, &nInterpretation, 
+                             &nStartOrdinal, &nElemOrdCount );
+
+            // Adjust for repeated end point except for last element.
+            if( nSubElementCount > 0 )
+                nElemOrdCount += nDimension;
+
+            // translate element.
+            poElemLS = (OGRLineString *)
+                TranslateGeometryElement( piElement, nGType, nDimension, 
+                                          nEType, nInterpretation,
+                                          nStartOrdinal - 1, nElemOrdCount );
+
+            // Try to append to our aggregate linestring/ring
+            if( poElemLS )
+            {
+                if( poLS->getNumPoints() > 0 )
+                {
+                    CPLAssert( 
+                        poElemLS->getX(0) == poLS->getX(poLS->getNumPoints()-1)
+                        && poElemLS->getY(0) ==poLS->getY(poLS->getNumPoints()-1));
+                    
+                    poLS->addSubLineString( poElemLS, 1 );
+                }
+                else
+                    poLS->addSubLineString( poElemLS, 0 );
+
+                delete poElemLS;
+            }
+            
+        }
+
+        *piElement -= 3;
+        return poLS;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Otherwise it is apparently unsupported.                         */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        
+        CPLDebug( "OCI", "Geometry with EType=%d, Interp=%d ignored.", 
+                  nEType, nInterpretation );
     }
 
     return NULL;
