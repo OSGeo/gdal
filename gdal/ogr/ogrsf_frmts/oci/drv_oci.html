@@ -67,6 +67,10 @@ an identified (and indexed) FID field can be very slow.  To force use of a
 particular field name the OCI_FID configuration variable (ie. environment
 variable) can be set to the target field name. <p>
 
+<li> Curved geometry types are converted to linestrings or linear rings in six degree segments when reading.  The driver has no support for writing curved geometries.
+
+<li> There is no support for point cloud (SDO_PC), TIN (SDO_TIN) and annotation text data types in Oracle Spatial.
+
 </ul>
 
 <h2>Creation Issues</h2>
