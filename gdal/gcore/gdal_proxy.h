@@ -198,7 +198,6 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
         int              bHasSrcProjection;
         int              bHasSrcGeoTransform;
         char            *pszGCPProjection;
-        char           **papszFileList;
         int              nGCPCount;
         GDAL_GCP        *pasGCPList;
         CPLHashSet      *metadataSet;
@@ -237,7 +236,6 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
                                             const char * pszDomain  );
 
         virtual void *GetInternalHandle( const char * pszRequest );
-        virtual char      **GetFileList(void);
 
         virtual const char *GetGCPProjection();
         virtual const GDAL_GCP *GetGCPs();
