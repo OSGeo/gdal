@@ -616,6 +616,65 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
             GByte *pabySrc = (GByte *) pSrcData;
             GByte *pabyDst = (GByte *) pDstData;
 
+            if (nWordCount > 100)
+            {
+/* ==================================================================== */
+/*     Optimization for high number of words to transfer and some       */
+/*     typical source and destination pixel spacing : we unroll the     */
+/*     loop.                                                            */
+/* ==================================================================== */
+#define ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, _k) \
+                 pabyDst[_nDstPixelOffset * _k] = pabySrc[_nSrcPixelOffset * _k]
+#define ASSIGN_LOOP(_nSrcPixelOffset, _nDstPixelOffset) \
+                for( i = nWordCount / 16 ; i != 0; i-- ) \
+                { \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 0); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 1); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 2); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 3); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 4); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 5); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 6); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 7); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 8); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 9); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 10); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 11); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 12); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 13); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 14); \
+                    ASSIGN(_nSrcPixelOffset, _nDstPixelOffset, 15); \
+                    pabyDst += _nDstPixelOffset * 16; \
+                    pabySrc += _nSrcPixelOffset * 16; \
+                } \
+                nWordCount = nWordCount % 16;
+
+                if (nSrcPixelOffset == 3 && nDstPixelOffset == 1)
+                {
+                    ASSIGN_LOOP(3, 1)
+                }
+                else if (nSrcPixelOffset == 1 && nDstPixelOffset == 3)
+                {
+                    ASSIGN_LOOP(1, 3)
+                }
+                else if (nSrcPixelOffset == 4 && nDstPixelOffset == 1)
+                {
+                    ASSIGN_LOOP(4, 1)
+                }
+                else if (nSrcPixelOffset == 1 && nDstPixelOffset == 4)
+                {
+                    ASSIGN_LOOP(1, 4)
+                }
+                else if (nSrcPixelOffset == 3 && nDstPixelOffset == 4)
+                {
+                    ASSIGN_LOOP(3, 4)
+                }
+                else if (nSrcPixelOffset == 4 && nDstPixelOffset == 3)
+                {
+                    ASSIGN_LOOP(4, 3)
+                }
+            }
+
             for( i = nWordCount; i != 0; i-- )
             {
                 *pabyDst = *pabySrc;
