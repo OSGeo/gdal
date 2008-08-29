@@ -225,9 +225,9 @@ public:
                             double dfMean,
                             double dfStdDev,
                             int nBand );
-    bool                HasColorTable( int nBand );
-    void                GetColorTable( int nBand, GDALColorTable* poCT );
-    void                SetColorTable( int nBand, GDALColorTable* poCT );
+    bool                HasColorMap( int nBand );
+    void                GetColorMap( int nBand, GDALColorTable* poCT );
+    void                SetColorMap( int nBand, GDALColorTable* poCT );
     bool                SetGeoReference( int nSRIDIn );
     char*               GetWKText( int nSRIDin );
     bool                GetBandBlock( 
@@ -243,6 +243,8 @@ public:
     bool                GetNoData( double* pdfNoDataValue );
     bool                SetNoData( double dfNoDataValue );
     CPLXMLNode*         GetMetadata() { return phMetadata; };
+    bool                SetVAT( int nBand, const char* pszName );
+    bool                GetVAT( int nBand, const char* pszName );
 
 public:
 

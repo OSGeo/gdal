@@ -139,7 +139,7 @@ GDALColorInterp GeoRasterRasterBand::GetColorInterpretation()
         }
     }
 
-    if( poGeoRaster->HasColorTable( nBand ) )
+    if( poGeoRaster->HasColorMap( nBand ) )
     {
         return GCI_PaletteIndex;
     }
@@ -155,7 +155,7 @@ GDALColorInterp GeoRasterRasterBand::GetColorInterpretation()
 
 GDALColorTable *GeoRasterRasterBand::GetColorTable()
 {
-    poGeoRaster->GetColorTable( nBand, poColorTable );
+    poGeoRaster->GetColorMap( nBand, poColorTable );
 
     if( poColorTable->GetColorEntryCount() == 0 )
     {
@@ -185,7 +185,7 @@ CPLErr GeoRasterRasterBand::SetColorTable( GDALColorTable *poInColorTable )
 
     poColorTable = poInColorTable->Clone();
 
-    poGeoRaster->SetColorTable( nBand, poColorTable );
+    poGeoRaster->SetColorMap( nBand, poColorTable );
 
     return CE_None;
 }
@@ -291,7 +291,7 @@ CPLErr GeoRasterRasterBand::SetNoDataValue( double dfNoDataValue )
 
 CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
 {
-    //TODO: test this code on windows/linux vs 10g,11g
+    GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;
 
     if( ! poRAT )
     {
@@ -307,7 +307,8 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     if( ! pszVATName )
     {
-        CPLSPrintf( "%s_Layer_%d", poGeoRaster->pszTable, nBand + 1 );
+        pszVATName = CPLStrdup( CPLSPrintf(
+            "RAT_%s_%d", poGeoRaster->pszDataTable, poGeoRaster->nRasterId ) );
     }
 
     // ----------------------------------------------------------
@@ -315,13 +316,14 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // ----------------------------------------------------------
 
     char szDescription[OWTEXT];
-    char cComma = '(';
     int  iCol = 0;
+
+    strcpy( szDescription, "( ID NUMBER" );
 
     for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
     {
-        strcpy( szDescription, CPLSPrintf( "%c %s %s",
-            cComma, szDescription, poRAT->GetNameOfCol( iCol ) ) );
+        strcpy( szDescription, CPLSPrintf( "%s, %s",
+            szDescription, poRAT->GetNameOfCol( iCol ) ) );
 
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer )
         {
@@ -330,7 +332,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
         {
-            strcpy( szDescription, CPLSPrintf( "%s NUMBER( 6, 6)",
+            strcpy( szDescription, CPLSPrintf( "%s NUMBER",
                 szDescription ) );
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
@@ -338,7 +340,6 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
             strcpy( szDescription, CPLSPrintf( "%s VARCHAR2(128)",
                 szDescription ) );
         }
-        cComma = ',';
     }
     strcpy( szDescription, CPLSPrintf( "%s )", szDescription ) );
 
@@ -356,7 +357,6 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         "  USR  VARCHAR2(68)    := UPPER(:3);\n"
         "  CNT  NUMBER          := 0;\n"
         "  GR1  SDO_GEORASTER   := NULL;\n"
-        "  GR2  SDO_GEORASTER   := NULL;\n"
         "BEGIN\n"
         "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
         "    WHERE TABLE_NAME = :1 AND OWNER = :2 ' INTO CNT USING TAB, USR;\n"
@@ -364,25 +364,22 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         "    EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
         "  END IF;\n"
         "\n"
-        "  SELECT %s INTO GR2 FROM %s T WHERE"
-        "    T.%s.RasterDataTable = :rdt AND"
-        "    T.%s.RasterId = :rid FOR UPDATE;\n"
         "  SELECT %s INTO GR1 FROM %s T WHERE"
         "    T.%s.RasterDataTable = :rdt AND"
-        "    T.%s.RasterId = :rid;\n"
+        "    T.%s.RasterId = :rid FOR UPDATE;\n"
         "  SDO_GEOR.setVAT(GR1, %d, '%s');\n"
-        "  UPDATE %s T SET %s = GR2     WHERE"
+        "  UPDATE %s T SET %s = GR1 WHERE"
         "    T.%s.RasterDataTable = :rdt AND"
         "    T.%s.RasterId = :rid;\n"
         "END;", 
         szDescription,
         poGeoRaster->pszColumn, poGeoRaster->pszTable,
-        poGeoRaster->pszColumn, poGeoRaster->pszColumn,
-        poGeoRaster->pszColumn, poGeoRaster->pszTable,
-        poGeoRaster->pszColumn, poGeoRaster->pszColumn, nBand + 1, pszVATName,
+        poGeoRaster->pszColumn, poGeoRaster->pszColumn, nBand, pszVATName,
         poGeoRaster->pszTable,  poGeoRaster->pszColumn,
         poGeoRaster->pszColumn, poGeoRaster->pszColumn  ) );
 
+    poStmt->BindName( ":rdt", poGDS->poGeoRaster->pszDataTable );
+    poStmt->BindName( ":rid", &poGDS->poGeoRaster->nRasterId );
     poStmt->Bind( pszVATName );
     poStmt->Bind( szUser );
 
@@ -399,59 +396,48 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // Create virtual file with INSERT instatements
     // ----------------------------------------------------------
 
-    char* pszFilename = CPLStrdup( CPLSPrintf( "/vsimem/%s.sql", pszVATName ) );
-
-    FILE* fp = VSIFOpenL( pszFilename, "w+" );
-
-    int iEntry      = 0;
-    int nEntryCount = poRAT->GetRowCount();
+    char* pszInserts = NULL;
+    int nSize        = 0;
+    int iEntry       = 0;
+    int nEntryCount  = poRAT->GetRowCount();
+    int nColunsCount = poRAT->GetColumnCount();
+    int nBytesCount  = 0;
 
     for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
-        strcpy( szDescription, CPLSPrintf ( "INSERT INTO %s VALUES",
-            pszVATName ) );
+        strcpy( szDescription, CPLSPrintf ( "INSERT INTO %s VALUES (%d",
+            pszVATName, iEntry ) );
 
-        cComma = '(';
-
-        for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
+        for( iCol = 0; iCol < nColunsCount; iCol++ )
         {
             if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
             {
-                strcpy( szDescription, CPLSPrintf ( "%s %c %s", szDescription,
-                    cComma, poRAT->GetValueAsString( iEntry, iCol ) ) );
+                strcpy( szDescription, CPLSPrintf ( "%s, '%s'", szDescription,
+                    poRAT->GetValueAsString( iEntry, iCol ) ) );
             }
-            else
+            if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer ||
+                poRAT->GetTypeOfCol( iCol ) == GFT_Real )
             {
-                strcpy( szDescription, CPLSPrintf ( "%s %c '%s'", szDescription,
-                    cComma, poRAT->GetValueAsString( iEntry, iCol ) ) );
+                strcpy( szDescription, CPLSPrintf ( "%s, %s", szDescription,
+                    poRAT->GetValueAsString( iEntry, iCol ) ) );
             }
-            cComma = ',';
         }
         strcpy( szDescription, CPLSPrintf ( "%s);\n", szDescription ) );
+        nBytesCount += strlen( szDescription );
+        pszInserts = (char*) CPLRealloc( pszInserts, sizeof(char) * ( nBytesCount + 1 ));
+        strcpy( &pszInserts[nSize], szDescription );
+        nSize = nBytesCount;
     }
-
-    VSIFCloseL( fp );
-
-    VSIStatBufL  sStat;
-    VSIStatL( pszFilename, &sStat );
-
-    char* pszInserts = (char*) CPLCalloc( sizeof(char*), sStat.st_size );
-
-    fp = VSIFOpenL( pszFilename, "r" );
-
-    VSIFReadL( pszInserts, 1, sStat.st_size, fp );
-
-    VSIFCloseL( fp );
-
-    VSIUnlink( pszFilename );
-
-    CPLFree_nt( pszFilename );
 
     // ----------------------------------------------------------
     // Insert Data to VAT
     // ----------------------------------------------------------
 
-    poStmt = poGeoRaster->poConnection->CreateStatement( pszInserts );
+    poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
+        "BEGIN\n"
+        "%s"
+        "END;",
+        pszInserts ) );
 
     if( ! poStmt->Execute() )
     {
@@ -464,6 +450,8 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     delete poStmt;
 
+    poGDS->poGeoRaster->SetVAT( nBand, pszVATName );
+
     return CE_None;
 }
 
@@ -473,7 +461,43 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
 const GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 {
-    //TODO: Read VAT as RAT
+//TODO: This code is not finished
 
-    return NULL;
+    GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;
+
+    char* pszVATName = NULL;
+
+    if( poGDS->poGeoRaster->GetVAT( nBand, pszVATName ) == NULL )
+    {
+        return NULL;
+    }
+
+    if( poDefaultRAT ) 
+    {
+        return poDefaultRAT->Clone();
+    }
+
+    OWConnection* phCntx = poGDS->poGeoRaster->poConnection;
+
+    OCIParam* phDesc = phCntx->GetDescription( pszVATName );
+
+    if( phDesc == NULL )
+    {
+        return NULL;
+    }
+
+    int i = 0;
+    const char* pszFName = NULL;
+    const char* pszFType = NULL;
+    const char* pszFSize = NULL;
+
+    while( phCntx->GetNextField( phDesc, i, pszFName, pszFType, pszFSize ) )
+    {      
+        poDefaultRAT->CreateColumn( pszFName, GFT_Integer, GFU_Generic );
+        i++;
+    }
+
+    CPLFree_nt( pszVATName );
+
+    return poDefaultRAT;
 }

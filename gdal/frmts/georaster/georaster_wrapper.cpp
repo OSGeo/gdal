@@ -108,9 +108,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
     //  Parse arguments
     //  -------------------------------------------------------------------
 
-    char **papszParam = CSLTokenizeString2( 
-                            strstr( pszStringID, ":" ) + 1,
-                            ID_SEPARATORS, 
+    char **papszParam = CSLTokenizeString2( pszStringID, ID_SEPARATORS, 
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
 
     int nArgc = CSLCount( papszParam );
@@ -119,7 +117,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
     // Assume the default database
     // --------------------------------------------------------------------
 
-    if( nArgc == 2 ) 
+    if( nArgc == 3 ) 
     {
         papszParam = CSLAddString( papszParam, "" );
     }
@@ -149,9 +147,9 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
     }
 
     poGRW->poConnection = poDriver->GetConnection( 
-        papszParam[0], 
-        papszParam[1],
-        papszParam[2] );
+        papszParam[1], 
+        papszParam[2],
+        papszParam[3] );
 
     if( ! poGRW->poConnection->Succed() )
     {
@@ -166,26 +164,26 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
 
     switch( nArgc ) 
     {
-    case 6:
-        poGRW->pszTable       = CPLStrdup( papszParam[3] );
-        poGRW->pszColumn      = CPLStrdup( papszParam[4] );
-        poGRW->pszWhere       = CPLStrdup( papszParam[5] );
+    case 7:
+        poGRW->pszTable       = CPLStrdup( papszParam[4] );
+        poGRW->pszColumn      = CPLStrdup( papszParam[5] );
+        poGRW->pszWhere       = CPLStrdup( papszParam[6] );
         break;
-    case 5 :
-        if( OWIsNumeric( papszParam[4] ) )
+    case 6 :
+        if( OWIsNumeric( papszParam[5] ) )
         {
-            poGRW->pszDataTable   = CPLStrdup( papszParam[3] );
-            poGRW->nRasterId      = atoi( papszParam[4]);
+            poGRW->pszDataTable   = CPLStrdup( papszParam[4] );
+            poGRW->nRasterId      = atoi( papszParam[5]);
             break;
         }
         else
         {
-            poGRW->pszTable   = CPLStrdup( papszParam[3] );
-            poGRW->pszColumn  = CPLStrdup( papszParam[4] );
+            poGRW->pszTable   = CPLStrdup( papszParam[4] );
+            poGRW->pszColumn  = CPLStrdup( papszParam[5] );
             return poGRW;
         }
-    case 4 :
-        poGRW->pszTable       = CPLStrdup( papszParam[3] );
+    case 5 :
+        poGRW->pszTable       = CPLStrdup( papszParam[4] );
         return poGRW;
     default :
         return poGRW;
@@ -195,7 +193,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
     //  Find Georaster Table/Column that uses the given RDT/RID
     //  -------------------------------------------------------------------
 
-    if( nArgc == 5 )
+    if( nArgc == 6 )
     {
         OWStatement* poStmt = NULL;
 
@@ -1005,7 +1003,7 @@ bool GeoRasterWrapper::SetStatistics( double dfMin,
 //                                                              HasColorTable()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::HasColorTable( int nBand )
+bool GeoRasterWrapper::HasColorMap( int nBand )
 {
     CPLXMLNode *psLayers;
 
@@ -1034,28 +1032,26 @@ bool GeoRasterWrapper::HasColorTable( int nBand )
 void GeoRasterWrapper::InitializeLayersNode()
 {
     CPLXMLNode *pslInfo  = CPLGetXMLNode( phMetadata, "layerInfo" );
-    CPLXMLNode *psSLayer = CPLGetXMLNode( pslInfo,    "subLayer" );
-
-    if( psSLayer != NULL )
-    {
-        CPLRemoveXMLChild( pslInfo, psSLayer );
-        CPLDestroyXMLNode( psSLayer );
-    }
-
+    
     int n = 1;
 
     for( n = 0 ; n < nRasterBands; n++ )
     {
-        psSLayer = CPLCreateXMLNode( pslInfo, CXT_Element, "subLayer" );
+        CPLXMLNode *psSLayer = CPLGetXMLNode( pslInfo,    "subLayer" );
 
-        CPLCreateXMLElementAndValue( psSLayer, "layerNumber", 
-            CPLSPrintf( "%d", n + 1 ) );
+        if( psSLayer == NULL )
+        {
+            psSLayer = CPLCreateXMLNode( pslInfo, CXT_Element, "subLayer" );
+    
+            CPLCreateXMLElementAndValue( psSLayer, "layerNumber", 
+                CPLSPrintf( "%d", n + 1 ) );
 
-        CPLCreateXMLElementAndValue( psSLayer, "layerDimensionOrdinate",
-            CPLSPrintf( "%d", n ) );
+            CPLCreateXMLElementAndValue( psSLayer, "layerDimensionOrdinate",
+                CPLSPrintf( "%d", n ) );
 
-        CPLCreateXMLElementAndValue( psSLayer, "layerID",
-            CPLSPrintf( "subLayer%d", n + 1 ) );
+            CPLCreateXMLElementAndValue( psSLayer, "layerID",
+                CPLSPrintf( "subLayer%d", n + 1 ) );
+        }
     }
 }
 
@@ -1063,7 +1059,7 @@ void GeoRasterWrapper::InitializeLayersNode()
 //                                                              GetColorTable()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterWrapper::GetColorTable( int nBand, GDALColorTable* poCT )
+void GeoRasterWrapper::GetColorMap( int nBand, GDALColorTable* poCT )
 {
     GDALColorEntry oEntry;
 
@@ -1101,7 +1097,7 @@ void GeoRasterWrapper::GetColorTable( int nBand, GDALColorTable* poCT )
 //                                                              SetColorTable()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterWrapper::SetColorTable( int nBand, GDALColorTable* poCT )
+void GeoRasterWrapper::SetColorMap( int nBand, GDALColorTable* poCT )
 {
     InitializeLayersNode();
 
@@ -1543,6 +1539,76 @@ bool GeoRasterWrapper::SetNoData( double dfNoDataValue )
 }
 
 //  ---------------------------------------------------------------------------
+//                                                                     SetVAT()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::SetVAT( int nBand, const char* pszName )
+{
+    InitializeLayersNode();
+
+    bFlushMetadata = true;
+
+    int n = 1;
+
+    CPLXMLNode* psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
+
+    for( ; psLayers; psLayers = psLayers->psNext, n++ )
+    {
+        if( n != nBand )
+        {
+            continue;
+        }
+
+        CPLXMLNode* psVAT = CPLGetXMLNode( psLayers, "vatTableName" );
+
+        if( psVAT != NULL )
+        {
+            CPLRemoveXMLChild( psLayers, psVAT );
+            CPLDestroyXMLNode( psVAT );
+        }
+
+        CPLCreateXMLElementAndValue(psLayers, "vatTableName", pszName );
+
+        return true;
+    }
+
+    return false;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                                     GetVAT()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::GetVAT( int nBand, const char* pszName )
+{
+    InitializeLayersNode();
+
+    bFlushMetadata = true;
+
+    int n = 1;
+
+    CPLXMLNode* psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
+
+    for( ; psLayers; psLayers = psLayers->psNext, n++ )
+    {
+        if( n != nBand )
+        {
+            continue;
+        }
+
+        CPLXMLNode* psVAT = CPLGetXMLNode( psLayers, "vatTableName" );
+
+        if( psVAT != NULL )
+        {
+            pszName= CPLStrdup( CPLGetXMLValue( psVAT, "vatTableName", NULL ) );
+            return true;
+        }
+    }
+
+    return false;
+}
+
+//  ---------------------------------------------------------------------------
 //                                                              FlushMetadata()
 //  ---------------------------------------------------------------------------
 
@@ -1577,9 +1643,9 @@ bool GeoRasterWrapper::FlushMetadata()
     const char* pszBlue  = "1";
 
     if( ( nRasterBands == 3 ) && ( EQUAL( pszCellDepth, "8BIT_U") ) &&
-        ( ! HasColorTable( 1 ) ) && 
-        ( ! HasColorTable( 2 ) ) && 
-        ( ! HasColorTable( 3 ) ) )
+        ( ! HasColorMap( 1 ) ) && 
+        ( ! HasColorMap( 2 ) ) && 
+        ( ! HasColorMap( 3 ) ) )
     {
         pszRed   = "1";
         pszGreen = "2";
