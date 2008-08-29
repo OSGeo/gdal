@@ -45,9 +45,6 @@ import gdaltest
 ###############################################################################
 # Verify that we always getting the same image when warping.
 # Warp the image using the VRT file and compare result with reference image
-# using the specified threshold.
-
-threshold_byte = 1.0    # For Byte datatype
 
 # Upsampling
 def warp_1():
@@ -74,9 +71,17 @@ def warp_2():
     if gdaltest.tiff_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_blinear.vrt', 1, 28772 )
+    ds = gdal.Open( 'data/utmsmall_blinear.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_blinear.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
 
-    return tst.testOpen()
+    return 'success'
 
 def warp_3():
 
@@ -84,9 +89,17 @@ def warp_3():
     if gdaltest.tiff_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_cubic.vrt', 1, 23824 )
+    ds = gdal.Open( 'data/utmsmall_cubic.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_cubic.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
 
-    return tst.testOpen()
+    return 'success'
 
 def warp_4():
  
@@ -112,9 +125,17 @@ def warp_5():
     if gdaltest.tiff_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_lanczos.vrt', 1, 25603 )
+    ds = gdal.Open( 'data/utmsmall_lanczos.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_lanczos.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
 
-    return tst.testOpen()
+    return 'success'
 
 # Downsampling
 def warp_6():
