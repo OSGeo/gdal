@@ -1948,6 +1948,9 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     if( psOptions->eResampleAlg == GRA_Cubic )
         nResWinSize = 2;
 
+    if( psOptions->eResampleAlg == GRA_CubicSpline )
+        nResWinSize = 2;
+
 /* -------------------------------------------------------------------- */
 /*      Allow addition of extra sample pixels to source window to       */
 /*      avoid missing pixels due to sampling error.  In fact,           */
