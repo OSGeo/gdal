@@ -30,7 +30,7 @@
 #******************************************************************************
 
 try:
-    from osgeo import ogr
+    from osgeo import osr
 except ImportError:
     import osr
 
