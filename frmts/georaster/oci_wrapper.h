@@ -236,6 +236,13 @@ private:
 public:
 
     OWStatement*        CreateStatement( const char* pszStatementIn );
+    OCIParam*           GetDescription( char* pszTableName );
+    bool                GetNextField( 
+                            OCIParam* phTable, 
+                            int nIndex,
+                            const char* pszName, 
+                            const char* pszType,
+                            const char* pszSize );
 
     void                CreateType( sdo_geometry** pphData );
     void                DestroyType( sdo_geometry** pphData );
