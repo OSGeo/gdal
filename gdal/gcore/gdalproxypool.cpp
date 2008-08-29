@@ -452,7 +452,6 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
     }
 
     pszGCPProjection = NULL;
-    papszFileList = NULL;
     nGCPCount = 0;
     pasGCPList = NULL;
     metadataSet = NULL;
@@ -468,7 +467,6 @@ GDALProxyPoolDataset::~GDALProxyPoolDataset()
 {
     CPLFree(pszProjectionRef);
     CPLFree(pszGCPProjection);
-    CSLDestroy(papszFileList);
     if (nGCPCount)
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -639,26 +637,6 @@ void *GDALProxyPoolDataset::GetInternalHandle( const char * pszRequest)
              "GetInternalHandle() cannot be safely called on a proxy pool dataset\n"
              "as the returned value may be invalidated at any time.\n");
     return GDALProxyDataset::GetInternalHandle(pszRequest);
-}
-
-/************************************************************************/
-/*                         GetFileList()                                */
-/************************************************************************/
-
-char      **GDALProxyPoolDataset::GetFileList(void)
-{
-    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
-
-    CSLDestroy(papszFileList);
-    papszFileList = NULL;
-
-    char** papszUnderlyingFileList = poUnderlyingDataset->GetFileList();
-    if (papszUnderlyingFileList)
-        papszFileList = CSLDuplicate(papszUnderlyingFileList);
-
-    UnrefUnderlyingDataset(poUnderlyingDataset);
-
-    return papszFileList;
 }
 
 /************************************************************************/
