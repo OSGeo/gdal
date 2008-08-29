@@ -88,9 +88,7 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
     //  Parse arguments
     //  -------------------------------------------------------------------
 
-    char **papszParam = CSLTokenizeString2(
-                            strstr( pszFilename, ":" ) + 1, 
-                            ID_SEPARATORS, 
+    char **papszParam = CSLTokenizeString2( pszFilename, ID_SEPARATORS, 
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
 
     int nArgc = CSLCount( papszParam );
@@ -104,10 +102,10 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
     //  Check mandatory arguments
     //  -------------------------------------------------------------------
 
-    if ( nArgc < 2 || 
-         nArgc > 6 ||
-         EQUAL( papszParam[0], "" ) ||
-         EQUAL( papszParam[1], "" ) )
+    if ( nArgc < 3 || 
+         nArgc > 7 ||
+         EQUAL( papszParam[1], "" ) ||
+         EQUAL( papszParam[2], "" ) )
     {
         CPLError( CE_Warning, CPLE_IllegalArg,
         "Invalid georaster identification\n\n"
@@ -554,6 +552,13 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
             &dfStdDev, &dfMean ) == CE_None )
         {
             poDstBand->SetStatistics( dfMin, dfMax, dfStdDev, dfMean );
+        }
+
+        const GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
+
+        if( poRAT != NULL )
+        {
+            poDstBand->SetDefaultRAT( poRAT );
         }
 
         dfNoDataValue = poSrcBand->GetNoDataValue( &bHasNoDataValue );

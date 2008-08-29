@@ -238,6 +238,89 @@ OWStatement* OWConnection::CreateStatement( const char* pszStatementIn )
     return poStatement;
 }
 
+OCIParam* OWConnection::GetDescription( char* pszTableName )
+{
+    OCIDescribe* phDescribe = NULL;
+    OCIParam*    phParam    = NULL;
+    OCIParam*    phAttrs    = NULL;
+
+    CheckError( OCIDescribeAny ( 
+        hSvcCtx, 
+        hError, 
+        (text*) pszTableName,
+        (ub4) strlen( pszTableName ),
+        (ub1) OCI_OTYPE_NAME,
+        (ub1) OCI_DEFAULT, 
+        (ub1) OCI_PTYPE_TYPE, 
+        phDescribe ), hError );
+
+    CheckError( OCIAttrGet( 
+        phDescribe,
+        (ub4) OCI_HTYPE_DESCRIBE,
+        (dvoid*) &phParam,
+        (ub4*) NULL,
+        (ub4) OCI_ATTR_PARAM, 
+        hError ), hError );
+
+    CheckError( OCIAttrGet( 
+        phDescribe,
+        (ub4) OCI_DTYPE_PARAM,
+        (dvoid*) &phAttrs,
+        (ub4*) NULL,
+        (ub4) OCI_ATTR_LIST_COLUMNS, 
+        hError ), hError );
+
+    return phAttrs;
+}
+
+bool OWConnection::GetNextField( OCIParam* phTable,
+                                 int nIndex,
+                                 const char* pszName, 
+                                 const char* pszType,
+                                 const char* pszSize )
+{
+    OCIParam     *hParmDesc;
+
+    sword nStatus = 0;
+
+    nStatus = OCIParamGet( 
+        phTable, 
+        (ub4) OCI_DTYPE_PARAM,
+        hError, 
+        (dvoid**) &hParmDesc, 
+        (ub4) nIndex + 1 );
+
+    if( nStatus != OCI_SUCCESS )
+    {
+        return false;
+    }
+
+    ub2 nOCIType;
+
+    CheckError( OCIAttrGet( 
+        hParmDesc,
+        (ub4) OCI_DTYPE_PARAM,
+        (dvoid*) &nOCIType,
+        (ub4*) NULL,
+        (ub4) OCI_ATTR_DATA_TYPE, 
+        hError ), hError );
+
+    ub2 nOCILen;
+
+    char* pszFieldName = NULL;
+    ub4 nNameLength = 0;
+
+    CheckError( OCIAttrGet( 
+        hParmDesc,
+        (ub4) OCI_DTYPE_PARAM,
+        (dvoid*) &pszFieldName,
+        (ub4*) &nNameLength,
+        (ub4) OCI_ATTR_NAME, 
+        hError ), hError );
+
+    return true;
+}
+
 /*****************************************************************************/
 /*                           OWStatement                                     */
 /*****************************************************************************/
