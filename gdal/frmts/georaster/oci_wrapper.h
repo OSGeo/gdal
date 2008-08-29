@@ -50,6 +50,9 @@ struct OW_CellDepth {
 
 /***************************************************************************/
 /*                            Free with NULL test                          */
+/*                                                                         */
+/* NOTE - mloskot: Calling free() or delete on null pointers is perfectly  */
+/* valid, so these tests are redundant.                                    */
 /***************************************************************************/
 
 #define ObjFree_nt(p)    if(p) { delete p; p = NULL; }
