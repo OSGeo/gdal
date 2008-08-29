@@ -1336,6 +1336,17 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
     int iBandIndex; 
     CPLErr eErr = CE_None;
 
+    const char* pszInterleave;
+    if (nXSize == nBufXSize && nYSize == nBufYSize &&
+        (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) != NULL &&
+        EQUAL(pszInterleave, "PIXEL"))
+    {
+        return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount, panBandMap,
+                                   nPixelSpace, nLineSpace, nBandSpace );
+    }
+
     for( iBandIndex = 0; 
          iBandIndex < nBandCount && eErr == CE_None; 
          iBandIndex++ )
