@@ -68,20 +68,22 @@ class CPL_DLL VSIVirtualHandle {
 class CPL_DLL VSIFilesystemHandler {
 
 public:
+
+    virtual ~VSIFilesystemHandler() {}
+
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess) = 0;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf) = 0;
-    virtual int      Unlink( const char *pszFilename ) 
-        		{ errno=ENOENT; return -1; }
-    virtual int      Mkdir( const char *pszDirname, long nMode ) 
-        		{ errno=ENOENT; return -1; }
-    virtual int      Rmdir( const char *pszDirname ) 
-			{ errno=ENOENT; return -1; }
-    virtual char   **ReadDir( const char *pszDirname ) 
-			{ return NULL; }
-    virtual          ~VSIFilesystemHandler() {}
-    virtual int      Rename( const char *oldpath, const char *newpath )
-        		{ errno=ENOENT; return -1; }
+    virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf) = 0;
+    virtual int Unlink( const char *pszFilename )
+                      { errno=ENOENT; return -1; }
+    virtual int Mkdir( const char *pszDirname, long nMode ) 
+                     { errno=ENOENT; return -1; }
+    virtual int Rmdir( const char *pszDirname ) 
+                     { errno=ENOENT; return -1; }
+    virtual char **ReadDir( const char *pszDirname ) 
+                          { return NULL; }
+    virtual int Rename( const char *oldpath, const char *newpath )
+                      { errno=ENOENT; return -1; }
 };
 
 /************************************************************************/
@@ -91,8 +93,8 @@ public:
 class CPL_DLL VSIFileManager 
 {
 private:
-    VSIFilesystemHandler         *poDefaultHandler;
-    std::map<std::string,VSIFilesystemHandler *>   oHandlers;
+    VSIFilesystemHandler *poDefaultHandler;
+    std::map<std::string, VSIFilesystemHandler *> oHandlers;
 
     VSIFileManager();
 
@@ -102,9 +104,9 @@ public:
     ~VSIFileManager();
 
     static VSIFilesystemHandler *GetHandler( const char * );
-    static void                InstallHandler( const std::string& osPrefix, 
-                                               VSIFilesystemHandler * );
-    static void                RemoveHandler( const std::string& osPrefix );
+    static void InstallHandler( const std::string& osPrefix, 
+                                VSIFilesystemHandler * );
+    static void RemoveHandler( const std::string& osPrefix );
 };
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */
