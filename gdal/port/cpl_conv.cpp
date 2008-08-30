@@ -260,7 +260,7 @@ char *CPLStrlwr( char *pszString )
 
         while (*pszTemp)
         {
-            *pszTemp = (char)tolower(*pszTemp);
+            *pszTemp = tolower (*pszTemp);
             pszTemp++;
         }
     }
@@ -557,7 +557,7 @@ const char *CPLReadLineL( FILE * fp )
     int nBufLength = 0;
     size_t nChunkBytesConsumed = 0;
 
-    for( ;; )
+    while( TRUE )
     {
 /* -------------------------------------------------------------------- */
 /*      Read a chunk from the input file.                               */
@@ -1187,7 +1187,7 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
 int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
                     double dfValue, const char *pszLocale )
 {
-    UNREFERENCED_PARAM(pszLocale);
+
 #define DOUBLE_BUFFER_SIZE 64
 
     char    szTemp[DOUBLE_BUFFER_SIZE];
@@ -1275,10 +1275,8 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
 int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
                   const struct tm *poBrokenTime, const char *pszLocale )
 {
-    UNREFERENCED_PARAM(pszLocale);
-
-    char *pszTemp = (char *)CPLMalloc( (nMaxLen + 1) * sizeof(char) );
-    int nChars = 0;
+    char    *pszTemp = (char *)CPLMalloc( (nMaxLen + 1) * sizeof(char) );
+    int     nChars;
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     char        *pszCurLocale = NULL;
@@ -1332,7 +1330,7 @@ void CPLVerifyConfiguration()
 /* -------------------------------------------------------------------- */
 /*      Verify byte order                                               */
 /* -------------------------------------------------------------------- */
-    GInt32 nTest;
+    GInt32   nTest;
 
     nTest = 1;
 
@@ -1341,7 +1339,7 @@ void CPLVerifyConfiguration()
 #endif
 #ifdef CPL_MSB
     if( ((GByte *) &nTest)[3] != 1 )
-#endif
+#endif    
         CPLError( CE_Fatal, CPLE_AppDefined, 
                   "CPLVerifyConfiguration(): byte order set wrong.\n" );
 }
@@ -1509,7 +1507,7 @@ double CPLDMSToDec( const char *is )
         ++s;
     }
     /* postfix sign */
-    if (*s && (NULL != (p = (char *) strchr(sym, *s)))) {
+    if (*s && (p = (char *) strchr(sym, *s))) {
         sign = (p - sym) >= 4 ? '-' : '+';
         ++s;
     }
