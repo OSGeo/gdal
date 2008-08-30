@@ -14,9 +14,8 @@
    Copyright (C) 1998-2005 Gilles Vollant
 */
 
-#ifndef _ZLIBIOAPI_H
-#define _ZLIBIOAPI_H
-
+#ifndef CPL_MINIZIP_IOAPI_H_INCLUDED
+#define CPL_MINIZIP_IOAPI_H_INCLUDED
 
 #define ZLIB_FILEFUNC_SEEK_CUR (1)
 #define ZLIB_FILEFUNC_SEEK_END (2)
@@ -28,7 +27,6 @@
 
 #define ZLIB_FILEFUNC_MODE_EXISTING (4)
 #define ZLIB_FILEFUNC_MODE_CREATE   (8)
-
 
 #ifndef ZCALLBACK
 
@@ -79,4 +77,4 @@ void cpl_fill_fopen_filefunc OF((zlib_filefunc_def* pzlib_filefunc_def));
 }
 #endif
 
-#endif
+#endif /* CPL_MINIZIP_IOAPI_H_INCLUDED */
