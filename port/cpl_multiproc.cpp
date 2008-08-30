@@ -104,6 +104,8 @@ CPLMutexHolder::~CPLMutexHolder()
 int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
 {
+    int bSuccess = FALSE;
+
 #ifndef MUTEX_NONE
     static void *hCOAMutex = NULL;
 
@@ -125,19 +127,17 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
     {
         *phMutex = CPLCreateMutex();
         CPLReleaseMutex( hCOAMutex );
-        return TRUE;
+        bSuccess = TRUE;
     }
     else
     {
         CPLReleaseMutex( hCOAMutex );
 
-        int bSuccess = CPLAcquireMutex( *phMutex, dfWaitInSeconds );
-        
-        return bSuccess;
+        bSuccess = CPLAcquireMutex( *phMutex, dfWaitInSeconds );
     }
 #endif /* ndef MUTEX_NONE */
 
-    return TRUE;
+    return bSuccess;
 }
 
 /************************************************************************/
