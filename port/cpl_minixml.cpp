@@ -42,8 +42,7 @@
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include <cctype>
-#include <cstddef>
+#include <ctype.h>
 
 CPL_CVSID("$Id$");
 
@@ -198,9 +197,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         psContext->eTokenType = TLiteral;
         
         AddToToken( psContext, '<' );
-        
-        for( ;; )
-        { 
+        do { 
             chNext = ReadChar(psContext);
             if( chNext == '\0' )
             {
@@ -249,7 +246,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
             }
 
             AddToToken( psContext, chNext );
-        }
+        } while( TRUE );
     }
 /* -------------------------------------------------------------------- */
 /*      Handle CDATA.                                                   */
@@ -1786,9 +1783,9 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 
 {
-    char *pszDoc = NULL;
-    FILE *fp = NULL;
-    std::size_t nLength = -1;
+    char    *pszDoc;
+    FILE    *fp;
+    vsi_l_offset nLength;
 
 /* -------------------------------------------------------------------- */
 /*      Serialize document.                                             */
