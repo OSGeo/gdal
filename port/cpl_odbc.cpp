@@ -76,6 +76,7 @@ CPLODBCDriverInstaller::CPLODBCDriverInstaller()
 int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         const char* pszPathIn, WORD fRequest )
 {
+    UNREFERENCED_PARAM(pszPathIn);
     CPLAssert( NULL != pszDriver ); 
 
     // Try to install driver to system-wide location
@@ -743,7 +744,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             m_papszColValues[iCol][cbDataLen] = '\0';
             m_panColValueLengths[iCol] = cbDataLen;
 
-            while( TRUE )
+            for( ;; )
             {
                 _SQLLEN nChunkLen;
 
@@ -808,8 +809,6 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             && m_panColValueLengths[iCol] > 0 )
         {
             wchar_t *pwszSrc = (wchar_t *) m_papszColValues[iCol];
-            int  nMaxChars = m_panColValueLengths[iCol]+1;
-            size_t nOutChars;
 
             m_papszColValues[iCol] = 
                 CPLRecodeFromWChar( pwszSrc, CPL_ENC_UCS2, CPL_ENC_UTF8 );
