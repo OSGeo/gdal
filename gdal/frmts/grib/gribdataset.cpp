@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gribdataset.cpp,v 1.9 2005/05/05 15:54:48 fwarmerdam Exp $
+ * $Id$
  *
  * Project:  GRIB Driver
  * Purpose:  GDALDataset driver for GRIB translator for read support
@@ -39,7 +39,7 @@
 
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id: gribdataset.cpp,v 1.9 2005/05/05 15:54:48 fwarmerdam Exp $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_GRIB(void);
@@ -186,6 +186,8 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand,
         }
         
         SetMetadataItem( "GRIB_PDS_TEMPLATE_NUMBERS", osOctet );
+
+        CPLFree( pabyBody );
     }
 
     VSIFSeekL( poDS->fp, nOffset, SEEK_SET );
