@@ -457,9 +457,10 @@ char **CSVReadParseLine( FILE * fp )
 /* -------------------------------------------------------------------- */
     pszWorkLine = CPLStrdup( pszLine );
 
-    while( TRUE )
+    for( ;; )
     {
-        int             i, nCount = 0;
+        int i = 0;
+        int nCount = 0;
 
         for( i = 0; pszWorkLine[i] != '\0'; i++ )
         {
