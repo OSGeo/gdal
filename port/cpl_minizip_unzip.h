@@ -52,18 +52,18 @@
       ftp://ftp.pkware.com/probdesc.zip
 */
 
-#ifndef _unz_H
-#define _unz_H
+#ifndef CPL_MINIZIP_UNZIP_H_INCLUDED
+#define CPL_MINIZIP_UNZIP_H_INCLUDED
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifndef _ZLIB_H
-#include "zlib.h"
+#include <zlib.h>
 #endif
 
-#ifndef _ZLIBIOAPI_H
+#ifndef CPL_MINIZIP_IOAPI_H_INCLUDED
 #include "cpl_minizip_ioapi.h"
 #endif
 
@@ -374,4 +374,4 @@ extern int ZEXPORT cpl_unzSetOffset (unzFile file, uLong pos);
 }
 #endif
 
-#endif /* _unz_H */
+#endif /* CPL_MINIZIP_UNZIP_H_INCLUDED */
