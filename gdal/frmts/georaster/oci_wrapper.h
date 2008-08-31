@@ -93,7 +93,6 @@ const char*         OWReplaceToken( const char* pszBaseString,
 
 #define TYPE_OWNER                  "MDSYS"
 #define SDO_GEOMETRY                TYPE_OWNER".SDO_GEOMETRY"
-#define SDO_COLORMAP                TYPE_OWNER".SDO_GEOR_COLORMAP"
 #define SDO_GEORASTER               TYPE_OWNER".SDO_GEORASTER"
 #define SDO_NUMBER_ARRAY            TYPE_OWNER".SDO_NUMBER_ARRAY"
 
@@ -104,7 +103,6 @@ const char*         OWReplaceToken( const char* pszBaseString,
 typedef OCIRef SDO_GEORASTER_ref;
 typedef OCIRef SDO_GEOMETRY_ref;
 typedef OCIRef SDO_POINT_TYPE_ref;
-typedef OCIRef SDO_GEOR_COLORMAP_ref;
 
 struct sdo_point_type
 {
@@ -170,29 +168,6 @@ struct sdo_georaster_ind
 };
 typedef struct sdo_georaster_ind SDO_GEORASTER_ind;
 
-struct sdo_geor_colormap
-{
-    OCIArray* CellValue;
-    OCIArray* Red;
-    OCIArray* Green;
-    OCIArray* Blue;
-    OCIArray* Alpha;
-};
-
-typedef struct sdo_geor_colormap SDO_GEOR_COLORMAP;
-
-struct sdo_geor_colormap_ind
-{
-    OCIInd _atomic;
-    OCIInd CellValue;
-    OCIInd Red;
-    OCIInd Green;
-    OCIInd Blue;
-    OCIInd Alpha;
-};
-
-typedef struct sdo_geor_colormap_ind SDO_GEOR_COLORMAP_ind;
-
 /***************************************************************************/
 /*                            Oracle class wrappers                        */
 /***************************************************************************/
@@ -234,18 +209,19 @@ private:
     OCIType*            hNumArrayTDO;
     OCIType*            hGeometryTDO;
     OCIType*            hGeoRasterTDO;
-    OCIType*            hColormapTDO;
 
 public:
 
     OWStatement*        CreateStatement( const char* pszStatementIn );
-    OCIParam*           GetDescription( char* pszTableName );
-    bool                GetNextField( 
-                            OCIParam* phTable, 
+    OCIParam*           GetDescription( char* pszTable );
+    bool                GetNextField(
+                            OCIParam* phTable,
                             int nIndex,
-                            const char* pszName, 
-                            const char* pszType,
-                            const char* pszSize );
+                            char* pszName,
+                            int* pnType,
+                            int* pnSize,
+                            int* pnPrecision,
+                            signed short* pnScale );
 
     void                CreateType( sdo_geometry** pphData );
     void                DestroyType( sdo_geometry** pphData );
@@ -306,7 +282,6 @@ public:
     void                Define( OCIArray** pphData );
     void                Define( sdo_georaster** pphData );
     void                Define( sdo_geometry** pphData );
-    void                Define( sdo_geor_colormap** pphData );
     void                Define( OCILobLocator** pphLocator, 
                             int nIterations );
     void                BindName( char* pszName, int* pnData );

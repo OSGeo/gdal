@@ -63,7 +63,6 @@ OWConnection::OWConnection( const char* pszUserIn,
     hNumArrayTDO    = NULL;
     hGeometryTDO    = NULL;
     hGeoRasterTDO   = NULL;
-    hColormapTDO    = NULL;
     bSuceeded       = false;
 
     // ------------------------------------------------------
@@ -72,40 +71,40 @@ OWConnection::OWConnection( const char* pszUserIn,
 
     ub4 nMode = ( OCI_DEFAULT | OCI_OBJECT );
 
-    CheckError( OCIEnvCreate( 
-        &hEnv, 
-        nMode, 
-        NULL, 
-        NULL, 
-        NULL, 
-        NULL, 
-        (size_t) 0, 
+    CheckError( OCIEnvCreate(
+        &hEnv,
+        nMode,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        (size_t) 0,
         (dvoid**) NULL ), NULL );
 
     // ------------------------------------------------------
     //  Create Error Handle
     // ------------------------------------------------------
 
-    CheckError( OCIHandleAlloc( 
-        (dvoid*) hEnv, 
-        (dvoid**) (dvoid*) &hError, 
-        (ub4) OCI_HTYPE_ERROR, 
-        (size_t) 0, 
+    CheckError( OCIHandleAlloc(
+        (dvoid*) hEnv,
+        (dvoid**) (dvoid*) &hError,
+        (ub4) OCI_HTYPE_ERROR,
+        (size_t) 0,
         (void**) NULL ), hError );
 
     // ------------------------------------------------------
     //  Logon to Oracle Server
     // ------------------------------------------------------
 
-    if( CheckError( OCILogon( 
-        hEnv, 
-        hError, 
-        &hSvcCtx, 
-        (text*) pszUser, 
+    if( CheckError( OCILogon(
+        hEnv,
+        hError,
+        &hSvcCtx,
+        (text*) pszUser,
         (ub4) strlen(pszUser),
-        (text*) pszPassword, 
-        (ub4) strlen(pszPassword), 
-        (text*) pszServer, 
+        (text*) pszPassword,
+        (ub4) strlen(pszPassword),
+        (text*) pszServer,
         (ub4) strlen(pszServer) ), hError ) )
     {
         bSuceeded = false;
@@ -144,7 +143,6 @@ OWConnection::OWConnection( const char* pszUserIn,
 
     hNumArrayTDO    = DescribeType( SDO_NUMBER_ARRAY );
     hGeometryTDO    = DescribeType( SDO_GEOMETRY );
-    hColormapTDO    = DescribeType( SDO_COLORMAP );
     hGeoRasterTDO   = DescribeType( SDO_GEORASTER );
 }
 
@@ -169,14 +167,14 @@ OCIType* OWConnection::DescribeType( char *pszTypeName )
     OCIRef*   hRef      = NULL;
     OCIType*  hType     = NULL;
 
-    CheckError( OCIDescribeAny( 
-        hSvcCtx, 
-        hError, 
+    CheckError( OCIDescribeAny(
+        hSvcCtx,
+        hError,
         (text*) pszTypeName,
         (ub4) strlen( pszTypeName ),
         (ub1) OCI_OTYPE_NAME,
-        (ub1) OCI_DEFAULT, 
-        (ub1) OCI_PTYPE_TYPE, 
+        (ub1) OCI_DEFAULT,
+        (ub1) OCI_PTYPE_TYPE,
         hDescribe ), hError );
 
     CheckError( OCIAttrGet( 
@@ -238,36 +236,35 @@ OWStatement* OWConnection::CreateStatement( const char* pszStatementIn )
     return poStatement;
 }
 
-OCIParam* OWConnection::GetDescription( char* pszTableName )
+OCIParam* OWConnection::GetDescription( char* pszTable )
 {
-    OCIDescribe* phDescribe = NULL;
     OCIParam*    phParam    = NULL;
     OCIParam*    phAttrs    = NULL;
 
-    CheckError( OCIDescribeAny ( 
-        hSvcCtx, 
-        hError, 
-        (text*) pszTableName,
-        (ub4) strlen( pszTableName ),
+    CheckError( OCIDescribeAny (
+        hSvcCtx,
+        hError,
+        (text*) pszTable,
+        (ub4) strlen( pszTable ),
         (ub1) OCI_OTYPE_NAME,
-        (ub1) OCI_DEFAULT, 
-        (ub1) OCI_PTYPE_TYPE, 
-        phDescribe ), hError );
+        (ub1) OCI_DEFAULT,
+        (ub1) OCI_PTYPE_TABLE,
+        hDescribe ), hError );
 
-    CheckError( OCIAttrGet( 
-        phDescribe,
+    CheckError( OCIAttrGet(
+        hDescribe,
         (ub4) OCI_HTYPE_DESCRIBE,
         (dvoid*) &phParam,
         (ub4*) NULL,
-        (ub4) OCI_ATTR_PARAM, 
+        (ub4) OCI_ATTR_PARAM,
         hError ), hError );
 
-    CheckError( OCIAttrGet( 
-        phDescribe,
+    CheckError( OCIAttrGet(
+        phParam,
         (ub4) OCI_DTYPE_PARAM,
         (dvoid*) &phAttrs,
         (ub4*) NULL,
-        (ub4) OCI_ATTR_LIST_COLUMNS, 
+        (ub4) OCI_ATTR_LIST_COLUMNS,
         hError ), hError );
 
     return phAttrs;
@@ -275,19 +272,21 @@ OCIParam* OWConnection::GetDescription( char* pszTableName )
 
 bool OWConnection::GetNextField( OCIParam* phTable,
                                  int nIndex,
-                                 const char* pszName, 
-                                 const char* pszType,
-                                 const char* pszSize )
+                                 char* pszName,
+                                 int* pnType,
+                                 int* pnSize,
+                                 int* pnPrecision,
+                                 signed short* pnScale )
 {
-    OCIParam     *hParmDesc;
+    OCIParam* hParmDesc = NULL;
 
     sword nStatus = 0;
 
-    nStatus = OCIParamGet( 
-        phTable, 
+    nStatus = OCIParamGet(
+        phTable,
         (ub4) OCI_DTYPE_PARAM,
-        hError, 
-        (dvoid**) &hParmDesc, 
+        hError,
+        (dvoid**) &hParmDesc,
         (ub4) nIndex + 1 );
 
     if( nStatus != OCI_SUCCESS )
@@ -295,30 +294,76 @@ bool OWConnection::GetNextField( OCIParam* phTable,
         return false;
     }
 
-    ub2 nOCIType;
+    char* pszFieldName = NULL;
+    ub4 nNameLength = 0;
 
-    CheckError( OCIAttrGet( 
+    CheckError( OCIAttrGet(
+        hParmDesc,
+        (ub4) OCI_DTYPE_PARAM,
+        (dvoid**) &pszFieldName,
+        (ub4*) &nNameLength,
+        (ub4) OCI_ATTR_NAME,
+        hError ), hError );
+
+    ub2 nOCIType = 0;
+
+    CheckError( OCIAttrGet(
         hParmDesc,
         (ub4) OCI_DTYPE_PARAM,
         (dvoid*) &nOCIType,
         (ub4*) NULL,
-        (ub4) OCI_ATTR_DATA_TYPE, 
+        (ub4) OCI_ATTR_DATA_TYPE,
         hError ), hError );
 
-    ub2 nOCILen;
+    ub2 nOCILen = 0;
 
-    char* pszFieldName = NULL;
-    ub4 nNameLength = 0;
-
-    CheckError( OCIAttrGet( 
+    CheckError( OCIAttrGet(
         hParmDesc,
         (ub4) OCI_DTYPE_PARAM,
-        (dvoid*) &pszFieldName,
-        (ub4*) &nNameLength,
-        (ub4) OCI_ATTR_NAME, 
+        (dvoid*) &nOCILen,
+        (ub4*) NULL,
+        (ub4) OCI_ATTR_DATA_SIZE,
         hError ), hError );
 
+    unsigned short nOCIPrecision = 0;
+    sb1 nOCIScale = 0;
+
+    if( nOCIType == SQLT_NUM )
+    {
+        CheckError( OCIAttrGet(
+            hParmDesc,
+            (ub4) OCI_DTYPE_PARAM,
+            (dvoid**) &nOCIPrecision,
+            (ub4*) 0,
+            (ub4) OCI_ATTR_PRECISION,
+            hError ), hError );
+
+        CheckError( OCIAttrGet(
+            hParmDesc,
+            (ub4) OCI_DTYPE_PARAM,
+            (dvoid**) &nOCIScale,
+            (ub4*) 0,
+            (ub4) OCI_ATTR_SCALE,
+            hError ), hError );
+
+        if( nOCIPrecision > 255 ) // Lesson learned from ogrocisession.cpp
+        {
+            nOCIPrecision = nOCIPrecision / 256;
+        }
+    }
+
+    nNameLength = MIN( nNameLength, OWNAME );
+
+    strncpy( pszName, pszFieldName, nNameLength);
+    pszName[nNameLength] = '\0';
+
+    *pnType      = (int) nOCIType;
+    *pnSize      = (int) nOCILen;
+    *pnPrecision = (int) nOCIPrecision;
+    *pnScale     = (signed short) nOCIScale;
+
     return true;
+
 }
 
 /*****************************************************************************/
@@ -675,33 +720,6 @@ void OWStatement::Define( sdo_geometry** pphData )
     CheckError( OCIDefineObject( hDefine, 
         hError, 
         poConnect->hGeometryTDO,
-        (dvoid**) pphData, 
-        (ub4*) NULL, 
-        (dvoid**) NULL, 
-        (ub4*) NULL ), hError );
-}
-
-void OWStatement::Define( sdo_geor_colormap** pphData )
-{
-    OCIDefine* hDefine = NULL;
-
-    nNextCol++;
-
-    CheckError( OCIDefineByPos( hStmt, 
-        &hDefine, 
-        hError,
-        (ub4) nNextCol, 
-        (dvoid*) NULL, 
-        (sb4) 0,
-        (ub2) SQLT_NTY, 
-        (void*) NULL, 
-        (ub2*) NULL, 
-        (ub2*) NULL, 
-        (ub4) OCI_DEFAULT ), hError );
-
-    CheckError( OCIDefineObject( hDefine, 
-        hError, 
-        poConnect->hColormapTDO,
         (dvoid**) pphData, 
         (ub4*) NULL, 
         (dvoid**) NULL, 
@@ -1259,4 +1277,5 @@ bool CheckError( sword nStatus, OCIError* hError )
 
     return true;
 }
+
 
