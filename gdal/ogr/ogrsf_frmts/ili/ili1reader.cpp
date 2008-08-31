@@ -61,12 +61,6 @@ ILI1Reader::ILI1Reader() {
   fpItf = NULL;
   nLayers = 0;
   papoLayers = NULL;
-  nAreaLayers = 0;
-  papoAreaLayers = NULL;
-  papoAreaLineLayers = NULL;
-  nSurfaceLayers = 0;
-  papoSurfaceLayers = NULL;
-  papoSurfacePolyLayers = NULL;
   SetArcDegrees(1);
 }
 
@@ -158,7 +152,7 @@ void ILI1Reader::AddField(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT obj)
   CPLDebug( "OGR_ILI", "Field %s: %s", iom_getattrvalue(obj, "name"), typenam);
   if (EQUAL(typenam, "iom04.metamodel.SurfaceType")) {
     OGRILI1Layer* polyLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbPolygon);
-    AddSurfaceLayer(layer, polyLayer);
+    layer->SetSurfacePolyLayer(polyLayer);
     //TODO: add line attributes to geometry
   } else if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
     IOM_OBJECT controlPointDomain = GetAttrObj(model, GetTypeObj(model, obj), "controlPointDomain");
@@ -168,7 +162,9 @@ void ILI1Reader::AddField(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT obj)
     }
     OGRILI1Layer* areaLineLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbMultiLineString);
 #ifdef POLYGONIZE_AREAS
-    AddAreaLayer(layer, areaLineLayer);
+    OGRILI1Layer* areaLayer = new OGRILI1Layer(CPLSPrintf("%s__Areas",layer->GetLayerDefn()->GetName()), NULL, 0, wkbPolygon, NULL);
+    AddLayer(areaLayer);
+    areaLayer->SetAreaLayers(layer, areaLineLayer);
 #endif
   } else if (EQUAL(typenam, "iom04.metamodel.PolylineType") ) {
     layer->GetLayerDefn()->SetGeomType(wkbMultiLineString);
@@ -256,6 +252,13 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
           if (roleobj) AddField(layer, model, roleobj);
           if (obj) AddField(layer, model, obj);
         }
+        if (papoLayers[nLayers-1]->GetLayerDefn()->GetFieldCount() == 0) {
+            //Area layer added
+            OGRILI1Layer* areaLayer = papoLayers[nLayers-1];
+            for (int i=0; i < layer->GetLayerDefn()->GetFieldCount(); i++) {
+              areaLayer->CreateField(layer->GetLayerDefn()->GetFieldDefn(i));
+            }
+        }
       }
     }
     iom_releaseobject(modelele);
@@ -341,8 +344,6 @@ int ILI1Reader::ReadFeatures() {
       {
         CSLDestroy(tokens);
         CPLFree(topic);
-        JoinSurfaceLayers();
-        PolygonizeAreaLayers();
         return TRUE;
       }
       else
@@ -381,142 +382,6 @@ int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
     CPLFree( pszRawData );
 #endif
     return TRUE;
-}
-
-OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines )
-{
-    if (poLines->getNumGeometries() == 0) return new OGRMultiPolygon();
-
-#if defined(POLYGONIZE_AREAS)
-    GEOSGeom *ahInGeoms = NULL;
-    int       i = 0;
-    OGRGeometryCollection *poNoncrossingLines = poLines;
-    GEOSGeom hResultGeom = NULL;
-    OGRGeometry *poMP = NULL;
-
-    if (fix_crossing_lines && poLines->getNumGeometries() > 0)
-    {
-#if (GEOS_VERSION_MAJOR >= 3)
-        CPLDebug( "OGR_ILI", "Fixing crossing lines");
-        //A union of the geometry collection with one line fixes invalid geometries
-        poNoncrossingLines = (OGRGeometryCollection*)poLines->Union(poLines->getGeometryRef(0));
-        CPLDebug( "OGR_ILI", "Fixed lines: %d", poNoncrossingLines->getNumGeometries()-poLines->getNumGeometries());
-#else
-        #warning Interlis 1 AREA cleanup disabled. Needs GEOS >= 3.0
-#endif
-    }
-
-    ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poNoncrossingLines->getNumGeometries());
-    for( i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
-          ahInGeoms[i] = poNoncrossingLines->getGeometryRef(i)->exportToGEOS();
-
-    hResultGeom = GEOSPolygonize( ahInGeoms,
-                                  poNoncrossingLines->getNumGeometries() );
-
-    for( i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
-        GEOSGeom_destroy( ahInGeoms[i] );
-    CPLFree( ahInGeoms );
-    if (poNoncrossingLines != poLines) delete poNoncrossingLines;
-
-    if( hResultGeom == NULL )
-        return NULL;
-
-    poMP = OGRGeometryFactory::createFromGEOS( hResultGeom );
-
-    GEOSGeom_destroy( hResultGeom );
-
-    return (OGRMultiPolygon *) poMP;
-
-#endif
-
-    return new OGRMultiPolygon();
-}
-
-
-void ILI1Reader::PolygonizeAreaLayers()
-{
-    for(int iLayer = 0; iLayer < nAreaLayers; iLayer++ )
-    {
-      OGRILI1Layer *poAreaLayer = papoAreaLayers[iLayer];
-      OGRILI1Layer *poLineLayer = papoAreaLineLayers[iLayer];
-
-      //add all lines from poLineLayer to collection
-      OGRGeometryCollection *gc = new OGRGeometryCollection();
-      poLineLayer->ResetReading();
-      while (OGRFeature *feature = poLineLayer->GetNextFeatureRef())
-          gc->addGeometry(feature->GetGeometryRef());
-
-      //polygonize lines
-      CPLDebug( "OGR_ILI", "Polygonizing layer %s with %d multilines", poAreaLayer->GetLayerDefn()->GetName(), gc->getNumGeometries());
-      OGRMultiPolygon* polys = Polygonize( gc );
-      if (polys->getNumGeometries() != poAreaLayer->GetFeatureCount())
-      {
-          CPLDebug( "OGR_ILI", "Geometries after polygonize: %d", polys->getNumGeometries());
-          delete polys;
-          polys = Polygonize( gc, true ); //try again with crossing line fix
-      }
-      delete gc;
-
-      //associate polygon feature with data row according to centroid
-      int i;
-      OGRPolygon emptyPoly;
-#if defined(POLYGONIZE_AREAS)
-      GEOSGeom *ahInGeoms = NULL;
-
-      ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),polys->getNumGeometries());
-      for( i = 0; i < polys->getNumGeometries(); i++ )
-      {
-          ahInGeoms[i] = polys->getGeometryRef(i)->exportToGEOS();
-          if (!GEOSisValid(ahInGeoms[i])) ahInGeoms[i] = NULL;
-      }
-      poAreaLayer->ResetReading();
-      while (OGRFeature *feature = poAreaLayer->GetNextFeatureRef())
-      {
-        GEOSGeom point = (GEOSGeom)feature->GetGeometryRef()->exportToGEOS();
-        for (i = 0; i < polys->getNumGeometries(); i++ )
-        {
-          if (ahInGeoms[i] && GEOSWithin(point, ahInGeoms[i]))
-          {
-            delete feature->StealGeometry(); //point
-            feature->SetGeometry( polys->getGeometryRef(i) );
-            break;
-          }
-        }
-        if (i == polys->getNumGeometries())
-        {
-          CPLDebug( "OGR_ILI", "Association between area and point failed.");
-          feature->SetGeometry( &emptyPoly );
-        }
-        GEOSGeom_destroy( point );
-      }
-      poAreaLayer->GetLayerDefn()->SetGeomType(wkbPolygon);
-      for( i = 0; i < polys->getNumGeometries(); i++ )
-          GEOSGeom_destroy( ahInGeoms[i] );
-      CPLFree( ahInGeoms );
-#endif
-      delete polys;
-    }
-}
-
-
-void ILI1Reader::JoinSurfaceLayers()
-{
-    for(int iLayer = 0; iLayer < nSurfaceLayers; iLayer++ )
-    {
-      OGRILI1Layer *poSurfaceLayer = papoSurfaceLayers[iLayer];
-      OGRILI1Layer *poPolyLayer = papoSurfacePolyLayers[iLayer];
-
-      poSurfaceLayer->GetLayerDefn()->SetGeomType(poPolyLayer->GetLayerDefn()->GetGeomType());
-      poSurfaceLayer->ResetReading();
-      while (OGRFeature *feature = poSurfaceLayer->GetNextFeatureRef())
-      {
-        OGRFeature *polyfeature = poPolyLayer->GetFeatureRef(feature->GetFID());
-        if (polyfeature) {
-          feature->SetGeometry(polyfeature->GetGeometryRef());
-        }
-
-      }
-    }
 }
 
 
@@ -646,6 +511,7 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
     int end = FALSE;
     int isArc = FALSE;
     OGRLineString *ogrLine = NULL; //current line
+    OGRLinearRing *ogrRing = NULL; //current ring
     OGRPolygon *ogrPoly = NULL; //current polygon
     OGRPoint ogrPoint, arcPoint, endPoint; //points for arc interpolation
     OGRMultiLineString *ogrMultiLine = NULL; //current multi line
@@ -674,7 +540,14 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
     else if (eType == wkbPolygon)
     {
       if (feature->GetGeometryRef())
+      {
         ogrPoly = (OGRPolygon *)feature->GetGeometryRef();
+        if (ogrPoly->getNumInteriorRings() > 0)
+          ogrRing = ogrPoly->getInteriorRing(ogrPoly->getNumInteriorRings()-1);
+        else
+          ogrRing = ogrPoly->getExteriorRing();
+        if (ogrRing && !ogrRing->get_IsClosed()) ogrLine = ogrRing; //SURFACE polygon spread over multiple OBJECTs
+      }
       else
       {
         ogrPoly = new OGRPolygon();
@@ -710,7 +583,7 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
         {
           ogrMultiLine->addGeometryDirectly(ogrLine);
         }
-        if (ogrPoly)
+        if (ogrPoly && ogrLine != ogrRing)
         {
           ogrPoly->addRingDirectly((OGRLinearRing *)ogrLine);
         }
@@ -759,38 +632,6 @@ void ILI1Reader::AddLayer( OGRILI1Layer * poNewLayer )
 /************************************************************************/
 /*                              AddAreaLayer()                              */
 /************************************************************************/
-
-void ILI1Reader::AddAreaLayer( OGRILI1Layer * poAreaLayer,  OGRILI1Layer * poLineLayer )
-
-{
-    ++nAreaLayers;
-
-    papoAreaLayers = (OGRILI1Layer **)
-        CPLRealloc( papoAreaLayers, sizeof(void*) * nAreaLayers );
-    papoAreaLineLayers = (OGRILI1Layer **)
-        CPLRealloc( papoAreaLineLayers, sizeof(void*) * nAreaLayers );
-
-    papoAreaLayers[nAreaLayers-1] = poAreaLayer;
-    papoAreaLineLayers[nAreaLayers-1] = poLineLayer;
-}
-
-/************************************************************************/
-/*                              AddSurfaceLayer()                              */
-/************************************************************************/
-
-void ILI1Reader::AddSurfaceLayer( OGRILI1Layer * poDataLayer,  OGRILI1Layer * poPolyLayer )
-
-{
-    ++nSurfaceLayers;
-
-    papoSurfaceLayers = (OGRILI1Layer **)
-        CPLRealloc( papoSurfaceLayers, sizeof(void*) * nSurfaceLayers );
-    papoSurfacePolyLayers = (OGRILI1Layer **)
-        CPLRealloc( papoSurfacePolyLayers, sizeof(void*) * nSurfaceLayers );
-
-    papoSurfaceLayers[nSurfaceLayers-1] = poDataLayer;
-    papoSurfacePolyLayers[nSurfaceLayers-1] = poPolyLayer;
-}
 
 /************************************************************************/
 /*                              GetLayer()                              */

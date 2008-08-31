@@ -47,17 +47,21 @@ private:
     OGRSpatialReference *poSRS;
     OGRFeatureDefn      *poFeatureDefn;
 
+    OGRILI1Layer        *poSurfacePolyLayer; //Corresponding poly layer for surfaces
+    OGRILI1Layer        *poAreaReferenceLayer; //corresponding point layer for AREA's
+    OGRILI1Layer        *poAreaLineLayer; //corresponding line layer with AREA's
+
     int                 nFeatures;
     OGRFeature          **papoFeatures;
     int                 nFeatureIdx;
-    
+
     int                 bWriter;
 
     OGRILI1DataSource   *poDS;
 
   public:
-                        OGRILI1Layer( const char * pszName, 
-                                     OGRSpatialReference *poSRS, 
+                        OGRILI1Layer( const char * pszName,
+                                     OGRSpatialReference *poSRS,
                                      int bWriter,
                                      OGRwkbGeometryType eType,
                                      OGRILI1DataSource *poDS );
@@ -65,24 +69,32 @@ private:
                        ~OGRILI1Layer();
 
     OGRErr              AddFeature(OGRFeature *poFeature);
-    
+
     void                ResetReading();
     OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextFeatureRef();
     OGRFeature *        GetFeatureRef( long nFID );
 
+    void                SetSurfacePolyLayer(OGRILI1Layer *poSurfacePolyLayer);
+    void                SetAreaLayers(OGRILI1Layer *poReferenceLayer, OGRILI1Layer *poAreaLineLayer);
+
     int                 GetFeatureCount( int bForce = TRUE );
 
     OGRErr              CreateFeature( OGRFeature *poFeature );
     int                 GeometryAppend( OGRGeometry *poGeometry );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
 
     OGRSpatialReference *GetSpatialRef();
-    
+
     int                 TestCapability( const char * );
+
+  private:
+    void                JoinSurfaceLayer();
+    OGRMultiPolygon*    Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines = false );
+    void                PolygonizeAreaLayer();
 };
 
 /************************************************************************/
@@ -112,7 +124,7 @@ class OGRILI1DataSource : public OGRDataSource
 
     FILE       *GetTransferFile() { return fpTransfer; }
 
-    virtual OGRLayer *CreateLayer( const char *, 
+    virtual OGRLayer *CreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -128,13 +140,13 @@ class OGRILI1Driver : public OGRSFDriver
 {
   public:
                 ~OGRILI1Driver();
-                
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
-    
+
     int                 TestCapability( const char * );
 };
 
