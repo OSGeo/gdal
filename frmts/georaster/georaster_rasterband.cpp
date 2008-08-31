@@ -305,6 +305,10 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     poDefaultRAT = poRAT->Clone();
 
+    // ----------------------------------------------------------
+    // Create VAT named based on RDT and RID (potential multi-reference)
+    // ----------------------------------------------------------
+
     if( ! pszVATName )
     {
         pszVATName = CPLStrdup( CPLSPrintf(
@@ -332,6 +336,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
         {
+            //TODO: add Precision and Scale:
             strcpy( szDescription, CPLSPrintf( "%s NUMBER",
                 szDescription ) );
         }
@@ -344,11 +349,11 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     strcpy( szDescription, CPLSPrintf( "%s )", szDescription ) );
 
     // ----------------------------------------------------------
-    // Create table
+    // Create table (Drop it in case it already exist)
     // ----------------------------------------------------------
 
     char szUser[OWCODE];
-    
+
     strcpy( szUser, CPLStrdup( poGeoRaster->poConnection->GetUser() ) );
 
     OWStatement* poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf(
@@ -358,11 +363,8 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         "  CNT  NUMBER          := 0;\n"
         "  GR1  SDO_GEORASTER   := NULL;\n"
         "BEGIN\n"
-        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
-        "    WHERE TABLE_NAME = :1 AND OWNER = :2 ' INTO CNT USING TAB, USR;\n"
-        "  IF CNT = 0 THEN\n"
-        "    EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
-        "  END IF;\n"
+        "  EXECUTE IMMEDIATE 'DROP TABLE '||TAB||' ';\n"
+        "  EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
         "\n"
         "  SELECT %s INTO GR1 FROM %s T WHERE"
         "    T.%s.RasterDataTable = :rdt AND"
@@ -403,29 +405,36 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     int nColunsCount = poRAT->GetColumnCount();
     int nBytesCount  = 0;
 
+    char szInsert[OWTEXT];
+
     for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
-        strcpy( szDescription, CPLSPrintf ( "INSERT INTO %s VALUES (%d",
+        szInsert[0] = '\0';
+
+        strcat( szInsert, CPLSPrintf ( "INSERT INTO %s VALUES (%d", 
             pszVATName, iEntry ) );
 
         for( iCol = 0; iCol < nColunsCount; iCol++ )
         {
             if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
             {
-                strcpy( szDescription, CPLSPrintf ( "%s, '%s'", szDescription,
+                strcat( szInsert, CPLSPrintf ( ", '%s'", 
                     poRAT->GetValueAsString( iEntry, iCol ) ) );
+
             }
             if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer ||
                 poRAT->GetTypeOfCol( iCol ) == GFT_Real )
             {
-                strcpy( szDescription, CPLSPrintf ( "%s, %s", szDescription,
+                strcat( szInsert, CPLSPrintf ( ", %s", 
                     poRAT->GetValueAsString( iEntry, iCol ) ) );
+
             }
         }
-        strcpy( szDescription, CPLSPrintf ( "%s);\n", szDescription ) );
-        nBytesCount += strlen( szDescription );
+        strcat( szInsert, ");\n" );
+
+        nBytesCount += strlen( szInsert );
         pszInserts = (char*) CPLRealloc( pszInserts, sizeof(char) * ( nBytesCount + 1 ));
-        strcpy( &pszInserts[nSize], szDescription );
+        strcpy( &pszInserts[nSize], szInsert );
         nSize = nBytesCount;
     }
 
@@ -461,41 +470,137 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
 const GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 {
-//TODO: This code is not finished
+    if( poDefaultRAT )
+    {
+        return poDefaultRAT->Clone();
+    }
+    else
+    {
+        poDefaultRAT = new GDALRasterAttributeTable();
+    }
 
     GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;
 
-    char* pszVATName = NULL;
+    // ----------------------------------------------------------
+    // Get the name of the VAT Table
+    // ----------------------------------------------------------
 
-    if( poGDS->poGeoRaster->GetVAT( nBand, pszVATName ) == NULL )
+    char* pszVATName = poGDS->poGeoRaster->GetVAT( nBand );
+
+    if( pszVATName == NULL )
     {
         return NULL;
     }
 
-    if( poDefaultRAT ) 
-    {
-        return poDefaultRAT->Clone();
-    }
+    OCIParam* phDesc = NULL;
 
-    OWConnection* phCntx = poGDS->poGeoRaster->poConnection;
-
-    OCIParam* phDesc = phCntx->GetDescription( pszVATName );
+    phDesc = poGDS->poGeoRaster->poConnection->GetDescription( pszVATName );
 
     if( phDesc == NULL )
     {
         return NULL;
     }
 
-    int i = 0;
-    const char* pszFName = NULL;
-    const char* pszFType = NULL;
-    const char* pszFSize = NULL;
+    // ----------------------------------------------------------
+    // Create the RAT and the SELECT statemet based on fields description
+    // ----------------------------------------------------------
 
-    while( phCntx->GetNextField( phDesc, i, pszFName, pszFType, pszFSize ) )
-    {      
-        poDefaultRAT->CreateColumn( pszFName, GFT_Integer, GFU_Generic );
-        i++;
+    int   iCol = 0;
+    char  szField[OWNAME];
+    int   hType = 0;
+    int   nSize = 0;
+    int   nPrecision = 0;
+    signed short nScale = 0;
+
+    char szColumnList[OWTEXT];
+    szColumnList[0] = '\0';
+
+    while( poGDS->poGeoRaster->poConnection->GetNextField(
+                phDesc, iCol, szField, &hType, &nSize, &nPrecision, &nScale ) )
+    {
+        switch( hType )
+        {
+            case SQLT_NUM:
+                if( nScale == 0 )
+                {
+                    poDefaultRAT->CreateColumn( szField, GFT_Integer,
+                        GFU_Generic );
+                }
+                else
+                {
+                    poDefaultRAT->CreateColumn( szField, GFT_Real,
+                        GFU_Generic );
+                }
+                break;
+            case SQLT_CHR:
+            case SQLT_AFC:
+            case SQLT_DAT:
+            case SQLT_DATE:
+            case SQLT_TIMESTAMP:
+            case SQLT_TIMESTAMP_TZ:
+            case SQLT_TIMESTAMP_LTZ:
+            case SQLT_TIME:
+            case SQLT_TIME_TZ:
+                    poDefaultRAT->CreateColumn( szField, GFT_String, 
+                        GFU_Generic );
+                break;
+            default:
+                CPLDebug("GEORASTER", "VAT (%s) Column (%s) type (%d) not supported"
+                    "as GDAL RAT", pszVATName, szField, hType );
+                continue;
+        }
+        strcpy( szColumnList, CPLSPrintf( "%s substr(%s,1,%d),",
+            szColumnList, szField, MIN(nSize,OWNAME) ) );
+
+        iCol++;
     }
+
+    szColumnList[strlen(szColumnList) - 1] = '\0'; // remove the last comma
+
+    // ----------------------------------------------------------
+    // Read VAT and load RAT
+    // ----------------------------------------------------------
+
+    OWStatement* poStmt = NULL;
+
+    poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
+        "SELECT %s FROM %s", szColumnList, pszVATName ) );
+
+    char** papszValue = (char**) CPLMalloc( sizeof(char**) * iCol );
+
+    int i = 0;
+
+    for( i = 0; i < iCol; i++ )
+    {
+        papszValue[i] = (char*) CPLMalloc( sizeof(char*) * OWNAME );
+        poStmt->Define( papszValue[i] );
+    }
+
+    if( ! poStmt->Execute() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Error reading VAT %s",
+            pszVATName );
+        return NULL;
+    }
+
+    int iRow = 0;
+
+    while( poStmt->Fetch() )
+    {
+        for( i = 0; i < iCol; i++ )
+        {
+           poDefaultRAT->SetValue( iRow, i, papszValue[i] );
+        }
+        iRow++;
+    }
+
+    for( i = 0; i < iCol; i++ )
+    {
+        CPLFree( papszValue[i] );
+    }
+    CPLFree( papszValue );
+
+    delete poStmt;
 
     CPLFree_nt( pszVATName );
 
