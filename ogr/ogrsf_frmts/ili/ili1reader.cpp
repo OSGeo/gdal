@@ -71,10 +71,6 @@ ILI1Reader::~ILI1Reader() {
  for(i=0;i<nLayers;i++)
      delete papoLayers[i];
  CPLFree(papoLayers);
- CPLFree(papoAreaLayers);
- CPLFree(papoAreaLineLayers);
- CPLFree(papoSurfaceLayers);
- CPLFree(papoSurfacePolyLayers);
 }
 
 void ILI1Reader::SetArcDegrees(double arcDegrees) {
