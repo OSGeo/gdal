@@ -18,7 +18,8 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		gdal_grid$(EXE) \
 		ogrinfo$(EXE) \
 		ogr2ogr$(EXE) \
-		ogrtindex$(EXE)
+		ogrtindex$(EXE) \
+		testepsg$(EXE)
 endif
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
