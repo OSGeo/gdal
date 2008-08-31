@@ -244,7 +244,7 @@ public:
     bool                SetNoData( double dfNoDataValue );
     CPLXMLNode*         GetMetadata() { return phMetadata; };
     bool                SetVAT( int nBand, const char* pszName );
-    bool                GetVAT( int nBand, const char* pszName );
+    char*               GetVAT( int nBand );
 
 public:
 
