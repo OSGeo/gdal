@@ -108,7 +108,8 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
     //  Parse arguments
     //  -------------------------------------------------------------------
 
-    char **papszParam = CSLTokenizeString2( pszStringID, ID_SEPARATORS, 
+    char **papszParam = CSLTokenizeString2(
+                            strstr( pszStringID, ":" ) + 1, ID_SEPARATORS,
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
 
     int nArgc = CSLCount( papszParam );
@@ -117,7 +118,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
     // Assume the default database
     // --------------------------------------------------------------------
 
-    if( nArgc == 3 ) 
+    if( nArgc == 2 ) 
     {
         papszParam = CSLAddString( papszParam, "" );
     }
@@ -147,13 +148,13 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
     }
 
     poGRW->poConnection = poDriver->GetConnection( 
-        papszParam[1], 
-        papszParam[2],
-        papszParam[3] );
+        papszParam[0],
+        papszParam[1],
+        papszParam[2] );
 
     if( ! poGRW->poConnection->Succed() )
     {
-        CPLFree_nt( papszParam );
+        CSLDestroy( papszParam );
         delete poGRW;
         return NULL;
     }
@@ -164,36 +165,38 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
 
     switch( nArgc ) 
     {
-    case 7:
-        poGRW->pszTable       = CPLStrdup( papszParam[4] );
-        poGRW->pszColumn      = CPLStrdup( papszParam[5] );
-        poGRW->pszWhere       = CPLStrdup( papszParam[6] );
+    case 6:
+        poGRW->pszTable       = CPLStrdup( papszParam[3] );
+        poGRW->pszColumn      = CPLStrdup( papszParam[4] );
+        poGRW->pszWhere       = CPLStrdup( papszParam[5] );
         break;
-    case 6 :
-        if( OWIsNumeric( papszParam[5] ) )
+    case 5 :
+        if( OWIsNumeric( papszParam[4] ) )
         {
-            poGRW->pszDataTable   = CPLStrdup( papszParam[4] );
-            poGRW->nRasterId      = atoi( papszParam[5]);
+            poGRW->pszDataTable   = CPLStrdup( papszParam[3] );
+            poGRW->nRasterId      = atoi( papszParam[4]);
             break;
         }
         else
         {
-            poGRW->pszTable   = CPLStrdup( papszParam[4] );
-            poGRW->pszColumn  = CPLStrdup( papszParam[5] );
+            poGRW->pszTable   = CPLStrdup( papszParam[3] );
+            poGRW->pszColumn  = CPLStrdup( papszParam[4] );
             return poGRW;
         }
-    case 5 :
-        poGRW->pszTable       = CPLStrdup( papszParam[4] );
+    case 4 :
+        poGRW->pszTable       = CPLStrdup( papszParam[3] );
         return poGRW;
     default :
         return poGRW;
     }
 
+    CSLDestroy( papszParam );
+
     //  -------------------------------------------------------------------
     //  Find Georaster Table/Column that uses the given RDT/RID
     //  -------------------------------------------------------------------
 
-    if( nArgc == 6 )
+    if( nArgc == 5 )
     {
         OWStatement* poStmt = NULL;
 
@@ -734,7 +737,7 @@ void GeoRasterWrapper::GetRasterInfo( void )
     CPLXMLNode* phDimSize   = NULL;
     const char* pszType     = NULL;
 
-    nCount      = atoi( CPLGetXMLValue( phMetadata, 
+    nCount      = atoi( CPLGetXMLValue( phMetadata,
                   "rasterInfo.totalDimensions", "0" ) );
     phDimSize   = CPLGetXMLNode( phMetadata, "rasterInfo.dimensionSize" );
 
@@ -807,7 +810,7 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  Get data type
     //  -------------------------------------------------------------------
 
-    pszCellDepth        = CPLStrdup( CPLGetXMLValue( phMetadata, 
+    pszCellDepth        = CPLStrdup( CPLGetXMLValue( phMetadata,
                             "rasterInfo.cellDepth", "8BIT_U" ) );
 
     sscanf( pszCellDepth, "%d", &nCellSize );
@@ -822,7 +825,7 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  Get default RGB Bands
     //  -------------------------------------------------------------------
 
-    iDefaultRedBand     = atoi( CPLGetXMLValue( phMetadata, 
+    iDefaultRedBand     = atoi( CPLGetXMLValue( phMetadata,
                             "objectInfo.defaultRed", "-1" ) );
 
     iDefaultGreenBand   = atoi( CPLGetXMLValue( phMetadata,
@@ -939,13 +942,13 @@ bool GeoRasterWrapper::GetStatistics( int nBand,
     {
         if( n == nBand && CPLGetXMLNode( phSubLayer, "statisticDataset" ) )
         {
-            dfMin    = atoi( CPLGetXMLValue( phSubLayer, 
+            dfMin    = atoi( CPLGetXMLValue( phSubLayer,
                                 "statisticDataset.MIM",  "0.0" ) );
-            dfMax    = atoi( CPLGetXMLValue( phSubLayer,  
+            dfMax    = atoi( CPLGetXMLValue( phSubLayer,
                                 "statisticDataset.MAX",  "0.0" ) );
-            dfMean   = atoi( CPLGetXMLValue( phSubLayer,  
+            dfMean   = atoi( CPLGetXMLValue( phSubLayer,
                                 "statisticDataset.MEAN", "0.0" ) );
-            dfStdDev = atoi( CPLGetXMLValue( phSubLayer,  
+            dfStdDev = atoi( CPLGetXMLValue( phSubLayer,
                                 "statisticDataset.STD",  "0.0" ) );
             XMLFree_nt( phSubLayer );
             return true;
@@ -1042,7 +1045,7 @@ void GeoRasterWrapper::InitializeLayersNode()
         if( psSLayer == NULL )
         {
             psSLayer = CPLCreateXMLNode( pslInfo, CXT_Element, "subLayer" );
-    
+
             CPLCreateXMLElementAndValue( psSLayer, "layerNumber", 
                 CPLSPrintf( "%d", n + 1 ) );
 
@@ -1534,7 +1537,7 @@ bool GeoRasterWrapper::SetNoData( double dfNoDataValue )
 
         return true;
     }
-    
+
     return false;
 }
 
@@ -1579,15 +1582,18 @@ bool GeoRasterWrapper::SetVAT( int nBand, const char* pszName )
 //                                                                     GetVAT()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::GetVAT( int nBand, const char* pszName )
+char* GeoRasterWrapper::GetVAT( int nBand )
 {
-    InitializeLayersNode();
+    CPLXMLNode* psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
 
-    bFlushMetadata = true;
+    if( psLayers == NULL )
+    {
+        return NULL;
+    }
+
+    char* pszTablename = NULL;
 
     int n = 1;
-
-    CPLXMLNode* psLayers = CPLGetXMLNode( phMetadata, "layerInfo.subLayer" );
 
     for( ; psLayers; psLayers = psLayers->psNext, n++ )
     {
@@ -1600,12 +1606,14 @@ bool GeoRasterWrapper::GetVAT( int nBand, const char* pszName )
 
         if( psVAT != NULL )
         {
-            pszName= CPLStrdup( CPLGetXMLValue( psVAT, "vatTableName", NULL ) );
-            return true;
+            pszTablename = CPLStrdup(
+                CPLGetXMLValue( psLayers, "vatTableName", "" ) );
         }
+
+        break;
     }
 
-    return false;
+    return pszTablename;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1620,6 +1628,8 @@ bool GeoRasterWrapper::FlushMetadata()
     }
 
     bFlushMetadata = false;
+
+    CPLDebug("**************************", "FLushMetadata" );
 
     //  --------------------------------------------------------------------
     //  Change the isBlank setting left by SDO_GEOR.createBlank() to 'false'

@@ -88,12 +88,14 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
     //  Parse arguments
     //  -------------------------------------------------------------------
 
-    char **papszParam = CSLTokenizeString2( pszFilename, ID_SEPARATORS, 
+    char **papszParam = CSLTokenizeString2(
+                            strstr( poOpenInfo->pszFilename, ":" ) + 1,
+                            ID_SEPARATORS,
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
 
     int nArgc = CSLCount( papszParam );
 
-    if( EQUAL( papszParam[nArgc-1], "" ) )
+    if( nArgc > 1 && EQUAL( papszParam[nArgc-1], "" ) )
     {
         nArgc = 99;
     }
@@ -102,10 +104,10 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
     //  Check mandatory arguments
     //  -------------------------------------------------------------------
 
-    if ( nArgc < 3 || 
-         nArgc > 7 ||
-         EQUAL( papszParam[1], "" ) ||
-         EQUAL( papszParam[2], "" ) )
+    if ( nArgc < 2 || 
+         nArgc > 6 ||
+         EQUAL( papszParam[0], "" ) ||
+         EQUAL( papszParam[1], "" ) )
     {
         CPLError( CE_Warning, CPLE_IllegalArg,
         "Invalid georaster identification\n\n"
@@ -127,10 +129,11 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
         "        \"georaster:scott/tiger@demodb,table,column,city=london\"\n"
         "         georaster:scott,tiger,,rdt_10$,10\n"
         "         geor:scott/tiger,,rdt_10$,10\n\n" );
-
-        CPLFree_nt( papszParam);
+        CSLDestroy( papszParam );
         return false;
     }
+
+    CSLDestroy( papszParam );
 
     return true;
 }
