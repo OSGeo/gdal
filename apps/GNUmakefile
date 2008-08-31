@@ -18,13 +18,13 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		gdal_grid$(EXE) \
 		ogrinfo$(EXE) \
 		ogr2ogr$(EXE) \
-		ogrtindex$(EXE)
+		ogrtindex$(EXE) \
+		testepsg$(EXE)
 endif
 
 NON_DEFAULT_LIST = 	gdalbuildvrt$(EXE) multireadtest$(EXE) \
 			dumpoverviews$(EXE) gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
-			gdaltorture$(EXE) gdal2ogr$(EXE) testepsg$(EXE) \
-			test_ogrsf$(EXE)
+			gdaltorture$(EXE) gdal2ogr$(EXE) test_ogrsf$(EXE)
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
 
