@@ -170,7 +170,8 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
       poReader->SetArcDegrees( atof( getenv("ARC_DEGREES") ) );
     }
 
-    poReader->ReadFeatures(); //FIXME
+    //Parse model and read data - without surface joing and polygonizing
+    poReader->ReadFeatures();
 
     return TRUE;
 }

@@ -48,12 +48,6 @@ private:
     FILE         *fpItf;
     int          nLayers;
     OGRILI1Layer **papoLayers;
-    int          nAreaLayers;
-    OGRILI1Layer **papoAreaLayers;
-    OGRILI1Layer **papoAreaLineLayers;
-    int          nSurfaceLayers;
-    OGRILI1Layer **papoSurfaceLayers;
-    OGRILI1Layer **papoSurfacePolyLayers;
     OGRILI1Layer *curLayer;
     double       arcIncr;
 
@@ -70,12 +64,7 @@ public:
     char         **ReadParseLine();
 
     void         AddLayer( OGRILI1Layer * poNewLayer );
-    void         AddAreaLayer( OGRILI1Layer * poAreaLayer,  OGRILI1Layer * poLineLayer );
-    void         AddSurfaceLayer( OGRILI1Layer * poDataLayer,  OGRILI1Layer * poPolyLayer );
     int          AddIliGeom(OGRFeature *feature, int iField, long fpos);
-    OGRMultiPolygon* Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines = false );
-    void         PolygonizeAreaLayers();
-    void         JoinSurfaceLayers();
     OGRILI1Layer *GetLayer( int );
     OGRILI1Layer *GetLayerByName( const char* );
     int          GetLayerCount();
