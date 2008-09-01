@@ -1,4 +1,4 @@
-/* $Id: tif_strip.c,v 1.29 2007/07/19 15:50:28 dron Exp $ */
+/* $Id: tif_strip.c,v 1.30 2008/07/29 19:51:07 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -125,12 +125,16 @@ TIFFVStripSize64(TIFF* tif, uint32 nrows)
 		uint32 samplingblocks_ver;
 		uint64 samplingrow_samples;
 		uint64 samplingrow_size;
-		assert(td->td_samplesperpixel==3);
+		if(td->td_samplesperpixel!=3)
+		{
+			TIFFErrorExt(tif->tif_clientdata,module,
+			    "Invalid td_samplesperpixel value");
+			return 0;
+		}
 		TIFFGetFieldDefaulted(tif,TIFFTAG_YCBCRSUBSAMPLING,ycbcrsubsampling+0,
 		    ycbcrsubsampling+1);
-		assert((ycbcrsubsampling[0]==1)||(ycbcrsubsampling[0]==2)||(ycbcrsubsampling[0]==4));
-		assert((ycbcrsubsampling[1]==1)||(ycbcrsubsampling[1]==2)||(ycbcrsubsampling[1]==4));
-		if (ycbcrsubsampling[0]*ycbcrsubsampling[1]==0)
+		if (((ycbcrsubsampling[0]!=1)&&(ycbcrsubsampling[0]!=2)&&(ycbcrsubsampling[0]!=4)) ||
+		    ((ycbcrsubsampling[1]!=1)&&(ycbcrsubsampling[1]!=2)&&(ycbcrsubsampling[1]!=4)))
 		{
 			TIFFErrorExt(tif->tif_clientdata,module,
 			    "Invalid YCbCr subsampling");
@@ -307,16 +311,21 @@ TIFFScanlineSize64(TIFF* tif)
 			uint32 samplingblocks_hor;
 			uint64 samplingrow_samples;
 			uint64 samplingrow_size;
-			assert(td->td_samplesperpixel==3);
-			TIFFGetFieldDefaulted(tif,TIFFTAG_YCBCRSUBSAMPLING,ycbcrsubsampling+0,
-			    ycbcrsubsampling+1);
-			assert((ycbcrsubsampling[0]==1)||(ycbcrsubsampling[0]==2)||(ycbcrsubsampling[0]==4));
-			assert((ycbcrsubsampling[1]==1)||(ycbcrsubsampling[1]==2)||(ycbcrsubsampling[1]==4));
-			if (ycbcrsubsampling[0]*ycbcrsubsampling[1]==0)
+			if(td->td_samplesperpixel!=3)
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,
-				    "Invalid YCbCr subsampling");
-				return 0;
+                            TIFFErrorExt(tif->tif_clientdata,module,
+                                         "Invalid td_samplesperpixel value");
+                            return 0;
+			}
+			TIFFGetFieldDefaulted(tif,TIFFTAG_YCBCRSUBSAMPLING,
+                                              ycbcrsubsampling+0,
+                                              ycbcrsubsampling+1);
+			if (((ycbcrsubsampling[0]!=1)&&(ycbcrsubsampling[0]!=2)&&(ycbcrsubsampling[0]!=4)) ||
+			    ((ycbcrsubsampling[1]!=1)&&(ycbcrsubsampling[1]!=2)&&(ycbcrsubsampling[1]!=4)))
+			{
+                            TIFFErrorExt(tif->tif_clientdata,module,
+                                         "Invalid YCbCr subsampling");
+                            return 0;
 			}
 			samplingblock_samples=ycbcrsubsampling[0]*ycbcrsubsampling[1]+2;
 			samplingblocks_hor=TIFFhowmany_32(td->td_imagewidth,ycbcrsubsampling[0]);

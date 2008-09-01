@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.70 2007/12/31 21:52:16 fwarmerdam Exp $ */
+/* $Id: tiffiop.h,v 1.73 2008/04/14 09:05:26 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -86,7 +86,11 @@ typedef struct {
 	uint16 tdir_tag;        /* see below */
 	uint16 tdir_type;       /* data type; see below */
 	uint64 tdir_count;      /* number of items; length in spec */
-	uint64 tdir_offset;
+	union {
+		uint16 toff_short;
+		uint32 toff_long;
+		uint64 toff_long8;
+	} tdir_offset;		/* either offset or the data itself if fits */
 } TIFFDirEntry;
 
 typedef struct client_info {
@@ -206,14 +210,14 @@ struct tiff {
 	TIFFPostMethod       tif_postdecode;   /* post decoding routine */
 	/* tag support */
 	TIFFField**          tif_fields;       /* sorted table of registered tags */
-	uint32               tif_nfields;      /* # entries in registered tag table */
+	size_t               tif_nfields;      /* # entries in registered tag table */
 	const TIFFField*     tif_foundfield;   /* cached pointer to already found tag */
 	TIFFTagMethods       tif_tagmethods;   /* tag get/set/print routines */
 	TIFFClientInfoLink*  tif_clientinfo;   /* extra client information. */
 	/* Backward compatibility stuff. We need these two fields for
 	 * setting up an old tag extension scheme. */
 	TIFFFieldArray*      tif_fieldscompat;
-	uint32               tif_nfieldscompat;
+	size_t               tif_nfieldscompat;
 };
 
 #define isPseudoTag(t) (t > 0xffff)            /* is tag value normal or pseudo */
@@ -223,7 +227,7 @@ struct tiff {
 #define isFillOrder(tif, o) (((tif)->tif_flags & (o)) != 0)
 #define isUpSampled(tif) (((tif)->tif_flags & TIFF_UPSAMPLED) != 0)
 #define TIFFReadFile(tif, buf, size) \
-	((*(tif)->tif_readproc)((tif)->tif_clientdata,buf,size))
+	((*(tif)->tif_readproc)((tif)->tif_clientdata,(buf),(size)))
 #define TIFFWriteFile(tif, buf, size) \
 	((*(tif)->tif_writeproc)((tif)->tif_clientdata,(buf),(size)))
 #define TIFFSeekFile(tif, off, whence) \
@@ -235,7 +239,7 @@ struct tiff {
 #define TIFFMapFileContents(tif, paddr, psize) \
 	((*(tif)->tif_mapproc)((tif)->tif_clientdata,(paddr),(psize)))
 #define TIFFUnmapFileContents(tif, addr, size) \
-	((*(tif)->tif_unmapproc)((tif)->tif_clientdata,addr,size))
+	((*(tif)->tif_unmapproc)((tif)->tif_clientdata,(addr),(size)))
 
 /*
  * Default Read/Seek/Write definitions.
@@ -286,6 +290,7 @@ extern void _TIFFSwab64BitData(TIFF* tif, uint8* buf, tmsize_t cc);
 extern int TIFFFlushData1(TIFF* tif);
 extern int TIFFDefaultDirectory(TIFF* tif);
 extern void _TIFFSetDefaultCompressionState(TIFF* tif);
+extern int _TIFFRewriteField(TIFF *, uint16, TIFFDataType, tmsize_t, void *);
 extern int TIFFSetCompressionScheme(TIFF* tif, int scheme);
 extern int TIFFSetDefaultCompressionState(TIFF* tif);
 extern uint32 _TIFFDefaultStripSize(TIFF* tif, uint32 s);
