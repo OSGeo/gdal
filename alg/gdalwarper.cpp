@@ -504,8 +504,8 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /* -------------------------------------------------------------------- */
     for( int iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
     {                                    //  (1/255)
-        pafMask[iPixel] = pafMask[iPixel] * 0.00392157; 
-        pafMask[iPixel] = MIN(1.0,pafMask[iPixel]);
+        pafMask[iPixel] = (float)( pafMask[iPixel] * 0.00392157 );
+        pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
     }
 
     return CE_None;
@@ -578,8 +578,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
         // rescale.
         for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
         {
-            pafMask[iPixel] = pafMask[iPixel] * 0.00392157;
-            pafMask[iPixel] = MIN(1.0,pafMask[iPixel]);
+            pafMask[iPixel] = (float) (pafMask[iPixel] * 0.00392157);
+            pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
         }
 
         return CE_None;
@@ -591,7 +591,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     else
     {
         for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
-            pafMask[iPixel] = (int) (pafMask[iPixel] * 255.1);
+            pafMask[iPixel] = (int) ( pafMask[iPixel] * 255.1 );
         
         // Write data.
 
