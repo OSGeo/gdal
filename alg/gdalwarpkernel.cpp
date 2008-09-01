@@ -1941,17 +1941,105 @@ static double BSpline( double x )
              xp2c:0.0) ) * 0.166666666666666666666;
 }
 
+
+typedef struct
+{
+    double  dfXScale, dfYScale;
+    double  dfXFilter, dfYFilter;
+    int     nXRadius, nFiltInitX;
+    int     nYRadius, nFiltInitY;
+
+    // Space for saved X weights
+    double  *padfWeightsX;
+    char    *panCalcX;
+
+    // Space for saving a row of pixels
+    double  *padfRowDensity;
+    double  *padfRowReal;
+    double  *padfRowImag;
+} GWKResampleWrkStruct;
+
 #define GWKCUBICSPLINE_RADIUS 2
+static GWKResampleWrkStruct* GWKResampleCreateWrkStruct(GDALWarpKernel *poWK)
+{
+    double  dfXScale, dfYScale;
+    double  dfXFilter, dfYFilter;
+    int     nXRadius, nFiltInitX;
+    int     nYRadius, nFiltInitY;
+
+    // Init kernel variables
+    if ( poWK->eResample == GRA_CubicSpline )
+    {
+        // Calculate the kernel size and extent for this alg
+        dfXScale = (double)poWK->nDstXSize / poWK->nSrcXSize;
+        dfYScale = (double)poWK->nDstYSize / poWK->nSrcYSize;
+        nXRadius = (dfXScale < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfXScale) : GWKCUBICSPLINE_RADIUS;
+        nYRadius = (dfYScale < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfYScale) : GWKCUBICSPLINE_RADIUS;
+        nFiltInitX = 1 - nXRadius;
+        nFiltInitY = 1 - nYRadius;
+        dfXFilter = dfYFilter = 0.0;
+    }
+    else if ( poWK->eResample == GRA_Lanczos )
+    {
+        dfXScale = poWK->dfXScale;
+        dfYScale = poWK->dfYScale;
+        nXRadius = poWK->nXRadius;
+        nYRadius = poWK->nYRadius;
+        nFiltInitX = -poWK->nXRadius;
+        nFiltInitY = -poWK->nYRadius;
+        dfXFilter = poWK->dfXFilter;
+        dfYFilter = poWK->dfYFilter;
+    }
+    else
+        return NULL;
+
+    int     nXDist = ( nXRadius + 1 ) * 2;
+
+    GWKResampleWrkStruct* psWrkStruct =
+            (GWKResampleWrkStruct*)CPLMalloc(sizeof(GWKResampleWrkStruct));
+
+    psWrkStruct->dfXScale = dfXScale;
+    psWrkStruct->dfYScale = dfYScale;
+    psWrkStruct->nXRadius = nXRadius;
+    psWrkStruct->nYRadius = nYRadius;
+    psWrkStruct->nFiltInitX = nFiltInitX;
+    psWrkStruct->nFiltInitY = nFiltInitY;
+    psWrkStruct->dfXFilter = dfXFilter;
+    psWrkStruct->dfYFilter = dfYFilter;
+
+    // Alloc space for saved X weights
+    psWrkStruct->padfWeightsX = (double *)CPLCalloc( nXDist, sizeof(double) );
+    psWrkStruct->panCalcX = (char *)CPLMalloc( nXDist * sizeof(char) );
+
+    // Alloc space for saving a row of pixels
+    psWrkStruct->padfRowDensity = (double *)CPLCalloc( nXDist, sizeof(double) );
+    psWrkStruct->padfRowReal = (double *)CPLCalloc( nXDist, sizeof(double) );
+    psWrkStruct->padfRowImag = (double *)CPLCalloc( nXDist, sizeof(double) );
+
+    return psWrkStruct;
+}
+
+static void GWKResampleDeleteWrkStruct(GWKResampleWrkStruct* psWrkStruct)
+{
+    CPLFree( psWrkStruct->padfWeightsX );
+    CPLFree( psWrkStruct->panCalcX );
+    CPLFree( psWrkStruct->padfRowDensity );
+    CPLFree( psWrkStruct->padfRowReal );
+    CPLFree( psWrkStruct->padfRowImag );
+    CPLFree( psWrkStruct );
+}
+
 static int GWKResample( GDALWarpKernel *poWK, int iBand, 
                         double dfSrcX, double dfSrcY,
                         double *pdfDensity, 
-                        double *pdfReal, double *pdfImag )
+                        double *pdfReal, double *pdfImag,
+                        const GWKResampleWrkStruct* psWrkStruct )
 
 {
     // Save as local variables to avoid following pointers in loops
     int     nSrcXSize = poWK->nSrcXSize;
     int     nSrcYSize = poWK->nSrcYSize;
-    
+
     double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
     double  dfAccumulatorDensity = 0.0;
     double  dfAccumulatorWeight = 0.0;
@@ -1966,45 +2054,28 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
     double  dfXFilter, dfYFilter;
     int     nXRadius, nFiltInitX;
     int     nYRadius, nFiltInitY;
-    
-    // Init kernel variables
-    if ( eResample == GRA_CubicSpline )
-    {
-        // Calculate the kernel size and extent for this alg
-        dfXScale = (double)poWK->nDstXSize / nSrcXSize;
-        dfYScale = (double)poWK->nDstYSize / nSrcYSize;
-        nXRadius = (dfXScale < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfXScale) : GWKCUBICSPLINE_RADIUS;
-        nYRadius = (dfYScale < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfYScale) : GWKCUBICSPLINE_RADIUS;
-        nFiltInitX = 1 - nXRadius;
-        nFiltInitY = 1 - nYRadius;
-        dfXFilter = dfYFilter = 0.0;
-    }
-    else if ( eResample == GRA_Lanczos )
-    {
-        dfXScale = poWK->dfXScale;
-        dfYScale = poWK->dfYScale;
-        nXRadius = poWK->nXRadius;
-        nYRadius = poWK->nYRadius;
-        nFiltInitX = -poWK->nXRadius;
-        nFiltInitY = -poWK->nYRadius;
-        dfXFilter = poWK->dfXFilter;
-        dfYFilter = poWK->dfYFilter;
-    }
-    else
-        return FALSE;
-    
+
+    dfXScale = psWrkStruct->dfXScale;
+    dfYScale = psWrkStruct->dfYScale;
+    nXRadius = psWrkStruct->nXRadius;
+    nYRadius = psWrkStruct->nYRadius;
+    nFiltInitX = psWrkStruct->nFiltInitX;
+    nFiltInitY = psWrkStruct->nFiltInitY;
+    dfXFilter = psWrkStruct->dfXFilter;
+    dfYFilter = psWrkStruct->dfYFilter;
+
     int     i, j;
     int     nXDist = ( nXRadius + 1 ) * 2;
-    
-    // Alloc space for saved X weights
-    double  *padfWeightsX = (double *)CPLCalloc( nXDist, sizeof(double) );
-    char    *panCalcX = (char *)CPLMalloc( nXDist * sizeof(char) );
-    
-    // Alloc space for saving a row of pixels
-    double  *padfRowDensity = (double *)CPLCalloc( nXDist, sizeof(double) );
-    double  *padfRowReal = (double *)CPLCalloc( nXDist, sizeof(double) );
-    double  *padfRowImag = (double *)CPLCalloc( nXDist, sizeof(double) );
-    
+
+    // Space for saved X weights
+    double  *padfWeightsX = psWrkStruct->padfWeightsX;
+    char    *panCalcX = psWrkStruct->panCalcX;
+
+    // Space for saving a row of pixels
+    double  *padfRowDensity = psWrkStruct->padfRowDensity;
+    double  *padfRowReal = psWrkStruct->padfRowReal;
+    double  *padfRowImag = psWrkStruct->padfRowImag;
+
     // Mark as needing calculation (don't calculate the weights yet,
     // because a mask may render it unnecessary)
     memset( panCalcX, FALSE, nXDist * sizeof(char) );
@@ -2093,12 +2164,6 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
             dfAccumulatorWeight += dfWeight2;
         }
     }
-
-    CPLFree( padfWeightsX );
-    CPLFree( panCalcX );
-    CPLFree( padfRowDensity );
-    CPLFree( padfRowReal );
-    CPLFree( padfRowImag );
 
     if ( dfAccumulatorWeight < 0.000001 || dfAccumulatorDensity < 0.000001 )
     {
@@ -2359,6 +2424,13 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
+    GWKResampleWrkStruct* psWrkStruct = NULL;
+    if (poWK->eResample == GRA_CubicSpline
+        || poWK->eResample == GRA_Lanczos )
+    {
+        psWrkStruct = GWKResampleCreateWrkStruct(poWK);
+    }
+
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
@@ -2491,7 +2563,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                                  padfX[iDstX]-poWK->nSrcXOff,
                                  padfY[iDstX]-poWK->nSrcYOff,
                                  dfBandDensity, 
-                                 dfValueReal, dfValueImag );
+                                 dfValueReal, dfValueImag, psWrkStruct );
                 }
 
 
@@ -2546,6 +2618,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
+    if (psWrkStruct)
+        GWKResampleDeleteWrkStruct(psWrkStruct);
 
     return eErr;
 }
