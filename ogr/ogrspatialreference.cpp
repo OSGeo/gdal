@@ -1404,10 +1404,10 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
 /* -------------------------------------------------------------------- */
 /*      Check for simple names.                                         */
 /* -------------------------------------------------------------------- */
-    char         *pszWKT = NULL;
+    char        *pszWKT = NULL;
 
     if( EQUAL(pszName, "WGS84") || EQUAL(pszName,"CRS84") )
-        pszWKT = SRS_WKT_WGS84;
+        pszWKT = (char* ) SRS_WKT_WGS84;
 
     else if( EQUAL(pszName, "WGS72") )
         pszWKT = (char* ) "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",\"7043\"]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",\"6322\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4322\"]]";
@@ -5793,17 +5793,44 @@ OGRErr OSRSetAxes( OGRSpatialReferenceH hSRS,
                                                     eYAxisOrientation );
 }
 
-/************************************************************************/
-/*                         exportToMICoordSys()                         */
-/*                                                                      */
-/*      Translate to a mapinfo style CoordSys definition.               */
-/************************************************************************/
-
 #ifdef HAVE_MITAB
 char CPL_DLL *MITABSpatialRef2CoordSys( OGRSpatialReference * );
 OGRSpatialReference CPL_DLL * MITABCoordSys2SpatialRef( const char * );
 #endif
 
+/************************************************************************/
+/*                       OSRExportToMICoordSys()                        */
+/************************************************************************/
+
+OGRErr OSRExportToMICoordSys( OGRSpatialReferenceH hSRS, char ** ppszReturn )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRExportToMICoordSys", CE_Failure );
+
+    *ppszReturn = NULL;
+
+    return ((OGRSpatialReference *) hSRS)->exportToMICoordSys( ppszReturn );
+}
+
+/************************************************************************/
+/*                         exportToMICoordSys()                         */
+/************************************************************************/
+
+/**
+ * Export coordinate system in Mapinfo style CoordSys format.
+ *
+ * Note that the returned WKT string should be freed with OGRFree() or
+ * CPLFree() when no longer needed.  It is the responsibility of the caller.
+ *
+ * This method is the same as the C function OSRExportToMICoordSys().
+ *
+ * @param ppszResult pointer to which dynamically allocated Mapinfo CoordSys
+ * definition will be assigned.
+ *
+ * @return  OGRERR_NONE on success, OGRERR_FAILURE on failure,
+ * OGRERR_UNSUPPORTED_OPERATION if MITAB library was not linked in.
+ */
+ 
 OGRErr OGRSpatialReference::exportToMICoordSys( char **ppszResult ) const
 
 {
@@ -5822,8 +5849,34 @@ OGRErr OGRSpatialReference::exportToMICoordSys( char **ppszResult ) const
 }
 
 /************************************************************************/
+/*                       OSRImportFromMICoordSys()                      */
+/************************************************************************/
+
+OGRErr OSRImportFromMICoordSys( OGRSpatialReferenceH hSRS,
+                                const char *pszCoordSys )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRImportFromMICoordSys", CE_Failure );
+
+    return ((OGRSpatialReference *)hSRS)->importFromMICoordSys( pszCoordSys );
+}
+
+/************************************************************************/
 /*                        importFromMICoordSys()                        */
 /************************************************************************/
+
+/**
+ * Import Mapinfo style CoordSys definition.
+ *
+ * The OGRSpatialReference is initialized from the passed Mapinfo style CoordSys definition string.
+ *
+ * This method is the equivelent of the C function OSRImportFromMICoordSys().
+ *
+ * @param pszCoordSys Mapinfo style CoordSys definition string.
+ *
+ * @return OGRERR_NONE on success, OGRERR_FAILURE on failure,
+ * OGRERR_UNSUPPORTED_OPERATION if MITAB library was not linked in.
+ */
 
 OGRErr OGRSpatialReference::importFromMICoordSys( const char *pszCoordSys )
 
