@@ -2190,7 +2190,7 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
 
 static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
                                               double dfSrcX, double dfSrcY,
-                                              GByte *pbValue )
+                                              GByte *pbValue, double *padfBSpline )
 
 {
     // Commonly used; save locally
@@ -2210,7 +2210,6 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     int     nYRadius = (dfYScale < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfYScale) : GWKCUBICSPLINE_RADIUS;
 
     GByte*  pabySrcBand = poWK->papabySrcImage[iBand];
-    double  *padfBSpline = (double *)CPLCalloc( nXRadius * 2, sizeof(double) );
     
     // Politely refusing to process invalid coordinates or obscenely small image
     if ( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize
@@ -2267,8 +2266,6 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         }
     }
 
-    CPLFree( padfBSpline );
-    
     if ( dfAccumulator < 0.0 )
         *pbValue = 0;
     else if ( dfAccumulator > 255.0 )
@@ -2281,7 +2278,7 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
 
 static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
                                                double dfSrcX, double dfSrcY,
-                                               GInt16 *piValue )
+                                               GInt16 *piValue, double *padfBSpline )
 
 {
     //Save src size to local var
@@ -2302,9 +2299,6 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
 
     // Save band array pointer to local var; cast here instead of later
     GInt16* pabySrcBand = ((GInt16 *)poWK->papabySrcImage[iBand]);
-    
-    // Make space to save weights
-    double  *padfBSpline = (double *)CPLCalloc( nXRadius * 2, sizeof(double) );
 
     // Politely refusing to process invalid coordinates or obscenely small image
     if ( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize
@@ -2360,13 +2354,10 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
         }
     }
 
-    CPLFree( padfBSpline );
-    
     *piValue = (GInt16)(0.5 + dfAccumulator);
     
     return TRUE;
 }
-#undef GWKCUBICSPLINE_RADIUS
 
 /************************************************************************/
 /*                           GWKGeneralCase()                           */
@@ -3065,6 +3056,10 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
+    double  dfXScale = (double)poWK->nDstXSize / nSrcXSize;
+    int     nXRadius = (dfXScale < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfXScale) : GWKCUBICSPLINE_RADIUS;
+    double  *padfBSpline = (double *)CPLCalloc( nXRadius * 2, sizeof(double) );
+
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
@@ -3131,7 +3126,8 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
                 GWKCubicSplineResampleNoMasksByte( poWK, iBand,
                                                    padfX[iDstX]-poWK->nSrcXOff,
                                                    padfY[iDstX]-poWK->nSrcYOff,
-                                                   &poWK->papabyDstImage[iBand][iDstOffset] );
+                                                   &poWK->papabyDstImage[iBand][iDstOffset],
+                                                   padfBSpline);
             }
         }
 
@@ -3154,6 +3150,7 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
+    CPLFree( padfBSpline );
 
     return eErr;
 }
@@ -3804,6 +3801,11 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
+    double  dfXScale = (double)poWK->nDstXSize / nSrcXSize;
+    int     nXRadius = (dfXScale < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfXScale) : GWKCUBICSPLINE_RADIUS;
+    // Make space to save weights
+    double  *padfBSpline = (double *)CPLCalloc( nXRadius * 2, sizeof(double) );
+
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
@@ -3871,7 +3873,8 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
                 GWKCubicSplineResampleNoMasksShort( poWK, iBand,
                                                     padfX[iDstX]-poWK->nSrcXOff,
                                                     padfY[iDstX]-poWK->nSrcYOff,
-                                                    &iValue );
+                                                    &iValue,
+                                                    padfBSpline);
                 ((GInt16 *)poWK->papabyDstImage[iBand])[iDstOffset] = iValue;
             }
         }
@@ -3895,6 +3898,7 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
+    CPLFree( padfBSpline );
 
     return eErr;
 }
@@ -4426,3 +4430,4 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
     return eErr;
 }
 
+#undef GWKCUBICSPLINE_RADIUS
