@@ -192,9 +192,17 @@ def warp_10():
     if gdaltest.tiff_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_lanczos.vrt', 1, 4758 )
+    ds = gdal.Open( 'data/utmsmall_ds_lanczos.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_ds_lanczos.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
 
-    return tst.testOpen()
+    return 'success'
 
 def warp_11():
 
