@@ -65,6 +65,42 @@ def warp_1():
 
     return 'success'
 
+def warp_1_short():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_near_short.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_near.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+def warp_1_float():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_near_float.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_near.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
 def warp_2():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -83,6 +119,24 @@ def warp_2():
 
     return 'success'
 
+def warp_2_short():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/utmsmall_blinear_short.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_blinear.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
 def warp_3():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -90,6 +144,24 @@ def warp_3():
         return 'skip'
 
     ds = gdal.Open( 'data/utmsmall_cubic.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_cubic.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+def warp_3_short():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/utmsmall_cubic_short.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall_cubic.tiff' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
@@ -301,12 +373,108 @@ def warp_14():
 
     return ret
 
+# Test GWKNearestFloat with transparent source alpha band
+def warp_15():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/test.tif', 20, 20, 4)
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(0)
+    ds.GetRasterBand(4).Fill(0)
+    ds = None
+
+    # The alpha channel must be empty
+    tst = gdaltest.GDALTest( 'VRT', 'test_nearest_float.vrt', 4, 0)
+
+    ret = tst.testOpen()
+
+    gdaltest.tiff_drv.Delete('tmp/test.tif')
+
+    return ret
+
+# Test GWKNearestFloat with opaque source alpha band
+def warp_16():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/test.tif', 20, 20, 4)
+    ds.GetRasterBand(1).Fill(255)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(0)
+    ds.GetRasterBand(4).Fill(255)
+    ds = None
+
+    # The alpha channel must be empty
+    tst = gdaltest.GDALTest( 'VRT', 'test_nearest_float.vrt', 4, 4921)
+
+    ret = tst.testOpen()
+
+    gdaltest.tiff_drv.Delete('tmp/test.tif')
+
+    return ret
+
+# Test GWKNearestShort with transparent source alpha band
+def warp_17():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/test.tif', 20, 20, 4)
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(0)
+    ds.GetRasterBand(4).Fill(0)
+    ds = None
+
+    # The alpha channel must be empty
+    tst = gdaltest.GDALTest( 'VRT', 'test_nearest_short.vrt', 4, 0)
+
+    ret = tst.testOpen()
+
+    gdaltest.tiff_drv.Delete('tmp/test.tif')
+
+    return ret
+
+# Test GWKNearestShort with opaque source alpha band
+def warp_18():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/test.tif', 20, 20, 4)
+    ds.GetRasterBand(1).Fill(255)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(0)
+    ds.GetRasterBand(4).Fill(255)
+    ds = None
+
+    # The alpha channel must be empty
+    tst = gdaltest.GDALTest( 'VRT', 'test_nearest_short.vrt', 4, 4921)
+
+    ret = tst.testOpen()
+
+    gdaltest.tiff_drv.Delete('tmp/test.tif')
+
+    return ret
+
 ###############################################################################
 
 gdaltest_list = [
     warp_1,
+    warp_1_short,
+    warp_1_float,
     warp_2,
+    warp_2_short,
     warp_3,
+    warp_3_short,
     warp_4,
     warp_4_short,
     warp_5,
@@ -318,7 +486,11 @@ gdaltest_list = [
     warp_11,
     warp_12,
     warp_13,
-    warp_14
+    warp_14,
+    warp_15,
+    warp_16,
+    warp_17,
+    warp_18,
     ]
 
 if __name__ == '__main__':
