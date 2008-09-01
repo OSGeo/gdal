@@ -119,6 +119,24 @@ def warp_4():
 
     return 'success'
 
+def warp_4_short():
+ 
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_cubicspline_short.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_cubicspline.tiff' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
 def warp_5():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -290,6 +308,7 @@ gdaltest_list = [
     warp_2,
     warp_3,
     warp_4,
+    warp_4_short,
     warp_5,
     warp_6,
     warp_7,
