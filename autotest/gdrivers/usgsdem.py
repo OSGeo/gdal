@@ -78,7 +78,8 @@ def usgsdem_3():
 
 def usgsdem_4():
 
-    tst = gdaltest.GDALTest( 'USGSDEM', '39079G6_truncated.dem', 1, 61424 )
+    tst = gdaltest.GDALTest( 'USGSDEM', '39079G6_truncated.dem', 1, 61424, \
+        options = [ 'RESAMPLE=Nearest' ] )
     return tst.testCreateCopy ( check_gt = 1, check_srs = 1 )
 
 
@@ -88,7 +89,8 @@ def usgsdem_4():
 def usgsdem_5():
 
     ds = gdal.Open('data/n43.dt0')
-    ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/n43.dem', ds)
+    ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/n43.dem', ds, \
+        options = [ 'RESAMPLE=Nearest' ])
 
     if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
         gdaltest.post_reason( 'Bad cechksum.' )
@@ -121,9 +123,12 @@ def usgsdem_5():
 def usgsdem_6():
 
     ds = gdal.Open('data/n43.dt0')
-    ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_1.dem', ds, options = [ 'PRODUCER=GDAL', 'OriginCode=GDAL', 'ProcessCode=A' ] )
+    ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_1.dem', ds, \
+        options = [ 'PRODUCER=GDAL', 'OriginCode=GDAL', 'ProcessCode=A', \
+        'RESAMPLE=Nearest' ] )
 
-    ds3 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_2.dem', ds2, options = [ 'TEMPLATE=tmp/file_1.dem' ] )
+    ds3 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_2.dem', ds2, \
+        options = [ 'TEMPLATE=tmp/file_1.dem', 'RESAMPLE=Nearest' ] )
 
     ds2 = None
     ds3 = None
