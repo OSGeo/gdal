@@ -1,4 +1,4 @@
-/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_flush.c,v 1.4 2007/12/31 21:52:16 fwarmerdam Exp $ */
+/* $Id: tif_flush.c,v 1.5 2008/04/10 11:08:48 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -53,10 +53,10 @@ TIFFFlush(TIFF* tif)
         {
             if( TIFFGetField( tif, TIFFTAG_TILEOFFSETS, &offsets ) 
                 && TIFFGetField( tif, TIFFTAG_TILEBYTECOUNTS, &sizes ) 
-                && TIFFRewriteField( tif, TIFFTAG_TILEOFFSETS, TIFF_LONG8, 
-                                     tif->tif_dir.td_nstrips, offsets )
-                && TIFFRewriteField( tif, TIFFTAG_TILEBYTECOUNTS, TIFF_LONG8, 
-                                     tif->tif_dir.td_nstrips, sizes ) )
+                && _TIFFRewriteField( tif, TIFFTAG_TILEOFFSETS, TIFF_LONG8, 
+                                      tif->tif_dir.td_nstrips, offsets )
+                && _TIFFRewriteField( tif, TIFFTAG_TILEBYTECOUNTS, TIFF_LONG8, 
+                                      tif->tif_dir.td_nstrips, sizes ) )
             {
                 tif->tif_flags &= ~TIFF_DIRTYSTRIP;
                 return 1;
@@ -66,10 +66,10 @@ TIFFFlush(TIFF* tif)
         {
             if( TIFFGetField( tif, TIFFTAG_STRIPOFFSETS, &offsets ) 
                 && TIFFGetField( tif, TIFFTAG_STRIPBYTECOUNTS, &sizes ) 
-                && TIFFRewriteField( tif, TIFFTAG_STRIPOFFSETS, TIFF_LONG8, 
-                                     tif->tif_dir.td_nstrips, offsets )
-                && TIFFRewriteField( tif, TIFFTAG_STRIPBYTECOUNTS, TIFF_LONG8, 
-                                     tif->tif_dir.td_nstrips, sizes ) )
+                && _TIFFRewriteField( tif, TIFFTAG_STRIPOFFSETS, TIFF_LONG8, 
+                                      tif->tif_dir.td_nstrips, offsets )
+                && _TIFFRewriteField( tif, TIFFTAG_STRIPBYTECOUNTS, TIFF_LONG8, 
+                                      tif->tif_dir.td_nstrips, sizes ) )
             {
                 tif->tif_flags &= ~TIFF_DIRTYSTRIP;
                 return 1;
@@ -106,3 +106,4 @@ TIFFFlushData(TIFF* tif)
 	return (TIFFFlushData1(tif));
 }
 
+/* vim: set ts=8 sts=8 sw=8 noet: */

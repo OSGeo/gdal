@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.64 2007/07/09 10:15:38 dron Exp $ */
+/* $Id: tif_fax3.c,v 1.65 2008/05/24 02:14:13 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -569,6 +569,7 @@ static const int _msbmask[9] =
 		length -= bit;					\
 		_FlushBits(tif);				\
 	}							\
+        assert( length < 9 );                                   \
 	data |= (bits & _msbmask[length]) << (bit - length);	\
 	bit -= length;						\
 	if (bit == 0)						\
