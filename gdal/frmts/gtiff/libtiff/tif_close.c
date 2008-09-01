@@ -1,4 +1,4 @@
-/* $Id: tif_close.c,v 1.17 2007/07/19 17:13:56 dron Exp $ */
+/* $Id: tif_close.c,v 1.18 2008/03/28 01:10:39 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -28,6 +28,7 @@
  * TIFF Library.
  */
 #include "tiffiop.h"
+#include <string.h>
 
 /************************************************************************/
 /*                            TIFFCleanup()                             */

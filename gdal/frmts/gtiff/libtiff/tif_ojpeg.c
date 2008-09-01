@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.41 2007/07/09 10:15:37 dron Exp $ */
+/* $Id: tif_ojpeg.c,v 1.42 2008/06/17 19:48:22 fwarmerdam Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -186,6 +186,20 @@ static const TIFFField ojpegFields[] = {
 
 #ifndef LIBJPEG_ENCAP_EXTERNAL
 #include <setjmp.h>
+#endif
+
+/* We undefine FAR to avoid conflict with JPEG definition */
+
+#ifdef FAR
+#undef FAR
+#endif
+
+/* Define "boolean" as unsigned char, not int, per Windows custom. */
+#if defined(__WIN32__) && !defined(__MINGW32__)
+# ifndef __RPCNDR_H__            /* don't conflict if rpcndr.h already read */
+   typedef unsigned char boolean;
+# endif
+# define HAVE_BOOLEAN            /* prevent jmorecfg.h from redefining it */
 #endif
 
 #include "jpeglib.h"
