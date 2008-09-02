@@ -58,9 +58,9 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS, int nBand )
 
 GeoRasterRasterBand::~GeoRasterRasterBand()
 {
-    ObjFree_nt( poColorTable );
-    ObjFree_nt( poDefaultRAT );
-    CPLFree_nt( pszVATName );
+    delete poColorTable;
+    delete poDefaultRAT;
+    CPLFree( pszVATName );
 }
 
 //  ---------------------------------------------------------------------------
@@ -450,12 +450,12 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     if( ! poStmt->Execute() )
     {
-        CPLFree_nt( pszInserts );
+        CPLFree( pszInserts );
         CPLError( CE_Failure, CPLE_AppDefined, "Insert on VAT Table Error!" );
         return CE_Failure;
     }
 
-    CPLFree_nt( pszInserts );
+    CPLFree( pszInserts );
 
     delete poStmt;
 
@@ -602,7 +602,7 @@ const GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 
     delete poStmt;
 
-    CPLFree_nt( pszVATName );
+    CPLFree( pszVATName );
 
     return poDefaultRAT;
 }

@@ -156,9 +156,9 @@ OWConnection::~OWConnection()
     OCIHandleFree( (dvoid*) hError, (ub4) OCI_HTYPE_ERROR);
     OCIHandleFree( (dvoid*) hEnv, (ub4) OCI_HTYPE_ENV);
 
-    CPLFree_nt( pszUser );
-    CPLFree_nt( pszPassword );
-    CPLFree_nt( pszServer );
+    CPLFree( pszUser );
+    CPLFree( pszPassword );
+    CPLFree( pszServer );
 }
 
 OCIType* OWConnection::DescribeType( char *pszTypeName )
@@ -430,7 +430,7 @@ OWStatement::OWStatement( OWConnection* pConnection,
 
 OWStatement::~OWStatement()
 {
-    CPLFree_nt( pszStatement );
+    CPLFree( pszStatement );
 
     OCIHandleFree( (dvoid*) hStmt, (ub4) OCI_HTYPE_STMT);
 }
@@ -971,7 +971,7 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
         0, 0, 0, 0), 
         hError ) )
     {
-        CPLFree_nt( pszBuffer );
+        CPLFree( pszBuffer );
         return NULL;
     }
 
@@ -981,7 +981,7 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
     }
     else
     {
-        CPLFree_nt( pszBuffer);
+        CPLFree( pszBuffer);
     }
 
     return pszBuffer;
