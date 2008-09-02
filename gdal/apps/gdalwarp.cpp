@@ -426,6 +426,21 @@ int main( int argc, char ** argv )
             printf( "Processing input file %s.\n", papszSrcFiles[iSrc] );
 
 /* -------------------------------------------------------------------- */
+/*      Warns if the file has a color table and something more          */
+/*      complicated than nearest neighbour resampling is asked          */
+/* -------------------------------------------------------------------- */
+
+        if ( eResampleAlg != GRA_NearestNeighbour &&
+             GDALGetRasterColorTable(GDALGetRasterBand(hSrcDS, 1)) != NULL)
+        {
+            if( !bQuiet )
+                fprintf( stderr, "Warning: Input file %s has a color table, which will likely lead to "
+                        "bad results when using a resampling method other than "
+                        "nearest neighbour. Converting the dataset prior to 24/32 bit "
+                        "is advised.\n", papszSrcFiles[iSrc] );
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Do we have a source alpha band?                                 */
 /* -------------------------------------------------------------------- */
         if( GDALGetRasterColorInterpretation( 
@@ -810,6 +825,15 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
         if( hSrcDS == NULL )
             exit( 1 );
+
+/* -------------------------------------------------------------------- */
+/*      Check that there's at least one raster band                     */
+/* -------------------------------------------------------------------- */
+        if ( GDALGetRasterCount(hSrcDS) == 0 )
+        {
+            fprintf(stderr, "Input file %s has no raster bands.\n", papszSrcFiles[iSrc] );
+            exit( 1 );
+        }
 
         if( eDT == GDT_Unknown )
             eDT = GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1));
