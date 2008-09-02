@@ -30,6 +30,8 @@ import sys
 import gdal
 import string
 import array
+import shutil
+import osr
 
 sys.path.append( '../pymod' )
 
@@ -1615,6 +1617,42 @@ def tiff_write_50():
     return 'success'
 
 
+###############################################################################
+# Test proper clearing of existing GeoTIFF tags when updating the projection.
+# http://trac.osgeo.org/gdal/ticket/2546
+
+def tiff_write_51():
+    shutil.copyfile( 'data/utmsmall.tif', 'tmp/tiff_write_51.tif' )
+
+    ds = gdal.Open( 'tmp/tiff_write_51.tif', gdal.GA_Update )
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:32601')
+    ds.SetProjection(srs.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_51.tif' )
+    wkt = ds.GetProjection()
+    ds = None
+
+    expected_wkt = 'PROJCS["WGS 84 / UTM zone 1N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235630016,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-177],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","32601"]]'
+
+    if string.find(wkt,'NAD') != -1 or string.find(wkt,'North Am') != -1:
+        gdaltest.post_reason( 'It appears the NAD27 datum was not properly cleared.' )
+        return 'fail'
+    
+    if wkt != expected_wkt:
+        print wkt
+        gdaltest.post_reason( 'coordinate system does not exactly match the expected, but this may just be a harmless update in coordinate system handling.' )
+        return 'fail'
+
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_51.tif' )
+    
+    return 'success'
+
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -1671,6 +1709,7 @@ gdaltest_list = [
     tiff_write_48,
     tiff_write_49,
     tiff_write_50,
+    tiff_write_51,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
