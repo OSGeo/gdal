@@ -210,6 +210,7 @@ private:
 
 public:
 
+    static char**       ParseIdentificator( const char* pszStringID );
     static GeoRasterWrapper*
                         Open( const char* pszStringID );
     bool                Create( char* pszDescription, char* pszInsert );
