@@ -911,7 +911,7 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 
     return TRUE;
 }
-                             
+
 
 /************************************************************************/
 /*                          GWKGetPixelRow()                            */
