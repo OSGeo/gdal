@@ -62,8 +62,8 @@ GeoRasterDataset::GeoRasterDataset()
 
 GeoRasterDataset::~GeoRasterDataset()
 {
-    ObjFree_nt( poGeoRaster );
-    CSLFree_nt( papszSubdatasets );
+    delete poGeoRaster;
+    CSLDestroy( papszSubdatasets );
 }
 
 //  ---------------------------------------------------------------------------
@@ -88,53 +88,43 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
     //  Parse arguments
     //  -------------------------------------------------------------------
 
-    char **papszParam = CSLTokenizeString2(
-                            strstr( poOpenInfo->pszFilename, ":" ) + 1,
-                            ID_SEPARATORS,
-                            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
+    char** papszParam = GeoRasterWrapper::ParseIdentificator( 
+        poOpenInfo->pszFilename );
 
     int nArgc = CSLCount( papszParam );
-
-    if( nArgc > 1 && EQUAL( papszParam[nArgc-1], "" ) )
-    {
-        nArgc = 99;
-    }
 
     //  -------------------------------------------------------------------
     //  Check mandatory arguments
     //  -------------------------------------------------------------------
 
-    if ( nArgc < 2 || 
+    if ( nArgc < 2 ||
          nArgc > 6 ||
          EQUAL( papszParam[0], "" ) ||
-         EQUAL( papszParam[1], "" ) )
+         EQUAL( papszParam[1], "" ) ||
+         EQUAL( papszParam[nArgc-1], "" ) )
     {
         CPLError( CE_Warning, CPLE_IllegalArg,
-        "Invalid georaster identification\n\n"
-        "Usage:\n\n"
-        "    georaster:<user>,<pwd>,[db],[table],[column],[where]\n"
-        "    georaster:<user>,<pwd>,[db],<rdt>:<rid>\n\n"
-        "    user   = user's login\n"
-        "    pwd    = user's password\n"
-        "    db     = connection identifier (database name)\n"
-        "    table  = name of a georaster table\n"
-        "    column = name of a georaster column\n"
-        "    where  = simple where clause\n"
-        "    rdt    = raster data table name\n"
-        "    rid    = numeric identification of a georaster\n\n"
-        "Note: Allowed separator characters are \",/@:\"\n"
-        "      Short name \"geor:\" is also allowed.\n\n"
-        "Example: geor:scott,tiger,demodb,table,column,id=1\n"
-        "        \"georaster:scott/tiger@demodb,table,column,gain>10\"\n"
-        "        \"georaster:scott/tiger@demodb,table,column,city=london\"\n"
-        "         georaster:scott,tiger,,rdt_10$,10\n"
-        "         geor:scott/tiger,,rdt_10$,10\n\n" );
+        "Invalid georaster identification\n"
+        "Usage:\n"
+        "    {georaster/geor}:<user>,<pwd>,[db],[table],[column],[where]\n"
+        "    {georaster/geor}:<user>,<pwd>,[db],<rdt>:<rid>\n"
+        "    user   - user's login\n"
+        "    pwd    - user's password\n"
+        "    db     - connection string ( default is $ORACLE_SID )\n"
+        "    table  - name of a georaster table\n"
+        "    column - name of a georaster column\n"
+        "    where  - simple where clause\n"
+        "    rdt    - raster data table name\n"
+        "    rid    - georaster numeric identification\n"
+        "Examples:\n"
+        "    geor:scott,tiger,demodb,table,column,id=1\n"
+        "    geor:scott,tiger,server.company.com:1521/survey,table,column,id=1\n"
+        "    \"georaster:scott,tiger,demodb,table,column,city='london'\"\n"
+        "    georaster:scott,tiger,,rdt_10$,10\n" );
         CSLDestroy( papszParam );
         return false;
     }
-
     CSLDestroy( papszParam );
-
     return true;
 }
 
@@ -228,7 +218,87 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     //  -------------------------------------------------------------------
-    //  Set GDAL's metadata information
+    //  Set objectInfo metadata information
+    //  -------------------------------------------------------------------
+
+    poGRD->SetMetadataItem("objectInfo.rasterType", CPLGetXMLValue(
+        poGRW->phMetadata, "objectInfo.rasterType", "" ), "");
+
+    poGRD->SetMetadataItem("objectInfo.isBlank", CPLGetXMLValue(
+        poGRW->phMetadata, "objectInfo.isBlank", "" ), "");
+
+    poGRD->SetMetadataItem("objectInfo.defaultRed", CPLGetXMLValue(
+        poGRW->phMetadata, "objectInfo.defaultRed", "" ), "");
+
+    poGRD->SetMetadataItem("objectInfo.defaultGreen", CPLGetXMLValue(
+        poGRW->phMetadata, "objectInfo.defaultGreen", "" ), "");
+
+    poGRD->SetMetadataItem("objectInfo.defaultBlue", CPLGetXMLValue(
+        poGRW->phMetadata, "objectInfo.defaultBlue", "" ), "");
+
+    //  -------------------------------------------------------------------
+    //  Set rasterInfo metadata information
+    //  -------------------------------------------------------------------
+
+    poGRD->SetMetadataItem("rasterInfo.cellDepth", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.cellDepth", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.totalDimensions", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.totalDimensions", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.dimensionSize.row", CPLSPrintf( "%d",
+        poGRD->nRasterYSize), "");
+
+    poGRD->SetMetadataItem("rasterInfo.dimensionSize.column", CPLSPrintf( "%d",
+        poGRD->nRasterXSize), "");
+
+    poGRD->SetMetadataItem("rasterInfo.dimensionSize.band", CPLSPrintf( "%d",
+        poGRD->nBands), "");
+
+    poGRD->SetMetadataItem("rasterInfo.ULTCoordinate.row", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.ULTCoordinate.row", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.ULTCoordinate.column", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.ULTCoordinate.column", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.ULTCoordinate.band", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.ULTCoordinate.band", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.blocking.type", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.blocking.type", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.blocking.totalRowBlocks", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.blocking.totalRowBlocks", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.blocking.totalColumnBlocks", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.blocking.totalColumnBlocks", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.blocking.totalBandBlocks", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.blocking.totalBandBlocks", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.blocking.rowBlockSize", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.blocking.rowBlockSize", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.blocking.columnBlockSize", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.blocking.columnBlockSize", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.blocking.bandBlockSize", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.blocking.bandBlockSize", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.interleaving", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.interleaving", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.pyramid.type", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.pyramid.type", "" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.pyramid.maxLevel", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.pyramid.maxLevel", "0" ), "");
+
+    poGRD->SetMetadataItem("rasterInfo.compression.type", CPLGetXMLValue(
+        poGRW->phMetadata, "rasterInfo.compression.type", "" ), "");
+
+    //  -------------------------------------------------------------------
+    //  Set IMAGE_STRUCTURE metadata information
     //  -------------------------------------------------------------------
 
     if( EQUAL( poGRW->szInterleaving, "BSQ" ) )
@@ -242,6 +312,24 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     else if( EQUAL( poGRW->szInterleaving, "BIL" ) )
     {
         poGRD->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
+    }
+
+    poGRD->SetMetadataItem( "COMPRESSION", CPLGetXMLValue( poGRW->phMetadata,
+        "rasterInfo.compression.type", "None" ), "IMAGE_STRUCTURE" );
+
+    if( EQUAL( poGRW->pszCellDepth, "1BIT" ) )
+    {
+        poGRD->SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
+    }
+
+    if( EQUAL( poGRW->pszCellDepth, "2BIT" ) )
+    {
+        poGRD->SetMetadataItem( "NBITS", "2", "IMAGE_STRUCTURE" );
+    }
+
+    if( EQUAL( poGRW->pszCellDepth, "4BIT" ) )
+    {
+        poGRD->SetMetadataItem( "NBITS", "4", "IMAGE_STRUCTURE" );
     }
 
     //  -------------------------------------------------------------------
@@ -431,8 +519,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     bool bSucced = poGRW->Create( pszDescription, pszInsert );
 
-    CPLFree_nt( pszInsert );
-    CPLFree_nt( pszDescription );
+    CPLFree( pszInsert );
+    CPLFree( pszDescription );
 
     if( ! bSucced )
     {
@@ -897,7 +985,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     CPLDebug("GEORASTER","WKT:%s", pszCloneWKT);
 
-    CPLFree_nt( pszCloneWKT );
+    CPLFree( pszCloneWKT );
 
     delete poSRS2;
 

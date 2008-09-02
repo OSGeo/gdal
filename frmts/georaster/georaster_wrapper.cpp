@@ -86,42 +86,73 @@ GeoRasterWrapper::~GeoRasterWrapper()
 {
     FlushMetadata();
 
-    CPLFree_nt( pszTable );
-    CPLFree_nt( pszColumn );
-    CPLFree_nt( pszDataTable );
-    CPLFree_nt( pszWhere );
-    XMLFree_nt( phMetadata );
-    CPLFree_nt( pszCellDepth );
+    CPLFree( pszTable );
+    CPLFree( pszColumn );
+    CPLFree( pszDataTable );
+    CPLFree( pszWhere );
+    CPLFree( pszCellDepth );
+    CPLFree( pabyBlockBuf );
+    CPLFree( poStmtRead );
+    CPLFree( poStmtWrite );
+    CPLDestroyXMLNode( phMetadata );
     OWStatement::Free( pahLocator, nBlockCount );
-    CPLFree_nt( pabyBlockBuf );
-    CPLFree_nt( poStmtRead );
-    CPLFree_nt( poStmtWrite );
+}
+
+//  ---------------------------------------------------------------------------
+//                                                         ParseIdentificator()
+//  ---------------------------------------------------------------------------
+
+char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
+{
+    //  -------------------------------------------------------------------
+    //  Parse arguments:
+    //  {georaster,geor}:<name>{/,,}<password>{/,@}<db>,<tab>,<col>,<where>
+    //  {georaster,geor}:<name>{/,,}<password>{/,@}<db>,<rdt>,<rid>
+    //  -------------------------------------------------------------------
+
+    char* pszStartPos = strstr( pszStringID, ":" ) + 1;
+
+    char** papszParam = CSLTokenizeString2( pszStartPos, ",@",
+                            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
+                            CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+
+    //  -------------------------------------------------------------------
+    //  The "/" should not be catch on the previous parser
+    //  -------------------------------------------------------------------
+
+    if( CSLCount( papszParam ) > 0 )
+    {
+        char** papszFirst2 = CSLTokenizeString2( papszParam[0], ",/",
+                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
+        if( CSLCount( papszFirst2 ) == 2 )
+        {
+            papszParam = CSLInsertStrings( papszParam, 0, papszFirst2 );
+            papszParam = CSLRemoveStrings( papszParam, 2, 1, NULL );
+        }
+        CSLDestroy( papszFirst2 );
+    }
+
+    // --------------------------------------------------------------------
+    // Assume a default database
+    // --------------------------------------------------------------------
+
+    if( CSLCount( papszParam ) == 2 ) 
+    {
+        papszParam = CSLAddString( papszParam, "" );
+    }
+
+    return papszParam;
 }
 
 //  ---------------------------------------------------------------------------
 //                                                                       Open()
 //  ---------------------------------------------------------------------------
 
-GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
+GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
 {
-    //  -------------------------------------------------------------------
-    //  Parse arguments
-    //  -------------------------------------------------------------------
-
-    char **papszParam = CSLTokenizeString2(
-                            strstr( pszStringID, ":" ) + 1, ID_SEPARATORS,
-                            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
+    char** papszParam = ParseIdentificator( pszStringId );
 
     int nArgc = CSLCount( papszParam );
-
-    // --------------------------------------------------------------------
-    // Assume the default database
-    // --------------------------------------------------------------------
-
-    if( nArgc == 2 ) 
-    {
-        papszParam = CSLAddString( papszParam, "" );
-    }
 
     //  ---------------------------------------------------------------
     //  Create a GeoRaster object
@@ -146,6 +177,10 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringID )
     {
         return NULL;
     }
+
+    CPLDebug("GEOR","Name     : %s",papszParam[0]);
+    CPLDebug("GEOR","Password : %s",papszParam[1]);
+    CPLDebug("GEOR","Database : %s",papszParam[2]);
 
     poGRW->poConnection = poDriver->GetConnection( 
         papszParam[0],
@@ -570,7 +605,7 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
                 "Failure to initialize GeoRaster" );
             return false;
         }
-        CPLFree_nt( pszDataTable );
+        CPLFree( pszDataTable );
         pszDataTable = CPLStrdup( szBindRDT );
         nRasterId    = nBindRID;
 
@@ -666,7 +701,7 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
         return false;
     }
 
-    CPLFree_nt( pszDataTable );
+    CPLFree( pszDataTable );
 
     pszDataTable = CPLStrdup( szBindRDT );
     nRasterId    = nBindRID;
@@ -950,7 +985,7 @@ bool GeoRasterWrapper::GetStatistics( int nBand,
                                 "statisticDataset.MEAN", "0.0" ) );
             dfStdDev = atoi( CPLGetXMLValue( phSubLayer,
                                 "statisticDataset.STD",  "0.0" ) );
-            XMLFree_nt( phSubLayer );
+            CPLDestroyXMLNode( phSubLayer );
             return true;
         }
     }
@@ -1223,7 +1258,7 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
         nCurrentBandBlock = nBandBlock;
         nCurrentBlock     = -1;
 
-        CPLFree_nt( poStmtRead );
+        CPLFree( poStmtRead );
 
         poStmtRead = poConnection->CreateStatement( CPLSPrintf(
             "SELECT RASTERBLOCK\n"
@@ -1361,7 +1396,7 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
     {
         nCurrentBandBlock = nBandBlock;
 
-        CPLFree_nt( poStmtWrite );
+        CPLFree( poStmtWrite );
 
         poStmtWrite = poConnection->CreateStatement( CPLSPrintf(
             "SELECT RASTERBLOCK\n"
@@ -1477,15 +1512,15 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
 
         int  ii = 0;
         int  jj = nStart;
-        for( ii = 0; ii < nBlockBytesGDAL; 
-             ii += ( nCellSizeGDAL * nSize ), 
+        for( ii = 0; ii < nBlockBytesGDAL;
+             ii += ( nCellSizeGDAL * nSize ),
              jj += nIncr )
         {
             memcpy( &pabyBlockBuf[jj], &pabyOutBuf[ii], nSize );
         }
     }
 
-    if( ! poStmtWrite->WriteBlob( pahLocator[nBlock], 
+    if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
                                   pabyBlockBuf,
                                   nBlockBytes ))
     {
@@ -1720,12 +1755,12 @@ bool GeoRasterWrapper::FlushMetadata()
     if( ! poStmt->Execute() )
     {
         CPLDebug( "XML-Error:", "%s", pszXML );
-        CPLFree_nt( pszXML );
-        ObjFree_nt( poStmt );
+        CPLFree( pszXML );
+        delete poStmt;
         return false;
     }
 
-    CPLFree_nt( pszXML );
+    CPLFree( pszXML );
 
     delete poStmt;
 

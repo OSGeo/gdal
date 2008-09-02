@@ -37,8 +37,6 @@
 
 #include <oci.h>
 
-#define ID_SEPARATORS   ",/@:"
-
 /***************************************************************************/
 /*                            Data type conversion table record type       */
 /***************************************************************************/
@@ -47,18 +45,6 @@ struct OW_CellDepth {
     const char*     pszValue;
     GDALDataType    eDataType;
 };
-
-/***************************************************************************/
-/*                            Free with NULL test                          */
-/*                                                                         */
-/* NOTE - mloskot: Calling free() or delete on null pointers is perfectly  */
-/* valid, so these tests are redundant.                                    */
-/***************************************************************************/
-
-#define ObjFree_nt(p)    if(p) { delete p; p = NULL; }
-#define CPLFree_nt(p)    if(p) { CPLFree(p); p = NULL; }
-#define CSLFree_nt(p)    if(p) { CSLDestroy(p); p = NULL; }
-#define XMLFree_nt(p)    if(p) { CPLDestroyXMLNode(p); p = NULL; }
 
 /***************************************************************************/
 /*                            OCI Error check                              */
@@ -75,9 +61,8 @@ const char*         OWSetDataType( const GDALDataType eType );
 int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );
 bool                OWIsNumeric( const char *pszText );
-const char*         OWReplaceToken( const char* pszBaseString, 
-                        char cToken, 
-                        const char* pszOWReplaceToken );
+const char*         OWReplaceToken( const char* pszBaseString,
+                        char cToken, const char* pszOWReplaceToken );
 
 /***************************************************************************/
 /*                            Arbitrary limits                             */
