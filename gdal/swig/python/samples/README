@@ -79,3 +79,5 @@ classify.py             Demonstrates using numpy for simple range based
 gdal_lut.py             Read a LUT from a text file, and apply it to an image.
                         Sort of a '1 band' version of pct2rgb.py.
 
+magphase.py             Example script computing magnitude and phase images
+                        from a complex image.
