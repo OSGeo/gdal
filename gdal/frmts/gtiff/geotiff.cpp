@@ -2859,7 +2859,26 @@ void GTiffDataset::WriteGeoTIFFInfo()
     {
         GTIF	*psGTIF;
 
-        psGTIF = GTIFNew( hTIFF );
+        // If we have existing geokeys, try to wipe them
+        // by writing a dummy goekey directory. (#2546)
+        uint16 *panVI = NULL;
+        uint16 nKeyCount;
+
+        if( TIFFGetField( hTIFF, TIFFTAG_GEOKEYDIRECTORY, 
+                          &nKeyCount, &panVI ) )
+        {
+            GUInt16 anGKVersionInfo[4] = { 1, 1, 0, 0 };
+            double  adfDummyDoubleParams[1] = { 0.0 };
+            TIFFSetField( hTIFF, TIFFTAG_GEOKEYDIRECTORY, 
+                          4, anGKVersionInfo );
+            TIFFSetField( hTIFF, TIFFTAG_GEODOUBLEPARAMS, 
+                          1, adfDummyDoubleParams );
+            TIFFSetField( hTIFF, TIFFTAG_GEOASCIIPARAMS, "" );
+        }
+
+        psGTIF = GTIFNew( hTIFF );  
+
+        // set according to coordinate system.
         GTIFSetFromOGISDefn( psGTIF, pszProjection );
 
         if( GetMetadataItem( GDALMD_AREA_OR_POINT ) 
