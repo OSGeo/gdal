@@ -1635,20 +1635,30 @@ def tiff_write_51():
     wkt = ds.GetProjection()
     ds = None
 
-    expected_wkt = 'PROJCS["WGS 84 / UTM zone 1N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235630016,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-177],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","32601"]]'
+    # Create a new GeoTIFF file with same projection
+    ds = gdal.GetDriverByName('GTiff').Create( 'tmp/tiff_write_51_ref.tif', 1, 1, 1 )
+    ds.SetProjection(srs.ExportToWkt())
+    ds = None
+
+    # Read it back as the reference WKT
+    ds = gdal.Open( 'tmp/tiff_write_51_ref.tif' )
+    expected_wkt = ds.GetProjection()
+    ds = None
 
     if string.find(wkt,'NAD') != -1 or string.find(wkt,'North Am') != -1:
         gdaltest.post_reason( 'It appears the NAD27 datum was not properly cleared.' )
         return 'fail'
     
-    if wkt != expected_wkt:
+    if wkt != expected_wkt or string.find(wkt, 'WGS 84 / UTM zone 1N') == -1:
         print wkt
-        gdaltest.post_reason( 'coordinate system does not exactly match the expected, but this may just be a harmless update in coordinate system handling.' )
+        print expected_wkt
+        gdaltest.post_reason( 'coordinate system does not exactly match.' )
         return 'fail'
 
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_51.tif' )
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_51_ref.tif' )
     
     return 'success'
 
