@@ -267,6 +267,8 @@ public:
     double              dfYFilter;
     int                 nXRadius;   // Size of window to filter.
     int                 nYRadius;
+    int                 nFiltInitX; // Filtering offset
+    int                 nFiltInitY;
     
     int                 nSrcXOff;
     int                 nSrcYOff;
