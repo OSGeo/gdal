@@ -1246,28 +1246,48 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
                                 double *pdfReal, double *pdfImag )
 
 {
+    // Save as local variables to avoid following pointers
+    int     nSrcXSize = poWK->nSrcXSize;
+    int     nSrcYSize = poWK->nSrcYSize;
+    
     int     iSrcX = (int) floor(dfSrcX - 0.5);
     int     iSrcY = (int) floor(dfSrcY - 0.5);
-    int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
     double  dfRatioX = 1.5 - (dfSrcX - iSrcX);
     double  dfRatioY = 1.5 - (dfSrcY - iSrcY);
     double  adfDensity[2], adfReal[2], adfImag[2];
     double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
     double  dfAccumulatorDensity = 0.0;
     double  dfAccumulatorDivisor = 0.0;
+    int     bShifted = FALSE;
     
-    //Get pixel row
-    if(iSrcY >= 0 && iSrcY < poWK->nSrcYSize &&
-       iSrcOffset >= 0 &&
-       GWKGetPixelRow(poWK, iBand, iSrcOffset, 1,
-                      adfDensity, adfReal, adfImag ))
+    // Shift so we don't overrun the array
+    if( nSrcXSize * nSrcYSize == iSrcOffset + 1
+        || nSrcXSize * nSrcYSize == iSrcOffset + nSrcXSize + 1 )
     {
-
+        bShifted = TRUE;
+        --iSrcOffset;
+    }
+    
+    // Get pixel row
+    if ( iSrcY >= 0 && iSrcY < nSrcYSize
+         && iSrcOffset >= 0 && iSrcOffset < nSrcXSize * nSrcYSize
+         && GWKGetPixelRow( poWK, iBand, iSrcOffset, 1,
+                            adfDensity, adfReal, adfImag ) )
+    {
         double dfMult1 = dfRatioX * dfRatioY;
         double dfMult2 = (1.0-dfRatioX) * dfRatioY;
 
+        // Shifting corrected
+        if ( bShifted )
+        {
+            adfReal[0] = adfReal[1];
+            adfImag[0] = adfImag[1];
+            adfDensity[0] = adfDensity[1];
+        }
+        
         // Upper Left Pixel
-        if ( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
+        if ( iSrcX >= 0 && iSrcX < nSrcXSize
              && adfDensity[0] > 0.000000001 )
         {
             dfAccumulatorDivisor += dfMult1;
@@ -1278,7 +1298,7 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
         }
             
         // Upper Right Pixel
-        if ( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
+        if ( iSrcX+1 >= 0 && iSrcX+1 < nSrcXSize
              && adfDensity[1] > 0.000000001 )
         {
             dfAccumulatorDivisor += dfMult2;
@@ -1289,18 +1309,26 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
         }
     }
         
-    //Get pixel row
-    if(iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize &&
-       iSrcOffset+poWK->nSrcXSize >= 0 &&
-       GWKGetPixelRow(poWK, iBand, iSrcOffset+poWK->nSrcXSize, 1,
-                      adfDensity, adfReal, adfImag ))
+    // Get pixel row
+    if ( iSrcY+1 >= 0 && iSrcY+1 < nSrcYSize
+         && iSrcOffset+nSrcXSize >= 0
+         && iSrcOffset+nSrcXSize < nSrcXSize * nSrcYSize
+         && GWKGetPixelRow( poWK, iBand, iSrcOffset+nSrcXSize, 1,
+                           adfDensity, adfReal, adfImag ) )
     {
-
         double dfMult1 = dfRatioX * (1.0-dfRatioY);
         double dfMult2 = (1.0-dfRatioX) * (1.0-dfRatioY);
         
+        // Shifting corrected
+        if ( bShifted )
+        {
+            adfReal[0] = adfReal[1];
+            adfImag[0] = adfImag[1];
+            adfDensity[0] = adfDensity[1];
+        }
+        
         // Lower Left Pixel
-        if ( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
+        if ( iSrcX >= 0 && iSrcX < nSrcXSize
              && adfDensity[0] > 0.000000001 )
         {
             dfAccumulatorDivisor += dfMult1;
@@ -1311,7 +1339,7 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
         }
 
         // Lower Right Pixel
-        if ( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
+        if ( iSrcX+1 >= 0 && iSrcX+1 < nSrcXSize
              && adfDensity[1] > 0.000000001 )
         {
             dfAccumulatorDivisor += dfMult2;
