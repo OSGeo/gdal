@@ -92,8 +92,8 @@ GeoRasterWrapper::~GeoRasterWrapper()
     CPLFree( pszWhere );
     CPLFree( pszCellDepth );
     CPLFree( pabyBlockBuf );
-    CPLFree( poStmtRead );
-    CPLFree( poStmtWrite );
+    delete poStmtRead;
+    delete poStmtWrite;
     CPLDestroyXMLNode( phMetadata );
     OWStatement::Free( pahLocator, nBlockCount );
 }
@@ -122,7 +122,7 @@ char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
 
     if( CSLCount( papszParam ) > 0 )
     {
-        char** papszFirst2 = CSLTokenizeString2( papszParam[0], ",/",
+        char** papszFirst2 = CSLTokenizeString2( papszParam[0], "/",
                              CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
         if( CSLCount( papszFirst2 ) == 2 )
         {
@@ -1258,7 +1258,7 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
         nCurrentBandBlock = nBandBlock;
         nCurrentBlock     = -1;
 
-        CPLFree( poStmtRead );
+        delete poStmtRead;
 
         poStmtRead = poConnection->CreateStatement( CPLSPrintf(
             "SELECT RASTERBLOCK\n"
@@ -1396,7 +1396,7 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
     {
         nCurrentBandBlock = nBandBlock;
 
-        CPLFree( poStmtWrite );
+        delete poStmtWrite;
 
         poStmtWrite = poConnection->CreateStatement( CPLSPrintf(
             "SELECT RASTERBLOCK\n"
