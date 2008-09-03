@@ -100,8 +100,7 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
     if ( nArgc < 2 ||
          nArgc > 6 ||
          EQUAL( papszParam[0], "" ) ||
-         EQUAL( papszParam[1], "" ) ||
-         EQUAL( papszParam[nArgc-1], "" ) )
+         EQUAL( papszParam[1], "" ) )
     {
         CPLError( CE_Warning, CPLE_IllegalArg,
         "Invalid georaster identification\n"
@@ -228,13 +227,13 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         poGRW->phMetadata, "objectInfo.isBlank", "" ), "");
 
     poGRD->SetMetadataItem("objectInfo.defaultRed", CPLGetXMLValue(
-        poGRW->phMetadata, "objectInfo.defaultRed", "" ), "");
+        poGRW->phMetadata, "objectInfo.defaultRed", "1" ), "");
 
     poGRD->SetMetadataItem("objectInfo.defaultGreen", CPLGetXMLValue(
-        poGRW->phMetadata, "objectInfo.defaultGreen", "" ), "");
+        poGRW->phMetadata, "objectInfo.defaultGreen", "1" ), "");
 
     poGRD->SetMetadataItem("objectInfo.defaultBlue", CPLGetXMLValue(
-        poGRW->phMetadata, "objectInfo.defaultBlue", "" ), "");
+        poGRW->phMetadata, "objectInfo.defaultBlue", "1" ), "");
 
     //  -------------------------------------------------------------------
     //  Set rasterInfo metadata information
