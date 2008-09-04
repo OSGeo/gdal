@@ -2628,10 +2628,11 @@ CPLErr GTiffDataset::IBuildOverviews(
         GDALRasterBand  **papoBandList;
 
         int nNewOverviews = 0;
+        int iBand;
 
         papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
         papoBandList = (GDALRasterBand **) CPLCalloc(sizeof(void*),nBands);
-        for( int iBand = 0; iBand < nBands; iBand++ )
+        for( iBand = 0; iBand < nBands; iBand++ )
         {
             GDALRasterBand* poBand = GetRasterBand( panBandList[iBand] );
 
@@ -2681,7 +2682,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                          nNewOverviews, papapoOverviewBands,
                                          pszResampling, pfnProgress, pProgressData );
 
-        for( int iBand = 0; iBand < nBands; iBand++ )
+        for( iBand = 0; iBand < nBands; iBand++ )
         {
             CPLFree(papapoOverviewBands[iBand]);
         }
