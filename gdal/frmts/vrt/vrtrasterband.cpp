@@ -348,12 +348,11 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         {
             if( psEntry->eType != CXT_Element 
                 || !EQUAL(psEntry->pszValue,"Category") 
-                || psEntry->psChild == NULL 
-                || psEntry->psChild->eType != CXT_Text )
+                || (psEntry->psChild != NULL && psEntry->psChild->eType != CXT_Text) )
                 continue;
             
             papszCategoryNames = CSLAddString( papszCategoryNames, 
-                                               psEntry->psChild->pszValue );
+                                (psEntry->psChild) ? psEntry->psChild->pszValue : "");
         }
     }
 
