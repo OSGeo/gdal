@@ -775,8 +775,13 @@ static int NITFWriteTREsFromOptions(
 
         pszEscapedContents = CPLParseNameValue( papszOptions[iOption]+4, 
                                                 &pszTREName );
-        
-        
+        if (pszEscapedContents == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not parse creation options %s", papszOptions[iOption]+4);
+            return FALSE;
+        }
+
         pszUnescapedContents = 
             CPLUnescapeString( pszEscapedContents, &nContentLength,
                                CPLES_BackslashQuotable );
