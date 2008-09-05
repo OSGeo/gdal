@@ -67,7 +67,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     poStmtRead          = NULL;
     poStmtWrite         = NULL;
     nCurrentBlock       = -1;
-    nCurrentBandBlock   = -1;
+    nBandsInBuffer        = -1;
     szInterleaving[0]   = 'B';
     szInterleaving[1]   = 'S';
     szInterleaving[2]   = 'Q';
@@ -1070,7 +1070,7 @@ bool GeoRasterWrapper::HasColorMap( int nBand )
 void GeoRasterWrapper::InitializeLayersNode()
 {
     CPLXMLNode *pslInfo  = CPLGetXMLNode( phMetadata, "layerInfo" );
-    
+
     int n = 1;
 
     for( n = 0 ; n < nRasterBands; n++ )
@@ -1237,6 +1237,20 @@ bool GeoRasterWrapper::InitializeIO()
 }
 
 //  ---------------------------------------------------------------------------
+//                                                           CalculateBlockId()
+//  ---------------------------------------------------------------------------
+
+int GeoRasterWrapper::CalculateBlockId( int nBand,
+                                        int nXOffset,
+                                        int nYOffset )
+{
+    int nBandBlock  = ( nBand - 1 ) % nTotalBandBlocks;
+
+    return ( nBandBlock * nTotalColumnBlocks * nTotalRowBlocks ) +
+           ( nYOffset * nTotalColumnBlocks ) + nXOffset;
+}
+
+//  ---------------------------------------------------------------------------
 //                                                               GetBandBlock()
 //  ---------------------------------------------------------------------------
 
@@ -1245,44 +1259,36 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
                                      int nYOffset,
                                      void* pData )
 {
-    nBandBlock = nBandBlockSize == 1 ? 0 : nBand % nTotalBandBlocks;
-    int nBlock = ( ( nYOffset * nTotalColumnBlocks ) + nXOffset );
+    int nBlock = CalculateBlockId( nBand, nXOffset, nYOffset );
+
+    //  --------------------------------------------------------------------
+    //  Load the LobLocators with a pointer to each row in the sorted RDT
+    //  --------------------------------------------------------------------
 
     if( ! bIOInitialized )
     {
         InitializeIO();
-    }
-
-    if ( nCurrentBandBlock != nBandBlock )
-    {
-        nCurrentBandBlock = nBandBlock;
-        nCurrentBlock     = -1;
-
-        delete poStmtRead;
 
         poStmtRead = poConnection->CreateStatement( CPLSPrintf(
             "SELECT RASTERBLOCK\n"
             "FROM   %s\n"
             "WHERE  RASTERID = :1 AND\n"
-            "       BANDBLOCKNUMBER = :2 AND\n"
             "       PYRAMIDLEVEL = :3\n"
             "ORDER BY\n"
+            "       BANDBLOCKNUMBER ASC,\n"
             "       ROWBLOCKNUMBER ASC,\n"
-            "       COLUMNBLOCKNUMBER ASC", 
+            "       COLUMNBLOCKNUMBER ASC",
             pszDataTable ) );
-
         poStmtRead->Bind( &nRasterId );
-        poStmtRead->Bind( &nBandBlock );
         poStmtRead->Bind( &nPyraLevel );
-
         poStmtRead->Define( pahLocator, nBlockCount );
-
         poStmtRead->Execute();
-
         if( poStmtRead->Fetch( nBlockCount ) == false )
         {
             return false;
         }
+
+        nCurrentBlock = -1;
     }
 
     if( nCurrentBlock != nBlock )
@@ -1345,12 +1351,14 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
 
     if( EQUAL( szInterleaving, "BSQ" ) )
     {
-        int nStart  = ( ( nBand - 1 ) % nRasterBands ) * nBlockBytesGDAL;
+        int nStart  = ( ( nBandBlockSize + nBand - 1 ) % nBandBlockSize ) *
+            nBlockBytesGDAL;
         memcpy( pData, &pabyBlockBuf[nStart], nBlockBytesGDAL );
     }
     else
     {
-        int nStart  = ( ( nBand - 1 ) % nRasterBands ) * nCellSizeGDAL;
+        int nStart  = ( ( nBandBlockSize + nBand - 1 ) % nBandBlockSize ) *
+            nBlockBytesGDAL;
         int nIncr   = nBandBlockSize * nCellSizeGDAL;
         int nSize   = nCellSizeGDAL;
 
@@ -1379,55 +1387,66 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
 //                                                               SetBandBlock()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::SetBandBlock( int nBand, 
-                                     int nXOffset, 
-                                     int nYOffset, 
+bool GeoRasterWrapper::SetBandBlock( int nBand,
+                                     int nXOffset,
+                                     int nYOffset,
                                      void* pData )
 {
-    nBandBlock = nBandBlockSize == 1 ? 0 : nBand % nTotalBandBlocks;
-    int nBlock = ( ( nYOffset * nTotalColumnBlocks ) + nXOffset );
+    int nBlock = CalculateBlockId( nBand, nXOffset, nYOffset );
+
+    bFlushMetadata = true;
+
+    //  --------------------------------------------------------------------
+    //  Load the LobLocators with a pointer to each row in the sorted RDT
+    //  --------------------------------------------------------------------
 
     if( ! bIOInitialized )
     {
         InitializeIO();
-    }
-
-    if ( nCurrentBandBlock != nBandBlock ) //TODO: Optimize for multi-band
-    {
-        nCurrentBandBlock = nBandBlock;
-
-        delete poStmtWrite;
 
         poStmtWrite = poConnection->CreateStatement( CPLSPrintf(
             "SELECT RASTERBLOCK\n"
             "FROM   %s\n"
             "WHERE  RASTERID = :1 AND\n"
-            "       BANDBLOCKNUMBER = :2 AND\n"
             "       PYRAMIDLEVEL = :3\n"
             "ORDER BY\n"
+            "       BANDBLOCKNUMBER ASC,\n"
             "       ROWBLOCKNUMBER ASC,\n"
             "       COLUMNBLOCKNUMBER ASC\n"
-            "FOR UPDATE ", 
+            "FOR UPDATE ",
             pszDataTable ) );
-
         poStmtWrite->Bind( &nRasterId );
-        poStmtWrite->Bind( &nBandBlock );
         poStmtWrite->Bind( &nPyraLevel );
-
         poStmtWrite->Define( pahLocator, nBlockCount );
-
         poStmtWrite->Execute();
-
         if( poStmtWrite->Fetch( nBlockCount ) == false )
         {
             return false;
         }
+
+        nCurrentBlock = -1;
+
+        nBandsInBuffer = 0;
     }
 
-    if( nBandBlockSize > 1 && nCurrentBlock != nBlock )
+    if( nCurrentBlock != nBlock )
     {
-        nCurrentBlock = nBlock;
-        poStmtWrite->ReadBlob( pahLocator[nBlock], pabyBlockBuf, nBlockBytes );
+        //  ----------------------------------------------------------------
+        //  Check if there is a block buffer pending to be writen?
+        //  ----------------------------------------------------------------
+
+        if( nBandsInBuffer != 0 )
+        {
+            if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
+                                          pabyBlockBuf,
+                                          nBlockBytes ) )
+            {
+                return false;
+            }
+        }
+
+        nBandsInBuffer = 0;
+        nCurrentBlock  = nBlock;
     }
 
     GByte *pabyOutBuf = (GByte *) pData;
@@ -1489,17 +1508,19 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
     }
 
     //  --------------------------------------------------------------------
-    //  Writing LOBs
+    //  Interleave it if necessary
     //  --------------------------------------------------------------------
 
     if( EQUAL( szInterleaving, "BSQ" ) )
     {
-        int nStart  = ( ( nBand - 1 ) % nRasterBands ) * nBlockBytesGDAL;
+        int nStart  = ( ( nBandBlockSize + nBand - 1 ) % nBandBlockSize ) *
+            nBlockBytesGDAL;
         memcpy( &pabyBlockBuf[nStart], pabyOutBuf, nBlockBytesGDAL );
     }
     else
     {
-        int nStart  = ( ( nBand - 1 ) % nRasterBands ) * nCellSizeGDAL;
+        int nStart  = ( ( nBandBlockSize + nBand - 1 ) % nBandBlockSize ) *
+            nCellSizeGDAL;
         int nIncr   = nBandBlockSize * nCellSizeGDAL;
         int nSize   = nCellSizeGDAL;
 
@@ -1520,11 +1541,21 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
         }
     }
 
-    if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
-                                  pabyBlockBuf,
-                                  nBlockBytes ))
+    //  --------------------------------------------------------------------
+    //  Write Buffer when it is filled with all the bands or at the very end
+    //  --------------------------------------------------------------------
+
+    nBandsInBuffer++;
+
+    if( nBandsInBuffer == nBandBlockSize || nBlock == ( nBlockCount - 1 ) )
     {
-        return false;
+        if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
+                                      pabyBlockBuf,
+                                      nBlockBytes ) )
+        {
+            return false;
+        }
+        nBandsInBuffer = 0;
     }
 
     return true;
@@ -1663,8 +1694,6 @@ bool GeoRasterWrapper::FlushMetadata()
     }
 
     bFlushMetadata = false;
-
-    CPLDebug("**************************", "FLushMetadata" );
 
     //  --------------------------------------------------------------------
     //  Change the isBlank setting left by SDO_GEOR.createBlank() to 'false'

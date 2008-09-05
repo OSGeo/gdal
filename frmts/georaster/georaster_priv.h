@@ -184,7 +184,6 @@ public:
 private:
 
     OCILobLocator**     pahLocator;
-    int                 nBandBlock;
     int                 nBlockCount;
     int                 nBlockBytes;
     int                 nBlockBytesGDAL;
@@ -193,8 +192,8 @@ private:
     OWStatement*        poStmtRead;
     OWStatement*        poStmtWrite;
 
-    int                 nCurrentBandBlock;
     int                 nCurrentBlock;
+    int                 nBandsInBuffer;
 
     int                 nPyraLevel;
     int                 nCellSize;
@@ -215,6 +214,10 @@ public:
                         Open( const char* pszStringID );
     bool                Create( char* pszDescription, char* pszInsert );
     void                GetRasterInfo( void );
+    int                 CalculateBlockId(
+                            int nBand,
+                            int nXOffset,
+                            int nYOffset );
     bool                GetImageExtent( double *padfTransform );
     bool                GetStatistics( int nBand,
                             double dfMin,
@@ -231,15 +234,15 @@ public:
     void                SetColorMap( int nBand, GDALColorTable* poCT );
     bool                SetGeoReference( int nSRIDIn );
     char*               GetWKText( int nSRIDin );
-    bool                GetBandBlock( 
-                            int nBand, 
-                            int nXOffset, 
-                            int nYOffset, 
+    bool                GetBandBlock(
+                            int nBand,
+                            int nXOffset,
+                            int nYOffset,
                             void* pData );
-    bool                SetBandBlock( 
-                            int nBand, 
-                            int nXOffset, 
-                            int nYOffset, 
+    bool                SetBandBlock(
+                            int nBand,
+                            int nXOffset,
+                            int nYOffset,
                             void* pData );
     bool                GetNoData( double* pdfNoDataValue );
     bool                SetNoData( double dfNoDataValue );
