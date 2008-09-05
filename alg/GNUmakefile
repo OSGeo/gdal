@@ -8,7 +8,7 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalgrid.o gdalcutline.o gdalproximity.o rasterfill.o
 
 ifeq ($(OGR_ENABLED),yes)
-OBJ += contour.o
+OBJ += contour.o polygonize.o
 endif
 
 ifeq ($(HAVE_GEOS),yes)
