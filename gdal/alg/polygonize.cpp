@@ -30,6 +30,10 @@
 #include "cpl_conv.h"
 #include <vector>
 
+CPL_CVSID("$Id$");
+
+#define GP_NODATA_MARKER -51502112
+
 /************************************************************************/
 /* ==================================================================== */
 /*                               RPolygon                               */
@@ -505,6 +509,39 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 
     return eErr;
 }
+
+/************************************************************************/
+/*                          GPMaskImageData()                           */
+/*                                                                      */
+/*      Mask out image pixels to a special nodata value if the mask     */
+/*      band is zero.                                                   */
+/************************************************************************/
+
+static CPLErr 
+GPMaskImageData( GDALRasterBandH hMaskBand, int iY, int nXSize, 
+                 GInt32 *panImageLine )
+
+{
+    GByte *pabyMaskLine;
+    CPLErr eErr;
+
+    pabyMaskLine = (GByte *) CPLMalloc(nXSize);
+    eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1, 
+                         pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
+    if( eErr == CE_None )
+    {
+        int i;
+        for( i = 0; i < nXSize; i++ )
+        {
+            if( pabyMaskLine[i] == 0 )
+                panImageLine[i] = GP_NODATA_MARKER;
+        }
+    }
+
+    CPLFree( pabyMaskLine );
+
+    return eErr;
+}
  
 /************************************************************************/
 /*                           GDALPolygonize()                           */
@@ -602,14 +639,6 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
         GDALGetGeoTransform( hSrcDS, adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
-/*      Do we have a nodata value?                                      */
-/* -------------------------------------------------------------------- */
-    double dfNoDataValue = 0.0;
-    int bGotNoData = FALSE;
-
-    dfNoDataValue = GDALGetRasterNoDataValue( hSrcBand, &bGotNoData );
-
-/* -------------------------------------------------------------------- */
 /*      The first pass over the raster is only used to build up the     */
 /*      polygon id map so we will know in advance what polygons are     */
 /*      what on the second pass.                                        */
@@ -626,6 +655,9 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
             hSrcBand,
             GF_Read, 0, iY, nXSize, 1, 
             panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
+        
+        if( eErr == CE_None && hMaskBand != NULL )
+            eErr = GPMaskImageData( hMaskBand, iY, nXSize, panThisLineVal );
 
         if( iY == 0 )
             GDALPolygonEnumerator( 
@@ -736,8 +768,8 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
             {
                 if( papoPoly[iX] && papoPoly[iX]->nLastLineUpdated != iY )
                 {
-                    if( !bGotNoData
-                        || papoPoly[iX]->nPolyValue != (int) dfNoDataValue )
+                    if( hMaskBand == NULL
+                        || papoPoly[iX]->nPolyValue != GP_NODATA_MARKER )
                     {
                         eErr = 
                             EmitPolygonToLayer( hOutLayer, iPixValField, 
@@ -769,8 +801,8 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
     {
         if( papoPoly[iX] )
         {
-            if( !bGotNoData
-                || papoPoly[iX]->nPolyValue != (int) dfNoDataValue )
+            if( hMaskBand == NULL
+                || papoPoly[iX]->nPolyValue != GP_NODATA_MARKER )
             {
                 eErr = 
                     EmitPolygonToLayer( hOutLayer, iPixValField, 
