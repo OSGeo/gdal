@@ -79,6 +79,13 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                 GDALProgressFunc pfnProgress, 
                 void * pProgressArg );
 
+CPLErr CPL_DLL CPL_STDCALL
+GDALPolygonize( GDALRasterBandH hSrcBand, 
+                GDALRasterBandH hMaskBand,
+                OGRLayerH hOutLayer, int iPixValField, 
+                char **papszOptions,
+                GDALProgressFunc pfnProgress, 
+                void * pProgressArg );
 /*
  * Warp Related.
  */
