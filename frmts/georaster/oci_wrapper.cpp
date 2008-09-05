@@ -439,13 +439,13 @@ bool OWStatement::Execute( int nRows )
 {
     CPLDebug("PL/SQL","\n%s\n", pszStatement );
 
-    sword nStatus = OCIStmtExecute( poConnect->hSvcCtx, 
-        hStmt, 
-        hError, 
-        (ub4) ( nStmtMode != OCI_DEFAULT ), 
-        (ub4) nRows, 
-        (OCISnapshot*) NULL, 
-        (OCISnapshot*) NULL, 
+    sword nStatus = OCIStmtExecute( poConnect->hSvcCtx,
+        hStmt,
+        hError,
+        (ub4) ( nStmtMode != OCI_DEFAULT ),
+        (ub4) nRows,
+        (OCISnapshot*) NULL,
+        (OCISnapshot*) NULL,
         nStmtMode );
 
     if( CheckError( nStatus, hError ) )
