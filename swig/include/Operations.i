@@ -28,6 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%{
+#ifdef DEBUG 
+typedef struct OGRLayerHS OGRLayerShadow;
+#else
+typedef void OGRLayerShadow;
+#endif
+%}
+
 /************************************************************************/
 /*                            TermProgress()                            */
 /************************************************************************/
@@ -146,6 +154,27 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 
     return GDALComputeProximity( srcBand, proximityBand, options,
                                  callback, callback_data );
+}
+%} 
+
+/************************************************************************/
+/*                             Polygonize()                             */
+/************************************************************************/
+
+%feature( "kwargs" ) Polygonize;
+%inline %{
+int  Polygonize( GDALRasterBandShadow *srcBand,
+     		 GDALRasterBandShadow *maskBand,
+  	         OGRLayerShadow *outLayer, 
+                 int iPixValField,
+                 char **options = NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALPolygonize( srcBand, maskBand, outLayer, iPixValField,
+                           options, callback, callback_data );
 }
 %} 
 
