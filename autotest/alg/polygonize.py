@@ -44,7 +44,7 @@ except:
     import ogr
 
 ###############################################################################
-# Test a fairly simple case.
+# Test a fairly simple case, with nodata masking.
 
 def polygonize_1():
 
@@ -68,7 +68,7 @@ def polygonize_1():
     mem_layer.CreateField( fd )
 
     # run the algorithm.
-    result = gdal.Polygonize( src_band, None, mem_layer, 0 )
+    result = gdal.Polygonize( src_band, src_band.GetMaskBand(), mem_layer, 0 )
 
     # Confirm we get the set of expected features in the output layer.
 
@@ -94,8 +94,48 @@ def polygonize_1():
     else:
         return 'fail'
 
+###############################################################################
+# Test a simple case without masking.
+
+def polygonize_2():
+
+    if not gdaltest.have_ng:
+        return 'skip'
+    
+    src_ds = gdal.Open('data/polygonize_in.grd')
+    src_band = src_ds.GetRasterBand(1)
+
+    # Create a memory OGR datasource to put results in. 
+    mem_drv = ogr.GetDriverByName( 'Memory' )
+    mem_ds = mem_drv.CreateDataSource( 'out' )
+
+    mem_layer = mem_ds.CreateLayer( 'poly', None, ogr.wkbPolygon )
+
+    fd = ogr.FieldDefn( 'DN', ogr.OFTInteger )
+    mem_layer.CreateField( fd )
+
+    # run the algorithm.
+    result = gdal.Polygonize( src_band, None, mem_layer, 0 )
+
+    # Confirm we get the set of expected features in the output layer.
+
+    if mem_layer.GetFeatureCount() != 17:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 11' % mem_layer.GetFeatureCount() )
+        return 'fail'
+
+    expect = [ 107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140, 132,
+               100, 101, 102, 156, 103 ]
+    
+    tr = ogrtest.check_features_against_list( mem_layer, 'DN', expect )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
 gdaltest_list = [
-    polygonize_1
+    polygonize_1,
+    polygonize_2
     ]
 
 if __name__ == '__main__':
