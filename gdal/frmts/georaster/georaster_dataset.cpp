@@ -332,6 +332,14 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     //  -------------------------------------------------------------------
+    //  Set RDT/RID metadata information
+    //  -------------------------------------------------------------------
+
+    poGRD->SetMetadataItem("RDT", poGRW->pszDataTable, "");
+
+    poGRD->SetMetadataItem("RID", CPLSPrintf( "%d", poGRW->nRasterId ), "");
+
+    //  -------------------------------------------------------------------
     //  Return a GDALDataset
     //  -------------------------------------------------------------------
 
