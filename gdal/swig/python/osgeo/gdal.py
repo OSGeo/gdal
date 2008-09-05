@@ -968,6 +968,7 @@ ComputeMedianCutPCT = _gdal.ComputeMedianCutPCT
 DitherRGB2PCT = _gdal.DitherRGB2PCT
 ReprojectImage = _gdal.ReprojectImage
 ComputeProximity = _gdal.ComputeProximity
+Polygonize = _gdal.Polygonize
 RegenerateOverviews = _gdal.RegenerateOverviews
 RegenerateOverview = _gdal.RegenerateOverview
 AutoCreateWarpedVRT = _gdal.AutoCreateWarpedVRT
