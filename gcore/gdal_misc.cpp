@@ -135,6 +135,7 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
         break;
         
       case GDT_Int16:
+      case GDT_CInt16:
         nBits = MAX(nBits,16);
         bSigned = TRUE;
         break;
