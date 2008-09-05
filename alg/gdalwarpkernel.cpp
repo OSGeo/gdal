@@ -912,6 +912,103 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
     return TRUE;
 }
 
+/************************************************************************/
+/*                          GWKGetPixelValue()                          */
+/************************************************************************/
+
+static int GWKGetPixelValue( GDALWarpKernel *poWK, int iBand, 
+                             int iSrcOffset, double *pdfDensity, 
+                             double *pdfReal, double *pdfImag )
+
+{
+    GByte *pabySrc = poWK->papabySrcImage[iBand];
+
+    if( poWK->panUnifiedSrcValid != NULL
+        && !((poWK->panUnifiedSrcValid[iSrcOffset>>5]
+              & (0x01 << (iSrcOffset & 0x1f))) ) )
+    {
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    if( poWK->papanBandSrcValid != NULL
+        && poWK->papanBandSrcValid[iBand] != NULL
+        && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
+              & (0x01 << (iSrcOffset & 0x1f)))) )
+    {
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    switch( poWK->eWorkingDataType )
+    {
+      case GDT_Byte:
+        *pdfReal = pabySrc[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+
+      case GDT_Int16:
+        *pdfReal = ((GInt16 *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+
+      case GDT_UInt16:
+        *pdfReal = ((GUInt16 *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_Int32:
+        *pdfReal = ((GInt32 *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_UInt32:
+        *pdfReal = ((GUInt32 *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_Float32:
+        *pdfReal = ((float *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_Float64:
+        *pdfReal = ((double *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_CInt16:
+        *pdfReal = ((GInt16 *) pabySrc)[iSrcOffset*2];
+        *pdfImag = ((GInt16 *) pabySrc)[iSrcOffset*2+1];
+        break;
+ 
+      case GDT_CInt32:
+        *pdfReal = ((GInt32 *) pabySrc)[iSrcOffset*2];
+        *pdfImag = ((GInt32 *) pabySrc)[iSrcOffset*2+1];
+        break;
+ 
+      case GDT_CFloat32:
+        *pdfReal = ((float *) pabySrc)[iSrcOffset*2];
+        *pdfImag = ((float *) pabySrc)[iSrcOffset*2+1];
+        break;
+ 
+      case GDT_CFloat64:
+        *pdfReal = ((double *) pabySrc)[iSrcOffset*2];
+        *pdfImag = ((double *) pabySrc)[iSrcOffset*2+1];
+        break;
+
+      default:
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    if( poWK->pafUnifiedSrcDensity != NULL )
+        *pdfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
+    else
+        *pdfDensity = 1.0;
+
+    return *pdfDensity != 0.0;
+}
 
 /************************************************************************/
 /*                          GWKGetPixelRow()                            */
@@ -925,7 +1022,6 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
     // We know that nSrcLen is even, so we can *always* unroll loops 2x
     int     nSrcLen = nHalfSrcLen * 2;
     int     bHasValid = FALSE;
-    GByte   *pabySrc = &(poWK->papabySrcImage[iBand][iSrcOffset]);
     int     i;
     
     // Init the density
@@ -988,113 +1084,159 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
     switch( poWK->eWorkingDataType )
     {
         case GDT_Byte:
+        {
+            GByte* pSrc = (GByte*) poWK->papabySrcImage[iBand];
+            pSrc += iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = pabySrc[i];
-                adfReal[i+1] = pabySrc[i+1];
+                adfReal[i] = pSrc[i];
+                adfReal[i+1] = pSrc[i+1];
             }
             memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
+        }
 
         case GDT_Int16:
+        {
+            GInt16* pSrc = (GInt16*) poWK->papabySrcImage[iBand];
+            pSrc += iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((GInt16 *) pabySrc)[i];
-                adfReal[i+1] = ((GInt16 *) pabySrc)[i+1];
+                adfReal[i] = pSrc[i];
+                adfReal[i+1] = pSrc[i+1];
             }
             memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
+        }
 
          case GDT_UInt16:
+         {
+            GUInt16* pSrc = (GUInt16*) poWK->papabySrcImage[iBand];
+            pSrc += iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((GUInt16 *) pabySrc)[i];
-                adfReal[i+1] = ((GUInt16 *) pabySrc)[i+1];
+                adfReal[i] = pSrc[i];
+                adfReal[i+1] = pSrc[i+1];
             }
             memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
+         }
 
         case GDT_Int32:
+        {
+            GInt32* pSrc = (GInt32*) poWK->papabySrcImage[iBand];
+            pSrc += iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((GInt32 *) pabySrc)[i];
-                adfReal[i+1] = ((GInt32 *) pabySrc)[i+1];
+                adfReal[i] = pSrc[i];
+                adfReal[i+1] = pSrc[i+1];
             }
             memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
+        }
 
         case GDT_UInt32:
+        {
+            GUInt32* pSrc = (GUInt32*) poWK->papabySrcImage[iBand];
+            pSrc += iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((GUInt32 *) pabySrc)[i];
-                adfReal[i+1] = ((GUInt32 *) pabySrc)[i+1];
+                adfReal[i] = pSrc[i];
+                adfReal[i+1] = pSrc[i+1];
             }
             memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
+        }
 
         case GDT_Float32:
+        {
+            float* pSrc = (float*) poWK->papabySrcImage[iBand];
+            pSrc += iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((float *) pabySrc)[i];
-                adfReal[i+1] = ((float *) pabySrc)[i+1];
+                adfReal[i] = pSrc[i];
+                adfReal[i+1] = pSrc[i+1];
             }
             memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
+        }
 
        case GDT_Float64:
+       {
+            double* pSrc = (double*) poWK->papabySrcImage[iBand];
+            pSrc += iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((double *) pabySrc)[i];
-                adfReal[i+1] = ((double *) pabySrc)[i+1];
+                adfReal[i] = pSrc[i];
+                adfReal[i+1] = pSrc[i+1];
             }
             memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
+       }
 
         case GDT_CInt16:
+        {
+            GInt16* pSrc = (GInt16*) poWK->papabySrcImage[iBand];
+            pSrc += 2 * iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((GInt16 *) pabySrc)[i];
-                adfReal[i+1] = ((GInt16 *) pabySrc)[i+1];
+                adfReal[i] = pSrc[2*i];
+                adfImag[i] = pSrc[2*i+1];
 
-                adfImag[i] = ((GInt16 *) pabySrc)[i];
-                adfImag[i+1] = ((GInt16 *) pabySrc)[i+1];
+                adfReal[i+1] = pSrc[2*i+2];
+                adfImag[i+1] = pSrc[2*i+3];
             }
             break;
+        }
 
         case GDT_CInt32:
+        {
+            GInt32* pSrc = (GInt32*) poWK->papabySrcImage[iBand];
+            pSrc += 2 * iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((GInt32 *) pabySrc)[i];
-                adfReal[i+1] = ((GInt32 *) pabySrc)[i+1];
+                adfReal[i] = pSrc[2*i];
+                adfImag[i] = pSrc[2*i+1];
 
-                adfImag[i] = ((GInt32 *) pabySrc)[i];
-                adfImag[i+1] = ((GInt32 *) pabySrc)[i+1];
+                adfReal[i+1] = pSrc[2*i+2];
+                adfImag[i+1] = pSrc[2*i+3];
             }
             break;
+        }
 
         case GDT_CFloat32:
+        {
+            float* pSrc = (float*) poWK->papabySrcImage[iBand];
+            pSrc += 2 * iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((float *) pabySrc)[i];
-                adfReal[i+1] = ((float *) pabySrc)[i+1];
+                adfReal[i] = pSrc[2*i];
+                adfImag[i] = pSrc[2*i+1];
 
-                adfImag[i] = ((float *) pabySrc)[i];
-                adfImag[i+1] = ((float *) pabySrc)[i+1];
+                adfReal[i+1] = pSrc[2*i+2];
+                adfImag[i+1] = pSrc[2*i+3];
             }
             break;
+        }
+
 
         case GDT_CFloat64:
+        {
+            double* pSrc = (double*) poWK->papabySrcImage[iBand];
+            pSrc += 2 * iSrcOffset;
             for ( i = 0; i < nSrcLen; i += 2 )
             {
-                adfReal[i] = ((double *) pabySrc)[i];
-                adfReal[i+1] = ((double *) pabySrc)[i+1];
+                adfReal[i] = pSrc[2*i];
+                adfImag[i] = pSrc[2*i+1];
 
-                adfImag[i] = ((double *) pabySrc)[i];
-                adfImag[i+1] = ((double *) pabySrc)[i+1];
+                adfReal[i+1] = pSrc[2*i+2];
+                adfImag[i+1] = pSrc[2*i+3];
             }
             break;
+        }
 
         default:
+            CPLAssert(FALSE);
             memset( adfDensity, 0, nSrcLen * sizeof(double) );
             return FALSE;
     }
@@ -2305,33 +2447,33 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
-                double dfBandDensity[2] = {0.0, 0.0};
-                double dfValueReal[2] = {0.0, 0.0};
-                double dfValueImag[2] = {0.0, 0.0};
+                double dfBandDensity = 0.0;
+                double dfValueReal = 0.0;
+                double dfValueImag = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
 /* -------------------------------------------------------------------- */
                 if ( poWK->eResample == GRA_NearestNeighbour )
                 {
-                    GWKGetPixelRow( poWK, iBand, iSrcOffset, 1,
-                                    dfBandDensity, dfValueReal, dfValueImag );
+                    GWKGetPixelValue( poWK, iBand, iSrcOffset,
+                                      &dfBandDensity, &dfValueReal, &dfValueImag );
                 }
                 else if ( poWK->eResample == GRA_Bilinear )
                 {
                     GWKBilinearResample( poWK, iBand, 
                                          padfX[iDstX]-poWK->nSrcXOff,
                                          padfY[iDstX]-poWK->nSrcYOff,
-                                         dfBandDensity, 
-                                         dfValueReal, dfValueImag );
+                                         &dfBandDensity, 
+                                         &dfValueReal, &dfValueImag );
                 }
                 else if ( poWK->eResample == GRA_Cubic )
                 {
                     GWKCubicResample( poWK, iBand, 
                                       padfX[iDstX]-poWK->nSrcXOff,
                                       padfY[iDstX]-poWK->nSrcYOff,
-                                      dfBandDensity, 
-                                      dfValueReal, dfValueImag );
+                                      &dfBandDensity, 
+                                      &dfValueReal, &dfValueImag );
                 }
                 else if ( poWK->eResample == GRA_CubicSpline
                           || poWK->eResample == GRA_Lanczos )
@@ -2339,13 +2481,13 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                     GWKResample( poWK, iBand, 
                                  padfX[iDstX]-poWK->nSrcXOff,
                                  padfY[iDstX]-poWK->nSrcYOff,
-                                 dfBandDensity, 
-                                 dfValueReal, dfValueImag, psWrkStruct );
+                                 &dfBandDensity, 
+                                 &dfValueReal, &dfValueImag, psWrkStruct );
                 }
 
 
                 // If we didn't find any valid inputs skip to next band.
-                if ( dfBandDensity[0] < 0.0000000001 )
+                if ( dfBandDensity < 0.0000000001 )
                     continue;
 
                 bHasFoundDensity = TRUE;
@@ -2355,8 +2497,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /*      the destination pixel.                                          */
 /* -------------------------------------------------------------------- */
                 GWKSetPixelValue( poWK, iBand, iDstOffset,
-                                  dfBandDensity[0],
-                                  dfValueReal[0], dfValueImag[0] );
+                                  dfBandDensity,
+                                  dfValueReal, dfValueImag );
 
             }
 
