@@ -719,9 +719,13 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
         {
             eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1, 
                                  panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
-            if( eErr != CE_None )
-                continue;
+
+            if( eErr == CE_None && hMaskBand != NULL )
+                eErr = GPMaskImageData( hMaskBand, iY, nXSize, panThisLineVal );
         }
+
+        if( eErr != CE_None )
+            continue;
 
 /* -------------------------------------------------------------------- */
 /*      Determine what polygon the various pixels belong to (redoing    */
