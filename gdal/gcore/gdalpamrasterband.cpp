@@ -368,14 +368,14 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         for( psEntry = CPLGetXMLNode( psTree, "CategoryNames" )->psChild;
              psEntry != NULL; psEntry = psEntry->psNext )
         {
+            /* Don't skeep <Category> tag with empty content */
             if( psEntry->eType != CXT_Element 
                 || !EQUAL(psEntry->pszValue,"Category") 
-                || psEntry->psChild == NULL 
-                || psEntry->psChild->eType != CXT_Text )
+                || (psEntry->psChild != NULL && psEntry->psChild->eType != CXT_Text) )
                 continue;
             
             papszCategoryNames = CSLAddString( papszCategoryNames, 
-                                               psEntry->psChild->pszValue );
+                                 (psEntry->psChild) ? psEntry->psChild->pszValue : "" );
         }
         
         GDALPamRasterBand::SetCategoryNames( papszCategoryNames );
