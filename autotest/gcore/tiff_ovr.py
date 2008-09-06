@@ -499,6 +499,72 @@ def tiff_ovr_12():
         return 'fail'
 
     return 'success'
+
+
+###############################################################################
+# Test gaussian resampling
+
+def tiff_ovr_13():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+
+    src_ds = gdal.Open('data/mfloat32.vrt')
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    gdaltest.tiff_drv.CreateCopy( 'tmp/mfloat32.tif', src_ds,
+                                  options = ['INTERLEAVE=PIXEL'] )
+    src_ds = None
+
+    ds = gdal.Open( 'tmp/mfloat32.tif' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    err = ds.BuildOverviews( 'GAUSS', overviewlist = [2, 4] )
+
+    if err != 0:
+        gdaltest.post_reason('BuildOverviews reports an error' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1225:
+        gdaltest.post_reason( 'bad checksum' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Check gauss resampling on a dataset with a raster band that has a color table
+
+def tiff_ovr_14():
+
+    shutil.copyfile( 'data/test_average_palette.tif', 'tmp/test_gauss_palette.tif' )
+
+    ds = gdal.Open('tmp/test_gauss_palette.tif', gdal.GA_Update)
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    ds.BuildOverviews( 'GAUSS', overviewlist = [2] )
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 200
+
+    ds = None
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -512,6 +578,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr10.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr11.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr12.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/test_gauss_palette.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -530,6 +597,8 @@ gdaltest_list_internal = [
     tiff_ovr_10,
     tiff_ovr_11,
     tiff_ovr_12,
+    tiff_ovr_13,
+    tiff_ovr_14,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
