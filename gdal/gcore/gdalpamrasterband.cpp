@@ -961,8 +961,13 @@ PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
 
         if( atof(CPLGetXMLValue( psXMLHist, "HistMin", "0")) != dfMin 
             || atof(CPLGetXMLValue( psXMLHist, "HistMax", "0")) != dfMax
-            || atoi(CPLGetXMLValue( psXMLHist, "BucketCount","0")) 
-            != nBuckets)
+            || atoi(CPLGetXMLValue( psXMLHist, 
+                                    "BucketCount","0")) != nBuckets
+            || !atoi(CPLGetXMLValue( psXMLHist, 
+                                     "IncludeOutOfRange","0")) != !bIncludeOutOfRange 
+            || (!bApproxOK && atoi(CPLGetXMLValue( psXMLHist, 
+                                                   "Approximate","0"))) )
+
             continue;
 
         return psXMLHist;
