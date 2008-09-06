@@ -34,7 +34,8 @@ CPL_CVSID("$Id$");
 typedef enum
 {
     GRM_Near = 0,
-    GRM_Average = 1
+    GRM_Average = 1,
+    GRM_Gauss = 2
 } GDALResamplingMethod;
 
 /************************************************************************/
@@ -67,6 +68,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         eResampling = GRM_Near;
     else if ( EQUALN(pszResampling, "AVER", 4) )
         eResampling = GRM_Average;
+    else if ( EQUALN(pszResampling, "GAUSS", 5) )
+        eResampling = GRM_Gauss;
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -80,9 +83,49 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
 /* -------------------------------------------------------------------- */
     int      nDstXOff, nDstXOff2, nDstYOff, nDstYOff2, nOXSize, nOYSize;
     float    *pafDstScanline;
+    int nGaussMatrixDim = 3;
+    const int *panGaussMatrix;
+    static const int anGaussMatrix3x3[] ={
+        1,2,1,
+        2,4,2,
+        1,2,1
+    };
+    static const int anGaussMatrix5x5[] = {
+        1,4,6,4,1,
+        4,16,24,16,4,
+        6,24,36,24,6,
+        4,16,24,16,4,
+        1,4,6,4,1};
+    static const int anGaussMatrix7x7[] = {
+        1,6,15,20,15,6,1,
+        6,36,90,120,90,36,6,
+        15,90,225,300,225,90,15,
+        20,120,300,400,300,120,20,
+        15,90,225,300,225,90,15,
+        6,36,90,120,90,36,6,
+        1,6,15,20,15,6,1};
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
+    int nResYFactor = (int) (0.5 + (double)nSrcHeight/(double)nOYSize);
+
+    // matrix for gauss filter
+    if(nResYFactor <= 2)
+    {
+        panGaussMatrix = anGaussMatrix3x3;
+        nGaussMatrixDim=3;
+    }
+    else if (nResYFactor <= 4)
+    {
+        panGaussMatrix = anGaussMatrix5x5;
+        nGaussMatrixDim=5;
+    }
+    else
+    {
+        panGaussMatrix = anGaussMatrix7x7;
+        nGaussMatrixDim=7;
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the column to start writing to, and the first column */
@@ -140,15 +183,37 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         GByte *pabySrcScanlineNodataMask;
         int   nSrcYOff, nSrcYOff2 = 0, iDstPixel;
 
-        nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
-        if ( nSrcYOff < nChunkYOff )
-            nSrcYOff = nChunkYOff;
+        if( eResampling == GRM_Near || eResampling == GRM_Average )
+        {
+          nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
+          if ( nSrcYOff < nChunkYOff )
+              nSrcYOff = nChunkYOff;
 
-        nSrcYOff2 = 
-            (int) (0.5 + ((iDstLine+1)/(double)nOYSize) * nSrcHeight);
+          nSrcYOff2 = 
+              (int) (0.5 + ((iDstLine+1)/(double)nOYSize) * nSrcHeight);
+        }
+        else /* if (eResampling == GRM_Gauss) */
+        {
+
+            nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
+            nSrcYOff2 = (int) (0.5 + ((iDstLine+1)/(double)nOYSize) * nSrcHeight) + 1;
+
+            if( nSrcYOff < nChunkYOff )
+            {
+               nSrcYOff = nChunkYOff;
+               nSrcYOff2++;
+            }
+
+            int iSizeY = nSrcYOff2 - nSrcYOff;
+            nSrcYOff = nSrcYOff + iSizeY/2 - nGaussMatrixDim/2;
+            nSrcYOff2 = nSrcYOff + nGaussMatrixDim;
+            if(nSrcYOff < 0)
+                nSrcYOff = 0;
+        }
+
         if( nSrcYOff2 > nSrcHeight || iDstLine == nOYSize-1 )
             nSrcYOff2 = nSrcHeight;
-        if( nSrcYOff2 > nChunkYOff + nChunkYSize )
+        if( nSrcYOff2 > nChunkYOff + nChunkYSize)
             nSrcYOff2 = nChunkYOff + nChunkYSize;
 
         pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
@@ -164,17 +229,32 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         {
             int   nSrcXOff, nSrcXOff2;
 
-            nSrcXOff =
-                (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
-            if ( nSrcXOff < nChunkXOff )
-                nSrcXOff = nChunkXOff;
-            nSrcXOff2 = (int) 
-                (0.5 + ((iDstPixel+1)/(double)nOXSize) * nSrcWidth);
+            if ( eResampling == GRM_Near || eResampling == GRM_Average )
+            {
+              nSrcXOff =
+                  (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
+              if ( nSrcXOff < nChunkXOff )
+                  nSrcXOff = nChunkXOff;
+              nSrcXOff2 = (int) 
+                  (0.5 + ((iDstPixel+1)/(double)nOXSize) * nSrcWidth);
+            }
+            else /* if (eResampling == GRM_Gauss) */
+            {
+              nSrcXOff = (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
+              nSrcXOff2 = (int)(0.5 + ((iDstPixel+1)/(double)nOXSize) * nSrcWidth) + 1;
+
+              int iSizeX = nSrcXOff2 - nSrcXOff;
+              nSrcXOff = nSrcXOff + iSizeX/2 - nGaussMatrixDim/2;
+              nSrcXOff2 = nSrcXOff + nGaussMatrixDim;
+              if(nSrcXOff < 0)
+                  nSrcXOff = 0;
+            }
+
             if( nSrcXOff2 > nSrcWidth || iDstPixel == nOXSize-1 )
                 nSrcXOff2 = nSrcWidth;
             if( nSrcXOff2 > nChunkXOff + nChunkXSize )
                 nSrcXOff2 = nChunkXOff + nChunkXSize;
-            
+
             if ( eResampling == GRM_Near )
             {
                 pafDstScanline[iDstPixel - nDstXOff] = pafSrcScanline[nSrcXOff - nChunkXOff];
@@ -192,15 +272,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                         for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                         {
                             val = pafSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize];
-                            if (pabySrcScanlineNodataMask)
-                            {
-                                if (pabySrcScanlineNodataMask[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize])
-                                {
-                                    dfTotal += val;
-                                    nCount++;
-                                }
-                            }
-                            else
+                            if (pabySrcScanlineNodataMask == NULL ||
+                                pabySrcScanlineNodataMask[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize])
                             {
                                 dfTotal += val;
                                 nCount++;
@@ -276,6 +349,102 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     }
                 }
             }
+            else /* if ( eResampling == GRM_Gauss ) */
+            {
+                if (poColorTable == NULL)
+                {
+                   double dfTotal = 0.0, val;
+                   int  nCount = 0, iX, iY;
+                   int  i = 0,j = 0;
+                   const int *panLineWeight = panGaussMatrix;
+
+                   for( j=0, iY = nSrcYOff; iY < nSrcYOff2;
+                        iY++, j++, panLineWeight += nGaussMatrixDim )
+                   {
+                        for( i=0, iX = nSrcXOff; iX < nSrcXOff2; iX++,++i )
+                        {
+                            val = pafSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize];
+                            if (pabySrcScanlineNodataMask == NULL ||
+                                pabySrcScanlineNodataMask[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize])
+                            {
+                                int nWeight = panLineWeight[i];
+                                dfTotal += val * nWeight;
+                                nCount += nWeight;
+                            }
+                        }
+                  }
+
+                  if (bHasNoData && nCount == 0)
+                  {
+                    pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
+                  }
+                  else
+                  {
+                     if( nCount == 0 )
+                      pafDstScanline[iDstPixel - nDstXOff] = 0.0;
+                    else
+                      pafDstScanline[iDstPixel - nDstXOff] = (float) (dfTotal / nCount);
+                  }
+                } else 
+                {
+                   double val;
+                   int  nTotalR = 0, nTotalG = 0, nTotalB = 0;
+                   int  nTotalWeight = 0, iX, iY;
+                   int  i = 0,j = 0;
+                   const int *panLineWeight = panGaussMatrix;
+
+                   for( j=0, iY = nSrcYOff; iY < nSrcYOff2; 
+                        iY++, j++, panLineWeight += nGaussMatrixDim )
+                   {
+                      for( i=0, iX = nSrcXOff; iX < nSrcXOff2; iX++,++i )
+                      {
+                          val = pafSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize];
+                          if (bHasNoData == FALSE || val != fNoDataValue)
+                          {
+                              int nVal = (int)val;
+                              if (nVal >= 0 && nVal < nEntryCount)
+                              {
+                                  int nWeight = panLineWeight[i];
+                                  nTotalR += aEntries[nVal].c1 * nWeight;
+                                  nTotalG += aEntries[nVal].c2 * nWeight;
+                                  nTotalB += aEntries[nVal].c3 * nWeight;
+                                  nTotalWeight += nWeight;
+                              }
+                          }
+                      }
+                  }
+
+                  if (bHasNoData && nTotalWeight == 0)
+                  {
+                      pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
+                  }
+                  else
+                  {
+                      CPLAssert( nTotalWeight > 0 );
+                      if( nTotalWeight == 0 )
+                          pafDstScanline[iDstPixel - nDstXOff] = 0.0;
+                      else
+                      {
+                          int nR = nTotalR / nTotalWeight, nG = nTotalG / nTotalWeight, nB = nTotalB / nTotalWeight;
+                          int i;
+                          double dfMinDist = 0;
+                          int iBestEntry = 0;
+                          for(i=0;i<nEntryCount;i++)
+                          {
+                              double dfDist = (nR - aEntries[i].c1) *  (nR - aEntries[i].c1) +
+                                              (nG - aEntries[i].c2) *  (nG - aEntries[i].c2) +
+                                              (nB - aEntries[i].c3) *  (nB - aEntries[i].c3);
+                              if (i == 0 || dfDist < dfMinDist)
+                              {
+                                  dfMinDist = dfDist;
+                                  iBestEntry = i;
+                              }
+                          }
+                          pafDstScanline[iDstPixel - nDstXOff] = iBestEntry;
+                      }
+                  }
+                }
+            } // end of gauss
         }
 
         eErr = poOverview->RasterIO( GF_Write, nDstXOff, iDstLine, nDstXOff2 - nDstXOff, 1, 
@@ -589,7 +758,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
-    if (EQUALN(pszResampling,"AVER",4) &&
+    if ((EQUALN(pszResampling,"AVER",4) || EQUALN(pszResampling,"GAUSS",5)) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
     {
         poColorTable = poSrcBand->GetColorTable();
@@ -617,7 +786,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /*      averaging, lets do them in cascading order to reduce the        */
 /*      amount of computation.                                          */
 /* -------------------------------------------------------------------- */
-    if( (EQUALN(pszResampling,"AVER",4)) && nOverviewCount > 1 )
+    if( (EQUALN(pszResampling,"AVER",4) || EQUALN(pszResampling,"GAUSS",5)) && nOverviewCount > 1 )
         return GDALRegenerateCascadingOverviews( poSrcBand, 
                                                  nOverviewCount, papoOvrBands,
                                                  pszResampling, 
