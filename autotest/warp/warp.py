@@ -41,6 +41,7 @@ except ImportError:
     import gdal
 
 import gdaltest
+import test_cli_utilities
 
 ###############################################################################
 # Verify that we always getting the same image when warping.
@@ -465,6 +466,73 @@ def warp_18():
 
     return ret
 
+
+def warp_19_internal(size, datatype, resampling_string):
+
+    ds = gdaltest.tiff_drv.Create('tmp/test.tif', size, size, 1, datatype)
+    ds.SetGeoTransform( (10,5,0,30,0,-5) )
+    ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+    ds.GetRasterBand(1).Fill(10.1, 20.1)
+    ds = None
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -r ' + resampling_string + ' tmp/test.tif tmp/testwarp.tif').read()
+
+    ref_ds = gdal.Open( 'tmp/test.tif' )
+    ds = gdal.Open( 'tmp/testwarp.tif' )
+    checksum = ds.GetRasterBand(1).Checksum()
+    checksum_ref = ref_ds.GetRasterBand(1).Checksum()
+    ds = None
+    ref_ds = None
+
+    gdaltest.tiff_drv.Delete('tmp/testwarp.tif')
+
+    if checksum != checksum_ref:
+        print 'got %d, expected %d' % (checksum, checksum_ref)
+        gdaltest.post_reason('Result different from source')
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete('tmp/test.tif')
+
+    return 'success'
+
+
+# Test all data types and resampling methods for very small images
+# to test edge behaviour
+def warp_19():
+
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    datatypes = [ gdal.GDT_Byte,
+                  gdal.GDT_Int16,
+                  gdal.GDT_CInt16,
+                  gdal.GDT_UInt16,
+                  gdal.GDT_Int32,
+                  gdal.GDT_CInt32,
+                  gdal.GDT_UInt32,
+                  gdal.GDT_Float32,
+                  gdal.GDT_CFloat32,
+                  gdal.GDT_Float64,
+                  gdal.GDT_CFloat64 ]
+
+    methods = [ 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos' ]
+
+    sizes = [ 1, 2, 3, 7 ]
+
+    for k in range(len(sizes)):
+        print 'Testing size = %d ...' % (sizes[k])
+        for j in range(len(methods)):
+            for i in range(len(datatypes)):
+                if warp_19_internal(sizes[k], datatypes[i], methods[j]) != 'success':
+                    print 'fail with size = %d, data type = %d and method %s' % (sizes[k], i, methods[j])
+                    return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 gdaltest_list = [
@@ -491,6 +559,7 @@ gdaltest_list = [
     warp_16,
     warp_17,
     warp_18,
+    warp_19
     ]
 
 if __name__ == '__main__':
