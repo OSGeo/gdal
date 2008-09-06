@@ -478,7 +478,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         memset( pImage, 0,
                 nBlockXSize * nBlockYSize
-                * GDALGetDataTypeSize(eDataType) / 8 );
+                * (GDALGetDataTypeSize(eDataType) / 8) );
         return CE_None;
     }
 
@@ -527,7 +527,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         memset( pImage, 0,
                 nBlockXSize * nBlockYSize
-                * GDALGetDataTypeSize(eDataType) / 8 );
+                * (GDALGetDataTypeSize(eDataType) / 8) );
         return eErr;
     }
 
