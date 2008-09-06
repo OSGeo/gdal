@@ -261,46 +261,52 @@ public:
 #if defined(SWIGCSHARP)
 %apply (int inout[ANY]) {int *panHistogram};
 #elif defined(SWIGPERL)
-%apply (int len, int *output) {(int nBuckets, int *panHistogram)};
+%apply (int len, int *output) {(int buckets, int *panHistogram)};
 %apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
 #else
 %feature( "kwargs" ) GetHistogram;
 #endif
-  CPLErr GetHistogram( double dfMin=-0.5,
-                     double dfMax=255.5,
-                     int nBuckets=256,
+  CPLErr GetHistogram( double min=-0.5,
+                     double max=255.5,
+                     int buckets=256,
                      int *panHistogram = NULL,
-                     int bIncludeOutOfRange = 0,
-                     int bApproxOk = 1,
+                     int include_out_of_range = 0,
+                     int approx_ok = 1,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL ) {
     CPLErrorReset(); 
-    CPLErr err = GDALGetRasterHistogram(  self, 
-                                dfMin,
-                                dfMax,
-                                nBuckets,
-                                panHistogram,
-                                bIncludeOutOfRange,
-                                bApproxOk,
-                                callback, 
-                                callback_data);
+    CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
+                                         include_out_of_range, approx_ok,
+                                         callback, callback_data );
     return err;
   }
 #if defined(SWIGCSHARP)
 %clear int *panHistogram;
 #elif defined(SWIGPERL)
-%clear (int nBuckets, int *panHistogram);
+%clear (int buckets, int *panHistogram);
 %clear (CPLErr);
 #endif
 
+%feature ("kwargs") GetDefaultHistogram;
+CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL, 
+                            int **ppanHistogram = NULL, int force = 1, 
+			    GDALProgressFunc callback = NULL,
+                            void* callback_data=NULL ) {
+    return GDALGetDefaultHistogram( self, min_ret, max_ret, buckets_ret,
+                                    ppanHistogram, force, 
+                                    callback, callback_data );
+}
+
+CPLErr SetDefaultHistogram( double min, double max, 
+       			    int buckets_in, int *panHistogram_in ) {
+    return GDALSetDefaultHistogram( self, min, max, 
+    	   			    buckets_in, panHistogram_in );
+}
+
 /* NEEDED */
-/* ReadAsArray */
-/* WriteArray */
-/* GetDefaultHistogram */
 /* GetStatistics */
 /* SetStatistics */
 /* ComputeStatistics */
-/* AdviseRead */
 
 } /* %extend */
 

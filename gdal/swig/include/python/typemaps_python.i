@@ -884,23 +884,43 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 
 OBJECT_LIST_INPUT(GDALRasterBandShadow);
 
-%typemap(in, numinputs=1) (int nBuckets, int* panHistogram)
+/* ***************************************************************************
+ *                       GetHistogram()
+ * Python is somewhat special in that we don't want the caller
+ * to pass in the histogram array to populate.  Instead we allocate
+ * it internally, call the C level, and then turn the result into 
+ * a list object. 
+ */
+
+%typemap(arginit) (int buckets, int* panHistogram)
 {
-  /* %typemap(in) int nBuckets, int* panHistogram -> list hobujunk*/
+  /* %typemap(in) int buckets, int* panHistogram -> list */
   $2 = (int *) CPLCalloc(sizeof(int),$1);
 }
 
-%typemap(freearg)  (int nBuckets, int* panHistogram)
+%typemap(in, numinputs=1) (int buckets, int* panHistogram)
 {
-  /* %typemap(freearg) (int nBuckets, int* panHistogram)*/
+  /* %typemap(in) int buckets, int* panHistogram -> list */
+  int requested_buckets;
+  SWIG_AsVal_int($input, &requested_buckets);
+  if( requested_buckets != $1 )
+  { 
+    $1 = requested_buckets;
+    $2 = (int *) CPLRealloc($2,sizeof(int) * requested_buckets);
+  }
+}
+
+%typemap(freearg)  (int buckets, int* panHistogram)
+{
+  /* %typemap(freearg) (int buckets, int* panHistogram)*/
   if ( $2 ) {
     CPLFree( $2 );
   }
 }
 
-%typemap(argout) (int nBuckets, int* panHistogram)
+%typemap(argout) (int buckets, int* panHistogram)
 {
-  /* %typemap(out) int nBuckets, int* panHistogram -> list hobujunk*/
+  /* %typemap(out) int buckets, int* panHistogram -> list */
   int *integerarray = $2;
   if ( integerarray == NULL ) {
     $result = Py_None;
@@ -913,4 +933,39 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
       PyList_SetItem($result, i, o );
     }
   }
+}
+
+/* ***************************************************************************
+ *                       GetDefaultHistogram()
+ */
+
+%typemap(arginit, noblock=1) (double *min_ret, double *max_ret, int *buckets_ret, int **ppanHistogram)
+{
+   double min_val, max_val;
+   int buckets_val;
+   int *panHistogram;
+
+  /* frankwdebug */
+
+   $1 = &min_val;
+   $2 = &max_val;
+   $3 = &buckets_val;
+   $4 = &panHistogram;
+}
+
+%typemap(argout) (double *min_ret, double *max_ret, int *buckets_ret, int** ppanHistogram)
+{
+  int i;
+  PyObject *psList = NULL;
+
+  /* frankwdebug */
+
+  psList = PyList_New(buckets_val);
+  for( i = 0; i < buckets_val; i++ )
+    PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+
+  CPLFree( panHistogram );
+
+  $result = Py_BuildValue( "(ddiO)", min_val, max_val, buckets_val, psList );
+  Py_XDECREF(psList);
 }
