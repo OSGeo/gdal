@@ -800,11 +800,23 @@ class Band(MajorObject):
 
     def GetHistogram(*args, **kwargs):
         """
-        GetHistogram(self, double dfMin=-0.5, double dfMax=255.5, int nBuckets=256, 
-            int bIncludeOutOfRange=0, int bApproxOk=1, 
+        GetHistogram(self, double min=-0.5, double max=255.5, int buckets=256, 
+            int include_out_of_range=0, int approx_ok=1, 
             GDALProgressFunc callback=None, void callback_data=None) -> CPLErr
         """
         return _gdal.Band_GetHistogram(*args, **kwargs)
+
+    def GetDefaultHistogram(*args, **kwargs):
+        """
+        GetDefaultHistogram(self, double min_ret=None, double max_ret=None, int buckets_ret=None, 
+            int ppanHistogram=None, int force=1, 
+            GDALProgressFunc callback=None, void callback_data=None) -> CPLErr
+        """
+        return _gdal.Band_GetDefaultHistogram(*args, **kwargs)
+
+    def SetDefaultHistogram(*args):
+        """SetDefaultHistogram(self, double min, double max, int buckets_in, int panHistogram_in) -> CPLErr"""
+        return _gdal.Band_SetDefaultHistogram(*args)
 
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_obj=None):
@@ -1005,6 +1017,7 @@ Transformer_swigregister(Transformer)
 
 VersionInfo = _gdal.VersionInfo
 AllRegister = _gdal.AllRegister
+GDALDestroyDriverManager = _gdal.GDALDestroyDriverManager
 GetCacheMax = _gdal.GetCacheMax
 SetCacheMax = _gdal.SetCacheMax
 GetCacheUsed = _gdal.GetCacheUsed
