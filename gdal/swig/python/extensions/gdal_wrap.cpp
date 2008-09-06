@@ -2489,8 +2489,9 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 #define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[18]
 #define SWIGTYPE_p_p_GDAL_GCP swig_types[19]
 #define SWIGTYPE_p_p_char swig_types[20]
-static swig_type_info *swig_types[22];
-static swig_module_info swig_module = {swig_types, 21, 0, 0, 0, 0};
+#define SWIGTYPE_p_p_int swig_types[21]
+static swig_type_info *swig_types[23];
+static swig_module_info swig_module = {swig_types, 22, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3531,19 +3532,22 @@ SWIGINTERN int GDALRasterBandShadow_GetMaskFlags(GDALRasterBandShadow *self){
 SWIGINTERN CPLErr GDALRasterBandShadow_CreateMaskBand(GDALRasterBandShadow *self,int nFlags){
       return GDALCreateMaskBand( self, nFlags );
   }
-SWIGINTERN CPLErr GDALRasterBandShadow_GetHistogram(GDALRasterBandShadow *self,double dfMin=-0.5,double dfMax=255.5,int nBuckets=256,int *panHistogram=NULL,int bIncludeOutOfRange=0,int bApproxOk=1,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN CPLErr GDALRasterBandShadow_GetHistogram(GDALRasterBandShadow *self,double min=-0.5,double max=255.5,int buckets=256,int *panHistogram=NULL,int include_out_of_range=0,int approx_ok=1,GDALProgressFunc callback=NULL,void *callback_data=NULL){
     CPLErrorReset(); 
-    CPLErr err = GDALGetRasterHistogram(  self, 
-                                dfMin,
-                                dfMax,
-                                nBuckets,
-                                panHistogram,
-                                bIncludeOutOfRange,
-                                bApproxOk,
-                                callback, 
-                                callback_data);
+    CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
+                                         include_out_of_range, approx_ok,
+                                         callback, callback_data );
     return err;
   }
+SWIGINTERN CPLErr GDALRasterBandShadow_GetDefaultHistogram(GDALRasterBandShadow *self,double *min_ret=NULL,double *max_ret=NULL,int *buckets_ret=NULL,int **ppanHistogram=NULL,int force=1,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+    return GDALGetDefaultHistogram( self, min_ret, max_ret, buckets_ret,
+                                    ppanHistogram, force, 
+                                    callback, callback_data );
+}
+SWIGINTERN CPLErr GDALRasterBandShadow_SetDefaultHistogram(GDALRasterBandShadow *self,double min,double max,int buckets_in,int *panHistogram_in){
+    return GDALSetDefaultHistogram( self, min, max, 
+    	   			    buckets_in, panHistogram_in );
+}
 
 GDALDataType GDALRasterBandShadow_DataType_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterDataType( h );
@@ -10829,9 +10833,13 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject * obj6 = 0 ;
   PyObject * obj7 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "dfMin",(char *) "dfMax",(char *) "nBuckets",(char *) "bIncludeOutOfRange",(char *) "bApproxOk",(char *) "callback",(char *) "callback_data", NULL 
+    (char *) "self",(char *) "min",(char *) "max",(char *) "buckets",(char *) "include_out_of_range",(char *) "approx_ok",(char *) "callback",(char *) "callback_data", NULL 
   };
   
+  {
+    /* %typemap(in) int buckets, int* panHistogram -> list */
+    arg5 = (int *) CPLCalloc(sizeof(int),arg4);
+  }
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
   PyProgressData *psProgressInfo;
   psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
@@ -10860,8 +10868,14 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   if (obj3) {
     {
-      /* %typemap(in) int nBuckets, int* panHistogram -> list hobujunk*/
-      arg5 = (int *) CPLCalloc(sizeof(int),arg4);
+      /* %typemap(in) int buckets, int* panHistogram -> list */
+      int requested_buckets;
+      SWIG_AsVal_int(obj3, &requested_buckets);
+      if( requested_buckets != arg4 )
+      {
+        arg4 = requested_buckets;
+        arg5 = (int *) CPLRealloc(arg5,sizeof(int) * requested_buckets);
+      }
     }
   }
   if (obj4) {
@@ -10925,7 +10939,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
-    /* %typemap(out) int nBuckets, int* panHistogram -> list hobujunk*/
+    /* %typemap(out) int buckets, int* panHistogram -> list */
     int *integerarray = arg5;
     if ( integerarray == NULL ) {
       resultobj = Py_None;
@@ -10940,7 +10954,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
     }
   }
   {
-    /* %typemap(freearg) (int nBuckets, int* panHistogram)*/
+    /* %typemap(freearg) (int buckets, int* panHistogram)*/
     if ( arg5 ) {
       CPLFree( arg5 );
     }
@@ -10954,7 +10968,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   return resultobj;
 fail:
   {
-    /* %typemap(freearg) (int nBuckets, int* panHistogram)*/
+    /* %typemap(freearg) (int buckets, int* panHistogram)*/
     if ( arg5 ) {
       CPLFree( arg5 );
     }
@@ -10965,6 +10979,243 @@ fail:
     CPLFree(psProgressInfo);
     
   }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  double *arg2 = (double *) NULL ;
+  double *arg3 = (double *) NULL ;
+  int *arg4 = (int *) NULL ;
+  int **arg5 = (int **) NULL ;
+  int arg6 = (int) 1 ;
+  GDALProgressFunc arg7 = (GDALProgressFunc) NULL ;
+  void *arg8 = (void *) NULL ;
+  CPLErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
+  void *argp5 = 0 ;
+  int res5 = 0 ;
+  int val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "min_ret",(char *) "max_ret",(char *) "buckets_ret",(char *) "ppanHistogram",(char *) "force",(char *) "callback",(char *) "callback_data", NULL 
+  };
+  
+  double min_val, max_val;
+  int buckets_val;
+  int *panHistogram;
+  
+  /* frankwdebug */
+  
+  arg2 = &min_val;
+  arg3 = &max_val;
+  arg4 = &buckets_val;
+  arg5 = &panHistogram;
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOOOOO:Band_GetDefaultHistogram",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetDefaultHistogram" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  if (obj1) {
+    res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Band_GetDefaultHistogram" "', argument " "2"" of type '" "double *""'"); 
+    }
+    arg2 = reinterpret_cast< double * >(argp2);
+  }
+  if (obj2) {
+    res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Band_GetDefaultHistogram" "', argument " "3"" of type '" "double *""'"); 
+    }
+    arg3 = reinterpret_cast< double * >(argp3);
+  }
+  if (obj3) {
+    res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_int, 0 |  0 );
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Band_GetDefaultHistogram" "', argument " "4"" of type '" "int *""'"); 
+    }
+    arg4 = reinterpret_cast< int * >(argp4);
+  }
+  if (obj4) {
+    res5 = SWIG_ConvertPtr(obj4, &argp5,SWIGTYPE_p_p_int, 0 |  0 );
+    if (!SWIG_IsOK(res5)) {
+      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "Band_GetDefaultHistogram" "', argument " "5"" of type '" "int **""'"); 
+    }
+    arg5 = reinterpret_cast< int ** >(argp5);
+  }
+  if (obj5) {
+    ecode6 = SWIG_AsVal_int(obj5, &val6);
+    if (!SWIG_IsOK(ecode6)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "Band_GetDefaultHistogram" "', argument " "6"" of type '" "int""'");
+    } 
+    arg6 = static_cast< int >(val6);
+  }
+  if (obj6) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj6) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj6, 
+          (void**)&cbfunction, 
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int, 
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg7 = GDALTermProgress;
+        } else {
+          if (!PyFunction_Check(obj6)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj6;
+          arg7 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj7) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      
+      psProgressInfo->psPyCallbackData = obj7 ;
+      arg8 = psProgressInfo;
+      
+    }
+  }
+  {
+    result = (CPLErr)GDALRasterBandShadow_GetDefaultHistogram(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    int i;
+    PyObject *psList = NULL;
+    
+    /* frankwdebug */
+    
+    psList = PyList_New(buckets_val);
+    for( i = 0; i < buckets_val; i++ )
+    PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+    
+    CPLFree( panHistogram );
+    
+    resultobj = Py_BuildValue( "(ddiO)", min_val, max_val, buckets_val, psList );
+    Py_XDECREF(psList);
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Band_SetDefaultHistogram(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  int arg4 ;
+  int *arg5 = (int *) 0 ;
+  CPLErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  void *argp5 = 0 ;
+  int res5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:Band_SetDefaultHistogram",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetDefaultHistogram" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_SetDefaultHistogram" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_SetDefaultHistogram" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Band_SetDefaultHistogram" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  res5 = SWIG_ConvertPtr(obj4, &argp5,SWIGTYPE_p_int, 0 |  0 );
+  if (!SWIG_IsOK(res5)) {
+    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "Band_SetDefaultHistogram" "', argument " "5"" of type '" "int *""'"); 
+  }
+  arg5 = reinterpret_cast< int * >(argp5);
+  {
+    result = (CPLErr)GDALRasterBandShadow_SetDefaultHistogram(arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -13638,6 +13889,26 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GDALDestroyDriverManager(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GDALDestroyDriverManager")) SWIG_fail;
+  {
+    GDALDestroyDriverManager();
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GetCacheMax(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int result;
@@ -14563,6 +14834,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_GetMaskFlags", _wrap_Band_GetMaskFlags, METH_VARARGS, NULL},
 	 { (char *)"Band_CreateMaskBand", _wrap_Band_CreateMaskBand, METH_VARARGS, NULL},
 	 { (char *)"Band_GetHistogram", (PyCFunction) _wrap_Band_GetHistogram, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"Band_GetDefaultHistogram", (PyCFunction) _wrap_Band_GetDefaultHistogram, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"Band_SetDefaultHistogram", _wrap_Band_SetDefaultHistogram, METH_VARARGS, NULL},
 	 { (char *)"Band_swigregister", Band_swigregister, METH_VARARGS, NULL},
 	 { (char *)"new_ColorTable", (PyCFunction) _wrap_new_ColorTable, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"delete_ColorTable", _wrap_delete_ColorTable, METH_VARARGS, NULL},
@@ -14609,6 +14882,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Transformer_swigregister", Transformer_swigregister, METH_VARARGS, NULL},
 	 { (char *)"VersionInfo", _wrap_VersionInfo, METH_VARARGS, NULL},
 	 { (char *)"AllRegister", _wrap_AllRegister, METH_VARARGS, NULL},
+	 { (char *)"GDALDestroyDriverManager", _wrap_GDALDestroyDriverManager, METH_VARARGS, NULL},
 	 { (char *)"GetCacheMax", _wrap_GetCacheMax, METH_VARARGS, NULL},
 	 { (char *)"SetCacheMax", _wrap_SetCacheMax, METH_VARARGS, NULL},
 	 { (char *)"GetCacheUsed", _wrap_GetCacheUsed, METH_VARARGS, NULL},
@@ -14672,6 +14946,7 @@ static swig_type_info _swigt__p_int = {"_p_int", "int *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALRasterBandShadow = {"_p_p_GDALRasterBandShadow", "GDALRasterBandShadow **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDAL_GCP = {"_p_p_GDAL_GCP", "GDAL_GCP **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLErrorHandler,
@@ -14695,6 +14970,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_p_GDALRasterBandShadow,
   &_swigt__p_p_GDAL_GCP,
   &_swigt__p_p_char,
+  &_swigt__p_p_int,
 };
 
 static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandler, 0, 0, 0},{0, 0, 0, 0}};
@@ -14718,6 +14994,7 @@ static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0
 static swig_cast_info _swigc__p_p_GDALRasterBandShadow[] = {  {&_swigt__p_p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GDAL_GCP[] = {  {&_swigt__p_p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLErrorHandler,
@@ -14741,6 +15018,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_p_GDALRasterBandShadow,
   _swigc__p_p_GDAL_GCP,
   _swigc__p_p_char,
+  _swigc__p_p_int,
 };
 
 
