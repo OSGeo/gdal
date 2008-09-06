@@ -2317,21 +2317,6 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
     }
 
 /* -------------------------------------------------------------------- */
-/*      How much of a window around our source pixel might we need      */
-/*      to collect data from based on the resampling kernel?  Even      */
-/*      if the requested central pixel falls off the source image,      */
-/*      we may need to collect data if some portion of the              */
-/*      resampling kernel could be on-image.                            */
-/* -------------------------------------------------------------------- */
-    int nResWinSize = 0;
-
-    if( poWK->eResample == GRA_Bilinear )
-        nResWinSize = 1;
-    
-    if( poWK->eResample == GRA_Cubic || poWK->eResample == GRA_CubicSpline )
-        nResWinSize = 2;
-
-/* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
 /*      scanlines worth of positions.                                   */
 /* -------------------------------------------------------------------- */
@@ -2391,8 +2376,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             // We test against the value before casting to avoid the
             // problem of asymmetric truncation effects around zero.  That is
             // -0.5 will be 0 when cast to an int. 
-            if( padfX[iDstX] < poWK->nSrcXOff - nResWinSize
-                || padfY[iDstX] < poWK->nSrcYOff - nResWinSize )
+            if( padfX[iDstX] < poWK->nSrcXOff
+                || padfY[iDstX] < poWK->nSrcYOff )
                 continue;
 
             int iSrcX, iSrcY, iSrcOffset;
@@ -2400,8 +2385,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize + nResWinSize 
-                || iSrcY >= nSrcYSize + nResWinSize )
+            if( iSrcX >= nSrcXSize
+                || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -2454,7 +2439,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
 /* -------------------------------------------------------------------- */
-                if ( poWK->eResample == GRA_NearestNeighbour )
+                if ( poWK->eResample == GRA_NearestNeighbour ||
+                     nSrcXSize == 1 || nSrcYSize == 1)
                 {
                     GWKGetPixelValue( poWK, iBand, iSrcOffset,
                                       &dfBandDensity, &dfValueReal, &dfValueImag );
