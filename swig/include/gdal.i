@@ -467,6 +467,8 @@ const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
 
 void GDALAllRegister();
 
+void GDALDestroyDriverManager();
+
 int GDALGetCacheMax();
 
 void GDALSetCacheMax( int nBytes );
