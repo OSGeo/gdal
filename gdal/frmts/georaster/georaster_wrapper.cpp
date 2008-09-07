@@ -67,7 +67,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     poStmtRead          = NULL;
     poStmtWrite         = NULL;
     nCurrentBlock       = -1;
-    nBandsInBuffer        = -1;
+    nBandsInBuffer      = -1;
     szInterleaving[0]   = 'B';
     szInterleaving[1]   = 'S';
     szInterleaving[2]   = 'Q';
@@ -75,6 +75,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     bIOInitialized      = false;
     bBlobInitialized    = false;
     bFlushMetadata      = false;
+    bOptimizedWriting   = false;
     nSRID               = -1;
 }
 
@@ -389,11 +390,18 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
 
     if( pszInsert )
     {
-        strcpy( szValues, pszInsert );
+        if( ! EQUALN( pszInsert, "VALUES", 6 ) )
+        {
+            strcpy( szValues, CPLSPrintf( "VALUES %s", pszInsert ) );
+        }
+        else
+        {
+            strcpy( szValues, pszInsert );
+        }
     }
     else
     {
-        strcpy( szValues, "VALUES (*)" );
+        strcpy( szValues, "VALUES (#)" );
     }
 
     if( pszDataTable )
@@ -418,7 +426,7 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
     {
         if( nRasterBands == 1 )
         {
-            strcpy( szInsert, OWReplaceToken( szValues, '*', CPLSPrintf(
+            strcpy( szInsert, OWReplaceToken( szValues, '#', CPLSPrintf(
                 "SDO_GEOR.createBlank(20001, \n"
                 "  SDO_NUMBER_ARRAY(0, 0), \n"
                 "  SDO_NUMBER_ARRAY(%d, %d), 0, %s, %s)",
@@ -426,7 +434,7 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
         }
         else
         {
-            strcpy( szInsert, OWReplaceToken( szValues, '*', CPLSPrintf(
+            strcpy( szInsert, OWReplaceToken( szValues, '#', CPLSPrintf(
                 "SDO_GEOR.createBlank(21001, \n"
                 "  SDO_NUMBER_ARRAY(0, 0, 0), \n"
                 "  SDO_NUMBER_ARRAY(%d, %d, %d), 0, %s, %s)", 
@@ -435,7 +443,7 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
     }
     else
     {
-        strcpy( szInsert, OWReplaceToken( szValues, '*', CPLSPrintf(
+        strcpy( szInsert, OWReplaceToken( szValues, '#', CPLSPrintf(
             "SDO_GEOR.init(%s, %s)", szRDT, szRID ) ) );
     }
 
@@ -1244,7 +1252,7 @@ int GeoRasterWrapper::CalculateBlockId( int nBand,
                                         int nXOffset,
                                         int nYOffset )
 {
-    int nBandBlock  = ( nBand - 1 ) % nTotalBandBlocks;
+    int nBandBlock = ( nBand - 1 ) % nTotalBandBlocks;
 
     return ( nBandBlock * nTotalColumnBlocks * nTotalRowBlocks ) +
            ( nYOffset * nTotalColumnBlocks ) + nXOffset;
@@ -1295,8 +1303,9 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
     {
         nCurrentBlock = nBlock;
 
-        if( ! poStmtRead->ReadBlob( pahLocator[nBlock], 
-                                    pabyBlockBuf, nBlockBytes ) )
+        if( ! poStmtRead->ReadBlob( pahLocator[nBlock],
+                                    pabyBlockBuf,
+                                    nBlockBytes ) )
         {
             return false;
         }
@@ -1429,22 +1438,37 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
         nBandsInBuffer = 0;
     }
 
-    if( nCurrentBlock != nBlock )
+    if( nCurrentBlock != nBlock && nBandBlockSize > 1 )
     {
-        //  ----------------------------------------------------------------
-        //  Check if there is a block buffer pending to be writen?
-        //  ----------------------------------------------------------------
+        //  ------------------------------------------------------------
+        //  Optimization should you be used if all bands will be writen
+        //  ------------------------------------------------------------
 
-        if( nBandsInBuffer != 0 )
+        if( bOptimizedWriting )
         {
-            if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
-                                          pabyBlockBuf,
-                                          nBlockBytes ) )
+            //  ------------------------------------------------------------
+            //  Write a pending block
+            //  ------------------------------------------------------------
+
+            if( nBandsInBuffer > 0 )
             {
-                return false;
+                if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
+                                              pabyBlockBuf,
+                                              nBlockBytes ) )
+                {
+                    return false;
+                }
+                nBandsInBuffer = 0;
             }
         }
+        else
+        {
+            //  ------------------------------------------------------------
+            //  Load an existing block to complement it with the incoming data
+            //  ------------------------------------------------------------
 
+            poStmtWrite->ReadBlob( pahLocator[nBlock], pabyBlockBuf, nBlockBytes );
+        }
         nBandsInBuffer = 0;
         nCurrentBlock  = nBlock;
     }
@@ -1547,7 +1571,9 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
 
     nBandsInBuffer++;
 
-    if( nBandsInBuffer == nBandBlockSize || nBlock == ( nBlockCount - 1 ) )
+    if( bOptimizedWriting == false ||
+        nBandsInBuffer    == nBandBlockSize ||
+        nBlock            == ( nBlockCount - 1 ) )
     {
         if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
                                       pabyBlockBuf,
