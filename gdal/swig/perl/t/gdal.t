@@ -68,6 +68,14 @@ if (0) {
     };
     ok($#histogram == 255, 'Histogram');
     eval {
+	$b->SetDefaultHistogram(1,10,[0..255]);
+    };
+    my ($min, $max);
+    eval {
+	($min,$max,$histogram) = $b->GetDefaultHistogram();
+    };
+    ok(($#$histogram == 255), "Default Histogram $#histogram == 255");
+    eval {
 	@histogram = $b->GetHistogram(Min=>0, Max=>100, Buckets=>20);
     };
     ok($#histogram == 19, 'Histogram with parameters');
