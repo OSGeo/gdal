@@ -10,5 +10,7 @@ CPPFLAGS :=	-DSAOffset=vsi_l_offset -DUSE_CPL \
 
 default:	$(O_OBJ)
 
+$(OBJ) $(O_OBJ):	ogrshape.h
+
 clean:
 	rm -f *.o $(O_OBJ)
