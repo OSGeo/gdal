@@ -84,6 +84,8 @@ class OGRShapeLayer : public OGRLayer
     OGRErr              DropSpatialIndex();
     OGRErr              Repack();
 
+    const char         *GetFullName() { return pszFullName; }
+
   public:
                         OGRShapeLayer( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
@@ -151,7 +153,8 @@ class OGRShapeDataSource : public OGRDataSource
                                      OGRGeometry *poSpatialFilter,
                                      const char *pszDialect );
 
-    int                 TestCapability( const char * );
+    virtual int          TestCapability( const char * );
+    virtual OGRErr       DeleteLayer( int iLayer );
 };
 
 /************************************************************************/
