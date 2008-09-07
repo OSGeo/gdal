@@ -611,6 +611,8 @@ int OGRShapeDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -736,3 +738,43 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
     return NULL;
 }
 
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
+
+{
+    char *pszFilename;
+
+    if( iLayer < 0 || iLayer >= nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Layer %d not in legal range of 0 to %d.", 
+                  iLayer, nLayers-1 );
+        return OGRERR_FAILURE;
+    }
+
+    pszFilename = CPLStrdup(((OGRShapeLayer*) papoLayers[iLayer])->GetFullName());
+
+    delete papoLayers[iLayer];
+
+    while( iLayer < nLayers - 1 )
+    {
+        papoLayers[iLayer] = papoLayers[iLayer+1];
+        iLayer++;
+    }
+
+    nLayers--;
+
+    VSIUnlink( CPLResetExtension(pszFilename, "shp") );
+    VSIUnlink( CPLResetExtension(pszFilename, "shx") );
+    VSIUnlink( CPLResetExtension(pszFilename, "dbf") );
+    VSIUnlink( CPLResetExtension(pszFilename, "prj") );
+    VSIUnlink( CPLResetExtension(pszFilename, "qix") );
+
+    CPLFree( pszFilename );
+
+    return OGRERR_NONE;
+}
