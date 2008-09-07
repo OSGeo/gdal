@@ -81,9 +81,11 @@ private:
     GeoRasterWrapper*   poGeoRaster;
     bool                bGeoTransform;
     bool                bForcedSRID;
-    char*               pszSpatialRef;
+    char*               pszProjection;
     char**              papszSubdatasets;
     double              adfGeoTransform[6];
+    int                 nGCPCount;
+    GDAL_GCP*           pasGCPList;
 
 public:
 
@@ -116,6 +118,14 @@ public:
                             GDALDataType eBufType,
                             int nBandCount, int *panBandMap, 
                             int nPixelSpace, int nLineSpace, int nBandSpace );
+    virtual int         GetGCPCount() { return nGCPCount; }
+    virtual const char* GetGCPProjection();
+    virtual const GDAL_GCP*
+                        GetGCPs() { return pasGCPList; }
+    virtual CPLErr      SetGCPs(
+                            int nGCPCount,
+                            const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
 };
 
 //  ---------------------------------------------------------------------------
@@ -206,6 +216,8 @@ private:
     void                InitializeLayersNode();
     bool                InitializeIO();
     bool                FlushMetadata();
+    bool                bOptimizedWriting; /* Doesn't need to read a block to
+                                           polulate it with individuals band */
 
 public:
 
@@ -249,6 +261,7 @@ public:
     CPLXMLNode*         GetMetadata() { return phMetadata; };
     bool                SetVAT( int nBand, const char* pszName );
     char*               GetVAT( int nBand );
+    void                OptimizedWriting() { bOptimizedWriting = true; };
 
 public:
 
