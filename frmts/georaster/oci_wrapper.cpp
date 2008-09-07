@@ -121,7 +121,7 @@ OWConnection::OWConnection( const char* pszUserIn,
 
     char szVersionTxt[OWTEXT];
 
-    OCIServerVersion ( 
+    OCIServerVersion (
         hSvcCtx,
         hError,
         (text*) szVersionTxt,
@@ -177,20 +177,20 @@ OCIType* OWConnection::DescribeType( char *pszTypeName )
         (ub1) OCI_PTYPE_TYPE,
         hDescribe ), hError );
 
-    CheckError( OCIAttrGet( 
+    CheckError( OCIAttrGet(
         hDescribe,
         (ub4) OCI_HTYPE_DESCRIBE,
         (dvoid*) &hParam,
         (ub4*) NULL,
-        (ub4) OCI_ATTR_PARAM, 
+        (ub4) OCI_ATTR_PARAM,
         hError ), hError );
 
-    CheckError( OCIAttrGet( 
+    CheckError( OCIAttrGet(
         hParam,
         (ub4) OCI_DTYPE_PARAM,
         (dvoid*) &hRef,
         (ub4*) NULL,
-        (ub4) OCI_ATTR_REF_TDO, 
+        (ub4) OCI_ATTR_REF_TDO,
         hError ), hError );
 
     CheckError( OCIObjectPin( 
@@ -212,11 +212,11 @@ void OWConnection::CreateType( sdo_geometry** pphData )
         hEnv,
         hError,
         hSvcCtx,
-        OCI_TYPECODE_OBJECT, 
-        hGeometryTDO, 
+        OCI_TYPECODE_OBJECT,
+        hGeometryTDO,
         (dvoid *) 0,
-        OCI_DURATION_CALL, 
-        TRUE, 
+        OCI_DURATION_CALL,
+        TRUE,
         (dvoid **) pphData), hError );
 }
 
@@ -224,8 +224,8 @@ void OWConnection::DestroyType( sdo_geometry** pphData )
 {
     CheckError( OCIObjectFree(
         hEnv,
-        hError, 
-        (dvoid *) *pphData, 
+        hError,
+        (dvoid*) *pphData,
         (ub2) 0), NULL );
 }
 
@@ -286,7 +286,7 @@ bool OWConnection::GetNextField( OCIParam* phTable,
         phTable,
         (ub4) OCI_DTYPE_PARAM,
         hError,
-        (dvoid**) &hParmDesc,
+        (dvoid**) &hParmDesc,   //Warning
         (ub4) nIndex + 1 );
 
     if( nStatus != OCI_SUCCESS )
@@ -300,7 +300,7 @@ bool OWConnection::GetNextField( OCIParam* phTable,
     CheckError( OCIAttrGet(
         hParmDesc,
         (ub4) OCI_DTYPE_PARAM,
-        (dvoid**) &pszFieldName,
+        (dvoid*) &pszFieldName,
         (ub4*) &nNameLength,
         (ub4) OCI_ATTR_NAME,
         hError ), hError );
@@ -333,7 +333,7 @@ bool OWConnection::GetNextField( OCIParam* phTable,
         CheckError( OCIAttrGet(
             hParmDesc,
             (ub4) OCI_DTYPE_PARAM,
-            (dvoid**) &nOCIPrecision,
+            (dvoid*) &nOCIPrecision,
             (ub4*) 0,
             (ub4) OCI_ATTR_PRECISION,
             hError ), hError );
@@ -341,7 +341,7 @@ bool OWConnection::GetNextField( OCIParam* phTable,
         CheckError( OCIAttrGet(
             hParmDesc,
             (ub4) OCI_DTYPE_PARAM,
-            (dvoid**) &nOCIScale,
+            (dvoid*) &nOCIScale,
             (ub4*) 0,
             (ub4) OCI_ATTR_SCALE,
             hError ), hError );
@@ -386,10 +386,10 @@ OWStatement::OWStatement( OWConnection* pConnection,
 
     OCIStmt* hStatement;
 
-    CheckError( OCIHandleAlloc( (dvoid*) poConnect->hEnv, 
-        (dvoid**) (dvoid*) &hStatement, 
-        (ub4) OCI_HTYPE_STMT, 
-        (size_t) 0, 
+    CheckError( OCIHandleAlloc( (dvoid*) poConnect->hEnv,
+        (dvoid**) (dvoid*) &hStatement,
+        (ub4) OCI_HTYPE_STMT,
+        (size_t) 0,
         (dvoid**) NULL), hError );
 
     hStmt = hStatement;   // Save Statement Handle
@@ -398,11 +398,11 @@ OWStatement::OWStatement( OWConnection* pConnection,
     //  Prepare Statement
     //  -----------------------------------------------------------
 
-    CheckError( OCIStmtPrepare( hStmt, 
-        hError, 
-        (text*) pszStatement, 
+    CheckError( OCIStmtPrepare( hStmt,
+        hError,
+        (text*) pszStatement,
         (ub4) strlen(pszStatement),
-        (ub4) OCI_NTV_SYNTAX, 
+        (ub4) OCI_NTV_SYNTAX,
         (ub4) OCI_DEFAULT ), hError );
 
     //  -----------------------------------------------------------
@@ -411,11 +411,11 @@ OWStatement::OWStatement( OWConnection* pConnection,
 
     ub2 nStmtType;
 
-    CheckError( OCIAttrGet( (dvoid*) hStmt, 
-        (ub4) OCI_HTYPE_STMT, 
-        (dvoid*) &nStmtType, 
-        (ub4*) 0, 
-        (ub4) OCI_ATTR_STMT_TYPE, 
+    CheckError( OCIAttrGet( (dvoid*) hStmt,
+        (ub4) OCI_HTYPE_STMT,
+        (dvoid*) &nStmtType,
+        (ub4*) 0,
+        (ub4) OCI_ATTR_STMT_TYPE,
         hError ), hError );
 
     //  -----------------------------------------------------------
@@ -465,7 +465,7 @@ bool OWStatement::Fetch( int nRows )
 {
     sword nStatus = 0;
 
-    nStatus = OCIStmtFetch2 ( 
+    nStatus = OCIStmtFetch2 (
         (OCIStmt*) hStmt,
         (OCIError*) poConnect->hError,
         (ub4) nRows,
@@ -492,15 +492,15 @@ void OWStatement::Define( int* pnData )
 
     nNextCol++;
 
-    CheckError( OCIDefineByPos( hStmt, 
-        &hDefine, 
+    CheckError( OCIDefineByPos( hStmt,
+        &hDefine,
         hError,
-        (ub4) nNextCol, 
-        (dvoid*) pnData, 
+        (ub4) nNextCol,
+        (dvoid*) pnData,
         (sb4) sizeof(int),
-        (ub2) SQLT_INT, 
-        (void*) NULL, 
-        (ub2*) NULL, 
+        (ub2) SQLT_INT,
+        (void*) NULL,
+        (ub2*) NULL,
         (ub2*) NULL, 
         (ub4) OCI_DEFAULT ), hError );
 }
@@ -557,16 +557,16 @@ void OWStatement::Define( double* pfdData )
 
     nNextCol++;
 
-    CheckError( OCIDefineByPos( hStmt, 
-        &hDefine, 
+    CheckError( OCIDefineByPos( hStmt,
+        &hDefine,
         hError,
-        (ub4) nNextCol, 
-        (dvoid*) pfdData, 
+        (ub4) nNextCol,
+        (dvoid*) pfdData,
         (sb4) sizeof(double),
-        (ub2) SQLT_BDOUBLE, 
-        (void*) NULL, 
-        (ub2*) NULL, 
-        (ub2*) NULL, 
+        (ub2) SQLT_BDOUBLE,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
         (ub4) OCI_DEFAULT ), hError );
 }
 
@@ -576,18 +576,18 @@ void OWStatement::Define( char* pszData, int nSize )
 
     nNextCol++;
 
-    CheckError( OCIDefineByPos( 
-        hStmt, 
-        &hDefine, 
+    CheckError( OCIDefineByPos(
+        hStmt,
+        &hDefine,
         hError,
-        (ub4) nNextCol, 
-        (dvoid*) pszData, 
+        (ub4) nNextCol,
+        (dvoid*) pszData,
         (sb4) nSize,
-        (ub2) SQLT_STR, 
-        (void*) NULL, 
-        (ub2*) NULL, 
-        (ub2*) NULL, 
-        (ub4) OCI_DEFAULT ), 
+        (ub2) SQLT_STR,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) OCI_DEFAULT ),
         hError );
 }
 
@@ -597,20 +597,20 @@ void OWStatement::Bind( char* pszData, int nSize )
 
     nNextBnd++;
 
-    CheckError( OCIBindByPos( 
-        hStmt, 
-        &hBind, 
+    CheckError( OCIBindByPos(
+        hStmt,
+        &hBind,
         hError,
-        (ub4) nNextBnd, 
-        (dvoid*) pszData, 
+        (ub4) nNextBnd,
+        (dvoid*) pszData,
         (sb4) nSize,
-        (ub2) SQLT_STR, 
-        (void*) NULL, 
-        (ub2*) NULL, 
-        (ub2*) NULL, 
-        (ub4) NULL, 
-        (ub4) NULL, 
-        (ub4) OCI_DEFAULT ), 
+        (ub2) SQLT_STR,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) NULL,
+        (ub4) NULL,
+        (ub4) OCI_DEFAULT ),
         hError );
 }
 
@@ -622,26 +622,26 @@ void OWStatement::Define( OCILobLocator** pphLocator, bool bBLOB )
 
     CheckError( OCIDescriptorAlloc( 
         poConnect->hEnv,
-        (void**) pphLocator, 
-        OCI_DTYPE_LOB, 
-        0, 
-        0), 
+        (void**) pphLocator,
+        OCI_DTYPE_LOB,
+        0,
+        0),
         hError );
 
     ub2 eDTY = bBLOB ? SQLT_BLOB : SQLT_CLOB;
 
-    CheckError( OCIDefineByPos( 
-        hStmt, 
-        &hDefine, 
+    CheckError( OCIDefineByPos(
+        hStmt,
+        &hDefine,
         hError,
-        (ub4) nNextCol, 
-        (dvoid*) pphLocator, 
+        (ub4) nNextCol,
+        (dvoid*) pphLocator,
         (sb4) 0,
-        (ub2) eDTY, 
-        (void*) NULL, 
-        (ub2*) NULL, 
-        (ub2*) NULL, 
-        (ub4) OCI_DEFAULT ), 
+        (ub2) eDTY,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) OCI_DEFAULT ),
         hError );
 }
 
@@ -651,24 +651,24 @@ void OWStatement::Define( OCIArray** pphData )
 
     nNextCol++;
 
-    CheckError( OCIDefineByPos( hStmt, 
-        &hDefine, 
+    CheckError( OCIDefineByPos( hStmt,
+        &hDefine,
         hError,
-        (ub4) nNextCol, 
-        (dvoid*) NULL, 
+        (ub4) nNextCol,
+        (dvoid*) NULL,
         (sb4) 0,
-        (ub2) SQLT_NTY, 
-        (void*) NULL, 
-        (ub2*) NULL, 
-        (ub2*) NULL, 
+        (ub2) SQLT_NTY,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
         (ub4) OCI_DEFAULT ), hError );
 
-    CheckError( OCIDefineObject( hDefine, 
-        hError, 
+    CheckError( OCIDefineObject( hDefine,
+        hError,
         poConnect->hNumArrayTDO,
-        (dvoid**) pphData, 
-        (ub4*) NULL, 
-        (dvoid**) NULL, 
+        (dvoid**) pphData,
+        (ub4*) NULL,
+        (dvoid**) NULL,
         (ub4*) NULL ), hError );
 }
 
@@ -678,24 +678,24 @@ void OWStatement::Define( sdo_georaster** pphData )
 
     nNextCol++;
 
-    CheckError( OCIDefineByPos( hStmt, 
-        &hDefine, 
+    CheckError( OCIDefineByPos( hStmt,
+        &hDefine,
         hError,
-        (ub4) nNextCol, 
-        (dvoid*) NULL, 
+        (ub4) nNextCol,
+        (dvoid*) NULL,
         (sb4) 0,
-        (ub2) SQLT_NTY, 
-        (void*) NULL, 
-        (ub2*) NULL, 
-        (ub2*) NULL, 
+        (ub2) SQLT_NTY,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
         (ub4) OCI_DEFAULT ), hError );
 
-    CheckError( OCIDefineObject( hDefine, 
-        hError, 
+    CheckError( OCIDefineObject( hDefine,
+        hError,
         poConnect->hGeoRasterTDO,
-        (dvoid**) pphData, 
-        (ub4*) NULL, 
-        (dvoid**) NULL, 
+        (dvoid**) pphData,
+        (ub4*) NULL,
+        (dvoid**) NULL,
         (ub4*) NULL ), hError );
 }
 
@@ -705,24 +705,24 @@ void OWStatement::Define( sdo_geometry** pphData )
 
     nNextCol++;
 
-    CheckError( OCIDefineByPos( hStmt, 
-        &hDefine, 
+    CheckError( OCIDefineByPos( hStmt,
+        &hDefine,
         hError,
-        (ub4) nNextCol, 
-        (dvoid*) NULL, 
+        (ub4) nNextCol,
+        (dvoid*) NULL,
         (sb4) 0,
-        (ub2) SQLT_NTY, 
-        (void*) NULL, 
-        (ub2*) NULL, 
-        (ub2*) NULL, 
+        (ub2) SQLT_NTY,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
         (ub4) OCI_DEFAULT ), hError );
 
-    CheckError( OCIDefineObject( hDefine, 
-        hError, 
+    CheckError( OCIDefineObject( hDefine,
+        hError,
         poConnect->hGeometryTDO,
-        (dvoid**) pphData, 
-        (ub4*) NULL, 
-        (dvoid**) NULL, 
+        (dvoid**) pphData,
+        (ub4*) NULL,
+        (dvoid**) NULL,
         (ub4*) NULL ), hError );
 }
 
@@ -737,33 +737,33 @@ void OWStatement::Define( OCILobLocator** pphLocator, int nIterations )
     sword nStatus = 0;
 
     for (i = 0; i < nIterations; i++)
-    { 
+    {
         nStatus = OCIDescriptorAlloc( poConnect->hEnv,
-            (void**) &pphLocator[i], 
-            OCI_DTYPE_LOB, 
-            0, 
+            (void**) &pphLocator[i],
+            OCI_DTYPE_LOB,
+            0,
             0);
 
         nLobEmpty = 0;
 
-        nStatus = OCIAttrSet(pphLocator[i], 
-            OCI_DTYPE_LOB, 
-            &nLobEmpty, 
-            0, 
-            OCI_ATTR_LOBEMPTY, 
+        nStatus = OCIAttrSet(pphLocator[i],
+            OCI_DTYPE_LOB,
+            &nLobEmpty,
+            0,
+            OCI_ATTR_LOBEMPTY,
             hError);
     }
 
-    CheckError( OCIDefineByPos( hStmt, 
-        &hDefine, 
+    CheckError( OCIDefineByPos( hStmt,
+        &hDefine,
         hError,
-        (ub4) nNextCol, 
-        (dvoid*) pphLocator, 
+        (ub4) nNextCol,
+        (dvoid*) pphLocator,
         (sb4) -1,
-        (ub2) SQLT_BLOB, 
-        (void*) 0, 
-        (ub2*) 0, 
-        (ub2*) 0, 
+        (ub2) SQLT_BLOB,
+        (void*) 0,
+        (ub2*) 0,
+        (ub2*) 0,
         (ub4) OCI_DEFAULT ), hError );
 }
 
@@ -771,12 +771,12 @@ int OWStatement::GetInteger( OCINumber* ppoData )
 {
     sb4 nRetVal;
 
-    CheckError( OCINumberToInt( 
-        hError, 
-        ppoData, 
-        (uword) sizeof(sb4), 
+    CheckError( OCINumberToInt(
+        hError,
+        ppoData,
+        (uword) sizeof(sb4),
         OCI_NUMBER_SIGNED,
-        (dvoid *) &nRetVal ), 
+        (dvoid *) &nRetVal ),
         hError );
 
     return nRetVal;
@@ -786,11 +786,11 @@ double OWStatement::GetDouble( OCINumber* ppoData )
 {
     double dfRetVal;
 
-    CheckError( OCINumberToReal( 
-        hError, 
-        ppoData, 
-        (uword) sizeof(dfRetVal), 
-        (dvoid*) &dfRetVal ), 
+    CheckError( OCINumberToReal(
+        hError,
+        ppoData,
+        (uword) sizeof(dfRetVal),
+        (dvoid*) &dfRetVal ),
         hError );
 
     return dfRetVal;
@@ -798,8 +798,8 @@ double OWStatement::GetDouble( OCINumber* ppoData )
 
 char* OWStatement::GetString( OCIString* ppoData )
 {
-    return (char*) OCIStringPtr( 
-        poConnect->hEnv, 
+    return (char*) OCIStringPtr(
+        poConnect->hEnv,
         ppoData );
 }
 
@@ -826,22 +826,22 @@ int OWStatement::GetElement( OCIArray** ppoData, int nIndex, int* pnResult )
 
     *pnResult = 0;
 
-    if( CheckError( OCICollGetElem( 
-        poConnect->hEnv, 
-        hError, 
-        (OCIColl*) *ppoData, 
-        (sb4) nIndex, 
-        (boolean*) &exists, 
-        (dvoid**) (dvoid*) &oci_number, 
+    if( CheckError( OCICollGetElem(
+        poConnect->hEnv,
+        hError,
+        (OCIColl*) *ppoData,
+        (sb4) nIndex,
+        (boolean*) &exists,
+        (dvoid**) (dvoid*) &oci_number,
         (dvoid**) NULL ), hError ) )
     {
         return *pnResult;
     }
 
-    if( CheckError( OCINumberToInt( 
-        hError, 
-        oci_number, 
-        (uword) sizeof(ub4), 
+    if( CheckError( OCINumberToInt(
+        hError,
+        oci_number,
+        (uword) sizeof(ub4),
         OCI_NUMBER_UNSIGNED,
         (dvoid *) &element_type ), hError ) )
     {
@@ -862,21 +862,21 @@ double OWStatement::GetElement( OCIArray** ppoData,
 
     *pdfResult = 0.0;
 
-    if( CheckError( OCICollGetElem( 
-        poConnect->hEnv, 
-        hError, 
-        (OCIColl*) *ppoData, 
-        (sb4) nIndex, 
-        (boolean*) &exists, 
+    if( CheckError( OCICollGetElem(
+        poConnect->hEnv,
+        hError,
+        (OCIColl*) *ppoData,
+        (sb4) nIndex,
+        (boolean*) &exists,
         (dvoid**) (dvoid*) &oci_number, NULL ), hError ) )
     {
         return *pdfResult;
     }
 
-    if( CheckError( OCINumberToReal( 
-        hError, 
-        oci_number, 
-        (uword) sizeof(double), 
+    if( CheckError( OCINumberToReal(
+        hError,
+        oci_number,
+        (uword) sizeof(double),
         (dvoid *) &element_type ), hError ) )
     {
         return *pdfResult;
@@ -893,14 +893,14 @@ bool OWStatement::ReadBlob( OCILobLocator* phLocator, void* pBuffer,
 {
     ub4 nAmont      = (ub4) nSize;
 
-    if( CheckError( OCILobRead( 
+    if( CheckError( OCILobRead(
         poConnect->hSvcCtx,
         hError,
         phLocator,
         (ub4*) &nAmont,
         (ub4) 1,
-        (dvoid*) pBuffer, 
-        (ub4) nSize, 
+        (dvoid*) pBuffer,
+        (ub4) nSize,
         0, 0, 0, 0 ),
         hError ) )
     {
@@ -915,7 +915,7 @@ bool OWStatement::WriteBlob( OCILobLocator* phLocator, void* pBuffer,
 {
     ub4 nAmont  = (ub4) nSize;
 
-    if( CheckError( OCILobWrite( 
+    if( CheckError( OCILobWrite(
         poConnect->hSvcCtx,
         hError,
         phLocator,
@@ -927,7 +927,7 @@ bool OWStatement::WriteBlob( OCILobLocator* phLocator, void* pBuffer,
         (dvoid*) NULL,
         NULL,
         (ub2) 0,
-        (ub1) SQLCS_IMPLICIT ), 
+        (ub1) SQLCS_IMPLICIT ),
         hError ) )
     {
         return false;
@@ -943,11 +943,11 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
 
     char* pszBuffer = NULL;
 
-    if( CheckError( OCILobGetLength ( 
+    if( CheckError( OCILobGetLength (
         poConnect->hSvcCtx,
         hError,
         phLocator,
-        (ub4*) &nSize ), 
+        (ub4*) &nSize ),
         hError ) )
     {
         return NULL;
@@ -960,15 +960,15 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
         return NULL;
     }
 
-    if( CheckError( OCILobRead( 
+    if( CheckError( OCILobRead(
         poConnect->hSvcCtx,
         hError,
         phLocator,
         (ub4*) &nAmont,
         (ub4) 1,
-        (dvoid*) pszBuffer, 
-        (ub4) nSize, 
-        0, 0, 0, 0), 
+        (dvoid*) pszBuffer,
+        (ub4) nSize,
+        0, 0, 0, 0),
         hError ) )
     {
         CPLFree( pszBuffer );
@@ -991,7 +991,7 @@ void OWStatement::BindName( char* pszName, int* pnData )
 {
     OCIBind* hBind = NULL;
 
-    CheckError( OCIBindByName( 
+    CheckError( OCIBindByName(
         (OCIStmt*) hStmt,
         (OCIBind**) &hBind,
         (OCIError*) hError,
@@ -1005,7 +1005,7 @@ void OWStatement::BindName( char* pszName, int* pnData )
         (ub2*) NULL,
         (ub4) 0,
         (ub4*) NULL,
-        (ub4) OCI_DEFAULT ), 
+        (ub4) OCI_DEFAULT ),
         hError );
 }
 
@@ -1027,7 +1027,7 @@ void OWStatement::BindName( char* pszName, char* pszData, int nSize )
         (ub2*) NULL,
         (ub4) 0,
         (ub4*) NULL,
-        (ub4) OCI_DEFAULT ), 
+        (ub4) OCI_DEFAULT ),
         hError );
 }
 
@@ -1035,15 +1035,15 @@ void OWStatement::BindName( char* pszName, OCILobLocator** pphLocator )
 {
     OCIBind* hBind = NULL;
 
-    CheckError( OCIDescriptorAlloc( 
+    CheckError( OCIDescriptorAlloc(
         poConnect->hEnv,
-        (void**) pphLocator, 
-        OCI_DTYPE_LOB, 
-        0, 
-        0), 
+        (void**) pphLocator,
+        OCI_DTYPE_LOB,
+        0,
+        0),
         hError );
 
-    CheckError( OCIBindByName( 
+    CheckError( OCIBindByName(
         (OCIStmt*) hStmt,
         (OCIBind**) &hBind,
         (OCIError*) hError,
@@ -1057,7 +1057,7 @@ void OWStatement::BindName( char* pszName, OCILobLocator** pphLocator )
         (ub2*) NULL,
         (ub4) 0,
         (ub4*) NULL,
-        (ub4) OCI_DEFAULT ), 
+        (ub4) OCI_DEFAULT ),
         hError );
 }
 
@@ -1076,7 +1076,7 @@ bool OWIsNumeric( const char *pszText )
 
     while( *pszPos != '\0' )
     {
-        if( *pszPos < '0' || 
+        if( *pszPos < '0' ||
             *pszPos > '9' )
             return false;
         pszPos++;
@@ -1253,12 +1253,12 @@ bool CheckError( sword nStatus, OCIError* hError )
 
         if( hError == NULL)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                 "OCI_ERROR with no error handler\n" );
         }
 
-        OCIErrorGet( (dvoid *) hError, (ub4) 1, 
-            (text *) NULL, &nCode, szMsg, 
+        OCIErrorGet( (dvoid *) hError, (ub4) 1,
+            (text *) NULL, &nCode, szMsg,
             (ub4) sizeof(szMsg), OCI_HTYPE_ERROR);
 
         if( nCode == 1405 ) //6550
@@ -1267,7 +1267,7 @@ bool CheckError( sword nStatus, OCIError* hError )
             return false;
         }
 
-        CPLError( CE_Failure, CPLE_AppDefined, "%.*s\n", 
+        CPLError( CE_Failure, CPLE_AppDefined, "%.*s\n",
             sizeof(szMsg), szMsg );
         break;
 
@@ -1277,5 +1277,3 @@ bool CheckError( sword nStatus, OCIError* hError )
 
     return true;
 }
-
-

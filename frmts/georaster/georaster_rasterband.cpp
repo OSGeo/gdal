@@ -42,6 +42,7 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS, int nBand )
     poColorTable        = new GDALColorTable();
     poDefaultRAT        = NULL;
     pszVATName          = NULL;
+    eDataType           = OWGetDataType( poGeoRaster->pszCellDepth );
     nRasterXSize        = poGeoRaster->nRasterColumns;
     nRasterYSize        = poGeoRaster->nRasterRows;
     nBlockXSize         = poGeoRaster->nColumnBlockSize;
@@ -336,7 +337,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
         {
-            //TODO: add Precision and Scale:
+            //TODO: add Precision and Scale or maybe us FLOAT
             strcpy( szDescription, CPLSPrintf( "%s NUMBER",
                 szDescription ) );
         }
