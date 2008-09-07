@@ -216,12 +216,15 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
         {
             // We are going to add a segment, but should we just extend 
             // an existing segment already going in the right direction?
+
+            int nLastLen = MAX(ABS(anString[nSSize-4]-anString[nSSize-2]),
+                               ABS(anString[nSSize-3]-anString[nSSize-1]));
             
             if( nSSize >= 4 
                 && (anString[nSSize-4] - anString[nSSize-2]
-                    == anString[nSSize-2] - x1 )
+                    == (anString[nSSize-2] - x1)*nLastLen)
                 && (anString[nSSize-3] - anString[nSSize-1]
-                    == anString[nSSize-1] - y1 ) )
+                    == (anString[nSSize-1] - y1)*nLastLen) )
             {
                 anString.pop_back();
                 anString.pop_back();
@@ -330,6 +333,12 @@ MergePolygon( int nPolygonCount, int *panPolyIdMap,
 {
     while( panPolyIdMap[nDstId] != nDstId )
         nDstId = panPolyIdMap[nDstId];
+
+    while( panPolyIdMap[nSrcId] != nSrcId )
+        nSrcId = panPolyIdMap[nSrcId];
+
+    if( nSrcId == nDstId )
+        return;
 
     panPolyIdMap[nSrcId] = nDstId;
 }
@@ -606,6 +615,9 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                 void * pProgressArg )
 
 {
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
 /* -------------------------------------------------------------------- */
 /*      Confirm our output layer will support feature creation.         */
 /* -------------------------------------------------------------------- */
@@ -681,6 +693,31 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
         panTmp = panThisLineId;
         panThisLineId = panLastLineId;
         panLastLineId = panTmp;
+
+/* -------------------------------------------------------------------- */
+/*      Report progress, and support interrupts.                        */
+/* -------------------------------------------------------------------- */
+        if( eErr == CE_None 
+            && !pfnProgress( 0.10 * ((iY+1) / (double) nYSize), 
+                             "", pProgressArg ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Make a pass through the maps, ensuring every polygon id         */
+/*      points to the final id it should use, not an intermediate       */
+/*      value.                                                          */
+/* -------------------------------------------------------------------- */
+    int iPoly;
+
+    for( iPoly = 0; iPoly < nNextPolygonId; iPoly++ )
+    {
+        while( panPolyIdMap[iPoly] 
+               != panPolyIdMap[panPolyIdMap[iPoly]] )
+            panPolyIdMap[iPoly] = panPolyIdMap[panPolyIdMap[iPoly]];
     }
 
 /* -------------------------------------------------------------------- */
@@ -770,7 +807,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
         {
             for( iX = 0; eErr == CE_None && iX < nNextPolygonId; iX++ )
             {
-                if( papoPoly[iX] && papoPoly[iX]->nLastLineUpdated != iY )
+                if( papoPoly[iX] && papoPoly[iX]->nLastLineUpdated < iY-1 )
                 {
                     if( hMaskBand == NULL
                         || papoPoly[iX]->nPolyValue != GP_NODATA_MARKER )
@@ -796,6 +833,17 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
         panTmp = panThisLineId;
         panThisLineId = panLastLineId;
         panLastLineId = panTmp;
+
+/* -------------------------------------------------------------------- */
+/*      Report progress, and support interrupts.                        */
+/* -------------------------------------------------------------------- */
+        if( eErr == CE_None 
+            && !pfnProgress( 0.10 + 0.90 * ((iY+1) / (double) nYSize), 
+                             "", pProgressArg ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
