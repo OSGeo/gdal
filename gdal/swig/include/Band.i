@@ -287,6 +287,11 @@ public:
 %clear (CPLErr);
 #endif
 
+#if defined(SWIGPERL)
+%apply (double *OUTPUT){double *min_ret, double *max_ret}
+%apply (int *nLen, const int **pList) {(int *buckets_ret, int **ppanHistogram)};
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
+#endif
 %feature ("kwargs") GetDefaultHistogram;
 CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL, 
                             int **ppanHistogram = NULL, int force = 1, 
@@ -296,12 +301,23 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
                                     ppanHistogram, force, 
                                     callback, callback_data );
 }
+#if defined(SWIGPERL)
+%clear (double *min_ret, double *max_ret);
+%clear (int *buckets_ret, int **ppanHistogram);
+%clear (CPLErr);
+#endif
 
+#if defined(SWIGPERL)
+%apply (int nList, int* pList) {(int buckets_in, int *panHistogram_in)}
+#endif
 CPLErr SetDefaultHistogram( double min, double max, 
        			    int buckets_in, int *panHistogram_in ) {
     return GDALSetDefaultHistogram( self, min, max, 
     	   			    buckets_in, panHistogram_in );
 }
+#if defined(SWIGPERL)
+%clear (int buckets_in, int *panHistogram_in);
+#endif
 
 /* NEEDED */
 /* GetStatistics */
