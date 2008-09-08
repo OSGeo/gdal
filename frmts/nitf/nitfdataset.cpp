@@ -2220,7 +2220,7 @@ void NITFDataset::InitializeTextMetadata()
                           psFile->fp ) != psSegment->nSegmentSize )
         {
             CPLError( CE_Warning, CPLE_FileIO, 
-                      "Failed to read %d bytes of graphic data at %d.", 
+                      "Failed to read %d bytes of text data at %d.", 
                       psSegment->nSegmentSize,
                       psSegment->nSegmentStart );
             return;
