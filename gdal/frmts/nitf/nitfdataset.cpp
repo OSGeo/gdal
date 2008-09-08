@@ -41,6 +41,7 @@ CPL_CVSID("$Id$");
 static void NITFPatchImageLength( const char *pszFilename,
                                   long nImageOffset, 
                                   GIntBig nPixelCount, const char *pszIC );
+static void NITFWriteTextSegments( const char *pszFilename, char **papszList );
 
 static GDALDataset *poWritableJ2KDataset = NULL;
 static CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
@@ -2905,6 +2906,29 @@ NITFDataset::NITFCreateCopy(
     }
 
 /* -------------------------------------------------------------------- */
+/*      Prepare for text segments.                                      */
+/* -------------------------------------------------------------------- */
+    int iOpt, nNUMT = 0;
+    char **papszTextMD = poSrcDS->GetMetadata( "TEXT" );
+
+    for( iOpt = 0; 
+         papszTextMD != NULL && papszTextMD[iOpt] != NULL; 
+         iOpt++ )
+    {
+        if( !EQUALN(papszTextMD[iOpt],"DATA_",5) )
+            continue;
+
+        nNUMT++;
+    }
+
+    if( nNUMT > 0 )
+    {
+        papszFullOptions = CSLAddString( papszFullOptions, 
+                                         CPLString().Printf( "NUMT=%d", 
+                                                             nNUMT ) );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Set if we can set IREP.                                         */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue(papszFullOptions,"IREP") == NULL )
@@ -3041,6 +3065,7 @@ NITFDataset::NITFCreateCopy(
             poSrcDS->GetRasterCount();
 
         NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount, "C8" );
+        NITFWriteTextSegments( pszFilename, papszTextMD );
 
         poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
 
@@ -3078,6 +3103,7 @@ NITFDataset::NITFCreateCopy(
 
         NITFPatchImageLength( pszFilename, nImageOffset,
                               nPixelCount, "C3" );
+        NITFWriteTextSegments( pszFilename, papszTextMD );
         
         poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
 
@@ -3091,6 +3117,8 @@ NITFDataset::NITFCreateCopy(
 /* ==================================================================== */
     else
     {
+        NITFWriteTextSegments( pszFilename, papszTextMD );
+
         poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
         if( poDstDS == NULL )
             return NULL;
@@ -3238,6 +3266,142 @@ static void NITFPatchImageLength( const char *pszFilename,
 
         VSIFWriteL( szCOMRAT, 4, 1, fpVSIL );
     }
+    
+    VSIFCloseL( fpVSIL );
+}
+        
+/************************************************************************/
+/*                       NITFWriteTextSegments()                        */
+/************************************************************************/
+
+static void NITFWriteTextSegments( const char *pszFilename,
+                                   char **papszList )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Count the number of apparent text segments to write.  There     */
+/*      is nothing at all to do if there are none to write.             */
+/* -------------------------------------------------------------------- */
+    int iOpt, nNUMT = 0;
+
+    for( iOpt = 0; papszList != NULL && papszList[iOpt] != NULL; iOpt++ )
+    {
+        if( EQUALN(papszList[iOpt],"DATA_",5) )
+            nNUMT++;
+    }
+
+    if( nNUMT == 0 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Open the target file.                                           */
+/* -------------------------------------------------------------------- */
+    FILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
+
+    if( fpVSIL == NULL )
+        return;
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm that the NUMT in the file header already matches the    */
+/*      number of text segements we want to write, and that the         */
+/*      segment header/data size info is blank.                         */
+/* -------------------------------------------------------------------- */
+    char achNUMT[4];
+    char *pachLT = (char *) CPLCalloc(nNUMT * 9 + 1, 1);
+
+    VSIFSeekL( fpVSIL, 385, SEEK_SET );
+    VSIFReadL( achNUMT, 1, 3, fpVSIL );
+    achNUMT[3] = '\0';
+
+    VSIFReadL( pachLT, 1, nNUMT * 9, fpVSIL );
+
+    if( atoi(achNUMT) != nNUMT )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "It appears an attempt was made to add or update text\n"
+                  "segments on an NITF file with existing segments.  This\n"
+                  "is not currently supported by the GDAL NITF driver." );
+
+        VSIFCloseL( fpVSIL );
+        return;
+    }
+
+    if( !EQUALN(pachLT,"         ",9) )
+    {
+        CPLFree( pachLT );
+        // presumably the text segments are already written, do nothing.
+        VSIFCloseL( fpVSIL );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      At this point we likely ought to confirm NUMDES, NUMRES,        */
+/*      UDHDL and XHDL are zero.  Consider adding later...              */
+/* -------------------------------------------------------------------- */
+
+/* ==================================================================== */
+/*      Write the text segments at the end of the file.                 */
+/* ==================================================================== */
+#define PLACE(location,name,text)  strncpy(location,text,strlen(text))
+    int iTextSeg = 0;
+    
+    for( iOpt = 0; papszList != NULL && papszList[iOpt] != NULL; iOpt++ )
+    {
+        const char *pszTextToWrite;
+
+        if( !EQUALN(papszList[iOpt],"DATA_",5) )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare and write text header.                                  */
+/* -------------------------------------------------------------------- */
+        VSIFSeekL( fpVSIL, 0, SEEK_END );
+
+        char achTSH[282];
+
+        memset( achTSH, ' ', sizeof(achTSH) );
+
+        PLACE( achTSH+  0, TE            , "TE"                              );
+        PLACE( achTSH+  9, TXTALVL       , "000"                             );
+        PLACE( achTSH+ 12, TXTDT         , "00000000000000"                  );
+        PLACE( achTSH+106, TSCLAS        , "U"                               );
+        PLACE( achTSH+273, ENCRYP        , "0"                               );
+        PLACE( achTSH+274, TXTFMT        , "STA"                             );
+        PLACE( achTSH+277, TXSHDL        , "00000"                           );
+
+        VSIFWriteL( achTSH, 1, sizeof(achTSH), fpVSIL );
+
+/* -------------------------------------------------------------------- */
+/*      Prepare and write text segment data.                            */
+/* -------------------------------------------------------------------- */
+        pszTextToWrite = CPLParseNameValue( papszList[iOpt], NULL );
+
+        VSIFWriteL( pszTextToWrite, 1, strlen(pszTextToWrite), fpVSIL );
+        
+/* -------------------------------------------------------------------- */
+/*      Update the subheader and data size info in the file header.     */
+/* -------------------------------------------------------------------- */
+        sprintf( pachLT + 9*iTextSeg+0, "%04d%05d",
+                 (int) sizeof(achTSH), (int) strlen(pszTextToWrite) );
+
+        iTextSeg++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out the text segment info.                                */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( fpVSIL, 388, SEEK_SET );
+    VSIFWriteL( pachLT, 1, nNUMT * 9, fpVSIL );
+
+/* -------------------------------------------------------------------- */
+/*      Update total file length.                                       */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( fpVSIL, 0, SEEK_END );
+    GIntBig nFileLen = VSIFTellL( fpVSIL );
+
+    VSIFSeekL( fpVSIL, 342, SEEK_SET );
+    VSIFWriteL( (void *) CPLString().Printf("%012ld",(long)nFileLen).c_str(),
+                1, 12, fpVSIL );
     
     VSIFCloseL( fpVSIL );
 }
