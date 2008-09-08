@@ -79,6 +79,10 @@ Currently no TEXT segment header data is preserved.  The argument to DATA_n
 is the raw text of the n'th (zero based) text segment with no escaping of any
 kind applied. <p>
 
+The CreateCopy() method on the NITF driver also supports creating 
+text segments on the output file as long as the input file has metadata
+in the TEXT domain as defined above.<p>
+
 <h2>TREs</h2>
 
 NITF files with registered (or unregistered?) extensions on the file header, 
