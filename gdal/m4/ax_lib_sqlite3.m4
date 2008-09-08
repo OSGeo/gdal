@@ -145,7 +145,6 @@ AC_DEFUN([AX_LIB_SQLITE3],
 
         AC_SUBST([SQLITE3_CFLAGS])
         AC_SUBST([SQLITE3_LDFLAGS])
-        AC_DEFINE([HAVE_SQLITE3])
 
     else
         AC_MSG_RESULT([disabled])
