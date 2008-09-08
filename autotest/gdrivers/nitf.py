@@ -437,6 +437,8 @@ def nitf_20():
 
 ###############################################################################
 # Verify that TEXT access via the metadata domain works.
+#
+# See also nitf_35 for writing TEXT segments.
 
 def nitf_21():
 
@@ -688,6 +690,38 @@ def nitf_34():
 
     tst = gdaltest.GDALTest( 'NITF', 'n43.dt0', 1, 49187, options = [ 'BLOCKSIZE=64' ] )
     return tst.testCreateCopy( )
+
+###############################################################################
+# Test CreateCopy() writing file with a text segment.
+
+def nitf_35():
+
+    src_ds = gdal.Open( 'data/text_md.vrt' )
+    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf_35.ntf', src_ds )
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open( 'tmp/nitf_35.ntf' )
+
+    exp_text = """This is text data
+with a newline."""
+    
+    md = ds.GetMetadata('TEXT')
+    if md['DATA_0'] != exp_text:
+        gdaltest.post_reason( 'Did not get expected TEXT metadata.' )
+        print md
+        return 'fail'
+
+    exp_text = """Also, a second text segment is created."""
+    
+    md = ds.GetMetadata('TEXT')
+    if md['DATA_1'] != exp_text:
+        gdaltest.post_reason( 'Did not get expected TEXT metadata.' )
+        print md
+        return 'fail'
+
+    gdal.GetDriverByName('NITF').Delete( 'tmp/nitf_35.ntf' )
+    return 'success'
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
@@ -992,6 +1026,7 @@ gdaltest_list = [
     nitf_32,
     nitf_33,
     nitf_34,
+    nitf_35,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
