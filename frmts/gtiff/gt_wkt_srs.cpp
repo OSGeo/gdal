@@ -30,6 +30,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_serv.h"
 #include "geo_tiffp.h"
 #define CPL_ERROR_H_INCLUDED
