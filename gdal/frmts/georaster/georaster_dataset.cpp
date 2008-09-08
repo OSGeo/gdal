@@ -230,80 +230,108 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  -------------------------------------------------------------------
 
     poGRD->SetMetadataItem("objectInfo.rasterType", CPLGetXMLValue(
-        poGRW->phMetadata, "objectInfo.rasterType", "NONE" ), "");
+        poGRW->phMetadata, "objectInfo.rasterType", "NONE" ), "ORACLE" );
 
     poGRD->SetMetadataItem("objectInfo.isBlank", CPLGetXMLValue(
-        poGRW->phMetadata, "objectInfo.isBlank", "NONE" ), "");
+        poGRW->phMetadata, "objectInfo.isBlank", "NONE" ), "ORACLE" );
 
     poGRD->SetMetadataItem("objectInfo.defaultRed", CPLGetXMLValue(
-        poGRW->phMetadata, "objectInfo.defaultRed", "NONE" ), "");
+        poGRW->phMetadata, "objectInfo.defaultRed", "NONE" ), "ORACLE" );
 
     poGRD->SetMetadataItem("objectInfo.defaultGreen", CPLGetXMLValue(
-        poGRW->phMetadata, "objectInfo.defaultGreen", "NONE" ), "");
+        poGRW->phMetadata, "objectInfo.defaultGreen", "NONE" ), "ORACLE" );
 
     poGRD->SetMetadataItem("objectInfo.defaultBlue", CPLGetXMLValue(
-        poGRW->phMetadata, "objectInfo.defaultBlue", "NONE" ), "");
+        poGRW->phMetadata, "objectInfo.defaultBlue", "NONE" ), "ORACLE" );
 
     //  -------------------------------------------------------------------
     //  Set rasterInfo metadata information
     //  -------------------------------------------------------------------
 
     poGRD->SetMetadataItem("rasterInfo.cellDepth", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.cellDepth", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.cellDepth", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.totalDimensions", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.totalDimensions", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.totalDimensions", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.dimensionSize.row", CPLSPrintf( "%d",
-        poGRD->nRasterYSize), "");
+        poGRD->nRasterYSize),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.dimensionSize.column", CPLSPrintf( "%d",
-        poGRD->nRasterXSize), "");
+        poGRD->nRasterXSize),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.dimensionSize.band", CPLSPrintf( "%d",
-        poGRD->nBands), "");
+        poGRD->nBands),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.ULTCoordinate.row", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.ULTCoordinate.row", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.ULTCoordinate.row", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.ULTCoordinate.column", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.ULTCoordinate.column", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.ULTCoordinate.column", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.ULTCoordinate.band", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.ULTCoordinate.band", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.ULTCoordinate.band", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.blocking.type", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.blocking.type", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.blocking.type", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.blocking.totalRowBlocks", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.blocking.totalRowBlocks", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.blocking.totalRowBlocks", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.blocking.totalColumnBlocks", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.blocking.totalColumnBlocks", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.blocking.totalColumnBlocks", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.blocking.totalBandBlocks", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.blocking.totalBandBlocks", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.blocking.totalBandBlocks", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.blocking.rowBlockSize", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.blocking.rowBlockSize", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.blocking.rowBlockSize", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.blocking.columnBlockSize", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.blocking.columnBlockSize", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.blocking.columnBlockSize", "NONE" ),
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.blocking.bandBlockSize", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.blocking.bandBlockSize", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.blocking.bandBlockSize", "NONE" ), 
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.interleaving", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.interleaving", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.interleaving", "NONE" ), 
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.pyramid.type", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.pyramid.type", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.pyramid.type", "NONE" ), 
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.pyramid.maxLevel", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.pyramid.maxLevel", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.pyramid.maxLevel", "NONE" ), 
+        "ORACLE" );
 
     poGRD->SetMetadataItem("rasterInfo.compression.type", CPLGetXMLValue(
-        poGRW->phMetadata, "rasterInfo.compression.type", "NONE" ), "");
+        poGRW->phMetadata, "rasterInfo.compression.type", "NONE" ), 
+        "ORACLE" );
+
+    //  -------------------------------------------------------------------
+    //  Set RDT/RID metadata information
+    //  -------------------------------------------------------------------
+
+    poGRD->SetMetadataItem("RDT", poGRW->pszDataTable, "ORACLE" );
+
+    poGRD->SetMetadataItem("RID", CPLSPrintf( "%d", poGRW->nRasterId ),
+        "ORACLE" );
 
     //  -------------------------------------------------------------------
     //  Set IMAGE_STRUCTURE metadata information
@@ -339,14 +367,6 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         poGRD->SetMetadataItem( "NBITS", "4", "IMAGE_STRUCTURE" );
     }
-
-    //  -------------------------------------------------------------------
-    //  Set RDT/RID metadata information
-    //  -------------------------------------------------------------------
-
-    poGRD->SetMetadataItem("RDT", poGRW->pszDataTable, "");
-
-    poGRD->SetMetadataItem("RID", CPLSPrintf( "%d", poGRW->nRasterId ), "");
 
     //  -------------------------------------------------------------------
     //  Return a GDALDataset
