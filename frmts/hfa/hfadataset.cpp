@@ -270,6 +270,7 @@ class CPL_DLL HFADataset : public GDALPamDataset
 
     CPLErr      ReadProjection();
     CPLErr      WriteProjection();
+    int         bForceToPEString;
 
     int		nGCPCount;
     GDAL_GCP	asGCPList[36];
@@ -1385,6 +1386,7 @@ HFADataset::HFADataset()
     pszProjection = CPLStrdup("");
     bMetadataDirty = FALSE;
     bIgnoreUTM = FALSE;
+    bForceToPEString = FALSE;
 
     nGCPCount = 0;
 }
@@ -1567,7 +1569,16 @@ CPLErr HFADataset::WriteProjection()
     if( bHaveSRS )
         pszProjName = oSRS.GetAttrValue( "PROJCS|PROJECTION" );
 
-    if( pszProjName == NULL )
+    if( bForceToPEString )
+    {
+        char *pszPEString = NULL;
+        oSRS.morphToESRI();
+        oSRS.exportToWkt( &pszPEString );
+        // need to transform this into ESRI format.
+        HFASetPEString( hHFA, pszPEString );
+        CPLFree( pszPEString );
+    }
+    else if( pszProjName == NULL )
     {
         if( bHaveSRS && oSRS.IsGeographic() )
         {
@@ -3130,6 +3141,17 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
                                             FALSE );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Sometimes we can improve ArcGIS compatability by forcing        */
+/*      generation of a PEString instead of traditional Imagine         */
+/*      coordinate system descriptions.                                 */
+/* -------------------------------------------------------------------- */
+    if( poDS != NULL )
+    {
+        poDS->bForceToPEString = 
+            CSLFetchBoolean( papszParmList, "FORCETOPESTRING", FALSE );
+    }
+
     return poDS;
 
 }
@@ -3156,7 +3178,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int bCreateAux = CSLFetchBoolean( papszOptions, "AUX", FALSE );
 
 /* -------------------------------------------------------------------- */
-/*      Create the basic dataset.                                       */
+/*      Establish a representative data type to use.                    */
 /* -------------------------------------------------------------------- */
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
@@ -3420,6 +3442,7 @@ void GDALRegister_HFA()
 "   <Option name='NBITS' type='integer' description='Create file with special sub-byte data type (1/2/4)'/>"
 "   <Option name='STATISTICS' type='boolean' description='Generate statistics and a histogram'/>"
 "   <Option name='DEPENDENT_FILE' type='string' description='Name of dependent file (must not have absolute path)'/>"
+"   <Option name='FORCETOPESTRING' type='boolean' description='Force use of ArcGIS PE String in file instead of Imagine coordinate system format'/>"
 "</CreationOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
