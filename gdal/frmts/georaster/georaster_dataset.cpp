@@ -729,6 +729,8 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     poGRD->poGeoRaster->OptimizedWriting();
 
+    int nPixelSize = GDALGetDataTypeSize( poSrcDS->GetRasterBand(1)->GetRasterDataType() ) / 8;
+
     for( iYOffset = 0, iYBlock = 0;
          iYOffset < nYSize;
          iYOffset += nBlockYSize, iYBlock++ )
@@ -750,7 +752,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
                 eErr = poSrcBand->RasterIO( GF_Read,
                     iXOffset, iYOffset,
                     nBlockCols, nBlockRows, pData,
-                    nBlockCols, nBlockRows, eType, 0, 0 );
+                    nBlockCols, nBlockRows, eType, 1, ( nBlockXSize * nPixelSize ) );
 
                 if( eErr != CE_None )
                 {
