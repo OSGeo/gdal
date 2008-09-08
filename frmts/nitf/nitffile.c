@@ -348,12 +348,15 @@ int NITFCreate( const char *pszFilename,
     FILE	*fp;
     char        *pachIMHDR;
     char        achHeader[5000];
+    int         nHeaderUsed = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
     GIntBig     nImageSize;
     int         nNBPR, nNBPC;
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
     const char *pszCLevel;
+    const char *pszOpt;
+    int nHL, nNUMT = 0;
     int nUDIDLOffset;
     const char *pszVersion;
 
@@ -380,6 +383,10 @@ int NITFCreate( const char *pszFilename,
     if( pszIREP == NULL )
         pszIREP = "MONO";
 
+    pszOpt = CSLFetchNameValue( papszOptions, "NUMT" );
+    if( pszOpt != NULL )
+        nNUMT = atoi(pszOpt);
+    
 /* -------------------------------------------------------------------- */
 /*      Compute raw image size, blocking factors and so forth.          */
 /* -------------------------------------------------------------------- */
@@ -482,22 +489,36 @@ int NITFCreate( const char *pszFilename,
     OVR(24,achHeader+300, ONAME        ,""                              );
     OVR(18,achHeader+324, OPHONE       ,""                              );
     PLACE (achHeader+342, FL           ,"????????????"                  );
-    PLACE (achHeader+354, HL           ,"000404"                        );
+    PLACE (achHeader+354, HL           ,"??????"                        );
     PLACE (achHeader+360, NUMI         ,"001"                           );
     PLACE (achHeader+363, LISH1        ,"??????"                        );
     PLACE (achHeader+369, LI1          ,CPLSPrintf("%010ud",(GUInt32) nImageSize)  );
     PLACE (achHeader+379, NUMS         ,"000"                           );
     PLACE (achHeader+382, NUMX         ,"000"                           );
-    PLACE (achHeader+385, NUMT         ,"000"                           );
-    PLACE (achHeader+388, NUMDES       ,"000"                           );
-    PLACE (achHeader+391, NUMRES       ,"000"                           );
-    PLACE (achHeader+394, UDHDL        ,"00000"                         );
-    PLACE (achHeader+399, XHDL         ,"00000"                         );
+    PLACE (achHeader+385, NUMT         ,CPLSPrintf("%03d",nNUMT)        );
+
+    PLACE (achHeader+388, LTSHnLTn     ,""                              );
+
+    nHL = 388 + (4+5) * nNUMT;
+
+    PLACE (achHeader+nHL, NUMDES       ,"000"                           );
+    nHL += 3;
+    PLACE (achHeader+nHL, NUMRES       ,"000"                           );
+    nHL += 3;
+    PLACE (achHeader+nHL, UDHDL        ,"00000"                         );
+    nHL += 5;
+    PLACE (achHeader+nHL, XHDL         ,"00000"                         );
+    nHL += 5;
+
+    // update header length
+    PLACE (achHeader+354, HL           ,CPLSPrintf("%06d",nHL)          );
     
+    nHeaderUsed = nHL;
+
 /* -------------------------------------------------------------------- */
 /*      Prepare the image header.                                       */
 /* -------------------------------------------------------------------- */
-    pachIMHDR = achHeader + 404;
+    pachIMHDR = achHeader + nHeaderUsed;
 
     PLACE (pachIMHDR+  0, IM           , "IM"                           );
     OVR(10,pachIMHDR+  2, IID1         , "Missing"                      );
@@ -652,19 +673,21 @@ int NITFCreate( const char *pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Update the image header length in the file header and the       */
-/*      total file size.                                                */
+/*      Update the image header length in the file header.              */
 /* -------------------------------------------------------------------- */
     nIHSize = nOffset;
 
     PLACE(achHeader+ 363, LISH1, CPLSPrintf("%06d",nIHSize)      );
-    PLACE(achHeader+ 342, FL,
-          CPLSPrintf( "%012d", (int) (404 + nIHSize + nImageSize) ) );
+
+    nHeaderUsed += nIHSize;
 
 /* -------------------------------------------------------------------- */
-/*      Write header info to file.                                      */
+/*      Update total file length, and write header info to file.        */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( achHeader, 1, nIHSize+404, fp );
+    PLACE(achHeader+ 342, FL,
+          CPLSPrintf( "%012d", (int) (nHeaderUsed + nImageSize) ) );
+
+    VSIFWriteL( achHeader, 1, nIHSize+nHL, fp );
 
 /* -------------------------------------------------------------------- */
 /*      Grow file to full required size by writing one byte at the end. */
