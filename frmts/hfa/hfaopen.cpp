@@ -1156,97 +1156,102 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 
 {
 /* -------------------------------------------------------------------- */
+/*      Loop over bands, setting information on each one.               */
+/* -------------------------------------------------------------------- */
+    int iBand;
+
+    for( iBand = 0; iBand < hHFA->nBands; iBand++ )
+    {
+        HFAEntry *poProX;
+
+/* -------------------------------------------------------------------- */
 /*      Verify we don't already have the node, since update-in-place    */
 /*      is likely to be more complicated.                               */
 /* -------------------------------------------------------------------- */
-    if( hHFA->nBands == 0 )
-        return CE_None;
-
-    HFAEntry *poProX;
-
-    poProX = hHFA->papoBand[0]->poNode->GetNamedChild( "ProjectionX" );
-    if( poProX != NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "HFASetPEString() failed because the ProjectionX node\n"
-                  "already exists and can't be reliably updated." );
-        return CE_Failure;
-    }
+        poProX = hHFA->papoBand[iBand]->poNode->GetNamedChild( "ProjectionX" );
+        if( poProX != NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "HFASetPEString() failed because the ProjectionX node\n"
+                      "already exists and can't be reliably updated." );
+            return CE_Failure;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Create the node.                                                */
 /* -------------------------------------------------------------------- */
-    poProX = new HFAEntry( hHFA, "ProjectionX","Eprj_MapProjection842",
-                           hHFA->papoBand[0]->poNode );
-    if( poProX == NULL )
-        return CE_Failure;
+        poProX = new HFAEntry( hHFA, "ProjectionX","Eprj_MapProjection842",
+                               hHFA->papoBand[iBand]->poNode );
+        if( poProX == NULL )
+            return CE_Failure;
 
-    GByte *pabyData = poProX->MakeData( 700 + strlen(pszPEString) );
-    memset( pabyData, 0, 250+strlen(pszPEString) );
+        GByte *pabyData = poProX->MakeData( 700 + strlen(pszPEString) );
+        memset( pabyData, 0, 250+strlen(pszPEString) );
 
-    poProX->SetPosition();
+        poProX->SetPosition();
 
-    poProX->SetStringField( "projection.type.string", "PE_COORDSYS" );
-    poProX->SetStringField( "projection.MIFDictionary.string", 
-                            "{0:pcstring,}Emif_String,{1:x{0:pcstring,}Emif_String,coordSys,}PE_COORDSYS,." );
+        poProX->SetStringField( "projection.type.string", "PE_COORDSYS" );
+        poProX->SetStringField( "projection.MIFDictionary.string", 
+                                "{0:pcstring,}Emif_String,{1:x{0:pcstring,}Emif_String,coordSys,}PE_COORDSYS,." );
 
 /* -------------------------------------------------------------------- */
 /*      Use a gross hack to scan ahead to the actual projection         */
 /*      string. We do it this way because we don't have general         */
 /*      handling for MIFObjects.                                        */
 /* -------------------------------------------------------------------- */
-    pabyData = poProX->GetData();
-    int    nDataSize = poProX->GetDataSize();
-    GUInt32   iOffset = poProX->GetDataPos();
-    GUInt32   nSize;
+        pabyData = poProX->GetData();
+        int    nDataSize = poProX->GetDataSize();
+        GUInt32   iOffset = poProX->GetDataPos();
+        GUInt32   nSize;
 
-    while( nDataSize > 10 
-           && !EQUALN((const char *) pabyData,"PE_COORDSYS,.",13) ) {
-        pabyData++;
-        nDataSize--;
-        iOffset++;
-    }
+        while( nDataSize > 10 
+               && !EQUALN((const char *) pabyData,"PE_COORDSYS,.",13) ) {
+            pabyData++;
+            nDataSize--;
+            iOffset++;
+        }
 
-    CPLAssert( nDataSize > (int) strlen(pszPEString) + 10 );
+        CPLAssert( nDataSize > (int) strlen(pszPEString) + 10 );
 
-    pabyData += 14;
-    iOffset += 14;
+        pabyData += 14;
+        iOffset += 14;
     
 /* -------------------------------------------------------------------- */
 /*      Set the size and offset of the mifobject.                       */
 /* -------------------------------------------------------------------- */
-    iOffset += 8;
+        iOffset += 8;
 
-    nSize = strlen(pszPEString) + 9;
+        nSize = strlen(pszPEString) + 9;
 
-    HFAStandard( 4, &nSize );
-    memcpy( pabyData, &nSize, 4 );
-    pabyData += 4;
+        HFAStandard( 4, &nSize );
+        memcpy( pabyData, &nSize, 4 );
+        pabyData += 4;
     
-    HFAStandard( 4, &iOffset );
-    memcpy( pabyData, &iOffset, 4 );
-    pabyData += 4;
+        HFAStandard( 4, &iOffset );
+        memcpy( pabyData, &iOffset, 4 );
+        pabyData += 4;
 
 /* -------------------------------------------------------------------- */
 /*      Set the size and offset of the string value.                    */
 /* -------------------------------------------------------------------- */
-    nSize = strlen(pszPEString) + 1;
+        nSize = strlen(pszPEString) + 1;
     
-    HFAStandard( 4, &nSize );
-    memcpy( pabyData, &nSize, 4 );
-    pabyData += 4;
+        HFAStandard( 4, &nSize );
+        memcpy( pabyData, &nSize, 4 );
+        pabyData += 4;
 
-    iOffset = 8;
-    HFAStandard( 4, &iOffset );
-    memcpy( pabyData, &iOffset, 4 );
-    pabyData += 4;
+        iOffset = 8;
+        HFAStandard( 4, &iOffset );
+        memcpy( pabyData, &iOffset, 4 );
+        pabyData += 4;
 
 /* -------------------------------------------------------------------- */
 /*      Place the string itself.                                        */
 /* -------------------------------------------------------------------- */
-    memcpy( pabyData, pszPEString, strlen(pszPEString)+1 );
+        memcpy( pabyData, pszPEString, strlen(pszPEString)+1 );
     
-    poProX->SetStringField( "title.string", "PE" );
+        poProX->SetStringField( "title.string", "PE" );
+    }
 
     return CE_None;
 }
