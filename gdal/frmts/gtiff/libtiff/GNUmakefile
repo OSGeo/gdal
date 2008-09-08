@@ -41,8 +41,11 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-ALL_C_FLAGS =	$(CFLAGS) $(CPPFLAGS) \
-		-DZIP_SUPPORT -DPIXARLOG_SUPPORT -I../../zlib
+ALL_C_FLAGS =	$(CFLAGS) $(CPPFLAGS)
+
+ifneq ($(LIBZ_SETTING),no)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DPIXARLOG_SUPPORT -DZIP_SUPPORT -I../../zlib
+endif
 
 ifneq ($(JPEG_SETTING),no)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DJPEG_SUPPORT -DOJPEG_SUPPORT
