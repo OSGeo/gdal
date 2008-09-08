@@ -2669,4 +2669,3 @@ void OGR_G_CloseRings( OGRGeometryH hGeom )
 {
     ((OGRGeometry *) hGeom)->closeRings();
 }
-
