@@ -35,7 +35,7 @@ GDAL_ROOT = ..
 
 !INCLUDE ..\nmake.opt
 
-EXTRAFLAGS	= 	 -I..\frmts\zlib
+EXTRAFLAGS	= 	 -I..\frmts\zlib -DHAVE_LIBZ
 
 !IFDEF CURL_INC
 EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
