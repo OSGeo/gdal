@@ -113,7 +113,7 @@ void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH,
 OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference( OGRGeometryH );
 OGRErr CPL_DLL OGR_G_Transform( OGRGeometryH, OGRCoordinateTransformationH );
 OGRErr CPL_DLL OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
-
+void   CPL_DLL OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength );
 int    CPL_DLL OGR_G_Intersects( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Equals( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Disjoint( OGRGeometryH, OGRGeometryH );
