@@ -485,20 +485,6 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         pszInsert               = CPLStrdup( pszFetched );
     }
 
-    pszFetched = CSLFetchNameValue( papszOptions, "RDT" );
-
-    if( pszFetched )
-    {
-        poGRW->pszDataTable     = CPLStrdup( pszFetched );
-    }
-
-    pszFetched = CSLFetchNameValue( papszOptions, "RID" );
-
-    if( pszFetched )
-    {
-        poGRW->nRasterId        = atoi( pszFetched );
-    }
-
     pszFetched = CSLFetchNameValue( papszOptions, "BLOCKXSIZE" );
 
     if( pszFetched )
@@ -729,7 +715,8 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     poGRD->poGeoRaster->OptimizedWriting();
 
-    int nPixelSize = GDALGetDataTypeSize( poSrcDS->GetRasterBand(1)->GetRasterDataType() ) / 8;
+    int nPixelSize = GDALGetDataTypeSize( 
+        poSrcDS->GetRasterBand(1)->GetRasterDataType() ) / 8;
 
     for( iYOffset = 0, iYBlock = 0;
          iYOffset < nYSize;
@@ -1225,15 +1212,12 @@ void CPL_DLL GDALRegister_GEOR()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
 "  <Option name='DESCRIPTION'   type='string'  description='Table Description'/>"
-"  <Option name='INSERT'        type='string'  description="
-"'{column1, column2,...} VALUES ({value1, value2,...} [*])'/>"
+"  <Option name='INSERT'        type='string'  description='Column Values'/>"
 "  <Option name='BLOCKXSIZE'    type='int'     description='Tile Width'/>"
 "  <Option name='BLOCKYSIZE'    type='int'     description='Tile Height'/>"
 "  <Option name='BLOCKBSIZE'    type='int'     description='Tile Bands'/>"
-"  <Option name='INTERLEAVE'    type='string'  description='{BAND,PIXEL,LINE} or {BSQ,BIP,BIL}'/>"
-"  <Option name='SRID'          type='int'     description='Overwrite EPSG projection code'/>"
-"  <Option name='RDT'           type='string'  description='Specify a Raster Data Table name'/>"
-"  <Option name='RID'           type='int'     description='Specify a RasterId numeric value'/>"
+"  <Option name='INTERLEAVE'    type='string'  description='{BAND,PIXEL,LINE}'/>"
+"  <Option name='SRID'          type='int'     description='Overwrite EPSG code'/>"
 "</CreationOptionList>" );
         poDriver->pfnOpen       = GeoRasterDataset::Open;
         poDriver->pfnCreate     = GeoRasterDataset::Create;

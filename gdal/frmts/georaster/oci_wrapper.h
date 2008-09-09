@@ -61,8 +61,10 @@ const char*         OWSetDataType( const GDALDataType eType );
 int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );
 bool                OWIsNumeric( const char *pszText );
-const char*         OWReplaceToken( const char* pszBaseString,
-                        char cToken, const char* pszOWReplaceToken );
+const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
+const char*         OWReplaceString( const char* pszBaseString,
+                        const char* pszToken, 
+                        const char* pszOWReplaceToken );
 
 /***************************************************************************/
 /*                            Arbitrary limits                             */

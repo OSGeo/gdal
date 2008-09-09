@@ -102,14 +102,15 @@ GeoRasterWrapper::~GeoRasterWrapper()
 //  ---------------------------------------------------------------------------
 //                                                         ParseIdentificator()
 //  ---------------------------------------------------------------------------
+//
+//  StringID:
+//      {georaster,geor}:<name>{/,,}<password>{/,@}<db>,<tab>,<col>,<where>
+//      {georaster,geor}:<name>{/,,}<password>{/,@}<db>,<rdt>,<rid>
+//
+//  ---------------------------------------------------------------------------
 
 char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
 {
-    //  -------------------------------------------------------------------
-    //  Parse arguments:
-    //  {georaster,geor}:<name>{/,,}<password>{/,@}<db>,<tab>,<col>,<where>
-    //  {georaster,geor}:<name>{/,,}<password>{/,@}<db>,<rdt>,<rid>
-    //  -------------------------------------------------------------------
 
     char* pszStartPos = strstr( pszStringID, ":" ) + 1;
 
@@ -401,8 +402,12 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
     }
     else
     {
-        strcpy( szValues, "VALUES (#)" );
+        strcpy( szValues, "VALUES (SDO_GEOR.INIT(NULL,NULL))" );
     }
+
+    //  -------------------------------------------------------------------
+    //  Parse RDT
+    //  -------------------------------------------------------------------
 
     if( pszDataTable )
     {
@@ -410,8 +415,12 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
     }
     else
     {
-        strcpy( szRDT, "NULL" );
+        strcpy( szRDT, OWParseSDO_GEOR_INIT( szValues, 1 ) );
     }
+
+    //  -------------------------------------------------------------------
+    //  Parse RID
+    //  -------------------------------------------------------------------
 
     if ( nRasterId >= 0 )
     {
@@ -419,23 +428,32 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
     }
     else
     {
-        strcpy( szRID, "NULL" );
+        strcpy( szRID, OWParseSDO_GEOR_INIT( szValues, 2 ) );
     }
+
+    if( EQUAL( szRDT, "" ) || EQUAL( szRID, "" ) )
+    {
+        return false;
+    }
+
+    //  -------------------------------------------------------------------
+    //  Prepare initialization parameters
+    //  -------------------------------------------------------------------
 
     if( poConnection->GetVersion() < 11 )
     {
         if( nRasterBands == 1 )
         {
-            strcpy( szInsert, OWReplaceToken( szValues, '#', CPLSPrintf(
-                "SDO_GEOR.createBlank(20001, \n"
+            strcpy( szInsert, OWReplaceString( szValues, "SDO_GEOR.INIT", 
+                CPLSPrintf( "SDO_GEOR.createBlank(20001, \n"
                 "  SDO_NUMBER_ARRAY(0, 0), \n"
                 "  SDO_NUMBER_ARRAY(%d, %d), 0, %s, %s)",
-                nRasterRows, nRasterColumns, szRDT, szRID ) ) );
+                nRasterRows, nRasterColumns, szRDT, szRID) ) );
         }
         else
         {
-            strcpy( szInsert, OWReplaceToken( szValues, '#', CPLSPrintf(
-                "SDO_GEOR.createBlank(21001, \n"
+            strcpy( szInsert, OWReplaceString( szValues, "SDO_GEOR.INIT", 
+                CPLSPrintf( "SDO_GEOR.createBlank(21001, \n"
                 "  SDO_NUMBER_ARRAY(0, 0, 0), \n"
                 "  SDO_NUMBER_ARRAY(%d, %d, %d), 0, %s, %s)", 
                 nRasterRows, nRasterColumns, nRasterBands, szRDT, szRID ) ) );
@@ -443,8 +461,7 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
     }
     else
     {
-        strcpy( szInsert, OWReplaceToken( szValues, '#', CPLSPrintf(
-            "SDO_GEOR.init(%s, %s)", szRDT, szRID ) ) );
+        strcpy( szInsert, szValues );
     }
 
     //  -----------------------------------------------------------
