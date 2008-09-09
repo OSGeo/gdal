@@ -1086,34 +1086,53 @@ bool OWIsNumeric( const char *pszText )
 }
 
 /*****************************************************************************/
-/*                            Replace String at given char token             */
+/*                            Replace String at given token             */
 /*****************************************************************************/
 
-const char* OWReplaceToken( const char* pszBaseString, char cToken, 
-                           const char* pszOWReplaceToken )
+/* Input Examples:
+ *
+ * "ID, RASTER, NAME VALUES (102, SDO_GEOR.INIT('RDT_80', 80), 'Nashua')"
+ * "SDO_GEOR.INIT"
+ * "SDO_GEOR.createBlank(20001, SDO_NUMBER_ARRAY(0, 0)..."
+ */
+const char* OWReplaceString( const char* pszBaseString, 
+                             const char* pszToken, 
+                             const char* pszOWReplaceToken )
 {
-    char pszResult[2048];
+    char  szUpcase[OWTEXT];
+    char* pszIn = NULL;
 
-    char* psz1 = (char*) pszBaseString;
-    char* psz2 = (char*) pszOWReplaceToken;
-    char* psz3 = (char*) pszResult;
+    strcpy( szUpcase, pszBaseString );
 
-    for( ; *psz1 != '\0'; psz1++ )
+    for( pszIn = szUpcase; *pszIn != '\0'; pszIn++ )
     {
-        if( *psz1 == cToken )
-        {
-            for( ; *psz2 != '\0'; psz2++ )
-            {
-                *(psz3++) = *psz2;
-            }
-        }
-        else
-        {
-            *(psz3++) = *psz1;
-        }
+        *pszIn = (char) toupper( *pszIn );
     }
 
-    *psz3 = '\0';
+    char* pszStart = strstr( szUpcase, pszToken );
+    
+    if( pszStart == NULL )
+    {
+        return "";
+    }
+
+    char* pszEnd = strstr( pszStart, ")" );
+
+    if( pszEnd == NULL )
+    {
+        return "";
+    }
+
+    pszEnd++;
+
+    int nLength = pszStart - szUpcase;
+
+    char pszResult[OWTEXT];
+
+    strncpy( pszResult, pszBaseString, nLength );
+    pszResult[nLength] = '\0';
+    strcat( pszResult, pszOWReplaceToken );
+    strcat( pszResult, pszEnd );
 
     return CPLStrdup( pszResult );
 }
@@ -1122,40 +1141,102 @@ const char* OWReplaceToken( const char* pszBaseString, char cToken,
 /*                     Parse Value after a Hint on a string                  */
 /*****************************************************************************/
 
-int OWParseValue( const char* pszText, const char* pszHint, int nOffset )
+const char *OWParseValue( const char* pszText,
+                          const char* pszSeparators,
+                          const char* pszHint,
+                          int nOffset )
 {
     if( pszText == NULL ) return 0;
 
     int i       = 0;
-    int nCode   = 0;
     int nCount  = 0;
 
-    char **papszTokens = CSLTokenizeString2( pszText, " .",
-        CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
+    char **papszTokens = CSLTokenizeString2( pszText, pszSeparators,
+        CSLT_PRESERVEQUOTES );
 
     nCount = CSLCount( papszTokens );
+    const char* pszResult = "";
 
-    for( i = 0; i < nCount; i++ )
+    for( i = 0; ( i + nOffset ) < nCount; i++ )
     {
-        if( EQUAL( papszTokens[i], pszHint ) && ( i + nOffset ) < nCount )
+        if( EQUAL( papszTokens[i], pszHint ) )
         {
-            nCode = atoi( papszTokens[i + nOffset] );
+            pszResult = CPLStrdup( papszTokens[i + nOffset] );
             break;
         }
     }
 
     CSLDestroy( papszTokens );
 
-    return nCode;
+    return pszResult;
 }
 
 /*****************************************************************************/
 /*                            Parse Release Version                          */
 /*****************************************************************************/
 
+/* Input Examples:
+ *
+ * "ID, RASTER, NAME VALUES (102, SDO_GEOR.INIT('RDT_80', 80), 'Nashua')"
+ *
+ */
+
+const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
+{
+    char  szUpcase[OWTEXT];
+    char* pszIn = NULL;
+
+    strcpy( szUpcase, pszInsert );
+
+    for( pszIn = szUpcase; *pszIn != '\0'; pszIn++ )
+    {
+        *pszIn = (char) toupper( *pszIn );
+    }
+
+    char* pszStart = strstr( szUpcase, "SDO_GEOR.INIT" );
+    
+    if( pszStart == NULL )
+    {
+        return "";
+    }
+
+    char* pszEnd   = strstr( pszStart, ")" );
+
+    if( pszEnd == NULL )
+    {
+        return "";
+    }
+
+    pszEnd++;
+
+    int nLength = pszEnd - pszStart + 1;
+
+    char szBuffer[OWTEXT];
+
+    strncpy( szBuffer, pszStart, nLength );
+    szBuffer[nLength] = '\0';
+
+    const char* pszValue = OWParseValue( szBuffer, " .(,)", "INIT", nField );
+
+    return EQUAL( pszValue, "" ) ? "NULL" : pszValue;
+}
+
+/*****************************************************************************/
+/*                            Parse Release Version                          */
+/*****************************************************************************/
+
+/* Input Examples:
+ *
+ * "Oracle Database 11g Enterprise Edition Release 11.1.0.6.0 - Production
+ * With the Partitioning, OLAP, Data Mining and Real Application Testing options"
+ *
+ */
+
 int OWParseServerVersion( const char* pszText )
 {
-    return OWParseValue( pszText, "Release", 1 );
+    const char* pszValue = OWParseValue( pszText, " .", "Release", 1 );
+
+    return pszValue == NULL ? 0 : atoi( pszValue );
 }
 
 /*****************************************************************************/
@@ -1171,7 +1252,9 @@ int OWParseServerVersion( const char* pszText )
 
 int OWParseEPSG( const char* pszText )
 {
-    return OWParseValue( pszText, "EPSG", 2 );
+    const char* pszValue = OWParseValue( pszText, " ()", "EPSG", 2 );
+
+    return pszValue == NULL ? 0 : atoi( pszValue );
 }
 
 /*****************************************************************************/
