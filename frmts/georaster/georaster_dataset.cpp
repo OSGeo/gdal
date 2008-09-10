@@ -226,7 +226,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     //  -------------------------------------------------------------------
-    //  Set objectInfo metadata information
+    //  Set objectInfo metadata
     //  -------------------------------------------------------------------
 
     poGRD->SetMetadataItem("objectInfo.rasterType", CPLGetXMLValue(
@@ -245,7 +245,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         poGRW->phMetadata, "objectInfo.defaultBlue", "NONE" ), "ORACLE" );
 
     //  -------------------------------------------------------------------
-    //  Set rasterInfo metadata information
+    //  Set rasterInfo metadata
     //  -------------------------------------------------------------------
 
     poGRD->SetMetadataItem("rasterInfo.cellDepth", CPLGetXMLValue(
@@ -325,12 +325,25 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         "ORACLE" );
 
     //  -------------------------------------------------------------------
-    //  Set RDT/RID metadata information
+    //  Set Spatial Reference metadata
     //  -------------------------------------------------------------------
 
-    poGRD->SetMetadataItem("RDT", poGRW->pszDataTable, "ORACLE" );
+    poGRD->SetMetadataItem("spatialReferenceInfo.isReferenced", CPLGetXMLValue(
+        poGRW->phMetadata, "spatialReferenceInfo.isReferenced", "FALSE" ), 
+        "ORACLE" );
 
-    poGRD->SetMetadataItem("RID", CPLSPrintf( "%d", poGRW->nRasterId ),
+    poGRD->SetMetadataItem("spatialReferenceInfo.SRID", CPLGetXMLValue(
+        poGRW->phMetadata, "spatialReferenceInfo.SRID", "0" ), 
+        "ORACLE" );
+
+    //  -------------------------------------------------------------------
+    //  Set RDT/RID metadata
+    //  -------------------------------------------------------------------
+
+    poGRD->SetMetadataItem("georasterTable", poGRW->pszTable, "ORACLE" );
+    poGRD->SetMetadataItem("georasterColumn", poGRW->pszColumn, "ORACLE" );
+    poGRD->SetMetadataItem("rasterDataTable", poGRW->pszDataTable, "ORACLE" );
+    poGRD->SetMetadataItem("rasterId", CPLSPrintf( "%d", poGRW->nRasterId ),
         "ORACLE" );
 
     //  -------------------------------------------------------------------
@@ -1211,13 +1224,20 @@ void CPL_DLL GDALRegister_GEOR()
                                    "Float64 CFloat32 CFloat64" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
-"  <Option name='DESCRIPTION'   type='string'  description='Table Description'/>"
-"  <Option name='INSERT'        type='string'  description='Column Values'/>"
-"  <Option name='BLOCKXSIZE'    type='int'     description='Tile Width'/>"
-"  <Option name='BLOCKYSIZE'    type='int'     description='Tile Height'/>"
-"  <Option name='BLOCKBSIZE'    type='int'     description='Tile Bands'/>"
-"  <Option name='INTERLEAVE'    type='string'  description='{BAND,PIXEL,LINE}'/>"
-"  <Option name='SRID'          type='int'     description='Overwrite EPSG code'/>"
+"  <Option name='DESCRIPTION' type='string' description='Table Description'/>"
+"  <Option name='INSERT'      type='string' description='Column Values'/>"
+"  <Option name='BLOCKXSIZE'  type='int'    description='Column Block Size'/>"
+"  <Option name='BLOCKYSIZE'  type='int'    description='Row Block Size'/>"
+"  <Option name='BLOCKBSIZE'  type='int'    description='Band Block Size'/>"
+"  <Option name='INTERLEAVE'  type='string-select' default='BAND'>"
+"       <Value>BAND</Value>"
+"       <Value>PIXEL</Value>"
+"       <Value>LINE</Value>"
+"       <Value>BSQ</Value>"
+"       <Value>BIP</Value>"
+"       <Value>BIL</Value>"
+"   </Option>"
+"  <Option name='SRID'        type='int'    description='Overwrite EPSG code'/>"
 "</CreationOptionList>" );
         poDriver->pfnOpen       = GeoRasterDataset::Open;
         poDriver->pfnCreate     = GeoRasterDataset::Create;
