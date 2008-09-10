@@ -647,7 +647,6 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
         "DECLARE\n"
         "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
         "  COL  VARCHAR2(68)    := UPPER(:2);\n"
-        "  USR  VARCHAR2(68)    := UPPER(:3);\n"
         "  W    NUMBER          := :4;\n"
         "  H    NUMBER          := :5;\n"
         "  BB   NUMBER          := :6;\n"
@@ -676,8 +675,8 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
         "    T.%s.RasterDataTable = :rdt AND"
         "    T.%s.RasterId = :rid;\n"
         "\n"
-        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES WHERE \n"
-        "    TABLE_NAME = :1 AND OWNER = :2' INTO CNT USING :rdt, USR;\n"
+        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM USER_SDO_GEOR_SYSDATA WHERE\n"
+        "    RDT_TABLE_NAME = :1' INTO CNT USING :rdt;\n"
         "  IF CNT = 0 THEN\n"
         "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
         "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
@@ -709,7 +708,6 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
 
     poStmt->Bind( pszTable );
     poStmt->Bind( pszColumn );
-    poStmt->Bind( szUser );
     poStmt->Bind( &nColumnBlockSize );
     poStmt->Bind( &nRowBlockSize );
     poStmt->Bind( &nTotalBandBlocks );
@@ -869,6 +867,8 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  -------------------------------------------------------------------
     //  Get data type
     //  -------------------------------------------------------------------
+
+    //TODO: That doesn't seams to be right. I need to revise it.
 
     pszCellDepth        = CPLStrdup( CPLGetXMLValue( phMetadata,
                             "rasterInfo.cellDepth", "8BIT_U" ) );

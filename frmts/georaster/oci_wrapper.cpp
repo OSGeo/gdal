@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id: $
  *
- * Name:     oci_wrapper.cpp.cpp
+ * Name:     oci_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Limited wrapper for OCI (Oracle Call Interfaces)
  * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
