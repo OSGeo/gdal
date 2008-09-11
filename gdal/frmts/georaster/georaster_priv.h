@@ -216,8 +216,7 @@ private:
     void                InitializeLayersNode();
     bool                InitializeIO();
     bool                FlushMetadata();
-    bool                bOptimizedWriting; /* Doesn't need to read a block to
-                                           polulate it with individuals band */
+    bool                bOptimizedWriting;
 
 public:
 
@@ -261,7 +260,7 @@ public:
     CPLXMLNode*         GetMetadata() { return phMetadata; };
     bool                SetVAT( int nBand, const char* pszName );
     char*               GetVAT( int nBand );
-    void                OptimizedWriting() { bOptimizedWriting = true; };
+    void                SetOptimizedWriting() { bOptimizedWriting = true; };
 
 public:
 
