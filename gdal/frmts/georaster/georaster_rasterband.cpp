@@ -337,8 +337,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
         {
-            //TODO: add Precision and Scale or maybe us FLOAT
-            strcpy( szDescription, CPLSPrintf( "%s NUMBER",
+            strcpy( szDescription, CPLSPrintf( "%s FLOAT",
                 szDescription ) );
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
@@ -350,41 +349,25 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     strcpy( szDescription, CPLSPrintf( "%s )", szDescription ) );
 
     // ----------------------------------------------------------
-    // Create table (Drop it in case it already exist)
+    // Create VAT table
     // ----------------------------------------------------------
-
-    char szUser[OWCODE];
-
-    strcpy( szUser, CPLStrdup( poGeoRaster->poConnection->GetUser() ) );
 
     OWStatement* poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
-        "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
-        "  USR  VARCHAR2(68)    := UPPER(:3);\n"
-        "  CNT  NUMBER          := 0;\n"
-        "  GR1  SDO_GEORASTER   := NULL;\n"
+        "  TAB VARCHAR2(68)  := UPPER(:1);\n"
+        "  CNT NUMBER        := 0;\n"
         "BEGIN\n"
-        "  EXECUTE IMMEDIATE 'DROP TABLE '||TAB||' ';\n"
-        "  EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
+        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM USER_TABLES\n"
+        "    WHERE TABLE_NAME = :1' INTO CNT USING TAB;\n"
         "\n"
-        "  SELECT %s INTO GR1 FROM %s T WHERE"
-        "    T.%s.RasterDataTable = :rdt AND"
-        "    T.%s.RasterId = :rid FOR UPDATE;\n"
-        "  SDO_GEOR.setVAT(GR1, %d, '%s');\n"
-        "  UPDATE %s T SET %s = GR1 WHERE"
-        "    T.%s.RasterDataTable = :rdt AND"
-        "    T.%s.RasterId = :rid;\n"
-        "END;", 
-        szDescription,
-        poGeoRaster->pszColumn, poGeoRaster->pszTable,
-        poGeoRaster->pszColumn, poGeoRaster->pszColumn, nBand, pszVATName,
-        poGeoRaster->pszTable,  poGeoRaster->pszColumn,
-        poGeoRaster->pszColumn, poGeoRaster->pszColumn  ) );
+        "  IF NOT CNT = 0 THEN\n"
+        "    EXECUTE IMMEDIATE 'DROP TABLE '||TAB||' PURGE';\n"
+        "  END IF;\n"
+        "\n"
+        "  EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
+        "END;", szDescription ) );
 
-    poStmt->BindName( ":rdt", poGDS->poGeoRaster->pszDataTable );
-    poStmt->BindName( ":rid", &poGDS->poGeoRaster->nRasterId );
     poStmt->Bind( pszVATName );
-    poStmt->Bind( szUser );
 
     if( ! poStmt->Execute() )
     {
@@ -412,7 +395,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     {
         szInsert[0] = '\0';
 
-        strcat( szInsert, CPLSPrintf ( "INSERT INTO %s VALUES (%d", 
+        strcat( szInsert, CPLSPrintf ( "  INSERT INTO %s VALUES (%d", 
             pszVATName, iEntry ) );
 
         for( iCol = 0; iCol < nColunsCount; iCol++ )
@@ -443,16 +426,36 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // Insert Data to VAT
     // ----------------------------------------------------------
 
-    poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
+    poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf(
+        "DECLARE\n"
+        "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
+        "  GR1  SDO_GEORASTER   := NULL;\n"
         "BEGIN\n"
         "%s"
+        "\n"
+        "  SELECT %s INTO GR1 FROM %s T WHERE"
+        "    T.%s.RasterDataTable = :rdt AND"
+        "    T.%s.RasterId = :rid FOR UPDATE;\n"
+        "  SDO_GEOR.setVAT(GR1, %d, '%s');\n"
+        "  UPDATE %s T SET %s = GR1 WHERE"
+        "    T.%s.RasterDataTable = :rdt AND"
+        "    T.%s.RasterId = :rid;\n"
         "END;",
-        pszInserts ) );
+        pszInserts,
+        poGeoRaster->pszColumn, poGeoRaster->pszTable,
+        poGeoRaster->pszColumn, poGeoRaster->pszColumn,
+        nBand, pszVATName,
+        poGeoRaster->pszTable,  poGeoRaster->pszColumn,
+        poGeoRaster->pszColumn, poGeoRaster->pszColumn  ) );
+
+    poStmt->Bind( pszVATName );
+    poStmt->BindName( ":rdt", poGDS->poGeoRaster->pszDataTable );
+    poStmt->BindName( ":rid", &poGDS->poGeoRaster->nRasterId );
 
     if( ! poStmt->Execute() )
     {
         CPLFree( pszInserts );
-        CPLError( CE_Failure, CPLE_AppDefined, "Insert on VAT Table Error!" );
+        CPLError( CE_Failure, CPLE_AppDefined, "Insert/registering VAT Error!" );
         return CE_Failure;
     }
 
@@ -521,8 +524,11 @@ const GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     {
         switch( hType )
         {
+            case SQLT_FLT:
+                poDefaultRAT->CreateColumn( szField, GFT_Real, GFU_Generic );
+                break;
             case SQLT_NUM:
-                if( nScale == 0 )
+                if( nPrecision == 0 )
                 {
                     poDefaultRAT->CreateColumn( szField, GFT_Integer,
                         GFU_Generic );
