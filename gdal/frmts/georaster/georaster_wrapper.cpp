@@ -559,6 +559,7 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
         "BEGIN\n"
         "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
         "    WHERE TABLE_NAME = :1 AND OWNER = :2 ' INTO CNT USING TAB, USR;\n"
+        "\n"
         "  IF CNT = 0 THEN\n"
         "    EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
         "    SDO_GEOR_UTL.createDMLTrigger( TAB,  COL );\n"
@@ -591,7 +592,6 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
             "DECLARE\n"
             "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
             "  COL  VARCHAR2(68)    := UPPER(:2);\n"
-            "  USR  VARCHAR2(68)    := UPPER(:3);\n"
             "  CNT  NUMBER          := 0;\n"
             "  GR1  SDO_GEORASTER   := NULL;\n"
             "BEGIN\n"
@@ -600,8 +600,9 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
             "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
             "  SELECT GR1.RASTERID        INTO :rid FROM DUAL;\n"
             "\n"
-            "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES WHERE \n"
-            "    TABLE_NAME = :1 AND OWNER = :2' INTO CNT USING :rdt, USR;\n"
+            "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM USER_OBJECT_TABLES\n"
+            "    WHERE TABLE_NAME = :1' INTO CNT USING :rdt;\n"
+            "\n"
             "  IF CNT = 0 THEN\n"
             "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
             "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
@@ -619,7 +620,6 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
 
         poStmt->Bind( pszTable );
         poStmt->Bind( pszColumn );
-        poStmt->Bind( szUser );
         poStmt->BindName( ":rdt", szBindRDT );
         poStmt->BindName( ":rid", &nBindRID );
 
@@ -647,7 +647,6 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
         "DECLARE\n"
         "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
         "  COL  VARCHAR2(68)    := UPPER(:2);\n"
-        "  USR  VARCHAR2(68)    := UPPER(:3);\n"
         "  W    NUMBER          := :4;\n"
         "  H    NUMBER          := :5;\n"
         "  BB   NUMBER          := :6;\n"
@@ -676,8 +675,9 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
         "    T.%s.RasterDataTable = :rdt AND"
         "    T.%s.RasterId = :rid;\n"
         "\n"
-        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES WHERE \n"
-        "    TABLE_NAME = :1 AND OWNER = :2' INTO CNT USING :rdt, USR;\n"
+        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM USER_OBJECT_TABLES\n"
+        "    WHERE TABLE_NAME = :1' INTO CNT USING :rdt;\n"
+        "\n"
         "  IF CNT = 0 THEN\n"
         "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
         "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
@@ -709,7 +709,6 @@ bool GeoRasterWrapper::Create( char* pszDescription, char* pszInsert )
 
     poStmt->Bind( pszTable );
     poStmt->Bind( pszColumn );
-    poStmt->Bind( szUser );
     poStmt->Bind( &nColumnBlockSize );
     poStmt->Bind( &nRowBlockSize );
     poStmt->Bind( &nTotalBandBlocks );

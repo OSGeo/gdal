@@ -439,10 +439,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     }
 
     //  -------------------------------------------------------------------
-    //  Check for create options
+    //  Check for overwriting
     //  -------------------------------------------------------------------
-
-    const char* pszFetched = "";
 
     if( poGRW->GetMetadata() != NULL )
     {
@@ -468,6 +466,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  Check the create options to use in initialization
     //  -------------------------------------------------------------------
 
+    const char* pszFetched      = "";
     char* pszDescription        = NULL;
     char* pszInsert             = NULL;
 
@@ -726,7 +725,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     int nBlockRows = 0;
     CPLErr eErr = CE_None;
 
-    poGRD->poGeoRaster->OptimizedWriting();
+    poGRD->poGeoRaster->SetOptimizedWriting();
 
     int nPixelSize = GDALGetDataTypeSize( 
         poSrcDS->GetRasterBand(1)->GetRasterDataType() ) / 8;
