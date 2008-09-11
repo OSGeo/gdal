@@ -475,6 +475,37 @@ def test_gdal_translate_17():
 
     return 'success'
 
+
+###############################################################################
+# Test translation of a VRT made of VRT
+
+def test_gdal_translate_18():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/8bit_pal.bmp -of VRT tmp/test18_1.vrt').read()
+    os.popen(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_1.vrt -expand rgb -of VRT tmp/test18_2.vrt').read()
+    (ret_stdin, ret_stdout, ret_stderr) = os.popen3(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_2.vrt tmp/test18_2.tif')
+
+    ret_stdout.read()
+
+    # Check that all datasets are closed
+    if ret_stderr.read().find('Open GDAL Datasets') != -1:
+        print ret
+        return 'fail'
+
+    ds = gdal.Open('tmp/test18_2.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -500,6 +531,18 @@ def test_gdal_translate_cleanup():
         os.remove('tmp/test17.vrt')
     except:
         pass
+    try:
+        os.remove('tmp/test18_1.vrt')
+    except:
+        pass
+    try:
+        os.remove('tmp/test18_2.vrt')
+    except:
+        pass
+    try:
+        os.remove('tmp/test18_2.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -520,6 +563,7 @@ gdaltest_list = [
     test_gdal_translate_15,
     test_gdal_translate_16,
     test_gdal_translate_17,
+    test_gdal_translate_18,
     test_gdal_translate_cleanup
     ]
 
