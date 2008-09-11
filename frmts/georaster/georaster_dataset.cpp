@@ -786,7 +786,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     if( pfnProgress )
     {
-        printf( "Ouput dataset: (georaster:%s,%s,%s,%s,%d) on %s,%s",
+        printf( "Ouput dataset: (georaster:%s,%s,%s,%s,%d) on %s,%s\n",
             poGRD->poGeoRaster->poConnection->GetUser(),
             poGRD->poGeoRaster->poConnection->GetPassword(),
             poGRD->poGeoRaster->poConnection->GetServer(),
