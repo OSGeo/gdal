@@ -58,6 +58,8 @@ struct _GDALProxyPoolCacheEntry
     GIntBig       responsiblePID;
     char         *pszFileName;
     GDALDataset  *poDS;
+
+    /* Ref count of the cached dataset */
     int           refCount;
 
     GDALProxyPoolCacheEntry* prev;
@@ -67,11 +69,24 @@ struct _GDALProxyPoolCacheEntry
 class GDALDatasetPool
 {
     private:
+        /* Ref count of the pool singleton */
+        /* Taken by "toplevel" GDALProxyPoolDataset in its constructor and released */
+        /* in its destructor. See also refCountOfDisableRefCount for the difference */
+        /* between toplevel and inner GDALProxyPoolDataset */
         int refCount;
+
         int maxSize;
         int currentSize;
         GDALProxyPoolCacheEntry* firstEntry;
         GDALProxyPoolCacheEntry* lastEntry;
+
+        /* This variable prevents a dataset that is going to be opened in GDALDatasetPool::_RefDataset */
+        /* from increasing refCount if, during its opening, it creates a GDALProxyPoolDataset */
+        /* We increment it before opening or closing a cached dataset and decrement it afterwards */
+        /* The typical use case is a VRT made of simple sources that are VRT */
+        /* We don't want the "inner" VRT to take a reference on the pool, otherwise there is */
+        /* a high chance that this reference will not be dropped and the pool remain ghost */
+        int refCountOfDisableRefCount;
 
         /* Caution : to be sure that we don't run out of entries, size must be at */
         /* least greater or equal than the maximum number of threads */
@@ -101,6 +116,7 @@ GDALDatasetPool::GDALDatasetPool(int maxSize)
     firstEntry = NULL;
     lastEntry = NULL;
     refCount = 0;
+    refCountOfDisableRefCount = 0;
 }
 
 /************************************************************************/
@@ -229,7 +245,11 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName, G
             /* Close by pretending we are the thread that GDALOpen'ed this */
             /* dataset */
             GDALSetResponsiblePIDForCurrentThread(lastEntryWithZeroRefCount->responsiblePID);
+
+            refCountOfDisableRefCount ++;
             GDALClose(lastEntryWithZeroRefCount->poDS);
+            refCountOfDisableRefCount --;
+
             lastEntryWithZeroRefCount->poDS = NULL;
             GDALSetResponsiblePIDForCurrentThread(responsiblePID);
         }
@@ -276,7 +296,11 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName, G
     cur->pszFileName = CPLStrdup(pszFileName);
     cur->responsiblePID = responsiblePID;
     cur->refCount = 1;
+
+    refCountOfDisableRefCount ++;
     cur->poDS = (GDALDataset*) GDALOpen(pszFileName, eAccess);
+    refCountOfDisableRefCount --;
+
     return cur;
 }
 
@@ -294,7 +318,8 @@ void GDALDatasetPool::Ref()
             maxSize = 100;
         singleton = new GDALDatasetPool(maxSize);
     }
-    singleton->refCount++;
+    if (singleton->refCountOfDisableRefCount == 0)
+      singleton->refCount++;
 }
 
 /************************************************************************/
@@ -309,11 +334,14 @@ void GDALDatasetPool::Unref()
         CPLAssert(0);
         return;
     }
-    singleton->refCount--;
-    if (singleton->refCount == 0)
+    if (singleton->refCountOfDisableRefCount == 0)
     {
-        delete singleton;
-        singleton = NULL;
+      singleton->refCount--;
+      if (singleton->refCount == 0)
+      {
+          delete singleton;
+          singleton = NULL;
+      }
     }
 }
 
