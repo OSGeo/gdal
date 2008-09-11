@@ -377,6 +377,10 @@ for use.  <i>Average_magphase</i> averages complex data in mag/phase space.
 <i>Nearest</i> and <i>average</i> are applicable to normal image data.  
 <i>Nearest</i> applies a nearest neighbour (simple sampling) resampler, while
 <i>average</i> computes the average of all non-NODATA contributing pixels.
+Gauss resampling applies a Gaussian kernel before computing the overview, 
+which can lead to better results than simple averaging in e.g case of sharp edges
+with high contrast or noisy patterns. The advised level values should be 2, 4, 8, ...
+so that a 3x3 resampling Gaussian kernel is selected.
 
 Selecting a level value like <i>2</i> causes an overview level that is 1/2
 the resolution (in each dimension) of the base layer to be computed.  If
