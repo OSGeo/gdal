@@ -5543,7 +5543,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj5) {
+      if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj5, 
           (void**)&cbfunction, 
@@ -8282,7 +8282,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj3) {
+      if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj3, 
           (void**)&cbfunction, 
@@ -10896,7 +10896,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj6) {
+      if (obj6 && obj6 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj6, 
           (void**)&cbfunction, 
@@ -11079,7 +11079,7 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj6) {
+      if (obj6 && obj6 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj6, 
           (void**)&cbfunction, 
@@ -11168,17 +11168,12 @@ SWIGINTERN PyObject *_wrap_Band_SetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
   int ecode2 = 0 ;
   double val3 ;
   int ecode3 = 0 ;
-  int val4 ;
-  int ecode4 = 0 ;
-  void *argp5 = 0 ;
-  int res5 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
-  PyObject * obj4 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOOO:Band_SetDefaultHistogram",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:Band_SetDefaultHistogram",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetDefaultHistogram" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
@@ -11194,16 +11189,22 @@ SWIGINTERN PyObject *_wrap_Band_SetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_SetDefaultHistogram" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast< double >(val3);
-  ecode4 = SWIG_AsVal_int(obj3, &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Band_SetDefaultHistogram" "', argument " "4"" of type '" "int""'");
-  } 
-  arg4 = static_cast< int >(val4);
-  res5 = SWIG_ConvertPtr(obj4, &argp5,SWIGTYPE_p_int, 0 |  0 );
-  if (!SWIG_IsOK(res5)) {
-    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "Band_SetDefaultHistogram" "', argument " "5"" of type '" "int *""'"); 
+  {
+    /* %typemap(in,numinputs=1) (int nList, int* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj3) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg4 = PySequence_Size(obj3);
+    arg5 = (int*) malloc(arg4*sizeof(int));
+    for( int i = 0; i<arg4; i++ ) {
+      PyObject *o = PySequence_GetItem(obj3,i);
+      if ( !PyArg_Parse(o,"i",&arg5[i]) ) {
+        SWIG_fail;
+      }
+    }
   }
-  arg5 = reinterpret_cast< int * >(argp5);
   {
     result = (CPLErr)GDALRasterBandShadow_SetDefaultHistogram(arg1,arg2,arg3,arg4,arg5);
     if ( bUseExceptions ) {
@@ -11214,8 +11215,20 @@ SWIGINTERN PyObject *_wrap_Band_SetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
   return NULL;
 }
 
@@ -12515,7 +12528,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj5) {
+      if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj5, 
           (void**)&cbfunction, 
@@ -12642,7 +12655,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj5) {
+      if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj5, 
           (void**)&cbfunction, 
@@ -12864,7 +12877,7 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj3) {
+      if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj3, 
           (void**)&cbfunction, 
@@ -13012,7 +13025,7 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj5) {
+      if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj5, 
           (void**)&cbfunction, 
@@ -13156,7 +13169,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj3) {
+      if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj3, 
           (void**)&cbfunction, 
@@ -13286,7 +13299,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverview(PyObject *SWIGUNUSEDPARM(self), Py
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj3) {
+      if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( obj3, 
           (void**)&cbfunction, 

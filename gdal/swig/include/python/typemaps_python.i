@@ -775,7 +775,7 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 {
     /* %typemap(in) (GDALProgressFunc callback = NULL) */
     /* callback_func typemap */
-    if ($input) {
+    if ($input && $input != Py_None ) {
         void* cbfunction = NULL;
         SWIG_ConvertPtr( $input, 
                          (void**)&cbfunction, 
@@ -969,3 +969,4 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
   $result = Py_BuildValue( "(ddiO)", min_val, max_val, buckets_val, psList );
   Py_XDECREF(psList);
 }
+
