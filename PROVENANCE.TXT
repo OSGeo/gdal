@@ -99,7 +99,6 @@ Note: all the following are build options, not required.
 === gdal/port === 
 
 * Various contributors including Daniel Morissette, Andrey Kiselev, Frank Warmerdam and Mateusz Loskot.
-* cpl_strtod.cpp is derived from public domain source (properly labelled). 
 * cpl_minizip* files come from the "minizip" distribution. Placed under a modified BSD Licence (see port/LICENCE_minizip). Added to gdal/LICENSE.TXT
 
 === gdal/gcore ===
