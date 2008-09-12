@@ -815,7 +815,7 @@ class Band(MajorObject):
         return _gdal.Band_GetDefaultHistogram(*args, **kwargs)
 
     def SetDefaultHistogram(*args):
-        """SetDefaultHistogram(self, double min, double max, int buckets_in, int panHistogram_in) -> CPLErr"""
+        """SetDefaultHistogram(self, double min, double max, int buckets_in) -> CPLErr"""
         return _gdal.Band_SetDefaultHistogram(*args)
 
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
