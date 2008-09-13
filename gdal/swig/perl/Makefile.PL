@@ -2,10 +2,11 @@ use ExtUtils::MakeMaker;
 
 $LIB = '';
 $INC = '';
-
-if (-f 'GNUmakefile') {
-    print "I am assuming I am in GDAL tree\n";
-    $LIB = '-L../../.libs';
+# check that we're part of GDAL distro
+# or that installed GDAL version is the same as that in lib/Geo/GDAL.pm 
+if (-f "../../GDALmake.opt") {
+    print "Building in GDAL distro tree\n";
+    $LIB = '-L../../.libs -L../..';
     $INC = '-I../../gcore -I../../alg -I../../ogr -I../../port';
 } elsif (-f "c:/msys/1.0/local/bin/gdal-config") {
     print "found gdal-config in c:/msys/1.0/local/bin/\n";
@@ -15,10 +16,12 @@ if (-f 'GNUmakefile') {
 } elsif (-f "/usr/local/bin/gdal-config") {
     print "found gdal-config in /usr/local/bin/\n";
     open $fh, "/usr/local/bin/gdal-config";
+} elsif (-f "/usr/bin/gdal-config") {
+    print "found gdal-config in /usr/bin/\n";
+    open $fh, "/usr/bin/gdal-config";
 } else {
-    die "gdal-config not found";
+    die "can't find gdal-config";
 }
-
 if ($fh) {
     @config = <$fh>;
     close $fh;
