@@ -512,9 +512,13 @@ int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned c
     tc1 = BLXmalloc(sizeof(blxdata)*side*side/4);
     tmpdata = BLXmalloc(5*4*side*side/4); 
 
-    /* Scale indata */
-    for(i=0; i<side*side; i++)
+    /* Scale indata and process undefined values*/
+    for(i=0; i<side*side; i++) {
+	if((indata[i] == BLX_UNDEF) && ctx->fillundef)
+	    indata[i] = ctx->fillundefval;
 	indata_scaled[i] = indata[i] / ctx->zscale;
+    }
+
     indata = indata_scaled;
     
     cout = tmpdata;
@@ -833,6 +837,9 @@ blxcontext_t *blx_create_context() {
     c->debug = 0;
 
     c->zscale = 1;
+
+    c->fillundef = 1;	
+    c->fillundefval = 0;
 
     return c;
 }
