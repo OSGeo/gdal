@@ -27,13 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
 *
-* $Log: blxdataset.cpp,v $
 */
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 #include <blx.h>
