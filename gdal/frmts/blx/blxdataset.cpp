@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Project:  BLX Driver
  * Purpose:  GDAL BLX support.
@@ -32,6 +32,8 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id $");
 
 CPL_C_START
 #include <blx.h>
