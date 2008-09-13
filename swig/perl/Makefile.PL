@@ -4,7 +4,7 @@ $LIB = '';
 $INC = '';
 # check that we're part of GDAL distro
 # or that installed GDAL version is the same as that in lib/Geo/GDAL.pm 
-if (-f "../../GDALmake.opt") {
+if (-d "../../.libs") {
     print "Building in GDAL distro tree\n";
     $LIB = '-L../../.libs';
     $INC = '-I../../gcore -I../../alg -I../../ogr -I../../port';
@@ -46,7 +46,7 @@ for my $module (keys %object) {
     WriteMakefile( NAME => $module,
 		   VERSION_FROM => 'lib/Geo/GDAL.pm',
 		   MAKEFILE => 'Makefile_'.$add,
-		   LIBS => "$LIB -lgdal.dll",
+		   LIBS => "$LIB -lgdal",
 		   INC => $INC,
 		   OBJECT => $object{$module}
 		   );
