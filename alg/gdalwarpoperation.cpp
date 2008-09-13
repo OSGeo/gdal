@@ -34,6 +34,10 @@
 
 CPL_CVSID("$Id$");
 
+/* Defined in gdalwarpkernel.cpp */
+int GWKGetFilterRadius(GDALResampleAlg eResampleAlg);
+
+
 /************************************************************************/
 /* ==================================================================== */
 /*                          GDALWarpOperation                           */
@@ -1940,16 +1944,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 /*      we may need to collect data if some portion of the              */
 /*      resampling kernel could be on-image.                            */
 /* -------------------------------------------------------------------- */
-    int nResWinSize = 0;
-
-    if( psOptions->eResampleAlg == GRA_Bilinear )
-        nResWinSize = 1;
-    
-    if( psOptions->eResampleAlg == GRA_Cubic )
-        nResWinSize = 2;
-
-    if( psOptions->eResampleAlg == GRA_CubicSpline )
-        nResWinSize = 2;
+    int nResWinSize = GWKGetFilterRadius(psOptions->eResampleAlg);
 
 /* -------------------------------------------------------------------- */
 /*      Allow addition of extra sample pixels to source window to       */
