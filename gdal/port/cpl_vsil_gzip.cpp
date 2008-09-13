@@ -1174,7 +1174,7 @@ public:
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
 
-    const ZIPContent* GetContentOfZip(const char* zipFilename);
+    const ZIPContent* GetContentOfZip(const char* zipFilename, unzFile unzF = NULL);
     char* SplitFilename(const char *pszFilename, CPLString &osZipInFileName);
     unzFile OpenZIPFile(const char* zipFilename, const char* zipInFileName);
     int FindFileInZip(const char* zipFilename, const char* zipInFileName, const ZIPEntry** zipEntry);
@@ -1219,7 +1219,7 @@ VSIZipFilesystemHandler::~VSIZipFilesystemHandler()
 /*                         GetContentOfZip()                            */
 /************************************************************************/
 
-const ZIPContent* VSIZipFilesystemHandler::GetContentOfZip(const char* zipFilename)
+const ZIPContent* VSIZipFilesystemHandler::GetContentOfZip(const char* zipFilename, unzFile unzF)
 {
     CPLMutexHolder oHolder( &hMutex );
 
@@ -1228,12 +1228,20 @@ const ZIPContent* VSIZipFilesystemHandler::GetContentOfZip(const char* zipFilena
         return oFileList[zipFilename];
     }
 
-    unzFile unzF = cpl_unzOpen(zipFilename);
-    if (!unzF)
-        return NULL;
+    int bMustCloseUnzf = (unzF == NULL);
+    if (unzF == NULL)
+    {
+        unzF = cpl_unzOpen(zipFilename);
+        if (!unzF)
+            return NULL;
+    }
 
     if (cpl_unzGoToFirstFile(unzF) != UNZ_OK)
+    {
+        if (bMustCloseUnzf)
+            cpl_unzClose(unzF);
         return NULL;
+    }
 
     ZIPContent* content = new ZIPContent;
     content->nEntries = 0;
@@ -1264,7 +1272,8 @@ const ZIPContent* VSIZipFilesystemHandler::GetContentOfZip(const char* zipFilena
         content->nEntries++;
     } while(cpl_unzGoToNextFile(unzF) == UNZ_OK);
 
-    cpl_unzClose(unzF);
+    if (bMustCloseUnzf)
+        cpl_unzClose(unzF);
 
     return content;
 }
@@ -1379,9 +1388,22 @@ unzFile VSIZipFilesystemHandler::OpenZIPFile(const char* zipFilename,
 
         if (cpl_unzGoToNextFile(unzF) != UNZ_END_OF_LIST_OF_FILE)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Support only 1 file in ZIP file %s when no explicit in-zip filename is specified",
-                     zipFilename);
+            CPLString msg;
+            msg.Printf("Support only 1 file in ZIP file %s when no explicit in-zip filename is specified",
+                       zipFilename);
+            const ZIPContent* content = GetContentOfZip(zipFilename, unzF);
+            if (content)
+            {
+                int i;
+                msg += "You could try one of the following :\n";
+                for(i=0;i<content->nEntries;i++)
+                {
+                    msg += CPLString().Printf("  /vsizip/%s/%s\n", zipFilename, content->entries[i].fileName);
+                }
+            }
+
+            CPLError(CE_Failure, CPLE_NotSupported, msg.c_str());
+
             cpl_unzClose(unzF);
             return NULL;
         }
