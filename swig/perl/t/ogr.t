@@ -198,18 +198,6 @@ for (@tmp) {
 
 ogr_tests($osr);
 
-my $src = Geo::OSR::SpatialReference->new();
-$src->ImportFromEPSG(2392);
-my $dst = Geo::OSR::SpatialReference->new();
-$dst->ImportFromEPSG(2392);
-
-my $t = Geo::OSR::CoordinateTransformation->new($src, $dst);
-
-my @points = ([2492055.205, 6830493.772],
-	      [2492065.205, 6830483.772]);
-
-$t->TransformPoints(\@points);
-
 my $methods = Geo::OSR::GetProjectionMethods;
 
 for my $method (@$methods) {
@@ -451,7 +439,7 @@ sub ogr_tests {
 			if ($type eq 'Pointxx') {
 			    mytest('skipped',undef,$name,$type,'geom open');
 			} else {
-			    $t = $type eq 'Unknown' ? 'Polygon' : $type;
+			    my $t = $type eq 'Unknown' ? 'Polygon' : $type;
 			    my $t2 = $geom->GeometryType;
 			    mytest($t eq $t2,"$t ne $t2",$name,$type,'geom open');
 
