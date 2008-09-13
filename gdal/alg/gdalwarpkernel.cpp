@@ -43,6 +43,12 @@ static const int anGWKFilterRadius[] =
     3       // Lanczos windowed sinc
 };
 
+/* Used in gdalwarpoperation.cpp */
+int GWKGetFilterRadius(GDALResampleAlg eResampleAlg)
+{
+    return anGWKFilterRadius[eResampleAlg];
+}
+
 static CPLErr GWKGeneralCase( GDALWarpKernel * );
 static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK );
