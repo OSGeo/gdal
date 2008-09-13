@@ -165,7 +165,7 @@ CPLErr BLXDataset::GetGeoTransform( double * padfTransform )
 
 const char *BLXDataset::GetProjectionRef()
 {
-    return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0]]" );
+    return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]" );
 }
 
 BLXRasterBand::BLXRasterBand( BLXDataset *poDS, int nBand, int overviewLevel )
@@ -240,6 +240,7 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nYSize = poSrcDS->GetRasterYSize();
     
     int zscale = 1;
+    int fillundef = 1, fillundefval = 0;
     int endian = LITTLEENDIAN;
 
 // -------------------------------------------------------------------- 
@@ -283,7 +284,24 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
         }
     }
-    if( CSLFetchNameValue(papszOptions,"BIGENDIAN") != NULL )
+
+    if( CSLFetchNameValue(papszOptions,"FILLUNDEF") != NULL 
+                && EQUAL(CSLFetchNameValue(papszOptions,"FILLUNDEF"),"NO") )
+	fillundef = 0;
+    else	
+	fillundef = 1;
+
+    if( CSLFetchNameValue(papszOptions,"FILLUNDEFVAL") != NULL ) {
+        fillundefval = atoi(CSLFetchNameValue(papszOptions,"FILLUNDEFVAL"));
+        if( (fillundefval < -32768) || (fillundefval > 32767) ) {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "FILLUNDEFVAL=%s is not a legal value in the range -32768, 32767.",
+                      CSLFetchNameValue(papszOptions,"FILLUNDEFVAL") );
+            return NULL;
+        }
+    }
+    if( CSLFetchNameValue(papszOptions,"BIGENDIAN") != NULL 
+	&& !EQUAL(CSLFetchNameValue(papszOptions,"BIGENDIAN"),"NO") )
 	endian = BIGENDIAN;
 	
     
@@ -300,6 +318,8 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     ctx->cell_rows = nYSize / ctx->cell_ysize;
     ctx->cell_cols = nXSize / ctx->cell_xsize;
     ctx->zscale = zscale;
+    ctx->fillundef = fillundef;
+    ctx->fillundefval = fillundefval;
     ctx->endian = endian;
 
     if(blxopen(ctx, pszFilename, "wb")) {
