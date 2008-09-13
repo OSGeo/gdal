@@ -45,6 +45,20 @@ def vrtfilt_1():
     return tst.testOpen()
 
 ###############################################################################
+# Verify simple 3x3 averaging filter (normalized) on a dataset with nodata
+
+def vrtfilt_2():
+
+    ds = gdal.Open('data/test_vrt_filter_nodata.tif')
+    checksum = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    # This is a black&white checkboard, where black = nodata
+    # Thus averaging it and taking nodata into account will not change it
+    tst = gdaltest.GDALTest( 'VRT', 'avfilt_nodata.vrt', 1, checksum )
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup.
 
 def vrtfilt_cleanup():
@@ -52,6 +66,7 @@ def vrtfilt_cleanup():
 
 gdaltest_list = [
     vrtfilt_1,
+    vrtfilt_2,
     vrtfilt_cleanup ]
 
 if __name__ == '__main__':
