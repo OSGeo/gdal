@@ -452,7 +452,10 @@ FilterData( int nXSize, int nYSize, GDALDataType eType,
 /* -------------------------------------------------------------------- */
     if( eType == GDT_Float32 )
     {
-        int iX, iY; 
+        int iX, iY;
+
+        int bHasNoData;
+        float fNoData = poRasterBand->GetNoDataValue(&bHasNoData);
 
         for( iY = 0; iY < nYSize; iY++ )
         {
@@ -461,31 +464,41 @@ FilterData( int nXSize, int nYSize, GDALDataType eType,
                 int    iYY, iKern = 0;
                 double dfSum = 0.0, dfKernSum = 0.0;
                 float  fResult;
+                int    iIndex = (iY+nKernelSize/2 ) * (nXSize+2*nExtraEdgePixels) + iX + nKernelSize/2;
+                float  fCenter = ((float *)pabySrcData)[iIndex];
 
-                for( iYY = 0; iYY < nKernelSize; iYY++ )
+                // Check if center srcpixel is NoData
+                if(!bHasNoData || fCenter != fNoData)
                 {
-                    int i;
-                    float *pafData = ((float *)pabySrcData) 
-                        + (iY+iYY) * (nXSize+2*nExtraEdgePixels) + iX;
-
-                    for( i = 0; i < nKernelSize; i++, pafData++, iKern++ )
+                    for( iYY = 0; iYY < nKernelSize; iYY++ )
                     {
-                        dfSum += *pafData * padfKernelCoefs[iKern];
-                        dfKernSum += padfKernelCoefs[iKern];
-                    }
-                }
+                        int i;
+                        float *pafData = ((float *)pabySrcData) 
+                                + (iY+iYY) * (nXSize+2*nExtraEdgePixels) + iX;
 
-                if( bNormalized )
-                {
-                    if( dfKernSum != 0.0 )
-                        fResult = (float) (dfSum / dfKernSum);
+                        for( i = 0; i < nKernelSize; i++, pafData++, iKern++ )
+                        {
+                            if(!bHasNoData || *pafData != fNoData)
+                            {
+                                dfSum += *pafData * padfKernelCoefs[iKern];
+                                dfKernSum += padfKernelCoefs[iKern];
+                            }
+                        }
+                    }
+                    if( bNormalized )
+                    {
+                        if( dfKernSum != 0.0 )
+                            fResult = (float) (dfSum / dfKernSum);
+                        else
+                            fResult = 0.0;
+                    }
                     else
-                        fResult = 0.0;
+                        fResult = (float) dfSum;
+
+                    ((float *) pabyDstData)[iX + iY * nXSize] = fResult;
                 }
                 else
-                    fResult = (float) dfSum;
-
-                ((float *) pabyDstData)[iX + iY * nXSize] = fResult;
+                    ((float *) pabyDstData)[iX + iY * nXSize] = fNoData;
             }
         }
     }
