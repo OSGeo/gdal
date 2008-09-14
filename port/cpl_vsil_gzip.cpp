@@ -1361,7 +1361,29 @@ char* VSIZipFilesystemHandler::SplitFilename(const char *pszFilename,
                 if (!VSI_ISDIR(statBuf.st_mode))
                 {
                     if (pszFilename[i + 4] != 0)
-                        osZipInFileName = pszFilename + i + 5;
+                    {
+                        char* pszZipInFileName = CPLStrdup(pszFilename + i + 5);
+
+                        /* Replace a/../b by b and foo/a/../b by foo/b */
+                        while(TRUE)
+                        {
+                            char* pszPrevDir = strstr(pszZipInFileName, "/../");
+                            if (pszPrevDir == NULL || pszPrevDir == pszZipInFileName)
+                                break;
+
+                            char* pszPrevSlash = pszPrevDir - 1;
+                            while(pszPrevSlash != pszZipInFileName &&
+                                  *pszPrevSlash != '/')
+                                pszPrevSlash --;
+                            if (pszPrevSlash == pszZipInFileName)
+                                memmove(pszZipInFileName, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
+                            else
+                                memmove(pszPrevSlash + 1, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
+                        }
+
+                        osZipInFileName = pszZipInFileName;
+                        CPLFree(pszZipInFileName);
+                    }
                     else
                         osZipInFileName = "";
 
