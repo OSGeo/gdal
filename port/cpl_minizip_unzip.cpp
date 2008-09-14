@@ -422,7 +422,7 @@ local uLong64 unzlocal_SearchCentralDir(const zlib_filefunc_def* pzlib_filefunc_
         uReadPos = uSizeFile-uBackRead ;
 
         uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
-                     (BUFREADCOMMENT+4) : (uSizeFile-uReadPos);
+                     (BUFREADCOMMENT+4) : (uLong)(uSizeFile-uReadPos);
         if (ZSEEK(*pzlib_filefunc_def,filestream,uReadPos,ZLIB_FILEFUNC_SEEK_SET)!=0)
             break;
 
@@ -489,7 +489,7 @@ local uLong64 unzlocal_SearchCentralDir64(const zlib_filefunc_def* pzlib_filefun
         uReadPos = uSizeFile-uBackRead ;
 
         uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
-                     (BUFREADCOMMENT+4) : (uSizeFile-uReadPos);
+                     (BUFREADCOMMENT+4) : (uLong)(uSizeFile-uReadPos);
         if (ZSEEK(*pzlib_filefunc_def,filestream,uReadPos,ZLIB_FILEFUNC_SEEK_SET)!=0)
             break;
 
@@ -798,22 +798,22 @@ local int unzlocal_GetCurrentFileInfoInternal OF((unzFile file,
                                                   unz_file_info_internal
                                                   *pfile_info_internal,
                                                   char *szFileName,
-                                                  uLong64 fileNameBufferSize,
+                                                  uLong fileNameBufferSize,
                                                   void *extraField,
-                                                  uLong64 extraFieldBufferSize,
+                                                  uLong extraFieldBufferSize,
                                                   char *szComment,
-                                                  uLong64 commentBufferSize));
+                                                  uLong commentBufferSize));
 
 local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                                                   unz_file_info *pfile_info,
                                                   unz_file_info_internal
                                                   *pfile_info_internal,
                                                   char *szFileName,
-                                                  uLong64 fileNameBufferSize,
+                                                  uLong fileNameBufferSize,
                                                   void *extraField,
-                                                  uLong64 extraFieldBufferSize,
+                                                  uLong extraFieldBufferSize,
                                                   char *szComment,
-                                                  uLong64 commentBufferSize)
+                                                  uLong commentBufferSize)
 {
     unz_s* s;
     unz_file_info file_info;
@@ -1796,7 +1796,7 @@ extern int ZEXPORT cpl_unzCloseCurrentFile (unzFile file)
   uSizeBuf is the size of the szComment buffer.
   return the number of byte copied or an error code <0
 */
-extern int ZEXPORT cpl_unzGetGlobalComment (unzFile file, char * szComment, uLong64 uSizeBuf)
+extern int ZEXPORT cpl_unzGetGlobalComment (unzFile file, char * szComment, uLong uSizeBuf)
 {
     /* int err=UNZ_OK; */
     unz_s* s;
