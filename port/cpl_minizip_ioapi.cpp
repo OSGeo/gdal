@@ -100,7 +100,7 @@ uLong ZCALLBACK fread_file_func (voidpf opaque, voidpf stream, void* buf, uLong 
 static
 uLong ZCALLBACK fwrite_file_func (voidpf opaque, voidpf stream, const void* buf, uLong size)
 {
-    uLong64 ret;
+    uLong ret;
     ret = (uLong)VSIFWriteL(buf, 1, (size_t)size, (FILE *)stream);
     return ret;
 }
