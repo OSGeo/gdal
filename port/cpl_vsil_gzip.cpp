@@ -1688,3 +1688,4 @@ void VSIInstallZipFileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsizip/", new VSIZipFilesystemHandler() );
 }
+
