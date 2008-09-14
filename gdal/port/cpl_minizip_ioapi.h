@@ -1,5 +1,6 @@
 /* Modified version by Even Rouault. :
       - change fill_fopen_filefunc to cpl_fill_fopen_filefunc
+      - Add support for ZIP64
 
    Copyright (C) 2007-2008 Even Rouault
 
@@ -16,6 +17,9 @@
 
 #ifndef CPL_MINIZIP_IOAPI_H_INCLUDED
 #define CPL_MINIZIP_IOAPI_H_INCLUDED
+
+#include "cpl_vsi.h"
+#define uLong64 vsi_l_offset
 
 #define ZLIB_FILEFUNC_SEEK_CUR (1)
 #define ZLIB_FILEFUNC_SEEK_END (2)
@@ -44,8 +48,8 @@ extern "C" {
 typedef voidpf (ZCALLBACK *open_file_func) OF((voidpf opaque, const char* filename, int mode));
 typedef uLong  (ZCALLBACK *read_file_func) OF((voidpf opaque, voidpf stream, void* buf, uLong size));
 typedef uLong  (ZCALLBACK *write_file_func) OF((voidpf opaque, voidpf stream, const void* buf, uLong size));
-typedef long   (ZCALLBACK *tell_file_func) OF((voidpf opaque, voidpf stream));
-typedef long   (ZCALLBACK *seek_file_func) OF((voidpf opaque, voidpf stream, uLong offset, int origin));
+typedef uLong64   (ZCALLBACK *tell_file_func) OF((voidpf opaque, voidpf stream));
+typedef long   (ZCALLBACK *seek_file_func) OF((voidpf opaque, voidpf stream, uLong64 offset, int origin));
 typedef int    (ZCALLBACK *close_file_func) OF((voidpf opaque, voidpf stream));
 typedef int    (ZCALLBACK *testerror_file_func) OF((voidpf opaque, voidpf stream));
 
