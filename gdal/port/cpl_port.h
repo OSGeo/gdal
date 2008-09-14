@@ -177,16 +177,22 @@ typedef int             GBool;
 #define VSI_LARGE_API_SUPPORTED
 typedef __int64          GIntBig;
 typedef unsigned __int64 GUIntBig;
+#define CPL_FRMT_GIB     "%I64d"
+#define CPL_FRMT_GUIB     "%I64u"
 
 #elif HAVE_LONG_LONG
 
 typedef long long        GIntBig;
 typedef unsigned long long GUIntBig;
+#define CPL_FRMT_GIB     "%lld"
+#define CPL_FRMT_GUIB     "%llu"
 
 #else
 
 typedef long             GIntBig;
 typedef unsigned long    GUIntBig;
+#define CPL_FRMT_GIB     "%ld"
+#define CPL_FRMT_GUIB     "%lu"
 
 #endif
 
