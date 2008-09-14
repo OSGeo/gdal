@@ -229,7 +229,7 @@ extern int ZEXPORT cpl_unzLocateFile OF((unzFile file,
 typedef struct unz_file_pos_s
 {
     uLong64 pos_in_zip_directory;   /* offset in zip file directory */
-    uLong num_of_file;            /* # of file */
+    uLong64 num_of_file;            /* # of file */
 } unz_file_pos;
 
 extern int ZEXPORT cpl_unzGetFilePos(

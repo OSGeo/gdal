@@ -214,7 +214,7 @@ local int unzlocal_getShort (const zlib_filefunc_def* pzlib_filefunc_def,
                              voidpf filestream,
                              uLong *pX)
 {
-    uLong64 x ;
+    uLong x ;
     int i;
     int err;
 
@@ -241,7 +241,7 @@ local int unzlocal_getLong (const zlib_filefunc_def* pzlib_filefunc_def,
                             voidpf filestream,
                             uLong *pX)
 {
-    uLong64 x ;
+    uLong x ;
     int i;
     int err;
 
@@ -412,7 +412,8 @@ local uLong64 unzlocal_SearchCentralDir(const zlib_filefunc_def* pzlib_filefunc_
     uBackRead = 4;
     while (uBackRead<uMaxBack)
     {
-        uLong64 uReadSize,uReadPos ;
+        uLong uReadSize;
+        uLong64 uReadPos ;
         int i;
         if (uBackRead+BUFREADCOMMENT>uMaxBack)
             uBackRead = uMaxBack;
@@ -478,7 +479,8 @@ local uLong64 unzlocal_SearchCentralDir64(const zlib_filefunc_def* pzlib_filefun
     uBackRead = 4;
     while (uBackRead<uMaxBack)
     {
-        uLong64 uReadSize,uReadPos ;
+        uLong uReadSize;
+        uLong64 uReadPos;
         int i;
         if (uBackRead+BUFREADCOMMENT>uMaxBack)
             uBackRead = uMaxBack;
@@ -892,7 +894,7 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
     lSeek+=file_info.size_filename;
     if ((err==UNZ_OK) && (szFileName!=NULL))
     {
-        uLong64 uSizeRead ;
+        uLong uSizeRead ;
         if (file_info.size_filename<fileNameBufferSize)
         {
             *(szFileName+file_info.size_filename)='\0';
@@ -1798,7 +1800,7 @@ extern int ZEXPORT cpl_unzGetGlobalComment (unzFile file, char * szComment, uLon
 {
     /* int err=UNZ_OK; */
     unz_s* s;
-    uLong64 uReadThis ;
+    uLong uReadThis ;
     if (file==NULL)
         return UNZ_PARAMERROR;
     s=(unz_s*)file;
