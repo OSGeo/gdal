@@ -2,6 +2,7 @@
       - change fill_fopen_filefunc to cpl_fill_fopen_filefunc
       - port to VSIL*L API
       - Remove old C style function prototypes
+      - Add support for ZIP64
 
    Copyright (C) 2007-2008 Even Rouault
 
@@ -48,7 +49,7 @@ uLong ZCALLBACK fwrite_file_func OF((
    uLong size));
 
 static
-long ZCALLBACK ftell_file_func OF((
+uLong64 ZCALLBACK ftell_file_func OF((
    voidpf opaque,
    voidpf stream));
 
@@ -56,7 +57,7 @@ static
 long ZCALLBACK fseek_file_func OF((
    voidpf opaque,
    voidpf stream,
-   uLong offset,
+   uLong64 offset,
    int origin));
 
 static
@@ -99,21 +100,21 @@ uLong ZCALLBACK fread_file_func (voidpf opaque, voidpf stream, void* buf, uLong 
 static
 uLong ZCALLBACK fwrite_file_func (voidpf opaque, voidpf stream, const void* buf, uLong size)
 {
-    uLong ret;
+    uLong64 ret;
     ret = (uLong)VSIFWriteL(buf, 1, (size_t)size, (FILE *)stream);
     return ret;
 }
 
 static
-long ZCALLBACK ftell_file_func (voidpf opaque, voidpf stream)
+uLong64 ZCALLBACK ftell_file_func (voidpf opaque, voidpf stream)
 {
-    long ret;
+    uLong64 ret;
     ret = VSIFTellL((FILE *)stream);
     return ret;
 }
 
 static
-long ZCALLBACK fseek_file_func (voidpf  opaque, voidpf stream, uLong offset, int origin)
+long ZCALLBACK fseek_file_func (voidpf  opaque, voidpf stream, uLong64 offset, int origin)
 {
     int fseek_origin=0;
     long ret;

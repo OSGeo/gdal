@@ -2,6 +2,7 @@
      - Addition of cpl_unzGetCurrentFileZStreamPos
      - Decoration of symbol names unz* -> cpl_unz*
      - Undef EXPORT so that we are sure the symbols are not exported
+     - Add support for ZIP64
 
    Copyright (C) 2007-2008 Even Rouault
 
@@ -55,6 +56,9 @@
 #ifndef CPL_MINIZIP_UNZIP_H_INCLUDED
 #define CPL_MINIZIP_UNZIP_H_INCLUDED
 
+#include "cpl_vsi.h"
+#define uLong64 vsi_l_offset
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -106,8 +110,8 @@ typedef struct tm_unz_s
    These data comes from the end of central dir */
 typedef struct unz_global_info_s
 {
-    uLong number_entry;         /* total number of entries in
-                       the central dir on this disk */
+    uLong64 number_entry;         /* total number of entries in
+                                     the central dir on this disk */
     uLong size_comment;         /* size of the global comment of the zipfile */
 } unz_global_info;
 
@@ -121,8 +125,8 @@ typedef struct unz_file_info_s
     uLong compression_method;   /* compression method              2 bytes */
     uLong dosDate;              /* last mod file date in Dos fmt   4 bytes */
     uLong crc;                  /* crc-32                          4 bytes */
-    uLong compressed_size;      /* compressed size                 4 bytes */
-    uLong uncompressed_size;    /* uncompressed size               4 bytes */
+    uLong64 compressed_size;      /* compressed size                 4 bytes */
+    uLong64 uncompressed_size;    /* uncompressed size               4 bytes */
     uLong size_filename;        /* filename length                 2 bytes */
     uLong size_file_extra;      /* extra field length              2 bytes */
     uLong size_file_comment;    /* file comment length             2 bytes */
@@ -224,7 +228,7 @@ extern int ZEXPORT cpl_unzLocateFile OF((unzFile file,
 /* unz_file_info contain information about a file in the zipfile */
 typedef struct unz_file_pos_s
 {
-    uLong pos_in_zip_directory;   /* offset in zip file directory */
+    uLong64 pos_in_zip_directory;   /* offset in zip file directory */
     uLong num_of_file;            /* # of file */
 } unz_file_pos;
 
@@ -262,7 +266,7 @@ extern int ZEXPORT cpl_unzGetCurrentFileInfo OF((unzFile file,
 
 /** Addition for GDAL : START */
 
-extern int ZEXPORT cpl_unzGetCurrentFileZStreamPos OF(( unzFile file));
+extern uLong64 ZEXPORT cpl_unzGetCurrentFileZStreamPos OF(( unzFile file));
 
 /** Addition for GDAL : END */
 
@@ -363,10 +367,10 @@ extern int ZEXPORT cpl_unzGetLocalExtrafield OF((unzFile file,
 /***************************************************************************/
 
 /* Get the current file offset */
-extern uLong ZEXPORT cpl_unzGetOffset (unzFile file);
+extern uLong64 ZEXPORT cpl_unzGetOffset (unzFile file);
 
 /* Set the current file offset */
-extern int ZEXPORT cpl_unzSetOffset (unzFile file, uLong pos);
+extern int ZEXPORT cpl_unzSetOffset (unzFile file, uLong64 pos);
 
 
 
