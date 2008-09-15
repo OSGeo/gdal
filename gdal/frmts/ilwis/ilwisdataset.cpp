@@ -41,7 +41,7 @@ bool CompareAsNum::operator() (const string& s1, const string& s2) const
     return Num1 < Num2;
 }
 
-string TrimSpaces(const string& input)
+static string TrimSpaces(const string& input)
 {
     // find first non space
     if ( input.empty()) 
@@ -55,9 +55,7 @@ string TrimSpaces(const string& input)
     return input.substr(iFirstNonSpace, iFindLastSpace - iFirstNonSpace + 1);
 }
 
-char line[1024];
-
-string GetLine(FILE* fil)
+static string GetLine(char line[1024], FILE* fil)
 {
     char *p = fgets(line, 1024, fil);
     if (p == NULL)
@@ -160,6 +158,8 @@ void IniFile::RemoveSection(const string& section)
 
 void IniFile::Load()
 {
+    char buffer[1024];
+
     enum ParseState { FindSection, FindKey, ReadFindKey, StoreKey, None } state;
     FILE *filIni = fopen(filename.c_str(), "r");
     if (filIni == NULL)
@@ -173,7 +173,7 @@ void IniFile::Load()
         switch (state)
         {
           case FindSection:
-            s = GetLine(filIni);
+            s = GetLine(buffer, filIni);
             if (s.empty())
                 continue;
 
@@ -190,7 +190,7 @@ void IniFile::Load()
                 state = FindKey;
             break;
           case ReadFindKey:
-            s = GetLine(filIni); // fall through (no break)
+            s = GetLine(buffer, filIni); // fall through (no break)
           case FindKey:
           {
               size_t iEqu = s.find_first_of('=');
