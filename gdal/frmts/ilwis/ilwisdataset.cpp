@@ -41,7 +41,7 @@ bool CompareAsNum::operator() (const string& s1, const string& s2) const
     return Num1 < Num2;
 }
 
-string TrimSpaces(const string& input)
+static string TrimSpaces(const string& input)
 {
     // find first non space
     if ( input.empty()) 
@@ -55,7 +55,7 @@ string TrimSpaces(const string& input)
     return input.substr(iFirstNonSpace, iFindLastSpace - iFirstNonSpace + 1);
 }
 
-string GetLine(FILE* fil)
+static string GetLine(FILE* fil)
 {
     const char *p = CPLReadLineL( fil );
     if (p == NULL)
