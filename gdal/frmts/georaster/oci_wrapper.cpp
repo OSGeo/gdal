@@ -1095,8 +1095,8 @@ bool OWIsNumeric( const char *pszText )
  * "SDO_GEOR.INIT"
  * "SDO_GEOR.createBlank(20001, SDO_NUMBER_ARRAY(0, 0)..."
  */
-const char* OWReplaceString( const char* pszBaseString, 
-                             const char* pszToken, 
+const char* OWReplaceString( const char* pszBaseString,
+                             const char* pszToken,
                              const char* pszOWReplaceToken )
 {
     char  szUpcase[OWTEXT];
@@ -1110,7 +1110,7 @@ const char* OWReplaceString( const char* pszBaseString,
     }
 
     char* pszStart = strstr( szUpcase, pszToken );
-    
+
     if( pszStart == NULL )
     {
         return "";
@@ -1194,7 +1194,7 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
     }
 
     char* pszStart = strstr( szUpcase, "SDO_GEOR.INIT" );
-    
+
     if( pszStart == NULL )
     {
         return "";
@@ -1324,7 +1324,7 @@ bool CheckError( sword nStatus, OCIError* hError )
         CPLError( CE_Failure, CPLE_AppDefined, "OCI_NODATA\n" );
         break;
     case OCI_INVALID_HANDLE:
-        CPLError( CE_Failure, CPLE_AppDefined, "OCI_INVALID_HANDLE\n" );
+        CPLError( CE_Failure, CPLE_AppDefined, "OCI_INVALID_HANDLE" );
         break;
     case OCI_STILL_EXECUTING:
         CPLError( CE_Failure, CPLE_AppDefined, "OCI_STILL_EXECUTE\n" );
@@ -1337,7 +1337,7 @@ bool CheckError( sword nStatus, OCIError* hError )
         if( hError == NULL)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                "OCI_ERROR with no error handler\n" );
+                "OCI_ERROR with no error handler" );
         }
 
         OCIErrorGet( (dvoid *) hError, (ub4) 1,
@@ -1350,7 +1350,7 @@ bool CheckError( sword nStatus, OCIError* hError )
             return false;
         }
 
-        CPLError( CE_Failure, CPLE_AppDefined, "%.*s\n",
+        CPLError( CE_Failure, CPLE_AppDefined, "%.*s",
             sizeof(szMsg), szMsg );
         break;
 
