@@ -128,7 +128,9 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
         "    geor:scott/tiger@demodb,table,column,id=1\n"
         "    geor:scott/tiger@server.company.com:1521/survey,table,column,id=1\n"
         "    \"georaster:scott,tiger,demodb,table,column,city='london'\"\n"
-        "    georaster:scott,tiger,,rdt_10$,10\n" );
+        "    georaster:scott,tiger,,rdt_10$,10\n"
+        "Note:\n"
+        "    Cannot use RDT/RID identification for writing to GeoRaster" );
         CSLDestroy( papszParam );
         return false;
     }
@@ -191,7 +193,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  Assign GeoRaster information
     //  -------------------------------------------------------------------
 
-    if( poGRW->GetMetadata() != NULL )
+    if( poGRW->nRasterRows && poGRW->nRasterColumns )
     {
         poGRD->nRasterXSize  = poGRW->nRasterColumns;
         poGRD->nRasterYSize  = poGRW->nRasterRows;
@@ -207,7 +209,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             delete poGRD;
             poGRD = NULL;
-    }
+        }
 
         return (GDALDataset*) poGRD;
     }
@@ -223,6 +225,54 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         nBand = i + 1;
         poGRD->SetBand( nBand, new GeoRasterRasterBand( poGRD, nBand ) );
+    }
+
+    //  -------------------------------------------------------------------
+    //  Set IMAGE_STRUCTURE metadata information
+    //  -------------------------------------------------------------------
+
+    if( EQUAL( poGRW->szInterleaving, "BSQ" ) )
+    {
+        poGRD->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
+    }
+    else if( EQUAL( poGRW->szInterleaving, "BIP" ) )
+    {
+        poGRD->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+    }
+    else if( EQUAL( poGRW->szInterleaving, "BIL" ) )
+    {
+        poGRD->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
+    }
+
+    poGRD->SetMetadataItem( "COMPRESSION", CPLGetXMLValue( poGRW->phMetadata,
+        "rasterInfo.compression.type", "NONE" ), "IMAGE_STRUCTURE" );
+
+    if( EQUAL( poGRW->pszCellDepth, "1BIT" ) )
+    {
+        poGRD->SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
+    }
+
+    if( EQUAL( poGRW->pszCellDepth, "2BIT" ) )
+    {
+        poGRD->SetMetadataItem( "NBITS", "2", "IMAGE_STRUCTURE" );
+    }
+
+    if( EQUAL( poGRW->pszCellDepth, "4BIT" ) )
+    {
+        poGRD->SetMetadataItem( "NBITS", "4", "IMAGE_STRUCTURE" );
+    }
+
+    //  -------------------------------------------------------------------
+    //  Set Metadata domain "ORACLE"
+    //  -------------------------------------------------------------------
+
+    if( poGRD->poGeoRaster->bRDTRIDOnly )
+    {
+        poGRD->SetMetadataItem( "rasterDataTable", poGRW->pszDataTable,
+            "ORACLE" );
+        poGRD->SetMetadataItem( "rasterId", CPLSPrintf("%d",poGRW->nRasterId ),
+            "ORACLE" );
+        return (GDALDataset*) poGRD;
     }
 
     //  -------------------------------------------------------------------
@@ -347,41 +397,6 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         "ORACLE" );
 
     //  -------------------------------------------------------------------
-    //  Set IMAGE_STRUCTURE metadata information
-    //  -------------------------------------------------------------------
-
-    if( EQUAL( poGRW->szInterleaving, "BSQ" ) )
-    {
-        poGRD->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
-    }
-    else if( EQUAL( poGRW->szInterleaving, "BIP" ) )
-    {
-        poGRD->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
-    }
-    else if( EQUAL( poGRW->szInterleaving, "BIL" ) )
-    {
-        poGRD->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
-    }
-
-    poGRD->SetMetadataItem( "COMPRESSION", CPLGetXMLValue( poGRW->phMetadata,
-        "rasterInfo.compression.type", "NONE" ), "IMAGE_STRUCTURE" );
-
-    if( EQUAL( poGRW->pszCellDepth, "1BIT" ) )
-    {
-        poGRD->SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
-    }
-
-    if( EQUAL( poGRW->pszCellDepth, "2BIT" ) )
-    {
-        poGRD->SetMetadataItem( "NBITS", "2", "IMAGE_STRUCTURE" );
-    }
-
-    if( EQUAL( poGRW->pszCellDepth, "4BIT" ) )
-    {
-        poGRD->SetMetadataItem( "NBITS", "4", "IMAGE_STRUCTURE" );
-    }
-
-    //  -------------------------------------------------------------------
     //  Return a GDALDataset
     //  -------------------------------------------------------------------
 
@@ -439,19 +454,26 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     }
 
     //  -------------------------------------------------------------------
-    //  Check for overwriting
+    //  Check for RDT RID only identificator
     //  -------------------------------------------------------------------
 
-    if( poGRW->GetMetadata() != NULL )
+    if( poGRW->bRDTRIDOnly )
     {
-        //  ---------------------------------------------------------------
-        //  Overwriting an existing GeoRaster
-        //  ---------------------------------------------------------------
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Attempt to create GeoRaster with invalid identification (%s). "
+            "Cannot create or update GeoRaster based on RDT/RID only.", pszFilename );
 
-        //  TODO: Allow users to change the format before overwriting
-
-        return (GeoRasterDataset *) poGRD;
+        delete poGRD;
+        return NULL;
     }
+
+    //  -------------------------------------------------------------------
+    //  Is it trying to overwrite an existing GeoRaster?
+    //  -------------------------------------------------------------------
+
+    bool bOverwrite = ( poGRW->nRasterRows && poGRW->nRasterColumns );
+
+CPLDebug("####1", "bOverwrite=%d", bOverwrite);
 
     //  -------------------------------------------------------------------
     //  Set basic information and default values
@@ -551,7 +573,27 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         }
     }
 
-    bool bSucced = poGRW->Create( pszDescription, pszInsert );
+    //  -------------------------------------------------------------------
+    //  Initialize (or Reintialize) GeoRaster
+    //  -------------------------------------------------------------------
+
+    if( pszDescription && bOverwrite )
+    {
+        CPLError( CE_Warning, CPLE_IllegalArg, 
+            "Cannot use DESCRIPTION on a existing GeoRaster" );
+        delete poGRD;
+        return NULL;
+    }
+
+    if( pszInsert && bOverwrite )
+    {
+        CPLError( CE_Warning, CPLE_IllegalArg, 
+            "Cannot use INSERT on a existing GeoRaster" );
+        delete poGRD;
+        return NULL;
+    }
+
+    bool bSucced = poGRW->Create( pszDescription, pszInsert, bOverwrite );
 
     CPLFree( pszInsert );
     CPLFree( pszDescription );
@@ -1050,10 +1092,26 @@ char **GeoRasterDataset::GetMetadata( const char *pszDomain )
 
 CPLErr GeoRasterDataset::Delete( const char* pszFilename )
 {
-    (void) pszFilename;
+/***
+    GeoRasterDataset* poGRD = NULL;
 
-    //TODO: Should I?
+    poGRD = (GeoRasterDataset*) GDALOpen( pszFilename, GA_Update );
 
+    if( ! poGRD )
+    {
+        return CE_Failure;
+    }
+
+    if( ! poGRD->poGeoRaster->pszWhere )
+    {
+        return CE_Failure;
+    }
+
+    if( ! poGRD->poGeoRaster->Delete() )
+    {
+        return CE_Failure;
+    }
+***/
     return CE_None;
 }
 
@@ -1130,16 +1188,18 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         if( poGRW->pszWhere == NULL )
         {
             poStmt = poConnection->CreateStatement( CPLSPrintf(
-                "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s T",
-                poGRW->pszColumn, poGRW->pszColumn, poGRW->pszTable ) );
+                "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s T "
+                "  WHERE %s IS NOT NULL",
+                poGRW->pszColumn, poGRW->pszColumn,
+                poGRW->pszTable, poGRW->pszColumn ) );
         }
         else
         {
             poStmt = poConnection->CreateStatement( CPLSPrintf(
                 "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s T\n"
-                "WHERE  %s",
+                "WHERE  %s AND %s IS NOT NULL",
                 poGRW->pszColumn, poGRW->pszColumn, poGRW->pszTable,
-                poGRW->pszWhere ) );
+                poGRW->pszWhere, poGRW->pszColumn ) );
         }
 
         poStmt->Define( szDataTable );
@@ -1215,20 +1275,28 @@ void CPL_DLL GDALRegister_GEOR()
         poDriver = new GeoRasterDriver();
 
         poDriver->SetDescription(  "GeoRaster" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Oracle Spatial GeoRaster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_georaster.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                    "Byte UInt16 Int16 UInt32 Int32 Float32 "
                                    "Float64 CFloat32 CFloat64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
-"  <Option name='DESCRIPTION' type='string' description='Table Description'/>"
-"  <Option name='INSERT'      type='string' description='Column Values'/>"
-"  <Option name='BLOCKXSIZE'  type='int'    description='Column Block Size'/>"
-"  <Option name='BLOCKYSIZE'  type='int'    description='Row Block Size'/>"
-"  <Option name='BLOCKBSIZE'  type='int'    description='Band Block Size'/>"
-"  <Option name='INTERLEAVE'  type='string-select' default='BAND'>"
+"  <Option name='DESCRIPTION' type='string' description='Table Description' "
+                                           "default='(RASTER MDSYS.SDO_GEORASTER)'/>"
+"  <Option name='INSERT'      type='string' description='Column Values' "
+                                           "default='(SDO_GEOR.INIT())'/>"
+"  <Option name='BLOCKXSIZE'  type='int'    description='Column Block Size' "
+                                           "default='256'/>"
+"  <Option name='BLOCKYSIZE'  type='int'    description='Row Block Size' "
+                                           "default='256'/>"
+"  <Option name='BLOCKBSIZE'  type='int'    description='Band Block Size' "
+                                           "default='Bands'/>"
+"  <Option name='SRID'        type='int'    description='Overwrite EPSG code' "
+                                           "default='0'/>"
+"  <Option name='INTERLEAVE'  type='string-select' "
+                                           "default='BAND'>"
 "       <Value>BAND</Value>"
 "       <Value>PIXEL</Value>"
 "       <Value>LINE</Value>"
@@ -1236,7 +1304,6 @@ void CPL_DLL GDALRegister_GEOR()
 "       <Value>BIP</Value>"
 "       <Value>BIL</Value>"
 "   </Option>"
-"  <Option name='SRID'        type='int'    description='Overwrite EPSG code'/>"
 "</CreationOptionList>" );
         poDriver->pfnOpen       = GeoRasterDataset::Open;
         poDriver->pfnCreate     = GeoRasterDataset::Create;
