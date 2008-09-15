@@ -223,7 +223,11 @@ public:
     static char**       ParseIdentificator( const char* pszStringID );
     static GeoRasterWrapper*
                         Open( const char* pszStringID );
-    bool                Create( char* pszDescription, char* pszInsert );
+    bool                Create(
+                            char* pszDescription,
+                            char* pszInsert,
+                            bool bUpdate );
+    bool                Delete( void );
     void                GetRasterInfo( void );
     int                 CalculateBlockId(
                             int nBand,
@@ -260,7 +264,7 @@ public:
     CPLXMLNode*         GetMetadata() { return phMetadata; };
     bool                SetVAT( int nBand, const char* pszName );
     char*               GetVAT( int nBand );
-    void                SetOptimizedWriting() { bOptimizedWriting = true; };
+    void                SetOptimizedWriting()   { bOptimizedWriting = true; };
 
 public:
 
@@ -271,6 +275,8 @@ public:
     char*               pszDataTable;
     int                 nRasterId;
     char*               pszWhere;
+
+    bool                bRDTRIDOnly;
 
     int                 nSRID;
     CPLXMLNode*         phMetadata;
