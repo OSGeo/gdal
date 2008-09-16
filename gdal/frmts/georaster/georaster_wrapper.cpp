@@ -371,10 +371,10 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     char szValues[OWNAME];
     char szFormat[OWTEXT];
 
-    if( pszTable  == NULL || 
+    if( pszTable  == NULL ||
         pszColumn == NULL )
     {
-        false;
+        return false;
     }
 
     char szDescription[OWTEXT];
