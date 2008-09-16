@@ -366,57 +366,83 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                                char* pszInsert,
                                bool bUpdate )
 {
-    char szDescription[OWTEXT];
-    char szUpdate[OWTEXT];
-    char szInsert[OWTEXT];
-    char szRDT[OWNAME];
-    char szRID[OWCODE];
+    char* pszUpdate = pszInsert;
+
     char szValues[OWNAME];
     char szFormat[OWTEXT];
 
-    //  -------------------------------------------------------------------
-    //  New table description
-    //  -------------------------------------------------------------------
-
-    if ( pszDescription  )
+    if( pszTable  == NULL || 
+        pszColumn == NULL )
     {
-        strcpy( szDescription, pszDescription );
-    }
-    else
-    {
-        strcpy( szDescription,
-           CPLSPrintf("(%s MDSYS.SDO_GEORASTER)", pszColumn ) );
+        false;
     }
 
-    //  -------------------------------------------------------------------
-    //  Insert parameters
-    //  -------------------------------------------------------------------
+    char szDescription[OWTEXT];
+    char szUpdate[OWTEXT];
+    char szInsert[OWTEXT];
 
-    if( pszInsert )
+    if( bUpdate == false )
     {
-        //  -----------------------------------------------------------
-        //  Accept the short form without "VALUES"
-        //  -----------------------------------------------------------
+        //  ---------------------------------------------------------------
+        //  Description parameters
+        //  ---------------------------------------------------------------
 
-        if( strstr( pszInsert, "VALUES" ) == NULL &&
-            strstr( pszInsert, "values" ) == NULL )
+        if ( pszDescription  )
         {
-            strcpy( szValues, CPLSPrintf( "VALUES %s", pszInsert ) );
+            strcpy( szDescription, pszDescription );
         }
         else
         {
-            strcpy( szValues, pszInsert );
+            strcpy( szDescription, CPLSPrintf( 
+                "(%s MDSYS.SDO_GEORASTER)", pszColumn ) );
+        }
+
+        //  ---------------------------------------------------------------
+        //  Insert parameters
+        //  ---------------------------------------------------------------
+
+        if( pszInsert )
+        {
+            if( strstr( pszInsert, "VALUES" ) == NULL &&
+                strstr( pszInsert, "values" ) == NULL )
+            {
+                strcpy( szValues, CPLSPrintf( 
+                    "VALUES %s", pszInsert ) );
+            }
+            else
+            {
+                strcpy( szValues, pszInsert );
+            }
+        }
+        else
+        {
+            strcpy( szValues, CPLStrdup( 
+                "VALUES (SDO_GEOR.INIT(NULL,NULL))" ) );
         }
     }
     else
     {
-        strcpy( szValues, CPLSPrintf( "VALUES (SDO_GEOR.INIT(NULL,NULL))",
-            szRDT, szRID ) );
+        //  ---------------------------------------------------------------
+        //  Update parameters
+        //  ---------------------------------------------------------------
+
+        if( pszUpdate )
+        {
+            strcpy( szValues, pszUpdate );
+        }
+        else
+        {
+            strcpy( szValues, CPLStrdup( 
+                "(SDO_GEOR.INIT(NULL,NULL))" ) );
+        }
     }
 
     //  -------------------------------------------------------------------
-    //  Parse RDT
+    //  Parse RDT/RID from the current szValues
     //  -------------------------------------------------------------------
+
+    char szRDT[OWNAME];
+    char szRID[OWCODE];
 
     if( pszDataTable )
     {
@@ -427,11 +453,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         strcpy( szRDT, OWParseSDO_GEOR_INIT( szValues, 1 ) );
     }
 
-    //  -------------------------------------------------------------------
-    //  Parse RID
-    //  -------------------------------------------------------------------
-
-    if ( nRasterId )
+    if ( nRasterId > 0 )
     {
         strcpy( szRID, CPLSPrintf( "%d", nRasterId ) );
     }
