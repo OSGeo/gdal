@@ -76,7 +76,7 @@ def get_gdal_config(option, gdal_config='gdal-config'):
     r = p[0].readline().strip()
     if not r:
         raise Warning(p[2].readline())
-    return r  
+    return r
     
 class gdal_ext(build_ext):
 
@@ -123,35 +123,52 @@ class gdal_ext(build_ext):
 gdal_version = '1.5.0'
 
 
-extra_link_args = []        
+include_dirs=['../../port', '../../gcore', '../../alg', '../../ogr/']
+library_dirs=['../../.libs', '../../']
+libraries = ['gdal']
+extra_link_args = []
 extra_compile_args = []
-
 # might need to tweak for Python 2.4 on OSX to be these
 #extra_compile_args = ['-g', '-arch', 'i386', '-isysroot','/']
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
+                        include_dirs=include_dirs,
+                        library_dirs=library_dirs,
+                        libraries = libraries,
                         extra_compile_args = extra_compile_args,
                         extra_link_args = extra_link_args)
 
 gdalconst_module = Extension('osgeo._gdalconst',
                     sources=['extensions/gdalconst_wrap.c'],
+                    include_dirs=include_dirs,
+                    library_dirs=library_dirs,
+                    libraries = libraries,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 osr_module = Extension('osgeo._osr',
                     sources=['extensions/osr_wrap.cpp'],
+                    include_dirs=include_dirs,
+                    library_dirs=library_dirs,
+                    libraries = libraries,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 ogr_module = Extension('osgeo._ogr',
                     sources=['extensions/ogr_wrap.cpp'],
+                    include_dirs=include_dirs,
+                    library_dirs=library_dirs,
+                    libraries = libraries,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 
 array_module = Extension('osgeo._gdal_array',
                     sources=['extensions/_gdal_array.cpp'],
+                    include_dirs=include_dirs,
+                    library_dirs=library_dirs,
+                    libraries = libraries,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
@@ -206,7 +223,7 @@ else:
     
 exclude_package_data = {'':['GNUmakefile']}
 
-if HAVE_SETUPTOOLS:  
+if HAVE_SETUPTOOLS:
     setup( name = name,
            version = gdal_version,
            author = author,
