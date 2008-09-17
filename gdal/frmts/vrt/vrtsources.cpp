@@ -723,10 +723,29 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
             // Convert to integers, assuming that the center of the source
             // pixel must be in our rect to get included.
-            iXSrcStart = (int) floor(dfXSrcStart+0.5);
-            iYSrcStart = (int) floor(dfYSrcStart+0.5);
-            iXSrcEnd = (int) floor(dfXSrcEnd+0.5);
-            iYSrcEnd = (int) floor(dfYSrcEnd+0.5);
+            if (dfXSrcEnd >= dfXSrcStart + 1)
+            {
+                iXSrcStart = (int) floor(dfXSrcStart+0.5);
+                iXSrcEnd = (int) floor(dfXSrcEnd+0.5);
+            }
+            else
+            {
+                /* If the resampling factor is less than 100%, the distance */
+                /* between the source pixel is < 1, so we stick to nearest */
+                /* neighbour */
+                iXSrcStart = (int) floor(dfXSrcStart);
+                iXSrcEnd = iXSrcStart + 1;
+            }
+            if (dfYSrcEnd >= dfYSrcStart + 1)
+            {
+                iYSrcStart = (int) floor(dfYSrcStart+0.5);
+                iYSrcEnd = (int) floor(dfYSrcEnd+0.5);
+            }
+            else
+            {
+                iYSrcStart = (int) floor(dfYSrcStart);
+                iYSrcEnd = iYSrcStart + 1;
+            }
 
             // Transform into the coordinate system of the source *buffer*
             iXSrcStart -= nReqXOff;
