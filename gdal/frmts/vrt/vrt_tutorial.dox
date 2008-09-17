@@ -205,9 +205,15 @@ tag is not present, the source dataset will be opened at the same time as the VR
     </SimpleSource>
 \endcode
 
+<li> <b>AveragedSource</b>: The AveragedSource is derived from the
+SimpleSource and shares the same properties except that it uses an averaging
+resampling instead of a nearest neighbour algorithm as in SimpleSource, when
+the size of the destination rectangle is not the same as the size of the source
+rectangle
+
 <li> <b>ComplexSource</b>: The ComplexSource is derived from the
 SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and 
-DestRect elements, but it provides support to rescale and offset
+DestRect elements), but it provides support to rescale and offset
 the range of the source values. Certain regions of the source
 can be masked by specifying the NODATA value.
 
