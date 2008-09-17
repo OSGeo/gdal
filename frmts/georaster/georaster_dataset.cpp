@@ -454,26 +454,10 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     }
 
     //  -------------------------------------------------------------------
-    //  Check for RDT RID only identificator
-    //  -------------------------------------------------------------------
-
-    if( poGRW->bRDTRIDOnly )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Attempt to create GeoRaster with invalid identification (%s). "
-            "Cannot create or update GeoRaster based on RDT/RID only.", pszFilename );
-
-        delete poGRD;
-        return NULL;
-    }
-
-    //  -------------------------------------------------------------------
     //  Is it trying to overwrite an existing GeoRaster?
     //  -------------------------------------------------------------------
 
     bool bOverwrite = ( poGRW->nRasterRows && poGRW->nRasterColumns );
-
-CPLDebug("####1", "bOverwrite=%d", bOverwrite);
 
     //  -------------------------------------------------------------------
     //  Set basic information and default values

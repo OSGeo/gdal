@@ -609,7 +609,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     if( bUpdate )
     {
         strcpy( szCommand, CPLSPrintf( 
-            "UPDATE %s SET %s = %s WHERE %s RETURNING %s INTO GR1;",
+            "UPDATE %s T SET %s = %s WHERE %s RETURNING %s INTO GR1;",
             pszTable, pszColumn, szUpdate, pszWhere, pszColumn ) );
     }
     else
