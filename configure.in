@@ -74,7 +74,7 @@ AC_CHECK_LIB(rt,nanosleep,,,)
 
 dnl We don't need to add math library to all targets
 case "${host_os}" in
-    cygwin* | mingw32* | beos* | darwin*)
+    cygwin* | mingw32* | pw32* | beos* | darwin*)
         ;;
     *)
 	AC_CHECK_LIB(m,sin,,,)
@@ -2119,17 +2119,23 @@ fi
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for cygwin .exe extension
+dnl Check whether we need to add specific suffix for executables (.EXE when
+dnl building for Windows). This test should work for the case of
+dnl cross-compilation too.
 dnl ---------------------------------------------------------------------------
-if test -f /bin/true.exe ; then
-  EXE_EXT=.exe
-  SO_EXT=dll
-else
-  EXE_EXT=
-fi
-export EXE_EXT
+case "${host_os}" in
+    cygwin* | mingw32* | pw32*)
+      EXE_EXT=.exe
+      SO_EXT=dll
+      ;;
+    *)
+      EXE_EXT=
+      SO_EXT=
+      ;;
+esac
 
-AC_SUBST(EXE_EXT,$EXE_EXT)
+AC_SUBST(EXE_EXT)
+AC_SUBST(SO_EXT)
 
 dnl ---------------------------------------------------------------------------
 dnl Which "true" program should we use? 
