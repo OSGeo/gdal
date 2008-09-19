@@ -2465,6 +2465,24 @@ CPLErr GTiffDataset::IBuildOverviews(
     GTIFFBuildOverviewMetadata( pszResampling, this, osMetadata );
 
 /* -------------------------------------------------------------------- */
+/*      Fetch extra sample tag                                          */
+/* -------------------------------------------------------------------- */
+    uint16 *panExtraSampleValues = NULL;
+    uint16 nExtraSamples = 0;
+
+    if( TIFFGetField( hTIFF, TIFFTAG_EXTRASAMPLES, &nExtraSamples, &panExtraSampleValues) )
+    {
+        uint16* panExtraSampleValuesNew = (uint16*) CPLMalloc(nExtraSamples * sizeof(uint16));
+        memcpy(panExtraSampleValuesNew, panExtraSampleValues, nExtraSamples * sizeof(uint16));
+        panExtraSampleValues = panExtraSampleValuesNew;
+    }
+    else
+    {
+        panExtraSampleValues = NULL;
+        nExtraSamples = 0;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
 /*      which are new.  We assume that band 1 of the file is            */
 /*      representative.                                                 */
@@ -2505,6 +2523,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                     nSamplesPerPixel, 128, 128, TRUE,
                                     nCompression, nPhotometric, nSampleFormat, 
                                     panRed, panGreen, panBlue,
+                                    nExtraSamples, panExtraSampleValues,
                                     osMetadata );
 
             if( nOverviewOffset == 0 )
@@ -2534,6 +2553,9 @@ CPLErr GTiffDataset::IBuildOverviews(
             panOverviewList[i] *= -1;
     }
 
+    CPLFree(panExtraSampleValues);
+    panExtraSampleValues = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Create overviews for the mask.                                  */
 /* -------------------------------------------------------------------- */
@@ -2554,7 +2576,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                         1, PLANARCONFIG_CONTIG,
                                         1, 128, 128, TRUE,
                                         COMPRESSION_NONE, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, 
-                                        NULL, NULL, NULL,
+                                        NULL, NULL, NULL, 0, NULL,
                                         "" );
 
                 if( nOverviewOffset == 0 )
@@ -5984,7 +6006,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
                                        1, PLANARCONFIG_CONTIG, 1,
                                        nBlockXSize, nBlockYSize,
                                        bIsTiled, COMPRESSION_NONE, PHOTOMETRIC_MASK,
-                                       SAMPLEFORMAT_UINT, NULL, NULL, NULL, "");
+                                       SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "");
         if (nOffset == 0)
             return CE_Failure;
 
