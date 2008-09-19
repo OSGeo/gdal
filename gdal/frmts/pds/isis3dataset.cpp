@@ -105,16 +105,20 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDS, FILE *fpVSIL,
     nBlockXSize = nTileXSize;
     nBlockYSize = nTileYSize;
 
+    int nBlocksPerRow = 
+            (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
+    int nBlocksPerColumn = 
+            (poDS->GetRasterYSize() + nTileYSize - 1) / nTileYSize;
+
     if( nXTileOffset == 0 && nYTileOffset == 0 )
     {
-        int nBlocksPerRow = 
-            (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
-
         nXTileOffset = (GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
         nYTileOffset = nXTileOffset * nBlocksPerRow;
     }
 
-    this->nFirstTileOffset = nFirstTileOffset;
+    this->nFirstTileOffset = nFirstTileOffset
+        + (nBand-1) * nYTileOffset * nBlocksPerColumn;
+
     this->nXTileOffset = nXTileOffset;
     this->nYTileOffset = nYTileOffset;
 }
