@@ -76,7 +76,13 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 /* -------------------------------------------------------------------- */
     nLoadedScanline = -1;
     nLineSize = nPixelOffset * nBlockXSize;
-    pLineBuffer = CPLMalloc( nLineSize );
+    pLineBuffer = (nLineSize <= 0 ) ? NULL : VSIMalloc2( nPixelOffset, nBlockXSize );
+    if (pLineBuffer == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not allocate line buffer : nPixelOffset=%d, nBlockXSize=%d",
+                 nPixelOffset, nBlockXSize);
+    }
 }
 
 /************************************************************************/
@@ -122,7 +128,13 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
 /* -------------------------------------------------------------------- */
     nLoadedScanline = -1;
     nLineSize = nPixelOffset * nBlockXSize;
-    pLineBuffer = CPLMalloc( nLineSize );
+    pLineBuffer = (nLineSize <= 0 ) ? NULL : VSIMalloc2( nPixelOffset, nBlockXSize );
+    if (pLineBuffer == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not allocate line buffer : nPixelOffset=%d, nBlockXSize=%d",
+                 nPixelOffset, nBlockXSize);
+    }
 }
 
 /************************************************************************/
@@ -204,6 +216,9 @@ CPLErr RawRasterBand::FlushCache()
 CPLErr RawRasterBand::AccessLine( int iLine )
 
 {
+    if (pLineBuffer == NULL)
+        return CE_Failure;
+
     if( nLoadedScanline == iLine )
         return CE_None;
 
@@ -290,6 +305,9 @@ CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     CPLAssert( nBlockXOff == 0 );
 
+    if (pLineBuffer == NULL)
+        return CE_Failure;
+
     eErr = AccessLine( nBlockYOff );
     
 /* -------------------------------------------------------------------- */
@@ -313,6 +331,9 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     CPLErr		eErr = CE_None;
 
     CPLAssert( nBlockXOff == 0 );
+
+    if (pLineBuffer == NULL)
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      If the data for this band is completely contiguous we don't     */

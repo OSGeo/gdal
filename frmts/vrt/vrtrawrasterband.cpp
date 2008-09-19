@@ -320,6 +320,12 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
         nPixelOffset = nWordDataSize;
     else
         nPixelOffset = atoi(CPLGetXMLValue( psTree, "PixelOffset", "0") );
+    if (nPixelOffset <= 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid value for <PixelOffset> element : %d", nPixelOffset );
+        return CE_Failure;
+    }
     
     if( CPLGetXMLValue( psTree, "LineOffset", NULL ) == NULL )
         nLineOffset = nWordDataSize * GetXSize();
