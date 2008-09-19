@@ -42,6 +42,8 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
                            unsigned short *panRed,
                            unsigned short *panGreen,
                            unsigned short *panBlue,
+                           int nExtraSamples,
+                           unsigned short *panExtraSampleValues,
                            const char *pszMetadata );
 
 void GTIFFBuildOverviewMetadata( const char *pszResampling,
