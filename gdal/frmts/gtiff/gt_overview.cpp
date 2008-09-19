@@ -62,6 +62,8 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
                            unsigned short *panRed,
                            unsigned short *panGreen,
                            unsigned short *panBlue,
+                           int nExtraSamples,
+                           unsigned short *panExtraSampleValues,
                            const char *pszMetadata )
 
 {
@@ -98,6 +100,11 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
         TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nBlockYSize );
 
     TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, nSubfileType );
+
+    if (panExtraSampleValues != NULL)
+    {
+        TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples, panExtraSampleValues );
+    }
     
 /* -------------------------------------------------------------------- */
 /*	Write color table if one is present.				*/
@@ -495,7 +502,8 @@ GTIFFBuildOverviews( const char * pszFilename,
                                 nPlanarConfig, nBands,
                                 128, 128, TRUE, nCompression,
                                 nPhotometric, nSampleFormat, 
-                                panRed, panGreen, panBlue, 
+                                panRed, panGreen, panBlue,
+                                0, NULL, /* FIXME ? how can we fetch extrasamples from here */
                                 osMetadata );
     }
 
