@@ -74,6 +74,10 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
             poDSIn->IssuedFirstCTError(); 
         }
     }
+    else
+    {
+        poSRS_ = NULL;
+    }
 
     iNextKMLId_ = 0;
     nTotalKMLCount_ = -1;
