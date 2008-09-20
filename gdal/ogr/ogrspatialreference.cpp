@@ -2450,6 +2450,62 @@ OGRErr OSRSetProjParm( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                            FindProjParm()                            */
+/*                                                                      */
+/*      Return the child index of the named projection parameter on     */
+/*      it's parent PROJCS node.  Returns -1 on failure.                */
+/************************************************************************/
+
+int OGRSpatialReference::FindProjParm( const char *pszParameter,
+                                       const OGR_SRSNode *poPROJCS ) const
+
+{
+    const OGR_SRSNode *poParameter = NULL;
+
+    if( poPROJCS == NULL )
+        poPROJCS = GetAttrNode( "PROJCS" );
+
+    if( poPROJCS == NULL )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Search for requested parameter.                                 */
+/* -------------------------------------------------------------------- */
+    int iChild;
+
+    for( iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+    {
+        poParameter = poPROJCS->GetChild(iChild);
+        
+        if( EQUAL(poParameter->GetValue(),"PARAMETER")
+            && poParameter->GetChildCount() == 2 
+            && EQUAL(poPROJCS->GetChild(iChild)->GetChild(0)->GetValue(),
+                     pszParameter) )
+        {
+            return iChild;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try similar names, for selected parameters.                     */
+/* -------------------------------------------------------------------- */
+    iChild = -1;
+
+    if( EQUAL(pszParameter,SRS_PP_LATITUDE_OF_ORIGIN) )
+    {
+        iChild = FindProjParm( SRS_PP_LATITUDE_OF_CENTER, poPROJCS );
+    }
+    else if( EQUAL(pszParameter,SRS_PP_CENTRAL_MERIDIAN) )
+    {
+        iChild = FindProjParm(SRS_PP_LONGITUDE_OF_CENTER, poPROJCS );
+        if( iChild == -1 )
+            iChild = FindProjParm(SRS_PP_LONGITUDE_OF_ORIGIN, poPROJCS );
+    }
+
+    return iChild;
+}
+
+/************************************************************************/
 /*                            GetProjParm()                             */
 /************************************************************************/
 
@@ -2477,53 +2533,22 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
 
 {
     const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-    const OGR_SRSNode *poParameter = NULL;
 
     if( pnErr != NULL )
         *pnErr = OGRERR_NONE;
     
 /* -------------------------------------------------------------------- */
-/*      Search for requested parameter.                                 */
+/*      Find the desired parameter.                                     */
 /* -------------------------------------------------------------------- */
-    if( poPROJCS != NULL )
+    int iChild = FindProjParm( pszName, poPROJCS );
+
+    if( iChild != -1 )
     {
-        for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
-        {
-            poParameter = poPROJCS->GetChild(iChild);
-            
-            if( EQUAL(poParameter->GetValue(),"PARAMETER")
-                && poParameter->GetChildCount() == 2 
-                && EQUAL(poPROJCS->GetChild(iChild)->GetChild(0)->GetValue(),
-                         pszName) )
-            {
-                return CPLAtof(poParameter->GetChild(1)->GetValue());
-            }
-        }
+        const OGR_SRSNode *poParameter = NULL;
+        poParameter = poPROJCS->GetChild(iChild);
+        return CPLAtof(poParameter->GetChild(1)->GetValue());
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try similar names, for selected parameters.                     */
-/* -------------------------------------------------------------------- */
-    double      dfValue;
-    OGRErr      nSubErr;
-    
-    if( EQUAL(pszName,SRS_PP_LATITUDE_OF_ORIGIN) )
-    {
-        dfValue = GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0,&nSubErr);
-        
-        if( nSubErr == OGRERR_NONE )
-            return dfValue;
-    }
-    else if( EQUAL(pszName,SRS_PP_CENTRAL_MERIDIAN) )
-    {
-        dfValue = GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0,&nSubErr);
-        if( nSubErr != OGRERR_NONE )
-            dfValue = GetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,0.0,&nSubErr);
-
-        if( nSubErr == OGRERR_NONE )
-            return dfValue;
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      Return default value on failure.                                */
 /* -------------------------------------------------------------------- */
