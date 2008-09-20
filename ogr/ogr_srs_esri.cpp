@@ -920,6 +920,12 @@ OGRErr OGRSpatialReference::morphToESRI()
                  "Hotine_Oblique_Mercator_Azimuth_Center" );
 
         /* ideally we should strip out of the rectified_grid_angle */
+        // strip off rectified_grid_angle -- I hope it is 90!
+        OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+        int iRGAChild = FindProjParm( "rectified_grid_angle", poPROJCS );
+        if( iRGAChild != NULL )
+            poPROJCS->DestroyChild( iRGAChild);
+
         pszProjection = GetAttrValue("PROJECTION");
     }
 
