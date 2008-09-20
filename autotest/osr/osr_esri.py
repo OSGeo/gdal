@@ -30,6 +30,7 @@
 
 import os
 import sys
+import string
 
 sys.path.append( '../pymod' )
 
@@ -457,6 +458,40 @@ def osr_esri_14():
 
     return 'success'
 
+###############################################################################
+# Verify hotine oblique mercator handling, particularly handling
+# of the rectified_grid_angle parameter.
+
+def osr_esri_15():
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('PROJCS["Bern_1898_Bern_LV03C",GEOGCS["GCS_Bern_1898_Bern",DATUM["D_Bern_1898",SPHEROID["Bessel_1841",6377397.155,299.1528128]],PRIMEM["Bern",7.439583333333333],UNIT["Degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Azimuth",90.0],PARAMETER["Longitude_Of_Center",0.0],PARAMETER["Latitude_Of_Center",46.95240555555556],UNIT["Meter",1.0]]' )
+
+    expected = 'PROJCS["Bern_1898_Bern_LV03C",GEOGCS["GCS_Bern_1898_Bern",DATUM["D_Bern_1898",SPHEROID["Bessel_1841",6377397.155,299.1528128]],PRIMEM["Bern",7.439583333333333],UNIT["Degree",0.017453292519943295]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Azimuth",90.0],PARAMETER["Longitude_Of_Center",0.0],PARAMETER["Latitude_Of_Center",46.95240555555556],UNIT["Meter",1.0]]'
+
+    
+    srs.MorphFromESRI()
+    wkt = srs.ExportToWkt()
+
+    if string.find(wkt,'rectified_grid_angle') == -1:
+        print wkt
+        gdaltest.post_reason( 'Did not get rectified_grid_angle as expected.')
+        return 'fail'
+
+    srs.MorphToESRI()
+    wkt = srs.ExportToWkt()
+    if string.find(wkt,'rectified_grid_angle') != -1:
+        gdaltest.post_reason('did not get rectified_grid_angle removed as expected.' )
+        return 'fail'
+
+    if wkt != expected:
+        print
+        print 'Got:      ', wkt
+        print 'Expected: ', expected
+        gdaltest.post_reason( 'Did not get expected HOM projection after morphing' )
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 
@@ -475,6 +510,7 @@ gdaltest_list = [
     osr_esri_12,
     osr_esri_13,
     osr_esri_14,
+    osr_esri_15,
     None ]
 
 if __name__ == '__main__':
