@@ -192,9 +192,31 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     }
   }
 }
-%typemap(freearg) (int nList, int* pList)
+
+/*
+ *  Typemap for counted arrays of doubles <- PySequence
+ */
+%typemap(in,numinputs=1) (int nList, double* pList)
 {
-  /* %typemap(freearg) (int nList, int* pList) */
+  /* %typemap(in,numinputs=1) (int nList, double* pList)*/
+  /* check if is List */
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  $1 = PySequence_Size($input);
+  $2 = (double*) malloc($1*sizeof(double));
+  for( int i = 0; i<$1; i++ ) {
+    PyObject *o = PySequence_GetItem($input,i);
+    if ( !PyArg_Parse(o,"d",&$2[i]) ) {
+      SWIG_fail;
+    }
+  }
+}
+
+%typemap(freearg) (int nList, double* pList)
+{
+  /* %typemap(freearg) (int nList, double* pList) */
   if ($2) {
     free((void*) $2);
   }
