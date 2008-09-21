@@ -31,6 +31,8 @@
 #ifndef GDAL_ALG_PRIV_H_INCLUDED
 #define GDAL_ALG_PRIV_H_INCLUDED
 
+#include "gdal_alg.h"
+
 CPL_C_START
 
 /************************************************************************/
@@ -52,5 +54,39 @@ void GDALdllImageFilledPolygon( int, int, int, int *, double *, double *,
                                llScanlineFunc, void * );
 
 CPL_C_END
+
+/************************************************************************/
+/*                          Polygon Enumerator                          */
+/************************************************************************/
+
+class GDALRasterPolygonEnumerator
+
+{
+private:
+    void     MergePolygon( int nSrcId, int nDstId );
+    int      NewPolygon( GInt32 nValue );
+
+public:  // these are intended to be readonly.
+
+    GInt32   *panPolyIdMap;
+    GInt32   *panPolyValue;
+
+    int      nNextPolygonId;
+    int      nPolyAlloc;
+
+    int      nConnectedness;
+
+public:
+             GDALRasterPolygonEnumerator( int nConnectedness=4 );
+            ~GDALRasterPolygonEnumerator();
+
+    void     ProcessLine( GInt32 *panLastLineVal, GInt32 *panThisLineVal,
+                          GInt32 *panLastLineId,  GInt32 *panThisLineId, 
+                          int nXSize );
+
+    void     CompleteMerges();
+
+    void     Clear();
+};
 
 #endif /* ndef GDAL_ALG_PRIV_H_INCLUDED */

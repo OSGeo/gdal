@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 #include "cpl_conv.h"
 #include <vector>
 
@@ -321,128 +321,6 @@ static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
 }
 
 /************************************************************************/
-/*                            MergePolygon()                            */
-/*                                                                      */
-/*      Update the polygon map to indicate the merger of two polygons.  */
-/************************************************************************/
-
-static void
-MergePolygon( int nPolygonCount, int *panPolyIdMap, 
-              int nSrcId, int nDstId )
-
-{
-    while( panPolyIdMap[nDstId] != nDstId )
-        nDstId = panPolyIdMap[nDstId];
-
-    while( panPolyIdMap[nSrcId] != nSrcId )
-        nSrcId = panPolyIdMap[nSrcId];
-
-    if( nSrcId == nDstId )
-        return;
-
-    panPolyIdMap[nSrcId] = nDstId;
-}
-
-/************************************************************************/
-/*                             NewPolygon()                             */
-/*                                                                      */
-/*      Allocate a new polygon id, and reallocate the polygon maps      */
-/*      if needed.                                                      */
-/************************************************************************/
-
-static int NewPolygon( int *pnNextPolygonId,
-                       int *pnPolyAlloc,
-                       GInt32 **ppanPolyIdMap, 
-                       GInt32 **ppanPolyValue,
-                       GInt32 nValue )
-
-{
-    int nPolyId = *pnNextPolygonId;
-
-    if( *pnNextPolygonId >= *pnPolyAlloc )
-    {
-        *pnPolyAlloc = *pnPolyAlloc * 2 + 20;
-        *ppanPolyIdMap = (GInt32 *) CPLRealloc(*ppanPolyIdMap,*pnPolyAlloc*4);
-        *ppanPolyValue = (GInt32 *) CPLRealloc(*ppanPolyValue,*pnPolyAlloc*4);
-    }
-
-    *pnNextPolygonId = *pnNextPolygonId + 1;
-
-    (*ppanPolyIdMap)[nPolyId] = nPolyId;
-    (*ppanPolyValue)[nPolyId] = nValue;
-
-    return nPolyId;
-}
-
-/************************************************************************/
-/*                       GDALPolygonEnumerator()                        */
-/*                                                                      */
-/*      Assign ids to polygons, one line at a time.                     */
-/************************************************************************/
-
-void GDALPolygonEnumerator( GInt32 *panLastLineVal, GInt32 *panThisLineVal,
-                            GInt32 *panLastLineId,  GInt32 *panThisLineId, 
-                            int nXSize, 
-                            int *pnNextPolygonId,
-                            int *pnPolyAlloc,
-                            GInt32 **ppanPolyIdMap, 
-                            GInt32 **ppanPolyValue )
-
-{
-    int i;
-
-/* -------------------------------------------------------------------- */
-/*      Special case for the first line.                                */
-/* -------------------------------------------------------------------- */
-    if( panLastLineVal == NULL )
-    {
-        for(  i=0; i < nXSize; i++ )
-        {
-            if( i == 0 || panThisLineVal[i] != panThisLineVal[i-1] )
-            {
-                panThisLineId[i] = 
-                    NewPolygon( pnNextPolygonId, pnPolyAlloc,
-                                ppanPolyIdMap, ppanPolyValue, 
-                                panThisLineVal[i] );
-            }
-            else
-                panThisLineId[i] = panThisLineId[i-1];
-        }        
-        
-        return;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Process each pixel comparing to the previous pixel, and to      */
-/*      the last line.                                                  */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nXSize; i++ )
-    {
-        if( i > 0 && panThisLineVal[i] == panThisLineVal[i-1] )
-        {
-            panThisLineId[i] = panThisLineId[i-1];        
-
-            if( panLastLineVal[i] == panThisLineVal[i] 
-                && ((*ppanPolyIdMap)[panLastLineId[i]]
-                    != (*ppanPolyIdMap)[panThisLineId[i]]) )
-            {
-                MergePolygon( *pnNextPolygonId, *ppanPolyIdMap, 
-                              panLastLineId[i], panThisLineId[i] );
-            }
-        }
-        else if( panLastLineVal[i] == panThisLineVal[i] )
-        {
-            panThisLineId[i] = panLastLineId[i];
-        }
-        else
-            panThisLineId[i] = 
-                NewPolygon( pnNextPolygonId, pnPolyAlloc,
-                            ppanPolyIdMap, ppanPolyValue, 
-                            panThisLineVal[i] );
-    }
-}
-
-/************************************************************************/
 /*                         EmitPolygonToLayer()                         */
 /************************************************************************/
 
@@ -656,10 +534,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /*      what on the second pass.                                        */
 /* -------------------------------------------------------------------- */
     int iY;
-    int nNextPolygonId = 0;
-    int nPolyAlloc = 0;
-    int *panPolyIdMap = NULL;
-    int *panPolyValue = NULL;
+    GDALRasterPolygonEnumerator oFirstEnum;
 
     for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
@@ -672,18 +547,13 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
             eErr = GPMaskImageData( hMaskBand, iY, nXSize, panThisLineVal );
 
         if( iY == 0 )
-            GDALPolygonEnumerator( 
-                NULL, panThisLineVal, NULL, panThisLineId,
-                nXSize, 
-                &nNextPolygonId, &nPolyAlloc, 
-                &panPolyIdMap, &panPolyValue );
+            oFirstEnum.ProcessLine( 
+                NULL, panThisLineVal, NULL, panThisLineId, nXSize );
         else
-            GDALPolygonEnumerator( 
+            oFirstEnum.ProcessLine(
                 panLastLineVal, panThisLineVal, 
                 panLastLineId,  panThisLineId, 
-                nXSize, 
-                &nNextPolygonId, &nPolyAlloc, 
-                &panPolyIdMap, &panPolyValue );
+                nXSize );
 
         // swap lines
         GInt32 *panTmp = panLastLineVal;
@@ -711,14 +581,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /*      points to the final id it should use, not an intermediate       */
 /*      value.                                                          */
 /* -------------------------------------------------------------------- */
-    int iPoly;
-
-    for( iPoly = 0; iPoly < nNextPolygonId; iPoly++ )
-    {
-        while( panPolyIdMap[iPoly] 
-               != panPolyIdMap[panPolyIdMap[iPoly]] )
-            panPolyIdMap[iPoly] = panPolyIdMap[panPolyIdMap[iPoly]];
-    }
+    oFirstEnum.CompleteMerges();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize ids to -1 to serve as a nodata value for the         */
@@ -734,14 +597,12 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
         panLastLineId[iX] = -1;
 
 /* -------------------------------------------------------------------- */
-/*      We will use dummy id maps for the second pass.                  */
+/*      We will use a new enumerator for the second pass primariliy     */
+/*      so we can preserve the first pass map.                          */
 /* -------------------------------------------------------------------- */
-    int *panDummyPolyIdMap = NULL;
-    int *panDummyPolyValue = NULL;
+    GDALRasterPolygonEnumerator oSecondEnum;
     RPolygon **papoPoly = (RPolygon **) 
-        CPLCalloc(sizeof(RPolygon*),nNextPolygonId);
-    nNextPolygonId = 0;
-    nPolyAlloc = 0;
+        CPLCalloc(sizeof(RPolygon*),oFirstEnum.nNextPolygonId);
 
 /* ==================================================================== */
 /*      Second pass during which we will actually collect polygon       */
@@ -774,18 +635,13 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                 panThisLineId[iX] = -1;
         }
         else if( iY == 0 )
-            GDALPolygonEnumerator( 
-                NULL, panThisLineVal, NULL, panThisLineId+1,
-                nXSize, 
-                &nNextPolygonId, &nPolyAlloc, 
-                &panDummyPolyIdMap, &panDummyPolyValue );
+            oSecondEnum.ProcessLine( 
+                NULL, panThisLineVal, NULL, panThisLineId+1, nXSize );
         else
-            GDALPolygonEnumerator( 
+            oSecondEnum.ProcessLine(
                 panLastLineVal, panThisLineVal, 
                 panLastLineId+1,  panThisLineId+1, 
-                nXSize, 
-                &nNextPolygonId, &nPolyAlloc, 
-                &panDummyPolyIdMap, &panDummyPolyValue );
+                nXSize );
 
 /* -------------------------------------------------------------------- */
 /*      Add polygon edges to our polygon list for the pixel             */
@@ -794,7 +650,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
         for( iX = 0; iX < nXSize+1; iX++ )
         {
             AddEdges( panThisLineId, panLastLineId, 
-                      panPolyIdMap, panPolyValue,
+                      oFirstEnum.panPolyIdMap, oFirstEnum.panPolyValue,
                       papoPoly, iX, iY );
         }
 
@@ -805,7 +661,9 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
         if( iY % 8 == 7 )
         {
-            for( iX = 0; eErr == CE_None && iX < nNextPolygonId; iX++ )
+            for( iX = 0; 
+                 eErr == CE_None && iX < oSecondEnum.nNextPolygonId; 
+                 iX++ )
             {
                 if( papoPoly[iX] && papoPoly[iX]->nLastLineUpdated < iY-1 )
                 {
@@ -849,7 +707,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Make a cleanup pass for all unflushed polygons.                 */
 /* -------------------------------------------------------------------- */
-    for( iX = 0; eErr == CE_None && iX < nNextPolygonId; iX++ )
+    for( iX = 0; eErr == CE_None && iX < oSecondEnum.nNextPolygonId; iX++ )
     {
         if( papoPoly[iX] )
         {
@@ -872,10 +730,6 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
     CPLFree( panLastLineId );
     CPLFree( panThisLineVal );
     CPLFree( panLastLineVal );
-    CPLFree( panPolyIdMap );
-    CPLFree( panPolyValue );
-    CPLFree( panDummyPolyIdMap );
-    CPLFree( panDummyPolyValue );
     CPLFree( papoPoly );
 
     return eErr;
