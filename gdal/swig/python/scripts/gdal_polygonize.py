@@ -43,7 +43,7 @@ gdal_polygonize [-o name=value] [-nomask] [-mask filename] raster_file [-b band]
                 [-q] [-f ogr_format] out_file [layer] [fieldname]
 """
     sys.exit(1)
-    
+
 # =============================================================================
 # 	Mainline
 # =============================================================================
@@ -112,6 +112,18 @@ if src_filename is None or dst_filename is None:
 if dst_layername is None:
     dst_layername = 'out'
     
+# =============================================================================
+# 	Verify we have next gen bindings with the polygonize method.
+# =============================================================================
+try:
+    gdal.Polygonize
+except:
+    print
+    print 'gdal.Polygonize() not available.  You are likely using "old gen"'
+    print 'bindings or an older version of the next gen bindings.'
+    print
+    sys.exit(1)
+
 # =============================================================================
 #	Open source file
 # =============================================================================
