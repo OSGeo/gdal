@@ -307,7 +307,7 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 %clear (CPLErr);
 #endif
 
-#if defined(SWIGPERL)
+#if defined(SWIGPERL) || defined(SWIGPYTHON)
 %apply (int nList, int* pList) {(int buckets_in, int *panHistogram_in)}
 #endif
 CPLErr SetDefaultHistogram( double min, double max, 
@@ -315,7 +315,7 @@ CPLErr SetDefaultHistogram( double min, double max,
     return GDALSetDefaultHistogram( self, min, max, 
     	   			    buckets_in, panHistogram_in );
 }
-#if defined(SWIGPERL)
+#if defined(SWIGPERL) || defined(SWIGPYTHON)
 %clear (int buckets_in, int *panHistogram_in);
 #endif
 

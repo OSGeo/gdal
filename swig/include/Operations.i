@@ -31,8 +31,10 @@
 %{
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;
+typedef struct OGRGeometryHS OGRGeometryShadow;
 #else
 typedef void OGRLayerShadow;
+typedef void OGRGeometryShadow;
 #endif
 %}
 
@@ -158,6 +160,55 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 %} 
 
 /************************************************************************/
+/*                        RasterizeLayer()                              */
+/************************************************************************/
+
+%feature( "kwargs" ) RasterizeLayer;
+%apply (int nList, int *pList ) { (int bands, int *band_list ) };
+%apply (int nList, double *pList ) { (int burn_values, double *burn_values_list ) };
+%inline %{
+int  RasterizeLayer( GDALDatasetShadow *dataset,
+                 int bands, int *band_list,
+                 OGRLayerShadow *layer,
+                 void *pfnTransformer = NULL,
+                 void *pTransformArg = NULL, 
+		 int burn_values = 0, double *burn_values_list = NULL, 
+                 char **options = NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL) {
+
+    CPLErr eErr;
+
+    CPLErrorReset();
+
+    if( burn_values == 0 )
+    {
+        burn_values_list = (double *) CPLMalloc(sizeof(double)*bands);
+        for( int i = 0; i < bands; i++ )
+            burn_values_list[i] = 255.0;
+    }
+    else if( burn_values != bands )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Did not get the expected number of burn values in RasterizeLayer()" );
+        return CE_Failure;
+    }
+
+    eErr = GDALRasterizeLayers( dataset, bands, band_list,
+                                1, &layer, 
+                                (GDALTransformerFunc) pfnTransformer, 
+                                pTransformArg,
+                                burn_values_list, options, 
+                                callback, callback_data );
+
+    if( burn_values == 0 )
+        CPLFree( burn_values_list );
+
+    return eErr;
+}
+%} 
+
+/************************************************************************/
 /*                             Polygonize()                             */
 /************************************************************************/
 
@@ -175,6 +226,28 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
 
     return GDALPolygonize( srcBand, maskBand, outLayer, iPixValField,
                            options, callback, callback_data );
+}
+%} 
+
+/************************************************************************/
+/*                            SieveFilter()                             */
+/************************************************************************/
+
+%feature( "kwargs" ) SieveFilter;
+%inline %{
+int  SieveFilter( GDALRasterBandShadow *srcBand,
+     		  GDALRasterBandShadow *maskBand,
+  	          GDALRasterBandShadow *dstBand,
+                  int threshold, int connectedness=4,
+                  char **options = NULL,
+                  GDALProgressFunc callback=NULL,
+                  void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALSieveFilter( srcBand, maskBand, dstBand, 
+                            threshold, connectedness,
+                            options, callback, callback_data );
 }
 %} 
 

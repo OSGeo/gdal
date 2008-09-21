@@ -1886,7 +1886,7 @@ class Feature(_object):
 
     def SetFieldDoubleList(*args):
         """
-        SetFieldDoubleList(self, int id, int nList, double pList)
+        SetFieldDoubleList(self, int id, int nList)
 
         void
         OGR_F_SetFieldDoubleList(OGRFeatureH hFeat, int iField, int nCount,
