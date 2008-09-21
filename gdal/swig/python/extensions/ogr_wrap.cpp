@@ -8228,20 +8228,8 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldIntegerList(PyObject *SWIGUNUSEDPARM(
     }
   }
   resultobj = SWIG_Py_Void();
-  {
-    /* %typemap(freearg) (int nList, int* pList) */
-    if (arg4) {
-      free((void*) arg4);
-    }
-  }
   return resultobj;
 fail:
-  {
-    /* %typemap(freearg) (int nList, int* pList) */
-    if (arg4) {
-      free((void*) arg4);
-    }
-  }
   return NULL;
 }
 
@@ -8256,16 +8244,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldDoubleList(PyObject *SWIGUNUSEDPARM(s
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOO:Feature_SetFieldDoubleList",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Feature_SetFieldDoubleList",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_SetFieldDoubleList" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
@@ -8276,16 +8259,22 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldDoubleList(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_SetFieldDoubleList" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  ecode3 = SWIG_AsVal_int(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Feature_SetFieldDoubleList" "', argument " "3"" of type '" "int""'");
-  } 
-  arg3 = static_cast< int >(val3);
-  res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Feature_SetFieldDoubleList" "', argument " "4"" of type '" "double *""'"); 
+  {
+    /* %typemap(in,numinputs=1) (int nList, double* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj2) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg3 = PySequence_Size(obj2);
+    arg4 = (double*) malloc(arg3*sizeof(double));
+    for( int i = 0; i<arg3; i++ ) {
+      PyObject *o = PySequence_GetItem(obj2,i);
+      if ( !PyArg_Parse(o,"d",&arg4[i]) ) {
+        SWIG_fail;
+      }
+    }
   }
-  arg4 = reinterpret_cast< double * >(argp4);
   {
     OGRFeatureShadow_SetFieldDoubleList(arg1,arg2,arg3,arg4);
     if ( bUseExceptions ) {
@@ -8296,8 +8285,20 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldDoubleList(PyObject *SWIGUNUSEDPARM(s
     }
   }
   resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (int nList, double* pList) */
+    if (arg4) {
+      free((void*) arg4);
+    }
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int nList, double* pList) */
+    if (arg4) {
+      free((void*) arg4);
+    }
+  }
   return NULL;
 }
 
