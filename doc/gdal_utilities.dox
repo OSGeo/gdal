@@ -25,6 +25,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdal_grid - Create raster from the scattered data.
 <li> \ref gdal_proximity - Compute a raster proximity map.
 <li> \ref gdal_polygonize - Generate polygons from raster.
+<li> \ref gdal_sieve - Raster Sieve filter.
 <li> \ref gdal-config - Get options required to build software using GDAL.
 </ul>
 
