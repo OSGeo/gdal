@@ -5,7 +5,8 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsimplewarp.o gdalwarper.o gdalwarpkernel.o \
 		gdalwarpoperation.o gdalchecksum.o gdal_rpc.o gdal_tps.o \
 		thinplatespline.o llrasterize.o gdalrasterize.o gdalgeoloc.o \
-		gdalgrid.o gdalcutline.o gdalproximity.o rasterfill.o
+		gdalgrid.o gdalcutline.o gdalproximity.o rasterfill.o \
+		gdalrasterpolygonenumerator.o gdalsievefilter.o
 
 ifeq ($(OGR_ENABLED),yes)
 OBJ += contour.o polygonize.o

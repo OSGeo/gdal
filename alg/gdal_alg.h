@@ -86,6 +86,15 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                 char **papszOptions,
                 GDALProgressFunc pfnProgress, 
                 void * pProgressArg );
+
+CPLErr CPL_DLL CPL_STDCALL
+GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
+                 GDALRasterBandH hDstBand,
+                 int nSizeThreshold, int nConnectedness,
+                 char **papszOptions,
+                 GDALProgressFunc pfnProgress, 
+                 void * pProgressArg );
+
 /*
  * Warp Related.
  */
