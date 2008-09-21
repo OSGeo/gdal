@@ -400,7 +400,8 @@ INPUT                  = port \
                          frmts/gdalallregister.cpp \
                          alg \
                          frmts/vrt \
-                         doc
+                         doc \
+			 swig/python/scripts
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
