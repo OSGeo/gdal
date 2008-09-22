@@ -39,7 +39,7 @@ Four connectedness should be used when determining polygons.  That is
 diagonal pixels are not considered directly connected.  This is the default.
 </dd>
 
-<dt> <b>-4</b>:</dt><dd>
+<dt> <b>-8</b>:</dt><dd>
 Eight connectedness should be used when determining polygons.  That is 
 diagonal pixels are considered directly connected.
 </dd>
