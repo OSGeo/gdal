@@ -1246,6 +1246,91 @@ const char* GeoRasterDataset::GetGCPProjection()
         return "";
 }
 
+//  ---------------------------------------------------------------------------
+//                                                            IBuildOverviews()
+//  ---------------------------------------------------------------------------
+
+CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
+                                          int nOverviews,
+                                          int* panOverviewList,
+                                          int nBands,
+                                          int* panBandList,
+                                          GDALProgressFunc pfnProgress,
+                                          void* pProgressData )
+{
+    char szMethod[OWNAME];
+
+    //  -----------------------------------------------------------
+    //  Pyramids applies to the whole dataset not to a specific band
+    //  -----------------------------------------------------------
+
+    if( nBands < GetRasterCount())
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Invalid GeoRaster Pyramids band selection" );
+        return CE_Failure;
+    }
+
+    //  -----------------------------------------------------------
+    //  Pyramids levels can not be treated individually
+    //  -----------------------------------------------------------
+
+    if( nOverviews > 0 )
+    {
+        int i;
+        for( i = 1; i < nOverviews; i++ )
+        {
+            //  -----------------------------------------------------------
+            //  Power of 2, starting on 2, e.g. 2, 4, 8, 16, 32, 64, 128
+            //  -----------------------------------------------------------
+
+            if( panOverviewList[0] != 2 ||
+              ( panOverviewList[i] != panOverviewList[i-1] * 2 ) )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "Invalid GeoRaster Pyramids levels." );
+                return CE_Failure;
+            }
+
+        }
+    }
+
+    //  -----------------------------------------------------------
+    //  Re-sampling method: NN, BILINEAR, AVERAGE4, AVERAGE16 and CUBIC
+    //  -----------------------------------------------------------
+
+    if( EQUAL( pszResampling, "NEAREST" ) )
+    {
+        strcpy( szMethod, "NN" );
+    }
+    else if( EQUALN( pszResampling, "AVERAGE", 7 ) )
+    {
+        strcpy( szMethod, "AVERAGE4" );
+    }
+    else
+    {
+        return CE_Failure;
+    }
+
+    //  -----------------------------------------------------------
+    //  There is no progress report callback from PL/SQL statement
+    //  -----------------------------------------------------------
+
+    pfnProgress( 1.0 / 100.0 , NULL, pProgressData );
+
+    //  -----------------------------------------------------------
+    //  Generate Pyramids based on SDO_GEOR.generatePyramids()
+    //  -----------------------------------------------------------
+
+    if( ! this->poGeoRaster->GeneratePyramid( nOverviews, szMethod ) )
+    {
+        return CE_Failure;
+    }
+
+    pfnProgress( 100 / 100.0 , NULL, pProgressData );
+
+    return CE_None;
+}
 /*****************************************************************************/
 /*                          GDALRegister_GEOR                                */
 /*****************************************************************************/
