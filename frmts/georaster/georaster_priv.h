@@ -126,6 +126,14 @@ public:
                             int nGCPCount,
                             const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
+    virtual CPLErr      IBuildOverviews(
+                            const char* pszResampling,
+                            int nOverviews,
+                            int* panOverviewList,
+                            int nBands,
+                            int* panBandList,
+                            GDALProgressFunc pfnProgress,
+                            void* pProgressData );
 };
 
 //  ---------------------------------------------------------------------------
@@ -265,7 +273,10 @@ public:
     bool                SetVAT( int nBand, const char* pszName );
     char*               GetVAT( int nBand );
     void                SetOptimizedWriting()   { bOptimizedWriting = true; };
-
+    bool                GeneratePyramid(
+                            int nLevel,
+                            const char* pszResampling,
+                            bool bNodata = false );
 public:
 
     OWConnection*       poConnection;
