@@ -976,7 +976,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * The output bands need to exist in advance and share the same characteristics
  * (type, dimensions)
  *
- * The resampling algorithms supported for the moment are "NEAREST" and "AVERAGE"
+ * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE"
+ * and "GAUSS"
  *
  * The pseudo-algorithm used by the function is :
  *    for each overview
@@ -991,7 +992,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * @param nOverviews the number of downsampled overview levels being generated.
  * @param papapoOverviewBands bidimension array of bands. First dimension is indexed
  *                            by nBands. Second dimension is indexed by nOverviews.
- * @param pszResampling Resampling algorithm ("NEAREST" or "AVERAGE"). 
+ * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE" or "GAUSS"). 
  * @param pfnProgress progress report function.
  * @param pProgressData progress function callback data.
  * @return CE_None on success or CE_Failure on failure.
@@ -1011,7 +1012,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         pfnProgress = GDALDummyProgress;
 
     /* Sanity checks */
-    if (!EQUALN(pszResampling, "NEAR", 4) && !EQUAL(pszResampling, "AVERAGE"))
+    if (!EQUALN(pszResampling, "NEAR", 4) && !EQUAL(pszResampling, "AVERAGE") && !EQUAL(pszResampling, "GAUSS"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GDALRegenerateOverviewsMultiBand: pszResampling='%s' not supported", pszResampling);
