@@ -259,7 +259,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetExtension( const char *pszTargetKey, 
                               const char *pszName, 
                               const char *pszValue );
-                           
+    
+    int         FindProjParm( const char *pszParameter,
+                              const OGR_SRSNode *poPROJCS=NULL ) const;
     OGRErr      SetProjParm( const char *, double );
     double      GetProjParm( const char *, double =0.0, OGRErr* = NULL ) const;
 
