@@ -1257,7 +1257,7 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is of size %d, whereas maximum size for %s creation option is %d.",
-                             pszValue, strlen(pszValue), pszKey, atoi(pszMaxSize));
+                             pszValue, (int)strlen(pszValue), pszKey, atoi(pszMaxSize));
                         bRet = FALSE;
                     }
                 }
