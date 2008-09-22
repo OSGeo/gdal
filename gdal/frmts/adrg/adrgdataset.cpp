@@ -1158,8 +1158,15 @@ char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
     if (!module.Open(pszFileName, TRUE))
         return papszFileNames;
 
-    while ((record = module.ReadRecord()) != NULL)
+    while (TRUE)
     {
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        record = module.ReadRecord();
+        CPLPopErrorHandler();
+        CPLErrorReset();
+        if (record == NULL)
+          break;
+
         if (record->GetFieldCount() >= 2)
         {
             field = record->GetField(0);
@@ -1307,8 +1314,15 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    while ((record = module.ReadRecord()) != NULL)
+    while (TRUE)
     {
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        record = module.ReadRecord();
+        CPLPopErrorHandler();
+        CPLErrorReset();
+        if (record == NULL)
+          break;
+
         if (record->GetFieldCount() >= 5)
         {
             field = record->GetField(0);
