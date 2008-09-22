@@ -923,7 +923,7 @@ OGRErr OGRSpatialReference::morphToESRI()
         // strip off rectified_grid_angle -- I hope it is 90!
         OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
         int iRGAChild = FindProjParm( "rectified_grid_angle", poPROJCS );
-        if( iRGAChild != NULL )
+        if( iRGAChild != -1 )
             poPROJCS->DestroyChild( iRGAChild);
 
         pszProjection = GetAttrValue("PROJECTION");
