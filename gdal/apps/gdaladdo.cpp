@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 static void Usage()
 
 {
-    printf( "Usage: gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]\n"
+    printf( "Usage: gdaladdo [-r {nearest,average,gauss,average_mp,average_magphase,mode}]\n"
             "                [-ro] [--help-general] filename levels\n"
             "\n"
             "  -r : choice of resampling method\n"
