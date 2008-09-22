@@ -1890,3 +1890,36 @@ bool GeoRasterWrapper::FlushMetadata()
 
     return true;
 }
+
+//  ---------------------------------------------------------------------------
+//                                                            GeneratePyramid()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::GeneratePyramid( int nLevel,
+                                        const char* pszResampling,
+                                        bool bNodata )
+{
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
+        "DECLARE\n"
+        "  gr sdo_georaster;\n"
+        "BEGIN\n"
+        "  SELECT %s INTO gr\n"
+        "    FROM %s t WHERE %s FOR UPDATE;\n"
+        "  sdo_geor.generatePyramid(gr, 'rlevel=%d resampling=%s');\n"
+        "  UPDATE %s t SET %s = gr WHERE %s;\n"
+        "END;\n",
+        pszColumn,
+        pszTable,
+        pszWhere,
+        nLevel,
+        pszResampling,
+        pszTable,
+        pszColumn,
+        pszWhere ) );
+
+    bool bReturn = poStmt->Execute();
+
+    delete poStmt;
+
+    return bReturn;
+}
