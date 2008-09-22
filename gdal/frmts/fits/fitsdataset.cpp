@@ -362,7 +362,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   }
   else if (bitpix == LONG_IMG) {
     gdalDataType = GDT_Int32;
-    fitsDataType = TLONG;
+    fitsDataType = TINT;
   }
   else if (bitpix == FLOAT_IMG) {
     gdalDataType = GDT_Float32;
