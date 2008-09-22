@@ -566,6 +566,49 @@ def tiff_ovr_14():
     return 'success'
 
 ###############################################################################
+# Same as tiff_ovr_11 but with gauss, and compression to trigger the multiband overview
+# code
+
+def tiff_ovr_15():
+
+    src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
+    
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr15.tif', src_ds, options = [ 'COMPRESS=DEFLATE' ] )
+    src_ds = None
+
+    # The two following lines are necessary with inverted endianness
+    # for the moment
+    # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
+    ds = None
+    ds = gdal.Open('tmp/ovr15.tif', gdal.GA_Update)
+
+    ds.BuildOverviews( 'GAUSS', overviewlist = [2] )
+
+    ds = None
+    ds = gdal.Open('tmp/ovr15.tif', gdal.GA_ReadOnly)
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open copy of test dataset.' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
+    # If NODATA_VALUES was ignored, we would get 2954
+    exp_cs = 2987
+
+    ds = None
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -579,6 +622,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr11.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr12.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/test_gauss_palette.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr15.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -599,6 +643,7 @@ gdaltest_list_internal = [
     tiff_ovr_12,
     tiff_ovr_13,
     tiff_ovr_14,
+    tiff_ovr_15,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
