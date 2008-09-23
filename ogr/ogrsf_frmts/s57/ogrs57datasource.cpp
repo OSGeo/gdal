@@ -58,13 +58,23 @@ OGRS57DataSource::OGRS57DataSource()
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
 /* -------------------------------------------------------------------- */
+    const char *pszOptString = CPLGetConfigOption( "OGR_S57_OPTIONS", NULL );
     papszOptions = NULL;
 
-    if( CPLGetConfigOption("OGR_S57_OPTIONS",NULL) != NULL )
+    if ( pszOptString )
     {
+        char    **papszCurOption;
+
         papszOptions = 
-            CSLTokenizeStringComplex( CPLGetConfigOption("OGR_S57_OPTIONS",""),
-                                      ",", FALSE, FALSE );
+            CSLTokenizeStringComplex( pszOptString, ",", FALSE, FALSE );
+
+        if ( papszOptions && *papszOptions )
+        {
+            CPLDebug( "S57", "The following S57 options are being set:" );
+            papszCurOption = papszOptions;
+            while( *papszCurOption )
+                CPLDebug( "S57", "    %s", *papszCurOption++ );
+        }
     }
 }
 
