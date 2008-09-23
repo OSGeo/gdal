@@ -139,7 +139,7 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
 }
 
 //  ---------------------------------------------------------------------------
-//                                                           GeoRasterDataset()
+//                                                                       Open()
 //  ---------------------------------------------------------------------------
 
 GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
@@ -266,14 +266,11 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  Set Metadata domain "ORACLE"
     //  -------------------------------------------------------------------
 
-    if( poGRD->poGeoRaster->bRDTRIDOnly )
-    {
-        poGRD->SetMetadataItem( "rasterDataTable", poGRW->pszDataTable,
-            "ORACLE" );
-        poGRD->SetMetadataItem( "rasterId", CPLSPrintf("%d",poGRW->nRasterId ),
-            "ORACLE" );
-        return (GDALDataset*) poGRD;
-    }
+    poGRD->SetMetadataItem( "rasterDataTable", poGRW->pszDataTable,
+        "ORACLE" );
+
+    poGRD->SetMetadataItem( "rasterId", CPLSPrintf("%d",poGRW->nRasterId ),
+        "ORACLE" );
 
     //  -------------------------------------------------------------------
     //  Set objectInfo metadata
@@ -379,7 +376,12 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  -------------------------------------------------------------------
 
     poGRD->SetMetadataItem("spatialReferenceInfo.isReferenced", CPLGetXMLValue(
-        poGRW->phMetadata, "spatialReferenceInfo.isReferenced", "FALSE" ), 
+        poGRW->phMetadata, "spatialReferenceInfo.isReferenced", "FALSE" ),
+        "ORACLE" );
+
+    poGRD->SetMetadataItem("spatialReferenceInfo.modelCoordinateLocation",
+        CPLGetXMLValue(
+        poGRW->phMetadata, "spatialReferenceInfo.modelCoordinateLocation", "???" ),
         "ORACLE" );
 
     poGRD->SetMetadataItem("spatialReferenceInfo.SRID", CPLGetXMLValue(
@@ -969,6 +971,12 @@ CPLErr GeoRasterDataset::SetGeoTransform( double *padfTransform )
 {
     memcpy( adfGeoTransform, padfTransform, sizeof( double ) * 6 );
 
+    if( OW_DEFAULT_CENTER )
+    {
+        padfTransform[0] -= padfTransform[1] / 2;
+        padfTransform[3] -= padfTransform[5] / 2;
+    }
+
     poGeoRaster->dfXCoefficient[0] = adfGeoTransform[1];
     poGeoRaster->dfXCoefficient[1] = adfGeoTransform[2];
     poGeoRaster->dfXCoefficient[2] = adfGeoTransform[0];
@@ -1309,6 +1317,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     }
     else
     {
+        CPLError( CE_Failure, CPLE_AppDefined, "Invalid resampling method" );
         return CE_Failure;
     }
 
@@ -1316,7 +1325,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     //  There is no progress report callback from PL/SQL statement
     //  -----------------------------------------------------------
 
-    pfnProgress( 1.0 / 100.0 , NULL, pProgressData );
+    pfnProgress( 5.0 / 100.0 , NULL, pProgressData );
 
     //  -----------------------------------------------------------
     //  Generate Pyramids based on SDO_GEOR.generatePyramids()

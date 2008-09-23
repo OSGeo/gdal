@@ -214,7 +214,7 @@ private:
     int                 nBandsInBuffer;
 
     int                 nPyraLevel;
-    int                 nCellSize;
+    int                 nCellSizeBits;
     int                 nCellSizeGDAL;
 
     bool                bIOInitialized;
