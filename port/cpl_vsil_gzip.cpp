@@ -1353,50 +1353,67 @@ char* VSIZipFilesystemHandler::SplitFilename(const char *pszFilename,
         {
             VSIStatBufL statBuf;
             char* zipFilename = CPLStrdup(pszFilename);
+            int bZipFileExists = FALSE;
             zipFilename[i + 4] = 0;
-            VSIFilesystemHandler *poFSHandler = 
-                VSIFileManager::GetHandler( zipFilename );
-            if (poFSHandler->Stat(zipFilename, &statBuf) == 0)
+
             {
-                if (!VSI_ISDIR(statBuf.st_mode))
+                CPLMutexHolder oHolder( &hMutex );
+
+                if (oFileList.find(zipFilename) != oFileList.end() )
                 {
-                    if (pszFilename[i + 4] != 0)
-                    {
-                        char* pszZipInFileName = CPLStrdup(pszFilename + i + 5);
-
-                        /* Replace a/../b by b and foo/a/../b by foo/b */
-                        while(TRUE)
-                        {
-                            char* pszPrevDir = strstr(pszZipInFileName, "/../");
-                            if (pszPrevDir == NULL || pszPrevDir == pszZipInFileName)
-                                break;
-
-                            char* pszPrevSlash = pszPrevDir - 1;
-                            while(pszPrevSlash != pszZipInFileName &&
-                                  *pszPrevSlash != '/')
-                                pszPrevSlash --;
-                            if (pszPrevSlash == pszZipInFileName)
-                                memmove(pszZipInFileName, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
-                            else
-                                memmove(pszPrevSlash + 1, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
-                        }
-
-                        osZipInFileName = pszZipInFileName;
-                        CPLFree(pszZipInFileName);
-                    }
-                    else
-                        osZipInFileName = "";
-
-                    /* Remove trailing slash */
-                    if (strlen(osZipInFileName))
-                    {
-                        char lastC = osZipInFileName[strlen(osZipInFileName) - 1];
-                        if (lastC == '\\' || lastC == '/')
-                            osZipInFileName[strlen(osZipInFileName) - 1] = 0;
-                    }
-
-                    return zipFilename;
+                    bZipFileExists = TRUE;
                 }
+            }
+
+            if (!bZipFileExists)
+            {
+                VSIFilesystemHandler *poFSHandler = 
+                    VSIFileManager::GetHandler( zipFilename );
+                if (poFSHandler->Stat(zipFilename, &statBuf) == 0 &&
+                    !VSI_ISDIR(statBuf.st_mode))
+                {
+                    bZipFileExists = TRUE;
+                }
+            }
+
+            if (bZipFileExists)
+            {
+                if (pszFilename[i + 4] != 0)
+                {
+                    char* pszZipInFileName = CPLStrdup(pszFilename + i + 5);
+
+                    /* Replace a/../b by b and foo/a/../b by foo/b */
+                    while(TRUE)
+                    {
+                        char* pszPrevDir = strstr(pszZipInFileName, "/../");
+                        if (pszPrevDir == NULL || pszPrevDir == pszZipInFileName)
+                            break;
+
+                        char* pszPrevSlash = pszPrevDir - 1;
+                        while(pszPrevSlash != pszZipInFileName &&
+                                *pszPrevSlash != '/')
+                            pszPrevSlash --;
+                        if (pszPrevSlash == pszZipInFileName)
+                            memmove(pszZipInFileName, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
+                        else
+                            memmove(pszPrevSlash + 1, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
+                    }
+
+                    osZipInFileName = pszZipInFileName;
+                    CPLFree(pszZipInFileName);
+                }
+                else
+                    osZipInFileName = "";
+
+                /* Remove trailing slash */
+                if (strlen(osZipInFileName))
+                {
+                    char lastC = osZipInFileName[strlen(osZipInFileName) - 1];
+                    if (lastC == '\\' || lastC == '/')
+                        osZipInFileName[strlen(osZipInFileName) - 1] = 0;
+                }
+
+                return zipFilename;
             }
             CPLFree(zipFilename);
         }
@@ -1549,57 +1566,58 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
 
 int VSIZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf )
 {
+    int ret;
     CPLString osZipInFileName;
     char* zipFilename = SplitFilename(pszFilename, osZipInFileName);
     if (zipFilename == NULL)
         return -1;
-    VSIFilesystemHandler *poFSHandler = 
-        VSIFileManager::GetHandler( zipFilename );
-    int ret = poFSHandler->Stat(zipFilename, pStatBuf);
-    /* In the case of .zip file, getting the uncompressed size is "free" */
-    if (ret == 0)
-    {
-        if (strlen(osZipInFileName) != 0)
-        {
-            if (ENABLE_DEBUG) CPLDebug("ZIP", "Looking for %s %s\n",
-                                       zipFilename, osZipInFileName.c_str());
 
-            const ZIPEntry* zipEntry = NULL;
-            if (FindFileInZip(zipFilename, osZipInFileName, &zipEntry) == FALSE)
-            {
-                ret = -1;
-            }
-            else
-            {
-                /* Patching st_size with uncompressed file size */
-                pStatBuf->st_size = zipEntry->uncompressed_size;
-                if (zipEntry->bIsDir)
-                    pStatBuf->st_mode = S_IFDIR;
-            }
+    if (strlen(osZipInFileName) != 0)
+    {
+        if (ENABLE_DEBUG) CPLDebug("ZIP", "Looking for %s %s\n",
+                                    zipFilename, osZipInFileName.c_str());
+
+        const ZIPEntry* zipEntry = NULL;
+        if (FindFileInZip(zipFilename, osZipInFileName, &zipEntry) == FALSE)
+        {
+            ret = -1;
         }
         else
         {
-            unzFile unzF = OpenZIPFile(zipFilename, NULL);
-            if (unzF)
-            {
-                cpl_unzOpenCurrentFile(unzF);
-
-                unz_file_info file_info;
-                cpl_unzGetCurrentFileInfo (unzF, &file_info, NULL, 0, NULL, 0, NULL, 0);
-
-                /* Patching st_size with uncompressed file size */
-                pStatBuf->st_size = file_info.uncompressed_size;
-
-                cpl_unzCloseCurrentFile(unzF);
-
-                cpl_unzClose(unzF);
-            }
+            /* Patching st_size with uncompressed file size */
+            pStatBuf->st_size = zipEntry->uncompressed_size;
+            if (zipEntry->bIsDir)
+                pStatBuf->st_mode = S_IFDIR;
             else
-            {
-                ret = -1;
-            }
+                pStatBuf->st_mode = S_IFREG;
+            ret = 0;
         }
     }
+    else
+    {
+        unzFile unzF = OpenZIPFile(zipFilename, NULL);
+        if (unzF)
+        {
+            cpl_unzOpenCurrentFile(unzF);
+
+            unz_file_info file_info;
+            cpl_unzGetCurrentFileInfo (unzF, &file_info, NULL, 0, NULL, 0, NULL, 0);
+
+            /* Patching st_size with uncompressed file size */
+            pStatBuf->st_size = file_info.uncompressed_size;
+            pStatBuf->st_mode = S_IFREG;
+
+            cpl_unzCloseCurrentFile(unzF);
+
+            cpl_unzClose(unzF);
+            ret = 0;
+        }
+        else
+        {
+            ret = -1;
+        }
+    }
+
     CPLFree(zipFilename);
     return ret;
 }
