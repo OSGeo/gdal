@@ -124,11 +124,32 @@ def netcdf_3():
     return 'success'
     
 ###############################################################################
+# In #2582 5dimensional files were causing problems.  Verify use ok.
+
+def netcdf_4():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NetCDF',
+                             'NETCDF:data/foo_5dimensional.nc:temperature',
+                             3, 1218, filename_absolute = 1 )
+
+    # We don't want to gum up the test stream output with the
+    # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    result = tst.testOpen()
+    gdal.PopErrorHandler()
+
+    return result
+    
+###############################################################################
 
 gdaltest_list = [
     netcdf_1,
     netcdf_2,
-    netcdf_3 ]
+    netcdf_3,
+    netcdf_4 ]
 
 
 if __name__ == '__main__':
