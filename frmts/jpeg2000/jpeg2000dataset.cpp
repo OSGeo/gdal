@@ -575,8 +575,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLDebug( "JPEG2000",
                           "IHDR box found. Dump: "
                           "width=%d, height=%d, numcmpts=%d, bpp=%d",
-                          box->data.ihdr.width, box->data.ihdr.height,
-                          box->data.ihdr.numcmpts, (box->data.ihdr.bpc & 0x7F) + 1 );
+                          (int)box->data.ihdr.width, (int)box->data.ihdr.height,
+                          (int)box->data.ihdr.numcmpts, (box->data.ihdr.bpc & 0x7F) + 1 );
                 if ( box->data.ihdr.bpc )
                 {
                     paiDepth = (int *)CPLMalloc(poDS->nBands * sizeof(int));
@@ -615,7 +615,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLDebug( "JPEG2000",
                           "PCLR box found. Dump: number of LUT entries=%d, "
                           "number of resulting channels=%d",
-                          box->data.pclr.numlutents, box->data.pclr.numchans );
+                          (int)box->data.pclr.numlutents, box->data.pclr.numchans );
                 poDS->nBands = box->data.pclr.numchans;
                 if ( paiDepth )
                     CPLFree( paiDepth );
