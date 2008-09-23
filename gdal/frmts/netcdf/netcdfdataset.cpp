@@ -329,9 +329,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
 /* ------------------------------------------------------------------ */
     if( nZDim > 2 ) {
 	this->panBandZPos = 
-	    (int *) CPLCalloc( nZDim-2, sizeof( int ) );
+	    (int *) CPLCalloc( nZDim-1, sizeof( int ) );
 	this->panBandZLev = 
-	    (int *) CPLCalloc( nZDim-2, sizeof( int ) );
+	    (int *) CPLCalloc( nZDim-1, sizeof( int ) );
 
 	for ( int i=0; i < nZDim - 2; i++ ){
 	    this->panBandZPos[i] = panBandDimPos[i+2];
@@ -1582,8 +1582,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create bands                                                    */
 /* -------------------------------------------------------------------- */
-    poDS->panBandZLev = (int *)CPLCalloc( sizeof( nd ) - 2, 
-                                              sizeof( int ) );
+    poDS->panBandZLev = (int *)CPLCalloc( nd-2, sizeof( int ) );
     
     nTotLevCount = 1;
     if ( dim_count > 2 ) {
