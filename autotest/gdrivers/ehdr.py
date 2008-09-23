@@ -112,8 +112,27 @@ def ehdr_5():
 
     return 'success'
 
+
 ###############################################################################
-# create dataset with a nodata value and a color table.
+# Test creating an in memory copy.
+
+def ehdr_6():
+
+    tst = gdaltest.GDALTest( 'EHDR', 'float32.bil', 1, 27 )
+
+    return tst.testCreateCopy( vsimem = 1 )
+
+###############################################################################
+# 32bit integer (read, and createcopy).
+
+def ehdr_7():
+
+    tst = gdaltest.GDALTest( 'EHDR', 'int32.tif', 1, 4672 )
+
+    return tst.testCreateCopy()
+
+###############################################################################
+# cleanup
 
 def ehdr_clean():
     gdaltest.clean_tmp()
@@ -125,6 +144,8 @@ gdaltest_list = [
     ehdr_3,
     ehdr_4,
     ehdr_5,
+    ehdr_6,
+    ehdr_7,
     ehdr_clean
     ]
 
