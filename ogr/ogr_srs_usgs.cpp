@@ -141,7 +141,7 @@ static const long aoEllips[] =
     0// FIXME: WGS 60 --- skipped
 };
 
-#define NUMBER_OF_ELLIPSOIDS    (sizeof(aoEllips)/sizeof(aoEllips[0]))
+#define NUMBER_OF_ELLIPSOIDS    (int)(sizeof(aoEllips)/sizeof(aoEllips[0]))
 
 /************************************************************************/
 /*                        USGSGetUOMLengthInfo()                        */
@@ -860,7 +860,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             }
 
         }
-        else if ( iDatum < (int) NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
+        else if ( iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
         {
             if( USGSGetEllipsoidInfo( aoEllips[iDatum], &pszName,
                                        &dfSemiMajor, &dfInvFlattening ) )
@@ -1284,7 +1284,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                       "Try to translate ellipsoid definition.", pszDatum );
 #endif
             
-            for ( i = 0; i < (int) NUMBER_OF_ELLIPSOIDS; i++ )
+            for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
             {
                 double  dfSM;
                 double  dfIF;
