@@ -514,7 +514,8 @@ const char *CPLFormCIFilename( const char * pszPath,
     char        *pszFilename;
     const char  *pszFullPath;
     int         nLen = strlen(pszBasename)+2, i;
-    FILE        *fp;
+    VSIStatBufL sStatBuf;
+    int         nStatRet;
 
     if( pszExtension != NULL )
         nLen += strlen(pszExtension);
@@ -530,8 +531,8 @@ const char *CPLFormCIFilename( const char * pszPath,
              pszBasename, pszAddedExtSep, pszExtension );
 
     pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
-    fp = VSIFOpen( pszFullPath, "r" );
-    if( fp == NULL )
+    nStatRet = VSIStatL( pszFullPath, &sStatBuf );
+    if( nStatRet != 0 )
     {
         for( i = 0; pszFilename[i] != '\0'; i++ )
         {
@@ -540,10 +541,10 @@ const char *CPLFormCIFilename( const char * pszPath,
         }
 
         pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
-        fp = VSIFOpen( pszFullPath, "r" );
+        nStatRet = VSIStatL( pszFullPath, &sStatBuf );
     }
 
-    if( fp == NULL )
+    if( nStatRet != 0 )
     {
         for( i = 0; pszFilename[i] != '\0'; i++ )
         {
@@ -552,12 +553,10 @@ const char *CPLFormCIFilename( const char * pszPath,
         }
 
         pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
-        fp = VSIFOpen( pszFullPath, "r" );
+        nStatRet = VSIStatL( pszFullPath, &sStatBuf );
     }
 
-    if( fp != NULL )
-        VSIFClose( fp );
-    else
+    if( nStatRet != 0 )
         pszFullPath = CPLFormFilename( pszPath, pszBasename, pszExtension );
 
     CPLFree( pszFilename );
