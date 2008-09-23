@@ -51,7 +51,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     nTotalColumnBlocks  = 0;
     nTotalRowBlocks     = 0;
     nTotalBandBlocks    = 0;
-    nCellSize           = 0;
+    nCellSizeBits       = 0;
     nCellSizeGDAL       = 0;
     dfXCoefficient[0]   = 1;
     dfXCoefficient[1]   = 0;
@@ -920,14 +920,10 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  Get data type
     //  -------------------------------------------------------------------
 
-    //TODO: That doesn't seams to be right. I need to revise it.
-
     pszCellDepth        = CPLStrdup( CPLGetXMLValue( phMetadata,
                             "rasterInfo.cellDepth", "8BIT_U" ) );
 
-    sscanf( pszCellDepth, "%d", &nCellSize );
-
-    nCellSize           /= 8;
+    sscanf( pszCellDepth, "%dBIT", &nCellSizeBits );
 
     GDALDataType eType  = OWGetDataType( pszCellDepth );
 
@@ -950,10 +946,10 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  Prepare to get Extents
     //  ------------------------------------------------------------------- 
 
-    bIsReferenced       = EQUAL( "TRUE", CPLGetXMLValue( phMetadata, 
+    bIsReferenced       = EQUAL( "TRUE", CPLGetXMLValue( phMetadata,
                             "spatialReferenceInfo.isReferenced", "FALSE" ) );
 
-    nSRID               = atoi( CPLGetXMLValue( phMetadata, 
+    nSRID               = atoi( CPLGetXMLValue( phMetadata,
                             "spatialReferenceInfo.SRID", "0" ) );
 }
 
@@ -969,7 +965,7 @@ bool GeoRasterWrapper::GetImageExtent( double *padfTransform )
     sdo_geometry*   poLowerLeft   = NULL;
     sdo_geometry*   poLowerRight  = NULL;
 
-    poStmt = poConnection->CreateStatement( CPLSPrintf( 
+    poStmt = poConnection->CreateStatement( CPLSPrintf(
         "SELECT\n"
         "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
         "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
@@ -1024,15 +1020,6 @@ bool GeoRasterWrapper::GetImageExtent( double *padfTransform )
     padfTransform[3] = dfULy;
     padfTransform[4] = -dfRotation;
     padfTransform[5] = ( dfLRy - dfULy ) / nRasterRows;
-
-    bool bUpLeft = EQUAL( "UPPERLEFT", CPLGetXMLValue( phMetadata, 
-        "spatialReferenceInfo.modelCoordinateLocation", "UPPERLEFT" ) );
-
-    if( ! bUpLeft )
-    {
-        padfTransform[0] -= padfTransform[1] / 2;
-        padfTransform[3] -= padfTransform[5] / 2;
-    }
 
     return true;
 }
@@ -1282,7 +1269,7 @@ bool GeoRasterWrapper::InitializeIO()
 {
     nBlockCount     = nTotalColumnBlocks * nTotalRowBlocks * nTotalBandBlocks;
     nBlockBytes     = nColumnBlockSize   * nRowBlockSize   * nBandBlockSize *
-                      nCellSize;
+                      nCellSizeBits / 8;
     nBlockBytesGDAL = nColumnBlockSize   * nRowBlockSize   * nCellSizeGDAL;
 
     // --------------------------------------------------------------------
@@ -1849,6 +1836,13 @@ bool GeoRasterWrapper::FlushMetadata()
     //  Update the Metadata directly from the XML text
     //  --------------------------------------------------------------------
 
+    int nModelCoordinateLocation = 0;
+
+    if( ! OW_DEFAULT_CENTER )
+    {
+        nModelCoordinateLocation = 1;
+    }
+
     char* pszXML = CPLSerializeXMLTree( phMetadata );
 
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
@@ -1858,8 +1852,8 @@ bool GeoRasterWrapper::FlushMetadata()
         "  SELECT %s INTO GR FROM %s T WHERE %s FOR UPDATE;\n"
         "  GR.metadata := XMLTYPE(:1);\n"
         "  IF NOT :2 = 0 THEN\n"
-        "  SDO_GEOR.georeference( GR, :2, 1,\n"
-        "    SDO_NUMBER_ARRAY(:3, :4, :5), SDO_NUMBER_ARRAY(:6, :7, :8));\n"
+        "  SDO_GEOR.georeference( GR, :2, :3,\n"
+        "    SDO_NUMBER_ARRAY(:4, :5, :6), SDO_NUMBER_ARRAY(:7, :8, :9));\n"
         "  END IF;\n"
         "  UPDATE %s T SET %s = GR WHERE %s;\n"
         "  COMMIT;\n"
@@ -1869,6 +1863,7 @@ bool GeoRasterWrapper::FlushMetadata()
 
     poStmt->Bind( pszXML, strlen( pszXML ) + 1);
     poStmt->Bind( &nSRID );
+    poStmt->Bind( &nModelCoordinateLocation );
     poStmt->Bind( &dfXCoefficient[0] );
     poStmt->Bind( &dfXCoefficient[1] );
     poStmt->Bind( &dfXCoefficient[2] );
