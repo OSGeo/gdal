@@ -125,7 +125,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     int   nSrcYSize = GDALGetRasterYSize(hSrcDS);
     GByte **papabySrcData;
 
-    papabySrcData = (GByte **) CPLCalloc(nBandCount,sizeof(int));
+    papabySrcData = (GByte **) CPLCalloc(nBandCount,sizeof(GByte*));
     for( iBand = 0; iBand < nBandCount; iBand++ )
     {
         papabySrcData[iBand] = (GByte *) VSIMalloc(nSrcXSize*nSrcYSize);
@@ -149,7 +149,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     int nDstYSize = GDALGetRasterYSize( hDstDS );
     GByte **papabyDstLine;
 
-    papabyDstLine = (GByte **) CPLCalloc(nBandCount,sizeof(int));
+    papabyDstLine = (GByte **) CPLCalloc(nBandCount,sizeof(GByte*));
     
     for( iBand = 0; iBand < nBandCount; iBand++ )
         papabyDstLine[iBand] = (GByte *) CPLMalloc( nDstXSize );
