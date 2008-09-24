@@ -288,6 +288,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         CPLFree( papabySrcData[iBand] );
     }
 
+    CPLFree( panBandInit );
     CPLFree( papabyDstLine );
     CPLFree( papabySrcData );
     CPLFree( padfX );
