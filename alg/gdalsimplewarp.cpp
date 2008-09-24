@@ -96,6 +96,13 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         int nResult;
 
         nBandCount = GDALGetRasterCount( hSrcDS ); 
+        if (nBandCount == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "No raster band in source dataset");
+            return FALSE;
+        }
+
         panBandList = (int *) CPLCalloc(sizeof(int),nBandCount);
 
         for( iBand = 0; iBand < nBandCount; iBand++ )
