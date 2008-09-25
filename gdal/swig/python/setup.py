@@ -100,12 +100,6 @@ class gdal_ext(build_ext):
     def get_gdal_config(self, option):
         return get_gdal_config(option, gdal_config =self.gdal_config)
     
-    def finalize_win32(self):
-        if self.get_compiler() == 'msvc':
-            self.libraries.remove('gdal')
-            self.libraries.append('gdal_i')
-        build_ext.finalize_win32()
-    
     def finalize_options(self):
         build_ext.finalize_options(self)
         
@@ -125,7 +119,10 @@ gdal_version = '1.5.0'
 
 include_dirs=['../../port', '../../gcore', '../../alg', '../../ogr/']
 library_dirs=['../../.libs', '../../']
-libraries = ['gdal']
+if get_default_compiler() == 'msvc':
+    libraries = ['gdal_i']
+else:
+    libraries = ['gdal']
 extra_link_args = []
 extra_compile_args = []
 # might need to tweak for Python 2.4 on OSX to be these
