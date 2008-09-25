@@ -274,13 +274,13 @@ int main( int nArgc, char ** papszArgv )
     {
         OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
         
-        printf( "FAILURE:\n"
+        fprintf( stderr, "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
                 pszDataSource );
 
         for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
         {
-            printf( "  -> %s\n", poR->GetDriver(iDriver)->GetName() );
+            fprintf( stderr, "  -> %s\n", poR->GetDriver(iDriver)->GetName() );
         }
 
         exit( 1 );
@@ -296,7 +296,7 @@ int main( int nArgc, char ** papszArgv )
         poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE );
         if( poODS == NULL )
         {
-            printf( "FAILURE:\n"
+            fprintf( stderr, "FAILURE:\n"
                     "Unable to open existing output datasource `%s'.\n",
                     pszDestDataSource );
             exit( 1 );
@@ -304,7 +304,7 @@ int main( int nArgc, char ** papszArgv )
 
         if( CSLCount(papszDSCO) > 0 )
         {
-            printf( "WARNING: Datasource creation options ignored since an existing datasource\n"
+            fprintf( stderr, "WARNING: Datasource creation options ignored since an existing datasource\n"
                     "         being updated.\n" );
         }
     }
@@ -330,19 +330,19 @@ int main( int nArgc, char ** papszArgv )
 
         if( poDriver == NULL )
         {
-            printf( "Unable to find driver `%s'.\n", pszFormat );
-            printf( "The following drivers are available:\n" );
+            fprintf( stderr, "Unable to find driver `%s'.\n", pszFormat );
+            fprintf( stderr,  "The following drivers are available:\n" );
         
             for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
             {
-                printf( "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
+                fprintf( stderr,  "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
             }
             exit( 1 );
         }
 
         if( !poDriver->TestCapability( ODrCCreateDataSource ) )
         {
-            printf( "%s driver does not support data source creation.\n",
+            fprintf( stderr,  "%s driver does not support data source creation.\n",
                     pszFormat );
             exit( 1 );
         }
@@ -353,7 +353,7 @@ int main( int nArgc, char ** papszArgv )
         poODS = poDriver->CreateDataSource( pszDestDataSource, papszDSCO );
         if( poODS == NULL )
         {
-            printf( "%s driver failed to create %s\n", 
+            fprintf( stderr,  "%s driver failed to create %s\n", 
                     pszFormat, pszDestDataSource );
             exit( 1 );
         }
@@ -367,7 +367,7 @@ int main( int nArgc, char ** papszArgv )
         poOutputSRS = new OGRSpatialReference();
         if( poOutputSRS->SetFromUserInput( pszOutputSRSDef ) != OGRERR_NONE )
         {
-            printf( "Failed to process SRS definition: %s\n", 
+            fprintf( stderr,  "Failed to process SRS definition: %s\n", 
                     pszOutputSRSDef );
             exit( 1 );
         }
@@ -381,7 +381,7 @@ int main( int nArgc, char ** papszArgv )
         poSourceSRS = new OGRSpatialReference();
         if( poSourceSRS->SetFromUserInput( pszSourceSRSDef ) != OGRERR_NONE )
         {
-            printf( "Failed to process SRS definition: %s\n", 
+            fprintf( stderr,  "Failed to process SRS definition: %s\n", 
                     pszSourceSRSDef );
             exit( 1 );
         }
@@ -395,9 +395,9 @@ int main( int nArgc, char ** papszArgv )
         OGRLayer *poResultSet;
 
         if( pszWHERE != NULL )
-            printf( "-where clause ignored in combination with -sql.\n" );
+            fprintf( stderr,  "-where clause ignored in combination with -sql.\n" );
         if( CSLCount(papszLayers) > 0 )
-            printf( "layer names ignored in combination with -sql.\n" );
+            fprintf( stderr,  "layer names ignored in combination with -sql.\n" );
         
         poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
                                         NULL );
@@ -430,7 +430,7 @@ int main( int nArgc, char ** papszArgv )
 
         if( poLayer == NULL )
         {
-            printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
+            fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %d!\n",
                     iLayer );
             exit( 1 );
         }
@@ -453,7 +453,7 @@ int main( int nArgc, char ** papszArgv )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
-                          "translation of layer %s\n", 
+                          "translation of layer %s (use -skipfailures to skip errors)\n", 
                           poLayer->GetLayerDefn()->GetName() );
 
                 exit( 1 );
@@ -587,7 +587,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
         if( poSourceSRS == NULL )
         {
-            printf( "Can't transform coordinates, source layer has no\n"
+            fprintf( stderr, "Can't transform coordinates, source layer has no\n"
                     "coordinate system.  Use -s_srs to set one.\n" );
             exit( 1 );
         }
@@ -600,16 +600,16 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         {
             char        *pszWKT = NULL;
 
-            printf("Failed to create coordinate transformation between the\n"
+            fprintf( stderr, "Failed to create coordinate transformation between the\n"
                    "following coordinate systems.  This may be because they\n"
                    "are not transformable, or because projection services\n"
                    "(PROJ.4 DLL/.so) could not be loaded.\n" );
             
             poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
-            printf( "Source:\n%s\n", pszWKT );
+            fprintf( stderr,  "Source:\n%s\n", pszWKT );
             
             poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
-            printf( "Target:\n%s\n", pszWKT );
+            fprintf( stderr,  "Target:\n%s\n", pszWKT );
             exit( 1 );
         }
     }
@@ -689,7 +689,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     else if( !bAppend )
     {
-        printf( "FAILED: Layer %s already exists, and -append not specified.\n"
+        fprintf( stderr, "FAILED: Layer %s already exists, and -append not specified.\n"
                 "        Consider using -append, or -overwrite.\n",
                 pszNewLayerName );
         return FALSE;
@@ -698,7 +698,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     {
         if( CSLCount(papszLCO) > 0 )
         {
-            printf( "WARNING: Layer creation options ignored since an existing layer is\n"
+            fprintf( stderr, "WARNING: Layer creation options ignored since an existing layer is\n"
                     "         being appended to.\n" );
         }
     }
@@ -720,7 +720,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 poDstLayer->CreateField( poFDefn->GetFieldDefn(iSrcField) );
             else
             {
-                printf( "Field '%s' not found in source layer.\n", 
+                fprintf( stderr, "Field '%s' not found in source layer.\n", 
                         papszSelFields[iField] );
                 if( !bSkipFailures )
                     return FALSE;
@@ -800,7 +800,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 if( nGroupTransactions )
                     poDstLayer->CommitTransaction();
 
-                printf( "Failed to transform feature %d.\n", 
+                fprintf( stderr, "Failed to reproject feature %d (geometry probably out of source or destination SRS).\n", 
                         (int) poFeature->GetFID() );
                 if( !bSkipFailures )
                 {
