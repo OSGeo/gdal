@@ -20,6 +20,15 @@ HAVE_SETUPTOOLS = False
 BUILD_FOR_CHEESESHOP = False
 
 # ---------------------------------------------------------------------------
+# Default build options
+# (may be overriden with setup.cfg or command line switches).
+# ---------------------------------------------------------------------------
+
+include_dirs = ['../../port', '../../gcore', '../../alg', '../../ogr/']
+library_dirs = ['../../.libs', '../../']
+libraries = ['gdal']
+
+# ---------------------------------------------------------------------------
 # Helper Functions
 # ---------------------------------------------------------------------------
 
@@ -101,6 +110,16 @@ class gdal_ext(build_ext):
         return get_gdal_config(option, gdal_config =self.gdal_config)
     
     def finalize_options(self):
+        if self.include_dirs is None:
+            self.include_dirs = include_dirs
+        if self.library_dirs is None:
+            self.library_dirs = library_dirs
+        if self.libraries is None:
+            if self.get_compiler() == 'msvc':
+                libraries.remove('gdal')
+                libraries.append('gdal_i')
+            self.libraries = libraries
+
         build_ext.finalize_options(self)
         
         self.include_dirs.append(self.numpy_include_dir)
@@ -116,13 +135,6 @@ class gdal_ext(build_ext):
 
 gdal_version = '1.5.0'
 
-
-include_dirs=['../../port', '../../gcore', '../../alg', '../../ogr/']
-library_dirs=['../../.libs', '../../']
-if get_default_compiler() == 'msvc':
-    libraries = ['gdal_i']
-else:
-    libraries = ['gdal']
 extra_link_args = []
 extra_compile_args = []
 # might need to tweak for Python 2.4 on OSX to be these
@@ -130,42 +142,27 @@ extra_compile_args = []
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
-                        include_dirs=include_dirs,
-                        library_dirs=library_dirs,
-                        libraries = libraries,
                         extra_compile_args = extra_compile_args,
                         extra_link_args = extra_link_args)
 
 gdalconst_module = Extension('osgeo._gdalconst',
                     sources=['extensions/gdalconst_wrap.c'],
-                    include_dirs=include_dirs,
-                    library_dirs=library_dirs,
-                    libraries = libraries,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 osr_module = Extension('osgeo._osr',
                     sources=['extensions/osr_wrap.cpp'],
-                    include_dirs=include_dirs,
-                    library_dirs=library_dirs,
-                    libraries = libraries,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 ogr_module = Extension('osgeo._ogr',
                     sources=['extensions/ogr_wrap.cpp'],
-                    include_dirs=include_dirs,
-                    library_dirs=library_dirs,
-                    libraries = libraries,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 
 array_module = Extension('osgeo._gdal_array',
                     sources=['extensions/_gdal_array.cpp'],
-                    include_dirs=include_dirs,
-                    library_dirs=library_dirs,
-                    libraries = libraries,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
