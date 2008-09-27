@@ -213,7 +213,6 @@ private:
     int                 nCurrentBlock;
     int                 nBandsInBuffer;
 
-    int                 nPyraLevel;
     int                 nCellSizeBits;
     int                 nCellSizeGDAL;
 
@@ -247,7 +246,7 @@ public:
                             double dfMax,
                             double dfMean,
                             double dfStdDev );
-    bool                SetStatistics( double dfMin, 
+    bool                SetStatistics( double dfMin,
                             double dfMax,
                             double dfMean,
                             double dfStdDev,
@@ -261,11 +260,13 @@ public:
                             int nBand,
                             int nXOffset,
                             int nYOffset,
+                            int nLevel,
                             void* pData );
     bool                SetBandBlock(
                             int nBand,
                             int nXOffset,
                             int nYOffset,
+                            int nLevel,
                             void* pData );
     bool                GetNoData( double* pdfNoDataValue );
     bool                SetNoData( double dfNoDataValue );
@@ -274,7 +275,7 @@ public:
     char*               GetVAT( int nBand );
     void                SetOptimizedWriting()   { bOptimizedWriting = true; };
     bool                GeneratePyramid(
-                            int nLevel,
+                            int nLevels,
                             const char* pszResampling,
                             bool bNodata = false );
 public:
