@@ -62,7 +62,6 @@ GeoRasterWrapper::GeoRasterWrapper()
     pszCellDepth        = NULL;
     pahLocator          = NULL;
     pabyBlockBuf        = NULL;
-    nPyraLevel          = 0;
     bIsReferenced       = false;
     poStmtRead          = NULL;
     poStmtWrite         = NULL;
@@ -722,6 +721,8 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
         "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
         "      LOB(RASTERBLOCK) STORE AS (NOCACHE NOLOGGING)';\n"
+        "  ELSE\n"
+        "    EXECUTE IMMEDIATE 'DELETE FROM '||:rdt||' WHERE RASTERID ='||:rid||' ';\n" 
         "  END IF;\n"
         "\n"
         "  STM := 'INSERT INTO '||:rdt||' VALUES (:1,0,:2-1,:3-1,:4-1,\n"
@@ -1321,6 +1322,7 @@ int GeoRasterWrapper::CalculateBlockId( int nBand,
 bool GeoRasterWrapper::GetBandBlock( int nBand,
                                      int nXOffset,
                                      int nYOffset,
+                                     int nLevel,
                                      void* pData )
 {
     int nBlock = CalculateBlockId( nBand, nXOffset, nYOffset );
@@ -1344,7 +1346,7 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
             "       COLUMNBLOCKNUMBER ASC",
             pszDataTable ) );
         poStmtRead->Bind( &nRasterId );
-        poStmtRead->Bind( &nPyraLevel );
+        poStmtRead->Bind( &nLevel );
         poStmtRead->Define( pahLocator, nBlockCount );
         poStmtRead->Execute();
         if( poStmtRead->Fetch( nBlockCount ) == false )
@@ -1455,6 +1457,7 @@ bool GeoRasterWrapper::GetBandBlock( int nBand,
 bool GeoRasterWrapper::SetBandBlock( int nBand,
                                      int nXOffset,
                                      int nYOffset,
+                                     int nLevel,
                                      void* pData )
 {
     int nBlock = CalculateBlockId( nBand, nXOffset, nYOffset );
@@ -1481,7 +1484,7 @@ bool GeoRasterWrapper::SetBandBlock( int nBand,
             "FOR UPDATE ",
             pszDataTable ) );
         poStmtWrite->Bind( &nRasterId );
-        poStmtWrite->Bind( &nPyraLevel );
+        poStmtWrite->Bind( &nLevel );
         poStmtWrite->Define( pahLocator, nBlockCount );
         poStmtWrite->Execute();
         if( poStmtWrite->Fetch( nBlockCount ) == false )
@@ -1890,7 +1893,7 @@ bool GeoRasterWrapper::FlushMetadata()
 //                                                            GeneratePyramid()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::GeneratePyramid( int nLevel,
+bool GeoRasterWrapper::GeneratePyramid( int nLevels,
                                         const char* pszResampling,
                                         bool bNodata )
 {
@@ -1906,7 +1909,7 @@ bool GeoRasterWrapper::GeneratePyramid( int nLevel,
         pszColumn,
         pszTable,
         pszWhere,
-        nLevel,
+        nLevels,
         pszResampling,
         pszTable,
         pszColumn,
