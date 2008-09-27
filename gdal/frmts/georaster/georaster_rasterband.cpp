@@ -77,7 +77,7 @@ CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
         return CE_None;
     }
 
-    if( poGeoRaster->GetBandBlock( nBand, nBlockXOff, nBlockYOff, pImage ) )
+    if( poGeoRaster->GetBandBlock( nBand, nBlockXOff, nBlockYOff, 0, pImage ) )
     {
         return CE_None;
     }
@@ -99,7 +99,7 @@ CPLErr GeoRasterRasterBand::IWriteBlock( int nBlockXOff,
                                          int nBlockYOff,
                                          void *pImage )
 {
-    if( poGeoRaster->SetBandBlock( nBand, nBlockXOff, nBlockYOff, pImage ) )
+    if( poGeoRaster->SetBandBlock( nBand, nBlockXOff, nBlockYOff, 0, pImage ) )
     {
         return CE_None;
     }
