@@ -72,7 +72,8 @@
 /*!
   \param     dataset The dataset we are a part of.
 */
-PCRasterRasterBand::PCRasterRasterBand(PCRasterDataset* dataset)
+PCRasterRasterBand::PCRasterRasterBand(
+         PCRasterDataset* dataset)
 
   : GDALPamRasterBand(), d_dataset(dataset)
 
@@ -95,7 +96,8 @@ PCRasterRasterBand::~PCRasterRasterBand()
 
 
 
-double PCRasterRasterBand::GetNoDataValue(int* success)
+double PCRasterRasterBand::GetNoDataValue(
+         int* success)
 {
   if(success) {
     *success = 1;
@@ -106,12 +108,14 @@ double PCRasterRasterBand::GetNoDataValue(int* success)
 
 
 
-double PCRasterRasterBand::GetMinimum(int* success)
+double PCRasterRasterBand::GetMinimum(
+         int* success)
 {
   double result;
   int isValid;
 
   switch(d_dataset->cellRepresentation()) {
+    // CSF version 2. ----------------------------------------------------------
     case CR_UINT1: {
       UINT1 min;
       isValid = RgetMinVal(d_dataset->map(), &min);
@@ -126,6 +130,37 @@ double PCRasterRasterBand::GetMinimum(int* success)
     }
     case CR_REAL4: {
       REAL4 min;
+      isValid = RgetMinVal(d_dataset->map(), &min);
+      result = static_cast<double>(min);
+      break;
+    }
+    case CR_REAL8: {
+      REAL8 min;
+      isValid = RgetMinVal(d_dataset->map(), &min);
+      result = static_cast<double>(min);
+      break;
+    }
+    // CSF version 1. ----------------------------------------------------------
+    case CR_INT1: {
+      INT1 min;
+      isValid = RgetMinVal(d_dataset->map(), &min);
+      result = static_cast<double>(min);
+      break;
+    }
+    case CR_INT2: {
+      INT2 min;
+      isValid = RgetMinVal(d_dataset->map(), &min);
+      result = static_cast<double>(min);
+      break;
+    }
+    case CR_UINT2: {
+      UINT2 min;
+      isValid = RgetMinVal(d_dataset->map(), &min);
+      result = static_cast<double>(min);
+      break;
+    }
+    case CR_UINT4: {
+      UINT4 min;
       isValid = RgetMinVal(d_dataset->map(), &min);
       result = static_cast<double>(min);
       break;
@@ -146,7 +181,8 @@ double PCRasterRasterBand::GetMinimum(int* success)
 
 
 
-double PCRasterRasterBand::GetMaximum(int* success)
+double PCRasterRasterBand::GetMaximum(
+         int* success)
 {
   double result;
   int isValid;
@@ -170,6 +206,31 @@ double PCRasterRasterBand::GetMaximum(int* success)
       result = static_cast<double>(max);
       break;
     }
+    // CSF version 1. ----------------------------------------------------------
+    case CR_INT1: {
+      INT1 max;
+      isValid = RgetMaxVal(d_dataset->map(), &max);
+      result = static_cast<double>(max);
+      break;
+    }
+    case CR_INT2: {
+      INT2 max;
+      isValid = RgetMaxVal(d_dataset->map(), &max);
+      result = static_cast<double>(max);
+      break;
+    }
+    case CR_UINT2: {
+      UINT2 max;
+      isValid = RgetMaxVal(d_dataset->map(), &max);
+      result = static_cast<double>(max);
+      break;
+    }
+    case CR_UINT4: {
+      UINT4 max;
+      isValid = RgetMaxVal(d_dataset->map(), &max);
+      result = static_cast<double>(max);
+      break;
+    }
     default: {
       result = 0.0;
       isValid = 0;
@@ -186,17 +247,21 @@ double PCRasterRasterBand::GetMaximum(int* success)
 
 
 
-CPLErr PCRasterRasterBand::IReadBlock(int nBlockXoff, int nBlockYoff,
+CPLErr PCRasterRasterBand::IReadBlock(
+         int nBlockXoff,
+         int nBlockYoff,
          void* buffer)
 {
   size_t nrCellsRead = RgetRow(d_dataset->map(), nBlockYoff, buffer);
 
-  if(d_dataset->cellRepresentation() == CR_REAL4 ||
-         d_dataset->cellRepresentation() == CR_REAL8) {
-    // Missing value in the buffer is a NAN. Replace by valid value.
-    alterFromStdMV(buffer, nrCellsRead, d_dataset->cellRepresentation(),
-           d_dataset->missingValue());
-  }
+  // Now we have raw values, missing values are set according to the CSF
+  // conventions. This means that floating points should not be evaluated.
+  // Since this is done by the GDal library we replace these with valid
+  // values. Non-MV values are not touched.
+
+  // Replace in-file MV with in-app MV which may be different.
+  alterFromStdMV(buffer, nrCellsRead, d_dataset->cellRepresentation(),
+         d_dataset->missingValue());
 
   return CE_None;
 }
