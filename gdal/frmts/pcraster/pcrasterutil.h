@@ -39,12 +39,16 @@
 #define INCLUDED_CSF
 #endif
 
+#ifndef INCLUDED_PCRTYPES
+#include "pcrtypes.h"
+#define INCLUDED_PCRTYPES
+#endif
+
 // Module headers.
 #ifndef INCLUDED_GDAL_PRIV
 #include "gdal_priv.h"
 #define INCLUDED_GDAL_PRIV
 #endif
-
 
 
 GDALDataType       cellRepresentation2GDALType(CSF_CR cellRepresentation);
@@ -91,3 +95,59 @@ MAP*               mapOpen             (std::string const& filename,
 
 CSF_VS             fitValueScale       (CSF_VS valueScale,
                                         CSF_CR cellRepresentation);
+
+void               castValuesToBooleanRange(
+                                        void* buffer,
+                                        size_t size,
+                                        CSF_CR cellRepresentation);
+
+template<typename T>
+struct CastToBooleanRange
+{
+  void operator()(T& value) {
+    if(!pcr::isMV(value)) {
+      if(value != 0) {
+        value = T(value > T(0));
+      }
+      else {
+        pcr::setMV(value);
+      }
+    }
+  }
+};
+
+
+
+template<>
+struct CastToBooleanRange<UINT1>
+{
+  void operator()(UINT1& value) {
+    if(!pcr::isMV(value)) {
+      value = UINT1(value > UINT1(0));
+    }
+  }
+};
+
+
+
+template<>
+struct CastToBooleanRange<UINT2>
+{
+  void operator()(UINT2& value) {
+    if(!pcr::isMV(value)) {
+      value = UINT2(value > UINT2(0));
+    }
+  }
+};
+
+
+
+template<>
+struct CastToBooleanRange<UINT4>
+{
+  void operator()(UINT4& value) {
+    if(!pcr::isMV(value)) {
+      value = UINT4(value > UINT4(0));
+    }
+  }
+};
