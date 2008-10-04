@@ -175,6 +175,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     int nRequestYSize;
+    int nRequestXSize;
 
 /* -------------------------------------------------------------------- */
 /*      If the last strip is partial, we need to avoid                  */
@@ -184,24 +185,35 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( (nBlockYOff + 1) * nBlockYSize > nRasterYSize )
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
-        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * nBlockXSize * nBlockYSize );
+        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * 
+            nBlockXSize * nBlockYSize );
     }
     else
     {
         nRequestYSize = nBlockYSize;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Each complex component is a seperate sample in the TIFF file    */
-/*      (old way)                                                       */
-/* -------------------------------------------------------------------- */
+/*-------------------------------------------------------------------- */
+/*      If the input imagery is tiled, also need to avoid over-        */
+/*      requesting in the X-direction.                                 */
+/* ------------------------------------------------------------------- */
+   if( (nBlockXOff + 1) * nBlockXSize > nRasterXSize )
+    {
+        nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
+        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * 
+            nBlockXSize * nBlockYSize );
+    }
+    else
+    {
+        nRequestXSize = nBlockXSize;
+    }
     if( eDataType == GDT_CInt16 && poBandFile->GetRasterCount() == 2 )
         return 
             poBandFile->RasterIO( GF_Read, 
                                   nBlockXOff * nBlockXSize, 
                                   nBlockYOff * nBlockYSize,
-                                  nBlockXSize, nRequestYSize,
-                                  pImage, nBlockXSize, nRequestYSize, 
+                                  nRequestXSize, nRequestYSize,
+                                  pImage, nRequestXSize, nRequestYSize, 
                                   GDT_Int16,
                                   2, NULL, 4, nBlockXSize * 4, 2 );
 
@@ -216,8 +228,8 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             poBandFile->RasterIO( GF_Read, 
                                   nBlockXOff * nBlockXSize, 
                                   nBlockYOff * nBlockYSize,
-                                  nBlockXSize, nRequestYSize, 
-                                  pImage, nBlockXSize, nRequestYSize, 
+                                  nRequestXSize, nRequestYSize, 
+                                  pImage, nRequestXSize, nRequestYSize, 
                                   GDT_UInt32,
                                   1, NULL, 4, nBlockXSize * 4, 0 );
 
@@ -241,8 +253,8 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             poBandFile->RasterIO( GF_Read, 
                                   nBlockXOff * nBlockXSize, 
                                   nBlockYOff * nBlockYSize,
-                                  nBlockXSize, nRequestYSize, 
-                                  pImage, nBlockXSize, nRequestYSize,
+                                  nRequestXSize, nRequestYSize, 
+                                  pImage, nRequestXSize, nRequestYSize,
                                   GDT_UInt16,
                                   1, NULL, 2, nBlockXSize * 2, 0 );
     else if ( eDataType == GDT_Byte ) 
@@ -251,8 +263,8 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             poBandFile->RasterIO( GF_Read,
                                   nBlockXOff * nBlockXSize,
                                   nBlockYOff * nBlockYSize,
-                                  nBlockXSize, nRequestYSize,
-                                  pImage, nBlockXSize, nRequestYSize,
+                                  nRequestXSize, nRequestYSize,
+                                  pImage, nRequestXSize, nRequestYSize,
                                   GDT_Byte,
                                   1, NULL, 1, nBlockXSize, 0 );
     else
