@@ -286,6 +286,8 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 /*      Read in product info.                                           */
 /* -------------------------------------------------------------------- */
 
+    poDS->SetMetadataItem( "SCENE_CENTRE_TIME", CPLGetXMLValue( psProductInfo,
+        "sceneInfo.sceneCenterCoord.azimuthTimeUTC", "unknown" ) );
 	poDS->SetMetadataItem( "OPERATIONAL_MODE", CPLGetXMLValue( psProductInfo, 
 		"generationInfo.groundOperationsType", "unknown" ) );
 	poDS->SetMetadataItem( "ORBIT_CYCLE", CPLGetXMLValue( psProductInfo,
@@ -315,6 +317,8 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 		"imageDataInfo.imageRaster.rowSpacing", "unknown" ) );
 	poDS->SetMetadataItem( "COL_SPACING", CPLGetXMLValue( psProductInfo,
 		"imageDataInfo.imageRaster.columnSpacing", "unknown" ) );
+    poDS->SetMetadataItem( "COL_SPACING_UNITS", CPLGetXMLValue( psProductInfo,
+        "imageDataInfo.imageRaster.columnSpacing.units", "unknown" ) );
 
 	/* Get equivalent number of looks */
 	poDS->SetMetadataItem( "AZIMUTH_LOOKS", CPLGetXMLValue( psProductInfo,
@@ -442,8 +446,8 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
             psGCP->dfGCPPixel = atof(CPLGetXMLValue(psNode, "refColumn", 
                 "0.0"));
             psGCP->dfGCPLine = atof(CPLGetXMLValue(psNode, "refRow", "0.0"));
-            psGCP->dfGCPX = atof(CPLGetXMLValue(psNode, "lat", "0.0"));
-            psGCP->dfGCPY = atof(CPLGetXMLValue(psNode, "lon", "0.0"));
+            psGCP->dfGCPX = atof(CPLGetXMLValue(psNode, "lon", "0.0"));
+            psGCP->dfGCPY = atof(CPLGetXMLValue(psNode, "lat", "0.0"));
             psGCP->dfGCPZ = dfAvgHeight;
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
