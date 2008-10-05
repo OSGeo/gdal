@@ -265,8 +265,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
             }
 
             int isValidGeometry;
+            const char* papszOptions[] = { "METHOD=ONLY_CCW", NULL };
             poOGR = OGRGeometryFactory::organizePolygons( 
-                (OGRGeometry**)tabPolygons, psShape->nParts, &isValidGeometry );
+                (OGRGeometry**)tabPolygons, psShape->nParts, &isValidGeometry, papszOptions );
 
             if (!isValidGeometry)
             {

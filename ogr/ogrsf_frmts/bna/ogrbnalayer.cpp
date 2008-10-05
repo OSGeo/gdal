@@ -678,7 +678,7 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
         {
             int isValidGeometry;
             poFeature->SetGeometryDirectly(
-                OGRGeometryFactory::organizePolygons((OGRGeometry**)tabPolygons, nbPolygons, &isValidGeometry));
+                OGRGeometryFactory::organizePolygons((OGRGeometry**)tabPolygons, nbPolygons, &isValidGeometry, NULL));
             
             if (!isValidGeometry)
             {
