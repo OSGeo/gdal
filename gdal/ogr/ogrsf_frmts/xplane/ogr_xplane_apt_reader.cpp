@@ -772,7 +772,7 @@ static OGRGeometry* OGRXPlaneAptReaderSplitPolygon(OGRPolygon& polygon)
     OGRGeometry* poGeom;
     poGeom = OGRGeometryFactory::organizePolygons((OGRGeometry**)papoPolygons,
                                                   1 + polygon.getNumInteriorRings(),
-                                                  &bIsValid);
+                                                  &bIsValid, NULL);
 
     delete[] papoPolygons;
 
