@@ -349,6 +349,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual void closeRings();
     virtual double get_Area() const;
     OGRBoolean isPointInRing(const OGRPoint* pt) const;
+    OGRBoolean isPointInRingOrOnRing(const OGRPoint* pt) const;
     
     // IWks Interface - Note this isnt really a first class object
     // for the purposes of WKB form.  These methods always fail since this
