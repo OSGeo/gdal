@@ -1034,6 +1034,25 @@ def ogr_shape_23():
 
     return 'success'
 
+
+###############################################################################
+# Test reading a polygon whose outer and the inner ring touches at one point (#2589)
+
+def ogr_shape_24():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    layer_name = 'touchingrings'
+    wkt = 'POLYGON((0 0,0 10,10 10,0 0), (0 0,1 1,0 1,0 0))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+
+    if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -1074,6 +1093,7 @@ gdaltest_list = [
     ogr_shape_21,
     ogr_shape_22,
     ogr_shape_23,
+    ogr_shape_24,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
