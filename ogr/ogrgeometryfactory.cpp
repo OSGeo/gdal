@@ -751,40 +751,6 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 /*                          organizePolygons()                          */
 /************************************************************************/
 
-/**
- * Organize polygons based on geometries.
- *
- * Analyse a set of rings (passed as simple polygons), and based on a 
- * geometric analysis convert them into a polygon with inner rings, 
- * or a MultiPolygon if dealing with more than one polygon.
- *
- * All the input geometries must be OGRPolygons with only a valid exterior
- * ring (at least 4 points) and no interior rings. 
- *
- * The passed in geometries become the responsibility of the method, but the
- * papoPolygons "pointer array" remains owned by the caller.
- *
- * For faster computation, a polygon is considered to be inside
- * another one if a single point of its external ring is included into the other one.
- * (unless 'OGR_DEBUG_ORGANIZE_POLYGONS' configuration option is set to TRUE.
- * In that case, a slower algorithm that tests exact topological relationships 
- * is used if GEOS is available.)
- *
- * In cases where a big number of polygons is passed to this function, the processing
- * may be really slow. You can skip the processing by setting OGR_ORGANIZE_POLYGONS=SKIP
- * (the result of the function will be a multi-polygon with all polygons as toplevel polygons)
- * or only make it analyze counter-clock wise polygons by setting OGR_ORGANIZE_POLYGONS=ONLY_CCW
- * if you can assume that the outline of holes is counter-clock wise defined.
- *
- * @param papoPolygons array of geometry pointers - should all be OGRPolygons.
- * Ownership of the geometries is passed, but not of the array itself.
- * @param nPolygonCount number of items in papoPolygons
- * @param pbIsValidGeometry value will be set TRUE if result is valid or 
- * FALSE otherwise. 
- *
- * @return a single resulting geometry (either OGRPolygon or OGRMultiPolygon).
- */
-
 typedef struct _sPolyExtended sPolyExtended;
 
 struct _sPolyExtended
@@ -826,13 +792,62 @@ static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
 
 #define N_CRITICAL_PART_NUMBER   100
 
+typedef enum
+{
+   METHOD_NORMAL,
+   METHOD_SKIP,
+   METHOD_ONLY_CCW
+} OrganizePolygonMethod;
+
+/**
+ * Organize polygons based on geometries.
+ *
+ * Analyse a set of rings (passed as simple polygons), and based on a 
+ * geometric analysis convert them into a polygon with inner rings, 
+ * or a MultiPolygon if dealing with more than one polygon.
+ *
+ * All the input geometries must be OGRPolygons with only a valid exterior
+ * ring (at least 4 points) and no interior rings. 
+ *
+ * The passed in geometries become the responsibility of the method, but the
+ * papoPolygons "pointer array" remains owned by the caller.
+ *
+ * For faster computation, a polygon is considered to be inside
+ * another one if a single point of its external ring is included into the other one.
+ * (unless 'OGR_DEBUG_ORGANIZE_POLYGONS' configuration option is set to TRUE.
+ * In that case, a slower algorithm that tests exact topological relationships 
+ * is used if GEOS is available.)
+ *
+ * In cases where a big number of polygons is passed to this function, the default processing
+ * may be really slow. You can skip the processing by adding METHOD=SKIP
+ * to the option list (the result of the function will be a multi-polygon with all polygons
+ * as toplevel polygons) or only make it analyze counterclockwise polygons by adding
+ * METHOD=ONLY_CCW to the option list if you can assume that the outline
+ * of holes is counterclockwise defined (this is the convention for shapefiles e.g.)
+ *
+ * If the OGR_ORGANIZE_POLYGONS configuration option is defined, its value will override
+ * the value of the METHOD option of papszOptions (usefull to modify the behaviour of the
+ * shapefile driver)
+ *
+ * @param papoPolygons array of geometry pointers - should all be OGRPolygons.
+ * Ownership of the geometries is passed, but not of the array itself.
+ * @param nPolygonCount number of items in papoPolygons
+ * @param pbIsValidGeometry value will be set TRUE if result is valid or 
+ * FALSE otherwise. 
+ * @param papszOptions a list of strings for passing options
+ *
+ * @return a single resulting geometry (either OGRPolygon or OGRMultiPolygon).
+ */
+
 OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                                    int nPolygonCount,
-                                                   int *pbIsValidGeometry )
+                                                   int *pbIsValidGeometry,
+                                                   const char** papszOptions )
 {
     int bUseFastVersion;
     int i, j;
     OGRGeometry* geom = NULL;
+    OrganizePolygonMethod method = METHOD_NORMAL;
 
 /* -------------------------------------------------------------------- */
 /*      Trivial case of a single polygon.                               */
@@ -877,19 +892,28 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     int bMixedUpGeometries = FALSE;
     int bNonPolygon = FALSE;
     int bFoundCCW = FALSE;
-    int bOrganisePolygonSkip = FALSE;
-    int bOrganisePolygonOnlyCCW = FALSE;
 
-    if (nPolygonCount > N_CRITICAL_PART_NUMBER)
+    const char* pszMethodValue = CSLFetchNameValue( (char**)papszOptions, "METHOD" );
+    if (CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL) != NULL)
+        pszMethodValue = CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL);
+
+    if (pszMethodValue != NULL)
     {
-        bOrganisePolygonSkip = EQUAL(CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", "DEFAULT"), "SKIP");
-        bOrganisePolygonOnlyCCW = EQUAL(CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", "DEFAULT"), "ONLY_CCW");
-        if (bOrganisePolygonSkip)
+        if (EQUAL(pszMethodValue, "SKIP"))
         {
+            method = METHOD_SKIP;
             bMixedUpGeometries = TRUE;
         }
+        else if (EQUAL(pszMethodValue, "ONLY_CCW"))
+        {
+            method = METHOD_ONLY_CCW;
+        }
+        else if (!EQUAL(pszMethodValue, "DEFAULT"))
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Unrecognized value for METHOD option : %s", pszMethodValue);
+        }
     }
-
 
     for(i=0;i<nPolygonCount;i++)
     {
@@ -925,9 +949,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     }
 
     /* Emits a warning if the number of parts is sufficiently big to anticipate for */
-    /* very long computation time */
-    if (nPolygonCount > N_CRITICAL_PART_NUMBER &&
-        !bOrganisePolygonSkip && !bOrganisePolygonOnlyCCW)
+    /* very long computation time, and the user didn't specify an explicit method */
+    if (nPolygonCount > N_CRITICAL_PART_NUMBER && method == METHOD_NORMAL && pszMethodValue == NULL)
     {
         static int firstTime = 1;
         if (firstTime)
@@ -937,9 +960,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 CPLError( CE_Warning, CPLE_AppDefined, 
                      "organizePolygons() received a polygon with more than %d parts. "
                      "The processing may be really slow.\n"
-                     "You can skip the processing by setting OGR_ORGANIZE_POLYGONS=SKIP, "
+                     "You can skip the processing by setting METHOD=SKIP, "
                      "or only make it analyze counter-clock wise parts by setting "
-                     "OGR_ORGANIZE_POLYGONS=ONLY_CCW if you can assume that the "
+                     "METHOD=ONLY_CCW if you can assume that the "
                      "outline of holes is counter-clock wise defined", N_CRITICAL_PART_NUMBER);
             }
             else
@@ -947,7 +970,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 CPLError( CE_Warning, CPLE_AppDefined, 
                         "organizePolygons() received a polygon with more than %d parts. "
                         "The processing may be really slow.\n"
-                        "You can skip the processing by setting OGR_ORGANIZE_POLYGONS=SKIP.",
+                        "You can skip the processing by setting METHOD=SKIP.",
                         N_CRITICAL_PART_NUMBER);
             }
             firstTime = 0;
@@ -1004,7 +1027,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     /* STEP 2 */
     for(i=1; !bMixedUpGeometries && go_on && i<nPolygonCount; i++)
     {
-        if (bOrganisePolygonOnlyCCW && asPolyEx[i].bIsCW)
+        if (method == METHOD_ONLY_CCW && asPolyEx[i].bIsCW)
         {
             nCountTopLevel ++;
             asPolyEx[i].bIsTopLevel = TRUE;
