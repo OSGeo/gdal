@@ -610,6 +610,11 @@ class CPL_DLL OGRGeometryFactory
                                            int nPolygonCount,
                                            int *pbResultValidGeometry );
 
+    static OGRGeometry * organizePolygons( OGRGeometry **papoPolygons,
+                                           int nPolygonCount,
+                                           int *pbResultValidGeometry,
+                                           const char **papszOptions);
+
     static void *getGEOSGeometryFactory();
 
     static int haveGEOS();
