@@ -1038,7 +1038,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         for(j=i-1; go_on && j>=0;j--)
         {
             if (asPolyEx[j].sEnvelope.Contains(asPolyEx[i].sEnvelope) &&
-                ((bUseFastVersion && asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint)) ||
+                ((bUseFastVersion && asPolyEx[j].poExteriorRing->isPointInRingOrOnRing(&asPolyEx[i].poAPoint)) ||
                  (!bUseFastVersion && asPolyEx[j].poPolygon->Contains(asPolyEx[i].poPolygon))))
             {
                 if (asPolyEx[j].bIsTopLevel)
