@@ -102,7 +102,7 @@ OGRDataSource *OGRIngresDriver::CreateDataSource( const char * pszName,
                                                   char ** /* papszOptions */ )
 
 {
-    OGRIngresDataSource     *poDS;
+    OGRIngresDataSource     *poDS = NULL;
     char **papszOpenOptions;
     const char *pszDriver;
 
