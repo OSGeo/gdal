@@ -496,14 +496,14 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint) const
 }
 
 /************************************************************************/
-/*                       isPointInRingOrOnRing()                        */
+/*                       isPointOnRingBoundary()                        */
 /************************************************************************/
 
-OGRBoolean OGRLinearRing::isPointInRingOrOnRing(const OGRPoint* poPoint) const
+OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint) const
 {
     if ( NULL == poPoint )
     {
-        CPLDebug( "OGR", "OGRLinearRing::isPointInRingOrOnRing(const  OGRPoint* poPoint) - passed point is NULL!" );
+        CPLDebug( "OGR", "OGRLinearRing::isPointOnRingBoundary(const  OGRPoint* poPoint) - passed point is NULL!" );
         return 0;
     }
 
@@ -525,10 +525,6 @@ OGRBoolean OGRLinearRing::isPointInRingOrOnRing(const OGRPoint* poPoint) const
         return 0;
     }
 
-	// For every point p in ring,
-    // test if ray starting from given point crosses segment (p - 1, p)
-    int iNumCrossings = 0;
-
     for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ ) 
     {
         const int iPointPrev = iPoint - 1;
@@ -539,25 +535,21 @@ OGRBoolean OGRLinearRing::isPointInRingOrOnRing(const OGRPoint* poPoint) const
         const double x2 = getX(iPointPrev) - dfTestX;
         const double y2 = getY(iPointPrev) - dfTestY;
 
+        /* If iPoint and iPointPrev are the same, go on */
+        if (x1 == x2 && y1 == y2)
+        {
+            continue;
+        }
+
         /* If the point is on the segment, return immediatly */
+        /* FIXME? If the test point is not exactly identical to one of */
+        /* the vertices of the ring, but somewhere on a segment, there's */
+        /* little chance that we get 0. So that should be tested against some epsilon */
         if ( x1 * y2 - x2 * y1 == 0 )
         {
             return 1;
         }
-
-        if( ( ( y1 > 0 ) && ( y2 <= 0 ) ) || ( ( y2 > 0 ) && ( y1 <= 0 ) ) ) 
-        {
-            // Check if ray intersects with segment of the ring
-            const double dfIntersection = ( x1 * y2 - x2 * y1 ) / (y2 - y1);
-            if ( 0.0 < dfIntersection )
-            {
-                // Count intersections
-                iNumCrossings++;
-            }
-        }
     }
 
-    // If iNumCrossings number is even, given point is outside the ring,
-    // when the crossings number is odd, the point is inside the ring.
-    return ( ( iNumCrossings % 2 ) == 1 ? 1 : 0 );
+    return 0;
 }
