@@ -62,6 +62,22 @@ def ers_3():
     return tst.testCreate( new_filename = 'tmp/rgbsmall.ers' )
     
 ###############################################################################
+# Test HeaderOffset case.
+
+def ers_4():
+
+    gt = (143.62125, 0.025000000000000001, 0.0, -39.40625, 0.0, -0.025)
+    
+    srs = """GEOGCS["GEOCENTRIC DATUM of AUSTRALIA",
+    DATUM["GDA94",
+        SPHEROID["GRS80",6378137,298.257222101]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]"""
+ 
+    tst = gdaltest.GDALTest( 'ERS', 'ers_dem.ers', 1, 56588 )
+    return tst.testOpen( check_prj = srs, check_gt = gt )
+    
+###############################################################################
 # Create simple copy and check (greyscale) using progressive option.
 
 def ers_cleanup():
@@ -72,6 +88,7 @@ gdaltest_list = [
     ers_1,
     ers_2,
     ers_3,
+    ers_4,
     ers_cleanup
     ]
   
