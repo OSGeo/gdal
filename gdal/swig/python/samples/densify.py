@@ -1,33 +1,4 @@
 #!/usr/bin/env python
-#******************************************************************************
-#  $Id$
-# 
-#  Project:  GDAL
-#  Purpose:  Densifies linestrings by a tolerance.
-#  Author:   Howard Butler, hobu.inc@gmail.com
-# 
-#******************************************************************************
-#  Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
-# 
-#  Permission is hereby granted, free of charge, to any person obtaining a
-#  copy of this software and associated documentation files (the "Software"),
-#  to deal in the Software without restriction, including without limitation
-#  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-#  and/or sell copies of the Software, and to permit persons to whom the
-#  Software is furnished to do so, subject to the following conditions:
-# 
-#  The above copyright notice and this permission notice shall be included
-#  in all copies or substantial portions of the Software.
-# 
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-#  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-#  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-#  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-#  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
-
 
 try:
     from osgeo import osr
@@ -159,7 +130,8 @@ class Translator(object):
         if self.options.t_srs:
             self.out_srs = osr.SpatialReference()
             self.out_srs.SetFromUserInput(self.options.t_srs)
-            
+        else:
+            self.out_srs = None
         self.output = self.out_ds.CreateLayer(  self.options.output,
                                                 geom_type = self.input.GetLayerDefn().GetGeomType(), 
                                                 srs= self.out_srs)
@@ -349,6 +321,41 @@ class Densify(Translator):
         self.make_fields()
         self.translate(geometry_callback = self.densify)
 
+def GetLength(geometry):
+
+    def get_distance(x1, y1, x2, y2):
+        """Return the euclidian distance between this point and another"""
+        import math
+        deltax = x1 - x2
+        deltay = y1 - y2
+        d2 = (deltax**2) + (deltay**2)
+        distance = math.sqrt(d2)
+        return distance
+
+    def cumulate(single):
+        cumulative = 0.0
+        g = single
+        pt_count = g.GetPointCount()
+        x1, y1 = g.GetX(0), g.GetY(0)
+        for pi in range(1,pt_count):
+             x2, y2 = g.GetX(pi), g.GetY(pi)
+             length = get_distance(x1, y1, x2, y2)
+             cumulative = cumulative + length
+             x1 = x2
+             y1 = y2
+        return cumulative
+
+    cumulative = 0.0
+    geom_count = geometry.GetGeometryCount()
+    
+    if geom_count:
+        for gi in range(geom_count):
+            g = geometry.GetGeometryRef(gi)
+            cumulative = cumulative + cumulate(g)
+    else:
+        cumulative = cumulate(geometry)
+    return cumulative
+    
 def main():
     import optparse
 
