@@ -1054,6 +1054,33 @@ def ogr_shape_24():
     return 'success'
 
 ###############################################################################
+# Test reading a multipolygon with one part inside the bounding box of the other 
+# part, but not inside it, and sharing the same first point... (#2589)
+
+def ogr_shape_25():
+    layer_name = 'touchingrings2'
+    wkt = 'MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+
+    if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    # Same test, but use OGR_ORGANIZE_POLYGONS=DEFAULT to avoid relying only on the winding order
+    layer_name = 'touchingrings3'
+    wkt = 'MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+
+    gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', 'DEFAULT')
+    ret = ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
+    gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', '')
+    if ret != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1094,6 +1121,7 @@ gdaltest_list = [
     ogr_shape_22,
     ogr_shape_23,
     ogr_shape_24,
+    ogr_shape_25,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
