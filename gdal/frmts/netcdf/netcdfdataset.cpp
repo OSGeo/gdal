@@ -2055,8 +2055,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Write data line per line                                        */
 /* -------------------------------------------------------------------- */
 
-	    pabScanline = (GByte *) CPLMalloc( nBands * nXSize * nYSize *
-					       sizeof( GByte ) );
+	    pabScanline = (GByte *) CPLMalloc( nBands * nXSize );
 	    for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )  {
 
 /* -------------------------------------------------------------------- */
@@ -2110,7 +2109,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    status = nc_def_var( fpImage, szBandName, NC_SHORT, 
 				 GDALNBDIM, anBandDims, &NCDFVarID );
 
-	    pasScanline = (GInt16 *) CPLMalloc( nBands * nXSize * nYSize *
+	    pasScanline = (GInt16 *) CPLMalloc( nBands * nXSize *
 						sizeof( GInt16 ) );
 /* -------------------------------------------------------------------- */
 /*      Write Fill Value                                                */
@@ -2149,7 +2148,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    status = nc_def_var( fpImage, szBandName, NC_INT, 
 				 GDALNBDIM, anBandDims, &NCDFVarID );
 
-	    panScanline = (GInt32 *) CPLMalloc( nBands * nXSize * nYSize *
+	    panScanline = (GInt32 *) CPLMalloc( nBands * nXSize *
 						sizeof( GInt32 ) );
 /* -------------------------------------------------------------------- */
 /*      Write Fill Value                                                */
@@ -2190,7 +2189,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    status = nc_def_var( fpImage, szBandName, NC_FLOAT, 
 				 GDALNBDIM, anBandDims, &NCDFVarID );
 
-	    pafScanline = (float *) CPLMalloc( nBands * nXSize * nYSize *
+	    pafScanline = (float *) CPLMalloc( nBands * nXSize *
 					       sizeof( float ) );
 
 /* -------------------------------------------------------------------- */
@@ -2231,8 +2230,9 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    status = nc_def_var( fpImage, szBandName, NC_DOUBLE, 
 				 GDALNBDIM, anBandDims, &NCDFVarID );
 
-	    padScanline = (double *) CPLMalloc( nBands * nXSize * nYSize *
+	    padScanline = (double *) CPLMalloc( nBands * nXSize *
 						sizeof( double ) );
+
 /* -------------------------------------------------------------------- */
 /*      Write Fill Value                                                */
 /* -------------------------------------------------------------------- */
