@@ -675,6 +675,15 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = atoi(poHeader->Find( "RasterInfo.NrOfLines" ));
 
 /* -------------------------------------------------------------------- */
+/*     Get the HeaderOffset if it exists in the header                  */
+/* -------------------------------------------------------------------- */
+    GIntBig nHeaderOffset = 0;
+    if( poHeader->Find( "HeaderOffset" ) != NULL )
+    {
+        nHeaderOffset = atoi(poHeader->Find( "HeaderOffset" ));
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Establish the data type.                                        */
 /* -------------------------------------------------------------------- */
     GDALDataType eType;
@@ -777,7 +786,8 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->SetBand( 
                     iBand+1, 
                     new RawRasterBand( poDS, iBand+1, poDS->fpImage,
-                                       iWordSize * iBand * poDS->nRasterXSize,
+                                       nHeaderOffset 
+                                       + iWordSize * iBand * poDS->nRasterXSize,
                                        iWordSize,
                                        iWordSize * nBands * poDS->nRasterXSize,
                                        eType, bNative, TRUE ));
