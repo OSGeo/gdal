@@ -38,6 +38,9 @@
 
 %include typemaps_csharp.i
 
+DEFINE_EXTERNAL_CLASS(OSRSpatialReferenceShadow, OSGeo.OSR.SpatialReference)
+DEFINE_EXTERNAL_CLASS(OSRCoordinateTransformationShadow, OSGeo.OSR.CoordinateTransformation)
+
 
 %typemap(cscode, noblock="1") OGRGeometryShadow {
   public int ExportToWkb( byte[] buffer, wkbByteOrder byte_order ) {

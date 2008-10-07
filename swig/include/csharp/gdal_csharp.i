@@ -50,6 +50,8 @@
 %csmethodmodifiers __GetGCPs "private";
 %csmethodmodifiers GDALGCPsToGeoTransform "private";
 
+DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
+
 %define %rasterio_functions(GDALTYPE,CSTYPE)
  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {
       CPLErr retval;

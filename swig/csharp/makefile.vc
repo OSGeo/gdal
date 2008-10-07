@@ -49,10 +49,10 @@ OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 all: ogr_dir gdal_dir osr_dir const_dir gdal_csharp samples
 
 gdal_csharp:
-    $(CSC) $(CSDEBUG) /target:library /out:ogr_csharp.dll ogr\*.cs AssemblyInfo.cs
-    $(CSC) $(CSDEBUG) /target:library /out:gdal_csharp.dll gdal\*.cs AssemblyInfo.cs
-    $(CSC) $(CSDEBUG) /target:library /out:gdalconst_csharp.dll const\*.cs AssemblyInfo.cs
     $(CSC) $(CSDEBUG) /target:library /out:osr_csharp.dll osr\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll gdal\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /target:library /out:gdalconst_csharp.dll const\*.cs AssemblyInfo.cs
     link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:ogr_wrap.dll $(LINKER_FLAGS)
@@ -104,13 +104,12 @@ interface:
 	$(SWIG) -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
 	cd ..
 	cd ogr
-	$(SWIG) -c++ -csharp -namespace OSGeo.OGR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
 	$(SWIG) -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
 	cd ..
 
 samples:
-    $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
-    $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /out:createdata.exe apps\createdata.cs
+    $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
+    $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:createdata.exe apps\createdata.cs
     $(CSC) $(CSDEBUG) /r:osr_csharp.dll /out:OSRTransform.exe apps\OSRTransform.cs
     $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALRead.exe apps\GDALRead.cs
     $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps\GDALReadDirect.cs
