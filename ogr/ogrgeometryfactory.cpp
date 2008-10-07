@@ -894,8 +894,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     int bFoundCCW = FALSE;
 
     const char* pszMethodValue = CSLFetchNameValue( (char**)papszOptions, "METHOD" );
-    if (CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL) != NULL)
-        pszMethodValue = CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL);
+    const char* pszMethodValueOption = CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL);
+    if (pszMethodValueOption != NULL && pszMethodValueOption[0] != '\0')
+        pszMethodValue = pszMethodValueOption;
 
     if (pszMethodValue != NULL)
     {
@@ -1037,9 +1038,58 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 
         for(j=i-1; go_on && j>=0;j--)
         {
-            if (asPolyEx[j].sEnvelope.Contains(asPolyEx[i].sEnvelope) &&
-                ((bUseFastVersion && asPolyEx[j].poExteriorRing->isPointInRingOrOnRing(&asPolyEx[i].poAPoint)) ||
-                 (!bUseFastVersion && asPolyEx[j].poPolygon->Contains(asPolyEx[i].poPolygon))))
+            int b_i_inside_j = FALSE;
+
+            if (method == METHOD_ONLY_CCW && asPolyEx[j].bIsCW == FALSE)
+            {
+                /* In that mode, i which is CCW if we reach here can only be */
+                /* included in a CW polygon */
+                continue;
+            }
+
+            if (asPolyEx[j].sEnvelope.Contains(asPolyEx[i].sEnvelope))
+            {
+                if (bUseFastVersion)
+                {
+                    /* Note that isPointInRing only test strict inclusion in the ring */
+                    if (asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint))
+                    {
+                        b_i_inside_j = TRUE;
+                    }
+                    else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint))
+                    {
+                        /* If the point of i is on the boundary of j, we will iterate over the other points of i */
+                        int k, nPoints = asPolyEx[i].poExteriorRing->getNumPoints();
+                        for(k=1;k<nPoints;k++)
+                        {
+                            OGRPoint point;
+                            asPolyEx[i].poExteriorRing->getPoint(k, &point);
+                            if (asPolyEx[j].poExteriorRing->isPointInRing(&point))
+                            {
+                                /* If then point is strictly included in j, then i is considered inside j */
+                                b_i_inside_j = TRUE;
+                                break;
+                            }
+                            else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&point))
+                            {
+                                /* If it is on the boundary of j, iterate again */ 
+                            }
+                            else
+                            {
+                                /* If it is outside, then i cannot be inside j */
+                                break;
+                            }
+                        }
+                    }
+                }
+                else if (asPolyEx[j].poPolygon->Contains(asPolyEx[i].poPolygon))
+                {
+                    b_i_inside_j = TRUE;
+                }
+            }
+
+
+            if (b_i_inside_j)
             {
                 if (asPolyEx[j].bIsTopLevel)
                 {
