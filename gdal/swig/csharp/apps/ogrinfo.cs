@@ -31,6 +31,7 @@
 using System;
 
 using OSGeo.OGR;
+using OSGeo.OSR;
 
 
 /**

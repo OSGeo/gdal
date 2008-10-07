@@ -35,7 +35,6 @@ interface:
 	$(SWIG) -$(BINDING) -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o const/gdalconst_wrap.c ../include/gdalconst.i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.GDAL -dllimport gdal_wrap -o gdal/gdal_wrap.cpp ../include/gdal.i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OSR -dllimport osr_wrap -o osr/osr_wrap.cpp ../include/osr.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OGR -dllimport osr_wrap -o ogr/osr_wrap.cpp ../include/osr.i
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OGR -dllimport ogr_wrap -o ogr/ogr_wrap.cpp ../include/ogr.i
 
 build: ${CSHARP_OBJECTS} ${CSHARP_MODULES} gdal_csharp samples
@@ -63,14 +62,14 @@ $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(CC) $(CFLAGS) $(GDAL_INCLUDE) -c $<
 
 gdal_csharp:
-	$(CSC) /debug:full /target:library /out:ogr_csharp.dll ogr/*.cs AssemblyInfo.cs
-	$(CSC) /debug:full /target:library /out:gdal_csharp.dll gdal/*.cs AssemblyInfo.cs
+    $(CSC) /debug:full /target:library /out:osr_csharp.dll osr/*.cs AssemblyInfo.cs
+	$(CSC) /debug:full /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr/*.cs AssemblyInfo.cs
+	$(CSC) /debug:full /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll gdal/*.cs AssemblyInfo.cs
 	$(CSC) /debug:full /target:library /out:gdalconst_csharp.dll const/*.cs AssemblyInfo.cs
-	$(CSC) /debug:full /target:library /out:osr_csharp.dll osr/*.cs AssemblyInfo.cs
 
 samples:
-	$(CSC) /r:ogr_csharp.dll /out:ogrinfo.exe apps/ogrinfo.cs
-	$(CSC) /r:ogr_csharp.dll /out:createdata.exe apps/createdata.cs
+	$(CSC) /r:ogr_csharp.dll /r:osr_csharp.dll /out:ogrinfo.exe apps/ogrinfo.cs
+	$(CSC) /r:ogr_csharp.dll /r:osr_csharp.dll /out:createdata.exe apps/createdata.cs
 	$(CSC) /r:osr_csharp.dll /out:OSRTransform.exe apps/OSRTransform.cs
 	$(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALRead.exe apps/GDALRead.cs
 	$(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps/GDALReadDirect.cs
