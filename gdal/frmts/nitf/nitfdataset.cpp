@@ -458,7 +458,7 @@ double NITFRasterBand::GetNoDataValue( int *pbSuccess )
     if( psImage->bNoDataSet )
         return psImage->nNoDataValue;
     else
-        return -1e10;
+        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
 
 /************************************************************************/
