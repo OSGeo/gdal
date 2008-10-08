@@ -1619,7 +1619,9 @@ Sets the driver that the dataset was created or opened with.
  <ul>
 
  <li> <b>OLCRandomRead</b> / "RandomRead": TRUE if the GetFeature() method 
-works for this layer.<p>
+is implemented in an optimized way for this layer, as opposed to the default
+implementation using ResetReading() and GetNextFeature() to find the requested
+feature id.<p>
 
  <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the 
 CreateFeature() method works for this layer.  Note this means that this 
