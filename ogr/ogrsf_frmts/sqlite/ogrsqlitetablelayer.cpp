@@ -195,16 +195,16 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
                      poFeatureDefn->GetName() );
 
     rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
-	    	          &hStmt, NULL );
+		          &hStmt, NULL );
 
     if( rc == SQLITE_OK )
     {
-    	return OGRERR_NONE;
+	return OGRERR_NONE;
     }
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "sqlite3_prepare(%s):\n  %s", 
+                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
                   osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
         return OGRERR_FAILURE;
@@ -253,7 +253,7 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
     rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(), 
-	    	          &hStmt, NULL );
+		          &hStmt, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Get the feature if possible.                                    */
@@ -781,7 +781,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "sqlite3_prepare(%s):\n  %s", 
+                  "In CreateFeature(): sqlite3_prepare(%s):\n  %s", 
                   osCommand.c_str(), sqlite3_errmsg(hDB) );
 
         return OGRERR_FAILURE;
