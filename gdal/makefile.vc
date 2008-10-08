@@ -86,6 +86,9 @@ clean:
 	cd apps
 	$(MAKE) /f makefile.vc clean
 	cd ..
+	cd swig
+	$(MAKE) /f makefile.vc clean
+	cd ..
 	cd pymod
 	$(MAKE) /f makefile.vc clean
 	cd ..
