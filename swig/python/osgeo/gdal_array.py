@@ -153,6 +153,13 @@ def BandWriteArray( band, array, xoff=0, yoff=0 ):
 
     datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
 
+    # if we receive some odd type, like int64, try casting to a very
+    # generic type we do support (#2285)
+    if not datatype:
+        gdal.Debug( 'gdal_array', 'force array to float64' )
+        array = array.astype( numpy.float64 )
+        datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
+        
     if not datatype:
         raise ValueError, "array does not have corresponding GDAL data type"
 
