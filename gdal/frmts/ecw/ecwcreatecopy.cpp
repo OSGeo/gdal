@@ -928,6 +928,28 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         pszWKT = poSrcDS->GetGCPProjection();
 
 /* -------------------------------------------------------------------- */
+/*      Confirm the datatype is 8bit.  It appears no other datatype     */
+/*      is supported in ECW format.                                     */
+/* -------------------------------------------------------------------- */
+    if( eType != GDT_Byte )
+    {
+        if( bStrict )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to create ECW file with pixel data type %s failed.\n"
+                      "Only Byte data type supported.",
+                      GDALGetDataTypeName( eType ) );
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "ECW only supports Byte pixel data type, ignoring request for %s.",
+                      GDALGetDataTypeName( eType ) );
+            eType = GDT_Byte;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Setup the compressor.                                           */
 /* -------------------------------------------------------------------- */
     GDALECWCompressor         oCompressor;
