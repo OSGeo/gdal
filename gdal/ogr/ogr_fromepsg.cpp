@@ -1469,13 +1469,20 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         break;
 
       case 9819:
-        poSRS->SetKrovak( OGR_FP( ProjCenterLat ), OGR_FP( ProjCenterLong ),
-                          OGR_FP( Azimuth ), 
-                          OGR_FP( PseudoStdParallelLat ),
-                          OGR_FP( PseudoStdParallelScaleFactor ),
-                          OGR_FP( ProjCenterEasting ), 
-                          OGR_FP( ProjCenterNorthing ) );
-        break;
+      {
+          double dfCenterLong = OGR_FP( ProjCenterLong );
+
+          if( dfCenterLong == 0.0 ) // See ticket #2559
+              dfCenterLong = OGR_FP( PolarLongOrigin );
+
+          poSRS->SetKrovak( OGR_FP( ProjCenterLat ), dfCenterLong,
+                            OGR_FP( Azimuth ), 
+                            OGR_FP( PseudoStdParallelLat ),
+                            OGR_FP( PseudoStdParallelScaleFactor ),
+                            OGR_FP( ProjCenterEasting ), 
+                            OGR_FP( ProjCenterNorthing ) );
+      }
+      break;
 
       case 9820:
         poSRS->SetLAEA( OGR_FP( NatOriginLat ), OGR_FP( NatOriginLong ),
