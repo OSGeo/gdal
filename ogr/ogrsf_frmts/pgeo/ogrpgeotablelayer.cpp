@@ -322,6 +322,15 @@ int OGRPGeoTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCreateField) )
         return bUpdateAccess;
 
+    else if( EQUAL(pszCap,OLCRandomRead) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+        return m_poFilterGeom == NULL;
+
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+        return FALSE;
+
     else 
         return OGRPGeoLayer::TestCapability( pszCap );
 }
