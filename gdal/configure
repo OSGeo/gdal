@@ -26934,7 +26934,6 @@ case "${host_os}" in
       ;;
     *)
       EXE_EXT=
-      SO_EXT=
       ;;
 esac
 
