@@ -1234,6 +1234,36 @@ Sets the driver that the dataset was created or opened with.
  
  */
 
+/** 
+ \fn void OGR_L_SetSpatialFilterRect( OGRLayerH hLayer,
+                                      double dfMinX, double dfMinY, 
+                                      double dfMaxX, double dfMaxY );
+
+ Set a new rectangular spatial filter. 
+
+ This method set rectangle to be used as a spatial filter when 
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the given rectangle will be returned.  
+
+ The x/y values should be in the same coordinate system as the layer as
+ a whole (as returned by OGRLayer::GetSpatialRef()).   Internally this 
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
+ a convenience. 
+
+ The only way to clear a spatial filter set with this method is to 
+ call OGRLayer::SetSpatialFilter(NULL). 
+
+ This method is the same as the C++ method OGRLayer::SetSpatialFilterRect().
+
+ @param hLayer handle to the layer on which to set the spatial filter.
+ @param dfMinX the minimum X coordinate for the rectangular region.
+ @param dfMinY the minimum Y coordinate for the rectangular region.
+ @param dfMaxX the maximum X coordinate for the rectangular region.
+ @param dfMaxY the maximum Y coordinate for the rectangular region.
+ 
+ */
+
 /**
  \fn OGRGeometry *OGRLayer::GetSpatialFilter();
 
