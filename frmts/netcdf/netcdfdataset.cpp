@@ -1292,6 +1292,11 @@ void netCDFDataset::CreateSubDatasetList( )
 	    case NC_DOUBLE:
 		strcpy(szType, "64-bit floating-point");
 		break;
+
+            //  variable types we can't possibly use...
+            case NC_CHAR:
+                continue;
+
 	    default:
 		break;
 	    }
