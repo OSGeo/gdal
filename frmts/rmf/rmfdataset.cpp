@@ -624,6 +624,7 @@ RMFDataset::RMFDataset()
     adfGeoTransform[5] = 1.0;
     pabyColorTable = NULL;
     poColorTable = NULL;
+    eRMFType = RMFT_RSW;
     memset( &sHeader, 0, sizeof(sHeader) );
     memset( &sExtHeader, 0, sizeof(sExtHeader) );
 
@@ -963,17 +964,25 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 #define RMF_READ_ULONG(ptr, value, offset)                              \
 {                                                                       \
     if ( poDS->bBigEndian )                                             \
+    {                                                                   \
         (value) = CPL_MSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+    }                                                                   \
     else                                                                \
+    {                                                                   \
         (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+    }                                                                   \
 }
 
 #define RMF_READ_LONG(ptr, value, offset)                               \
 {                                                                       \
     if ( poDS->bBigEndian )                                             \
+    {                                                                   \
         (value) = CPL_MSBWORD32(*(GInt32*)((ptr) + (offset)));          \
+    }                                                                   \
     else                                                                \
+    {                                                                   \
         (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)));          \
+    }                                                                   \
 }
 
 #define RMF_READ_DOUBLE(ptr, value, offset)                             \
@@ -999,15 +1008,15 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFSeekL( poDS->fp, 0, SEEK_SET );
         VSIFReadL( abyHeader, 1, sizeof(abyHeader), poDS->fp );
 
-        if ( memcmp(abyHeader, RMF_SigRSW, sizeof(RMF_SigMTW)) == 0 )
+        if ( memcmp(abyHeader, RMF_SigMTW, sizeof(RMF_SigMTW)) == 0 )
             poDS->eRMFType = RMFT_MTW;
-        else if ( memcmp(abyHeader, RMF_SigRSW, sizeof(RMF_SigRSW)) == 0 )
-            poDS->eRMFType = RMFT_RSW;
         else if ( memcmp(abyHeader, RMF_SigRSW_BE, sizeof(RMF_SigRSW_BE)) == 0 )
         {
             poDS->eRMFType = RMFT_RSW;
             poDS->bBigEndian = TRUE;
         }
+        else
+            poDS->eRMFType = RMFT_RSW;
 
         memcpy( poDS->sHeader.bySignature, abyHeader, RMF_SIGNATURE_SIZE );
         RMF_READ_ULONG( abyHeader, poDS->sHeader.iVersion, 4 );
