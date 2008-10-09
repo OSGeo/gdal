@@ -49,7 +49,7 @@ enum RMFType
 typedef struct
 {
 #define RMF_SIGNATURE_SIZE 4
-    char        szSignature[RMF_SIGNATURE_SIZE];// "RSW" for raster
+    char        bySignature[RMF_SIGNATURE_SIZE];// "RSW" for raster
                                                 // map or "MTW" for DEM
     GUInt32     iVersion;
     GUInt32     nSize;                          // File size in bytes
@@ -136,6 +136,7 @@ class RMFDataset : public GDALDataset
     double          adfGeoTransform[6];
     char            *pszProjection;
 
+    int             bBigEndian;
     int             bHeaderDirty;
 
     const char      *pszFilename;
