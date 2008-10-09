@@ -379,10 +379,10 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         for( ; i < 10; i++ )
             adfParm[i] = 0.0;
 
-        adfParm[0] /= psDefn->UOMAngleInDegrees;
-        adfParm[1] /= psDefn->UOMAngleInDegrees;
-        adfParm[2] /= psDefn->UOMAngleInDegrees;
-        adfParm[3] /= psDefn->UOMAngleInDegrees;
+        adfParm[0] *= psDefn->UOMAngleInDegrees;
+        adfParm[1] *= psDefn->UOMAngleInDegrees;
+        adfParm[2] *= psDefn->UOMAngleInDegrees;
+        adfParm[3] *= psDefn->UOMAngleInDegrees;
         
         adfParm[5] /= psDefn->UOMLengthInMeters;
         adfParm[6] /= psDefn->UOMLengthInMeters;
