@@ -27,6 +27,7 @@
 
 import os
 import sys
+import string
 
 sys.path.append( '../pymod' )
 
@@ -166,6 +167,21 @@ def tiff_read_zip_2():
 
     return 'success'
 
+###############################################################################
+# Check handling of non-degree angular units (#601)
+
+def tiff_grads():
+
+    ds = gdal.Open('data/test_gf.tif')
+    srs = ds.GetProjectionRef()
+
+    if string.find(srs,'PARAMETER["latitude_of_origin",46.8]') == -1:
+        print srs
+        gdaltest.post_reason( 'Did not get expected latitude of origin.' )
+        return 'fail'
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -178,6 +194,7 @@ gdaltest_list.append( (tiff_read_cmyk_raw) )
 gdaltest_list.append( (tiff_read_gzip) )
 gdaltest_list.append( (tiff_read_zip_1) )
 gdaltest_list.append( (tiff_read_zip_2) )
+gdaltest_list.append( (tiff_grads) )
 
 if __name__ == '__main__':
 
