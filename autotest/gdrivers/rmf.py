@@ -70,16 +70,23 @@ def rmf_5():
     return tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432) )
 
+def rmf_6():
+
+    tst = gdaltest.GDALTest( 'rmf', 'big-endian.rsw', 1, 7782 )
+    tst = gdaltest.GDALTest( 'rmf', 'big-endian.rsw', 2, 8480 )
+    tst = gdaltest.GDALTest( 'rmf', 'big-endian.rsw', 3, 4195 )
+    return tst.testOpen()
+
 ###############################################################################
 # Create simple copy and check.
 
-def rmf_6():
+def rmf_7():
 
     tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672 )
 
     return tst.testCreateCopy( check_srs = 1, check_gt = 1 )
     
-def rmf_7():
+def rmf_8():
 
     tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 2, 21053 )
 
@@ -94,7 +101,8 @@ gdaltest_list = [
     rmf_4,
     rmf_5,
     rmf_6,
-    rmf_7
+    rmf_7,
+    rmf_8
 ]
   
 if __name__ == '__main__':
