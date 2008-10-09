@@ -1011,7 +1011,9 @@ else
   fi
 
   ORIG_LIBS="$LIBS"
-  LIBS="-L$HDF_LIB_DIR $LIBS"
+  if test "$HDF_LIB_DIR" != "" ; then
+    LIBS="-L$HDF_LIB_DIR $LIBS"
+  fi
 
   AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf)
   if test "$HDF_LIB_NAME" = "missing" ; then
@@ -1033,7 +1035,11 @@ dnl Not found... again, with -lsz.
 
   if test "$HDF_LIB_NAME" != "missing" ; then
 
-    LIBS="-L$HDF_LIB_DIR $HDF_LIB_NAME $ORIG_LIBS"
+    if test "$HDF_LIB_DIR" != "" ; then
+      LIBS="-L$HDF_LIB_DIR $HDF_LIB_NAME $ORIG_LIBS"
+    else
+      LIBS="$HDF_LIB_NAME $ORIG_LIBS"
+    fi
 
   dnl Now search for headers
     if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" -a -r /usr/include/hdf/hdf.h ; then
