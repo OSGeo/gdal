@@ -41,6 +41,10 @@ CPL_C_END
 #define RMF_DEFAULT_BLOCKXSIZE 256
 #define RMF_DEFAULT_BLOCKYSIZE 256
 
+static const char RMF_SigRSW[] = { 'R', 'S', 'W', '\0' };
+static const char RMF_SigRSW_BE[] = { '\0', 'W', 'S', 'R' };
+static const char RMF_SigMTW[] = { 'M', 'T', 'W', '\0' };
+
 /************************************************************************/
 /* ==================================================================== */
 /*                            RMFRasterBand                             */
@@ -625,6 +629,7 @@ RMFDataset::RMFDataset()
 
     Decompress = NULL;
 
+    bBigEndian = FALSE;
     bHeaderDirty = FALSE;
 }
 
@@ -769,7 +774,7 @@ CPLErr RMFDataset::WriteHeader()
 
         memset( abyHeader, 0, sizeof(abyHeader) );
 
-        memcpy( abyHeader, sHeader.szSignature, RMF_SIGNATURE_SIZE );
+        memcpy( abyHeader, sHeader.bySignature, RMF_SIGNATURE_SIZE );
         RMF_WRITE_ULONG( abyHeader, sHeader.iVersion, 4 );
         //
         RMF_WRITE_ULONG( abyHeader, sHeader.nOvrOffset, 12 );
@@ -921,8 +926,9 @@ int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->fp == NULL )
         return FALSE;
 
-    if( memcmp(poOpenInfo->pabyHeader, "RSW\0", 4) != 0
-        && memcmp(poOpenInfo->pabyHeader, "MTW\0", 4) != 0 )
+    if( memcmp(poOpenInfo->pabyHeader, RMF_SigRSW, sizeof(RMF_SigRSW)) != 0
+        && memcmp(poOpenInfo->pabyHeader, RMF_SigRSW_BE, sizeof(RMF_SigRSW_BE)) != 0
+        && memcmp(poOpenInfo->pabyHeader, RMF_SigMTW, sizeof(RMF_SigMTW)) != 0 )
         return FALSE;
 
     return TRUE;
@@ -955,15 +961,32 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 #define RMF_READ_ULONG(ptr, value, offset)                              \
-    (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)))
+{                                                                       \
+    if ( poDS->bBigEndian )                                             \
+        (value) = CPL_MSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+    else                                                                \
+        (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+}
 
 #define RMF_READ_LONG(ptr, value, offset)                               \
-    (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)))
+{                                                                       \
+    if ( poDS->bBigEndian )                                             \
+        (value) = CPL_MSBWORD32(*(GInt32*)((ptr) + (offset)));          \
+    else                                                                \
+        (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)));          \
+}
 
 #define RMF_READ_DOUBLE(ptr, value, offset)                             \
 {                                                                       \
     (value) = *(double*)((ptr) + (offset));                             \
-    CPL_LSBPTR64(&(value));                                             \
+    if ( poDS->bBigEndian )                                             \
+    {                                                                   \
+        CPL_MSBPTR64(&(value));                                         \
+    }                                                                   \
+    else                                                                \
+    {                                                                   \
+        CPL_LSBPTR64(&(value));                                         \
+    }                                                                   \
 }
 
 /* -------------------------------------------------------------------- */
@@ -976,8 +999,17 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFSeekL( poDS->fp, 0, SEEK_SET );
         VSIFReadL( abyHeader, 1, sizeof(abyHeader), poDS->fp );
 
-        memcpy( poDS->sHeader.szSignature, abyHeader, RMF_SIGNATURE_SIZE );
-        poDS->sHeader.szSignature[3] = '\0'; // Paranoid
+        if ( memcmp(abyHeader, RMF_SigRSW, sizeof(RMF_SigMTW)) == 0 )
+            poDS->eRMFType = RMFT_MTW;
+        else if ( memcmp(abyHeader, RMF_SigRSW, sizeof(RMF_SigRSW)) == 0 )
+            poDS->eRMFType = RMFT_RSW;
+        else if ( memcmp(abyHeader, RMF_SigRSW_BE, sizeof(RMF_SigRSW_BE)) == 0 )
+        {
+            poDS->eRMFType = RMFT_RSW;
+            poDS->bBigEndian = TRUE;
+        }
+
+        memcpy( poDS->sHeader.bySignature, abyHeader, RMF_SIGNATURE_SIZE );
         RMF_READ_ULONG( abyHeader, poDS->sHeader.iVersion, 4 );
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nSize, 8 );
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nOvrOffset, 12 );
@@ -1059,10 +1091,11 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef DEBUG
 
     CPLDebug( "RMF", "%s image has width %d, height %d, bit depth %d, "
-              "compression scheme %d",
-              poDS->sHeader.szSignature, poDS->sHeader.nWidth,
-              poDS->sHeader.nHeight, poDS->sHeader.nBitDepth,
-              poDS->sHeader.iCompression );
+              "compression scheme %d, %s",
+              (poDS->eRMFType == RMFT_MTW) ? "MTW" : "RSW",
+              poDS->sHeader.nWidth, poDS->sHeader.nHeight,
+              poDS->sHeader.nBitDepth, poDS->sHeader.iCompression,
+              poDS->bBigEndian ? "big endian" : "little endian" );
     CPLDebug( "RMF", "Size %d, offset to overview 0x%x, user ID %d, "
               "ROI offset 0x%x, ROI size %d",
               poDS->sHeader.nSize, poDS->sHeader.nOvrOffset,
@@ -1103,8 +1136,17 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 #ifdef CPL_MSB
-    for ( i = 0; i < poDS->sHeader.nTileTblSize / sizeof(GUInt32); i++ )
-        CPL_SWAP32PTR( poDS->paiTiles + i );
+    if ( !poDS->bBigEndian )
+    {
+        for ( i = 0; i < poDS->sHeader.nTileTblSize / sizeof(GUInt32); i++ )
+            CPL_SWAP32PTR( poDS->paiTiles + i );
+    }
+#else
+    if ( poDS->bBigEndian )
+    {
+        for ( i = 0; i < poDS->sHeader.nTileTblSize / sizeof(GUInt32); i++ )
+            CPL_SWAP32PTR( poDS->paiTiles + i );
+    }
 #endif
 
 #if DEBUG
@@ -1122,8 +1164,6 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     GDALDataType eType = GDT_Byte;
 
-    poDS->eRMFType =
-        ( EQUAL( poDS->sHeader.szSignature, "MTW" ) ) ? RMFT_MTW : RMFT_RSW;
     poDS->nRasterXSize = poDS->sHeader.nWidth;
     poDS->nRasterYSize = poDS->sHeader.nHeight;
 
@@ -1351,9 +1391,9 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     else
         poDS->eRMFType = RMFT_RSW;
     if ( poDS->eRMFType == RMFT_MTW )
-        memcpy( poDS->sHeader.szSignature, "MTW\0", RMF_SIGNATURE_SIZE );
+        memcpy( poDS->sHeader.bySignature, RMF_SigMTW, RMF_SIGNATURE_SIZE );
     else
-        memcpy( poDS->sHeader.szSignature, "RSW\0", RMF_SIGNATURE_SIZE );
+        memcpy( poDS->sHeader.bySignature, RMF_SigRSW, RMF_SIGNATURE_SIZE );
     poDS->sHeader.iVersion = 0x0200;
     poDS->sHeader.nOvrOffset = 0x00;
     poDS->sHeader.iUserID = 0x00;
