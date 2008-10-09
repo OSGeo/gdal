@@ -15511,7 +15511,7 @@ fi
 
 
 case "${host_os}" in
-    cygwin* | mingw32* | beos* | darwin*)
+    cygwin* | mingw32* | pw32* | beos* | darwin*)
         ;;
     *)
 
@@ -26571,15 +26571,17 @@ fi
 EXTRA_INCLUDES=$EXTRA_INCLUDES
 
 
-if test -f /bin/true.exe ; then
-  EXE_EXT=.exe
-  SO_EXT=dll
-else
-  EXE_EXT=
-fi
-export EXE_EXT
+case "${host_os}" in
+    cygwin* | mingw32* | pw32*)
+      EXE_EXT=.exe
+      SO_EXT=dll
+      ;;
+    *)
+      EXE_EXT=
+      ;;
+esac
 
-EXE_EXT=$EXE_EXT
+
 
 
 BINTRUE=/bin/true
