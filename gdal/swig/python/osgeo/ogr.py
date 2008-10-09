@@ -1211,6 +1211,7 @@ class Layer(_object):
         """Support list and slice -like access to the layer.
     r[0] would return the first feature on the layer.
     r[0:4] would return a list of the first four features."""
+        import types
         if isinstance(value, types.SliceType):
             output = []
             if value.stop == sys.maxint:

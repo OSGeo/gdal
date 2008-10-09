@@ -2880,7 +2880,7 @@ SWIGINTERN int OGRDriverShadow_DeleteDataSource(OGRDriverShadow *self,char const
     return OGR_Dr_DeleteDataSource( self, name );
   }
 SWIGINTERN bool OGRDriverShadow_TestCapability(OGRDriverShadow *self,char const *cap){
-    return OGR_Dr_TestCapability(self, cap);
+    return (OGR_Dr_TestCapability(self, cap) > 0);
   }
 
 SWIGINTERNINLINE PyObject*
@@ -2966,7 +2966,7 @@ SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_GetLayerByName(OGRDataSourceShado
     return layer;
   }
 SWIGINTERN bool OGRDataSourceShadow_TestCapability(OGRDataSourceShadow *self,char const *cap){
-    return OGR_DS_TestCapability(self, cap);
+    return (OGR_DS_TestCapability(self, cap) > 0);
   }
 SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *self,char const *statement,OGRGeometryShadow *spatialFilter=NULL,char const *dialect=""){
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_ExecuteSQL((OGRDataSourceShadow*)self,
@@ -3051,7 +3051,7 @@ SWIGINTERN OGRErr OGRLayerShadow_GetExtent(OGRLayerShadow *self,double argout[4]
     return OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
   }
 SWIGINTERN bool OGRLayerShadow_TestCapability(OGRLayerShadow *self,char const *cap){
-    return OGR_L_TestCapability(self, cap);
+    return (OGR_L_TestCapability(self, cap) > 0);
   }
 SWIGINTERN OGRErr OGRLayerShadow_CreateField(OGRLayerShadow *self,OGRFieldDefnShadow *field_def,int approx_ok=1){
     return OGR_L_CreateField(self, field_def, approx_ok);
@@ -3096,7 +3096,7 @@ SWIGINTERN OGRFeatureShadow *OGRFeatureShadow_Clone(OGRFeatureShadow *self){
     return (OGRFeatureShadow*) OGR_F_Clone(self);
   }
 SWIGINTERN bool OGRFeatureShadow_Equal(OGRFeatureShadow *self,OGRFeatureShadow *feature){
-    return OGR_F_Equal(self, feature);
+    return (OGR_F_Equal(self, feature) > 0);
   }
 SWIGINTERN int OGRFeatureShadow_GetFieldCount(OGRFeatureShadow *self){
     return OGR_F_GetFieldCount(self);
@@ -3149,15 +3149,15 @@ SWIGINTERN double OGRFeatureShadow_GetFieldAsDouble__SWIG_1(OGRFeatureShadow *se
       return 0;
   }
 SWIGINTERN bool OGRFeatureShadow_IsFieldSet__SWIG_0(OGRFeatureShadow *self,int id){
-    return OGR_F_IsFieldSet(self, id);
+    return (OGR_F_IsFieldSet(self, id) > 0);
   }
 SWIGINTERN bool OGRFeatureShadow_IsFieldSet__SWIG_1(OGRFeatureShadow *self,char const *name){
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  return OGR_F_IsFieldSet(self, i);
-      return (bool)0;
+	  return (OGR_F_IsFieldSet(self, i) > 0);
+      return false;
   }
 SWIGINTERN int OGRFeatureShadow_GetFieldIndex(OGRFeatureShadow *self,char const *name){
       return OGR_F_GetFieldIndex(self, name);
@@ -3485,40 +3485,40 @@ SWIGINTERN void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
     OGR_G_Empty(self);
   }
 SWIGINTERN bool OGRGeometryShadow_IsEmpty(OGRGeometryShadow *self){
-    return OGR_G_IsEmpty(self);
+    return (OGR_G_IsEmpty(self) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_IsValid(OGRGeometryShadow *self){
-    return OGR_G_IsValid(self);
+    return (OGR_G_IsValid(self) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_IsSimple(OGRGeometryShadow *self){
-    return OGR_G_IsSimple(self);
+    return (OGR_G_IsSimple(self) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_IsRing(OGRGeometryShadow *self){
-    return OGR_G_IsRing(self);
+    return (OGR_G_IsRing(self) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_Intersect(self, other);
+    return (OGR_G_Intersect(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Equal(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_Equal(self, other);
+    return (OGR_G_Equal(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Disjoint(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_Disjoint(self, other);
+    return (OGR_G_Disjoint(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Touches(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_Touches(self, other);
+    return (OGR_G_Touches(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Crosses(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_Crosses(self, other);
+    return (OGR_G_Crosses(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Within(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_Within(self, other);
+    return (OGR_G_Within(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Contains(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_Contains(self, other);
+    return (OGR_G_Contains(self, other) > 0);
   }
 SWIGINTERN bool OGRGeometryShadow_Overlaps(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_Overlaps(self, other);
+    return (OGR_G_Overlaps(self, other) > 0);
   }
 SWIGINTERN OGRErr OGRGeometryShadow_TransformTo(OGRGeometryShadow *self,OSRSpatialReferenceShadow *reference){
     return OGR_G_TransformTo(self, reference);
