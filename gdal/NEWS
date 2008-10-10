@@ -1,3 +1,77 @@
+= GDAL/OGR 1.5.3 = 
+
+ * #601 (GTiff): Correct handling of non-degree angular units.
+ * #2285 (Python): Handle other pixel types in BandWriteArray() (64bit pct2rgb)
+ * #2604 (configure): Better support for cross compiling. 
+ * #2601 (PGeo): Correct TestCapability() return values.
+ * #2593 (ECW): Warn/error on illegal pixel data types written.
+ * #2591 (NetCDF): Fix extreme memory use for large images.
+ * #2589 (Shape): Various fixes for inner/outer ring categorization.
+ * #2598 (ERS): Add support for HeaderOffset keyword.
+ * #2596 (NITF): Fallback to .aux.xml (PAM) for nodata values.
+ * #2586 (alg): Fix gdalsimplewarp on 64bit platforms.
+ * #2575 (SRS): Improve oblique mercator morphing to/from ESRI PE format.
+ * #2579 (FITS): Fix int32 case on 64bit platforms.
+ * #2576 (raw): Fix crash when pixel offset is zero.
+ * #2573 (ISIS3): Fix handling of multiband tiled files.
+ * #2571 (ILWIS): Avoid exporting global called 'line'.
+ * #2243 (HFA): Add FORCETOPESTRING option, ProjectionX applied to all bands.
+ * #2564 (warper): Fix CInt16 support in warper.
+ * #2562 (PAM): Allow empty category in .aux.xml and .vrt 
+ * #2546 (GTiff): Fix problems updating geotiff SRS in place.
+ * #2554 (testepsg): Now built by default.
+ * #2548 (esri2wkt): Fixed for use with NG Python bindings.
+ * #???? (SDE): Remove inappropriate errors generation in SDE Open.
+ * #???? (ECW): Correct manifest generation for plugin.
+ * #2443 (JPEG): Improved handling for YCbCr, CMYK and YCbCrK JPEG files.
+ * #2523 (HFA): Fix problem with compressed files with uninitialized blocks.
+ * #2535 (JPEG): Fix restart problem in rare circumstances.
+ * #2532 (NITF): Support decoding 12bit images.
+ * #2533 (SRS): Ensure Clear() properly clears OGRSpatialReference state.
+ * #2220 (OGR SQL): Improved string quote handling in OGR SQL.
+ * #2528 (gcore): Fixed nodata mask handling for negative integer bands.
+ * #1979 (port): Correct problems with CPLSPrintf/CPLString use.
+ * #2525 (HFA): Fix crash in compressing data larger than 16bits.
+ * #2425 (HFA): Open dependent file with same permissions as master file.
+ * #2518 (warper): Fix thread handling in multiprocessing case.
+ * #2513 (E00): Error out instead of crashing on compressed E00 files.
+ * #2512 (GTiff): Ensure flushing works properly.
+ * #1345 (configure): Improve PROJ.4 related search logic.
+ * #2505 (HFA): Support nodata from .aux file. 
+ * #2508 (gdal_grid): Fix geotransform when -txe, -tye not provided.
+ * #2504 (gcore): Fix nodata masking generation for odd pixel types.
+ * #2499 (gcore): Fix crash in creation option validation.
+ * #2494 (HDF4): Removed useless and dangerous redefinition of sincos().
+ * #2459 (swig): Improve handling of strings the caller may not change.
+ * #2475 (NITF): Fix 'adding BLOCKA TRE precludes writing IGEOLO'
+ * #???? (swig): fix typemaps for SetMetadata()
+ * #2426, #1986, #1677 (swig): Added to support GetGCPs, SetGCPs and GCPsToGeoTransform in the C# bindings
+ * #2473 (swig): Avoid boolean related compile warning
+ * #2471 (HFA): Avoid using .aux files with mismatched raster model.
+ * #2472 (PCRaster): Add overview support.
+ * #2465 (ADRG): Fix warning about not supporting update access.
+ * #2464 (NetCDF): Fixed windows plugin name.
+ * #2410 (MRSID): Improve support for DSDK 7.x. 
+ * #2457 (gcore): Improve reading when block cache is too small.
+ * #2360 (GTiff): Fix problems writing odd bit depths.
+ * #2455 (ogr2ogr): Fix the -gt option operation.
+ * #2454 (ogr core): improve spatial filtering with polygons with holes.
+ * #2451 (wince): Fix CPLStrtodDelim() building on WinCE.
+ * #2449 (GTiff): Fix crash when using BLOCKYSIZE=1 for tiled files.
+ * #2448 (GTiff): Handle mix of TIFF+PAM metadata properly.
+ * #2428 (Shape): Add OGR_ORGANIZE_POLYGONS configuration option. 
+ * #2427 (HFA): Correct some problems with unitialized blocks and updating.
+ * #2422 (HFA): Improve save/load of names for SRS. 
+ * #2437 (port): Improve handling of large file errors on different platforms.
+ * #2415 (PAM/VRT): store nodata values in binary form to preserve precision.
+ * #2436 (HFA): Support writing 1/2/4 bit data.
+ * #2320 (ECW/JP2ECW): Fix up plugin naming. 
+ * #2435 (GTiff): Push JPEG compressed data into block cache to avoid redecoding
+ * #2434 (alg): Make GeoLoc transformer more robust in case of errors.
+ * #1000 (HFA): Fix reading of reduced precision 32bit floating point blocks.
+ * #2396 (FITS): Fix crash if metadata is found. 
+ * #2409 (ogr2ogr): Force -gt to 1 with -skipfailures.
+
 = GDAL/OGR 1.5.2 =
 
  * #2036 (CPL): Fix precision issues with CPLAtof() functions. 
