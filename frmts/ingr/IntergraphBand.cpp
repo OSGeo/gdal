@@ -431,8 +431,10 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
                                      int nRGorB )
     : IntergraphRasterBand( poDS, nBand, nBandOffset )
 {
-    nRLESize    = 0;
-    nRGBIndex   = nRGorB;
+    nRLESize         = 0;
+    nRGBIndex        = nRGorB;
+    bRLEBlockLoaded  = FALSE;
+    panRLELineOffset = NULL;
 
     if( ! this->bTiled )
     {
@@ -441,9 +443,20 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
         // ------------------------------------------------------------
 
         nFullBlocksX = 1;
-        nFullBlocksY = 1;
 
-        nBlockYSize  = nRasterYSize;
+        if( eFormat == RunLengthEncodedC )
+        {
+            nBlockYSize = 1;
+            panRLELineOffset = (uint32 *) 
+                CPLCalloc(sizeof(uint32),nRasterYSize);
+            nFullBlocksY = nRasterYSize;
+        }
+        else
+        {
+            nBlockYSize  = nRasterYSize;
+            nFullBlocksY = 1;
+        }
+
         nRLESize     = INGR_GetDataBlockSize( poDS->pszFilename, 
                           hHeaderTwo.CatenatedFilePointer,
                           nDataOffset);
@@ -486,10 +499,10 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
     // Set a black and white Color Table
     // ----------------------------------------------------------------
 
-	if( eFormat == RunLengthEncoded )
-	{
+    if( eFormat == RunLengthEncoded )
+    {
         BlackWhiteCT();
-	}
+    }
 
 }
 
@@ -500,6 +513,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
 IntergraphRLEBand::~IntergraphRLEBand()
 {
     CPLFree( pabyRLEBlock );
+    CPLFree( panRLELineOffset );
 }
 
 //  ----------------------------------------------------------------------------
@@ -514,7 +528,15 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     // Load Block Buffer
     // --------------------------------------------------------------------
 
-    uint32 nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nRLESize, pabyRLEBlock );
+    uint32 nBytesRead;
+    
+    if( bTiled || !bRLEBlockLoaded )
+    {
+        nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nRLESize, pabyRLEBlock );
+        bRLEBlockLoaded = TRUE;
+    }
+    else
+        nBytesRead = nRLESize;
 
     if( nBytesRead == 0 )
     {
@@ -553,10 +575,44 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
         nBytesRead = INGR_DecodeRunLengthBitonal( pabyRLEBlock, pabyBlockBuf,  
             nRLESize, nBlockBufSize );
         break;
+
     case RunLengthEncodedC:
-        nBytesRead = INGR_DecodeRunLengthPaletted( pabyRLEBlock, pabyBlockBuf,  
-            nRLESize, nBlockBufSize );
-        break;
+    {
+        if( bTiled )
+        {
+            nBytesRead = 
+                INGR_DecodeRunLengthPaletted( pabyRLEBlock, pabyBlockBuf,  
+                                              nRLESize, nBlockBufSize, 
+                                              NULL );
+        }
+        else
+        {
+            // If we are missing the offset to this line, process all
+            // preceding lines.
+            if( nBlockYOff > 0 && panRLELineOffset[nBlockYOff] == 0 )
+            {
+                int iLine;
+                for( iLine = 0; iLine < nBlockYOff; iLine++ )
+                    IReadBlock( 0, iLine, pImage );
+            }
+            if( nBlockYOff == 0 || panRLELineOffset[nBlockYOff] > 0 )
+            {
+                uint32 nBytesConsumed;
+
+                nBytesRead = 
+                    INGR_DecodeRunLengthPaletted( 
+                        pabyRLEBlock + panRLELineOffset[nBlockYOff], 
+                        pabyBlockBuf,  nRLESize, nBlockBufSize,
+                        &nBytesConsumed );
+
+                if( nBlockYOff < nRasterYSize-1 )
+                    panRLELineOffset[nBlockYOff+1] = 
+                        panRLELineOffset[nBlockYOff] + nBytesConsumed;
+            }
+        }
+    }
+    break;
+
     default:
         nBytesRead = INGR_DecodeRunLength( pabyRLEBlock, pabyBlockBuf,  
             nRLESize, nBlockBufSize );
