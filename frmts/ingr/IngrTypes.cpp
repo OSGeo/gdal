@@ -905,8 +905,10 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
 //                                                INGR_DecodeRunLengthPaletted()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
-                                              uint32 nSrcBytes, uint32 nBlockSize )
+int CPL_STDCALL 
+INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
+                              uint32 nSrcBytes, uint32 nBlockSize, 
+                              uint32 *pnBytesConsumed )
 {
     unsigned short nColor;
     unsigned short nCount;
@@ -949,6 +951,9 @@ int CPL_STDCALL INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDst
         }
     }
     while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize) );
+
+    if( pnBytesConsumed != NULL )
+        *pnBytesConsumed = iInput * 2;
 
     return iOutput;
 }
