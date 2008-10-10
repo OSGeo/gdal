@@ -127,6 +127,8 @@ class IntergraphRLEBand : public IntergraphRasterBand
 private:
     GByte	       *pabyRLEBlock;
     uint32          nRLESize;
+    int             bRLEBlockLoaded;
+    uint32         *panRLELineOffset;
 
 public:
     IntergraphRLEBand( IntergraphDataset *poDS, 
