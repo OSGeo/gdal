@@ -1,5 +1,5 @@
 #
-# CPL (Common Portability Library) makefile
+# CPL (Common Portability Library) makefile for MSVC
 #
 
 OBJ	=	cpl_conv.obj \
