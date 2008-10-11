@@ -916,6 +916,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         }
     }
 
+    int nCountCWPolygon = 0;
+    int indexOfCWPolygon = -1;
+
     for(i=0;i<nPolygonCount;i++)
     {
         asPolyEx[i].nInitialIndex = i;
@@ -930,6 +933,11 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             asPolyEx[i].poExteriorRing = asPolyEx[i].poPolygon->getExteriorRing();
             asPolyEx[i].poExteriorRing->getPoint(0, &asPolyEx[i].poAPoint);
             asPolyEx[i].bIsCW = asPolyEx[i].poExteriorRing->isClockwise();
+            if (asPolyEx[i].bIsCW)
+            {
+                indexOfCWPolygon = i;
+                nCountCWPolygon ++;
+            }
             if (!bFoundCCW)
                 bFoundCCW = ! (asPolyEx[i].bIsCW);
         }
@@ -947,6 +955,25 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             if( wkbFlatten(papoPolygons[i]->getGeometryType()) != wkbPolygon )
                 bNonPolygon = TRUE;
         }
+    }
+
+    /* If we are in ONLY_CCW mode and that we have found that there is only one outer ring, */
+    /* then it is pretty easy : we can assume that all other rings are inside */
+    if (method == METHOD_ONLY_CCW && nCountCWPolygon == 1 && bUseFastVersion)
+    {
+        geom = asPolyEx[indexOfCWPolygon].poPolygon;
+        for(i=0; i<nPolygonCount; i++)
+        {
+            if (i != indexOfCWPolygon)
+            {
+                ((OGRPolygon*)geom)->addRing(asPolyEx[i].poPolygon->getExteriorRing());
+                delete asPolyEx[i].poPolygon;
+            }
+        }
+        delete [] asPolyEx;
+        if (pbIsValidGeometry)
+            *pbIsValidGeometry = TRUE;
+        return geom;
     }
 
     /* Emits a warning if the number of parts is sufficiently big to anticipate for */
@@ -1052,11 +1079,11 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 if (bUseFastVersion)
                 {
                     /* Note that isPointInRing only test strict inclusion in the ring */
-                    if (asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint))
+                    if (asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint, FALSE))
                     {
                         b_i_inside_j = TRUE;
                     }
-                    else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint))
+                    else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint, FALSE))
                     {
                         /* If the point of i is on the boundary of j, we will iterate over the other points of i */
                         int k, nPoints = asPolyEx[i].poExteriorRing->getNumPoints();
@@ -1064,13 +1091,13 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                         {
                             OGRPoint point;
                             asPolyEx[i].poExteriorRing->getPoint(k, &point);
-                            if (asPolyEx[j].poExteriorRing->isPointInRing(&point))
+                            if (asPolyEx[j].poExteriorRing->isPointInRing(&point, FALSE))
                             {
                                 /* If then point is strictly included in j, then i is considered inside j */
                                 b_i_inside_j = TRUE;
                                 break;
                             }
-                            else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&point))
+                            else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&point, FALSE))
                             {
                                 /* If it is on the boundary of j, iterate again */ 
                             }
