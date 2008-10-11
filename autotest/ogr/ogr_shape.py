@@ -1044,7 +1044,7 @@ def ogr_shape_24():
         return 'skip'
 
     layer_name = 'touchingrings'
-    wkt = 'POLYGON((0 0,0 10,10 10,0 0), (0 0,1 1,0 1,0 0))'
+    wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0), (0 0,1 1,0 1,0 0)), ((100 100,100 200,200 200,200 100,100 100)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
 
     if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
@@ -1059,7 +1059,7 @@ def ogr_shape_24():
 
 def ogr_shape_25():
     layer_name = 'touchingrings2'
-    wkt = 'MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)))'
+    wkt = 'MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)), ((100 100,100 200,200 200,200 100,100 100)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
 
     if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
@@ -1068,7 +1068,7 @@ def ogr_shape_25():
 
     # Same test, but use OGR_ORGANIZE_POLYGONS=DEFAULT to avoid relying only on the winding order
     layer_name = 'touchingrings3'
-    wkt = 'MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)))'
+    wkt = 'MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)), ((100 100,100 200,200 200,200 100,100 100)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
 
     gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', 'DEFAULT')
@@ -1079,6 +1079,24 @@ def ogr_shape_25():
         return 'fail'
 
     return 'success'
+
+
+###############################################################################
+# Test a polygon made of one outer ring and two inner rings (special case
+# in organizePolygons()
+
+def ogr_shape_26():
+    layer_name = 'oneouterring'
+    wkt = 'POLYGON ((100 100,100 200,200 200,200 100,100 100),(110 110,120 110,120 120,110 120,110 110),(130 110,140 110,140 120,130 120,130 110))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+
+    ret = ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
+    if ret != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    return 'success'
+
 
 ###############################################################################
 # 
@@ -1122,6 +1140,7 @@ gdaltest_list = [
     ogr_shape_23,
     ogr_shape_24,
     ogr_shape_25,
+    ogr_shape_26,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
