@@ -438,7 +438,7 @@ double OGRLinearRing::get_Area() const
 /*                              isPointInRing()                         */
 /************************************************************************/
 
-OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint) const
+OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelope) const
 {
     if ( NULL == poPoint )
     {
@@ -456,12 +456,15 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint) const
     const double dfTestY = poPoint->getY();
 
     // Fast test if point is inside extent of the ring
-    OGREnvelope extent;
-    getEnvelope(&extent);
-    if ( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
-         && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
+    if (bTestEnvelope)
     {
-        return 0;
+        OGREnvelope extent;
+        getEnvelope(&extent);
+        if ( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
+            && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
+        {
+            return 0;
+        }
     }
 
 	// For every point p in ring,
@@ -499,7 +502,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint) const
 /*                       isPointOnRingBoundary()                        */
 /************************************************************************/
 
-OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint) const
+OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTestEnvelope) const
 {
     if ( NULL == poPoint )
     {
