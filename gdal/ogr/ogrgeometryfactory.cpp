@@ -887,6 +887,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         }
     }
 
+    int nCountCWPolygon = 0;
+    int indexOfCWPolygon = -1;
+
     for(i=0;i<nPolygonCount;i++)
     {
         asPolyEx[i].nInitialIndex = i;
@@ -901,6 +904,11 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             asPolyEx[i].poExteriorRing = asPolyEx[i].poPolygon->getExteriorRing();
             asPolyEx[i].poExteriorRing->getPoint(0, &asPolyEx[i].poAPoint);
             asPolyEx[i].bIsCW = asPolyEx[i].poExteriorRing->isClockwise();
+            if (asPolyEx[i].bIsCW)
+            {
+                indexOfCWPolygon = i;
+                nCountCWPolygon ++;
+            }
             if (!bFoundCCW)
                 bFoundCCW = ! (asPolyEx[i].bIsCW);
         }
@@ -918,6 +926,25 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             if( wkbFlatten(papoPolygons[i]->getGeometryType()) != wkbPolygon )
                 bNonPolygon = TRUE;
         }
+    }
+
+    /* If we are in ONLY_CCW mode and that we have found that there is only one outer ring, */
+    /* then it is pretty easy : we can assume that all other rings are inside */
+    if (method == METHOD_ONLY_CCW && nCountCWPolygon == 1 && bUseFastVersion)
+    {
+        geom = asPolyEx[indexOfCWPolygon].poPolygon;
+        for(i=0; i<nPolygonCount; i++)
+        {
+            if (i != indexOfCWPolygon)
+            {
+                ((OGRPolygon*)geom)->addRing(asPolyEx[i].poPolygon->getExteriorRing());
+                delete asPolyEx[i].poPolygon;
+            }
+        }
+        delete [] asPolyEx;
+        if (pbIsValidGeometry)
+            *pbIsValidGeometry = TRUE;
+        return geom;
     }
 
     /* Emits a warning if the number of parts is sufficiently big to anticipate for */
