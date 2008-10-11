@@ -8,6 +8,8 @@ CPPFLAGS	:=	-I../gtiff/libtiff $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 
+$(OBJ) $(O_OBJ):        IngrTypes.h IntergraphBand.h IntergraphDataset.h JpegHelper.h
+
 clean:
 	rm -f *.o $(O_OBJ)
 
