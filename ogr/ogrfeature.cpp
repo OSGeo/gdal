@@ -1422,6 +1422,9 @@ const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
  *
  * Currently this method only works for OFTStringList fields.
  *
+ * The returned list is terminated by a NULL pointer. The number of
+ * elements can also be calculated using CSLCount().
+ *
  * This method is the same as the C function OGR_F_GetFieldAsStringList().
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -1460,6 +1463,9 @@ char **OGRFeature::GetFieldAsStringList( int iField ) const
  * Fetch field value as a list of strings.
  *
  * Currently this method only works for OFTStringList fields.
+ *
+ * The returned list is terminated by a NULL pointer. The number of
+ * elements can also be calculated using CSLCount().
  *
  * This function is the same as the C++ method 
  * OGRFeature::GetFieldAsStringList().
