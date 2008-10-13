@@ -1009,8 +1009,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	// We will use SDS index as an identificator, because SDS names
 	// are not unique. Filename also needed for further file opening
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp, 
-              CPLSPrintf( "HDF4_SDS:%s:\"%s\":%d", poDS->pszSubdatasetType,
-			  poOpenInfo->pszFilename, i) );
+              CPLSPrintf( "HDF4_SDS:%s:\"%s\":%ld", poDS->pszSubdatasetType,
+			  poOpenInfo->pszFilename, (long)i) );
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
 	pszString = SPrintArray( GDT_UInt32, aiDimSizes, iRank, "x" );
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
@@ -1048,12 +1048,13 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         nCount = CSLCount( poDS->papszSubDatasets ) / 2;
         sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
-              CPLSPrintf( "HDF4_GR:UNKNOWN:\"%s\":%d", poOpenInfo->pszFilename, i));
+              CPLSPrintf( "HDF4_GR:UNKNOWN:\"%s\":%ld",
+                          poOpenInfo->pszFilename, (long)i));
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
 	pszString = SPrintArray( GDT_UInt32, aiDimSizes, 2, "x" );
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
-              CPLSPrintf( "[%sx%d] %s (%s)", pszString,
-		          iRank, szName, poDS->GetDataTypeName(iNumType)) );
+              CPLSPrintf( "[%sx%ld] %s (%s)", pszString, (long)iRank,
+                          szName, poDS->GetDataTypeName(iNumType)) );
 	CPLFree( pszString );
 
 	GRendaccess( iGR );
