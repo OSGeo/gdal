@@ -9,7 +9,7 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(HDF4_INCLUDE) -I. $(CPPFLAGS) 
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(HDF4_INCLUDE) -I. -I.. $(CPPFLAGS) 
 
 default:	$(OBJ)
 

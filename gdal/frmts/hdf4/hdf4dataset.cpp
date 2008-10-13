@@ -36,6 +36,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "hdf4compat.h"
 #include "hdf4dataset.h"
 
 CPL_CVSID("$Id$");
@@ -573,7 +574,7 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
 CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 {
     int32	iAttribute, nValues, iNumType, nAttributes;
-    char	szAttrName[MAX_NC_NAME];
+    char	szAttrName[H4_MAX_NC_NAME];
 
 /* -------------------------------------------------------------------- */
 /*     Obtain number of SDSs and global attributes in input file.       */
@@ -751,7 +752,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     char	*pszString;
     const char  *pszName;
     int		nCount;
-    int32	aiDimSizes[MAX_VAR_DIMS];
+    int32	aiDimSizes[H4_MAX_VAR_DIMS];
     int32	iRank, iNumType, nAttrs;
 
     // Sometimes "HDFEOSVersion" attribute is not defined and we will

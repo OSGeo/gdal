@@ -79,6 +79,8 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 #include "HdfEosDef.h"
 #include <math.h>
 
+#include "hdf4compat.h"
+
 #define SWIDOFFSET 1048576
 
 
@@ -11412,7 +11414,7 @@ SWsdid(int32 swathID, const char *fieldname, int32 *sdid)
     int32           fid;	        /* HDF-EOS file ID */
     int32           sdInterfaceID;      /* HDF SDS interface ID */
     int32           dum;	        /* Dummy variable */
-    int32           dims[MAX_VAR_DIMS]; /* Field/SDS dimensions */
+    int32           dims[H4_MAX_VAR_DIMS]; /* Field/SDS dimensions */
 
     status = SWchkswid(swathID, "SWsdid", &fid, &sdInterfaceID, &dum);
     if (status != -1)
