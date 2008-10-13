@@ -91,6 +91,8 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 #include <math.h>
 #include "HdfEosDef.h"
 
+#include "hdf4compat.h"
+
 extern  void for_init(int32, int32, float64 *, int32, char *, char *, int32 *,
                       int32 (*for_trans[])());
 extern  void inv_init(int32, int32, float64 *, int32, char *, char *, int32 *,
@@ -10852,7 +10854,7 @@ GDsdid(int32 gridID, const char *fieldname, int32 *sdid)
     int32           fid;	        /* HDF-EOS file ID */
     int32           sdInterfaceID;      /* HDF SDS interface ID */
     int32           dum;	        /* Dummy variable */
-    int32           dims[MAX_VAR_DIMS]; /* Field/SDS dimensions */
+    int32           dims[H4_MAX_VAR_DIMS]; /* Field/SDS dimensions */
 
     status = GDchkgdid(gridID, "GDsdid", &fid, &sdInterfaceID, &dum);
     if (status != -1)
