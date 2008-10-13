@@ -3,10 +3,10 @@
  *
  * Project:  Hierarchical Data Format Release 4 (HDF4)
  * Purpose:  Header file for HDF4 datasets reader.
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2002, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
