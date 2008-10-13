@@ -11,34 +11,34 @@ tamas         Tamas Szekeres               c# swig bindings
               szekerest at gmail.com
 
 dmorissette   Daniel Morissette            mitab, avc, cpl
-danmo         dmorissette at mapgears.com  
+danmo         dmorissette at mapgears.com
 
 hobu          Howard Butler                swig/python, sde
-              hobu.inc at gmail.com             
+              hobu.inc at gmail.com
 
 kdejong       Kor de Jong                  pcraster
               k.dejong at geo.uu.nl
 
 rblazek       Radim Blazek                 grass drivers
-              radim.blazek at gmail.com    
+              radim.blazek at gmail.com
 
 osemykin      Oleg Semykin	           postgis, informix
               oss-dev at rambler.ru
 
-sperkins      Simon Perkins                fits, windows builds. 
-              sy at perkins.net               
+sperkins      Simon Perkins                fits, windows builds.
+              sy at perkins.net
 
 kmelero	      Ken Melero		   mrsid
               kmelero at sanz.com
 
 ajolma        Ari Jolma                    perl bindings
-              ari.jolma at tkk.fi          
+              ari.jolma at tkk.fi
 
 shalasz       Steve Halasz                 DebianGIS Packaging
-              debian at adkgis.org         
+              debian at adkgis.org
 
 mloskot	      Mateusz Loskot		   wince
-              mateusz at loskot.net        
+              mateusz at loskot.net
 
 ilucena       Ivan Lucena                  idrisi
               ivan.lucena at pmldnet.com
@@ -47,7 +47,7 @@ mbrudka	      Marek Brudka		   thread safety
               mbrudka at aster.pl
 
 jlacroix      Julien-Samuel Lacroix	   mitab, avc
-              jlacroix at mapgears.com        
+              jlacroix at mapgears.com
 
 dnadeau	      Denis Nadeau                 netcdf, hdf, opendap
               denis.nadeau@gmail.com
@@ -56,13 +56,13 @@ cfis          Charles F. I. Savage         ruby
               cfis at savagexi.com
 
 lichun	      Lichun Wang                  ilwis
-              lichun at itc.nl 		
+              lichun at itc.nl
 
 dron          Andrey Kiselev               HDF, geotiff, informix, core
               dron at ak4719.spb.edu
 
-dreamil       Swapnil Harjare              
-              dreamil at gmail.com 
+dreamil       Swapnil Harjare
+              dreamil at gmail.com
 
 mchapman      Martin Chapman               mysql, postgres, etc
               mchapman at sanz.com
@@ -71,7 +71,7 @@ hannah	      Hannah Valbonesi             hdf, png, gif, geotiff
               Hannah.Valvonesi at safe.com
 
 gaopeng       Gao Peng
-              pgao at esri.com 
+              pgao at esri.com
 
 aaime         Andrea Aime                  swig java bindings
               aaime at openplans.org
@@ -92,7 +92,7 @@ retsios       Bas Retsios                  ILWIS, GRIB
               retsios at itc.nl
 
 condit        Chris Condit                 Python, KML
-              condit at sdsc.edu              
+              condit at sdsc.edu
 
 klokan        Petr Pridal                  gdal2tiles
               klokan at klokan.cz
@@ -101,9 +101,9 @@ pvachon       Phil Vachon                  jaxapalsar, radar in general.
               philippe at cowpig.ca
 
 moratto	      Stefano Moratto              delphi bindings, OGR: shp
-              stefano.moratto@gmail.com	
+              stefano.moratto@gmail.com
 
-drichard      Didier Richard               geoconcept, coordinate systems.
+dgrichard     Didier Richard               geoconcept, coordinate systems.
               didier.richard@ign.fr
 
 
