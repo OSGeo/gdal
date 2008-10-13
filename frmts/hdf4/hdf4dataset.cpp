@@ -5,10 +5,10 @@
  * Purpose:  HDF4 Datasets. Open HDF4 file, fetch metadata and list of
  *           subdatasets.
  *           This driver initially based on code supplied by Markus Neteler
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2002, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
