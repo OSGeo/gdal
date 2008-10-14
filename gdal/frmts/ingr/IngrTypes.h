@@ -478,13 +478,21 @@ double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
 //    Run Length decoders
 //  ------------------------------------------------------------------
 
+int CPL_STDCALL
+INGR_Decode( INGR_Format eFormat, 
+             GByte *pabySrcData, GByte *pabyDstData,
+             uint32 nSrcBytes, uint32 nBlockSize,
+             uint32 *pnBytesConsumed );
+
 int CPL_STDCALL 
 INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
-                      uint32 nSrcBytes, uint32 nBlockSize );
+                      uint32 nSrcBytes, uint32 nBlockSize,
+                      uint32 *pnBytesConsumed );
 
 int CPL_STDCALL 
 INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
-                             uint32 nSrcBytes, uint32 nBlockSize );
+                             uint32 nSrcBytes, uint32 nBlockSize,
+                             uint32 *pnBytesConsumed );
 
 int CPL_STDCALL 
 INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,

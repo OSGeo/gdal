@@ -856,11 +856,42 @@ int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
 }
 
 // -----------------------------------------------------------------------------
+//                                                        INGR_Decode()
+//
+//	Decode the various RLE compression options.
+// -----------------------------------------------------------------------------
+
+int CPL_STDCALL 
+INGR_Decode( INGR_Format eFormat, GByte *pabySrcData, GByte *pabyDstData,
+             uint32 nSrcBytes, uint32 nBlockSize, uint32 *pnBytesConsumed )
+
+{
+    switch( eFormat )
+    {
+      case RunLengthEncoded:
+        return INGR_DecodeRunLengthBitonal( pabySrcData,  pabyDstData,
+                                            nSrcBytes, nBlockSize,
+                                            pnBytesConsumed );
+
+      case RunLengthEncodedC:
+        return INGR_DecodeRunLengthPaletted( pabySrcData,  pabyDstData,
+                                             nSrcBytes, nBlockSize, 
+                                             pnBytesConsumed );
+
+      default:
+        return INGR_DecodeRunLength( pabySrcData,  pabyDstData,
+                                     nSrcBytes, nBlockSize,
+                                     pnBytesConsumed );
+    }
+}
+
+// -----------------------------------------------------------------------------
 //                                                        INGR_DecodeRunLength()
 // -----------------------------------------------------------------------------
 
 int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
-                                      uint32 nSrcBytes, uint32 nBlockSize )
+                                      uint32 nSrcBytes, uint32 nBlockSize,
+                                      uint32 *pnBytesConsumed )
 {
     signed char cAtomHead;
 
@@ -897,6 +928,9 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
         }
     }
     while( ( iInput < nSrcBytes ) && ( iOutput < nBlockSize ) );
+
+    if( pnBytesConsumed != NULL )
+        *pnBytesConsumed = iInput * 2;
 
     return iOutput;
 }
@@ -962,8 +996,10 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 //                                                 INGR_DecodeRunLengthBitonal()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
-                                            uint32 nSrcBytes, uint32 nBlockSize )
+int CPL_STDCALL 
+INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
+                             uint32 nSrcBytes, uint32 nBlockSize,
+                             uint32 *pnBytesConsumed )
 {
     unsigned short i; 
     unsigned int   iInput = 0;
@@ -974,52 +1010,31 @@ int CPL_STDCALL INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstD
     unsigned char  nValue = 0;
 
     if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
-    {
         nValue = 1;
 
-        do
-        {
-            nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
-            iInput++;
-
-            if( nRun == 0 && nValue == 0 )
-            {
-                continue;
-            }
-
-            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
-            {
-                pabyDstData[ iOutput++ ] = nValue;
-            }
-
-            nValue = ( nValue == 1 ? 0 : 1 );
-        }
-        while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
-    }
-    else
+    do
     {
-        do
+        nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
+        iInput++;
+        
+        if( nRun == 0x5900 )
         {
-            nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
-            iInput++;
-
-            if( nRun == 0x5900 )
-            {
-                iInput++; // line id
-                iInput++; // line data size
-                continue;
-            }
-
-            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
-            {
-                pabyDstData[ iOutput++ ] = nValue;
-            }
-
-            nValue = ( nValue == 1 ? 0 : 1 );
-
+            iInput++; // line id
+            iInput++; // line data size
+            continue;
         }
-        while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
+        
+        for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+        {
+            pabyDstData[ iOutput++ ] = nValue;
+        }
+        
+        nValue = ( nValue == 1 ? 0 : 1 );
     }
+    while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
+
+    if( pnBytesConsumed != NULL )
+        *pnBytesConsumed = iInput * 2;
 
     return iOutput;
 }

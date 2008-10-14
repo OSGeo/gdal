@@ -444,7 +444,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
 
         nFullBlocksX = 1;
 
-        if( eFormat == RunLengthEncodedC )
+        if( eFormat == RunLengthEncodedC || eFormat == RunLengthEncoded )
         {
             nBlockYSize = 1;
             panRLELineOffset = (uint32 *) 
@@ -569,53 +569,36 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     // Decode Run Length
     // --------------------------------------------------------------------
 
-    switch( eFormat )
+    if( bTiled || panRLELineOffset == NULL )
     {
-    case RunLengthEncoded:
-        nBytesRead = INGR_DecodeRunLengthBitonal( pabyRLEBlock, pabyBlockBuf,  
-            nRLESize, nBlockBufSize );
-        break;
-
-    case RunLengthEncodedC:
-    {
-        if( bTiled )
-        {
-            nBytesRead = 
-                INGR_DecodeRunLengthPaletted( pabyRLEBlock, pabyBlockBuf,  
-                                              nRLESize, nBlockBufSize, 
-                                              NULL );
-        }
-        else
-        {
-            // If we are missing the offset to this line, process all
-            // preceding lines.
-            if( nBlockYOff > 0 && panRLELineOffset[nBlockYOff] == 0 )
-            {
-                int iLine;
-                for( iLine = 0; iLine < nBlockYOff; iLine++ )
-                    IReadBlock( 0, iLine, pImage );
-            }
-            if( nBlockYOff == 0 || panRLELineOffset[nBlockYOff] > 0 )
-            {
-                uint32 nBytesConsumed;
-
-                nBytesRead = 
-                    INGR_DecodeRunLengthPaletted( 
-                        pabyRLEBlock + panRLELineOffset[nBlockYOff], 
-                        pabyBlockBuf,  nRLESize, nBlockBufSize,
-                        &nBytesConsumed );
-
-                if( nBlockYOff < nRasterYSize-1 )
-                    panRLELineOffset[nBlockYOff+1] = 
-                        panRLELineOffset[nBlockYOff] + nBytesConsumed;
-            }
-        }
+        nBytesRead = INGR_Decode( eFormat, pabyRLEBlock, pabyBlockBuf,  
+                                  nRLESize, nBlockBufSize, 
+                                  NULL );
     }
-    break;
-
-    default:
-        nBytesRead = INGR_DecodeRunLength( pabyRLEBlock, pabyBlockBuf,  
-            nRLESize, nBlockBufSize );
+    else
+    {
+        // If we are missing the offset to this line, process all
+        // preceding lines.
+        if( nBlockYOff > 0 && panRLELineOffset[nBlockYOff] == 0 )
+        {
+            int iLine;
+            for( iLine = 0; iLine < nBlockYOff; iLine++ )
+                IReadBlock( 0, iLine, pImage );
+        } 
+        if( nBlockYOff == 0 || panRLELineOffset[nBlockYOff] > 0 )
+        {
+            uint32 nBytesConsumed;
+            
+            nBytesRead = 
+                INGR_Decode( eFormat,
+                             pabyRLEBlock + panRLELineOffset[nBlockYOff], 
+                             pabyBlockBuf,  nRLESize, nBlockBufSize,
+                             &nBytesConsumed );
+            
+            if( nBlockYOff < nRasterYSize-1 )
+                panRLELineOffset[nBlockYOff+1] = 
+                    panRLELineOffset[nBlockYOff] + nBytesConsumed;
+        }
     }
 
     // --------------------------------------------------------------------
