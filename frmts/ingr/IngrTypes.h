@@ -66,7 +66,11 @@ typedef float               real32;
 //    Header Element Type Word ( HTC )
 //  ----------------------------------------------------------------------------
 
+#ifdef __sparcv9
+#pragma pack( 8 )
+#else 
 #pragma pack( 1 )
+#endif
 
 typedef struct {
 #if defined(CPL_LSB)
