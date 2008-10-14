@@ -29,10 +29,9 @@
 #******************************************************************************
 
 try:
-    from osgeo import gdal, ogr
+    from osgeo import gdal, ogr, osr
 except ImportError:
-    import gdal
-    import ogr
+    import gdal, ogr, osr
 
 import sys
 import os.path
@@ -173,7 +172,13 @@ except:
     dst_layer = None
 
 if dst_layer is None:
-    dst_layer = dst_ds.CreateLayer(dst_layername)
+
+    srs = None
+    if src_ds.GetProjectionRef() != '':
+        srs = osr.SpatialReference()
+        srs.ImportFromWkt( src_ds.GetProjectionRef() )
+        
+    dst_layer = dst_ds.CreateLayer(dst_layername, srs = srs )
 
     if dst_fieldname is None:
         dst_fieldname = 'DN'
