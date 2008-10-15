@@ -415,8 +415,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
         * (GDALGetDataTypeSize(eType)/8);
     nYChunkSize = 10000000 / nScanlineBytes;
-    if( nYChunkSize > poBand->GetYSize() )
-        nYChunkSize = poBand->GetYSize();
+    if( nYChunkSize > poDS->GetRasterYSize() )
+        nYChunkSize = poDS->GetRasterYSize();
 
     pabyChunkBuf = (unsigned char *) VSIMalloc(nYChunkSize * nScanlineBytes);
     if( pabyChunkBuf == NULL )
@@ -463,11 +463,11 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         }
 
         eErr = 
-            poDS->RasterIO( GF_Write, 
-                            0, iY, poBand->GetXSize(), nThisYChunkSize, 
-                            pabyChunkBuf, poBand->GetXSize(), nThisYChunkSize, 
-                            eType, nBandCount, panBandList,
-                            0, 0, 0 );
+            poDS->RasterIO( GF_Write, 0, iY,
+                            poDS->GetRasterXSize(), nThisYChunkSize, 
+                            pabyChunkBuf,
+                            poDS->GetRasterXSize(), nThisYChunkSize, 
+                            eType, nBandCount, panBandList, 0, 0, 0 );
 
         if( !pfnProgress((iY+nThisYChunkSize)/((double)poDS->GetRasterYSize()),
                          "", pProgressArg ) )
@@ -575,8 +575,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
         * (GDALGetDataTypeSize(eType)/8);
     nYChunkSize = 10000000 / nScanlineBytes;
-    if( nYChunkSize > poBand->GetYSize() )
-        nYChunkSize = poBand->GetYSize();
+    if( nYChunkSize > poDS->GetRasterYSize() )
+        nYChunkSize = poDS->GetRasterYSize();
 
     pabyChunkBuf = (unsigned char *) VSIMalloc(nYChunkSize * nScanlineBytes);
     if( pabyChunkBuf == NULL )
@@ -666,8 +666,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /*      Loop over image in designated chunks.                           */
 /* -------------------------------------------------------------------- */
        for( iY = 0; 
-             iY < poDS->GetRasterYSize() && eErr == CE_None; 
-             iY += nYChunkSize )
+            iY < poDS->GetRasterYSize() && eErr == CE_None; 
+            iY += nYChunkSize )
         {
             int	nThisYChunkSize;
 
@@ -705,13 +705,15 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
             eErr = 
                 poDS->RasterIO( GF_Write, 0, iY,
-                                poBand->GetXSize(), nThisYChunkSize, 
+                                poDS->GetRasterXSize(), nThisYChunkSize, 
                                 pabyChunkBuf,
-                                poBand->GetXSize(), nThisYChunkSize, 
+                                poDS->GetRasterXSize(), nThisYChunkSize, 
                                 eType, nBandCount, panBandList, 0, 0, 0 );
 
+            poLayer->ResetReading();
+
             if( !pfnProgress((iY+nThisYChunkSize)/((double)poDS->GetRasterYSize()),
-                             "", pProgressArg ) )
+                             "", pProgressArg) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 eErr = CE_Failure;
