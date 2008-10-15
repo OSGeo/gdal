@@ -498,10 +498,11 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
             string sMaxY = ReadElement("GeoRefCorners", "MaxY", pszRefName);
 				
             //Calculate pixel size in X and Y direction from the extent
-            double PixelSizeX = floor((atof(sMaxX.c_str()) - 
-                                       atof(sMinX.c_str())) / nRasterXSize + 0.5);
-            double PixelSizeY = floor((atof(sMaxY.c_str()) - 
-                                       atof(sMinY.c_str())) / nRasterYSize + 0.5);
+            double deltaX = atof(sMaxX.c_str()) - atof(sMinX.c_str());
+            double deltaY = atof(sMaxY.c_str()) - atof(sMinY.c_str());
+
+            double PixelSizeX = deltaX / (double)nRasterXSize;
+            double PixelSizeY = deltaY / (double)nRasterYSize;
 				
             if (EQUAL(IsCorner.c_str(),"Yes"))
             {
