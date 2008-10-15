@@ -600,7 +600,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     for( iLayer = 0; iLayer < nLayerCount; iLayer++ )
     {
         int         iBurnField = -1;
-        double      *padfBurnValues;
+        double      *padfBurnValues = NULL;
         OGRLayer    *poLayer = (OGRLayer *) pahLayers[iLayer];
 
         if ( !poLayer )
