@@ -70,6 +70,7 @@ class DIMAPDataset : public GDALPamDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
     virtual char **GetMetadata( const char *pszDomain );
+    virtual char **GetFileList(void);
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -179,20 +180,51 @@ CPLErr DIMAPDataset::GetGeoTransform( double *padfGeoTransform )
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **DIMAPDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+    char **papszImageFiles = poImageDS->GetFileList();
+
+    papszFileList = CSLInsertStrings( papszFileList, -1, papszImageFiles );
+
+    CSLDestroy( papszImageFiles );
+    
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
 int DIMAPDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->nHeaderBytes < 100 )
-        return FALSE;
+    if( poOpenInfo->nHeaderBytes >= 100 )
+    {
+        if( strstr((const char *) poOpenInfo->pabyHeader, 
+                   "<Dimap_Document" ) == NULL )
+            return FALSE;
+        else
+            return TRUE;
+    }
+    else if( poOpenInfo->bIsDirectory )
+    {
+        VSIStatBufL sStat;
 
-    if( strstr((const char *) poOpenInfo->pabyHeader, 
-               "<Dimap_Document" ) == NULL )
-        return FALSE;
+        CPLString osMDFilename = 
+            CPLFormCIFilename( poOpenInfo->pszFilename, "METADATA.DIM", NULL );
+        
+        if( VSIStatL( osMDFilename, &sStat ) == 0 )
+            return TRUE;
+        else
+            return FALSE;
+    }
 
-    return TRUE;
+    return FALSE;
 }
 
 /************************************************************************/
@@ -206,11 +238,24 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Get the metadata filename.                                      */
+/* -------------------------------------------------------------------- */
+    CPLString osMDFilename;
+
+    if( poOpenInfo->bIsDirectory )
+    {
+        osMDFilename = 
+            CPLFormCIFilename( poOpenInfo->pszFilename, "METADATA.DIM", NULL );
+    }
+    else
+        osMDFilename = poOpenInfo->pszFilename;
+
+/* -------------------------------------------------------------------- */
 /*      Ingest the xml file.                                            */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psProduct, *psImageAttributes;
 
-    psProduct = CPLParseXMLFile( poOpenInfo->pszFilename );
+    psProduct = CPLParseXMLFile( osMDFilename );
     if( psProduct == NULL )
         return NULL;
 
@@ -249,7 +294,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char *pszHref = CPLGetXMLValue(
         psDoc, "Data_Access.Data_File.DATA_FILE_PATH.href", "" );
-    CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+    CPLString osPath = CPLGetPath(osMDFilename);
     CPLString osImageFilename = 
         CPLFormFilename( osPath, pszHref, NULL );
                                    
@@ -418,12 +463,12 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, osMDFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetDescription( osMDFilename );
     poDS->TryLoadXML();
 
     return( poDS );
