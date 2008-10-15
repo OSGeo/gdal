@@ -87,9 +87,11 @@ class RS2Dataset : public GDALPamDataset
     double      adfGeoTransform[6];
     bool        bHaveGeoTransform;
 
+    char        **papszExtraFiles;
+
   public:
             RS2Dataset();
-                ~RS2Dataset();
+           ~RS2Dataset();
     
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -100,6 +102,7 @@ class RS2Dataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * );
 
     virtual char **GetMetadata( const char * pszDomain = "" );
+    virtual char **GetFileList(void);
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -540,7 +543,7 @@ RS2Dataset::RS2Dataset()
     bHaveGeoTransform = FALSE;
 
     papszSubDatasets = NULL;
-
+    papszExtraFiles = NULL;
 }
 
 /************************************************************************/
@@ -562,9 +565,22 @@ RS2Dataset::~RS2Dataset()
         CPLFree( pasGCPList );
     }
     
-    if (papszSubDatasets != NULL) 
-        CSLDestroy( papszSubDatasets );
+    CSLDestroy( papszSubDatasets );
+    CSLDestroy( papszExtraFiles );
+}
 
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **RS2Dataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    papszFileList = CSLInsertStrings( papszFileList, -1, papszExtraFiles );
+
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -577,6 +593,21 @@ int RS2Dataset::Identify( GDALOpenInfo *poOpenInfo )
     /* Check for the case where we're trying to read the calibrated data: */
     if (EQUALN("RADARSAT_2_CALIB:",poOpenInfo->pszFilename,17)) {
         return 1;
+    }
+
+    /* Check for directory access when there is a product.xml file in the
+       directory. */
+    if( poOpenInfo->bIsDirectory )
+    {
+        VSIStatBufL sStat;
+
+        CPLString osMDFilename = 
+            CPLFormCIFilename( poOpenInfo->pszFilename, "product.xml", NULL );
+        
+        if( VSIStatL( osMDFilename, &sStat ) == 0 )
+            return TRUE;
+        else
+            return FALSE;
     }
 
     /* otherwise, do our normal stuff */
@@ -614,6 +645,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*        Get subdataset information, if relevant                            */
 /* -------------------------------------------------------------------- */
+    CPLString osMDFilename;
     const char *pszFilename = poOpenInfo->pszFilename;
     eCalibration eCalib = None;
 
@@ -637,14 +669,24 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         if (*pszFilename == ':')
             pszFilename++;
+
+        osMDFilename = pszFilename;
     }
+
+    else if( poOpenInfo->bIsDirectory )
+    {
+        osMDFilename = 
+            CPLFormCIFilename( poOpenInfo->pszFilename, "product.xml", NULL );
+    }
+    else
+        osMDFilename = poOpenInfo->pszFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Ingest the Product.xml file.                                    */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psProduct, *psImageAttributes, *psImageGenerationParameters;
 
-    psProduct = CPLParseXMLFile( pszFilename );
+    psProduct = CPLParseXMLFile( osMDFilename );
     if( psProduct == NULL )
         return NULL;
 
@@ -725,8 +767,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     GDALDataType eDataType;
 
-   const char *pszDataType = 
-           CPLGetXMLValue( psImageAttributes, "rasterAttributes.dataType", 
+    const char *pszDataType = 
+        CPLGetXMLValue( psImageAttributes, "rasterAttributes.dataType", 
                         "" );
     int nBitsPerSample = 
         atoi( CPLGetXMLValue( psImageAttributes, 
@@ -760,9 +802,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open each of the data files as a complex band.                  */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psNode;
-    char *pszPath = CPLStrdup(CPLGetPath( pszFilename ));
+    char *pszPath = CPLStrdup(CPLGetPath( osMDFilename ));
     char *pszBuf;
-    int nFLen = strlen(pszFilename);
+    int nFLen = strlen(osMDFilename);
 
     for( psNode = psImageAttributes->psChild;
          psNode != NULL;
@@ -779,17 +821,23 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             const char *pszLUTType = CPLGetXMLValue( psNode,
                 "incidenceAngleCorrection", "" );
             const char *pszLUTFile = CPLGetXMLValue( psNode, "", "" );
+            CPLString osLUTFilePath = CPLFormFilename( pszPath, pszLUTFile, 
+                                                       NULL );
 
             if (EQUAL(pszLUTType, "")) 
                 continue;
             else if (EQUAL(pszLUTType, "Beta Nought") && 
                 IsValidXMLFile(pszPath,pszLUTFile)) 
             {
+                poDS->papszExtraFiles = 
+                    CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
+
                 pszBuf = (char *)CPLMalloc(nFLen + 27);
                 pszBeta0LUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "BETA_NOUGHT_LUT", pszLUTFile );
                 
-                sprintf(pszBuf, "RADARSAT_2_CALIB:BETA0:%s", pszFilename);
+                sprintf(pszBuf, "RADARSAT_2_CALIB:BETA0:%s", 
+                        osMDFilename.c_str() );
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_3_NAME", pszBuf );
                 poDS->papszSubDatasets = CSLSetNameValue( 
@@ -800,11 +848,15 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             else if (EQUAL(pszLUTType, "Sigma Nought") && 
                 IsValidXMLFile(pszPath,pszLUTFile)) 
             {
+                poDS->papszExtraFiles = 
+                    CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
+
                 pszBuf = (char *)CPLMalloc(nFLen + 27);
                 pszSigma0LUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "SIGMA_NOUGHT_LUT", pszLUTFile );
 
-                sprintf(pszBuf, "RADARSAT_2_CALIB:SIGMA0:%s", pszFilename);
+                sprintf(pszBuf, "RADARSAT_2_CALIB:SIGMA0:%s", 
+                        osMDFilename.c_str() );
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_2_NAME", pszBuf );
                 poDS->papszSubDatasets = CSLSetNameValue( 
@@ -815,10 +867,14 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             else if (EQUAL(pszLUTType, "Gamma") && 
                 IsValidXMLFile(pszPath,pszLUTFile)) 
             {
+                poDS->papszExtraFiles = 
+                    CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
+
                 pszBuf = (char *)CPLMalloc(nFLen + 27);
                 pszGammaLUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "GAMMA_LUT", pszLUTFile );
-                sprintf(pszBuf, "RADARSAT_2_CALIB:GAMMA:%s", pszFilename);
+                sprintf(pszBuf, "RADARSAT_2_CALIB:GAMMA:%s", 
+                        osMDFilename.c_str());
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_4_NAME", pszBuf );
                 poDS->papszSubDatasets = CSLSetNameValue( 
@@ -851,6 +907,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( poBandFile == NULL )
             continue;
         
+        poDS->papszExtraFiles = CSLAddString( poDS->papszExtraFiles,
+                                              pszFullname );
+
 /* -------------------------------------------------------------------- */
 /*      Create the band.                                                */
 /* -------------------------------------------------------------------- */
@@ -891,7 +950,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if (poDS->papszSubDatasets != NULL && eCalib == None) {
         char *pszBuf;
         pszBuf = (char *)CPLMalloc(nFLen + 28);
-        sprintf(pszBuf, "RADARSAT_2_CALIB:UNCALIB:%s", pszFilename);
+        sprintf(pszBuf, "RADARSAT_2_CALIB:UNCALIB:%s", 
+                osMDFilename.c_str() );
         poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets,
             "SUBDATASET_1_NAME", pszBuf );
         poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets,
@@ -1229,7 +1289,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, pszFilename );
+    poDS->oOvManager.Initialize( poDS, osMDFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1239,23 +1299,27 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     switch (eCalib) {
         case Sigma0:
             pszDescription = (char *)CPLMalloc(nFLen + 26);
-            sprintf(pszDescription, "RADARSAT_2_CALIB:SIGMA0:%s", pszFilename);
+            sprintf(pszDescription, "RADARSAT_2_CALIB:SIGMA0:%s", 
+                    osMDFilename.c_str());
             break;
         case Beta0:
             pszDescription = (char *)CPLMalloc(nFLen + 25);
-            sprintf(pszDescription, "RADARSAT_2_CALIB:BETA0:%s", pszFilename);
+            sprintf(pszDescription, "RADARSAT_2_CALIB:BETA0:%s", 
+                    osMDFilename.c_str());
             break;
         case Gamma:
             pszDescription = (char *)CPLMalloc(nFLen + 26);
-            sprintf(pszDescription, "RADARSAT_2_CALIB:GAMMA0:%s", pszFilename);
+            sprintf(pszDescription, "RADARSAT_2_CALIB:GAMMA0:%s",
+                    osMDFilename.c_str() );
             break;
         case Uncalib:
             pszDescription = (char *)CPLMalloc(nFLen + 27);
-            sprintf(pszDescription, "RADARSAT_2_CALIB:UNCALIB:%s", pszFilename);
+            sprintf(pszDescription, "RADARSAT_2_CALIB:UNCALIB:%s", 
+                    osMDFilename.c_str() );
             break;
         default:
             pszDescription = (char *)CPLMalloc(nFLen + 1);
-            strcpy(pszDescription,pszFilename);
+            strcpy(pszDescription,osMDFilename);
     }
 
     poDS->SetDescription( pszDescription );
