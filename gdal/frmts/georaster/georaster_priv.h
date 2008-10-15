@@ -41,6 +41,22 @@ class GeoRasterRasterBand;
 class GeoRasterWrapper;
 
 //  ---------------------------------------------------------------------------
+//  Calculate the row index where a block is stored
+//  ---------------------------------------------------------------------------
+
+#define CALCULATEBLOCK( bn, xo, yo, bb, tc, tr ) \
+    ( ( (int) ceil( ( bn - 1 ) / bb ) * tc * tr ) + ( yo * tc ) + xo )
+
+//  ---------------------------------------------------------------------------
+//  Link between bands+pyramid levels and modified <shrinked> georaster object
+//  ---------------------------------------------------------------------------
+
+struct OverviewLink {
+    int nLevel;
+    GeoRasterRasterBand* poOverview;
+};
+
+//  ---------------------------------------------------------------------------
 //  GeoRasterDriver, extends GDALDriver to support GeoRaster Server Connections
 //  ---------------------------------------------------------------------------
 
@@ -86,6 +102,7 @@ private:
     double              adfGeoTransform[6];
     int                 nGCPCount;
     GDAL_GCP*           pasGCPList;
+    int                 nOverviewCount;
 
 public:
 
@@ -146,7 +163,8 @@ class GeoRasterRasterBand : public GDALRasterBand
 
 public:
                         GeoRasterRasterBand( GeoRasterDataset* poGDS, 
-                            int nBand );
+                            int nBand,
+                            int nLevel );
     virtual            ~GeoRasterRasterBand();
 
 private:
@@ -162,13 +180,16 @@ private:
     bool                bValidStats;
     double              dfNoData;
     char*               pszVATName;
+    int                 nOverviewLevel;
+    OverviewLink**      paphOverviewLinks;
+    int                 nOverviewLinks;
 
 public:
 
     virtual double      GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr      SetNoDataValue( double dfNoDataValue );
     virtual double      GetMinimum( int* pbSuccess = NULL );
-    virtual double      GetMaximum( int* pbSuccess = NULL ); 
+    virtual double      GetMaximum( int* pbSuccess = NULL );
     virtual GDALColorTable* 
                         GetColorTable();
     virtual CPLErr      SetColorTable( GDALColorTable *poInColorTable ); 
@@ -185,6 +206,9 @@ public:
                             double* pdfMean, double* pdfStdDev );
     virtual const       GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable * );
+    virtual int         GetOverviewCount();
+    virtual GDALRasterBand*
+                        GetOverview( int );
 };
 
 //  ---------------------------------------------------------------------------
@@ -203,15 +227,14 @@ private:
 
     OCILobLocator**     pahLocator;
     int                 nBlockCount;
-    int                 nBlockBytes;
-    int                 nBlockBytesGDAL;
-    int                 nBandBytes;
+    unsigned long       nBlockBytes;
+    unsigned long       nBlockBytesGDAL;
     GByte*              pabyBlockBuf;
     OWStatement*        poStmtRead;
     OWStatement*        poStmtWrite;
 
     int                 nCurrentBlock;
-    int                 nBandsInBuffer;
+    int                 nCurrentLevel;
 
     int                 nCellSizeBits;
     int                 nCellSizeGDAL;
@@ -219,11 +242,16 @@ private:
     bool                bIOInitialized;
     bool                bBlobInitialized;
     bool                bFlushMetadata;
+    bool                bFlushBuffer;
 
     void                InitializeLayersNode();
-    bool                InitializeIO();
+    bool                InitializeIO( int nLevel, bool bUpdate = false );
     bool                FlushMetadata();
-    bool                bOptimizedWriting;
+
+    void                UnpackNBits( GByte* pabyData );
+    void                PackNBits( GByte* pabyOutBuf, void* pData );
+    void                CompressJpeg( GByte* pabyOutBuf, void* pData );
+    void                CompressDeflate( GByte* pabyOutBuf, void* pData );
 
 public:
 
@@ -236,10 +264,6 @@ public:
                             bool bUpdate );
     bool                Delete( void );
     void                GetRasterInfo( void );
-    int                 CalculateBlockId(
-                            int nBand,
-                            int nXOffset,
-                            int nYOffset );
     bool                GetImageExtent( double *padfTransform );
     bool                GetStatistics( int nBand,
                             double dfMin,
@@ -256,28 +280,28 @@ public:
     void                SetColorMap( int nBand, GDALColorTable* poCT );
     bool                SetGeoReference( int nSRIDIn );
     char*               GetWKText( int nSRIDin );
-    bool                GetBandBlock(
+    bool                GetDataBlock(
                             int nBand,
+                            int nLevel,
                             int nXOffset,
                             int nYOffset,
-                            int nLevel,
                             void* pData );
-    bool                SetBandBlock(
+    bool                SetDataBlock(
                             int nBand,
+                            int nLevel,
                             int nXOffset,
                             int nYOffset,
-                            int nLevel,
                             void* pData );
     bool                GetNoData( double* pdfNoDataValue );
     bool                SetNoData( double dfNoDataValue );
     CPLXMLNode*         GetMetadata() { return phMetadata; };
     bool                SetVAT( int nBand, const char* pszName );
     char*               GetVAT( int nBand );
-    void                SetOptimizedWriting()   { bOptimizedWriting = true; };
     bool                GeneratePyramid(
                             int nLevels,
                             const char* pszResampling,
                             bool bNodata = false );
+
 public:
 
     OWConnection*       poConnection;
@@ -293,6 +317,7 @@ public:
     int                 nSRID;
     CPLXMLNode*         phMetadata;
     char*               pszCellDepth;
+    char*               pszCompressionType;
 
     int                 nRasterColumns;
     int                 nRasterRows;
@@ -315,4 +340,8 @@ public:
     int                 iDefaultRedBand;
     int                 iDefaultGreenBand;
     int                 iDefaultBlueBand;
+
+    int                 nPyramidMaxLevel;
+
+    int                 bPackingOrCompress;
 };

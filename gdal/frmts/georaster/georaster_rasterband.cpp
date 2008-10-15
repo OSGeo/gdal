@@ -34,23 +34,32 @@
 //                                                        GeoRasterRasterBand()
 //  ---------------------------------------------------------------------------
 
-GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS, int nBand )
+GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
+                                          int nBand,
+                                          int nLevel )
 {
     poDS                = (GDALDataset*) poGDS;
-    nBand               = nBand;
+    this->nBand         = nBand;
     poGeoRaster         = poGDS->poGeoRaster;
     poColorTable        = new GDALColorTable();
     poDefaultRAT        = NULL;
     pszVATName          = NULL;
-    eDataType           = OWGetDataType( poGeoRaster->pszCellDepth );
     nRasterXSize        = poGeoRaster->nRasterColumns;
     nRasterYSize        = poGeoRaster->nRasterRows;
     nBlockXSize         = poGeoRaster->nColumnBlockSize;
     nBlockYSize         = poGeoRaster->nRowBlockSize;
-    nBlocksPerColumn    = poGeoRaster->nTotalColumnBlocks;
-    nBlocksPerRow       = poGeoRaster->nTotalRowBlocks;
     dfNoData            = 0.0;
     bValidStats         = false;
+    nOverviewLevel      = nLevel;
+    paphOverviewLinks   = NULL;
+    nOverviewLinks      = 0;
+
+    if( nLevel )
+    {
+        double dfScale  = pow( 2, nLevel );
+        nRasterXSize    = (int) ceil( nRasterXSize / dfScale );
+        nRasterYSize    = (int) ceil( nRasterYSize / dfScale );
+    }
 }
 
 //  ---------------------------------------------------------------------------
@@ -62,6 +71,19 @@ GeoRasterRasterBand::~GeoRasterRasterBand()
     delete poColorTable;
     delete poDefaultRAT;
     CPLFree( pszVATName );
+
+    if( nOverviewLinks )
+    {
+        int i;
+
+        for( i = 0; i < nOverviewLinks; i++ )
+        {
+            CPLFree( paphOverviewLinks[i] );
+        }
+
+        CPLFree( paphOverviewLinks );
+    }
+
 }
 
 //  ---------------------------------------------------------------------------
@@ -77,7 +99,11 @@ CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
         return CE_None;
     }
 
-    if( poGeoRaster->GetBandBlock( nBand, nBlockXOff, nBlockYOff, 0, pImage ) )
+    if( poGeoRaster->GetDataBlock( nBand,
+                                   nOverviewLevel,
+                                   nBlockXOff,
+                                   nBlockYOff,
+                                   pImage ) )
     {
         return CE_None;
     }
@@ -99,14 +125,18 @@ CPLErr GeoRasterRasterBand::IWriteBlock( int nBlockXOff,
                                          int nBlockYOff,
                                          void *pImage )
 {
-    if( poGeoRaster->SetBandBlock( nBand, nBlockXOff, nBlockYOff, 0, pImage ) )
+    if( poGeoRaster->SetDataBlock( nBand,
+                                   nOverviewLevel,
+                                   nBlockXOff,
+                                   nBlockYOff,
+                                   pImage ) )
     {
         return CE_None;
     }
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-            "Error updating GeoRaster ofsett X (%d) offset Y (%d) band (%d)",
+            "Error writing GeoRaster ofsett X (%d) offset Y (%d) band (%d)",
             nBlockXOff, nBlockYOff, nBand );
 
         return CE_Failure;
@@ -612,4 +642,65 @@ const GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     CPLFree( pszVATName );
 
     return poDefaultRAT;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                           GetOverviewCount()
+//  ---------------------------------------------------------------------------
+
+int GeoRasterRasterBand::GetOverviewCount()
+{
+    return poGeoRaster->nPyramidMaxLevel;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                           GetOverviewCount()
+//  ---------------------------------------------------------------------------
+
+GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
+{
+    GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;
+
+    //  -----------------------------------------------------------------------
+    //  Check if there is a previous stored overview links
+    //  -----------------------------------------------------------------------
+
+    int i = 0;
+
+    for( i = 0; i < nOverviewLinks; i++ )
+    {
+        if( nLevel == paphOverviewLinks[i]->nLevel )
+        {
+            return paphOverviewLinks[i]->poOverview;
+        }
+    }
+
+    //  -----------------------------------------------------------------------
+    //  Creat RasterBand as Overview 
+    //  -----------------------------------------------------------------------
+
+    GeoRasterRasterBand* poOVR = NULL;
+    poOVR       = new GeoRasterRasterBand( poGDS, nBand, ( nLevel + 1 ) );
+
+    //  -----------------------------------------------------------------------
+    //  Create a Overview link
+    //  -----------------------------------------------------------------------
+
+    OverviewLink* phOVRLink = NULL;
+    phOVRLink   = (OverviewLink*) CPLMalloc( sizeof(OverviewLink) );
+    phOVRLink->nLevel       = nLevel;
+    phOVRLink->poOverview   = poOVR;
+
+    //  -----------------------------------------------------------------------
+    //  Save a Overview link
+    //  -----------------------------------------------------------------------
+
+    nOverviewLinks++;
+
+    paphOverviewLinks = (OverviewLink**) CPLRealloc(
+        paphOverviewLinks, sizeof(OverviewLink*) * nOverviewLinks );
+
+    paphOverviewLinks[ nOverviewLinks - 1 ] = phOVRLink;
+
+    return (GDALRasterBand*) poOVR;
 }
