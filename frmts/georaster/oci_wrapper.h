@@ -284,10 +284,10 @@ public:
                             OCILobLocator** pphLocator );
     static void         Free( OCILobLocator** ppphLocator,
                             int nCount );
-    bool                ReadBlob( OCILobLocator* phLocator, 
+    unsigned long       ReadBlob( OCILobLocator* phLocator,
                             void* pBuffer, int nSize );
     char*               ReadClob( OCILobLocator* phLocator );
-    bool                WriteBlob( OCILobLocator* phLocator, 
+    bool                WriteBlob( OCILobLocator* phLocator,
                             void* pBuffer, int nSize );
     int                 GetElement( OCIArray** ppoData, 
                             int nIndex, int* pnResult );

@@ -888,8 +888,9 @@ double OWStatement::GetElement( OCIArray** ppoData,
 }
 
 
-bool OWStatement::ReadBlob( OCILobLocator* phLocator, void* pBuffer, 
-                            int nSize )
+unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
+                                     void* pBuffer,
+                                     int nSize )
 {
     ub4 nAmont      = (ub4) nSize;
 
@@ -904,10 +905,10 @@ bool OWStatement::ReadBlob( OCILobLocator* phLocator, void* pBuffer,
         0, 0, 0, 0 ),
         hError ) )
     {
-        return false;
+        return 0;
     }
 
-    return ( nAmont == (ub4) nSize );
+    return nAmont;
 }
 
 bool OWStatement::WriteBlob( OCILobLocator* phLocator, void* pBuffer, 
