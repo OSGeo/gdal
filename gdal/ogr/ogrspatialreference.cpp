@@ -611,6 +611,9 @@ OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
 
 {
+    if ( !ppszInput || !*ppszInput )
+        return OGRERR_FAILURE;
+
     Clear();
 
     poRoot = new OGR_SRSNode();
