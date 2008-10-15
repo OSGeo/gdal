@@ -1,12 +1,18 @@
 include ../../GDALmake.opt
 
+ifeq ($(LIBZ_SETTING),internal)
+	XTRA_OPT =	-I../zlib
+else
+	XTRA_OPT =
+endif
+
 OBJ		=	georaster_driver.o \
 			georaster_dataset.o \
 			georaster_rasterband.o \
 			oci_wrapper.o \
 			georaster_wrapper.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 

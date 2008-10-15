@@ -55,6 +55,7 @@ GeoRasterDataset::GeoRasterDataset()
     pszProjection       = NULL;
     nGCPCount           = 0;
     pasGCPList          = NULL;
+    nOverviewCount      = 0;
     poDriver            = (GDALDriver *) GDALGetDriverByName( "GEORASTER" );
 }
 
@@ -71,6 +72,7 @@ GeoRasterDataset::~GeoRasterDataset()
     }
 
     delete poGeoRaster;
+
     CPLFree( pszProjection );
     CSLDestroy( papszSubdatasets );
 }
@@ -198,6 +200,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         poGRD->nRasterXSize  = poGRW->nRasterColumns;
         poGRD->nRasterYSize  = poGRW->nRasterRows;
         poGRD->nBands        = poGRW->nRasterBands;
+        poGRD->nOverviewCount = poGRW->nPyramidMaxLevel;
         poGRD->poGeoRaster   = poGRW;
     }
     else
@@ -224,7 +227,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     for( i = 0; i < poGRD->nBands; i++ )
     {
         nBand = i + 1;
-        poGRD->SetBand( nBand, new GeoRasterRasterBand( poGRD, nBand ) );
+        poGRD->SetBand( nBand, new GeoRasterRasterBand( poGRD, nBand, 0 ) );
     }
 
     //  -------------------------------------------------------------------
@@ -465,10 +468,13 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  Set basic information and default values
     //  -------------------------------------------------------------------
 
-    poGRW->nRasterColumns       = nXSize;
-    poGRW->nRasterRows          = nYSize;
-    poGRW->nRasterBands         = nBands;
-    poGRW->pszCellDepth         = CPLStrdup( OWSetDataType( eType ) );
+    poGRW->nRasterColumns   = nXSize;
+    poGRW->nRasterRows      = nYSize;
+    poGRW->nRasterBands     = nBands;
+    poGRW->pszCellDepth     = CPLStrdup( OWSetDataType( eType ) );
+    poGRW->nColumnBlockSize = 256;
+    poGRW->nRowBlockSize    = 256;
+    poGRW->nBandBlockSize   = 1;
 
     //  -------------------------------------------------------------------
     //  Check the create options to use in initialization
@@ -524,21 +530,6 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     if( pszFetched )
     {
         poGRW->nBandBlockSize   = atoi( pszFetched );
-    }
-
-    if( poGRW->nRowBlockSize == 0 )
-    {
-        poGRW->nRowBlockSize    = 256;
-    }
-
-    if( poGRW->nColumnBlockSize == 0 )
-    {
-        poGRW->nColumnBlockSize = 256;
-    }
-
-    if( poGRW->nBandBlockSize == 0 )
-    {
-        poGRW->nBandBlockSize   = nBands;
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
@@ -752,8 +743,6 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     int nBlockCols = 0;
     int nBlockRows = 0;
     CPLErr eErr = CE_None;
-
-    poGRD->poGeoRaster->SetOptimizedWriting();
 
     int nPixelSize = GDALGetDataTypeSize( 
         poSrcDS->GetRasterBand(1)->GetRasterDataType() ) / 8;
@@ -1057,8 +1046,6 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     //TODO: Try to find a correspondent WKT on the server
 
-    CPLDebug("GEORASTER","WKT:%s", pszCloneWKT);
-
     CPLFree( pszCloneWKT );
 
     delete poSRS2;
@@ -1325,7 +1312,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     //  There is no progress report callback from PL/SQL statement
     //  -----------------------------------------------------------
 
-    pfnProgress( 5.0 / 100.0 , NULL, pProgressData );
+    pfnProgress( 10.0 / 100.0 , NULL, pProgressData );
 
     //  -----------------------------------------------------------
     //  Generate Pyramids based on SDO_GEOR.generatePyramids()
