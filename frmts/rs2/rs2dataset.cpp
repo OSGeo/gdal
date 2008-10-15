@@ -1322,6 +1322,10 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             strcpy(pszDescription,osMDFilename);
     }
 
+    if( eCalib != None )
+        poDS->papszExtraFiles = 
+            CSLAddString( poDS->papszExtraFiles, osMDFilename );
+
     poDS->SetDescription( pszDescription );
     CPLFree( pszDescription );
     poDS->TryLoadXML();
