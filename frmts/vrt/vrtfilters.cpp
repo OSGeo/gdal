@@ -535,8 +535,10 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
     {
         CSLDestroy( papszCoefItems );
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Got wrong number of filter kernel coefficients (%s)", 
-                  CPLGetXMLValue(psTree,"Kernel.Coefs","") );
+                  "Got wrong number of filter kernel coefficients (%s).\n"
+                  "Expected %d, got %d.", 
+                  CPLGetXMLValue(psTree,"Kernel.Coefs",""),
+                  nNewKernelSize * nNewKernelSize, nCoefs );
         return CE_Failure;
     }
 
