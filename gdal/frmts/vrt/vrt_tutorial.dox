@@ -95,7 +95,7 @@ as the data of the element.
 \endcode
 
 <li> <b>VRTRasterBand</b>: This represents one band of a dataset.  It will
-have a dataType attribute with the type of the pixel data associated with
+have a ataType attribute with the type of the pixel data associated with
 this band (use names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
 CInt16, CInt32, CFloat32 or CFloat64) and the band this element represents
 (1 based).  This element may have Metadata, ColorInterp, NoDataValue, 
@@ -190,7 +190,7 @@ or not relative to the .vrt file (value is 0).  The default is 0.
 
 Some characteristics of the source band can be specified in the optional
 SourceProperties tag to enable the VRT driver to differ the opening of the source
-dataset until it really needs to read data from it. This is particularly usefull
+dataset until it really needs to read data from it. This is particularly useful
 when building VRTs with a big number of source datasets. The needed parameters are the
 raster dimensions, the size of the blocks and the data type. If the SourceProperties
 tag is not present, the source dataset will be opened at the same time as the VRT itself.
@@ -228,8 +228,8 @@ the following form:
 The intermediary values are calculated using a linear interpolation
 between the bounding destination values of the corresponding range.
 
-The ComplexSource supports fetching a color component from a source rasterband
-that has a color table. The ColorTableComponent value is the index of the
+The ComplexSource supports fetching a color component from a source raster
+band that has a color table. The ColorTableComponent value is the index of the
 color component to extract : 1 for the red band, 2 for the green band, 3 for
 the blue band or 4 for the alpha band.
 
@@ -288,10 +288,10 @@ but for which no format specific driver exists.  This can be accomplished
 by writing a .vrt file describing the raw file.  
 
 For example, the following .vrt describes a raw raster file containing
-floating point complex pixels in a file called l2p3hhsso.img.  The image
-data starts from the first byte (ImageOffset=0).  The byte offset between
-pixels is 8 (PixelOffset=8), the size of a CFloat32.  The byte offset
-from the start of one line to the start of the next is 9376 bytes 
+floating point complex pixels in a file called <i>l2p3hhsso.img</i>.  The
+image data starts from the first byte (ImageOffset=0).  The byte offset
+between pixels is 8 (PixelOffset=8), the size of a CFloat32.  The byte offset
+from the start of one line to the start of the next is 9376 bytes
 (LineOffset=9376) which is the width (1172) times the size of a pixel (8). 
 
 \code
@@ -674,10 +674,11 @@ CPLErr TestFunction(void **papoSources, int nSources, void *pData,
 
 \section gdal_vrttut_mt Multi-threading issues
 
-When using VRT datasets in a multi-threading environment, you should be careful
-to open the VRT dataset by the thread that will use it afterwards. The reason for that
-is that the VRT dataset uses GDALOpenShared when opening the underlying datasets. So,
-if you open twice the same VRT dataset by the same thread, both VRT datasets will share
-the same handles to the underlying datasets.
+When using VRT datasets in a multi-threading environment, you should be
+careful to open the VRT dataset by the thread that will use it afterwards. The
+reason for that is that the VRT dataset uses GDALOpenShared when opening the
+underlying datasets. So, if you open twice the same VRT dataset by the same
+thread, both VRT datasets will share the same handles to the underlying
+datasets.
 
 */
