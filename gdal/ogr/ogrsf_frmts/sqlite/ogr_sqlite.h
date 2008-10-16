@@ -67,6 +67,10 @@ class OGRSQLiteLayer : public OGRLayer
 
     virtual void	ClearStatement() = 0;
 
+   OGRErr               ImportSpatialiteGeometry( const GByte *pabyData, 
+                                                  int nBytes,
+                                                  OGRGeometry **ppoGeometry );
+
   public:
                         OGRSQLiteLayer();
     virtual             ~OGRSQLiteLayer();
