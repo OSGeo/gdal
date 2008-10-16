@@ -141,16 +141,16 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 continue;
             }
         }
-#ifdef notdef
+
         // SpatialLite / Gaia
         if( EQUAL(oField.GetNameRef(),"GaiaGeometry") 
             && osGeomColumn.size() == 0 )
         {
             osGeomColumn = oField.GetNameRef();
-            osGeomFormat = "WKB";
+            osGeomFormat = "SpatiaLite";
             continue;
         }
-#endif
+
         // The rowid is for internal use, not a real column.
         if( EQUAL(oField.GetNameRef(),"_rowid_") )
             continue;
@@ -340,6 +340,16 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                     NULL, &poGeometry, nBytes, NULL ) == OGRERR_NONE )
                 poFeature->SetGeometryDirectly( poGeometry );
         }
+        else if( EQUAL(osGeomFormat,"SpatiaLite") )
+        {
+            const int nBytes = sqlite3_column_bytes( hStmt, iGeomCol );
+            OGRGeometry *poGeometry = NULL;
+
+            if( ImportSpatialiteGeometry( 
+                    (GByte*)sqlite3_column_blob( hStmt, iGeomCol ), nBytes,
+                    &poGeometry ) == OGRERR_NONE )
+                poFeature->SetGeometryDirectly( poGeometry );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -415,6 +425,38 @@ OGRFeature *OGRSQLiteLayer::GetFeature( long nFeatureId )
 
 {
     return OGRLayer::GetFeature( nFeatureId );
+}
+
+/************************************************************************/
+/*                      ImportSpatialiteGeometry()                      */
+/************************************************************************/
+
+OGRErr OGRSQLiteLayer::ImportSpatialiteGeometry(
+    const GByte *pabyData, int nBytes, OGRGeometry **ppoGeometry )
+
+{
+    *ppoGeometry = NULL;
+
+    if( nBytes < 43 || pabyData[0] != 0 || pabyData[nBytes-1] != 0xFE )
+        return OGRERR_CORRUPT_DATA;
+
+    GByte *pabyWKB = (GByte *) CPLMalloc(nBytes);
+    
+    // copy endian flag. 
+    memcpy( pabyWKB, pabyData + 1, 1 );
+
+    // copy class type. 
+    memcpy( pabyWKB + 1, pabyData + 39, 4 );
+
+    // copy the remainder.
+    memcpy( pabyWKB + 5, pabyData + 43, nBytes - 44 );
+
+    OGRErr eErr = OGRGeometryFactory::createFromWkb( pabyWKB, NULL, 
+                                                     ppoGeometry, nBytes - 39);
+    
+    CPLFree( pabyWKB );
+
+    return eErr;
 }
 
 /************************************************************************/
