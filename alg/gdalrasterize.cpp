@@ -610,6 +610,14 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             continue;
         }
 
+/* -------------------------------------------------------------------- */
+/*      If the layer does not contain any features just skip it.        */
+/*      Do not force the feature count, so if driver doesn't know       */
+/*      exact number of features, go down the normal way.               */
+/* -------------------------------------------------------------------- */
+        if ( poLayer->GetFeatureCount(FALSE) == 0 )
+            continue;
+
         if ( pszBurnAttribute )
         {
             iBurnField =
