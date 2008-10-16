@@ -319,7 +319,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
     // If we haven't writen any features yet, output the layer's schema
     if (0 == nWroteFeatureCount_)
     {
-        VSIFPrintf( fp, "<Schema name=\"%s\" parent=\"Placemark\">\n", pszName_  );
+        VSIFPrintf( fp, "<Schema name=\"%s\" id=\"%s\">\n", pszName_, pszName_ );
         OGRFeatureDefn *featureDefinition = GetLayerDefn();
         for (int j=0; j < featureDefinition->GetFieldCount(); j++)
         {
@@ -435,7 +435,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
         {
             if (!bHasFoundOtherField)
             {                
-                VSIFPrintf( fp, "\t<ExtendedData><SchemaData schemaURL=\"#%s\">\n", pszName_ );
+                VSIFPrintf( fp, "\t<ExtendedData><SchemaData schemaUrl=\"#%s\">\n", pszName_ );
                 bHasFoundOtherField = TRUE;
             }
             const char *pszRaw = poFeature->GetFieldAsString( iField );
