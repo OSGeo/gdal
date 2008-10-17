@@ -201,7 +201,7 @@ int VizGeorefSpline2D::solve(void)
 	
     // More than 2 points - first we have to check if it is 1D or 2D case
 		
-    double xmax = FLT_MIN, xmin = FLT_MAX, ymax = FLT_MIN, ymin = FLT_MAX;
+    double xmax = x[0], xmin = x[0], ymax = y[0], ymin = y[0];
     double delx, dely;
     double xx, yy;
     double sumx = 0.0f, sumy= 0.0f, sumx2 = 0.0f, sumy2 = 0.0f, sumxy = 0.0f;
@@ -521,7 +521,7 @@ int matrixInvert( int N, double input[], double output[] )
         ftemp = temp[ k*2*N + k ];
         if ( ftemp == 0.0f ) // matrix cannot be inverted
         {
-            delete temp;
+            delete[] temp;
             return false;
         }
 		
