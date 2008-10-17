@@ -228,12 +228,16 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
               int ili1AttrIdx = GetAttrObjPos(fieldele, "attributesAndRoles")-1;
               if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.RoleDef")) {
                 int ili1AttrIdxOppend = atoi(iom_getattrvalue(GetAttrObj(model, obj, "oppend"), "ili1AttrIdx"));
-                if (ili1AttrIdxOppend>=0) roledefs[ili1AttrIdxOppend] = obj;
+                if (ili1AttrIdxOppend>=0) {
+                  roledefs[ili1AttrIdxOppend] = obj;
+                  //CPLDebug( "OGR_ILI", "RoleDef Field %s Pos: %d", iom_getattrvalue(obj, "name"), ili1AttrIdxOppend);
+                  if (ili1AttrIdxOppend > maxIdx) maxIdx = ili1AttrIdxOppend;
+                }
               } else {
                 fields[ili1AttrIdx] = obj;
+                //CPLDebug( "OGR_ILI", "Field %s Pos: %d", iom_getattrvalue(obj, "name"), ili1AttrIdx);
+                if (ili1AttrIdx > maxIdx) maxIdx = ili1AttrIdx;
               }
-              if (ili1AttrIdx > maxIdx) maxIdx = ili1AttrIdx;
-              //CPLDebug( "OGR_ILI", "Field %s Pos: %d", iom_getattrvalue(obj, "name"), ili1AttrIdx);
             }
           }
           iom_releaseobject(fieldele);
@@ -243,9 +247,11 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
         OGRFieldDefn fieldDef("_TID", OFTString);
         layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
         for (int i=0; i<=maxIdx; i++) {
+          IOM_OBJECT obj = roledefs[i];
+          if (obj) AddField(layer, model, obj);
+        }
+        for (int i=0; i<=maxIdx; i++) {
           IOM_OBJECT obj = fields[i];
-          IOM_OBJECT roleobj = roledefs[i];
-          if (roleobj) AddField(layer, model, roleobj);
           if (obj) AddField(layer, model, obj);
         }
         if (papoLayers[nLayers-1]->GetLayerDefn()->GetFieldCount() == 0) {
