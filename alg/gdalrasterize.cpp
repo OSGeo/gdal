@@ -526,6 +526,12 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * used for a burn in value. The value will be burned into all output
  * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
  * pointer.</dd>
+ * <dt>"CHUNKYSIZE":<dt> <dd>The height in lines of the chunk to operate on.
+ * The larger the chunk size the less times we need to make a pass through all
+ * the shapes. If it is not set or set to zero the default chunk size will be
+ * used. Default size will be estimated based on the GDAL cache buffer size
+ * using formula: cache_size_bytes/scanline_size_bytes, so the chunk will
+ * not exceed the cache.</dd>
  * </dl>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
@@ -545,7 +551,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
 {
     GDALDataType   eType;
-    int            nYChunkSize, nScanlineBytes;
     unsigned char *pabyChunkBuf;
     int            iY;
     GDALDataset *poDS = (GDALDataset *) hDS;
@@ -567,6 +572,10 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /*      size the less times we need to make a pass through all the      */
 /*      shapes.                                                         */
 /* -------------------------------------------------------------------- */
+    int         nYChunkSize, nScanlineBytes;
+    const char  *pszYChunkSize =
+        CSLFetchNameValue( papszOptions, "CHUNKYSIZE" );
+
     if( poBand->GetRasterDataType() == GDT_Byte )
         eType = GDT_Byte;
     else
@@ -574,7 +583,12 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
         * (GDALGetDataTypeSize(eType)/8);
-    nYChunkSize = 10000000 / nScanlineBytes;
+
+    if ( pszYChunkSize && (nYChunkSize = atoi(pszYChunkSize)) )
+        ;
+    else
+        nYChunkSize = GDALGetCacheMax() / nScanlineBytes;
+
     if( nYChunkSize > poDS->GetRasterYSize() )
         nYChunkSize = poDS->GetRasterYSize();
 
