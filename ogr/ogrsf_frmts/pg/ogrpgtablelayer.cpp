@@ -1238,7 +1238,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 {
     PGconn              *hPGConn = poDS->GetPGConn();
-    int nCommandBufSize = 4000;
+    CPLString            osCommand;
 
     /* First process geometry */
     OGRGeometry *poGeometry = (OGRGeometry *) poFeature->GetGeometryRef();
@@ -1253,22 +1253,18 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             pszGeom = GeometryToBYTEA( poGeometry );
         else
             pszGeom = GeometryToHex( poGeometry, nSRSId );
-
-        nCommandBufSize = nCommandBufSize + strlen(pszGeom);
     }
-
-    char *pszCommand = (char *) CPLMalloc(nCommandBufSize);
 
     if ( pszGeom )
     {
-        sprintf( pszCommand, "%s", pszGeom);
+        osCommand += pszGeom,
         CPLFree( pszGeom );
     }
     else
     {
-        sprintf( pszCommand, "\\N");
+        osCommand = "\\N";
     }
-    strcat( pszCommand, "\t" );
+    osCommand += "\t";
 
 
     /* Next process the field id column */
@@ -1277,19 +1273,18 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         /* Set the FID */
         if( poFeature->GetFID() != OGRNullFID )
         {
-            sprintf( pszCommand + strlen(pszCommand), "%ld ", poFeature->GetFID());
+            osCommand += CPLString().Printf("%ld ", poFeature->GetFID());
         }
         else
-	    {
-	        strcat( pszCommand, "\\N" );
+        {
+            osCommand += "\\N" ;
         }
 
-        strcat( pszCommand, "\t" );
+        osCommand += "\t";
     }
 
 
     /* Now process the remaining fields */
-    int nOffset = strlen(pszCommand);
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
     for( int i = 0; i < nFieldCount;  i++ )
@@ -1299,10 +1294,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
         if( !poFeature->IsFieldSet( i ) )
         {
-            strcat( pszCommand, "\\N" );
+            osCommand += "\\N" ;
 
             if( i < nFieldCount - 1 )
-                strcat( pszCommand, "\t" );
+                osCommand += "\t";
 
             continue;
         }
@@ -1369,14 +1364,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             pszStrValue = pszNeedToFree = pszBytea;
         }
 
-        // Grow the command buffer?
-        if( (int) (strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset)
-            > nCommandBufSize-50 )
-        {
-            nCommandBufSize = strlen(pszCommand) + strlen(pszStrValue) + 10000;
-            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
-        }
-
         if( nOGRFieldType != OFTIntegerList &&
             nOGRFieldType != OFTRealList &&
             nOGRFieldType != OFTInteger &&
@@ -1384,8 +1371,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             nOGRFieldType != OFTBinary )
         {
             int         iChar;
-
-            nOffset += strlen(pszCommand+nOffset);
 
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
@@ -1405,29 +1390,26 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                     pszStrValue[iChar] == '\r' || 
                     pszStrValue[iChar] == '\n'   )
                 {
-                    pszCommand[nOffset++] = '\\';
+                    osCommand += '\\';
                 }
 
-                pszCommand[nOffset++] = pszStrValue[iChar];
+                osCommand += pszStrValue[iChar];
             }
-
-            pszCommand[nOffset] = '\0';
-//            strcat( pszCommand+nOffset, "'" );
         }
         else
         {
-            strcat( pszCommand+nOffset, pszStrValue );
+            osCommand += pszStrValue;
         }
 
         if( pszNeedToFree )
             CPLFree( pszNeedToFree );
 
         if( i < nFieldCount - 1 )
-            strcat( pszCommand, "\t" );
+            osCommand += "\t";
     }
 
     /* Add end of line marker */
-    strcat( pszCommand, "\n" );
+    osCommand += "\n";
 
 
     /* ------------------------------------------------------------ */
@@ -1438,34 +1420,31 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
     /* This is for postgresql  7.4 and higher */
 #if !defined(PG_PRE74)
-    int copyResult = PQputCopyData(hPGConn, pszCommand, strlen(pszCommand));
+    int copyResult = PQputCopyData(hPGConn, osCommand.c_str(), strlen(osCommand.c_str()));
 
     switch (copyResult)
     {
     case 0:
-        CPLDebug( "PG", "PQexec(%s)\n", pszCommand );
+        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
         CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
         result = OGRERR_FAILURE;
         break;
     case -1:
-        CPLDebug( "PG", "PQexec(%s)\n", pszCommand );
+        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
         CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
         result = OGRERR_FAILURE;
         break;
     }
 #else /* else defined(PG_PRE74) */
-    int copyResult = PQputline(hPGConn, pszCommand);
+    int copyResult = PQputline(hPGConn, osCommand.c_str());
 
     if (copyResult == EOF)
     {
-      CPLDebug( "PG", "PQexec(%s)\n", pszCommand );
+      CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
       CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
       result = OGRERR_FAILURE;
     }  
 #endif /* end of defined(PG_PRE74) */
-
-    /* Free the buffer we allocated before returning */
-    CPLFree( pszCommand );
 
     return result;
 }
@@ -1670,12 +1649,12 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
     PGresult    *hResult = NULL;
     PGconn      *hPGConn = poDS->GetPGConn();
     char        *pszFieldList = BuildFields();
-    char        *pszCommand = (char *) CPLMalloc(strlen(pszFieldList)+2000);
+    CPLString    osCommand;
 
     poDS->FlushSoftTransaction();
     poDS->SoftStartTransaction();
 
-    sprintf( pszCommand,
+    osCommand.Printf(
              "DECLARE getfeaturecursor %s for "
              "SELECT %s FROM %s WHERE %s = %ld",
               ( poDS->bUseBinaryCursor ) ? "BINARY CURSOR" : "CURSOR",
@@ -1683,8 +1662,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
              nFeatureId );
     CPLFree( pszFieldList );
 
-    hResult = PQexec(hPGConn, pszCommand );
-    CPLFree( pszCommand );
+    hResult = PQexec(hPGConn, osCommand.c_str() );
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
@@ -1766,17 +1744,17 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
     {
         PGconn      *hPGConn = poDS->GetPGConn();
         PGresult    *hResult = NULL;
-        char        szCommand[1024];
+        CPLString    osCommand;
 
         nSRSId = -1;
 
         poDS->SoftStartTransaction();
 
-        sprintf( szCommand,
+        osCommand.Printf(
                  "SELECT srid FROM geometry_columns "
                  "WHERE f_table_name = '%s' AND f_table_schema = '%s'",
                  pszTableName, pszSchemaName );
-        hResult = PQexec(hPGConn, szCommand );
+        hResult = PQexec(hPGConn, osCommand.c_str() );
 
         if( hResult
             && PQresultStatus(hResult) == PGRES_TUPLES_OK
@@ -1791,11 +1769,11 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
             poDS->SoftCommit();
             poDS->SoftStartTransaction();
 
-            sprintf( szCommand,
+            osCommand.Printf(
                      "SELECT srid FROM geometry_columns "
                      "WHERE f_table_name = '%s' AND f_schema_name = '%s'",
                      pszTableName, pszSchemaName );
-            hResult = PQexec(hPGConn, szCommand );
+            hResult = PQexec(hPGConn, osCommand.c_str() );
             if( hResult
                 && PQresultStatus(hResult) == PGRES_TUPLES_OK
                 && PQntuples(hResult) == 1 )
