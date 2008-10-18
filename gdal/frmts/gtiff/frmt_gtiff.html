@@ -42,7 +42,7 @@ and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
 extention .tfw, .tifw/.tiffw or .wld, as well as a MapInfo .tab file (only control
 points used, Coordsys ignored).<P>
 
-<h2>Nodata masks</h2>
+<h2>Internal nodata masks (from GDAL 1.6.0)</h2>
 
 TIFF files can contain internal transparency masks. The GeoTIFF driver
 recognizes an internal directory as being a transparency mask when the
@@ -69,7 +69,7 @@ Internal overviews can be created on GeoTIFF files opened in update mode
 the creation of overviews will be done in an external .ovr file.
 Overview are only updated on request with the BuildOverviews() method.<p>
 
-If a GeoTIFF file has a transparency mask and the GDAL_TIFF_INTERNAL_MASK
+(From GDAL 1.6.0) If a GeoTIFF file has a transparency mask and the GDAL_TIFF_INTERNAL_MASK
 environment variable is set to YES and the GeoTIFF file is opened in update mode,
 BuildOverviews() will automatically create overviews for the internal transparency mask.
 These overviews will be refreshed by further calls to BuildOverviews() even if
