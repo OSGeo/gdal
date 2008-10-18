@@ -31,6 +31,7 @@
 #include "ogrpgutility.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_hash_set.h"
 
 CPL_CVSID("$Id$");
 
@@ -436,6 +437,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         nGeometryOID = (Oid) 0;
     }
 
+    int bListAllTables = CSLTestBoolean(CPLGetConfigOption("PG_LIST_ALL_TABLES", "NO"));
+
     OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
@@ -494,7 +497,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         {
             OGRPGClearResult( hResult );
 
-            if ( bHavePostGIS )
+            if ( bHavePostGIS && !bListAllTables )
                 hResult = PQexec(hPGConn,
                                 "DECLARE mycursor CURSOR for "
                                 "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n, geometry_columns g "
@@ -522,6 +525,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             return FALSE;
         }
 
+        CPLHashSet* hSetTables = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
+
     /* -------------------------------------------------------------------- */
     /*      Parse the returned table list                                   */
     /* -------------------------------------------------------------------- */
@@ -540,6 +545,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             papszTableNames = CSLAddString(papszTableNames, pszTable);
             papszSchemaNames = CSLAddString(papszSchemaNames, pszSchemaName);
 
+            CPLHashSetInsert(hSetTables, CPLStrdup(CPLString().Printf("%s.%s", pszSchemaName, pszTable)));
         }
 
     /* -------------------------------------------------------------------- */
@@ -552,6 +558,92 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         hResult = PQexec(hPGConn, "COMMIT");
         OGRPGClearResult( hResult );
+
+        if ( bHavePostGIS && !bListAllTables )
+        {
+            hResult = PQexec(hPGConn, "BEGIN");
+
+            OGRPGClearResult( hResult );
+
+        /* -------------------------------------------------------------------- */
+        /*      Fetch inherited tables                                          */
+        /* -------------------------------------------------------------------- */
+            hResult = PQexec(hPGConn,
+                                "DECLARE mycursor CURSOR for "
+                                "SELECT c1.relname AS derived, c2.relname AS parent, n.nspname "
+                                "FROM pg_class c1, pg_class c2, pg_namespace n, pg_inherits i "
+                                "WHERE i.inhparent = c2.oid AND i.inhrelid = c1.oid AND c1.relnamespace=n.oid "
+                                "AND c1.relkind in ('r', 'v') AND c1.relnamespace=n.oid AND c2.relkind in ('r','v') "
+                                "AND c2.relname !~ '^pg' AND c2.relnamespace=n.oid");
+
+            if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+            {
+                OGRPGClearResult( hResult );
+                hResult = PQexec(hPGConn, "FETCH ALL in mycursor" );
+            }
+
+            if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+            {
+                OGRPGClearResult( hResult );
+
+                CPLHashSetDestroy(hSetTables);
+
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "%s", PQerrorMessage(hPGConn) );
+                return FALSE;
+            }
+
+        /* -------------------------------------------------------------------- */
+        /*      Parse the returned table list                                   */
+        /* -------------------------------------------------------------------- */
+            int bHasDoneSomething;
+            do
+            {
+                /* Iterate over the tuples while we have managed to resolved at least one */
+                /* table to its table parent with a geometry */
+                /* For example if we have C inherits B and B inherits A, where A is a base table with a geometry */
+                /* The first pass will add B to the set of tables */
+                /* The second pass will add C to the set of tables */
+
+                bHasDoneSomething = FALSE;
+
+                for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
+                {
+                    const char *pszTable = PQgetvalue(hResult, iRecord, 0);
+                    const char *pszParentTable = PQgetvalue(hResult, iRecord, 1);
+                    const char *pszSchemaName = PQgetvalue(hResult, iRecord, 2);
+                    if (CPLHashSetLookup(hSetTables, CPLString().Printf("%s.%s", pszSchemaName, pszTable)) == NULL)
+                    {
+                        if (CPLHashSetLookup(hSetTables, CPLString().Printf("%s.%s", pszSchemaName, pszParentTable)) != NULL)
+                        {
+                            /* The parent table of this table is already in the set, so we */
+                            /* can now add the table in the set */
+
+                            bHasDoneSomething = TRUE;
+
+                            papszTableNames = CSLAddString(papszTableNames, pszTable);
+                            papszSchemaNames = CSLAddString(papszSchemaNames, pszSchemaName);
+
+                            CPLHashSetInsert(hSetTables, CPLStrdup(CPLString().Printf("%s.%s", pszSchemaName, pszTable)));
+                        }
+                    }
+                }
+            } while(bHasDoneSomething);
+
+        /* -------------------------------------------------------------------- */
+        /*      Cleanup                                                         */
+        /* -------------------------------------------------------------------- */
+            OGRPGClearResult( hResult );
+
+            hResult = PQexec(hPGConn, "CLOSE mycursor");
+            OGRPGClearResult( hResult );
+
+            hResult = PQexec(hPGConn, "COMMIT");
+            OGRPGClearResult( hResult );
+
+        }
+
+        CPLHashSetDestroy(hSetTables);
     }
 
 /* -------------------------------------------------------------------- */
@@ -637,6 +729,8 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
 
     if( bHavePostGIS )
     {
+        /* This is unnecessary if the layer is not a geometry table, or an inherited geometry table */
+        /* but it shouldn't hurt */
         osCommand.Printf(
                  "SELECT DropGeometryColumn('%s','%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' and f_table_schema='%s' order by f_geometry_column limit 1))",
                  osSchemaName.c_str(), osTableName.c_str(), osTableName.c_str(), osSchemaName.c_str() );
