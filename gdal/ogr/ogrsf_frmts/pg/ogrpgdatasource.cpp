@@ -628,26 +628,26 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
     PGresult            *hResult;
-    char                szCommand[1024];
+    CPLString            osCommand;
 
     hResult = PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
 
     if( bHavePostGIS )
     {
-        sprintf( szCommand,
+        osCommand.Printf(
                  "SELECT DropGeometryColumn('%s','%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' and f_table_schema='%s' order by f_geometry_column limit 1))",
                  osSchemaName.c_str(), osTableName.c_str(), osTableName.c_str(), osSchemaName.c_str() );
 
-        CPLDebug( "PG", "PGexec(%s)", szCommand );
+        CPLDebug( "PG", "PGexec(%s)", osCommand.c_str() );
 
-        hResult = PQexec( hPGConn, szCommand );
+        hResult = PQexec( hPGConn, osCommand.c_str() );
         OGRPGClearResult( hResult );
     }
 
-    sprintf( szCommand, "DROP TABLE \"%s\".\"%s\" CASCADE", osSchemaName.c_str(), osTableName.c_str() );
-    CPLDebug( "PG", "PGexec(%s)", szCommand );
-    hResult = PQexec( hPGConn, szCommand );
+    osCommand.Printf("DROP TABLE \"%s\".\"%s\" CASCADE", osSchemaName.c_str(), osTableName.c_str() );
+    CPLDebug( "PG", "PGexec(%s)", osCommand.c_str() );
+    hResult = PQexec( hPGConn, osCommand.c_str() );
     OGRPGClearResult( hResult );
 
     hResult = PQexec(hPGConn, "COMMIT");
@@ -668,7 +668,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
 {
     PGresult            *hResult = NULL;
-    char                szCommand[1024];
+    CPLString            osCommand;
     const char          *pszGeomType = NULL;
     char                *pszLayerName = NULL;
     const char          *pszTableName = NULL;
@@ -796,7 +796,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
     if( !bHavePostGIS )
     {
-        sprintf( szCommand,
+        osCommand.Printf(
                  "CREATE TABLE \"%s\".\"%s\" ( "
                  "   OGC_FID SERIAL, "
                  "   WKB_GEOMETRY %s, "
@@ -805,17 +805,17 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     }
     else
     {
-        sprintf( szCommand,
+        osCommand.Printf(
                  "CREATE TABLE \"%s\".\"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
                  pszSchemaName, pszTableName, pszTableName );
     }
 
-    CPLDebug( "PG", "PQexec( %s )", szCommand );
-    hResult = PQexec(hPGConn, szCommand);
+    CPLDebug( "PG", "PQexec( %s )", osCommand.c_str() );
+    hResult = PQexec(hPGConn, osCommand.c_str());
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s\n%s", szCommand, PQerrorMessage(hPGConn) );
+                  "%s\n%s", osCommand.c_str(), PQerrorMessage(hPGConn) );
         CPLFree( pszLayerName );
         CPLFree( pszSchemaName );
 
@@ -849,12 +849,12 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
          * table if things were not properly cleaned up before.  We make
          * an effort to clean out such cruft.
          */
-        sprintf( szCommand,
+        osCommand.Printf(
                  "DELETE FROM geometry_columns WHERE f_table_name = '%s' AND f_table_schema = '%s'",
                  pszTableName, pszSchemaName );
 
-        CPLDebug( "PG", "PQexec(%s)", szCommand );
-        hResult = PQexec(hPGConn, szCommand);
+        CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
+        hResult = PQexec(hPGConn, osCommand.c_str());
         OGRPGClearResult( hResult );
 
         switch( wkbFlatten(eType) )
@@ -893,13 +893,13 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         }
 
-        sprintf( szCommand,
+        osCommand.Printf(
                  "select AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
                  pszSchemaName, pszTableName, pszGFldName, nSRSId, pszGeometryType,
                  nDimension );
 
-        CPLDebug( "PG", "PQexec(%s)", szCommand );
-        hResult = PQexec(hPGConn, szCommand);
+        CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
+        hResult = PQexec(hPGConn, osCommand.c_str());
 
         if( !hResult
             || PQresultStatus(hResult) != PGRES_TUPLES_OK )
@@ -930,18 +930,18 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
         if( pszSI == NULL || CSLTestBoolean(pszSI) )
         {
-            sprintf( szCommand, "CREATE INDEX %s_geom_idx ON \"%s\".\"%s\" USING GIST (\"%s\")",
+            osCommand.Printf("CREATE INDEX %s_geom_idx ON \"%s\".\"%s\" USING GIST (\"%s\")",
                     pszTableName, pszSchemaName, pszTableName, pszGFldName);
 
-            CPLDebug( "PG", "PQexec(%s)", szCommand );
-            hResult = PQexec(hPGConn, szCommand);
+            CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
+            hResult = PQexec(hPGConn, osCommand.c_str());
 
             if( !hResult
                 || PQresultStatus(hResult) != PGRES_COMMAND_OK )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "'%s' failed for layer %s, layer creation has failed.",
-                        szCommand, pszLayerName );
+                        osCommand.c_str(), pszLayerName );
 
                 CPLFree( pszLayerName );
                 CPLFree( pszSchemaName );
@@ -1105,16 +1105,16 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 /*      Try looking up in spatial_ref_sys table.                        */
 /* -------------------------------------------------------------------- */
     PGresult        *hResult = NULL;
-    char            szCommand[1024];
+    CPLString        osCommand;
     OGRSpatialReference *poSRS = NULL;
 
     SoftStartTransaction();
 
-    sprintf( szCommand,
+    osCommand.Printf(
              "SELECT srtext FROM spatial_ref_sys "
              "WHERE srid = %d",
              nId );
-    hResult = PQexec(hPGConn, szCommand );
+    hResult = PQexec(hPGConn, osCommand.c_str() );
 
     if( hResult
         && PQresultStatus(hResult) == PGRES_TUPLES_OK
@@ -1158,7 +1158,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
     PGresult            *hResult = NULL;
-    char                szCommand[10000];
+    CPLString           osCommand;
     char                *pszWKT = NULL;
     int                 nSRSId = -1;
     const char*         pszAuthorityName;
@@ -1181,11 +1181,11 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
          */
         nAuthorityCode = atoi( poSRS->GetAuthorityCode(NULL) );
 
-        sprintf( szCommand, "SELECT srid FROM spatial_ref_sys WHERE "
-                            "auth_name = '%s' AND auth_srid = %d",
-                            pszAuthorityName,
-                            nAuthorityCode );
-        hResult = PQexec(hPGConn, szCommand);
+        osCommand.Printf("SELECT srid FROM spatial_ref_sys WHERE "
+                         "auth_name = '%s' AND auth_srid = %d",
+                         pszAuthorityName,
+                         nAuthorityCode );
+        hResult = PQexec(hPGConn, osCommand.c_str());
 
         if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
             && PQntuples(hResult) > 0 )
@@ -1206,19 +1206,16 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
         return -1;
 
-    CPLAssert( strlen(pszWKT) < sizeof(szCommand) - 500 );
-
-
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing table.                              */
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
 
-    sprintf( szCommand,
+    osCommand.Printf(
              "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
              pszWKT );
-    hResult = PQexec(hPGConn, szCommand );
+    hResult = PQexec(hPGConn, osCommand.c_str() );
     CPLFree( pszWKT );  // CM:  Added to prevent mem leaks
     pszWKT = NULL;      // CM:  Added
 
@@ -1284,8 +1281,6 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return -1;
     }
 
-    CPLAssert( strlen(pszWKT) < sizeof(szCommand) - 500 );
-
     char    *pszProj4 = NULL;
     if( poSRS->exportToProj4( &pszProj4 ) != OGRERR_NONE )
     {
@@ -1301,7 +1296,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
         nAuthorityCode = atoi( poSRS->GetAuthorityCode(NULL) );
 
-        sprintf( szCommand,
+        osCommand.Printf(
                  "INSERT INTO spatial_ref_sys (srid,srtext,proj4text,auth_name,auth_srid) "
                  "VALUES (%d, '%s', '%s', '%s', %d)",
                  nSRSId, pszWKT, pszProj4, pszAuthorityName,
@@ -1309,7 +1304,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
     else
     {
-        sprintf( szCommand,
+        osCommand.Printf(
                  "INSERT INTO spatial_ref_sys (srid,srtext,proj4text) VALUES (%d,'%s','%s')",
                  nSRSId, pszWKT, pszProj4 );
     }
@@ -1318,7 +1313,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     CPLFree( pszProj4 );
     CPLFree( pszWKT);
 
-    hResult = PQexec(hPGConn, szCommand );
+    hResult = PQexec(hPGConn, osCommand.c_str() );
     OGRPGClearResult( hResult );
 
     hResult = PQexec(hPGConn, "COMMIT");
