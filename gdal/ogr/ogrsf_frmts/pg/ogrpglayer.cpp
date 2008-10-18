@@ -151,7 +151,7 @@ void OGRPGLayer::ResetReading()
 
 {
     PGconn      *hPGConn = poDS->GetPGConn();
-    char        szCommand[1024];
+    CPLString    osCommand;
 
     iNextShapeId = 0;
 
@@ -161,9 +161,9 @@ void OGRPGLayer::ResetReading()
 
         if( bCursorActive )
         {
-            sprintf( szCommand, "CLOSE %s", pszCursorName );
+            osCommand.Printf("CLOSE %s", pszCursorName );
 
-            hCursorResult = PQexec(hPGConn, szCommand);
+            hCursorResult = PQexec(hPGConn, osCommand.c_str());
             OGRPGClearResult( hCursorResult );
         }
 
