@@ -291,7 +291,7 @@ is GeoTIFF (GTiff).  Use the short format name.</dd>
 output. Bands are numbered from 1 Multiple <b>-b</b> switches may be used
 to select a set of input bands to write to the output file, or to reorder
 bands.</dd>
-<dt> <b>-expand</b> <i>rgb|rgba</i>:</dt><dd> To expose a dataset with 1 band
+<dt> <b>-expand</b> <i>rgb|rgba</i>:</dt><dd> (From GDAL 1.6.0) To expose a dataset with 1 band
 with a color table as a dataset with 3 (RGB) or 4 (RGBA) bands. Usefull for
 output drivers such as JPEG, JPEG2000, MrSID, ECW that don't support color
 indexed datasets.</dd>
@@ -368,7 +368,7 @@ most supported file formats with one over several downsampling algorithms.
 <dt> <b>-r</b>
 <i>{nearest,average,gauss,average_mp,average_magphase,mode}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
-<dt> <b>-ro</b></dt>:<dd> open the dataset in read-only mode, in order to generate
+<dt> <b>-ro</b></dt>:<dd> (available from GDAL 1.6.0) open the dataset in read-only mode, in order to generate
 external overview (for GeoTIFF especially). </dd>
 <dt> <i>filename</i>:</dt><dd> The file to build overviews for. </dd>
 <dt> <i>levels</i>:</dt><dd> A list of integral overview levels to build.  </dd>
@@ -379,7 +379,7 @@ for use.  <i>Average_magphase</i> averages complex data in mag/phase space.
 <i>Nearest</i> and <i>average</i> are applicable to normal image data.  
 <i>Nearest</i> applies a nearest neighbour (simple sampling) resampler, while
 <i>average</i> computes the average of all non-NODATA contributing pixels.
-Gauss resampling applies a Gaussian kernel before computing the overview, 
+Gauss resampling (available from GDAL 1.6.0) applies a Gaussian kernel before computing the overview, 
 which can lead to better results than simple averaging in e.g case of sharp edges
 with high contrast or noisy patterns. The advised level values should be 2, 4, 8, ...
 so that a 3x3 resampling Gaussian kernel is selected.
