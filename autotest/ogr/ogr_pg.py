@@ -1371,6 +1371,25 @@ def ogr_pg_34():
 
     return 'success'
 
+
+###############################################################################
+# Test for buffer overflows
+
+def ogr_pg_35():
+
+    try:
+        gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testoverflows' )
+        ogrtest.quick_create_layer_def( gdaltest.pg_lyr, [ ('0123456789' * 1000, ogr.OFTReal)] )
+    except:
+        pass
+
+    try:
+        gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testoverflows', options = [ 'OVERWRITE=YES', 'GEOMETRY_NAME=' + ('0123456789' * 1000) ] )
+    except:
+        pass
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -1388,6 +1407,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext2' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testoverflows' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly2' )
@@ -1449,6 +1469,7 @@ gdaltest_list_internal = [
     ogr_pg_32,
     ogr_pg_33,
     ogr_pg_34,
+    ogr_pg_35,
     ogr_pg_cleanup ]
 
 
