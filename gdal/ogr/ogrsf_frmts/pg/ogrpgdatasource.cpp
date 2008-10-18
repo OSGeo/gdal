@@ -528,15 +528,17 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
         {
             const char *pszTable = PQgetvalue(hResult, iRecord, 0);
+            const char *pszSchemaName = PQgetvalue(hResult, iRecord, 1);
 
             if( EQUAL(pszTable,"spatial_ref_sys")
                 || EQUAL(pszTable,"geometry_columns") )
                 continue;
 
-            papszTableNames = CSLAddString(papszTableNames,
-                                        PQgetvalue(hResult, iRecord, 0));
-            papszSchemaNames = CSLAddString(papszSchemaNames,
-                                        PQgetvalue(hResult, iRecord, 1));
+            if( EQUAL(pszSchemaName,"information_schema") )
+                continue;
+
+            papszTableNames = CSLAddString(papszTableNames, pszTable);
+            papszSchemaNames = CSLAddString(papszSchemaNames, pszSchemaName);
 
         }
 
