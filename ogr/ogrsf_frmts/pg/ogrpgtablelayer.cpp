@@ -68,6 +68,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
       pszSchemaName = NULL;
 
     pszSqlTableName = (char*)CPLMalloc(255); //set in ReadTableDefinition
+    pszSqlGeomParentTableName = NULL;
 
     poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaName );
 
@@ -91,6 +92,7 @@ OGRPGTableLayer::~OGRPGTableLayer()
     EndCopy();
     CPLFree( pszSqlTableName );
     CPLFree( pszTableName );
+    CPLFree( pszSqlGeomParentTableName );
     CPLFree( pszSchemaName );
 }
 
@@ -418,9 +420,14 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     // get layer geometry type (for PostGIS dataset)
     if ( bHasPostGISGeometry )
     {
+      /* Get the geometry type and dimensions from the table, or */
+      /* from its parents if it is a derived table, or from the parent of the parent, etc.. */
+      int bGoOn = TRUE;
+      while(bGoOn)
+      {
         osCommand.Printf(
             "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
-            pszTableIn);
+            (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn);
 
         hResult = PQexec(hPGConn,osCommand);
 
@@ -455,9 +462,34 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
                      nCoordDimension );
 
             poDefn->SetGeomType( nGeomType );
+
+            bGoOn = FALSE;
+        }
+        else
+        {
+            /* Fetch the name of the parent table */
+            osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
+                             "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
+                             "(SELECT pg_class.oid FROM pg_class WHERE relname = '%s'))",
+                             (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn );
+
+            OGRPGClearResult( hResult );
+            hResult = PQexec(hPGConn, osCommand.c_str() );
+
+            if ( hResult && PQntuples( hResult ) == 1 && !PQgetisnull( hResult,0,0 ) )
+            {
+                CPLFree(pszSqlGeomParentTableName);
+                pszSqlGeomParentTableName = CPLStrdup( PQgetvalue(hResult,0,0) );
+            }
+            else
+            {
+                /* No more parent : stop recursion */
+                bGoOn = FALSE;
+            }
         }
 
         OGRPGClearResult( hResult );
+      }
     }
 
     return poDefn;
@@ -1753,7 +1785,7 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
         osCommand.Printf(
                  "SELECT srid FROM geometry_columns "
                  "WHERE f_table_name = '%s' AND f_table_schema = '%s'",
-                 pszTableName, pszSchemaName );
+                 (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName, pszSchemaName );
         hResult = PQexec(hPGConn, osCommand.c_str() );
 
         if( hResult
@@ -1772,7 +1804,7 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
             osCommand.Printf(
                      "SELECT srid FROM geometry_columns "
                      "WHERE f_table_name = '%s' AND f_schema_name = '%s'",
-                     pszTableName, pszSchemaName );
+                     (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName, pszSchemaName );
             hResult = PQexec(hPGConn, osCommand.c_str() );
             if( hResult
                 && PQresultStatus(hResult) == PGRES_TUPLES_OK

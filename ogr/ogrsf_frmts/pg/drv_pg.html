@@ -19,14 +19,19 @@ any other options and defaults
 that would apply to it, apply to the name here.  The PG: prefix is used
 to mark the name as a postgres connection string.<p>
 
-The set of tables to be scanned can be overridden by specifying
+From GDAL 1.6.0, the set of tables to be scanned can be overridden by specifying
 <i>tables=[schema.]table[,[schema2.]table2,...]</i> within the connection string.
 If the parameter is found, the driver skips enumeration of the tables as
 described in the next paragraph.<p>
 
-If the <i>geometry_columns</i> table exists, then all listed tables and
-named views will be treated as OGR layers.  Otherwise all regular user tables
-will be treated as layers.<p>
+If the <i>geometry_columns</i> table exists (i.e. PostGIS is enabled for the accessed
+database), then all tables and named views listed in the <i>geometry_columns</i> table
+will be treated as OGR layers. Otherwise all regular user tables will be treated as layers.
+
+From GDAL 1.6.0, even when PostGIS is enabled, if the user defines the environment variable
+PG_LIST_ALL_TABLES=YES (and does not specify tables=), all regular user tables will be treated as layers.<p>
+
+In any case, all user tables can be queried explicitely with GetLayerByName()<p>
 
 Regular (non-spatial) tables can be accessed, and will return features with
 attributes, but not geometry.  If the table has a "wkb_geometry" field, it will
@@ -34,6 +39,8 @@ be treated as a spatial table.  The type of the field is inspected to
 determine how to read it.  It can be a PostGIS <b>geometry</b> field, which
 is assumed to come back in OGC WKT, or type BYTEA or OID in which case it
 is used as a source of OGC WKB geometry.<p>
+
+From GDAL 1.6.0, tables inherited from spatial tables are supported.<p>
 
 If there is an "ogc_fid" field, it will be used to set the feature id of
 the features, and not treated as a regular field. <p>
@@ -121,7 +128,7 @@ on the geometry dimension during loading.<p>
 omitted it defaults to wkb_geometry.<p>
 <li> <b>SCHEMA</b>: Set name of schema for new table.
 Using the same layer name in different schemas is supported, but not in the public schema and others.<p>
-<li> <b>SPATIAL_INDEX</b>: Set to ON by default. Creates a spatial index on the geometry column
+<li> <b>SPATIAL_INDEX</b>: (From GDAL 1.6.0) Set to ON by default. Creates a spatial index on the geometry column
 to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is available).<p>
 </ul>
 

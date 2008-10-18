@@ -167,6 +167,9 @@ class OGRPGTableLayer : public OGRPGLayer
     char               *pszSchemaName;
     char               *pszSqlTableName;
 
+    /* Name of the parent table with the geometry definition if it is a derived table or NULL */
+    char               *pszSqlGeomParentTableName; 
+
     CPLString           osQuery;
     CPLString           osWHERE;
 
