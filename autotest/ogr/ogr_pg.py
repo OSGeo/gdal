@@ -1377,6 +1377,9 @@ def ogr_pg_34():
 
 def ogr_pg_35():
 
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
     try:
         gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testoverflows' )
         ogrtest.quick_create_layer_def( gdaltest.pg_lyr, [ ('0123456789' * 1000, ogr.OFTReal)] )
@@ -1387,6 +1390,73 @@ def ogr_pg_35():
         gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testoverflows', options = [ 'OVERWRITE=YES', 'GEOMETRY_NAME=' + ('0123456789' * 1000) ] )
     except:
         pass
+
+    return 'success'
+
+###############################################################################
+# Test support for inherited tables : tables inherited from a Postgis Table
+
+def ogr_pg_36():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if gdaltest.pg_has_postgis:
+        gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'table36_base', geom_type = ogr.wkbPoint )
+    else:
+        gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'table36_base' )
+
+    gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table36_inherited ( col1 CHAR(1) ) INHERITS ( table36_base )')
+    gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table36_inherited2 ( col2 CHAR(1) ) INHERITS ( table36_inherited )')
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = ds.GetLayerByName( 'table36_inherited2' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+def ogr_pg_36_bis():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' TABLES=table36_base', update = 1 )
+    lyr = ds.GetLayerByName( 'table36_inherited' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test support for inherited tables : Postgis table inherited from a non-Postgis table
+
+def ogr_pg_37():
+
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table37_base ( col1 CHAR(1) )')
+    gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table37_inherited ( col2 CHAR(1) ) INHERITS ( table37_base )')
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','table37_inherited','wkb_geometry',-1,'POINT',2)" )
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = ds.GetLayerByName( 'table37_inherited' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+        return 'fail'
+
+    ds.Destroy()
 
     return 'success'
 
@@ -1408,6 +1478,11 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testoverflows' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table36_inherited2' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table36_inherited' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table36_base' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table37_inherited' )
+    gdaltest.pg_ds.ExecuteSQL( 'DROP TABLE table37_base')
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly2' )
@@ -1470,6 +1545,9 @@ gdaltest_list_internal = [
     ogr_pg_33,
     ogr_pg_34,
     ogr_pg_35,
+    ogr_pg_36,
+    ogr_pg_36_bis,
+    ogr_pg_37,
     ogr_pg_cleanup ]
 
 
