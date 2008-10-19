@@ -40,6 +40,7 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
+#include "hdf4compat.h"
 #include "hdf4dataset.h"
 
 CPL_CVSID("$Id$");
@@ -88,7 +89,7 @@ class HDF4ImageDataset : public HDF4Dataset
     int32       iRank, iNumType, nAttrs,
                 iInterlaceMode, iPalInterlaceMode, iPalDataType;
     int32       nComps, nPalEntries;
-    int32       aiDimSizes[MAX_VAR_DIMS];
+    int32       aiDimSizes[H4_MAX_VAR_DIMS];
     int         iXDim, iYDim, iBandDim, i4Dim;
     int         nBandCount;
     char        **papszLocalMetadata;
@@ -202,7 +203,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                         void * pImage )
 {
     HDF4ImageDataset    *poGDS = (HDF4ImageDataset *) poDS;
-    int32               aiStart[MAX_NC_DIMS], aiEdges[MAX_NC_DIMS];
+    int32               aiStart[H4_MAX_NC_DIMS], aiEdges[H4_MAX_NC_DIMS];
     CPLErr              eErr = CE_None;
 
     if( poGDS->eAccess == GA_Update )
@@ -328,7 +329,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       {
           switch ( poGDS->iSubdatasetType )
           {
-            case EOS_GRID:
+            case H4ST_EOS_GRID:
             {
                 int32   hGD;
 
@@ -382,8 +383,8 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
             break;
                     
-            case EOS_SWATH:
-            case EOS_SWATH_GEOL:
+            case H4ST_EOS_SWATH:
+            case H4ST_EOS_SWATH_GEOL:
             {
                 int32   hSW;
 
@@ -441,7 +442,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                          void * pImage )
 {
     HDF4ImageDataset    *poGDS = (HDF4ImageDataset *)poDS;
-    int32               aiStart[MAX_NC_DIMS], aiEdges[MAX_NC_DIMS];
+    int32               aiStart[H4_MAX_NC_DIMS], aiEdges[H4_MAX_NC_DIMS];
     CPLErr              eErr = CE_None;
 
     CPLAssert( poGDS != NULL
@@ -700,11 +701,11 @@ HDF4ImageDataset::~HDF4ImageDataset()
             case HDF4_EOS:
                 switch ( iSubdatasetType )
                 {
-                    case EOS_SWATH:
-                    case EOS_SWATH_GEOL:
+                    case H4ST_EOS_SWATH:
+                    case H4ST_EOS_SWATH_GEOL:
                         SWclose( hHDF4 );
                         break;
-                    case EOS_GRID:
+                    case H4ST_EOS_GRID:
                         GDclose( hHDF4 );
                     default:
                         break;
@@ -1097,10 +1098,10 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
     {
         char        szName[HDF4_SDS_MAXNAMELEN];
         int32	    iRank, iNumType, nAttrs;
-        int32       aiDimSizes[MAX_VAR_DIMS];
+        int32       aiDimSizes[H4_MAX_VAR_DIMS];
 
         double adfGCTP[29];
-        int32 aiStart[MAX_NC_DIMS], aiEdges[MAX_NC_DIMS];
+        int32 aiStart[H4_MAX_NC_DIMS], aiEdges[H4_MAX_NC_DIMS];
 
         aiStart[0] = 0;
         aiEdges[0] = 29;
@@ -1456,14 +1457,14 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
     {
         int32	    iRank, iNumType, iAttribute, nAttrs, nValues;
         char        szName[HDF4_SDS_MAXNAMELEN];
-        int32       aiDimSizes[MAX_VAR_DIMS];
+        int32       aiDimSizes[H4_MAX_VAR_DIMS];
         
 	if( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, 
                        &nAttrs) == 0 )
         {
             for ( iAttribute = 0; iAttribute < nAttrs; iAttribute++ )
             {
-                char    szAttrName[MAX_NC_NAME];
+                char    szAttrName[H4_MAX_NC_NAME];
                 SDattrinfo( iSDS, iAttribute, szAttrName,
                             &iNumType, &nValues );
                 papszLocalMetadata =
@@ -1566,14 +1567,14 @@ void HDF4ImageDataset::GetGridAttrs( int32 hGD )
     {
         int32	    iRank, iNumType, iAttribute, nAttrs, nValues;
         char        szName[HDF4_SDS_MAXNAMELEN];
-        int32       aiDimSizes[MAX_VAR_DIMS];
+        int32       aiDimSizes[H4_MAX_VAR_DIMS];
         
 	if( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, 
                        &nAttrs) == 0 )
         {
             for ( iAttribute = 0; iAttribute < nAttrs; iAttribute++ )
             {
-                char    szAttrName[MAX_NC_NAME];
+                char    szAttrName[H4_MAX_NC_NAME];
                 SDattrinfo( iSDS, iAttribute, szAttrName,
                             &iNumType, &nValues );
                 papszLocalMetadata =
@@ -1621,7 +1622,7 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
     {
         int32	    iRank, iNumType, nAttrs, iSDS;
         char        szName[HDF4_SDS_MAXNAMELEN];
-        int32       aiDimSizes[MAX_VAR_DIMS];
+        int32       aiDimSizes[H4_MAX_VAR_DIMS];
         
 	iSDS = SDselect( hSD, iDSIndex );
 
@@ -1690,7 +1691,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     int32   nLatCount = 0, nLongCount = 0;
     int32   nXPoints=0, nYPoints=0;
     int32   nStrBufSize;
-    int32   aiDimSizes[MAX_VAR_DIMS];
+    int32   aiDimSizes[H4_MAX_VAR_DIMS];
     int     i, j, iDataSize = 0, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
     int32   *paiRank = NULL, *paiNumType = NULL,
         *paiOffset = NULL, *paiIncrement = NULL;
@@ -1906,7 +1907,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         && nYPoints == aiDimSizes[0]
         && aiDimSizes[2] == 2 )
     {
-        int32   iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
+        int32   iStart[H4_MAX_NC_DIMS], iEdges[H4_MAX_NC_DIMS];
 
         iLatticeDataSize =
             GetDataTypeSize( iLatticeType );
@@ -2278,19 +2279,19 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->iDatasetType = HDF4_UNKNOWN;
     
     if( EQUAL( papszSubdatasetName[1], "GDAL_HDF4" ) )
-        poDS->iSubdatasetType = GDAL_HDF4;
+        poDS->iSubdatasetType = H4ST_GDAL;
     else if( EQUAL( papszSubdatasetName[1], "EOS_GRID" ) )
-        poDS->iSubdatasetType = EOS_GRID;
+        poDS->iSubdatasetType = H4ST_EOS_GRID;
     else if( EQUAL( papszSubdatasetName[1], "EOS_SWATH" ) )
-        poDS->iSubdatasetType = EOS_SWATH;
+        poDS->iSubdatasetType = H4ST_EOS_SWATH;
     else if( EQUAL( papszSubdatasetName[1], "EOS_SWATH_GEOL" ) )
-        poDS->iSubdatasetType = EOS_SWATH_GEOL;
+        poDS->iSubdatasetType = H4ST_EOS_SWATH_GEOL;
     else if( EQUAL( papszSubdatasetName[1], "SEAWIFS_L3" ) )
-        poDS->iSubdatasetType= SEAWIFS_L3;
+        poDS->iSubdatasetType= H4ST_SEAWIFS_L3;
     else if( EQUAL( papszSubdatasetName[1], "HYPERION_L1" ) )
-        poDS->iSubdatasetType= HYPERION_L1;
+        poDS->iSubdatasetType= H4ST_HYPERION_L1;
     else
-        poDS->iSubdatasetType = UNKNOWN;
+        poDS->iSubdatasetType = H4ST_UNKNOWN;
 
     // Is our file still here?
     if ( !Hishdf( poDS->pszFilename ) )
@@ -2344,8 +2345,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  HDF-EOS Swath.                                                      */
 /* -------------------------------------------------------------------- */
-            case EOS_SWATH:
-            case EOS_SWATH_GEOL:
+            case H4ST_EOS_SWATH:
+            case H4ST_EOS_SWATH_GEOL:
             {
                 int32   hSW, nStrBufSize;
                 char    *pszDimList = NULL;
@@ -2399,7 +2400,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Fetch metadata.                                                     */
 /* -------------------------------------------------------------------- */
-                if( poDS->iSubdatasetType == EOS_SWATH ) /* Not SWATH_GEOL */
+                if( poDS->iSubdatasetType == H4ST_EOS_SWATH ) /* Not H4ST_EOS_SWATH_GEOL */
                     poDS->GetSwatAttrs( hSW );
 
 /* -------------------------------------------------------------------- */
@@ -2430,7 +2431,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Handle Geolocation processing.                                  */
 /* -------------------------------------------------------------------- */
-                if( poDS->iSubdatasetType == EOS_SWATH ) /* Not SWATH_GEOL */
+                if( poDS->iSubdatasetType == H4ST_EOS_SWATH ) /* Not H4ST_SWATH_GEOL */
                 {
                     char **papszDimList =
                         CSLTokenizeString2( pszDimList, ",",
@@ -2454,7 +2455,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      HDF-EOS Grid.                                                   */
 /* -------------------------------------------------------------------- */
-            case EOS_GRID:
+            case H4ST_EOS_GRID:
             {
                 int32   hGD, iProjCode = 0, iZoneCode = 0, iSphereCode = 0;
                 int32   nXSize, nYSize;
@@ -2611,7 +2612,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
           if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
               return NULL;
 
-          memset( poDS->aiDimSizes, 0, sizeof(int32) * MAX_VAR_DIMS );
+          memset( poDS->aiDimSizes, 0, sizeof(int32) * H4_MAX_VAR_DIMS );
           iSDS = SDselect( poDS->hSD, poDS->iDataset );
           SDgetinfo( iSDS, poDS->szName, &poDS->iRank, poDS->aiDimSizes,
                      &poDS->iNumType, &poDS->nAttrs);
@@ -2622,7 +2623,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
           for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
           {
-              char  szAttrName[MAX_NC_NAME];
+              char  szAttrName[H4_MAX_NC_NAME];
               SDattrinfo( iSDS, iAttribute, szAttrName,
                           &iAttrNumType, &nValues );
               poDS->papszLocalMetadata =
@@ -2734,7 +2735,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
         {
-            char    szAttrName[MAX_NC_NAME];
+            char    szAttrName[H4_MAX_NC_NAME];
             GRattrinfo( poDS->iGR, iAttribute, szAttrName,
                         &iAttrNumType, &nValues );
             poDS->papszLocalMetadata = 
@@ -2776,7 +2777,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
     poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
 
-    if ( poDS->iSubdatasetType == HYPERION_L1 )
+    if ( poDS->iSubdatasetType == H4ST_HYPERION_L1 )
     {
         // XXX: Hyperion SDSs has Height x Bands x Width dimensions scheme
         if ( poDS->iRank > 2 )
@@ -2820,7 +2821,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  HDF, created by GDAL.                                               */
 /* -------------------------------------------------------------------- */
-      case GDAL_HDF4:
+      case H4ST_GDAL:
       {
           const char  *pszValue;
 
@@ -2868,7 +2869,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      SeaWiFS Level 3 Standard Mapped Image Products.                 */
 /*      Organized similar to MODIS Level 3 products.                    */
 /* -------------------------------------------------------------------- */
-      case SEAWIFS_L3:
+      case H4ST_SEAWIFS_L3:
       {
           CPLDebug( "HDF4Image", "Input dataset interpreted as SEAWIFS_L3" );
 
@@ -2919,7 +2920,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Generic SDS							*/
 /* -------------------------------------------------------------------- */
-      case UNKNOWN:
+      case H4ST_UNKNOWN:
       {
 
           // This is a coastwatch convention.
@@ -2993,7 +2994,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Hyperion Level 1.                                               */
 /* -------------------------------------------------------------------- */
-      case HYPERION_L1:
+      case H4ST_HYPERION_L1:
       {
           CPLDebug( "HDF4Image", "Input dataset interpreted as HYPERION_L1" );
       }
@@ -3031,7 +3032,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     const char          *pszSDSName;
     int                 iBand;
     int32               iSDS = -1;
-    int32               aiDimSizes[MAX_VAR_DIMS];
+    int32               aiDimSizes[H4_MAX_VAR_DIMS];
 
     poDS = new HDF4ImageDataset();
 
@@ -3149,7 +3150,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
     poDS->iDatasetType = HDF4_SDS;
-    poDS->iSubdatasetType = GDAL_HDF4;
+    poDS->iSubdatasetType = H4ST_GDAL;
     poDS->nBands = nBands;
 
 /* -------------------------------------------------------------------- */
