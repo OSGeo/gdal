@@ -65,8 +65,13 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     // Get Header Info
     // -------------------------------------------------------------------- 
 
-    memcpy( &hHeaderOne, &poDS->hHeaderOne, SIZEOF_HDR1 );
-    memcpy( &hHeaderTwo, &poDS->hHeaderTwo, SIZEOF_HDR2_A );
+    GByte abyBuf[MAX(SIZEOF_HDR1,SIZEOF_HDR2_A)];
+
+    INGR_HeaderOneMemToDisk( &poDS->hHeaderOne, abyBuf );
+    INGR_HeaderOneDiskToMem( &hHeaderOne, abyBuf );
+
+    INGR_HeaderTwoAMemToDisk( &poDS->hHeaderTwo, abyBuf );
+    INGR_HeaderTwoADiskToMem( &hHeaderTwo, abyBuf );
 
     // -------------------------------------------------------------------- 
     // Get the image start from Words to Follow (WTF)
@@ -144,7 +149,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     // Get the Data Type from Format
     // -------------------------------------------------------------------- 
 
-    this->eDataType = INGR_GetDataType( eFormat );
+    this->eDataType = INGR_GetDataType( (uint16) eFormat );
 
     // -------------------------------------------------------------------- 
     // Allocate buffer for a Block of data
@@ -159,7 +164,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     // More Metadata Information
     // -------------------------------------------------------------------- 
 
-    SetMetadataItem( "FORMAT", INGR_GetFormatName( eFormat ), 
+    SetMetadataItem( "FORMAT", INGR_GetFormatName( (uint16) eFormat ), 
         "IMAGE_STRUCTURE" );
 
     if( bTiled )
@@ -379,7 +384,7 @@ IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDS,
                                      int nRGorB )
     : IntergraphRasterBand( poDS, nBand, nBandOffset )
 {
-    nRGBIndex     = nRGorB;
+    nRGBIndex     = (uint8) nRGorB;
 
     // -------------------------------------------------------------------- 
     // Reallocate buffer for a block of RGB Data
@@ -432,7 +437,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
     : IntergraphRasterBand( poDS, nBand, nBandOffset )
 {
     nRLESize         = 0;
-    nRGBIndex        = nRGorB;
+    nRGBIndex        = (uint8) nRGorB;
     bRLEBlockLoaded  = FALSE;
     panRLELineOffset = NULL;
 
@@ -983,21 +988,28 @@ void IntergraphRasterBand::FlushBandHeader( void )
     }
 
     VSIFSeekL( poGDS->fp, nBandStart, SEEK_SET );
-#ifdef CPL_MSB
-    INGR_HeaderOne hdr1ForDisk;
-    memcpy(&hdr1ForDisk, &hHeaderOne, SIZEOF_HDR1);
-    INGR_HeaderOneMemToDisk(&hdr1ForDisk);
-    VSIFWriteL( &hdr1ForDisk, 1, SIZEOF_HDR1,   poGDS->fp );
 
-    INGR_HeaderTwoA hdr2ForDisk;
-    memcpy(&hdr2ForDisk, &hHeaderTwo, SIZEOF_HDR2_A);
-    INGR_HeaderTwoAMemToDisk(&hdr2ForDisk);
-    VSIFWriteL( &hdr2ForDisk, 1, SIZEOF_HDR2_A, poGDS->fp );
-#else
-    VSIFWriteL( &hHeaderOne, 1, SIZEOF_HDR1,   poGDS->fp );
-    VSIFWriteL( &hHeaderTwo, 1, SIZEOF_HDR2_A, poGDS->fp );
-#endif
-    VSIFWriteL( &hCTab,      1, SIZEOF_CTAB,   poGDS->fp );
+    GByte abyBuf[MAX(SIZEOF_HDR1,SIZEOF_CTAB)];
+
+    INGR_HeaderOneMemToDisk( &hHeaderOne, abyBuf );
+
+    VSIFWriteL( abyBuf, 1, SIZEOF_HDR1, poGDS->fp );
+
+    INGR_HeaderTwoAMemToDisk( &hHeaderTwo, abyBuf );
+
+    VSIFWriteL( abyBuf, 1, SIZEOF_HDR2_A, poGDS->fp );
+
+    unsigned int i = 0;
+    unsigned int n = 0;
+
+    for( i = 0; i < 256; i++ )
+    {
+        STRC2BUF( abyBuf, n, hCTab.Entry[i].v_red );
+        STRC2BUF( abyBuf, n, hCTab.Entry[i].v_green );
+        STRC2BUF( abyBuf, n, hCTab.Entry[i].v_blue );
+    }
+
+    VSIFWriteL( abyBuf, 1, SIZEOF_CTAB, poGDS->fp );
 }
 
 //  ----------------------------------------------------------------------------
