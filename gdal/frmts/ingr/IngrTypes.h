@@ -66,12 +66,6 @@ typedef float               real32;
 //    Header Element Type Word ( HTC )
 //  ----------------------------------------------------------------------------
 
-#ifdef __sparcv9
-#pragma pack( 8 )
-#else 
-#pragma pack( 1 )
-#endif
-
 typedef struct {
 #if defined(CPL_LSB)
     uint16 Version   : 6;        // ??????00 00000000 
@@ -141,7 +135,7 @@ struct INGR_FormatDescription {
     GDALDataType     eDataType;
 };
 
-#define FORMAT_TAB_COUNT (sizeof(INGR_FormatTable) / sizeof(INGR_FormatDescription))
+#define FORMAT_TAB_COUNT 32
 
 //  ----------------------------------------------------------------------------
 //    Raster Application Types
@@ -349,8 +343,6 @@ typedef     struct {
     const char      *pszFileName;
 } INGR_VirtualFile;
 
-#pragma pack()
-
 //  ----------------------------------------------------------------------------
 //    Header Size
 //  ----------------------------------------------------------------------------
@@ -399,16 +391,16 @@ typedef     struct {
 
 */
 
-#define SIZEOF_HDR1     sizeof( INGR_HeaderOne )
-#define SIZEOF_HDR2_A   sizeof( INGR_HeaderTwoA )
-#define SIZEOF_HDR2_B   sizeof( INGR_HeaderTwoB )
-#define SIZEOF_HDR2     SIZEOF_HDR2_A + SIZEOF_HDR2_B;
-#define SIZEOF_CTAB     sizeof( INGR_ColorTable256 )
-#define SIZEOF_TDIR     sizeof( INGR_TileHeader )
-#define SIZEOF_TILE     sizeof( INGR_TileItem )
-#define SIZEOF_JPGAD    sizeof( INGR_JPEGAppData )
-#define SIZEOF_VLTS     sizeof( vlt_slot )
-#define SIZEOF_IGDS     sizeof( igds_slot )
+#define SIZEOF_HDR1     512
+#define SIZEOF_HDR2_A   256
+#define SIZEOF_HDR2_B   256
+#define SIZEOF_HDR2     512
+#define SIZEOF_CTAB     768
+#define SIZEOF_TDIR     140
+#define SIZEOF_TILE     12
+#define SIZEOF_JPGAD    12
+#define SIZEOF_VLTS     8
+#define SIZEOF_IGDS     3
 
 //  ----------------------------------------------------------------------------
 //                                 Functions
@@ -544,21 +536,34 @@ typedef     struct {
         bb[ibb] = REVERSEBITS( bb[ibb] )
 
 //  ------------------------------------------------------------------
-//    JPEG Tables
+//    Struct reading helpers
 //  ------------------------------------------------------------------
 
+#define BUF2STRC(bb, nn, ff)    \
+{                               \
+    int ss = sizeof(ff);        \
+    memcpy( &ff, &bb[nn], ss);  \
+    nn += ss;                   \
+}
+    
+#define STRC2BUF(bb, nn, ff)    \
+{                               \
+    int ss = sizeof(ff);        \
+    memcpy( &bb[nn], &ff, ss);  \
+    nn += ss;                   \
+}
 
 //  ------------------------------------------------------------------
 //    Fix Endianness issues
 //  ------------------------------------------------------------------
 
-void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne);
-void CPL_STDCALL INGR_HeaderOneMemToDisk(INGR_HeaderOne* pHeaderOne);
-void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo);
-void CPL_STDCALL INGR_HeaderTwoAMemToDisk(INGR_HeaderTwoA* pHeaderTwo);
-void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader);
-void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem);
-void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData);
+void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, GByte *pabyBuf);
+void CPL_STDCALL INGR_HeaderOneMemToDisk(INGR_HeaderOne* pHeaderOne, GByte *pabyBuf);
+void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf);
+void CPL_STDCALL INGR_HeaderTwoAMemToDisk(INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf);
+void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader, GByte *pabyBuf);
+void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem, GByte *pabyBuf);
+void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData, GByte *pabyBuf);
 
 #endif
 
