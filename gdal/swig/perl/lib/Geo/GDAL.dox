@@ -634,15 +634,17 @@
 
 ## @method @GetHistogram(%parameters)
 # Compute raster histogram
-# @param Min the lower bound, default is -0.5
-# @param Max the upper bound, default is 255.5
-# @param Buckets the number of buckets in the histogram, default is 256
-# @param IncludeOutOfRange whether to use $histogram[0] and
-# $histogram[$#histogram] for out of range values, default is false; the bucket size
-# is (Max-Min) / Buckets if this is false and (Max-Min) / (Buckets-2) if this is true
-# @param ApproxOK if histogram can be computed from overviews, default is false
-# @param Progress an optional progress function, the default is undef
-# @param ProgressData data for the progress function, the default is undef
+# @param parameters Named parameters:
+# - <i>Min</i> the lower bound, default is -0.5
+# - <i>Max</i> the upper bound, default is 255.5
+# - <i>Buckets</i> the number of buckets in the histogram, default is 256
+# - <i>IncludeOutOfRange</i> whether to use $histogram[0] and
+# $histogram[$#histogram] for out of range values, default is false;
+# the bucket size is (Max-Min) / Buckets if this is false and
+# (Max-Min) / (Buckets-2) if this is true
+# - <i>ApproxOK</i> if histogram can be computed from overviews, default is false
+# - <i>Progress</i> an optional progress function, the default is undef
+# - <i>ProgressData</i> data for the progress function, the default is undef
 # @return a list which contains the count of values in each bucket
 
 ## @method FlushCache()
