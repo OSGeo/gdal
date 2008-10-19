@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef DEBUG
+#include "stdio.h"
+#endif
+
 #include "IngrTypes.h"
 #include "JpegHelper.h"
 
@@ -302,7 +306,7 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
     switch( (INGR_Orientation ) pHeaderOne->ScanlineOrientation )
     {
         case UpperLeftVertical:
-            memcpy( adfConcat, pHeaderOne->TransformationMatrix, 16 );
+            memcpy( adfConcat, pHeaderOne->TransformationMatrix, 16 ); //?? sizeof(double) ??
             break;
         case UpperRightVertical:
             INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_URV_Flip ); 
@@ -396,7 +400,6 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
                                           INGR_TileItem **pahTiles)
 {
     if( fp == NULL ||
-        nOffset < 0 ||
         nBandXSize < 1 ||
         nBandYSize < 1 ||
         pTileDir == NULL )
@@ -408,13 +411,16 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
     // Read it from the begging of the data segment
     // -------------------------------------------------------------
 
+    GByte abyBuf[SIZEOF_TDIR];
+
     if( ( VSIFSeekL( fp, nOffset, SEEK_SET ) == -1 ) ||
-        ( VSIFReadL( pTileDir, 1, SIZEOF_TDIR, fp ) == 0 ) )
+        ( VSIFReadL( abyBuf, 1, SIZEOF_TDIR, fp ) == 0 ) )
     {
         CPLDebug("INGR", "Error reading tiles header");
         return 0;
     }
-    INGR_TileHeaderDiskToMem(pTileDir);
+
+    INGR_TileHeaderDiskToMem( pTileDir, abyBuf );
 
     // ----------------------------------------------------------------
     // Calculate the number of tiles
@@ -430,23 +436,28 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
     // ----------------------------------------------------------------
 
     *pahTiles  = (INGR_TileItem*) CPLCalloc( nTiles, SIZEOF_TILE );
+    GByte *pabyBuf  = (GByte*) CPLCalloc( ( nTiles - 1 ), SIZEOF_TILE );
 
     (*pahTiles)[0].Start      = pTileDir->First.Start;
     (*pahTiles)[0].Allocated  = pTileDir->First.Allocated;
     (*pahTiles)[0].Used       = pTileDir->First.Used;
 
     if( nTiles > 1 &&
-      ( VSIFReadL( &((*pahTiles)[1]), nTiles - 1, SIZEOF_TILE, fp ) == 0 ) )
+      ( VSIFReadL( pabyBuf, ( nTiles - 1 ), SIZEOF_TILE, fp ) == 0 ) )
     {
         CPLDebug("INGR", "Error reading tiles table");
         return 1;
     }
+
     unsigned int i;
-    for(i=1;i<nTiles;i++)
+
+    for( i = 1; i < nTiles; i++ )
     {
-        INGR_TileItemDiskToMem(&((*pahTiles)[i]));
+        INGR_TileItemDiskToMem( &((*pahTiles)[i]), 
+                                &pabyBuf[ (i - 1) * SIZEOF_TILE] );
     }
 
+    CPLFree( pabyBuf );
     return nTiles;
 }
 
@@ -460,7 +471,6 @@ void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
                                      GDALColorTable *poColorTable )
 {
     if( fp == NULL ||
-        nOffset < 0 ||
         nEntries == 0 ||
         poColorTable == NULL )
     {
@@ -475,18 +485,31 @@ void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
 
     INGR_ColorTable256 hIGDSColors;
 
+    GByte *pabyBuf = (GByte*) CPLCalloc( nEntries, SIZEOF_IGDS );
+
     if( ( VSIFSeekL( fp, nStart, SEEK_SET ) == -1 ) ||
-        ( VSIFReadL( hIGDSColors.Entry, nEntries, SIZEOF_IGDS, fp ) == 0 ) )
+        ( VSIFReadL( pabyBuf, nEntries, SIZEOF_IGDS, fp ) == 0 ) )
     {
         return;
     }
+
+    unsigned int i = 0;
+    unsigned int n = 0;
+
+    for( i = 0; i < nEntries; i++ )
+    {
+        BUF2STRC( pabyBuf, n, hIGDSColors.Entry[i].v_red );
+        BUF2STRC( pabyBuf, n, hIGDSColors.Entry[i].v_green );
+        BUF2STRC( pabyBuf, n, hIGDSColors.Entry[i].v_blue );
+    }
+
+    CPLFree( pabyBuf );
 
     // -------------------------------------------------------------
     // Read it to poColorTable
     // -------------------------------------------------------------
 
     GDALColorEntry oEntry;
-    unsigned int i;
 
     oEntry.c4 = 255;
 
@@ -532,7 +555,6 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
                              GDALColorTable *poColorTable )
 {
     if( fp == NULL ||
-        nOffset < 0 ||
         nEntries == 0 ||
         poColorTable == NULL )
     {
@@ -549,11 +571,24 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
 
     hVLTColors.Entry = (vlt_slot*) CPLCalloc( nEntries, SIZEOF_VLTS );
 
+    GByte *pabyBuf = (GByte*) CPLCalloc( nEntries, SIZEOF_VLTS );
+
     if( ( VSIFSeekL( fp, nStart, SEEK_SET ) == -1 ) ||
-        ( VSIFReadL( hVLTColors.Entry, nEntries, SIZEOF_VLTS, fp ) == 0 ) )
+        ( VSIFReadL( pabyBuf, nEntries, SIZEOF_VLTS, fp ) == 0 ) )
     {
         CPLFree( hVLTColors.Entry );
         return;
+    }
+
+    unsigned int i = 0;
+    unsigned int n = 0;
+
+    for( i = 0; i < nEntries; i++ )
+    {
+        BUF2STRC( pabyBuf, n, hVLTColors.Entry[i].v_slot );
+        BUF2STRC( pabyBuf, n, hVLTColors.Entry[i].v_red );
+        BUF2STRC( pabyBuf, n, hVLTColors.Entry[i].v_green );
+        BUF2STRC( pabyBuf, n, hVLTColors.Entry[i].v_blue );
     }
 
     // -------------------------------------------------------------
@@ -562,8 +597,8 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
 
     vlt_slot hSwapSlot;
     bool bContinue = true; // Inproved bubble sort.
-    uint32 i;              // This is the best sort techique when you
-    uint32 j;              // suspect that the data is already sorted
+    unsigned j = 0;        // This is the best sort techique when you
+                           // suspect that the data is already sorted
 
 #if defined(CPL_MSB)
     for (i = 0; i < nEntries; i++)
@@ -823,7 +858,7 @@ void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMem )
 // -----------------------------------------------------------------------------
 
 int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
-                                    uint32 nSeekLimit )
+                                      uint32 nSeekLimit )
 {
     if( nAppDataOfseet == 0  )
     {
@@ -833,14 +868,17 @@ int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
     INGR_JPEGAppData hJpegData;
     uint32 nNext = nAppDataOfseet;
 
+    GByte abyBuf[SIZEOF_JPGAD];
+
     do
     {
         if( ( VSIFSeekL( fp, nNext, SEEK_SET ) == -1 ) ||
-            ( VSIFReadL( &hJpegData, 1, SIZEOF_JPGAD, fp ) == 0 ) )
+            ( VSIFReadL( abyBuf, 1, SIZEOF_JPGAD, fp ) == 0 ) )
         {
             return INGR_JPEGQDEFAULT;
         }
-        INGR_JPEGAppDataDiskToMem(&hJpegData);
+
+        INGR_JPEGAppDataDiskToMem(&hJpegData, abyBuf);
 
         nNext += hJpegData.RemainingLength;
 
@@ -1039,9 +1077,38 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
     return iOutput;
 }
 
-
-void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne)
+void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, GByte *pabyBuf)
 {
+    unsigned int n = 0;
+
+    BUF2STRC( pabyBuf, n, pHeaderOne->HeaderType );
+    BUF2STRC( pabyBuf, n, pHeaderOne->WordsToFollow );
+    BUF2STRC( pabyBuf, n, pHeaderOne->DataTypeCode );
+    BUF2STRC( pabyBuf, n, pHeaderOne->ApplicationType );
+    BUF2STRC( pabyBuf, n, pHeaderOne->XViewOrigin );
+    BUF2STRC( pabyBuf, n, pHeaderOne->YViewOrigin );
+    BUF2STRC( pabyBuf, n, pHeaderOne->ZViewOrigin );
+    BUF2STRC( pabyBuf, n, pHeaderOne->XViewExtent );
+    BUF2STRC( pabyBuf, n, pHeaderOne->YViewExtent );
+    BUF2STRC( pabyBuf, n, pHeaderOne->ZViewExtent );
+    BUF2STRC( pabyBuf, n, pHeaderOne->TransformationMatrix );
+    BUF2STRC( pabyBuf, n, pHeaderOne->PixelsPerLine );
+    BUF2STRC( pabyBuf, n, pHeaderOne->NumberOfLines );
+    BUF2STRC( pabyBuf, n, pHeaderOne->DeviceResolution );
+    BUF2STRC( pabyBuf, n, pHeaderOne->ScanlineOrientation );
+    BUF2STRC( pabyBuf, n, pHeaderOne->ScannableFlag );
+    BUF2STRC( pabyBuf, n, pHeaderOne->RotationAngle );
+    BUF2STRC( pabyBuf, n, pHeaderOne->SkewAngle );
+    BUF2STRC( pabyBuf, n, pHeaderOne->DataTypeModifier );
+    BUF2STRC( pabyBuf, n, pHeaderOne->DesignFileName );
+    BUF2STRC( pabyBuf, n, pHeaderOne->DataBaseFileName );
+    BUF2STRC( pabyBuf, n, pHeaderOne->ParentGridFileName );
+    BUF2STRC( pabyBuf, n, pHeaderOne->FileDescription );
+    BUF2STRC( pabyBuf, n, pHeaderOne->Minimum );
+    BUF2STRC( pabyBuf, n, pHeaderOne->Maximum );
+    BUF2STRC( pabyBuf, n, pHeaderOne->Reserved );
+    BUF2STRC( pabyBuf, n, pHeaderOne->GridFileVersion );
+
 #if defined(CPL_MSB)
     CPL_LSBPTR16(&pHeaderOne->WordsToFollow);
     CPL_LSBPTR16(&pHeaderOne->DataTypeCode);
@@ -1052,21 +1119,35 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne)
     CPL_LSBPTR16(&pHeaderOne->DataTypeModifier);
     switch (INGR_GetDataType(pHeaderOne->DataTypeCode))
     {
-        case GDT_Byte:    pHeaderOne->Minimum.AsUint8 = *(uint8*)&(pHeaderOne->Minimum);
-                          pHeaderOne->Maximum.AsUint8 = *(uint8*)&(pHeaderOne->Maximum); break;
-        case GDT_Int16:   pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
-                          pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum)); break;
-        case GDT_UInt16:  pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
-                          pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum)); break;
-        case GDT_Int32:   pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-                          pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); break;
-        case GDT_UInt32:  pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-                          pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); break;
+    case GDT_Byte:    
+        pHeaderOne->Minimum.AsUint8 = *(uint8*)&(pHeaderOne->Minimum);
+        pHeaderOne->Maximum.AsUint8 = *(uint8*)&(pHeaderOne->Maximum); 
+        break;
+    case GDT_Int16:   
+        pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum)); 
+        break;
+    case GDT_UInt16:  
+        pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum)); 
+        break;
+    case GDT_Int32:   
+        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); 
+        break;
+    case GDT_UInt32:  
+        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); 
+        break;
         /* FIXME ? I'm not sure this is correct for floats */
-        case GDT_Float32: pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-                          pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); break;
-        case GDT_Float64: CPL_LSBPTR64(&pHeaderOne->Minimum); CPL_LSBPTR64(&pHeaderOne->Maximum); break;
-        default: break;
+    case GDT_Float32: 
+        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); 
+        break;
+    case GDT_Float64: 
+        CPL_LSBPTR64(&pHeaderOne->Minimum); CPL_LSBPTR64(&pHeaderOne->Maximum); 
+        break;
+    default: break;
     }
 #endif
 
@@ -1117,8 +1198,38 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne)
     }
 }
 
-void CPL_STDCALL INGR_HeaderOneMemToDisk(INGR_HeaderOne* pHeaderOne)
+void CPL_STDCALL INGR_HeaderOneMemToDisk(INGR_HeaderOne* pHeaderOne, GByte *pabyBuf)
 {
+    unsigned int n = 0;
+
+    STRC2BUF( pabyBuf, n, pHeaderOne->HeaderType );
+    STRC2BUF( pabyBuf, n, pHeaderOne->WordsToFollow );
+    STRC2BUF( pabyBuf, n, pHeaderOne->DataTypeCode );
+    STRC2BUF( pabyBuf, n, pHeaderOne->ApplicationType );
+    STRC2BUF( pabyBuf, n, pHeaderOne->XViewOrigin );
+    STRC2BUF( pabyBuf, n, pHeaderOne->YViewOrigin );
+    STRC2BUF( pabyBuf, n, pHeaderOne->ZViewOrigin );
+    STRC2BUF( pabyBuf, n, pHeaderOne->XViewExtent );
+    STRC2BUF( pabyBuf, n, pHeaderOne->YViewExtent );
+    STRC2BUF( pabyBuf, n, pHeaderOne->ZViewExtent );
+    STRC2BUF( pabyBuf, n, pHeaderOne->TransformationMatrix );
+    STRC2BUF( pabyBuf, n, pHeaderOne->PixelsPerLine );
+    STRC2BUF( pabyBuf, n, pHeaderOne->NumberOfLines );
+    STRC2BUF( pabyBuf, n, pHeaderOne->DeviceResolution );
+    STRC2BUF( pabyBuf, n, pHeaderOne->ScanlineOrientation );
+    STRC2BUF( pabyBuf, n, pHeaderOne->ScannableFlag );
+    STRC2BUF( pabyBuf, n, pHeaderOne->RotationAngle );
+    STRC2BUF( pabyBuf, n, pHeaderOne->SkewAngle );
+    STRC2BUF( pabyBuf, n, pHeaderOne->DataTypeModifier );
+    STRC2BUF( pabyBuf, n, pHeaderOne->DesignFileName );
+    STRC2BUF( pabyBuf, n, pHeaderOne->DataBaseFileName );
+    STRC2BUF( pabyBuf, n, pHeaderOne->ParentGridFileName );
+    STRC2BUF( pabyBuf, n, pHeaderOne->FileDescription );
+    STRC2BUF( pabyBuf, n, pHeaderOne->Minimum );
+    STRC2BUF( pabyBuf, n, pHeaderOne->Maximum );
+    STRC2BUF( pabyBuf, n, pHeaderOne->Reserved );
+    STRC2BUF( pabyBuf, n, pHeaderOne->GridFileVersion );
+
 #if defined(CPL_MSB)
     switch (INGR_GetDataType(pHeaderOne->DataTypeCode))
     {
@@ -1168,8 +1279,26 @@ void CPL_STDCALL INGR_HeaderOneMemToDisk(INGR_HeaderOne* pHeaderOne)
 #endif
 }
 
-void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo)
+void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf)
 {
+    unsigned int n = 0;
+
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Gain );                    
+    BUF2STRC( pabyBuf, n, pHeaderTwo->OffsetThreshold );         
+    BUF2STRC( pabyBuf, n, pHeaderTwo->View1 );                   
+    BUF2STRC( pabyBuf, n, pHeaderTwo->View2 );                   
+    BUF2STRC( pabyBuf, n, pHeaderTwo->ViewNumber );              
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved2 );               
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved3 );               
+    BUF2STRC( pabyBuf, n, pHeaderTwo->AspectRatio );             
+    BUF2STRC( pabyBuf, n, pHeaderTwo->CatenatedFilePointer );    
+    BUF2STRC( pabyBuf, n, pHeaderTwo->ColorTableType );          
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved8 );               
+    BUF2STRC( pabyBuf, n, pHeaderTwo->NumberOfCTEntries );       
+    BUF2STRC( pabyBuf, n, pHeaderTwo->ApplicationPacketPointer );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->ApplicationPacketLength ); 
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved );           
+
 #if defined(CPL_MSB)
     CPL_LSBPTR64(&pHeaderTwo->AspectRatio);
     CPL_LSBPTR32(&pHeaderTwo->CatenatedFilePointer);
@@ -1180,8 +1309,26 @@ void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo)
 #endif
 }
 
-void CPL_STDCALL INGR_HeaderTwoAMemToDisk(INGR_HeaderTwoA* pHeaderTwo)
+void CPL_STDCALL INGR_HeaderTwoAMemToDisk(INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf)
 {
+    unsigned int n = 0;
+
+    STRC2BUF( pabyBuf, n, pHeaderTwo->Gain );                    
+    STRC2BUF( pabyBuf, n, pHeaderTwo->OffsetThreshold );         
+    STRC2BUF( pabyBuf, n, pHeaderTwo->View1 );                   
+    STRC2BUF( pabyBuf, n, pHeaderTwo->View2 );                   
+    STRC2BUF( pabyBuf, n, pHeaderTwo->ViewNumber );              
+    STRC2BUF( pabyBuf, n, pHeaderTwo->Reserved2 );               
+    STRC2BUF( pabyBuf, n, pHeaderTwo->Reserved3 );               
+    STRC2BUF( pabyBuf, n, pHeaderTwo->AspectRatio );             
+    STRC2BUF( pabyBuf, n, pHeaderTwo->CatenatedFilePointer );    
+    STRC2BUF( pabyBuf, n, pHeaderTwo->ColorTableType );          
+    STRC2BUF( pabyBuf, n, pHeaderTwo->Reserved8 );               
+    STRC2BUF( pabyBuf, n, pHeaderTwo->NumberOfCTEntries );       
+    STRC2BUF( pabyBuf, n, pHeaderTwo->ApplicationPacketPointer );
+    STRC2BUF( pabyBuf, n, pHeaderTwo->ApplicationPacketLength ); 
+    STRC2BUF( pabyBuf, n, pHeaderTwo->Reserved );           
+
 #if defined(CPL_MSB)
     CPL_LSBPTR64(&pHeaderTwo->AspectRatio);
     CPL_LSBPTR32(&pHeaderTwo->CatenatedFilePointer);
@@ -1192,8 +1339,23 @@ void CPL_STDCALL INGR_HeaderTwoAMemToDisk(INGR_HeaderTwoA* pHeaderTwo)
 #endif
 }
 
-void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader)
+void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader, GByte *pabyBuf)
 {
+    unsigned int n = 0;
+
+    BUF2STRC( pabyBuf, n, pTileHeader->ApplicationType );
+    BUF2STRC( pabyBuf, n, pTileHeader->SubTypeCode );
+    BUF2STRC( pabyBuf, n, pTileHeader->WordsToFollow );
+    BUF2STRC( pabyBuf, n, pTileHeader->PacketVersion );
+    BUF2STRC( pabyBuf, n, pTileHeader->Identifier );
+    BUF2STRC( pabyBuf, n, pTileHeader->Reserved );
+    BUF2STRC( pabyBuf, n, pTileHeader->Properties );
+    BUF2STRC( pabyBuf, n, pTileHeader->DataTypeCode );
+    BUF2STRC( pabyBuf, n, pTileHeader->Reserved2 );
+    BUF2STRC( pabyBuf, n, pTileHeader->TileSize ); 
+    BUF2STRC( pabyBuf, n, pTileHeader->Reserved3 );
+    BUF2STRC( pabyBuf, n, pTileHeader->First );
+
 #if defined(CPL_MSB)
     CPL_LSBPTR16(&pTileHeader->ApplicationType);
     CPL_LSBPTR16(&pTileHeader->SubTypeCode);
@@ -1203,12 +1365,20 @@ void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader)
     CPL_LSBPTR16(&pTileHeader->Properties);
     CPL_LSBPTR16(&pTileHeader->DataTypeCode);
     CPL_LSBPTR32(&pTileHeader->TileSize);
-    INGR_TileItemDiskToMem(&pTileHeader->First);
+    CPL_LSBPTR32(&pTileHeader->First->Start);
+    CPL_LSBPTR32(&pTileHeader->First->Allocated);
+    CPL_LSBPTR32(&pTileHeader->First->Used);
 #endif
 }
 
-void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem)
+void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem, GByte *pabyBuf)
 {
+    unsigned int n = 0;
+
+    BUF2STRC( pabyBuf, n, pTileItem->Start );
+    BUF2STRC( pabyBuf, n, pTileItem->Allocated );
+    BUF2STRC( pabyBuf, n, pTileItem->Used );
+
 #if defined(CPL_MSB)
     CPL_LSBPTR32(&pTileItem->Start);
     CPL_LSBPTR32(&pTileItem->Allocated);
@@ -1216,8 +1386,16 @@ void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem)
 #endif
 }
 
-void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData)
+void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData, GByte *pabyBuf)
 {
+    unsigned int n = 0;
+
+    BUF2STRC( pabyBuf, n, pJPEGAppData->ApplicationType );
+    BUF2STRC( pabyBuf, n, pJPEGAppData->SubTypeCode );
+    BUF2STRC( pabyBuf, n, pJPEGAppData->RemainingLength );
+    BUF2STRC( pabyBuf, n, pJPEGAppData->PacketVersion );
+    BUF2STRC( pabyBuf, n, pJPEGAppData->JpegQuality );
+
 #if defined(CPL_MSB)
     CPL_LSBPTR16(&pJPEGAppData->ApplicationType);
     CPL_LSBPTR16(&pJPEGAppData->SubTypeCode);
