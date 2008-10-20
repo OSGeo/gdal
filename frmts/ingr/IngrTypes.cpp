@@ -1354,7 +1354,9 @@ void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader, GByte *p
     BUF2STRC( pabyBuf, n, pTileHeader->Reserved2 );
     BUF2STRC( pabyBuf, n, pTileHeader->TileSize ); 
     BUF2STRC( pabyBuf, n, pTileHeader->Reserved3 );
-    BUF2STRC( pabyBuf, n, pTileHeader->First );
+    BUF2STRC( pabyBuf, n, pTileHeader->First.Start );
+    BUF2STRC( pabyBuf, n, pTileHeader->First.Allocated );
+    BUF2STRC( pabyBuf, n, pTileHeader->First.Used );
 
 #if defined(CPL_MSB)
     CPL_LSBPTR16(&pTileHeader->ApplicationType);
@@ -1365,9 +1367,9 @@ void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader, GByte *p
     CPL_LSBPTR16(&pTileHeader->Properties);
     CPL_LSBPTR16(&pTileHeader->DataTypeCode);
     CPL_LSBPTR32(&pTileHeader->TileSize);
-    CPL_LSBPTR32(&pTileHeader->First->Start);
-    CPL_LSBPTR32(&pTileHeader->First->Allocated);
-    CPL_LSBPTR32(&pTileHeader->First->Used);
+    CPL_LSBPTR32(&pTileHeader->First.Start);
+    CPL_LSBPTR32(&pTileHeader->First.Allocated);
+    CPL_LSBPTR32(&pTileHeader->First.Used);
 #endif
 }
 
