@@ -1603,7 +1603,8 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     FlushSoftTransaction();
 
-    if( SoftStartTransaction() == OGRERR_NONE  )
+    if( EQUALN(pszSQLCommand,"VACUUM",6) 
+        || SoftStartTransaction() == OGRERR_NONE  )
     {
         if (EQUALN(pszSQLCommand, "SELECT", 6) == FALSE)
         {
