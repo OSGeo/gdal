@@ -1303,7 +1303,8 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     FlushSoftTransaction();
 
-    if( SoftStartTransaction() == OGRERR_NONE  )
+    if( EQUALN(pszSQLCommand,"VAC",3)
+        || SoftStartTransaction() == OGRERR_NONE  )
     {
         CPLDebug( "OGR_PG", "PQexec(%s)", pszSQLCommand );
         hResult = PQexec(hPGConn, pszSQLCommand );
