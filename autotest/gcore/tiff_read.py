@@ -187,6 +187,9 @@ def tiff_grads():
 
 def tiff_g4_split():
 
+    if not 'GetBlockSize' in dir(gdal.Band):
+        return 'skip'
+    
     ds = gdal.Open('data/slim_g4.tif')
 
     (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
@@ -202,6 +205,8 @@ def tiff_g4_split():
         return 'fail'
     
     return 'success'
+
+
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
