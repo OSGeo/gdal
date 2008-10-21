@@ -75,6 +75,7 @@ class GTiffDataset : public GDALPamDataset
     friend class GTiffRasterBand;
     friend class GTiffRGBABand;
     friend class GTiffBitmapBand;
+    friend class GTiffSplitBitmapBand;
     friend class GTiffOddBitsBand;
     
     TIFF	*hTIFF;
@@ -1774,6 +1775,115 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 /************************************************************************/
 /* ==================================================================== */
+/*                          GTiffSplitBitmapBand                        */
+/* ==================================================================== */
+/************************************************************************/
+
+class GTiffSplitBitmapBand : public GTiffBitmapBand
+{
+    friend class GTiffDataset;
+
+    int            nLastLineRead;
+
+  public:
+
+                   GTiffSplitBitmapBand( GTiffDataset *, int );
+    virtual       ~GTiffSplitBitmapBand();
+
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
+};
+
+
+/************************************************************************/
+/*                           GTiffBitmapBand()                          */
+/************************************************************************/
+
+GTiffSplitBitmapBand::GTiffSplitBitmapBand( GTiffDataset *poDS, int nBand )
+        : GTiffBitmapBand( poDS, nBand )
+
+{
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
+
+    nLastLineRead = -1;
+}
+
+/************************************************************************/
+/*                           GTiffBitmapBand()                          */
+/************************************************************************/
+
+GTiffSplitBitmapBand::~GTiffSplitBitmapBand()
+
+{
+}
+
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                         void * pImage )
+
+{
+    GByte              *pabyLineBuf;
+
+    poGDS->SetDirectory();
+
+    pabyLineBuf = (GByte *) CPLMalloc(TIFFScanlineSize(poGDS->hTIFF));
+
+/* -------------------------------------------------------------------- */
+/*      Read through to target scanline.                                */
+/* -------------------------------------------------------------------- */
+    if( nLastLineRead >= nBlockYOff )
+        nLastLineRead = -1;
+
+    while( nLastLineRead < nBlockYOff )
+    {
+        if( TIFFReadScanline( poGDS->hTIFF, pabyLineBuf, nBlockYOff, 0 ) == -1 )
+        {
+            CPLFree( pabyLineBuf );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "TIFFReadScanline() failed." );
+            return CE_Failure;
+        }
+        nLastLineRead++;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Translate 1bit data to eight bit.                               */
+/* -------------------------------------------------------------------- */
+    int	  iPixel, iSrcOffset=0, iDstOffset=0;
+
+    for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset++ )
+    {
+        if( pabyLineBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
+            ((GByte *) pImage)[iDstOffset++] = 1;
+        else
+            ((GByte *) pImage)[iDstOffset++] = 0;
+    }
+    
+    CPLFree( pabyLineBuf );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffSplitBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                          void * pImage )
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "Split bitmap bands are read-only." );
+    return CE_Failure;
+}
+
+/************************************************************************/
+/* ==================================================================== */
 /*                            GTiffDataset                              */
 /* ==================================================================== */
 /************************************************************************/
@@ -3116,6 +3226,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     uint32	nXSize, nYSize;
     int		bTreatAsBitmap = FALSE;
     int         bTreatAsOdd = FALSE;
+    int         bTreatAsSplit = FALSE;
 
     hTIFF = hTIFFIn;
 
@@ -3202,7 +3313,15 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 /*      Should we handle this using the GTiffBitmapBand?                */
 /* -------------------------------------------------------------------- */
     if( nBitsPerSample == 1 && nBands == 1 )
+    {
         bTreatAsBitmap = TRUE;
+
+        // Lets treat large "one row" bitmaps using the scanline api.
+        if( !TIFFIsTiled(hTIFF) 
+            && nBlockYSize == nYSize 
+            && nYSize > 2000 )
+            bTreatAsSplit = TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the RGBA interface?                    */
@@ -3325,6 +3444,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     {
         if( bTreatAsRGBA )
             SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
+        else if( bTreatAsSplit )
+            SetBand( iBand+1, new GTiffSplitBitmapBand( this, iBand+1 ) );
         else if( bTreatAsBitmap )
             SetBand( iBand+1, new GTiffBitmapBand( this, iBand+1 ) );
         else if( bTreatAsOdd )
