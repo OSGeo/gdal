@@ -157,6 +157,8 @@ class GTiffDataset : public GDALPamDataset
     GTiffDataset* poMaskDS;
     GTiffDataset* poBaseDS;
 
+    CPLString    osFilename;
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -2080,7 +2082,7 @@ GTiffDataset::~GTiffDataset()
     if( GetAccess() == GA_Update && bBase )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE, osProfile, GetDescription(),
+            WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
                            papszCreationOptions );
         
         if( bNewDataset || bGeoTIFFInfoChanged )
@@ -2361,7 +2363,7 @@ void GTiffDataset::Crystalize()
     if( !bCrystalized )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE, osProfile, GetDescription(),
+            WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
                            papszCreationOptions );
 
         bCrystalized = TRUE;
@@ -2955,7 +2957,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
         if( CSLFetchBoolean( papszCreationOptions, "TFW", FALSE ) 
             || CSLFetchBoolean( papszCreationOptions, "WORLDFILE", FALSE ) )
         {
-            GDALWriteWorldFile( GetDescription(), "tfw", adfGeoTransform );
+            GDALWriteWorldFile( osFilename, "tfw", adfGeoTransform );
         }
     }
     else if( GetGCPCount() > 0 )
@@ -3693,6 +3695,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new GTiffDataset();
     poDS->SetDescription( pszFilename );
+    poDS->osFilename = pszFilename;
 
     if( poDS->OpenOffset( hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE,
                           poOpenInfo->eAccess, bAllowRGBAInterface ) != CE_None )
@@ -3709,7 +3712,6 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( pszFilename );
     poDS->TryLoadXML();
     poDS->ApplyPamInfo();
 
@@ -3864,7 +3866,16 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     GTiffDataset 	*poDS;
 
     poDS = new GTiffDataset();
-    poDS->SetDescription( pszFilename );
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->osFilename = poOpenInfo->pszFilename;
+
+    if( !EQUAL(pszFilename,poOpenInfo->pszFilename) 
+        && !EQUALN(poOpenInfo->pszFilename,"GTIFF_RAW:",10) )
+    {
+        poDS->SetPhysicalFilename( pszFilename );
+        poDS->SetSubdatasetName( poOpenInfo->pszFilename );
+        poDS->osFilename = pszFilename;
+    }
 
     if (poOpenInfo->eAccess == GA_Update)
     {
@@ -4221,18 +4232,18 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         else
         {
             bGeoTransformValid = 
-                GDALReadWorldFile( GetDescription(), NULL, adfGeoTransform );
+                GDALReadWorldFile( osFilename, NULL, adfGeoTransform );
 
             if( !bGeoTransformValid )
             {
                 bGeoTransformValid = 
-                    GDALReadWorldFile( GetDescription(), "wld", adfGeoTransform );
+                    GDALReadWorldFile( osFilename, "wld", adfGeoTransform );
             }
 
             if( !bGeoTransformValid )
             {
                 int bTabFileOK = 
-                    GDALReadTabFile( GetDescription(), adfGeoTransform, 
+                    GDALReadTabFile( osFilename, adfGeoTransform, 
                                      &pszTabWKT, &nGCPCount, &pasGCPList );
 
                 if( bTabFileOK && nGCPCount == 0 )
@@ -4513,7 +4524,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 /* -------------------------------------------------------------------- */
     if( bBaseIn )
     {
-        char **papszRPCMD = GDALLoadRPBFile( GetDescription(), NULL );
+        char **papszRPCMD = GDALLoadRPBFile( osFilename, NULL );
         
         if( papszRPCMD != NULL )
         {
@@ -4530,7 +4541,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 /* -------------------------------------------------------------------- */
     if( bBaseIn )
     {
-        char **papszIMDMD = GDALLoadIMDFile( GetDescription(), NULL );
+        char **papszIMDMD = GDALLoadIMDFile( osFilename, NULL );
 
         if( papszIMDMD != NULL )
         {
@@ -4678,7 +4689,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     nSPP = 1;
 
                 osName.Printf( "SUBDATASET_%d_NAME=GTIFF_DIR:%d:%s", 
-                               iDirIndex, iDirIndex, GetDescription() );
+                               iDirIndex, iDirIndex, osFilename.c_str() );
                 osDesc.Printf( "SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)", 
                                iDirIndex, iDirIndex, 
                                nXSize, nYSize, nSPP );
@@ -6037,12 +6048,12 @@ char **GTiffDataset::GetFileList()
 /* -------------------------------------------------------------------- */
 /*      Check for .imd file.                                            */
 /* -------------------------------------------------------------------- */
-    CPLString osTarget = CPLResetExtension( GetDescription(), "IMD" );
+    CPLString osTarget = CPLResetExtension( osFilename, "IMD" );
     if( VSIStatL( osTarget, &sStatBuf ) == 0 )
         papszFileList = CSLAddString( papszFileList, osTarget );
     else
     {
-        osTarget = CPLResetExtension( GetDescription(), "imd" );
+        osTarget = CPLResetExtension( osFilename, "imd" );
         if( VSIStatL( osTarget, &sStatBuf ) == 0 )
             papszFileList = CSLAddString( papszFileList, osTarget );
     }
@@ -6050,12 +6061,12 @@ char **GTiffDataset::GetFileList()
 /* -------------------------------------------------------------------- */
 /*      Check for .rpb file.                                            */
 /* -------------------------------------------------------------------- */
-    osTarget = CPLResetExtension( GetDescription(), "RPB" );
+    osTarget = CPLResetExtension( osFilename, "RPB" );
     if( VSIStatL( osTarget, &sStatBuf ) == 0 )
         papszFileList = CSLAddString( papszFileList, osTarget );
     else
     {
-        osTarget = CPLResetExtension( GetDescription(), "rpb" );
+        osTarget = CPLResetExtension( osFilename, "rpb" );
         if( VSIStatL( osTarget, &sStatBuf ) == 0 )
             papszFileList = CSLAddString( papszFileList, osTarget );
     }
