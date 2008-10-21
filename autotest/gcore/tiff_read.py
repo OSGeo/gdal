@@ -183,7 +183,7 @@ def tiff_grads():
     return 'success'
 
 ###############################################################################
-# Check handling of non-degree angular units (#601)
+# Test GTiffSplitBitmapBand to treat one row 1bit files as scanline blocks (#2622)
 
 def tiff_g4_split():
 
