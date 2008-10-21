@@ -1947,14 +1947,13 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     while( nLastLineRead < nBlockYOff )
     {
-        if( TIFFReadScanline( poGDS->hTIFF, pabyLineBuf, nBlockYOff, 0 ) == -1 )
+        if( TIFFReadScanline( poGDS->hTIFF, pabyLineBuf, ++nLastLineRead, 0 ) == -1 )
         {
             CPLFree( pabyLineBuf );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TIFFReadScanline() failed." );
             return CE_Failure;
         }
-        nLastLineRead++;
     }
     
 /* -------------------------------------------------------------------- */
