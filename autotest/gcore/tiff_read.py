@@ -182,6 +182,27 @@ def tiff_grads():
 
     return 'success'
 
+###############################################################################
+# Check handling of non-degree angular units (#601)
+
+def tiff_g4_split():
+
+    ds = gdal.Open('data/slim_g4.tif')
+
+    (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+    
+    if blocky != 1:
+        gdaltest.post_reason( 'Did not get scanline sized blocks.' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 3322:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum' )
+        return 'fail'
+    
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -195,6 +216,7 @@ gdaltest_list.append( (tiff_read_gzip) )
 gdaltest_list.append( (tiff_read_zip_1) )
 gdaltest_list.append( (tiff_read_zip_2) )
 gdaltest_list.append( (tiff_grads) )
+gdaltest_list.append( (tiff_g4_split) )
 
 if __name__ == '__main__':
 
