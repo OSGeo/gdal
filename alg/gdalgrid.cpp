@@ -70,9 +70,9 @@ CPL_CVSID("$Id$");
  * @param poOptions Algorithm parameters. This should point to
  * GDALGridInverseDistanceToAPowerOptions object. 
  * @param nPoints Number of elements in input arrays.
- * @param pdfX Input array of X coordinates. 
- * @param pdfY Input array of Y coordinates. 
- * @param pdfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param nXPoint X position of the point to compute.  
@@ -85,8 +85,8 @@ CPL_CVSID("$Id$");
 
 CPLErr
 GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
-                                 const double *pdfX, const double *pdfY,
-                                 const double *pdfZ,
+                                 const double *padfX, const double *padfY,
+                                 const double *padfZ,
                                  double dfXPoint, double dfYPoint,
                                  double *pdfValue )
 {
@@ -126,8 +126,8 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
 
     for ( i = 0; i < nPoints; i++ )
     {
-        double  dfRX = pdfX[i] - dfXPoint;
-        double  dfRY = pdfY[i] - dfYPoint;
+        double  dfRX = padfX[i] - dfXPoint;
+        double  dfRY = padfY[i] - dfYPoint;
         const double dfR2 =
             dfRX * dfRX + dfRY * dfRY + dfSmoothing * dfSmoothing;
 
@@ -145,13 +145,13 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
         {
             if ( CPLIsEqual(dfR2, 0.0) )
             {
-                (*pdfValue) = pdfZ[i];
+                (*pdfValue) = padfZ[i];
                 return CE_None;
             }
             else
             {
                 const double  dfW = pow( sqrt(dfR2), dfPower );
-                dfNominator += pdfZ[i] / dfW;
+                dfNominator += padfZ[i] / dfW;
                 dfDenominator += 1.0 / dfW;
                 n++;
                 if ( nMaxPoints > 0 && n > nMaxPoints )
@@ -189,8 +189,8 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
 
 CPLErr
 GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
-                                         const double *pdfX, const double *pdfY,
-                                         const double *pdfZ,
+                                         const double *padfX, const double *padfY,
+                                         const double *padfZ,
                                          double dfXPoint, double dfYPoint,
                                          double *pdfValue )
 {
@@ -203,20 +203,20 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
 
     for ( i = 0; i < nPoints; i++ )
     {
-        const double dfRX = pdfX[i] - dfXPoint;
-        const double dfRY = pdfY[i] - dfYPoint;
+        const double dfRX = padfX[i] - dfXPoint;
+        const double dfRY = padfY[i] - dfYPoint;
         const double dfR2 =
             dfRX * dfRX + dfRY * dfRY + dfSmoothing * dfSmoothing;
 
         if ( CPLIsEqual(dfR2, 0.0) )
         {
-            (*pdfValue) = pdfZ[i];
+            (*pdfValue) = padfZ[i];
             return CE_None;
         }
         else
         {
             const double dfW = pow( sqrt(dfR2), dfPower );
-            dfNominator += pdfZ[i] / dfW;
+            dfNominator += padfZ[i] / dfW;
             dfDenominator += 1.0 / dfW;
         }
     }
@@ -261,9 +261,9 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
  * @param poOptions Algorithm parameters. This should point to
  * GDALGridMovingAverageOptions object. 
  * @param nPoints Number of elements in input arrays.
- * @param pdfX Input array of X coordinates. 
- * @param pdfY Input array of Y coordinates. 
- * @param pdfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -274,8 +274,8 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
 
 CPLErr
 GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
-                       const double *pdfX, const double *pdfY,
-                       const double *pdfZ,
+                       const double *padfX, const double *padfY,
+                       const double *padfZ,
                        double dfXPoint, double dfYPoint, double *pdfValue )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
@@ -306,8 +306,8 @@ GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
 
     while ( i < nPoints )
     {
-        double  dfRX = pdfX[i] - dfXPoint;
-        double  dfRY = pdfY[i] - dfYPoint;
+        double  dfRX = padfX[i] - dfXPoint;
+        double  dfRY = padfY[i] - dfYPoint;
 
         if ( bRotated )
         {
@@ -321,7 +321,7 @@ GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
         // Is this point located inside the search ellipse?
         if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
-            dfAccumulator += pdfZ[i];
+            dfAccumulator += padfZ[i];
             n++;
         }
 
@@ -355,9 +355,9 @@ GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
  * @param poOptions Algorithm parameters. This should point to
  * GDALGridNearestNeighborOptions object. 
  * @param nPoints Number of elements in input arrays.
- * @param pdfX Input array of X coordinates. 
- * @param pdfY Input array of Y coordinates. 
- * @param pdfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -368,8 +368,8 @@ GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
 
 CPLErr
 GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
-                         const double *pdfX, const double *pdfY,
-                         const double *pdfZ,
+                         const double *padfX, const double *padfY,
+                         const double *padfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
@@ -409,8 +409,8 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
 
     while ( i < nPoints )
     {
-        double  dfRX = pdfX[i] - dfXPoint;
-        double  dfRY = pdfY[i] - dfYPoint;
+        double  dfRX = padfX[i] - dfXPoint;
+        double  dfRY = padfY[i] - dfYPoint;
 
         if ( bRotated )
         {
@@ -428,7 +428,7 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
             if ( dfNearestR == 0.0 || dfR2 < dfNearestR )
             {
                 dfNearestR = dfR2;
-                dfNearestValue = pdfZ[i];
+                dfNearestValue = padfZ[i];
             }
         }
 
@@ -464,9 +464,9 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
  * @param poOptions Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object. 
  * @param nPoints Number of elements in input arrays.
- * @param pdfX Input array of X coordinates. 
- * @param pdfY Input array of Y coordinates. 
- * @param pdfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -477,8 +477,8 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
 
 CPLErr
 GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
-                           const double *pdfX, const double *pdfY,
-                           const double *pdfZ,
+                           const double *padfX, const double *padfY,
+                           const double *padfZ,
                            double dfXPoint, double dfYPoint, double *pdfValue )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
@@ -511,8 +511,8 @@ GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
 
     while ( i < nPoints )
     {
-        double  dfRX = pdfX[i] - dfXPoint;
-        double  dfRY = pdfY[i] - dfYPoint;
+        double  dfRX = padfX[i] - dfXPoint;
+        double  dfRY = padfY[i] - dfYPoint;
 
         if ( bRotated )
         {
@@ -528,11 +528,11 @@ GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
         {
             if ( n )
             {
-                if ( dfMinimumValue > pdfZ[i] )
-                    dfMinimumValue = pdfZ[i];
+                if ( dfMinimumValue > padfZ[i] )
+                    dfMinimumValue = padfZ[i];
             }
             else
-                dfMinimumValue = pdfZ[i];
+                dfMinimumValue = padfZ[i];
             n++;
         }
 
@@ -575,9 +575,9 @@ GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
  * @param poOptions Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object. 
  * @param nPoints Number of elements in input arrays.
- * @param pdfX Input array of X coordinates. 
- * @param pdfY Input array of Y coordinates. 
- * @param pdfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -588,8 +588,8 @@ GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
 
 CPLErr
 GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
-                           const double *pdfX, const double *pdfY,
-                           const double *pdfZ,
+                           const double *padfX, const double *padfY,
+                           const double *padfZ,
                            double dfXPoint, double dfYPoint, double *pdfValue )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
@@ -622,8 +622,8 @@ GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
 
     while ( i < nPoints )
     {
-        double  dfRX = pdfX[i] - dfXPoint;
-        double  dfRY = pdfY[i] - dfYPoint;
+        double  dfRX = padfX[i] - dfXPoint;
+        double  dfRY = padfY[i] - dfYPoint;
 
         if ( bRotated )
         {
@@ -639,11 +639,11 @@ GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
         {
             if ( n )
             {
-                if ( dfMaximumValue < pdfZ[i] )
-                    dfMaximumValue = pdfZ[i];
+                if ( dfMaximumValue < padfZ[i] )
+                    dfMaximumValue = padfZ[i];
             }
             else
-                dfMaximumValue = pdfZ[i];
+                dfMaximumValue = padfZ[i];
             n++;
         }
 
@@ -687,9 +687,9 @@ GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
  * @param poOptions Algorithm parameters. This should point to
  * GDALGridDataMetricsOptions object. 
  * @param nPoints Number of elements in input arrays.
- * @param pdfX Input array of X coordinates. 
- * @param pdfY Input array of Y coordinates. 
- * @param pdfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -700,8 +700,8 @@ GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
 
 CPLErr
 GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
-                         const double *pdfX, const double *pdfY,
-                         const double *pdfZ,
+                         const double *padfX, const double *padfY,
+                         const double *padfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
@@ -734,8 +734,8 @@ GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
 
     while ( i < nPoints )
     {
-        double  dfRX = pdfX[i] - dfXPoint;
-        double  dfRY = pdfY[i] - dfYPoint;
+        double  dfRX = padfX[i] - dfXPoint;
+        double  dfRY = padfY[i] - dfYPoint;
 
         if ( bRotated )
         {
@@ -751,13 +751,13 @@ GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
         {
             if ( n )
             {
-                if ( dfMinimumValue > pdfZ[i] )
-                    dfMinimumValue = pdfZ[i];
-                if ( dfMaximumValue < pdfZ[i] )
-                    dfMaximumValue = pdfZ[i];
+                if ( dfMinimumValue > padfZ[i] )
+                    dfMinimumValue = padfZ[i];
+                if ( dfMaximumValue < padfZ[i] )
+                    dfMaximumValue = padfZ[i];
             }
             else
-                dfMinimumValue = dfMaximumValue = pdfZ[i];
+                dfMinimumValue = dfMaximumValue = padfZ[i];
             n++;
         }
 
@@ -791,9 +791,9 @@ GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
  * @param eAlgorithm Gridding method. 
  * @param poOptions Options to control choosen gridding method.
  * @param nPoints Number of elements in input arrays.
- * @param pdfX Input array of X coordinates. 
- * @param pdfY Input array of Y coordinates. 
- * @param pdfZ Input array of Z values. 
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
  * @param dfXMin Lowest X border of output grid.
  * @param dfXMax Highest X border of output grid.
  * @param dfYMin Lowest Y border of output grid.
@@ -812,15 +812,15 @@ GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
 CPLErr
 GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                 GUInt32 nPoints,
-                const double *pdfX, const double *pdfY, const double *pdfZ,
+                const double *padfX, const double *padfY, const double *padfZ,
                 double dfXMin, double dfXMax, double dfYMin, double dfYMax,
                 GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
                 GDALProgressFunc pfnProgress, void *pProgressArg )
 {
     CPLAssert( poOptions );
-    CPLAssert( pdfX );
-    CPLAssert( pdfY );
-    CPLAssert( pdfZ );
+    CPLAssert( padfX );
+    CPLAssert( padfY );
+    CPLAssert( padfZ );
     CPLAssert( pData );
 
     if ( nXSize == 0 || nYSize == 0 )
@@ -881,13 +881,14 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const double    dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
             double          dfValue = 0.0;
-            if ( (*pfnGDALGridMethod)( poOptions, nPoints, pdfX, pdfY, pdfZ,
+            if ( (*pfnGDALGridMethod)( poOptions, nPoints, padfX, padfY, padfZ,
                                        dfXPoint, dfYPoint,
                                        &dfValue ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Gridding failed at X position %lu, Y position %lu",
-                          (long unsigned int)nXPoint, (long unsigned int)nYPoint );
+                          (long unsigned int)nXPoint,
+                          (long unsigned int)nYPoint );
                 return CE_Failure;
             }
 
