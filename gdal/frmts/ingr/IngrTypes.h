@@ -491,6 +491,11 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
                              uint32 *pnBytesConsumed );
 
 int CPL_STDCALL 
+INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
+                                  uint32 nSrcBytes, uint32 nBlockSize,
+                                  uint32 *pnBytesConsumed );
+
+int CPL_STDCALL 
 INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
                               uint32 nSrcBytes, uint32 nBlockSize,
                               uint32 *pnBytesConsumed );
