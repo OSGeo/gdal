@@ -506,7 +506,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
 
     if( eFormat == RunLengthEncoded )
     {
-        BlackWhiteCT();
+        BlackWhiteCT( true );
     }
 
 }
