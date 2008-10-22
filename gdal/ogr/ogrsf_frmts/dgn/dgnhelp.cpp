@@ -1043,6 +1043,17 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             if( nMSLink != 0 || nEntityNum != 0 )
                 fprintf( fp, ", EntityNum=%d, MSLink=%d", 
                          nEntityNum, nMSLink );
+
+            int nBytes = psElement->attr_data + psElement->attr_bytes - pabyData;
+            if( nBytes < nLinkSize )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Corrupt linkage, element id:%d",
+                        psElement->element_id, iLink);
+                fprintf(fp, " (Corrupt, declared size: %d, assuming size: %d)", 
+                    nLinkSize, nBytes);
+                nLinkSize = nBytes;
+            }
             fprintf( fp, "\n  0x" );
 
             for( i = 0; i < nLinkSize; i++ )
