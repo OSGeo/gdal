@@ -169,7 +169,7 @@ static const double INGR_LRH_Flip[16] =
         0.0,  0.0,  0.0,  1.0
     };
 
-void INGR_MultiplyMatrix( double *padfA, double *padfB, const double *padfC )
+void INGR_MultiplyMatrix( double *padfA, real64 *padfB, const double *padfC )
 {
     int i;
     int j;
@@ -178,7 +178,7 @@ void INGR_MultiplyMatrix( double *padfA, double *padfB, const double *padfC )
     {
         for( j = 0; j < 4; j++ )
         {
-            padfA[(i * 4) + j] = 
+            padfA[(i * 4) + j] = (double)
                 padfB[(i * 4) + 0] * padfC[(0 * 4) + j] +
                 padfB[(i * 4) + 1] * padfC[(1 * 4) + j] +
                 padfB[(i * 4) + 2] * padfC[(2 * 4) + j] +
@@ -291,9 +291,9 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
         padfGeoTransform[0] = 0.0;
         padfGeoTransform[1] = 1.0;
         padfGeoTransform[2] = 0.0; 
-        padfGeoTransform[3] = pHeaderOne->PixelsPerLine;
+        padfGeoTransform[3] = 0.0;
         padfGeoTransform[4] = 0.0;
-        padfGeoTransform[5] = -1.0;
+        padfGeoTransform[5] = 1.0;
         return;
     }
 
@@ -306,7 +306,13 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
     switch( (INGR_Orientation ) pHeaderOne->ScanlineOrientation )
     {
         case UpperLeftVertical:
-            memcpy( adfConcat, pHeaderOne->TransformationMatrix, 16 ); //?? sizeof(double) ??
+            {
+                unsigned int i = 0;
+                for(i = 0; i < 16; i++)
+                {
+                    adfConcat[i] = (double) pHeaderOne->TransformationMatrix[i];
+                }
+            }
             break;
         case UpperRightVertical:
             INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_URV_Flip ); 
@@ -1044,35 +1050,68 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
     unsigned int   iOutput = 0;
     unsigned short *pauiSrc = (unsigned short *) pabySrcData;
     unsigned int   nSrcShorts = nSrcBytes / 2;
-    unsigned short nRun;
+    unsigned short nRun = 0;
     unsigned char  nValue = 0;
+    unsigned short previous = 0;
 
     if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
-        nValue = 1;
-
-    do
     {
-        nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
-        iInput++;
-        
-        if( nRun == 0x5900 )
+        nRun     = 256;
+        nValue   = 0;
+        previous = 0;
+        do
         {
-            iInput++; // line id
-            iInput++; // line data size
-            continue;
+            previous = nRun;
+
+            nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
+            iInput++;
+            
+            if( nRun == 0 && previous == 0 ) // new line
+            {
+                nValue = 0; 
+            }
+
+            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            {
+                pabyDstData[ iOutput++ ] = nValue;
+            }
+            
+            if( nRun != 0 )
+            {
+                nValue = ( nValue == 1 ? 0 : 1 );
+            }
         }
-        
-        for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
-        {
-            pabyDstData[ iOutput++ ] = nValue;
-        }
-        
-        nValue = ( nValue == 1 ? 0 : 1 );
+        while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
     }
-    while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
+    else
+    {
+        nValue = 1;
+        do
+        {
+            nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
+            iInput++;
+            
+            if( nRun == 0x5900 )
+            {
+                iInput++; // line id
+                iInput++; // line data size
+                continue;
+            }
+            
+            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            {
+                pabyDstData[ iOutput++ ] = nValue;
+            }
+            
+            nValue = ( nValue == 1 ? 0 : 1 );
+        }
+        while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
+    }
 
     if( pnBytesConsumed != NULL )
+    {
         *pnBytesConsumed = iInput * 2;
+    }
 
     return iOutput;
 }
