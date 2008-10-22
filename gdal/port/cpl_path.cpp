@@ -914,3 +914,44 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
     return papszNewList;
 }
 
+/************************************************************************/
+/*                      CPLGenerateTempFilename()                       */
+/************************************************************************/
+
+/**
+ * Generate temporary file name.
+ * 
+ * Returns a filename that may be used for a temporary file.  The location
+ * of the file tries to follow operating system semantics but may be
+ * forced via the CPL_TMPDIR configuration option.  
+ *
+ * @param pszStem if non-NULL this will be part of the filename.
+ * 
+ * @return a filename which is valid till the next CPL call in this thread.
+ */
+
+const char *CPLGenerateTempFilename( const char *pszStem )
+
+{
+    const char *pszDir = CPLGetConfigOption( "CPL_TMPDIR", NULL );
+    static volatile int nTempFileCounter = 0;
+
+    if( pszDir == NULL )
+        pszDir = CPLGetConfigOption( "TMPDIR", NULL );
+
+    if( pszDir == NULL )
+        pszDir = CPLGetConfigOption( "TEMP", NULL );
+
+    if( pszDir == NULL )
+        pszDir = ".";
+
+    CPLString osFilename;
+
+    if( pszStem == NULL )
+        pszStem = "";
+
+    osFilename.Printf( "%s%d_%d", pszStem, 
+                       (int) CPLGetPID(), nTempFileCounter++ );
+
+    return CPLFormFilename( pszDir, osFilename, NULL );
+}
