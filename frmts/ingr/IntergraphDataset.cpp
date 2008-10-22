@@ -706,8 +706,6 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
 
 CPLErr  IntergraphDataset::GetGeoTransform( double *padfTransform )
 {
-    INGR_GetTransMatrix( &hHeaderOne, adfGeoTransform );
-
     if( GDALPamDataset::GetGeoTransform( padfTransform ) != CE_None )
     {
         memcpy( padfTransform, adfGeoTransform, sizeof( double ) * 6 );
