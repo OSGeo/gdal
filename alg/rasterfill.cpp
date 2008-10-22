@@ -364,8 +364,10 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     GDALDatasetH hYDS;
     GDALRasterBandH hYBand;
     static const char *apszOptions[] = { "COMPRESS=LZW", NULL };
-
-    hYDS = GDALCreate( hDriver, "fill_y_work.tif", nXSize, nYSize, 1, 
+    CPLString osTmpFile = CPLGenerateTempFilename("");
+    
+    hYDS = GDALCreate( hDriver, (osTmpFile+"fill_y_work.tif").c_str(), 
+                       nXSize, nYSize, 1, 
                        eType, (char **) apszOptions );
     
     if( hYDS == NULL )
@@ -380,7 +382,8 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     GDALDatasetH hValDS;
     GDALRasterBandH hValBand;
 
-    hValDS = GDALCreate( hDriver, "fill_val_work.tif", nXSize, nYSize, 1,
+    hValDS = GDALCreate( hDriver, (osTmpFile+"fill_val_work.tif").c_str(), 
+                         nXSize, nYSize, 1,
                          GDALGetRasterDataType( hTargetBand ), 
                          (char **) apszOptions );
     
@@ -397,7 +400,8 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     GDALRasterBandH hFiltMaskBand;
     
     hFiltMaskDS = 
-        GDALCreate( hDriver, "fill_filtmask_work.tif", nXSize, nYSize, 1,
+        GDALCreate( hDriver, (osTmpFile+"fill_filtmask_work.tif").c_str(), 
+                    nXSize, nYSize, 1,
                     GDT_Byte, (char **) apszOptions );
     
     if( hFiltMaskDS == NULL )
