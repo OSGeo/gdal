@@ -149,6 +149,8 @@ char CPL_DLL      **CPLCorrespondingPaths( const char *pszOldFilename,
                                            char **papszFileList );
 int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 
+const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem );
+
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
 /* -------------------------------------------------------------------- */
