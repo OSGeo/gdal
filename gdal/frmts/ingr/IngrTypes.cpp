@@ -1037,13 +1037,60 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 }
 
 // -----------------------------------------------------------------------------
-//                                                 INGR_DecodeRunLengthBitonal()
+//                                                INGR_DecodeRunLengthBitonal()
 // -----------------------------------------------------------------------------
 
 int CPL_STDCALL 
 INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
                              uint32 nSrcBytes, uint32 nBlockSize,
                              uint32 *pnBytesConsumed )
+{
+    unsigned short i; 
+    unsigned int   iInput = 0;
+    unsigned int   iOutput = 0;
+    unsigned short *pauiSrc = (unsigned short *) pabySrcData;
+    unsigned int   nSrcShorts = nSrcBytes / 2;
+    unsigned short nRun;
+    unsigned char  nValue = 0;
+
+    if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
+        nValue = 1;
+
+    do
+    {
+        nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
+        iInput++;
+        
+        if( nRun == 0x5900 )
+        {
+            iInput++; // line id
+            iInput++; // line data size
+            continue;
+        }
+        
+        for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+        {
+            pabyDstData[ iOutput++ ] = nValue;
+        }
+        
+        nValue = ( nValue == 1 ? 0 : 1 );
+    }
+    while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
+
+    if( pnBytesConsumed != NULL )
+        *pnBytesConsumed = iInput * 2;
+
+    return iOutput;
+}
+
+// -----------------------------------------------------------------------------
+//                                           INGR_DecodeRunLengthBitonalTiled()
+// -----------------------------------------------------------------------------
+
+int CPL_STDCALL 
+INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
+                                  uint32 nSrcBytes, uint32 nBlockSize,
+                                  uint32 *pnBytesConsumed )
 {
     unsigned short i; 
     unsigned int   iInput = 0;

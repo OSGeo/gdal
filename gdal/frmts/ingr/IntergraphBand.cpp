@@ -574,12 +574,20 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     // Decode Run Length
     // --------------------------------------------------------------------
 
-    if( bTiled || panRLELineOffset == NULL )
+    if( bTiled && eFormat == RunLengthEncoded )
+    {
+        nBytesRead = 
+            INGR_DecodeRunLengthBitonalTiled( pabyRLEBlock, pabyBlockBuf,  
+                                              nRLESize, nBlockBufSize, NULL );
+    }
+    
+    else if( bTiled || panRLELineOffset == NULL )
     {
         nBytesRead = INGR_Decode( eFormat, pabyRLEBlock, pabyBlockBuf,  
                                   nRLESize, nBlockBufSize, 
                                   NULL );
     }
+
     else
     {
         // If we are missing the offset to this line, process all
