@@ -148,6 +148,8 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     else
         dfMaxDist = GDALGetRasterXSize(hSrcBand) + GDALGetRasterYSize(hSrcBand);
 
+    CPLDebug( "GDAL", "MAXDIST=%g, DISTMULT=%g", dfMaxDist, dfDistMult );
+
 /* -------------------------------------------------------------------- */
 /*      Verify the source and destination are compatible.               */
 /* -------------------------------------------------------------------- */
@@ -218,6 +220,26 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     }
 
 /* -------------------------------------------------------------------- */
+/*      We need a signed type for the working proximity values kept     */
+/*      on disk.  If our proximity band is not signed, then create a    */
+/*      temporary file for this purpose.                                */
+/* -------------------------------------------------------------------- */
+    GDALRasterBandH hWorkProximityBand = hProximityBand;
+    GDALDatasetH hWorkProximityDS = NULL;
+    GDALDataType eProxType = GDALGetRasterDataType( hProximityBand );
+
+    if( eProxType == GDT_Byte 
+        || eProxType == GDT_UInt16
+        || eProxType == GDT_UInt32 )
+    {
+        CPLString osTmpFile = CPLGenerateTempFilename( "proximity" );
+        hWorkProximityDS = 
+            GDALCreate( GDALGetDriverByName("GTiff"), osTmpFile,
+                        nXSize, nYSize, 1, GDT_Float32, NULL );
+        hWorkProximityBand = GDALGetRasterBand( hWorkProximityDS, 1 );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Allocate buffer for two scanlines of distances as floats        */
 /*      (the current and last line).                                    */
 /* -------------------------------------------------------------------- */
@@ -272,7 +294,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 
         // Write out results.
         eErr = 
-            GDALRasterIO( hProximityBand, GF_Write, 0, iLine, nXSize, 1, 
+            GDALRasterIO( hWorkProximityBand, GF_Write, 0, iLine, nXSize, 1, 
                           pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
 
         if( eErr != CE_None )
@@ -296,7 +318,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     {
         // Read first pass proximity
         eErr = 
-            GDALRasterIO( hProximityBand, GF_Read, 0, iLine, nXSize, 1, 
+            GDALRasterIO( hWorkProximityBand, GF_Read, 0, iLine, nXSize, 1, 
                           pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
 
         if( eErr != CE_None )
@@ -356,6 +378,13 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     CPLFree( panNearY );
     CPLFree( panSrcScanline );
     CPLFree( pafProximity );
+
+    if( hWorkProximityDS != NULL )
+    {
+        CPLString osProxFile = GDALGetDescription( hWorkProximityDS );
+        GDALClose( hWorkProximityDS );
+        GDALDeleteDataset( GDALGetDriverByName( "GTiff" ), osProxFile );
+    }
 
     return eErr;
 }
@@ -418,7 +447,7 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Are we near(er) to the closest target to the above (below)      */
 /*      pixel?                                                          */
 /* -------------------------------------------------------------------- */
-        float fNearDistSq = nXSize * nXSize * 2;
+        float fNearDistSq = MAX(dfMaxDist,nXSize) * MAX(dfMaxDist,nXSize) * 2;
         float fDistSq;
 
         if( panNearX[iPixel] != -1 )
