@@ -44,6 +44,10 @@ extern "C" {
 #include <grass/version.h>
 #include <grass/gprojects.h>
 #include <grass/gis.h>
+
+char *GPJ_grass_to_wkt(struct Key_Value *proj_info,
+		       struct Key_Value *proj_units,
+		       int esri_style, int prettify);
 }
 
 #include "gdal_priv.h"
@@ -365,10 +369,10 @@ GRASSRasterBand::~GRASSRasterBand()
         G_close_cell( hCell );
     
     if ( pszCellName )
-        free ( pszCellName );
+        G_free ( pszCellName );
 
     if ( pszMapset )
-        free ( pszMapset );
+        G_free ( pszMapset );
 }
 
 /************************************************************************/
@@ -465,7 +469,7 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImag
 	                pImage, eDataType, GDALGetDataTypeSize(eDataType)/8,
 			nBlockXSize );    
 
-	free ( cbuf );
+	G_free ( cbuf );
 
     } else if ( eDataType == GDT_Int32 ) {
 	G_get_c_raster_row ( hCell, (CELL *) pImage, nBlockYOff );
@@ -585,9 +589,9 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
 	}
     }
 
-    if ( cbuf ) free ( cbuf );
-    if ( fbuf ) free ( fbuf );
-    if ( dbuf ) free ( dbuf );
+    if ( cbuf ) G_free ( cbuf );
+    if ( fbuf ) G_free ( fbuf );
+    if ( dbuf ) G_free ( dbuf );
     
     return CE_None;
 }
@@ -701,13 +705,13 @@ GRASSDataset::~GRASSDataset()
 {
     
     if ( pszGisdbase )
-	free ( pszGisdbase );
+	G_free ( pszGisdbase );
     
     if ( pszLocation )
-        free ( pszLocation );
+        G_free ( pszLocation );
     
     if ( pszElement )
-	free ( pszElement );
+	G_free ( pszElement );
 
     CPLFree( pszProjection );
 }
@@ -768,7 +772,7 @@ bool GRASSDataset::SplitPath( char *path, char **gisdbase, char **location,
 
     /* Note: empty GISDBASE == 0 is not accepted (relative path) */
     if ( i != 4 ) {
-        free ( tmp );
+        G_free ( tmp );
 	return false;
     }
 
@@ -778,7 +782,7 @@ bool GRASSDataset::SplitPath( char *path, char **gisdbase, char **location,
     *element  = G_store ( ptr[1] );
     *name     = G_store ( ptr[0] );
 
-    free ( tmp );
+    G_free ( tmp );
     return true;
 }
 
@@ -841,11 +845,11 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check element name                                              */
 /* -------------------------------------------------------------------- */
     if ( strcmp(pszElem,"cellhd") != 0 && strcmp(pszElem,"group") != 0 ) { 
-	free(pszGisdb); 
-        free(pszLoc); 
-        free(pszMapset); 
-        free(pszElem); 
-        free(pszName);
+	G_free(pszGisdb); 
+        G_free(pszLoc); 
+        G_free(pszMapset); 
+        G_free(pszElem); 
+        G_free(pszName);
 	return NULL;
     }
     
@@ -865,7 +869,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( strcmp(pszElem,"cellhd") == 0 ) {
 	
         if ( G_find_file2("cell", pszName, pszMapset) == NULL ) {
-	    free(pszGisdb); free(pszLoc); free(pszMapset); free(pszElem); free(pszName);
+	    G_free(pszGisdb); G_free(pszLoc); G_free(pszMapset); G_free(pszElem); G_free(pszName);
 	    return NULL;
 	}
 
@@ -880,7 +884,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         I_init_group_ref( &ref );
         if ( I_get_group_ref( pszName, &ref ) == 0 ) {
-	    free(pszGisdb); free(pszLoc); free(pszMapset); free(pszElem); free(pszName);
+	    G_free(pszGisdb); G_free(pszLoc); G_free(pszMapset); G_free(pszElem); G_free(pszName);
 	    return NULL;
 	}
         
@@ -894,8 +898,8 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
         I_free_group_ref( &ref );
     }
     
-    free( pszMapset );
-    free( pszName );
+    G_free( pszMapset );
+    G_free( pszName );
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
