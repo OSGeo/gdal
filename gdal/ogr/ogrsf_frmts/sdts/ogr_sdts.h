@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 #ifndef _OGR_SDTS_H_INCLUDED
-#define _OGR_SDTS_H_INLLUDED
+#define _OGR_SDTS_H_INCLUDED
 
 #include "sdts_al.h"
 #include "ogrsf_frmts.h"

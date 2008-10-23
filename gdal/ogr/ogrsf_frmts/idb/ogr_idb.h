@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 #ifndef _OGR_IDB_H_INCLUDED_
-#define _OGR_IDB_H_INLLUDED_
+#define _OGR_IDB_H_INCLUDED_
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"

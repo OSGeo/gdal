@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #ifndef _OGR_DODS_H_INCLUDED
-#define _OGR_DODS_H_INLLUDED
+#define _OGR_DODS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"

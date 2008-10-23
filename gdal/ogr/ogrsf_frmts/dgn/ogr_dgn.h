@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #ifndef _OGR_DGN_H_INCLUDED
-#define _OGR_DGN_H_INLLUDED
+#define _OGR_DGN_H_INCLUDED
 
 #include "dgnlib.h"
 #include "ogrsf_frmts.h"
