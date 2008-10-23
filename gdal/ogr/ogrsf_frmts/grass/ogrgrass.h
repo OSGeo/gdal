@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #ifndef _OGRGRASS_H_INCLUDED
-#define _OGRGRASS_H_INLLUDED
+#define _OGRGRASS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
