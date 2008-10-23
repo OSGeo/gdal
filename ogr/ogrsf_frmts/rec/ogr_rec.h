@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #ifndef _OGR_REC_H_INCLUDED
-#define _OGR_REC_H_INLLUDED
+#define _OGR_REC_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 

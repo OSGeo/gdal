@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #ifndef OGR_INGRES_H_INCLUDED
-#define OGR_INGRES_H_INLLUDED
+#define OGR_INGRES_H_INCLUDED
 
 #include <iiapi.h>
 #include "ogrsf_frmts.h"

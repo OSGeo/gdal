@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 #ifndef _OGR_MYSQL_H_INCLUDED
-#define _OGR_MYSQL_H_INLLUDED
+#define _OGR_MYSQL_H_INCLUDED
 
 #include <my_global.h>
 #include <mysql.h>
@@ -264,6 +264,6 @@ class OGRMySQLDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGR_PG_H_INCLUDED */
+#endif /* ndef _OGR_MYSQL_H_INCLUDED */
 
 
