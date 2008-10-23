@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 #ifndef _OGRSHAPE_H_INCLUDED
-#define _OGRSHAPE_H_INLLUDED
+#define _OGRSHAPE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "shapefil.h"

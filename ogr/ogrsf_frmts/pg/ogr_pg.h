@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #ifndef _OGR_PG_H_INCLUDED
-#define _OGR_PG_H_INLLUDED
+#define _OGR_PG_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "libpq-fe.h"

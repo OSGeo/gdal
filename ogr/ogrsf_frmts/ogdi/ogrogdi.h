@@ -30,7 +30,7 @@
  ****************************************************************************/
 
 #ifndef _OGDOGDI_H_INCLUDED
-#define _OGDOGDI_H_INLLUDED
+#define _OGDOGDI_H_INCLUDED
 
 #include <math.h>
 extern "C" {
