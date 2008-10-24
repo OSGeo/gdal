@@ -427,12 +427,12 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
                                           INGR_TileHeader *pTileDir,
                                           INGR_TileItem **pahTiles);
 
-const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
-                                              const char *pszCompression );
+INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
+                                        const char *pszCompression );
 
 const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode );
 
-const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode );
+GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode );
 
 const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex );
 

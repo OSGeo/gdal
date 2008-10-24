@@ -59,9 +59,9 @@ public:
         GMLPropertyDefn( const char *pszName, const char *pszSrcElement=NULL );
        ~GMLPropertyDefn();
 
-    const char *GetName() { return m_pszName; } const
+    const char *GetName() const { return m_pszName; } 
 
-    GMLPropertyType GetType() { return m_eType; } const
+    GMLPropertyType GetType() const { return m_eType; } 
     void        SetType( GMLPropertyType eType ) { m_eType = eType; }
     void        SetWidth( int nWidth) { m_nWidth = nWidth; }
     int         GetWidth() { return m_nWidth; }
@@ -107,7 +107,7 @@ public:
     const char *GetGeometryElement() const { return m_pszGeometryElement; }
     void        SetGeometryElement( const char *pszElementName );
 
-    const char *GetName() { return m_pszName; } const
+    const char *GetName() const { return m_pszName; } 
     int         GetPropertyCount() const { return m_nPropertyCount; }
     GMLPropertyDefn *GetProperty( int iIndex ) const;
     int GetPropertyIndex( const char *pszName ) const;
