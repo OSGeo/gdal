@@ -173,6 +173,14 @@ def ingr_15():
 
     return result
 
+###############################################################################
+# Read simple RLE tiled
+
+def ingr_16():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt09t.cot', 1, 3178 )
+    return tst.testOpen()
+
 gdaltest_list = [
     ingr_1,
     ingr_2,
@@ -188,7 +196,8 @@ gdaltest_list = [
     ingr_12,
     ingr_13,
     ingr_14,
-    ingr_15 ]
+    ingr_15,
+    ingr_16 ]
 
 if __name__ == '__main__':
 
