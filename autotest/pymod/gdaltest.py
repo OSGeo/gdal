@@ -46,7 +46,7 @@ skip_counter = 0
 failure_summary = []
 
 reason = None
-download_file_has_warned = False
+count_skipped_tests = 0
 
 # Process commandline arguments for stuff like --debug, --locale, --config
 
@@ -125,6 +125,7 @@ def post_reason( msg ):
 ###############################################################################
 
 def summarize():
+    global count_skipped_tests
     global success_counter, failure_counter, blow_counter, skip_counter
     global cur_name
     
@@ -134,6 +135,8 @@ def summarize():
     print 'Failed:    %d (%d blew exceptions)' \
           % (failure_counter+blow_counter, blow_counter)
     print 'Skipped:   %d' % skip_counter
+    if count_skipped_tests != 0:
+        print 'As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests
     print
 
     return failure_counter + blow_counter
@@ -866,7 +869,7 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
 def download_file(url, filename, download_size = -1):
-    global download_file_has_warned
+    global count_skipped_tests
     try:
         os.stat( 'tmp/cache/' + filename )
         return True
@@ -899,9 +902,9 @@ def download_file(url, filename, download_size = -1):
                 print 'Cannot write %s' % (filename)
                 return False
         else:
-            if download_file_has_warned == False:
+            if count_skipped_tests == 0:
                 print 'As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, some tests relying on data to downloaded from the Web will be skipped'
-                download_file_has_warned = True
+            count_skipped_tests = count_skipped_tests + 1
             return False
 
 ###############################################################################
