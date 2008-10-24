@@ -1580,7 +1580,7 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
              || nGType == 6      // MultiPolygon
              || nGType == 7 )    // MultiGeometry
     {
-        OGRGeometryCollection *poGC;
+        OGRGeometryCollection *poGC = NULL;
         GInt32 nGeomCount;
         int iGeom, nBytesUsed;
 
