@@ -297,14 +297,45 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Fetch and parse USGS projection parameters.                     */
+/* -------------------------------------------------------------------- */
+    double adfUSGSParms[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    char **papszParmTokens = 
+        CSLTokenizeStringComplex( poDS->Get( "USGS_PROJECTION_NUMBER", "" ),
+                                  ",", FALSE, TRUE );
+
+    if( CSLCount( papszParmTokens ) >= 15 )
+    {
+        int i;
+        for( i = 0; i < 15; i++ )
+            adfUSGSParms[i] = atof(papszParmTokens[i]);
+    }
+            
+/* -------------------------------------------------------------------- */
 /*      Minimal georef support ... should add full USGS style           */
 /*      support at some point.                                          */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
+    int nUSGSProjection = atoi(poDS->Get( "USGS_PROJECTION_NUMBER", "" ));
+    int nZone = atoi(poDS->Get("USGS_MAP_ZONE","0"));
 
-    if( EQUAL(poDS->Get( "USGS_PROJECTION_NUMBER", "" ),"1") )
+    oSRS.importFromUSGS( nUSGSProjection, nZone, adfUSGSParms, 12 );
+
+    CPLString osDatum = poDS->Get( "HORIZONTAL_DATUM", "" );
+    if( EQUAL(osDatum,"WGS84") || EQUAL(osDatum,"NAD83") 
+        || EQUAL(osDatum,"NAD27") )
     {
-        oSRS.SetUTM( atoi(poDS->Get("USGS_MAP_ZONE","0")) );
+        oSRS.SetWellKnownGeogCS( osDatum );
+    }
+    else if( EQUALN(osDatum,"NAD27",5) )
+    {
+        oSRS.SetWellKnownGeogCS( "NAD27" );
+    }
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unrecognised datum name in NLAPS/NDF file:%s, assuming WGS84.", 
+                  osDatum.c_str() );
         oSRS.SetWellKnownGeogCS( "WGS84" );
     }
 
