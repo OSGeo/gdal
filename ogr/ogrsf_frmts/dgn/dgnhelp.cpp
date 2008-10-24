@@ -1048,7 +1048,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             if( nBytes < nLinkSize )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Corrupt linkage, element id:%d",
+                        "Corrupt linkage, element id:%d, link:%d",
                         psElement->element_id, iLink);
                 fprintf(fp, " (Corrupt, declared size: %d, assuming size: %d)", 
                     nLinkSize, nBytes);
