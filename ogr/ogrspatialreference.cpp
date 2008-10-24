@@ -5651,7 +5651,7 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
 /* -------------------------------------------------------------------- */
 /*      Find desired child AXIS.                                        */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poAxis;
+    OGR_SRSNode *poAxis = NULL;
     int iChild, nChildCount = poNode->GetChildCount();
 
     for( iChild = 0; iChild < nChildCount; iChild++ )
