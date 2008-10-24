@@ -131,7 +131,7 @@ void tr_strcpy( XMLCh *panXMLString, const char *pszCString )
 
     pwszUTF16 = CPLRecodeToWChar( pszCString, CPL_ENC_UTF8, CPL_ENC_UTF16 );
     
-    for( i = 0; i < pwszUTF16[i] != 0; i++ )
+    for( i = 0; pwszUTF16[i] != 0; i++ )
         panXMLString[i] = pwszUTF16[i];
 
     panXMLString[i] = 0;
