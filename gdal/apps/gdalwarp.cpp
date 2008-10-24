@@ -31,11 +31,17 @@
 #include "gdalwarper.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
 //static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT );
 
+static void
+LoadCutline( GDALDatasetH hDstDS, 
+             const char *pszCutlineDSName, const char *pszCLayer, 
+             const char *pszCWHERE, const char *pszCSQL, 
+             char ***ppapszWarpOptions );
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, char **papszTO,
@@ -47,6 +53,153 @@ static int             nForcePixels=0, nForceLines=0, bQuiet = FALSE;
 static int             bEnableDstAlpha = FALSE, bEnableSrcAlpha = FALSE;
 
 static int             bVRT = FALSE;
+
+/******************************************************************************/
+/*! \page gdalwarp gdalwarp
+
+image reprojection and warping utility
+
+\section wsynopsis SYNOPSIS
+
+\htmlonly
+Usage: 
+\endhtmlonly
+
+\verbatim
+gdalwarp [--help-general] [--formats]
+    [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
+    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]
+    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
+    [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
+    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
+    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
+    [-cutline datasource] [-cl layer] [-cwhere expression]
+    [-csql statement] [-cblend dist_in_pixels]
+    [-of format] [-co "NAME=VALUE"]*
+    srcfile* dstfile
+\endverbatim
+
+\section wdescription DESCRIPTION
+
+<p>
+The gdalwarp utility is an image mosaicing, reprojection and warping
+utility. The program can reproject to any supported projection,
+and can also apply GCPs stored with the image if the image is "raw"
+with control information.
+
+<p>
+<dl>
+<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference set.
+The coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
+(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+containing well known text.</dd>
+<dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set.
+The coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
+(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+containing well known text.</dd>
+<dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
+to pass to GDALCreateGenImgProjTransformer2(). </dd>
+<dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynomial used for warping
+(1 to 3). The default is to select a polynomial order based on the number of
+GCPs.</dd>
+<dt> <b>-tps</b>:</dt><dd>Force use of thin plate spline transformer based on
+available GCPs.</dd>
+<dt> <b>-rpc</b>:</dt> <dd>Force use of RPCs.</dd>
+<dt> <b>-geoloc</b>:</dt><dd>Force use of Geolocation Arrays.</dd>
+<dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for
+transformation approximation (in pixel units - defaults to 0.125).</dd>
+<dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced
+extents of output file to be created.</dd>
+<dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in
+target georeferenced units)</dd>
+<dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
+pixels and lines</dd>
+<dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp options.  The 
+GDALWarpOptions::papszWarpOptions docs show all options.  Multiple
+ <b>-wo</b> options may be listed.</dd>
+<dt> <b>-ot</b> <em>type</em>:</dt><dd> For the output bands to be of the
+indicated data type.</dd>
+<dt> <b>-wt</b> <em>type</em>:</dt><dd> Working pixel data type. The data type
+of pixels in the source image and destination image buffers.</dd>
+<dt> <b>-r</b> <em>resampling_method</em>:</dt><dd> Resampling method to use. Available methods are:
+<dl>
+<dt><b>near</b></dt>: <dd>nearest neighbour resampling (default, fastest
+algorithm, worst interpolation quality).</dd>
+<dt><b>bilinear</b></dt>: <dd>bilinear resampling.</dd>
+<dt><b>cubic</b></dt>: <dd>cubic resampling.</dd>
+<dt><b>cubicspline</b></dt>: <dd>cubic spline resampling.</dd>
+<dt><b>lanczos</b></dt>: <dd>Lanczos windowed sinc resampling.</dd>
+</dl>
+<dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata masking
+values for input bands (different values can be supplied for each band).  If 
+more than one value is supplied all values should be quoted to keep them 
+together as a single operating system argument.  Masked values will not be 
+used in interpolation.  Use a value of <tt>None</tt> to ignore intrinsic nodata settings on the source dataset.</dd>
+<dt> <b>-dstnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata values
+for output bands (different values can be supplied for each band).  If more
+than one value is supplied all values should be quoted to keep them together
+as a single operating system argument.  New files will be initialized to this
+value and if possible the nodata value will be recorded in the output
+file.</dd>
+<dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify 
+nodata (unset/transparent) pixels. </dd>
+<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
+megabytes) that the warp API is allowed to use for caching.</dd>
+<dt> <b>-multi</b>:</dt><dd> Use multithreaded warping implementation.
+Multiple threads will be used to process chunks of image and perform
+input/output operation simultaneously.</dd>
+<dt> <b>-q</b>:</dt><dd> Be quiet.</dd>
+<dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. The default is GeoTIFF (GTiff). Use the short format name. </dd>
+<dt> <b>-co</b> <em>"NAME=VALUE"</em>:</dt><dd> passes a creation option to
+the output format driver. Multiple <b>-co</b> options may be listed. See
+format specific documentation for legal creation options for each format.
+</dd>
+
+<dt> <b>-cutline</b> <em>datasource</em>:</dt><dd>Enable use of a blend cutline from the name OGR support datasource.</dd>
+<dt> <b>-cl</b> <em>layername</em>:</dt><dd>Select the named layer from the 
+cutline datasource.</dd>
+<dt> <b>-cwhere</b> <em>expression</em>:</dt><dd>Restrict desired cutline features based on attribute query.</dd>
+<dt> <b>-csql</b> <em>query</em>:</dt><dd>Select cutline features using an SQL query instead of from a layer with -cl.</dd>
+<dt> <b>-cblend</b> <em>distance</em>:</dt><dd>Set a blend distance to use to blend over cutlines (in pixels).</dd>
+
+<dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
+<dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
+</dl>
+
+Mosaicing into an existing output file is supported if the output file 
+already exists. The spatial extent of the existing file will not
+be modified to accomodate new data, so you may have to remove it in that case.
+
+Polygon cutlines may be used to restrict the the area of the destination file 
+that may be updated, including blending.  Cutline features must be in the 
+georeferenced units of the destination file. 
+
+<p>
+\section wexample EXAMPLE
+
+For instance, an eight bit spot scene stored in GeoTIFF with
+control points mapping the corners to lat/long could be warped to a UTM
+projection with a command like this:<p>
+
+\verbatim
+gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+\endverbatim
+
+For instance, the second channel of an ASTER image stored in HDF with
+control points mapping the corners to lat/long could be warped to a UTM
+projection with a command like this:<p>
+
+\verbatim
+gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
+\endverbatim
+
+\if man
+\section wauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -63,6 +216,9 @@ static void Usage()
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
+        "    [-cutline datasource] [-cl layer] [-cwhere expression]\n"
+        "    [-csql statement] [-cblend dist_in_pixels]\n"
+
         "    [-of format] [-co \"NAME=VALUE\"]*\n"
         "    srcfile* dstfile\n"
         "\n"
@@ -123,6 +279,8 @@ int main( int argc, char ** argv )
     const char          *pszDstNodata = NULL;
     int                 bMulti = FALSE;
     char                **papszTO = NULL;
+    char                *pszCutlineDSName = NULL;
+    char                *pszCLayer = NULL, *pszCWHERE = NULL, *pszCSQL = NULL;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -335,6 +493,27 @@ int main( int argc, char ** argv )
             }
         }
 
+        else if( EQUAL(argv[i],"-cutline") && i < argc-1 )
+        {
+            pszCutlineDSName = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-cwhere") && i < argc-1 )
+        {
+            pszCWHERE = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-cl") && i < argc-1 )
+        {
+            pszCLayer = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-csql") && i < argc-1 )
+        {
+            pszCSQL = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-cblend") && i < argc-1 )
+        {
+            papszWarpOptions = 
+                CSLSetNameValue( papszWarpOptions, "BLEND_DIST", argv[++i] );
+        }
         else if( argv[i][0] == '-' )
             Usage();
 
@@ -404,6 +583,16 @@ int main( int argc, char ** argv )
 
     if( hDstDS == NULL )
         exit( 1 );
+
+/* -------------------------------------------------------------------- */
+/*      If we have a cutline datasource read it and attach it in the    */
+/*      warp options.                                                   */
+/* -------------------------------------------------------------------- */
+    if( pszCutlineDSName != NULL )
+    {
+        LoadCutline( hDstDS, pszCutlineDSName, pszCLayer, pszCWHERE, pszCSQL, 
+                     &papszWarpOptions );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all source files, processing each in turn.            */
@@ -1122,7 +1311,222 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     CPLFree( pszThisTargetSRS );
     return hDstDS;
 }
+
+/************************************************************************/
+/*                      GeoTransform_Transformer()                      */
+/*                                                                      */
+/*      Convert points from georef coordinates to pixel/line based      */
+/*      on a geotransform.                                              */
+/************************************************************************/
+
+class GeoTransform_Transformer : public OGRCoordinateTransformation
+{
+public:
+
+    double        adfGeoTransform[6];
+
+    virtual OGRSpatialReference *GetSourceCS() { return NULL; }
+    virtual OGRSpatialReference *GetTargetCS() { return NULL; }
+
+    virtual int Transform( int nCount, 
+                           double *x, double *y, double *z = NULL ) {
+        return TransformEx( nCount, x, y, z, NULL );
+    }
+
+    virtual int TransformEx( int nCount, 
+                             double *x, double *y, double *z = NULL,
+                             int *pabSuccess = NULL ) {
+        int i;
+
+        for( i = 0; i < nCount; i++ )
+        {
+            double x_out, y_out;
+
+            x_out = adfGeoTransform[0] 
+                + x[i] * adfGeoTransform[1]
+                + y[i] * adfGeoTransform[2];
+            y_out = adfGeoTransform[3] 
+                + x[i] * adfGeoTransform[4]
+                + y[i] * adfGeoTransform[5];
+
+            x[i] = x_out;
+            y[i] = y_out;
+            
+            if( pabSuccess )
+                pabSuccess[i] = TRUE;
+        }
+        
+        return TRUE;
+    }
+};
+
+
+/************************************************************************/
+/*                            LoadCutline()                             */
+/*                                                                      */
+/*      Load blend cutline from OGR datasource and attach in warp       */
+/*      options, after potentially transforming to destination          */
+/*      pixel/line coordinates.                                         */
+/************************************************************************/
+
+static void
+LoadCutline( GDALDatasetH hDstDS, 
+             const char *pszCutlineDSName, const char *pszCLayer, 
+             const char *pszCWHERE, const char *pszCSQL, 
+             char ***ppapszWarpOptions )
+
+{
+    OGRRegisterAll();
+
+/* -------------------------------------------------------------------- */
+/*      Open source vector dataset.                                     */
+/* -------------------------------------------------------------------- */
+    OGRDataSourceH hSrcDS;
+
+    hSrcDS = OGROpen( pszCutlineDSName, FALSE, NULL );
+    if( hSrcDS == NULL )
+        exit( 1 );
+
+/* -------------------------------------------------------------------- */
+/*      Get the source layer                                            */
+/* -------------------------------------------------------------------- */
+    OGRLayerH hLayer = NULL;
+
+    if( pszCSQL != NULL )
+        hLayer = OGR_DS_ExecuteSQL( hSrcDS, pszCSQL, NULL, NULL ); 
+    else if( pszCLayer != NULL )
+        hLayer = OGR_DS_GetLayerByName( hSrcDS, pszCLayer );
+    else
+        hLayer = OGR_DS_GetLayer( hSrcDS, 0 );
+
+    if( hLayer == NULL )
+    {
+        fprintf( stderr, "Failed to identify source layer from datasource.\n" );
+        exit( 1 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Apply WHERE clause if there is one.                             */
+/* -------------------------------------------------------------------- */
+    if( pszCWHERE != NULL )
+        OGR_L_SetAttributeFilter( hLayer, pszCWHERE );
+
+/* -------------------------------------------------------------------- */
+/*      Checkout that SRS are the same.                                 */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReferenceH  hDstSRS = NULL;
+
+    if( GDALGetProjectionRef( hDstDS ) != NULL )
+    {
+        char *pszProjection;
+
+        pszProjection = (char *) GDALGetProjectionRef( hDstDS );
+
+        hDstSRS = OSRNewSpatialReference(NULL);
+        if( OSRImportFromWkt( hDstSRS, &pszProjection ) != CE_None )
+        {
+            OSRDestroySpatialReference(hDstSRS);
+            hDstSRS = NULL;
+        }
+    }
+
+    OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hLayer);
+    if( hDstSRS != NULL && hSrcSRS != NULL )
+    {
+        if( OSRIsSame(hSrcSRS, hDstSRS) == FALSE )
+        {
+            fprintf(stderr,
+                    "Warning : the output raster dataset and the input vector layer do not have the same SRS. "
+                    "Results will be probably incorrect.\n");
+        }
+    }
+    else if( hDstSRS != NULL && hSrcSRS == NULL )
+    {
+        fprintf(stderr,
+                "Warning : the output raster dataset has a SRS, but the input vector layer not. "
+                "Results may be incorrect.\n");
+    }
+    else if( hDstSRS == NULL && hLayer != NULL )
+    {
+        fprintf(stderr,
+                "Warning : the input vector layer has a SRS, but the output raster dataset not. "
+                "Results may be incorrect.\n");
+    }
+
+    if( hDstSRS != NULL )
+        OSRDestroySpatialReference(hDstSRS);
+
+/* -------------------------------------------------------------------- */
+/*      Collect the geometries from this layer, and build list of       */
+/*      burn values.                                                    */
+/* -------------------------------------------------------------------- */
+    OGRFeatureH hFeat;
+    OGRGeometryH hMultiPolygon = OGR_G_CreateGeometry( wkbMultiPolygon );
+
+    OGR_L_ResetReading( hLayer );
     
+    while( (hFeat = OGR_L_GetNextFeature( hLayer )) != NULL )
+    {
+        OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
+
+        if( hGeom == NULL )
+        {
+            fprintf( stderr, "ERROR: Cutline feature without a geometry.\n" );
+            exit( 1 );
+        }
+        
+        OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
+        if( eType != wkbPolygon && eType != wkbMultiPolygon )
+        {
+            fprintf( stderr, "ERROR: Cutline not of polygon type.\n" );
+            exit( 1 );
+        }
+
+        OGR_G_AddGeometry( hMultiPolygon, hGeom );
+
+        OGR_F_Destroy( hFeat );
+    }
+
+    if( OGR_G_GetGeometryCount( hMultiPolygon ) == 0 )
+    {
+        fprintf( stderr, "ERROR: Did not get any cutline features.\n" );
+        exit( 1 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Transform the geometry to pixel/line coordinates.               */
+/* -------------------------------------------------------------------- */
+    GeoTransform_Transformer oTransformer;
+    double adfGT[6];
+
+    GDALGetGeoTransform( hDstDS, adfGT );
+    GDALInvGeoTransform( adfGT, oTransformer.adfGeoTransform );
+
+    OGR_G_Transform( hMultiPolygon, 
+                     (OGRCoordinateTransformationH) &oTransformer );
+
+/* -------------------------------------------------------------------- */
+/*      Convert aggregate geometry into WKT.                            */
+/* -------------------------------------------------------------------- */
+    char *pszWKT = NULL;
+
+    OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
+
+    *ppapszWarpOptions = CSLSetNameValue( *ppapszWarpOptions, 
+                                          "CUTLINE", pszWKT );
+    CPLFree( pszWKT );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    if( pszCSQL != NULL )
+        OGR_DS_ReleaseResultSet( hSrcDS, hLayer );
+
+    OGR_DS_Destroy( hSrcDS );
+
+    OGR_G_DestroyGeometry( hMultiPolygon );
+}
+
 /************************************************************************/
 /*                          InsertCenterLong()                          */
 /*                                                                      */
