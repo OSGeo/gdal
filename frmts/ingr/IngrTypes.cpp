@@ -191,7 +191,7 @@ void INGR_MultiplyMatrix( double *padfA, real64 *padfB, const double *padfC )
 //                                                            INGR_GetDataType()
 // -----------------------------------------------------------------------------
 
-const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
+GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 {
     unsigned int i;
 
@@ -238,8 +238,8 @@ const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex )
 //                                                              INGR_GetFormat()
 // -----------------------------------------------------------------------------
 
-const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
-                                              const char *pszCompression )
+INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
+                                        const char *pszCompression )
 {
     if( EQUAL( pszCompression, "None" ) ||
         EQUAL( pszCompression, "" ) )
