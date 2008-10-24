@@ -808,8 +808,6 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             && m_panColValueLengths[iCol] > 0 )
         {
             wchar_t *pwszSrc = (wchar_t *) m_papszColValues[iCol];
-            int  nMaxChars = m_panColValueLengths[iCol]+1;
-            size_t nOutChars;
 
             m_papszColValues[iCol] = 
                 CPLRecodeFromWChar( pwszSrc, CPL_ENC_UCS2, CPL_ENC_UTF8 );
