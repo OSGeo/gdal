@@ -42,6 +42,7 @@ except:
     import gdal
     import gdalconst
     import ogr
+    import osr
 
 ###############################################################################
 # Simple polygon rasterization.
