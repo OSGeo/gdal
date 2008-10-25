@@ -69,6 +69,10 @@ def ogr_sde_1():
         
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base)
+    if ds is None:
+        print "Couldn't open %s" % base
+        gdaltest.sde_dr = None
+        return 'skip'
     ds.Destroy()
 
     ds = ogr.Open(base, update=1)
