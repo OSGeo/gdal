@@ -154,6 +154,7 @@ def hfa_update_overviews():
     if result != 0:
         gdaltest.post_reason( 'BuildOverviews() failed.' )
         return 'fail'
+    ds = None
 
     gdal.GetDriverByName('HFA').Delete( 'tmp/small.img' )
 
