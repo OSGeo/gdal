@@ -720,6 +720,8 @@ with a newline."""
         print md
         return 'fail'
 
+    ds = None
+
     gdal.GetDriverByName('NITF').Delete( 'tmp/nitf_35.ntf' )
     return 'success'
 
