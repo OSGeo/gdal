@@ -177,6 +177,18 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	$t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
 	return _GetDataTypeSize($t);
     }
+    sub DataTypeValueRange {
+    	my $t = shift;
+	# these values are from gdalrasterband.cpp
+	return (0,255) if $t =~ /^Byte$/;
+	return (0,65535) if $t =~ /^UInt16$/;
+	return (-32768,32767) if $t =~ /Int16$/; # also CInt
+	return (0,4294967295) if $t =~ /^UInt32$/;
+	return (-2147483648,2147483647) if $t =~ /Int32$/; # also CInt
+	return (-4294967295.0,4294967295.0) if $t =~ /Float32$/; # also CFloat
+	return (-4294967295.0,4294967295.0) if $t =~ /Float64$/; # also CFloat
+	croak "unsupported data type: $t";
+    }
     sub DataTypeIsComplex {
 	my $t = shift;
 	$t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
