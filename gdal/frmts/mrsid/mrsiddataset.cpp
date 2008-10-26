@@ -956,10 +956,10 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
                     osTemp.Printf( "%d", ((GInt16 *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_UINT32:
-                    osTemp.Printf( "%lu", ((unsigned long *)pData)[k++] );
+                    osTemp.Printf( "%u", ((GUInt32 *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_SINT32:
-                    osTemp.Printf( "%ld", ((long *)pData)[k++] );
+                    osTemp.Printf( "%d", ((GInt32 *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_FLOAT32:
                     osTemp.Printf( "%f", ((float *)pData)[k++] );
