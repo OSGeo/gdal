@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = Geo::GDAL
-PROJECT_NUMBER         = 0.21
+PROJECT_NUMBER         = 1.6.0
 OUTPUT_DIRECTORY       = .
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
@@ -85,8 +85,7 @@ INPUT                  = .
 FILE_PATTERNS          = *.pm \
 			*.dox
 RECURSIVE              = YES
-EXCLUDE                = C:/dev/gdal/swig/perl/blib \
-			blib
+EXCLUDE                = blib
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
 EXAMPLE_PATH           = 
