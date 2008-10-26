@@ -284,7 +284,6 @@ int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
 /*                         RegenerateOverview()                         */
 /************************************************************************/
 
-#ifndef SWIGPERL
 %feature( "kwargs" ) RegenerateOverview;
 %inline %{
 int  RegenerateOverview( GDALRasterBandShadow *srcBand,
@@ -298,8 +297,7 @@ int  RegenerateOverview( GDALRasterBandShadow *srcBand,
     return GDALRegenerateOverviews( srcBand, 1, &overviewBand,
     	   			    resampling, callback, callback_data );
 }
-%} 
-#endif
+%}
 
 /************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
