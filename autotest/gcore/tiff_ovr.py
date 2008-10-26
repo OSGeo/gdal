@@ -608,6 +608,104 @@ def tiff_ovr_15():
 
     return 'success'
 
+
+###############################################################################
+# Test mode resampling on non-byte dataset
+
+def tiff_ovr_16():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+
+    src_ds = gdal.Open('data/mfloat32.vrt')
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    gdaltest.tiff_drv.CreateCopy( 'tmp/ovr16.tif', src_ds,
+                                  options = ['INTERLEAVE=PIXEL'] )
+    src_ds = None
+
+    ds = gdal.Open( 'tmp/ovr16.tif' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    err = ds.BuildOverviews( 'MODE', overviewlist = [2, 4] )
+
+    if err != 0:
+        gdaltest.post_reason('BuildOverviews reports an error' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 1122
+    if cs != exp_cs:
+        gdaltest.post_reason( 'bad checksum' )
+        print exp_cs, cs
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+
+###############################################################################
+# Test mode resampling on a byte dataset
+
+def tiff_ovr_17():
+
+    shutil.copyfile( 'data/byte.tif', 'tmp/ovr17.tif' )
+
+    ds = gdal.Open( 'tmp/ovr17.tif' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    err = ds.BuildOverviews( 'MODE', overviewlist = [2, 4] )
+
+    if err != 0:
+        gdaltest.post_reason('BuildOverviews reports an error' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 1122
+    if cs != exp_cs:
+        gdaltest.post_reason( 'bad checksum' )
+        print exp_cs, cs
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Check mode resampling on a dataset with a raster band that has a color table
+
+def tiff_ovr_18():
+
+    shutil.copyfile( 'data/test_average_palette.tif', 'tmp/ovr18.tif' )
+
+    ds = gdal.Open('tmp/ovr18.tif', gdal.GA_Update)
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    ds.BuildOverviews( 'MODE', overviewlist = [2] )
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 100
+
+    ds = None
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
 ###############################################################################
 # Cleanup
 
@@ -623,6 +721,9 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr12.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/test_gauss_palette.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr15.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr16.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr17.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr18.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -644,6 +745,9 @@ gdaltest_list_internal = [
     tiff_ovr_13,
     tiff_ovr_14,
     tiff_ovr_15,
+    tiff_ovr_16,
+    tiff_ovr_17,
+    tiff_ovr_18,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
