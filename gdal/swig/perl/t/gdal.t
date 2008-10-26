@@ -96,6 +96,8 @@ if (0) {
 
     # without callback only implicit test:
     Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,Geo::GDAL::ColorTable->new);
+
+    Geo::GDAL::RegenerateOverview($r, $b, 'GAUSS');
     
     my $band = $r;
 
