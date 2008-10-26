@@ -68,6 +68,40 @@ $return = $object->method(); # method called in scalar context
 Many of the methods may throw an error, which can be caught by putting
 the call into eval{}; and then examining the contents of $@.
 
+\section index_exceptions Exceptions
+
+Geo::GDAL uses the Perl exception mechanism in such a way that
+exceptions that are classified in GDAL as failures or fatal errors
+trigger a Perl exception, and an exception that is classified as a
+warning triggers a Perl warning.
+
+Perl exceptions can be caught by \i eval() and Perl warnings can be
+caught by signal '__WARN__'. Examples:
+
+\code
+use Geo::GDAL;
+eval {
+    $point = Geo::OGR::Geometry->create(WKT=>"POINTXX(1 1)");
+};
+print STDERR "Error: $@";
+\endcode
+
+Prints:
+\code
+Error: RuntimeError OGR Error: Unsupported geometry type
+\endcode
+
+\code
+use Geo::GDAL;
+BEGIN { $SIG{'__WARN__'} = sub {  print STDERR "Warning: @_"; } }
+Geo::GDAL::Driver('GTiff')->Create('x',10,10,1,'Byte',{a=>'b'});
+\endcode
+
+Prints: 
+\code
+Warning: Driver GTiff does not support a creation option at site/lib/Geo/GDAL.pm line 771.
+\endcode
+
 \section index_footer Note
 
 This documentation is generated from files within the GDAL
