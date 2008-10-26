@@ -103,7 +103,7 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
             poFeatureDefn->AddFieldDefn( &oFieldMinorRadius );
         }
 
-        fpBNA = VSIFOpen( pszFilename, "r" );
+        fpBNA = VSIFOpen( pszFilename, "rb" );
         if( fpBNA == NULL )
             return;
     }
