@@ -134,8 +134,83 @@ and http://64.145.236.125/forum/topic.asp?topic_id=1930&forum_id=1&Topic_Title=h
 #define TOO_LONG_ID                "too long id (> 256 characters)"
 #define MAX_BNA_IDS_REACHED        "maximum number of IDs reached"
 #define NOT_ENOUGH_MEMORY          "not enough memory for request number of coordinates"
+#define LINE_TOO_LONG              "line too long"
 
 #define TMP_BUFFER_SIZE             256
+#define LINE_BUFFER_SIZE            1024
+
+enum
+{
+    BNA_LINE_OK,
+    BNA_LINE_EOF,
+    BNA_LINE_TOO_LONG
+};
+
+static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], FILE* f)
+{
+    char* ptrCurLine = szLineBuffer;
+    int nRead = VSIFRead(szLineBuffer, 1, LINE_BUFFER_SIZE, f);
+    szLineBuffer[nRead] = 0;
+    if (nRead == 0)
+    {
+        /* EOF */
+        return BNA_LINE_EOF;
+    }
+
+    int bFoundEOL = FALSE;
+    while (*ptrCurLine)
+    {
+        if (*ptrCurLine == 0x0d || *ptrCurLine == 0x0a)
+        {
+            bFoundEOL = TRUE;
+            break;
+        }
+        ptrCurLine ++;
+    }
+    if (!bFoundEOL)
+    {
+        if (nRead < LINE_BUFFER_SIZE)
+            return BNA_LINE_OK;
+        else
+            return BNA_LINE_TOO_LONG;
+    }
+
+    if (*ptrCurLine == 0x0d)
+    {
+        if (ptrCurLine == szLineBuffer + LINE_BUFFER_SIZE - 1)
+        {
+            char c;
+            nRead = VSIFRead(&c, 1, 1, f);
+            if (nRead == 1)
+            {
+                if (c == 0x0a)
+                {
+                    /* Do nothing */
+                }
+                else
+                {
+                    VSIFSeek(f, -1, SEEK_CUR);
+                }
+            }
+        }
+        else if (ptrCurLine[1] == 0x0a)
+        {
+            VSIFSeek(f, ptrCurLine + 2 - (szLineBuffer + nRead), SEEK_CUR);
+        }
+        else
+        {
+            VSIFSeek(f, ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_CUR);
+        }
+    }
+    else /* *ptrCurLine == 0x0a */
+    {
+        VSIFSeek(f, ptrCurLine + 1 - (szLineBuffer + nRead), SEEK_CUR);
+    }
+    *ptrCurLine = 0;
+
+    return BNA_LINE_OK;
+}
+
 
 BNARecord* BNA_GetNextRecord(FILE* f,
                              int* ok,
@@ -157,37 +232,29 @@ BNARecord* BNA_GetNextRecord(FILE* f,
     int nbExtraId = 0;
     char tmpBuffer[NB_MAX_BNA_IDS][TMP_BUFFER_SIZE+1];
     int  tmpBufferLength[NB_MAX_BNA_IDS] = {0, 0, 0};
+    char szLineBuffer[LINE_BUFFER_SIZE + 1];
 
     record = (BNARecord*)CPLMalloc(sizeof(BNARecord));
     memset(record, 0, sizeof(BNARecord));
 
-    while(1)
+    while (TRUE)
     {
-      const char* ptrBeginLine = CPLReadLine(f);
-      const char* ptrCurLine = ptrBeginLine;
-
       numChar = 0;
       (*curLine)++;
-      if (ptrBeginningOfNumber != NULL)
+
+      int retGetLine = BNA_GetLine(szLineBuffer, f);
+      if (retGetLine == BNA_LINE_TOO_LONG)
       {
-        goto error;
+          detailedErrorMsg = LINE_TOO_LONG;
+          goto error;
+      }
+      else if (retGetLine == BNA_LINE_EOF)
+      {
+          break;
       }
 
-      if (ptrBeginLine == NULL)
-      {
-        if (numField == 0)
-        {
-          /* End of file */
-          *ok = 1;
-          BNA_FreeRecord(record);
-          return NULL;
-        }
-        else
-        {
-          detailedErrorMsg = MISSING_FIELDS;
-          goto error;
-        }
-      }
+      const char* ptrCurLine = szLineBuffer;
+      const char* ptrBeginLine = szLineBuffer;
 
       if (*ptrCurLine == 0)
         continue;
@@ -532,6 +599,19 @@ BNARecord* BNA_GetNextRecord(FILE* f,
         }
         ptrCurLine++;
       }
+    }
+
+    if (numField == 0)
+    {
+        /* End of file */
+        *ok = 1;
+        BNA_FreeRecord(record);
+        return NULL;
+    }
+    else
+    {
+        detailedErrorMsg = MISSING_FIELDS;
+        goto error;
     }
 error:
     if (verbose)
