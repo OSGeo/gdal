@@ -75,7 +75,7 @@ exceptions that are classified in GDAL as failures or fatal errors
 trigger a Perl exception, and an exception that is classified as a
 warning triggers a Perl warning.
 
-Perl exceptions can be caught by \i eval() and Perl warnings can be
+Perl exceptions can be caught by \a eval() and Perl warnings can be
 caught by signal '__WARN__'. Examples:
 
 \code
