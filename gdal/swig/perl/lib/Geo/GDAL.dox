@@ -111,6 +111,10 @@
 # %Geo::GDAL::TYPE_INT2STRING).
 # @return the size as the number of bits.
 
+## @fn @DataTypeValueRange($DataType)
+# @param DataType Data type as string.
+# @return the minimum, maximum range of the data type.
+
 ## @fn $DataTypeIsComplex($GDALDataType)
 # @param GDALDataType An integer (one of keys of
 # %Geo::GDAL::TYPE_INT2STRING).
@@ -573,7 +577,7 @@
 ## @method $GetProjection()
 # @return the projection as WKT
 
-## @method $GetProjectionRef()
+## @ignore $GetProjectionRef()
 # @return the projection as WKT
 
 ## @method $SetProjection($proj)
@@ -587,45 +591,54 @@
 # Yp = geo_transform[3] + x*geo_transform[4] + y*geo_transform[5]
 # \endcode
 # @param geo_transform [optional]
+# @return the geo transform in a non-void context.
 
 ## @method \@GetGeoTransform()
-# @return a reference to an array of six parameters 
+# @return a reference to an array of six parameters.
 
 ## @method SetGeoTransform(\@GeoTransform)
 # @param GeoTransform
 
-## @method BuildOverviews($resampling = "NEAREST", \@overviews = undef)
-# @param resampling
-# @param overviews
+## @method BuildOverviews($resampling, \@overviews, $callback, $callback_data)
+# @param resampling Either 'NEAREST', 'AVERAGE', or 'AVERAGE_MAGPHASE'.
+# @param overviews The list of overview decimation factors to
+# build. For example [2,4,8].
+# @param callback [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, callback_data)
+# @param callback_data [optional]
 
 ## @method @GCPs(@GCPs, $GCPProjection)
 # Get or set the GCPs and their projection.
 # @param GCPs [optional] a list of Geo::GDAL::GCP objects
-# @param GCPProjection [optional]
+# @param GCPProjection [optional] Projection string.
 # @return a list of Geo::GDAL::GCP objects followed by a GCPProjection
 
 ## @method $GetGCPCount()
 # @return the number of GCPs
 
 ## @method $GetGCPProjection()
-# @return
+# @return projection string.
 
 ## @method \@GetGCPs()
-# @return
+# @return 
 
 ## @method SetGCPs(\@GCPs, $GCPProjection)
 # @param GCPs
 # @param GCPProjection
 
 ## @method FlushCache()
+# Write cached data to disk. There is usually no need to call this
+# method.
 
-## @method AddBand($datatype = 'Byte', \@options = 0)
-# @param datatype
-# @param options
+## @method AddBand($datatype = 'Byte', \%options = 0)
+# Add a new band to the dataset. The driver must support the action.
+# @param datatype Data type string. The data type must be supported by
+# the driver of this dataset.
+# @param options A reference to a hash of format specific key=>value options.
 
 ## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, \@band_list = undef)
-# Write a buffer into the raster. Create the buffer with pack.
-# <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs</a>
+# Write a buffer into the raster. Create the buffer with \a pack function of Perl.
+# <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
 # @param xoff
 # @param yoff
 # @param xsize
@@ -663,15 +676,15 @@
 ## @attr YSize
 # scalar (access as $band->{YSize})
 
-## @attr DataType
-# @deprecated use the Geo::GDAL::Band::DataType method, which returns
-# a string.
+## @method $DataType()
+# @return a data type string.
 
 ## @method @Size()
-# @return (width, height)
+# @return the size of the band as a list (width, height).
 
 ## @method @GetBlockSize()
-# @return ($BlockXSize, $BlockYSize)
+# @return the size of a preferred i/o raster blocks as a list (width,
+# height).
 
 ## @method ColorInterpretation($color_interpretation)
 # Color interpretation is currently one of Undefined GrayIndex
@@ -684,61 +697,84 @@
 ## @method $NoDataValue($NoDataValue)
 # @param NoDataValue [optional]
 # Get or set the no data value.
+# @note There does not exist a good way to clear the no data
+# value. $band->NoDataValue(undef) does not do what you want.
+# @return the nodata value.
 
 ## @method $GetNoDataValue()
 # @return number (the "no data" value) or undef (there is no "no data" value).
 
 ## @method SetNoDataValue($NoDataValue)
-# @param NoDataValue (undef is zero, i.e., once set NoDataValue can't be removed)
+# @param NoDataValue A number. undef does not do what it should do.
 
 ## @method $GetMinimum()
-# @return number or undef
+# @return statistical minimum of the band or undef if statistics are
+# not kept or computed.
 
 ## @method $GetMaximum()
-# @return number or undef
+# @return statistical minimum of the band or undef if statistics are
+# not kept or computed.
 
 ## @method $GetOffset()
-# @return number or undef
+# Scale and offset used to store data values in transformed form. The
+# conversion function is:
+# \code
+# Units value = (raw value * scale) + offset
+# \endcode
+# @return offset or undef.
 
 ## @method $GetScale()
-# @return number or undef
+# Scale and offset are used to store data values in transformed form. The
+# conversion function is:
+# \code
+# Units value = (raw value * scale) + offset
+# \endcode
+# @return scale or undef.
 
 ## @method @GetStatistics($approx_ok, $force)
-# @param approx_ok
-# @param force
-# @return array Statistics = ($min, $max, $mean, $stddev)
+# @param approx_ok Whether it is allowed to compute the statistics
+# based on overviews or similar.
+# @param force Whether to force scanning of the whole raster.
+# @return a list ($min, $max, $mean, $stddev).
 
 ## @method SetStatistics($min, $max, $mean, $stddev)
+# Save the statistics of the band if possible (the format can save
+# arbitrary metadata).
 # @param min
 # @param max
 # @param mean
 # @param stddev
 
 ## @method $GetOverviewCount()
-# @return integer
+# @return the number of overviews available of the band.
 
-## @method Geo::GDAL::Band GetOverview($i)
-# @param i 0..GetOverviewCount-1
-# @return a new Geo::GDAL::Band object
+## @method Geo::GDAL::Band GetOverview($band)
+# @param band 0..GetOverviewCount-1
+# @return a new Geo::GDAL::Band object.
 
 ## @method $Checksum($xoff = 0, $yoff = 0, $xsize = undef, $ysize = undef)
+# Computes a checksum from the raster or a part of it.
 # @param xoff
 # @param yoff
 # @param xsize
 # @param ysize
-# @return integer
+# @return the checksum.
 
 ## @method ComputeRasterMinMax($approx_ok = 0)
-# @return arrayref MinMax = [$min, $max]
+# @return arrayref MinMax = [min, max]
 
 ## @method ComputeBandStats($samplestep = 1)
-# @return arrayref Stats
+# @param samplestep
+# @return arrayref Stats [mean, stddev]
 
-## @method Fill($real_fill, $imag_fill = 0.0)
+## @method Fill($real_part, $imag_part = 0.0)
+# Fill the band with a constant value.
+# @param real_part Real component of fill value.
+# @param imag_part Imaginary component of fill value.
 
 ## @method WriteTile($data, $xoff = 0, $yoff = 0)
-# @param data a two-dimensional Perl array (a pixel at x,y, when up
-# left pixel is 0,0 is $data->[$x][$y])
+# @param data A two-dimensional Perl array (a pixel at x,y, when up
+# left pixel is 0,0 is $data->[$x][$y]).
 # @param xoff
 # @param yoff
 
@@ -747,40 +783,59 @@
 # @param yoff
 # @param xsize
 # @param ysize
-# @return a two-dimensional Perl array
+# @return a two-dimensional Perl array.
 
 ## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef)
+# @param xoff
+# @param yoff
+# @param xsize
+# @param ysize
+# @param buf The data to be written in a binary buffer. Use the \a
+# pack function of Perl to prepare a buffer.
+# @param buf_xsize
+# @param buf_ysize
+# @param buf_type
 
 ## @method $ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef)
-# @return $buf
+# @param xoff
+# @param yoff
+# @param xsize
+# @param ysize
+# @param buf_xsize
+# @param buf_ysize
+# @param buf_type
+# @return the data in a binary buffer. Use the \a unpack function of
+# Perl to get the data from the buffer.
 
 ## @method @GetHistogram(%parameters)
-# Compute raster histogram
+# Compute histogram from the raster.
 # @param parameters Named parameters:
-# - <i>Min</i> the lower bound, default is -0.5
-# - <i>Max</i> the upper bound, default is 255.5
-# - <i>Buckets</i> the number of buckets in the histogram, default is 256
-# - <i>IncludeOutOfRange</i> whether to use $histogram[0] and
+# - \a Min the lower bound, default is -0.5
+# - \a Max the upper bound, default is 255.5
+# - \a Buckets the number of buckets in the histogram, default is 256
+# - \a IncludeOutOfRange whether to use $histogram[0] and
 # $histogram[$#histogram] for out of range values, default is false;
 # the bucket size is (Max-Min) / Buckets if this is false and
 # (Max-Min) / (Buckets-2) if this is true
-# - <i>ApproxOK</i> if histogram can be computed from overviews, default is false
-# - <i>Progress</i> an optional progress function, the default is undef
-# - <i>ProgressData</i> data for the progress function, the default is undef
+# - \a ApproxOK if histogram can be computed from overviews, default is false
+# - \a Progress an optional progress function, the default is undef
+# - \a ProgressData data for the progress function, the default is undef
 # @return a list which contains the count of values in each bucket
 
 ## @method FlushCache()
+# Write cached data to disk. There is usually no need to call this
+# method.
 
 ## @method Geo::GDAL::ColorTable ColorTable($ColorTable)
 # Get or set the color table of this band.
 # @param ColorTable [optional] a Geo::GDAL::ColorTable object
-# @return a new Geo::GDAL::ColorTable object if in non-void context
+# @return a new Geo::GDAL::ColorTable object in a non-void context.
 
 ## @method Geo::GDAL::ColorTable GetRasterColorTable()
-# @return
+# @return a color table object.
 
 ## @method SetRasterColorTable($ColorTable)
-# @param ColorTable
+# @param ColorTable A color table object.
 
 ## @method CreateMaskBand()
 
@@ -799,13 +854,15 @@
 # @param names
 
 ## @method Geo::GDAL::RasterAttributeTable AttributeTable($AttributeTable)
-# @param AttributeTable [optional] a Geo::GDAL::RasterAttributeTable object
-# @return a new Geo::GDAL::RasterAttributeTable object, whose data is contained within the band
+# @param AttributeTable [optional] A Geo::GDAL::RasterAttributeTable object.
+# @return a new Geo::GDAL::RasterAttributeTable object, whose data is
+# contained within the band.
 
 ## @method Geo::GDAL::RasterAttributeTable GetDefaultRAT()
 # @deprecated use Geo::GDAL::Band::AttributeTable, which makes sure
-# the band is not destroyed before the attribute table
-# @return a new Geo::GDAL::RasterAttributeTable object, whose data is contained within the band
+# the band is not destroyed before the attribute table.
+# @return a new Geo::GDAL::RasterAttributeTable object, whose data is
+# contained within the band.
 
 ## @method SetDefaultRAT($AttributeTable)
 # @param AttributeTable a Geo::GDAL::RasterAttributeTable object
@@ -820,8 +877,9 @@
 # @param NoDataValue default is undef
 # @param IDField default is '', i.e., no field
 # @param ElevField default is '', i.e., no field
-# @param callback default is undef
-# @param callback_data default is undef
+# @param callback [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, callback_data)
+# @param callback_data [optional]
 # @return
 
 ## @method $GetRasterColorInterpretation()
