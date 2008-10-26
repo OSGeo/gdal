@@ -282,7 +282,7 @@ CPLErr GSBGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 	return CE_Failure;
 
-    GSBGDataset *poGDS = (GSBGDataset *) poDS;
+    GSBGDataset *poGDS = dynamic_cast<GSBGDataset *>(poDS);
     if( VSIFSeekL( poGDS->fp,
 		   GSBGDataset::nHEADER_SIZE +
                         4 * nRasterXSize * (nRasterYSize - nBlockYOff - 1),
@@ -327,7 +327,7 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 	return CE_Failure;
 
-    GSBGDataset *poGDS = (GSBGDataset *) poDS;
+    GSBGDataset *poGDS = dynamic_cast<GSBGDataset *>(poDS);
     assert( poGDS != NULL );
 
     if( pafRowMinZ == NULL || pafRowMaxZ == NULL
@@ -663,7 +663,7 @@ CPLErr GSBGDataset::GetGeoTransform( double *padfGeoTransform )
     if( padfGeoTransform == NULL )
 	return CE_Failure;
 
-    GSBGRasterBand *poGRB = (GSBGRasterBand *) GetRasterBand( 1 );
+    GSBGRasterBand *poGRB = dynamic_cast<GSBGRasterBand *>(GetRasterBand( 1 ));
 
     if( poGRB == NULL )
     {
@@ -712,7 +712,7 @@ CPLErr GSBGDataset::SetGeoTransform( double *padfGeoTransform )
 	return CE_Failure;
     }
 
-    GSBGRasterBand *poGRB = (GSBGRasterBand *) GetRasterBand( 1 );
+    GSBGRasterBand *poGRB = dynamic_cast<GSBGRasterBand *>(GetRasterBand( 1 ));
 
     if( poGRB == NULL || padfGeoTransform == NULL)
 	return CE_Failure;
@@ -1090,7 +1090,7 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 		  "Unable to open copy of dataset.\n" );
 	return NULL;
     }
-    else if( poDstDS == NULL )
+    else if( dynamic_cast<GSBGDataset *>(poDstDS) == NULL )
     {
 	VSIUnlink( pszFilename );
 	delete poDstDS;
