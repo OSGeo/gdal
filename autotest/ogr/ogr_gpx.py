@@ -444,10 +444,10 @@ def ogr_gpx_cleanup():
     if gdaltest.gpx_ds is not None:
         gdaltest.gpx_ds.Destroy()
     gdaltest.gpx_ds = None
-    try:
-        os.remove ('tmp/gpx.gpx')
-    except:
-        pass
+    #try:
+    #    os.remove ('tmp/gpx.gpx')
+    #except:
+    #    pass
     return 'success'
 
 gdaltest_list = [ 
