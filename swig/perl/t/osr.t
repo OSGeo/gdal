@@ -3,11 +3,12 @@ BEGIN { use_ok('Geo::GDAL') };
 
 $srs1 = Geo::OSR::SpatialReference->create(EPSG=>2936);
 $srs2 = Geo::OSR::SpatialReference->create(Text=>$srs1->AsText);
-#print STDERR $srs2->ExportToProj4,"\n";
+
 ok($srs1->ExportToProj4 eq $srs2->ExportToProj4, "create EPSG, Text, Proj4");
 
 my $src = Geo::OSR::SpatialReference->new();
 $src->ImportFromEPSG(2392);
+
 my $dst = Geo::OSR::SpatialReference->new();
 $dst->ImportFromEPSG(2392);
 ok(($src and $dst), "create Geo::OSR::SpatialReference");
