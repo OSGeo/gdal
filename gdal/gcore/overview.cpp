@@ -35,7 +35,8 @@ typedef enum
 {
     GRM_Near = 0,
     GRM_Average = 1,
-    GRM_Gauss = 2
+    GRM_Gauss = 2,
+    GRM_Mode = 3
 } GDALResamplingMethod;
 
 /************************************************************************/
@@ -51,7 +52,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                         GDALRasterBand * poOverview,
                         const char * pszResampling,
                         int bHasNoData, float fNoDataValue,
-                        GDALColorTable* poColorTable)
+                        GDALColorTable* poColorTable,
+                        GDALDataType eSrcDataType)
 
 {
 /* -------------------------------------------------------------------- */
@@ -70,6 +72,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         eResampling = GRM_Average;
     else if ( EQUALN(pszResampling, "GAUSS", 5) )
         eResampling = GRM_Gauss;
+    else if ( EQUALN(pszResampling, "MODE", 4) )
+        eResampling = GRM_Mode;
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -174,6 +178,10 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         }
     }
 
+    int      nMaxNumPx = 0;
+    float*   pafVals = NULL;
+    int*     panSums = NULL;
+
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
@@ -183,7 +191,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         GByte *pabySrcScanlineNodataMask;
         int   nSrcYOff, nSrcYOff2 = 0, iDstPixel;
 
-        if( eResampling == GRM_Near || eResampling == GRM_Average )
+        if( eResampling == GRM_Near || eResampling == GRM_Average || eResampling == GRM_Mode )
         {
           nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
           if ( nSrcYOff < nChunkYOff )
@@ -229,7 +237,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         {
             int   nSrcXOff, nSrcXOff2;
 
-            if ( eResampling == GRM_Near || eResampling == GRM_Average )
+            if ( eResampling == GRM_Near || eResampling == GRM_Average || eResampling == GRM_Mode )
             {
               nSrcXOff =
                   (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
@@ -349,6 +357,98 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     }
                 }
             }
+            else if ( eResampling == GRM_Mode )
+            {
+                if (eSrcDataType != GDT_Byte || nEntryCount > 256)
+                {
+                    /* I'm not sure how much sense it makes to run a majority
+                     filter on floating point data, but here it is for the sake
+                     of compatability. It won't look right on RGB images by the
+                     nature of the filter. */
+                    int     nNumPx = (nSrcYOff2-nSrcYOff)*(nSrcXOff2-nSrcXOff);
+                    int     iMaxInd = 0, iMaxVal = -1, iY, iX;
+
+                    if (nNumPx > nMaxNumPx)
+                    {
+                        pafVals = (float*) CPLRealloc(pafVals, nNumPx * sizeof(float));
+                        panSums = (int*) CPLRealloc(panSums, nNumPx * sizeof(int));
+                        nMaxNumPx = nNumPx;
+                    }
+
+                    for( iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                    {
+                        int     iTotYOff = (iY-nSrcYOff)*nChunkXSize-nChunkXOff;
+                        for( iX = nSrcXOff; iX < nSrcXOff2; ++iX )
+                        {
+                            if (pabySrcScanlineNodataMask == NULL ||
+                                pabySrcScanlineNodataMask[iX+iTotYOff])
+                            {
+                                float fVal = pafSrcScanline[iX+iTotYOff];
+                                int i;
+
+                                //Check array for existing entry
+                                for( i = 0; i < iMaxInd; ++i )
+                                    if( pafVals[i] == fVal
+                                        && ++panSums[i] > panSums[iMaxVal] )
+                                    {
+                                        iMaxVal = i;
+                                        break;
+                                    }
+
+                                //Add to arr if entry not already there
+                                if( i == iMaxInd )
+                                {
+                                    pafVals[iMaxInd] = fVal;
+                                    panSums[iMaxInd] = 1;
+
+                                    if( iMaxVal < 0 )
+                                        iMaxVal = iMaxInd;
+
+                                    ++iMaxInd;
+                                }
+                            }
+                        }
+                    }
+
+                    if( iMaxVal == -1 )
+                        pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
+                    else
+                        pafDstScanline[iDstPixel - nDstXOff] = pafVals[iMaxVal];
+                }
+                else /* if (eSrcDataType == GDT_Byte && nEntryCount < 256) */
+                {
+                    /* So we go here for a paletted or non-paletted byte band */
+                    /* The input values are then between 0 and 255 */
+                    int     anVals[256], nMaxVal = 0, iMaxInd = -1, iY, iX;
+
+                    memset(anVals, 0, 256*sizeof(int));
+
+                    for( iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                    {
+                        int     iTotYOff = (iY-nSrcYOff)*nChunkXSize-nChunkXOff;
+                        for( iX = nSrcXOff; iX < nSrcXOff2; ++iX )
+                        {
+                            float  val = pafSrcScanline[iX+iTotYOff];
+                            if (bHasNoData == FALSE || val != fNoDataValue)
+                            {
+                                int nVal = (int) val;
+                                if ( ++anVals[nVal] > nMaxVal)
+                                {
+                                    //Sum the density
+                                    //Is it the most common value so far?
+                                    iMaxInd = nVal;
+                                    nMaxVal = anVals[nVal];
+                                }
+                            }
+                        }
+                    }
+
+                    if( iMaxInd == -1 )
+                        pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
+                    else
+                        pafDstScanline[iDstPixel - nDstXOff] = iMaxInd;
+                }
+            }
             else /* if ( eResampling == GRM_Gauss ) */
             {
                 if (poColorTable == NULL)
@@ -385,7 +485,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     else
                       pafDstScanline[iDstPixel - nDstXOff] = (float) (dfTotal / nCount);
                   }
-                } else 
+                }
+                else 
                 {
                    double val;
                    int  nTotalR = 0, nTotalG = 0, nTotalB = 0;
@@ -454,6 +555,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
 
     CPLFree( pafDstScanline );
     CPLFree( aEntries );
+    CPLFree( pafVals );
+    CPLFree( panSums );
 
     return eErr;
 }
@@ -758,7 +861,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
-    if ((EQUALN(pszResampling,"AVER",4) || EQUALN(pszResampling,"GAUSS",5)) &&
+    if ((EQUALN(pszResampling,"AVER",4)
+         || EQUALN(pszResampling,"MODE",4)
+         || EQUALN(pszResampling,"GAUSS",5)) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
     {
         poColorTable = poSrcBand->GetColorTable();
@@ -919,7 +1024,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                                               0, nWidth,
                                               nChunkYOff, nFullResYChunk,
                                               papoOvrBands[iOverview], pszResampling,
-                                              bHasNoData, fNoDataValue, poColorTable);
+                                              bHasNoData, fNoDataValue, poColorTable,
+                                              poSrcBand->GetRasterDataType());
             else
                 eErr = GDALDownsampleChunkC32R(nWidth, poSrcBand->GetYSize(), 
                                                pafChunk, nChunkYOff, nFullResYChunk,
@@ -1021,6 +1127,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
 
     int nSrcWidth = papoSrcBands[0]->GetXSize();
     int nSrcHeight = papoSrcBands[0]->GetYSize();
+    GDALDataType eDataType = papoSrcBands[0]->GetRasterDataType();
     for(iBand=1;iBand<nBands;iBand++)
     {
         if (papoSrcBands[iBand]->GetXSize() != nSrcWidth ||
@@ -1028,6 +1135,12 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                     "GDALRegenerateOverviewsMultiBand: all the source bands must have the same dimensions");
+            return CE_Failure;
+        }
+        if (papoSrcBands[iBand]->GetRasterDataType() != eDataType)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "GDALRegenerateOverviewsMultiBand: all the source bands must have the same data type");
             return CE_Failure;
         }
     }
@@ -1043,6 +1156,12 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                         "GDALRegenerateOverviewsMultiBand: all the overviews bands of the same level must have the same dimensions");
+                return CE_Failure;
+            }
+            if (papapoOverviewBands[iBand][iOverview]->GetRasterDataType() != eDataType)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "GDALRegenerateOverviewsMultiBand: all the overviews bands must have the same data type as the source bands");
                 return CE_Failure;
             }
         }
@@ -1236,7 +1355,8 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                                                   pszResampling,
                                                   pabHasNoData[iBand],
                                                   pafNoDataValue[iBand],
-                                                  /*poColorTable*/ NULL);
+                                                  /*poColorTable*/ NULL,
+                                                  eDataType);
                 }
             }
 
