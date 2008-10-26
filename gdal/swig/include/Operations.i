@@ -113,7 +113,9 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
 }
 %}
 
-%newobject ReprojectImage;
+/************************************************************************/
+/*                           ReprojectImage()                           */
+/************************************************************************/
 %inline %{
 CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          GDALDatasetShadow *dst_ds,
@@ -121,7 +123,9 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          const char *dst_wkt=NULL,
                          GDALResampleAlg eResampleAlg=GRA_NearestNeighbour,
                          double WarpMemoryLimit=0.0,
-                         double maxerror = 0.0) {
+                         double maxerror = 0.0,
+			 GDALProgressFunc callback = NULL,
+                     	 void* callback_data=NULL) {
 
     CPLErrorReset();
 
@@ -132,8 +136,8 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                                      eResampleAlg,
                                      WarpMemoryLimit,
                                      maxerror,
-                                     NULL,
-                                     NULL,
+                                     callback,
+                                     callback_data,
                                      NULL);
     
     return err;
