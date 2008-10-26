@@ -181,7 +181,7 @@
 
 ## @fn Geo::GDAL::Driver Driver($driver)
 # Create a driver object for the internal GDAL driver.
-# \note Alternative name: GetDriver.
+# \note aka GetDriver
 # @param driver The name or number of the driver.
 # @return a new Geo::GDAL::Driver object
 
@@ -431,9 +431,9 @@
 # @return The short name of the driver.
 
 ## @cmethod @Capabilities()
-# @return The class method returns a list of all potential
-# capabilities a driver may have; the object method returns a list of
-# all capabilities the driver has.
+# @return A list of capabilities. The class method returns a list of
+# all potential capabilities a driver may have; the object method
+# returns a list of all capabilities the driver has.
 # Examples.
 # \code
 # @all_capabilities = Geo::GDAL::Driver::Capabilities;
@@ -442,8 +442,8 @@
 
 ## @method $TestCapability($cap)
 # Test whether the driver has the specified capability.
-# @param cap a capability string
-# @return boolean
+# @param cap A capability string.
+# @return a boolean value.
 
 ## @method $Extension()
 # @return a suggested extension or extensions (e.g., ext1/ext2) for
@@ -460,7 +460,8 @@
 # @return a list of data types (strings) that can be used for new datasets.
 
 ## @method Geo::GDAL::Dataset Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \%options = undef)
-# Create a GDAL dataset using this driver. Alternative name: CreateDataset.
+# Create a GDAL dataset using this driver.
+# \note aka CreateDataset
 # @brief Create a new Geo::GDAL::Dataset
 # @param name
 # @param xsize
@@ -471,7 +472,8 @@
 # @return a new Geo::GDAL::Dataset object
 
 ## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, \%options = undef)
-# Copy a GDAL dataset. Alternative name: CopyDataset.
+# Copy a GDAL dataset.
+# \note aka CopyDataset
 # @brief Create a new Geo::GDAL::Dataset as a copy of an existing dataset.
 # @param name
 # @param src A Geo::GDAL::Dataset object.
@@ -562,7 +564,8 @@
 # @return a new Geo::GDAL::Driver object
 
 ## @method Geo::GDAL::Band Band($index)
-# Create a band object for the band within the dataset. Alternative name: GetRasterBand.
+# Create a band object for the band within the dataset.
+# \note aka GetRasterBand
 # @param index 1...RasterCount
 # @return a new Geo::GDAL::Band object
 
