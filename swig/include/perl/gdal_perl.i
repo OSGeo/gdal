@@ -270,7 +270,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub Capabilities {
 	my $self = shift;
-	return @CAPABILITIES unless shift;
+	return @CAPABILITIES unless $self;
 	my $h = $self->GetMetadata;
 	my @cap;
 	for my $cap (@CAPABILITIES) {
