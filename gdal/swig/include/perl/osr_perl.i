@@ -1,4 +1,5 @@
 %include cpl_exceptions.i
+%import typemaps_perl.i
 
 %perlcode %{
     sub RELEASE_PARENTS {

@@ -169,7 +169,6 @@ typedef int OGRErr;
 #elif defined(SWIGJAVA)
 %include osr_java.i
 #elif defined(SWIGPERL)
-%include typemaps_perl.i
 %include osr_perl.i
 #else
 %include gdal_typemaps.i
