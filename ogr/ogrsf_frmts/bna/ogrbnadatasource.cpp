@@ -172,7 +172,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
     if( !EQUAL( CPLGetExtension(pszFilename), "bna" ) )
         return FALSE;
     
-    FILE* fp = VSIFOpen(pszFilename, "r");
+    FILE* fp = VSIFOpen(pszFilename, "rt");
     if (fp)
     {
         BNARecord* record;
