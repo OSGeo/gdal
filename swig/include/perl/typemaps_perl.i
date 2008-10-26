@@ -659,21 +659,19 @@ CreateArrayFromStringArray( char **first ) {
 
 /*
  * Typemap for CPLErr.
- * This typemap will use the wrapper C-variable
- * int UseExceptions to determine proper behavour for
- * CPLErr return codes.
- * If UseExceptions ==0, then return the rc.
- * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
+ * The assumption is that all errors have been reported through CPLError
+ * and are thus caught by call to CPLGetLastErrorType() in %exception
  */
 %typemap(out) CPLErr
 {
   /* %typemap(out) CPLErr */
-  $result = sv_2mortal(newSViv($1));
-  argvi++;
 }
 
 /*
  * Typemap for OGRErr.
+ * _Some_ errors in OGR are not reported through CPLError and the return
+ * value of the function must be examined and the message obtained from
+ * OGRErrMessages, which is a function within these wrappers.
  */
 %import "ogr_error_map.i"
 %typemap(out,fragment="OGRErrMessages") OGRErr
