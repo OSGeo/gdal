@@ -10,62 +10,63 @@
 ## @ignore STORE
 ## @ignore this
 
-## @fn UseExceptions()
+## @ignore UseExceptions()
 
-## @fn DontUseExceptions()
+## @ignore DontUseExceptions()
 
 ## @fn @GeometryTypes()
-# @return a list of all geometry types
+# @return a list of all geometry types.
 
 ## @fn Geo::OGR::Geometry CreateGeometryFromWkb($WKB, $srs = undef)
-# @param WKB buffer containing well known binary
-# @param srs a Geo::OSR::SpatialReference object
-# @return a new Geo::OGR::Geometry object
+# @param WKB Buffer containing well known binary.
+# @param srs A Geo::OSR::SpatialReference object.
+# @return a new Geo::OGR::Geometry object.
 
 ## @fn Geo::OGR::Geometry CreateGeometryFromWkt($WKT, $srs = undef)
-# @param WKT string containing well known text
-# @param srs a Geo::OSR::SpatialReference object
-# @return a new Geo::OGR::Geometry object
+# @param WKT String containing well known text.
+# @param srs A Geo::OSR::SpatialReference object.
+# @return a new Geo::OGR::Geometry object.
 
 ## @fn Geo::OGR::Geometry CreateGeometryFromGML($GML)
-# @param GML string containing GML
-# @return a new Geo::OGR::Geometry object
+# @param GML String containing GML.
+# @return a new Geo::OGR::Geometry object.
 
 ## @fn @Drivers()
-# @return
+# @return a list of drivers for all available OGR formats.
 
 ## @fn $GetDriverCount()
-# @return count
+# @return the number of all available drivers.
 
 ## @fn $GetOpenDSCount()
-# @return count
+# @return the number of all open data sources.
 
 ## @fn SetGenerate_DB2_V72_BYTE_ORDER($Generate_DB2_V72_BYTE_ORDER)
 # Needed only on IBM DB2.
 
-## @fn RegisterAll()
+## @ignore RegisterAll()
 # Called in initialization.
 
 ## @fn Geo::OGR::DataSource GetOpenDS($number)
-# @param number the data source number
-# @return a new Geo::OGR::DataSource object
+# @param number The number of the requested data source.
+# @return a new Geo::OGR::DataSource object.
 
 ## @fn Geo::OGR::DataSource Open($name, $update = 0)
-# @param name the data source name (directory, filename, etc.)
-# @param update if set to true, the data source can be updated
-# @return a new Geo::OGR::DataSource object
+# @param name The data source string (directory, filename, etc.).
+# @param update Whether to open the data source in update mode.
+# @return a new Geo::OGR::DataSource object.
 
 ## @fn Geo::OGR::DataSource OpenShared($name, $update = 0)
-# @param name the data source name (directory, filename, etc.)
-# @param update if set to true, the data source can be updated
-# @return a new Geo::OGR::DataSource object
+# @param name The data source string (directory, filename, etc.).
+# @param update Whether to open the data source in update mode.
+# @return a new Geo::OGR::DataSource object.
 
 ## @fn Geo::OGR::Driver GetDriverByName($name)
 # @param name
-# @return a new Geo::OGR::Driver object
+# @return a new Geo::OGR::Driver object.
 
-## @fn Geo::OGR::Driver Driver($driver)
-# Create a driver object for an internal OGR driver object. Alternative name: GetDriver.
+## @fn Geo::OGR::Driver Driver($driver) 
+# Create a driver object for the internal OGR driver.
+# @note aka GetDriver
 # @param driver the index or the name of the driver
 # @return a new Geo::OGR::Driver object
 
@@ -223,44 +224,51 @@
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
-## @cmethod @Capabilities()
-# @return the class method returns a list of all potential
-# capabilities a driver may have; the object method returns a list of
-# all capabilities the driver has
-
-## @method $TestCapability($cap)
-# @param cap a capability string
-# @return boolean
-
 ## @attr name
 # scalar (access as $driver->{name})
 
-## @method Geo::OGR::DataSource Create($name, \@options = undef )
-# Create an OGR data source object. Alternative name: CreateDataSource.
-# @param name the data source name
-# @param options a list of driver specific options
-# @return a new Geo::OGR::DataSource object
+## @cmethod @Capabilities()
+# @return a list of capabilities. The class method returns a list of
+# all potential capabilities a driver may have; the object method
+# returns a list of all capabilities the driver has.
+# Examples.
+# \code
+# @all_capabilities = Geo::OGR::Driver::Capabilities;
+# @capabilities_of_a_driver = Geo::OGR::Driver('KML')->Capabilities;
+# \endcode
+
+## @method $TestCapability($cap)
+# @param cap A capability string.
+# @return boolean value.
+
+## @method Geo::OGR::DataSource Create($name, \%options = undef )
+# Create an OGR data source object.
+# \note aka CreateDataSource
+# @param name The data source name.
+# @param options Driver specific options.
+# @return a new Geo::OGR::DataSource object.
 
 ## @method Geo::OGR::DataSource Copy($ds, $name, \@options = undef)
-# Copy an OGR data source object. Alternative name: CopyDataSource.
-# @param ds the Geo::OGR::DataSource object to be copied
-# @param name
-# @param options
-# @return a new Geo::OGR::DataSource object
+# Copy an OGR data source object.
+# \note CopyDataSource
+# @param ds The Geo::OGR::DataSource object to be copied.
+# @param name The name for the new data source.
+# @param options Driver specific options.
+# @return a new Geo::OGR::DataSource object.
 
 ## @method Geo::OGR::DataSource Open($name, $update = 0)
 # Open an OGR data source object. Alternative name: OpenDataSource.
-# @param name
-# @param update
+# @param name The name of data source.
+# @param update Whether to open the data source in update mode.
 # @return a new Geo::OGR::DataSource object
 
 ## @method Delete($name)
-# Delete an OGR data source object. Alternative name: DeleteDataSource.
-# @param name
-# @return integer
+# Delete an OGR data source.
+# \note aka DeleteDataSource
+# @param name The name of data source.
 
 ## @method $GetName()
-# @return the name
+# @return the name of the driver.
 
 
 ## @class Geo::OGR::DataSource
@@ -270,27 +278,33 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod @Capabilities()
-# @return the class method returns a list of all potential
-# capabilities a data source may have; the object method returns a
-# list of all capabilities the data source has
-
-## @method $TestCapability($cap)
-# @param cap
-# @return integer
-
-## @cmethod Geo::OGR::DataSource Open($name, $update = 0)
-# @param name the data source name (directory, filename, etc.)
-# @param update if set to true, the data source can be updated
-# @return a new Geo::OGR::DataSource object
-
-## @cmethod Geo::OGR::DataSource OpenShared($name, $update = 0)
-# @param name the data source name (directory, filename, etc.)
-# @param update if set to true, the data source can be updated
-# @return a new Geo::OGR::DataSource object
-
 ## @attr name
 # string (access as $datasource->{name})
+
+## @cmethod @Capabilities()
+# @return a list of capabilities. The class method returns a list of
+# all potential capabilities a data source may have; the object method
+# returns a list of all capabilities the data source has.
+
+## @method $TestCapability($cap)
+# @param cap A capability string.
+# @return a boolean value indicating whether the data source has the
+# specified capability.
+
+## @cmethod Geo::OGR::DataSource Open($name, $update = 0)
+# An example:
+# \code
+# use Geo::GDAL;
+# $ds = Geo::OGR::DataSource::Open('/data/roads.shp');
+# \endcode
+# @param name The data source name (directory, filename, etc.).
+# @param update Whether to open the data source in update mode.
+# @return a new Geo::OGR::DataSource object.
+
+## @cmethod Geo::OGR::DataSource OpenShared($name, $update = 0)
+# @param name The data source name (directory, filename, etc.).
+# @param update Whether to open the data source in update mode.
+# @return a new Geo::OGR::DataSource object.
 
 ## @method Geo::OGR::Layer Layer($layer = 0)
 # @param layer a name (primary) or index (secondary) of the requested
@@ -298,65 +312,65 @@
 # @return a new Geo::OGR::Layer object
 
 ## @method @Layers()
-# @return a list of layer names
+# @return a list of layers this data source provides.
 
 ## @method $GetLayerCount()
-# @return integer
+# @return the number of layers this data source provides.
 
 ## @method Geo::OGR::Driver GetDriver()
-# @return a Geo::OGR::Driver object for this data source
+# @return a Geo::OGR::Driver object for this data source.
 
 ## @method $GetName()
-# @return string
+# @return the name of this data source.
 
-## @method Geo::OGR::Layer CreateLayer($Name, $SRS = undef, $GeometryType = 'Unknown', \@Options = undef, \%Schema = undef)
-# This method can also be used with a named parameters syntax: $ds->CreateLayer({..named parameters..}).
-# @param Name
-# @param SRS a Geo::OSR::SpatialReference object
-# @param GeometryType one of geometry types (a string: Point, LineString, etc)
-# @param Options
+## @method Geo::OGR::Layer CreateLayer($Name, $SRS = undef, $GeometryType = 'Unknown', \%Options = undef, \%Schema = undef)
+# \note This method can also be used with named parameters: $ds->CreateLayer({parameter=>value, ...}).
+# @param Name A name for the new layer.
+# @param SRS a Geo::OSR::SpatialReference object.
+# @param GeometryType One of geometry types (a string: Point, LineString, or some else)
+# @param Options A ref to a hash of format specific options.
 # @param Schema Forwarded to Layer::Schema, which is called if this parameter exists.
-# @return a new Geo::OGR::Layer object
+# @return a new Geo::OGR::Layer object.
 
-## @method Geo::OGR::Layer CopyLayer($layer, $name, \@options = undef)
-# @param layer a Geo::OGR::Layer object to be copied
-# @param name a name for the new layer
-# @param options
-# @return a new Geo::OGR::Layer object
+## @method Geo::OGR::Layer CopyLayer($layer, $name, \%options = undef)
+# @param layer A Geo::OGR::Layer object to be copied.
+# @param name A name for the new layer.
+# @param options A ref to a hash of format specific options.
+# @return a new Geo::OGR::Layer object.
 
 ## @method DeleteLayer($layer)
-# Deletes a layer from the data source. Note that if there are layer
-# objects for the deleted layer, they become unusable.
+# Deletes a layer from the data source. Note that if there is a layer
+# object for the deleted layer, it becomes unusable.
 # @param layer name (primary) or index (secondary) of the layer to be
-# deleted, if ambiguous use named parameter syntax (name or index)
+# deleted, if ambiguous use named parameter syntax (name or index).
 
 ## @method DeleteLayer(%param)
 # Deletes a layer from the data source. Note that if there are layers
 # objects for the deleted layer, they become unusable.
-# @param param named parameter (name or index) for the layer to be
-# deleted
+# @param param Named parameter (name or index) for the layer to be
+# deleted.
 
 ## @method Geo::OGR::Layer ExecuteSQL($statement, $geom = undef, $dialect = "")
-# @param statement
-# @param geom a Geo::OGR::Geometry object
+# @param statement A SQL statement.
+# @param geom A Geo::OGR::Geometry object.
 # @param dialect
-# @return a new Geo::OGR::Layer object
+# @return a new Geo::OGR::Layer object.
 
 ## @method ReleaseResultSet($layer)
-# @param layer a layer the has been created with ExecuteSQL
+# @param layer A layer the has been created with ExecuteSQL.
 
 ## @method Geo::OGR::Layer GetLayerByIndex($index = 0)
-# @param index
-# @return a new Geo::OGR::Layer object
+# @param index A number.
+# @return a new Geo::OGR::Layer object.
 
 ## @method Geo::OGR::Layer GetLayerByName($name)
-# @param name
-# @return a new Geo::OGR::Layer object
+# @param name A string.
+# @return a new Geo::OGR::Layer object.
 
-## @method $GetRefCount()
+## @ignore $GetRefCount()
 # @return integer
 
-## @method $GetSummaryRefCount()
+## @ignore $GetSummaryRefCount()
 # @return integer
 
 
@@ -367,25 +381,29 @@
 ## @ignore ACQUIRE
 
 ## @cmethod @Capabilities()
-# @return the class method returns a list of all potential
-# capabilities a layer may have; the object method returns a list of
-# all capabilities the layer has
+# @return a list of capabilities. The class method returns a list of
+# all potential capabilities a layer may have; the object method
+# returns a list of all capabilities the layer has.
 
 ## @method $TestCapability($cap)
-# @param cap
-# @return boolean
+# @param cap A capability string.
+# @return a boolean value indicating whether the layer has the
+# specified capability.
 
 ## @method \%Schema(%schema)
-# Get and/or set the schema of the layer. The named input parameters
-# are: Fields and ApproxOK. Fields is a reference to a list of field
-# definitions (either Geo::OGR::FieldDefn objects or hashrefs from
-# which they can be created). ApproxOK is a flag telling OGR whether
-# it is ok to change the requested field definition to accommodate
-# limitations of the layer. The output contains keys Name,
-# GeometryType, and Fields. Fields is an array of hashrefs that
-# contain schemas of FieldDefns
-# @param schema [optional]
-# @return
+# Get and/or set the schema of the layer.
+# @param schema The schema hash may contain the keys:
+# - \a Fields A reference to a list of field definitions (either
+# Geo::OGR::FieldDefn objects or hashrefs from which they can be
+# created).
+# - \a ApproxOK (optional) A flag specifying whether it is ok to
+# change the requested field definition to accommodate limitations of
+# the layer.
+# @return a reference to a schema hash, which has keys:
+# - \a Name The name of this layer.
+# - \a GeometryType The type of the geometries in this layer (a
+# string).
+# - \a Fields An array of references to hashes of field definitions.
 
 ## @method \%Row(%row)
 # Get and/or set the data of a feature that has the supplied feature
