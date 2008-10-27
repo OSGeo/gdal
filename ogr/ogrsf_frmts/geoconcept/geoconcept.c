@@ -1198,6 +1198,20 @@ static int _checkSchema_GCIO (
                           kSubclass_GCIO, GetTypeName_GCIO(theClass), GetSubTypeName_GCIO(theSubType) );
                 return FALSE;
               }
+              if (iNa==-1 )
+              {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Geoconcept mandatory field %s is missing on %s.%s!\n",
+                          kName_GCIO, GetTypeName_GCIO(theClass), GetSubTypeName_GCIO(theSubType) );
+                return FALSE;
+              }
+              else if( iNa-iSu!=1)
+              {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Geoconcept mandatory field %s must be the forth field of %s.%s!\n",
+                          kName_GCIO, GetTypeName_GCIO(theClass), GetSubTypeName_GCIO(theSubType) );
+                return FALSE;
+              }
               if( iNb==-1 )
               {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -2233,6 +2247,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   snprintf(tdst, kItemSize_GCIO-1, "%s.%s", GetTypeName_GCIO(theClass), GetSubTypeName_GCIO(*theSubType));
   tdst[kItemSize_GCIO-1]= '\0';
   /* Name */
+#if 0
   if( _findFieldByName_GCIO(GetSubTypeFields_GCIO(*theSubType),kName_GCIO)!=-1 )
   {
     nbf= 4;
@@ -2241,6 +2256,17 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     nbf= 3;
   }
+#else
+  if( _findFieldByName_GCIO(GetSubTypeFields_GCIO(*theSubType),kName_GCIO)==-1 )
+  {
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "Line %ld, missing mandatory field %s for type '%s'.\n",
+              GetGCCurrentLinenum_GCIO(H), kName_GCIO, tdst );
+    CSLDestroy(pszFields);
+    return NULL;
+  }
+  nbf= 4;
+#endif /* 0 */
   /* NbFields */
   if( GetSubTypeNbFields_GCIO(*theSubType)==-1 )
   {
@@ -4774,7 +4800,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
     {
       return GEOMETRYEXPECTED_GCIO;/* needs a call to WriteFeatureGeometry_GCIO() now */
     }
-    if( EQUAL(fieldName,kIdentifier_GCIO) ) /* FIXME : must be the first field ? */
+    if( EQUAL(fieldName,kIdentifier_GCIO) )
     {
       /* long integer which GeoConcept may use as a key for the object it will create. */
       /* If set to '-1', it will be ignored.                                           */
@@ -4784,7 +4810,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
         return WRITEERROR_GCIO;
       }
     }
-    else if( EQUAL(fieldName,kClass_GCIO) ) /* FIXME : must be the second field ? */
+    else if( EQUAL(fieldName,kClass_GCIO) )
     {
       if( !(escapedValue= _escapeString_GCIO(H,GetTypeName_GCIO(GetSubTypeType_GCIO(theSubType)))) )
       {
@@ -4797,7 +4823,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
       }
       CPLFree(escapedValue);
     }
-    else if( EQUAL(fieldName,kSubclass_GCIO) ) /* FIXME : must be the third field ? */
+    else if( EQUAL(fieldName,kSubclass_GCIO) )
     {
       if( !(escapedValue= _escapeString_GCIO(H,GetSubTypeName_GCIO(theSubType))) )
       {
@@ -4812,7 +4838,6 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
     }
     else if( EQUAL(fieldName,kName_GCIO) )
     {
-      /* FIXME */
       if( !(escapedValue= _escapeString_GCIO(H,GetSubTypeName_GCIO(theSubType))) )
       {
         return WRITEERROR_GCIO;
