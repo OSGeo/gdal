@@ -472,21 +472,22 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
       AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kIdentifier_GCIO, -100, vIntFld_GCIO, NULL, NULL);
       AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kClass_GCIO, -101, vMemoFld_GCIO, NULL, NULL);
       AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kSubclass_GCIO, -102, vMemoFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kNbFields_GCIO, -103, vIntFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kX_GCIO, -104, vRealFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kY_GCIO, -105, vRealFld_GCIO, NULL, NULL);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kName_GCIO, -103, vMemoFld_GCIO, NULL, NULL);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kNbFields_GCIO, -104, vIntFld_GCIO, NULL, NULL);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kX_GCIO, -105, vRealFld_GCIO, NULL, NULL);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kY_GCIO, -106, vRealFld_GCIO, NULL, NULL);
       /* user's fields will be added with Layer->CreateField() method ... */
       switch( gcioFeaType )
       {
         case vPoint_GCIO :
           break;
         case vLine_GCIO  :
-          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kXP_GCIO, -106, vRealFld_GCIO, NULL, NULL);
-          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kYP_GCIO, -107, vRealFld_GCIO, NULL, NULL);
-          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kGraphics_GCIO, -108, vUnknownItemType_GCIO, NULL, NULL);
+          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kXP_GCIO, -107, vRealFld_GCIO, NULL, NULL);
+          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kYP_GCIO, -108, vRealFld_GCIO, NULL, NULL);
+          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kGraphics_GCIO, -109, vUnknownItemType_GCIO, NULL, NULL);
           break;
         default          :
-          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kGraphics_GCIO, -108, vUnknownItemType_GCIO, NULL, NULL);
+          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kGraphics_GCIO, -109, vUnknownItemType_GCIO, NULL, NULL);
           break;
       }
       SetSubTypeGCHandle_GCIO(aSubclass,_hGXT);
