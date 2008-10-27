@@ -277,9 +277,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
 {
     int     i, n;
 
-    if (!nPartCount) {
+    if ( !nPartCount )
         return;
-    }
 
     for ( i = 0, n = 0; i < nPartCount; i++, n += panPartSize[i] )
     {
@@ -297,21 +296,21 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
             int iX = (int)floor( padfX[n + j - 1] + 0.5 );
             int iY = (int)floor( padfY[n + j - 1] + 0.5 );
 
-            int iX1 = (int)floor( padfX[n + j] + 0.5 );
-            int iY1 = (int)floor( padfY[n + j] + 0.5 );
+            const int iX1 = (int)floor( padfX[n + j] + 0.5 );
+            const int iY1 = (int)floor( padfY[n + j] + 0.5 );
 
             int nDeltaX = ABS( iX1 - iX );
             int nDeltaY = ABS( iY1 - iY );
 
             // Step direction depends on line direction.
-            int nXStep = ( iX > iX1 ) ? -1 : 1;
-            int nYStep = ( iY > iY1 ) ? -1 : 1;
+            const int nXStep = ( iX > iX1 ) ? -1 : 1;
+            const int nYStep = ( iY > iY1 ) ? -1 : 1;
 
             // Determine the line slope.
             if ( nDeltaX >= nDeltaY )
             {           
-                int nXError = nDeltaY << 1;
-                int nYError = nXError - (nDeltaX << 1);
+                const int nXError = nDeltaY << 1;
+                const int nYError = nXError - (nDeltaX << 1);
                 int nError = nXError - nDeltaX;
 
                 while ( nDeltaX-- >= 0 )
@@ -332,8 +331,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
             }
             else
             {
-                int nXError = nDeltaX << 1;
-                int nYError = nXError - (nDeltaY << 1);
+                const int nXError = nDeltaX << 1;
+                const int nYError = nXError - (nDeltaY << 1);
                 int nError = nXError - nDeltaY;
 
                 while ( nDeltaY-- >= 0 )
