@@ -270,8 +270,8 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
          * within the fields of some extended datasets (such as JP34NC94.000).
          * So we don't check for the field terminator and unit terminators as 
          * a single byte if the field appears to be multi-byte which we 
-         * established by the first character being out of the ASCII printable
-         * range (32-127). 
+         * establish by checking for the buffer ending with 0x1e 0x00 (a
+         * two byte field terminator). 
          *
          * In the case of S57, the subfield ATVL of the NATF field can be 
          * encoded in lexical level 2 (see S57 specification, Edition 3.1, 
@@ -279,39 +279,47 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
          * Terminator are followed by the NULL character.
          * A better fix would be to read the NALL tag in the DSSI to check 
          * that the lexical level is 2, instead of relying on the value of 
-         * the first byte as we are doing. 
-         * (Fix for bug #1526)
+         * the first byte as we are doing - but that is not information
+         * that is available at the libiso8211 level (bug #1526)
          */
 
-        if( (unsigned char)pachSourceData[0] < 32 || (unsigned char)pachSourceData[0] >= 127 )
+        // If the whole field ends with 0x1e 0x00 then we assume this
+        // field is a double byte character set.
+        if( nMaxBytes > 1 
+            && (pachSourceData[nMaxBytes-2] == chFormatDelimeter
+                || pachSourceData[nMaxBytes-2] == DDF_FIELD_TERMINATOR) 
+            && pachSourceData[nMaxBytes-1] == 0x00 )
             bAsciiField = FALSE;
-        if (pachSourceData[0] != chFormatDelimeter)
+
+//        if( !bAsciiField )
+//            CPLDebug( "ISO8211", "Non-ASCII field detected." );
+
+        while( nLength < nMaxBytes)
         {
-            while( nLength < nMaxBytes)
+            if (bAsciiField)
             {
-                if (bAsciiField)
-                {
-                    if (pachSourceData[nLength] == chFormatDelimeter ||
-                        pachSourceData[nLength] == DDF_FIELD_TERMINATOR)
-                        break;
-                }
-                else
-                {
-                    if ((pachSourceData[nLength] == chFormatDelimeter ||
-                        pachSourceData[nLength] == DDF_FIELD_TERMINATOR) &&
-                        nLength+1 < nMaxBytes &&
-                        pachSourceData[nLength+1] == 0)
-                    {
-                        extraConsumedBytes = 1;
-                        if (nLength+2 < nMaxBytes &&
-                            pachSourceData[nLength+2] == DDF_FIELD_TERMINATOR)
-                            extraConsumedBytes++;
-                        break;
-                    } 
-                }
-    
-                nLength++;
+                if (pachSourceData[nLength] == chFormatDelimeter ||
+                    pachSourceData[nLength] == DDF_FIELD_TERMINATOR)
+                    break;
             }
+            else
+            {
+                if (nLength > 0 
+                    && (pachSourceData[nLength-1] == chFormatDelimeter 
+                        || pachSourceData[nLength-1] == DDF_FIELD_TERMINATOR) 
+                    && pachSourceData[nLength] == 0)
+                {
+                    // Suck up the field terminator if one follows
+                    // or else it will be interpreted as a new subfield.
+                    // This is a pretty ugly counter-intuitive hack!
+                    if (nLength+1 < nMaxBytes &&
+                        pachSourceData[nLength+1] == DDF_FIELD_TERMINATOR)
+                        extraConsumedBytes++;
+                    break;
+                } 
+            }
+            
+            nLength++;
         }
 
         if( pnConsumedBytes != NULL )
