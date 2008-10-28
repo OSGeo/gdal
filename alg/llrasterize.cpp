@@ -280,7 +280,7 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
     if ( !nPartCount )
         return;
 
-    for ( i = 0, n = 0; i < nPartCount; i++, n += panPartSize[i] )
+    for ( i = 0, n = 0; i < nPartCount; n += panPartSize[i++] )
     {
         int j;
 
