@@ -339,7 +339,8 @@ int DDFRecord::ReadHeader()
 /*      If we don't find a field terminator at the end of the record    */
 /*      we will read extra bytes till we get to it.                     */
 /* -------------------------------------------------------------------- */
-        while( pachData[nDataSize-1] != DDF_FIELD_TERMINATOR )
+        while( pachData[nDataSize-1] != DDF_FIELD_TERMINATOR 
+               && (nDataSize == 0 || pachData[nDataSize-2] != DDF_FIELD_TERMINATOR) )
         {
             nDataSize++;
             pachData = (char *) CPLRealloc(pachData,nDataSize);
