@@ -191,6 +191,31 @@ def ogr_s57_5():
     return 'success'
 
 ###############################################################################
+# Test reading features from dataset with some double byte attributes. (#1526)
+
+def ogr_s57_6():
+    if gdaltest.s57_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'data/bug1526.000' )
+    
+    feat = ds.GetLayerByName('FOGSIG').GetNextFeature()
+
+    if feat is None:
+        gdaltest.post_reason( 'Did not get expected FOGSIG feature at all.' )
+        return 'fail'
+    
+    if feat.GetField( 'INFORM' ) != 'During South winds nautophone is not always heard in S direction from lighthouse' \
+       or len(feat.GetField( 'NINFOM' )) < 1:
+        gdaltest.post_reason( 'FOGSIG: did not get expected attributes' )
+        return 'fail'
+
+    feat.Destroy()
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_s57_cleanup():
@@ -207,6 +232,7 @@ gdaltest_list = [
     ogr_s57_3,
     ogr_s57_4,
     ogr_s57_5,
+    ogr_s57_6,
     ogr_s57_cleanup ]
 
 if __name__ == '__main__':
