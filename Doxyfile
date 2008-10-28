@@ -401,6 +401,7 @@ INPUT                  = port \
                          alg \
                          frmts/vrt \
                          doc \
+			 apps \
 			 swig/python/scripts
 
 # If the value of the INPUT tag contains directories, you can use the 
