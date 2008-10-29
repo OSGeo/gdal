@@ -498,10 +498,9 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             break;
 
         case PAN_PROJ_EQC:
-            SetEquirectangular2( 0.0,
-                                 TO_DEGREES * padfPrjParams[3],
-                                 padfPrjParams[5], padfPrjParams[6],
-                                 TO_DEGREES * padfPrjParams[0] );
+            SetEquirectangular( TO_DEGREES * padfPrjParams[0],
+                                TO_DEGREES * padfPrjParams[3],
+                                padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case PAN_PROJ_CEA:

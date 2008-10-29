@@ -2595,18 +2595,8 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefn )
             break;
         
           case CT_Equirectangular:
-            if( adfParm[3]!= 0.0 )
-            {
-                oSRS.SetEquirectangular2( adfParm[0], adfParm[1],
-                                          adfParm[5], adfParm[6],
-                                          adfParm[3] );
-            }
-            else
-            {
-                oSRS.SetEquirectangular2( 0.0,        adfParm[1],
-                                          adfParm[5], adfParm[6],
-                                          adfParm[0] );
-            }
+            oSRS.SetEquirectangular( adfParm[0], adfParm[1],
+                                     adfParm[5], adfParm[6] );
             break;
         
           case CT_Gnomonic:
