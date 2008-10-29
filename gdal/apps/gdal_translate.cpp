@@ -853,17 +853,18 @@ static int ProxyMain( int argc, char ** argv )
                                         anSrcWin[2], anSrcWin[3], 
                                         0, 0, nOXSize, nOYSize );
 
+        /* In case of color table translate, we only set the color interpretation */
+        /* other info copied by CopyCommonInfoFrom are not relevant in RGB expansion */
+        if (nRGBExpand != 0 && i < nRGBExpand)
+        {
+            poVRTBand->SetColorInterpretation( (GDALColorInterp) (GCI_RedBand + i) );
+        }
+        else
+        {
 /* -------------------------------------------------------------------- */
 /*      copy over some other information of interest.                   */
 /* -------------------------------------------------------------------- */
-        poVRTBand->CopyCommonInfoFrom( poSrcBand );
-
-        /* In case of color table translate, we must unset the color table */
-        /* and override the color interpretation */
-        if (nRGBExpand != 0 && i < nRGBExpand)
-        {
-            poVRTBand->SetColorTable( NULL );
-            poVRTBand->SetColorInterpretation( (GDALColorInterp) (GCI_RedBand + i) );
+            poVRTBand->CopyCommonInfoFrom( poSrcBand );
         }
 
 /* -------------------------------------------------------------------- */
