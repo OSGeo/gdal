@@ -348,6 +348,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_CPG();
     GDALRegister_IDA();
     GDALRegister_NDF();
+    GDALRegister_EIR();
     GDALRegister_DIPEx();
     GDALRegister_LCP();
 #endif
