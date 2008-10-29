@@ -1877,6 +1877,10 @@ int OSRSetEckertVI( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
 int OSRSetEquirectangular(OGRSpatialReferenceH hSRS, 
                         double dfCenterLat, double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
+int OSRSetEquirectangular2(OGRSpatialReferenceH hSRS, 
+                        double dfCenterLat, double dfCenterLong,
+                        double dfFalseEasting, double dfFalseNorthing,
+                        double dfStdP1 );
 
 /** Gall Stereograpic */
 int OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,

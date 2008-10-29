@@ -417,8 +417,9 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     else if( EQUALN( pszProj, "ER", 2 ) )
     {
-        SetEquirectangular( padfPrjParams[3], padfPrjParams[2],
-                            padfPrjParams[6], padfPrjParams[7] );
+        SetEquirectangular2( 0.0, padfPrjParams[2],
+                            padfPrjParams[6], padfPrjParams[7],
+                            padfPrjParams[3] );
     }
 
     else if( EQUALN( pszProj, "GNO", 3 ) )

@@ -2415,7 +2415,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     }
     else if( EQUALN( pszProjName, "Plate Carrée", 10 ) )
     {
-        oSRS.SetEquirectangular( dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
+        oSRS.SetEquirectangular2( 0.0, dfCenterLong, dfFalseEasting, dfFalseNorthing, dfCenterLat );
     }
     else if( EQUAL( pszProjName, "Hammer Aitoff" ) )
     {

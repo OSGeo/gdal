@@ -105,9 +105,9 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDS, FILE *fpVSIL,
     nBlockXSize = nTileXSize;
     nBlockYSize = nTileYSize;
 
-    int nBlocksPerRow = 
+    int nBlocksPerRow =
             (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
-    int nBlocksPerColumn = 
+    int nBlocksPerColumn =
             (poDS->GetRasterYSize() + nTileYSize - 1) / nTileYSize;
 
     if( nXTileOffset == 0 && nYTileOffset == 0 )
@@ -553,7 +553,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ((EQUAL( map_proj_name, "Equirectangular" )) ||
         (EQUAL( map_proj_name, "SimpleCylindrical" )) )  {
-        oSRS.OGRSpatialReference::SetEquirectangular ( center_lat, center_lon, 0, 0 );
+        oSRS.OGRSpatialReference::SetEquirectangular2 ( 0, center_lon, 0, 0, center_lat );
     } else if (EQUAL( map_proj_name, "Orthographic" )) {
         oSRS.OGRSpatialReference::SetOrthographic ( center_lat, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "Sinusoidal" )) {
