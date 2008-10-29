@@ -1091,9 +1091,9 @@ static OGRFeature *TranslateMeridian2Point( NTFFileReader *poReader,
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "FC", 2, "PN", 3, "OD", 4, "PO", 5, 
-                                    "JN", 6, "RT", 7, "SN", 7, "SI", 8, 
-                                    "PN", 9, "PI", 10, "NM", 11, "DA", 12, 
-                                    "WA", 13, "HT", 14,
+                                    "JN", 6, "RT", 7, "SN", 8, "SI", 9, 
+                                    "PI", 10, "NM", 11, "DA", 12, 
+                                    "WA", 13, "HT", 14, "FA", 15,
                                     NULL );
 
     return poFeature;
@@ -1254,7 +1254,7 @@ static OGRFeature *TranslateStrategiText( NTFFileReader *poReader,
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "FC", 1, "TX", 6,
+                                    "FC", 1, "TX", 6, "DE", 8,
                                     NULL );
 
     return poFeature;
@@ -1290,9 +1290,13 @@ static OGRFeature *TranslateStrategiPoint( NTFFileReader *poReader,
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "FC", 1, "PN", 2, "NU", 3, "RB", 4,
-                                    "RU", 5, "AN", 6, "AO", 7, "CM", 8,
-                                    "UN", 9, 
+                                    "FC",  1, "PN",  2, "NU",  3, "RB",  4,
+                                    "RU",  5, "AN",  6, "AO",  7, "CM",  8,
+                                    "UN",  9, "DE", 11, "DN", 12, "FM", 13,
+                                    "GS", 14, "HI", 15, "HM", 16, "LO", 17,
+                                    "OR", 18, "OW", 19, "RJ", 20, "RL", 21,
+                                    "RM", 22, "RQ", 23, "RW", 24, "RZ", 25,
+                                    "UE", 26,
                                     NULL );
 
     return poFeature;
@@ -1328,8 +1332,10 @@ static OGRFeature *TranslateStrategiLine( NTFFileReader *poReader,
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "FC", 1,
-                                    "PN", 2,
+                                    "FC",   1, "PN",  2, "DE",  4, "FE",  5,
+                                    "FF",   6, "FI",  7, "FM",  8, "FP",  9,
+                                    "FR",  10, "FT", 11, "GS", 12, "NU", 13,
+                                    "TX", 14,
                                     NULL );
 
     return poFeature;
@@ -1921,6 +1927,22 @@ void NTFFileReader::EstablishLayers()
                         "COUNTY_NAME", OFTString, 0, 0, 
                         "UNITARY_NAME", OFTString, 0, 0, 
                         "GEOM_ID", OFTInteger, 6, 0,
+                        "DATE", OFTInteger, 8, 0,
+                        "DISTRICT_NAME", OFTString, 0, 0,
+                        "FEATURE_NAME", OFTString, 0, 0,
+                        "GIS", OFTString, 0, 0,
+                        "HEIGHT_IMPERIAL", OFTInteger, 4, 0,
+                        "HEIGHT_METRIC", OFTInteger, 4, 0,
+                        "LOCATION", OFTInteger, 1, 0,
+                        "ORIENTATION", OFTReal, 4, 1,
+                        "OWNER", OFTString, 0, 0,
+                        "RESTRICTION_NORTH", OFTString, 0, 0,
+                        "RESTRICTION_SOUTH", OFTString, 0, 0,
+                        "RESTRICTION_EAST", OFTString, 0, 0,
+                        "RESTRICTION_WEST", OFTString, 0, 0,
+                        "RESTRICTION_CLOCKWISE", OFTString, 0, 0,
+                        "RESTRICTION_ANTICLOCKWISE", OFTString, 0, 0,
+                        "USAGE", OFTInteger, 1, 0,
                         NULL );
         
         EstablishLayer( "STRATEGI_LINE", wkbLineString,
@@ -1929,6 +1951,16 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "PROPER_NAME", OFTString, 0, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
+                        "DATE", OFTInteger, 8, 0,
+                        "FERRY_ACCESS", OFTString, 0, 0,
+                        "FERRY_FROM", OFTString, 0, 0,
+                        "FERRY_TIME", OFTString, 0, 0,
+                        "FEATURE_NAME", OFTString, 0, 0,
+                        "FERRY_TYPE", OFTString, 0, 0,
+                        "FERRY_RESTRICTIONS", OFTString, 0, 0,
+                        "FERRY_TO", OFTString, 0, 0,
+                        "GIS", OFTString, 0, 0,
+                        "FEATURE_NUMBER", OFTString, 0, 0, 
                         NULL );
 
         EstablishLayer( "STRATEGI_TEXT", wkbPoint,
@@ -1941,6 +1973,7 @@ void NTFFileReader::EstablishLayers()
                         "ORIENT", OFTReal, 5, 1,
                         "TEXT", OFTString, 0, 0, 
                         "TEXT_HT_GROUND", OFTReal, 10, 3,
+                        "DATE", OFTInteger, 8, 0,
                         NULL );
 
         EstablishLayer( "STRATEGI_NODE", wkbNone,
@@ -2023,12 +2056,12 @@ void NTFFileReader::EstablishLayers()
                         "ROUNDABOUT", OFTString, 1, 0,
                         "SETTLEMENT_NAME", OFTString, 0, 0,
                         "STATION_ID", OFTString, 13, 0,
-                        "PROPER_NAME", OFTString, 0, 0, 
                         "GLOBAL_ID", OFTInteger, 6, 0, 
                         "ADMIN_NAME", OFTString, 0, 0, 
                         "DA_DLUA_ID", OFTString, 13, 0, 
                         "WATER_AREA", OFTString, 13, 0, 
                         "HEIGHT", OFTInteger, 8, 0,
+                        "FOREST_ID", OFTString, 13, 0,
                         NULL );
         
         EstablishLayer( "MERIDIAN2_LINE", wkbLineString,
