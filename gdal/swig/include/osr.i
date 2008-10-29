@@ -55,7 +55,7 @@
 %constant char *SRS_PT_EQUIDISTANT_CONIC	= SRS_PT_EQUIDISTANT_CONIC;
 %constant char *SRS_PT_EQUIRECTANGULAR		= SRS_PT_EQUIRECTANGULAR;
 %constant char *SRS_PT_GALL_STEREOGRAPHIC	= SRS_PT_GALL_STEREOGRAPHIC;
-%constant char *SRS_PT_GAUSSSCHREIBERTMERCATOR  = SRS_PT_GAUSSSCHREIBERTMERCATOR;
+%constant char *SRS_PT_GAUSSLABORDEREUNION      = SRS_PT_GAUSSLABORDEREUNION;
 %constant char *SRS_PT_GNOMONIC			= SRS_PT_GNOMONIC;
 %constant char *SRS_PT_GOODE_HOMOLOSINE         = SRS_PT_GOODE_HOMOLOSINE;
 %constant char *SRS_PT_HOTINE_OBLIQUE_MERCATOR	= SRS_PT_HOTINE_OBLIQUE_MERCATOR;
@@ -457,16 +457,16 @@ public:
 
 %feature( "kwargs" ) SetEquirectangular2;
   OGRErr SetEquirectangular2( double clat, double clong,
-                              double fe, double fn,
-                              double pseudostdparallellat ) {
+                              double pseudostdparallellat,
+                              double fe, double fn ) {
     return OSRSetEquirectangular2( self, clat, clong,
-                                   fe, fn,
-                                   pseudostdparallellat );
+                                   pseudostdparallellat,
+                                   fe, fn );
   }
 
-%feature( "kwargs" ) SetGaussSchreiberTMercator;
-  OGRErr SetGaussSchreiberTMercator( double clat, double clong, double sc, double fe, double fn ) {
-    return OSRSetGaussSchreiberTMercator( self, clat, clong, sc, fe, fn );
+%feature( "kwargs" ) SetGaussLabordeReunion;
+  OGRErr SetGaussLabordeReunion( double clat, double clong, double sc, double fe, double fn ) {
+    return OSRSetGaussLabordeReunion( self, clat, clong, sc, fe, fn );
   }
 
 %feature( "kwargs" ) SetGS;
