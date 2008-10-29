@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.70 2008/06/13 18:39:21 aboudreault Exp $
+ * $Id: mitab_tabfile.cpp,v 1.71 2008/09/26 14:40:24 aboudreault Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.71  2008/09/26 14:40:24  aboudreault
+ * Fixed bug: MITAB doesn't support writing DateTime type (bug 1948)
+ *
  * Revision 1.70  2008/06/13 18:39:21  aboudreault
  * Fixed problem with corrupt pointer if file not found (bug 1899) and
  * fixed tabdump build problem if DEBUG option not provided (bug 1898)
@@ -1574,6 +1577,9 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                 break;
               case OFTReal:
                 eMapInfoType = TABFFloat;
+                break;
+              case OFTDateTime:
+                eMapInfoType = TABFDateTime;
                 break;
               case OFTString:
               default:

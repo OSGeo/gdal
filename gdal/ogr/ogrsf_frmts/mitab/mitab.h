@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.116 2008/08/22 16:14:19 fwarmerdam Exp $
+ * $Id: mitab.h,v 1.117 2008/10/29 12:55:10 dmorissette Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.117  2008/10/29 12:55:10  dmorissette
+ * Update version to 2.0.0-dev (2008-10) for GDAL 1.6.0 release
+ *
  * Revision 1.116  2008/08/22 16:14:19  fwarmerdam
  * export spatialref/coordsys transformers
  *
@@ -108,7 +111,7 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION      "2.0.0-dev (2008-03)"
+#define MITAB_VERSION      "2.0.0-dev (2008-10)"
 #define MITAB_VERSION_INT  2000000  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI
