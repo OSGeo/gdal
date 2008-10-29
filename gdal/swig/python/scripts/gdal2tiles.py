@@ -710,6 +710,9 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 			self.error("It is not possible to open the input file '%s'." % self.input )
 			
 		# Read metadata from the input file
+
+                if self.in_ds.RasterCount == 0:
+                        self.error( "Input file '%s' has no raster band" % self.input )
 			
 		if self.in_ds.GetRasterBand(1).GetRasterColorTable():
 			# TODO: Process directly paletted dataset by generating VRT in memory
