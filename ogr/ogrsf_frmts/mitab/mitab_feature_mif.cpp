@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.33 2008/02/01 20:30:59 dmorissette Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.35 2008/09/23 14:56:03 aboudreault Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.35  2008/09/23 14:56:03  aboudreault
+ * Fixed an error related to the " character when converting mif to tab file.
+ *
+ * Revision 1.34  2008/09/23 13:45:03  aboudreault
+ * Fixed bug with the characters ",\n in the tab2tab application. (bug 1945)
+ *
  * Revision 1.33  2008/02/01 20:30:59  dmorissette
  * Use %.15g instead of %.16g as number precision in .MIF output
  *
@@ -172,7 +178,7 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
 
     for( iChar = 0; pszLine[iChar] != '\0'; iChar++ )
     {
-        if( bInQuotes && pszLine[iChar] == '\\' && pszLine[iChar+1] == '"' )
+        if( bInQuotes && pszLine[iChar] == '"' && pszLine[iChar+1] == '"' )
         {
             pszToken[iTokenChar++] = '"';
             iChar++;
@@ -285,9 +291,41 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 
         switch(poFDefn->GetType())
         {
-          case OFTString:
-            fp->WriteLine("\"%s\"",GetFieldAsString(iField));
-            break;          
+          case OFTString: 
+          {
+            int nStringLen = strlen(GetFieldAsString(iField));
+            char *pszString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
+            strcpy(pszString, GetFieldAsString(iField));
+            char *pszWorkString = (char*)CPLMalloc((2*(nStringLen)+1)*sizeof(char));
+            int j = 0;
+            for (int i =0; i < nStringLen; ++i)
+            { 
+              if (pszString[i] == '"')
+              {
+                pszWorkString[j] = pszString[i];
+                ++j;
+                pszWorkString[j] = pszString[i];
+              }
+              else if (pszString[i] == '\n')
+              {
+                pszWorkString[j] = '\\';
+                ++j;
+                pszWorkString[j] = 'n';
+              }
+              else
+                pszWorkString[j] = pszString[i];
+              ++j;
+            }
+            
+            pszWorkString[j] = '\0';
+            CPLFree(pszString);
+            pszString = (char*)CPLMalloc((strlen(pszWorkString)+1)*sizeof(char));
+            strcpy(pszString, pszWorkString);
+            CPLFree(pszWorkString);
+            fp->WriteLine("\"%s\"",pszString);
+            CPLFree(pszString);
+            break;
+          }
           default:
             fp->WriteLine("%s",GetFieldAsString(iField));
         }
