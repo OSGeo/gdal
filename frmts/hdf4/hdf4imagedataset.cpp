@@ -2926,7 +2926,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                        "Map Projection"),
                      "Equidistant Cylindrical") )
           {
-              poDS->oSRS.SetEquirectangular( 0.0, 0.0, 0.0, 0.0 );
+              poDS->oSRS.SetEquirectangular2( 0.0, 0.0, 0.0, 0.0, 0.0 );
               poDS->oSRS.SetLinearUnits( SRS_UL_METER, 1 );
               if ( poDS->pszProjection )
                   CPLFree( poDS->pszProjection );

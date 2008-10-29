@@ -1277,6 +1277,20 @@ static int SetGTParmIds( int nCTProjection,
         /* EPSG codes? */
         return TRUE;
 
+      case CT_GaussSchreiber_TransverseMercator:
+        panProjParmId[0] = ProjCenterLatGeoKey;
+        panProjParmId[1] = ProjCenterLongGeoKey;
+        panProjParmId[4] = ProjScaleAtCenterGeoKey;//FIXME
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGProjCenterLat;
+        panEPSGCodes[1] = EPSGProjCenterLong;
+        panEPSGCodes[4] = EPSGInitialLineScaleFactor;
+        panEPSGCodes[5] = EPSGProjCenterEasting;
+        panEPSGCodes[6] = EPSGProjCenterNorthing;
+        return TRUE;
+
       default:
         return( FALSE );
     }
@@ -1661,12 +1675,26 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
+        if( psDefn->CTProjection==CT_Equirectangular )
+        {
+            if( GTIFKeyGet(psGTIF, ProjStdParallel1GeoKey,
+                           &dfStdParallel1, 0, 1 ) == 0 )
+                dfStdParallel1= 0.0;
+        }
+
         /* notdef: should transform to decimal degrees at this point */
 
         psDefn->ProjParm[0] = dfNatOriginLat;
         psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
         psDefn->ProjParm[1] = dfNatOriginLong;
         psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
+
+        if( dfStdParallel1!=0.0 &&
+            psDefn->CTProjection==CT_Equirectangular )
+        {
+            psDefn->ProjParm[3] = dfStdParallel1;
+            psDefn->ProjParmId[3] = ProjStdParallel1GeoKey;
+        }
         psDefn->ProjParm[5] = dfFalseEasting;
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParm[6] = dfFalseNorthing;

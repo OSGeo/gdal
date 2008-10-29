@@ -2322,15 +2322,17 @@ CPLErr HFADataset::ReadProjection()
 
       case EPRJ_PLATE_CARREE:
       case EPRJ_EQUIRECTANGULAR:
-        oSRS.SetEquirectangular(
-            psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
-            psPro->proParams[6], psPro->proParams[7] );
+        oSRS.SetEquirectangular2(
+            0.0, psPro->proParams[4]*R2D,
+            psPro->proParams[6], psPro->proParams[7],
+            psPro->proParams[5]*R2D );
         break;
 
       case EPRJ_EQUIDISTANT_CYLINDRICAL:
-        oSRS.SetEquirectangular(
-            psPro->proParams[2]*R2D, psPro->proParams[4]*R2D,
-            psPro->proParams[6], psPro->proParams[7] );
+        oSRS.SetEquirectangular2(
+            0.0, psPro->proParams[4]*R2D,
+            psPro->proParams[6], psPro->proParams[7],
+            psPro->proParams[2]*R2D );
         break;
 
       case EPRJ_MILLER_CYLINDRICAL:
@@ -3148,7 +3150,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
     if( poDS != NULL )
     {
-        poDS->bForceToPEString = 
+        poDS->bForceToPEString =
             CSLFetchBoolean( papszParmList, "FORCETOPESTRING", FALSE );
     }
 

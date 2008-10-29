@@ -477,7 +477,7 @@ static GCProjectionInfo GCSRSAPI_CALL1(*) _findProjection_GCSRS ( const char* p,
           EQUAL(p,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) ) )
       break;
     if( iProj==8 &&
-        EQUAL(p,SRS_PT_GAUSSLABORDEREUNION) )
+        EQUAL(p,SRS_PT_GAUSSSCHREIBERTMERCATOR) )
       break;
     if( iProj==9 &&
         EQUAL(p,SRS_PT_POLYCONIC) )
@@ -896,10 +896,11 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
                           GetSysCoordFalseNorthing_GCSRS(syscoord));
         break;
       case    4: /* Plate Caree */
-        OSRSetEquirectangular(poSR, GetSysCoordLatitudeOfOrigin_GCSRS(syscoord),
-                                    GetSysCoordCentralMeridian_GCSRS(syscoord),
-                                    GetSysCoordFalseEasting_GCSRS(syscoord),
-                                    GetSysCoordFalseNorthing_GCSRS(syscoord));
+        OSRSetEquirectangular2(poSR, 0.0,
+                                     GetSysCoordCentralMeridian_GCSRS(syscoord),
+                                     GetSysCoordFalseEasting_GCSRS(syscoord),
+                                     GetSysCoordFalseNorthing_GCSRS(syscoord),
+                                     GetSysCoordLatitudeOfOrigin_GCSRS(syscoord));
         break;
       case   18: /* LCC 2SP */
         OSRSetLCC(poSR, GetSysCoordStandardParallel1_GCSRS(syscoord),
@@ -910,11 +911,11 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
                         GetSysCoordFalseNorthing_GCSRS(syscoord));
         break;
       case   19: /* Gauss Laborde Reunion */
-        OSRSetGaussLabordeReunion(poSR, GetSysCoordLatitudeOfOrigin_GCSRS(syscoord),
-                                        GetSysCoordCentralMeridian_GCSRS(syscoord),
-                                        GetSysCoordScaleFactor_GCSRS(syscoord),
-                                        GetSysCoordFalseEasting_GCSRS(syscoord),
-                                        GetSysCoordFalseNorthing_GCSRS(syscoord));
+        OSRSetGaussSchreiberTMercator(poSR, GetSysCoordLatitudeOfOrigin_GCSRS(syscoord),
+                                            GetSysCoordCentralMeridian_GCSRS(syscoord),
+                                            GetSysCoordScaleFactor_GCSRS(syscoord),
+                                            GetSysCoordFalseEasting_GCSRS(syscoord),
+                                            GetSysCoordFalseNorthing_GCSRS(syscoord));
         break;
       case   20: /* Polyconic */
         OSRSetPolyconic(poSR, GetSysCoordLatitudeOfOrigin_GCSRS(syscoord),
@@ -945,9 +946,9 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
       case   26: /* Equi rectangular */
         OSRSetEquirectangular2(poSR, GetSysCoordLatitudeOfOrigin_GCSRS(syscoord),
                                      GetSysCoordCentralMeridian_GCSRS(syscoord),
-                                     GetSysCoordStandardParallel1_GCSRS(syscoord),
                                      GetSysCoordFalseEasting_GCSRS(syscoord),
-                                     GetSysCoordFalseNorthing_GCSRS(syscoord));
+                                     GetSysCoordFalseNorthing_GCSRS(syscoord),
+                                     GetSysCoordStandardParallel1_GCSRS(syscoord));
         break;
       default  :
         break;
