@@ -1,6 +1,6 @@
 Version 300
 Charset "WindowsLatin1"
-Delimiter ", "
+Delimiter ","
 CoordSys Nonearth Units "M" Bounds (406547, 153897) (407967, 155532)
 Columns 7
   NAME Char (50)

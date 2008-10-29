@@ -1,6 +1,6 @@
 Version 300
 Charset "WindowsLatin1"
-Delimiter ", "
+Delimiter ","
 CoordSys Earth Projection 3, 1002, "m", 0, 46.8, 45.898918964419, 47.696014502038, 600000, 2200000 Bounds (-113967455.417, - 106367759.649) (115167455.417, 122767151.185)
 Columns 7
   NAME Char (50)
