@@ -378,7 +378,7 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 int iOffset = i*3 / 2;
 
-                panImage[i] = pabyImage[iOffset] 
+                panImage[i] = pabyImage[iOffset]
                     + (pabyImage[iOffset+1] & 0xf0) * 16;
             }
             else
@@ -390,7 +390,7 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     + (pabyImage[iOffset+1] & 0x0f) * 256;
             }
         }
-        
+
         return CE_None;
     }
 
@@ -1788,7 +1788,7 @@ void NITFDataset::CheckGeoSDEInfo()
         oSRS.SetBonne( adfParm[1], adfParm[0], dfFE, dfFN );
 
     else if( EQUALN(pszPRJPSB+80,"CP",2) )
-        oSRS.SetEquirectangular( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetEquirectangular2( 0.0, adfParm[0], dfFE, dfFN, adfParm[1] );
 
     else if( EQUALN(pszPRJPSB+80,"CS",2) )
         oSRS.SetCS( adfParm[1], adfParm[0], dfFE, dfFN );
@@ -2221,7 +2221,7 @@ void NITFDataset::InitializeTextMetadata()
                           psFile->fp ) != psSegment->nSegmentSize )
         {
             CPLError( CE_Warning, CPLE_FileIO, 
-                      "Failed to read %d bytes of text data at %d.", 
+                      "Failed to read %d bytes of text data at %d.",
                       psSegment->nSegmentSize,
                       psSegment->nSegmentStart );
             return;
@@ -2911,8 +2911,8 @@ NITFDataset::NITFCreateCopy(
     int iOpt, nNUMT = 0;
     char **papszTextMD = poSrcDS->GetMetadata( "TEXT" );
 
-    for( iOpt = 0; 
-         papszTextMD != NULL && papszTextMD[iOpt] != NULL; 
+    for( iOpt = 0;
+         papszTextMD != NULL && papszTextMD[iOpt] != NULL;
          iOpt++ )
     {
         if( !EQUALN(papszTextMD[iOpt],"DATA_",5) )
@@ -2923,8 +2923,8 @@ NITFDataset::NITFCreateCopy(
 
     if( nNUMT > 0 )
     {
-        papszFullOptions = CSLAddString( papszFullOptions, 
-                                         CPLString().Printf( "NUMT=%d", 
+        papszFullOptions = CSLAddString( papszFullOptions,
+                                         CPLString().Printf( "NUMT=%d",
                                                              nNUMT ) );
     }
 
@@ -3300,7 +3300,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
     if( fpVSIL == NULL )
         return;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm that the NUMT in the file header already matches the    */
 /*      number of text segements we want to write, and that the         */
@@ -3344,7 +3344,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /* ==================================================================== */
 #define PLACE(location,name,text)  strncpy(location,text,strlen(text))
     int iTextSeg = 0;
-    
+
     for( iOpt = 0; papszList != NULL && papszList[iOpt] != NULL; iOpt++ )
     {
         const char *pszTextToWrite;
@@ -3377,7 +3377,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
         pszTextToWrite = CPLParseNameValue( papszList[iOpt], NULL );
 
         VSIFWriteL( pszTextToWrite, 1, strlen(pszTextToWrite), fpVSIL );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Update the subheader and data size info in the file header.     */
 /* -------------------------------------------------------------------- */
@@ -3402,10 +3402,10 @@ static void NITFWriteTextSegments( const char *pszFilename,
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
     VSIFWriteL( (void *) CPLString().Printf("%012ld",(long)nFileLen).c_str(),
                 1, 12, fpVSIL );
-    
+
     VSIFCloseL( fpVSIL );
 }
-        
+
 /************************************************************************/
 /*                         NITFWriteJPEGImage()                         */
 /************************************************************************/
@@ -3664,7 +3664,7 @@ static const NITFFieldDescription asFieldDescription [] =
 };
 
 /* Keep in sync with NITFWriteBLOCKA */
-static const char *apszFieldsBLOCKA[] = { 
+static const char *apszFieldsBLOCKA[] = {
         "BLOCK_INSTANCE", "0", "2",
         "N_GRAY",         "2", "5",
         "L_LINES",        "7", "5",

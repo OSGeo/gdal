@@ -713,9 +713,10 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             break;
 
         case EQRECT:
-            SetEquirectangular( pfnUnpackAnglesFn(padfPrjParams[5]),
+            SetEquirectangular2( 0.0,
                                 pfnUnpackAnglesFn(padfPrjParams[4]),
-                                padfPrjParams[6], padfPrjParams[7] );
+                                padfPrjParams[6], padfPrjParams[7],
+                                pfnUnpackAnglesFn(padfPrjParams[5]) );
             break;
 
         case MILLER:

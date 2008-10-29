@@ -76,6 +76,8 @@ ValuePair(CT_TransvMercator_SouthOrientated, 27)
 /* Added Feb 2005 */
 ValuePair(CT_CylindricalEqualArea, 28)
 
+/* Added for PROJ.4.6.1 */
+ValuePair(CT_GaussSchreiber_TransverseMercator, 29)
 
 /* Aliases */
 

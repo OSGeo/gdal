@@ -2479,9 +2479,9 @@ int OGRSpatialReference::FindProjParm( const char *pszParameter,
     for( iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
     {
         poParameter = poPROJCS->GetChild(iChild);
-        
+
         if( EQUAL(poParameter->GetValue(),"PARAMETER")
-            && poParameter->GetChildCount() == 2 
+            && poParameter->GetChildCount() == 2
             && EQUAL(poPROJCS->GetChild(iChild)->GetChild(0)->GetValue(),
                      pszParameter) )
         {
@@ -2551,7 +2551,7 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
         poParameter = poPROJCS->GetChild(iChild);
         return CPLAtof(poParameter->GetChild(1)->GetValue());
     }
-
+ 
 /* -------------------------------------------------------------------- */
 /*      Return default value on failure.                                */
 /* -------------------------------------------------------------------- */
@@ -3252,7 +3252,7 @@ OGRErr OGRSpatialReference::SetEquirectangular(
 
 {
     SetProjection( SRS_PT_EQUIRECTANGULAR );
-    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
     SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
@@ -3285,9 +3285,9 @@ OGRErr OSRSetEquirectangular( OGRSpatialReferenceH hSRS,
 
 OGRErr OGRSpatialReference::SetEquirectangular2(
                                    double dfCenterLat, double dfCenterLong,
-                                   double dfPseudoStdParallel1,
                                    double dfFalseEasting,
-                                   double dfFalseNorthing )
+                                   double dfFalseNorthing,
+                                   double dfPseudoStdParallel1 )
 
 {
     SetProjection( SRS_PT_EQUIRECTANGULAR );
@@ -3306,17 +3306,17 @@ OGRErr OGRSpatialReference::SetEquirectangular2(
 
 OGRErr OSRSetEquirectangular2( OGRSpatialReferenceH hSRS, 
                                double dfCenterLat, double dfCenterLong,
-                               double dfPseudoStdParallel1,
                                double dfFalseEasting,
-                               double dfFalseNorthing )
+                               double dfFalseNorthing,
+                               double dfPseudoStdParallel1 )
     
 {
     VALIDATE_POINTER1( hSRS, "OSRSetEquirectangular", CE_Failure );
 
     return ((OGRSpatialReference *) hSRS)->SetEquirectangular2( 
         dfCenterLat, dfCenterLong, 
-        dfPseudoStdParallel1,
-        dfFalseEasting, dfFalseNorthing );
+        dfFalseEasting, dfFalseNorthing,
+        dfPseudoStdParallel1 );
 }
 
 /************************************************************************/
@@ -3425,17 +3425,17 @@ OGRErr OSRSetGEOS( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
-/*                         SetGaussLabordeReunion()                     */
+/*                       SetGaussSchreiberTMercator()                   */
 /************************************************************************/
 
-OGRErr OGRSpatialReference::SetGaussLabordeReunion(
+OGRErr OGRSpatialReference::SetGaussSchreiberTMercator(
                                    double dfCenterLat, double dfCenterLong,
                                    double dfScale,
                                    double dfFalseEasting,
                                    double dfFalseNorthing )
 
 {
-    SetProjection( SRS_PT_GAUSSLABORDEREUNION );
+    SetProjection( SRS_PT_GAUSSSCHREIBERTMERCATOR );
     SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
     SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
@@ -3446,17 +3446,17 @@ OGRErr OGRSpatialReference::SetGaussLabordeReunion(
 }
 
 /************************************************************************/
-/*                       OSRSetGaussLabordeReunion()                    */
+/*                     OSRSetGaussSchreiberTMercator()                  */
 /************************************************************************/
 
-OGRErr OSRSetGaussLabordeReunion( OGRSpatialReferenceH hSRS,
-                                  double dfCenterLat, double dfCenterLong,
-                                  double dfScale,
-                                  double dfFalseEasting,
-                                  double dfFalseNorthing )
+OGRErr OSRSetGaussSchreiberTMercator( OGRSpatialReferenceH hSRS,
+                                      double dfCenterLat, double dfCenterLong,
+                                      double dfScale,
+                                      double dfFalseEasting,
+                                      double dfFalseNorthing )
 
 {
-    return ((OGRSpatialReference *) hSRS)->SetGaussLabordeReunion(
+    return ((OGRSpatialReference *) hSRS)->SetGaussSchreiberTMercator(
         dfCenterLat, dfCenterLong, dfScale,
         dfFalseEasting, dfFalseNorthing );
 }

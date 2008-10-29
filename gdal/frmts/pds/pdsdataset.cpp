@@ -496,7 +496,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     if ((EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
         (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ||
         (EQUAL( map_proj_name, "EQUIDISTANT" )) )  {
-        oSRS.SetEquirectangular ( center_lat, center_lon, 0, 0 );
+        oSRS.SetEquirectangular2 ( 0, center_lon, 0, 0, center_lat );
     } else if (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) {
         oSRS.SetOrthographic ( center_lat, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "SINUSOIDAL" )) {
