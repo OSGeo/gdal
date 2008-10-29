@@ -376,15 +376,16 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         for( i = 0; i < MIN(10,psDefn->nParms); i++ )
             adfParm[i] = psDefn->ProjParm[i];
 
+        for( ; i < 10; i++ )
+            adfParm[i] = 0.0;
+
         adfParm[0] *= psDefn->UOMAngleInDegrees;
         adfParm[1] *= psDefn->UOMAngleInDegrees;
         adfParm[2] *= psDefn->UOMAngleInDegrees;
         adfParm[3] *= psDefn->UOMAngleInDegrees;
-        for( ; i < 10; i++ )
-            adfParm[i] = 0.0;
         
-        adfParm[5] *= psDefn->UOMLengthInMeters;
-        adfParm[6] *= psDefn->UOMLengthInMeters;
+        adfParm[5] /= psDefn->UOMLengthInMeters;
+        adfParm[6] /= psDefn->UOMLengthInMeters;
         
 /* -------------------------------------------------------------------- */
 /*      Translation the fundamental projection.                         */
@@ -455,18 +456,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             break;
         
           case CT_Equirectangular:
-            if( adfParm[3]!= 0.0 )
-            {
-                oSRS.SetEquirectangular2( adfParm[0], adfParm[1],
-                                          adfParm[5], adfParm[6],
-                                          adfParm[3] );
-            }
-            else
-            {
-                oSRS.SetEquirectangular2( 0.0,        adfParm[1],
-                                          adfParm[5], adfParm[6],
-                                          adfParm[0] );
-            }
+            oSRS.SetEquirectangular( adfParm[0], adfParm[1],
+                                     adfParm[5], adfParm[6] );
             break;
         
           case CT_Gnomonic:
@@ -532,13 +523,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             oSRS.SetCEA( adfParm[0], adfParm[1],
                          adfParm[5], adfParm[6] );
             break;
-
-          case CT_GaussSchreiber_TransverseMercator:
-            oSRS.SetGaussSchreiberTMercator( adfParm[0], adfParm[1],
-                                             adfParm[4],
-                                             adfParm[5], adfParm[6] );
-            break;
-
         }
 
 /* -------------------------------------------------------------------- */
@@ -1031,19 +1015,19 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
         GTIFKeySet(psGTIF, ProjCenterLongGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
-
+        
         GTIFKeySet(psGTIF, ProjAzimuthAngleGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_AZIMUTH, 0.0 ) );
-
+        
         GTIFKeySet(psGTIF, ProjRectifiedGridAngleGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_RECTIFIED_GRID_ANGLE, 0.0 ) );
-
+        
         GTIFKeySet(psGTIF, ProjScaleAtCenterGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) );
-
+        
         GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );
-
+        
         GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
     }
@@ -1199,9 +1183,6 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
         GTIFKeySet(psGTIF, ProjCenterLongGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        
-        GTIFKeySet(psGTIF, ProjStdParallel1GeoKey, TYPE_DOUBLE, 1,
-                   poSRS->GetNormProjParm( SRS_PP_PSEUDO_STD_PARALLEL_1, 0.0 ) );
         
         GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );

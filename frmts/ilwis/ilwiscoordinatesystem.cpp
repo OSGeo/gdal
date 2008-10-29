@@ -588,8 +588,8 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         // set 0.0 for CenterLat for Plate Carree projection
         // skipp Latitude_Of_True_Scale for Plate Rectangle projection definition
         oSRS.SetProjCS(pszProj.c_str());				
-        oSRS.SetEquirectangular2(	0.0, padfPrjParams[6], 
-                                        padfPrjParams[3], padfPrjParams[4], padfPrjParams[5] );
+        oSRS.SetEquirectangular(	padfPrjParams[5], padfPrjParams[6], 
+                                        padfPrjParams[3], padfPrjParams[4] );
     }
     else if( EQUALN( pszProj.c_str(), "PolyConic", 9 ) )
     {

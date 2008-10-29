@@ -1,5 +1,5 @@
 /******************************************************************************
- * * $Id$
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference interface to PROJ.4.
@@ -485,24 +485,26 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     else if( EQUAL(pszProj,"eqc") )
     {
-        // Former version switched lat_ts to lat_0
-        // lat_0 was considered to be 0
-        // to maintain this switch, lat_0 is set to lat_ts
-        // when lat_0 equals 0.0 and lat_ts is different from 0.0
-        SetEquirectangular2( OSR_GDV( papszNV, "lat_0", 0.0 ),
-                             OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich,
-                             OSR_GDV( papszNV, "x_0", 0.0 ),
-                             OSR_GDV( papszNV, "y_0", 0.0 ),
-                             OSR_GDV( papszNV, "lat_ts", 0.0 ) );
+        if( OSR_GDV( papszNV, "lat_0", 0.0 ) != OSR_GDV( papszNV, "lat_ts", 0.0 ) )
+          SetEquirectangular2( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                               OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich,
+                               OSR_GDV( papszNV, "lat_ts", 0.0 ),
+                               OSR_GDV( papszNV, "x_0", 0.0 ),
+                               OSR_GDV( papszNV, "y_0", 0.0 ) );
+        else
+          SetEquirectangular( OSR_GDV( papszNV, "lat_ts", 0.0 ),
+                              OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich,
+                              OSR_GDV( papszNV, "x_0", 0.0 ),
+                              OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-   else if( EQUAL(pszProj,"gstmerc") )
+   else if( EQUAL(pszProj,"glabsgm") )
    {
-       SetGaussSchreiberTMercator( OSR_GDV( papszNV, "lat_0", -21.116666667 ),
-                                   OSR_GDV( papszNV, "lon_0", 55.53333333309)+dfFromGreenwich,
-                                   OSR_GDV( papszNV, "k_0", 1.0 ),
-                                   OSR_GDV( papszNV, "x_0", 160000.000 ),
-                                   OSR_GDV( papszNV, "y_0", 50000.000 ) );
+       SetGaussLabordeReunion( OSR_GDV( papszNV, "lat_0", -21.116666667 ),
+                               OSR_GDV( papszNV, "lon_0", 55.53333333309)+dfFromGreenwich,
+                               OSR_GDV( papszNV, "k_0", 1.0 ),
+                               OSR_GDV( papszNV, "x_0", 160000.000 ),
+                               OSR_GDV( papszNV, "y_0", 50000.000 ) );
    }
 
     else if( EQUAL(pszProj,"gnom") )
@@ -1231,7 +1233,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
-    else if( EQUAL(pszProjection,SRS_PT_GAUSSSCHREIBERTMERCATOR) )
+    else if( EQUAL(pszProjection,SRS_PT_GAUSSLABORDEREUNION) )
     {
       sprintf( szProj4+strlen(szProj4),
                "+proj=glabsgm +lat_0=%.16g +lon_0=%.16g"
