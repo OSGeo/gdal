@@ -13,7 +13,6 @@ For a complete change history, please see the CVS log comments.
 CHANGES - Current Version:
 --------------------------
 
-
 Version 2.0-dev (CVS)
 ---------------------
 
@@ -61,6 +60,16 @@ Version 2.0-dev (CVS)
 
 - Added Font Point styles support (halo, border) (bug 1925)
  
+- C API: Added mitab_c_get_feature_count_by_type() (bug 1952)
+
+- Fixed bug: MITAB doesn't support writing DateTime type (bug 1948)
+
+- Fixed bug with the characters ",\n in the tab2tab application. (bug 
+  1945)
+ 
+- mitab.h: Export MITABSpatialRef2CoordSys() and MITABCoordSys2SpatialRef()
+  from the DLL.  Mostly for use in GDAL 
+
 
 Version 1.7.0-beta1 (2007-02-29)
 --------------------------------
@@ -923,5 +932,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.217 2008/07/29 13:06:16 aboudreault Exp $
+$Id: HISTORY.TXT,v 1.222 2008/10/29 12:55:27 dmorissette Exp $
 ------------
