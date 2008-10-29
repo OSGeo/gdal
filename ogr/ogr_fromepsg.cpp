@@ -1476,10 +1476,10 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
               dfCenterLong = OGR_FP( PolarLongOrigin );
 
           poSRS->SetKrovak( OGR_FP( ProjCenterLat ), dfCenterLong,
-                            OGR_FP( Azimuth ),
+                            OGR_FP( Azimuth ), 
                             OGR_FP( PseudoStdParallelLat ),
                             OGR_FP( PseudoStdParallelScaleFactor ),
-                            OGR_FP( ProjCenterEasting ),
+                            OGR_FP( ProjCenterEasting ), 
                             OGR_FP( ProjCenterNorthing ) );
       }
       break;
@@ -1507,10 +1507,9 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         break;
 
       case 9823: /* Equidistant Cylindrical / Plate Carre / Equirectangular */
-        poSRS->SetEquirectangular2( 0.0,
-                                    OGR_FP( NatOriginLong ), 
-                                    0.0, 0.0,
-                                    OGR_FP( NatOriginLat ) );
+        poSRS->SetEquirectangular( OGR_FP( NatOriginLat ),
+                                   OGR_FP( NatOriginLong ), 
+                                   0.0, 0.0 );
         break;
 
       case 9829: /* Polar Stereographic (Variant B) */

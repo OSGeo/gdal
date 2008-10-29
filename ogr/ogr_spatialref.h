@@ -1,5 +1,5 @@
 /******************************************************************************
- * Id: ogr_spatialref.h 15398 2008-09-20 02:18:34Z warmerdam $
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Classes for manipulating spatial reference systems in a
@@ -273,7 +273,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetExtension( const char *pszTargetKey, 
                               const char *pszName, 
                               const char *pszValue );
-
+    
     int         FindProjParm( const char *pszParameter,
                               const OGR_SRSNode *poPROJCS=NULL ) const;
     OGRErr      SetProjParm( const char *, double );
@@ -327,8 +327,8 @@ class CPL_DLL OGRSpatialReference
                             double dfFalseEasting, double dfFalseNorthing );
     /** Equirectangular generalized form : */
     OGRErr      SetEquirectangular2( double dfCenterLat, double dfCenterLong,
-                                     double dfFalseEasting, double dfFalseNorthing,
-                                     double dfPseudoStdParallel1= 0.0 );
+                                     double dfPseudoStdParallel1,
+                                     double dfFalseEasting, double dfFalseNorthing );
 
     /** Geostationary Satellite */
     OGRErr      SetGEOS( double dfCentralMeridian, double dfSatelliteHeight, 
@@ -342,10 +342,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetGS( double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
  
-    /** Gauss Schreiber Transverse Mercator */
-    OGRErr      SetGaussSchreiberTMercator(double dfCenterLat, double dfCenterLong,
-                                           double dfScale,
-                                           double dfFalseEasting, double dfFalseNorthing );
+    /** Gauss Laborde Reunion */
+    OGRErr      SetGaussLabordeReunion(double dfCenterLat, double dfCenterLong,
+                                       double dfScale,
+                                       double dfFalseEasting, double dfFalseNorthing );
 
     /** Gnomonic */
     OGRErr      SetGnomonic(double dfCenterLat, double dfCenterLong,
