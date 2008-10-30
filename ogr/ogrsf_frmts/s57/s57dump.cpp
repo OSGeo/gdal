@@ -41,7 +41,6 @@ int main( int nArgc, char ** papszArgv )
 
 {
     char        **papszOptions = NULL;
-    int         bUpdate = TRUE;
     int         bReturnPrimitives = FALSE;
     char       *pszDataPath = NULL;
     
@@ -63,7 +62,8 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-data") )
             pszDataPath = papszArgv[++iArg];
         else if( EQUAL(papszArgv[iArg],"-no-update") )
-            bUpdate = FALSE;
+            papszOptions =
+                CSLSetNameValue( papszOptions, S57O_UPDATES, "OFF" );
         else if( EQUAL(papszArgv[iArg],"-pen") )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_PRESERVE_EMPTY_NUMBERS,
@@ -189,9 +189,6 @@ int main( int nArgc, char ** papszArgv )
         int             nFeatures = 0;
         DDFModule       oUpdate;
 
-        if( bUpdate )
-            oReader.FindAndApplyUpdates(papszFiles[iFile]);
-    
         while( (poFeature = oReader.ReadNextFeature()) != NULL )
         {
             poFeature->DumpReadable( stdout );
