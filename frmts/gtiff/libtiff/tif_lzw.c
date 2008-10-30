@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.37 2007/11/02 00:25:25 fwarmerdam Exp $ */
+/* $Id: tif_lzw.c,v 1.39 2008/09/03 07:16:09 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -231,7 +231,8 @@ LZWSetupDecode(TIFF* tif)
 	if (sp->dec_codetab == NULL) {
 		sp->dec_codetab = (code_t*)_TIFFmalloc(CSIZE*sizeof (code_t));
 		if (sp->dec_codetab == NULL) {
-			TIFFErrorExt(tif->tif_clientdata, module, "No space for LZW code table");
+			TIFFErrorExt(tif->tif_clientdata, module,
+				     "No space for LZW code table");
 			return (0);
 		}
 		/*
@@ -244,6 +245,11 @@ LZWSetupDecode(TIFF* tif)
 			sp->dec_codetab[code].length = 1;
 			sp->dec_codetab[code].next = NULL;
 		} while (code--);
+		/*
+		 * Zero-out the unused entries
+                 */
+                 _TIFFmemset(&sp->dec_codetab[CODE_CLEAR], 0,
+			     (CODE_FIRST - CODE_CLEAR) * sizeof (code_t));
 	}
 	return (1);
 }
@@ -423,12 +429,20 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			break;
 		if (code == CODE_CLEAR) {
 			free_entp = sp->dec_codetab + CODE_FIRST;
+			_TIFFmemset(free_entp, 0,
+				    (CSIZE - CODE_FIRST) * sizeof (code_t));
 			nbits = BITS_MIN;
 			nbitsmask = MAXCODE(BITS_MIN);
 			maxcodep = sp->dec_codetab + nbitsmask-1;
 			NextCode(tif, sp, bp, code, GetNextCode);
 			if (code == CODE_EOI)
 				break;
+			if (code == CODE_CLEAR) {
+				TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+				"LZWDecode: Corrupted LZW table at scanline %d",
+					     tif->tif_row);
+				return (0);
+			}
 			*op++ = (char)code, occ--;
 			oldcodep = sp->dec_codetab + code;
 			continue;
@@ -627,12 +641,20 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			break;
 		if (code == CODE_CLEAR) {
 			free_entp = sp->dec_codetab + CODE_FIRST;
+			_TIFFmemset(free_entp, 0,
+				    (CSIZE - CODE_FIRST) * sizeof (code_t));
 			nbits = BITS_MIN;
 			nbitsmask = MAXCODE(BITS_MIN);
 			maxcodep = sp->dec_codetab + nbitsmask;
 			NextCode(tif, sp, bp, code, GetNextCodeCompat);
 			if (code == CODE_EOI)
 				break;
+			if (code == CODE_CLEAR) {
+				TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+				"LZWDecode: Corrupted LZW table at scanline %d",
+					     tif->tif_row);
+				return (0);
+			}
 			*op++ = code, occ--;
 			oldcodep = sp->dec_codetab + code;
 			continue;
@@ -640,8 +662,8 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 		codep = sp->dec_codetab + code;
 
 		/*
-	 	 * Add the new entry to the code table.
-	 	 */
+		 * Add the new entry to the code table.
+		 */
 		if (free_entp < &sp->dec_codetab[0] ||
 		    free_entp >= &sp->dec_codetab[CSIZE]) {
 			TIFFErrorExt(tif->tif_clientdata, module,
