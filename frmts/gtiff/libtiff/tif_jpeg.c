@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.76 2008/02/01 21:50:24 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.77 2008/10/10 01:48:36 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -388,16 +388,19 @@ std_empty_output_buffer(j_compress_ptr cinfo)
 
 	/* the entire buffer has been filled */
 	tif->tif_rawcc = tif->tif_rawdatasize;
+
 #ifdef IPPJ_HUFF
-/*
- * The Intel IPP performance library does not necessarily fill up
- * the whole output buffer on each pass, so only dump out the parts
- * that have been filled.
- */
-	if ( sp->dest.free_in_buffer >= 0 ) {
-		tif->tif_rawcc = tif->tif_rawdatasize - sp->dest.free_in_buffer;
-	}
+       /*
+        * The Intel IPP performance library does not necessarily fill up
+        * the whole output buffer on each pass, so only dump out the parts
+        * that have been filled.
+        *   http://trac.osgeo.org/gdal/wiki/JpegIPP
+        */
+       if ( sp->dest.free_in_buffer >= 0 ) {
+               tif->tif_rawcc = tif->tif_rawdatasize - sp->dest.free_in_buffer;
+       }
 #endif
+
 	TIFFFlushData1(tif);
 	sp->dest.next_output_byte = (JOCTET*) tif->tif_rawdata;
 	sp->dest.free_in_buffer = (size_t) tif->tif_rawdatasize;
@@ -514,17 +517,18 @@ std_fill_input_buffer(j_decompress_ptr cinfo)
 	static const JOCTET dummy_EOI[2] = { 0xFF, JPEG_EOI };
 
 #ifdef IPPJ_HUFF
-/*
- * The Intel IPP performance library does not necessarily read the whole
- * input buffer in one pass, so it is possible to get here with data
- * yet to read. 
- * 
- * We just return without doing anything, until the entire buffer has been
- * read. Because the whole input tile is read into memory
- * we never need to "fill" the buffer, as init_source does that.
- */
-	if( sp->src.bytes_in_buffer > 0 ) {
-		return (TRUE);
+   /*
+    * The Intel IPP performance library does not necessarily read the whole
+    * input buffer in one pass, so it is possible to get here with data
+    * yet to read. 
+    * 
+    * We just return without doing anything, until the entire buffer has been
+    * read. Because the whole input tile is read into memory
+    * we never need to "fill" the buffer, as init_source does that.
+    * http://trac.osgeo.org/gdal/wiki/JpegIPP
+    */
+        if( sp->src.bytes_in_buffer > 0 ) {
+            return (TRUE);
         }
 #endif
 
