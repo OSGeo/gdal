@@ -706,6 +706,39 @@ def tiff_ovr_18():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Check that we can create overviews on a newly create file (#2621)
+
+def tiff_ovr_19():
+
+    ds=gdal.GetDriverByName('GTiff').Create('tmp/ovr19.tif',100,100,1)
+    ds.GetRasterBand(1).Fill(1)
+
+    # The flush is important to simulate the behaviour that wash it by #2621
+    ds.FlushCache()
+    ds.BuildOverviews('NEAR', overviewlist = [2])
+    ds.FlushCache()
+    ds.BuildOverviews('NEAR', overviewlist = [2,4])
+
+    if ds.GetRasterBand(1).GetOverviewCount() != 2 is None:
+        print 'Overview could not be generated'
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 2500:
+        print cs
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != 625:
+        print cs
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -724,6 +757,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr16.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr17.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr18.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr19.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -748,6 +782,7 @@ gdaltest_list_internal = [
     tiff_ovr_16,
     tiff_ovr_17,
     tiff_ovr_18,
+    tiff_ovr_19,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
