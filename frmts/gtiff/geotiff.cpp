@@ -2369,9 +2369,22 @@ void GTiffDataset::Crystalize()
         bCrystalized = TRUE;
 
         TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffDataset::Crystalize");
-        TIFFWriteDirectory( hTIFF );
 
+ 	// Keep zip and tiff quality, which gets reset when we call 
+        // TIFFWriteDirectory 
+        int jquality = -1, zquality = -1; 
+        TIFFGetField(hTIFF, TIFFTAG_JPEGQUALITY, &jquality); 
+        TIFFGetField(hTIFF, TIFFTAG_ZIPQUALITY, &zquality); 
+
+        TIFFWriteDirectory( hTIFF );
         TIFFSetDirectory( hTIFF, 0 );
+
+        // Now, reset zip and tiff quality. 
+        if(jquality > 0) 
+            TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, jquality); 
+        if(zquality > 0) 
+            TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, zquality);
+
         nDirOffset = TIFFCurrentDirOffset( hTIFF );
     }
 }
