@@ -1,4 +1,4 @@
-/* $Id: tif_flush.c,v 1.5 2008/04/10 11:08:48 dron Exp $ */
+/* $Id: tif_flush.c,v 1.6 2008/10/30 01:25:11 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -59,6 +59,7 @@ TIFFFlush(TIFF* tif)
                                       tif->tif_dir.td_nstrips, sizes ) )
             {
                 tif->tif_flags &= ~TIFF_DIRTYSTRIP;
+                tif->tif_flags &= ~TIFF_BEENWRITING;
                 return 1;
             }
         }
@@ -72,6 +73,7 @@ TIFFFlush(TIFF* tif)
                                       tif->tif_dir.td_nstrips, sizes ) )
             {
                 tif->tif_flags &= ~TIFF_DIRTYSTRIP;
+                tif->tif_flags &= ~TIFF_BEENWRITING;
                 return 1;
             }
         }
