@@ -108,7 +108,7 @@ Supported geometries :
 For route points and tracks points, if there is a Z coordinate, it is used to fill the elevation element
 of the corresponding points.<p>
 
-The GPX writer supports the following creation options (layer options):
+The GPX writer supports the following <i>layer</i> creation options:
 <ul>
 <li> <b>FORCE_GPX_TRACK</b>:
 By default when writting a layer whose features are of type wkbLineString, the GPX driver
@@ -120,6 +120,11 @@ By default when writting a layer whose features are of type wkbMultiLineString, 
 chooses to write them as tracks.
 <br>If FORCE_GPX_ROUTE=YES is specified, they will be written
 as routes, provided that the multilines are composed of only one single line.</li><p>
+</ul>
+<p>
+
+The GPX writer supports the following <i>dataset</i> creation options:
+<ul>
 <li> <b>GPX_USE_EXTENSIONS</b>:
 By default, the GPX driver will discard attribute fields that do not match the GPX XML definition (name, cmt, etc...).<br>
 If GPX_USE_EXTENSIONS=YES is specified, extra fields will be written inside the<i>&lt;extensions&gt;</i> tag.</li><p>
