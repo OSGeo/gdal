@@ -29,3 +29,7 @@
 # From Külli Tiits (http://www.csc.fi/tutkimus/alat/geotieteet/infra/fwtools_coordsys)
 #
 4123,KKJ,6123,Kartastokoordinaattijarjestelma 1966,6123,9122,7022,8901,1,0,9606,-96.0617,-82.4278,-121.7435,4.80107,0.34543,-1.37646,1.4964
+#
+# Add explicit datum shift info as Proj 4.6.0 requires
+#
+4258,ETRS89,6258,European Terrestrial Reference System 1989,6258,9122,7019,8901,1,0,9606,0,0,0,0,0,0,0,0
