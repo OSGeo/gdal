@@ -499,7 +499,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
         for( iX = 0; iX < nXSize; iX++ )
         {
-            int iThisPoly = panThisLineId[iX];
+            int iThisPoly = oFirstEnum.panPolyIdMap[panThisLineId[iX]];
 
             if( anBigNeighbour[iThisPoly] != -1 )
             {
