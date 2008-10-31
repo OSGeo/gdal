@@ -1873,6 +1873,9 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     GDALDataset *poDstDS = (GDALDataset *) hDstDS;
     CPLErr eErr = CE_None;
 
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the datasets match in size and band counts.             */
 /* -------------------------------------------------------------------- */
