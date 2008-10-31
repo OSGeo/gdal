@@ -111,6 +111,10 @@ PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_sde
 !ENDIF
 !ENDIF
 
+!IFDEF OCI_LIB
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_georaster
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:
