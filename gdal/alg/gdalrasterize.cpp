@@ -33,9 +33,12 @@
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "ogr_api.h"
-#include "ogrsf_frmts.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+
+#ifdef OGR_ENABLED
+#include "ogrsf_frmts.h"
+#endif
 
 typedef struct {
     unsigned char * pabyChunkBuf;
@@ -539,6 +542,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * @return CE_None on success or CE_Failure on error.
  */
 
+#ifdef OGR_ENABLED
+
 CPLErr GDALRasterizeLayers( GDALDatasetH hDS, 
                             int nBandCount, int *panBandList,
                             int nLayerCount, OGRLayerH *pahLayers,
@@ -758,3 +763,4 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     return eErr;
 }
 
+#endif /* def OGR_ENABLED */
