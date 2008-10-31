@@ -419,11 +419,19 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
     if( nBytes < 1 )
         return OGRERR_FAILURE;
 
-//    printf( "%s\n", CPLBinaryToHex( nBytes, pabyShape ) );
-
     int nSHPType = pabyShape[0];
 
-    //CPLDebug( "PGeo", "Shape type read from PGeo data is nSHPType = %d", nSHPType );
+
+//    CPLDebug( "PGeo", 
+//              "Shape type read from PGeo data is nSHPType = %d", 
+//              nSHPType );
+
+/* -------------------------------------------------------------------- */
+/*      type 50 appears to just be an alias for normal line             */
+/*      strings. (#1484)                                                */
+/* -------------------------------------------------------------------- */
+    if( nSHPType == 50 )
+        nSHPType = SHPT_ARC;
 
 /* ==================================================================== */
 /*  Extract vertices for a Polygon or Arc.				*/
@@ -719,6 +727,9 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 
         return OGRERR_NONE;
     }
+
+    CPLDebug( "PGEO", "Unsupported geometry type:%d\n%s",
+              nSHPType, CPLBinaryToHex( nBytes, pabyShape ) );
 
     return OGRERR_FAILURE;
 }
