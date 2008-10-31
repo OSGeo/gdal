@@ -192,8 +192,16 @@ GDALDataset::~GDALDataset()
     // we don't want to report destruction of datasets that 
     // were never really open.
     if( nBands != 0 || !EQUAL(GetDescription(),"") )
-        CPLDebug( "GDAL", "GDALClose(%s, this=%p) (pid=%d, responsiblePID=%d)", GetDescription(), this,
-                  (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
+    {
+        if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
+            CPLDebug( "GDAL", 
+                      "GDALClose(%s, this=%p) (pid=%d, responsiblePID=%d)", GetDescription(), this,
+                      (int)CPLGetPID(), 
+                      (int)GDALGetResponsiblePIDForCurrentThread() );
+        else
+            CPLDebug( "GDAL", 
+                      "GDALClose(%s, this=%p)", GetDescription(), this );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Remove dataset from the "open" dataset list.                    */
@@ -1929,9 +1937,13 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
                 poDS->poDriver = poDriver;
 
             
-            CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
-                      pszFilename, poDS, poDriver->GetDescription(),
-                      (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
+            if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
+                CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
+                          pszFilename, poDS, poDriver->GetDescription(),
+                          (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
+            else
+                CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
+                          pszFilename, poDS, poDriver->GetDescription() );
 
             return (GDALDatasetH) poDS;
         }
