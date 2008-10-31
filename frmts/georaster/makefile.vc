@@ -8,7 +8,7 @@ OBJ = oci_wrapper.obj \
       georaster_rasterband.obj \
       georaster_wrapper.obj
 
-EXTRAFLAGS = $(OCI_INCLUDE)
+EXTRAFLAGS = $(OCI_INCLUDE) -I..\zlib
 
 default: $(OBJ)
 	xcopy /D  /Y *.obj ..\o
