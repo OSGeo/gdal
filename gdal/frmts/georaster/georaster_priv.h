@@ -45,7 +45,7 @@ class GeoRasterWrapper;
 //  ---------------------------------------------------------------------------
 
 #define CALCULATEBLOCK( bn, xo, yo, bb, tc, tr ) \
-    ( ( (int) ceil( ( bn - 1 ) / bb ) * tc * tr ) + ( yo * tc ) + xo )
+    ( ( (int) ceil( (double) ( ( bn - 1 ) / bb ) ) * tc * tr ) + ( yo * tc ) + xo )
 
 //  ---------------------------------------------------------------------------
 //  Link between bands+pyramid levels and modified <shrinked> georaster object
