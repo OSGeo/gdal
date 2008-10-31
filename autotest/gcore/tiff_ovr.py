@@ -709,8 +709,15 @@ def tiff_ovr_18():
 
 ###############################################################################
 # Check that we can create overviews on a newly create file (#2621)
+# Will cause older libtiff versions (<=3.8.2 for sure) to crash, so skip it
+# if BigTIFF is not supported (this is a sign of an older libtiff...)
 
 def tiff_ovr_19():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
 
     ds=gdal.GetDriverByName('GTiff').Create('tmp/ovr19.tif',100,100,1)
     ds.GetRasterBand(1).Fill(1)
