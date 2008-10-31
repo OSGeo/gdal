@@ -10,9 +10,9 @@ EXTRAFLAGS =	-I../ogr/ogrsf_frmts $(GEOS_CFLAGS)
 !INCLUDE ..\nmake.opt
 
 !IFDEF INCLUDE_OGR_FRMTS
+EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED
 OBJ_OGR_RELATED =	contour.obj polygonize.obj
 !ENDIF
-
 
 OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalsimplewarp.obj gdalwarper.obj gdalwarpkernel.obj \
