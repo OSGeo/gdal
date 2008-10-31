@@ -1331,10 +1331,10 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
 
         double dfScale      = pow( 2, nLevel );
 
-        int nPyramidRows         = (int) ceil( nRasterRows / dfScale );
-        int nPyramidColumns      = (int) ceil( nRasterColumns / dfScale );
-        int nHalfBlockRows       = (int) ceil( nRowBlockSize / 2 );
-        int nHalfBlockColumns    = (int) ceil( nColumnBlockSize / 2 );
+        int nPyramidRows         = (int) ceil( (double) ( nRasterRows / dfScale ) );
+        int nPyramidColumns      = (int) ceil( (double) ( nRasterColumns / dfScale ) );
+        int nHalfBlockRows       = (int) ceil( (double) ( nRowBlockSize / 2 ) );
+        int nHalfBlockColumns    = (int) ceil( (double) ( nColumnBlockSize / 2 ) );
 
         // There is problably a easier way to do that math ...
 
@@ -1345,8 +1345,8 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
             nRowBlockSize       = nPyramidRows;
         }
 
-        nTotalColumnBlocks  = (int) ceil( nTotalColumnBlocks / dfScale );
-        nTotalRowBlocks     = (int) ceil( nTotalRowBlocks / dfScale );
+        nTotalColumnBlocks  = (int) ceil( (double) ( nTotalColumnBlocks / dfScale ) );
+        nTotalRowBlocks     = (int) ceil( (double) ( nTotalRowBlocks / dfScale ) );
     }
 
     // --------------------------------------------------------------------
