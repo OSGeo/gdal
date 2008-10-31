@@ -1376,6 +1376,11 @@ LoadCutline( GDALDatasetH hDstDS,
              char ***ppapszWarpOptions )
 
 {
+#ifndef OGR_ENABLED
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "Request to load a cutline failed, this build does not support OGR features.\n" );
+    exit( 1 );
+#else // def OGR_ENABLED
     OGRRegisterAll();
 
 /* -------------------------------------------------------------------- */
@@ -1525,6 +1530,7 @@ LoadCutline( GDALDatasetH hDstDS,
     OGR_DS_Destroy( hSrcDS );
 
     OGR_G_DestroyGeometry( hMultiPolygon );
+#endif
 }
 
 /************************************************************************/
