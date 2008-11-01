@@ -225,6 +225,7 @@ protected:
     int m_verify_advise_read;
     int m_offline_mode;
     int m_http_max_conn;
+    int m_http_timeout;
     int m_clamp_requests;
 };
 
