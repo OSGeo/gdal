@@ -164,7 +164,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
     // add at most max_conn requests
     for (conn_i = 0; conn_i < MIN(nRequestCount, max_conn); ++conn_i) {
         CPLHTTPRequest *const psRequest = &pasRequest[conn_i];
-        CPLDebug("HTTP", "Requesting [%d] %s", conn_i, pasRequest[conn_i].pszURL);
+        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount, pasRequest[conn_i].pszURL);
         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
     }
 
@@ -182,7 +182,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
                 if (msg->msg == CURLMSG_DONE) { // transfer completed, check if we have more waiting and add them
                     if (conn_i < nRequestCount) {
                         CPLHTTPRequest *const psRequest = &pasRequest[conn_i];
-                        CPLDebug("HTTP", "Requesting [%d] %s", conn_i, pasRequest[conn_i].pszURL);
+                        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount, pasRequest[conn_i].pszURL);
                         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
                         ++conn_i;
                     }

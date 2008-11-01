@@ -53,11 +53,19 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         }
     }
     if (ret == CE_None) {
+        const char *timeout = CPLGetXMLValue(config, "Timeout", "");
+        if (timeout[0] != '\0') {
+            m_http_timeout = atoi(timeout);
+        } else {
+            m_http_timeout = 300;
+        }
+    }
+    if (ret == CE_None) {
         const char *offline_mode = CPLGetXMLValue(config, "OfflineMode", "");
         if (offline_mode[0] != '\0') {
             const int offline_mode_bool = StrToBool(offline_mode);
             if (offline_mode_bool == -1) {
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value in OfflineMode, true / false expected.");
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of OfflineMode, true / false expected.");
                 ret = CE_Failure;
             } else {
                 m_offline_mode = offline_mode_bool;
@@ -71,7 +79,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         if (advise_read[0] != '\0') {
             const int advise_read_bool = StrToBool(advise_read);
             if (advise_read_bool == -1) {
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value in AdviseRead, true / false expected.");
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of AdviseRead, true / false expected.");
                 ret = CE_Failure;
             } else {
                 m_use_advise_read = advise_read_bool;
@@ -86,7 +94,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             if (verify_advise_read[0] != '\0') {
                 const int verify_advise_read_bool = StrToBool(verify_advise_read);
                 if (verify_advise_read_bool == -1) {
-                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value in VerifyAdviseRead, true / false expected.");
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of VerifyAdviseRead, true / false expected.");
                     ret = CE_Failure;
                 } else {
                     m_verify_advise_read = verify_advise_read_bool;
