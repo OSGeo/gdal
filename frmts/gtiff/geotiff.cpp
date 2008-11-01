@@ -2374,20 +2374,23 @@ void GTiffDataset::Crystalize()
 
         TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffDataset::Crystalize");
 
- 	// Keep zip and tiff quality, which gets reset when we call 
+ 	// Keep zip and tiff quality, and jpegcolormode which get reset when we call 
         // TIFFWriteDirectory 
-        int jquality = -1, zquality = -1; 
+        int jquality = -1, zquality = -1, nColorMode = -1; 
         TIFFGetField(hTIFF, TIFFTAG_JPEGQUALITY, &jquality); 
         TIFFGetField(hTIFF, TIFFTAG_ZIPQUALITY, &zquality); 
+        TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
 
         TIFFWriteDirectory( hTIFF );
         TIFFSetDirectory( hTIFF, 0 );
 
-        // Now, reset zip and tiff quality. 
+        // Now, reset zip and tiff quality and jpegcolormode. 
         if(jquality > 0) 
             TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, jquality); 
         if(zquality > 0) 
             TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, zquality);
+        if (nColorMode >= 0)
+            TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, nColorMode);
 
         nDirOffset = TIFFCurrentDirOffset( hTIFF );
     }
@@ -5360,6 +5363,24 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
     if( CSLFetchNameValue( papszParmList, "PROFILE" ) != NULL )
         poDS->osProfile = CSLFetchNameValue( papszParmList, "PROFILE" );
+
+/* -------------------------------------------------------------------- */
+/*      YCbCr JPEG compressed images should be translated on the fly    */
+/*      to RGB by libtiff/libjpeg unless specifically requested         */
+/*      otherwise.                                                      */
+/* -------------------------------------------------------------------- */
+    if( poDS->nCompression == COMPRESSION_JPEG 
+        && poDS->nPhotometric == PHOTOMETRIC_YCBCR 
+        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                              "YES") ) )
+    {
+        int nColorMode;
+
+        poDS->SetMetadataItem( "SOURCE_COLOR_SPACE", "YCbCr", "IMAGE_STRUCTURE" );
+        if ( !TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode ) ||
+              nColorMode != JPEGCOLORMODE_RGB )
+            TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read palette back as a color table if it has one.               */
