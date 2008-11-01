@@ -1,14 +1,17 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>WMS -- Web Map Services</title>
 	<STYLE type="text/css">
 		td.xml { font-family: monospace; white-space: pre; padding-right: 20px; }
 		td.desc { }
 		span.value { color: #00B000; }
+		body { background-color: #ffffff; }
 	</STYLE>
 </head>
 
-<body bgcolor="#ffffff">
+<body>
 
 <h1>WMS -- Web Map Services</h1>
 
@@ -17,7 +20,7 @@
   using the WMS format in GDAL. Services are accessed by creating a
   local service description XML file -- there are examples below for 
   each of the supported image services. It is important that there be no
-  spaces or other content before the <tt>&lt;GDAL_WMS&gt;</tt> element.<p>
+  spaces or other content before the <tt>&lt;GDAL_WMS&gt;</tt> element.
 </p>
 
 	<table>
@@ -183,6 +186,7 @@
 			<td class="xml">    &lt;ClampRequests&gt;<span class="value">false</span>&lt;/ClampRequests&gt;</td>
 			<td class="desc">Should requests, that otherwise would be partially outside of defined data window, be clipped resulting in smaller than block size request. (optional, defaults to true)</td>
 		</tr>
+		<tr>
 			<td class="xml">&lt;/GDAL_WMS&gt;</td>
 			<td class="desc"></td>
 		</tr>
@@ -198,9 +202,9 @@
     <li>
 	<a href="frmt_wms_onearth_global_mosaic.xml">onearth_global_mosaic.xml</a> - Landsat mosaic from a <a href="http://onearth.jpl.nasa.gov/">OnEarth</a> WMS server<br>
 	<pre>gdal_translate -of JPEG -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic.jpg</pre>
-	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic.jpg">
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic.jpg" alt="example output">
 	<pre>gdal_translate -of JPEG -projwin -10 55 30 35 -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic2.jpg</pre>
-	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic2.jpg">
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic2.jpg" alt="example output">
     </li>
     <li>
 	<a href="frmt_wms_metacarta_wmsc.xml">metacarta_wmsc.xml</a> - 
@@ -209,24 +213,24 @@
 	tile size of the cache. The following example is a sample set up for 
 	a 19-level "Global Profile" WMS-C cache.
 	<pre>gdal_translate -of PNG -outsize 500 250 metacarta_wmsc.xml metacarta_wmsc.png</pre>
-	<img src="http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png">
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png" alt="example output">
     </li>
     <li>
 	<a href="frmt_wms_tileservice_bmng.xml">tileservice_bmng.xml</a> - TileService, Blue Marble NG (January)<br>
 	<pre>gdal_translate -of JPEG -outsize 500 250 tileservice_bmng.xml tileservice_bmng.jpg</pre>
-	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg">
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg" alt="example output">
     </li>
     <li>
 	<a href="frmt_wms_tileservice_nysdop2004.xml">tileservice_nysdop2004.xml</a> - TileService, NYSDOP 2004<br>
 	<pre>gdal_translate -of JPEG -projwin -73.687030 41.262680 -73.686359 41.262345 -outsize 500 250 tileservice_nysdop2004.xml tileservice_nysdop2004.jpg</pre>
-	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg">
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg" alt="example output">
     </li>
 </ul>
 
-See Also:<p>
+<p>See Also:</p>
 
 <ul>
-<li> <a href="http://www.opengeospatial.org/standards/wms">OGC WMS Standards</a></li>
+<li><a href="http://www.opengeospatial.org/standards/wms">OGC WMS Standards</a></li>
 <li><a href="http://wiki.osgeo.org/index.php/WMS_Tiling_Client_Recommendation">WMS Tiling Client Recommendation</a></li>
 <li><a href="http://www.worldwindcentral.com/wiki/TileService">TileService</a></li>
 </ul>
