@@ -479,8 +479,8 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         poGeoRaster->pszColumn, poGeoRaster->pszColumn  ) );
 
     poStmt->Bind( pszVATName );
-    poStmt->BindName( ":rdt", poGDS->poGeoRaster->pszDataTable );
-    poStmt->BindName( ":rid", &poGDS->poGeoRaster->nRasterId );
+    poStmt->BindName( (char*) ":rdt", poGDS->poGeoRaster->pszDataTable );
+    poStmt->BindName( (char*) ":rid", &poGDS->poGeoRaster->nRasterId );
 
     if( ! poStmt->Execute() )
     {

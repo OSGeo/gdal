@@ -141,9 +141,9 @@ OWConnection::OWConnection( const char* pszUserIn,
         (size_t) 0, 
         (dvoid**) NULL ), hError );
 
-    hNumArrayTDO    = DescribeType( SDO_NUMBER_ARRAY );
-    hGeometryTDO    = DescribeType( SDO_GEOMETRY );
-    hGeoRasterTDO   = DescribeType( SDO_GEORASTER );
+    hNumArrayTDO    = DescribeType( (char*) SDO_NUMBER_ARRAY );
+    hGeometryTDO    = DescribeType( (char*) SDO_GEOMETRY );
+    hGeoRasterTDO   = DescribeType( (char*) SDO_GEORASTER );
 }
 
 OWConnection::~OWConnection()
