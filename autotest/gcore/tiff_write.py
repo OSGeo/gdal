@@ -1728,6 +1728,25 @@ def tiff_write_53():
     
     return 'success'
 
+
+###############################################################################
+# Test the ability to create a JPEG compressed TIFF, with PHOTOMETRIC=YCBCR
+# and write data into it without closing it and re-opening it (#2645)
+
+def tiff_write_54():
+
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_54.tif',
+                                              256, 256, 3,
+                                              options=['TILED=YES', 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'] )
+    ds.GetRasterBand(1).Fill(0)
+    ds.FlushCache()
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_54.tif' )
+
+    return 'success'
+
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -1787,6 +1806,7 @@ gdaltest_list = [
     tiff_write_51,
     tiff_write_52,
     tiff_write_53,
+    tiff_write_54,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
