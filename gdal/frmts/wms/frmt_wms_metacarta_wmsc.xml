@@ -1,0 +1,20 @@
+<GDAL_WMS>
+    <Service name="WMS">
+        <Version>1</Version>
+        <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py?</ServerUrl>
+        <Layers>basic</Layers>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>-180.0</UpperLeftX>
+        <UpperLeftY>90.0</UpperLeftY>
+        <LowerRightX>180.0</LowerRightX>
+        <LowerRightY>-90.0</LowerRightY>
+        <TileLevel>19</TileLevel>
+	<TileCountX>2</TileCountX>
+	<TileCountY>1</TileCountY>
+    </DataWindow>
+    <Projection>EPSG:4326</Projection>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+</GDAL_WMS>
