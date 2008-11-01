@@ -1,0 +1,20 @@
+<GDAL_WMS>
+    <Service name="TileService">
+        <Version>1</Version>
+        <ServerUrl>http://s0.tileservice.worldwindcentral.com/getTile?</ServerUrl>
+        <Dataset>bmng.topo.bathy.200401</Dataset>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>-180.0</UpperLeftX>
+        <UpperLeftY>90.0</UpperLeftY>
+        <LowerRightX>180.0</LowerRightX>
+        <LowerRightY>-90.0</LowerRightY>
+	<SizeX>65536</SizeX>
+	<SizeY>32768</SizeY>
+	<TileLevel>7</TileLevel>
+    </DataWindow>
+    <Projection>EPSG:4326</Projection>
+    <BlockSizeX>512</BlockSizeX>
+    <BlockSizeY>512</BlockSizeY>
+    <BandsCount>3</BandsCount>
+</GDAL_WMS>
