@@ -1662,6 +1662,71 @@ def tiff_write_51():
     
     return 'success'
 
+###############################################################################
+# Test the ability to update a paletted TIFF files color table.
+
+def tiff_write_52():
+    shutil.copyfile( 'data/test_average_palette.tif', 'tmp/tiff_write_52.tif' )
+
+    test_ct_data = [ (255,0,0), (0,255,0), (0,0,255), (255,255,255,0)]
+
+    test_ct = gdal.ColorTable()
+    for i in range(len(test_ct_data)):
+        test_ct.SetColorEntry( i, test_ct_data[i] )
+        
+    ds = gdal.Open( 'tmp/tiff_write_52.tif', gdal.GA_Update )
+    ds.GetRasterBand(1).SetRasterColorTable( test_ct )
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_52.tif' )
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+
+    if ct.GetColorEntry(0) != (255,0,0,255):
+        print ct.GetColorEntry(0)
+        gdaltest.post_reason( 'Did not get expected color 0.' )
+        return 'fail'
+
+    ct = None
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_52.tif' )
+    
+    return 'success'
+
+###############################################################################
+# Test the ability to create a paletted image and then update later.
+
+def tiff_write_53():
+    test_ct_data = [ (255,0,0), (0,255,0), (0,0,255), (255,255,255,0)]
+
+    test_ct = gdal.ColorTable()
+    for i in range(len(test_ct_data)):
+        test_ct.SetColorEntry( i, test_ct_data[i] )
+        
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_53.tif',
+                                              30, 50, 1,
+                                              options=['PHOTOMETRIC=PALETTE'] )
+    ds.GetRasterBand(1).Fill(10)
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_53.tif', gdal.GA_Update )
+    ds.GetRasterBand(1).SetRasterColorTable( test_ct )
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_53.tif' )
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+
+    if ct.GetColorEntry(0) != (255,0,0,255):
+        print ct.GetColorEntry(0)
+        gdaltest.post_reason( 'Did not get expected color 0.' )
+        return 'fail'
+
+    ct = None
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_53.tif' )
+    
+    return 'success'
 
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -1720,6 +1785,8 @@ gdaltest_list = [
     tiff_write_49,
     tiff_write_50,
     tiff_write_51,
+    tiff_write_52,
+    tiff_write_53,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
