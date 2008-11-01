@@ -250,8 +250,11 @@ private:
 
     void                UnpackNBits( GByte* pabyData );
     void                PackNBits( GByte* pabyOutBuf, void* pData );
-    void                CompressJpeg( GByte* pabyOutBuf, void* pData );
-    void                CompressDeflate( GByte* pabyOutBuf, void* pData );
+    void                CompressJpeg();
+    void                UncompressJpeg( unsigned long nInSize );
+    bool                UncompressDeflate( unsigned long nDestLen,
+                            unsigned long nSourceLen );
+    bool                CompressDeflate( void* pData );
 
 public:
 

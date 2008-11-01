@@ -532,6 +532,19 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRW->nBandBlockSize   = atoi( pszFetched );
     }
 
+    pszFetched = CSLFetchNameValue( papszOptions, "COMPRESS" );
+
+    if( pszFetched != NULL &&
+      ( EQUAL( pszFetched, "JPEG-F" ) ||
+        EQUAL( pszFetched, "DEFLATE" ) ) )
+    {
+        poGRW->pszCompressionType = CPLStrdup( pszFetched );
+    }
+    else
+    {
+        poGRW->pszCompressionType = CPLStrdup( "NONE" );
+    }
+
     pszFetched = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
 
     if( pszFetched )
@@ -1360,14 +1373,17 @@ void CPL_DLL GDALRegister_GEOR()
                                            "default='Bands'/>"
 "  <Option name='SRID'        type='int'    description='Overwrite EPSG code' "
                                            "default='0'/>"
-"  <Option name='INTERLEAVE'  type='string-select' "
-                                           "default='BAND'>"
+"  <Option name='INTERLEAVE'  type='string-select' default='BAND'>"
 "       <Value>BAND</Value>"
 "       <Value>PIXEL</Value>"
 "       <Value>LINE</Value>"
 "       <Value>BSQ</Value>"
 "       <Value>BIP</Value>"
 "       <Value>BIL</Value>"
+"   </Option>"
+"  <Option name='COMPRESS'    type='string-select' default='NONE'>"
+"       <Value>JPEG-F</Value>"
+"       <Value>DEFLATE</Value>"
 "   </Option>"
 "</CreationOptionList>" );
         poDriver->pfnOpen       = GeoRasterDataset::Open;
