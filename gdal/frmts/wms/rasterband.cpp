@@ -67,6 +67,12 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
         download_blocks = new BlockXY[max_request_count];
     }
 
+    char **http_request_opts = NULL;
+    if (m_parent_dataset->m_http_timeout != -1) {
+	CPLString http_request_optstr;
+        http_request_optstr.Printf("TIMEOUT=%d", m_parent_dataset->m_http_timeout);
+        http_request_opts = CSLAddString(http_request_opts, http_request_optstr.c_str());
+    }
     for (int iy = by0; iy <= by1; ++iy) {
         for (int ix = bx0; ix <= bx1; ++ix) {
             bool need_this_block = false;
@@ -108,13 +114,16 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                         }
                     }
                 } else {
-                    CPLHTTPInitializeRequest(&download_requests[request_count], url.c_str());
+                    CPLHTTPInitializeRequest(&download_requests[request_count], url.c_str(), http_request_opts);
                     download_blocks[request_count].x = ix;
                     download_blocks[request_count].y = iy;
                     ++request_count;
                 }
             }
         }
+    }
+    if (http_request_opts != NULL) {
+        CSLDestroy(http_request_opts);
     }
 
     if (request_count > 0) {
@@ -181,8 +190,9 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                     }
                 }
             } else {
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to download block %d, %d (%s). HTTP status code: %d",
-                    download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus);
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to download block %d, %d.\n  URL: %s\n  HTTP status code: %d, error: %s.",
+                    download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus, 
+		    download_requests[i].pszError ? download_requests[i].pszError : "(null)");
                 ret = CE_Failure;
             }
         }

@@ -13,3 +13,5 @@ clean:
 	rm -f *.o $(OBJ) $(O_OBJ)
 
 install-obj:	$(O_OBJ)
+
+$(OBJ) $(O_OBJ):	gdalhttp.h md5.h minidriver_tileservice.h minidriver_wms.h minidriver_worldwind.h wmsdriver.h
