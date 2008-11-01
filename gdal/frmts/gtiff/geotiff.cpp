@@ -134,6 +134,7 @@ class GTiffDataset : public GDALPamDataset
     int         bGeoTIFFInfoChanged;
     int         bNoDataSet;
     int         bNoDataChanged;
+    int         bColorTableChanged;
     double      dfNoDataValue;
 
     int	        bMetadataChanged;
@@ -915,7 +916,7 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /* -------------------------------------------------------------------- */
 /*      Check if this is even a candidate for applying a PCT.           */
 /* -------------------------------------------------------------------- */
-    if( poGDS->bCrystalized )
+    if( poGDS->bCrystalized && poGDS->poColorTable == NULL )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "SetColorTable() not supported for existing TIFF files." );
@@ -982,6 +983,7 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
         delete poGDS->poColorTable;
 
     poGDS->poColorTable = poCT->Clone();
+    poGDS->bColorTableChanged = TRUE;
 
     return CE_None;
 }
@@ -2012,6 +2014,7 @@ GTiffDataset::GTiffDataset()
     bGeoTIFFInfoChanged = FALSE;
     bCrystalized = TRUE;
     poColorTable = NULL;
+    bColorTableChanged = FALSE;
     bNoDataSet = FALSE;
     bNoDataChanged = FALSE;
     dfNoDataValue = -9999.0;
@@ -2076,9 +2079,6 @@ GTiffDataset::~GTiffDataset()
 
     SetDirectory();
 
-    if( poColorTable != NULL )
-        delete poColorTable;
-
     if( GetAccess() == GA_Update && bBase )
     {
         if( bNewDataset || bMetadataChanged )
@@ -2091,7 +2091,8 @@ GTiffDataset::~GTiffDataset()
 	if( bNoDataChanged )
             WriteNoDataValue( hTIFF, dfNoDataValue );
         
-        if( bNewDataset || bMetadataChanged || bGeoTIFFInfoChanged || bNoDataChanged )
+        if( bNewDataset || bMetadataChanged || bGeoTIFFInfoChanged 
+            || bNoDataChanged || bColorTableChanged )
         {
 #if defined(TIFFLIB_VERSION)
 #if  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
@@ -2100,6 +2101,9 @@ GTiffDataset::~GTiffDataset()
 #endif
         }
     }
+
+    if( poColorTable != NULL )
+        delete poColorTable;
 
     if( bBase || bCloseTIFFHandle )
     {
@@ -4168,6 +4172,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         }
     }
     
+    bColorTableChanged = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -5084,6 +5090,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*      passed option or guess correct value otherwise.                 */
 /* -------------------------------------------------------------------- */
     int nSamplesAccountedFor = 1;
+    int bForceColorTable = FALSE;
 
     pszValue = CSLFetchNameValue(papszParmList,"PHOTOMETRIC");
     if( pszValue != NULL )
@@ -5092,6 +5099,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
         else if( EQUAL( pszValue, "MINISWHITE" ) )
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISWHITE );
+        else if( EQUAL( pszValue, "PALETTE" ))
+        {
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
+            nSamplesAccountedFor = 1;
+            bForceColorTable = TRUE;
+        }
         else if( EQUAL( pszValue, "RGB" ))
         {
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
@@ -5236,6 +5249,49 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( nCompression == COMPRESSION_JPEG 
         && nJpegQuality != -1 )
         TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
+
+/* -------------------------------------------------------------------- */
+/*      If we forced production of a file with photometric=palette,     */
+/*      we need to push out a default color table.                      */
+/* -------------------------------------------------------------------- */
+    if( bForceColorTable )
+    {
+        int nColors;
+        
+        if( eType == GDT_Byte )
+            nColors = 256;
+        else
+            nColors = 65536;
+        
+        unsigned short *panTRed, *panTGreen, *panTBlue;
+
+        panTRed = (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
+        panTGreen = (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
+        panTBlue = (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
+
+        for( int iColor = 0; iColor < nColors; iColor++ )
+        {
+            if( eType == GDT_Byte )
+            {                
+                panTRed[iColor] = (unsigned short) (257 * iColor);
+                panTGreen[iColor] = (unsigned short) (257 * iColor);
+                panTBlue[iColor] = (unsigned short) (257 * iColor);
+            }
+            else
+            {
+                panTRed[iColor] = (unsigned short) iColor;
+                panTGreen[iColor] = (unsigned short) iColor;
+                panTBlue[iColor] = (unsigned short) iColor;
+            }
+        }
+        
+        TIFFSetField( hTIFF, TIFFTAG_COLORMAP,
+                      panTRed, panTGreen, panTBlue );
+        
+        CPLFree( panTRed );
+        CPLFree( panTGreen );
+        CPLFree( panTBlue );
+    }
         
     return( hTIFF );
 }
@@ -5304,6 +5360,33 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
     if( CSLFetchNameValue( papszParmList, "PROFILE" ) != NULL )
         poDS->osProfile = CSLFetchNameValue( papszParmList, "PROFILE" );
+
+/* -------------------------------------------------------------------- */
+/*      Read palette back as a color table if it has one.               */
+/* -------------------------------------------------------------------- */
+    unsigned short	*panRed, *panGreen, *panBlue;
+    
+    if( poDS->nPhotometric == PHOTOMETRIC_PALETTE
+        && TIFFGetField( hTIFF, TIFFTAG_COLORMAP, 
+                         &panRed, &panGreen, &panBlue) )
+    {
+        int	nColorCount;
+        GDALColorEntry oEntry;
+
+        poDS->poColorTable = new GDALColorTable();
+
+        nColorCount = 1 << poDS->nBitsPerSample;
+
+        for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
+        {
+            oEntry.c1 = panRed[iColor] / 256;
+            oEntry.c2 = panGreen[iColor] / 256;
+            oEntry.c3 = panBlue[iColor] / 256;
+            oEntry.c4 = 255;
+
+            poDS->poColorTable->SetColorEntry( iColor, &oEntry );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Preserve creation options for consulting later (for instance    */
@@ -6409,6 +6492,7 @@ void GDALRegister_GTiff()
 "   <Option name='PHOTOMETRIC' type='string-select'>"
 "       <Value>MINISBLACK</Value>"
 "       <Value>MINISWHITE</Value>"
+"       <Value>PALETTE</Value>"
 "       <Value>RGB</Value>"
 "       <Value>CMYK</Value>"
 "       <Value>YCBCR</Value>"
