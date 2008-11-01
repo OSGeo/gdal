@@ -17,7 +17,7 @@
   using the WMS format in GDAL. Services are accessed by creating a
   local service description XML file -- there are examples below for 
   each of the supported image services. It is important that there be no
-  spaces or other content before the <tt>&lt;GDAL_WMS&gt;</tt> element.
+  spaces or other content before the <tt>&lt;GDAL_WMS&gt;</tt> element.<p>
 </p>
 
 	<table>
@@ -105,7 +105,7 @@
 		</tr>
 		<tr>
 			<td class="xml">        &lt;TileLevel&gt;<span class="value">0</span>&lt;/TileLevel&gt;</td>
-			<td class="desc">Tile level at highest resolution. (ignored for WMS, tiled image sources only, optional, defaults to 0)</td>
+			<td class="desc">Tile level at highest resolution. (tiled image sources only, optional, defaults to 0)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;TileCountX&gt;<span class="value">0</span>&lt;/TileCountX&gt;</td>
@@ -160,6 +160,14 @@
 			<td class="desc"></td>
 		</tr>
 		<tr>
+			<td class="xml">    &lt;MaxConnections&gt;<span class="value">2</span>&lt;/MaxConnections&gt;</td>
+			<td class="desc">Maximum number of simultaneous connections. (optional, defaults to 2)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Timeout&gt;<span class="value">300</span>&lt;/Timeout&gt;</td>
+			<td class="desc">Connection timeout in seconds. (optional, defaults to 300)</td>
+		</tr>
+		<tr>
 			<td class="xml">    &lt;OfflineMode&gt;<span class="value">true</span>&lt;/OfflineMode&gt;</td>
 			<td class="desc">Do not download any new images, use only what is in cache. Usefull only with cache enabled. (optional, defaults to false)</td>
 		</tr>
@@ -171,6 +179,10 @@
 			<td class="xml">    &lt;VerifyAdviseRead&gt;<span class="value">true</span>&lt;/VerifyAdviseRead&gt;</td>
 			<td class="desc">Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)</td>
 		</tr>
+		<tr>
+			<td class="xml">    &lt;ClampRequests&gt;<span class="value">false</span>&lt;/ClampRequests&gt;</td>
+			<td class="desc">Should requests, that otherwise would be partially outside of defined data window, be clipped resulting in smaller than block size request. (optional, defaults to true)</td>
+		</tr>
 			<td class="xml">&lt;/GDAL_WMS&gt;</td>
 			<td class="desc"></td>
 		</tr>
@@ -180,99 +192,35 @@
 		</tr>
 	</table>
 
-<h2>OGC Web Map Service</h2>
+<h2>Examples</h2>
 
-<p>
-Accessing a WMS server is accomplished by creating a local service description
-xml file looking something like the following. It is important that there be no
-spaces or other content before the <tt>&lt;GDAL_WMS&gt;</tt> element.<p>
-</p>
-
-<pre>
-&lt;GDAL_WMS&gt;
-    &lt;Service name="WMS"&gt;
-        &lt;Version&gt;1.1.1&lt;/Version&gt;
-        &lt;ServerUrl&gt;http://onearth.jpl.nasa.gov/wms.cgi?&lt;/ServerUrl&gt;
-        &lt;SRS&gt;EPSG:4326&lt;/SRS&gt;
-        &lt;ImageFormat&gt;image/jpeg&lt;/ImageFormat&gt;
-        &lt;Layers&gt;modis,global_mosaic&lt;/Layers&gt;
-        &lt;Styles&gt;&lt;/Styles&gt;
-    &lt;/Service&gt;
-    &lt;DataWindow&gt;
-        &lt;UpperLeftX&gt;-180.0&lt;/UpperLeftX&gt;
-        &lt;UpperLeftY&gt;90.0&lt;/UpperLeftY&gt;
-        &lt;LowerRightX&gt;180.0&lt;/LowerRightX&gt;
-        &lt;LowerRightY&gt;-90.0&lt;/LowerRightY&gt;
-        &lt;SizeX&gt;2666666&lt;/SizeX&gt;
-        &lt;SizeY&gt;1333333&lt;/SizeY&gt;
-    &lt;/DataWindow&gt;
-    &lt;Projection&gt;EPSG:4326&lt;/Projection&gt;
-    &lt;BandsCount&gt;3&lt;/BandsCount&gt;
-&lt;/GDAL_WMS&gt;
-</pre>
-
-<p>
- It is possible to configure a WMS Service conforming to a WMS-C cache by
- specifying a number of overviews and specifying the 'block size' as the 
- tile size of the cache. The following example is a sample set up for 
- a 19-level "Global Profile" WMS-C cache:
-</p> 
-<pre> 
-&lt;GDAL_WMS&gt;
-    &lt;Service name="WMS"&gt;
-        &lt;Version&gt;1&lt;/Version&gt;
-        &lt;ServerUrl&gt;http://labs.metacarta.com/wms-c/Basic.py?&lt;/ServerUrl&gt;
-        &lt;Layers&gt;basic&lt;/Layers&gt;
-    &lt;/Service&gt;
-    &lt;DataWindow&gt;
-        &lt;UpperLeftX&gt;-180.0&lt;/UpperLeftX&gt;
-        &lt;UpperLeftY&gt;90.0&lt;/UpperLeftY&gt;
-        &lt;LowerRightX&gt;180.0&lt;/LowerRightX&gt;
-        &lt;LowerRightY&gt;-90.0&lt;/LowerRightY&gt;
-        &lt;SizeX&gt;268435456&lt;/SizeX&gt;
-        &lt;SizeY&gt;134217728&lt;/SizeY&gt;
-        &lt;TileLevel&gt;19&lt;/TileLevel&gt;
-    &lt;/DataWindow&gt;
-    &lt;Projection&gt;EPSG:4326&lt;/Projection&gt;
-    &lt;OverviewCount&gt;19&lt;/OverviewCount&gt;
-    &lt;BlockSizeX&gt;256&lt;/BlockSizeX&gt;
-    &lt;BlockSizeY&gt;256&lt;/BlockSizeY&gt;
-    &lt;BandsCount&gt;3&lt;/BandsCount&gt;
-&lt;/GDAL_WMS&gt;
-</pre>
-
-<h2>TileService</h2>
-<p>
-  TileService is a specific type of request format used by WorldWind.
-  It is described as being "a bunch of PHP scripts used to serve image data to 
-  World Wind, GDAL and some other software." 
-</p>
-<p>Example TileService Configuration:</p>
-<pre>
-&lt;GDAL_WMS&gt;
-    &lt;Service name="TileService"&gt;
-        &lt;Version&gt;1&lt;/Version&gt;
-        &lt;ServerUrl&gt;http://s0.tileservice.worldwindcentral.com/getTile?&lt;/ServerUrl&gt;
-        &lt;Dataset&gt;za.johannesburg_2006_20cm&lt;/Dataset&gt;
-    &lt;/Service&gt;
-    &lt;DataWindow&gt;
-        &lt;UpperLeftX&gt;-180.0&lt;/UpperLeftX&gt;
-        &lt;UpperLeftY&gt;90.0&lt;/UpperLeftY&gt;
-        &lt;LowerRightX&gt;180.0&lt;/LowerRightX&gt;
-        &lt;LowerRightY&gt;-90.0&lt;/LowerRightY&gt;
-        &lt;SizeX&gt;268435456&lt;/SizeX&gt;
-        &lt;SizeY&gt;134217728&lt;/SizeY&gt;
-        &lt;TileLevel&gt;19&lt;/TileLevel&gt;
-    &lt;/DataWindow&gt;
-    &lt;Projection&gt;EPSG:4326&lt;/Projection&gt;
-    &lt;OverviewCount&gt;16&lt;/OverviewCount&gt;
-    &lt;BlockSizeX&gt;512&lt;/BlockSizeX&gt;
-    &lt;BlockSizeY&gt;512&lt;/BlockSizeY&gt;
-    &lt;BandsCount&gt;3&lt;/BandsCount&gt;
-&lt;/GDAL_WMS&gt;
-</pre>
 <ul>
-<li> <b> </b>: 
+    <li>
+	<a href="frmt_wms_onearth_global_mosaic.xml">onearth_global_mosaic.xml</a> - Landsat mosaic from a <a href="http://onearth.jpl.nasa.gov/">OnEarth</a> WMS server<br>
+	<pre>gdal_translate -of JPEG -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic.jpg</pre>
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic.jpg">
+	<pre>gdal_translate -of JPEG -projwin -10 55 30 35 -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic2.jpg</pre>
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic2.jpg">
+    </li>
+    <li>
+	<a href="frmt_wms_metacarta_wmsc.xml">metacarta_wmsc.xml</a> - 
+	It is possible to configure a WMS Service conforming to a WMS-C cache by
+	specifying a number of overviews and specifying the 'block size' as the 
+	tile size of the cache. The following example is a sample set up for 
+	a 19-level "Global Profile" WMS-C cache.
+	<pre>gdal_translate -of PNG -outsize 500 250 metacarta_wmsc.xml metacarta_wmsc.png</pre>
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png">
+    </li>
+    <li>
+	<a href="frmt_wms_tileservice_bmng.xml">tileservice_bmng.xml</a> - TileService, Blue Marble NG (January)<br>
+	<pre>gdal_translate -of JPEG -outsize 500 250 tileservice_bmng.xml tileservice_bmng.jpg</pre>
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg">
+    </li>
+    <li>
+	<a href="frmt_wms_tileservice_nysdop2004.xml">tileservice_nysdop2004.xml</a> - TileService, NYSDOP 2004<br>
+	<pre>gdal_translate -of JPEG -projwin -73.687030 41.262680 -73.686359 41.262345 -outsize 500 250 tileservice_nysdop2004.xml tileservice_nysdop2004.jpg</pre>
+	<img src="http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg">
+    </li>
 </ul>
 
 See Also:<p>
