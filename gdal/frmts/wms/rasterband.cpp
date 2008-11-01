@@ -163,7 +163,8 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                                     cache->Write(download_requests[i].pszURL, file_name);
                                 }
                             } else {
-                                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ReadBlockFromFile failed.");
+                                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ReadBlockFromFile (%s) failed.",
+                                         download_requests[i].pszURL);
                                 ret = CE_Failure;
                             }
                         }
@@ -315,6 +316,8 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
     GByte *color_table = NULL;
     int i;
 
+    //CPLDebug("WMS", "ReadBlockFromFile: to_buffer_band=%d, (x,y)=(%d, %d)", to_buffer_band, x, y);
+
     /* expected size */
     const int esx = MIN(MAX(0, (x + 1) * nBlockXSize), nRasterXSize) - MIN(MAX(0, x * nBlockXSize), nRasterXSize);
     const int esy = MIN(MAX(0, (y + 1) * nBlockYSize), nRasterYSize) - MIN(MAX(0, y * nBlockYSize), nRasterYSize);
@@ -380,7 +383,15 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                             b = band->GetLockedBlockRef(x, y, true);
                             if (b != NULL) {
                                 p = b->GetDataRef();
+                                if (p == NULL) {
+                                  CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
+                                  ret = CE_Failure;
+                                }
                             }
+                        }
+                        else
+                        {
+                            //CPLDebug("WMS", "Band %d, block (x,y)=(%d, %d) already in cache", band->GetBand(), x, y);
                         }
                     }
                     if (p != NULL) {
@@ -410,9 +421,6 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Color table supports at most 4 components.");
                             ret = CE_Failure;
                         }
-                    } else {
-                        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
-                        ret = CE_Failure;
                     }
                     if (b != NULL) {
                         b->DropLock();
@@ -449,6 +457,10 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
                     b = band->GetLockedBlockRef(x, y, true);
                     if (b != NULL) {
                         p = b->GetDataRef();
+                        if (p == NULL) {
+                          CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
+                          ret = CE_Failure;
+                        }
                     }
                 }
             }
@@ -456,9 +468,6 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
                 unsigned char *b = reinterpret_cast<unsigned char *>(p);
                 int block_size = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
                 for (int i = 0; i < block_size; ++i) b[i] = 0;
-            } else {
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
-                ret = CE_Failure;
             }
             if (b != NULL) {
                 b->DropLock();
