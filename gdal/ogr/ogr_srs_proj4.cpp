@@ -202,7 +202,35 @@ static double OSR_GDV( char **papszNV, const char * pszField,
  * Example:
  *   pszProj4 = "+proj=utm +zone=11 +datum=WGS84" 
  *
- * This method is the equivelent of the C function OSRImportFromProj4().
+ * Some parameters, such as grids, recognised by PROJ.4 may not be well
+ * understood and translated into the OGRSpatialReference model. It is possible
+ * to add the +wktext parameter which is a special keyword that OGR recognises
+ * as meaning "embed the entire PROJ.4 string in the WKT and use it literally
+ * when converting back to PROJ.4 format".
+ * 
+ * For example:
+ * "+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000 +y_0=6023150 +ellps=intl
+ *  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"
+ *
+ * will be translated as :
+ * \code
+ * PROJCS["unnamed",
+ *    GEOGCS["International 1909 (Hayford)",
+ *        DATUM["unknown",
+ *            SPHEROID["intl",6378388,297]],
+ *        PRIMEM["Greenwich",0],
+ *        UNIT["degree",0.0174532925199433]],
+ *    PROJECTION["New_Zealand_Map_Grid"],
+ *    PARAMETER["latitude_of_origin",-41],
+ *    PARAMETER["central_meridian",173],
+ *    PARAMETER["false_easting",2510000],
+ *    PARAMETER["false_northing",6023150],
+ *    UNIT["Meter",1],
+ *    EXTENSION["PROJ4","+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000 
+ *               +y_0=6023150 +ellps=intl  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"]]
+ * \endcode
+ *
+ * This method is the equivalent of the C function OSRImportFromProj4().
  *
  * @param pszProj4 the PROJ.4 style string. 
  *
