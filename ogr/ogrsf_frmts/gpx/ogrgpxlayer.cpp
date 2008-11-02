@@ -1097,8 +1097,17 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
             {
                 char* compatibleName =
                         OGRGPX_GetXMLCompatibleTagName(pszExtensionsNS, poFieldDefn->GetNameRef());
-                 char* pszValue =
-                    CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
+
+                /* Remove leading spaces for a numeric field */
+                const char *pszRaw = poFeature->GetFieldAsString( i );
+                if (poFieldDefn->GetType() == OFTInteger || poFieldDefn->GetType() == OFTReal)
+                {
+                    while( *pszRaw == ' ' )
+                        pszRaw++;
+                }
+
+                char* pszValue =
+                    CPLEscapeString(pszRaw, -1, CPLES_XML);
                 VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
                         pszExtensionsNS,
                         compatibleName,
