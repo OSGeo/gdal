@@ -316,6 +316,41 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     
     papoLayers[nLayers-1]->SetCRLF( bUseCRLF );
 
+/* -------------------------------------------------------------------- */
+/*      Should we write the geometry ?                                  */
+/* -------------------------------------------------------------------- */
+    const char *pszGeometry = CSLFetchNameValue( papszOptions, "GEOMETRY");
+    if (pszGeometry != NULL)
+    {
+        if (EQUAL(pszGeometry, "AS_WKT"))
+        {
+            papoLayers[nLayers-1]->SetWriteGeometry(OGR_CSV_GEOM_AS_WKT);
+        }
+        else if (EQUAL(pszGeometry, "AS_XYZ") ||
+                 EQUAL(pszGeometry, "AS_XY") ||
+                 EQUAL(pszGeometry, "AS_YX"))
+        {
+            if (eGType == wkbUnknown || wkbFlatten(eGType) == wkbPoint)
+            {
+                papoLayers[nLayers-1]->SetWriteGeometry(EQUAL(pszGeometry, "AS_XYZ") ? OGR_CSV_GEOM_AS_XYZ :
+                                                        EQUAL(pszGeometry, "AS_XY") ?  OGR_CSV_GEOM_AS_XY :
+                                                                                       OGR_CSV_GEOM_AS_YX);
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Geometry type %s is not compatible with GEOMETRY=AS_XYZ.",
+                          OGRGeometryTypeToName(eGType) );
+            }
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Unsupported value %s for creation option GEOMETRY",
+                       pszGeometry );
+        }
+    }
+
     return papoLayers[nLayers-1];
 }
 
