@@ -628,7 +628,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		"""Prepare the option parser for input (argv)"""
 		
 		from optparse import OptionParser, OptionGroup
-		usage = "Usage: %prog [options] input_file(s) [self.output]"
+		usage = "Usage: %prog [options] input_file(s) [output]"
 		p = OptionParser(usage, version="%prog "+ __version__)
 		p.add_option("-p", "--profile", dest='profile', type='choice', choices=profile_list,
 						  help="Tile cutting profile (%s) - default 'mercator' (Google Maps compatible)" % ",".join(profile_list))
@@ -638,7 +638,9 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 						  help="The spatial reference system used for the source input data")
 		p.add_option('-z', '--zoom', dest="zoom",
 						  help="Zoom levels to render (format:'2-5' or '10').")
-		# TODO:
+		# TODO: NODATA: ds.GetRasterBand(i).SetNoDataValue( float(null_value) )
+		# But this would have to be done on in memory VRT - created by CreateCopy()
+		# Let's do that together with merging of files later...
 		#p.add_option('-n', '--srcnodata', dest="srcnodata", metavar="NODATA",
 		#				  help="NODATA transparency value to assign to the input data")
 		p.add_option("-v", "--verbose",
@@ -710,9 +712,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 			self.error("It is not possible to open the input file '%s'." % self.input )
 			
 		# Read metadata from the input file
-
-                if self.in_ds.RasterCount == 0:
-                        self.error( "Input file '%s' has no raster band" % self.input )
+		if self.in_ds.RasterCount == 0:
+			self.error( "Input file '%s' has no raster band" % self.input )
 			
 		if self.in_ds.GetRasterBand(1).GetRasterColorTable():
 			# TODO: Process directly paletted dataset by generating VRT in memory
@@ -1462,7 +1463,7 @@ gdal2tiles temp.vrt""" % self.input )
 	      <Region>
 	        <Lod>
 	          <minLodPixels>%d</minLodPixels>
-	          <maxLodPixels>%d</maxLodPixels>
+	          <maxLodPixels>-1</maxLodPixels>
 	        </Lod>
 	        <LatLonAltBox>
 	          <north>%.14f</north>
@@ -1477,7 +1478,7 @@ gdal2tiles temp.vrt""" % self.input )
 	        <viewFormat/>
 	      </Link>
 	    </NetworkLink>
-	""" % (cz, cx, cy, args['tileformat'], args['minlodpixels'], args['maxlodpixels'], cnorth, csouth, ceast, cwest, url, cz, cx, cy)
+	""" % (cz, cx, cy, args['tileformat'], args['minlodpixels'], cnorth, csouth, ceast, cwest, url, cz, cx, cy)
 
 		s += """	  </Document>
 	</kml>
