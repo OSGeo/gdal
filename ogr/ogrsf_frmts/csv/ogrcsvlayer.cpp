@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -52,6 +53,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
     bUseCRLF = FALSE;
     bNeedRewind = FALSE;
+    eGeometryFormat = OGR_CSV_GEOM_NONE;
 
     nNextFID = 1;
 
@@ -429,12 +431,37 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 /* -------------------------------------------------------------------- */
     if( !bHasFieldNames )
     {
+        if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT)
+        {
+            VSIFPrintf( fpCSV, "%s", "WKT");
+            if (poFeatureDefn->GetFieldCount() > 0)
+                VSIFPrintf( fpCSV, "%s", "," );
+        }
+        else if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
+        {
+            VSIFPrintf( fpCSV, "%s", "X,Y,Z");
+            if (poFeatureDefn->GetFieldCount() > 0)
+                VSIFPrintf( fpCSV, "%s", "," );
+        }
+        else if (eGeometryFormat == OGR_CSV_GEOM_AS_XY)
+        {
+            VSIFPrintf( fpCSV, "%s", "X,Y");
+            if (poFeatureDefn->GetFieldCount() > 0)
+                VSIFPrintf( fpCSV, "%s", "," );
+        }
+        else if (eGeometryFormat == OGR_CSV_GEOM_AS_YX)
+        {
+            VSIFPrintf( fpCSV, "%s", "Y,X");
+            if (poFeatureDefn->GetFieldCount() > 0)
+                VSIFPrintf( fpCSV, "%s", "," );
+        }
+
         for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
             char *pszEscaped;
 
             if( iField > 0 )
-                fprintf( fpCSV, "%s", "," );
+                VSIFPrintf( fpCSV, "%s", "," );
 
             pszEscaped = 
                 CPLEscapeString( poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), 
@@ -456,9 +483,61 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
     VSIFSeek( fpCSV, 0, SEEK_END );
 
 /* -------------------------------------------------------------------- */
+/*      Write out the geometry                                          */
+/* -------------------------------------------------------------------- */
+    if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT)
+    {
+        OGRGeometry     *poGeom = poNewFeature->GetGeometryRef();
+        char* pszWKT = NULL;
+        if (poGeom && poGeom->exportToWkt(&pszWKT) == OGRERR_NONE)
+        {
+            VSIFPrintf( fpCSV, "\"%s\"", pszWKT);
+        }
+        else
+        {
+            VSIFPrintf( fpCSV, "\"\"");
+        }
+        CPLFree(pszWKT);
+        if (poFeatureDefn->GetFieldCount() > 0)
+            VSIFPrintf( fpCSV, "%s", "," );
+    }
+    else if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ ||
+             eGeometryFormat == OGR_CSV_GEOM_AS_XY ||
+             eGeometryFormat == OGR_CSV_GEOM_AS_YX)
+    {
+        OGRGeometry     *poGeom = poNewFeature->GetGeometryRef();
+        if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
+        {
+            OGRPoint* poPoint = (OGRPoint*) poGeom;
+            char szBuffer[75];
+            if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ )
+                OGRMakeWktCoordinate(szBuffer, poPoint->getX(), poPoint->getY(), poPoint->getZ(), 3);
+            else if (eGeometryFormat == OGR_CSV_GEOM_AS_XY )
+                OGRMakeWktCoordinate(szBuffer, poPoint->getX(), poPoint->getY(), 0, 2);
+            else
+                OGRMakeWktCoordinate(szBuffer, poPoint->getY(), poPoint->getX(), 0, 2);
+            char* pc = szBuffer;
+            while(*pc != '\0')
+            {
+                if (*pc == ' ')
+                    *pc = ',';
+                pc ++;
+            }
+            VSIFPrintf( fpCSV, "%s", szBuffer );
+        }
+        else
+        {
+            VSIFPrintf( fpCSV, "%s", "," );
+            if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
+                VSIFPrintf( fpCSV, "%s", "," );
+        }
+        if (poFeatureDefn->GetFieldCount() > 0)
+            VSIFPrintf( fpCSV, "%s", "," );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Write out all the field values.                                 */
 /* -------------------------------------------------------------------- */
-    
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         char *pszEscaped;
@@ -489,4 +568,13 @@ void OGRCSVLayer::SetCRLF( int bNewValue )
 
 {
     bUseCRLF = bNewValue;
+}
+
+/************************************************************************/
+/*                       SetWriteGeometry()                             */
+/************************************************************************/
+
+void OGRCSVLayer::SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat)
+{
+    this->eGeometryFormat = eGeometryFormat;
 }
