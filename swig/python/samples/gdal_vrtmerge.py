@@ -75,11 +75,14 @@ class file_info:
 		self.lry = self.uly + self.geotransform[5] * self.ysize
 
 		self.band_types = [None]
+		self.nodata = [None]
 		self.cts = [None]
 		self.color_interps = [None]
 		for i in range(1, fh.RasterCount+1):
 			band = fh.GetRasterBand(i)
 			self.band_types.append(band.DataType)
+			if band.GetNoDataValue() != None:
+				self.nodata.append(band.GetNoDataValue())
 			self.color_interps.append(band.GetRasterColorInterpretation())
 			ct = band.GetRasterColorTable()
 			if ct is not None:
@@ -276,6 +279,9 @@ if __name__ == '__main__':
 
 			t_fh.write('\t<VRTRasterBand dataType="%s" band="%i">\n'
 				% (dataType, band))
+			if file_infos[0].nodata != [None]:
+				t_fh.write('\t\t<NoDataValue>%f</NoDataValue>\n' %
+					file_infos[0].nodata[band])
 			t_fh.write('\t\t<ColorInterp>%s</ColorInterp>\n' %
 				gdal.GetColorInterpretationName(
 					file_infos[0].color_interps[band]))
