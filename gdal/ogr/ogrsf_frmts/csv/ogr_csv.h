@@ -32,6 +32,15 @@
 
 #include "ogrsf_frmts.h"
 
+typedef enum
+{
+    OGR_CSV_GEOM_NONE,
+    OGR_CSV_GEOM_AS_WKT,
+    OGR_CSV_GEOM_AS_XYZ,
+    OGR_CSV_GEOM_AS_XY,
+    OGR_CSV_GEOM_AS_YX,
+} OGRCSVGeometryFormat;
+
 class OGRCSVDataSource;
 
 /************************************************************************/
@@ -54,6 +63,7 @@ class OGRCSVLayer : public OGRLayer
     int                 bInWriteMode;
     int                 bUseCRLF;
     int                 bNeedRewind;
+    OGRCSVGeometryFormat eGeometryFormat;
 
   public:
     OGRCSVLayer( const char *pszName, FILE *fp, const char *pszFilename,
@@ -75,6 +85,7 @@ class OGRCSVLayer : public OGRLayer
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 
     void                SetCRLF(int);
+    void                SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat);
 };
 
 /************************************************************************/
