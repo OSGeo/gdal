@@ -92,6 +92,10 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
  * What argument values are legal for particular drivers is driver specific,
  * and there is no way to query in advance to establish legal values.
  *
+ * That function will try to validate the creation option list passed to the driver
+ * with the GDALValidateCreationOptions() method. This check can be disabled
+ * by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS=NO.
+ *
  * Equivelent of the C function GDALCreate().
  * 
  * @param pszFilename the name of the dataset to create.
@@ -141,7 +145,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     QuietDelete( pszFilename );
 
-    GDALValidateCreationOptions( this, papszParmList);
+    if (CSLTestBoolean(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES")))
+        GDALValidateCreationOptions( this, papszParmList);
 /* -------------------------------------------------------------------- */
 /*      Proceed with creation.                                          */
 /* -------------------------------------------------------------------- */
@@ -508,11 +513,14 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * then the default CreateCopy() mechanism built on calling Create() will
  * be used.                                                             
  *
- * It is intended that CreateCopy() would often be used with a source dataset
+ * It is intended that CreateCopy() will often be used with a source dataset
  * which is a virtual dataset allowing configuration of band types, and
- * other information without actually duplicating raster data.  This virtual
- * dataset format hasn't yet been implemented at the time of this documentation
- * being written. 
+ * other information without actually duplicating raster data (see the VRT driver).
+ * This is what is done by the gdal_translate utility for example.
+ *
+ * That function will try to validate the creation option list passed to the driver
+ * with the GDALValidateCreationOptions() method. This check can be disabled
+ * by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS=NO.
  *
  * @param pszFilename the name for the new dataset. 
  * @param poSrcDS the dataset being duplicated. 
@@ -546,7 +554,9 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     QuietDelete( pszFilename );
 
-    GDALValidateCreationOptions( this, papszOptions);
+    if (CSLTestBoolean(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES")))
+        GDALValidateCreationOptions( this, papszOptions);
+
 /* -------------------------------------------------------------------- */
 /*      If the format provides a CreateCopy() method use that,          */
 /*      otherwise fallback to the internal implementation using the     */
