@@ -45,9 +45,10 @@
 /* ==================================================================== */
 /************************************************************************/
 #define MAX_STR_LEN            8192
+#define CEA                    "cylindrical_equal_area"
 #define L_C_CONIC              "lambert_conformal_conic"
 #define TM                     "transverse_mercator"
-
+#define LAEA                   "lambert_azimuthal_equal_area"
 #define GRD_MAPPING_NAME       "grid_mapping_name"
 #define GRD_MAPPING            "grid_mapping"
 #define COORDINATES            "coordinates"
@@ -56,7 +57,11 @@
 #define STD_PARALLEL_1         "standard_parallel_1"
 #define STD_PARALLEL_2         "standard_parallel_2"
 #define LONG_CENTRAL_MERIDIAN  "central_meridian"
+#define LON_PROJ_ORIGIN        "longitude_of_projection_origin"
 #define LAT_PROJ_ORIGIN        "latitude_of_projection_origin"
+#define SCALE_FACTOR_ORIGIN    "scale_factor_at_projection_origin"
+#define PROJ_X_ORIGIN          "projection_x_coordinate_origin"
+#define PROJ_Y_ORIGIN          "projection_y_coordinate_origin"
 #define EARTH_SHAPE            "GRIB_earth_shape"
 #define EARTH_SHAPE_CODE       "GRIB_earth_shape_code"
 #define SCALE_FACTOR           "scale_factor_at_central_meridian"
