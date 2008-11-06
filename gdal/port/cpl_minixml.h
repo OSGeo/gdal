@@ -109,7 +109,7 @@ typedef struct CPLXMLNode
      *
      * Pointer to first child node, if any.  Only CXT_Element and CXT_Attribute
      * nodes should have children.  For CXT_Attribute it should be a single
-     * CXT_Text value node, while CXT_Attribute can have any kind of child. 
+     * CXT_Text value node, while CXT_Element can have any kind of child. 
      * The full list of children for a node are identified by walking the 
      * psNext's starting with the psChild node. 
      */
