@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: rs2dataset.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id $
  *
  * Project:  SPOT Dimap Driver
  * Purpose:  Implementation of SPOT Dimap driver.
@@ -33,7 +33,7 @@
 #include "cpl_minixml.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id: rs2dataset.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_DIMAP(void);
@@ -457,6 +457,51 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
                 osName += psTarget->pszValue;
                 poDS->SetMetadataItem( osName, psTarget->psChild->pszValue );
             }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set Band metadata from the <Spectral_Band_Info> content         */
+/* -------------------------------------------------------------------- */
+
+    CPLXMLNode *psImageInterpretationNode = 
+            CPLGetXMLNode( psDoc, "Image_Interpretation" );
+    if (psImageInterpretationNode != NULL)
+    {
+        CPLXMLNode *psSpectralBandInfoNode = psImageInterpretationNode->psChild;
+        while (psSpectralBandInfoNode != NULL)
+        {
+            if (psSpectralBandInfoNode->eType == CXT_Element &&
+                EQUAL(psSpectralBandInfoNode->pszValue, "Spectral_Band_Info"))
+            {
+                CPLXMLNode *psTag = psSpectralBandInfoNode->psChild;
+                int nBandIndex = 0;
+                while(psTag != NULL)
+                {
+                    if (psTag->eType == CXT_Element && psTag->psChild != NULL &&
+                        psTag->psChild->eType == CXT_Text && psTag->pszValue != NULL)
+                    {
+                        if (EQUAL(psTag->pszValue, "BAND_INDEX"))
+                        {
+                            nBandIndex = atoi(psTag->psChild->pszValue);
+                            if (nBandIndex <= 0 ||
+                                nBandIndex > poDS->poImageDS->GetRasterCount())
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Bad BAND_INDEX value : %s", psTag->psChild->pszValue);
+                                nBandIndex = 0;
+                            }
+                        }
+                        else if (nBandIndex >= 1)
+                        {
+                            poDS->GetRasterBand(nBandIndex)->SetMetadataItem(
+                                    psTag->pszValue, psTag->psChild->pszValue);
+                        }
+                    }
+                    psTag = psTag->psNext;
+                }
+            }
+            psSpectralBandInfoNode = psSpectralBandInfoNode->psNext;
         }
     }
 
