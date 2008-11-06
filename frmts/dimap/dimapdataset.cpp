@@ -60,6 +60,8 @@ class DIMAPDataset : public GDALPamDataset
     int           bHaveGeoTransform;
     double        adfGeoTransform[6];
 
+    char          **papszXMLDimapMetadata;
+
   public:
 		DIMAPDataset();
 	        ~DIMAPDataset();
@@ -98,6 +100,8 @@ DIMAPDataset::DIMAPDataset()
 
     poImageDS = NULL;
     bHaveGeoTransform = FALSE;
+
+    papszXMLDimapMetadata = NULL;
 }
 
 /************************************************************************/
@@ -121,6 +125,8 @@ DIMAPDataset::~DIMAPDataset()
     if( poImageDS != NULL )
         delete poImageDS;
 
+    CSLDestroy(papszXMLDimapMetadata);
+
 /* -------------------------------------------------------------------- */
 /*      Disconnect the bands so our destructor doesn't try and          */
 /*      delete them since they really belonged to poImageDS.            */
@@ -142,9 +148,12 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
 {
     if( pszDomain && EQUAL(pszDomain,"xml:dimap") )
     {
-        char **papszReturn = (char **) CPLCalloc(sizeof(char*),2);
-        papszReturn[0] = CPLSerializeXMLTree( psProduct );
-        return papszReturn;
+        if (papszXMLDimapMetadata == NULL)
+        {
+            papszXMLDimapMetadata = (char **) CPLCalloc(sizeof(char*),2);
+            papszXMLDimapMetadata[0] = CPLSerializeXMLTree( psProduct );
+        }
+        return papszXMLDimapMetadata;
     }
     else
         return GDALPamDataset::GetMetadata( pszDomain );
