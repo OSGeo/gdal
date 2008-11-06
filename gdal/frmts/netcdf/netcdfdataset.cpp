@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "netcdfdataset.h"
-
+#include "cpl_error.h"
 CPL_CVSID("$Id$");
 
 
@@ -355,7 +355,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
         return;
     }
 
-    if( nc_datatype == NC_BYTE )
+    if( nc_datatype == NC_BYTE|NC_CHAR )
         eDataType = GDT_Byte;
     else if( nc_datatype == NC_SHORT )
         eDataType = GDT_Int16;
@@ -671,6 +671,7 @@ void netCDFDataset::SetProjection( int var )
     double       dfScale;
     double       dfFalseEasting;
     double       dfFalseNorthing;
+    double       dfCentralMeridian;
 
     OGRSpatialReference oSRS;
     int          nVarDimXID = -1;
@@ -776,6 +777,89 @@ void netCDFDataset::SetProjection( int var )
 			    dfFalseNorthing );
 		oSRS.SetWellKnownGeogCS( "WGS84" );
 	    }
+
+/* -------------------------------------------------------------------- */
+/*      Cylindrical Equal Area                                          */
+/* -------------------------------------------------------------------- */
+
+	    else if( EQUAL( pszValue, CEA ) ) {
+		dfStdP1 = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         STD_PARALLEL_1, 0.0 );
+		dfCentralMeridian = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+					 LONG_CENTRAL_MERIDIAN, 0.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+		
+		oSRS.SetCEA( dfStdP1, dfCentralMeridian,
+			     dfFalseEasting, dfFalseNorthing );
+		
+		oSRS.SetWellKnownGeogCS( "WGS84" );
+	    }
+/* -------------------------------------------------------------------- */
+/*      lambert_azimuthal_equal_area                                    */
+/* -------------------------------------------------------------------- */
+	    else if( EQUAL( pszValue, LAEA ) ) {
+		dfCenterLon = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LON_PROJ_ORIGIN, 0.0 );
+
+		dfCenterLat = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+
+		/*
+		dfLonOrig =
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LON_PROJ_ORIGIN, 0.0 );
+
+		dfLatOrig =
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfScaleFactorOrig = 
+		    poDS->FetchCopyParm( szGridMappingValue,
+					 SCALE_FACTOR_ORIGN, 0.0 );
+
+		dfProjXOrig =
+		    poDS->FetchCopyParm( szGridMappingValue,
+					 PROJ_X_ORIGIN, 0.0 );
+
+		dfProjYOrig =
+		    poDS->FetchCopyParm( szGridMappingValue,
+					 PROJ_Y_ORIGIN, 0.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+		*/
+		oSRS.SetLAEA( dfCenterLat, dfCenterLon,
+			      dfFalseEasting, dfFalseNorthing );
+		
+		oSRS.SetWellKnownGeogCS( "WGS84" );
+
+	    }
+
+
 /* -------------------------------------------------------------------- */
 /*      Lambert conformal conic                                         */
 /* -------------------------------------------------------------------- */
@@ -1275,9 +1359,10 @@ void netCDFDataset::CreateSubDatasetList( )
 /*      Get rid of the last "x" character                               */
 /* -------------------------------------------------------------------- */
 	    szDim[strlen(szDim) - 1] = '\0';
-	    
 	    switch( nVarType ) {
+		
 	    case NC_BYTE:
+	    case NC_CHAR:
 		strcpy(szType, "8-bit character");
 		break;
 	    case NC_SHORT: 
@@ -1292,10 +1377,6 @@ void netCDFDataset::CreateSubDatasetList( )
 	    case NC_DOUBLE:
 		strcpy(szType, "64-bit floating-point");
 		break;
-
-            //  variable types we can't possibly use...
-            case NC_CHAR:
-                continue;
 
 	    default:
 		break;
@@ -1352,7 +1433,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     char         attname[NC_MAX_NAME];
     int          ndims, nvars, ngatts, unlimdimid;
     int          nCount=0;
-    int          nVarID;
+    int          nVarID=-1;
 
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
