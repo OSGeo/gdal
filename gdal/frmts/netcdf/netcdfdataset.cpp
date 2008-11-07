@@ -1365,6 +1365,7 @@ void netCDFDataset::CreateSubDatasetList( )
 	    case NC_CHAR:
 		strcpy(szType, "8-bit character");
 		break;
+
 	    case NC_SHORT: 
 		strcpy(szType, "8-bit integer");
 		break;
