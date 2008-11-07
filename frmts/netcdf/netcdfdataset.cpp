@@ -355,7 +355,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
         return;
     }
 
-    if( nc_datatype == NC_BYTE|NC_CHAR )
+    if( (nc_datatype == NC_BYTE) ) 
         eDataType = GDT_Byte;
     else if( nc_datatype == NC_SHORT )
         eDataType = GDT_Int16;
@@ -464,6 +464,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
 	    bNoDataSet = TRUE;
     }
     SetNoDataValue( dfNoData );
+
     
 }
 
@@ -852,10 +853,12 @@ void netCDFDataset::SetProjection( int var )
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          FALSE_NORTHING, 0.0 );
 		*/
+		oSRS.SetProjCS( "LAEA (WGS84) " );
+		oSRS.SetWellKnownGeogCS( "WGS84" );
+
 		oSRS.SetLAEA( dfCenterLat, dfCenterLon,
 			      dfFalseEasting, dfFalseNorthing );
 		
-		oSRS.SetWellKnownGeogCS( "WGS84" );
 
 	    }
 
@@ -889,9 +892,9 @@ void netCDFDataset::SetProjection( int var )
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          FALSE_NORTHING, 0.0 );
 		
+		oSRS.SetWellKnownGeogCS( "WGS84" );
 		oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
 			     dfFalseEasting, dfFalseNorthing );
-		oSRS.SetWellKnownGeogCS( "WGS84" );
 
 	    }
 /* -------------------------------------------------------------------- */
