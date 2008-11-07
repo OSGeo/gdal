@@ -74,8 +74,8 @@ class HDF4Dataset : public GDALPamDataset
   protected:
 
     FILE	*fp;
-    int32	hHDF4, hSD, hGR;
-    int32	nDatasets, nImages;
+    int32	hGR, hSD;
+    int32	nImages;
     HDF4DatasetType iDatasetType;
     HDF4SubdatasetType iSubdatasetType;
     const char	*pszSubdatasetType;
@@ -83,23 +83,23 @@ class HDF4Dataset : public GDALPamDataset
     char	**papszGlobalMetadata;
     char	**papszSubDatasets;
 
-    CPLErr      ReadGlobalAttributes( int32 );
+    CPLErr              ReadGlobalAttributes( int32 );
 
     static GDALDataType GetDataType( int32 ) ;
-    static const char *GetDataTypeName( int32 );
-    static int  GetDataTypeSize( int32 );
-    static double AnyTypeToDouble( int32, void * );
-    static char **TranslateHDF4Attributes( int32, int32, char *,
-                                           int32, int32, char ** );
-    static char ** TranslateHDF4EOSAttributes( int32, int32, int32,
-                                               char ** );
+    static const char   *GetDataTypeName( int32 );
+    static int          GetDataTypeSize( int32 );
+    static double       AnyTypeToDouble( int32, void * );
+    static char         **TranslateHDF4Attributes( int32, int32, char *,
+                                                   int32, int32, char ** );
+    static char         **TranslateHDF4EOSAttributes( int32, int32, int32,
+                                                      char ** );
 
   public:
                 HDF4Dataset();
 		~HDF4Dataset();
     
-    virtual char **GetMetadata( const char * pszDomain = "" );
-    static GDALDataset *Open( GDALOpenInfo * );
+    virtual char        **GetMetadata( const char * pszDomain = "" );
+    static GDALDataset  *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 };
 
