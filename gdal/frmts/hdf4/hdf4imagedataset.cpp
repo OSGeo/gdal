@@ -85,7 +85,7 @@ class HDF4ImageDataset : public HDF4Dataset
     friend class HDF4ImageRasterBand;
 
     char        *pszFilename;
-    int32       iGR, iPal, iDataset;
+    int32       hHDF4, iGR, iPal, iDataset;
     int32       iRank, iNumType, nAttrs,
                 iInterlaceMode, iPalInterlaceMode, iPalDataType;
     int32       nComps, nPalEntries;
@@ -1645,6 +1645,11 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
 /* -------------------------------------------------------------------- */
 /*      Scan for latitude and longitude sections.                       */
 /* -------------------------------------------------------------------- */
+    int32   nDatasets, nAttributes;
+
+    if ( SDfileinfo( hSD, &nDatasets, &nAttributes ) != 0 )
+	return;
+
     for( iDSIndex = 0; iDSIndex < nDatasets; iDSIndex++ )
     {
         int32	    iRank, iNumType, nAttrs, iSDS;
