@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  Hierarchical Data Format Release 4 (HDF4)
  * Purpose:  Header file for HDF4 compatibility
