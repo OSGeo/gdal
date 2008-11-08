@@ -55,8 +55,10 @@
 	PUTBACK;
 	count = call_sv(env_ptr->fct, G_SCALAR);
 	SPAGAIN;
-	if (count != 1)
-	    croak("Big trouble\n");
+	if (count != 1) {
+	    fprintf(stderr, "The callback must return only one value.\n");
+	    return 0; /* interrupt */
+	}
 	ret = POPi;
 	PUTBACK;
 	FREETMPS;
@@ -94,9 +96,18 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_OpenShared) OpenShared;
 %newobject _OpenShared;
 
+/* those that need callback_data check: */
+
 %rename (_ComputeMedianCutPCT) ComputeMedianCutPCT;
 %rename (_DitherRGB2PCT) DitherRGB2PCT;
 %rename (_ReprojectImage) ReprojectImage;
+%rename (_ComputeProximity) ComputeProximity;
+%rename (_RasterizeLayer) RasterizeLayer;
+%rename (_Polygonize) Polygonize;
+%rename (_SieveFilter) SieveFilter;
+%rename (_RegenerateOverviews) RegenerateOverviews;
+%rename (_RegenerateOverview) RegenerateOverview;
+
 %rename (_AutoCreateWarpedVRT) AutoCreateWarpedVRT;
 %newobject _AutoCreateWarpedVRT;
 
@@ -231,22 +242,45 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return _OpenShared(@p);
     }
     sub ComputeMedianCutPCT {
-	my($red, $green, $blue, $num_colors, $colors, $callback, $callback_data) = @_;
-	_ComputeMedianCutPCT($red, $green, $blue, $num_colors, $colors, $callback, $callback_data);
+    	$_[6] = 1 if $_[5] and not defined $_[6];
+	_ComputeMedianCutPCT(@_);
     }
     sub DitherRGB2PCT {
-	my($red, $green, $blue, $target, $colors, $callback, $callback_data) = @_;
-	_DitherRGB2PCT($red, $green, $blue, $target, $colors, $callback, $callback_data);
+    	$_[6] = 1 if $_[5] and not defined $_[6];
+	_DitherRGB2PCT(@_);
+    }
+    sub ComputeProximity {
+    	$_[4] = 1 if $_[3] and not defined $_[4];
+	_ComputeProximity(@_);
+    }
+    sub RasterizeLayer {
+    	$_[8] = 1 if $_[7] and not defined $_[8];
+	_RasterizeLayer(@_);
+    }
+    sub Polygonize {
+    	$_[6] = 1 if $_[5] and not defined $_[6];
+	_Polygonize(@_);
+    }
+    sub SieveFilter {
+    	$_[7] = 1 if $_[6] and not defined $_[7];
+	_SieveFilter(@_);
+    }
+    sub RegenerateOverviews {
+    	$_[4] = 1 if $_[3] and not defined $_[4];
+	_RegenerateOverviews(@_);
+    }
+    sub RegenerateOverview {
+    	$_[4] = 1 if $_[3] and not defined $_[4];
+	_RegenerateOverview(@_);
     }
     sub ReprojectImage {
-	my @p = @_;
-	$p[4] = $RESAMPLING_STRING2INT{$p[4]} if $p[4] and exists $RESAMPLING_STRING2INT{$p[4]};
-	return _ReprojectImage(@p);
+    	$_[8] = 1 if $_[7] and not defined $_[8];
+	$_[4] = $RESAMPLING_STRING2INT{$_[4]} if $_[4] and exists $RESAMPLING_STRING2INT{$_[4]};
+	return _ReprojectImage(@_);
     }
     sub AutoCreateWarpedVRT {
-	my @p = @_;
-	$p[3] = $RESAMPLING_STRING2INT{$p[3]} if $p[3] and exists $RESAMPLING_STRING2INT{$p[3]};
-	return _AutoCreateWarpedVRT(@p);
+	$_[3] = $RESAMPLING_STRING2INT{$_[3]} if $_[3] and exists $RESAMPLING_STRING2INT{$_[3]};
+	return _AutoCreateWarpedVRT(@_);
     }
 
     package Geo::GDAL::MajorObject;
@@ -535,6 +569,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	for (keys %defaults) {
 	    $params{$_} = $defaults{$_} unless defined $params{$_};
 	}
+	$params{ProgressData} = 1 if $params{Progress} and not defined $params{ProgressData};
 	my $h = _GetHistogram($self, $params{Min}, $params{Max}, $params{Buckets},
 			      $params{IncludeOutOfRange}, $params{ApproxOK},
 			      $params{Progress}, $params{ProgressData});
@@ -575,6 +610,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	for ('IDField', 'ElevField') {
 	    $params{$_} = $schema->GetFieldIndex($params{ElevField}) unless $params{ElevField} =~ /^[+-]?\d+$/;
 	}
+	$params{callback_data} = 1 if $params{callback} and not defined $params{callback_data};
 	ContourGenerate($self, $params{ContourInterval}, $params{ContourBase}, $params{FixedLevels},
 			$params{NoDataValue}, $layer, $params{IDField}, $params{ElevField},
 			$params{callback}, $params{callback_data});
