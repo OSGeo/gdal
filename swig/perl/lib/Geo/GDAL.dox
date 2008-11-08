@@ -112,7 +112,8 @@
 # @return the size as the number of bits.
 
 ## @fn @DataTypeValueRange($DataType)
-# @param DataType Data type as string.
+# @param DataType Data type as string (one of Byte UInt16 Int16 UInt32
+# Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64).
 # @return the minimum, maximum range of the data type.
 
 ## @fn $DataTypeIsComplex($GDALDataType)
@@ -636,7 +637,8 @@
 ## @method AddBand($datatype = 'Byte', \%options = 0)
 # Add a new band to the dataset. The driver must support the action.
 # @param datatype Data type string. The data type must be supported by
-# the driver of this dataset.
+# the driver of this dataset. GDAL raster data types are Byte UInt16
+# Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64.
 # @param options A reference to a hash of format specific key=>value options.
 
 ## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, \@band_list = undef)
@@ -680,8 +682,8 @@
 # scalar (access as $band->{YSize})
 
 ## @method $DataType()
-# @return a data type string.
-
+# @return a data type string (Byte, UInt16, Int16, UInt32, Int32, Float32,
+# Float64, CInt16, CInt32, CFloat32, or CFloat64).
 ## @method @Size()
 # @return the size of the band as a list (width, height).
 
@@ -776,8 +778,8 @@
 # @param imag_part Imaginary component of fill value.
 
 ## @method WriteTile($data, $xoff = 0, $yoff = 0)
-# @param data A two-dimensional Perl array (a pixel at x,y, when up
-# left pixel is 0,0 is $data->[$x][$y]).
+# @param data A two-dimensional Perl array, organizes as data->[y][x], y =
+# 0..height-1, x = 0..width-1.
 # @param xoff
 # @param yoff
 
@@ -786,7 +788,8 @@
 # @param yoff
 # @param xsize
 # @param ysize
-# @return a two-dimensional Perl array.
+# @return a two-dimensional Perl array, organizes as data->[y][x], y =
+# 0..height-1, x = 0..width-1.
 
 ## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef)
 # @param xoff
