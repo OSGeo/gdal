@@ -544,32 +544,34 @@ CreateArrayFromStringArray( char **first ) {
 %typemap(in) char **options
 {
     /* %typemap(in) char **options */
-    if (SvROK($input)) {
-	if (SvTYPE(SvRV($input))==SVt_PVAV) {
-	    AV *av = (AV*)(SvRV($input));
-	    for (int i = 0; i < av_len(av)+1; i++) {
-		char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
-		$1 = CSLAddString( $1, pszItem );
-	    }
-	} else if (SvTYPE(SvRV($input))==SVt_PVHV) {
-	    HV *hv = (HV*)SvRV($input);
-	    SV *sv;
-	    char *key;
-	    I32 klen;
-	    $1 = NULL;
-	    hv_iterinit(hv);
-	    while(sv = hv_iternextsv(hv,&key,&klen)) {
-		$1 = CSLAddNameValue( $1, key, SvPV_nolen(sv) );
-	    }
+    if (SvOK($input)) {
+        if (SvROK($input)) {
+	    if (SvTYPE(SvRV($input))==SVt_PVAV) {
+		AV *av = (AV*)(SvRV($input));
+		for (int i = 0; i < av_len(av)+1; i++) {
+		    char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+		    $1 = CSLAddString( $1, pszItem );
+		}
+	    } else if (SvTYPE(SvRV($input))==SVt_PVHV) {
+		HV *hv = (HV*)SvRV($input);
+		SV *sv;
+		char *key;
+		I32 klen;
+		$1 = NULL;
+		hv_iterinit(hv);
+		while(sv = hv_iternextsv(hv,&key,&klen)) {
+                    $1 = CSLAddNameValue( $1, key, SvPV_nolen(sv) );
+		}
+	    } else
+		SWIG_croak("'options' is not a reference to an array or hash");
 	} else
-	    SWIG_croak("'options' is not a reference to an array or hash");
-    } else
-	SWIG_croak("'options' is not a reference");   
+	    SWIG_croak("'options' is not a reference");   
+    }
 }
 %typemap(freearg) char **options
 {
   /* %typemap(freearg) char **options */
-  CSLDestroy( $1 );
+  if ($1) CSLDestroy( $1 );
 }
 %typemap(out) char **options
 {
@@ -700,7 +702,8 @@ static CPLXMLNode *AVToXMLTree( AV *av )
     
     nChildCount = av_len(av) - 1; /* there are two non-childs in the array */
     if (nChildCount < 0)
-        croak("the input XML is empty");
+        /* the input XML is empty */
+	return NULL;
 
     nType = SvIV(*(av_fetch(av,0,0)));
     pszText = SvPV_nolen(*(av_fetch(av,1,0)));
@@ -709,10 +712,18 @@ static CPLXMLNode *AVToXMLTree( AV *av )
     for( iChild = 0; iChild < nChildCount; iChild++ )
     {
 	SV **s = av_fetch(av, iChild+2, 0);
+	CPLXMLNode *psChild;
 	if (!(SvROK(*s) && (SvTYPE(SvRV(*s))==SVt_PVAV)))
-	    croak("expected a reference to an array");
-        CPLXMLNode *psChild = AVToXMLTree((AV*)SvRV(*s));
-        CPLAddXMLChild( psThisNode, psChild );
+	    /* expected a reference to an array */
+	    psChild = NULL;
+	else
+	    psChild = AVToXMLTree((AV*)SvRV(*s));
+	if (psChild)
+	    CPLAddXMLChild( psThisNode, psChild );
+	else {
+	    CPLDestroyXMLNode(psThisNode);
+	    return NULL;
+	}
     }
 
     return psThisNode;
@@ -723,10 +734,10 @@ static CPLXMLNode *AVToXMLTree( AV *av )
 {
     /* %typemap(in) (CPLXMLNode* xmlnode ) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-	croak("expected a reference to an array");
+	SWIG_croak("expected a reference to an array");
     AV *av = (AV*)(SvRV($input));
     $1 = AVToXMLTree( av );
-    if ( !$1 ) SWIG_croak("AVToXMLTree failed");
+    if ( !$1 ) SWIG_croak("Conversion Perl array to XMLTree failed");
 }
 %typemap(freearg) (CPLXMLNode *xmlnode)
 {
@@ -864,7 +875,7 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
     if ($4) free($4);
 }
 
-%typemap(arginit, noblock=1) ( void* callback_data=NULL)
+%typemap(arginit, noblock=1) ( void* callback_data = NULL)
 {
     SavedEnv saved_env;
     saved_env.fct = NULL;
@@ -875,13 +886,20 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 {
     /* %typemap(in) (GDALProgressFunc callback = NULL) */
     if (SvOK($input)) {
-	saved_env.fct = (SV *)$input;
-	$1 = &callback_d_cp_vp;
-    } else
-	$1 = NULL;
+        if (SvROK($input)) {
+	    if (SvTYPE(SvRV($input)) != SVt_PVCV) {
+	       SWIG_croak("the callback arg must be a reference to a subroutine\n");
+	    } else {
+	       saved_env.fct = (SV *)$input;
+	       $1 = &callback_d_cp_vp;
+           }
+        } else {
+            SWIG_croak("the callback arg must be a reference to a subroutine\n");
+	}
+    }
 }
 
-%typemap(in) (void* callback_data=NULL)
+%typemap(in) (void* callback_data = NULL)
 {
     /* %typemap(in) (void* callback_data=NULL) */
     if (SvOK($input))
