@@ -282,8 +282,8 @@
 # will be considered suitable for collection as polygons. Must be
 # undef if not used.
 # @param out
-# @param PixValField The index of the field in output layer into which
-# the pixel value of the polygon should be written.
+# @param PixValField The index (or name) of the field in output layer
+# into which the pixel value of the polygon should be written.
 # @param options Not used.
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
