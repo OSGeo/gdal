@@ -32,7 +32,7 @@
 # @return a new Geo::OGR::Geometry object.
 
 ## @fn @Drivers()
-# @return a list of drivers for all available OGR formats.
+# @return a list of Geo::OGR::Driver objects, one for each OGR format.
 
 ## @fn $GetDriverCount()
 # @return the number of all available drivers.
@@ -601,7 +601,8 @@
 
 ## @method @GetField($field)
 # @param field the index or the name of the field
-# @return the value of the field
+# @return the value of the field, which may be a scalar or a list,
+# depending on the field type.
 
 ## @method $IsFieldSet($field)
 # @param field the index or the name of the field
