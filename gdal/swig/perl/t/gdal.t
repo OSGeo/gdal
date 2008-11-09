@@ -62,11 +62,24 @@ if (0) {
     my $g = $dataset->GetRasterBand(1);
     my $b = $dataset->GetRasterBand(1);
 
+    $b->WriteTile([
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+    [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+    ]);
+
     my $histogram;
     eval {
 	@histogram = $b->GetHistogram();
     };
-    ok($#histogram == 255, 'Histogram');
+    ok($#histogram == 255, "Histogram: @histogram");
     eval {
 	$b->SetDefaultHistogram(1,10,[0..255]);
     };
@@ -78,21 +91,36 @@ if (0) {
     eval {
 	@histogram = $b->GetHistogram(Min=>0, Max=>100, Buckets=>20);
     };
-    ok($#histogram == 19, 'Histogram with parameters');
+    ok($#histogram == 19, "Histogram with parameters: @histogram");
 
+    my @o;
+    for (0..5) {
+	my $a = 0.1*$_;
+	push @o, "$a Generating Histogram 1";
+    }
     my @out;
+    $callback = sub {
+    	      push @out, "@_";	
+    	      return $_[0] < 0.5 ? 1 : 0 };	
     eval {
 	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
 				       Geo::GDAL::ColorTable->new,
-				       sub {push @out, "@_"; 
-					    return $_[0] < 0.5 ? 1 : 0},6);
+				       $callback
+				       );
     };
-    my @o;
+    ok(is_deeply(\@out, \@o), "callback without callback_data");
+    @o = ();
     for (0..5) {
 	my $a = 0.1*$_;
 	push @o, "$a Generating Histogram 6";
     }
-    ok(is_deeply(\@out, \@o),"callback");
+    @out = ();
+    eval {
+	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
+				       Geo::GDAL::ColorTable->new,
+				       $callback,6);
+    };
+    ok(is_deeply(\@out, \@o), "callback with callback_data");
 
     # without callback only implicit test:
     Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,Geo::GDAL::ColorTable->new);
