@@ -258,7 +258,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	_RasterizeLayer(@_);
     }
     sub Polygonize {
-    	$_[6] = 1 if $_[5] and not defined $_[6];
+        $_[6] = 1 if $_[5] and not defined $_[6];
+        $_[3] = $_[2]->GetLayerDefn->GetFieldIndex($_[3]) unless $_[3] =~ /^\d/;
 	_Polygonize(@_);
     }
     sub SieveFilter {
