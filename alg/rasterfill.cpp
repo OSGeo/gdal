@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalchecksum.cpp 13893 2008-02-28 21:08:37Z rouault $
+ * $Id$
  *
  * Project:  GDAL
  * Purpose:  Interpolate in nodata areas.
@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: gdalchecksum.cpp 13893 2008-02-28 21:08:37Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           GDALFilterLine()                           */
