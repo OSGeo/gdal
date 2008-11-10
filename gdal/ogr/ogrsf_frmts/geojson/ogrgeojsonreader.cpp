@@ -191,6 +191,25 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
         const char* pszSrsType = json_object_get_string( poObjSrsType );
 
         // TODO: Add URL and URN types support
+        if( EQUALN( pszSrsType, "NAME", 4 ) )
+        {
+            json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
+            CPLAssert( NULL != poObjSrsProps );
+
+            json_object* poNameURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "name" );
+            CPLAssert( NULL != poNameURL );
+
+            const char* pszName = json_object_get_string( poNameURL );
+
+            poSRS = new OGRSpatialReference();
+            if( OGRERR_NONE != poSRS->SetFromUserInput( pszName ) )
+            {
+                delete poSRS;
+                poSRS = NULL;
+                poLayer_->SetSpatialRef( NULL );
+                return poLayer_;
+            }
+        }
 
         if( EQUALN( pszSrsType, "EPSG", 4 ) )
         {
@@ -211,12 +230,16 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
                 return poLayer_;
             }
         }
-        if( EQUALN( pszSrsType, "URL", 3 ) )
+        if( EQUALN( pszSrsType, "URL", 3 ) || EQUALN( pszSrsType, "LINK", 4 )  )
         {
             json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
             CPLAssert( NULL != poObjSrsProps );
 
             json_object* poObjURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "url" );
+            
+            if (NULL == poObjURL) {
+                poObjURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "href" );
+            }
             CPLAssert( NULL != poObjURL );
 
             const char* pszURL = json_object_get_string( poObjURL );
