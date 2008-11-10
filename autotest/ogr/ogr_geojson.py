@@ -31,12 +31,19 @@ import string
 
 sys.path.append( '../pymod' )
 
+
+try:
+    from osgeo import osr
+    from osgeo import ogr
+    from osgeo import gdal
+except ImportError:
+    
+    import ogr
+    import osr
+    import gdal
+
 import gdaltest
 import ogrtest
-import ogr
-import osr
-import gdal
-
 ###############################################################################
 # Test utilities
 def validate_layer(lyr, name, features, type, fields, box):
@@ -269,7 +276,7 @@ def ogr_geojson_3():
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
     if rc is not True:
         return 'fail'
-
+        
     lyr = None
     # Required by old-gen python bindings
     ds.Destroy()
@@ -480,6 +487,48 @@ def ogr_geojson_9():
 
 ###############################################################################
 
+def ogr_geojson_10():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/srs_name.geojson')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+
+    extent = (100.0, 102.0, 0.0, 1.0)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbGeometryCollection, 0, extent)
+    if rc is not True:
+        return 'fail'
+
+    ref = lyr.GetSpatialRef()
+    gcs = int(ref.GetAuthorityCode('GEOGCS'))
+    pcs = ref.GetAuthorityCode('PROJCS')
+    if pcs:
+        pcs = int(pcs)
+        
+    if  not gcs == 4326 and not pcs == 26915:
+        gdaltest.post_reason("Spatial reference was not valid")
+        return 'fail'
+
+    lyr = None
+    # Required by old-gen python bindings
+    ds.Destroy()
+
+    return 'success'
+    
 def ogr_geojson_cleanup():
 
     try:
@@ -506,6 +555,7 @@ gdaltest_list = [
     ogr_geojson_7,
     ogr_geojson_8,
     ogr_geojson_9,
+    ogr_geojson_10,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
