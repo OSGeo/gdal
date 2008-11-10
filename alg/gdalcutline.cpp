@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalwarper.cpp 13803 2008-02-17 05:28:42Z warmerdam $
+ * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Implement cutline/blend mask generator.
@@ -34,7 +34,7 @@
 #include "ogr_geometry.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: gdalwarper.cpp 13803 2008-02-17 05:28:42Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         BlendMaskGenerator()                         */
