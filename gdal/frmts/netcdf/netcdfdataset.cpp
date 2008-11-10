@@ -2428,7 +2428,7 @@ void GDALRegister_netCDF()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Network Common Data Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#netCDF" );
+                                   "frmt_netcdf.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nc" );
 
         poDriver->pfnOpen = netCDFDataset::Open;
