@@ -178,83 +178,8 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read spatial reference definition.                              */
-/* -------------------------------------------------------------------- */
-    // TODO: Move this code to separate function
     OGRSpatialReference* poSRS = NULL;
-
-    json_object* poObjSrs = OGRGeoJSONFindMemberByName( poGJObject_, "crs" );
-    if( NULL != poObjSrs )
-    {
-        json_object* poObjSrsType = OGRGeoJSONFindMemberByName( poObjSrs, "type" );
-        const char* pszSrsType = json_object_get_string( poObjSrsType );
-
-        // TODO: Add URL and URN types support
-        if( EQUALN( pszSrsType, "NAME", 4 ) )
-        {
-            json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
-            CPLAssert( NULL != poObjSrsProps );
-
-            json_object* poNameURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "name" );
-            CPLAssert( NULL != poNameURL );
-
-            const char* pszName = json_object_get_string( poNameURL );
-
-            poSRS = new OGRSpatialReference();
-            if( OGRERR_NONE != poSRS->SetFromUserInput( pszName ) )
-            {
-                delete poSRS;
-                poSRS = NULL;
-                poLayer_->SetSpatialRef( NULL );
-                return poLayer_;
-            }
-        }
-
-        if( EQUALN( pszSrsType, "EPSG", 4 ) )
-        {
-            json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
-            CPLAssert( NULL != poObjSrsProps );
-
-            json_object* poObjCode = OGRGeoJSONFindMemberByName( poObjSrsProps, "code" );
-            CPLAssert( NULL != poObjCode );
-
-            int nEPSG = json_object_get_int( poObjCode );
-
-            poSRS = new OGRSpatialReference();
-            if( OGRERR_NONE != poSRS->importFromEPSG( nEPSG ) )
-            {
-                delete poSRS;
-                poSRS = NULL;
-                poLayer_->SetSpatialRef( NULL );
-                return poLayer_;
-            }
-        }
-        if( EQUALN( pszSrsType, "URL", 3 ) || EQUALN( pszSrsType, "LINK", 4 )  )
-        {
-            json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
-            CPLAssert( NULL != poObjSrsProps );
-
-            json_object* poObjURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "url" );
-            
-            if (NULL == poObjURL) {
-                poObjURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "href" );
-            }
-            CPLAssert( NULL != poObjURL );
-
-            const char* pszURL = json_object_get_string( poObjURL );
-
-            poSRS = new OGRSpatialReference();
-            if( OGRERR_NONE != poSRS->importFromUrl( pszURL ) )
-            {
-                delete poSRS;
-                poSRS = NULL;
-                poLayer_->SetSpatialRef( NULL );
-                return poLayer_;
-            }
-        }
-    }
-
+    poSRS = OGRGeoJSONReadSpatialReference( poGJObject_ );
     if (poSRS == NULL ) {
         // If there is none defined, we use 4326
         poSRS = new OGRSpatialReference();
@@ -276,6 +201,81 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
     return poLayer_;
 }
 
+OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
+    
+/* -------------------------------------------------------------------- */
+/*      Read spatial reference definition.                              */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference* poSRS = NULL;
+
+    json_object* poObjSrs = OGRGeoJSONFindMemberByName( poObj, "crs" );
+    if( NULL != poObjSrs )
+    {
+        json_object* poObjSrsType = OGRGeoJSONFindMemberByName( poObjSrs, "type" );
+        const char* pszSrsType = json_object_get_string( poObjSrsType );
+
+        // TODO: Add URL and URN types support
+        if( EQUALN( pszSrsType, "NAME", 4 ) )
+        {
+            json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
+            CPLAssert( NULL != poObjSrsProps );
+
+            json_object* poNameURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "name" );
+            CPLAssert( NULL != poNameURL );
+
+            const char* pszName = json_object_get_string( poNameURL );
+
+            poSRS = new OGRSpatialReference();
+            if( OGRERR_NONE != poSRS->SetFromUserInput( pszName ) )
+            {
+                delete poSRS;
+                poSRS = NULL;
+            }
+        }
+
+        if( EQUALN( pszSrsType, "EPSG", 4 ) )
+        {
+            json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
+            CPLAssert( NULL != poObjSrsProps );
+
+            json_object* poObjCode = OGRGeoJSONFindMemberByName( poObjSrsProps, "code" );
+            CPLAssert( NULL != poObjCode );
+
+            int nEPSG = json_object_get_int( poObjCode );
+
+            poSRS = new OGRSpatialReference();
+            if( OGRERR_NONE != poSRS->importFromEPSG( nEPSG ) )
+            {
+                delete poSRS;
+                poSRS = NULL;
+            }
+        }
+        if( EQUALN( pszSrsType, "URL", 3 ) || EQUALN( pszSrsType, "LINK", 4 )  )
+        {
+            json_object* poObjSrsProps = OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
+            CPLAssert( NULL != poObjSrsProps );
+
+            json_object* poObjURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "url" );
+            
+            if (NULL == poObjURL) {
+                poObjURL = OGRGeoJSONFindMemberByName( poObjSrsProps, "href" );
+            }
+            CPLAssert( NULL != poObjURL );
+
+            const char* pszURL = json_object_get_string( poObjURL );
+
+            poSRS = new OGRSpatialReference();
+            if( OGRERR_NONE != poSRS->importFromUrl( pszURL ) )
+            {
+                delete poSRS;
+                poSRS = NULL;
+
+            }
+        }
+    }
+    
+    return poSRS;
+}
 /************************************************************************/
 /*                           SetPreserveGeometryType                    */
 /************************************************************************/
@@ -753,6 +753,16 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
         CPLDebug( "GeoJSON",
                   "Unsupported geometry type detected. "
                   "Feature gets NULL geometry assigned." );
+    }
+    // If we have a crs object in the current object, let's try and 
+    // set it too.
+    
+    json_object* poObjSrs = OGRGeoJSONFindMemberByName( poObj, "crs" );
+    if (poObjSrs != NULL) {
+        OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference(poObj);
+        if (poSRS != NULL) {
+            poGeometry->assignSpatialReference(poSRS);
+        }
     }
     return poGeometry;
 }
