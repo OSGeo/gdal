@@ -1818,32 +1818,6 @@ AC_SUBST(DWG_PLT)
 AC_SUBST(DWGDIRECT)
 
 dnl ---------------------------------------------------------------------------
-dnl Select a Panorama Library to use, or disable driver.
-dnl ---------------------------------------------------------------------------
-
-HAVE_PANORAMA=no
-AC_ARG_WITH(panorama,[  --with-panorama[=ARG]   Include "Panorama" GIS support via "Panorama" SDK (ARG=path)],,)
-
-if test "$with_panorama" = "no" ; then
-
-  AC_MSG_NOTICE(["Panorama" GIS support disabled.])
-
-else
-
-  if test -r "$with_panorama/include/mapapi.h" ; then   
-
-    HAVE_PANORAMA=yes
-    PANORAMA_INC="-I$with_panorama/include $EXTRA_INCLUDES"
-    AC_MSG_NOTICE([using "Panorama" GIS library from $with_panorama.])
-
-  fi
-
-fi
-
-AC_SUBST(HAVE_PANORAMA,$HAVE_PANORAMA)
-AC_SUBST(PANORAMA_INC,$PANORAMA_INC)
-
-dnl ---------------------------------------------------------------------------
 dnl Select Informix DataBlade support
 dnl ---------------------------------------------------------------------------
 
@@ -2346,7 +2320,6 @@ LOC_MSG([  SDE support:               ${SDE_ENABLED}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
-LOC_MSG([  PANORAMA GIS support:      ${HAVE_PANORAMA}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
 LOC_MSG()

@@ -314,9 +314,6 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #GEOS_CFLAGS = -I$(GEOS_DIR)/capi -I$(GEOS_DIR)/source/headers -DHAVE_GEOS
 #GEOS_LIB     = $(GEOS_DIR)/source/geos_c_i.lib
 
-# Uncomment for Panorama GIS support
-#PANORAMA_INC =	z:/panorama/include
-
 # Any extra libraries needed on this platform?
 ADD_LIBS	=
 
