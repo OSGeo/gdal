@@ -45,6 +45,12 @@ static const char RMF_SigRSW[] = { 'R', 'S', 'W', '\0' };
 static const char RMF_SigRSW_BE[] = { '\0', 'W', 'S', 'R' };
 static const char RMF_SigMTW[] = { 'M', 'T', 'W', '\0' };
 
+static const char RMF_UnitsEmpty[] = "";
+static const char RMF_UnitsM[] = "m";
+static const char RMF_UnitsCM[] = "cm";
+static const char RMF_UnitsDM[] = "dm";
+static const char RMF_UnitsMM[] = "mm";
+
 /************************************************************************/
 /* ==================================================================== */
 /*                            RMFRasterBand                             */
@@ -523,6 +529,32 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+const char *RMFRasterBand::GetUnitType()
+
+{
+    RMFDataset   *poGDS = (RMFDataset *) poDS;
+
+    return (const char *)poGDS->pszUnitType;
+}
+
+/************************************************************************/
+/*                            SetUnitType()                             */
+/************************************************************************/
+
+CPLErr RMFRasterBand::SetUnitType( const char *pszNewValue )
+
+{
+    RMFDataset   *poGDS = (RMFDataset *) poDS;
+
+    poGDS->pszUnitType = CPLStrdup( pszNewValue );
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/
 
@@ -616,6 +648,7 @@ RMFDataset::RMFDataset()
     nYTiles = 0;
     paiTiles = NULL;
     pszProjection = CPLStrdup( "" );
+    pszUnitType = CPLStrdup( RMF_UnitsEmpty );
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -646,6 +679,8 @@ RMFDataset::~RMFDataset()
         CPLFree( paiTiles );
     if ( pszProjection )
         CPLFree( pszProjection );
+    if ( pszUnitType )
+        CPLFree( pszUnitType );
     if ( pabyColorTable )
         CPLFree( pabyColorTable );
     if ( poColorTable != NULL )
@@ -1322,6 +1357,52 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[4] = 0.0;
     }
 
+/* -------------------------------------------------------------------- */
+/*  Set units.                                                          */
+/* -------------------------------------------------------------------- */
+    
+    if ( poDS->eRMFType == RMFT_MTW )
+    {
+        switch ( poDS->sHeader.iElevationUnit )
+        {
+            case 0:
+                poDS->pszUnitType = CPLStrdup( RMF_UnitsM );
+                break;
+            case 1:
+                poDS->pszUnitType = CPLStrdup( RMF_UnitsCM );
+                break;
+            case 2:
+                poDS->pszUnitType = CPLStrdup( RMF_UnitsDM );
+                break;
+            case 3:
+                poDS->pszUnitType = CPLStrdup( RMF_UnitsMM );
+                break;
+            default:
+                poDS->pszUnitType = CPLStrdup( RMF_UnitsEmpty );
+                break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*  Report some other dataset related information.                      */
+/* -------------------------------------------------------------------- */
+
+    if ( poDS->eRMFType == RMFT_MTW )
+    {
+        char        szTemp[256];
+
+        snprintf( szTemp, sizeof(szTemp), "%g", poDS->sHeader.adfElevMinMax[0] );
+        poDS->SetMetadataItem( "ELEVATION_MINIMUM", szTemp );
+
+        snprintf( szTemp, sizeof(szTemp), "%g", poDS->sHeader.adfElevMinMax[1] );
+        poDS->SetMetadataItem( "ELEVATION_MAXIMUM", szTemp );
+
+        poDS->SetMetadataItem( "ELEVATION_UNITS", poDS->pszUnitType );
+
+        snprintf( szTemp, sizeof(szTemp), "%d", poDS->sHeader.iElevationType );
+        poDS->SetMetadataItem( "ELEVATION_TYPE", szTemp );
+    }
+
     return( poDS );
 }
 
@@ -1478,6 +1559,18 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.nSize =
         poDS->paiTiles[poDS->sHeader.nTileTblSize / 4 - 2] + nTileSize;
 
+    // Elevation units
+    if ( EQUAL(poDS->pszUnitType, RMF_UnitsM) )
+        poDS->sHeader.iElevationUnit = 0;
+    else if ( EQUAL(poDS->pszUnitType, RMF_UnitsCM) )
+        poDS->sHeader.iElevationUnit = 1;
+    else if ( EQUAL(poDS->pszUnitType, RMF_UnitsDM) )
+        poDS->sHeader.iElevationUnit = 2;
+    else if ( EQUAL(poDS->pszUnitType, RMF_UnitsMM) )
+        poDS->sHeader.iElevationUnit = 3;
+    else
+        poDS->sHeader.iElevationUnit = 0;
+
     poDS->sHeader.iMapType = -1;
     poDS->sHeader.iProjection = -1;
     poDS->sHeader.dfScale = 10000.0;
@@ -1498,7 +1591,6 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.adfElevMinMax[0] = 0.0;
     poDS->sHeader.adfElevMinMax[1] = 0.0;
     poDS->sHeader.dfNoData = 0.0;
-    poDS->sHeader.iElevationUnit = 0;
     poDS->sHeader.iElevationType = 0;
 
     poDS->nRasterXSize = nXSize;
