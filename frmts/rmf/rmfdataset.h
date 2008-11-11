@@ -136,6 +136,8 @@ class RMFDataset : public GDALDataset
     double          adfGeoTransform[6];
     char            *pszProjection;
 
+    char            *pszUnitType;
+
     int             bBigEndian;
     int             bHeaderDirty;
 
@@ -184,8 +186,10 @@ class RMFRasterBand : public GDALRasterBand
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual const char      *GetUnitType();
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable  *GetColorTable();
-    CPLErr                  SetColorTable( GDALColorTable * );
+    virtual CPLErr          SetUnitType(const char *);
+    virtual CPLErr          SetColorTable( GDALColorTable * );
 };
 
