@@ -69,7 +69,8 @@ def ogr_mem_2():
     ogrtest.quick_create_layer_def( gdaltest.mem_lyr,
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString) ] )
+                                      ('PRFEDEA', ogr.OFTString),
+                                      ('WHEN', ogr.OFTDateTime) ] )
     
     #######################################################
     # Copy in poly.shp
@@ -338,7 +339,7 @@ def ogr_mem_10():
 ###############################################################################
 # Verify that we can delete layers properly
 
-def ogr_mem_11():
+def ogr_mem_12():
     
     if gdaltest.mem_ds.TestCapability( 'DeleteLayer' ) == 0:
         gdaltest.post_reason ('Deletelayer TestCapability failed.' )
@@ -358,7 +359,26 @@ def ogr_mem_11():
     return 'success'
     
 ###############################################################################
-# 
+# Test some date handling
+def ogr_mem_11():
+    ogr.UseExceptions()
+    if gdaltest.mem_ds is None:
+        return 'skip'
+
+    #######################################################
+    # Create memory Layer
+    lyr = gdaltest.mem_ds.GetLayerByName('tpoly')
+    if lyr is None:
+        return 'fail'
+    
+    # Set the date of the first feature
+    f = lyr.GetFeature(1)
+    f.SetField("WHEN", 2008, 03, 19, 16, 15, 00, 0)
+    lyr.SetFeature(f)
+    f = lyr.GetFeature(1)
+    idx = f.GetFieldIndex('WHEN')
+    print f.GetFieldAsDateTime(idx)
+    return 'success'
 
 def ogr_mem_cleanup():
 
@@ -382,6 +402,7 @@ gdaltest_list = [
     ogr_mem_9,
     ogr_mem_10,
     ogr_mem_11,
+    ogr_mem_12,
     ogr_mem_cleanup ]
 
 if __name__ == '__main__':
