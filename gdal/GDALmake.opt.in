@@ -252,12 +252,6 @@ HAVE_DWGDIRECT = no
 endif
 
 #
-# "Panorama" GIS support.
-#
-HAVE_PANORAMA   = @HAVE_PANORAMA@
-PANORAMA_INC	= @PANORAMA_INC@
-
-#
 # Informix DataBlade support
 #
 HAVE_IDB	= @HAVE_IDB@
@@ -339,15 +333,18 @@ endif
 #
 
 ifeq ($(HAVE_LIBTOOL), yes)
+
 CONFIG_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
 ifeq ($(MACOSX_FRAMEWORK),yes)
 CONFIG_LIBS_INS	=	-L$(INST_LIB)/unix/lib -lgdal
 else
 CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
-endif
+endif # MACOSX_FRAMEWORK
+
 EXE_DEP_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
 SO_EXT		=	la
-else
+
+else # HAVE_LIBTOOL
 
 ifeq ($(HAVE_LD_SHARED),yes)
 CONFIG_LIBS	=	$(GDAL_SLIB_LINK) $(LIBS)
