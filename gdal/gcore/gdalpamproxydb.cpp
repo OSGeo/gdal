@@ -282,7 +282,9 @@ void PamCleanProxyDB()
     CPLMutexHolderD( &hProxyDBLock );
     
     bProxyDBInitialized = FALSE;
+
     delete poProxyDB;
+    poProxyDB = NULL;
 }
 
 /************************************************************************/

@@ -32,6 +32,7 @@
 #include "cpl_multiproc.h"
 #include "ogr_srs_api.h"
 #include "cpl_multiproc.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
@@ -148,6 +149,11 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
     VSIFree( papoDrivers );
     VSIFree( pszHome );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup any Proxy related memory.                               */
+/* -------------------------------------------------------------------- */
+    PamCleanProxyDB();
 
 /* -------------------------------------------------------------------- */
 /*      Blow away all the finder hints paths.  We really shouldn't      */
