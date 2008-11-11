@@ -48,6 +48,7 @@ class OGRMultiPolygon;
 class OGRGeometryCollection;
 class OGRFeature;
 class OGRGeoJSONLayer;
+class OGRSpatialReference;
 
 /************************************************************************/
 /*                           GeoJSONObject                              */
@@ -142,5 +143,6 @@ OGRLinearRing* OGRGeoJSONReadLinearRing( json_object* poObj );
 OGRPolygon* OGRGeoJSONReadPolygon( json_object* poObj , bool bRaw=false);
 OGRMultiPolygon* OGRGeoJSONReadMultiPolygon( json_object* poObj );
 OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj );
+OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj );
 
 #endif /* OGR_GEOJSONUTILS_H_INCLUDED */
