@@ -3,7 +3,13 @@
    "geometries": [
        {
            "type": "Point",
-           "coordinates": [100.0, 0.0]
+           "coordinates": [100.0, 0.0],
+           "crs": {
+           "type": "name",
+           "properties": {
+               "name": "urn:ogc:def:crs:EPSG::26916"
+               }
+            }
        },
        {
            "type": "LineString",

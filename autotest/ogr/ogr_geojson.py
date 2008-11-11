@@ -523,6 +523,16 @@ def ogr_geojson_10():
         gdaltest.post_reason("Spatial reference was not valid")
         return 'fail'
 
+    feature = lyr.GetNextFeature()
+    geometry = feature.GetGeometryRef().GetGeometryRef(0)
+    
+    srs = geometry.GetSpatialReference()
+    gcs = int(srs.GetAuthorityCode('GEOGCS'))
+    pcs = srs.GetAuthorityCode('PROJCS')
+    if not gcs == 4269 and not pcs == 26916:
+        gdaltest.post_reason("Spatial reference for individual geometry was not valid")
+        return 'fail'
+
     lyr = None
     # Required by old-gen python bindings
     ds.Destroy()
