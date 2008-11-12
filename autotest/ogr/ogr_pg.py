@@ -1490,6 +1490,110 @@ def ogr_pg_37():
     return 'success'
 
 ###############################################################################
+# Test support for multiple geometry columns (#1476)
+
+def ogr_pg_38():
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','table37_base','pointBase',-1,'POINT',2)" )
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','table37_inherited','point25D',-1,'POINT',3)" )
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+
+    # Check for the layer with the wkb_geometry column
+    found = ogr_pg_check_layer_in_list(ds, 'table37_inherited')
+    if found is False:
+        gdaltest.post_reason( 'layer table37_inherited not listed' )
+        return 'fail'
+
+    lyr = ds.GetLayerByName( 'table37_inherited' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+        return 'fail'
+
+    try:
+        if lyr.GetGeometryColumn() != 'wkb_geometry':
+            gdaltest.post_reason( 'wrong geometry column name' )
+            return 'fail'
+    except:
+        pass
+
+    # Explicit query to 'table37_inherited(wkb_geometry)' should also work
+    lyr = ds.GetLayerByName( 'table37_inherited(wkb_geometry)' )
+    if lyr is None:
+        return 'fail'
+
+
+    # Check for the layer with the new 'pointBase' geometry column inherited from table37_base
+    found = ogr_pg_check_layer_in_list(ds, 'table37_inherited(pointBase)')
+    if found is False:
+        gdaltest.post_reason( 'layer table37_inherited(pointBase) not listed' )
+        return 'fail'
+
+    lyr = ds.GetLayerByName( 'table37_inherited(pointBase)' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+        return 'fail'
+
+    try:
+        if lyr.GetGeometryColumn() != 'pointBase':
+            gdaltest.post_reason( 'wrong geometry column name' )
+            return 'fail'
+    except:
+        pass
+
+
+    # Check for the layer with the new 'point25D' geometry column
+    found = ogr_pg_check_layer_in_list(ds, 'table37_inherited(point25D)')
+    if found is False:
+        gdaltest.post_reason( 'layer table37_inherited(point25D) not listed' )
+        return 'fail'
+
+    lyr = ds.GetLayerByName( 'table37_inherited(point25D)' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint25D:
+        return 'fail'
+
+    try:
+        if lyr.GetGeometryColumn() != 'point25D':
+            gdaltest.post_reason( 'wrong geometry column name' )
+            return 'fail'
+    except:
+        pass
+
+    ds.Destroy()
+
+    # Check for the layer with the new 'point25D' geometry column when tables= is specified
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' tables=table37_inherited(point25D)', update = 1 )
+    found = ogr_pg_check_layer_in_list(ds, 'table37_inherited(point25D)')
+    if found is False:
+        gdaltest.post_reason( 'layer table37_inherited(point25D) not listed' )
+        return 'fail'
+
+    lyr = ds.GetLayerByName( 'table37_inherited(point25D)' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint25D:
+        return 'fail'
+
+    try:
+        if lyr.GetGeometryColumn() != 'point25D':
+            gdaltest.post_reason( 'wrong geometry column name' )
+            return 'fail'
+    except:
+        pass
+
+    ds.Destroy()
+
+    return 'success'
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -1577,6 +1681,7 @@ gdaltest_list_internal = [
     ogr_pg_36,
     ogr_pg_36_bis,
     ogr_pg_37,
+    ogr_pg_38,
     ogr_pg_cleanup ]
 
 
