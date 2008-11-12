@@ -37,6 +37,17 @@ import ogr
 import osr
 import gdal
 
+###############################################################################
+# Return true if 'layer_name' is one of the reported layers of pg_ds
+
+def ogr_pg_check_layer_in_list(ds, layer_name):
+
+    for i in range(0, ds.GetLayerCount()):
+        name = ds.GetLayer(i).GetName()
+        if name == layer_name:
+            return True
+    return False
+
 #
 # To create the required PostGIS instance do something like:
 #
@@ -928,12 +939,8 @@ def ogr_pg_22():
     dst_feat.Destroy()
 
     # Test if test layer under custom schema is listed
-    
-    found = False
-    for i in range(0, gdaltest.pg_ds.GetLayerCount()):
-        name = gdaltest.pg_ds.GetLayer(i).GetName()
-        if name == layer_name:
-            found = True
+
+    found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, layer_name)
 
     if found is False:
         gdaltest.post_reason( 'layer from schema \''+schema_name+'\' not listed' )
@@ -1410,12 +1417,22 @@ def ogr_pg_36():
     gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table36_inherited2 ( col2 CHAR(1) ) INHERITS ( table36_inherited )')
 
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+
+    found = ogr_pg_check_layer_in_list(ds, 'table36_inherited')
+    if found is False:
+        gdaltest.post_reason( 'layer table36_inherited not listed' )
+        return 'fail'
+
+    found = ogr_pg_check_layer_in_list(ds, 'table36_inherited2')
+    if found is False:
+        gdaltest.post_reason( 'layer table36_inherited2 not listed' )
+        return 'fail'
+
     lyr = ds.GetLayerByName( 'table36_inherited2' )
     if lyr is None:
         return 'fail'
     if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
         return 'fail'
-
     ds.Destroy()
 
     return 'success'
@@ -1426,6 +1443,12 @@ def ogr_pg_36_bis():
         return 'skip'
 
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' TABLES=table36_base', update = 1 )
+
+    found = ogr_pg_check_layer_in_list(ds, 'table36_inherited')
+    if found is True:
+        gdaltest.post_reason( 'layer table36_inherited is listed but it should not' )
+        return 'fail'
+
     lyr = ds.GetLayerByName( 'table36_inherited' )
     if lyr is None:
         return 'fail'
@@ -1450,6 +1473,12 @@ def ogr_pg_37():
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+
+    found = ogr_pg_check_layer_in_list(ds, 'table37_inherited')
+    if found is False:
+        gdaltest.post_reason( 'layer table37_inherited not listed' )
+        return 'fail'
+
     lyr = ds.GetLayerByName( 'table37_inherited' )
     if lyr is None:
         return 'fail'
