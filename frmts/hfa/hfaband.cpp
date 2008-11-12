@@ -57,6 +57,7 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
 
     nPCTColors = -1;
     apadfPCT[0] = apadfPCT[1] = apadfPCT[2] = apadfPCT[3] = NULL;
+    padfPCTBins = NULL;
 
     nOverviews = 0;
     papoOverviews = NULL;
@@ -247,6 +248,7 @@ HFABand::~HFABand()
     CPLFree( apadfPCT[1] );
     CPLFree( apadfPCT[2] );
     CPLFree( apadfPCT[3] );
+    CPLFree( padfPCTBins );
 
     if( fpExternal != NULL )
         VSIFCloseL( fpExternal );
@@ -1496,6 +1498,63 @@ CPLErr HFABand::SetNoDataValue( double dfValue )
 }
 
 /************************************************************************/
+/*                           HFAReadPCTBins()                           */
+/*                                                                      */
+/*      Attempt to read the bins used for a PCT from a BinFunction      */
+/*      node.  On failure just return NULL.                             */
+/************************************************************************/
+
+static double *HFAReadPCTBins( HFAEntry *poBinFunc, int nPCTColors )
+
+{
+/* -------------------------------------------------------------------- */
+/*      First confirm this is a "BFUnique" bin function.  We don't      */
+/*      know what to do with any other types.                           */
+/* -------------------------------------------------------------------- */
+    const char *pszBinFunctionType = 
+        poBinFunc->GetStringField( "binFunction.type.string" );
+
+    if( pszBinFunctionType == NULL 
+        || !EQUAL(pszBinFunctionType,"BFUnique") )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Process dictionary.                                             */
+/* -------------------------------------------------------------------- */
+    HFADictionary oMiniDict( 
+        poBinFunc->GetStringField( "binFunction.MIFDictionary" ) );
+
+    HFAType *poBFUnique = oMiniDict.FindType( "BFUnique" );
+    if( poBFUnique == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Field the MIFObject raw data pointer.                           */
+/* -------------------------------------------------------------------- */
+    const GByte *pabyMIFObject = (const GByte *) 
+        poBinFunc->GetStringField("binFunction.MIFObject");
+    
+    if( pabyMIFObject == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Decode bins.                                                    */
+/* -------------------------------------------------------------------- */
+    double *padfBins = (double *) CPLCalloc(sizeof(double),nPCTColors);
+    int i;
+
+    memcpy( padfBins, pabyMIFObject + 24, sizeof(double) * nPCTColors );
+    
+    for( i = 0; i < nPCTColors; i++ )
+    {
+        HFAStandard( 8, padfBins + i );
+//        CPLDebug( "HFA", "Bin[%d] = %g", i, padfBins[i] );
+    }
+    
+    return padfBins;
+}
+
+/************************************************************************/
 /*                               GetPCT()                               */
 /*                                                                      */
 /*      Return PCT information, if any exists.                          */
@@ -1505,7 +1564,8 @@ CPLErr HFABand::GetPCT( int * pnColors,
                         double **ppadfRed,
                         double **ppadfGreen,
                         double **ppadfBlue,
-                        double **ppadfAlpha )
+                        double **ppadfAlpha,
+                        double **ppadfBins )
 
 {
     *pnColors = 0;
@@ -1513,6 +1573,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
     *ppadfGreen = NULL;
     *ppadfBlue = NULL;
     *ppadfAlpha = NULL;
+    *ppadfBins = NULL;
         
 /* -------------------------------------------------------------------- */
 /*      If we haven't already tried to load the colors, do so now.      */
@@ -1558,14 +1619,14 @@ CPLErr HFABand::GetPCT( int * pnColors,
             else
             {
                 if (VSIFSeekL( psInfo->fp, poColumnEntry->GetIntField("columnDataPtr"),
-                           SEEK_SET ) < 0)
+                               SEEK_SET ) < 0)
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
                               "VSIFSeekL() failed in HFABand::GetPCT()." );
                     return CE_Failure;
                 }
                 if (VSIFReadL( apadfPCT[iColumn], sizeof(double), nPCTColors,
-                           psInfo->fp) != (size_t)nPCTColors)
+                               psInfo->fp) != (size_t)nPCTColors)
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
                               "VSIFReadL() failed in HFABand::GetPCT()." );
@@ -1575,6 +1636,17 @@ CPLErr HFABand::GetPCT( int * pnColors,
                 for( i = 0; i < nPCTColors; i++ )
                     HFAStandard( 8, apadfPCT[iColumn] + i );
             }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a custom binning function? If so, try reading it.    */
+/* -------------------------------------------------------------------- */
+        HFAEntry *poBinFunc = 
+            poNode->GetNamedChild("Descriptor_Table.#Bin_Function840#");
+        
+        if( poBinFunc != NULL )
+        {
+            padfPCTBins = HFAReadPCTBins( poBinFunc, nPCTColors );
         }
     }
 
@@ -1589,6 +1661,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
     *ppadfGreen = apadfPCT[1];
     *ppadfBlue = apadfPCT[2];
     *ppadfAlpha = apadfPCT[3];
+    *ppadfBins = padfPCTBins;
     
     return( CE_None );
 }
