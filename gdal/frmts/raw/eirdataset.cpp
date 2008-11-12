@@ -43,11 +43,9 @@ CPL_C_END
 /* ==================================================================== */
 /************************************************************************/
 
-class EIRRasterBand;
-
 class EIRDataset : public RawDataset
 {
-    friend class EIRRasterBand;
+    friend class RawRasterBand;
 
     FILE  *fpImage; // image data file
     int    bGotTransform;
@@ -64,7 +62,6 @@ class EIRDataset : public RawDataset
     ~EIRDataset();
     
     virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual CPLErr SetGeoTransform( double *padfTransform );
     
     virtual char **GetFileList();
     
@@ -72,249 +69,6 @@ class EIRDataset : public RawDataset
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
-/************************************************************************/
-/* ==================================================================== */
-/*                          EIRRasterBand                               */
-/* ==================================================================== */
-/************************************************************************/
-
-class EIRRasterBand : public RawRasterBand
-{
-   friend class EIRDataset;
-
-    int            nBits;
-    long           nStartBit;
-    int            nPixelOffsetBits;
-    int            nLineOffsetBits;
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int );
-
-  public:
-    EIRRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
-                    vsi_l_offset nImgOffset, int nPixelOffset,
-                    int nLineOffset,
-                    GDALDataType eDataType, int bNativeOrder,
-                    int nBits);
-
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
-};
-
-
-/************************************************************************/
-/*                           EIRRasterBand()                           */
-/************************************************************************/
-
-EIRRasterBand::EIRRasterBand( GDALDataset *poDS,
-                                      int nBand, FILE * fpRaw, 
-                                      vsi_l_offset nImgOffset, int nPixelOffset,
-                                      int nLineOffset,
-                                      GDALDataType eDataType, int bNativeOrder,
-                                      int nBits)
-: RawRasterBand( poDS, nBand, fpRaw, nImgOffset, nPixelOffset, nLineOffset, 
-                         eDataType, bNativeOrder, TRUE ),
-  nBits(nBits)
-{
-    if (nBits < 8)
-    {
-        EIRDataset* poEDS = (EIRDataset*)poDS;
-        nStartBit = atoi(poEDS->GetKeyValue("SKIPBYTES")) * 8;
-        if (nBand >= 2)
-        {
-            long nRowBytes = atoi(poEDS->GetKeyValue("BANDROWBYTES"));
-            if (nRowBytes == 0)
-                nRowBytes = (nBits * poDS->GetRasterXSize() + 7) / 8;
-
-            nStartBit += nRowBytes * (nBand-1) * 8;
-        }
-
-        nPixelOffsetBits = nBits;
-        nLineOffsetBits = atoi(poEDS->GetKeyValue("TOTALROWBYTES")) * 8;
-        if( nLineOffsetBits == 0 )
-            nLineOffsetBits = nPixelOffsetBits * poDS->GetRasterXSize();
-
-        nBlockXSize = poDS->GetRasterXSize();
-        nBlockYSize = 1;
-
-        SetMetadataItem( "NBITS", 
-                         CPLString().Printf( "%d", nBits ),
-                         "IMAGE_STRUCTURE" );
-    }
-}
-
-/************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-CPLErr EIRRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
-
-{
-    if (nBits >= 8)
-      return RawRasterBand::IReadBlock(nBlockXOff, nBlockYOff, pImage);
-
-    vsi_l_offset   nLineStart;
-    unsigned int   nLineBytes;
-    int            iBitOffset;
-    GByte         *pabyBuffer;
-
-/* -------------------------------------------------------------------- */
-/*      Establish desired position.                                     */
-/* -------------------------------------------------------------------- */
-    nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
-    nLineStart = (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) / 8;
-    iBitOffset = 
-        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8;
-
-/* -------------------------------------------------------------------- */
-/*      Read data into buffer.                                          */
-/* -------------------------------------------------------------------- */
-    pabyBuffer = (GByte *) CPLCalloc(nLineBytes,1);
-
-    if( VSIFSeekL( GetFP(), nLineStart, SEEK_SET ) != 0 
-        || VSIFReadL( pabyBuffer, 1, nLineBytes, GetFP() ) != nLineBytes )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %d bytes at offset %d.\n%s",
-                  (int) nLineBytes, (int) nLineStart, 
-                  VSIStrerror( errno ) );
-        return CE_Failure;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Copy data, promoting to 8bit.                                   */
-/* -------------------------------------------------------------------- */
-    int iPixel = 0, iX;
-
-    for( iX = 0; iX < nBlockXSize; iX++ )
-    {
-        int  nOutWord = 0, iBit;
-
-        for( iBit = 0; iBit < nBits; iBit++ )
-        {
-            if( pabyBuffer[iBitOffset>>3]  & (0x80 >>(iBitOffset & 7)) )
-                nOutWord |= (1 << (nBits - 1 - iBit));
-            iBitOffset++;
-        } 
-
-        iBitOffset = iBitOffset + nPixelOffsetBits - nBits;
-                
-        ((GByte *) pImage)[iPixel++] = nOutWord;
-    }
-
-    CPLFree( pabyBuffer );
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                            IWriteBlock()                             */
-/************************************************************************/
-
-CPLErr EIRRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
-
-{
-    if (nBits >= 8)
-      return RawRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage);
-
-    vsi_l_offset   nLineStart;
-    unsigned int   nLineBytes;
-    int            iBitOffset;
-    GByte         *pabyBuffer;
-
-/* -------------------------------------------------------------------- */
-/*      Establish desired position.                                     */
-/* -------------------------------------------------------------------- */
-    nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
-    nLineStart = (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) / 8;
-    iBitOffset = 
-        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8;
-
-/* -------------------------------------------------------------------- */
-/*      Read data into buffer.                                          */
-/* -------------------------------------------------------------------- */
-    pabyBuffer = (GByte *) CPLCalloc(nLineBytes,1);
-
-    if( VSIFSeekL( GetFP(), nLineStart, SEEK_SET ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %d bytes at offset %d.\n%s",
-                  (int) nLineBytes, (int) nLineStart, 
-                  VSIStrerror( errno ) );
-        return CE_Failure;
-    }
-
-    VSIFReadL( pabyBuffer, 1, nLineBytes, GetFP() );
-
-/* -------------------------------------------------------------------- */
-/*      Copy data, promoting to 8bit.                                   */
-/* -------------------------------------------------------------------- */
-    int iPixel = 0, iX;
-
-    for( iX = 0; iX < nBlockXSize; iX++ )
-    {
-        int iBit;
-        int  nOutWord = ((GByte *) pImage)[iPixel++];
-
-        for( iBit = 0; iBit < nBits; iBit++ )
-        {
-            if( nOutWord & (1 << (nBits - 1 - iBit)) )
-                pabyBuffer[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
-            else
-                pabyBuffer[iBitOffset>>3] &= ~((0x80 >>(iBitOffset & 7)));
-
-            iBitOffset++;
-        } 
-
-        iBitOffset = iBitOffset + nPixelOffsetBits - nBits;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Write the data back out.                                        */
-/* -------------------------------------------------------------------- */
-    if( VSIFSeekL( GetFP(), nLineStart, SEEK_SET ) != 0 
-        || VSIFWriteL( pabyBuffer, 1, nLineBytes, GetFP() ) != nLineBytes )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to write %d bytes at offset %d.\n%s",
-                  (int) nLineBytes, (int) nLineStart, 
-                  VSIStrerror( errno ) );
-        return CE_Failure;
-    }
-
-    CPLFree( pabyBuffer );
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                             IRasterIO()                              */
-/************************************************************************/
-
-CPLErr EIRRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                  int nXOff, int nYOff, int nXSize, int nYSize,
-                                  void * pData, int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace )
-
-{
-    // Defer to RawRasterBand
-    if (nBits >= 8)
-        return RawRasterBand::IRasterIO( eRWFlag, 
-                                         nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, 
-                                         eBufType, nPixelSpace, nLineSpace );
-
-    // Force use of IReadBlock() and IWriteBlock()
-    else
-        return GDALRasterBand::IRasterIO( eRWFlag, 
-                                          nXOff, nYOff, nXSize, nYSize,
-                                          pData, nBufXSize, nBufYSize, 
-                                          eBufType, nPixelSpace, nLineSpace );
-}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -448,64 +202,6 @@ CPLErr EIRDataset::GetGeoTransform( double * padfTransform )
         return GDALPamDataset::GetGeoTransform( padfTransform );
     }
 }
-
-/************************************************************************/
-/*                          SetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr EIRDataset::SetGeoTransform( double *padfGeoTransform )
-
-{
-/* -------------------------------------------------------------------- */
-/*      We only support non-rotated images with info in the .HDR file.  */
-/* -------------------------------------------------------------------- */
-    if( padfGeoTransform[2] != 0.0 
-        || padfGeoTransform[4] != 0.0 )
-    {
-        return GDALPamDataset::SetGeoTransform( padfGeoTransform );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Record new geotransform.                                        */
-/* -------------------------------------------------------------------- */
-    bGotTransform = TRUE;
-    memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
-
-/* -------------------------------------------------------------------- */
-/*      Strip out all old geotransform keywords from HDR records.       */
-/* -------------------------------------------------------------------- */
-    int i;
-    for( i = CSLCount(papszHDR)-1; i >= 0; i-- )
-    {
-        if( EQUALN(papszHDR[i],"ul",2)
-            || EQUALN(papszHDR[i]+1,"ll",2)
-            || EQUALN(papszHDR[i],"cell",4)
-            || EQUALN(papszHDR[i]+1,"dim",3) )
-        {
-            papszHDR = CSLRemoveStrings( papszHDR, i, 1, NULL );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Set the transformation information.                             */
-/* -------------------------------------------------------------------- */
-    CPLString  oValue;
-
-    oValue.Printf( "%.15g", adfGeoTransform[0] + adfGeoTransform[1] * 0.5 );
-    ResetKeyValue( "ULXMAP", oValue );
-                   
-    oValue.Printf( "%.15g", adfGeoTransform[3] + adfGeoTransform[5] * 0.5 );
-    ResetKeyValue( "ULYMAP", oValue );
-
-    oValue.Printf( "%.15g", adfGeoTransform[1] );
-    ResetKeyValue( "XDIM", oValue );
-
-    oValue.Printf( "%.15g", fabs(adfGeoTransform[5]) );
-    ResetKeyValue( "YDIM", oValue );
-
-    return CE_None;
-}
-
 
 /************************************************************************/
 /*                            GetFileList()                             */
@@ -792,10 +488,10 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = nBands;
     for( i = 0; i < poDS->nBands; i++ )
     {
-        EIRRasterBand   *poBand;
+        RawRasterBand   *poBand;
             
         poBand = 
-            new EIRRasterBand( poDS, i+1, poDS->fpImage,
+            new RawRasterBand( poDS, i+1, poDS->fpImage,
                                 nSkipBytes + nBandOffset * i, 
                                 nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB                               
