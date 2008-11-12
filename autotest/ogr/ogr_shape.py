@@ -549,6 +549,43 @@ def ogr_shape_16():
     return 'success'
     
 ###############################################################################
+# Test adding a field to the schema of a populated layer.
+
+def ogr_shape_16_1():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    ######################################################################
+    # Add a new field.
+    field_defn = ogr.FieldDefn( 'NEWFLD', ogr.OFTString )
+    field_defn.SetWidth( 12 )
+
+    result = gdaltest.shape_lyr.CreateField( field_defn )
+
+    field_defn.Destroy()
+
+    if result != 0:
+        gdaltest.post_reason( 'failed to create new field.' )
+        return 'fail'
+
+    ######################################################################
+    # Check at least one feature. 
+
+    feat = gdaltest.shape_lyr.GetFeature(8)
+    if feat.EAS_ID != 165:
+        gdaltest.post_reason( 'Got wrong EAS_ID' )
+        return 'fail'
+
+    if feat.IsFieldSet( 'NEWFLD' ):
+        gdaltest.post_reason( 'Expected NULL NEWFLD value!' )
+        return 'fail'
+
+    feat.Destroy()
+    
+    return 'success'
+
+###############################################################################
 # Simple test with point shapefile with no associated .dbf
 
 def ogr_shape_17():
@@ -1097,7 +1134,6 @@ def ogr_shape_26():
 
     return 'success'
 
-
 ###############################################################################
 # 
 
@@ -1131,6 +1167,7 @@ gdaltest_list = [
     ogr_shape_14,
     ogr_shape_15,
     ogr_shape_16,
+    ogr_shape_16_1,
     ogr_shape_17,
     ogr_shape_18,
     ogr_shape_19,
