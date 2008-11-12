@@ -1,5 +1,5 @@
-#ifndef _SHAPEFILE_H_INCLUDED
-#define _SHAPEFILE_H_INCLUDED
+#ifndef SHAPEFILE_H_INCLUDED
+#define SHAPEFILE_H_INCLUDED
 
 /******************************************************************************
  * $Id$
@@ -37,6 +37,32 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.46  2008/11/12 14:28:15  fwarmerdam
+ * DBFCreateField() now works on files with records
+ *
+ * Revision 1.45  2008/11/11 17:47:10  fwarmerdam
+ * added DBFDeleteField() function
+ *
+ * Revision 1.44  2008/01/16 20:05:19  bram
+ * Add file hooks that accept UTF-8 encoded filenames on some platforms.  Use SASetupUtf8Hooks
+ *  tosetup the hooks and check SHPAPI_UTF8_HOOKS for its availability.  Currently, this
+ *  is only available on the Windows platform that decodes the UTF-8 filenames to wide
+ *  character strings and feeds them to _wfopen and _wremove.
+ *
+ * Revision 1.43  2008/01/10 16:35:30  fwarmerdam
+ * avoid _ prefix on #defined symbols (bug 1840)
+ *
+ * Revision 1.42  2007/12/18 18:28:14  bram
+ * - create hook for client specific atof (bugzilla ticket 1615)
+ * - check for NULL handle before closing cpCPG file, and close after reading.
+ *
+ * Revision 1.41  2007/12/15 20:25:32  bram
+ * dbfopen.c now reads the Code Page information from the DBF file, and exports
+ * this information as a string through the DBFGetCodePage function.  This is 
+ * either the number from the LDID header field ("LDID/<number>") or as the 
+ * content of an accompanying .CPG file.  When creating a DBF file, the code can
+ * be set using DBFCreateEx.
+ *
  * Revision 1.40  2007/12/06 07:00:25  fwarmerdam
  * dbfopen now using SAHooks for fileio
  *
@@ -185,7 +211,16 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #else
 #  define SHP_CVSID(string)
 #endif
-    
+
+/* -------------------------------------------------------------------- */
+/*      On some platforms, additional file IO hooks are defined that    */
+/*      UTF-8 encoded filenames Unicode filenames                       */
+/* -------------------------------------------------------------------- */
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#	define SHPAPI_WINDOWS
+#	define SHPAPI_UTF8_HOOKS
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      IO/Error hook functions.                                        */
 /* -------------------------------------------------------------------- */
@@ -196,18 +231,23 @@ typedef unsigned long SAOffset;
 #endif
 
 typedef struct {
-    SAFile     (*FOpen) ( const char *filename, const char *path);
+    SAFile     (*FOpen) ( const char *filename, const char *access);
     SAOffset   (*FRead) ( void *p, SAOffset size, SAOffset nmemb, SAFile file);
     SAOffset   (*FWrite)( void *p, SAOffset size, SAOffset nmemb, SAFile file);
     SAOffset   (*FSeek) ( SAFile file, SAOffset offset, int whence );
     SAOffset   (*FTell) ( SAFile file );
     int        (*FFlush)( SAFile file );
     int        (*FClose)( SAFile file );
+    int        (*Remove) ( const char *filename );
 
     void       (*Error) ( const char *message );
+    double     (*Atof)  ( const char *str );
 } SAHooks;
 
 void SHPAPI_CALL SASetupDefaultHooks( SAHooks *psHooks );
+#ifdef SHPAPI_UTF8_HOOKS
+void SHPAPI_CALL SASetupUtf8Hooks( SAHooks *psHooks );
+#endif
 
 /************************************************************************/
 /*                             SHP Support.                             */
@@ -459,6 +499,9 @@ typedef	struct
     int		bUpdated;
 
     double      dfDoubleField;
+
+    int         iLanguageDriver;
+    char        *pszCodePage;
 } DBFInfo;
 
 typedef DBFInfo * DBFHandle;
@@ -482,7 +525,9 @@ DBFHandle SHPAPI_CALL
 DBFHandle SHPAPI_CALL
       DBFCreate( const char * pszDBFFile );
 DBFHandle SHPAPI_CALL
-      DBFCreateLL( const char * pszDBFFile, SAHooks *psHooks );
+      DBFCreateEx( const char * pszDBFFile, const char * pszCodePage );
+DBFHandle SHPAPI_CALL
+      DBFCreateLL( const char * pszDBFFile, const char * pszCodePage, SAHooks *psHooks );
 
 int	SHPAPI_CALL
       DBFGetFieldCount( DBFHandle psDBF );
@@ -495,6 +540,9 @@ int	SHPAPI_CALL
 int	SHPAPI_CALL
       DBFAddNativeFieldType( DBFHandle hDBF, const char * pszFieldName,
                              char chType, int nWidth, int nDecimals );
+
+int	SHPAPI_CALL
+      DBFDeleteField( DBFHandle hDBF, int iField );
 
 DBFFieldType SHPAPI_CALL
       DBFGetFieldInfo( DBFHandle psDBF, int iField, 
@@ -551,8 +599,11 @@ void    SHPAPI_CALL
 char    SHPAPI_CALL
       DBFGetNativeFieldType( DBFHandle hDBF, int iField );
 
+const char SHPAPI_CALL1(*)
+      DBFGetCodePage(DBFHandle psDBF );
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ndef _SHAPEFILE_H_INCLUDED */
+#endif /* ndef SHAPEFILE_H_INCLUDED */

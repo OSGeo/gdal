@@ -116,6 +116,16 @@ void VSI_SHP_Error( const char *message )
 }
 
 /************************************************************************/
+/*                           VSI_SHP_Remove()                           */
+/************************************************************************/
+
+int VSI_SHP_Remove( const char *pszFilename )
+
+{
+    return VSIUnlink( pszFilename );
+}
+
+/************************************************************************/
 /*                        SASetupDefaultHooks()                         */
 /************************************************************************/
 
@@ -129,6 +139,9 @@ void SASetupDefaultHooks( SAHooks *psHooks )
     psHooks->FTell   = VSI_SHP_Tell;
     psHooks->FFlush  = VSI_SHP_Flush;
     psHooks->FClose  = VSI_SHP_Close;
+
+    psHooks->Remove  = VSI_SHP_Remove;
+    psHooks->Atof    = atof;
 
     psHooks->Error   = VSI_SHP_Error;
 }
