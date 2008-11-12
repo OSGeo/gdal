@@ -14,3 +14,17 @@ $(OBJ) $(O_OBJ):	ogrshape.h
 
 clean:
 	rm -f *.o $(O_OBJ)
+
+import:
+	@if test ! -d ~/shapelib ; then \
+	  echo reimport requires shapelib checked out as ~/shapelib ; \
+	  exit 1; \
+	fi
+
+	copymatch.sh ~/shapelib *.c *.h
+
+	@echo
+	@echo 'Now do something like:'
+	@echo '% svn commit -m "updated to shapelib CVS"'
+	@echo
+
