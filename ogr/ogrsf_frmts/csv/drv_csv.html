@@ -144,6 +144,13 @@ The geometry column(s) will be prepended to the columns with the attributes valu
 </ul>
 </p>
 
+<h3>Examples</h3>
+
+<ul>
+<li> This example shows using ogr2ogr to transform a shapefile with point geometry into a .csv file with the X,Y,Z coordinates of the points as first columns in the .csv file
+<pre>ogr2ogr -f CSV output.csv input.shp -lco GEOMETRY=AS_XYZ</pre>
+</li>
+</ul>
 
 <h2>Other Notes</h2>
 
