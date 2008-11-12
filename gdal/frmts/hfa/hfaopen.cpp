@@ -1531,7 +1531,8 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
 
 CPLErr HFAGetPCT( HFAHandle hHFA, int nBand, int *pnColors,
                   double **ppadfRed, double **ppadfGreen, 
-		  double **ppadfBlue , double **ppadfAlpha)
+		  double **ppadfBlue , double **ppadfAlpha,
+                  double **ppadfBins )
 
 {
     if( nBand < 1 || nBand > hHFA->nBands )
@@ -1539,7 +1540,7 @@ CPLErr HFAGetPCT( HFAHandle hHFA, int nBand, int *pnColors,
 
     return( hHFA->papoBand[nBand-1]->GetPCT( pnColors, ppadfRed,
                                              ppadfGreen, ppadfBlue,
-					     ppadfAlpha) );
+					     ppadfAlpha, ppadfBins ) );
 }
 
 /************************************************************************/

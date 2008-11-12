@@ -180,7 +180,8 @@ void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName );
 int     CPL_DLL HFAGetDataTypeBits( int );
 const char CPL_DLL *HFAGetDataTypeName( int );
 CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *, 
-                           double **, double **, double ** , double **);
+                           double **, double **, double ** , double **,
+                           double **);
 CPLErr  CPL_DLL HFASetPCT( HFAHandle, int, int, double *, double *, double *, double * );
 void    CPL_DLL HFADumpTree( HFAHandle, FILE * );
 void    CPL_DLL HFADumpDictionary( HFAHandle, FILE * );
