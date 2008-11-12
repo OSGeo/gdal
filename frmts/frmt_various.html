@@ -225,6 +225,19 @@ See Also: <p>
    <li> <a href="#SRTMHGT">SRTMHGT Driver</a>
 </ul>
 
+<h2><a name="EIR">EIR -- Erdas Imagine Raw</h2>
+
+GDAL supports the Erdas Imagine Raw format for read access including 1, 2, 4, 8,
+16 and 32bit unsigned integers, 16 and 32bit signed integers and 32 and 64bit
+complex floating point. Georeferencing is supported.<p>
+
+To open a dataset select the file with the header information. The driver finds
+the image file from the header information. Erdas documents call the header
+file the "raw" file and it may have the extension .raw while the image file that
+contains the actual raw data may have the extension .bl.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/eirdataset.cpp</tt>.<p>
+
 <h2><a name="ENVI">ENVI - ENVI .hdr Labelled Raster</h2>
 
 GDAL supports some variations of raw raster files with associated ENVI
