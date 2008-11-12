@@ -88,6 +88,11 @@ def run_tests( test_list ):
         try:
             result = func()
             print result
+        except SystemExit,x:
+            import traceback
+            traceback.print_exc()
+            
+            raise x
         except:
             result = 'fail (blowup)'
             print result
