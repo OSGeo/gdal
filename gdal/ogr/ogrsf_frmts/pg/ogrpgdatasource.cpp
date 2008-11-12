@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <string.h>
 #include "ogr_pg.h"
 #include "ogrpgutility.h"
 #include "cpl_conv.h"
@@ -154,6 +155,65 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, char* pszVer)
 
 }
 
+
+/************************************************************************/
+/*                     One entry for each PG table                      */
+/************************************************************************/
+
+typedef struct
+{
+    char* pszTableName;
+    char* pszSchemaName;
+    char** papszGeomColumnNames; /* list of geometry columns */
+    int   bDerivedInfoAdded;            /* set to TRUE if it derives from another table */
+} PGTableEntry;
+
+static unsigned long OGRPGHashTableEntry(const void * _psTableEntry)
+{
+    const PGTableEntry* psTableEntry = (PGTableEntry*)_psTableEntry;
+    return CPLHashSetHashStr(CPLString().Printf("%s.%s", psTableEntry->pszSchemaName, psTableEntry->pszTableName));
+}
+
+static int OGRPGEqualTableEntry(const void* _psTableEntry1, const void* _psTableEntry2)
+{
+    const PGTableEntry* psTableEntry1 = (PGTableEntry*)_psTableEntry1;
+    const PGTableEntry* psTableEntry2 = (PGTableEntry*)_psTableEntry2;
+    return strcmp(psTableEntry1->pszTableName, psTableEntry2->pszTableName) == 0 &&
+           strcmp(psTableEntry1->pszSchemaName, psTableEntry2->pszSchemaName) == 0;
+}
+
+static void OGRPGFreeTableEntry(void * _psTableEntry)
+{
+    PGTableEntry* psTableEntry = (PGTableEntry*)_psTableEntry;
+    CPLFree(psTableEntry->pszTableName);
+    CPLFree(psTableEntry->pszSchemaName);
+    CSLDestroy(psTableEntry->papszGeomColumnNames);
+    CPLFree(psTableEntry);
+}
+
+static PGTableEntry* OGRPGFindTableEntry(CPLHashSet* hSetTables,
+                                         const char* pszTableName,
+                                         const char* pszSchemaName)
+{
+    PGTableEntry sEntry;
+    sEntry.pszTableName = (char*) pszTableName;
+    sEntry.pszSchemaName = (char*) pszSchemaName;
+    return (PGTableEntry*) CPLHashSetLookup(hSetTables, &sEntry);
+}
+
+static PGTableEntry* OGRPGAddTableEntry(CPLHashSet* hSetTables,
+                                        const char* pszTableName,
+                                        const char* pszSchemaName)
+{
+    PGTableEntry* psEntry = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
+    psEntry->pszTableName = CPLStrdup(pszTableName);
+    psEntry->pszSchemaName = CPLStrdup(pszSchemaName);
+
+    CPLHashSetInsert(hSetTables, psEntry);
+
+    return psEntry;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -196,6 +256,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     char              **papszTableNames=NULL;
     char              **papszSchemaNames=NULL;
+    char              **papszGeomColumnNames=NULL;
 
     char             *pszTableStart;
     pszTableStart = strstr(pszName, "tables=");
@@ -236,6 +297,23 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             // Get schema and table name
             papszQualifiedParts = CSLTokenizeString2( papszTableList[i],
                                                       ".", 0 );
+
+            /* Find the geometry column name if specified */
+            if( CSLCount( papszQualifiedParts ) >= 1 )
+            {
+                char* pszGeomColumnName = NULL;
+                char* pos = strchr(papszQualifiedParts[CSLCount( papszQualifiedParts ) - 1], '(');
+                if (pos != NULL)
+                {
+                    *pos = '\0';
+                    pszGeomColumnName = pos+1;
+                    int len = strlen(pszGeomColumnName);
+                    if (len > 0)
+                        pszGeomColumnName[len - 1] = '\0';
+                }
+                papszGeomColumnNames = CSLAddString( papszGeomColumnNames,
+                        pszGeomColumnName ? pszGeomColumnName : "");
+            }
 
             if( CSLCount( papszQualifiedParts ) == 2 )
             {
@@ -489,6 +567,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      specified through the TABLES connection string param           */
 /* -------------------------------------------------------------------- */
 
+    CPLHashSet* hSetTables = CPLHashSetNew(OGRPGHashTableEntry, OGRPGEqualTableEntry, OGRPGFreeTableEntry);
+
     if (papszTableNames == NULL)
     {
         hResult = PQexec(hPGConn, "BEGIN");
@@ -497,10 +577,12 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         {
             OGRPGClearResult( hResult );
 
+            /* Caution : in PostGIS case, the result has 3 columns, whereas in the */
+            /* non-PostGIS case it has only 2 columns */
             if ( bHavePostGIS && !bListAllTables )
                 hResult = PQexec(hPGConn,
                                 "DECLARE mycursor CURSOR for "
-                                "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n, geometry_columns g "
+                                "SELECT c.relname, n.nspname, g.f_geometry_column FROM pg_class c, pg_namespace n, geometry_columns g "
                                 "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
                                 "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
             else
@@ -519,13 +601,12 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
         {
             OGRPGClearResult( hResult );
+            CPLHashSetDestroy(hSetTables);
 
             CPLError( CE_Failure, CPLE_AppDefined,
                     "%s", PQerrorMessage(hPGConn) );
             return FALSE;
         }
-
-        CPLHashSet* hSetTables = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
 
     /* -------------------------------------------------------------------- */
     /*      Parse the returned table list                                   */
@@ -534,6 +615,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         {
             const char *pszTable = PQgetvalue(hResult, iRecord, 0);
             const char *pszSchemaName = PQgetvalue(hResult, iRecord, 1);
+            const char *pszGeomColumnName =
+                    (bHavePostGIS && !bListAllTables) ? PQgetvalue(hResult, iRecord, 2) : NULL;
 
             if( EQUAL(pszTable,"spatial_ref_sys")
                 || EQUAL(pszTable,"geometry_columns") )
@@ -544,8 +627,15 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
             papszTableNames = CSLAddString(papszTableNames, pszTable);
             papszSchemaNames = CSLAddString(papszSchemaNames, pszSchemaName);
+            if (pszGeomColumnName)
+                papszGeomColumnNames = CSLAddString(papszGeomColumnNames, pszGeomColumnName);
 
-            CPLHashSetInsert(hSetTables, CPLStrdup(CPLString().Printf("%s.%s", pszSchemaName, pszTable)));
+            PGTableEntry* psEntry = OGRPGFindTableEntry(hSetTables, pszTable, pszSchemaName);
+            if (psEntry == NULL)
+                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName);
+            if (pszGeomColumnName)
+                psEntry->papszGeomColumnNames =
+                        CSLAddString(psEntry->papszGeomColumnNames, pszGeomColumnName);
         }
 
     /* -------------------------------------------------------------------- */
@@ -612,19 +702,38 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                     const char *pszTable = PQgetvalue(hResult, iRecord, 0);
                     const char *pszParentTable = PQgetvalue(hResult, iRecord, 1);
                     const char *pszSchemaName = PQgetvalue(hResult, iRecord, 2);
-                    if (CPLHashSetLookup(hSetTables, CPLString().Printf("%s.%s", pszSchemaName, pszTable)) == NULL)
+
+                    PGTableEntry* psEntry = OGRPGFindTableEntry(hSetTables, pszTable, pszSchemaName);
+                    /* We must be careful that a derived table can have its own geometry column(s) */
+                    /* and some inherited from another table */
+                    if (psEntry == NULL || psEntry->bDerivedInfoAdded == FALSE)
                     {
-                        if (CPLHashSetLookup(hSetTables, CPLString().Printf("%s.%s", pszSchemaName, pszParentTable)) != NULL)
+                        PGTableEntry* psParentEntry =
+                                OGRPGFindTableEntry(hSetTables, pszParentTable, pszSchemaName);
+                        if (psParentEntry != NULL)
                         {
                             /* The parent table of this table is already in the set, so we */
-                            /* can now add the table in the set */
+                            /* can now add the table in the set if it was not in it already */
 
                             bHasDoneSomething = TRUE;
 
-                            papszTableNames = CSLAddString(papszTableNames, pszTable);
-                            papszSchemaNames = CSLAddString(papszSchemaNames, pszSchemaName);
+                            if (psEntry == NULL)
+                                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName);
 
-                            CPLHashSetInsert(hSetTables, CPLStrdup(CPLString().Printf("%s.%s", pszSchemaName, pszTable)));
+                            char** iterGeomColumnNames = psParentEntry->papszGeomColumnNames;
+                            while(*iterGeomColumnNames)
+                            {
+                                papszTableNames = CSLAddString(papszTableNames, pszTable);
+                                papszSchemaNames = CSLAddString(papszSchemaNames, pszSchemaName);
+                                papszGeomColumnNames = CSLAddString(papszGeomColumnNames, *iterGeomColumnNames);
+
+                                psEntry->papszGeomColumnNames =
+                                        CSLAddString(psEntry->papszGeomColumnNames, *iterGeomColumnNames);
+
+                                iterGeomColumnNames ++;
+                            }
+
+                            psEntry->bDerivedInfoAdded = TRUE;
                         }
                     }
                 }
@@ -643,7 +752,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         }
 
-        CPLHashSetDestroy(hSetTables);
     }
 
 /* -------------------------------------------------------------------- */
@@ -653,11 +761,31 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
          papszTableNames != NULL && papszTableNames[iRecord] != NULL;
          iRecord++ )
     {
-        OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], bUpdate, FALSE );
+        PGTableEntry sEntry;
+        PGTableEntry* psEntry;
+        sEntry.pszTableName = (char*) papszTableNames[iRecord];
+        sEntry.pszSchemaName = (char*) papszSchemaNames[iRecord];
+        psEntry = (PGTableEntry* )CPLHashSetLookup(hSetTables, &sEntry);
+
+        if (psEntry != NULL && CSLCount(psEntry->papszGeomColumnNames) <= 1)
+        {
+            OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], NULL, bUpdate, FALSE );
+        }
+        else
+        {
+            CPLAssert( papszGeomColumnNames && papszGeomColumnNames[iRecord]);
+            if (EQUAL(papszGeomColumnNames[iRecord], ""))
+                OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], NULL, bUpdate, FALSE );
+            else
+                OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], papszGeomColumnNames[iRecord], bUpdate, FALSE );
+        }
     }
+
+    CPLHashSetDestroy(hSetTables);
 
     CSLDestroy( papszSchemaNames );
     CSLDestroy( papszTableNames );
+    CSLDestroy( papszGeomColumnNames );
 
 /* -------------------------------------------------------------------- */
     return nLayers > 0 || bUpdate;
@@ -667,7 +795,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGRPGDataSource::OpenTable( const char *pszNewName, const char *pszSchemaName, int bUpdate,
+int OGRPGDataSource::OpenTable( const char *pszNewName, const char *pszSchemaName, const char * pszGeomColumnIn, int bUpdate,
                                 int bTestOpen )
 
 {
@@ -676,7 +804,7 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, const char *pszSchemaNam
 /* -------------------------------------------------------------------- */
     OGRPGTableLayer  *poLayer;
 
-    poLayer = new OGRPGTableLayer( this, pszNewName, pszSchemaName, bUpdate );
+    poLayer = new OGRPGTableLayer( this, pszNewName, pszSchemaName, pszGeomColumnIn, bUpdate );
     if( poLayer->GetLayerDefn() == NULL )
     {
         delete poLayer;
@@ -1064,7 +1192,14 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     OGRPGTableLayer     *poLayer;
 
-    poLayer = new OGRPGTableLayer( this, pszTableName, pszSchemaName, TRUE, nSRSId );
+    poLayer = new OGRPGTableLayer( this, pszTableName, pszSchemaName, NULL, TRUE, nSRSId );
+    if( poLayer->GetLayerDefn() == NULL )
+    {
+        CPLFree( pszLayerName );
+        CPLFree( pszSchemaName );
+        delete poLayer;
+        return NULL;
+    }
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
@@ -1117,8 +1252,22 @@ OGRLayer *OGRPGDataSource::GetLayer( int iLayer )
 OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
 
 {
+    char* pszNameWithoutBracket;
     if ( ! pszName )
         return NULL;
+    char *pszGeomColumnName = NULL;
+
+    pszNameWithoutBracket = CPLStrdup(pszName);
+
+    char *pos = strchr(pszNameWithoutBracket, '(');
+    if (pos != NULL)
+    {
+        *pos = '\0';
+        pszGeomColumnName = pos+1;
+        int len = strlen(pszGeomColumnName);
+        if (len > 0)
+            pszGeomColumnName[len - 1] = '\0';
+    }
 
     int  i;
     
@@ -1129,7 +1278,10 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
         OGRPGTableLayer *poLayer = papoLayers[i];
 
         if( strcmp( pszName, poLayer->GetLayerDefn()->GetName() ) == 0 )
+        {
+            CPLFree(pszNameWithoutBracket);
             return poLayer;
+        }
     }
         
     /* then case insensitive */
@@ -1138,13 +1290,22 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
         OGRPGTableLayer *poLayer = papoLayers[i];
 
         if( EQUAL( pszName, poLayer->GetLayerDefn()->GetName() ) )
+        {
+            CPLFree(pszNameWithoutBracket);
             return poLayer;
+        }
     }
-    
-    if( OpenTable( pszName, NULL, TRUE, FALSE ) )
+
+    if( OpenTable( pszNameWithoutBracket, NULL, pszGeomColumnName, TRUE, FALSE ) )
+    {
+        CPLFree(pszNameWithoutBracket);
         return GetLayer(count);
+    }
     else
+    {
+        CPLFree(pszNameWithoutBracket);
         return NULL;
+    }
 }
 
 
