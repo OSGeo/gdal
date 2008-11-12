@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shptree.c,v 1.11 2007/10/27 03:31:14 fwarmerdam Exp $
+ * $Id: shptree.c,v 1.12 2008/11/12 15:39:50 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of quadtree building and searching functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shptree.c,v $
+ * Revision 1.12  2008/11/12 15:39:50  fwarmerdam
+ * improve safety in face of buggy .shp file.
+ *
  * Revision 1.11  2007/10/27 03:31:14  fwarmerdam
  * limit default depth of tree to 12 levels (gdal ticket #1594)
  *
@@ -79,7 +82,7 @@
 #include <cpl_error.h>
 #endif
 
-SHP_CVSID("$Id: shptree.c,v 1.11 2007/10/27 03:31:14 fwarmerdam Exp $")
+SHP_CVSID("$Id: shptree.c,v 1.12 2008/11/12 15:39:50 fwarmerdam Exp $")
 
 #ifndef TRUE
 #  define TRUE 1
@@ -259,8 +262,11 @@ SHPCreateTree( SHPHandle hSHP, int nDimension, int nMaxDepth,
             SHPObject	*psShape;
             
             psShape = SHPReadObject( hSHP, iShape );
-            SHPTreeAddShapeId( psTree, psShape );
-            SHPDestroyObject( psShape );
+            if( psShape != NULL )
+            {
+                SHPTreeAddShapeId( psTree, psShape );
+                SHPDestroyObject( psShape );
+            }
         }
     }        
 
