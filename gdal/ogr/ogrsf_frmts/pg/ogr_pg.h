@@ -157,7 +157,8 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bUpdateAccess;
 
     OGRFeatureDefn     *ReadTableDefinition(const char * pszTableName,
-                                            const char * pszSchemaName);
+                                            const char * pszSchemaName,
+                                            const char * pszGeomColumnIn);
 
     void                BuildWhere(void);
     char               *BuildFields(void);
@@ -185,6 +186,7 @@ public:
                         OGRPGTableLayer( OGRPGDataSource *,
                                          const char * pszTableName,
                                          const char * pszSchemaName,
+                                         const char * pszGeomColumnIn,
                                          int bUpdate, int nSRSId = -2 );
                         ~OGRPGTableLayer();
 
@@ -312,7 +314,8 @@ class OGRPGDataSource : public OGRDataSource
     OGRErr              InitializeMetadataTables();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char * pszTableName, const char * pszSchemaName, int bUpdate, int bTestOpen );
+    int                 OpenTable( const char * pszTableName, const char * pszSchemaName,
+                                   const char * pszGeomColumnIn, int bUpdate, int bTestOpen );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }

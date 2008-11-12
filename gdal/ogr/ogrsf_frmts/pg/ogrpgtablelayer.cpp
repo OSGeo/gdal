@@ -44,6 +44,7 @@ CPL_CVSID("$Id$");
 OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
                                   const char * pszTableNameIn,
                                   const char * pszSchemaNameIn,
+                                  const char * pszGeomColumnIn,
                                   int bUpdate, int nSRSIdIn )
 
 {
@@ -67,10 +68,10 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     else
       pszSchemaName = NULL;
 
-    pszSqlTableName = (char*)CPLMalloc(255); //set in ReadTableDefinition
+    pszSqlTableName = NULL; //set in ReadTableDefinition
     pszSqlGeomParentTableName = NULL;
 
-    poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaName );
+    poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaName, pszGeomColumnIn );
 
     if( poFeatureDefn )
     {
@@ -104,7 +105,8 @@ OGRPGTableLayer::~OGRPGTableLayer()
 /************************************************************************/
 
 OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
-                                                      const char * pszSchemaNameIn )
+                                                      const char * pszSchemaNameIn,
+                                                      const char * pszGeomColumnIn)
 
 {
     PGresult            *hResult;
@@ -252,23 +254,35 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
-    char szLayerName[256];
+    CPLString osDefnName;
     if ( pszSchemaNameIn && osCurrentSchema != pszSchemaNameIn )
     {
-        sprintf( szLayerName, "%s.%s", pszSchemaNameIn, pszTableIn );
-        sprintf( pszSqlTableName, "\"%s\".\"%s\"", pszSchemaNameIn, pszTableIn );
+        /* For backwards compatibility, don't report the geometry column name */
+        /* if it's wkb_geometry */
+        if (pszGeomColumnIn && !EQUAL(pszGeomColumnIn, "wkb_geometry"))
+            osDefnName.Printf( "%s.%s(%s)", pszSchemaNameIn, pszTableIn, pszGeomColumnIn );
+        else
+            osDefnName.Printf("%s.%s", pszSchemaNameIn, pszTableIn );
+        pszSqlTableName = CPLStrdup(CPLString().Printf("\"%s\".\"%s\"", pszSchemaNameIn, pszTableIn ));
     }
     else
-    {
+    {	
         //no prefix for current_schema in layer name, for backwards compatibility
-        strcpy( szLayerName, pszTableIn );
-        sprintf( pszSqlTableName, "\"%s\"", pszTableIn );
+        /* For backwards compatibility, don't report the geometry column name */
+        /* if it's wkb_geometry */
+        if (pszGeomColumnIn && !EQUAL(pszGeomColumnIn, "wkb_geometry"))
+            osDefnName.Printf( "%s(%s)", pszTableIn, pszGeomColumnIn );
+        else
+            osDefnName = pszTableIn;
+        pszSqlTableName = CPLStrdup(CPLString().Printf("\"%s\"", pszTableIn ));
     }
 
-    OGRFeatureDefn *poDefn = new OGRFeatureDefn( szLayerName );
+    OGRFeatureDefn *poDefn = new OGRFeatureDefn( osDefnName );
     int            iRecord;
 
     poDefn->Reference();
+    if (pszGeomColumnIn)
+      pszGeomColumn = CPLStrdup(pszGeomColumnIn);
 
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {
@@ -290,15 +304,19 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         else if( EQUAL(pszType,"geometry") )
         {
             bHasPostGISGeometry = TRUE;
-            pszGeomColumn = CPLStrdup(oField.GetNameRef());
+            if (!pszGeomColumn)
+                pszGeomColumn = CPLStrdup(oField.GetNameRef());
             continue;
         }
         else if( EQUAL(oField.GetNameRef(),"WKB_GEOMETRY") )
         {
-            bHasWkb = TRUE;
-            pszGeomColumn = CPLStrdup(oField.GetNameRef());
-            if( EQUAL(pszType,"OID") )
-                bWkbAsOid = TRUE;
+            if (!pszGeomColumn)
+            {
+                bHasWkb = TRUE;
+                pszGeomColumn = CPLStrdup(oField.GetNameRef());
+                if( EQUAL(pszType,"OID") )
+                    bWkbAsOid = TRUE;
+            }
             continue;
         }
 
@@ -428,6 +446,10 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         osCommand.Printf(
             "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
             (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn);
+        if (pszGeomColumn)
+        {
+            osCommand += CPLString().Printf(" AND f_geometry_column='%s'", pszGeomColumn);
+        }
 
         hResult = PQexec(hPGConn,osCommand);
 
@@ -1784,8 +1806,19 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
         osCommand.Printf(
                  "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s' AND f_table_schema = '%s'",
-                 (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName, pszSchemaName );
+                 "WHERE f_table_name = '%s'",
+                 (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
+
+        if (pszGeomColumn)
+        {
+            osCommand += CPLString().Printf(" AND f_geometry_column = '%s'", pszGeomColumn);
+        }
+
+        if (pszSchemaName)
+        {
+            osCommand += CPLString().Printf(" AND f_table_schema = '%s'", pszSchemaName);
+        }
+
         hResult = PQexec(hPGConn, osCommand.c_str() );
 
         if( hResult
@@ -1803,8 +1836,19 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
             osCommand.Printf(
                      "SELECT srid FROM geometry_columns "
-                     "WHERE f_table_name = '%s' AND f_schema_name = '%s'",
-                     (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName, pszSchemaName );
+                     "WHERE f_table_name = '%s'",
+                     (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName );
+
+            if (pszGeomColumn)
+            {
+                osCommand += CPLString().Printf(" AND f_geometry_column = '%s'", pszGeomColumn);
+            }
+
+            if (pszSchemaName)
+            {
+                osCommand += CPLString().Printf(" AND f_schema_name = '%s'", pszSchemaName);
+            }
+
             hResult = PQexec(hPGConn, osCommand.c_str() );
             if( hResult
                 && PQresultStatus(hResult) == PGRES_TUPLES_OK
