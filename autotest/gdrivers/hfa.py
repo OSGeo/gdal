@@ -728,6 +728,36 @@ def hfa_read_empty_compressed():
     return result
 
 ###############################################################################
+# Verify "unique values" based color table (#2419)
+
+def hfa_unique_values_color_table():
+
+    ds = gdal.Open( 'data/i8u_c_i.img' )
+
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+
+    if ct.GetCount() != 256:
+        print ct.GetCount()
+        gdaltest.post_reason( 'got wrong color count' )
+        return 'fail'
+
+    if ct.GetColorEntry(253) != (0,0,0,0) \
+       or ct.GetColorEntry(254) != (255,255,170,255) \
+       or ct.GetColorEntry(255) != (255,255,255,255):
+
+        print ct.GetColorEntry(253)
+        print ct.GetColorEntry(254)
+        print ct.GetColorEntry(255)
+    
+        gdaltest.post_reason( 'Got wrong colors' )
+        return 'fail'
+
+    ct = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -753,7 +783,8 @@ gdaltest_list = [
     hfa_rotated_write,
     hfa_vsimem,
     hfa_proName,
-    hfa_read_empty_compressed
+    hfa_read_empty_compressed,
+    hfa_unique_values_color_table
     ]
 
 if __name__ == '__main__':
