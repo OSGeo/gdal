@@ -349,16 +349,22 @@ int main( int argc, char ** argv )
             Usage();
     }
 
-    if( pszSrcFilename == NULL || pszDstFilename == NULL 
-        || (pszSQL == NULL && papszLayers == NULL) )
+    if( pszSrcFilename == NULL || pszDstFilename == NULL )
     {
+        fprintf( stderr, "Missing source or destination.\n\n" );
+        Usage();
+    }
+    
+    if( pszSQL == NULL && papszLayers == NULL )
+    {
+        fprintf( stderr, "At least one of -l or -sql required.\n\n" );
         Usage();
     }
 
     if( adfBurnValues.size() == 0 && pszBurnAttribute == NULL && !b3D )
     {
-        fprintf( stdout, "To many of -3d, -burn and -a specified.\n" );
-        exit( 1 );
+        fprintf( stderr, "At least one of -3d, -burn or -a required.\n\n" );
+        Usage();
     }
 
     if( anBandList.size() == 0 )
@@ -371,7 +377,11 @@ int main( int argc, char ** argv )
 
     hSrcDS = OGROpen( pszSrcFilename, FALSE, NULL );
     if( hSrcDS == NULL )
+    {
+        fprintf( stderr, "Failed to open feature source: %s\n", 
+                 pszSrcFilename);
         exit( 1 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open target raster file.  Eventually we will add optional       */
