@@ -605,12 +605,6 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     CPLAssert( NULL != poField );
 
     int         iNewField;
-    if( GetFeatureCount(TRUE) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create fields on a Shapefile layer with features.\n");
-        return OGRERR_FAILURE;
-    }
 
     if( !bUpdateAccess )
     {
