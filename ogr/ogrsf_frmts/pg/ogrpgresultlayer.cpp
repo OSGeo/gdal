@@ -140,7 +140,13 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultI
                  EQUAL(oField.GetNameRef(),"asEWKT") ||
                  EQUAL(oField.GetNameRef(),"asText") )
         {
+            if (bHasPostGISGeometry)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "More than one geometry column was found in the result of the SQL request. Only last one will be used");
+            }
             bHasPostGISGeometry = TRUE;
+            CPLFree(pszGeomColumn);
             pszGeomColumn = CPLStrdup(oField.GetNameRef());
             continue;
         }

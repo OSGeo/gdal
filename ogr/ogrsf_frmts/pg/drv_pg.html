@@ -13,20 +13,28 @@ PostgreSQL extended with the
 Some support exists in the driver for use with PostgreSQL without PostGIS
 but this has not been recently tested and is likely decayed.<p>
 
-When opening a database, it's name should be specified in the form
-"PG:dbname=<databasename>". It's also possible to omit the database name and connet to <em>default</em> one, with the same name as the user name.  We use PQconnectdb() to make the connection, so 
+When opening a database, its name should be specified in the form
+"PG:dbname=<databasename>". It's also possible to omit the database name and connect to <em>default</em> one, with the same name as the user name.  We use PQconnectdb() to make the connection, so 
 any other options and defaults
 that would apply to it, apply to the name here.  The PG: prefix is used
 to mark the name as a postgres connection string.<p>
 
 From GDAL 1.6.0, the set of tables to be scanned can be overridden by specifying
-<i>tables=[schema.]table[,[schema2.]table2,...]</i> within the connection string.
+<i>tables=[schema.]table[(geom_column_name)][,[schema2.]table2[(geom_column_name2)],...]</i> within the connection string.
 If the parameter is found, the driver skips enumeration of the tables as
 described in the next paragraph.<p>
 
 If the <i>geometry_columns</i> table exists (i.e. PostGIS is enabled for the accessed
 database), then all tables and named views listed in the <i>geometry_columns</i> table
-will be treated as OGR layers. Otherwise all regular user tables will be treated as layers.
+will be treated as OGR layers. Otherwise all regular user tables will be treated as layers.<p>
+
+From GDAL 1.6.0, the PostgreSQL driver supports accessing tables with multiple PostGIS geometry columns.
+For such tables, there will be as many layers reported as the number of geometry columns.
+For example, if a table 'foo' has 2 geometry columns 'bar' and 'baz', 2 layers will be reported :
+'foo(bar)' and 'foo(baz)'. For backward compatibility, if a table has only one geometry column,
+the layer name is the table name. Also if a table 'foo' has several geometry columns,
+with one being called 'wkb_geometry', the layer corresponding to this geometry column will
+be simply reported as 'foo'<p>
 
 From GDAL 1.6.0, even when PostGIS is enabled, if the user defines the environment variable
 PG_LIST_ALL_TABLES=YES (and does not specify tables=), all regular user tables will be treated as layers.<p>
