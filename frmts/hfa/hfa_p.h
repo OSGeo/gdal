@@ -136,6 +136,7 @@ class HFABand
 
     int		nPCTColors;
     double	*apadfPCT[4];
+    double      *padfPCTBins;
 
     CPLErr	LoadBlockInfo();
     CPLErr	LoadExternalBlockInfo();
@@ -177,7 +178,8 @@ class HFABand
 
     CPLErr  SetNoDataValue( double dfValue );
 
-    CPLErr	GetPCT( int *, double **, double **, double **, double ** );
+    CPLErr	GetPCT( int *, double **, double **, double **, double **,
+                        double ** );
     CPLErr	SetPCT( int, double *, double *, double *, double * );
 
     int         CreateOverview( int nOverviewLevel );
@@ -365,7 +367,7 @@ class HFADictionary
     int         nTypesMax;
     HFAType	**papoTypes;
     
-    		HFADictionary( const char * );
+                HFADictionary( const char *pszDict );
                 ~HFADictionary();
 
     HFAType	*FindType( const char * );

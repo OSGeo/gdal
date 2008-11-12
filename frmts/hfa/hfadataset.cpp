@@ -510,12 +510,13 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 /* -------------------------------------------------------------------- */
 /*      Collect color table if present.                                 */
 /* -------------------------------------------------------------------- */
-    double    *padfRed, *padfGreen, *padfBlue, *padfAlpha;
+    double    *padfRed, *padfGreen, *padfBlue, *padfAlpha, *padfBins;
     int       nColors;
 
     if( iOverview == -1
         && HFAGetPCT( hHFA, nBand, &nColors,
-                      &padfRed, &padfGreen, &padfBlue, &padfAlpha ) == CE_None
+                      &padfRed, &padfGreen, &padfBlue, &padfAlpha,
+                      &padfBins ) == CE_None
         && nColors > 0 )
     {
         poCT = new GDALColorTable();
@@ -531,7 +532,11 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
             sEntry.c2 = MIN(255,(short) (padfGreen[iColor] * 256));
             sEntry.c3 = MIN(255,(short) (padfBlue[iColor]  * 256));
             sEntry.c4 = MIN(255,(short) (padfAlpha[iColor] * 256));
-            poCT->SetColorEntry( iColor, &sEntry );
+            
+            if( padfBins != NULL )
+                poCT->SetColorEntry( (int) padfBins[iColor], &sEntry );
+            else
+                poCT->SetColorEntry( iColor, &sEntry );
         }
     }
 
