@@ -1977,8 +1977,8 @@ GDALGetRasterSampleOverview( GDALRasterBandH hBand, int nDesiredSamples )
  * GDALDataset::BuildOverviews().  That makes this method pretty useless
  * from a practical point of view. 
  *
- * @param pszResampling one of "NEAREST", "AVERAGE", or "AVERAGE_MAGPHASE" 
- * controlling the downsampling method applied.
+ * @param pszResampling one of "NEAREST", "AVERAGE", or "AVERAGE_MAGPHASE",
+ * "GAUSS" or "NONE" controlling the downsampling method applied.
  * @param nOverviews number of overviews to build. 
  * @param panOverviewList the list of overview decimation factors to build. 
  * @param pfnProgress a function to call to report progress, or NULL.
