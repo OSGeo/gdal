@@ -4588,6 +4588,7 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
     poCurrent->StripNodes( "AUTHORITY" );
     poCurrent->StripNodes( "TOWGS84" );
     poCurrent->StripNodes( "AXIS" );
+    poCurrent->StripNodes( "EXTENSION" );
 
     return OGRERR_NONE;
 }
