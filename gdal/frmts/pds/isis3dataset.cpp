@@ -712,7 +712,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     int     nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int		nLineOffset, nPixelOffset, nBandOffset;
+    int	    nLineOffset=0, nPixelOffset=0, nBandOffset=0;
     
     if( EQUAL(szLayout,"BSQ") )
     {
