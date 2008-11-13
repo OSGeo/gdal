@@ -8,7 +8,7 @@ GDAL_ROOT	=	..\..
 
 default:	$(OBJ)
 	lib /out:libiso8211.lib $(OBJ)
-	xcopy /D  /Y *.obj ..\o
+	xcopy /D  /Y $(OBJ) ..\o
 
 clean:
 	-del *.obj
@@ -20,10 +20,13 @@ all:	default 8211view.exe 8211dump.exe
 iso8211.dll:
 	link /dll $(LDEBUG) $(OBJ) $(GDAL_ROOT)\port\cpl.lib \
 		/out:iso8211.dll /implib:iso8211_i.lib
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
 
 8211view.exe:	8211view.obj $(OBJ)
 	$(CC) $(CFLAGS) 8211view.obj $(OBJ) $(CPLLIB) /link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
 
 8211dump.exe:	8211dump.obj $(OBJ)
 	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) $(CPLLIB) /link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
 
