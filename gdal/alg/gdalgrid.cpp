@@ -504,7 +504,7 @@ GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
         dfCoeff2 = sin(dfAngle);
     }
 
-    double      dfMinimumValue;
+    double      dfMinimumValue=0.0;
     GUInt32     i = 0, n = 0;
 
     while ( i < nPoints )
@@ -615,7 +615,7 @@ GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
         dfCoeff2 = sin(dfAngle);
     }
 
-    double      dfMaximumValue;
+    double      dfMaximumValue=0.0;
     GUInt32     i = 0, n = 0;
 
     while ( i < nPoints )
@@ -727,7 +727,7 @@ GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
         dfCoeff2 = sin(dfAngle);
     }
 
-    double      dfMaximumValue, dfMinimumValue;
+    double      dfMaximumValue=0.0, dfMinimumValue=0.0;
     GUInt32     i = 0, n = 0;
 
     while ( i < nPoints )
