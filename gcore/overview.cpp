@@ -36,7 +36,8 @@ typedef enum
     GRM_Near = 0,
     GRM_Average = 1,
     GRM_Gauss = 2,
-    GRM_Mode = 3
+    GRM_Mode = 3,
+    GRM_Cubic = 4,
 } GDALResamplingMethod;
 
 /************************************************************************/
@@ -74,6 +75,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         eResampling = GRM_Gauss;
     else if ( EQUALN(pszResampling, "MODE", 4) )
         eResampling = GRM_Mode;
+    else if ( EQUALN(pszResampling, "CUBIC", 6) )
+        eResampling = GRM_Cubic;
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -861,6 +864,12 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
+    if( EQUAL(pszResampling,"NONE") )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Check color tables...                                           */
+/* -------------------------------------------------------------------- */
     if ((EQUALN(pszResampling,"AVER",4)
          || EQUALN(pszResampling,"MODE",4)
          || EQUALN(pszResampling,"GAUSS",5)) &&
@@ -1116,6 +1125,9 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
 
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
+
+    if( EQUAL(pszResampling,"NONE") )
+        return CE_None;
 
     /* Sanity checks */
     if (!EQUALN(pszResampling, "NEAR", 4) && !EQUAL(pszResampling, "AVERAGE") && !EQUAL(pszResampling, "GAUSS"))
