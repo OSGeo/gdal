@@ -882,6 +882,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( psImage )
     {
+        if (psImage->nCols <= 0 || psImage->nRows <= 0 ||
+            psImage->nBlockWidth <= 0 || psImage->nBlockHeight <= 0)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Bad values in NITF image : nCols=%d, nRows=%d, nBlockWidth=%d, nBlockHeight=%d",
+                      psImage->nCols, psImage->nRows, psImage->nBlockWidth, psImage->nBlockHeight);
+            delete poDS;
+            return NULL;
+        }
+
         poDS->nRasterXSize = psImage->nCols;
         poDS->nRasterYSize = psImage->nRows;
     }
