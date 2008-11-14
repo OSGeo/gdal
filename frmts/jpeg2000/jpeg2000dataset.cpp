@@ -889,8 +889,8 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     
     pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
     if ( !pszFormatName ||
-         !EQUALN( pszFormatName, "jp2", 3 ) ||
-         !EQUALN( pszFormatName, "jpc", 3 ) )
+         (!EQUALN( pszFormatName, "jp2", 3 ) &&
+          !EQUALN( pszFormatName, "jpc", 3 ) ) )
         pszFormatName = "jp2";
     
     pszOptionBuf[0] = '\0';
