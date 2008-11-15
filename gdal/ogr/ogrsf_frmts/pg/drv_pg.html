@@ -34,7 +34,10 @@ For example, if a table 'foo' has 2 geometry columns 'bar' and 'baz', 2 layers w
 'foo(bar)' and 'foo(baz)'. For backward compatibility, if a table has only one geometry column,
 the layer name is the table name. Also if a table 'foo' has several geometry columns,
 with one being called 'wkb_geometry', the layer corresponding to this geometry column will
-be simply reported as 'foo'<p>
+be simply reported as 'foo'. Be careful : the bahaviour in creation, update or deletion of layers
+that are based on tables with multiple PostGIS geometry column is known to have (not well-defined)
+side-effects on the other layers as they are closely tied. Thus, that capability should currently
+be thought as mostly read-only.<p>
 
 From GDAL 1.6.0, even when PostGIS is enabled, if the user defines the environment variable
 PG_LIST_ALL_TABLES=YES (and does not specify tables=), all regular user tables will be treated as layers.<p>
