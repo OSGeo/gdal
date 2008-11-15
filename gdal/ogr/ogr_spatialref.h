@@ -342,10 +342,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetGS( double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
  
-    /** Gauss Laborde Reunion */
-    OGRErr      SetGaussLabordeReunion(double dfCenterLat, double dfCenterLong,
-                                       double dfScale,
-                                       double dfFalseEasting, double dfFalseNorthing );
+    /** Gauss Schreiber Transverse Mercator */
+    OGRErr      SetGaussSchreiberTMercator(double dfCenterLat, double dfCenterLong,
+                                           double dfScale,
+                                           double dfFalseEasting, double dfFalseNorthing );
 
     /** Gnomonic */
     OGRErr      SetGnomonic(double dfCenterLat, double dfCenterLong,
