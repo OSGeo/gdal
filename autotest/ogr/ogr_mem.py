@@ -361,7 +361,7 @@ def ogr_mem_12():
 ###############################################################################
 # Test some date handling
 def ogr_mem_11():
-    ogr.UseExceptions()
+
     if gdaltest.mem_ds is None:
         return 'skip'
 
@@ -373,7 +373,11 @@ def ogr_mem_11():
     
     # Set the date of the first feature
     f = lyr.GetFeature(1)
-    f.SetField("WHEN", 2008, 03, 19, 16, 15, 00, 0)
+    try:
+        # Old-gen bindings don't accept this form of SetField
+        f.SetField("WHEN", 2008, 03, 19, 16, 15, 00, 0)
+    except:
+        return 'skip'
     lyr.SetFeature(f)
     f = lyr.GetFeature(1)
     idx = f.GetFieldIndex('WHEN')
