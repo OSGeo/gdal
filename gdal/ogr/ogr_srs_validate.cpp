@@ -295,6 +295,14 @@ static const char *papszProjWithParms[] = {
     SRS_PP_FALSE_NORTHING,
     NULL,
 
+    SRS_PT_MERCATOR_2SP,
+    SRS_PP_STANDARD_PARALLEL_1,
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
+    NULL,
+
     SRS_PT_MOLLWEIDE,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
@@ -395,6 +403,8 @@ static const char *papszProjWithParms[] = {
     SRS_PP_LONGITUDE_OF_2ND_POINT,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
+    NULL,
+
 
     NULL
 };
@@ -670,8 +680,7 @@ OGRErr OGRSpatialReference::Validate()
         if( poDATUM->GetChildCount() == 0 )
         {
             CPLDebug( "OGRSpatialReference::Validate",
-                      "DATUM has no children.",
-                      poDATUM->GetChildCount() );
+                      "DATUM has no children." );
             
             return OGRERR_CORRUPT_DATA;
         }
