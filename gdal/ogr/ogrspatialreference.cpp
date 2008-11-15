@@ -3425,17 +3425,17 @@ OGRErr OSRSetGEOS( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
-/*                         SetGaussLabordeReunion()                     */
+/*                       SetGaussSchreiberTMercator()                   */
 /************************************************************************/
 
-OGRErr OGRSpatialReference::SetGaussLabordeReunion(
+OGRErr OGRSpatialReference::SetGaussSchreiberTMercator(
                                    double dfCenterLat, double dfCenterLong,
                                    double dfScale,
                                    double dfFalseEasting,
                                    double dfFalseNorthing )
 
 {
-    SetProjection( SRS_PT_GAUSSLABORDEREUNION );
+    SetProjection( SRS_PT_GAUSSSCHREIBERTMERCATOR );
     SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
     SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
@@ -3446,17 +3446,17 @@ OGRErr OGRSpatialReference::SetGaussLabordeReunion(
 }
 
 /************************************************************************/
-/*                       OSRSetGaussLabordeReunion()                    */
+/*                     OSRSetGaussSchreiberTMercator()                  */
 /************************************************************************/
 
-OGRErr OSRSetGaussLabordeReunion( OGRSpatialReferenceH hSRS,
-                                  double dfCenterLat, double dfCenterLong,
-                                  double dfScale,
-                                  double dfFalseEasting,
-                                  double dfFalseNorthing )
+OGRErr OSRSetGaussSchreiberTMercator( OGRSpatialReferenceH hSRS,
+                                      double dfCenterLat, double dfCenterLong,
+                                      double dfScale,
+                                      double dfFalseEasting,
+                                      double dfFalseNorthing )
 
 {
-    return ((OGRSpatialReference *) hSRS)->SetGaussLabordeReunion(
+    return ((OGRSpatialReference *) hSRS)->SetGaussSchreiberTMercator(
         dfCenterLat, dfCenterLong, dfScale,
         dfFalseEasting, dfFalseNorthing );
 }
