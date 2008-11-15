@@ -57,7 +57,7 @@ SRS_PT_ECKERT_VI = _osr.SRS_PT_ECKERT_VI
 SRS_PT_EQUIDISTANT_CONIC = _osr.SRS_PT_EQUIDISTANT_CONIC
 SRS_PT_EQUIRECTANGULAR = _osr.SRS_PT_EQUIRECTANGULAR
 SRS_PT_GALL_STEREOGRAPHIC = _osr.SRS_PT_GALL_STEREOGRAPHIC
-SRS_PT_GAUSSLABORDEREUNION = _osr.SRS_PT_GAUSSLABORDEREUNION
+SRS_PT_GAUSSSCHREIBERTMERCATOR = _osr.SRS_PT_GAUSSSCHREIBERTMERCATOR
 SRS_PT_GNOMONIC = _osr.SRS_PT_GNOMONIC
 SRS_PT_GOODE_HOMOLOSINE = _osr.SRS_PT_GOODE_HOMOLOSINE
 SRS_PT_HOTINE_OBLIQUE_MERCATOR = _osr.SRS_PT_HOTINE_OBLIQUE_MERCATOR
@@ -311,9 +311,9 @@ class SpatialReference(_object):
         """
         return _osr.SpatialReference_SetEquirectangular2(*args, **kwargs)
 
-    def SetGaussLabordeReunion(*args, **kwargs):
-        """SetGaussLabordeReunion(self, double clat, double clong, double sc, double fe, double fn) -> OGRErr"""
-        return _osr.SpatialReference_SetGaussLabordeReunion(*args, **kwargs)
+    def SetGaussSchreiberTMercator(*args, **kwargs):
+        """SetGaussSchreiberTMercator(self, double clat, double clong, double sc, double fe, double fn) -> OGRErr"""
+        return _osr.SpatialReference_SetGaussSchreiberTMercator(*args, **kwargs)
 
     def SetGS(*args, **kwargs):
         """SetGS(self, double cm, double fe, double fn) -> OGRErr"""
