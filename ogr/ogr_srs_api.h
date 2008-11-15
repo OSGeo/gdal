@@ -107,8 +107,8 @@ typedef enum {
 #define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
 #define SRS_PT_GALL_STEREOGRAPHIC                                       \
                                 "Gall_Stereographic"
-#define SRS_PT_GAUSSLABORDEREUNION                                      \
-                                "Gauss_Laborde_Sphere_Geometric_Mean"
+#define SRS_PT_GAUSSSCHREIBERTMERCATOR                                      \
+                                "Gauss_Schreiber_Transverse_Mercator"
 #define SRS_PT_GEOSTATIONARY_SATELLITE                                  \
                                 "Geostationary_Satellite"
 #define SRS_PT_GOODE_HOMOLOSINE "Goode_Homolosine"
@@ -446,8 +446,8 @@ OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS,
                            double dfCentralMeridian, double dfSatelliteHeight,
                            double dfFalseEasting, double dfFalseNorthing );
 
-/** Gauss Laborde Reunion */    
-OGRErr CPL_DLL OSRSetGaussLabordeReunion( OGRSpatialReferenceH hSRS,
+/** Gauss Schreiber Transverse Mercator */    
+OGRErr CPL_DLL OSRSetGaussSchreiberTMercator( OGRSpatialReferenceH hSRS,
                                   double dfCenterLat, double dfCenterLong,
                                   double dfScale,
                                   double dfFalseEasting,

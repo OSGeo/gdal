@@ -515,25 +515,25 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         if( OSR_GDV( papszNV, "lat_0", 0.0 ) != OSR_GDV( papszNV, "lat_ts", 0.0 ) )
           SetEquirectangular2( OSR_GDV( papszNV, "lat_0", 0.0 ),
-                               OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich,
+                               OSR_GDV( papszNV, "lon_0", 0.0 ),
                                OSR_GDV( papszNV, "lat_ts", 0.0 ),
                                OSR_GDV( papszNV, "x_0", 0.0 ),
                                OSR_GDV( papszNV, "y_0", 0.0 ) );
         else
           SetEquirectangular( OSR_GDV( papszNV, "lat_ts", 0.0 ),
-                              OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich,
+                              OSR_GDV( papszNV, "lon_0", 0.0 ),
                               OSR_GDV( papszNV, "x_0", 0.0 ),
                               OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-   else if( EQUAL(pszProj,"glabsgm") )
-   {
-       SetGaussLabordeReunion( OSR_GDV( papszNV, "lat_0", -21.116666667 ),
-                               OSR_GDV( papszNV, "lon_0", 55.53333333309)+dfFromGreenwich,
-                               OSR_GDV( papszNV, "k_0", 1.0 ),
-                               OSR_GDV( papszNV, "x_0", 160000.000 ),
-                               OSR_GDV( papszNV, "y_0", 50000.000 ) );
-   }
+    else if( EQUAL(pszProj,"gstmerc") )
+    {
+        SetGaussSchreiberTMercator( OSR_GDV( papszNV, "lat_0", -21.116666667 ),
+                                    OSR_GDV( papszNV, "lon_0", 55.53333333309),
+                                    OSR_GDV( papszNV, "k_0", 1.0 ),
+                                    OSR_GDV( papszNV, "x_0", 160000.000 ),
+                                    OSR_GDV( papszNV, "y_0", 50000.000 ) );
+    }
 
     else if( EQUAL(pszProj,"gnom") )
     {
@@ -1261,10 +1261,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
-    else if( EQUAL(pszProjection,SRS_PT_GAUSSLABORDEREUNION) )
+    else if( EQUAL(pszProjection,SRS_PT_GAUSSSCHREIBERTMERCATOR) )
     {
       sprintf( szProj4+strlen(szProj4),
-               "+proj=glabsgm +lat_0=%.16g +lon_0=%.16g"
+               "+proj=gstmerc +lat_0=%.16g +lon_0=%.16g"
                " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
                GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,-21.116666667),
                GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,55.53333333309),

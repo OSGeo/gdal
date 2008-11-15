@@ -117,6 +117,7 @@ static const char *papszProjectionSupported[] =
     SRS_PT_WAGNER_V,
     SRS_PT_WAGNER_VI,
     SRS_PT_WAGNER_VII,
+    SRS_PT_GAUSSSCHREIBERTMERCATOR,
     NULL
 };
 
@@ -454,6 +455,14 @@ static const char *papszProjWithParms[] = {
 
     SRS_PT_WAGNER_VII,
     SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+    NULL,
+
+    SRS_PT_GAUSSSCHREIBERTMERCATOR,
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
