@@ -1158,6 +1158,18 @@ char** VSIGZipFilesystemHandler::ReadDir( const char *pszDirname )
 /*                   VSIInstallGZipFileHandler()                        */
 /************************************************************************/
 
+
+/**
+ * \brief Install GZip file system handler. 
+ *
+ * A special file handler is installed that allows reading on-the-fly in GZip (.gz) files.
+ * All portions of the file system underneath the base
+ * path "/vsigzip/" will be handled by this driver.
+ *
+ * Additional documentation is to be found at http://trac.osgeo.org/gdal/wiki/UserDocs/ReadInZip
+ *
+ */
+
 void VSIInstallGZipFileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsigzip/", new VSIGZipFilesystemHandler );
@@ -1723,6 +1735,18 @@ char** VSIZipFilesystemHandler::ReadDir( const char *pszDirname )
 /************************************************************************/
 /*                    VSIInstallZipFileHandler()                        */
 /************************************************************************/
+
+
+/**
+ * \brief Install ZIP file system handler. 
+ *
+ * A special file handler is installed that allows reading on-the-fly in ZIP (.zip) archives.
+ * All portions of the file system underneath the base
+ * path "/vsizip/" will be handled by this driver.
+ *
+ * Additional documentation is to be found at http://trac.osgeo.org/gdal/wiki/UserDocs/ReadInZip
+ *
+ */
 
 void VSIInstallZipFileHandler(void)
 {
