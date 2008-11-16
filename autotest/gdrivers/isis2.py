@@ -56,8 +56,7 @@ def isis2_1():
     PARAMETER["latitude_of_origin",-6.5],
     PARAMETER["central_meridian",0],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0],
-    PARAMETER["pseudo_standard_parallel_1",-6.5]]"""
+    PARAMETER["false_northing",0]]"""
     expected_gt = (10157400.403618813, 1200.0000476837158, 0.0, -585000.02324581146, 0.0, -1200.0000476837158)
     return tst.testOpen( check_prj = expected_prj,
                          check_gt = expected_gt )
