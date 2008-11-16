@@ -206,6 +206,33 @@ def tiff_g4_split():
     
     return 'success'
 
+###############################################################################
+# Test reading a tiff with multiple images in it
+
+def tiff_multi_images():
+
+    # Implicitely get the content of the first image (backward compatibility)
+    ds = gdal.Open('data/twoimages.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            return 'fail'
+    ds = None
+
+    # Explicitely get the content of the first image
+    ds = gdal.Open('GTIFF_DIR:1:data/twoimages.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            return 'fail'
+    ds = None
+
+    # Explicitely get the content of the second image
+    ds = gdal.Open('GTIFF_DIR:2:data/twoimages.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            return 'fail'
+    ds = None
+
+    return 'success'
 
 
 for item in init_list:
@@ -222,6 +249,7 @@ gdaltest_list.append( (tiff_read_zip_1) )
 gdaltest_list.append( (tiff_read_zip_2) )
 gdaltest_list.append( (tiff_grads) )
 gdaltest_list.append( (tiff_g4_split) )
+gdaltest_list.append( (tiff_multi_images) )
 
 if __name__ == '__main__':
 
