@@ -1091,17 +1091,19 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
  * Read ESRI world file. 
  *
  * This function reads an ESRI style world file, and formats a geotransform
- * from it's contents.
+ * from its contents.
  *
  * The world file contains an affine transformation with the parameters
  * in a different order than in a geotransform array. 
  *
- *  geotransform[1] - width of pixel
- *  geotransform[4] - rotational coefficient, zero for north up images.
- *  geotransform[2] - rotational coefficient, zero for north up images.
- *  geotransform[5] - height of pixel (but negative)
- *  geotransform[0] - x offset to center of top left pixel.
- *  geotrasnform[3] - y offset to center of top left pixel.
+ * <ul>
+ * <li> geotransform[1] : width of pixel
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.
+ * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x offset to center of top left pixel.
+ * <li> geotransform[3] + 0.5 * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left pixel.
+ * </ul>
  *
  * @param pszFilename the world file name.
  * @param padfGeoTransform the six double array into which the
@@ -1117,6 +1119,9 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
     int         nLinesCount = 0;
     char        **papszLines = NULL;
     bool        bValid = false;
+
+    VALIDATE_POINTER1( pszFilename, "GDALLoadWorldFile", FALSE );
+    VALIDATE_POINTER1( padfGeoTransform, "GDALLoadWorldFile", FALSE );
 
     papszLines = CSLLoad( pszFilename );
 
@@ -1190,12 +1195,14 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
  * The world file contains an affine transformation with the parameters
  * in a different order than in a geotransform array. 
  *
- *  geotransform[1] - width of pixel
- *  geotransform[4] - rotational coefficient, zero for north up images.
- *  geotransform[2] - rotational coefficient, zero for north up images.
- *  geotransform[5] - height of pixel (but negative)
- *  geotransform[0] - x offset to center of top left pixel.
- *  geotrasnform[3] - y offset to center of top left pixel.
+ * <ul>
+ * <li> geotransform[1] : width of pixel
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.
+ * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x offset to center of top left pixel.
+ * <li> geotransform[3] + 0.5 * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left pixel.
+ * </ul>
  *
  * @param pszBaseFilename the target raster file.
  * @param pszExtension the extension to use (ie. ".wld") or NULL to derive it
@@ -1214,6 +1221,9 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
     const char  *pszTFW;
     char        szExtUpper[32], szExtLower[32];
     int         i;
+
+    VALIDATE_POINTER1( pszBaseFilename, "GDALReadWorldFile", FALSE );
+    VALIDATE_POINTER1( padfGeoTransform, "GDALReadWorldFile", FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't given an extension, try both the unix and          */
@@ -1299,11 +1309,39 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
 /*      support for ESRI world files.                                   */
 /************************************************************************/
 
+/**
+ * Write ESRI world file. 
+ *
+ * This function writes an ESRI style world file from the passed geotransform.
+ *
+ * The world file contains an affine transformation with the parameters
+ * in a different order than in a geotransform array. 
+ *
+ * <ul>
+ * <li> geotransform[1] : width of pixel
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.
+ * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x offset to center of top left pixel.
+ * <li> geotransform[3] + 0.5 * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left pixel.
+ * </ul>
+ *
+ * @param pszBaseFilename the target raster file.
+ * @param pszExtension the extension to use (ie. ".wld"). Must not be NULL
+ * @param padfGeoTransform the six double array from which the 
+ * geotransformation should be read. 
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
 int CPL_STDCALL 
 GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
                     double *padfGeoTransform )
 
 {
+    VALIDATE_POINTER1( pszBaseFilename, "GDALWriteWorldFile", FALSE );
+    VALIDATE_POINTER1( pszExtension, "GDALWriteWorldFile", FALSE );
+    VALIDATE_POINTER1( padfGeoTransform, "GDALWriteWorldFile", FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the text to write to the file.                          */
@@ -1354,6 +1392,10 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "1.1.7"
  * <li> "--version": Returns one line version message suitable for use in 
  * response to --version requests.  ie. "GDAL 1.1.7, released 2002/04/16"
+ * <li> "LICENCE": Returns the content of the LICENSE.TXT file from the GDAL_DATA directory.
+ *      Currently, the returned string is leaking memory but applications are discouraged from
+ *      deallocating the returned memory in this case since in the
+ *      future we may resolve the leak issue internally.
  * </ul>
  *
  * @param pszRequest the type of version info desired, as listed above.
