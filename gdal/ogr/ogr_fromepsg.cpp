@@ -1513,10 +1513,15 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         break;
 
       case 9829: /* Polar Stereographic (Variant B) */
-          poSRS->SetPS( OGR_FP( PolarLatStdParallel ), OGR_FP(PolarLongOrigin),
-                        1.0,
-                        OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
-          break;
+        poSRS->SetPS( OGR_FP( PolarLatStdParallel ), OGR_FP(PolarLongOrigin),
+                      1.0,
+                      OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
+        break;
+
+      case 9834: /* Lambert Cylindrical Equal Area (Spherical) bug #2659 */
+        poSRS->SetCEA( OGR_FP( StdParallel1Lat ), OGR_FP( NatOriginLong ), 
+                       OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
+        break;
 
       default:
         CPLDebug( "EPSG", "No WKT support for projection method %d.",
