@@ -694,7 +694,12 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
             DBFAddNativeFieldType( hDBF, poField->GetNameRef(), 'D', 8, 0 );
 
         if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( poField );
+        {
+            OGRFieldDefn oModDefn( poField );
+            
+            oModDefn.SetType( OFTDate );
+            poFeatureDefn->AddFieldDefn( &oModDefn );
+        }
     }
     else
     {
