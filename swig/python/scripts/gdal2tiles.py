@@ -643,6 +643,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 						  help="The spatial reference system used for the source input data")
 		p.add_option('-z', '--zoom', dest="zoom",
 						  help="Zoom levels to render (format:'2-5' or '10').")
+		p.add_option('-e', '--resume', dest="resume", action="store_true",
+						  help="Resume mode. Generate only missing files.")
 		# TODO: NODATA: ds.GetRasterBand(i).SetNoDataValue( float(null_value) )
 		# But this would have to be done on in memory VRT - created by CreateCopy()
 		# Let's do that together with merging of files later...
@@ -683,7 +685,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		# p.add_option_group(g)
 
 		p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
-		webviewer='all', copyright='', resampling='average',
+		webviewer='all', copyright='', resampling='average', resume=False,
 		googlekey='INSERT_YOUR_KEY_HERE', yahookey='INSERT_YOUR_YAHOO_APP_ID_HERE')
 
 		self.parser = p
@@ -986,15 +988,17 @@ gdal2tiles temp.vrt""" % self.input )
 
 			# Generate googlemaps.html
 			if self.options.webviewer in ('all','google') and self.options.profile == 'mercator':
-				f = open(os.path.join(self.output, 'googlemaps.html'), 'w')
-				f.write( self.generate_googlemaps() )
-				f.close()
+				if not self.options.resume or not os.path.exists(os.path.join(self.output, 'googlemaps.html')):
+					f = open(os.path.join(self.output, 'googlemaps.html'), 'w')
+					f.write( self.generate_googlemaps() )
+					f.close()
 
 			# Generate openlayers.html
 			if self.options.webviewer in ('all','openlayers'):
-				f = open(os.path.join(self.output, 'openlayers.html'), 'w')
-				f.write( self.generate_openlayers() )
-				f.close()
+				if not self.options.resume or not os.path.exists(os.path.join(self.output, 'openlayers.html')):
+					f = open(os.path.join(self.output, 'openlayers.html'), 'w')
+					f.write( self.generate_openlayers() )
+					f.close()
 
 		elif self.options.profile == 'geodetic':
 			
@@ -1006,9 +1010,10 @@ gdal2tiles temp.vrt""" % self.input )
 			
 			# Generate openlayers.html
 			if self.options.webviewer in ('all','openlayers'):
-				f = open(os.path.join(self.output, 'openlayers.html'), 'w')
-				f.write( self.generate_openlayers() )
-				f.close()			
+				if not self.options.resume or not os.path.exists(os.path.join(self.output, 'openlayers.html')):
+					f = open(os.path.join(self.output, 'openlayers.html'), 'w')
+					f.write( self.generate_openlayers() )
+					f.close()			
 
 		elif self.options.profile == 'raster':
 			
@@ -1019,14 +1024,17 @@ gdal2tiles temp.vrt""" % self.input )
 			
 			# Generate openlayers.html
 			if self.options.webviewer in ('all','openlayers'):
-				f = open(os.path.join(self.output, 'openlayers.html'), 'w')
-				f.write( self.generate_openlayers() )
-				f.close()			
+				if not self.options.resume or not os.path.exists(os.path.join(self.output, 'openlayers.html')):
+					f = open(os.path.join(self.output, 'openlayers.html'), 'w')
+					f.write( self.generate_openlayers() )
+					f.close()			
+
 
 		# Generate tilemapresource.xml.
-		f = open(os.path.join(self.output, 'tilemapresource.xml'), 'w')
-		f.write( self.generate_tilemapresource())
-		f.close()
+		if not self.options.resume or not os.path.exists(os.path.join(self.output, 'tilemapresource.xml')):
+			f = open(os.path.join(self.output, 'tilemapresource.xml'), 'w')
+			f.write( self.generate_tilemapresource())
+			f.close()
 
 		if self.kml:
 			# TODO: Maybe problem for not automatically generated tminz
@@ -1038,9 +1046,10 @@ gdal2tiles temp.vrt""" % self.input )
 					children.append( [ x, y, self.tminz ] ) 
 			# Generate Root KML
 			if self.kml:
-				f = open(os.path.join(self.output, 'doc.kml'), 'w')
-				f.write( self.generate_kml( None, None, None, children) )
-				f.close()
+				if not self.options.resume or not os.path.exists(os.path.join(self.output, 'doc.kml')):
+					f = open(os.path.join(self.output, 'doc.kml'), 'w')
+					f.write( self.generate_kml( None, None, None, children) )
+					f.close()
 		
 	# -------------------------------------------------------------------------
 	def generate_base_tiles(self):
@@ -1088,6 +1097,13 @@ gdal2tiles temp.vrt""" % self.input )
 				tilefilename = os.path.join(self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
 				if self.options.verbose:
 					print ti,'/',tcount, tilefilename #, "( TileMapService: z / x / y )"
+
+				if self.options.resume and os.path.exists(tilefilename):
+					if self.options.verbose:
+						print "Tile generation skiped because of --resume"
+					else:
+						self.progressbar( ti / float(tcount) )
+					continue
 
 				# Create directories for the tile
 				if not os.path.exists(os.path.dirname(tilefilename)):
@@ -1184,9 +1200,11 @@ gdal2tiles temp.vrt""" % self.input )
 
 				# Create a KML file for this tile.
 				if self.kml:
-					f = open( os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty), 'w')
-					f.write( self.generate_kml( tx, ty, tz ))
-					f.close()
+					kmlfilename = os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty)
+					if not self.options.resume or not os.path.exists(kmlfilename):
+						f = open( kmlfilename, 'w')
+						f.write( self.generate_kml( tx, ty, tz ))
+						f.close()
 					
 				if not self.options.verbose:
 					self.progressbar( ti / float(tcount) )
@@ -1217,8 +1235,16 @@ gdal2tiles temp.vrt""" % self.input )
 
 					ti += 1
 					tilefilename = os.path.join( self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext) )
+
 					if self.options.verbose:
 						print ti,'/',tcount, tilefilename #, "( TileMapService: z / x / y )"
+					
+					if self.options.resume and os.path.exists(tilefilename):
+						if self.options.verbose:
+							print "Tile generation skiped because of --resume"
+						else:
+							self.progressbar( ti / float(tcount) )
+						continue
 
 					# Create directories for the tile
 					if not os.path.exists(os.path.dirname(tilefilename)):
