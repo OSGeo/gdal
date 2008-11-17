@@ -46,6 +46,14 @@ import sys
 import os
 import math
 
+try:
+	from PIL import Image
+	import numpy
+	import osgeo.gdal_array as gdalarray
+except:
+	# 'antialias' resampling is not available
+	pass
+
 __version__ = "$Id$"
 
 resampling_list = ('average','near','bilinear','cubic','cubicspline','lanczos','antialias')
@@ -398,7 +406,7 @@ class GlobalGeodetic(object):
 		return (b[1],b[0],b[3],b[2])
 
 #---------------------
-
+# TODO: Finish Zoomify implemtentation!!!
 class Zoomify(object):
 	"""
 	Tiles compatible with the Zoomify viewer
@@ -508,12 +516,9 @@ class GDAL2Tiles(object):
 		self.querysize = 4 * self.tilesize
 
 		# Should we use Read on the input file for generating overview tiles?
-		# Note: Modified leter by open_input()
+		# Note: Modified later by open_input()
 		# Otherwise the overview tiles are generated from existing underlying tiles
 		self.overviewquery = False
-		
-		# Only metadata, no raster processing
-		self.only_metadata = False
 		
 		# RUN THE ARGUMENT PARSER:
 		
@@ -576,9 +581,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		
 		elif self.options.resampling == 'antialias':
 			try:
-				from PIL import Image
-				import numpy
-				import osgeo.gdal_array as gdalarray
+				if numpy:
+					pass
 			except:
 				self.error("'antialias' resampling algorithm is not available.", "Install PIL (Python Imaging Library) and numpy.")
 		
@@ -621,6 +625,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 			print "Options:", self.options
 			print "Input:", self.input
 			print "Output:", self.output
+			print "Cache: %s MB" % (gdal.GetCacheMax() / 1024 / 1024)
 			print
 
 	# -------------------------------------------------------------------------
@@ -677,7 +682,9 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		#				  help="Generate tileindex and mapfile for MapServer (WMS)")
 		# p.add_option_group(g)
 
-		p.set_defaults(verbose=False, profile="mercator", kml=False, url='', webviewer='all', copyright='', resampling='average', googlekey='INSERT_YOUR_KEY_HERE', yahookey='INSERT_YOUR_YAHOO_APP_ID_HERE')
+		p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
+		webviewer='all', copyright='', resampling='average',
+		googlekey='INSERT_YOUR_KEY_HERE', yahookey='INSERT_YOUR_YAHOO_APP_ID_HERE')
 
 		self.parser = p
 		
@@ -862,9 +869,13 @@ gdal2tiles temp.vrt""" % self.input )
 			for tz in range(0, 32):
 				tminx, tminy = self.mercator.MetersToTile( self.ominx, self.ominy, tz )
 				tmaxx, tmaxy = self.mercator.MetersToTile( self.omaxx, self.omaxy, tz )
+				# crop tiles extending world limits (+-180,+-90)
+				tminx, tminy = max(0, tminx), max(0, tminy)
+				tmaxx, tmaxy = min(2**tz-1, tmaxx), min(2**tz-1, tmaxy)
 				self.tminmax[tz] = (tminx, tminy, tmaxx, tmaxy)
-				# TODO: correctly handle tiles extending world limits (+-180,+-90)
-						
+
+			# TODO: Maps crossing 180E (Alaska?)
+
 			# Get the minimal zoom level (map covers area equivalent to one tile) 
 			if self.tminz == None:
 				self.tminz = self.mercator.ZoomForPixelSize( self.out_gt[1] * max( self.out_ds.RasterXSize, self.out_ds.RasterYSize) / float(self.tilesize) )
@@ -890,7 +901,12 @@ gdal2tiles temp.vrt""" % self.input )
 			for tz in range(0, 32):
 				tminx, tminy = self.geodetic.LatLonToTile( self.ominx, self.ominy, tz )
 				tmaxx, tmaxy = self.geodetic.LatLonToTile( self.omaxx, self.omaxy, tz )
+				# crop tiles extending world limits (+-180,+-90)
+				tminx, tminy = max(0, tminx), max(0, tminy)
+				tmaxx, tmaxy = min(2**(tz+1)-1, tmaxx), min(2**tz-1, tmaxy)
 				self.tminmax[tz] = (tminx, tminy, tmaxx, tmaxy)
+				
+			# TODO: Maps crossing 180E (Alaska?)
 
 			# Get the maximal zoom level (closest possible zoom level up on the resolution of raster)
 			if self.tminz == None:
@@ -963,7 +979,9 @@ gdal2tiles temp.vrt""" % self.input )
 		if self.options.profile == 'mercator':
 			
 			south, west = self.mercator.MetersToLatLon( self.ominx, self.ominy)
-			north, east = self.mercator.MetersToLatLon( self.omaxx, self.omaxy)	
+			north, east = self.mercator.MetersToLatLon( self.omaxx, self.omaxy)
+			south, west = max(-85.05112878, south), max(-180.0, west)
+			north, east = min(85.05112878, north), min(180.0, east)
 			self.swne = (south, west, north, east)
 
 			# Generate googlemaps.html
@@ -982,6 +1000,8 @@ gdal2tiles temp.vrt""" % self.input )
 			
 			west, south = self.ominx, self.ominy
 			east, north = self.omaxx, self.omaxy
+			south, west = max(-90.0, south), max(-180.0, west)
+			north, east = min(90.0, north), min(180.0, east)
 			self.swne = (south, west, north, east)
 			
 			# Generate openlayers.html
@@ -1003,12 +1023,10 @@ gdal2tiles temp.vrt""" % self.input )
 				f.write( self.generate_openlayers() )
 				f.close()			
 
-
 		# Generate tilemapresource.xml.
 		f = open(os.path.join(self.output, 'tilemapresource.xml'), 'w')
 		f.write( self.generate_tilemapresource())
 		f.close()
-
 
 		if self.kml:
 			# TODO: Maybe problem for not automatically generated tminz
@@ -1310,6 +1328,9 @@ gdal2tiles temp.vrt""" % self.input )
 
 			# Function: gdal.RegenerateOverview()
 			for i in range(1,tilebands+1):
+				# Black border around NODATA
+				#if i != 4:
+				#	dsquery.GetRasterBand(i).SetNoDataValue(0)
 				res = gdal.RegenerateOverview( dsquery.GetRasterBand(i),
 					dstile.GetRasterBand(i), 'average' )
 				if res != 0:
@@ -1326,7 +1347,7 @@ gdal2tiles temp.vrt""" % self.input )
 			else:
 				im = Image.fromarray(array, 'RGB')
 			im1 = im.resize((tilesize,tilesize), Image.ANTIALIAS)
-			im1.save(tilefilename,tileformat)
+			im1.save(tilefilename,self.tiledriver)
 
 		else:
 
@@ -1378,8 +1399,10 @@ gdal2tiles temp.vrt""" % self.input )
 		for z in range(self.tminz, self.tmaxz+1):
 			if self.options.profile == 'raster':
 				s += """	    <TileSet href="%s%d" units-per-pixel="%.14f" order="%d"/>\n""" % (args['publishurl'], z, (2**(self.nativezoom-z) * self.out_gt[1]), z)
-			else:
-				s += """	    <TileSet href="%s%d" units-per-pixel="%.14f" order="%d"/>\n""" % (args['publishurl'], z, (2**z * self.out_gt[1]), z)
+			elif self.options.profile == 'mercator':
+				s += """	    <TileSet href="%s%d" units-per-pixel="%.14f" order="%d"/>\n""" % (args['publishurl'], z, 156543.0339/2**z, z)
+			elif self.options.profile == 'geodetic':
+				s += """	    <TileSet href="%s%d" units-per-pixel="%.14f" order="%d"/>\n""" % (args['publishurl'], z, 0.703125/2**z, z)
 		s += """	  </TileSets>
 	</TileMap>
 	"""
@@ -1398,7 +1421,7 @@ gdal2tiles temp.vrt""" % self.input )
 		if not args.has_key('minlodpixels'):
 			args['minlodpixels'] = int( args['tilesize'] / 2 ) # / 2.56) # default 128
 		if not args.has_key('maxlodpixels'):
-			args['maxlodpixels'] = int( args['tilesize'] * 8 ) # -1 # 1.7) # default 2048
+			args['maxlodpixels'] = int( args['tilesize'] * 8 ) # 1.7) # default 2048 (used to be -1)
 		if children == []:
 			args['maxlodpixels'] = -1
 	
@@ -1821,7 +1844,7 @@ gdal2tiles temp.vrt""" % self.input )
 			s += """
 		    <script src='http://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1'></script>
 		    <script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=%(googlemapskey)s' type='text/javascript'></script>
-		    <script src="http://api.maps.yahoo.com/ajaxymap?v=3.0&amp;appid=%(yahooappid)s"></script>"""
+		    <script src="http://api.maps.yahoo.com/ajaxymap?v=3.0&amp;appid=%(yahooappid)s"></script>""" % args
 
 		s += """
 		    <script src="http://www.openlayers.org/api/2.7/OpenLayers.js" type="text/javascript"></script>
@@ -1909,7 +1932,7 @@ gdal2tiles temp.vrt""" % self.input )
 	            var options = {
 	                controls: [],
 		            projection: new OpenLayers.Projection("EPSG:4326"),
-		            maxResolution: 1.40625/2,
+		            maxResolution: 0.703125,
 		            maxExtent: new OpenLayers.Bounds(-180, -90, 180, 90)
 		            };
 	            map = new OpenLayers.Map('map', options);
