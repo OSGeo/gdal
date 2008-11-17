@@ -11,11 +11,14 @@ This driver implements support for access to spatial tables in
 PostgreSQL extended with the 
 <a href="http://www.postgis.org/">PostGIS</a> spatial data support. 
 Some support exists in the driver for use with PostgreSQL without PostGIS
-but this has not been recently tested and is likely decayed.<p>
+but with less functionnalities.<p>
+
+<h2>Connectiong to a database</h2>
 
 When opening a database, its name should be specified in the form
-"PG:dbname=<databasename>". It's also possible to omit the database name and connect to <em>default</em> one, with the same name as the user name.  We use PQconnectdb() to make the connection, so 
-any other options and defaults
+"PG:dbname=<databasename>". It's also possible to omit the database name and connect
+to <em>default</em> one, with the same name as the user name. 
+We use PQconnectdb() to make the connection, so any other options and defaults
 that would apply to it, apply to the name here.  The PG: prefix is used
 to mark the name as a postgres connection string.<p>
 
@@ -24,12 +27,16 @@ From GDAL 1.6.0, the set of tables to be scanned can be overridden by specifying
 If the parameter is found, the driver skips enumeration of the tables as
 described in the next paragraph.<p>
 
+<h2>Geometry columns</h2>
+
 If the <i>geometry_columns</i> table exists (i.e. PostGIS is enabled for the accessed
 database), then all tables and named views listed in the <i>geometry_columns</i> table
-will be treated as OGR layers. Otherwise all regular user tables will be treated as layers.<p>
+will be treated as OGR layers. Otherwise (PostGIS disabled for the accessed database),
+all regular user tables and named views will be treated as layers.<p>
 
 From GDAL 1.6.0, the PostgreSQL driver supports accessing tables with multiple PostGIS geometry columns.
-For such tables, there will be as many layers reported as the number of geometry columns.
+For such a table, there will be as many layers reported as the number of geometry columns listed for that
+table in the <i>geometry_columns</i> table.
 For example, if a table 'foo' has 2 geometry columns 'bar' and 'baz', 2 layers will be reported :
 'foo(bar)' and 'foo(baz)'. For backward compatibility, if a table has only one geometry column,
 the layer name is the table name. Also if a table 'foo' has several geometry columns,
@@ -39,8 +46,12 @@ that are based on tables with multiple PostGIS geometry column is known to have 
 side-effects on the other layers as they are closely tied. Thus, that capability should currently
 be thought as mostly read-only.<p>
 
+<h2>Layers</h2>
 From GDAL 1.6.0, even when PostGIS is enabled, if the user defines the environment variable
-PG_LIST_ALL_TABLES=YES (and does not specify tables=), all regular user tables will be treated as layers.<p>
+PG_LIST_ALL_TABLES=YES (and does not specify tables=), all regular user tables and named views
+will be treated as layers. However, tables with multiple geometry column will only be reporded
+once in that mode. So this variable is mainly usefull when PostGIS is enabled to find out tables
+with no spatial data, or views without an entry in <i>geometry_columns</i> table.<p>
 
 In any case, all user tables can be queried explicitely with GetLayerByName()<p>
 
@@ -58,6 +69,21 @@ the features, and not treated as a regular field. <p>
 
 The layer name may be of the form "schema.table". The schema must exist, and the 
 user needs to have write permissions for the target and the public schema.<p>
+
+<h2>Named views</h2>
+
+When PostGIS is enabled for the accessed database, named views are supported, provided that 
+there is an entry in the <i>geometry_columns</i> tables. But, note that the AddGeometryColumn() SQL
+function doesn't accept to add an entry for a view (only for regular tables). So, that must usually
+be done by hand with a SQL statement like :
+<pre>"INSERT INTO geometry_columns VALUES ( '', 'public', 'name_of_my_view', 'name_of_geometry_column', 2, 4326, 'POINT');"</pre>
+
+From GDAL 1.6.0, it is also possible to use named views without inserting a row in the geometry_columns
+table. For that, you need to explicitely specify the name of the view in the "tables=" option of the
+connection string. See above. The drawback is that OGR will not be able to report a valid SRS and figure out
+the right geometry type.
+
+<h2>SQL statements</h2>
 
 <p>The PostgreSQL driver passes SQL statements directly to PostgreSQL by default,
 rather than evaluating them internally when using the ExecuteSQL() call on the
@@ -218,6 +244,15 @@ This example shows using ogrinfo to list only the layers specified by the <i>tab
 
 <pre>
 ogrinfo -ro PG:'dbname=warmerda tables=table1,table2'
+</pre>
+</li>
+
+<li>
+<p>
+This example shows using ogrinfo to query a table 'foo' with multiple geometry columns ('geom1' and 'geom2').<p>
+
+<pre>
+ogrinfo -ro -al PG:dbname=warmerda 'foo(geom2)'
 </pre>
 </li>
 
