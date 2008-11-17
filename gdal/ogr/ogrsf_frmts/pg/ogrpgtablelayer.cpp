@@ -45,7 +45,9 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
                                   const char * pszTableNameIn,
                                   const char * pszSchemaNameIn,
                                   const char * pszGeomColumnIn,
-                                  int bUpdate, int nSRSIdIn )
+                                  int bUpdate,
+                                  int bAdvertizeGeomColumn,
+                                  int nSRSIdIn )
 
 {
     poDS = poDSIn;
@@ -71,7 +73,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     pszSqlTableName = NULL; //set in ReadTableDefinition
     pszSqlGeomParentTableName = NULL;
 
-    poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaName, pszGeomColumnIn );
+    poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaName, pszGeomColumnIn, bAdvertizeGeomColumn );
 
     if( poFeatureDefn )
     {
@@ -106,7 +108,8 @@ OGRPGTableLayer::~OGRPGTableLayer()
 
 OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
                                                       const char * pszSchemaNameIn,
-                                                      const char * pszGeomColumnIn)
+                                                      const char * pszGeomColumnIn,
+                                                      int bAdvertizeGeomColumn)
 
 {
     PGresult            *hResult;
@@ -259,7 +262,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     {
         /* For backwards compatibility, don't report the geometry column name */
         /* if it's wkb_geometry */
-        if (pszGeomColumnIn && !EQUAL(pszGeomColumnIn, "wkb_geometry"))
+        if (bAdvertizeGeomColumn && pszGeomColumnIn)
             osDefnName.Printf( "%s.%s(%s)", pszSchemaNameIn, pszTableIn, pszGeomColumnIn );
         else
             osDefnName.Printf("%s.%s", pszSchemaNameIn, pszTableIn );
@@ -270,7 +273,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         //no prefix for current_schema in layer name, for backwards compatibility
         /* For backwards compatibility, don't report the geometry column name */
         /* if it's wkb_geometry */
-        if (pszGeomColumnIn && !EQUAL(pszGeomColumnIn, "wkb_geometry"))
+        if (bAdvertizeGeomColumn && pszGeomColumnIn)
             osDefnName.Printf( "%s(%s)", pszTableIn, pszGeomColumnIn );
         else
             osDefnName = pszTableIn;

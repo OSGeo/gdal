@@ -767,17 +767,32 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         sEntry.pszSchemaName = (char*) papszSchemaNames[iRecord];
         psEntry = (PGTableEntry* )CPLHashSetLookup(hSetTables, &sEntry);
 
+        /* Some heuristics to preserve backward compatibility with the way that */
+        /* layers were reported in GDAL <= 1.5.0 */
+        /* That is to say : */
+        /* - if we get only one geometry column from the request to geometry_columns */
+        /*   then use it but don't report it into layer definition */
+        /* - if we get several geometry columns, use their names and report them */
+        /*   except for the wkb_geometry column */
+        /* - if we get no geometry column, let ReadTableDefinition() parses the columns */
+        /*   and find the likely geometry column */
+
         if (psEntry != NULL && CSLCount(psEntry->papszGeomColumnNames) <= 1)
         {
-            OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], NULL, bUpdate, FALSE );
+            if (CSLCount(psEntry->papszGeomColumnNames) == 1)
+                OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord],
+                           psEntry->papszGeomColumnNames[0], bUpdate, FALSE, FALSE );
+            else
+                OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], NULL, bUpdate, FALSE, FALSE );
         }
         else
         {
             CPLAssert( papszGeomColumnNames && papszGeomColumnNames[iRecord]);
             if (EQUAL(papszGeomColumnNames[iRecord], ""))
-                OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], NULL, bUpdate, FALSE );
+                OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], NULL, bUpdate, FALSE, FALSE );
             else
-                OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], papszGeomColumnNames[iRecord], bUpdate, FALSE );
+                OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], papszGeomColumnNames[iRecord],
+                           bUpdate, FALSE, !EQUAL(papszGeomColumnNames[iRecord], "wkb_geometry") );
         }
     }
 
@@ -796,7 +811,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /************************************************************************/
 
 int OGRPGDataSource::OpenTable( const char *pszNewName, const char *pszSchemaName, const char * pszGeomColumnIn, int bUpdate,
-                                int bTestOpen )
+                                int bTestOpen, int bAdvertizeGeomColumn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -804,7 +819,7 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, const char *pszSchemaNam
 /* -------------------------------------------------------------------- */
     OGRPGTableLayer  *poLayer;
 
-    poLayer = new OGRPGTableLayer( this, pszNewName, pszSchemaName, pszGeomColumnIn, bUpdate );
+    poLayer = new OGRPGTableLayer( this, pszNewName, pszSchemaName, pszGeomColumnIn, bUpdate, bAdvertizeGeomColumn );
     if( poLayer->GetLayerDefn() == NULL )
     {
         delete poLayer;
@@ -1192,7 +1207,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     OGRPGTableLayer     *poLayer;
 
-    poLayer = new OGRPGTableLayer( this, pszTableName, pszSchemaName, NULL, TRUE, nSRSId );
+    poLayer = new OGRPGTableLayer( this, pszTableName, pszSchemaName, NULL, TRUE, FALSE, nSRSId);
     if( poLayer->GetLayerDefn() == NULL )
     {
         CPLFree( pszLayerName );
@@ -1296,7 +1311,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
         }
     }
 
-    if( OpenTable( pszNameWithoutBracket, NULL, pszGeomColumnName, TRUE, FALSE ) )
+    if( OpenTable( pszNameWithoutBracket, NULL, pszGeomColumnName, TRUE, FALSE, TRUE ) )
     {
         CPLFree(pszNameWithoutBracket);
         return GetLayer(count);
