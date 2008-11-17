@@ -2726,6 +2726,19 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
             SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             break;
 
+          case OFTDate:
+          case OFTDateTime:
+          case OFTTime:
+            if (GetFieldDefnRef(iDstField)->GetType() == OFTDate ||
+                GetFieldDefnRef(iDstField)->GetType() == OFTTime ||
+                GetFieldDefnRef(iDstField)->GetType() == OFTDateTime)
+            {
+                SetField( iDstField, poSrcFeature->GetRawFieldRef( iField ) );
+            }
+            else if( !bForgiving )
+                return OGRERR_FAILURE;
+            break;
+
           default:
             if( poSrcFeature->GetFieldDefnRef(iField)->GetType()
                 == GetFieldDefnRef(iDstField)->GetType() )
