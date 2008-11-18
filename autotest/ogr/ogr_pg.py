@@ -1593,6 +1593,100 @@ def ogr_pg_38():
     ds.Destroy()
 
     return 'success'
+
+###############################################################################
+# Test support for named views
+
+def ogr_pg_39():
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if not gdaltest.pg_has_postgis:
+        gdaltest.pg_ds.ExecuteSQL( "CREATE VIEW testview AS SELECT * FROM table36_base" )
+        ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+        found = ogr_pg_check_layer_in_list(ds, 'testview')
+        if found is False:
+            gdaltest.post_reason( 'layer testview not listed' )
+            return 'fail'
+        ds.Destroy()
+        return 'success'
+
+    gdaltest.pg_ds.ExecuteSQL( "CREATE VIEW testview AS SELECT * FROM table37_inherited" )
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geometry_columns VALUES ( '', 'public', 'testview', 'wkb_geometry', 2, -1, 'POINT') ")
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO table37_inherited (col1, col2, wkb_geometry) VALUES ( 'a', 'b', GeomFromEWKT('POINT (0 1)') )" )
+
+    # Check for the layer
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    found = ogr_pg_check_layer_in_list(ds, 'testview')
+    if found is False:
+        gdaltest.post_reason( 'layer testview not listed' )
+        return 'fail'
+
+    lyr = ds.GetLayerByName( 'testview' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint:
+        return 'fail'
+
+    try:
+        if lyr.GetGeometryColumn() != 'wkb_geometry':
+            gdaltest.post_reason( 'wrong geometry column name' )
+            return 'fail'
+    except:
+        pass
+
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason( 'no feature')
+        return 'fail'
+
+    if feat.GetGeometryRef() is None or feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
+        gdaltest.post_reason( 'bad geometry %s' % feat.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    ds.Destroy()
+
+    # Test another geometry column
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geometry_columns VALUES ( '', 'public', 'testview', 'point25D', 3, -1, 'POINT') ")
+    gdaltest.pg_ds.ExecuteSQL( "UPDATE table37_inherited SET \"point25D\" = GeomFromEWKT('POINT (0 1 2)') " )
+
+    # Check for the layer
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    found = ogr_pg_check_layer_in_list(ds, 'testview')
+    if found is False:
+        gdaltest.post_reason( 'layer testview not listed' )
+        return 'fail'
+    found = ogr_pg_check_layer_in_list(ds, 'testview(point25D)')
+    if found is False:
+        gdaltest.post_reason( 'layer testview(point25D) not listed' )
+        return 'fail'
+
+    lyr = ds.GetLayerByName( 'testview(point25D)' )
+    if lyr is None:
+        return 'fail'
+    if gdaltest.pg_has_postgis and lyr.GetLayerDefn().GetGeomType() != ogr.wkbPoint25D:
+        return 'fail'
+
+    try:
+        if lyr.GetGeometryColumn() != 'point25D':
+            gdaltest.post_reason( 'wrong geometry column name' )
+            return 'fail'
+    except:
+        pass
+
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason( 'no feature')
+        return 'fail'
+
+    if feat.GetGeometryRef() is None or feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1 2)':
+        gdaltest.post_reason( 'bad geometry %s' % feat.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -1616,6 +1710,8 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table36_base' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table37_inherited' )
     gdaltest.pg_ds.ExecuteSQL( 'DROP TABLE table37_base')
+    gdaltest.pg_ds.ExecuteSQL( 'DROP VIEW testview')
+    gdaltest.pg_ds.ExecuteSQL( "DELETE FROM geometry_columns WHERE f_table_name='testview'")
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly2' )
@@ -1682,6 +1778,7 @@ gdaltest_list_internal = [
     ogr_pg_36_bis,
     ogr_pg_37,
     ogr_pg_38,
+    ogr_pg_39,
     ogr_pg_cleanup ]
 
 
