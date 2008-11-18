@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.27 2008/09/26 14:40:24 aboudreault Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.28 2008/11/17 22:06:21 aboudreault Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.28  2008/11/17 22:06:21  aboudreault
+ * Added support to use OFTDateTime/OFTDate/OFTTime type when compiled with
+ * OGR and fixed reading/writing support for these types.
+ *
  * Revision 1.27  2008/09/26 14:40:24  aboudreault
  * Fixed bug: MITAB doesn't support writing DateTime type (bug 1948)
  *
@@ -439,11 +443,23 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
         if( nWidth == 0 )
             nWidth = 32;
     }
+    else if( poField->GetType() == OFTDate )
+    {
+        eTABType = TABFDate;
+        if( nWidth == 0 )
+            nWidth = 10;
+    }
+    else if( poField->GetType() == OFTTime )
+    {
+        eTABType = TABFTime;
+        if( nWidth == 0 )
+            nWidth = 8;
+    }
     else if( poField->GetType() == OFTDateTime )
     {
         eTABType = TABFDateTime;
         if( nWidth == 0 )
-            nWidth = 10;
+            nWidth = 19;
     }
     else if( poField->GetType() == OFTString )
     {
