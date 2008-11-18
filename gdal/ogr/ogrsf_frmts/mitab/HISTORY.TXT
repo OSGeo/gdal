@@ -70,6 +70,10 @@ Version 2.0-dev (CVS)
 - mitab.h: Export MITABSpatialRef2CoordSys() and MITABCoordSys2SpatialRef()
   from the DLL.  Mostly for use in GDAL 
 
+- Added support to use OFTDateTime/OFTDate/OFTTime type when compiled with
+  OGR and fixed reading/writing support for these types. (Bug 1948 and 
+  GDAL ticket #2585)
+
 
 Version 1.7.0-beta1 (2007-02-29)
 --------------------------------
@@ -932,5 +936,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.222 2008/10/29 12:55:27 dmorissette Exp $
+$Id: HISTORY.TXT,v 1.223 2008/11/17 22:06:20 aboudreault Exp $
 ------------
