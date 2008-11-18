@@ -22,7 +22,7 @@ OBJ	= 	mitab_rawbinblock.obj mitab_mapheaderblock.obj \
 		mitab_ogr_datasource.obj mitab_geometry.obj \
 		mitab_tabseamless.obj
 
-EXTRAFLAGS = -I.. -I..\.. -DOGR
+EXTRAFLAGS = -I.. -I..\.. -DOGR -DMITAB_USE_OFTDATETIME
 GDAL_ROOT  =  ..\..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
