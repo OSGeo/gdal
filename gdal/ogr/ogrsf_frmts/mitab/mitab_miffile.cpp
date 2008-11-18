@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.48 2008/09/26 14:40:24 aboudreault Exp $
+ * $Id: mitab_miffile.cpp,v 1.49 2008/11/17 22:06:21 aboudreault Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.49  2008/11/17 22:06:21  aboudreault
+ * Added support to use OFTDateTime/OFTDate/OFTTime type when compiled with
+ * OGR and fixed reading/writing support for these types.
+ *
  * Revision 1.48  2008/09/26 14:40:24  aboudreault
  * Fixed bug: MITAB doesn't support writing DateTime type (bug 1948)
  *
@@ -1596,6 +1600,12 @@ int MIFFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
               case OFTDateTime:
                 eMapInfoType = TABFDateTime;
                 break;
+              case OFTDate:
+                eMapInfoType = TABFDate;
+                break;
+              case OFTTime:
+                eMapInfoType = TABFTime;
+                break;
               case OFTString:
               default:
                 eMapInfoType = TABFChar;
@@ -1725,7 +1735,12 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * DATE type (V450, returned as a string: "DD/MM/YYYY" or "YYYYMMDD")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTString);
+        poFieldDefn = new OGRFieldDefn(pszCleanName, 
+#ifdef MITAB_USE_OFTDATETIME
+                                                   OFTDate);
+#else
+                                                   OFTString);
+#endif
         poFieldDefn->SetWidth(10);
         m_nVersion = MAX(m_nVersion, 450);
         break;
@@ -1733,7 +1748,12 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * TIME type (v900, returned as a string: "HH:MM:SS" or "HHMMSSmmm")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTString);
+        poFieldDefn = new OGRFieldDefn(pszCleanName, 
+#ifdef MITAB_USE_OFTDATETIME
+                                                   OFTTime);
+#else
+                                                   OFTString);
+#endif
         poFieldDefn->SetWidth(9);
         m_nVersion = MAX(m_nVersion, 900);
         break;
@@ -1742,7 +1762,12 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
          * DATETIME type (v900, returned as a string: "DD/MM/YYYY HH:MM:SS",
          * "YYYY/MM/DD HH:MM:SS" or "YYYYMMDDHHMMSSmmm")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(pszCleanName, OFTString);
+        poFieldDefn = new OGRFieldDefn(pszCleanName, 
+#ifdef MITAB_USE_OFTDATETIME
+                                                   OFTDateTime);
+#else
+                                                   OFTString);
+#endif
         poFieldDefn->SetWidth(19);
         break;
         m_nVersion = MAX(m_nVersion, 900);
