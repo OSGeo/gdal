@@ -140,10 +140,7 @@ will be added to the baseline.  With <tt>BASELINE</tt> no GDAL or GeoTIFF
 tags will be written.  BASELINE is occationally useful when writing files to
 be read by applications intolerant of unrecognised tags.<p>
 
-<li> <b>BIGTIFF=YES</b>: Force creation of BigTIFF file. BigTIFF is a TIFF
-variant which can contain more than 4GiB of data (size of classic TIFF is
-limited by that value). This option available if GDAL is built with libtiff
-library version 4.0 or higher.<p>
+<li> <b>BIGTIFF=YES/NO/IF_NEEDED/IF_SAFER</b>: Control whether the created file is a BigTIFF or a classic TIFF.  YES forces BigTIFF.  NO forces classic TIFF.  IF_NEEDED will only create a BigTIFF if it is clearly needed (uncompressed, and image larger than 4GB).  IF_SAFER will create BigTIFF if the resulting file *might* exceed 4GB.  BigTIFF is a TIFF variant which can contain more than 4GiB of data (size of classic TIFF is limited by that value). This option available if GDAL is built with libtiff library version 4.0 or higher.  The default is IF_NEEDED.<p>
 
 <li> <b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a 
 new Byte file can be forced to be written as signed byte.<p>
