@@ -17,12 +17,15 @@ color space translation to RGB is done, the source color space is indicated in t
 SOURCE_COLOR_SPACE metedata of the IMAGE_STRUCTURE domain.<p>
 
 There is currently no support for georeferencing information or metadata for
-JPEG files. But if an ESRI world file exists with the .jgw, .jpgw/.jpegw or .wld suffixes,
-it will be read and used to establish the geotransform for the image. Overviews
-can be built for JPEG files as an external .ovr file.<p>
+JPEG files. But if an ESRI world file exists with the .jgw, .jpgw/.jpegw or 
+.wld suffixes, it will be read and used to establish the geotransform for 
+the image. If available a MapInfo .tab file will also be used for 
+georeferencing.  Overviews can be built for JPEG files as an external 
+.ovr file.<p>
 
-The driver also supports the "zlib compressed mask appended to the file" approach
-used by a few data providers to add a bitmask to identify pixels that are not valid data.
+The driver also supports the "zlib compressed mask appended to the file" 
+approach used by a few data providers to add a bitmask to identify pixels that 
+are not valid data.
 See <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15</a> for further details.<p>
 
 The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
