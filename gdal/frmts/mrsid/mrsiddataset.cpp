@@ -790,8 +790,8 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     int sceneUlXOff = nXOff / nZoomMag;
     int sceneUlYOff = nYOff / nZoomMag;
-    int sceneWidth  = (int)(nXSize * maxWidth / (double)maxWidthAtL0 + 0.99);
-    int sceneHeight = (int)(nYSize * maxHeight / (double)maxHeightAtL0 + 0.99);
+    int sceneWidth  = (int)(nXSize * (double) maxWidth / (double)maxWidthAtL0 + 0.99); 
+    int sceneHeight = (int)(nYSize * (double) maxHeight / (double)maxHeightAtL0 + 0.99); 
 
     if( (sceneUlXOff + sceneWidth) > (int) maxWidth )
         sceneWidth = maxWidth - sceneUlXOff;
