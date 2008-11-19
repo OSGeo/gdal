@@ -230,11 +230,23 @@ public:
     GDALFlushRasterCache( self );
   }
 
+  // Deprecated name
   GDALColorTableShadow *GetRasterColorTable() {
     return (GDALColorTableShadow*) GDALGetRasterColorTable( self );
   }
 
+  // Preferred name 
+  GDALColorTableShadow *GetColorTable() {
+    return (GDALColorTableShadow*) GDALGetRasterColorTable( self );
+  }
+
+  // Deprecated name
   int SetRasterColorTable( GDALColorTableShadow *arg ) {
+    return GDALSetRasterColorTable( self, arg );
+  }
+ 
+  // Preferred name.
+  int SetColorTable( GDALColorTableShadow *arg ) {
     return GDALSetRasterColorTable( self, arg );
   }
  
