@@ -1553,9 +1553,6 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_BIT:
         case SQL_TINYINT:
         case SQL_BIGINT:
-        case SQL_TYPE_DATE:
-        case SQL_TYPE_TIME:
-        case SQL_TYPE_TIMESTAMP:
 /*        case SQL_TYPE_UTCDATETIME:
         case SQL_TYPE_UTCTIME:*/
         case SQL_INTERVAL_MONTH:
@@ -1573,6 +1570,18 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_INTERVAL_MINUTE_TO_SECOND:
         case SQL_GUID:
             return SQL_C_CHAR;
+
+        case SQL_DATE:
+        case SQL_TYPE_DATE:
+            return SQL_C_DATE;
+
+        case SQL_TIME:
+        case SQL_TYPE_TIME:
+            return SQL_C_TIME;
+
+        case SQL_TIMESTAMP:
+        case SQL_TYPE_TIMESTAMP:
+            return SQL_C_TIMESTAMP;
 
         case SQL_BINARY:
         case SQL_VARBINARY:
