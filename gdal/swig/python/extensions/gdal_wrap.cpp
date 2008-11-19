@@ -3514,7 +3514,13 @@ SWIGINTERN void GDALRasterBandShadow_FlushCache(GDALRasterBandShadow *self){
 SWIGINTERN GDALColorTableShadow *GDALRasterBandShadow_GetRasterColorTable(GDALRasterBandShadow *self){
     return (GDALColorTableShadow*) GDALGetRasterColorTable( self );
   }
+SWIGINTERN GDALColorTableShadow *GDALRasterBandShadow_GetColorTable(GDALRasterBandShadow *self){
+    return (GDALColorTableShadow*) GDALGetRasterColorTable( self );
+  }
 SWIGINTERN int GDALRasterBandShadow_SetRasterColorTable(GDALRasterBandShadow *self,GDALColorTableShadow *arg){
+    return GDALSetRasterColorTable( self, arg );
+  }
+SWIGINTERN int GDALRasterBandShadow_SetColorTable(GDALRasterBandShadow *self,GDALColorTableShadow *arg){
     return GDALSetRasterColorTable( self, arg );
   }
 SWIGINTERN GDALRasterAttributeTableShadow *GDALRasterBandShadow_GetDefaultRAT(GDALRasterBandShadow *self){ 
@@ -3707,7 +3713,9 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          const char *dst_wkt=NULL,
                          GDALResampleAlg eResampleAlg=GRA_NearestNeighbour,
                          double WarpMemoryLimit=0.0,
-                         double maxerror = 0.0) {
+                         double maxerror = 0.0,
+			 GDALProgressFunc callback = NULL,
+                     	 void* callback_data=NULL) {
 
     CPLErrorReset();
 
@@ -3718,8 +3726,8 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                                      eResampleAlg,
                                      WarpMemoryLimit,
                                      maxerror,
-                                     NULL,
-                                     NULL,
+                                     callback,
+                                     callback_data,
                                      NULL);
     
     return err;
@@ -10618,6 +10626,36 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Band_GetColorTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  GDALColorTableShadow *result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Band_GetColorTable",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetColorTable" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  {
+    result = (GDALColorTableShadow *)GDALRasterBandShadow_GetColorTable(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Band_SetRasterColorTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -10643,6 +10681,45 @@ SWIGINTERN PyObject *_wrap_Band_SetRasterColorTable(PyObject *SWIGUNUSEDPARM(sel
   arg2 = reinterpret_cast< GDALColorTableShadow * >(argp2);
   {
     result = (int)GDALRasterBandShadow_SetRasterColorTable(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Band_SetColorTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  GDALColorTableShadow *arg2 = (GDALColorTableShadow *) 0 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Band_SetColorTable",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetColorTable" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Band_SetColorTable" "', argument " "2"" of type '" "GDALColorTableShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALColorTableShadow * >(argp2);
+  {
+    result = (int)GDALRasterBandShadow_SetColorTable(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -12735,6 +12812,8 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   GDALResampleAlg arg5 = (GDALResampleAlg) GRA_NearestNeighbour ;
   double arg6 = (double) 0.0 ;
   double arg7 = (double) 0.0 ;
+  GDALProgressFunc arg8 = (GDALProgressFunc) NULL ;
+  void *arg9 = (void *) NULL ;
   CPLErr result;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12759,8 +12838,16 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
   PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO|OOOOO:ReprojectImage",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  if (!PyArg_ParseTuple(args,(char *)"OO|OOOOOOO:ReprojectImage",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ReprojectImage" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
@@ -12806,8 +12893,44 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
     } 
     arg7 = static_cast< double >(val7);
   }
+  if (obj7) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj7 && obj7 != Py_None ) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj7, 
+          (void**)&cbfunction, 
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int, 
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg8 = GDALTermProgress;
+        } else {
+          if (!PyFunction_Check(obj7)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj7;
+          arg8 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj8) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      
+      psProgressInfo->psPyCallbackData = obj8 ;
+      arg9 = psProgressInfo;
+      
+    }
+  }
   {
-    result = (CPLErr)ReprojectImage(arg1,arg2,(char const *)arg3,(char const *)arg4,arg5,arg6,arg7);
+    result = (CPLErr)ReprojectImage(arg1,arg2,(char const *)arg3,(char const *)arg4,arg5,arg6,arg7,arg8,arg9);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -12818,10 +12941,22 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
   return resultobj;
 fail:
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
   return NULL;
 }
 
@@ -15210,7 +15345,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_WriteRaster", (PyCFunction) _wrap_Band_WriteRaster, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Band_FlushCache", _wrap_Band_FlushCache, METH_VARARGS, NULL},
 	 { (char *)"Band_GetRasterColorTable", _wrap_Band_GetRasterColorTable, METH_VARARGS, NULL},
+	 { (char *)"Band_GetColorTable", _wrap_Band_GetColorTable, METH_VARARGS, NULL},
 	 { (char *)"Band_SetRasterColorTable", _wrap_Band_SetRasterColorTable, METH_VARARGS, NULL},
+	 { (char *)"Band_SetColorTable", _wrap_Band_SetColorTable, METH_VARARGS, NULL},
 	 { (char *)"Band_GetDefaultRAT", _wrap_Band_GetDefaultRAT, METH_VARARGS, NULL},
 	 { (char *)"Band_SetDefaultRAT", _wrap_Band_SetDefaultRAT, METH_VARARGS, NULL},
 	 { (char *)"Band_GetMaskBand", _wrap_Band_GetMaskBand, METH_VARARGS, NULL},
