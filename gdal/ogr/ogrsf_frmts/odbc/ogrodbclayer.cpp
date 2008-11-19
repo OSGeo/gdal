@@ -119,7 +119,7 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
         if( pszGeomColumn != NULL 
             && EQUAL(poStmt->GetColName(iCol),pszGeomColumn) )
             continue;
-       
+
         switch( CPLODBCStatement::GetTypeMapping(poStmt->GetColType(iCol)) )
         {
             case SQL_C_SSHORT:
@@ -142,6 +142,18 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
             case SQL_C_DOUBLE:
                 oField.SetType( OFTReal );
                 oField.SetWidth( 0 );
+                break;
+
+            case SQL_C_DATE:
+                oField.SetType( OFTDate );
+                break;
+
+            case SQL_C_TIME:
+                oField.SetType( OFTTime );
+                break;
+
+            case SQL_C_TIMESTAMP:
+                oField.SetType( OFTDateTime );
                 break;
 
             default:

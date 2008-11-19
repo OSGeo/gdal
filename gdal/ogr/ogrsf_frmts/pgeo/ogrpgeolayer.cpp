@@ -156,6 +156,18 @@ CPLErr OGRPGeoLayer::BuildFeatureDefn( const char *pszLayerName,
             oField.SetWidth( 0 );
             break;
 
+          case SQL_C_DATE:
+            oField.SetType( OFTDate );
+            break;
+
+          case SQL_C_TIME:
+            oField.SetType( OFTTime );
+            break;
+
+          case SQL_C_TIMESTAMP:
+            oField.SetType( OFTDateTime );
+            break;
+
           default:
             /* leave it as OFTString */;
         }
