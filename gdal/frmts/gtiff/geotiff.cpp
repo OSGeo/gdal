@@ -4916,45 +4916,62 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     nJpegQuality = GTiffGetJpegQuality(papszParmList);
 
 /* -------------------------------------------------------------------- */
-/*      Check if we are producing an uncompressed file and it is        */
-/*      certain to be larger than 4GB.                                  */
+/*      Compute the uncompressed size.                                  */
 /* -------------------------------------------------------------------- */
-    if( nCompression == COMPRESSION_NONE )
+    double  dfUncompressedImageSize;
+
+    dfUncompressedImageSize = 
+        nXSize * ((double)nYSize) * nBands * (GDALGetDataTypeSize(eType)/8);
+
+    if( nCompression == COMPRESSION_NONE 
+        && dfUncompressedImageSize > 4200000000.0 )
     {
-        if( nXSize * ((double)nYSize) * nBands * (GDALGetDataTypeSize(eType)/8)
-            > 4200000000.0 )
-        {
 #ifndef BIGTIFF_SUPPORT
-            CPLError( CE_Failure, CPLE_NotSupported, 
-                      "A %d pixels x %d lines x %d bands %s image would be larger than 4GB\n"
-                      "but this is the largest size a TIFF can be.  Creation failed.",
-                      nXSize, nYSize, nBands, GDALGetDataTypeName(eType) );
-            return NULL;
-#else
-            CPLDebug( "GTiff", 
-                 "Automatically flipping to Bigtiff due to large file size" );
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "A %d pixels x %d lines x %d bands %s image would be larger than 4GB\n"
+                  "but this is the largest size a TIFF can be, and BigTIFF is unavailable.\n"
+                  "Creation failed.",
+                  nXSize, nYSize, nBands, GDALGetDataTypeName(eType) );
+        return NULL;
+#endif
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Should the file be created as a bigtiff file?                   */
+/* -------------------------------------------------------------------- */
+    const char *pszBIGTIFF = CSLFetchNameValue(papszParmList, "BIGTIFF");
+
+    if( pszBIGTIFF == NULL )
+        pszBIGTIFF = "IF_NEEDED";
+
+    if( EQUAL(pszBIGTIFF,"IF_NEEDED") )
+    {
+        if( nCompression == COMPRESSION_NONE 
+            && dfUncompressedImageSize > 4200000000.0 )
             bCreateBigTIFF = TRUE;
-#endif
-        }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Create BigTIFF file on user's request, even if total image      */
-/*      size is enough for ClassicTIFF.                                 */
-/* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszParmList, "BigTIFF") != NULL )
+    else if( EQUAL(pszBIGTIFF,"IF_SAFER") )
     {
-        bCreateBigTIFF = CSLFetchBoolean( papszParmList, "BIGTIFF", 
-                                          bCreateBigTIFF );
-#ifndef BIGTIFF_SUPPORT
-        if( bCreateBigTIFF )
-            CPLError( CE_Warning, CPLE_NotSupported,
-                      "BIGTIFF requested, but GDAL built without BigTIFF\n"
-                      "enabled libtiff, request ignored." );
-        bCreateBigTIFF = FALSE;
-#endif
+        if( dfUncompressedImageSize > 2000000000.0 )
+            bCreateBigTIFF = TRUE;
     }
 
+    else
+        bCreateBigTIFF = CSLTestBoolean( pszBIGTIFF );
+
+#ifndef BIGTIFF_SUPPORT
+    if( bCreateBigTIFF )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "BigTIFF requested, but GDAL built without BigTIFF\n"
+                  "enabled libtiff, request ignored." );
+        bCreateBigTIFF = FALSE;
+    }
+#endif
+
+    if( bCreateBigTIFF )
+        CPLDebug( "GTiff", "File being created as a BigTIFF." );
+    
 /* -------------------------------------------------------------------- */
 /*      Check if the user wishes a particular endianness                */
 /* -------------------------------------------------------------------- */
@@ -6532,7 +6549,12 @@ void GDALRegister_GTiff()
 "       <Value>SIGNEDBYTE</Value>"
 "   </Option>"
 #ifdef BIGTIFF_SUPPORT
-"   <Option name='BIGTIFF' type='boolean' description='Force creation of BigTIFF file'/>"
+"   <Option name='BIGTIFF' type='string-select' description='Force creation of BigTIFF file'>"
+"     <Value>YES</Value>"
+"     <Value>NO</Value>"
+"     <Value>IF_NEEDED</Value>"
+"     <Value>IF_SAFER</Value>"
+"   </Option>"
 #endif
 "   <Option name='ENDIANNESS' type='string-select' default='NATIVE' description='Force endianness of created file. For DEBUG purpose mostly'>"
 "       <Value>NATIVE</Value>"
