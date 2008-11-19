@@ -1071,7 +1071,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
     {
         if( pszStringRet == NULL )
         {
-            sprintf( szNumberString, "%d", nIntRet );
+            sprintf( szNumberString, "%.14g", dfDoubleRet );
             pszStringRet = szNumberString;
         }
         
