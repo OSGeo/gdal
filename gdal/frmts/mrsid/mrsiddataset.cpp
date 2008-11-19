@@ -809,8 +809,8 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     int sceneUlXOff = nXOff / nZoomMag;
     int sceneUlYOff = nYOff / nZoomMag;
-    int sceneWidth  = (int)(nXSize * maxWidth / (double)maxWidthAtL0 + 0.99);
-    int sceneHeight = (int)(nYSize * maxHeight / (double)maxHeightAtL0 + 0.99);
+    int sceneWidth  = (int)(nXSize * (double) maxWidth / (double)maxWidthAtL0 + 0.99);
+    int sceneHeight = (int)(nYSize * (double) maxHeight / (double)maxHeightAtL0 + 0.99);
 
     if( (sceneUlXOff + sceneWidth) > (int) maxWidth )
         sceneWidth = maxWidth - sceneUlXOff;
@@ -1414,6 +1414,9 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug( "MrSID",
               "Opened image: width %d, height %d, bands %d",
               poDS->nRasterXSize, poDS->nRasterYSize, poDS->nBands );
+
+    if( poDS->nBands > 1 )
+        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
