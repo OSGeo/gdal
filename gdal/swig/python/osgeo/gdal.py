@@ -774,9 +774,17 @@ class Band(MajorObject):
         """GetRasterColorTable(self) -> ColorTable"""
         return _gdal.Band_GetRasterColorTable(*args)
 
+    def GetColorTable(*args):
+        """GetColorTable(self) -> ColorTable"""
+        return _gdal.Band_GetColorTable(*args)
+
     def SetRasterColorTable(*args):
         """SetRasterColorTable(self, ColorTable arg) -> int"""
         return _gdal.Band_SetRasterColorTable(*args)
+
+    def SetColorTable(*args):
+        """SetColorTable(self, ColorTable arg) -> int"""
+        return _gdal.Band_SetColorTable(*args)
 
     def GetDefaultRAT(*args):
         """GetDefaultRAT(self) -> RasterAttributeTable"""
