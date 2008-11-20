@@ -216,6 +216,8 @@ HFAEvaluateXFormStack( int nStepCount, int bForward,
                        Efga_Polynomial *pasPolyList,
                        double *pdfX, double *pdfY );
 
+char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
+
 /* -------------------------------------------------------------------- */
 /*      data types.                                                     */
 /* -------------------------------------------------------------------- */
