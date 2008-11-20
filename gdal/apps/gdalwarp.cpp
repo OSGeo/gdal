@@ -111,7 +111,7 @@ available GCPs.</dd>
 <dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for
 transformation approximation (in pixel units - defaults to 0.125).</dd>
 <dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced
-extents of output file to be created.</dd>
+extents of output file to be created (in target SRS).</dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in
 target georeferenced units)</dd>
 <dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
