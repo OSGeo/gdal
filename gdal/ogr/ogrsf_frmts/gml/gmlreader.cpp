@@ -186,10 +186,14 @@ int GMLReader::SetupParser()
 //    m_poSAXReader->setDoSchema(true);
 //    m_poSAXReader->setValidationSchemaFullChecking(true);
 #else
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/validation"), false);
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/namespaces"), false);
+        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreValidation, false);
+
+#if XERCES_VERSION_MAJOR >= 3
+        m_poSAXReader->setFeature( XMLUni::fgXercesSchema, false);
+#else
+        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, false);
+#endif
+
 #endif
     }
     catch (...)
