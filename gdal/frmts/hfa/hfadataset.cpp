@@ -2677,6 +2677,17 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->ReadProjection();
 
 /* -------------------------------------------------------------------- */
+/*      Read the camera model as metadata, if present.                  */
+/* -------------------------------------------------------------------- */
+    char **papszCM = HFAReadCameraModel( hHFA );
+
+    if( papszCM != NULL )
+    {
+        poDS->SetMetadata( papszCM, "CAMERA_MODEL" );
+        CSLDestroy( papszCM );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < poDS->nBands; i++ )
