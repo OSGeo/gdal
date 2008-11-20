@@ -130,7 +130,7 @@ AC_CHECK_FUNCS(strtof)
 AC_CHECK_FUNCS(getcwd)
 
 dnl Check for declarations
-AC_CHECK_DECLS([nan, nanf])
+AC_CHECK_DECLS(strtof)
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.
