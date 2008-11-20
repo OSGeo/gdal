@@ -53,6 +53,7 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
     
     nFilePos = nPos;
     bDirty = FALSE;
+    bIsMIFObject = FALSE;
 
     poParent = poParentIn;
     poPrev = poPrevIn;
@@ -126,6 +127,7 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
     psHFA = psHFAIn;
     
     nFilePos = 0;
+    bIsMIFObject = FALSE;
 
     poParent = poParentIn;
     poPrev = poNext = poChild = NULL;
@@ -166,6 +168,75 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
 }
 
 /************************************************************************/
+/*                              HFAEntry()                              */
+/*                                                                      */
+/*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
+/************************************************************************/
+
+HFAEntry::HFAEntry( HFAEntry * poContainer,
+                    const char *pszMIFObjectPath )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Initialize Entry                                                */
+/* -------------------------------------------------------------------- */
+    nFilePos = 0;
+
+    poParent = poPrev = poNext = poChild = NULL;
+
+    bIsMIFObject = TRUE;
+
+    nDataPos = nDataSize = 0;
+    nNextPos = nChildPos = 0;
+
+    memset( szName, 0, 64 );
+
+    pabyData = NULL;
+    poType = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create a dummy HFAInfo_t.                                       */
+/* -------------------------------------------------------------------- */
+    psHFA = (HFAInfo_t *) CPLCalloc(sizeof(HFAInfo_t),1);
+
+    psHFA->eAccess = HFA_ReadOnly;
+    psHFA->bTreeDirty = FALSE;
+    psHFA->poRoot = this;
+
+    psHFA->poDictionary = new HFADictionary( 
+        poContainer->GetStringField( 
+            CPLString().Printf("%s.%s", pszMIFObjectPath, "MIFDictionary" ) ) );
+
+/* -------------------------------------------------------------------- */
+/*      Work out the type for this MIFObject.                           */
+/* -------------------------------------------------------------------- */
+    memset( szType, 0, 32 );
+    strncpy( szType, 
+             poContainer->GetStringField( 
+                 CPLString().Printf("%s.%s", pszMIFObjectPath, "type.string") ),
+             32 );
+    
+    poType = psHFA->poDictionary->FindType( szType );
+
+/* -------------------------------------------------------------------- */
+/*      Find the desired field.                                         */
+/* -------------------------------------------------------------------- */
+    GInt32 nMIFObjectSize;
+    const GByte *pabyRawData = (const GByte *) 
+        poContainer->GetStringField( 
+            CPLString().Printf("%s.%s", pszMIFObjectPath, "MIFObject" ) );
+
+    // we rudely look before the field data to get at the pointer/size info
+    memcpy( &nMIFObjectSize, pabyRawData-8, 4 );
+    HFAStandard( 4, &nMIFObjectSize );
+
+    nDataSize = nMIFObjectSize;
+    pabyData = (GByte *) VSIMalloc(nDataSize);
+
+    memcpy( pabyData, pabyRawData, nDataSize );
+}
+
+/************************************************************************/
 /*                             ~HFAEntry()                              */
 /*                                                                      */
 /*      Ensure that children are cleaned up when this node is           */
@@ -182,6 +253,12 @@ HFAEntry::~HFAEntry()
 
     if( poChild != NULL )
         delete poChild;
+
+    if( bIsMIFObject )
+    {
+        delete psHFA->poDictionary;
+        CPLFree( psHFA );
+    }
 }
 
 /************************************************************************/
@@ -849,3 +926,4 @@ void HFAEntry::MarkDirty()
     bDirty = TRUE;
     psHFA->bTreeDirty = TRUE;
 }
+
