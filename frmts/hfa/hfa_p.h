@@ -222,6 +222,8 @@ class HFAEntry
     int 	GetFieldValue( const char *, char, void * );
     CPLErr      SetFieldValue( const char *, char, void * );
 
+    int         bIsMIFObject;
+
 public:
     		HFAEntry( HFAInfo_t * psHFA, GUInt32 nPos,
                           HFAEntry * poParent, HFAEntry *poPrev);
@@ -230,6 +232,8 @@ public:
                           const char *pszNodeName,
                           const char *pszTypeName,
                           HFAEntry *poParent );
+
+                HFAEntry( HFAEntry *poContainer, const char *pszMIFObjectPath );
                           
     virtual     ~HFAEntry();                
 
