@@ -3304,15 +3304,84 @@ char **HFAReadCameraModel( HFAHandle hHFA )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Fetch the projection info.                                      */
+/*      Create a pseudo-entry for the MIFObject with the                */
+/*      outputProjection.                                               */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
     HFAEntry *poProjInfo = new HFAEntry( poXForm, "outputProjection" );
 
-    poProjInfo->DumpFieldValues( stdout, "" );
+/* -------------------------------------------------------------------- */
+/*      Fetch the datum.                                                */
+/* -------------------------------------------------------------------- */
+    Eprj_Datum sDatum;
+
+    memset( &sDatum, 0, sizeof(sDatum));
+    
+    sDatum.datumname = 
+        (char *) poProjInfo->GetStringField("earthModel.datum.datumname");
+    sDatum.type = (Eprj_DatumType) poProjInfo->GetIntField(
+        "earthModel.datum.type");
+
+    for( i = 0; i < 7; i++ )
+    {
+        char	szFieldName[60];
+
+        sprintf( szFieldName, "earthModel.datum.params[%d]", i );
+        sDatum.params[i] = poProjInfo->GetDoubleField(szFieldName);
+    }
+
+    sDatum.gridname = (char *) 
+        poProjInfo->GetStringField("earthModel.datum.gridname");
+    
+/* -------------------------------------------------------------------- */
+/*      Fetch the projection parameters.                                */
+/* -------------------------------------------------------------------- */
+    Eprj_ProParameters sPro;
+
+    memset( &sPro, 0, sizeof(sPro) );
+
+    sPro.proType = (Eprj_ProType) poProjInfo->GetIntField("projectionObject.proType");
+    sPro.proNumber = poProjInfo->GetIntField("projectionObject.proNumber");
+    sPro.proExeName = (char *) poProjInfo->GetStringField("projectionObject.proExeName");
+    sPro.proName = (char *) poProjInfo->GetStringField("projectionObject.proName");
+    sPro.proZone = poProjInfo->GetIntField("projectionObject.proZone");
+
+    for( i = 0; i < 15; i++ )
+    {
+        char	szFieldName[30];
+
+        sprintf( szFieldName, "projectionObject.proParams[%d]", i );
+        sPro.proParams[i] = poProjInfo->GetDoubleField(szFieldName);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the spheroid.                                             */
+/* -------------------------------------------------------------------- */
+    sPro.proSpheroid.sphereName = (char *)
+        poProjInfo->GetStringField("earthModel.proSpheroid.sphereName");
+    sPro.proSpheroid.a = poProjInfo->GetDoubleField("earthModel.proSpheroid.a");
+    sPro.proSpheroid.b = poProjInfo->GetDoubleField("earthModel.proSpheroid.b");
+    sPro.proSpheroid.eSquared =
+        poProjInfo->GetDoubleField("earthModel.proSpheroid.eSquared");
+    sPro.proSpheroid.radius =
+        poProjInfo->GetDoubleField("earthModel.proSpheroid.radius");
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the projection info.                                      */
+/* -------------------------------------------------------------------- */
+    char *pszProjection;
+
+//    poProjInfo->DumpFieldValues( stdout, "" );
+
+    pszProjection = HFAPCSStructToWKT( &sDatum, &sPro, NULL, NULL );
+
+    if( pszProjection )
+    {
+        papszMD = 
+            CSLSetNameValue( papszMD, "outputProjection", pszProjection );
+        CPLFree( pszProjection );
+    }
 
     delete poProjInfo;
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the horizontal units.                                     */

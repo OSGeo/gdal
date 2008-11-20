@@ -2050,46 +2050,28 @@ static int ESRIToUSGSZone( int nESRIZone )
 }
 
 /************************************************************************/
-/*                           ReadProjection()                           */
+/*                           PCSStructToWKT()                           */
+/*                                                                      */
+/*      Convert the datum, proparameters and mapinfo structures into    */
+/*      WKT format.                                                     */
 /************************************************************************/
 
-CPLErr HFADataset::ReadProjection()
+char *
+HFAPCSStructToWKT( const Eprj_Datum *psDatum,
+                   const Eprj_ProParameters *psPro,
+                   const Eprj_MapInfo *psMapInfo,
+                   HFAEntry *poMapInformation )
 
 {
-    const Eprj_Datum	      *psDatum;
-    const Eprj_ProParameters  *psPro;
-    const Eprj_MapInfo        *psMapInfo;
-    OGRSpatialReference        oSRS;
-    char *pszPE_COORDSYS;
+    OGRSpatialReference oSRS;
+    char *pszProjection = NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Special logic for PE string in ProjectionX node.                */
-/* -------------------------------------------------------------------- */
-    pszPE_COORDSYS = HFAGetPEString( hHFA );
-    if( pszPE_COORDSYS != NULL 
-        && oSRS.SetFromUserInput( pszPE_COORDSYS ) == OGRERR_NONE )
-    {
-        CPLFree( pszPE_COORDSYS );
-
-        oSRS.morphFromESRI();
-        oSRS.Fixup();
-
-        CPLFree( pszProjection );
-        pszProjection = NULL;
-        oSRS.exportToWkt( &pszProjection );
-        
-        return CE_None;
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      General case for Erdas style projections.                       */
 /*                                                                      */
 /*      We make a particular effort to adapt the mapinfo->proname as    */
 /*      the PROJCS[] name per #2422.                                    */
 /* -------------------------------------------------------------------- */
-    psDatum = HFAGetDatum( hHFA );
-    psPro = HFAGetProParameters( hHFA );
-    psMapInfo = HFAGetMapInfo( hHFA );
 
     if( psPro == NULL && psMapInfo != NULL )
     {
@@ -2098,7 +2080,7 @@ CPLErr HFADataset::ReadProjection()
 
     else if( psPro == NULL )
     {
-        return CE_Failure;
+        return NULL;
     }
 
     else if( psPro->proType == EPRJ_EXTERNAL )
@@ -2123,16 +2105,7 @@ CPLErr HFADataset::ReadProjection()
 /*      units from meters.  Erdas linear projection values are          */
 /*      always in meters.                                               */
 /* -------------------------------------------------------------------- */
-    HFAEntry *poMapInformation = NULL;
     int iUnitIndex = 0;
-
-    // If we don't have "Map_Info" entry, look for "MapInformation" node
-    // which has at least the units. 
-    if( psMapInfo == NULL ) 
-    {
-        HFABand *poBand = hHFA->papoBand[0];
-        poMapInformation = poBand->poNode->GetNamedChild("MapInformation");
-    }
 
     if( oSRS.IsProjected() || oSRS.IsLocal() )
     {
@@ -2167,19 +2140,16 @@ CPLErr HFADataset::ReadProjection()
     {
         if( oSRS.IsLocal() )
         {
-            CPLFree( pszProjection );
-            pszProjection = NULL;
-            
             if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
-                return CE_None;
+                return pszProjection;
             else
             {
                 pszProjection = NULL;
-                return CE_Failure;
+                return NULL;
             }
         }
         else
-            return CE_Failure;
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2521,16 +2491,71 @@ CPLErr HFADataset::ReadProjection()
 /* -------------------------------------------------------------------- */
 /*      Get the WKT representation of the coordinate system.            */
 /* -------------------------------------------------------------------- */
-    CPLFree( pszProjection );
-    pszProjection = NULL;
-
     if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
-        return CE_None;
+        return pszProjection;
     else
     {
-        pszProjection = NULL;
-        return CE_Failure;
+        return NULL;
     }
+}
+
+/************************************************************************/
+/*                           ReadProjection()                           */
+/************************************************************************/
+
+CPLErr HFADataset::ReadProjection()
+
+{
+    const Eprj_Datum	      *psDatum;
+    const Eprj_ProParameters  *psPro;
+    const Eprj_MapInfo        *psMapInfo;
+    OGRSpatialReference        oSRS;
+    char *pszPE_COORDSYS;
+
+/* -------------------------------------------------------------------- */
+/*      Special logic for PE string in ProjectionX node.                */
+/* -------------------------------------------------------------------- */
+    pszPE_COORDSYS = HFAGetPEString( hHFA );
+    if( pszPE_COORDSYS != NULL 
+        && oSRS.SetFromUserInput( pszPE_COORDSYS ) == OGRERR_NONE )
+    {
+        CPLFree( pszPE_COORDSYS );
+
+        oSRS.morphFromESRI();
+        oSRS.Fixup();
+
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+        oSRS.exportToWkt( &pszProjection );
+        
+        return CE_None;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      General case for Erdas style projections.                       */
+/*                                                                      */
+/*      We make a particular effort to adapt the mapinfo->proname as    */
+/*      the PROJCS[] name per #2422.                                    */
+/* -------------------------------------------------------------------- */
+    psDatum = HFAGetDatum( hHFA );
+    psPro = HFAGetProParameters( hHFA );
+    psMapInfo = HFAGetMapInfo( hHFA );
+
+    HFAEntry *poMapInformation = NULL;
+    if( psMapInfo == NULL ) 
+    {
+        HFABand *poBand = hHFA->papoBand[0];
+        poMapInformation = poBand->poNode->GetNamedChild("MapInformation");
+    }
+
+    CPLFree( pszProjection );
+    pszProjection = HFAPCSStructToWKT( psDatum, psPro, psMapInfo, 
+                                       poMapInformation );
+
+    if( pszProjection != NULL )
+        return CE_None;
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
