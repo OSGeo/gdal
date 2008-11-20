@@ -218,6 +218,12 @@ HFAEvaluateXFormStack( int nStepCount, int bForward,
 
 char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
 
+char *
+HFAPCSStructToWKT( const Eprj_Datum *psDatum,
+                   const Eprj_ProParameters *psPro,
+                   const Eprj_MapInfo *psMapInfo,
+                   HFAEntry *poMapInformation );
+
 /* -------------------------------------------------------------------- */
 /*      data types.                                                     */
 /* -------------------------------------------------------------------- */
