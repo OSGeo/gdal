@@ -898,7 +898,7 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
 }
 
 /************************************************************************/
-/*                        HFAInvGeoTransform()                          */
+/*                         HFAInvGeoTransform()                         */
 /************************************************************************/
 
 static int HFAInvGeoTransform( double *gt_in, double *gt_out )
@@ -932,7 +932,7 @@ static int HFAInvGeoTransform( double *gt_in, double *gt_out )
 }
 
 /************************************************************************/
-/*                       int HFAGetGeoTransform()                       */
+/*                         HFAGetGeoTransform()                         */
 /************************************************************************/
 
 int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
@@ -3245,6 +3245,112 @@ CPLErr HFAWriteXFormStack( HFAHandle hHFA, int nBand, int nXFormCount,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                         HFAReadCameraModel()                         */
+/************************************************************************/
+
+char **HFAReadCameraModel( HFAHandle hHFA )
+    
+{
+    if( hHFA->nBands == 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Get the camera model node, and confirm it's type.               */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poXForm;
+
+    poXForm = 
+        hHFA->papoBand[0]->poNode->GetNamedChild( "MapToPixelXForm.XForm0" );
+    if( poXForm == NULL )
+        return NULL;
+
+    if( !EQUAL(poXForm->GetType(),"Camera_ModelX") )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Convert the values to metadata.                                 */
+/* -------------------------------------------------------------------- */
+    const char *pszValue;
+    int i;
+    char **papszMD = NULL;
+    static const char *apszFields[] = { 
+        "direction", "refType", "demsource", "PhotoDirection", "RotationSystem",
+        "demfilename", "demzunits", 
+        "forSrcAffine[0]", "forSrcAffine[1]", "forSrcAffine[2]", 
+        "forSrcAffine[3]", "forSrcAffine[4]", "forSrcAffine[5]", 
+        "forDstAffine[0]", "forDstAffine[1]", "forDstAffine[2]", 
+        "forDstAffine[3]", "forDstAffine[4]", "forDstAffine[5]", 
+        "invSrcAffine[0]", "invSrcAffine[1]", "invSrcAffine[2]", 
+        "invSrcAffine[3]", "invSrcAffine[4]", "invSrcAffine[5]", 
+        "invDstAffine[0]", "invDstAffine[1]", "invDstAffine[2]", 
+        "invDstAffine[3]", "invDstAffine[4]", "invDstAffine[5]", 
+        "z_mean", "lat0", "lon0", 
+        "coeffs[0]", "coeffs[1]", "coeffs[2]", 
+        "coeffs[3]", "coeffs[4]", "coeffs[5]", 
+        "coeffs[6]", "coeffs[7]", "coeffs[8]", 
+        "LensDistortion[0]", "LensDistortion[1]", "LensDistortion[2]", 
+        NULL };
+
+    for( i = 0; apszFields[i] != NULL; i++ )
+    {
+        pszValue = poXForm->GetStringField( apszFields[i] );
+        if( pszValue == NULL )
+            pszValue = "";
+
+        papszMD = CSLSetNameValue( papszMD, apszFields[i], pszValue );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the projection info.                                      */
+/* -------------------------------------------------------------------- */
+#ifdef notdef
+    HFAEntry *poProjInfo = new HFAEntry( poXForm, "outputProjection" );
+
+    poProjInfo->DumpFieldValues( stdout, "" );
+
+    delete poProjInfo;
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the horizontal units.                                     */
+/* -------------------------------------------------------------------- */
+    pszValue = poXForm->GetStringField( "outputHorizontalUnits.string" );
+    if( pszValue == NULL )
+        pszValue = "";
+    
+    papszMD = CSLSetNameValue( papszMD, "outputHorizontalUnits", pszValue );
+    
+/* -------------------------------------------------------------------- */
+/*      Fetch the elevationinfo.                                        */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poElevInfo = new HFAEntry( poXForm, "outputElevationInfo" );
+    //poElevInfo->DumpFieldValues( stdout, "" );
+
+    if( poElevInfo->GetDataSize() != 0 )
+    {
+        static const char *apszEFields[] = { 
+            "verticalDatum.datumname", 
+            "verticalDatum.type",
+            "elevationUnit",
+            "elevationType",
+            NULL };
+
+        for( i = 0; apszEFields[i] != NULL; i++ )
+        {
+            pszValue = poElevInfo->GetStringField( apszEFields[i] );
+            if( pszValue == NULL )
+                pszValue = "";
+            
+            papszMD = CSLSetNameValue( papszMD, apszEFields[i], pszValue );
+        }
+    }
+
+    delete poElevInfo;
+
+    return papszMD;
 }
 
 /************************************************************************/
