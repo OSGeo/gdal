@@ -1451,6 +1451,18 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check for GeoRaster in the local tree.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for OCI])
+if test "$with_oci" = yes -o x"$with_oci" = x ; then
+    OPT_GDAL_FORMATS="georaster $OPT_GDAL_FORMATS"
+    AC_MSG_RESULT([enabled])
+else
+    AC_MSG_RESULT([disabled by user])
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check for GRIB in the local tree.
 dnl ---------------------------------------------------------------------------
 
