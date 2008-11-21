@@ -89,22 +89,27 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         // Failure is likely related to no write permissions to
         // system-wide default location, so try to install to HOME
        
-        // Read HOME location
-        char* pszEnvHome = NULL;
-        pszEnvHome = getenv("HOME");
+        static char* pszEnvIni = NULL;
+        if (pszEnvIni == NULL)
+        {
+            // Read HOME location
+            char* pszEnvHome = NULL;
+            pszEnvHome = getenv("HOME");
 
-        CPLAssert( NULL != pszEnvHome );
-        CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
+            CPLAssert( NULL != pszEnvHome );
+            CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
 
-        // Set ODBCSYSINI variable pointing to HOME location
-        char* pszEnvIni = (char *)CPLMalloc( strlen(pszEnvHome) + 12 );
+            // Set ODBCSYSINI variable pointing to HOME location
+            pszEnvIni = (char *)CPLMalloc( strlen(pszEnvHome) + 12 );
 
-        sprintf( pszEnvIni, "ODBCSYSINI=%s", pszEnvHome );
-        putenv( pszEnvIni );
+            sprintf( pszEnvIni, "ODBCSYSINI=%s", pszEnvHome );
+            /* a 'man putenv' shows that we cannot free pszEnvIni */
+            /* because the pointer is used directly by putenv in old glibc */
+            putenv( pszEnvIni );
 
-        CPLDebug( "ODBC", pszEnvIni );
-        //CPLFree( pszEnvIni );
-        
+            CPLDebug( "ODBC", pszEnvIni );
+        }
+
         // Try to install ODBC driver in new location
         if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
                 ODBC_FILENAME_MAX, NULL, fRequest,
