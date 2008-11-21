@@ -163,12 +163,16 @@ bool OGRPGeoDriver::InstallMdbDriver()
 bool OGRPGeoDriver::FindDriverLib()
 {
     // Default name and path of driver library
-    const char szDefaultLibName[] = "libmdbodbc.so";
+    const char* aszDefaultLibName[] = {
+        "libmdbodbc.so",
+        "libmdbodbc.so.0" /* for Ubuntu 8.04 support */
+    };
+    const int nLibNames = sizeof(aszDefaultLibName) / sizeof(aszDefaultLibName[0]);
     const char* libPath[] = { 
         "/usr/lib",
         "/usr/local/lib"
     };
-    const int nLibPaths = 2;
+    const int nLibPaths = sizeof(libPath) / sizeof(libPath[0]);
 
     CPLString strLibPath("");
 
@@ -183,7 +187,7 @@ bool OGRPGeoDriver::FindDriverLib()
              && VSI_ISDIR( sStatBuf.st_mode ) ) 
         {
             // Find default library in custom directory
-            const char* pszDriverFile = CPLFormFilename( pszDrvCfg, szDefaultLibName, NULL );
+            const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], NULL );
             CPLAssert( 0 != pszDriverFile );
         
             strLibPath = pszDriverFile;
@@ -200,14 +204,17 @@ bool OGRPGeoDriver::FindDriverLib()
     // Try to find library in default path
     for ( int i = 0; i < nLibPaths; i++ )
     {
-        const char* pszDriverFile = CPLFormFilename( libPath[i], szDefaultLibName, NULL );
-        CPLAssert( 0 != pszDriverFile );
-
-        if ( LibraryExists( pszDriverFile ) )
+        for ( int j = 0; j < nLibNames; j++ )
         {
-            // Save default driver path
-            osDriverFile = pszDriverFile;
-            return true;
+            const char* pszDriverFile = CPLFormFilename( libPath[i], aszDefaultLibName[j], NULL );
+            CPLAssert( 0 != pszDriverFile );
+
+            if ( LibraryExists( pszDriverFile ) )
+            {
+                // Save default driver path
+                osDriverFile = pszDriverFile;
+                return true;
+            }
         }
     }
 
