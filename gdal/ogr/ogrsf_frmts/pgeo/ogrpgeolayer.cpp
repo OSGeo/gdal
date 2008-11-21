@@ -135,6 +135,7 @@ CPLErr OGRPGeoLayer::BuildFeatureDefn( const char *pszLayerName,
         switch( poStmt->GetColType(iCol) )
         {
           case SQL_INTEGER:
+          case SQL_SMALLINT:
             oField.SetType( OFTInteger );
             break;
 
@@ -286,8 +287,8 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
             if( OGRERR_NONE != err )
             {
                 CPLDebug( "PGeo",
-                          "Translation shape binary to OGR geometry failed (FID=%d)",
-                          poFeature->GetFID() );
+                          "Translation shape binary to OGR geometry failed (FID=%ld)",
+                           (long)poFeature->GetFID() );
             }
         }
 
