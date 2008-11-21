@@ -1164,7 +1164,8 @@ Usage: gdal_grid [--help-general] [--formats]
     [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
           CInt16/CInt32/CFloat32/CFloat64}]
     [-of format] [-co "NAME=VALUE"]
-    [-a_srs srs_def]
+    [-zfield field_name]
+    [-a_srs srs_def] [-spat xmin ymin xmax ymax]
     [-l layername]* [-where expression] [-sql select_statement]
     [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]
     [-a algorithm[:parameter1=value1]*]    [-quiet]
@@ -1208,6 +1209,10 @@ containing Z value).</dd>
 </dt><dd> Set the interpolation algorithm or data metric name and (optionally)
 its parameters. See \ref gdal_grid_algorithms and \ref gdal_grid_metrics
 sections for further discussion of available options.</dd>
+
+<dt> <b>-spat</b> <i>xmin ymin xmax ymax</i>:</dt><dd> Adds a spatial filter
+to select only features intersecting the bounding box described by
+(xmin, ymin) - (xmax, ymax).</dd>
 
 <dt> <b>-l</b> <em>layername</em>: </dt><dd> Indicates the layer(s) from the
 datasource that will be used for input features.  May be specified multiple
