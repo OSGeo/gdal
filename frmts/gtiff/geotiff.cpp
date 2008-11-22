@@ -2062,13 +2062,13 @@ GTiffDataset::~GTiffDataset()
 {
     Crystalize();
 
+    FlushCache();
+
     if( bFillEmptyTiles )
     {
         FillEmptyTiles();
         bFillEmptyTiles = FALSE;
     }
-
-    FlushCache();
 
     if( bBase )
     {
