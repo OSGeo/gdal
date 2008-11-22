@@ -741,8 +741,10 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
         return OGRERR_NONE;
     }
 
+    char* pszHex = CPLBinaryToHex( nBytes, pabyShape );
     CPLDebug( "PGEO", "Unsupported geometry type:%d\n%s",
-              nSHPType, CPLBinaryToHex( nBytes, pabyShape ) );
+              nSHPType, pszHex );
+    CPLFree(pszHex);
 
     return OGRERR_FAILURE;
 }
