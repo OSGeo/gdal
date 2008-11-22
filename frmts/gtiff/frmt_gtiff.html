@@ -42,7 +42,7 @@ and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
 extention .tfw, .tifw/.tiffw or .wld, as well as a MapInfo .tab file (only control
 points used, Coordsys ignored).<P>
 
-<h2>Internal nodata masks (from GDAL 1.6.0)</h2>
+<h2>Internal nodata masks</h2> (from GDAL 1.6.0)<p>
 
 TIFF files can contain internal transparency masks. The GeoTIFF driver
 recognizes an internal directory as being a transparency mask when the
@@ -110,7 +110,7 @@ option can be used to force creation of tiled TIFF files.<p>
 <li> <b>BLOCKYSIZE=n</b>: Set tile or strip height.  Tile height defaults to
 256, strip height defaults to a value such that one strip is 8K or less. <p>
 
-<li> <b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. <p>
+<li> <b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted. <p>
 
 <li> <b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/NONE]</b>: 
 Set the compression to use.  JPEG should only be used with Byte data.  The
@@ -119,7 +119,7 @@ default.<p>
 
 <li> <b>PREDICTOR=[1/2/3]</b>: Set the predictor for LZW or DEFLATE compression. The default is 1 (no predictor), 2 is horizontal differencing and 3 is floating point prediction.<p>
 
-<li> <b>SPARSE_OK=TRUE/FALSE</b>: Should newly created files be allowed to be sparse?  Sparse files have 0 tile/strip offsets for blocks never written and save space; however, most non-GDAL packages cannot read such files.  The default is FALSE.<p>
+<li> <b>SPARSE_OK=TRUE/FALSE</b> (From GDAL 1.6.0): Should newly created files be allowed to be sparse?  Sparse files have 0 tile/strip offsets for blocks never written and save space; however, most non-GDAL packages cannot read such files.  The default is FALSE.<p>
 
 <li> <b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.<p>
 
@@ -136,13 +136,31 @@ there are any extra samples.  This is necessary if you want to produce
 a greyscale TIFF file with an alpha band (for instance). <p>
 
 <li> <b>PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]</b>: Control what non-baseline
-tags are emitted by GDAL.  With <tt>GDALGeoTIFF</tt> (the default) various 
-GDAL custom tags may be written.  With <tt>GeoTIFF</tt> only GeoTIFF tags
-will be added to the baseline.  With <tt>BASELINE</tt> no GDAL or GeoTIFF
-tags will be written.  BASELINE is occationally useful when writing files to
-be read by applications intolerant of unrecognised tags.<p>
+tags are emitted by GDAL.
+<ul>
+<li>With <tt>GDALGeoTIFF</tt> (the default) various GDAL custom tags may be written.</li>
+<li>With <tt>GeoTIFF</tt> only GeoTIFF tags will be added to the baseline.</li>
+<li>With <tt>BASELINE</tt> no GDAL or GeoTIFF tags will be written.  BASELINE is occationally useful when writing files to
+be read by applications intolerant of unrecognised tags.</li>
+</ul>
+<p>
 
-<li> <b>BIGTIFF=YES/NO/IF_NEEDED/IF_SAFER</b>: Control whether the created file is a BigTIFF or a classic TIFF.  YES forces BigTIFF.  NO forces classic TIFF.  IF_NEEDED will only create a BigTIFF if it is clearly needed (uncompressed, and image larger than 4GB).  IF_SAFER will create BigTIFF if the resulting file *might* exceed 4GB.  BigTIFF is a TIFF variant which can contain more than 4GiB of data (size of classic TIFF is limited by that value). This option available if GDAL is built with libtiff library version 4.0 or higher.  The default is IF_NEEDED.<p>
+<li> <b>BIGTIFF=YES/NO/IF_NEEDED/IF_SAFER</b>: Control whether the created file is a BigTIFF or a classic TIFF.
+<ul>
+<li>YES forces BigTIFF.</li>
+<li>NO forces classic TIFF.</li>
+<li>IF_NEEDED will only create a BigTIFF if it is clearly needed (uncompressed, and image larger than 4GB).</li>
+<li>IF_SAFER will create BigTIFF if the resulting file *might* exceed 4GB.</li>
+</ul><p>
+BigTIFF is a TIFF variant which can contain more than 4GiB of data (size of classic TIFF is limited by that value). This option is available if GDAL is built with libtiff library version 4.0 or higher (which is the case of the internal libtiff version from GDAL >= 1.5.0).  The default is IF_NEEDED. (IF_NEEDED and IF_SAFER are available from GDAL 1.6.0).<p>
+When creating a new GeoTIFF with no compression, GDAL computes in advance the
+size of the resulting file. If that computed file size is over 4GiB, GDAL will automatically
+decide to create a BigTIFF file. However, when compression is used, it is not possible in
+advance to known the final size of the file, so classical TIFF will be chosen. In
+that case, the user must explicitely require the creation of a BigTIFF with BIGTIFF=YES
+if he anticipates the final file to be too big for classical TIFF format.
+If BigTIFF creation is not explicitely asked or guessed and that the resulting file is too big for classical TIFF,
+libtiff will fail with an error message like "TIFFAppendToStrip:Maximum TIFF file size exceeded".<p>
 
 <li> <b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a 
 new Byte file can be forced to be written as signed byte.<p>
@@ -154,17 +172,6 @@ used. Primarily intended for debugging & test purposes</p>
 -->
 
 </ul>
-
-<h3>About BigTIFF (only relevent with libtiff >= 4.0) </h3>
-
-When creating a new GeoTIFF with no compression, GDAL computes in advance the
-size of the resulting file. If that computed file size is over 4GiB, GDAL will automatically
-decide to create a BigTIFF file. However, when compression is used, it is not possible in
-advance to known the final size of the file, so classical TIFF will be chosen. In
-that case, the user must explicitely require the creation of a BigTIFF with BIGTIFF=YES
-if he anticipates the final file to be too big for classical TIFF format. If BigTIFF
-creation is not explicitely asked and that the resulting file is too big for classical TIFF,
-libtiff will fail with an error message like "TIFFAppendToStrip:Maximum TIFF file size exceeded".<p>
 
 <h3>About JPEG compression of RGB images </h3>
 
