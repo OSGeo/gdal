@@ -72,7 +72,10 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
 
     nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
 
+#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20051201 /* 3.8.0 */
     TIFFFreeDirectory( hTIFF );
+#endif
+
     TIFFCreateDirectory( hTIFF );
     
 /* -------------------------------------------------------------------- */
