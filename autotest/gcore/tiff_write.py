@@ -1047,7 +1047,8 @@ def tiff_write_31():
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 100000, 100000, 1 )
+    ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 100000, 100000, 1,
+                                   options = ['SPARSE_OK=TRUE'] )
     ds = None
 
     ds = gdal.Open( 'tmp/bigtiff.tif' )
