@@ -2064,7 +2064,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
 {
     OGRSpatialReference oSRS;
-    char *pszProjection = NULL;
+    char *pszNewProj = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      General case for Erdas style projections.                       */
@@ -2140,11 +2140,11 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     {
         if( oSRS.IsLocal() )
         {
-            if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
-                return pszProjection;
+            if( oSRS.exportToWkt( &pszNewProj ) == OGRERR_NONE )
+                return pszNewProj;
             else
             {
-                pszProjection = NULL;
+                pszNewProj = NULL;
                 return NULL;
             }
         }
@@ -2491,8 +2491,8 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 /* -------------------------------------------------------------------- */
 /*      Get the WKT representation of the coordinate system.            */
 /* -------------------------------------------------------------------- */
-    if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
-        return pszProjection;
+    if( oSRS.exportToWkt( &pszNewProj ) == OGRERR_NONE )
+        return pszNewProj;
     else
     {
         return NULL;
@@ -2555,7 +2555,10 @@ CPLErr HFADataset::ReadProjection()
     if( pszProjection != NULL )
         return CE_None;
     else
-        return CE_Failure;
+    {
+        pszProjection = CPLStrdup("");
+        return CE_Failure;					
+    }
 }
 
 /************************************************************************/
