@@ -2144,6 +2144,8 @@ void GTiffDataset::FillEmptyTiles()
     toff_t *panByteCounts = NULL;
     int    nBlockCount, iBlock;
 
+    SetDirectory();
+
 /* -------------------------------------------------------------------- */
 /*      How many blocks are there in this file?                         */
 /* -------------------------------------------------------------------- */
