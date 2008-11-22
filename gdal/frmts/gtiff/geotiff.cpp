@@ -160,6 +160,9 @@ class GTiffDataset : public GDALPamDataset
 
     CPLString    osFilename;
 
+    int          bFillEmptyTiles;
+    void         FillEmptyTiles(void);
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -2046,6 +2049,8 @@ GTiffDataset::GTiffDataset()
 
     poMaskDS = NULL;
     poBaseDS = NULL;
+
+    bFillEmptyTiles = FALSE;
 }
 
 /************************************************************************/
@@ -2056,6 +2061,12 @@ GTiffDataset::~GTiffDataset()
 
 {
     Crystalize();
+
+    if( bFillEmptyTiles )
+    {
+        FillEmptyTiles();
+        bFillEmptyTiles = FALSE;
+    }
 
     FlushCache();
 
@@ -2121,6 +2132,56 @@ GTiffDataset::~GTiffDataset()
     CSLDestroy( papszCreationOptions );
 
     CPLFree(pabyTempWriteBuffer);
+}
+
+/************************************************************************/
+/*                           FillEmptyTiles()                           */
+/************************************************************************/
+
+void GTiffDataset::FillEmptyTiles()
+
+{
+    toff_t *panByteCounts = NULL;
+    int    nBlockCount, iBlock;
+
+/* -------------------------------------------------------------------- */
+/*      How many blocks are there in this file?                         */
+/* -------------------------------------------------------------------- */
+    if( nPlanarConfig == PLANARCONFIG_SEPARATE )
+        nBlockCount = nBlocksPerBand * nBands;
+    else
+        nBlockCount = nBlocksPerBand;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch block maps.                                               */
+/* -------------------------------------------------------------------- */
+    if( TIFFIsTiled( hTIFF ) )
+        TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts );
+    else
+        TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts );
+
+/* -------------------------------------------------------------------- */
+/*      Prepare a blank data buffer to write for uninitialized blocks.  */
+/* -------------------------------------------------------------------- */
+    int nBlockBytes;
+
+    if( TIFFIsTiled( hTIFF ) )
+        nBlockBytes = TIFFTileSize(hTIFF);
+    else
+        nBlockBytes = TIFFStripSize(hTIFF);
+
+    GByte *pabyData = (GByte *) CPLCalloc(nBlockBytes,1);
+
+/* -------------------------------------------------------------------- */
+/*      Check all blocks, writing out data for uninitialized blocks.    */
+/* -------------------------------------------------------------------- */
+    for( iBlock = 0; iBlock < nBlockCount; iBlock++ )
+    {
+        if( panByteCounts[iBlock] == 0 )
+            WriteEncodedTileOrStrip( iBlock, pabyData, FALSE );
+    }
+
+    CPLFree( pabyData );
 }
 
 /************************************************************************/
@@ -5431,6 +5492,13 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we want to ensure all blocks get written out on close to     */
+/*      avoid sparse files?                                             */
+/* -------------------------------------------------------------------- */
+    if( !CSLFetchBoolean( papszParmList, "SPARSE_OK", FALSE ) )
+        poDS->bFillEmptyTiles = TRUE;
+        
+/* -------------------------------------------------------------------- */
 /*      Preserve creation options for consulting later (for instance    */
 /*      to decide if a TFW file should be written).                     */
 /* -------------------------------------------------------------------- */
@@ -6542,7 +6610,8 @@ void GDALRegister_GTiff()
 "       <Value>ICCLAB</Value>"
 "       <Value>ITULAB</Value>"
 "   </Option>"
- "  <Option name='ALPHA' type='boolean' description='Mark first extrasample as being alpha'/>"
+"   <Option name='SPARSE_OK' type='boolean' description='Can newly created files have missing blocks?' default='FALSE'/>"
+"   <Option name='ALPHA' type='boolean' description='Mark first extrasample as being alpha'/>"
 "   <Option name='PROFILE' type='string-select' default='GDALGeoTIFF'>"
 "       <Value>GDALGeoTIFF</Value>"
 "       <Value>GeoTIFF</Value>"
