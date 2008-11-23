@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgpxdatasource.cpp
+ * $Id$
  *
  * Project:  GPX Translator
  * Purpose:  Implements OGRGPXDataSource class
@@ -31,6 +31,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRGPXDataSource()                          */
