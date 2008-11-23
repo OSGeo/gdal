@@ -445,6 +445,11 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
     if( nSHPType == 50 )
         nSHPType = SHPT_ARC;
+/* -------------------------------------------------------------------- */
+/*      type 9 appears to just be an alias for POINTZ (#2692)           */
+/* -------------------------------------------------------------------- */
+    else if ( nSHPType == 9 )
+        nSHPType = SHPT_POINTZ;
 
 /* ==================================================================== */
 /*  Extract vertices for a Polygon or Arc.				*/
