@@ -362,7 +362,7 @@ int OGRPGeoTableLayer::GetFeatureCount( int bForce )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "GetFeatureCount() failed on query %s.\n%s",
                   oStmt.GetCommand(), poDS->GetSession()->GetLastError() );
-        return -1;
+        return OGRPGeoLayer::GetFeatureCount(bForce);
     }
 
     return atoi(oStmt.GetColData(0));
