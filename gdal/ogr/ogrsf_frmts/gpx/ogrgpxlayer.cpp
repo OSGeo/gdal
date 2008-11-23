@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgpxlayer.cpp
+ * $Id$
  *
  * Project:  GPX Translator
  * Purpose:  Implements OGRGPXLayer class.
@@ -30,6 +30,8 @@
 #include "ogr_gpx.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRGPXLayer()                             */
