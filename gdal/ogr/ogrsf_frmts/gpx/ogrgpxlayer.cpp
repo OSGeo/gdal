@@ -265,7 +265,8 @@ OGRGPXLayer::~OGRGPXLayer()
 
 {
 #ifdef HAVE_EXPAT
-    XML_ParserFree(oParser);
+    if (oParser)
+        XML_ParserFree(oParser);
 #endif
     poFeatureDefn->Release();
     

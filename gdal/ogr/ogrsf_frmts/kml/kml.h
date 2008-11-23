@@ -37,8 +37,13 @@
 #include <string>
 #include <vector>
 
+/* Compatibility stuff for expat >=1.95.0 and < 1.95.7 */
 #ifndef XMLCALL
-#error "Old version of expat, please upgrade to expat 2.x"
+#define XMLCALL
+#endif
+#ifndef XML_STATUS_OK
+#define XML_STATUS_OK    1
+#define XML_STATUS_ERROR 0
 #endif
 
 class KMLNode;
