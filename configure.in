@@ -1454,12 +1454,13 @@ dnl ---------------------------------------------------------------------------
 dnl Check for GeoRaster in the local tree.
 dnl ---------------------------------------------------------------------------
 
-AC_MSG_CHECKING([for OCI])
-if test "$with_oci" = yes -o x"$with_oci" = x ; then
+ORACLE_OCI_REQ_VERSION="10.0.1"
+AX_LIB_ORACLE_OCI($ORACLE_OCI_REQ_VERSION)
+
+if test "$HAVE_ORACLE_OCI" = "yes"; then
     OPT_GDAL_FORMATS="georaster $OPT_GDAL_FORMATS"
+    HAVE_GEORASTER=yes
     AC_MSG_RESULT([enabled])
-else
-    AC_MSG_RESULT([disabled by user])
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -2328,6 +2329,7 @@ LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGeo support:              ${ODBC_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
+LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
 LOC_MSG([  SDE support:               ${SDE_ENABLED}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
