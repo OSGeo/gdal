@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgpxdriver.cpp
+ * $Id$
  *
  * Project:  GPX Translator
  * Purpose:  Implements OGRGPXDriver.
@@ -29,6 +29,8 @@
 
 #include "ogr_gpx.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           ~OGRGPXDriver()                            */
