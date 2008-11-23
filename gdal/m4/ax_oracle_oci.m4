@@ -264,7 +264,7 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
                 AC_MSG_CHECKING([for Oracle version >= 10.x to use -lnnz10 flag])
                 oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
                 if test "$oracle_nnz10_check" = "1"; then
-                    ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz10"
+                    ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
                     AC_MSG_RESULT([yes])
                 else
                     AC_MSG_RESULT([no])
