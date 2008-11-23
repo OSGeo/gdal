@@ -34,6 +34,16 @@
 
 #ifdef HAVE_EXPAT
 #include <expat.h>
+
+/* Compatibility stuff for expat >= 1.95.0 and < 1.95.7 */
+#ifndef XMLCALL
+#define XMLCALL
+#endif
+#ifndef XML_STATUS_OK
+#define XML_STATUS_OK    1
+#define XML_STATUS_ERROR 0
+#endif
+
 #endif
 
 class OGRGPXDataSource;
