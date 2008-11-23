@@ -3,9 +3,6 @@
 /* Define if you want to use pthreads based multiprocessing support */
 #undef CPL_MULTIPROC_PTHREAD
 
-/* Define to 1 if you want to use the -fvisibility GCC flag */
-#undef USE_GCC_VISIBILITY_FLAG
-
 /* --prefix directory for GDAL install */
 #undef GDAL_PREFIX
 
@@ -15,24 +12,15 @@
 /* Define to 1 if you have the `atoll' function. */
 #undef HAVE_ATOLL
 
-/* Define to 1 if you have the `copysign' function. */
-#undef HAVE_COPYSIGN
-
-/* Define to 1 if you have the `copysignf' function. */
-#undef HAVE_COPYSIGNF
-
 /* Define to 1 if you have the <csf.h> header file. */
 #undef HAVE_CSF_H
 
 /* Define to 1 if you have the <dbmalloc.h> header file. */
 #undef HAVE_DBMALLOC_H
 
-/* Define to 1 if you have the declaration of `nan', and to 0 if you don't. */
-#undef HAVE_DECL_NAN
-
-/* Define to 1 if you have the declaration of `nanf', and to 0 if you don't.
+/* Define to 1 if you have the declaration of `strtof', and to 0 if you don't.
    */
-#undef HAVE_DECL_NANF
+#undef HAVE_DECL_STRTOF
 
 /* Define to 1 if you have the <direct.h> header file. */
 #undef HAVE_DIRECT_H
@@ -98,12 +86,6 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the `nan' function. */
-#undef HAVE_NAN
-
-/* Define to 1 if you have the `nanf' function. */
-#undef HAVE_NANF
-
 /* Define to 1 if you have the <png.h> header file. */
 #undef HAVE_PNG_H
 
@@ -153,16 +135,16 @@
 /* Define for Mac OSX Framework build */
 #undef MACOSX_FRAMEWORK
 
-/* The size of a `int', as computed by sizeof. */
+/* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `unsigned long', as computed by sizeof. */
+/* The size of `unsigned long', as computed by sizeof. */
 #undef SIZEOF_UNSIGNED_LONG
 
-/* The size of a `void*', as computed by sizeof. */
+/* The size of `void*', as computed by sizeof. */
 #undef SIZEOF_VOIDP
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -171,8 +153,8 @@
 /* Define to 1 if you have fseek64, ftell64 */
 #undef UNIX_STDIO_64
 
-/* Define to 1, if you have GNU C compiler */
-#undef USE_GNUCC
+/* Define to 1 if you want to use the -fvisibility GCC flag */
+#undef USE_GCC_VISIBILITY_FLAG
 
 /* Define to name of 64bit fopen function */
 #undef VSI_FOPEN64
