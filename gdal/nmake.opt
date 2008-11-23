@@ -174,7 +174,7 @@ JPEG_SUPPORTED = 1
 #OGDILIB =	$(OGDIDIR)\lib\$(TARGET)\ogdi$(OGDIVER).lib \
 #		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
 
-# Uncomment for Expat support (required for KML read support).
+# Uncomment for Expat support (required for KML and GPX read support).
 #EXPAT_DIR = "C:\Program Files\Expat 2.0.1"
 #EXPAT_INCLUDE = -I$(EXPAT_DIR)/source/lib
 #EXPAT_LIB = $(EXPAT_DIR)/bin/libexpat.lib
