@@ -38,7 +38,9 @@ CPL_CVSID("$Id$");
 // XXX: with GCC 2.95 strtof() function is only available when in c99 mode.
 // Fix it here not touching the compiler options.
 #if defined(HAVE_STRTOF) && !HAVE_DECL_STRTOF
+extern "C" {
 extern float strtof(const char *nptr, char **endptr);
+}
 #endif
 
 /************************************************************************/
