@@ -14,16 +14,17 @@ OBJ		=	georaster_driver.o \
 
 CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
 
+PLUGIN_SO	= gdal_GEOR.so
+
 default:	$(OBJ)
 
 clean:
-	rm -f *.o $(O_OBJ)
-	rm -f *.lo
-	rm -f *.so   
+	rm -f *.o $(O_OBJ) *.so
 
 install-obj:	$(O_OBJ)
 
-plugin:	gdal_GEOR.so
+plugin: $(PLUGIN_SO)
 
-gdal_GEOR.so:	$(OBJ)
-	$(LD_SHARED) $(LNK_FLAGS) $(OBJ) -o gdal_GEOR.so
+$(PLUGIN_SO):	$(OBJ)
+	$(LD_SHARED) $(LNK_FLAGS) $(OBJ) $(CONFIG_LIBS_INS) $(EXTRA_LIBS) \
+		-o $(PLUGIN_SO)
