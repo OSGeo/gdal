@@ -1868,15 +1868,20 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
 /************************************************************************/
 /*                           NITFReadRPC00B()                           */
 /*                                                                      */
-/*      Read an RPC00B structure if the TRE is available.               */
+/*      Read an RPC00A or RPC00B structure if the TRE is available.     */
+/*      RPC00A is remapped into RPC00B organization.                    */
 /************************************************************************/
 
 int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 
 {
+    static const int anRPC00AMap[] = /* See ticket #2040 */
+    {0, 1, 2, 3, 4, 5, 6 , 10, 7, 8, 9, 11, 14, 17, 12, 15, 18, 13, 16, 19};
+
     const char *pachTRE;
     char szTemp[100];
     int  i;
+    int  bRPC00A = FALSE;
 
     psRPC->SUCCESS = 0;
 
@@ -1887,22 +1892,24 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
                            "RPC00B", NULL );
 
     if( pachTRE == NULL )
-	{
-		pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes,
-						"RPC00A", NULL );
-	}
+    {
+        pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes,
+                               "RPC00A", NULL );
+        if( pachTRE )
+            bRPC00A = TRUE;
+    }
 
-	if( pachTRE == NULL )
-	{
+    if( pachTRE == NULL )
+    {
         return FALSE;
-	}
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
     psRPC->SUCCESS = atoi(NITFGetField(szTemp, pachTRE, 0, 1 ));
 	
-	if ( !psRPC->SUCCESS )
+    if ( !psRPC->SUCCESS )
 	fprintf( stdout, "RPC Extension not Populated!\n");
 
     psRPC->ERR_BIAS = atof(NITFGetField(szTemp, pachTRE, 1, 7 ));
@@ -1925,14 +1932,19 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < 20; i++ )
     {
+        int iSrcCoef = i;
+
+        if( bRPC00A )
+            iSrcCoef = anRPC00AMap[i];
+
         psRPC->LINE_NUM_COEFF[i] = 
-            atof(NITFGetField(szTemp, pachTRE, 81+i*12, 12));
+            atof(NITFGetField(szTemp, pachTRE, 81+iSrcCoef*12, 12));
         psRPC->LINE_DEN_COEFF[i] = 
-            atof(NITFGetField(szTemp, pachTRE, 321+i*12, 12));
+            atof(NITFGetField(szTemp, pachTRE, 321+iSrcCoef*12, 12));
         psRPC->SAMP_NUM_COEFF[i] = 
-            atof(NITFGetField(szTemp, pachTRE, 561+i*12, 12));
+            atof(NITFGetField(szTemp, pachTRE, 561+iSrcCoef*12, 12));
         psRPC->SAMP_DEN_COEFF[i] = 
-            atof(NITFGetField(szTemp, pachTRE, 801+i*12, 12));
+            atof(NITFGetField(szTemp, pachTRE, 801+iSrcCoef*12, 12));
     }
 
     return TRUE;
