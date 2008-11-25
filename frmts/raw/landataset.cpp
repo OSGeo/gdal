@@ -89,6 +89,10 @@ little endian depending on what platform the file was written on.  Usually
 this can be checked against the number of bands though this test won't work
 if there are more than 255 bands. 
 
+There is also some information on .STA and .TRL files at:
+
+  http://www.pcigeomatics.com/cgi-bin/pcihlp/ERDASWR%7CTRAILER+FORMAT
+
 **/
 
 #define ERD_HEADER_SIZE  128
@@ -134,6 +138,11 @@ class LANDataset : public RawDataset
     char        *pszProjection;
     
     double      adfGeoTransform[6];
+
+    CPLString   osSTAFilename;
+    void        CheckForStatistics(void);
+
+    virtual char **GetFileList();
 
   public:
     		LANDataset();
@@ -462,6 +471,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->CheckForStatistics();
     poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
@@ -589,6 +599,95 @@ const char *LANDataset::GetProjectionRef()
         return "";
     else
         return pszProjection;
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **LANDataset::GetFileList()
+
+{
+    char **papszFileList = NULL;
+
+    // Main data file, etc. 
+    papszFileList = GDALPamDataset::GetFileList();
+
+    if( strlen(osSTAFilename) > 0 )
+        papszFileList = CSLAddString( papszFileList, osSTAFilename );
+
+    return papszFileList;
+}
+
+/************************************************************************/
+/*                         CheckForStatistics()                         */
+/************************************************************************/
+
+void LANDataset::CheckForStatistics()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Do we have a statistics file?                                   */
+/* -------------------------------------------------------------------- */
+    osSTAFilename = CPLResetExtension(GetDescription(),"sta");
+
+    FILE *fpSTA = VSIFOpenL( osSTAFilename, "r" );
+
+#ifndef WIN32
+    if( fpSTA == NULL )
+    {
+        osSTAFilename = CPLResetExtension(GetDescription(),"STA");
+        fpSTA = VSIFOpenL( osSTAFilename, "r" );
+    }
+#endif
+
+    if( fpSTA == NULL )
+    {
+        osSTAFilename = "";
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read it one band at a time.                                     */
+/* -------------------------------------------------------------------- */
+    GByte abyBandInfo[1152];
+    int iBand;
+
+    for( iBand = 0; iBand < nBands; iBand++ )
+    {
+        if( VSIFReadL( abyBandInfo, 1152, 1, fpSTA ) != 1 )
+            break;
+
+        int nBandNumber = abyBandInfo[7];
+        GDALRasterBand *poBand = GetRasterBand(nBandNumber);
+        if( poBand == NULL )
+            break;
+
+        float fMean, fStdDev;
+        GInt16 nMin, nMax;
+
+        if( poBand->GetRasterDataType() != GDT_Byte )
+        {
+            memcpy( &nMin, abyBandInfo + 28, 2 );
+            memcpy( &nMax, abyBandInfo + 30, 2 );
+            CPL_LSBPTR16( &nMin );
+            CPL_LSBPTR16( &nMax );
+        }
+        else
+        {
+            nMin = abyBandInfo[9];
+            nMax = abyBandInfo[8];
+        }
+        
+        memcpy( &fMean, abyBandInfo + 12, 4 );
+        memcpy( &fStdDev, abyBandInfo + 24, 4 );
+        CPL_LSBPTR32( &fMean );
+        CPL_LSBPTR32( &fStdDev );
+        
+        poBand->SetStatistics( nMin, nMax, fMean, fStdDev );
+    }
+    
+    VSIFCloseL( fpSTA );
 }
 
 /************************************************************************/
