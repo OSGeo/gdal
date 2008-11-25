@@ -356,6 +356,36 @@ def ogr_kml_polygon_read():
     return 'success'
 
 ###############################################################################
+# Write test
+
+def ogr_kml_write_1():
+
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS('WGS72')
+    ds = ogr.GetDriverByName('KML').CreateDataSource('tmp/kml.kml')
+    lyr = ds.CreateLayer('test', srs = srs)
+
+    dst_feat = ogr.Feature( lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+
+    if lyr.CreateFeature( dst_feat ) != 0:
+        gdaltest.post_reason('CreateFeature failed.')
+        return 'fail'
+
+    if dst_feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        print dst_feat.GetGeometryRef().ExportToWkt()
+        gdaltest.post_reason('CreateFeature changed the geometry.')
+        return 'fail'
+
+    dst_feat.Destroy()
+
+    ds.Destroy()
+    os.remove('tmp/kml.kml')
+
+    return 'success'
+
+
+###############################################################################
 #  Cleanup
 
 def ogr_kml_cleanup():
@@ -379,6 +409,7 @@ gdaltest_list = [
     ogr_kml_point_read,
     ogr_kml_linestring_read,
     ogr_kml_polygon_read,
+    ogr_kml_write_1,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
