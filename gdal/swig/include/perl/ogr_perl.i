@@ -655,7 +655,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub Geometry {
 	    my $self = shift;
 	    SetGeometry($self, $_[0]) if @_;
-	    GetGeometryRef($self)->Clone() if defined wantarray;
+            my $geometry = GetGeometryRef($self);
+	    $geometry->Clone() if $geometry and defined wantarray;
 	}
 	sub SetGeometryDirectly {
 	    _SetGeometryDirectly(@_);
