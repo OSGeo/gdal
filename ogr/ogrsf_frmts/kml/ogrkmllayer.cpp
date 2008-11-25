@@ -461,22 +461,35 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
     if( poFeature->GetGeometryRef() != NULL )
     {
         char* pszGeometry = NULL;
-        OGREnvelope sGeomBounds;		
-				
+        OGREnvelope sGeomBounds;
+        OGRGeometry* poWGS84Geom;	
+
         if (NULL != poCT_)
-            poFeature->GetGeometryRef()->transform( poCT_ );		
-		
+        {
+            poWGS84Geom = poFeature->GetGeometryRef()->clone();
+            poWGS84Geom->transform( poCT_ );
+        }
+        else
+        {
+            poWGS84Geom = poFeature->GetGeometryRef();
+        }
+	
         // TODO - porting
         // pszGeometry = poFeature->GetGeometryRef()->exportToKML();
         pszGeometry = 
-            OGR_G_ExportToKML( (OGRGeometryH)( poFeature->GetGeometryRef() ),
+            OGR_G_ExportToKML( (OGRGeometryH)poWGS84Geom,
                                poDS_->GetAltitudeMode());
         
         VSIFPrintf( fp, "      %s\n", pszGeometry );
         CPLFree( pszGeometry );
 
-        poFeature->GetGeometryRef()->getEnvelope( &sGeomBounds );
+        poWGS84Geom->getEnvelope( &sGeomBounds );
         poDS_->GrowExtents( &sGeomBounds );
+
+        if (NULL != poCT_)
+        {
+            delete poWGS84Geom;
+        }
     }
     
     if ( wkbPolygon == poFeatureDefn_->GetGeomType()
