@@ -879,6 +879,9 @@ KAKDIR
 MRSID_INCLUDE
 MRSID_FLAGS
 MRSID_LIBS
+ORACLE_OCI_VERSION
+ORACLE_OCI_CFLAGS
+ORACLE_OCI_LDFLAGS
 OPT_GDAL_FORMATS
 OGR_ENABLED
 MYSQL_CONFIG
@@ -901,9 +904,6 @@ EXPAT_VERSION
 HAVE_EXPAT
 EXPAT_INCLUDE
 ODBC_SETTING
-ORACLE_OCI_VERSION
-ORACLE_OCI_CFLAGS
-ORACLE_OCI_LDFLAGS
 HAVE_OCI
 OCI_INCLUDE
 DODS_INC
@@ -1591,6 +1591,12 @@ Optional Packages:
   --with-jp2mrsid=ARG   Enable MrSID JPEG2000 support (ARG=yes/no)
   --with-msg=ARG          Enable MSG driver (ARG=yes or no)
   --without-bsb           Disable BSB driver (legal issues pending
+  --with-oci=[ARG]        use Oracle OCI API from given Oracle home
+                          (ARG=path); use existing ORACLE_HOME (ARG=yes);
+                          disable Oracle OCI support (ARG=no)
+  --with-oci-include=[DIR]
+                          use Oracle OCI API headers from given path
+  --with-oci-lib=[DIR]    use Oracle OCI API libraries from given path
   --without-grib          Disable GRIB driver
   --without-ogr         Don't build OGR into shared library
   --with-mysql=ARG      Include MySQL (ARG=path to mysql_config) [default=no]
@@ -1604,12 +1610,6 @@ Optional Packages:
   --with-expat-inc=[DIR]  path to Expat XML Parser headers
   --with-expat-lib=[ARG]  link options for Expat XML Parser libraries
   --with-odbc=ARG       Include ODBC support (ARG=no or path)
-  --with-oci=[ARG]        use Oracle OCI API from given Oracle home
-                          (ARG=path); use existing ORACLE_HOME (ARG=yes);
-                          disable Oracle OCI support (ARG=no)
-  --with-oci-include=[DIR]
-                          use Oracle OCI API headers from given path
-  --with-oci-lib=[DIR]    use Oracle OCI API libraries from given path
   --with-dods-root=ARG  Include DODS support (ARG=no or absolute path)
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
@@ -23544,6 +23544,370 @@ echo "${ECHO_T}disabled by user" >&6; }
 fi
 
 
+ORACLE_OCI_REQ_VERSION="10.0.1"
+
+
+# Check whether --with-oci was given.
+if test "${with_oci+set}" = set; then
+  withval=$with_oci;
+        if test "$withval" = "yes"; then
+            if test -n "$ORACLE_HOME"; then
+                oracle_home_dir="$ORACLE_HOME"
+            else
+                oracle_home_dir=""
+            fi
+        elif test -d "$withval"; then
+            oracle_home_dir="$withval"
+        else
+            oracle_home_dir=""
+        fi
+
+else
+
+        if test -n "$ORACLE_HOME"; then
+            oracle_home_dir="$ORACLE_HOME"
+        else
+            oracle_home_dir=""
+        fi
+
+
+fi
+
+
+
+# Check whether --with-oci-include was given.
+if test "${with_oci_include+set}" = set; then
+  withval=$with_oci_include; oracle_home_include_dir="$withval"
+else
+  oracle_home_include_dir=""
+
+fi
+
+
+# Check whether --with-oci-lib was given.
+if test "${with_oci_lib+set}" = set; then
+  withval=$with_oci_lib; oracle_home_lib_dir="$withval"
+else
+  oracle_home_lib_dir=""
+
+fi
+
+
+    ORACLE_OCI_CFLAGS=""
+    ORACLE_OCI_LDFLAGS=""
+    ORACLE_OCI_VERSION=""
+
+                want_oracle_but_no_path="no"
+
+    if test -n "$oracle_home_dir"; then
+
+        if test "$oracle_home_dir" != "no" -a "$oracle_home_dir" != "yes"; then
+
+                        oracle_include_dir="$oracle_home_dir/rdbms/public"
+
+                        oracle_include_dir2="$oracle_home_dir/rdbms/demo"
+
+                        oracle_lib_dir="$oracle_home_dir/lib"
+        elif test "$oracle_home_dir" = "yes"; then
+            want_oracle_but_no_path="yes"
+        fi
+
+    elif test -n "$oracle_home_include_dir" -o -n "$oracle_home_lib_dir"; then
+
+        if test "$oracle_home_include_dir" != "no" -a "$oracle_home_include_dir" != "yes"; then
+            oracle_include_dir="$oracle_home_include_dir"
+        elif test "$oracle_home_include_dir" = "yes"; then
+            want_oracle_but_no_path="yes"
+        fi
+
+        if test "$oracle_home_lib_dir" != "no" -a "$oracle_home_lib_dir" != "yes"; then
+            oracle_lib_dir="$oracle_home_lib_dir"
+        elif test "$oracle_home_lib_dir" = "yes"; then
+            want_oracle_but_no_path="yes"
+        fi
+    fi
+
+    if test "$want_oracle_but_no_path" = "yes"; then
+        { echo "$as_me:$LINENO: WARNING: Oracle support is requested but no Oracle paths have been provided. \
+Please, locate Oracle directories using --with-oci or \
+--with-oci-include and --with-oci-lib options." >&5
+echo "$as_me: WARNING: Oracle support is requested but no Oracle paths have been provided. \
+Please, locate Oracle directories using --with-oci or \
+--with-oci-include and --with-oci-lib options." >&2;}
+    fi
+
+                if test -n "$oracle_include_dir" -a -n "$oracle_lib_dir"; then
+
+        saved_CPPFLAGS="$CPPFLAGS"
+        CPPFLAGS="$CPPFLAGS -I$oracle_include_dir"
+
+                if test -n "$oracle_include_dir2"; then
+            CPPFLAGS="$CPPFLAGS -I$oracle_include_dir2"
+        fi
+
+                        saved_LDFLAGS="$LDFLAGS"
+        oci_ldflags="-L$oracle_lib_dir -lclntsh"
+        LDFLAGS="$LDFLAGS $oci_ldflags"
+
+                                { echo "$as_me:$LINENO: checking for Oracle OCI headers in $oracle_include_dir" >&5
+echo $ECHO_N "checking for Oracle OCI headers in $oracle_include_dir... $ECHO_C" >&6; }
+
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        cat >conftest.$ac_ext <<_ACEOF
+
+            /* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <oci.h>
+int
+main ()
+{
+
+#if defined(OCI_MAJOR_VERSION)
+#if OCI_MAJOR_VERSION == 10 && OCI_MINOR_VERSION == 2
+// Oracle 10.2 detected
+#endif
+#elif defined(OCI_V7_SYNTAX)
+// OK, older Oracle detected
+// TODO - mloskot: find better macro to check for older versions;
+#else
+#  error Oracle oci.h header not found
+#endif
+
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+
+            ORACLE_OCI_CFLAGS="-I$oracle_include_dir"
+
+            if test -n "$oracle_include_dir2"; then
+                ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir2"
+            fi
+
+            oci_header_found="yes"
+            { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+            oci_header_found="no"
+            { echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6; }
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+                                if test "$oci_header_found" = "yes"; then
+
+            { echo "$as_me:$LINENO: checking for Oracle OCI libraries in $oracle_lib_dir" >&5
+echo $ECHO_N "checking for Oracle OCI libraries in $oracle_lib_dir... $ECHO_C" >&6; }
+
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+            cat >conftest.$ac_ext <<_ACEOF
+
+                /* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <oci.h>
+int
+main ()
+{
+
+OCIEnv* envh = 0;
+OCIEnvCreate(&envh, OCI_DEFAULT, 0, 0, 0, 0, 0, 0);
+if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
+
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+
+                ORACLE_OCI_LDFLAGS="$oci_ldflags"
+                oci_lib_found="yes"
+                { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+                oci_lib_found="no"
+                { echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6; }
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+            ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        fi
+
+        CPPFLAGS="$saved_CPPFLAGS"
+        LDFLAGS="$saved_LDFLAGS"
+    fi
+
+                oracle_version_req=$ORACLE_OCI_REQ_VERSION
+
+    if test "$oci_header_found" = "yes" -a "$oci_lib_found" = "yes" -a \
+        -n "$oracle_version_req"; then
+
+        oracle_version_major=`cat $oracle_include_dir/oci.h \
+                             | grep '#define.*OCI_MAJOR_VERSION.*' \
+                             | sed -e 's/#define OCI_MAJOR_VERSION  *//' \
+                             | sed -e 's/  *\/\*.*\*\///'`
+
+        oracle_version_minor=`cat $oracle_include_dir/oci.h \
+                             | grep '#define.*OCI_MINOR_VERSION.*' \
+                             | sed -e 's/#define OCI_MINOR_VERSION  *//' \
+                             | sed -e 's/  *\/\*.*\*\///'`
+
+        { echo "$as_me:$LINENO: checking if Oracle OCI version is >= $oracle_version_req" >&5
+echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req... $ECHO_C" >&6; }
+
+        if test -n "$oracle_version_major" -a -n $"oracle_version_minor"; then
+
+            ORACLE_OCI_VERSION="$oracle_version_major.$oracle_version_minor"
+
+                                    oracle_version_req_major=`expr $oracle_version_req : '\([0-9]*\)'`
+            oracle_version_req_minor=`expr $oracle_version_req : '[0-9]*\.\([0-9]*\)'`
+
+            oracle_version_req_number=`expr $oracle_version_req_major \* 1000000 \
+                                       \+ $oracle_version_req_minor \* 1000`
+
+                        oracle_version_number=`expr $oracle_version_major \* 1000000 \
+                                  \+ $oracle_version_minor \* 1000`
+
+            oracle_version_check=`expr $oracle_version_number \>\= $oracle_version_req_number`
+            if test "$oracle_version_check" = "1"; then
+
+                oracle_version_checked="yes"
+                { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz10 flag" >&5
+echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz10 flag... $ECHO_C" >&6; }
+                oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
+                if test "$oracle_nnz10_check" = "1"; then
+                    ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
+                    { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+                else
+                    { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+                fi
+            else
+                oracle_version_checked="no"
+                { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+                { { echo "$as_me:$LINENO: error: Oracle $ORACLE_OCI_VERSION found, but required version is $oracle_version_req" >&5
+echo "$as_me: error: Oracle $ORACLE_OCI_VERSION found, but required version is $oracle_version_req" >&2;}
+   { (exit 1); exit 1; }; }
+            fi
+        else
+            ORACLE_OCI_VERSION="UNKNOWN"
+            { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+            { echo "$as_me:$LINENO: WARNING: Oracle version unknown, probably OCI older than 10.2 is available" >&5
+echo "$as_me: WARNING: Oracle version unknown, probably OCI older than 10.2 is available" >&2;}
+        fi
+    fi
+
+    { echo "$as_me:$LINENO: checking if Oracle support is enabled" >&5
+echo $ECHO_N "checking if Oracle support is enabled... $ECHO_C" >&6; }
+
+    if test "$oci_header_found" = "yes" -a "$oci_lib_found" = "yes"; then
+
+
+
+
+
+        HAVE_ORACLE_OCI="yes"
+    else
+        HAVE_ORACLE_OCI="no"
+    fi
+
+    { echo "$as_me:$LINENO: result: $HAVE_ORACLE_OCI" >&5
+echo "${ECHO_T}$HAVE_ORACLE_OCI" >&6; }
+
+
+if test "$HAVE_ORACLE_OCI" = "yes"; then
+    OPT_GDAL_FORMATS="georaster $OPT_GDAL_FORMATS"
+    HAVE_GEORASTER=yes
+    { echo "$as_me:$LINENO: result: enabled" >&5
+echo "${ECHO_T}enabled" >&6; }
+fi
+
+
 
 # Check whether --with-grib was given.
 if test "${with_grib+set}" = set; then
@@ -24922,7 +25286,7 @@ echo "${ECHO_T}yes" >&6; }
 echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz10 flag... $ECHO_C" >&6; }
                 oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
                 if test "$oracle_nnz10_check" = "1"; then
-                    ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz10"
+                    ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
                     { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
                 else
@@ -28425,6 +28789,9 @@ KAKDIR!$KAKDIR$ac_delim
 MRSID_INCLUDE!$MRSID_INCLUDE$ac_delim
 MRSID_FLAGS!$MRSID_FLAGS$ac_delim
 MRSID_LIBS!$MRSID_LIBS$ac_delim
+ORACLE_OCI_VERSION!$ORACLE_OCI_VERSION$ac_delim
+ORACLE_OCI_CFLAGS!$ORACLE_OCI_CFLAGS$ac_delim
+ORACLE_OCI_LDFLAGS!$ORACLE_OCI_LDFLAGS$ac_delim
 OPT_GDAL_FORMATS!$OPT_GDAL_FORMATS$ac_delim
 OGR_ENABLED!$OGR_ENABLED$ac_delim
 MYSQL_CONFIG!$MYSQL_CONFIG$ac_delim
@@ -28447,9 +28814,6 @@ EXPAT_VERSION!$EXPAT_VERSION$ac_delim
 HAVE_EXPAT!$HAVE_EXPAT$ac_delim
 EXPAT_INCLUDE!$EXPAT_INCLUDE$ac_delim
 ODBC_SETTING!$ODBC_SETTING$ac_delim
-ORACLE_OCI_VERSION!$ORACLE_OCI_VERSION$ac_delim
-ORACLE_OCI_CFLAGS!$ORACLE_OCI_CFLAGS$ac_delim
-ORACLE_OCI_LDFLAGS!$ORACLE_OCI_LDFLAGS$ac_delim
 HAVE_OCI!$HAVE_OCI$ac_delim
 OCI_INCLUDE!$OCI_INCLUDE$ac_delim
 DODS_INC!$DODS_INC$ac_delim
@@ -29821,6 +30185,9 @@ echo "  PGeo support:              ${ODBC_SETTING}"
 
 
 echo "  OCI support:               ${HAVE_OCI}"
+
+
+echo "  GEORASTER support:         ${HAVE_GEORASTER}"
 
 
 echo "  SDE support:               ${SDE_ENABLED}"
