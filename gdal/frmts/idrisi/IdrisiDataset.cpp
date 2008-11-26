@@ -304,6 +304,13 @@ public:
         GDALProgressFunc pfnProgress, 
         void * pProgressData );
 
+    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag, 
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType,
+                              int nBandCount, int *panBandMap, 
+                              int nPixelSpace, int nLineSpace, int nBandSpace);
+
     virtual char **GetFileList(void);
     virtual CPLErr GetGeoTransform( double *padfTransform );
     virtual CPLErr SetGeoTransform( double *padfTransform );
@@ -1082,6 +1089,37 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
 }
 
 /************************************************************************/
+/*                             IRasterIO()                              */
+/*                                                                      */
+/*      Multi-band raster io handler.  We will use  block based         */
+/*      loading is used for multiband RSTs.  That is because they       */
+/*      are effectively pixel interleaved, so processing all bands      */
+/*      for a given block together avoid extra seeks.                   */
+/************************************************************************/
+
+CPLErr IdrisiDataset::IRasterIO( GDALRWFlag eRWFlag, 
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType,
+                              int nBandCount, int *panBandMap, 
+                              int nPixelSpace, int nLineSpace, 
+                              int nBandSpace )
+
+{
+    if( nBandCount > 1 )
+        return GDALDataset::BlockBasedRasterIO( 
+            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType, 
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+    else
+        return 
+            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize, eBufType, 
+                                    nBandCount, panBandMap, 
+                                    nPixelSpace, nLineSpace, nBandSpace );
+}
+
+/************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
 
@@ -1191,14 +1229,23 @@ CPLErr  IdrisiDataset::SetGeoTransform( double * padfTransform )
     dfYPixSz = padfTransform[5];
     dfMinX   = padfTransform[0];
     dfMaxX   = ( dfXPixSz * nRasterXSize ) + dfMinX;
-    dfMaxY   = padfTransform[3];
-    dfMinY   = ( dfYPixSz * nRasterYSize ) + dfMaxY;
+
+    if( dfYPixSz < 0 )
+    {
+        dfMaxY   = padfTransform[3];
+        dfMinY   = ( dfYPixSz * nRasterYSize ) + padfTransform[3];
+    }
+    else
+    {
+        dfMaxY   = ( dfYPixSz * nRasterYSize ) + padfTransform[3];
+        dfMinY   = padfTransform[3];
+    }
 
     CSLSetNameValue( papszRDC, rdcMIN_X,      CPLSPrintf( "%.7f", dfMinX ) );
     CSLSetNameValue( papszRDC, rdcMAX_X,      CPLSPrintf( "%.7f", dfMaxX ) );
     CSLSetNameValue( papszRDC, rdcMIN_Y,      CPLSPrintf( "%.7f", dfMinY ) );
     CSLSetNameValue( papszRDC, rdcMAX_Y,      CPLSPrintf( "%.7f", dfMaxY ) );
-    CSLSetNameValue( papszRDC, rdcRESOLUTION, CPLSPrintf( "%.7f", -dfYPixSz ) );
+    CSLSetNameValue( papszRDC, rdcRESOLUTION, CPLSPrintf( "%.7f", abs( dfYPixSz ) ) );
 
     // --------------------------------------------------------------------
     // Update the Dataset attribute
