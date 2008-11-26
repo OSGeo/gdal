@@ -303,14 +303,6 @@ public:
         char **papszOptions,
         GDALProgressFunc pfnProgress, 
         void * pProgressData );
-
-    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag, 
-                              int nXOff, int nYOff, int nXSize, int nYSize,
-                              void *pData, int nBufXSize, int nBufYSize, 
-                              GDALDataType eBufType,
-                              int nBandCount, int *panBandMap, 
-                              int nPixelSpace, int nLineSpace, int nBandSpace);
-
     virtual char **GetFileList(void);
     virtual CPLErr GetGeoTransform( double *padfTransform );
     virtual CPLErr SetGeoTransform( double *padfTransform );
@@ -1086,37 +1078,6 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     poDS->FlushCache();
 
     return poDS;
-}
-
-/************************************************************************/
-/*                             IRasterIO()                              */
-/*                                                                      */
-/*      Multi-band raster io handler.  We will use  block based         */
-/*      loading is used for multiband RSTs.  That is because they       */
-/*      are effectively pixel interleaved, so processing all bands      */
-/*      for a given block together avoid extra seeks.                   */
-/************************************************************************/
-
-CPLErr IdrisiDataset::IRasterIO( GDALRWFlag eRWFlag, 
-                              int nXOff, int nYOff, int nXSize, int nYSize,
-                              void *pData, int nBufXSize, int nBufYSize, 
-                              GDALDataType eBufType,
-                              int nBandCount, int *panBandMap, 
-                              int nPixelSpace, int nLineSpace, 
-                              int nBandSpace )
-
-{
-    if( nBandCount > 1 )
-        return GDALDataset::BlockBasedRasterIO( 
-            eRWFlag, nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
-    else
-        return 
-            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize, eBufType, 
-                                    nBandCount, panBandMap, 
-                                    nPixelSpace, nLineSpace, nBandSpace );
 }
 
 /************************************************************************/
