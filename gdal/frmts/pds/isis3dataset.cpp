@@ -553,7 +553,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ((EQUAL( map_proj_name, "Equirectangular" )) ||
         (EQUAL( map_proj_name, "SimpleCylindrical" )) )  {
-        oSRS.OGRSpatialReference::SetEquirectangular ( center_lat, center_lon, 0, 0 );
+        oSRS.OGRSpatialReference::SetEquirectangular2 ( 0.0, center_lon, center_lat, 0, 0 );
     } else if (EQUAL( map_proj_name, "Orthographic" )) {
         oSRS.OGRSpatialReference::SetOrthographic ( center_lat, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "Sinusoidal" )) {
