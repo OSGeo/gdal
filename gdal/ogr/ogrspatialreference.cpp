@@ -3256,7 +3256,6 @@ OGRErr OGRSpatialReference::SetEquirectangular(
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
     SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
-    SetNormProjParm( SRS_PP_PSEUDO_STD_PARALLEL_1, dfCenterLat );
 
     return OGRERR_NONE;
 }
@@ -3285,7 +3284,7 @@ OGRErr OSRSetEquirectangular( OGRSpatialReferenceH hSRS,
 
 OGRErr OGRSpatialReference::SetEquirectangular2(
                                    double dfCenterLat, double dfCenterLong,
-                                   double dfPseudoStdParallel1,
+                                   double dfStdParallel1,
                                    double dfFalseEasting,
                                    double dfFalseNorthing )
 
@@ -3295,7 +3294,7 @@ OGRErr OGRSpatialReference::SetEquirectangular2(
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
     SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
-    SetNormProjParm( SRS_PP_PSEUDO_STD_PARALLEL_1, dfPseudoStdParallel1 );
+    SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdParallel1 );
 
     return OGRERR_NONE;
 }
@@ -3306,16 +3305,16 @@ OGRErr OGRSpatialReference::SetEquirectangular2(
 
 OGRErr OSRSetEquirectangular2( OGRSpatialReferenceH hSRS, 
                                double dfCenterLat, double dfCenterLong,
-                               double dfPseudoStdParallel1,
+                               double dfStdParallel1,
                                double dfFalseEasting,
                                double dfFalseNorthing )
     
 {
-    VALIDATE_POINTER1( hSRS, "OSRSetEquirectangular", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRSetEquirectangular2", CE_Failure );
 
     return ((OGRSpatialReference *) hSRS)->SetEquirectangular2( 
         dfCenterLat, dfCenterLong, 
-        dfPseudoStdParallel1,
+        dfStdParallel1,
         dfFalseEasting, dfFalseNorthing );
 }
 
