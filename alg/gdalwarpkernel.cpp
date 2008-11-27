@@ -537,8 +537,14 @@ CPLErr GDALWarpKernel::PerformWarp()
 /* -------------------------------------------------------------------- */
 /*      Pre-calculate resampling scales and window sizes for filtering. */
 /* -------------------------------------------------------------------- */
-    dfXScale = (double)nDstXSize / nSrcXSize;
-    dfYScale = (double)nDstYSize / nSrcYSize;
+
+    if( nSrcXSize > 0 && nSrcYSize > 0 )  // #2445
+    {
+        dfXScale = (double)nDstXSize / nSrcXSize;
+        dfYScale = (double)nDstYSize / nSrcYSize;
+    }
+    else 
+        dfXScale = dfYScale = 1.0;
 
     dfXFilter = anGWKFilterRadius[eResample];
     dfYFilter = anGWKFilterRadius[eResample];
