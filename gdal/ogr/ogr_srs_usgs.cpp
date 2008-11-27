@@ -713,9 +713,10 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             break;
 
         case EQRECT:
-            SetEquirectangular( pfnUnpackAnglesFn(padfPrjParams[5]),
-                                pfnUnpackAnglesFn(padfPrjParams[4]),
-                                padfPrjParams[6], padfPrjParams[7] );
+            SetEquirectangular2( 0.0,
+                                 pfnUnpackAnglesFn(padfPrjParams[4]),
+                                 pfnUnpackAnglesFn(padfPrjParams[5]),
+                                 padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case MILLER:
@@ -1155,7 +1156,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
         (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
             GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
         (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
+            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
         (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
