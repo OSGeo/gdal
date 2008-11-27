@@ -2622,7 +2622,9 @@ typedef void OSRCoordinateTransformationShadow;
 
 int bUseExceptions=0;
 
-void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
+void CPL_STDCALL 
+VeryQuietErrorHandler(CPLErr eclass, int code, const char *msg ) 
+{
   /* If the error class is CE_Fatal, we want to have a message issued
      because the CPL support code does an abort() before any exception
      can be generated */
@@ -2634,7 +2636,7 @@ void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
 
 void UseExceptions() {
   bUseExceptions = 1;
-  CPLSetErrorHandler( (CPLErrorHandler) VeryQuiteErrorHandler );
+  CPLSetErrorHandler( (CPLErrorHandler) VeryQuietErrorHandler );
 }
 
 void DontUseExceptions() {
