@@ -11,18 +11,20 @@ This driver implements support for access to spatial tables in
 PostgreSQL extended with the 
 <a href="http://www.postgis.org/">PostGIS</a> spatial data support. 
 Some support exists in the driver for use with PostgreSQL without PostGIS
-but with less functionnalities.<p>
+but with less functionalities.<p>
 
-<h2>Connectiong to a database</h2>
+<h2>Connecting to a database</h2>
 
-When opening a database, its name should be specified in the form
-"PG:dbname=<databasename>". It's also possible to omit the database name and connect
-to <em>default</em> one, with the same name as the user name. 
-We use PQconnectdb() to make the connection, so any other options and defaults
+To connect to a Postgres datasource, use a connection string specifying the database name,
+with additional parameters as necessary<br>
+<blockquote><pre>PG:dbname=databasename</pre><em> or</em><pre>PG:"dbname='databasename' server='addr' port='5432' user='x' passwd='y'"</pre></blockquote>
+It's also possible to omit the database name and connect
+to a <em>default</em> database, with the same name as the user name. 
+<b>Note</b>: We use PQconnectdb() to make the connection, so any other options and defaults
 that would apply to it, apply to the name here.  The PG: prefix is used
 to mark the name as a postgres connection string.<p>
 
-From GDAL 1.6.0, the set of tables to be scanned can be overridden by specifying
+Starting with GDAL 1.6.0, the set of tables to be scanned can be overridden by specifying
 <i>tables=[schema.]table[(geom_column_name)][,[schema2.]table2[(geom_column_name2)],...]</i> within the connection string.
 If the parameter is found, the driver skips enumeration of the tables as
 described in the next paragraph.<p>
@@ -34,26 +36,26 @@ database), then all tables and named views listed in the <i>geometry_columns</i>
 will be treated as OGR layers. Otherwise (PostGIS disabled for the accessed database),
 all regular user tables and named views will be treated as layers.<p>
 
-From GDAL 1.6.0, the PostgreSQL driver supports accessing tables with multiple PostGIS geometry columns.
+Starting with GDAL 1.6.0, the PostgreSQL driver supports accessing tables with multiple PostGIS geometry columns.
 For such a table, there will be as many layers reported as the number of geometry columns listed for that
 table in the <i>geometry_columns</i> table.
 For example, if a table 'foo' has 2 geometry columns 'bar' and 'baz', 2 layers will be reported :
 'foo(bar)' and 'foo(baz)'. For backward compatibility, if a table has only one geometry column,
 the layer name is the table name. Also if a table 'foo' has several geometry columns,
 with one being called 'wkb_geometry', the layer corresponding to this geometry column will
-be simply reported as 'foo'. Be careful : the bahaviour in creation, update or deletion of layers
+be simply reported as 'foo'. Be careful - the behaviour in creation, update or deletion of layers
 that are based on tables with multiple PostGIS geometry column is known to have (not well-defined)
 side-effects on the other layers as they are closely tied. Thus, that capability should currently
 be thought as mostly read-only.<p>
 
 <h2>Layers</h2>
-From GDAL 1.6.0, even when PostGIS is enabled, if the user defines the environment variable
-PG_LIST_ALL_TABLES=YES (and does not specify tables=), all regular user tables and named views
-will be treated as layers. However, tables with multiple geometry column will only be reporded
-once in that mode. So this variable is mainly usefull when PostGIS is enabled to find out tables
+Starting with GDAL 1.6.0, even when PostGIS is enabled, if the user defines the environment variable
+<pre>PG_LIST_ALL_TABLES=YES</pre> (and does not specify tables=), all regular user tables and named views
+will be treated as layers. However, tables with multiple geometry column will only be reported
+once in that mode. So this variable is mainly useful when PostGIS is enabled to find out tables
 with no spatial data, or views without an entry in <i>geometry_columns</i> table.<p>
 
-In any case, all user tables can be queried explicitely with GetLayerByName()<p>
+In any case, all user tables can be queried explicitly with GetLayerByName()<p>
 
 Regular (non-spatial) tables can be accessed, and will return features with
 attributes, but not geometry.  If the table has a "wkb_geometry" field, it will
@@ -62,7 +64,7 @@ determine how to read it.  It can be a PostGIS <b>geometry</b> field, which
 is assumed to come back in OGC WKT, or type BYTEA or OID in which case it
 is used as a source of OGC WKB geometry.<p>
 
-From GDAL 1.6.0, tables inherited from spatial tables are supported.<p>
+Starting with GDAL 1.6.0, tables inherited from spatial tables are supported.<p>
 
 If there is an "ogc_fid" field, it will be used to set the feature id of
 the features, and not treated as a regular field. <p>
@@ -74,12 +76,12 @@ user needs to have write permissions for the target and the public schema.<p>
 
 When PostGIS is enabled for the accessed database, named views are supported, provided that 
 there is an entry in the <i>geometry_columns</i> tables. But, note that the AddGeometryColumn() SQL
-function doesn't accept to add an entry for a view (only for regular tables). So, that must usually
+function doesn't accept adding an entry for a view (only for regular tables). So, that must usually
 be done by hand with a SQL statement like :
 <pre>"INSERT INTO geometry_columns VALUES ( '', 'public', 'name_of_my_view', 'name_of_geometry_column', 2, 4326, 'POINT');"</pre>
 
-From GDAL 1.6.0, it is also possible to use named views without inserting a row in the geometry_columns
-table. For that, you need to explicitely specify the name of the view in the "tables=" option of the
+Starting with GDAL 1.6.0, it is also possible to use named views without inserting a row in the geometry_columns
+table. For that, you need to explicitly specify the name of the view in the "tables=" option of the
 connection string. See above. The drawback is that OGR will not be able to report a valid SRS and figure out
 the right geometry type.
 
@@ -88,10 +90,10 @@ the right geometry type.
 <p>The PostgreSQL driver passes SQL statements directly to PostgreSQL by default,
 rather than evaluating them internally when using the ExecuteSQL() call on the
 OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
-expressions are also passed through to PostgreSQL. 
-It's also possible to request the driver to handle SQL commands 
-with <a href="/ogr/ogr_sql.html">OGR SQL</a> engine, by passing <strong>"OGRSQL"</strong> 
-string to the ExecuteSQL() method, as name of the SQL dialect.</p>
+expressions are also passed directly through to PostgreSQL. 
+It's also possible to request the ogr Pg driver to handle SQL commands 
+with the <a href="/ogr/ogr_sql.html">OGR SQL</a> engine, by passing <strong>"OGRSQL"</strong> 
+string to the ExecuteSQL() method, as the name of the SQL dialect.</p>
 
 <p>The PostgreSQL driver in OGR supports the OGRDataSource::StartTrasaction(), 
 OGRDataSource::CommitTransaction() and OGRDataSource::RollbackTransaction()
@@ -123,7 +125,7 @@ within PostgreSQL), but it does allow creation of new layers within an
 existing database.<P>
 
 As mentioned above the type system is impoverished, and many OGR types
-are not appropriate mapped into PostgreSQL.<p>
+are not appropriately mapped into PostgreSQL.<p>
 
 If the database has PostGIS types loaded (ie. the geometry type) newly
 created layers will be created with the PostGIS Geometry type.  Otherwise
@@ -131,9 +133,9 @@ they will use OID.
 
 By default it is assumed that text being sent to Postgres is in the UTF-8
 encoding.  This is fine for plain ASCII, but can result in errors for
-extended characters (ASCII 155+ for instance).  Whle OGR provides no direct
+extended characters (ASCII 155+, LATIN1, etc).  While OGR provides no direct
 control over this, you can set the PGCLIENTENCODING environment variable 
-to indicate the format being provided.  For instance, if you text is 
+to indicate the format being provided.  For instance, if your text is 
 LATIN1 you could set the environment variable to LATIN1 before using OGR
 and input would be assumed to be LATIN1 instead of UTF-8. <p>
 
@@ -153,7 +155,8 @@ desired name to be destroyed before creating the requested layer.<p>
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
 layer to have their field names "laundered" into a form more compatible with
 PostgreSQL.  This converts to lower case and converts some special characters
-like "-" and "#" to "_".  If "NO" exact names are preserved.  The default value is "YES".  If enabled the table (layer) name will also be laundered.<p>
+like "-" and "#" to "_".  If "NO" exact names are preserved.  
+The default value is "YES".  If enabled the table (layer) name will also be laundered.<p>
 <li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
 layer to try and represent the width and precision information, if available
 using NUMERIC(width,precision) or CHAR(width) types.  If "NO" then the types
@@ -173,7 +176,7 @@ to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is ava
 
 <ul>
 <li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
-COPY is less robust than INSERT, but signficantly faster.</li><p>
+COPY is less robust than INSERT, but significantly faster.</li><p>
 <li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'.</li><p>
 </ul>
 
