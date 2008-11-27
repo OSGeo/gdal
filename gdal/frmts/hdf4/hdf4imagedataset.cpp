@@ -198,7 +198,10 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
     // SDS based datasets since other variations haven't been tested. #2208  
     if( poDS->iDatasetType == HDF4_SDS )
     {
-        nBlockYSize = 100000 / poDS->GetRasterXSize();
+        int nChunkSize = 
+            atoi( CPLGetConfigOption("HDF4_BLOCK_PIXELS", "100000") );
+
+        nBlockYSize = nChunkSize / poDS->GetRasterXSize();
         nBlockYSize = MAX(1,MIN(nBlockYSize,poDS->GetRasterYSize()));
     }
     else

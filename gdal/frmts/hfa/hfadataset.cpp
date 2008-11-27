@@ -1739,7 +1739,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proNumber = EPRJ_EQUIRECTANGULAR;
         sPro.proName = (char*) "Equirectangular";
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*D2R;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
@@ -2297,15 +2297,17 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
       case EPRJ_PLATE_CARREE:
       case EPRJ_EQUIRECTANGULAR:
-        oSRS.SetEquirectangular(
-            psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
-            psPro->proParams[6], psPro->proParams[7] );
+        oSRS.SetEquirectangular2( 0.0, 
+                                  psPro->proParams[4]*R2D,
+                                  psPro->proParams[5]*R2D, 
+                                  psPro->proParams[6], psPro->proParams[7] );
         break;
 
       case EPRJ_EQUIDISTANT_CYLINDRICAL:
-        oSRS.SetEquirectangular(
-            psPro->proParams[2]*R2D, psPro->proParams[4]*R2D,
-            psPro->proParams[6], psPro->proParams[7] );
+        oSRS.SetEquirectangular2( 0.0,
+                                  psPro->proParams[4]*R2D,
+                                  psPro->proParams[2]*R2D,
+                                  psPro->proParams[6], psPro->proParams[7] );
         break;
 
       case EPRJ_MILLER_CYLINDRICAL:
