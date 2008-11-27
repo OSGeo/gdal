@@ -32,6 +32,10 @@ loaded from utm.tif might look like this:
 </VRTDataset>
 \endcode
 
+Many aspects of the VRT file are a direct XML encoding of the 
+<a href="gdal_datamodel.html">GDAL Data Model</a> which should be reviewed
+for understanding of the semantics of various elements.<p>
+
 VRT files can be produced by translating to VRT format.  The resulting file can
 then be edited to modify mappings, add metadata or other purposes.  VRT files
 can also be produced programmatically by various means.<p>
@@ -68,16 +72,7 @@ known GEOGCS names, and PROJ.4 format) is also allowed in the SRS element.
 
 <li> <b>GeoTransform</b>: This element contains a six value affine 
 geotransformation for the dataset, mapping between pixel/line coordinates 
-and georeferenced coordinates.  The list of values is the data of the SRS 
-element, and the values are separated by commas.
-<P>
-The parameter order is as follows:
-    [0] top left x;
-    [1] w-e pixel resolution;
-    [2] rotation, 0 if image is "north up";
-    [3] top left y;
-    [4] rotation, 0 if image is "north up";
-    [5] n-s pixel resolution.
+and georeferenced coordinates.<P>
 
 \code
   <GeoTransform>440720.0,  60,  0.0,  3751320.0,  0.0, -60.0</GeoTransform>
