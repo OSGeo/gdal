@@ -417,8 +417,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     else if( EQUALN( pszProj, "ER", 2 ) )
     {
-        SetEquirectangular( padfPrjParams[3], padfPrjParams[2],
-                            padfPrjParams[6], padfPrjParams[7] );
+        // PCI and GCTP don't support natural origin lat. 
+        SetEquirectangular2( 0.0, padfPrjParams[2],
+                             padfPrjParams[3], 
+                             padfPrjParams[6], padfPrjParams[7] );
     }
 
     else if( EQUALN( pszProj, "GNO", 3 ) )
@@ -861,7 +863,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         CPLPrintStringFill( szProj, "ER", 16 );
         (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         (*ppadfPrjParams)[3] =
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
+            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
         (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
