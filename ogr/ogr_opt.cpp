@@ -146,6 +146,7 @@ static const char *papszProjectionDefinitions[] = {
     "Equirectangular",
     SRS_PP_LATITUDE_OF_ORIGIN, 
     SRS_PP_CENTRAL_MERIDIAN, 
+    SRS_PP_STANDARD_PARALLEL_1, 
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
 
