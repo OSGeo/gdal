@@ -912,7 +912,10 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             psSrcField = poSrcFeat->GetRawFieldRef( psKeyDef->field_index );
 
             if( poFDefn->GetType() == OFTInteger 
-                || poFDefn->GetType() == OFTReal )
+                || poFDefn->GetType() == OFTReal
+                || poFDefn->GetType() == OFTDate
+                || poFDefn->GetType() == OFTTime
+                || poFDefn->GetType() == OFTDateTime)
                 memcpy( psDstField, psSrcField, sizeof(OGRField) );
             else if( poFDefn->GetType() == OFTString )
             {
@@ -1046,6 +1049,49 @@ void OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
     CPLFree( panMerged );
 }
 
+
+/************************************************************************/
+/*                    OGRGenSQLCompareDate()                            */
+/************************************************************************/
+
+static int OGRGenSQLCompareDate(   OGRField *psFirstTuple,
+                                   OGRField *psSecondTuple )
+{
+    /* FIXME? : We ignore TZFlag */
+
+    if (psFirstTuple->Date.Year < psSecondTuple->Date.Year)
+        return -1;
+    else if (psFirstTuple->Date.Year > psSecondTuple->Date.Year)
+        return 1;
+
+    if (psFirstTuple->Date.Month < psSecondTuple->Date.Month)
+        return -1;
+    else if (psFirstTuple->Date.Month > psSecondTuple->Date.Month)
+        return 1;
+
+    if (psFirstTuple->Date.Day < psSecondTuple->Date.Day)
+        return -1;
+    else if (psFirstTuple->Date.Day > psSecondTuple->Date.Day)
+        return 1;
+
+    if (psFirstTuple->Date.Hour < psSecondTuple->Date.Hour)
+        return -1;
+    else if (psFirstTuple->Date.Hour > psSecondTuple->Date.Hour)
+        return 1;
+
+    if (psFirstTuple->Date.Minute < psSecondTuple->Date.Minute)
+        return -1;
+    else if (psFirstTuple->Date.Minute > psSecondTuple->Date.Minute)
+        return 1;
+
+    if (psFirstTuple->Date.Second < psSecondTuple->Date.Second)
+        return -1;
+    else if (psFirstTuple->Date.Second > psSecondTuple->Date.Second)
+        return 1;
+
+    return 0;
+}
+
 /************************************************************************/
 /*                              Compare()                               */
 /************************************************************************/
@@ -1110,6 +1156,13 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
                 nResult = -1;
             else if( pasFirstTuple[iKey].Real > pasSecondTuple[iKey].Real )
                 nResult = 1;
+        }
+        else if( poFDefn->GetType() == OFTDate ||
+                 poFDefn->GetType() == OFTTime ||
+                 poFDefn->GetType() == OFTDateTime)
+        {
+            nResult = OGRGenSQLCompareDate(&pasFirstTuple[iKey],
+                                           &pasSecondTuple[iKey]);
         }
 
         if( psKeyDef->ascending_flag )
