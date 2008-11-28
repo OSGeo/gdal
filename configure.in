@@ -39,8 +39,9 @@ AC_CONFIG_HEADER(port/cpl_config.h)
 dnl We require autoconf 2.52+ for libtool support on cygwin/mingw hosts
 AC_PREREQ(2.52)
 
-dnl Compute the canonical target-system type variable $target
-AC_CANONICAL_TARGET
+dnl Compute the canonical host-system (the system we are building for)
+dnl type variable $host
+AC_CANONICAL_HOST
 
 dnl Enable as much warnings as possible
 AX_CFLAGS_WARN_ALL(C_WFLAGS)
@@ -110,7 +111,7 @@ AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the
 
 dnl Check the native cpu bit order (also libtiff stuff).
 AC_MSG_CHECKING([native cpu bit order])
-case "$target_cpu" in
+case "$host_cpu" in
     i*86*)
         HOST_FILLORDER=FILLORDER_LSB2MSB
 	AC_MSG_RESULT([lsb2msb])
