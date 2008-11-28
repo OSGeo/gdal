@@ -1748,6 +1748,34 @@ def tiff_write_54():
     return 'success'
 
 
+###############################################################################
+# Test creating and reading an equirectangular file with all parameters (#2706)
+
+def tiff_write_55():
+
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_55.tif',
+                                              256, 256, 1 )
+    srs_expected = 'PROJCS["Equirectangular Mars",GEOGCS["GCS_Mars",DATUM["unknown",SPHEROID["unnamed",3394813.857975945,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",-2],PARAMETER["central_meridian",184.4129943847656],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["standard_parallel_1",-15],UNIT["metre",1,AUTHORITY["EPSG","9001"]]]'
+    
+    ds.SetProjection( srs_expected )
+
+    ds.SetGeoTransform( (100,1,0,200,0,-1) )
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_55.tif' )
+    srs = ds.GetProjectionRef()
+    ds = None
+
+    if srs != srs_expected:
+        print srs
+        gdaltest.post_reason( 'failed to preserve Equirectangular projection as expected, old libgeotiff?' )
+        return 'fail'
+
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_55.tif' )
+
+    return 'success'
+
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -1808,6 +1836,7 @@ gdaltest_list = [
     tiff_write_52,
     tiff_write_53,
     tiff_write_54,
+    tiff_write_55,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
