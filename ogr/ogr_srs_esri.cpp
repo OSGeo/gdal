@@ -36,6 +36,7 @@ CPL_CVSID("$Id$");
 static const char *apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
+    "Equidistant_Cylindrical", SRS_PT_EQUIRECTANGULAR,
     "Plate_Carree", SRS_PT_EQUIRECTANGULAR,
     "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
                                         SRS_PT_HOTINE_OBLIQUE_MERCATOR,
@@ -47,7 +48,6 @@ static const char *apszProjMapping[] = {
     SRS_PT_TRANSVERSE_MERCATOR, SRS_PT_TRANSVERSE_MERCATOR,
     "Gauss_Kruger", SRS_PT_TRANSVERSE_MERCATOR,
     "Mercator", SRS_PT_MERCATOR_1SP,
-    "Equidistant_Cylindrical", SRS_PT_EQUIRECTANGULAR,
     NULL, NULL }; 
  
 static const char *apszAlbersMapping[] = {
@@ -1133,6 +1133,26 @@ OGRErr OGRSpatialReference::morphToESRI()
             (char **)apszPolarStereographicMapping + 1, 
             (char **)apszPolarStereographicMapping + 0, 2 );
 
+/* -------------------------------------------------------------------- */
+/*      ESRI's Equidistant_Cylindrical does not support the             */
+/*      latitude_of_origin keyword.                                     */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL 
+        && EQUAL(pszProjection,"Equidistant_Cylindrical") )
+    {
+        if( GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0) != 0.0 )
+        {
+            CPLDebug( "OGR_ESRI", "Equirectangular with non-zero latitude of origin - not supported." );
+        }
+        else
+        {
+            OGR_SRSNode *poPROJCS = GetAttrNode("PROJCS");
+            if( poPROJCS )
+                poPROJCS->DestroyChild( 
+                    FindProjParm( SRS_PP_LATITUDE_OF_ORIGIN ) );
+        }
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Convert SPHEROID name to use underscores instead of spaces.     */
 /* -------------------------------------------------------------------- */
