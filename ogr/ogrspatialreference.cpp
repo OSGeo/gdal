@@ -3292,9 +3292,9 @@ OGRErr OGRSpatialReference::SetEquirectangular2(
     SetProjection( SRS_PT_EQUIRECTANGULAR );
     SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdParallel1 );
     SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
-    SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdParallel1 );
 
     return OGRERR_NONE;
 }
