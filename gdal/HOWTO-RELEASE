@@ -39,7 +39,11 @@
    argument should be the version number (ie. 1.4.1). 
 
    eg.
-   % mkgdaldist.sh 1.4.1
+   % mkgdaldist.sh 1.4.0
+
+   or
+ 
+   % mkgdaldist.sh 1.4.2 -branch tags/1.4.2
 
 10) Create a snapshot of the documentation.
 
