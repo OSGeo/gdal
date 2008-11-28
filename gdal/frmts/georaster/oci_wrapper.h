@@ -70,6 +70,7 @@ bool                OWIsNumeric( const char *pszText );
 const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
 const char*         OWReplaceString( const char* pszBaseString,
                         const char* pszToken, 
+                        const char* pszStopToken,
                         const char* pszOWReplaceToken );
 
 /***************************************************************************/
