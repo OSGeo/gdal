@@ -156,7 +156,12 @@ transform_list = [ \
     # test scale factor precision (per #1970)
     ('data/wkt_rt90.def', (1572570.342,6728429.67,0.0), 0.001,
      ' +proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',(616531.1155,6727527.5682,0.0), 0.001,
-     'ScalePrecision(#1970)', None)
+     'ScalePrecision(#1970)', None),
+
+    # Test Equirectangular with all parameters
+    ('+proj=eqc +ellps=sphere  +lat_0=-2 +lat_ts=1 +lon_0=-10', (-14453132.04, 4670184.72,0.0), 0.1,
+     '+proj=latlong +ellps=sphere', (-140.0, 40.0, 0.0), 0.000001,
+     'Equirectangular(#2706)', None)
 
     ]
     
