@@ -371,8 +371,6 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                                char* pszInsert,
                                bool bUpdate )
 {
-    char* pszUpdate = pszInsert;
-
     char szValues[OWNAME];
     char szFormat[OWTEXT];
 
@@ -383,7 +381,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     }
 
     char szDescription[OWTEXT];
-    char szUpdate[OWTEXT];
+    char szCreateBlank[OWTEXT];
     char szInsert[OWTEXT];
 
     if( bUpdate == false )
@@ -411,8 +409,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             if( strstr( pszInsert, "VALUES" ) == NULL &&
                 strstr( pszInsert, "values" ) == NULL )
             {
-                strcpy( szValues, CPLSPrintf( 
-                    "VALUES %s", pszInsert ) );
+                strcpy( szValues, CPLSPrintf( "VALUES %s", pszInsert ) );
             }
             else
             {
@@ -423,22 +420,6 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         {
             strcpy( szValues, CPLStrdup( 
                 "VALUES (SDO_GEOR.INIT(NULL,NULL))" ) );
-        }
-    }
-    else
-    {
-        //  ---------------------------------------------------------------
-        //  Update parameters
-        //  ---------------------------------------------------------------
-
-        if( pszUpdate )
-        {
-            strcpy( szValues, pszUpdate );
-        }
-        else
-        {
-            strcpy( szValues, CPLStrdup( 
-                "(SDO_GEOR.INIT(NULL,NULL))" ) );
         }
     }
 
@@ -471,28 +452,25 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     //  Prepare initialization parameters
     //  -------------------------------------------------------------------
 
-    if( poConnection->GetVersion() < 11 )
+    if( nRasterBands == 1 )
     {
-        if( nRasterBands == 1 )
-        {
-            strcpy( szUpdate, CPLSPrintf( "SDO_GEOR.createBlank(20001, "
-                "SDO_NUMBER_ARRAY(0, 0), "
-                "SDO_NUMBER_ARRAY(%d, %d), 0, %s, %s)",
-                nRasterRows, nRasterColumns, szRDT, szRID) );
-        }
-        else
-        {
-            strcpy( szUpdate, CPLSPrintf( "SDO_GEOR.createBlank(21001, "
-                "SDO_NUMBER_ARRAY(0, 0, 0), "
-                "SDO_NUMBER_ARRAY(%d, %d, %d), 0, %s, %s)", 
-                nRasterRows, nRasterColumns, nRasterBands, szRDT, szRID ) );
-        }
-        strcpy(szInsert, OWReplaceString(szValues, "SDO_GEOR.INIT", szUpdate));
+        strcpy( szCreateBlank, CPLSPrintf( "SDO_GEOR.createBlank(20001, "
+            "SDO_NUMBER_ARRAY(0, 0), "
+            "SDO_NUMBER_ARRAY(%d, %d), 0, %s, %s)",
+            nRasterRows, nRasterColumns, szRDT, szRID) );
     }
     else
     {
-        strcpy( szUpdate, CPLSPrintf("SDO_GEOR.INIT(%s,%s)", szRDT, szRID ));
-        strcpy( szInsert, szValues );
+        strcpy( szCreateBlank, CPLSPrintf( "SDO_GEOR.createBlank(21001, "
+            "SDO_NUMBER_ARRAY(0, 0, 0), "
+            "SDO_NUMBER_ARRAY(%d, %d, %d), 0, %s, %s)",
+            nRasterRows, nRasterColumns, nRasterBands, szRDT, szRID ) );
+    }
+
+    if( ! bUpdate )
+    {
+        strcpy( szInsert,
+            OWReplaceString( szValues, "SDO_GEOR.INIT", ")", "GR1" ) );
     }
 
     //  -----------------------------------------------------------
@@ -622,8 +600,8 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     if( bUpdate )
     {
         strcpy( szCommand, CPLSPrintf( 
-            "UPDATE %s T SET %s = %s WHERE %s RETURNING %s INTO GR1;",
-            pszTable, pszColumn, szUpdate, pszWhere, pszColumn ) );
+            "UPDATE %s T SET %s = GR1 WHERE %s RETURNING %s INTO GR1;",
+            pszTable, pszColumn, pszWhere, pszColumn ) );
     }
     else
     {
@@ -648,6 +626,11 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "  CNT  NUMBER          := 0;\n"
             "  GR1  SDO_GEORASTER   := NULL;\n"
             "BEGIN\n"
+            "\n"
+            "  GR1 := %s;\n"
+            "\n"
+            "  GR1.spatialExtent := NULL;\n"
+            "\n"
             "  %s\n"
             "\n"
             "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
@@ -668,6 +651,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             " T.%s.RasterDataTable = :rdt AND"
             " T.%s.RasterId = :rid;\n"
             "END;\n",
+            szCreateBlank,
             szCommand,
             szFormat,
             pszTable, pszColumn, pszColumn, pszColumn  ) );
@@ -711,6 +695,11 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "  GR2  SDO_GEORASTER   := NULL;\n"
         "  STM  VARCHAR2(1024)  := '';\n"
         "BEGIN\n"
+        "\n"
+        "  GR1 := %s;\n"
+        "\n"
+        "  GR1.spatialExtent := NULL;\n"
+        "\n"
         "  %s\n"
         "\n"
         "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
@@ -754,6 +743,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "    END LOOP;\n"
         "  END LOOP;\n"
         "END;",
+        szCreateBlank,
         szCommand,
         pszColumn, pszTable, pszColumn, pszColumn,
         pszColumn, pszTable, pszColumn, pszColumn, szFormat,
@@ -826,14 +816,16 @@ bool GeoRasterWrapper::SetGeoReference( int nSRIDIn )
 char* GeoRasterWrapper::GetWKText( int nSRIDin )
 {
     char szWKText[OWTEXT];
+    char szAuthority[OWTEXT];
 
     OWStatement* poStmt = poConnection->CreateStatement(
-        "SELECT WKTEXT\n"
+        "SELECT WKTEXT, AUTH_NAME\n"
         "FROM   MDSYS.CS_SRS\n"
         "WHERE  SRID = :1 AND WKTEXT IS NOT NULL" );
 
     poStmt->Bind( &nSRIDin );
     poStmt->Define( szWKText,  OWTEXT );
+    poStmt->Define( szAuthority,  OWTEXT );
 
     if( poStmt->Execute() == false ||
         poStmt->Fetch()   == false )
@@ -1452,7 +1444,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
     if( bIOInitialized == false || nCurrentLevel != nLevel )
     {
         InitializeIO( nLevel );
-
+        CPLDebug("GEOR","Pyramid level (%d)", nLevel);
         nCurrentLevel = nLevel;
         nCurrentBlock = -1;
     }
@@ -1849,18 +1841,30 @@ bool GeoRasterWrapper::FlushMetadata()
 
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
-        "  GR   sdo_georaster;\n"
+        "  GR1  sdo_georaster;\n"
+        "  SRID number;\n"
         "BEGIN\n"
-        "  SELECT %s INTO GR FROM %s T WHERE %s FOR UPDATE;\n"
-        "  GR.metadata := XMLTYPE(:1);\n"
-        "  IF NOT :2 = 0 THEN\n"
-        "  SDO_GEOR.georeference( GR, :2, :3,\n"
-        "    SDO_NUMBER_ARRAY(:4, :5, :6), SDO_NUMBER_ARRAY(:7, :8, :9));\n"
+        "\n"
+        "  SELECT %s INTO GR1 FROM %s T WHERE %s FOR UPDATE;\n"
+        "\n"
+        "  GR1.metadata := XMLTYPE(:1);\n"
+        "\n"
+        "  SRID := :2;\n"
+        "  IF SRID = 0 THEN\n"
+        "    SRID := %d;\n"
         "  END IF;\n"
-        "  UPDATE %s T SET %s = GR WHERE %s;\n"
+        "\n"
+        "  SDO_GEOR.georeference( GR1, SRID, :3,"
+           " SDO_NUMBER_ARRAY(:4, :5, :6), SDO_NUMBER_ARRAY(:7, :8, :9));\n"
+        "\n"
+        "  GR1.spatialExtent := SDO_GEOR.generateSpatialExtent( GR1, NULL );\n"
+        "\n"
+        "  UPDATE %s T SET %s = GR1 WHERE %s;\n"
+        "\n"
         "  COMMIT;\n"
         "END;", 
         pszColumn, pszTable, pszWhere,
+        UNKNOW_CRS,
         pszTable, pszColumn, pszWhere ) );
 
     poStmt->Bind( pszXML, strlen( pszXML ) + 1);
@@ -2141,4 +2145,6 @@ bool GeoRasterWrapper::CompressDeflate( void* pData )
         CPLError( CE_Failure, CPLE_AppDefined, "ZLib return code (%d)", nRet );
         return false;
     }
+
+    return true;
 }
