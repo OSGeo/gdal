@@ -642,6 +642,8 @@ char **DODSDataset::ParseBandsFromURL( string oVarList )
         }
     }
 
+    CSLDestroy(papszVars);
+
     return papszResultList;
 }
 
@@ -949,6 +951,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     
     DODSDataset *poDS = new DODSDataset();
+    char **papszVarConstraintList = NULL;
 
     poDS->nRasterXSize = 0;
     poDS->nRasterYSize = 0;
@@ -987,7 +990,6 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*      DDS and try to identify grids or arrays that are good           */
 /*      targets and return them in the same format.                     */
 /* -------------------------------------------------------------------- */
-        char **papszVarConstraintList = NULL;
 
         if( oVarList.length() == 0 )
             papszVarConstraintList = poDS->CollectBandsFromDDS();
@@ -1041,12 +1043,15 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     catch (Error &e) {
-	string msg =
+        string msg =
 "An error occurred while creating a virtual connection to the DAP server:\n";
-	msg += e.get_error_message();
+        msg += e.get_error_message();
         CPLError(CE_Failure, CPLE_AppDefined, msg.c_str());
-	return 0;
+        delete poDS;
+        poDS = NULL;
     }
+
+    CSLDestroy(papszVarConstraintList);
 
     return poDS;
 }
