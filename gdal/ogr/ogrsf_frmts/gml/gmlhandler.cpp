@@ -232,8 +232,8 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
 /*      feature, and we pop the feature read state.                     */
 /* -------------------------------------------------------------------- */
     if( poState->m_poFeature != NULL
-        && EQUAL(szElementName,
-                 poState->m_poFeature->GetClass()->GetElementName()) )
+        && strcmp(szElementName,
+                 poState->m_poFeature->GetClass()->GetElementName()) == 0 )
     {
         m_poReader->PopState();
     }
@@ -244,7 +244,7 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
 /* -------------------------------------------------------------------- */
     else
     {
-        if( EQUAL(szElementName,poState->GetLastComponent()) )
+        if( strcmp(szElementName,poState->GetLastComponent()) == 0 )
             poState->PopPath();
         else
         {
