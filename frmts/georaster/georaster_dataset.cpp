@@ -1345,6 +1345,9 @@ void CPL_DLL GDALRegister_GEOR()
 {
     GeoRasterDriver* poDriver;
 
+    if (! GDAL_CHECK_VERSION("GeoRaster driver"))
+        return;
+
     if( GDALGetDriverByName( "GeoRaster" ) == NULL )
     {
         poDriver = new GeoRasterDriver();
