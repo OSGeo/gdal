@@ -31,6 +31,7 @@
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
 
+/* Must be a multiple of 4 */
 #define MAX_TOKEN_SIZE  1000
 
 /************************************************************************/
@@ -71,7 +72,25 @@ void GMLHandler::startElement(const XMLCh* const    uri,
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
 
-    tr_strcpy( szElementName, localname );
+    /* A XMLCh character can expand to 4 bytes in UTF-8 */
+    if (4 * tr_strlen( localname ) >= MAX_TOKEN_SIZE)
+    {
+        static int bWarnOnce = FALSE;
+        XMLCh* tempBuffer = (XMLCh*) CPLMalloc(sizeof(XMLCh) * (MAX_TOKEN_SIZE / 4 + 1));
+        memcpy(tempBuffer, localname, sizeof(XMLCh) * (MAX_TOKEN_SIZE / 4));
+        tempBuffer[MAX_TOKEN_SIZE / 4] = 0;
+        tr_strcpy( szElementName, tempBuffer );
+        CPLFree(tempBuffer);
+        if (!bWarnOnce)
+        {
+            bWarnOnce = TRUE;
+            CPLError(CE_Warning, CPLE_AppDefined, "A too big element name has been trucated");
+        }
+    }
+    else
+        tr_strcpy( szElementName, localname );
+
+    int nLNLenBytes = strlen(szElementName);
 
 /* -------------------------------------------------------------------- */
 /*      If we are in the midst of collecting a feature attribute        */
@@ -92,24 +111,22 @@ void GMLHandler::startElement(const XMLCh* const    uri,
     if( m_pszGeometry != NULL 
         || IsGeometryElement( szElementName ) )
     {
-        int nLNLen = tr_strlen( localname );
-
         /* should save attributes too! */
 
         if( m_pszGeometry == NULL )
             m_nGeometryDepth = poState->m_nPathLength;
         
-        if( m_nGeomLen + nLNLen + 4 > m_nGeomAlloc )
+        if( m_nGeomLen + nLNLenBytes + 4 > m_nGeomAlloc )
         {
-            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLen + 1000);
+            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
             m_pszGeometry = (char *) 
                 CPLRealloc( m_pszGeometry, m_nGeomAlloc);
         }
 
         strcpy( m_pszGeometry+m_nGeomLen, "<" );
-        tr_strcpy( m_pszGeometry+m_nGeomLen+1, localname );
-        strcat( m_pszGeometry+m_nGeomLen+nLNLen+1, ">" );
-        m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
+        strcpy( m_pszGeometry+m_nGeomLen+1, szElementName );
+        strcat( m_pszGeometry+m_nGeomLen+nLNLenBytes+1, ">" );
+        m_nGeomLen += nLNLenBytes + 2;
     }
     
 /* -------------------------------------------------------------------- */
@@ -148,7 +165,19 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
 
-    tr_strcpy( szElementName, localname );
+    /* A XMLCh character can expand to 4 bytes in UTF-8 */
+    if (4 * tr_strlen( localname ) >= MAX_TOKEN_SIZE)
+    {
+        XMLCh* tempBuffer = (XMLCh*) CPLMalloc(sizeof(XMLCh) * (MAX_TOKEN_SIZE / 4 + 1));
+        memcpy(tempBuffer, localname, sizeof(XMLCh) * (MAX_TOKEN_SIZE / 4));
+        tempBuffer[MAX_TOKEN_SIZE / 4] = 0;
+        tr_strcpy( szElementName, tempBuffer );
+        CPLFree(tempBuffer);
+    }
+    else
+        tr_strcpy( szElementName, localname );
+
+    int nLNLenBytes = strlen(szElementName);
 
 /* -------------------------------------------------------------------- */
 /*      Is this closing off an attribute value?  We assume so if        */
@@ -171,21 +200,19 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
 /* -------------------------------------------------------------------- */
     if( m_pszGeometry != NULL )
     {
-        int nLNLen = tr_strlen( localname );
-
         /* should save attributes too! */
 
-        if( m_nGeomLen + nLNLen + 4 > m_nGeomAlloc )
+        if( m_nGeomLen + nLNLenBytes + 4 > m_nGeomAlloc )
         {
-            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLen + 1000);
+            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
             m_pszGeometry = (char *) 
                 CPLRealloc( m_pszGeometry, m_nGeomAlloc);
         }
 
         strcat( m_pszGeometry+m_nGeomLen, "</" );
-        tr_strcpy( m_pszGeometry+m_nGeomLen+2, localname );
-        strcat( m_pszGeometry+m_nGeomLen+nLNLen+2, ">" );
-        m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
+        strcpy( m_pszGeometry+m_nGeomLen+2, szElementName );
+        strcat( m_pszGeometry+m_nGeomLen+nLNLenBytes+2, ">" );
+        m_nGeomLen += nLNLenBytes + 3;
 
         if( poState->m_nPathLength == m_nGeometryDepth+1 )
         {
