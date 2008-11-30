@@ -417,7 +417,7 @@ def ecw_13():
 # Write out image with GCPs.
 
 def ecw_14():
-    if gdaltest.ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None:
 	return 'skip'
 
     ds = gdal.Open( 'data/rgb_gcp.vrt' )
@@ -431,7 +431,7 @@ def ecw_14():
 
 def ecw_15():
 
-    if gdaltest.ecw_drv is None:
+    if gdaltest.jp2ecw_drv is None:
 	return 'skip'
 
     ds = gdal.Open( 'tmp/rgb_gcp.jp2' )
