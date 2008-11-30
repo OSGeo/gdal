@@ -300,7 +300,7 @@ def osr_esri_9():
     return 'success'
 
 ###############################################################################
-# Verify Plate_Carree handling.
+# Verify Plate_Carree handling. 
 
 def osr_esri_10():
     
@@ -318,7 +318,7 @@ def osr_esri_10():
         gdaltest.post_reason( 'Did not get expected Equirectangular SRS after morphFromESRI' )
         return 'fail'
 
-    expected = 'PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Plate_Carree"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]'
+    expected = 'PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Equidistant_Cylindrical"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]'
     
     srs.MorphToESRI()
     wkt = srs.ExportToWkt()
@@ -326,7 +326,7 @@ def osr_esri_10():
         print
         print 'Got:      ', wkt
         print 'Expected: ', expected
-        gdaltest.post_reason( 'Did not get expected Plate_Caree SRS after morphToESRI' )
+        gdaltest.post_reason( 'Did not get expected Equidistant_Cylindrical SRS after morphToESRI' )
         return 'fail'
 
     return 'success'
@@ -494,6 +494,28 @@ def osr_esri_15():
     return 'success'
 
 ###############################################################################
+# Verify translation of equirectngular to equidistant cylindrical with
+# cleanup of parameters.
+
+def osr_esri_16():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('+proj=eqc +lat_0=0 +lat_ts=-10 +lon_0=2 +x=100000 +y_0=200000 +ellps=sphere')
+
+    expected = 'PROJCS["Equidistant_Cylindrical",GEOGCS["Normal Sphere (r=6370997)",DATUM["D_unknown",SPHEROID["sphere",6370997,0]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Equidistant_Cylindrical"],PARAMETER["central_meridian",2],PARAMETER["standard_parallel_1",-10],PARAMETER["false_easting",0],PARAMETER["false_northing",200000],UNIT["Meter",1]]'
+    
+    srs.MorphToESRI()
+    wkt = srs.ExportToWkt()
+
+    if expected != wkt:
+        print wkt
+        gdaltest.post_reason( 'Did not get expected equidistant cylindrical.' )
+        return 'fail'
+
+    return 'success'
+    
+    
+###############################################################################
 
 gdaltest_list = [ 
     osr_esri_1,
@@ -511,6 +533,7 @@ gdaltest_list = [
     osr_esri_13,
     osr_esri_14,
     osr_esri_15,
+    osr_esri_16,
     None ]
 
 if __name__ == '__main__':
