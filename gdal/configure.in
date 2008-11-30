@@ -1460,7 +1460,8 @@ AX_LIB_ORACLE_OCI($ORACLE_OCI_REQ_VERSION)
 if test "$HAVE_ORACLE_OCI" = "yes"; then
     OPT_GDAL_FORMATS="georaster $OPT_GDAL_FORMATS"
     HAVE_GEORASTER=yes
-    AC_MSG_RESULT([enabled])
+else
+    HAVE_GEORASTER=no
 fi
 
 dnl ---------------------------------------------------------------------------
