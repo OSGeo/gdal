@@ -23903,8 +23903,8 @@ echo "${ECHO_T}$HAVE_ORACLE_OCI" >&6; }
 if test "$HAVE_ORACLE_OCI" = "yes"; then
     OPT_GDAL_FORMATS="georaster $OPT_GDAL_FORMATS"
     HAVE_GEORASTER=yes
-    { echo "$as_me:$LINENO: result: enabled" >&5
-echo "${ECHO_T}enabled" >&6; }
+else
+    HAVE_GEORASTER=no
 fi
 
 

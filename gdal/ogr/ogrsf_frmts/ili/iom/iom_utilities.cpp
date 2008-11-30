@@ -165,37 +165,44 @@ extern "C" void iom_init()
 
 }
 
+/* Compatibility stuff due to change of Xerces-C API signature (#2616) */
+#if XERCES_VERSION_MAJOR >= 3
+#define LEN_SIZE_TYPE XMLSize_t
+#else
+#define LEN_SIZE_TYPE unsigned int
+#endif
+
 /** transcode a xerces unicode string to an utf8 encoded one.
 */
 char *iom_toUTF8(const XMLCh *src)
 {
-	unsigned int srcLen=XMLString::stringLen(src);
-	int destLen=srcLen+10;
-	char *dest;
-	dest=dbgnew char[destLen+1];
-	unsigned int eaten;
-	unsigned int endDest;
-	endDest=utf8_transcoder->transcodeTo(src,srcLen,(unsigned char *)dest,destLen,eaten,XMLTranscoder::UnRep_RepChar);
+	LEN_SIZE_TYPE srcLen=XMLString::stringLen(src);
+	LEN_SIZE_TYPE destLen=srcLen+10;
+	XMLByte *dest;
+	dest=dbgnew XMLByte[destLen+1];
+	LEN_SIZE_TYPE eaten;
+	LEN_SIZE_TYPE endDest;
+	endDest=utf8_transcoder->transcodeTo(src,srcLen,dest,destLen,eaten,XMLTranscoder::UnRep_RepChar);
 	while(eaten<srcLen){
 		delete[] dest;
 		destLen=destLen+srcLen-eaten+10;
-		dest=dbgnew char[destLen+1];
-		endDest=utf8_transcoder->transcodeTo(src,srcLen,(unsigned char *)dest,destLen,eaten,XMLTranscoder::UnRep_RepChar);
+		dest=dbgnew XMLByte[destLen+1];
+		endDest=utf8_transcoder->transcodeTo(src,srcLen,dest,destLen,eaten,XMLTranscoder::UnRep_RepChar);
 	}
 	dest[endDest]=0;
-	return dest;
+	return (char*)dest; /* should be a unsigned char* == XMLByte* instead */
 }
 
 /** transcode an utf8 encoded string to a xerces unicode one.
 */
 XMLCh *iom_fromUTF8(const char *src)
 {
-	int srcLen=XMLString::stringLen(src);
-	int destLen=srcLen;
+	LEN_SIZE_TYPE srcLen=XMLString::stringLen(src);
+	LEN_SIZE_TYPE destLen=srcLen;
 	XMLCh *dest=dbgnew XMLCh[destLen+1];
 	unsigned char *charSizes=dbgnew unsigned char[destLen];
-	unsigned int eaten;
-	unsigned int endDest=utf8_transcoder->transcodeFrom((unsigned char *)src,srcLen,dest,destLen,eaten,charSizes);
+	LEN_SIZE_TYPE eaten;
+	LEN_SIZE_TYPE endDest=utf8_transcoder->transcodeFrom((const XMLByte *)src,srcLen,dest,destLen,eaten,charSizes);
 	dest[endDest]=0;
 	delete[] charSizes;
 	return dest;
