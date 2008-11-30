@@ -1087,7 +1087,7 @@ bool OWIsNumeric( const char *pszText )
 }
 
 /*****************************************************************************/
-/*                            Replace String at given token             */
+/*                            Replace String at given token                  */
 /*****************************************************************************/
 
 /* Input Examples:
@@ -1098,44 +1098,61 @@ bool OWIsNumeric( const char *pszText )
  */
 const char* OWReplaceString( const char* pszBaseString,
                              const char* pszToken,
+                             const char* pszStopToken,
                              const char* pszOWReplaceToken )
 {
-    char  szUpcase[OWTEXT];
+    char szUpcaseBase[OWTEXT];
+    char szUpcaseToken[OWTEXT];
+    char szUpcaseStopT[OWTEXT];
+    char szResult[OWTEXT];
+
+    strcpy( szUpcaseBase, pszBaseString );
+    strcpy( szUpcaseToken, pszToken );
+    strcpy( szUpcaseStopT, pszStopToken );
+    strcpy( szResult, pszBaseString );
+
     char* pszIn = NULL;
 
-    strcpy( szUpcase, pszBaseString );
+    // Upper case a copy of the base string
 
-    for( pszIn = szUpcase; *pszIn != '\0'; pszIn++ )
+    for( pszIn = szUpcaseBase; *pszIn != '\0'; pszIn++ )
     {
         *pszIn = (char) toupper( *pszIn );
     }
 
-    char* pszStart = strstr( szUpcase, pszToken );
+    // Upper case a copy of the token
 
-    if( pszStart == NULL )
+    for( pszIn = szUpcaseToken; *pszIn != '\0'; pszIn++ )
     {
-        return "";
+        *pszIn = (char) toupper( *pszIn );
     }
 
-    char* pszEnd = strstr( pszStart, ")" );
+    // Upper case a copy of the stop token
 
-    if( pszEnd == NULL )
+    for( pszIn = szUpcaseStopT; *pszIn != '\0'; pszIn++ )
     {
-        return "";
+        *pszIn = (char) toupper( *pszIn );
     }
 
-    pszEnd++;
+    // Search for Token, Stop Token on the Base String
 
-    int nLength = pszStart - szUpcase;
+    char* pszStart = strstr( szUpcaseBase, szUpcaseToken );
+    char* pszEnd   = strstr( szUpcaseBase, szUpcaseStopT );
 
-    char pszResult[OWTEXT];
+    if( pszStart )
+    {
+        // Concatenate the result
 
-    strncpy( pszResult, pszBaseString, nLength );
-    pszResult[nLength] = '\0';
-    strcat( pszResult, pszOWReplaceToken );
-    strcat( pszResult, pszEnd );
+        int nStart = (int) ( pszStart - szUpcaseBase );
+        int nEnd   = (int) ( pszEnd   - szUpcaseBase );
 
-    return CPLStrdup( pszResult );
+        strncpy( szResult, pszBaseString, nStart );
+        szResult[nStart] = '\0';
+        strcat( szResult, pszOWReplaceToken );
+        strcat( szResult, &pszBaseString[nEnd + 1] );
+    }
+
+    return CPLStrdup( szResult );
 }
 
 /*****************************************************************************/
@@ -1345,9 +1362,8 @@ bool CheckError( sword nStatus, OCIError* hError )
             (text *) NULL, &nCode, szMsg,
             (ub4) sizeof(szMsg), OCI_HTYPE_ERROR);
 
-        if( nCode == 1405 ) //6550
+        if( nCode == 1405 ) // Null field
         {
-            CPLDebug( "geroaster", "ORA-ERROR 1405 - Null field" );
             return false;
         }
 

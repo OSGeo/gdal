@@ -130,9 +130,7 @@ int GeoRasterDataset::Identify( GDALOpenInfo* poOpenInfo )
         "    geor:scott/tiger@demodb,table,column,id=1\n"
         "    geor:scott/tiger@server.company.com:1521/survey,table,column,id=1\n"
         "    \"georaster:scott,tiger,demodb,table,column,city='london'\"\n"
-        "    georaster:scott,tiger,,rdt_10$,10\n"
-        "Note:\n"
-        "    Cannot use RDT/RID identification for writing to GeoRaster" );
+        "    georaster:scott,tiger,,rdt_10$,10\n" );
         CSLDestroy( papszParam );
         return false;
     }
@@ -480,9 +478,9 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  Check the create options to use in initialization
     //  -------------------------------------------------------------------
 
-    const char* pszFetched      = "";
-    char* pszDescription        = NULL;
-    char* pszInsert             = NULL;
+    const char* pszFetched  = "";
+    char* pszDescription    = NULL;
+    char* pszInsert         = NULL;
 
     if( poGRW->pszTable )
     {
@@ -490,25 +488,25 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
         if( pszFetched )
         {
-            pszDescription      = CPLStrdup( pszFetched );
+            pszDescription  = CPLStrdup( pszFetched );
         }
     }
 
     if( ! poGRW->pszTable )
     {
-        poGRW->pszTable         = CPLStrdup( "GDAL_IMPORT" );
+        poGRW->pszTable     = CPLStrdup( "GDAL_IMPORT" );
     }
 
     if( ! poGRW->pszColumn )
     {
-        poGRW->pszColumn        = CPLStrdup( "RASTER" );
+        poGRW->pszColumn    = CPLStrdup( "RASTER" );
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "INSERT" );
 
     if( pszFetched )
     {
-        pszInsert               = CPLStrdup( pszFetched );
+        pszInsert           = CPLStrdup( pszFetched );
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "BLOCKXSIZE" );
@@ -869,6 +867,11 @@ const char* GeoRasterDataset::GetProjectionRef( void )
         return NULL;
     }
 
+    if( poGeoRaster->nSRID == UNKNOW_CRS )
+    {
+        return NULL;
+    }
+
     if( pszProjection )
     {
         return pszProjection;
@@ -877,50 +880,40 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     OGRSpatialReference oSRS;
 
     // --------------------------------------------------------------------
-    // Try to interprete the EPSG code
+    // Get the WKT from the server
     // --------------------------------------------------------------------
 
-    if( oSRS.importFromEPSG( poGeoRaster->nSRID ) == OGRERR_NONE )
-    {
-        oSRS.exportToWkt( &pszProjection );
-        return pszProjection;
-    }
+    char* pszWKText = CPLStrdup(
+        poGeoRaster->GetWKText( poGeoRaster->nSRID ) );
 
     // --------------------------------------------------------------------
     // Try to interpreter the WKT text
     // --------------------------------------------------------------------
 
-    char* pszWKText = CPLStrdup( poGeoRaster->GetWKText( poGeoRaster->nSRID ) );
-
-    if( oSRS.importFromWkt( &pszWKText ) != OGRERR_NONE || 
-        oSRS.GetRoot() == NULL )
+    if( oSRS.importFromWkt( &pszWKText ) == OGRERR_NONE && oSRS.GetRoot() )
     {
-        return FALSE;
+        oSRS.SetAuthority( oSRS.GetRoot()->GetValue(), "EPSG",
+            poGeoRaster->nSRID );
+
+        // ----------------------------------------------------------------
+        // Decorate EPSG Autority if they are present
+        // ----------------------------------------------------------------
+
+        int nSpher = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM|SPHEROID") );
+
+        if( nSpher > 0 )
+        {
+            oSRS.SetAuthority( "GEOGCS|DATUM|SPHEROID", "EPSG", nSpher );
+        }
+
+        int nDatum = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM") );
+
+        if( nDatum > 0 )
+        {
+            oSRS.SetAuthority( "GEOGCS|DATUM", "EPSG", nDatum );
+        }
     }
 
-    // --------------------------------------------------------------------
-    // Try to extract EPGS authority codes
-    // --------------------------------------------------------------------
-
-    int nSpher = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM|SPHEROID") );
-    if( nSpher > 0 )
-    {
-        oSRS.SetAuthority( "GEOGCS|DATUM|SPHEROID", "EPSG", nSpher );
-    }
-
-    int nDatum = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM") );
-    if( nDatum > 0 )
-    {
-        oSRS.SetAuthority( "GEOGCS|DATUM", "EPSG", nDatum );
-    }
-
-    int nProjc = OWParseEPSG( oSRS.GetAttrValue("PROJECTION") );
-    if( nProjc > 0 )
-    {
-        oSRS.SetAuthority( "PROJECTION", "EPSG", nProjc );
-    }
-
-    oSRS.SetAuthority( oSRS.GetRoot()->GetValue(), "EPSG", poGeoRaster->nSRID );
     oSRS.exportToWkt( &pszProjection );
 
     return pszProjection;
@@ -999,10 +992,14 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     char* pszWKT = CPLStrdup( pszProjString );
 
+    CPLDebug("GEOR", " SetProjection(%s)", pszWKT);
+
     OGRErr eOGRErr = oSRS.importFromWkt( &pszWKT );
 
     if( eOGRErr != OGRERR_NONE )
     {
+        CPLDebug("GEOR", "Not recongnized");
+
         return CE_Failure;
     }
 
@@ -1121,7 +1118,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     OWConnection* poConnection  = poGRW->poConnection;
     OWStatement*  poStmt        = NULL;
 
-    char* papszToken[10];
+    const char* papszToken[10];
     papszToken[0] = poConnection->GetUser();
     papszToken[1] = poConnection->GetPassword();
     papszToken[2] = poConnection->GetServer();
