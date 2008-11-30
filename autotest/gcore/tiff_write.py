@@ -1755,7 +1755,7 @@ def tiff_write_55():
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_55.tif',
                                               256, 256, 1 )
-    srs_expected = 'PROJCS["Equirectangular Mars",GEOGCS["GCS_Mars",DATUM["unknown",SPHEROID["unnamed",3394813.857975945,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",-2],PARAMETER["central_meridian",184.4129943847656],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["standard_parallel_1",-15],UNIT["metre",1,AUTHORITY["EPSG","9001"]]]'
+    srs_expected = 'PROJCS["Equirectangular Mars",GEOGCS["GCS_Mars",DATUM["unknown",SPHEROID["unnamed",3394813.857975945,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",-2],PARAMETER["central_meridian",184.4129943847656],PARAMETER["standard_parallel_1",-15],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]]]'
     
     ds.SetProjection( srs_expected )
 
