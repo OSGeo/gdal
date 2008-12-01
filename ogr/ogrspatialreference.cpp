@@ -5656,16 +5656,17 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
 
     for( iChild = 0; iChild < nChildCount; iChild++ )
     {
-        poAxis = poNode->GetChild( iChild );
+        OGR_SRSNode *poChild = poNode->GetChild( iChild );
 
-        if( !EQUAL(poAxis->GetValue(),"AXIS") )
+        if( !EQUAL(poChild->GetValue(),"AXIS") )
             continue;
 
-        if( iAxis > 0 )
+        if( iAxis == 0 )
         {
-            iAxis--;
-            continue;
+            poAxis = poChild;
+            break;
         }
+        iAxis--;
     }
 
     if( poAxis == NULL )
