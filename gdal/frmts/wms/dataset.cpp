@@ -110,6 +110,17 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         m_block_size_x = atoi(block_size_x);
         m_block_size_y = atoi(block_size_y);
     }
+    if (ret == CE_None)
+    {
+        const char *data_type = CPLGetXMLValue(config, "DataType", "Byte");
+        m_data_type = GDALGetDataTypeByName( data_type );
+        if ( m_data_type == GDT_Unknown || m_data_type >= GDT_TypeCount )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "GDALWMS: Invalid value in DataType. Data type \"%s\" is not supported.", data_type );
+            ret = CE_Failure;
+        }
+    }
     if (ret == CE_None) {
     	const int clamp_requests_bool = StrToBool(CPLGetXMLValue(config, "ClampRequests", "true"));
     	if (clamp_requests_bool == -1) {
