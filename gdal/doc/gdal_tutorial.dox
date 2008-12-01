@@ -595,7 +595,8 @@ In C:
 In Python:
 
 \code
-    import Numeric, osr
+    import osr
+    import numpy
 
     dst_ds.SetGeoTransform( [ 444720, 30, 0, 3751320, 0, -30 ] )
     
@@ -604,7 +605,7 @@ In Python:
     srs.SetWellKnownGeogCS( 'NAD27' )
     dst_ds.SetProjection( srs.ExportToWkt() )
 
-    raster = Numeric.zeros( (512, 512) )    
+    raster = numpy.zeros( (512, 512), dtype=numpy.uint8 )    
     dst_ds.GetRasterBand(1).WriteArray( raster )
 \endcode
 
