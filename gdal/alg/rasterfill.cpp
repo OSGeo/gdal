@@ -135,13 +135,14 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
                  void * pProgressArg )
 
 {
-    float *pafLineBuf;
+    float *paf3PassLineBuf;
     GByte *pabyTMaskBuf;
     GByte *pabyFMaskBuf;
-    float *pafThisLineOut, *pafLastLineOut;
+    float *pafThisPass, *pafLastPass, *pafSLastPass;
 
     int   nBufLines = nIterations + 2;
-    int   nFirstBufLine;  
+    int   iPassCounter = 0;
+    int   nNewLine; // the line being loaded this time (zero based scanline)
     int   nXSize = GDALGetRasterBandXSize( hTargetBand );
     int   nYSize = GDALGetRasterBandYSize( hTargetBand );
     CPLErr eErr = CE_None;
@@ -151,38 +152,42 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
     pabyTMaskBuf = (GByte *) CPLMalloc(nXSize * nBufLines);
     pabyFMaskBuf = (GByte *) CPLMalloc(nXSize * nBufLines);
-    pafLineBuf = (float *) CPLCalloc(nXSize * nBufLines,sizeof(float));
-    pafThisLineOut = (float *) CPLCalloc(nXSize,sizeof(float));
-    pafLastLineOut = (float *) CPLCalloc(nXSize,sizeof(float));
+
+    paf3PassLineBuf = (float *) CPLCalloc(nXSize*nBufLines*3,sizeof(float));
 
 /* -------------------------------------------------------------------- */
 /*      Process rotating buffers.                                       */
 /* -------------------------------------------------------------------- */
-    for( nFirstBufLine = 0 - nBufLines + 1;
-         nFirstBufLine < nYSize && eErr == CE_None; 
-         nFirstBufLine++ )
+    for( nNewLine = 0; 
+         eErr == CE_None && nNewLine < nYSize+nIterations; 
+         nNewLine++ )
     {
-        int nFirstBufLineOffset = nFirstBufLine % nBufLines;
+/* -------------------------------------------------------------------- */
+/*      Rotate pass buffers.                                            */
+/* -------------------------------------------------------------------- */
+        iPassCounter = (iPassCounter + 1) % 3;
 
-        if( nFirstBufLineOffset < 0 )
-            nFirstBufLineOffset += nBufLines;
+        pafSLastPass = paf3PassLineBuf 
+            + ((iPassCounter+0)%3) * nXSize*nBufLines;
+        pafLastPass = paf3PassLineBuf 
+            + ((iPassCounter+1)%3) * nXSize*nBufLines;
+        pafThisPass = paf3PassLineBuf 
+            + ((iPassCounter+2)%3) * nXSize*nBufLines;
 
 /* -------------------------------------------------------------------- */
-/*      Figure out what line we want to load, and where it goes in      */
-/*      the rotating buffer.                                            */
+/*      Where does the new line go in the rotating buffer?              */
 /* -------------------------------------------------------------------- */
-        int iLineToLoad = nFirstBufLine + nBufLines - 1;
-        int iBufOffset = (iLineToLoad - nFirstBufLine + nFirstBufLineOffset)
-            % nBufLines;
+        int iBufOffset = nNewLine % nBufLines;
 
 /* -------------------------------------------------------------------- */
-/*      Read the new data.                                              */
+/*      Read the new data line if it is't off the bottom of the         */
+/*      image.                                                          */
 /* -------------------------------------------------------------------- */
-        if( iLineToLoad < nYSize )
+        if( nNewLine < nYSize )
         {
             eErr = 
                 GDALRasterIO( hTargetMaskBand, GF_Read, 
-                              0, iLineToLoad, nXSize, 1, 
+                              0, nNewLine, nXSize, 1, 
                               pabyTMaskBuf + nXSize * iBufOffset, nXSize, 1, 
                               GDT_Byte, 0, 0 );
             
@@ -191,7 +196,7 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 
             eErr = 
                 GDALRasterIO( hFiltMaskBand, GF_Read, 
-                              0, iLineToLoad, nXSize, 1, 
+                              0, nNewLine, nXSize, 1, 
                               pabyFMaskBuf + nXSize * iBufOffset, nXSize, 1, 
                               GDT_Byte, 0, 0 );
             
@@ -200,8 +205,8 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 
             eErr = 
                 GDALRasterIO( hTargetBand, GF_Read, 
-                              0, iLineToLoad, nXSize, 1, 
-                              pafLineBuf + nXSize * iBufOffset, nXSize, 1, 
+                              0, nNewLine, nXSize, 1, 
+                              pafThisPass + nXSize * iBufOffset, nXSize, 1, 
                               GDT_Float32, 0, 0 );
             
             if( eErr != CE_None )
@@ -213,82 +218,66 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 /*      lines with neighbours.                                          */
 /* -------------------------------------------------------------------- */
         int iFLine;
-        int bHaveModifiedLastLine = FALSE;
 
-        for( iFLine = nFirstBufLine+1; 
-             iFLine < nFirstBufLine + nBufLines - 1;
-             iFLine++ )
+        for( iFLine = nNewLine-1;
+             eErr == CE_None && iFLine >= nNewLine-nIterations;
+             iFLine-- )
         {
             int iLastOffset, iThisOffset, iNextOffset;
+
+            iLastOffset = (iFLine-1) % nBufLines; 
+            iThisOffset = (iFLine  ) % nBufLines;
+            iNextOffset = (iFLine+1) % nBufLines;
+
+            // default to preserving the old value.
+            if( iFLine >= 0 )
+                memcpy( pafThisPass + iThisOffset * nXSize, 
+                        pafLastPass + iThisOffset * nXSize, 
+                        sizeof(float) * nXSize );
 
             // currently this skips the first and last line.  Eventually 
             // we will enable these too.  TODO
             if( iFLine < 1 || iFLine >= nYSize-1 )
+            {
                 continue;
-
-            iLastOffset = (iFLine-1 - nFirstBufLine + nFirstBufLineOffset)
-                % nBufLines;
-            iThisOffset = (iFLine - nFirstBufLine + nFirstBufLineOffset)
-                % nBufLines;
-            iNextOffset = (iFLine+1 - nFirstBufLine + nFirstBufLineOffset)
-                % nBufLines;
+            }
 
             GDALFilterLine( 
-                pafLineBuf + iLastOffset * nXSize, 
-                pafLineBuf + iThisOffset * nXSize,
-                pafLineBuf + iNextOffset * nXSize,
-                pafThisLineOut, 
+                pafSLastPass + iLastOffset * nXSize,
+                pafLastPass  + iThisOffset * nXSize, 
+                pafThisPass  + iNextOffset * nXSize, 
+                pafThisPass  + iThisOffset * nXSize,
                 pabyTMaskBuf + iLastOffset * nXSize,
                 pabyTMaskBuf + iThisOffset * nXSize,
                 pabyTMaskBuf + iNextOffset * nXSize,
                 pabyFMaskBuf + iThisOffset * nXSize, 
                 nXSize );
-
-            if( bHaveModifiedLastLine )
-            {
-                memcpy( pafLineBuf+ iLastOffset * nXSize, 
-                        pafLastLineOut, 
-                        sizeof(float) * nXSize );
-            }
-
-            if( iFLine == nFirstBufLine + nBufLines - 2 ) 
-            {
-                // last line to process?  If so, we push it back into the
-                // line data buffer too.
-                memcpy( pafLineBuf+ iThisOffset * nXSize, 
-                        pafThisLineOut, 
-                        sizeof(float) * nXSize );
-            }
-            else // flip this/last line buffers.
-            {
-                float *pafTmp = pafLastLineOut;
-                pafLastLineOut = pafThisLineOut;
-                pafThisLineOut = pafTmp;
-                bHaveModifiedLastLine = TRUE;
-            }
         }
 
 /* -------------------------------------------------------------------- */
 /*      Write out the top data line that will be rolling out of our     */
 /*      buffer.                                                         */
 /* -------------------------------------------------------------------- */
-        int iLineToSave = nFirstBufLine;
-        
-        iBufOffset = (iLineToSave - nFirstBufLine + nFirstBufLineOffset)
-            % nBufLines;
+        int iLineToSave = nNewLine - nIterations;
 
-        if( iLineToSave >= 0 && iLineToSave < nYSize )
+        if( iLineToSave >= 0 && eErr == CE_None )
         {
+            iBufOffset = iLineToSave % nBufLines;
+
             eErr = 
                 GDALRasterIO( hTargetBand, GF_Write, 
                               0, iLineToSave, nXSize, 1, 
-                              pafLineBuf + nXSize * iBufOffset, nXSize, 1, 
+                              pafThisPass + nXSize * iBufOffset, nXSize, 1, 
                               GDT_Float32, 0, 0 );
-            
-            if( eErr != CE_None )
-                break;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    CPLFree( pabyTMaskBuf );
+    CPLFree( pabyFMaskBuf );
+    CPLFree( paf3PassLineBuf );
 
     return eErr;
 }
@@ -365,9 +354,9 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     GDALRasterBandH hYBand;
     static const char *apszOptions[] = { "COMPRESS=LZW", NULL };
     CPLString osTmpFile = CPLGenerateTempFilename("");
+    CPLString osYTmpFile = osTmpFile + "fill_y_work.tif";
     
-    hYDS = GDALCreate( hDriver, (osTmpFile+"fill_y_work.tif").c_str(), 
-                       nXSize, nYSize, 1, 
+    hYDS = GDALCreate( hDriver, osYTmpFile, nXSize, nYSize, 1, 
                        eType, (char **) apszOptions );
     
     if( hYDS == NULL )
@@ -381,9 +370,9 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
     GDALDatasetH hValDS;
     GDALRasterBandH hValBand;
+    CPLString osValTmpFile = osTmpFile + "fill_val_work.tif";
 
-    hValDS = GDALCreate( hDriver, (osTmpFile+"fill_val_work.tif").c_str(), 
-                         nXSize, nYSize, 1,
+    hValDS = GDALCreate( hDriver, osValTmpFile, nXSize, nYSize, 1,
                          GDALGetRasterDataType( hTargetBand ), 
                          (char **) apszOptions );
     
@@ -398,10 +387,10 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
     GDALDatasetH hFiltMaskDS;
     GDALRasterBandH hFiltMaskBand;
+    CPLString osFiltMaskTmpFile = osTmpFile + "fill_filtmask_work.tif";
     
     hFiltMaskDS = 
-        GDALCreate( hDriver, (osTmpFile+"fill_filtmask_work.tif").c_str(), 
-                    nXSize, nYSize, 1,
+        GDALCreate( hDriver, osFiltMaskTmpFile, nXSize, nYSize, 1,
                     GDT_Byte, (char **) apszOptions );
     
     if( hFiltMaskDS == NULL )
@@ -697,22 +686,21 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         // force masks to be to flushed and recomputed.
         GDALFlushRasterCache( hMaskBand );
 
-#ifdef notdef
-        while( nSmoothingIterations-- > 0 )
-            eErr = GDALMultiFilter( hTargetBand, hMaskBand, hFiltMaskBand, 
-                                    1,
-                                    pfnProgress, pProgressArg );
-#else
         eErr = GDALMultiFilter( hTargetBand, hMaskBand, hFiltMaskBand, 
                                 nSmoothingIterations,
                                 pfnProgress, pProgressArg );
-#endif
-        
     }
 
+/* -------------------------------------------------------------------- */
+/*      Close and clean up temporary files.                             */
+/* -------------------------------------------------------------------- */
     GDALClose( hYDS );
     GDALClose( hValDS );
     GDALClose( hFiltMaskDS );
+
+    GDALDeleteDataset( hDriver, osYTmpFile );
+    GDALDeleteDataset( hDriver, osValTmpFile );
+    GDALDeleteDataset( hDriver, osFiltMaskTmpFile );
 
     return eErr;
 }
