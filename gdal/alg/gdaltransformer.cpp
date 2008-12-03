@@ -522,7 +522,7 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 }
 
 /************************************************************************/
-/*                  GDALCreateGenImgProjTransformer()                   */
+/*                  GDALCreateGenImgProjTransformer2()                  */
 /************************************************************************/
 
 /**
@@ -751,6 +751,125 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     if( hDstDS )
     {
         GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform );
+        GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
+                             psInfo->adfDstInvGeoTransform );
+    }
+    else
+    {
+        psInfo->adfDstGeoTransform[0] = 0.0;
+        psInfo->adfDstGeoTransform[1] = 1.0;
+        psInfo->adfDstGeoTransform[2] = 0.0;
+        psInfo->adfDstGeoTransform[3] = 0.0;
+        psInfo->adfDstGeoTransform[4] = 0.0;
+        psInfo->adfDstGeoTransform[5] = 1.0;
+        memcpy( psInfo->adfDstInvGeoTransform, psInfo->adfDstGeoTransform,
+                sizeof(double) * 6 );
+    }
+    
+    return psInfo;
+}
+
+/************************************************************************/
+/*                  GDALCreateGenImgProjTransformer3()                  */
+/************************************************************************/
+
+/**
+ * Create image to image transformer.
+ *
+ * This function creates a transformation object that maps from pixel/line
+ * coordinates on one image to pixel/line coordinates on another image.  The
+ * images may potentially be georeferenced in different coordinate systems, 
+ * and may used GCPs to map between their pixel/line coordinates and 
+ * georeferenced coordinates (as opposed to the default assumption that their
+ * geotransform should be used). 
+ *
+ * This transformer potentially performs three concatenated transformations.
+ *
+ * The first stage is from source image pixel/line coordinates to source
+ * image georeferenced coordinates, and may be done using the geotransform, 
+ * or if not defined using a polynomial model derived from GCPs.  If GCPs
+ * are used this stage is accomplished using GDALGCPTransform(). 
+ *
+ * The second stage is to change projections from the source coordinate system
+ * to the destination coordinate system, assuming they differ.  This is 
+ * accomplished internally using GDALReprojectionTransform().
+ *
+ * The third stage is converting from destination image georeferenced
+ * coordinates to destination image coordinates.  This is done using the
+ * destination image geotransform, or if not available, using a polynomial 
+ * model derived from GCPs. If GCPs are used this stage is accomplished using 
+ * GDALGCPTransform().  This stage is skipped if hDstDS is NULL when the
+ * transformation is created. 
+ *
+ * @param hSrcDS source dataset, or NULL.
+ * @param hDstDS destination dataset (or NULL). 
+ * 
+ * @return handle suitable for use GDALGenImgProjTransform(), and to be
+ * deallocated with GDALDestroyGenImgProjTransformer() or NULL on failure.
+ */
+
+void *
+GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
+                                  const double *padfSrcGeoTransform,
+                                  const char *pszDstWKT,
+                                  const double *padfDstGeoTransform )
+
+{
+    GDALGenImgProjTransformInfo *psInfo;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the transform info.                                  */
+/* -------------------------------------------------------------------- */
+    psInfo = (GDALGenImgProjTransformInfo *) 
+        CPLCalloc(sizeof(GDALGenImgProjTransformInfo),1);
+
+    strcpy( psInfo->sTI.szSignature, "GTI" );
+    psInfo->sTI.pszClassName = "GDALGenImgProjTransformer";
+    psInfo->sTI.pfnTransform = GDALGenImgProjTransform;
+    psInfo->sTI.pfnCleanup = GDALDestroyGenImgProjTransformer;
+    psInfo->sTI.pfnSerialize = GDALSerializeGenImgProjTransformer;
+
+/* -------------------------------------------------------------------- */
+/*      Get forward and inverse geotransform for the source image.      */
+/* -------------------------------------------------------------------- */
+    if( padfSrcGeoTransform )
+    {
+        memcpy( psInfo->adfSrcGeoTransform, padfSrcGeoTransform,
+                sizeof(psInfo->adfSrcGeoTransform) );
+        GDALInvGeoTransform( psInfo->adfSrcGeoTransform, 
+                             psInfo->adfSrcInvGeoTransform );
+    }
+    else
+    {
+        psInfo->adfSrcGeoTransform[0] = 0.0;
+        psInfo->adfSrcGeoTransform[1] = 1.0;
+        psInfo->adfSrcGeoTransform[2] = 0.0;
+        psInfo->adfSrcGeoTransform[3] = 0.0;
+        psInfo->adfSrcGeoTransform[4] = 0.0;
+        psInfo->adfSrcGeoTransform[5] = 1.0;
+        memcpy( psInfo->adfSrcInvGeoTransform, psInfo->adfSrcGeoTransform,
+                sizeof(double) * 6 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup reprojection.                                             */
+/* -------------------------------------------------------------------- */
+    if( pszSrcWKT != NULL && strlen(pszSrcWKT) > 0 
+        && pszDstWKT != NULL && strlen(pszDstWKT) > 0 
+        && !EQUAL(pszSrcWKT, pszDstWKT) )
+    {
+        psInfo->pReprojectArg = 
+            GDALCreateReprojectionTransformer( pszSrcWKT, pszDstWKT );
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Get forward and inverse geotransform for destination image.     */
+/*      If we have no destination matrix use a unit transform.          */
+/* -------------------------------------------------------------------- */
+    if( padfDstGeoTransform )
+    {
+        memcpy( psInfo->adfDstGeoTransform, padfDstGeoTransform,
+                sizeof(psInfo->adfDstGeoTransform) );
         GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
                              psInfo->adfDstInvGeoTransform );
     }
