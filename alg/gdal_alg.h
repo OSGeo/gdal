@@ -130,6 +130,11 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 void CPL_DLL *
 GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS, 
                                   char **papszOptions );
+void CPL_DLL *
+GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
+                                  const double *padfSrcGeoTransform,
+                                  const char *pszDstWKT,
+                                  const double *padfDstGeoTransform );
 void CPL_DLL GDALSetGenImgProjTransformerDstGeoTransform( void *, 
                                                           const double * );
 void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
@@ -415,6 +420,15 @@ GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 double, double, double, double,
                 GUInt32, GUInt32, GDALDataType, void *,
                 GDALProgressFunc, void *);
+
+/************************************************************************/
+/*  Profiling interface.                                                */
+/************************************************************************/
+
+CPLErr CPL_DLL
+GDALProfile( GDALDatasetH, int, int *, GUInt32, GUInt32, GUInt32, GUInt32,
+             void *, GUInt32 * );
+
 
 CPL_C_END
                             
