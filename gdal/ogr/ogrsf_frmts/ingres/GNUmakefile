@@ -8,7 +8,7 @@ OBJ	=	ogringresdriver.o ogringresstatement.o ogringresdatasource.o \
 
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(INGRES_INC) $(CPPFLAGS)
 
-default:	$(O_OBJ)
+default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ)

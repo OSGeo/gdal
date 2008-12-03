@@ -9,7 +9,7 @@ OBJ	=	ogrfmecacheindex.o ogrfmedatasource.o ogrfmedriver.o \
 CPPFLAGS	+=	-I.. -I../.. $(FME_INCLUDE) \
 		-DSUPPORT_INDIRECT_FMEDLL -DSUPPORT_PERSISTENT_CACHE
 
-default:	$(O_OBJ)
+default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ)
