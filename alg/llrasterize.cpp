@@ -151,12 +151,8 @@ No known bug
         part = 0;
         ints = 0;
 
-
         /*Initialize polyInts, otherwise it can sometimes causes a seg fault */
-        for (i=0; (i < n); i++) {
-            polyInts[i] = -1;
-        }
-
+        memset(polyInts, -1, sizeof(int) * n);
 
         for (i=0; (i < n); i++) {
         
