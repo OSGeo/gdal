@@ -605,8 +605,27 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         return CE_Failure;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Read the image once for all layers if user requested to render  */
+/*      the whole raster in single chunk.                               */
+/* -------------------------------------------------------------------- */
+    if ( nYChunkSize == poDS->GetRasterYSize() )
+    {
+        if ( poDS->RasterIO( GF_Read, 0, 0, poDS->GetRasterXSize(),
+                             nYChunkSize, pabyChunkBuf,
+                             poDS->GetRasterXSize(), nYChunkSize,
+                             eType, nBandCount, panBandList, 0, 0, 0 )
+             != CE_None )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Unable to read buffer." );
+            CPLFree( pabyChunkBuf );
+            return CE_Failure;
+        }
+    }
+
 /* ==================================================================== */
-/*      Read thespecified layers transfoming and rasterizing            */
+/*      Read thes pecified layers transfoming and rasterizing           */
 /*      geometries.                                                     */
 /* ==================================================================== */
     CPLErr      eErr = CE_None;
@@ -692,9 +711,9 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image in designated chunks.                           */
 /* -------------------------------------------------------------------- */
-       for( iY = 0; 
-            iY < poDS->GetRasterYSize() && eErr == CE_None; 
-            iY += nYChunkSize )
+        for( iY = 0; 
+             iY < poDS->GetRasterYSize() && eErr == CE_None; 
+             iY += nYChunkSize )
         {
             int	nThisYChunkSize;
 
@@ -702,14 +721,18 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             if( nThisYChunkSize + iY > poDS->GetRasterYSize() )
                 nThisYChunkSize = poDS->GetRasterYSize() - iY;
 
-            eErr = 
-                poDS->RasterIO( GF_Read, 0, iY,
-                                poDS->GetRasterXSize(), nThisYChunkSize, 
-                                pabyChunkBuf,
-                                poDS->GetRasterXSize(), nThisYChunkSize,
-                                eType, nBandCount, panBandList, 0, 0, 0 );
-            if( eErr != CE_None )
-                break;
+            // Only re-read image if not a single chunk is being rendered
+            if ( nYChunkSize < poDS->GetRasterYSize() )
+            {
+                eErr = 
+                    poDS->RasterIO( GF_Read, 0, iY,
+                                    poDS->GetRasterXSize(), nThisYChunkSize, 
+                                    pabyChunkBuf,
+                                    poDS->GetRasterXSize(), nThisYChunkSize,
+                                    eType, nBandCount, panBandList, 0, 0, 0 );
+                if( eErr != CE_None )
+                    break;
+            }
 
             while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
@@ -730,12 +753,16 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                 delete poFeat;
             }
 
-            eErr = 
-                poDS->RasterIO( GF_Write, 0, iY,
-                                poDS->GetRasterXSize(), nThisYChunkSize, 
-                                pabyChunkBuf,
-                                poDS->GetRasterXSize(), nThisYChunkSize, 
-                                eType, nBandCount, panBandList, 0, 0, 0 );
+            // Only write image if not a single chunk is being rendered
+            if ( nYChunkSize < poDS->GetRasterYSize() )
+            {
+                eErr = 
+                    poDS->RasterIO( GF_Write, 0, iY,
+                                    poDS->GetRasterXSize(), nThisYChunkSize, 
+                                    pabyChunkBuf,
+                                    poDS->GetRasterXSize(), nThisYChunkSize, 
+                                    eType, nBandCount, panBandList, 0, 0, 0 );
+            }
 
             poLayer->ResetReading();
 
@@ -755,6 +782,19 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         }
     }
     
+/* -------------------------------------------------------------------- */
+/*      Write out the image once for all layers if user requested       */
+/*      to render the whole raster in single chunk.                     */
+/* -------------------------------------------------------------------- */
+    if ( nYChunkSize == poDS->GetRasterYSize() )
+    {
+        poDS->RasterIO( GF_Write, 0, 0,
+                                poDS->GetRasterXSize(), nYChunkSize, 
+                                pabyChunkBuf,
+                                poDS->GetRasterXSize(), nYChunkSize, 
+                                eType, nBandCount, panBandList, 0, 0, 0 );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
