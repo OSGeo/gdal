@@ -13,8 +13,10 @@ LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
 LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
 LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
 LIBTOOL_CLEAN	=	$(LIBTOOL) --mode=clean
+OBJ_EXT = lo
 else
 LIBTOOL_FINISH	=	@BINTRUE@
+OBJ_EXT = o
 endif
 
 CC	=	$(LIBTOOL_COMPILE_CC) @CC@
@@ -375,16 +377,16 @@ endif # HAVE_LIBTOOL
 
 O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 
-../o/%.o:	%.c
+../o/%.$(OBJ_EXT):	%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
-../o/%.o:	%.cpp
+../o/%.$(OBJ_EXT):	%.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
-%.o:	%.c
+%.$(OBJ_EXT):	%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
-%.o:	%.cpp
+%.$(OBJ_EXT):	%.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 #

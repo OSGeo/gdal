@@ -29,7 +29,7 @@ clean:
 very-clean: clean
 	rm -rf html rtf
 
-lib:	sublibs $(OBJ)
+lib:	sublibs $(OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ): ogr_feature.h ogr_geometry.h
 

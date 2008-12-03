@@ -111,9 +111,14 @@ CFLAGS   :=	$(CFLAGS) -DIDB_ENABLED
 CXXFLAGS :=	$(CXXFLAGS) -DIDB_ENABLED
 endif
 
+ifeq ($(HAVE_PANORAMA),yes)
+CFLAGS   :=	$(CFLAGS) -DPANORAMA_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DPANORAMA_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
-default:	$(O_OBJ)
+default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ)

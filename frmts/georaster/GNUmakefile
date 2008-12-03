@@ -16,12 +16,12 @@ CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
 
 PLUGIN_SO	= gdal_GEOR.so
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ) *.so
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 plugin: $(PLUGIN_SO)
 
