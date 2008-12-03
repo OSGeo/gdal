@@ -15,7 +15,7 @@ OBJ =	$(AVC_OBJ) $(OGR_OBJ)
 CPPFLAGS	:=	-I../shape -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 
-default:	$(O_OBJ)
+default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ)

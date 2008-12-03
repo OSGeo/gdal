@@ -14,7 +14,7 @@ SDTSLIB =	$(SDTSDIR)/libsdts_al.a
 
 CPPFLAGS :=	-I.. -I../.. -I$(SDTSDIR) -I$(ISODIR) $(GDAL_INCLUDE) $(CPPFLAGS)
 
-default:	$(O_OBJ)
+default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o *-marker $(O_OBJ)

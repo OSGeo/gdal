@@ -6,18 +6,18 @@ OBJ	=	aigdataset.o $(AIGOBJ)
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../../ogr/ogrsf_frmts/avc
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o aitest$(EXE) $(OBJ) $(O_OBJ)
 
-aitest$(EXE):	aitest.o
-	$(LD) $(LDFLAGS) aitest.o $(CONFIG_LIBS) -o aitest$(EXE)
+aitest$(EXE):	aitest.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) aitest.$(OBJ_EXT) $(CONFIG_LIBS) -o aitest$(EXE)
 
-aigrid2tif$(EXE):	aigrid2tif.o
-	$(LD) $(LDFLAGS) aigrid2tif.o $(CONFIG_LIBS) -o aigrid2tif$(EXE)
+aigrid2tif$(EXE):	aigrid2tif.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) aigrid2tif.$(OBJ_EXT) $(CONFIG_LIBS) -o aigrid2tif$(EXE)
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 aitest-dist:
 	rm -rf aitest_dist

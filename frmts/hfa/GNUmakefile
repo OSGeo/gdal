@@ -12,29 +12,29 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 IMG_DATA_DIR	=	/usr2/data/imagine
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o hfatest img2tif $(O_OBJ)
 
 $(O_OBJ):  hfa.h hfa_p.h
 
-%.o:	addtiffo_src/%.cpp
+%.$(OBJ_EXT):	addtiffo_src/%.cpp
 	$(CXX) -c -I../../gcore -I../../port $(ALL_C_FLAGS) \
-		addtiffo_src/$*.cpp -o $*.o
+		addtiffo_src/$*.cpp -o $*.$(OBJ_EXT)
 
 
-hfatest:	hfatest.o $(HFAOBJ)
-	$(LD) hfatest.o $(HFAOBJ) ../../port/*.o $(LIBS) -o hfatest
+hfatest:	hfatest.$(OBJ_EXT) $(HFAOBJ:.o=.$(OBJ_EXT))
+	$(LD) hfatest.$(OBJ_EXT) $(HFAOBJ:.o=.$(OBJ_EXT)) ../../port/*.$(OBJ_EXT) $(LIBS) -o hfatest
 
 img2tif:	img2tif.cpp imggeotiff.c geoextra.c \
-		tif_overview.o rawblockedimage.o $(HFAOBJ)
+		tif_overview.$(OBJ_EXT) rawblockedimage.$(OBJ_EXT) $(HFAOBJ:.o=.$(OBJ_EXT))
 	$(LD) $(ALL_C_FLAGS) -I../gtiff/libtiff -I../gtiff/libgeotiff \
 		img2tif.cpp imggeotiff.c geoextra.c \
-		$(HFAOBJ) ../../port/*.o $(LIBS) \
-		tif_overview.o rawblockedimage.o\
-		../gtiff/libgeotiff/*.o \
-		../gtiff/libtiff/*.o \
+		$(HFAOBJ:.o=.$(OBJ_EXT)) ../../port/*.$(OBJ_EXT) $(LIBS) \
+		tif_overview.$(OBJ_EXT) rawblockedimage.$(OBJ_EXT)\
+		../gtiff/libgeotiff/*.$(OBJ_EXT) \
+		../gtiff/libtiff/*.$(OBJ_EXT) \
 		-o img2tif
 
 #	
@@ -51,7 +51,7 @@ test_img2tif:	img2tif
 	./tst_img2tif_1.sh
 
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 img2tif-dist:
 	rm -rf img2tif_dist
