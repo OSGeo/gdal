@@ -1325,7 +1325,7 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
         nTotalRowBlocks     = atoi( CPLGetXMLValue( phMetadata,
                                 "rasterInfo.blocking.totalRowBlocks", "0" ) );
 
-        double dfScale      = pow( 2, nLevel );
+        double dfScale      = pow( (double) 2.0, (double) nLevel );
 
         int nPyramidRows         = (int) ceil( (double) ( nRasterRows / dfScale ) );
         int nPyramidColumns      = (int) ceil( (double) ( nRasterColumns / dfScale ) );
