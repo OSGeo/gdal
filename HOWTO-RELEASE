@@ -10,6 +10,8 @@
 
 3) Update the VERSION file. Update ./swig/python/setup.py version information.
 
+3.5) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
+
 4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION. 
    - Adding interfaces, bump CURRENT/AGE, set REVISION to 0. 
@@ -52,7 +54,11 @@
  % ./gdalhtmlupdate.sh
  % zip -r /osgeo/download/gdal/gdal150doc.zip gdal-web/*.* gdal-web/ogr
 
-11) Create a snapshot of gdalautotest (make sure it doesn't include .svn's)
+11) Create a snapshot of autotest suite:
+
+  svn export http://svn.osgeo.org/gdal/branches/1.6/autotest gdalautotest-1.6.0
+  tar czvf gdalautotest-1.6.0.tar.gz gdalautotest-1.6.0
+  zip -r gdalautotest-1.6.0.zip gdalautotest-1.6.0
 
 12) Publish the resulting files in download.osgeo.org/gdal.
 
