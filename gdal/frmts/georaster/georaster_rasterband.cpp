@@ -56,7 +56,7 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
 
     if( nLevel )
     {
-        double dfScale  = pow( 2, nLevel );
+        double dfScale  = pow( (double) 2.0, (double) nLevel );
         nRasterXSize    = (int) ceil( nRasterXSize / dfScale );
         nRasterYSize    = (int) ceil( nRasterYSize / dfScale );
     }

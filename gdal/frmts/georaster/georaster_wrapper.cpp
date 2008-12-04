@@ -118,7 +118,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
 char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
 {
 
-    char* pszStartPos = strstr( pszStringID, ":" ) + 1;
+    char* pszStartPos = (char*) strstr( pszStringID, ":" ) + 1;
 
     char** papszParam = CSLTokenizeString2( pszStartPos, ",@",
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
@@ -1325,7 +1325,7 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
         nTotalRowBlocks     = atoi( CPLGetXMLValue( phMetadata,
                                 "rasterInfo.blocking.totalRowBlocks", "0" ) );
 
-        double dfScale      = pow( 2, nLevel );
+        double dfScale      = pow( (double) 2.0, (double) nLevel );
 
         int nPyramidRows         = (int) ceil( (double) ( nRasterRows / dfScale ) );
         int nPyramidColumns      = (int) ceil( (double) ( nRasterColumns / dfScale ) );
