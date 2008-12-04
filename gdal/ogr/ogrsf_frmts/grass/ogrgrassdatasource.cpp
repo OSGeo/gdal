@@ -152,14 +152,17 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
     // GISBASE is path to the directory where GRASS is installed,
     // it is necessary because there are database drivers.
     if ( !getenv( "GISBASE" ) ) {
-	char *gisbase = GRASS_GISBASE;
+        static char* gisbaseEnv = NULL;
+        const char *gisbase = GRASS_GISBASE;
         CPLError( CE_Warning, CPLE_AppDefined, "GRASS warning: GISBASE "
-		  "enviroment variable was not set, using:\n%s", gisbase );
-	char buf[2000];
-	sprintf ( buf, "GISBASE=%s", gisbase );
+                "enviroment variable was not set, using:\n%s", gisbase );
+        char buf[2000];
+        snprintf ( buf, sizeof(buf), "GISBASE=%s", gisbase );
+        buf[sizeof(buf)-1] = '\0';
 
- 	char *gisbaseEnv = CPLStrdup ( buf );
-	putenv( gisbaseEnv );
+        CPLFree(gisbaseEnv);
+        gisbaseEnv = CPLStrdup ( buf );
+        putenv( gisbaseEnv );
     }
 
     // Don't use GISRC file and read/write GRASS variables 
