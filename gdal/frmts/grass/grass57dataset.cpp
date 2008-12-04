@@ -803,8 +803,6 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     char	*pszMapset = NULL, *pszElem = NULL, *pszName = NULL;
     char        **papszCells = NULL;
     char        **papszMapsets = NULL;
-    static char fake_gisbase[50];
-    static bool hasGisbase;
 
 /* -------------------------------------------------------------------- */
 /*      Does this even look like a grass file path?                     */
@@ -825,15 +823,20 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     // Set error function
     G_set_error_routine ( (GrassErrorHandler) Grass2CPLErrorHook );
     
-    
+
+    // GISBASE is path to the directory where GRASS is installed,
     if ( !getenv( "GISBASE" ) ) {
-	// we are outside a GRASS session
-	// TODO: use function instead of hardcoded path
-	sprintf(fake_gisbase, "GISBASE=/usr/local/share/gdal/grass/" );	
-        putenv( fake_gisbase );
-	hasGisbase = false;
-    } else {
-	hasGisbase = true;
+        static char* gisbaseEnv = NULL;
+        const char *gisbase = GRASS_GISBASE;
+        CPLError( CE_Warning, CPLE_AppDefined, "GRASS warning: GISBASE "
+                "enviroment variable was not set, using:\n%s", gisbase );
+        char buf[2000];
+        snprintf ( buf, sizeof(buf), "GISBASE=%s", gisbase );
+        buf[sizeof(buf)-1] = '\0';
+
+        CPLFree(gisbaseEnv);
+        gisbaseEnv = CPLStrdup ( buf );
+        putenv( gisbaseEnv );
     }
 
     if ( !SplitPath( poOpenInfo->pszFilename, &pszGisdb, &pszLoc, &pszMapset,
@@ -940,13 +943,11 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     struct Key_Value *projinfo, *projunits;
 
-    if ( hasGisbase ) {
-	projinfo = G_get_projinfo();
-	projunits = G_get_projunits();
-        poDS->pszProjection = GPJ_grass_to_wkt ( projinfo, projunits, 0, 0);
-        G_free_key_value(projinfo);
-        G_free_key_value(projunits);
-    }
+    projinfo = G_get_projinfo();
+    projunits = G_get_projunits();
+    poDS->pszProjection = GPJ_grass_to_wkt ( projinfo, projunits, 0, 0);
+    G_free_key_value(projinfo);
+    G_free_key_value(projunits);
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
