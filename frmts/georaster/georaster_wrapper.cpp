@@ -118,7 +118,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
 char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
 {
 
-    char* pszStartPos = strstr( pszStringID, ":" ) + 1;
+    char* pszStartPos = (char*) strstr( pszStringID, ":" ) + 1;
 
     char** papszParam = CSLTokenizeString2( pszStartPos, ",@",
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
