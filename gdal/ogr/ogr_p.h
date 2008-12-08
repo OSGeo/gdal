@@ -62,6 +62,25 @@ const char CPL_DLL * OGRWktReadPoints( const char * pszInput,
 void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
 #endif
 
+/* -------------------------------------------------------------------- */
+/*      Date-time parsing and processing functions                      */
+/* -------------------------------------------------------------------- */
+
+/* Internal use by OGR drivers only, CPL_DLL is just there in case */
+/* they are compiled as plugins  */
+int CPL_DLL OGRGetDayOfWeek(int day, int month, int year);
+int CPL_DLL OGRParseXMLDateTime( const char* pszXMLDateTime,
+                               int *pnYear, int *pnMonth, int *pnDay,
+                               int *pnHour, int *pnMinute, float* pfSecond, int *pnTZ);
+int CPL_DLL OGRParseRFC822DateTime( const char* pszRFC822DateTime,
+                                  int *pnYear, int *pnMonth, int *pnDay,
+                                  int *pnHour, int *pnMinute, int *pnSecond, int *pnTZ);
+char CPL_DLL * OGRGetRFC822DateTime(int year, int month, int day,
+                                    int hour, int minute, int second, int TZ);
+char CPL_DLL * OGRGetXMLDateTime(int year, int month, int day,
+                                 int hour, int minute, int second, int TZFlag);
+
+
 
 /* General utility option processing. */
 int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions );
