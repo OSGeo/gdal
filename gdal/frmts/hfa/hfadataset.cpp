@@ -654,6 +654,7 @@ void HFARasterBand::ReadAuxMetadata()
             CPLAssert( FALSE );
         }
     }
+
     // now try to read the histogram
     HFAEntry *poEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
     if ( poEntry != NULL )
@@ -2976,9 +2977,17 @@ void HFADataset::UseXFormStack( int nStepCount,
             continue;
         }
 
-        CPLAssert( pasPLForward[iStep].order == 2 );
+        int nCoefCount;
 
-        for( i = 0; i < 10; i++ )
+        if( pasPLForward[iStep].order == 2 )
+            nCoefCount = 10;
+        else
+        {
+            CPLAssert( pasPLForward[iStep].order == 3 );
+            nCoefCount = 18;
+        }
+
+        for( i = 0; i < nCoefCount; i++ )
             GDALMajorObject::SetMetadataItem( 
                 CPLString().Printf("XFORM%d_FWD_POLYCOEFMTX[%d]", iStep, i),
                 CPLString().Printf("%.15g",
@@ -2992,7 +3001,7 @@ void HFADataset::UseXFormStack( int nStepCount,
                                    pasPLForward[iStep].polycoefvector[i]),
                 "XFORMS" );
             
-        for( i = 0; i < 10; i++ )
+        for( i = 0; i < nCoefCount; i++ )
             GDALMajorObject::SetMetadataItem( 
                 CPLString().Printf("XFORM%d_REV_POLYCOEFMTX[%d]", iStep, i),
                 CPLString().Printf("%.15g",
