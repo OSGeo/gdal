@@ -533,6 +533,18 @@ def warp_19():
 
     return 'success'
 
+
+# Test fix for #2724 (initialization of destination area to nodata in warped VRT)
+def warp_20():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'white_nodata.vrt', 1, 1705 )
+
+    return tst.testOpen()
+
 ###############################################################################
 
 gdaltest_list = [
@@ -559,7 +571,8 @@ gdaltest_list = [
     warp_16,
     warp_17,
     warp_18,
-    warp_19
+    warp_19,
+    warp_20
     ]
 
 if __name__ == '__main__':
