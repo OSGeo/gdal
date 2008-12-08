@@ -303,6 +303,18 @@ GDALRasterizeLayers( GDALDatasetH hDS,
                      GDALProgressFunc pfnProgress, 
                      void *pProgressArg );
 
+CPLErr CPL_DLL 
+GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
+                        GDALDataType eBufType, int nPixelSpace, int nLineSpace,
+                        int nLayerCount, OGRLayerH *pahLayers,
+                        const char *pszDstProjection,
+                        double *padfDstGeoTransform,
+                        GDALTransformerFunc pfnTransformer, 
+                        void *pTransformArg, double dfBurnValue,
+                        char **papszOptions, GDALProgressFunc pfnProgress, 
+                        void *pProgressArg );
+
+
 /************************************************************************/
 /*  Gridding interface.                                                 */
 /************************************************************************/
