@@ -2936,7 +2936,7 @@ static int HFAReadAndValidatePoly( HFAEntry *poTarget,
     osFldName.Printf( "%sorder", pszName );
     psRetPoly->order = poTarget->GetIntField(osFldName);
 
-    if( psRetPoly->order < 1 || psRetPoly->order > 2 )
+    if( psRetPoly->order < 1 || psRetPoly->order > 3 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -2957,7 +2957,8 @@ static int HFAReadAndValidatePoly( HFAEntry *poTarget,
         return FALSE;
 
     if( (psRetPoly->order == 1 && termcount != 3) 
-        || (psRetPoly->order == 2 && termcount != 6) )
+        || (psRetPoly->order == 2 && termcount != 6) 
+        || (psRetPoly->order == 3 && termcount != 10) )
         return FALSE;
 
     // we don't check the exponent organization for now.  Hopefully
@@ -3125,6 +3126,32 @@ int HFAEvaluateXFormStack( int nStepCount, int bForward,
                 + psStep->polycoefmtx[5] * *pdfX * *pdfX
                 + psStep->polycoefmtx[7] * *pdfX * *pdfY
                 + psStep->polycoefmtx[9] * *pdfY * *pdfY;
+
+            *pdfX = dfXOut;
+            *pdfY = dfYOut;
+        }
+        else if( psStep->order == 3 )
+        {
+            dfXOut = psStep->polycoefvector[0] 
+                + psStep->polycoefmtx[ 0] * *pdfX
+                + psStep->polycoefmtx[ 2] * *pdfY
+                + psStep->polycoefmtx[ 4] * *pdfX * *pdfX
+                + psStep->polycoefmtx[ 6] * *pdfX * *pdfY
+                + psStep->polycoefmtx[ 8] * *pdfY * *pdfY
+                + psStep->polycoefmtx[10] * *pdfX * *pdfX * *pdfX
+                + psStep->polycoefmtx[12] * *pdfX * *pdfX * *pdfY
+                + psStep->polycoefmtx[14] * *pdfX * *pdfY * *pdfY
+                + psStep->polycoefmtx[16] * *pdfY * *pdfY * *pdfY;
+            dfYOut = psStep->polycoefvector[1] 
+                + psStep->polycoefmtx[ 1] * *pdfX
+                + psStep->polycoefmtx[ 3] * *pdfY
+                + psStep->polycoefmtx[ 5] * *pdfX * *pdfX
+                + psStep->polycoefmtx[ 7] * *pdfX * *pdfY
+                + psStep->polycoefmtx[ 9] * *pdfY * *pdfY
+                + psStep->polycoefmtx[11] * *pdfX * *pdfX * *pdfX
+                + psStep->polycoefmtx[13] * *pdfX * *pdfX * *pdfY
+                + psStep->polycoefmtx[15] * *pdfX * *pdfY * *pdfY
+                + psStep->polycoefmtx[17] * *pdfY * *pdfY * *pdfY;
 
             *pdfX = dfXOut;
             *pdfY = dfYOut;
