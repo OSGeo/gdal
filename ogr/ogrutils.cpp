@@ -838,3 +838,245 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
 
     return TRUE;
 }
+
+
+/************************************************************************/
+/*                           OGRParseXMLDateTime()                      */
+/************************************************************************/
+
+int OGRParseXMLDateTime( const char* pszXMLDateTime,
+                               int *pnYear, int *pnMonth, int *pnDay,
+                               int *pnHour, int *pnMinute, float* pfSecond, int *pnTZ)
+{
+    int year = 0, month = 0, day = 0, hour = 0, minute = 0, TZHour, TZMinute;
+    float second = 0;
+    char c;
+    int TZ = 0;
+    int bRet = FALSE;
+
+    /* Date is expressed as a UTC date */
+    if (sscanf(pszXMLDateTime, "%04d-%02d-%02dT%02d:%02d:%f%c",
+                &year, &month, &day, &hour, &minute, &second, &c) == 7 && c == 'Z')
+    {
+        TZ = 100;
+        bRet = TRUE;
+    }
+    /* Date is expressed as a UTC date, with a timezone */
+    else if (sscanf(pszXMLDateTime, "%04d-%02d-%02dT%02d:%02d:%f%c%02d:%02d",
+                &year, &month, &day, &hour, &minute, &second, &c, &TZHour, &TZMinute) == 9 &&
+                (c == '+' || c == '-'))
+    {
+        TZ = 100 + ((c == '+') ? 1 : -1) * ((TZHour * 60 + TZMinute) / 15);
+        bRet = TRUE;
+    }
+    /* Date is expressed into an unknown timezone */
+    else if (sscanf(pszXMLDateTime, "%04d-%02d-%02dT%02d:%02d:%f",
+                    &year, &month, &day, &hour, &minute, &second) == 6)
+    {
+        TZ = 0;
+        bRet = TRUE;
+    }
+    if (bRet)
+    {
+        if (pnYear) *pnYear = year;
+        if (pnMonth) *pnMonth = month;
+        if (pnDay) *pnDay = day;
+        if (pnHour) *pnHour = hour;
+        if (pnMinute) *pnMinute = minute;
+        if (pfSecond) *pfSecond = second;
+        if (pnTZ) *pnTZ = TZ;
+    }
+
+    return bRet;
+}
+
+/************************************************************************/
+/*                      OGRParseRFC822DateTime()                        */
+/************************************************************************/
+
+static const char* aszMonthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+int OGRParseRFC822DateTime( const char* pszRFC822DateTime,
+                                  int *pnYear, int *pnMonth, int *pnDay,
+                                  int *pnHour, int *pnMinute, int *pnSecond, int *pnTZ)
+{
+    /* Following http://asg.web.cmu.edu/rfc/rfc822.html#sec-5 : [Fri,] 28 Dec 2007 05:24[:17] GMT */
+    char** papszTokens = CSLTokenizeStringComplex( pszRFC822DateTime, " ,:", TRUE, FALSE );
+    char** papszVal = papszTokens;
+    int bRet = FALSE;
+    int nTokens = CSLCount(papszTokens);
+    if (nTokens >= 6)
+    {
+        if ( ! ((*papszVal)[0] >= '0' && (*papszVal)[0] <= '9') )
+        {
+            /* Ignore day of week */
+            papszVal ++;
+        }
+
+        int day = atoi(*papszVal);
+        papszVal ++;
+
+        int month = 0;
+
+        for(int i = 0; i < 12; i++)
+        {
+            if (EQUAL(*papszVal, aszMonthStr[i]))
+                month = i + 1;
+        }
+        papszVal ++;
+
+        int year = atoi(*papszVal);
+        papszVal ++;
+        if( year < 100 && year >= 30 )
+            year += 1900;
+        else if( year < 30 && year >= 0 )
+            year += 2000;
+
+        int hour = atoi(*papszVal);
+        papszVal ++;
+
+        int minute = atoi(*papszVal);
+        papszVal ++;
+
+        int second = 0;
+        if (*papszVal != NULL && (*papszVal)[0] >= '0' && (*papszVal)[0] <= '9')
+        {
+            second = atoi(*papszVal);
+            papszVal ++;
+        }
+
+        if (month != 0)
+        {
+            bRet = TRUE;
+            int TZ = 0;
+
+            if (*papszVal == NULL)
+            {
+            }
+            else if (strlen(*papszVal) == 5 &&
+                     (*papszVal)[0] == '+' || (*papszVal)[0] == '-')
+            {
+                char szBuf[3];
+                szBuf[0] = (*papszVal)[1];
+                szBuf[1] = (*papszVal)[2];
+                szBuf[2] = 0;
+                int TZHour = atoi(szBuf);
+                szBuf[0] = (*papszVal)[3];
+                szBuf[1] = (*papszVal)[4];
+                szBuf[2] = 0;
+                int TZMinute = atoi(szBuf);
+                TZ = 100 + (((*papszVal)[0] == '+') ? 1 : -1) * ((TZHour * 60 + TZMinute) / 15);
+            }
+            else
+            {
+                const char* aszTZStr[] = { "GMT", "UT", "Z", "EST", "EDT", "CST", "CDT", "MST", "MDT", "PST", "PDT" };
+                int anTZVal[] = { 0, 0, 0, -5, -4, -6, -5, -7, -6, -8, -7 };
+                for(int i = 0; i < 11; i++)
+                {
+                    if (EQUAL(*papszVal, aszTZStr[i]))
+                    {
+                        TZ =  100 + anTZVal[i] * 4;
+                        break;
+                    }
+                }
+            }
+
+            if (pnYear) *pnYear = year;
+            if (pnMonth) *pnMonth = month;
+            if (pnDay) *pnDay = day;
+            if (pnHour) *pnHour = hour;
+            if (pnMinute) *pnMinute = minute;
+            if (pnSecond) *pnSecond = second;
+            if (pnTZ) *pnTZ = TZ;
+        }
+    }
+    CSLDestroy(papszTokens);
+    return bRet;
+}
+
+
+/**
+  * Returns the day of the week in Gregorian calendar
+  *
+  * @param day : day of the month, between 1 and 31
+  * @param month : month of the year, between 1 (Jan) and 12 (Dec)
+  * @param year : year
+
+  * @return day of the week : 0 for Monday, ... 6 for Sunday
+  */
+
+int OGRGetDayOfWeek(int day, int month, int year)
+{
+    /* Reference: Zeller's congruence */
+    int q = day;
+    int m;
+    if (month >=3)
+        m = month;
+    else
+    {
+        m = month + 12;
+        year --;
+    }
+    int K = year % 100;
+    int J = year / 100;
+    int h = ( q + (((m+1)*26)/10) + K + K/4 + J/4 + 5 * J) % 7;
+    return ( h + 5 ) % 7;
+}
+
+
+/************************************************************************/
+/*                         OGRGetRFC822DateTime()                       */
+/************************************************************************/
+
+char* OGRGetRFC822DateTime(int year, int month, int day, int hour, int minute, int second, int TZFlag)
+{
+    char* pszTZ = NULL;
+    const char* aszDayOfWeek[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+
+    int dayofweek = OGRGetDayOfWeek(day, month, year);
+
+    if (month < 1 || month > 12)
+        month = 1;
+
+    if (TZFlag == 0 || TZFlag == 100)
+    {
+        pszTZ = CPLStrdup("GMT");
+    }
+    else
+    {
+        int TZOffset = ABS(TZFlag - 100) * 15;
+        int TZHour = TZOffset / 60;
+        int TZMinute = TZOffset - TZHour * 60;
+        pszTZ = CPLStrdup(CPLSPrintf("%c%02d%02d", TZFlag > 100 ? '+' : '-',
+                                        TZHour, TZMinute));
+    }
+    char* pszRet = CPLStrdup(CPLSPrintf("%s, %02d %s %04d %02d:%02d:%02d %s",
+                     aszDayOfWeek[dayofweek], day, aszMonthStr[month - 1], year, hour, minute, second, pszTZ));
+    CPLFree(pszTZ);
+    return pszRet;
+}
+
+/************************************************************************/
+/*                            OGRGetXMLDateTime()                       */
+/************************************************************************/
+
+char* OGRGetXMLDateTime(int year, int month, int day, int hour, int minute, int second, int TZFlag)
+{
+    char* pszRet;
+    if (TZFlag == 0 || TZFlag == 100)
+    {
+        pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+                           year, month, day, hour, minute, second));
+    }
+    else
+    {
+        int TZOffset = ABS(TZFlag - 100) * 15;
+        int TZHour = TZOffset / 60;
+        int TZMinute = TZOffset - TZHour * 60;
+        pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
+                           year, month, day, hour, minute, second,
+                           (TZFlag > 100) ? '+' : '-', TZHour, TZMinute));
+    }
+    return pszRet;
+}
