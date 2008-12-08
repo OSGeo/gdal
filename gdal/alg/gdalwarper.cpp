@@ -1122,7 +1122,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
                 psWO->padfSrcNoDataImag = 
                     (double *) CPLCalloc(sizeof(double),psWO->nBandCount);
 
-            psWO->padfSrcNoDataReal[iBand] = atof(pszValue);
+            psWO->padfSrcNoDataImag[iBand] = atof(pszValue);
         }
         
 /* -------------------------------------------------------------------- */
@@ -1145,7 +1145,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
                 psWO->padfDstNoDataImag = 
                     (double *) CPLCalloc(sizeof(double),psWO->nBandCount);
 
-            psWO->padfDstNoDataReal[iBand] = atof(pszValue);
+            psWO->padfDstNoDataImag[iBand] = atof(pszValue);
         }
         
         iBand++;
