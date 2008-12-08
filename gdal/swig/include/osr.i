@@ -759,6 +759,10 @@ public:
   OGRErr ImportFromXML( char const *xmlString ) {
     return OSRImportFromXML( self, xmlString );
   }
+  
+  OGRErr ImportFromMICoordSys( char const *pszCoordSys ) {
+    return OSRImportFromMICoordSys( self, pszCoordSys );
+  }
 
   OGRErr ExportToWkt( char **argout ) {
     return OSRExportToWkt( self, argout );
@@ -790,6 +794,10 @@ public:
 
   OGRErr ExportToXML( char **argout, const char *dialect = "" ) {
     return OSRExportToXML( self, argout, dialect );
+  }
+  
+  OGRErr ExportToMICoordSys( char **argout ) {
+    return OSRExportToMICoordSys( self, argout );
   }
 
 %newobject CloneGeogCS;
