@@ -30,6 +30,7 @@
 #include "ogr_gpx.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -860,34 +861,11 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                 pszSubElementValue[nSubElementValueLen] = 0;
                 if (strcmp(pszSubElementName, "time") == 0)
                 {
-                    int year, month, day, hour, minute, TZHour, TZMinute;
+                    int year, month, day, hour, minute, TZ;
                     float second;
-                    char c;
-                    /* Date is expressed as a UTC date */
-                    if (sscanf(pszSubElementValue, "%04d-%02d-%02dT%02d:%02d:%f%c",
-                               &year, &month, &day, &hour, &minute, &second, &c) == 7 && c == 'Z')
+                    if (OGRParseXMLDateTime(pszSubElementValue, &year, &month, &day, &hour, &minute, &second, &TZ))
                     {
-                        poFeature->SetField( iCurrentField,
-                                             year, month, day,
-                                             hour, minute, (int)floor(second + 0.5), 100);
-                    }
-                    /* Date is expressed as a UTC date, with a timezone */
-                    else if (sscanf(pszSubElementValue, "%04d-%02d-%02dT%02d:%02d:%f%c%02d:%02d",
-                               &year, &month, &day, &hour, &minute, &second, &c, &TZHour, &TZMinute) == 9 &&
-                             (c == '+' || c == '-'))
-                    {
-                        poFeature->SetField( iCurrentField,
-                                             year, month, day,
-                                             hour, minute, (int)floor(second + 0.5),
-                                             100 + ((c == '+') ? 1 : -1) * ((TZHour * 60 + TZMinute) / 15));
-                    }
-                    /* Date is expressed into an unknown timezone */
-                    else if (sscanf(pszSubElementValue, "%04d-%02d-%02dT%02d:%02d:%f",
-                                    &year, &month, &day, &hour, &minute, &second) == 6)
-                    {
-                        poFeature->SetField( iCurrentField,
-                                             year, month, day,
-                                             hour, minute, (int)floor(second + 0.5));
+                        poFeature->SetField(iCurrentField, year, month, day, hour, minute, (int)(second + .5), TZ);
                     }
                     else
                     {
@@ -1048,20 +1026,9 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                 if (poFeature->GetFieldAsDateTime(i, &year, &month, &day,
                                                   &hour, &minute, &second, &TZFlag))
                 {
-                    if (TZFlag == 0 || TZFlag == 100)
-                    {
-                        VSIFPrintf(fp, "  <time>%04d-%02d-%02dT%02d:%02d:%02dZ</time>\n",
-                                    year, month, day, hour, minute, second);
-                    }
-                    else
-                    {
-                        int TZOffset = ABS(TZFlag - 100) * 15;
-                        int TZHour = TZOffset / 60;
-                        int TZMinute = TZOffset - TZHour * 60;
-                        VSIFPrintf(fp, "  <time>%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d</time>\n",
-                                    year, month, day, hour, minute, second,
-                                    (TZFlag > 100) ? '+' : '-', TZHour, TZMinute);
-                    }
+                    char* pszDate = OGRGetXMLDateTime(year, month, day, hour, minute, second, TZFlag);
+                    VSIFPrintf(fp, "  <time>%s</time>\n", pszDate);
+                    CPLFree(pszDate);
                 }
             }
             else if (strncmp(pszName, "link", 4) == 0)
@@ -1433,6 +1400,10 @@ int OGRGPXLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCSequentialWrite) )
         return bWriteMode;
+
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
+
     else
         return FALSE;
 }
