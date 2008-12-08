@@ -1097,6 +1097,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /*      from the hDstDS.  This is sometimes used to optimize            */
 /*      operation to a new output file ... it doesn't have to           */
 /*      written out and read back for nothing.                          */
+/* NOTE:The following code is 99% similar in gdalwarpoperation.cpp and  */
+/*      vrtwarped.cpp. Be careful to keep it in sync !                  */
 /* -------------------------------------------------------------------- */
     const char *pszInitDest = CSLFetchNameValue( psOptions->papszWarpOptions,
                                                  "INIT_DEST" );
