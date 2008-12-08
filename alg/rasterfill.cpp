@@ -342,6 +342,38 @@ if( quad_value != nNoDataVal ) 						\
 /*                           GDALFillNodata()                           */
 /************************************************************************/
 
+/**
+ * Fill selected raster regions by interpolation from the edges.
+ *
+ * This algorithm will interpolate values for all designated 
+ * nodata pixels (marked by zeros in hMaskBand).  For each pixel
+ * a four direction conic search is done to find values to interpolate
+ * from (using inverse distance weighting).  Once all values are
+ * interpolated, zero or more smoothing iterations (3x3 average
+ * filters on interpolated pixels) are applied to smooth out 
+ * artifacts. 
+ *
+ * This algorithm is generally suitable for interpolating missing
+ * regions of fairly continuously varying rasters (such as elevation
+ * models for instance).  It is also suitable for filling small holes
+ * and cracks in more irregularly varying images (like airphotos).  It
+ * is generally not so great for interpolating a raster from sparse 
+ * point data - see the algorithms defined in gdal_grid.h for that case.
+ *
+ * @param hTargetBand the raster band to be modified in place. 
+ * @param hMaskBand a mask band indicating pixels to be interpolated (zero valued
+ * @param dfMaxSearchDist the maximum number of pixels to search in all 
+ * directions to find values to interpolate from.
+ * @param nSmoothingIterations the number of 3x3 smoothing filter passes to 
+ * run (0 or more).
+ * @param papszOptions additional name=value options in a string list (none 
+ * supported at this time - just pass NULL).
+ * @param pfnProgress the progress function to report completion.
+ * @param pProgressArg callback data for progress function.
+ * 
+ * @return CE_None on success or CE_Failure if something goes wrong. 
+ */
+
 CPLErr
 GDALFillNodata( GDALRasterBandH hTargetBand, 
                 GDALRasterBandH hMaskBand,
