@@ -35,6 +35,10 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           GDALFilterLine()                           */
+/*                                                                      */
+/*      Apply 3x3 filtering one one scanline with masking for which     */
+/*      pixels are to be interpolated (ThisFMask) and which window      */
+/*      pixels are valid to include in the interpolation (TMask).       */
 /************************************************************************/
 
 static void
@@ -123,7 +127,17 @@ GDALFilterLine( float *pafLastLine, float *pafThisLine, float *pafNextLine,
 /************************************************************************/
 /*                          GDALMultiFilter()                           */
 /*                                                                      */
-/*      Apply multiple iterations of a 3x3 smoothing filter.            */
+/*      Apply multiple iterations of a 3x3 smoothing filter over a      */
+/*      band with masking controlling what pixels should be             */
+/*      filtered (FiltMaskBand non zero) and which pixels can be        */
+/*      considered valid contributors to the filter                     */
+/*      (TargetMaskBand non zero).                                      */
+/*                                                                      */
+/*      This implementation attempts to apply many iterations in        */
+/*      one IO pass by managing the filtering over a rolling buffer     */
+/*      of nIternations+2 scanlines.  While possibly clever this        */
+/*      makes the algorithm implementation largely                      */
+/*      incomprehensible.                                               */
 /************************************************************************/
 
 static CPLErr
@@ -146,6 +160,15 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
     int   nXSize = GDALGetRasterBandXSize( hTargetBand );
     int   nYSize = GDALGetRasterBandYSize( hTargetBand );
     CPLErr eErr = CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Report starting progress value.                                 */
+/* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, "Smoothing Filter...", pProgressArg ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate rotating buffers.                                      */
@@ -270,6 +293,17 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
                               pafThisPass + nXSize * iBufOffset, nXSize, 1, 
                               GDT_Float32, 0, 0 );
         }
+
+/* -------------------------------------------------------------------- */
+/*      Report progress.                                                */
+/* -------------------------------------------------------------------- */
+        if( eErr == CE_None
+            && !pfnProgress( (nNewLine+1) / (double) nYSize+nIterations, 
+                             "Smoothing Filter...", pProgressArg ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -345,6 +379,18 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
     if( hMaskBand == NULL )
         hMaskBand = GDALGetMaskBand( hTargetBand );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize progress counter.                                    */
+/* -------------------------------------------------------------------- */
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
+    if( !pfnProgress( 0.0, "Filling...", pProgressArg ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a work file to hold the Y "last value" indices.          */
@@ -494,6 +540,17 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             panThisY = panLastY;
             panLastY = panTmp;
         }
+
+/* -------------------------------------------------------------------- */
+/*      report progress.                                                */
+/* -------------------------------------------------------------------- */
+        if( eErr == CE_None
+            && !pfnProgress( 0.5*(iY+1) / (double)nYSize, 
+                             "Filling...", pProgressArg ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
     }
 
 /* ==================================================================== */
@@ -634,20 +691,12 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                 pabyFiltMask[iX] = 255;
                 pafScanline[iX] = dfValueSum / dfWeightSum;
             }
+
         }
 
 /* -------------------------------------------------------------------- */
 /*      Write out the updated data and mask information.                */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-        eErr = 
-            GDALRasterIO( hMaskBand, GF_Write, 0, iY, nXSize, 1, 
-                          pabyMask, nXSize, 1, GDT_Byte, 0, 0 );
-
-        if( eErr != CE_None )
-            break;
-#endif
-
         eErr = 
             GDALRasterIO( hTargetBand, GF_Write, 0, iY, nXSize, 1, 
                           pafScanline, nXSize, 1, GDT_Float32, 0, 0 );
@@ -673,6 +722,17 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             GUInt32 *panTmp = panThisY;
             panThisY = panLastY;
             panLastY = panTmp;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      report progress.                                                */
+/* -------------------------------------------------------------------- */
+        if( eErr == CE_None
+            && !pfnProgress( 0.5+0.5*(nYSize-iY) / (double)nYSize, 
+                             "Filling...", pProgressArg ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
         }
     }        
 
