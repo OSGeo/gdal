@@ -838,6 +838,8 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 /* -------------------------------------------------------------------- */
 /*      Process INIT_DEST option to initialize the buffer prior to      */
 /*      warping into it.                                                */
+/* NOTE:The following code is 99% similar in gdalwarpoperation.cpp and  */
+/*      vrtwarped.cpp. Be careful to keep it in sync !                  */
 /* -------------------------------------------------------------------- */
     const char *pszInitDest = CSLFetchNameValue( psWO->papszWarpOptions,
                                                  "INIT_DEST" );
