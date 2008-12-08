@@ -149,5 +149,8 @@ void OGRRegisterAll()
 #ifdef GEOCONCEPT_ENABLED
     RegisterOGRGeoconcept();
 #endif
+#ifdef GEORSS_ENABLED
+    RegisterOGRGeoRSS();
+#endif
 } /* OGRRegisterAll */
 
