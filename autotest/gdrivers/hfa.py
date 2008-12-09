@@ -758,6 +758,62 @@ def hfa_unique_values_color_table():
     return 'success'
 
 ###############################################################################
+# Verify reading of 3rd order XFORM polynomials.
+
+def hfa_xforms_3rd():
+
+    ds = gdal.Open( 'data/42BW_420730_VT2.aux' )
+
+    check_list = [
+        ('XFORM_STEPS', 2),
+        ('XFORM0_POLYCOEFMTX[3]', -0.151286406053458),
+        ('XFORM0_POLYCOEFVECTOR[1]', 401692.559078924),
+        ('XFORM1_ORDER', 3),
+        ('XFORM1_FWD_POLYCOEFMTX[0]', -0.560405515080768),
+        ('XFORM1_FWD_POLYCOEFMTX[17]', -1.01593898110617e-08),
+        ('XFORM1_REV_POLYCOEFMTX[17]', 4.01319402177037e-09),
+        ('XFORM1_REV_POLYCOEFVECTOR[0]', 2605.41812438735) ]
+
+    xform_md = ds.GetMetadata( 'XFORMS' )
+
+    for check_item in check_list:
+        try:
+            value = float(xform_md[check_item[0]])
+        except:
+            gdaltest.post_reason( 'metadata item %d missing' % check_item[0])
+            return 'fail'
+
+        if abs(value - check_item[1]) > abs(value/100000.0):
+            gdaltest.post_reason( 'metadata item %s has wrong value: %.15g' % \
+                                  (check_item[0], value) )
+            return 'fail'
+
+    # Check that the GCPs are as expected implying that the evaluation
+    # function for XFORMs if working ok.
+    
+    gcps = ds.GetGCPs()
+
+    if gcps[0].GCPPixel != 0.5 \
+       or gcps[0].GCPLine != 0.5 \
+       or abs(gcps[0].GCPX - 1667635.007) > 0.001 \
+       or abs(gcps[0].GCPY - 2620003.171) > 0.001:
+        print gcps[0].GCPPixel, gcps[0].GCPLine, gcps[0].GCPX, gcps[0].GCPY
+        gdaltest.post_reason( 'GCP 0 value wrong.' )
+        return 'fail'
+    
+    if abs(gcps[14].GCPPixel - 1769.7) > 0.1 \
+       or abs(gcps[14].GCPLine  - 2124.9) > 0.1 \
+       or abs(gcps[14].GCPX - 1665221.064) > 0.001 \
+       or abs(gcps[14].GCPY - 2632414.379) > 0.001:
+        print gcps[14].GCPPixel, gcps[14].GCPLine, gcps[14].GCPX, gcps[14].GCPY
+        gdaltest.post_reason( 'GCP 14 value wrong.' )
+        return 'fail'
+    
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -784,7 +840,8 @@ gdaltest_list = [
     hfa_vsimem,
     hfa_proName,
     hfa_read_empty_compressed,
-    hfa_unique_values_color_table
+    hfa_unique_values_color_table,
+    hfa_xforms_3rd
     ]
 
 if __name__ == '__main__':
