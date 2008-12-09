@@ -122,7 +122,7 @@ typedef struct {
 
 typedef struct {
     int		order;
-    double      polycoefmtx[12];
+    double      polycoefmtx[18];
     double      polycoefvector[2];
 } Efga_Polynomial;
 
