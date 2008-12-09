@@ -646,6 +646,11 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
  * destination (INIT_DEST) and all other processing, and so should be used
  * careful.  Mostly useful to short circuit a lot of extra work in mosaicing 
  * situations.
+ * 
+ * - UNIFIED_SRC_NODATA=YES/[NO]: By default nodata masking values considered
+ * independently for each band.  However, sometimes it is desired to treat all
+ * bands as nodata if and only if, all bands match the corresponding nodata
+ * values.  To get this behavior set this option to YES. 
  *
  * Normally when computing the source raster data to 
  * load to generate a particular output area, the warper samples transforms
