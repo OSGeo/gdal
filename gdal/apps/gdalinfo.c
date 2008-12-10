@@ -50,7 +50,7 @@ void Usage()
 
 {
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
-            "                [-noct] [-checksum] [-mdd domain]* datasetname\n" );
+            "                [-norat] [-noct] [-checksum] [-mdd domain]* datasetname\n" );
     exit( 1 );
 }
 
@@ -68,7 +68,7 @@ int main( int argc, char ** argv )
     GDALDriverH		hDriver;
     char		**papszMetadata;
     int                 bComputeMinMax = FALSE, bSample = FALSE;
-    int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
+    int                 bShowGCPs = TRUE, bShowMetadata = TRUE, bShowRAT=TRUE;
     int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
     int                 bShowColorTable = TRUE, bComputeChecksum = FALSE;
     int                 bReportHistograms = FALSE;
@@ -125,6 +125,8 @@ int main( int argc, char ** argv )
             bShowGCPs = FALSE;
         else if( EQUAL(argv[i], "-nomd") )
             bShowMetadata = FALSE;
+        else if( EQUAL(argv[i], "-norat") )
+            bShowRAT = FALSE;
         else if( EQUAL(argv[i], "-noct") )
             bShowColorTable = FALSE;
         else if( EQUAL(argv[i], "-mdd") && i < argc-1 )
@@ -648,7 +650,7 @@ int main( int argc, char ** argv )
             }
         }
 
-        if( bShowMetadata && GDALGetDefaultRAT( hBand ) != NULL )
+        if( bShowRAT && GDALGetDefaultRAT( hBand ) != NULL )
         {
             GDALRasterAttributeTableH hRAT = GDALGetDefaultRAT( hBand );
             
