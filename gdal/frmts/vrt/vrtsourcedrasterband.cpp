@@ -122,7 +122,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 {
     int         iSource;
-    CPLErr      eErr = CE_Failure;
+    CPLErr      eErr = CE_None;
 
     if( eRWFlag == GF_Write )
     {
@@ -171,7 +171,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Overlay each source in turn over top this.                      */
 /* -------------------------------------------------------------------- */
-    for( iSource = 0; iSource < nSources; iSource++ )
+    for( iSource = 0; eErr == CE_None && iSource < nSources; iSource++ )
     {
         eErr = 
             papoSources[iSource]->RasterIO( nXOff, nYOff, nXSize, nYSize, 
@@ -298,15 +298,11 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Done.                                                           */
 /* -------------------------------------------------------------------- */
-    if( nSources > 0 )
-        return CE_None;
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "No valid sources found for band in VRT file:\n%s",
+    if( nSources == 0 )
+        CPLDebug( "VRT", "No valid sources found for band in VRT file:\n%s",
                   pszVRTPath );
-        return CE_Failure;
-    }
+
+    return CE_None;
 }
 
 /************************************************************************/
