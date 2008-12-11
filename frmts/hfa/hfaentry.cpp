@@ -414,6 +414,7 @@ GByte *HFAEntry::MakeData( int nSize )
         if( nFilePos != 0 )
         {
             nFilePos = 0;
+            nDataPos = 0;
             if (poPrev != NULL) poPrev->MarkDirty(); 
             if (poNext != NULL) poNext->MarkDirty(); 
             if (poChild != NULL) poChild->MarkDirty(); 
