@@ -512,7 +512,8 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-cblend") && i < argc-1 )
         {
             papszWarpOptions = 
-                CSLSetNameValue( papszWarpOptions, "BLEND_DIST", argv[++i] );
+                CSLSetNameValue( papszWarpOptions, 
+                                 "CUTLINE_BLEND_DIST", argv[++i] );
         }
         else if( argv[i][0] == '-' )
             Usage();
