@@ -1068,6 +1068,8 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
             + strlen(poMapInfo->units) + 1;
 
         pabyData = poMIEntry->MakeData( nSize );
+        memset( pabyData, 0, nSize );
+
         poMIEntry->SetPosition();
 
 /* -------------------------------------------------------------------- */
@@ -1169,22 +1171,21 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /*      is likely to be more complicated.                               */
 /* -------------------------------------------------------------------- */
         poProX = hHFA->papoBand[iBand]->poNode->GetNamedChild( "ProjectionX" );
-        if( poProX != NULL )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "HFASetPEString() failed because the ProjectionX node\n"
-                      "already exists and can't be reliably updated." );
-            return CE_Failure;
-        }
 
 /* -------------------------------------------------------------------- */
 /*      Create the node.                                                */
 /* -------------------------------------------------------------------- */
-        poProX = new HFAEntry( hHFA, "ProjectionX","Eprj_MapProjection842",
-                               hHFA->papoBand[iBand]->poNode );
         if( poProX == NULL )
-            return CE_Failure;
+        {
+            poProX = new HFAEntry( hHFA, "ProjectionX","Eprj_MapProjection842",
+                                   hHFA->papoBand[iBand]->poNode );
+            if( poProX == NULL )
+                return CE_Failure;
+        }
 
+/* -------------------------------------------------------------------- */
+/*      Prepare the data area with some extra space just in case.       */
+/* -------------------------------------------------------------------- */
         GByte *pabyData = poProX->MakeData( 700 + strlen(pszPEString) );
         memset( pabyData, 0, 250+strlen(pszPEString) );
 
@@ -1200,7 +1201,8 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /*      handling for MIFObjects.                                        */
 /* -------------------------------------------------------------------- */
         pabyData = poProX->GetData();
-        int    nDataSize = poProX->GetDataSize();
+        
+        int       nDataSize = poProX->GetDataSize();
         GUInt32   iOffset = poProX->GetDataPos();
         GUInt32   nSize;
 
