@@ -62,6 +62,40 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
             ((OGRGeometry *) hPolygon)->clone() );
 
 /* -------------------------------------------------------------------- */
+/*      Prepare a clipping polygon a bit bigger than the area of        */
+/*      interest in the hopes of simplifying the cutline down to        */
+/*      stuff that will be relavent for this area of interest.          */
+/* -------------------------------------------------------------------- */
+    CPLString osClipRectWKT;
+
+    osClipRectWKT.Printf( "POLYGON((%g %g,%g %g,%g %g,%g %g,%g %g))", 
+                          nXOff - (dfBlendDist+1), 
+                          nYOff - (dfBlendDist+1), 
+                          nXOff + nXSize + (dfBlendDist+1), 
+                          nYOff - (dfBlendDist+1), 
+                          nXOff + nXSize + (dfBlendDist+1), 
+                          nYOff + nYSize + (dfBlendDist+1), 
+                          nXOff - (dfBlendDist+1), 
+                          nYOff + nYSize + (dfBlendDist+1), 
+                          nXOff - (dfBlendDist+1), 
+                          nYOff - (dfBlendDist+1) );
+    
+    OGRPolygon *poClipRect = NULL;
+    char *pszWKT = (char *) osClipRectWKT.c_str();
+    
+    OGRGeometryFactory::createFromWkt( &pszWKT, NULL, 
+                                       (OGRGeometry**) (&poClipRect) );
+
+    if( poClipRect )
+    {
+        OGRGeometry *poClippedLines = 
+            poLines->Intersection( poClipRect );
+        delete poLines;
+        poLines = poClippedLines;
+        delete poClipRect;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Convert our polygon into GEOS format, and compute an            */
 /*      envelope to accelerate later distance operations.               */
 /* -------------------------------------------------------------------- */
