@@ -243,6 +243,7 @@ public:
     void SetName( const char *pszNodeName );
     
     const char  *GetType() { return szType; }
+    HFAType     *GetTypeObject();
 
     GByte      *GetData() { LoadData(); return pabyData; }
     GUInt32	GetDataPos() { return nDataPos; }
@@ -370,6 +371,9 @@ class HFADictionary
     int		nTypes;
     int         nTypesMax;
     HFAType	**papoTypes;
+
+    CPLString   osDictionaryText;
+    int         bDictionaryTextDirty;
     
                 HFADictionary( const char *pszDict );
                 ~HFADictionary();
