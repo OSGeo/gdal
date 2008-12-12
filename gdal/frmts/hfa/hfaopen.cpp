@@ -380,7 +380,7 @@ void HFAClose( HFAHandle hHFA )
 {
     int		i;
 
-    if( hHFA->bTreeDirty )
+    if( hHFA->bTreeDirty || hHFA->poDictionary->bDictionaryTextDirty )
         HFAFlush( hHFA );
 
     if( hHFA->psDependent != NULL )
@@ -1068,6 +1068,8 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
             + strlen(poMapInfo->units) + 1;
 
         pabyData = poMIEntry->MakeData( nSize );
+        memset( pabyData, 0, nSize );
+
         poMIEntry->SetPosition();
 
 /* -------------------------------------------------------------------- */
@@ -1169,22 +1171,21 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /*      is likely to be more complicated.                               */
 /* -------------------------------------------------------------------- */
         poProX = hHFA->papoBand[iBand]->poNode->GetNamedChild( "ProjectionX" );
-        if( poProX != NULL )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "HFASetPEString() failed because the ProjectionX node\n"
-                      "already exists and can't be reliably updated." );
-            return CE_Failure;
-        }
 
 /* -------------------------------------------------------------------- */
 /*      Create the node.                                                */
 /* -------------------------------------------------------------------- */
-        poProX = new HFAEntry( hHFA, "ProjectionX","Eprj_MapProjection842",
-                               hHFA->papoBand[iBand]->poNode );
         if( poProX == NULL )
-            return CE_Failure;
+        {
+            poProX = new HFAEntry( hHFA, "ProjectionX","Eprj_MapProjection842",
+                                   hHFA->papoBand[iBand]->poNode );
+            if( poProX == NULL || poProX->GetTypeObject() == NULL )
+                return CE_Failure;
+        }
 
+/* -------------------------------------------------------------------- */
+/*      Prepare the data area with some extra space just in case.       */
+/* -------------------------------------------------------------------- */
         GByte *pabyData = poProX->MakeData( 700 + strlen(pszPEString) );
         memset( pabyData, 0, 250+strlen(pszPEString) );
 
@@ -1200,7 +1201,8 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /*      handling for MIFObjects.                                        */
 /* -------------------------------------------------------------------- */
         pabyData = poProX->GetData();
-        int    nDataSize = poProX->GetDataSize();
+        
+        int       nDataSize = poProX->GetDataSize();
         GUInt32   iOffset = poProX->GetDataPos();
         GUInt32   nSize;
 
@@ -1859,7 +1861,7 @@ CPLErr HFAFlush( HFAHandle hHFA )
 {
     CPLErr	eErr;
 
-    if( !hHFA->bTreeDirty )
+    if( !hHFA->bTreeDirty && !hHFA->poDictionary->bDictionaryTextDirty )
         return CE_None;
 
     CPLAssert( hHFA->poRoot != NULL );
@@ -1867,23 +1869,52 @@ CPLErr HFAFlush( HFAHandle hHFA )
 /* -------------------------------------------------------------------- */
 /*      Flush HFAEntry tree to disk.                                    */
 /* -------------------------------------------------------------------- */
-    eErr = hHFA->poRoot->FlushToDisk();
-    if( eErr != CE_None )
-        return eErr;
+    if( hHFA->bTreeDirty )
+    {
+        eErr = hHFA->poRoot->FlushToDisk();
+        if( eErr != CE_None )
+            return eErr;
+        
+        hHFA->bTreeDirty = FALSE;
+    }
 
-    hHFA->bTreeDirty = FALSE;
+/* -------------------------------------------------------------------- */
+/*      Flush Dictionary to disk.                                       */
+/* -------------------------------------------------------------------- */
+    GUInt32 nNewDictionaryPos = hHFA->nDictionaryPos;
+
+    if( hHFA->poDictionary->bDictionaryTextDirty )
+    {
+        VSIFSeekL( hHFA->fp, 0, SEEK_END );
+        nNewDictionaryPos = (GUInt32) VSIFTellL( hHFA->fp );
+        VSIFWriteL( hHFA->poDictionary->osDictionaryText.c_str(), 
+                    strlen(hHFA->poDictionary->osDictionaryText.c_str()) + 1,
+                    1, hHFA->fp );
+        hHFA->poDictionary->bDictionaryTextDirty = FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      do we need to update the Ehfa_File pointer to the root node?    */
 /* -------------------------------------------------------------------- */
-    if( hHFA->nRootPos != hHFA->poRoot->GetFilePos() )
+    if( hHFA->nRootPos != hHFA->poRoot->GetFilePos() 
+        || nNewDictionaryPos != hHFA->nDictionaryPos )
     {
-        GUInt32		nRootPos;
+        GUInt32		nOffset;
+        GUInt32         nHeaderPos;
 
-        nRootPos = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
-        HFAStandard( 4, &nRootPos );
-        VSIFSeekL( hHFA->fp, 20 + 8, SEEK_SET );
-        VSIFWriteL( &nRootPos, 4, 1, hHFA->fp );
+        VSIFSeekL( hHFA->fp, 16, SEEK_SET );
+        VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, hHFA->fp );
+        HFAStandard( 4, &nHeaderPos );
+
+        nOffset = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
+        HFAStandard( 4, &nOffset );
+        VSIFSeekL( hHFA->fp, nHeaderPos+8, SEEK_SET );
+        VSIFWriteL( &nOffset, 4, 1, hHFA->fp );
+
+        nOffset = hHFA->nDictionaryPos = nNewDictionaryPos;
+        HFAStandard( 4, &nOffset );
+        VSIFSeekL( hHFA->fp, nHeaderPos+14, SEEK_SET );
+        VSIFWriteL( &nOffset, 4, 1, hHFA->fp );
     }
 
     return CE_None;
