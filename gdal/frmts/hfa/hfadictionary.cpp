@@ -63,6 +63,9 @@ static const char *apszDefDefn[] = {
     "Eimg_NonInitializedValue", 
     "{1:*bvalueBD,}Eimg_NonInitializedValue",
 
+    "Eprj_MapProjection842",
+    "{1:x{1:x{0:pcstring,}Emif_String,type,1:x{0:pcstring,}Emif_String,MIFDictionary,0:pCMIFObject,}Emif_MIFObject,projection,1:x{0:pcstring,}Emif_String,title,}Eprj_MapProjection842",
+
     NULL,
     NULL };
     
@@ -88,6 +91,9 @@ HFADictionary::HFADictionary( const char * pszString )
     nTypesMax = 0;
     papoTypes = NULL;
 
+    osDictionaryText = pszString;
+    bDictionaryTextDirty = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Read all the types.                                             */
 /* -------------------------------------------------------------------- */
@@ -102,23 +108,6 @@ HFADictionary::HFADictionary( const char * pszString )
             AddType( poNewType );
         else
             delete poNewType;
-    }
-
-
-/* -------------------------------------------------------------------- */
-/*      Provide hardcoded values for some definitions that are          */
-/*      sometimes missing from the data dictionary for unknown          */
-/*      reasons.                                                        */
-/* -------------------------------------------------------------------- */
-    for( i = 0; apszDefDefn[i] != NULL; i += 2 )
-    {
-        if( FindType( apszDefDefn[i] ) == NULL )
-        {
-            HFAType *poNewType = new HFAType();
-
-            poNewType->Initialize( apszDefDefn[i+1] );
-            AddType( poNewType );
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -175,6 +164,31 @@ HFAType * HFADictionary::FindType( const char * pszName )
     {
         if( strcmp(pszName,papoTypes[i]->pszTypeName) == 0 )
             return( papoTypes[i] );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check if this is a type have other knowledge of.  If so, add    */
+/*      it to the dictionary now.  I'm not sure how some files end      */
+/*      up being distributed using types not in the dictionary.         */
+/* -------------------------------------------------------------------- */
+    for( i = 0; apszDefDefn[i] != NULL; i += 2 )
+    {
+        if( strcmp( pszName, apszDefDefn[i] ) == 0 )
+        {
+            HFAType *poNewType = new HFAType();
+
+            poNewType->Initialize( apszDefDefn[i+1] );
+            AddType( poNewType );
+            poNewType->CompleteDefn( this );
+
+            osDictionaryText.erase( osDictionaryText.size() - 1, 1 );
+            osDictionaryText += apszDefDefn[i+1];
+            osDictionaryText += ",.";
+
+            bDictionaryTextDirty = TRUE;
+
+            return poNewType;
+        }
     }
 
     return NULL;
