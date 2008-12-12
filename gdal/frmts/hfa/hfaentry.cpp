@@ -375,6 +375,19 @@ void HFAEntry::LoadData()
 }
 
 /************************************************************************/
+/*                           GetTypeObject()                            */
+/************************************************************************/
+
+HFAType *HFAEntry::GetTypeObject()
+
+{
+    if( poType == NULL )
+        poType = psHFA->poDictionary->FindType( szType );
+
+    return poType;
+}
+
+/************************************************************************/
 /*                              MakeData()                              */
 /*                                                                      */
 /*      Create a data block on the this HFAEntry in memory.  By         */
