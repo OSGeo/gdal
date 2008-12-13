@@ -622,6 +622,16 @@ OGRErr OGRSpatialReference::Validate()
                     return OGRERR_CORRUPT_DATA;
                 }
             }
+            else if( EQUAL(poNode->GetValue(),"AXIS") )
+            {
+                if( poNode->GetChildCount() != 2 )
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                       "AXIS has wrong number of children (%d), not 2.\n",
+                              poNode->GetChildCount() );
+                    return OGRERR_CORRUPT_DATA;
+                }
+            }
             else if( EQUAL(poNode->GetValue(),"EXTENSION") )
             {
                 // We do not try to control the sub-organization of 
