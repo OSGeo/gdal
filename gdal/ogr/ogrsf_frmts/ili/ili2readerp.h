@@ -78,6 +78,8 @@ class ILI2Handler : public DefaultHandler
     
     DOMDocument *dom_doc;
     DOMElement *dom_elem;
+    
+    int m_nEntityCounter;
 
 public:
     ILI2Handler( ILI2Reader *poReader );
@@ -99,6 +101,8 @@ public:
     );
     void characters( const XMLCh *const chars,
                      const unsigned int length );
+
+    void startEntity (const XMLCh *const name);
 
     void fatalError(const SAXParseException&);
 };

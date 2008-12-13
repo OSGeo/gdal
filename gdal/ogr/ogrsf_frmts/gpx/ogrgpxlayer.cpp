@@ -247,6 +247,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     pszSubElementName = NULL;
     pszSubElementValue = NULL;
     nSubElementValueLen = 0;
+    bStopParsing = FALSE;
 
     poSRS = new OGRSpatialReference("GEOGCS[\"WGS 84\", "
         "   DATUM[\"WGS_1984\","
@@ -316,13 +317,6 @@ OGRGPXLayer::~OGRGPXLayer()
 
 #ifdef HAVE_EXPAT
 
-extern "C"
-{
-static void XMLCALL startElementCbk(void *pUserData, const char *pszName, const char **ppszAttr);
-static void XMLCALL endElementCbk(void *pUserData, const char *pszName);
-static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen);
-}
-
 static void XMLCALL startElementCbk(void *pUserData, const char *pszName, const char **ppszAttr)
 {
     ((OGRGPXLayer*)pUserData)->startElementCbk(pszName, ppszAttr);
@@ -336,6 +330,32 @@ static void XMLCALL endElementCbk(void *pUserData, const char *pszName)
 static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen)
 {
     ((OGRGPXLayer*)pUserData)->dataHandlerCbk(data, nLen);
+}
+
+#define OGR_EXPAT_MAX_ALLOWED_ALLOC 100000
+static void* OGRGPXLayerExpatMalloc(size_t size)
+{
+    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
+        return malloc(size);
+    else
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Expat tried to malloc %d bytes. File probably corrupted", (int)size);
+        return NULL;
+    }
+}
+
+static void* OGRGPXLayerExpatRealloc(void *ptr, size_t size)
+{
+    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
+        return realloc(ptr, size);
+    else
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Expat tried to realloc %d bytes. File probably corrupted", (int)size);
+        free(ptr);
+        return NULL;
+    }
 }
 
 #endif
@@ -355,8 +375,12 @@ void OGRGPXLayer::ResetReading()
 #ifdef HAVE_EXPAT
         if (oParser)
             XML_ParserFree(oParser);
-        
-        oParser = XML_ParserCreate(NULL);
+
+        XML_Memory_Handling_Suite memsuite;
+        memsuite.malloc_fcn = OGRGPXLayerExpatMalloc;
+        memsuite.realloc_fcn = OGRGPXLayerExpatRealloc;
+        memsuite.free_fcn = free;
+        oParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
         XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
         XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
         XML_SetUserData(oParser, this);
@@ -391,6 +415,7 @@ void OGRGPXLayer::ResetReading()
     rteFID = rtePtId = 0;
 }
 
+#ifdef HAVE_EXPAT
 
 /************************************************************************/
 /*                        startElementCbk()                            */
@@ -412,7 +437,15 @@ static char* OGRGPX_GetOGRCompatibleTagName(const char* pszName)
 void OGRGPXLayer::AddStrToSubElementValue(const char* pszStr)
 {
     int len = strlen(pszStr);
-    pszSubElementValue = (char*) CPLRealloc(pszSubElementValue, nSubElementValueLen + len + 1);
+    pszSubElementValue = (char*)
+            VSIRealloc(pszSubElementValue, nSubElementValueLen + len + 1);
+    if (pszSubElementValue == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        XML_StopParser(oParser, XML_FALSE);
+        bStopParsing = TRUE;
+        return;
+    }
     memcpy(pszSubElementValue + nSubElementValueLen, pszStr, len);
     nSubElementValueLen += len;
 }
@@ -420,6 +453,11 @@ void OGRGPXLayer::AddStrToSubElementValue(const char* pszStr)
 void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 {
     int i;
+
+    if (bStopParsing) return;
+
+    nWithoutEventCounter = 0;
+
     if ((gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0) ||
         (gpxGeomType == GPX_ROUTE_POINT && strcmp(pszName, "rtept") == 0) ||
         (gpxGeomType == GPX_TRACK_POINT && strcmp(pszName, "trkpt") == 0))
@@ -714,6 +752,10 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
 void OGRGPXLayer::endElementCbk(const char *pszName)
 {
+    if (bStopParsing) return;
+
+    nWithoutEventCounter = 0;
+
     depthLevel--;
 
     if (inInterestingElement)
@@ -915,6 +957,19 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
 
 void OGRGPXLayer::dataHandlerCbk(const char *data, int nLen)
 {
+    if (bStopParsing) return;
+
+    nDataHandlerCounter ++;
+    if (nDataHandlerCounter >= BUFSIZ)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
+        XML_StopParser(oParser, XML_FALSE);
+        bStopParsing = TRUE;
+        return;
+    }
+
+    nWithoutEventCounter = 0;
+
     if (pszSubElementName)
     {
         if (inExtensions && depthLevel > interestingDepthLevel + 2)
@@ -922,11 +977,26 @@ void OGRGPXLayer::dataHandlerCbk(const char *data, int nLen)
             if (data[0] == '\n')
                 return;
         }
-        pszSubElementValue = (char*) CPLRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
+        pszSubElementValue = (char*) VSIRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
+        if (pszSubElementValue == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            XML_StopParser(oParser, XML_FALSE);
+            bStopParsing = TRUE;
+            return;
+        }
         memcpy(pszSubElementValue + nSubElementValueLen, data, nLen);
         nSubElementValueLen += nLen;
+        if (nSubElementValueLen > 100000)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too much data inside one element. File probably corrupted");
+            XML_StopParser(oParser, XML_FALSE);
+            bStopParsing = TRUE;
+        }
     }
 }
+#endif
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -934,6 +1004,19 @@ void OGRGPXLayer::dataHandlerCbk(const char *data, int nLen)
 
 OGRFeature *OGRGPXLayer::GetNextFeature()
 {
+    if (bWriteMode)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot read features when writing a GPX file");
+        return NULL;
+    }
+
+    if (fpGPX == NULL)
+        return NULL;
+
+    if (bStopParsing)
+        return NULL;
+
 #ifdef HAVE_EXPAT
     if (nFeatureTabIndex < nFeatureTabLength)
     {
@@ -949,10 +1032,12 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     ppoFeatureTab = NULL;
     nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
+    nWithoutEventCounter = 0;
 
     int nDone;
     do
     {
+        nDataHandlerCounter = 0;
         unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fpGPX );
         nDone = VSIFEofL(fpGPX);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
@@ -962,10 +1047,19 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
                      XML_ErrorString(XML_GetErrorCode(oParser)),
                      (int)XML_GetCurrentLineNumber(oParser),
                      (int)XML_GetCurrentColumnNumber(oParser));
+            bStopParsing = TRUE;
             break;
         }
-    } while (!nDone && nFeatureTabLength == 0);
-    
+        nWithoutEventCounter ++;
+    } while (!nDone && nFeatureTabLength == 0 && !bStopParsing && nWithoutEventCounter < 10);
+
+    if (nWithoutEventCounter == 10)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too much data inside one element. File probably corrupted");
+        bStopParsing = TRUE;
+    }
+
     return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
 #else
     return NULL;
@@ -1415,13 +1509,6 @@ int OGRGPXLayer::TestCapability( const char * pszCap )
 
 #ifdef HAVE_EXPAT
 
-extern "C"
-{
-static void XMLCALL startElementLoadSchemaCbk(void *pUserData, const char *pszName, const char **ppszAttr);
-static void XMLCALL endElementLoadSchemaCbk(void *pUserData, const char *pszName);
-static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, int nLen);
-}
-
 static void XMLCALL startElementLoadSchemaCbk(void *pUserData, const char *pszName, const char **ppszAttr)
 {
     ((OGRGPXLayer*)pUserData)->startElementLoadSchemaCbk(pszName, ppszAttr);
@@ -1437,16 +1524,19 @@ static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, 
     ((OGRGPXLayer*)pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
 }
 
-#endif
 
 /** This function parses the whole file to detect the extensions fields */
 void OGRGPXLayer::LoadExtensionsSchema()
 {
-#ifdef HAVE_EXPAT
-    XML_Parser extensionSchemaParser = XML_ParserCreate(NULL);
-    XML_SetElementHandler(extensionSchemaParser, ::startElementLoadSchemaCbk, ::endElementLoadSchemaCbk);
-    XML_SetCharacterDataHandler(extensionSchemaParser, ::dataHandlerLoadSchemaCbk);
-    XML_SetUserData(extensionSchemaParser, this);
+    XML_Memory_Handling_Suite memsuite;
+    memsuite.malloc_fcn = OGRGPXLayerExpatMalloc;
+    memsuite.realloc_fcn = OGRGPXLayerExpatRealloc;
+    memsuite.free_fcn = free;
+
+    oSchemaParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
+    XML_SetElementHandler(oSchemaParser, ::startElementLoadSchemaCbk, ::endElementLoadSchemaCbk);
+    XML_SetCharacterDataHandler(oSchemaParser, ::dataHandlerLoadSchemaCbk);
+    XML_SetUserData(oSchemaParser, this);
 
     VSIFSeekL( fpGPX, 0, SEEK_SET );
 
@@ -1457,30 +1547,41 @@ void OGRGPXLayer::LoadExtensionsSchema()
     pszSubElementName = NULL;
     pszSubElementValue = NULL;
     nSubElementValueLen = 0;
-    
+    nWithoutEventCounter = 0;
+    bStopParsing = FALSE;
+
     char aBuf[BUFSIZ];
     int nDone;
     do
     {
+        nDataHandlerCounter = 0;
         unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fpGPX );
         nDone = VSIFEofL(fpGPX);
-        if (XML_Parse(extensionSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of GPX file failed : %s at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(extensionSchemaParser)),
-                     (int)XML_GetCurrentLineNumber(extensionSchemaParser),
-                     (int)XML_GetCurrentColumnNumber(extensionSchemaParser));
+                     XML_ErrorString(XML_GetErrorCode(oSchemaParser)),
+                     (int)XML_GetCurrentLineNumber(oSchemaParser),
+                     (int)XML_GetCurrentColumnNumber(oSchemaParser));
+            bStopParsing = TRUE;
             break;
         }
-    } while (!nDone);
+        nWithoutEventCounter ++;
+    } while (!nDone && !bStopParsing && nWithoutEventCounter < 10);
 
-    XML_ParserFree(extensionSchemaParser);
+    if (nWithoutEventCounter == 10)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too much data inside one element. File probably corrupted");
+        bStopParsing = TRUE;
+    }
+
+    XML_ParserFree(oSchemaParser);
+    oSchemaParser = NULL;
 
     VSIFSeekL( fpGPX, 0, SEEK_SET );
-#endif
 }
-
 
 
 /************************************************************************/
@@ -1490,6 +1591,10 @@ void OGRGPXLayer::LoadExtensionsSchema()
 
 void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr)
 {
+    if (bStopParsing) return;
+
+    nWithoutEventCounter = 0;
+
     if (gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0)
     {
         inInterestingElement = TRUE;
@@ -1560,6 +1665,14 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName, const char **pp
                 
                 poFeatureDefn->AddFieldDefn(&newFieldDefn);
                 currentFieldDefn = poFeatureDefn->GetFieldDefn(poFeatureDefn->GetFieldCount() - 1);
+
+                if (poFeatureDefn->GetFieldCount() == 100)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Too many fields. File probably corrupted");
+                    XML_StopParser(oSchemaParser, XML_FALSE);
+                    bStopParsing = TRUE;
+                }
             }
         }
     }
@@ -1595,6 +1708,10 @@ static int OGRGPXIsInt(const char* pszStr)
 
 void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
 {
+    if (bStopParsing) return;
+
+    nWithoutEventCounter = 0;
+
     depthLevel--;
 
     if (inInterestingElement)
@@ -1675,10 +1792,42 @@ void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
 
 void OGRGPXLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
 {
+    if (bStopParsing) return;
+
+    nDataHandlerCounter ++;
+    if (nDataHandlerCounter >= BUFSIZ)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
+        XML_StopParser(oSchemaParser, XML_FALSE);
+        bStopParsing = TRUE;
+        return;
+    }
+
+    nWithoutEventCounter = 0;
+
     if (pszSubElementName)
     {
-        pszSubElementValue = (char*) CPLRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
+        pszSubElementValue = (char*) VSIRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
+        if (pszSubElementValue == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            XML_StopParser(oSchemaParser, XML_FALSE);
+            bStopParsing = TRUE;
+            return;
+        }
         memcpy(pszSubElementValue + nSubElementValueLen, data, nLen);
         nSubElementValueLen += nLen;
+        if (nSubElementValueLen > 100000)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too much data inside one element. File probably corrupted");
+            XML_StopParser(oSchemaParser, XML_FALSE);
+            bStopParsing = TRUE;
+        }
     }
 }
+#else
+void OGRGPXLayer::LoadExtensionsSchema()
+{
+}
+#endif

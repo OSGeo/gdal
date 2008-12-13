@@ -69,6 +69,32 @@ bool KML::open(const char * pszFilename)
     return TRUE;
 }
 
+#define OGR_EXPAT_MAX_ALLOWED_ALLOC 100000
+static void* OGRKMLExpatMalloc(size_t size)
+{
+    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
+        return malloc(size);
+    else
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Expat tried to malloc %d bytes. File probably corrupted", (int)size);
+        return NULL;
+    }
+}
+
+static void* OGRKMLExpatRealloc(void *ptr, size_t size)
+{
+    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
+        return realloc(ptr, size);
+    else
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Expat tried to realloc %d bytes. File probably corrupted", (int)size);
+        free(ptr);
+        return NULL;
+    }
+}
+
 void KML::parse()
 {
     std::size_t nDone = 0;
@@ -92,13 +118,21 @@ void KML::parse()
         poCurrent_ = NULL;
     }
 
-    XML_Parser oParser = XML_ParserCreate(NULL);
+    XML_Memory_Handling_Suite memsuite;
+    memsuite.malloc_fcn = OGRKMLExpatMalloc;
+    memsuite.realloc_fcn = OGRKMLExpatRealloc;
+    memsuite.free_fcn = free;
+
+    XML_Parser oParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, startElement, endElement);
     XML_SetCharacterDataHandler(oParser, dataHandler);
+    oCurrentParser = oParser;
+    nWithoutEventCounter = 0;
 
     do
     {
+        nDataHandlerCounter = 0;
         nLen = (int)VSIFReadL( aBuf, 1, sizeof(aBuf), pKMLFile_ );
         nDone = VSIFEofL(pKMLFile_);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
@@ -112,11 +146,18 @@ void KML::parse()
             VSIRewindL(pKMLFile_);
             return;
         }
-    } while (!nDone && nLen > 0 );
+        nWithoutEventCounter ++;
+    } while (!nDone && nLen > 0 & nWithoutEventCounter < 10);
 
     XML_ParserFree(oParser);
     VSIRewindL(pKMLFile_);
     poCurrent_ = NULL;
+
+    if (nWithoutEventCounter == 10)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too much data inside one element. File probably corrupted");
+    }
 }
 
 void KML::checkValidity()
@@ -146,11 +187,15 @@ void KML::checkValidity()
     XML_Parser oParser = XML_ParserCreate(NULL);
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, startElementValidate, NULL);
+    XML_SetCharacterDataHandler(oParser, dataHandlerValidate);
     int nCount = 0;
+
+    oCurrentParser = oParser;
 
     /* Parses the file until we find the first element */
     do
     {
+        nDataHandlerCounter = 0;
         nLen = (int)VSIFReadL( aBuf, 1, sizeof(aBuf), pKMLFile_ );
         nDone = VSIFEofL(pKMLFile_);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
@@ -168,6 +213,7 @@ void KML::checkValidity()
                         (int)XML_GetCurrentColumnNumber(oParser));
             }
 
+            validity = KML_VALIDITY_INVALID;
             XML_ParserFree(oParser);
             VSIRewindL(pKMLFile_);
             return;
@@ -185,57 +231,63 @@ void KML::checkValidity()
 
 void XMLCALL KML::startElement(void* pUserData, const char* pszName, const char** ppszAttr)
 {
-	int i = 0;
+    int i = 0;
     KMLNode* poMynew = NULL;
-	Attribute* poAtt = NULL;
-	
-	if(((KML *)pUserData)->poTrunk_ == NULL 
-        || (((KML *)pUserData)->poCurrent_->getName()).compare("description") != 0)
+    Attribute* poAtt = NULL;
+
+    KML* poKML = (KML*) pUserData;
+
+    poKML->nWithoutEventCounter = 0;
+
+    if(poKML->poTrunk_ == NULL 
+    || (poKML->poCurrent_->getName()).compare("description") != 0)
     {
-    	poMynew = new KMLNode();
-	    poMynew->setName(pszName);
-    	poMynew->setLevel(((KML *)pUserData)->nDepth_);
-	
-    	for (i = 0; ppszAttr[i]; i += 2)
+        poMynew = new KMLNode();
+            poMynew->setName(pszName);
+        poMynew->setLevel(poKML->nDepth_);
+
+        for (i = 0; ppszAttr[i]; i += 2)
         {
             poAtt = new Attribute();
             poAtt->sName = ppszAttr[i];
             poAtt->sValue = ppszAttr[i + 1];
             poMynew->addAttribute(poAtt);
-    	}
+        }
 
-        if(((KML *)pUserData)->poTrunk_ == NULL)
-            ((KML *)pUserData)->poTrunk_ = poMynew;
-        if(((KML *)pUserData)->poCurrent_ != NULL)
-            poMynew->setParent(((KML *)pUserData)->poCurrent_);
-        ((KML *)pUserData)->poCurrent_ = poMynew;
+        if(poKML->poTrunk_ == NULL)
+            poKML->poTrunk_ = poMynew;
+        if(poKML->poCurrent_ != NULL)
+            poMynew->setParent(poKML->poCurrent_);
+        poKML->poCurrent_ = poMynew;
 
-    	((KML *)pUserData)->nDepth_++;
+        poKML->nDepth_++;
     }
     else
     {
         std::string sNewContent = "<";
         sNewContent += pszName;
-    	for (i = 0; ppszAttr[i]; i += 2)
+        for (i = 0; ppszAttr[i]; i += 2)
         {
             sNewContent += " ";
             sNewContent += ppszAttr[i];
             sNewContent += "=";
             sNewContent += ppszAttr[i + 1];
-    	}
+        }
         sNewContent += ">";
-        ((KML *)pUserData)->poCurrent_->addContent(sNewContent);
+        poKML->poCurrent_->addContent(sNewContent);
     }
 }
 
 void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, const char** ppszAttr)
 {
     int i = 0;
-    
-    if (((KML *)pUserData)->validity != KML_VALIDITY_UNKNOWN)
+
+    KML* poKML = (KML*) pUserData;
+
+    if (poKML->validity != KML_VALIDITY_UNKNOWN)
         return;
 
-    ((KML *)pUserData)->validity = KML_VALIDITY_INVALID;
+    poKML->validity = KML_VALIDITY_INVALID;
 
     if(strcmp(pszName, "kml") == 0)
     {
@@ -247,23 +299,35 @@ void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, con
             {
                 // Is it KML 2.2?
                 if((strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.2") == 0) || 
-				   (strcmp(ppszAttr[i + 1], "http://www.opengis.net/kml/2.2") == 0))
+                   (strcmp(ppszAttr[i + 1], "http://www.opengis.net/kml/2.2") == 0))
                 {
-                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                    ((KML *)pUserData)->sVersion_ = "2.2";
+                    poKML->validity = KML_VALIDITY_VALID;
+                    poKML->sVersion_ = "2.2";
                 }
                 else if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.1") == 0)
                 {
-                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                    ((KML *)pUserData)->sVersion_ = "2.1";
+                    poKML->validity = KML_VALIDITY_VALID;
+                    poKML->sVersion_ = "2.1";
                 }
                 else if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.0") == 0)
                 {
-                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                    ((KML *)pUserData)->sVersion_ = "2.0";
+                    poKML->validity = KML_VALIDITY_VALID;
+                    poKML->sVersion_ = "2.0";
                 }
             }
         }
+    }
+}
+
+void XMLCALL KML::dataHandlerValidate(void * pUserData, const char * pszData, int nLen)
+{
+    KML* poKML = (KML*) pUserData;
+
+    poKML->nDataHandlerCounter ++;
+    if (poKML->nDataHandlerCounter >= BUFSIZ)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
+        XML_StopParser(poKML->oCurrentParser, XML_FALSE);
     }
 }
 
@@ -274,91 +338,106 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
     std::string sTmp;
     unsigned short nPos = 0;
 
-	if(((KML *)pUserData)->poCurrent_ != NULL
-        && 
-	    ((KML *)pUserData)->poCurrent_->getName().compare(pszName) == 0)
+    KML* poKML = (KML*) pUserData;
+
+    poKML->nWithoutEventCounter = 0;
+
+    if(poKML->poCurrent_ != NULL &&
+       poKML->poCurrent_->getName().compare(pszName) == 0)
     {
-    	((KML *)pUserData)->nDepth_--;
-        poTmp = ((KML *)pUserData)->poCurrent_;
+        poKML->nDepth_--;
+        poTmp = poKML->poCurrent_;
         // Split the coordinates
-        if(((KML *)pUserData)->poCurrent_->getName().compare("coordinates") == 0)
+        if(poKML->poCurrent_->getName().compare("coordinates") == 0)
         {
-            sData = ((KML *)pUserData)->poCurrent_->getContent(0);
+            sData = poKML->poCurrent_->getContent(0);
             while(sData.length() > 0)
             {
                 // Cut off whitespaces
-           	    while((sData[nPos] == ' ' || sData[nPos] == '\n'
+                while((sData[nPos] == ' ' || sData[nPos] == '\n'
                     || sData[nPos] == '\r' || 
-        	        sData[nPos] == '\t' ) && sData.length() > 0)
-                        sData = sData.substr(1, sData.length()-1);
-                
+                        sData[nPos] == '\t' ) && sData.length() > 0)
+                    sData = sData.substr(1, sData.length()-1);
+
                 // Get content
                 while(sData[nPos] != ' ' && sData[nPos] != '\n' && sData[nPos] != '\r' && 
-                    sData[nPos] != '\t' && nPos < sData.length()) 
-                        nPos++;
+                      sData[nPos] != '\t' && nPos < sData.length()) 
+                    nPos++;
                 sTmp = sData.substr(0, nPos);
 
-            	if(sTmp.length() > 0)
-        	        ((KML *)pUserData)->poCurrent_->addContent(sTmp);
+                if(sTmp.length() > 0)
+                    poKML->poCurrent_->addContent(sTmp);
                 // Cut the content from the rest
-        	    if(nPos < sData.length())
+                if(nPos < sData.length())
                     sData = sData.substr(nPos, sData.length() - nPos);
                 else
                     break;
                 nPos = 0;
             }
-            if(((KML *)pUserData)->poCurrent_->numContent() > 1)
-                ((KML *)pUserData)->poCurrent_->deleteContent(0);
+            if(poKML->poCurrent_->numContent() > 1)
+                poKML->poCurrent_->deleteContent(0);
         }
-        
-        if(((KML *)pUserData)->poCurrent_->getParent() != NULL)
-            ((KML *)pUserData)->poCurrent_ = ((KML *)pUserData)->poCurrent_->getParent();
-        else
-            ((KML *)pUserData)->poCurrent_ = NULL;
 
-    	if(!((KML *)pUserData)->isHandled(pszName))
+        if(poKML->poCurrent_->getParent() != NULL)
+            poKML->poCurrent_ = poKML->poCurrent_->getParent();
+        else
+            poKML->poCurrent_ = NULL;
+
+        if(!poKML->isHandled(pszName))
         {
-    	    CPLDebug("KML", "Not handled: %s", pszName);
-    	    delete poTmp;
-	    }
+            CPLDebug("KML", "Not handled: %s", pszName);
+            delete poTmp;
+        }
         else
         {
-	        if(((KML *)pUserData)->poCurrent_ != NULL)
-               	((KML *)pUserData)->poCurrent_->addChildren(poTmp);
-	    }
+            if(poKML->poCurrent_ != NULL)
+                poKML->poCurrent_->addChildren(poTmp);
+        }
     }
-    else if(((KML *)pUserData)->poCurrent_ != NULL)
+    else if(poKML->poCurrent_ != NULL)
     {
         std::string sNewContent = "</";
         sNewContent += pszName;
         sNewContent += ">";
-        ((KML *)pUserData)->poCurrent_->addContent(sNewContent);
+        poKML->poCurrent_->addContent(sNewContent);
     }
 }
 
 void XMLCALL KML::dataHandler(void* pUserData, const char* pszData, int nLen)
 {
-    if(nLen < 1 || ((KML *)pUserData)->poCurrent_ == NULL)
+    KML* poKML = (KML*) pUserData;
+
+    poKML->nWithoutEventCounter = 0;
+
+    if(nLen < 1 || poKML->poCurrent_ == NULL)
         return;
+
+    poKML->nDataHandlerCounter ++;
+    if (poKML->nDataHandlerCounter >= BUFSIZ)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
+        XML_StopParser(poKML->oCurrentParser, XML_FALSE);
+    }
+
     std::string sData(pszData, nLen);
     std::string sTmp;
-    
-	if(((KML *)pUserData)->poCurrent_->getName().compare("coordinates") == 0)
-	{
-	    if(((KML *)pUserData)->poCurrent_->numContent() == 0)
-	        ((KML *)pUserData)->poCurrent_->addContent(sData);
-	    else
-	        ((KML *)pUserData)->poCurrent_->appendContent(sData);
+
+    if(poKML->poCurrent_->getName().compare("coordinates") == 0)
+    {
+        if(poKML->poCurrent_->numContent() == 0)
+            poKML->poCurrent_->addContent(sData);
+        else
+            poKML->poCurrent_->appendContent(sData);
     }
     else
     {
-    	while(sData[0] == ' ' || sData[0] == '\n' || sData[0] == '\r' || sData[0] == '\t')
+        while(sData[0] == ' ' || sData[0] == '\n' || sData[0] == '\r' || sData[0] == '\t')
         {
-    		sData = sData.substr(1, sData.length()-1);
-    	}
-       	if(sData.length() > 0)
-	        ((KML *)pUserData)->poCurrent_->addContent(sData);
-	}
+            sData = sData.substr(1, sData.length()-1);
+        }
+        if(sData.length() > 0)
+            poKML->poCurrent_->addContent(sData);
+    }
 }
 
 bool KML::isValid()

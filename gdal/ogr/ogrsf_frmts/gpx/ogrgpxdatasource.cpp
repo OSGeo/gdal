@@ -155,6 +155,8 @@ OGRLayer * OGRGPXDataSource::CreateLayer( const char * pszLayerName,
     return papoLayers[nLayers-1];
 }
 
+#ifdef HAVE_EXPAT
+
 /************************************************************************/
 /*                startElementValidateCbk()                             */
 /************************************************************************/
@@ -191,11 +193,32 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszName, const char *
     }
 }
 
-#ifdef HAVE_EXPAT
+
+/************************************************************************/
+/*                      dataHandlerValidateCbk()                        */
+/************************************************************************/
+
+void OGRGPXDataSource::dataHandlerValidateCbk(const char *data, int nLen)
+{
+    nDataHandlerCounter ++;
+    if (nDataHandlerCounter >= BUFSIZ)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
+        XML_StopParser(oCurrentParser, XML_FALSE);
+    }
+}
+
+
 static void XMLCALL startElementValidateCbk(void *pUserData, const char *pszName, const char **ppszAttr)
 {
     OGRGPXDataSource* poDS = (OGRGPXDataSource*) pUserData;
     poDS->startElementValidateCbk(pszName, ppszAttr);
+}
+
+static void XMLCALL dataHandlerValidateCbk(void *pUserData, const char *data, int nLen)
+{
+    OGRGPXDataSource* poDS = (OGRGPXDataSource*) pUserData;
+    poDS->dataHandlerValidateCbk(data, nLen);
 }
 #endif
 
@@ -237,8 +260,10 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     nElementsRead = 0;
     
     XML_Parser oParser = XML_ParserCreate(NULL);
+    oCurrentParser = oParser;
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
+    XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
     
     char aBuf[BUFSIZ];
     int nDone;
@@ -251,6 +276,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     /* handle the file or not with that driver */
     do
     {
+        nDataHandlerCounter = 0;
         nLen = (unsigned int) VSIFReadL( aBuf, 1, sizeof(aBuf), fp );
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
@@ -267,6 +293,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
                         (int)XML_GetCurrentLineNumber(oParser),
                         (int)XML_GetCurrentColumnNumber(oParser));
             }
+            validity = GPX_VALIDITY_INVALID;
             break;
         }
         if (validity == GPX_VALIDITY_INVALID)
