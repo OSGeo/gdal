@@ -23,5 +23,4 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o kmlview $(O_OBJ)
 
-
-
+$(O_OBJ):	kml.h kmlnode.h kmlutility.h kmlvector.h ogr_kml.h

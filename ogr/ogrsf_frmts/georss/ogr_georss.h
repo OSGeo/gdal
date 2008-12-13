@@ -83,6 +83,7 @@ class OGRGeoRSSLayer : public OGRLayer
     int                bHasReadSchema;
 #ifdef HAVE_EXPAT
     XML_Parser         oParser;
+    XML_Parser         oSchemaParser;
 #endif
     OGRGeometry*       poGlobalGeom;
     int                bStopParsing;
@@ -109,8 +110,9 @@ class OGRGeoRSSLayer : public OGRLayer
     int                featureDepth;
     int                geometryDepth;
     OGRFieldDefn*      currentFieldDefn;
-    int                counterForSafety;
+    int                nWithoutEventCounter;
     CPLHashSet*        setOfFoundFields;
+    int                nDataHandlerCounter;
 
     OGRFeature*        poFeature;
     OGRFeature **      ppoFeatureTab;
@@ -118,7 +120,9 @@ class OGRGeoRSSLayer : public OGRLayer
     int                nFeatureTabIndex;
 
   private:
+#ifdef HAVE_EXPAT
     void               AddStrToSubElementValue(const char* pszStr);
+#endif
     int                IsStandardField(const char* pszName);
     
   public:
@@ -142,15 +146,18 @@ class OGRGeoRSSLayer : public OGRLayer
     OGRSpatialReference *GetSpatialRef();
     
     int                 GetFeatureCount( int bForce );
-    
+
+    void                LoadSchema();
+
+#ifdef HAVE_EXPAT
     void                startElementCbk(const char *pszName, const char **ppszAttr);
     void                endElementCbk(const char *pszName);
     void                dataHandlerCbk(const char *data, int nLen);
-    
-    void                LoadSchema();
+
     void                startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr);
     void                endElementLoadSchemaCbk(const char *pszName);
     void                dataHandlerLoadSchemaCbk(const char *data, int nLen);
+#endif
 };
 
 /************************************************************************/
@@ -179,7 +186,11 @@ class OGRGeoRSSDataSource : public OGRDataSource
     OGRGeoRSSGeomDialect eGeomDialect;
     int                 bUseExtensions;
     int                 bWriteHeaderAndFooter;
-    
+#ifdef HAVE_EXPAT
+    XML_Parser          oCurrentParser;
+    int                 nDataHandlerCounter;
+#endif
+
   public:
                         OGRGeoRSSDataSource();
                         ~OGRGeoRSSDataSource();
@@ -207,7 +218,10 @@ class OGRGeoRSSDataSource : public OGRDataSource
     OGRGeoRSSGeomDialect GetGeomDialect() { return eGeomDialect; }
     int                 GetUseExtensions() { return bUseExtensions; }
     
+#ifdef HAVE_EXPAT
     void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
+    void                dataHandlerValidateCbk(const char *data, int nLen);
+#endif
 };
 
 /************************************************************************/

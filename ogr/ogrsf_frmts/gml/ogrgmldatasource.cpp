@@ -243,7 +243,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Save the schema file if possible.  Don't make a fuss if we      */
 /*      can't ... could be read-only directory or something.            */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema )
+    if( !bHaveSchema && !poReader->HasStoppedParsing())
     {
         FILE    *fp = NULL;
 
