@@ -145,6 +145,7 @@ OGRLayer * OGRGeoRSSDataSource::CreateLayer( const char * pszLayerName,
     return papoLayers[nLayers-1];
 }
 
+#ifdef HAVE_EXPAT
 /************************************************************************/
 /*                startElementValidateCbk()                             */
 /************************************************************************/
@@ -170,11 +171,32 @@ void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszName, const cha
     }
 }
 
-#ifdef HAVE_EXPAT
+
+/************************************************************************/
+/*                      dataHandlerValidateCbk()                        */
+/************************************************************************/
+
+void OGRGeoRSSDataSource::dataHandlerValidateCbk(const char *data, int nLen)
+{
+    nDataHandlerCounter ++;
+    if (nDataHandlerCounter >= BUFSIZ)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
+        XML_StopParser(oCurrentParser, XML_FALSE);
+    }
+}
+
+
 static void XMLCALL startElementValidateCbk(void *pUserData, const char *pszName, const char **ppszAttr)
 {
     OGRGeoRSSDataSource* poDS = (OGRGeoRSSDataSource*) pUserData;
     poDS->startElementValidateCbk(pszName, ppszAttr);
+}
+
+static void XMLCALL dataHandlerValidateCbk(void *pUserData, const char *data, int nLen)
+{
+    OGRGeoRSSDataSource* poDS = (OGRGeoRSSDataSource*) pUserData;
+    poDS->dataHandlerValidateCbk(data, nLen);
 }
 #endif
 
@@ -214,6 +236,8 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     XML_Parser oParser = XML_ParserCreate(NULL);
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
+    XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
+    oCurrentParser = oParser;
     
     char aBuf[BUFSIZ];
     int nDone;
@@ -226,6 +250,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     /* handle the file or not with that driver */
     do
     {
+        nDataHandlerCounter = 0;
         nLen = (unsigned int) VSIFReadL( aBuf, 1, sizeof(aBuf), fp );
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
@@ -242,6 +267,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
                         (int)XML_GetCurrentLineNumber(oParser),
                         (int)XML_GetCurrentColumnNumber(oParser));
             }
+            validity = GEORSS_VALIDITY_INVALID;
             break;
         }
         if (validity == GEORSS_VALIDITY_INVALID)
@@ -254,7 +280,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
         else
         {
-            /* After reading 50 * BUFSIZE bytes, and not finding whether the file */
+            /* After reading 50 * BUFSIZ bytes, and not finding whether the file */
             /* is GeoRSS or not, we give up and fail silently */
             nCount ++;
             if (nCount == 50)

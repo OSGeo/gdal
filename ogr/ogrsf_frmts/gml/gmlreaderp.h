@@ -74,6 +74,8 @@ class GMLHandler : public DefaultHandler
     int        m_nGeomAlloc;
     int        m_nGeomLen;
 
+    int        m_nEntityCounter;
+
     int        m_nGeometryDepth;
     int        IsGeometryElement( const char * );
 
@@ -96,6 +98,8 @@ public:
                      const unsigned int length );
 
     void fatalError(const SAXParseException&);
+
+    void startEntity (const XMLCh *const name);
 };
 
 /************************************************************************/
@@ -149,6 +153,8 @@ private:
 
     GMLFeature   *m_poCompleteFeature;
 
+    int           m_bStopParsing;
+
     int           SetupParser();
     void          CleanupParser();
 
@@ -193,6 +199,8 @@ public:
 
     void        SetFeatureProperty( const char *pszElement,
                                     const char *pszValue );
+
+    int         HasStoppedParsing() { return m_bStopParsing; }
 
 };
 

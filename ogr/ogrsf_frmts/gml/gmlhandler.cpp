@@ -45,6 +45,7 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_pszCurField = NULL;
     m_pszGeometry = NULL;
     m_nGeomAlloc = m_nGeomLen = 0;
+    m_nEntityCounter = 0;
 }
 
 /************************************************************************/
@@ -72,6 +73,8 @@ void GMLHandler::startElement(const XMLCh* const    uri,
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
 
+    m_nEntityCounter = 0;
+
     /* A XMLCh character can expand to 4 bytes in UTF-8 */
     if (4 * tr_strlen( localname ) >= MAX_TOKEN_SIZE)
     {
@@ -84,7 +87,7 @@ void GMLHandler::startElement(const XMLCh* const    uri,
         if (!bWarnOnce)
         {
             bWarnOnce = TRUE;
-            CPLError(CE_Warning, CPLE_AppDefined, "A too big element name has been trucated");
+            CPLError(CE_Warning, CPLE_AppDefined, "A too big element name has been truncated");
         }
     }
     else
@@ -120,7 +123,11 @@ void GMLHandler::startElement(const XMLCh* const    uri,
         {
             m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
             m_pszGeometry = (char *) 
-                CPLRealloc( m_pszGeometry, m_nGeomAlloc);
+                VSIRealloc( m_pszGeometry, m_nGeomAlloc);
+            if (m_pszGeometry == NULL)
+            {
+                throw SAXNotSupportedException("Out of memory");
+            }
         }
 
         strcpy( m_pszGeometry+m_nGeomLen, "<" );
@@ -165,6 +172,8 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
 
+    m_nEntityCounter = 0;
+
     /* A XMLCh character can expand to 4 bytes in UTF-8 */
     if (4 * tr_strlen( localname ) >= MAX_TOKEN_SIZE)
     {
@@ -206,7 +215,11 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
         {
             m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
             m_pszGeometry = (char *) 
-                CPLRealloc( m_pszGeometry, m_nGeomAlloc);
+                VSIRealloc( m_pszGeometry, m_nGeomAlloc);
+            if (m_pszGeometry == NULL)
+            {
+                throw SAXNotSupportedException("Out of memory");
+            }
         }
 
         strcat( m_pszGeometry+m_nGeomLen, "</" );
@@ -266,6 +279,10 @@ void GMLHandler::characters(const XMLCh* const chars_in,
     if( m_pszCurField != NULL )
     {
         int     nCurFieldLength = strlen(m_pszCurField);
+        if (nCurFieldLength > 100000)
+        {
+            throw SAXNotSupportedException("Too much data inside one element. File probably corrupted");
+        }
 
         while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
             chars++;
@@ -280,8 +297,13 @@ void GMLHandler::characters(const XMLCh* const chars_in,
         else
         {
             m_pszCurField = (char *) 
-                CPLRealloc( m_pszCurField, 
+                VSIRealloc( m_pszCurField, 
                             nCurFieldLength+strlen(pszTranslated)+1 );
+            if (m_pszCurField == NULL)
+            {
+                CPLFree( pszTranslated );
+                throw SAXNotSupportedException("Out of memory");
+            }
             strcpy( m_pszCurField + nCurFieldLength, pszTranslated );
             CPLFree( pszTranslated );
         }
@@ -298,11 +320,20 @@ void GMLHandler::characters(const XMLCh* const chars_in,
         {
             m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nCharsLen*4 + 1000);
             m_pszGeometry = (char *) 
-                CPLRealloc( m_pszGeometry, m_nGeomAlloc);
+                VSIRealloc( m_pszGeometry, m_nGeomAlloc);
+            if (m_pszGeometry == NULL)
+            {
+                throw SAXNotSupportedException("Out of memory");
+            }
         }
 
         tr_strcpy( m_pszGeometry+m_nGeomLen, chars );
         m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
+
+        if (m_nGeomLen > 100000)
+        {
+            throw SAXNotSupportedException("Too much data inside one element. File probably corrupted");
+        }
     }
 }
 
@@ -337,4 +368,17 @@ int GMLHandler::IsGeometryElement( const char *pszElement )
         || strcmp(pszElement,"GeometryCollection") == 0
         || strcmp(pszElement,"Point") == 0 
         || strcmp(pszElement,"LineString") == 0;
+}
+
+/************************************************************************/
+/*                             startEntity()                            */
+/************************************************************************/
+
+void GMLHandler::startEntity (const XMLCh *const name)
+{
+    m_nEntityCounter ++;
+    if (m_nEntityCounter > 1000 && !m_poReader->HasStoppedParsing())
+    {
+        throw SAXNotSupportedException("File probably corrupted (million laugh pattern)");
+    }
 }

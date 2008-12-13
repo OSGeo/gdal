@@ -85,6 +85,7 @@ ILI2Handler::~ILI2Handler() {
 void ILI2Handler::startDocument() {
   // the level counter starts with DATASECTION
   level = -1;
+  m_nEntityCounter = 0;
 }
 
 void ILI2Handler::endDocument() {
@@ -100,6 +101,7 @@ void ILI2Handler::startElement(
   
   // start to add the layers, features with the DATASECTION  
   char *tmpC = NULL;
+  m_nEntityCounter = 0;
   if ((level >= 0) || (cmpStr(ILI2_DATASECTION, tmpC = XMLString::transcode(qname)) == 0)) {
     level++;
     
@@ -125,6 +127,7 @@ void ILI2Handler::endElement(
         const   XMLCh* const    qname
     ) {
     
+  m_nEntityCounter = 0;
   if (level >= 0) {
     if (level == 2) {
     
@@ -158,6 +161,15 @@ void ILI2Handler::characters( const XMLCh *const chars,
     
     XMLString::release(&tmpC);
   }
+}
+
+void ILI2Handler::startEntity (const XMLCh *const name)
+{
+    m_nEntityCounter ++;
+    if (m_nEntityCounter > 1000)
+    {
+        throw SAXNotSupportedException ("File probably corrupted (million laugh pattern)");
+    }
 }
 
 void ILI2Handler::fatalError(const SAXParseException&) {
