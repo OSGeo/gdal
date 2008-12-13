@@ -202,6 +202,8 @@ public:
     virtual int  ParseXSD( const char *pszFile ) = 0;
 
     virtual int PrescanForSchema( int bGetExtents = TRUE ) = 0;
+
+    virtual int HasStoppedParsing() = 0;
 };
 
 IGMLReader *CreateGMLReader();

@@ -105,6 +105,8 @@ GMLReader::GMLReader()
     m_poCompleteFeature = NULL;
 
     m_pszFilename = NULL;
+
+    m_bStopParsing = FALSE;
 }
 
 /************************************************************************/
@@ -255,6 +257,7 @@ GMLFeature *GMLReader::NextFeature()
         }
 
         while( m_poCompleteFeature == NULL 
+               && !m_bStopParsing
                && m_poSAXReader->parseNext( m_oToFill ) ) {}
 
         poReturn = m_poCompleteFeature;
@@ -263,9 +266,19 @@ GMLFeature *GMLReader::NextFeature()
     }
     catch (const XMLException& toCatch)
     {
+        char *pszErrorMessage = tr_strdup( toCatch.getMessage() );
         CPLDebug( "GML", 
                   "Error during NextFeature()! Message:\n%s", 
-                  tr_strdup( toCatch.getMessage() ) );
+                  pszErrorMessage );
+        CPLFree(pszErrorMessage);
+        m_bStopParsing = TRUE;
+    }
+    catch (const SAXException& toCatch)
+    {
+        char *pszErrorMessage = tr_strdup( toCatch.getMessage() );
+        CPLError(CE_Failure, CPLE_AppDefined, pszErrorMessage);
+        CPLFree(pszErrorMessage);
+        m_bStopParsing = TRUE;
     }
 
     return poReturn;

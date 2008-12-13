@@ -91,6 +91,7 @@ protected:
 	static void XMLCALL startElement(void *, const char *, const char **);
 	static void XMLCALL startElementValidate(void *, const char *, const char **);
 	static void XMLCALL dataHandler(void *, const char *, int);
+        static void XMLCALL dataHandlerValidate(void *, const char *, int);
 	static void XMLCALL endElement(void *, const char *);
 
 	// trunk of KMLnodes
@@ -111,6 +112,10 @@ private:
 	std::string sError_;
 	// current KMLNode
 	KMLNode *poCurrent_;
+        
+        XML_Parser oCurrentParser;
+        int nDataHandlerCounter;
+        int nWithoutEventCounter;
 };
 
 #endif /* OGR_KML_KML_H_INCLUDED */

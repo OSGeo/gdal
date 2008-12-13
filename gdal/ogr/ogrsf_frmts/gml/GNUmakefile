@@ -33,4 +33,4 @@ gmlview:	gmlview.cpp $(CORE_OBJ:.o=.$(OBJ_EXT))
 		gmlview.cpp $(CORE_OBJ:.o=.$(OBJ_EXT)) $(GDAL_LIB) $(LIBS) \
 		-o gmlview
 
-
+$(O_OBJ):	ogr_gml.h gmlreader.h gmlreaderp.h

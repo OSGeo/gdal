@@ -190,14 +190,6 @@ OGRFeatureDefn * OGRGeoRSSLayer::GetLayerDefn()
 
 #ifdef HAVE_EXPAT
 
-extern "C"
-{
-static void XMLCALL startElementCbk(void *pUserData, const char *pszName,
-                                    const char **ppszAttr);
-static void XMLCALL endElementCbk(void *pUserData, const char *pszName);
-static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen);
-}
-
 static void XMLCALL startElementCbk(void *pUserData, const char *pszName,
                                     const char **ppszAttr)
 {
@@ -214,6 +206,31 @@ static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen)
     ((OGRGeoRSSLayer*)pUserData)->dataHandlerCbk(data, nLen);
 }
 
+#define OGR_EXPAT_MAX_ALLOWED_ALLOC 100000
+static void* OGRGeoRSSLayerExpatMalloc(size_t size)
+{
+    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
+        return malloc(size);
+    else
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Expat tried to malloc %d bytes. File probably corrupted", (int)size);
+        return NULL;
+    }
+}
+
+static void* OGRGeoRSSLayerExpatRealloc(void *ptr, size_t size)
+{
+    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
+        return realloc(ptr, size);
+    else
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Expat tried to realloc %d bytes. File probably corrupted", (int)size);
+        free(ptr);
+        return NULL;
+    }
+}
 #endif
 
 /************************************************************************/
@@ -235,7 +252,11 @@ void OGRGeoRSSLayer::ResetReading()
         if (oParser)
             XML_ParserFree(oParser);
         
-        oParser = XML_ParserCreate(NULL);
+        XML_Memory_Handling_Suite memsuite;
+        memsuite.malloc_fcn = OGRGeoRSSLayerExpatMalloc;
+        memsuite.realloc_fcn = OGRGeoRSSLayerExpatRealloc;
+        memsuite.free_fcn = free;
+        oParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
         XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
         XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
         XML_SetUserData(oParser, this);
@@ -280,6 +301,28 @@ void OGRGeoRSSLayer::ResetReading()
     pszTagWithSubTag = NULL;
 }
 
+#ifdef HAVE_EXPAT
+
+/************************************************************************/
+/*                      AddStrToSubElementValue()                       */
+/************************************************************************/
+
+void OGRGeoRSSLayer::AddStrToSubElementValue(const char* pszStr)
+{
+    int len = strlen(pszStr);
+    pszSubElementValue = (char*)
+            VSIRealloc(pszSubElementValue, nSubElementValueLen + len + 1);
+    if (pszSubElementValue == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        XML_StopParser(oParser, XML_FALSE);
+        bStopParsing = TRUE;
+        return;
+    }
+
+    memcpy(pszSubElementValue + nSubElementValueLen, pszStr, len);
+    nSubElementValueLen += len;
+}
 
 /************************************************************************/
 /*              OGRGeoRSS_GetOGRCompatibleTagName()                     */
@@ -299,25 +342,6 @@ static char* OGRGeoRSS_GetOGRCompatibleTagName(const char* pszName)
 }
 
 /************************************************************************/
-/*                      AddStrToSubElementValue()                       */
-/************************************************************************/
-
-void OGRGeoRSSLayer::AddStrToSubElementValue(const char* pszStr)
-{
-    int len = strlen(pszStr);
-    pszSubElementValue = (char*)
-            VSIRealloc(pszSubElementValue, nSubElementValueLen + len + 1);
-    if (pszSubElementValue == NULL)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-        return;
-    }
-
-    memcpy(pszSubElementValue + nSubElementValueLen, pszStr, len);
-    nSubElementValueLen += len;
-}
-
-/************************************************************************/
 /*               OGRGeoRSSLayerATOMTagHasSubElement()                   */
 /************************************************************************/
 
@@ -332,7 +356,6 @@ static int OGRGeoRSSLayerATOMTagHasSubElement(const char* pszName)
     return FALSE;
 }
 
-
 /************************************************************************/
 /*                        startElementCbk()                            */
 /************************************************************************/
@@ -340,6 +363,8 @@ static int OGRGeoRSSLayerATOMTagHasSubElement(const char* pszName)
 void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 {
     int bSerializeTag = FALSE;
+
+    if (bStopParsing) return;
 
     if ((eFormat == GEORSS_ATOM && currentDepth == 1 && strcmp(pszName, "entry") == 0) ||
         (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0))
@@ -580,6 +605,8 @@ static OGRGeometry* OGRGeoRSS_GetGMLEnvelope(const char* pszGML)
 void OGRGeoRSSLayer::endElementCbk(const char *pszName)
 {
     OGRGeometry* poGeom = NULL;
+
+    if (bStopParsing) return;
 
     currentDepth--;
 
@@ -905,6 +932,8 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
 
 void OGRGeoRSSLayer::dataHandlerCbk(const char *data, int nLen)
 {
+    if (bStopParsing) return;
+
     if (bInGMLGeometry == TRUE || bInSimpleGeometry == TRUE ||
         bInGeoLat == TRUE || bInGeoLong == TRUE ||
         pszSubElementName != NULL)
@@ -914,12 +943,15 @@ void OGRGeoRSSLayer::dataHandlerCbk(const char *data, int nLen)
         if (pszSubElementValue == NULL)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            XML_StopParser(oSchemaParser, XML_FALSE);
+            bStopParsing = TRUE;
             return;
         }
         memcpy(pszSubElementValue + nSubElementValueLen, data, nLen);
         nSubElementValueLen += nLen;
     }
 }
+#endif
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -973,9 +1005,9 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
                      XML_ErrorString(XML_GetErrorCode(oParser)),
                      (int)XML_GetCurrentLineNumber(oParser),
                      (int)XML_GetCurrentColumnNumber(oParser));
-            break;
+            bStopParsing = TRUE;
         }
-    } while (!nDone && nFeatureTabLength == 0);
+    } while (!nDone && !bStopParsing && nFeatureTabLength == 0);
     
     return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
 #else
@@ -1705,13 +1737,6 @@ OGRErr OGRGeoRSSLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
 #ifdef HAVE_EXPAT
 
-extern "C"
-{
-static void XMLCALL startElementLoadSchemaCbk(void *pUserData, const char *pszName, const char **ppszAttr);
-static void XMLCALL endElementLoadSchemaCbk(void *pUserData, const char *pszName);
-static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, int nLen);
-}
-
 static void XMLCALL startElementLoadSchemaCbk(void *pUserData, const char *pszName, const char **ppszAttr)
 {
     ((OGRGeoRSSLayer*)pUserData)->startElementLoadSchemaCbk(pszName, ppszAttr);
@@ -1727,7 +1752,6 @@ static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, 
     ((OGRGeoRSSLayer*)pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
 }
 
-#endif
 
 /************************************************************************/
 /*                       LoadSchema()                         */
@@ -1744,11 +1768,14 @@ void OGRGeoRSSLayer::LoadSchema()
     if (fpGeoRSS == NULL)
         return;
 
-#ifdef HAVE_EXPAT
-    XML_Parser schemaParser = XML_ParserCreate(NULL);
-    XML_SetElementHandler(schemaParser, ::startElementLoadSchemaCbk, ::endElementLoadSchemaCbk);
-    XML_SetCharacterDataHandler(schemaParser, ::dataHandlerLoadSchemaCbk);
-    XML_SetUserData(schemaParser, this);
+    XML_Memory_Handling_Suite memsuite;
+    memsuite.malloc_fcn = OGRGeoRSSLayerExpatMalloc;
+    memsuite.realloc_fcn = OGRGeoRSSLayerExpatRealloc;
+    memsuite.free_fcn = free;
+    oSchemaParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
+    XML_SetElementHandler(oSchemaParser, ::startElementLoadSchemaCbk, ::endElementLoadSchemaCbk);
+    XML_SetCharacterDataHandler(oSchemaParser, ::dataHandlerLoadSchemaCbk);
+    XML_SetUserData(oSchemaParser, this);
 
     VSIFSeekL( fpGeoRSS, 0, SEEK_SET );
 
@@ -1766,7 +1793,7 @@ void OGRGeoRSSLayer::LoadSchema()
     bInTagWithSubTag = FALSE;
     pszTagWithSubTag = NULL;
     bStopParsing = FALSE;
-    counterForSafety = 0;
+    nWithoutEventCounter = 0;
     nTotalFeatureCount = 0;
     setOfFoundFields = NULL;
 
@@ -1774,23 +1801,24 @@ void OGRGeoRSSLayer::LoadSchema()
     int nDone;
     do
     {
+        nDataHandlerCounter = 0;
         unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fpGeoRSS );
         nDone = VSIFEofL(fpGeoRSS);
-        if (XML_Parse(schemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of GeoRSS file failed : %s at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(schemaParser)),
-                     (int)XML_GetCurrentLineNumber(schemaParser),
-                     (int)XML_GetCurrentColumnNumber(schemaParser));
-            break;
+                     XML_ErrorString(XML_GetErrorCode(oSchemaParser)),
+                     (int)XML_GetCurrentLineNumber(oSchemaParser),
+                     (int)XML_GetCurrentColumnNumber(oSchemaParser));
+            bStopParsing = TRUE;
         }
-        counterForSafety ++;
-    } while (!nDone && !bStopParsing && counterForSafety < 10);
+        nWithoutEventCounter ++;
+    } while (!nDone && !bStopParsing && nWithoutEventCounter < 10);
 
-    XML_ParserFree(schemaParser);
+    XML_ParserFree(oSchemaParser);
 
-    if (counterForSafety == 10)
+    if (nWithoutEventCounter == 10)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
@@ -1824,7 +1852,6 @@ void OGRGeoRSSLayer::LoadSchema()
     pszTagWithSubTag = NULL;
 
     VSIFSeekL( fpGeoRSS, 0, SEEK_SET );
-#endif
 }
 
 
@@ -1858,7 +1885,9 @@ static int OGRGeoRSSIsInt(const char* pszStr)
 
 void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr)
 {
-    counterForSafety = 0;
+    if (bStopParsing) return;
+
+    nWithoutEventCounter = 0;
 
     if ((eFormat == GEORSS_ATOM && currentDepth == 1 && strcmp(pszName, "entry") == 0) ||
         (eFormat == GEORSS_RSS && currentDepth == 2 && strcmp(pszName, "item") == 0))
@@ -1879,6 +1908,14 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
         {
             OGRFieldDefn newFieldDefn(pszFieldName, OFTString);
             poFeatureDefn->AddFieldDefn(&newFieldDefn);
+
+            if (poFeatureDefn->GetFieldCount() == 100)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Too many fields. File probably corrupted");
+                XML_StopParser(oSchemaParser, XML_FALSE);
+                bStopParsing = TRUE;
+            }
         }
         CPLFree(pszFieldName);
     }
@@ -1936,10 +1973,18 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
             OGRFieldDefn newFieldDefn(pszCompatibleName, eFieldType);
             poFeatureDefn->AddFieldDefn(&newFieldDefn);
             currentFieldDefn = poFeatureDefn->GetFieldDefn(poFeatureDefn->GetFieldCount() - 1);
+
+            if (poFeatureDefn->GetFieldCount() == 100)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Too many fields. File probably corrupted");
+                XML_StopParser(oSchemaParser, XML_FALSE);
+                bStopParsing = TRUE;
+            }
         }
 
         /* Create field definitions for attributes */
-        for(int i=0; ppszAttr[i] != NULL && ppszAttr[i+1] != NULL; i+= 2)
+        for(int i=0; ppszAttr[i] != NULL && ppszAttr[i+1] != NULL && !bStopParsing; i+= 2)
         {
             char* pszAttrCompatibleName =
                     OGRGeoRSS_GetOGRCompatibleTagName(CPLSPrintf("%s_%s", pszSubElementName, ppszAttr[i]));
@@ -1954,6 +1999,14 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
                 OGRFieldDefn newFieldDefn(pszAttrCompatibleName, OFTInteger);
                 poFeatureDefn->AddFieldDefn(&newFieldDefn);
                 currentAttrFieldDefn = poFeatureDefn->GetFieldDefn(poFeatureDefn->GetFieldCount() - 1);
+
+                if (poFeatureDefn->GetFieldCount() == 100)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Too many fields. File probably corrupted");
+                    XML_StopParser(oSchemaParser, XML_FALSE);
+                    bStopParsing = TRUE;
+                }
             }
             if (currentAttrFieldDefn->GetType() == OFTInteger ||
                 currentAttrFieldDefn->GetType() == OFTReal)
@@ -2080,7 +2133,9 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
 
 void OGRGeoRSSLayer::endElementLoadSchemaCbk(const char *pszName)
 {
-    counterForSafety = 0;
+    if (bStopParsing) return;
+
+    nWithoutEventCounter = 0;
 
     currentDepth--;
 
@@ -2142,7 +2197,18 @@ void OGRGeoRSSLayer::endElementLoadSchemaCbk(const char *pszName)
 
 void OGRGeoRSSLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
 {
-    counterForSafety = 0;
+    if (bStopParsing) return;
+
+    nDataHandlerCounter ++;
+    if (nDataHandlerCounter >= BUFSIZ)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
+        XML_StopParser(oSchemaParser, XML_FALSE);
+        bStopParsing = TRUE;
+        return;
+    }
+
+    nWithoutEventCounter = 0;
 
     if (pszSubElementName)
     {
@@ -2150,6 +2216,7 @@ void OGRGeoRSSLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
         if (pszSubElementValue == NULL)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            XML_StopParser(oSchemaParser, XML_FALSE);
             bStopParsing = TRUE;
             return;
         }
@@ -2159,11 +2226,16 @@ void OGRGeoRSSLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Too much data inside one element. File probably corrupted");
+            XML_StopParser(oSchemaParser, XML_FALSE);
             bStopParsing = TRUE;
         }
     }
 }
-
+#else
+void OGRGeoRSSLayer::LoadSchema()
+{
+}
+#endif
 
 /************************************************************************/
 /*                           TestCapability()                           */
