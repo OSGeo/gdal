@@ -296,6 +296,42 @@ def osr_basic_9():
 
     return 'success'
 
+
+###############################################################################
+# Test the Validate() method on PROJCS with AXIS definition (#2739)
+
+def osr_basic_10():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
+    GEOGCS["NAD83(CSRS98)",
+        DATUM["NAD83_Canadian_Spatial_Reference_System",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6140"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9108"]],
+        AUTHORITY["EPSG","4140"]],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-63],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    AUTHORITY["EPSG","2038"],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
+
+    if srs.Validate() != 0:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_basic_1,
     osr_basic_2,
@@ -306,6 +342,7 @@ gdaltest_list = [
     osr_basic_7,
     osr_basic_8,
     osr_basic_9,
+    osr_basic_10,
     None ]
 
 if __name__ == '__main__':
