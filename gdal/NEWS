@@ -1,3 +1,55 @@
+= GDAL/OGR 1.4.5 - Overview of Changes =
+
+The GDAL 1.4.5 release is a stable release, and contains the following bug fixes. 
+
+== GDAL ==
+
+ * Fix memory leak of saved histograms (#2226)
+ * Preliminary GMLJP2 axis orientation workaround (#2131)
+ * Remove spurious printf() in GDALOpen() (#2166)
+
+MRSID Driver:
+ * Fix windowing problem with large files (#2689)
+
+NITF Driver:
+ * Improve georeferencing over dateline handling (#2135) 
+
+GeoTIFF Driver:
+ * Fix creation options XML for parsability (#2322)
+
+PAux Driver:
+ * Permit alterate spelling of AuxiliaryTarget (#2219)
+
+NetCDF Driver:
+ * Handle very large attributes properly (#2196)
+
+PNM Driver:
+ * Fix problems identifying PNM files and overflow with corrupt files (#2190)
+
+AAIGRID Driver:
+ * Fix georeferencing computation in yllcorner case (#1794)
+
+HFA (Imagine) Driver:
+ * Fix creation of duplicate table nodes in tree (#2043)
+
+== OGR == 
+
+GML Driver:
+ * Fix potential buffer overflow (#2708)
+
+Postgres/PostGIS Driver:
+ * Fix buffer overflow (#2303)
+ * Fix improper reporting of tables with no primary key as having a multi column primary key (#2082)
+
+DGN Driver:
+ * Fixes with color computation (#2035)
+
+== Other ==
+
+ * Fix error code detection when opening large files on Solaris (#2437)
+ * Serious fixes for Thin Plate Spline warper (#2300, #2301)
+
+-----------------------------------------------------------------------------
 
 = GDAL/OGR 1.4.4 - Overview of Changes =
 
