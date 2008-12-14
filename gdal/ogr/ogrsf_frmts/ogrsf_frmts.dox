@@ -1616,7 +1616,7 @@ Sets the driver that the dataset was created or opened with.
  types may implement class specific capabilities, but this can't generally
  be discovered by the caller. <p>
 
- <ul>
+<ul>
 
  <li> <b>OLCRandomRead</b> / "RandomRead": TRUE if the GetFeature() method 
 is implemented in an optimized way for this layer, as opposed to the default
@@ -1651,6 +1651,24 @@ TRUE if this layer can return its data extent (via OGRLayer::GetExtent()) effici
  <li> <b>OLCFastSetNextByIndex</b> / "FastSetNextByIndex": 
 TRUE if this layer can perform the SetNextByIndex() call efficiently, otherwise
 FALSE.<p>
+
+ <li> <b>OLCCreateField</b> / "CreateField": TRUE if this layer can create 
+new fields on the current layer using CreateField(), otherwise FALSE.<p>
+
+ <li> <b>OLCDeleteFeature</b> / "DeleteFeature": TRUE if the DeleteFeature()
+method is supported on this layer, otherwise FALSE.<p>
+
+ <li> <b>OLCStringsAsUTF8</b> / "StringsAsUTF8": TRUE if values of OFTString
+fields are assured to be in UTF-8 format.  If FALSE the encoding of fields 
+is uncertain, though it might still be UTF-8.<p>
+
+ <li> <b>OLCStringsAsUTF8</b> / "StringsAsUTF8": TRUE if values of OFTString
+fields are assured to be in UTF-8 format.  If FALSE the encoding of fields 
+is uncertain, though it might still be UTF-8.<p>
+
+<li> <b>OLCTransactions</b> / "Transactions": TRUE if the StartTransaction(), CommitTransaction() and RollbackTransaction() methods work in a meaningful way, otherwise FALSE.<p>
+
+<p>
 
 </ul>
  
