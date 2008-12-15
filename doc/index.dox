@@ -8,7 +8,7 @@
 
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
 is a translator library for raster geospatial data formats
-that is released under an <a href="faq.html#license">X/MIT</a> style 
+that is released under an <a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatlicensedoesGDALOGRuse">X/MIT</a> style 
 <a href="http://www.opensource.org/">
 Open Source</a> license by the <a href="http://www.osgeo.org/">Open Source
 Geospatial Foundation</a>.  As a library, it presents a
