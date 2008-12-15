@@ -1266,8 +1266,13 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         nPixels = (int) ((dfMaxX - dfMinX + (dfXRes/2.0)) / dfXRes);
         nLines = (int) ((dfMaxY - dfMinY + (dfYRes/2.0)) / dfYRes);
 
+        dfXRes = (dfMaxX - dfMinX) / nPixels;
+        dfYRes = (dfMaxY - dfMinY) / nLines;
+
         adfDstGeoTransform[0] = dfMinX;
         adfDstGeoTransform[3] = dfMaxY;
+        adfDstGeoTransform[1] = dfXRes;
+        adfDstGeoTransform[5] = -dfYRes;
     }
 
 /* -------------------------------------------------------------------- */
