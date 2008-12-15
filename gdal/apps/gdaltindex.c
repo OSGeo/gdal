@@ -233,6 +233,7 @@ int main(int argc, char *argv[])
         }
         if (i != nExistingFiles)
         {
+            CPLFree(fileNameToWrite);
             continue;
         }
 
@@ -278,6 +279,7 @@ int main(int argc, char *argv[])
                 if (skip_different_projection)
                 {
                     CPLFree(fileNameToWrite);
+                    GDALClose( hDS );
                     continue;
                 }
             }
