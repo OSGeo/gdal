@@ -124,10 +124,12 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      processing each pixel.                                          */
 /* -------------------------------------------------------------------- */
     int iY, iX;
-    double dfLastDist = 0;
+    double dfLastDist;
     
     for( iY = 0; iY < nYSize; iY++ )
     {
+        dfLastDist = 0.0;
+
         for( iX = 0; iX < nXSize; iX++ )
         {
             if( iX < iXMin || iX >= iXMax
