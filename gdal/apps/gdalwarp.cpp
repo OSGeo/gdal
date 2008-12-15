@@ -115,7 +115,8 @@ extents of output file to be created (in target SRS).</dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in
 target georeferenced units)</dd>
 <dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
-pixels and lines</dd>
+pixels and lines. If width or height is set to 0, the other dimension will be
+guessed from the computed resolution. Note that -ts cannot be used with -tr</dd>
 <dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp options.  The 
 GDALWarpOptions::papszWarpOptions docs show all options.  Multiple
  <b>-wo</b> options may be listed.</dd>
@@ -520,6 +521,17 @@ int main( int argc, char ** argv )
 
         else 
             papszSrcFiles = CSLAddString( papszSrcFiles, argv[i] );
+    }
+/* -------------------------------------------------------------------- */
+/*      Check that incompatible options are not used                    */
+/* -------------------------------------------------------------------- */
+
+    if ((nForcePixels != 0 || nForceLines != 0) && 
+        (dfXRes != 0 && dfYRes != 0))
+    {
+        printf( "-tr and -ts options cannot be used at the same time\n");
+        Usage();
+        exit( 2 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1164,7 +1176,6 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /* -------------------------------------------------------------------- */
     if( dfXRes != 0.0 && dfYRes != 0.0 )
     {
-        CPLAssert( nForcePixels == 0 && nForceLines == 0 );
         if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
         {
             dfMinX = adfDstGeoTransform[0];
