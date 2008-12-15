@@ -1902,11 +1902,11 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
         return OGRERR_FAILURE;
     }
 
-    if( EQUALN(pszCode,"CRS84",5) )
+    if( EQUALN(pszCode,"CRS84",5) || EQUALN(pszCode,"CRS:84",6) )
         return SetWellKnownGeogCS( pszCode );
-    else if( EQUALN(pszCode,"CRS83",5) )
+    else if( EQUALN(pszCode,"CRS83",5) || EQUALN(pszCode,"CRS:83",6) )
         return SetWellKnownGeogCS( pszCode );
-    else if( EQUALN(pszCode,"CRS27",5) )
+    else if( EQUALN(pszCode,"CRS27",5) || EQUALN(pszCode,"CRS:27",6))
         return SetWellKnownGeogCS( pszCode );
 
 /* -------------------------------------------------------------------- */
