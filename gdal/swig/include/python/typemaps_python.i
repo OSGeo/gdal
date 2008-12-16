@@ -807,7 +807,7 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
         if ( cbfunction == GDALTermProgress ) {
             $1 = GDALTermProgress;
         } else {
-            if (!PyFunction_Check($input)) {
+            if (!PyCallable_Check($input)) {
                 PyErr_SetString( PyExc_RuntimeError, 
                                  "Object given is not a Python function" );
                 SWIG_fail;
