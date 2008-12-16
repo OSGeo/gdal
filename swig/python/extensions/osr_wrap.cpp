@@ -3283,6 +3283,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromUSGS(OSRSpatialReferenceSh
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromXML(OSRSpatialReferenceShadow *self,char const *xmlString){
     return OSRImportFromXML( self, xmlString );
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromMICoordSys(OSRSpatialReferenceShadow *self,char const *pszCoordSys){
+    return OSRImportFromMICoordSys( self, pszCoordSys );
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToWkt(OSRSpatialReferenceShadow *self,char **argout){
     return OSRExportToWkt( self, argout );
   }
@@ -3300,6 +3303,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToUSGS(OSRSpatialReferenceShad
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToXML(OSRSpatialReferenceShadow *self,char **argout,char const *dialect=""){
     return OSRExportToXML( self, argout, dialect );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToMICoordSys(OSRSpatialReferenceShadow *self,char **argout){
+    return OSRExportToMICoordSys( self, argout );
   }
 SWIGINTERN OSRSpatialReferenceShadow *OSRSpatialReferenceShadow_CloneGeogCS(OSRSpatialReferenceShadow *self){
     return (OSRSpatialReferenceShadow*) OSRCloneGeogCS(self);
@@ -9541,6 +9547,64 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromMICoordSys(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:SpatialReference_ImportFromMICoordSys",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_ImportFromMICoordSys" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_ImportFromMICoordSys" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    result = (OGRErr)OSRSpatialReferenceShadow_ImportFromMICoordSys(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_ExportToWkt(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -10074,6 +10138,80 @@ fail:
     CPLFree( *arg2 );
   }
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_ExportToMICoordSys(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  char *argout2 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  {
+    /* %typemap(in,numinputs=0) (char **argout2) */
+    arg2 = &argout2;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_ExportToMICoordSys",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_ExportToMICoordSys" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    result = (OGRErr)OSRSpatialReferenceShadow_ExportToMICoordSys(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(argout) (char **argout) */
+    PyObject *o;
+    if ( arg2 ) {
+      o = PyString_FromString( *arg2 );
+    }
+    else {
+      o = Py_None;
+      Py_INCREF( o );
+    }
+    resultobj = t_output_helper(resultobj, o);
+  }
+  {
+    /* %typemap(freearg) (char **argout) */
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (char **argout) */
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
   return NULL;
 }
 
@@ -10806,12 +10944,14 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_ImportFromPCI", _wrap_SpatialReference_ImportFromPCI, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ImportFromUSGS", _wrap_SpatialReference_ImportFromUSGS, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ImportFromXML", _wrap_SpatialReference_ImportFromXML, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_ImportFromMICoordSys", _wrap_SpatialReference_ImportFromMICoordSys, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ExportToWkt", _wrap_SpatialReference_ExportToWkt, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ExportToPrettyWkt", _wrap_SpatialReference_ExportToPrettyWkt, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ExportToProj4", _wrap_SpatialReference_ExportToProj4, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ExportToPCI", _wrap_SpatialReference_ExportToPCI, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ExportToUSGS", _wrap_SpatialReference_ExportToUSGS, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ExportToXML", _wrap_SpatialReference_ExportToXML, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_ExportToMICoordSys", _wrap_SpatialReference_ExportToMICoordSys, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_CloneGeogCS", _wrap_SpatialReference_CloneGeogCS, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_Validate", _wrap_SpatialReference_Validate, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_StripCTParms", _wrap_SpatialReference_StripCTParms, METH_VARARGS, NULL},

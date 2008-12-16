@@ -5622,7 +5622,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj5)) {
+          if (!PyCallable_Check(obj5)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -8361,7 +8361,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj3)) {
+          if (!PyCallable_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -11008,7 +11008,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
         if ( cbfunction == GDALTermProgress ) {
           arg8 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj6)) {
+          if (!PyCallable_Check(obj6)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -11191,7 +11191,7 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj6)) {
+          if (!PyCallable_Check(obj6)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -12628,7 +12628,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj5)) {
+          if (!PyCallable_Check(obj5)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -12755,7 +12755,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj5)) {
+          if (!PyCallable_Check(obj5)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -12909,7 +12909,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
         if ( cbfunction == GDALTermProgress ) {
           arg8 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj7)) {
+          if (!PyCallable_Check(obj7)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13035,7 +13035,7 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj3)) {
+          if (!PyCallable_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13223,7 +13223,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
         if ( cbfunction == GDALTermProgress ) {
           arg10 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj7)) {
+          if (!PyCallable_Check(obj7)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13383,7 +13383,7 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj5)) {
+          if (!PyCallable_Check(obj5)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13542,7 +13542,7 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj6)) {
+          if (!PyCallable_Check(obj6)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13686,7 +13686,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj3)) {
+          if (!PyCallable_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13816,7 +13816,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverview(PyObject *SWIGUNUSEDPARM(self), Py
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj3)) {
+          if (!PyCallable_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
