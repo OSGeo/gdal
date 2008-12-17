@@ -13,6 +13,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdaladdo - Add overviews to a file.
 <li> \ref gdalwarp - Warp an image into a new coordinate system.
 <li> \ref gdaltindex - Build a MapServer raster tileindex.
+<li> \ref gdalbuildvrt - Build a VRT from a list of datasets.
 <li> \ref gdal_contour - Contours from DEM.
 <li> \ref rgb2pct - Convert a 24bit RGB image to 8bit paletted.
 <li> \ref pct2rgb - Convert an 8bit paletted image to 24bit RGB.
@@ -491,6 +492,60 @@ gdaltindex doq_index.shp doq/*.tif
 \if man
 \section wauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
+\endif
+*/
+
+
+*******************************************************************************
+/*! \page gdalbuildvrt gdalbuildvrt
+
+Builds a VRT from a list of datasets.
+
+\section isynopsis SYNOPSIS
+
+\verbatim
+gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average}]
+             [-input_file_list my_liste.txt] output.vrt [gdalfile]*
+\endverbatim
+
+\section idescription DESCRIPTION
+
+This program builds a VRT (Virtual Dataset) that is a mosaic of the list of
+input gdal datasets. The list of input gdal datasets can be specified at the end
+of the command line, or put in a text file (one filename per line) for very long lists,
+or it can be a MapServer tileindex (see \ref gdaltindex utility). In the later case, all
+entries in the tile index will be added to the VRT.
+
+If one GDAL dataset is made of several subdatasets and has 0 raster bands,
+all the subdatasets will be added to the VRT rather than the dataset itself.
+
+gdalbuildvrt does some amount of checks to assure that all files that will be put
+in the resulting VRT have similar characteristics : number of bands, projection, color
+interpretation... If not, files that do not match the common characteristics will be skipped.
+
+If there is some amount of spatial overlapping between files, the order may depend on the order they
+are inserted in the VRT file, but this behaviour should not be relied on.
+
+For input tileindex files, the default tile index field is 'location' unless
+otherwise specified with -tileindex.
+
+In case the resolution of all input files is not the same, the -resolution flag
+enables the user to control the way the output resolution is computed. average is the default.
+
+\section iexample EXAMPLE
+
+\htmlonly
+Example:
+\endhtmlonly
+
+\verbatim
+gdalbuildvrt doq_index.vrt doq/*.tif
+gdalbuildvrt -input_file_list my_liste.txt doq_index.vrt
+\endverbatim
+
+\if man
+\section wauthor AUTHOR
+Even Rouault <even.rouault@mines-paris.org>
 \endif
 */
 
