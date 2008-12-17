@@ -19,10 +19,11 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		ogrinfo$(EXE) \
 		ogr2ogr$(EXE) \
 		ogrtindex$(EXE) \
-		testepsg$(EXE)
+		testepsg$(EXE) \
+		gdalbuildvrt$(EXE)
 endif
 
-NON_DEFAULT_LIST = 	gdalbuildvrt$(EXE) multireadtest$(EXE) \
+NON_DEFAULT_LIST = 	multireadtest$(EXE) \
 			dumpoverviews$(EXE) gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
 			gdaltorture$(EXE) gdal2ogr$(EXE) test_ogrsf$(EXE)
 
@@ -61,7 +62,6 @@ gdal_rasterize$(EXE):	gdal_rasterize.$(OBJ_EXT) $(DEP_LIBS)
 gdaltindex$(EXE):	gdaltindex.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-# Not compiled by default
 gdalbuildvrt$(EXE):	gdalbuildvrt.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
