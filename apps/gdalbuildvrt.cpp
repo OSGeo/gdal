@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalbuildvrt.cpp rouault $
+ * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Commandline application to build VRT datasets from raster products or content of SHP tile index
@@ -32,7 +32,7 @@
 #include "ogrsf_frmts/shape/shapefil.h"
 #include "vrt/gdal_vrt.h"
 
-CPL_CVSID("$Id: gdalbuildvrt.cpp rouault $");
+CPL_CVSID("$Id$");
 
 #define GEOTRSFRM_TOPLEFT_X            0
 #define GEOTRSFRM_WE_RES               1
@@ -75,8 +75,8 @@ static void Usage()
 
 {
     fprintf(stdout, "%s", 
-            "Usage: gdalbuildvrt [-tileindex field_name] [-resolution {highest,lowest,average}]\n"
-            "                     output.vrt {[inputfile]* | -input_file_list my_liste.txt}\n"
+            "Usage: gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average}]\n"
+            "                     [-input_file_list my_liste.txt] output.vrt [gdalfile]*\n"
             "\n"
             "eg.\n"
             "  % gdalbuildvrt doq_index.vrt doq/*.tif\n"
@@ -88,12 +88,16 @@ static void Usage()
             "    enable the user to control the way the output resolution is computed. average is the default.\n"
             "  o Input files may be any valid GDAL dataset or a GDAL raster tile index.\n"
             "  o For a GDAL raster tile index, all entries will be added to the VRT.\n"
-            "  o If one GDAL dataset is made of several subdatasets, they will be added to the VRT "
-            "    rather than the dataset itself.\n"
+            "  o If one GDAL dataset is made of several subdatasets and has 0 raster bands, its\n"
+            "    datasets will be added to the VRT rather than the dataset itself.\n"
             "  o Only datasets of same projection and band characteristics may be added to the VRT.\n");
     exit( 1 );
 }
 
+
+/************************************************************************/
+/*                           build_vrt()                                */
+/************************************************************************/
 
 void build_vrt(const char* pszOutputFilename,
                int* pnInputFiles, char*** pppszInputFilenames,
@@ -130,7 +134,7 @@ void build_vrt(const char* pszOutputFilename,
         if (hDS)
         {
             char** papszMetadata = GDALGetMetadata( hDS, "SUBDATASETS" );
-            if( CSLCount(papszMetadata) > 0 )
+            if( CSLCount(papszMetadata) > 0 && GDALGetRasterCount(hDS) == 0 )
             {
                 psDatasetProperties =
                     (DatasetProperty*) CPLMalloc((nInputFiles+CSLCount(papszMetadata))*sizeof(DatasetProperty));
@@ -144,7 +148,8 @@ void build_vrt(const char* pszOutputFilename,
                 {
                     if (EQUALN(*papszMetadata, subdatasetNameKey, strlen(subdatasetNameKey)))
                     {
-                        ppszInputFilenames[nInputFiles++] = CPLStrdup(*papszMetadata+strlen(subdatasetNameKey)+1);
+                        ppszInputFilenames[nInputFiles++] =
+                                CPLStrdup(*papszMetadata+strlen(subdatasetNameKey)+1);
                         count++;
                         sprintf(subdatasetNameKey, "SUBDATASET_%d_NAME", count);
                     }
@@ -176,9 +181,11 @@ void build_vrt(const char* pszOutputFilename,
             double product_minX = psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
             double product_maxY = psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
             double product_maxX = product_minX +
-                        GDALGetRasterXSize(hDS) * psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES];
+                        GDALGetRasterXSize(hDS) *
+                        psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES];
             double product_minY = product_maxY +
-                        GDALGetRasterYSize(hDS) * psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES];
+                        GDALGetRasterYSize(hDS) *
+                        psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES];
 
             GDALGetBlockSize(GDALGetRasterBand( hDS, 1 ),
                              &psDatasetProperties[i].nBlockXSize,
@@ -197,19 +204,23 @@ void build_vrt(const char* pszOutputFilename,
                 for(j=0;j<nBands;j++)
                 {
                     GDALRasterBandH hRasterBand = GDALGetRasterBand( hDS, j+1 );
-                    bandProperties[j].colorInterpretation = GDALGetRasterColorInterpretation(hRasterBand);
+                    bandProperties[j].colorInterpretation =
+                            GDALGetRasterColorInterpretation(hRasterBand);
                     bandProperties[j].dataType = GDALGetRasterDataType(hRasterBand);
                     if (bandProperties[j].colorInterpretation == GCI_PaletteIndex)
                     {
-                        bandProperties[j].colorTable = GDALGetRasterColorTable( hRasterBand );
+                        bandProperties[j].colorTable =
+                                GDALGetRasterColorTable( hRasterBand );
                         if (bandProperties[j].colorTable)
                         {
-                            bandProperties[j].colorTable = GDALCloneColorTable(bandProperties[j].colorTable);
+                            bandProperties[j].colorTable =
+                                    GDALCloneColorTable(bandProperties[j].colorTable);
                         }
                     }
                     else
                         bandProperties[j].colorTable = 0;
-                    bandProperties[j].noDataValue = GDALGetRasterNoDataValue(hRasterBand, &bandProperties[j].bHasNoData);
+                    bandProperties[j].noDataValue =
+                            GDALGetRasterNoDataValue(hRasterBand, &bandProperties[j].bHasNoData);
                 }
             }
             else
@@ -369,13 +380,16 @@ void build_vrt(const char* pszOutputFilename,
         int yoffset = (int)
                 (0.5 + (maxY - psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
         int dest_width = (int)
-                (0.5 + psDatasetProperties[i].nRasterXSize * psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES] / we_res);
+                (0.5 + psDatasetProperties[i].nRasterXSize *
+                       psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES] / we_res);
         int dest_height = (int)
-                (0.5 + psDatasetProperties[i].nRasterYSize * psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res);
+                (0.5 + psDatasetProperties[i].nRasterYSize *
+                       psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res);
 
         for(j=0;j<nBands;j++)
         {
-            VRTSourcedRasterBandH hVRTBand = (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, j + 1);
+            VRTSourcedRasterBandH hVRTBand =
+                    (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, j + 1);
 
             /* Place the raster band at the right position in the VRT */
             VRTAddSimpleSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, j + 1),
@@ -400,6 +414,10 @@ end:
     CPLFree(projectionRef);
 
 }
+
+/************************************************************************/
+/*                        add_file_to_list()                            */
+/************************************************************************/
 
 static void add_file_to_list(const char* filename, const char* tile_index,
                              int* pnInputFiles, char*** pppszInputFilenames)
@@ -459,10 +477,12 @@ static void add_file_to_list(const char* filename, const char* tile_index,
             return;
         }
         
-        ppszInputFilenames = (char**)CPLRealloc(ppszInputFilenames, sizeof(char*) * (nInputFiles+nTileIndexFiles));
+        ppszInputFilenames = (char**)CPLRealloc(ppszInputFilenames,
+                              sizeof(char*) * (nInputFiles+nTileIndexFiles));
         for(j=0;j<nTileIndexFiles;j++)
         {
-            ppszInputFilenames[nInputFiles++] = CPLStrdup(DBFReadStringAttribute( hDBF, j, ti_field ));
+            ppszInputFilenames[nInputFiles++] =
+                    CPLStrdup(DBFReadStringAttribute( hDBF, j, ti_field ));
         }
 
         DBFClose( hDBF );
@@ -470,7 +490,8 @@ static void add_file_to_list(const char* filename, const char* tile_index,
     }
     else
     {
-        ppszInputFilenames = (char**)CPLRealloc(ppszInputFilenames, sizeof(char*) * (nInputFiles+1));
+        ppszInputFilenames = (char**)CPLRealloc(ppszInputFilenames,
+                                                 sizeof(char*) * (nInputFiles+1));
         ppszInputFilenames[nInputFiles++] = CPLStrdup(filename);
     }
 
@@ -503,15 +524,24 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     for( iArg = 1; iArg < nArgc; iArg++ )
     {
-        if( strcmp(papszArgv[iArg],"-tileindex") == 0 )
+        if( EQUAL(papszArgv[iArg], "--utility_version") )
+        {
+            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                   papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if( strcmp(papszArgv[iArg],"-tileindex") == 0 &&
+                 iArg + 1 < nArgc)
         {
             tile_index = papszArgv[++iArg];
         }
-        else if( strcmp(papszArgv[iArg],"-resolution") == 0 )
+        else if( strcmp(papszArgv[iArg],"-resolution") == 0 &&
+                 iArg + 1 < nArgc)
         {
             resolution = papszArgv[++iArg];
         }
-        else if( strcmp(papszArgv[iArg],"-input_file_list") == 0 )
+        else if( strcmp(papszArgv[iArg],"-input_file_list") == 0 &&
+                 iArg + 1 < nArgc)
         {
             const char* input_file_list = papszArgv[++iArg];
             FILE* f = VSIFOpen(input_file_list, "r");
@@ -522,7 +552,8 @@ int main( int nArgc, char ** papszArgv )
                     const char* filename = CPLReadLine(f);
                     if (filename == NULL)
                         break;
-                    add_file_to_list(filename, tile_index, &nInputFiles, &ppszInputFilenames);
+                    add_file_to_list(filename, tile_index,
+                                     &nInputFiles, &ppszInputFilenames);
                 }
                 VSIFClose(f);
             }
@@ -531,7 +562,8 @@ int main( int nArgc, char ** papszArgv )
             pszOutputFilename = papszArgv[iArg];
         else
         {
-            add_file_to_list(papszArgv[iArg], tile_index, &nInputFiles, &ppszInputFilenames);
+            add_file_to_list(papszArgv[iArg], tile_index,
+                             &nInputFiles, &ppszInputFilenames);
         }
     }
 
