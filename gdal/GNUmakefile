@@ -147,9 +147,13 @@ install-docs:
 web-update:	docs
 	cp html/*.* $(WEB_DIR)
 
+install-man:
+	$(INSTALL_DIR) $(DESTDIR)$(INST_MAN)/man1
+	for f in $(wildcard man/man1/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
+
 install:	default install-actions
 
-install-actions: install-lib
+install-actions: install-lib install-man
 	$(INSTALL_DIR) $(DESTDIR)$(INST_BIN)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DATA)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_INCLUDE)
@@ -178,7 +182,6 @@ endif
 	(cd alg; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
 	(cd apps; $(MAKE) install)
-	(cd man; $(MAKE) install)
 ifneq ($(PYTHON_DEV),no)
 	(cd pymod; $(MAKE) install)
 endif
