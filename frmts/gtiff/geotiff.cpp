@@ -943,8 +943,7 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
         TIFFSetField( poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, 
                       PHOTOMETRIC_MINISBLACK );
 
-#if TIFFLIB_VERSION >= 20081217 \
-    && defined(TIFFLIB_RELEASE) && TIFFLIB_RELEASE >= 040000
+#if TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
         TIFFUnsetField( poGDS->hTIFF, TIFFTAG_COLORMAP );
 #else
         CPLDebug( "GTiff", 
