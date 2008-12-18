@@ -919,13 +919,6 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /* -------------------------------------------------------------------- */
 /*      Check if this is even a candidate for applying a PCT.           */
 /* -------------------------------------------------------------------- */
-    if( poGDS->bCrystalized && poGDS->poColorTable == NULL )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "SetColorTable() not supported for existing TIFF files." );
-        return CE_Failure;
-    }
-
     if( poGDS->nSamplesPerPixel != 1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -939,7 +932,35 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
                   "SetColorTable() only supported for Byte or UInt16 bands in TIFF format." );
         return CE_Failure;
     }
+
+    poGDS->SetDirectory();
+
+/* -------------------------------------------------------------------- */
+/*      Is this really a request to clear the color table?              */
+/* -------------------------------------------------------------------- */
+    if( poCT == NULL || poCT->GetColorEntryCount() == 0 )
+    {
+        TIFFSetField( poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, 
+                      PHOTOMETRIC_MINISBLACK );
+
+#if TIFFLIB_VERSION >= 20081217 \
+    && defined(TIFFLIB_RELEASE) && TIFFLIB_RELEASE >= 040000
+        TIFFUnsetField( poGDS->hTIFF, TIFFTAG_COLORMAP );
+#else
+        CPLDebug( "GTiff", 
+                  "TIFFUnsetField() not supported, colormap may not be cleared." );
+#endif
         
+        if( poGDS->poColorTable )
+        {
+            delete poGDS->poColorTable;
+            poGDS->poColorTable = NULL;
+        }
+
+        poGDS->bColorTableChanged = TRUE;
+        return CE_None;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Write out the colortable, and update the configuration.         */
 /* -------------------------------------------------------------------- */
