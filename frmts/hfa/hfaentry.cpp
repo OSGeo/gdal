@@ -262,6 +262,41 @@ HFAEntry::~HFAEntry()
 }
 
 /************************************************************************/
+/*                          RemoveAndDestroy()                          */
+/*                                                                      */
+/*      Removes this entry, and it's children from the current          */
+/*      tree.  The parent and/or siblings are appropriately updated     */
+/*      so that they will be flushed back to disk without the           */
+/*      reference to this node.                                         */
+/************************************************************************/
+
+CPLErr HFAEntry::RemoveAndDestroy()
+
+{
+    if( poPrev != NULL )
+    {
+        poPrev->poNext = poNext;
+        poPrev->MarkDirty();
+    }
+    if( poParent != NULL && poParent->poChild == this )
+    {
+        poParent->poChild = poNext;
+        poParent->MarkDirty();
+    }
+
+    if( poNext != NULL )
+        poNext->poPrev = poPrev;
+    
+    poNext = NULL;
+    poPrev = NULL;
+    poParent = NULL;
+
+    delete this;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                              SetName()                               */
 /*                                                                      */
 /*    Changes the name assigned to this node                            */
