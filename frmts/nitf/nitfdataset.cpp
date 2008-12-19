@@ -586,6 +586,9 @@ GDALColorTable *NITFRasterBand::GetColorTable()
 CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
 
 {
+    if( poNewCT == NULL )
+        return CE_Failure;
+
     GByte abyNITFLUT[768];
     int   i;
     int   nCount = MIN(256,poNewCT->GetColorEntryCount());
