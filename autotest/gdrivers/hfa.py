@@ -814,6 +814,31 @@ def hfa_xforms_3rd():
     return 'success'
 
 ###############################################################################
+# Verify reading of 3rd order XFORM polynomials.
+
+def hfa_delete_colortable():
+
+    # copy a file to tmp dir to modify.
+    open('tmp/i8u.img','w').write(open('data/i8u_c_i.img').read())
+
+    # clear color table.
+    ds = gdal.Open( 'tmp/i8u.img', gdal.GA_Update )
+    ds.GetRasterBand(1).SetColorTable(None)
+    ds = None
+
+    # check color table gone.
+    ds = gdal.Open( 'tmp/i8u.img' )
+    if ds.GetRasterBand(1).GetColorTable() != None:
+        gdaltest.post_reason( 'failed to remove color table' )
+        return 'fail'
+
+    ds = None
+
+    gdal.GetDriverByName('HFA').Delete('tmp/i8u.img')
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -841,7 +866,8 @@ gdaltest_list = [
     hfa_proName,
     hfa_read_empty_compressed,
     hfa_unique_values_color_table,
-    hfa_xforms_3rd
+    hfa_xforms_3rd,
+    hfa_delete_colortable
     ]
 
 if __name__ == '__main__':
