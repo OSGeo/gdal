@@ -1679,113 +1679,117 @@ CPLErr HFABand::SetPCT( int nColors,
 			double *padfAlpha)
 
 {
+    static const char *apszColNames[4] = {"Red", "Green", "Blue", "Opacity"};
+    HFAEntry	*poEdsc_Table;
+    int          iColumn;
 
+/* -------------------------------------------------------------------- */
+/*      Do we need to try and clear any existing color table?           */
+/* -------------------------------------------------------------------- */
     if( nColors == 0 )
+    {
+        poEdsc_Table = poNode->GetNamedChild( "Descriptor_Table" );
+        if( poEdsc_Table == NULL )
+            return CE_None;
+        
+        for( iColumn = 0; iColumn < 4; iColumn++ )
+        {
+            HFAEntry        *poEdsc_Column;
+
+            poEdsc_Column = poEdsc_Table->GetNamedChild(apszColNames[iColumn]);
+            if( poEdsc_Column )
+                poEdsc_Column->RemoveAndDestroy();
+        }
+
         return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the Descriptor table.                                    */
 /* -------------------------------------------------------------------- */
-    if( TRUE )
-    {
-        HFAEntry	*poEdsc_Table;
+    poEdsc_Table = poNode->GetNamedChild( "Descriptor_Table" );
+    if( poEdsc_Table == NULL 
+        || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
+        poEdsc_Table = new HFAEntry( psInfo, "Descriptor_Table", 
+                                     "Edsc_Table", poNode );
 
-        poEdsc_Table = poNode->GetNamedChild( "Descriptor_Table" );
-        if( poEdsc_Table == NULL 
-            || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
-            poEdsc_Table = new HFAEntry( psInfo, "Descriptor_Table", 
-                                         "Edsc_Table", poNode );
-
-        poEdsc_Table->SetIntField( "numrows", nColors );
+    poEdsc_Table->SetIntField( "numrows", nColors );
 
 /* -------------------------------------------------------------------- */
 /*      Create the Binning function node.  I am not sure that we        */
 /*      really need this though.                                        */
 /* -------------------------------------------------------------------- */
-        HFAEntry       *poEdsc_BinFunction;
+    HFAEntry       *poEdsc_BinFunction;
 
-        poEdsc_BinFunction = poEdsc_Table->GetNamedChild( "#Bin_Function#" );
-        if( poEdsc_BinFunction == NULL 
-            || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
-            poEdsc_BinFunction = new HFAEntry( psInfo, "#Bin_Function#", 
-                                               "Edsc_BinFunction", 
-                                               poEdsc_Table );
+    poEdsc_BinFunction = poEdsc_Table->GetNamedChild( "#Bin_Function#" );
+    if( poEdsc_BinFunction == NULL 
+        || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
+        poEdsc_BinFunction = new HFAEntry( psInfo, "#Bin_Function#", 
+                                           "Edsc_BinFunction", 
+                                           poEdsc_Table );
 
-        // Because of the BaseData we have to hardcode the size. 
-        poEdsc_BinFunction->MakeData( 30 );
+    // Because of the BaseData we have to hardcode the size. 
+    poEdsc_BinFunction->MakeData( 30 );
 
-        poEdsc_BinFunction->SetIntField( "numBins", nColors );
-        poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
-        poEdsc_BinFunction->SetDoubleField( "minLimit", 0.0 );
-        poEdsc_BinFunction->SetDoubleField( "maxLimit", nColors - 1.0 );
+    poEdsc_BinFunction->SetIntField( "numBins", nColors );
+    poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
+    poEdsc_BinFunction->SetDoubleField( "minLimit", 0.0 );
+    poEdsc_BinFunction->SetDoubleField( "maxLimit", nColors - 1.0 );
 
 /* -------------------------------------------------------------------- */
 /*      Process each color component                                    */
 /* -------------------------------------------------------------------- */
-        for( int iColumn = 0; iColumn < 4; iColumn++ )
-        {
-            HFAEntry        *poEdsc_Column;
-            double	    *padfValues=NULL;
-            const char      *pszName=NULL;
-            
-            if( iColumn == 0 )
-            {
-                pszName = "Red";
-                padfValues = padfRed;
-            }
-            else if( iColumn == 1 )
-            {
-                pszName = "Green";
-                padfValues = padfGreen;
-            }
-            else if( iColumn == 2 )
-            {
-                pszName = "Blue";
-                padfValues = padfBlue;
-            }
-            else if( iColumn == 3 )
-            {
-                pszName = "Opacity";
-                padfValues = padfAlpha;
-            }
+    for( iColumn = 0; iColumn < 4; iColumn++ )
+    {
+        HFAEntry        *poEdsc_Column;
+        double	    *padfValues=NULL;
+        const char      *pszName = apszColNames[iColumn];
+
+        if( iColumn == 0 )
+            padfValues = padfRed;
+        else if( iColumn == 1 )
+            padfValues = padfGreen;
+        else if( iColumn == 2 )
+            padfValues = padfBlue;
+        else if( iColumn == 3 )
+            padfValues = padfAlpha;
 
 /* -------------------------------------------------------------------- */
 /*      Create the Edsc_Column.                                         */
 /* -------------------------------------------------------------------- */
-            poEdsc_Column = poEdsc_Table->GetNamedChild( pszName );
-            if( poEdsc_Column == NULL 
-                || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
-                poEdsc_Column = new HFAEntry( psInfo, pszName, "Edsc_Column", 
+        poEdsc_Column = poEdsc_Table->GetNamedChild( pszName );
+        if( poEdsc_Column == NULL 
+            || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
+            poEdsc_Column = new HFAEntry( psInfo, pszName, "Edsc_Column", 
                                           poEdsc_Table );
                                           
-            poEdsc_Column->SetIntField( "numRows", nColors );
-            poEdsc_Column->SetStringField( "dataType", "real" );
-            poEdsc_Column->SetIntField( "maxNumChars", 0 );
+        poEdsc_Column->SetIntField( "numRows", nColors );
+        poEdsc_Column->SetStringField( "dataType", "real" );
+        poEdsc_Column->SetIntField( "maxNumChars", 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Write the data out.                                             */
 /* -------------------------------------------------------------------- */
-            int		nOffset = HFAAllocateSpace( psInfo, 8*nColors);
-            double      *padfFileData;
+        int		nOffset = HFAAllocateSpace( psInfo, 8*nColors);
+        double      *padfFileData;
 
-            poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
+        poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
 
-            padfFileData = (double *) CPLMalloc(nColors*sizeof(double));
-            for( int iColor = 0; iColor < nColors; iColor++ )
-            {
-                padfFileData[iColor] = padfValues[iColor];
-                HFAStandard( 8, padfFileData + iColor );
-            }
-            VSIFSeekL( psInfo->fp, nOffset, SEEK_SET );
-            VSIFWriteL( padfFileData, 8, nColors, psInfo->fp );
-            CPLFree( padfFileData );
+        padfFileData = (double *) CPLMalloc(nColors*sizeof(double));
+        for( int iColor = 0; iColor < nColors; iColor++ )
+        {
+            padfFileData[iColor] = padfValues[iColor];
+            HFAStandard( 8, padfFileData + iColor );
         }
+        VSIFSeekL( psInfo->fp, nOffset, SEEK_SET );
+        VSIFWriteL( padfFileData, 8, nColors, psInfo->fp );
+        CPLFree( padfFileData );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Update the layer type to be thematic.                           */
 /* -------------------------------------------------------------------- */
-        poNode->SetStringField( "layerType", "thematic" );
-    }
+    poNode->SetStringField( "layerType", "thematic" );
 
     return( CE_None );
 }
