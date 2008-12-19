@@ -1474,6 +1474,9 @@ CPLErr PNGDataset::SetGeoTransform( double * padfTransform )
 
 CPLErr PNGRasterBand::SetColorTable(GDALColorTable* poCT)
 {
+    if( poCT == NULL )
+        return CE_Failure;
+
     // rcg, added to support Create().
     // We get called even for grayscale files, since some 
     // formats need a palette even then. PNG doesn't, so
