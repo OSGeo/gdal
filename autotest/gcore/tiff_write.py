@@ -1812,6 +1812,32 @@ def tiff_write_56():
     
     return 'success'
 
+###############################################################################
+# Test replacing normal norm up georef with rotated georef (#2625)
+
+def tiff_write_57():
+
+    # copy a file to tmp dir to modify.
+    open('tmp/tiff57.tif','w').write(open('data/byte.tif').read())
+
+    # open and set a non-northup geotransform.
+
+    ds = gdal.Open('tmp/tiff57.tif',gdal.GA_Update)
+    ds.SetGeoTransform([100,1,3,200,3,1])
+    ds = None
+
+    ds = gdal.Open('tmp/tiff57.tif')
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    if gt != (100,1,3,200,3,1):
+        print gt
+        gdaltest.post_reason( 'did not get expected geotransform, perhaps unset is not working?' )
+        return 'fail'
+    
+    gdal.GetDriverByName('GTiff').Delete('tmp/tiff57.tif')
+
+    return 'success'
 
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -1875,6 +1901,7 @@ gdaltest_list = [
     tiff_write_54,
     tiff_write_55,
     tiff_write_56,
+    tiff_write_57,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
