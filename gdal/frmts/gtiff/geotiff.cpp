@@ -55,6 +55,10 @@ CPL_C_END
 #define TIFFTAG_GDAL_NODATA    42113
 #define TIFFTAG_RPCCOEFFICIENT 50844
 
+#if TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
+#  define HAVE_UNSETFIELD
+#endif
+
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
 enum
@@ -943,7 +947,7 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
         TIFFSetField( poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, 
                       PHOTOMETRIC_MINISBLACK );
 
-#if TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
+#ifdef HAVE_UNSETFIELD
         TIFFUnsetField( poGDS->hTIFF, TIFFTAG_COLORMAP );
 #else
         CPLDebug( "GTiff", 
@@ -3012,6 +3016,16 @@ void GTiffDataset::WriteGeoTIFFInfo()
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
         || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 )
     {
+/* -------------------------------------------------------------------- */
+/*      Clear old tags to ensure we don't end up with conflicting       */
+/*      information. (#2625)                                            */
+/* -------------------------------------------------------------------- */
+#ifdef HAVE_UNSETFIELD
+        TIFFUnsetField( hTIFF, TIFFTAG_GEOPIXELSCALE );
+        TIFFUnsetField( hTIFF, TIFFTAG_GEOTIEPOINTS );
+        TIFFUnsetField( hTIFF, TIFFTAG_GEOTRANSMATRIX );
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Write the transform.  If we have a normal north-up image we     */
 /*      use the tiepoint plus pixelscale otherwise we use a matrix.     */
