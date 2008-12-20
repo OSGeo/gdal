@@ -1780,6 +1780,12 @@ def tiff_write_55():
 
 def tiff_write_56():
 
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
     test_ct_data = [ (255,0,0), (0,255,0), (0,0,255), (255,255,255,0)]
 
     test_ct = gdal.ColorTable()
@@ -1816,6 +1822,12 @@ def tiff_write_56():
 # Test replacing normal norm up georef with rotated georef (#2625)
 
 def tiff_write_57():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
 
     # copy a file to tmp dir to modify.
     open('tmp/tiff57.tif','w').write(open('data/byte.tif').read())
