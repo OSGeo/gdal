@@ -237,6 +237,8 @@ public:
                           
     virtual     ~HFAEntry();                
 
+    CPLErr      RemoveAndDestroy();
+
     GUInt32	GetFilePos() { return nFilePos; }
 
     const char	*GetName() { return szName; }

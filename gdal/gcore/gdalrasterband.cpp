@@ -1747,7 +1747,8 @@ GDALColorTableH CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH hBand )
  *
  * This method is the same as the C function GDALSetRasterColorTable().
  *
- * @param poCT the color table to apply.
+ * @param poCT the color table to apply.  This may be NULL to clear the color 
+ * table (where supported).
  *
  * @return CE_None on success, or CE_Failure on failure.  If the action is
  * unsupported by the driver, a value of CE_Failure is returned, but no
