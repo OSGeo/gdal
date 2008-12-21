@@ -2237,9 +2237,28 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, void* data,
 int  GTiffDataset::WriteEncodedStrip(uint32 strip, void* data,
                                      int bPreserveDataBuffer)
 {
-    /* TIFFWriteEncodedStrip can alter the passed buffer if byte-swapping is necessary */
-    /* so we use a temporary buffer before calling it */
     int cc = TIFFStripSize( hTIFF );
+    
+/* -------------------------------------------------------------------- */
+/*      If this is the last strip in the image, and is partial, then    */
+/*      we need to trim the number of scanlines written to the          */
+/*      amount of valid data we have. (#2748)                           */
+/* -------------------------------------------------------------------- */
+    int nStripWithinBand = strip % nBlocksPerBand;
+    
+    if( (int) ((nStripWithinBand+1) * nRowsPerStrip) > GetRasterYSize() )
+    {
+        cc = (cc / nRowsPerStrip)
+            * (GetRasterYSize() - nStripWithinBand * nRowsPerStrip);
+        CPLDebug( "GTiff", "Adjusted bytes to write from %d to %d.", 
+                  (int) TIFFStripSize(hTIFF), cc );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      TIFFWriteEncodedStrip can alter the passed buffer if            */
+/*      byte-swapping is necessary so we use a temporary buffer         */
+/*      before calling it.                                              */
+/* -------------------------------------------------------------------- */
     if (bPreserveDataBuffer && TIFFIsByteSwapped(hTIFF))
     {
         if (cc != nTempWriteBufferSize)
