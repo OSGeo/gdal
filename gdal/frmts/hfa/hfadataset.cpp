@@ -998,11 +998,31 @@ GDALColorTable *HFARasterBand::GetColorTable()
 CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
 
 {
-    int nColors = poCTable->GetColorEntryCount();
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess, 
+                  "Unable to set color table on read-only file." );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case if we are clearing the color table.                */
+/* -------------------------------------------------------------------- */
+    if( poCTable == NULL )
+    {
+        delete poCT;
+        poCT = NULL;
+
+        HFASetPCT( hHFA, nBand, 0, NULL, NULL, NULL, NULL );
+
+        return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write out the colortable, and update the configuration.         */
 /* -------------------------------------------------------------------- */
+    int nColors = poCTable->GetColorEntryCount();
+
     double *padfRed, *padfGreen, *padfBlue, *padfAlpha;
 
     padfRed   = (double *) CPLMalloc(sizeof(double) * nColors);
