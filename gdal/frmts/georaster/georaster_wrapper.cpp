@@ -647,6 +647,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "  END IF;\n"
             "\n"
             "  SDO_GEOR.createTemplate(GR1, %s, null, 'TRUE');\n"
+            "\n"
             "  UPDATE %s T SET %s = GR1 WHERE"
             " T.%s.RasterDataTable = :rdt AND"
             " T.%s.RasterId = :rid;\n"
@@ -1857,14 +1858,19 @@ bool GeoRasterWrapper::FlushMetadata()
         "  SDO_GEOR.georeference( GR1, SRID, :3,"
            " SDO_NUMBER_ARRAY(:4, :5, :6), SDO_NUMBER_ARRAY(:7, :8, :9));\n"
         "\n"
-        "  GR1.spatialExtent := SDO_GEOR.generateSpatialExtent( GR1, NULL );\n"
+        "  IF SRID = %d THEN\n"
+        "    GR1.spatialExtent := NULL;\n"
+        "  ELSE\n"
+        "    GR1.spatialExtent := SDO_GEOR.generateSpatialExtent( GR1 );\n"
+        "  END IF;\n"
         "\n"
         "  UPDATE %s T SET %s = GR1 WHERE %s;\n"
         "\n"
         "  COMMIT;\n"
         "END;", 
         pszColumn, pszTable, pszWhere,
-        UNKNOW_CRS,
+        UNKNOWN_CRS,
+        UNKNOWN_CRS,
         pszTable, pszColumn, pszWhere ) );
 
     poStmt->Bind( pszXML, strlen( pszXML ) + 1);
