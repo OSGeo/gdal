@@ -31,7 +31,29 @@
 #include "ogr_p.h"
 #include "cpl_csv.h"
 
+#include "ogr_srs_esri_names.h"
+
 CPL_CVSID("$Id$");
+
+void  SetNewName( OGRSpatialReference* pOgr, const char* keyName, const char* newName );
+int   RemapImgWGSProjcsName(OGRSpatialReference* pOgr, const char* pszProjCSName, 
+                            const char* pszProgCSName);
+int   RemapImgUTMNames(OGRSpatialReference* pOgr, const char* pszProjCSName, 
+                       const char* pszProgCSName, char **mappingTable);
+int   RemapNameBasedOnKeyName(OGRSpatialReference* pOgr, const char* pszName, 
+                             const char* pszkeyName, char **mappingTable);
+int   RemapNamesBasedOnTwo(OGRSpatialReference* pOgr, const char* name1, const char* name2, 
+                             char **mappingTable, long nTableStepSize, 
+                             char** pszkeyNames, long nKeys);
+int   RemapPValuesBasedOnProjCSAndPName(OGRSpatialReference* pOgr, 
+                             const char* pszProgCSName, char **mappingTable);
+int   RemapPNamesBasedOnProjCSAndPName(OGRSpatialReference* pOgr, 
+                             const char* pszProgCSName, char **mappingTable);
+int   DeleteParamBasedOnPrjName( OGRSpatialReference* pOgr, 
+                             const char* pszProjectionName, char **mappingTable);
+int   AddParamBasedOnPrjName( OGRSpatialReference* pOgr, 
+                             const char* pszProjectionName, char **mappingTable);
+int   RemapGeogCSName(OGRSpatialReference* pOgr, const char *pszGeogCSName);
 
 static const char *apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
@@ -81,7 +103,9 @@ static const char *apszUnitMapping[] = {
     "Meter", "metre",
     "Foot", "foot",
     "Foot", "feet",
+    "Foot", "international_feet", 
     "Foot_US", SRS_UL_US_FOOT,
+    "Foot_Clarke", "clarke_feet",
     "Degree", "degree",
     "Degree", "degrees",
     "Degree", SRS_UA_DEGREE,
@@ -294,7 +318,8 @@ static void MorphNameToESRI( char ** ppszName )
 /* -------------------------------------------------------------------- */
     for( i = 0; pszName[i] != '\0'; i++ )
     {
-        if( !(pszName[i] >= 'A' && pszName[i] <= 'Z')
+        if( pszName[i] != '+'
+            && !(pszName[i] >= 'A' && pszName[i] <= 'Z')
             && !(pszName[i] >= 'a' && pszName[i] <= 'z')
             && !(pszName[i] >= '0' && pszName[i] <= '9') )
         {
@@ -888,6 +913,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 {
     OGRErr      eErr;
 
+    CPLLocaleC localeC;
 /* -------------------------------------------------------------------- */
 /*      Fixup ordering, missing linear units, etc.                      */
 /* -------------------------------------------------------------------- */
@@ -913,19 +939,12 @@ OGRErr OGRSpatialReference::morphToESRI()
     
     if( pszProjection != NULL
         && EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR) 
-        && fabs(GetProjParm(SRS_PP_AZIMUTH, 0.0 )-90) < 0.0001 
-        && fabs(GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, 0.0 )-90) < 0.0001 )
+        && (GetProjParm(SRS_PP_AZIMUTH, 0.0 ) > 0.0 && GetProjParm(SRS_PP_AZIMUTH, 0.0 ) < 90.0001) )
     {
         SetNode( "PROJCS|PROJECTION", 
                  "Hotine_Oblique_Mercator_Azimuth_Center" );
 
         /* ideally we should strip out of the rectified_grid_angle */
-        // strip off rectified_grid_angle -- I hope it is 90!
-        OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-        int iRGAChild = FindProjParm( "rectified_grid_angle", poPROJCS );
-        if( iRGAChild != -1 )
-            poPROJCS->DestroyChild( iRGAChild);
-
         pszProjection = GetAttrValue("PROJECTION");
     }
 
@@ -935,8 +954,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      on latitude.                                                    */
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL
-        && ( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) 
-             || EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) ))
+        && ( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) ))
     {
         if( GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) < 0.0 )
         {
@@ -950,6 +968,15 @@ OGRErr OGRSpatialReference::morphToESRI()
                      "Stereographic_North_Pole" );
             pszProjection = GetAttrValue("PROJECTION");
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      OBLIQUE_STEREOGRAPHIC maps to ESRI Stereographic                */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL
+        && ( EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) ))
+    {
+        SetNode( "PROJCS|PROJECTION", "Stereographic" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -967,6 +994,11 @@ OGRErr OGRSpatialReference::morphToESRI()
 
     GetRoot()->applyRemapper( "DATUM", 
                               papszDatumMapping+2, papszDatumMapping+1, 3 );
+
+    const char *pszProjCSName      = NULL;
+    const char *pszGcsName         = NULL;
+    OGR_SRSNode *poProjCS          = NULL;
+    OGR_SRSNode *poProjCSNodeChild = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Very specific handling for some well known geographic           */
@@ -1033,40 +1065,60 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      If the PROJCS name is unset, use the PROJECTION name in         */
 /*      place of unknown, or unnamed.  At the request of Peng Gao.      */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poNode;
+        if( (poProjCS = GetAttrNode( "PROJCS" )) )
+            poProjCSNodeChild = poProjCS->GetChild(0);
 
-    poNode = GetAttrNode( "PROJCS" );
-    if( poNode != NULL )
-        poNode = poNode->GetChild( 0 );
+        if( poProjCSNodeChild )
+        {
+            pszProjCSName = poProjCSNodeChild->GetValue();
+            char *pszNewValue = CPLStrdup(pszProjCSName);
+            MorphNameToESRI( &pszNewValue );
+            poProjCSNodeChild->SetValue( pszNewValue );
+            CPLFree( pszNewValue );
+            pszProjCSName = poProjCSNodeChild->GetValue();
+        }
 
-    if( poNode != NULL 
-        && ( EQUAL(poNode->GetValue(),"unnamed")
-             || EQUAL(poNode->GetValue(),"unknown")
-             || EQUAL(poNode->GetValue(),"") ) )
-    {
-        if( GetAttrValue( "PROJECTION", 0 ) != NULL )
-            poNode->SetValue( GetAttrValue( "PROJECTION", 0 ) );
-    }
+        if( pszProjCSName != NULL
+            && ( EQUAL(pszProjCSName,"unnamed")
+                 || EQUAL(pszProjCSName,"unknown")
+                 || EQUAL(pszProjCSName,"") ) )
+        {
+            if( GetAttrValue( "PROJECTION", 0 ) != NULL )
+            {
+                pszProjCSName = GetAttrValue( "PROJECTION", 0 );
+                poProjCSNodeChild->SetValue( pszProjCSName );
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Prepare very specific PROJCS names for UTM coordinate           */
 /*      systems.                                                        */
 /* -------------------------------------------------------------------- */
-        int bNorth, nZone;
+        int bNorth = 0;
+        int nZone  = 0;
 
-        nZone = GetUTMZone( &bNorth );
-        if( nZone > 0 && pszUTMPrefix != NULL )
+        /* get zone from name first */
+        if( pszProjCSName && EQUALN(pszProjCSName, "UTM Zone ", 9) )
+        {
+            nZone = atoi(pszProjCSName+9);
+            if( strstr(pszProjCSName, "North") )
+                bNorth = 1;
+        }
+
+        /* if can not get from the name, from the parameters */
+        if( nZone <= 0 ) 
+            nZone = GetUTMZone( &bNorth );
+
+        if( nZone > 0 && pszUTMPrefix )
         {
             char szUTMName[128];
-
             if( bNorth )
                 sprintf( szUTMName, "%s_UTM_Zone_%dN", pszUTMPrefix, nZone );
             else
                 sprintf( szUTMName, "%s_UTM_Zone_%dS", pszUTMPrefix, nZone );
-            
-            OGR_SRSNode *poProjCS = GetAttrNode( "PROJCS" );
-            if( poProjCS != NULL )
-                poProjCS->GetChild(0)->SetValue( szUTMName );
+              
+            if( poProjCSNodeChild )
+                poProjCSNodeChild->SetValue( szUTMName );
         }
     }
 
@@ -1114,7 +1166,11 @@ OGRErr OGRSpatialReference::morphToESRI()
             (char **)apszAlbersMapping + 0, 2 );
 
     if( pszProjection != NULL 
-        && EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
+        && (EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) ||
+            EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) ||
+            EQUAL(pszProjection,SRS_PT_AZIMUTHAL_EQUIDISTANT) ||
+            EQUAL(pszProjection,SRS_PT_SINUSOIDAL) ||
+            EQUAL(pszProjection,SRS_PT_ROBINSON) ) )
         GetRoot()->applyRemapper( 
             "PARAMETER", (char **)apszECMapping + 1,
             (char **)apszECMapping + 0, 2 );
@@ -1128,6 +1184,12 @@ OGRErr OGRSpatialReference::morphToESRI()
     if( pszProjection != NULL 
         && EQUALN(pszProjection,"Stereographic_",14)
         && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", 
+            (char **)apszPolarStereographicMapping + 1, 
+            (char **)apszPolarStereographicMapping + 0, 2 );
+
+    if( pszProjection != NULL && EQUAL(pszProjection,"Plate_Carree") )
         GetRoot()->applyRemapper( 
             "PARAMETER", 
             (char **)apszPolarStereographicMapping + 1, 
@@ -1157,19 +1219,35 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      Convert SPHEROID name to use underscores instead of spaces.     */
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poSpheroid;
-
+    OGR_SRSNode *poSpheroidChild;
     poSpheroid = GetAttrNode( "SPHEROID" );
     if( poSpheroid != NULL )
-        poSpheroid = poSpheroid->GetChild(0);
+        poSpheroidChild = poSpheroid->GetChild(0);
 
-    if( poSpheroid != NULL )
+    if( poSpheroidChild != NULL )
     {
-        char *pszNewValue = CPLStrdup(RemapSpheroidName(poSpheroid->GetValue()));
+        char *pszNewValue = CPLStrdup(RemapSpheroidName(poSpheroidChild->GetValue()));
 
         MorphNameToESRI( &pszNewValue );
 
-        poSpheroid->SetValue( pszNewValue );
+        poSpheroidChild->SetValue( pszNewValue );
         CPLFree( pszNewValue );
+    }
+
+    if( poSpheroid != NULL )
+        poSpheroidChild = poSpheroid->GetChild(2);
+
+    if( poSpheroidChild != NULL )
+    {
+      const char * dfValue = poSpheroidChild->GetValue();
+      for( int i = 0; apszInvFlatteningMapping[i] != NULL; i += 2 )
+      {
+        if( EQUALN(apszInvFlatteningMapping[i], dfValue, strlen(apszInvFlatteningMapping[i]) ))
+        {
+          poSpheroidChild->SetValue( apszInvFlatteningMapping[i+1] );
+          break;
+        }
+      }
     }
     
 /* -------------------------------------------------------------------- */
@@ -1183,7 +1261,8 @@ OGRErr OGRSpatialReference::morphToESRI()
 
     if( poDatum != NULL )
     {
-        if( !EQUALN(poDatum->GetValue(),"D_",2) )
+        const char* pszDatumName = poDatum->GetValue();
+        if( !EQUALN(pszDatumName, "D_",2) )
         {
             char *pszNewValue;
 
@@ -1193,6 +1272,73 @@ OGRErr OGRSpatialReference::morphToESRI()
             poDatum->SetValue( pszNewValue );
             CPLFree( pszNewValue );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*                        final check names                             */
+/* -------------------------------------------------------------------- */
+    if( poProjCSNodeChild )
+      pszProjCSName = poProjCSNodeChild->GetValue();
+
+    if( pszProjCSName )
+    {
+      pszGcsName = GetAttrValue( "GEOGCS" ); 
+      if(pszGcsName && !EQUALN( pszGcsName, "GCS_", 4 ) )
+      {
+        char* newGcsName = (char *) CPLMalloc(strlen(pszGcsName) + 5);
+        strcpy( newGcsName, "GCS_" );
+        strcat(newGcsName, pszGcsName);
+        SetNewName( this, "GEOGCS", newGcsName );
+        CPLFree( newGcsName );
+        pszGcsName = GetAttrValue("GEOGCS" );
+      }    
+      RemapGeogCSName(this, pszGcsName);
+
+      // Specific processing and remapping 
+      pszProjection = GetAttrValue("PROJECTION");
+      if(pszProjection) 
+      {
+        if(EQUAL(pszProjection,"Lambert_Conformal_Conic"))
+        {
+          if(FindProjParm( SRS_PP_STANDARD_PARALLEL_2, poProjCS ) < 0 )
+          {
+            int iChild = FindProjParm( SRS_PP_LATITUDE_OF_ORIGIN, poProjCS );
+            int iChild1 = FindProjParm( SRS_PP_STANDARD_PARALLEL_1, poProjCS );
+            if( iChild >= 0 && iChild1 < 0 )
+            {
+              const OGR_SRSNode *poParameter = poProjCS->GetChild(iChild);
+              if( poParameter )
+              {
+                OGR_SRSNode *poNewParm = new OGR_SRSNode( "PARAMETER" );
+                poNewParm->AddChild( new OGR_SRSNode( "standard_parallel_1" ) );
+                poNewParm->AddChild( new OGR_SRSNode( poParameter->GetChild(1)->GetValue() ) );
+                poProjCS->AddChild( poNewParm );
+              }
+            }
+          }
+        }
+
+        if(EQUAL(pszProjection,"Plate_Carree"))
+        {
+          int iChild = FindProjParm( SRS_PP_STANDARD_PARALLEL_1, poProjCS );
+          if(iChild < 0)
+            iChild = FindProjParm( SRS_PP_PSEUDO_STD_PARALLEL_1, poProjCS );
+            
+          if(iChild >= 0)
+          {
+            const OGR_SRSNode *poParameter = poProjCS->GetChild(iChild);
+            if(!EQUAL(poParameter->GetChild(1)->GetValue(), "0.0") && !EQUAL(poParameter->GetChild(1)->GetValue(), "0"))
+            {
+              SetNode( "PROJCS|PROJECTION", "Equidistant_Cylindrical" );
+              pszProjection = GetAttrValue("PROJECTION");
+            }
+          }
+        }
+        DeleteParamBasedOnPrjName( this, pszProjection, (char **)apszDeleteParametersBasedOnProjection);
+        AddParamBasedOnPrjName( this, pszProjection, (char **)apszAddParametersBasedOnProjection);
+        RemapPValuesBasedOnProjCSAndPName( this, pszProjection, (char **)apszParamValueMapping);
+        RemapPNamesBasedOnProjCSAndPName( this, pszProjection, (char **)apszParamNameMapping);
+      }
     }
 
     return OGRERR_NONE;
@@ -1292,19 +1438,6 @@ OGRErr OGRSpatialReference::morphFromESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we are remapping Hotine_Oblique_Mercator_Azimuth_Center      */
-/*      add a rectified_grid_angle parameter - to match the azimuth     */
-/*      I guess.                                                        */
-/* -------------------------------------------------------------------- */
-    if( pszProjection != NULL
-        && EQUAL(pszProjection,"Hotine_Oblique_Mercator_Azimuth_Center") )
-    {
-        SetProjParm( SRS_PP_RECTIFIED_GRID_ANGLE , 
-                     GetProjParm( SRS_PP_AZIMUTH, 0.0 ) );
-        FixupOrdering();
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Remap Albers, Mercator and Polar Stereographic parameters.      */
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
@@ -1313,7 +1446,11 @@ OGRErr OGRSpatialReference::morphFromESRI()
             (char **)apszAlbersMapping + 1, 2 );
 
     if( pszProjection != NULL 
-        && EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
+        && (EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) ||
+            EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) ||
+            EQUAL(pszProjection,SRS_PT_AZIMUTHAL_EQUIDISTANT) ||
+            EQUAL(pszProjection,SRS_PT_SINUSOIDAL) ||
+            EQUAL(pszProjection,SRS_PT_ROBINSON) ) )
         GetRoot()->applyRemapper( 
             "PARAMETER", (char **)apszECMapping + 0,
             (char **)apszECMapping + 1, 2 );
@@ -1342,6 +1479,18 @@ OGRErr OGRSpatialReference::morphFromESRI()
         SetNode( "PROJCS|PROJECTION", SRS_PT_POLAR_STEREOGRAPHIC );
         pszProjection = GetAttrValue("PROJECTION");
     }
+
+/* -------------------------------------------------------------------- */
+/*      Remap Equidistant_Cylindrical parameter. It is same as          */
+/*      Stereographic                                                   */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL && EQUAL(pszProjection,"Equidistant_Cylindrical") )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", 
+            (char **)apszPolarStereographicMapping + 0, 
+            (char **)apszPolarStereographicMapping + 1, 2 );
+
+
 
 /* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
@@ -1373,3 +1522,357 @@ OGRErr OSRMorphFromESRI( OGRSpatialReferenceH hSRS )
 
     return ((OGRSpatialReference *) hSRS)->morphFromESRI();
 }
+
+/************************************************************************/
+/*                           SetNewName()                               */
+/*                                                                      */
+/*      Set an esri name                                                */
+/************************************************************************/
+void SetNewName( OGRSpatialReference* pOgr, const char* keyName, const char* newName )
+{
+  OGR_SRSNode *poNode = pOgr->GetAttrNode( keyName );
+  OGR_SRSNode *poNodeChild = NULL;
+  if(poNode)
+    poNodeChild = poNode->GetChild(0);
+  if( poNodeChild)
+      poNodeChild->SetValue( newName);
+}
+
+/************************************************************************/
+/*                           RemapImgWGSProjcsName()                    */
+/*                                                                      */
+/*      Convert Img projcs names to ESRI style                          */
+/************************************************************************/
+int RemapImgWGSProjcsName( OGRSpatialReference* pOgr, const char* pszProjCSName, const char* pszProgCSName )
+{
+  if(EQUAL(pszProgCSName, "WGS_1972") || EQUAL(pszProgCSName, "WGS_1984") )
+  {
+    char* newName = (char *) CPLMalloc(strlen(pszProjCSName) + 10);
+    sprintf( newName, "%s_", pszProgCSName );
+    strcat(newName, pszProjCSName);
+    SetNewName( pOgr, "PROJCS", newName );
+    CPLFree( newName );
+    return 1;
+  }
+  return -1;
+}
+
+/************************************************************************/
+/*                           RemapImgUTMNames()                         */
+/*                                                                      */
+/*      Convert Img UTM names to ESRI style                             */
+/************************************************************************/
+
+int RemapImgUTMNames( OGRSpatialReference* pOgr, const char* pszProjCSName, const char* pszProgCSName, 
+                                          char **mappingTable )
+{
+  long i;
+  long iIndex = -1;
+  for( i = 0; mappingTable[i] != NULL; i += 5 )
+  {
+    if( EQUAL(pszProjCSName, mappingTable[i]) )
+    {
+      long j = i;
+      while(mappingTable[j] != NULL && EQUAL(mappingTable[i], mappingTable[j]))
+      {
+        if( EQUAL(pszProgCSName, mappingTable[j+1]) )
+        {
+          iIndex = j;
+          break;
+        }
+        j += 5;
+      }
+      if (iIndex >= 0)
+        break;
+    }
+  }
+  if(iIndex >= 0)
+  {
+    OGR_SRSNode *poNode = pOgr->GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poNodeChild = NULL;
+    if(poNode)
+      poNodeChild = poNode->GetChild(0);
+    if( poNodeChild && strlen(poNodeChild->GetValue()) > 0 )
+        poNodeChild->SetValue( mappingTable[iIndex+2]);
+
+    poNode = pOgr->GetAttrNode( "GEOGCS" );
+    poNodeChild = NULL;
+    if(poNode)
+      poNodeChild = poNode->GetChild(0);
+    if( poNodeChild && strlen(poNodeChild->GetValue()) > 0 )
+        poNodeChild->SetValue( mappingTable[iIndex+3]);
+
+    poNode = pOgr->GetAttrNode( "DATUM" );
+    poNodeChild = NULL;
+    if(poNode)
+      poNodeChild = poNode->GetChild(0);
+    if( poNodeChild && strlen(poNodeChild->GetValue()) > 0 )
+        poNodeChild->SetValue( mappingTable[iIndex+4]);
+  }
+  return iIndex;
+}
+
+/************************************************************************/
+/*                           RemapNameBasedOnKeyName()                  */
+/*                                                                      */
+/*      Convert a name to ESRI style name                               */
+/************************************************************************/
+
+int RemapNameBasedOnKeyName( OGRSpatialReference* pOgr, const char* pszName, const char* pszkeyName, 
+                                                 char **mappingTable )
+{
+  long i, n;
+  long iIndex = -1;
+  for( i = 0; mappingTable[i] != NULL; i += 2 )
+  {
+    n = strlen(pszName);
+    if( EQUALN(pszName, mappingTable[i],n) )
+    {
+      iIndex = i;
+      break;
+    }
+  }
+  if(iIndex >= 0) 
+  {
+    OGR_SRSNode *poNode = pOgr->GetAttrNode( pszkeyName );
+    OGR_SRSNode *poNodeChild = NULL;
+    if(poNode)
+      poNodeChild = poNode->GetChild(0);
+    if( poNodeChild && strlen(poNodeChild->GetValue()) > 0 )
+        poNodeChild->SetValue( mappingTable[iIndex+1]);
+  }
+  return iIndex;
+}
+
+/************************************************************************/
+/*                     RemapNamesBasedOnTwo()                           */
+/*                                                                      */
+/*      Convert a name to ESRI style name                               */
+/************************************************************************/
+
+int RemapNamesBasedOnTwo( OGRSpatialReference* pOgr, const char* name1, const char* name2, 
+                                              char **mappingTable, long nTableStepSize, 
+                                              char** pszkeyNames, long nKeys )
+{
+  long i, n, n1;
+  long iIndex = -1;
+  for( i = 0; mappingTable[i] != NULL; i += nTableStepSize )
+  {
+    n = strlen(name1);
+    n1 = strlen(mappingTable[i]); 
+    if( EQUALN(name1, mappingTable[i], n1<=n? n1 : n) )
+    {
+      long j = i;
+      while(mappingTable[j] != NULL && EQUAL(mappingTable[i], mappingTable[j]))
+      {
+        if( EQUALN(name2, mappingTable[j+1], strlen(mappingTable[j+1])) )
+        {
+          iIndex = j;
+          break;
+        }
+        j += 3;
+      }
+      if (iIndex >= 0)
+        break;
+    }
+  }
+  if(iIndex >= 0)
+  {
+    for( i = 0; i < nKeys; i ++ )
+    {
+      OGR_SRSNode *poNode = pOgr->GetAttrNode( pszkeyNames[i] );
+      OGR_SRSNode *poNodeChild = NULL;
+      if(poNode)
+        poNodeChild = poNode->GetChild(0);
+      if( poNodeChild && strlen(poNodeChild->GetValue()) > 0 )
+          poNodeChild->SetValue( mappingTable[iIndex+i+2]);
+    }
+
+  }
+  return iIndex;
+}
+
+/************************************************************************/
+/*                RemapPValuesBasedOnProjCSAndPName()                   */
+/*                                                                      */
+/*      Convert a parameters to ESRI style name                         */
+/************************************************************************/
+
+int RemapPValuesBasedOnProjCSAndPName( OGRSpatialReference* pOgr, const char* pszProgCSName, 
+                                                                      char **mappingTable )
+{
+  long ret = 0;
+  OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
+  for( int i = 0; mappingTable[i] != NULL; i += 4 )
+  {
+    while( mappingTable[i] != NULL && EQUALN(pszProgCSName, mappingTable[i], strlen(mappingTable[i])) )
+    {
+      OGR_SRSNode *poParm;
+      const char* pszParamName = mappingTable[i+1];
+      const char* pszParamValue = mappingTable[i+2];
+      for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+      {
+          poParm = poPROJCS->GetChild( iChild );
+
+          if( EQUAL(poParm->GetValue(),"PARAMETER") 
+              && poParm->GetChildCount() == 2 
+              && EQUAL(poParm->GetChild(0)->GetValue(),pszParamName) 
+              && EQUALN(poParm->GetChild(1)->GetValue(),pszParamValue, strlen(pszParamValue) ) )
+          {
+              poParm->GetChild(1)->SetValue( mappingTable[i+3] );
+              break;
+          }
+      }
+      ret ++;
+      i += 4;
+    }
+    if (ret > 0)
+      break;
+  }
+  return ret;
+}
+
+/************************************************************************/
+/*                  RemapPNamesBasedOnProjCSAndPName()                  */
+/*                                                                      */
+/*      Convert a parameters to ESRI style name                         */
+/************************************************************************/
+
+int RemapPNamesBasedOnProjCSAndPName( OGRSpatialReference* pOgr, const char* pszProgCSName, 
+                                                                     char **mappingTable )
+{
+  long ret = 0;
+  OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
+  for( int i = 0; mappingTable[i] != NULL; i += 3 )
+  {
+    while( mappingTable[i] != NULL && EQUALN(pszProgCSName, mappingTable[i], strlen(mappingTable[i])) )
+    {
+      OGR_SRSNode *poParm;
+      const char* pszParamName = mappingTable[i+1];
+      for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+      {
+          poParm = poPROJCS->GetChild( iChild );
+
+          if( EQUAL(poParm->GetValue(),"PARAMETER") 
+              && poParm->GetChildCount() == 2 
+              && EQUAL(poParm->GetChild(0)->GetValue(),pszParamName) )
+          {
+              poParm->GetChild(0)->SetValue( mappingTable[i+2] );
+              break;
+          }
+      }
+      ret ++;
+      i += 3;
+    }
+    if (ret > 0)
+      break;
+  }
+  return ret;
+}
+
+/************************************************************************/
+/*                        DeleteParamBasedOnPrjName                     */
+/*                                                                      */
+/*      Delete non-ESRI parameters                                      */
+/************************************************************************/
+int DeleteParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProjectionName, 
+                                                             char **mappingTable )
+{
+  long iIndex = -1, ret = -1;
+  for( int i = 0; mappingTable[i] != NULL; i += 2 )
+  {
+    if( EQUALN(pszProjectionName, mappingTable[i], strlen(mappingTable[i])) )
+    {
+      OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
+      OGR_SRSNode *poParm;
+      const char* pszParamName = mappingTable[i+1];
+      iIndex = -1;
+      for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+      {
+        poParm = poPROJCS->GetChild( iChild );
+
+        if( EQUAL(poParm->GetValue(),"PARAMETER") 
+            && poParm->GetChildCount() == 2 
+            && EQUAL(poParm->GetChild(0)->GetValue(),pszParamName) )
+        {
+          iIndex = iChild;
+          break;
+        }
+      }
+      if(iIndex >= 0)
+      {
+        poPROJCS->DestroyChild( iIndex );
+        ret ++;
+      }
+    }
+  }
+  return ret;
+}
+/************************************************************************/
+/*                          AddParamBasedOnPrjName()                    */
+/*                                                                      */
+/*      Add ESRI style parameters                                       */
+/************************************************************************/
+int AddParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProjectionName, 
+                                                          char **mappingTable )
+{
+  long ret = -1;
+  OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
+  for( int i = 0; mappingTable[i] != NULL; i += 3 )
+  {
+    if( EQUALN(pszProjectionName, mappingTable[i], strlen(mappingTable[i])) )
+    {
+      OGR_SRSNode *poParm;
+      int exist = 0;
+      for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+      {
+        poParm = poPROJCS->GetChild( iChild );
+
+        if( EQUAL(poParm->GetValue(),"PARAMETER") 
+            && poParm->GetChildCount() == 2 
+            && EQUAL(poParm->GetChild(0)->GetValue(),mappingTable[i+1]) )
+          exist = 1;
+      }
+      if(!exist)
+      {
+        poParm = new OGR_SRSNode( "PARAMETER" );
+        poParm->AddChild( new OGR_SRSNode( mappingTable[i+1] ) );
+        poParm->AddChild( new OGR_SRSNode( mappingTable[i+2] ) );
+        poPROJCS->AddChild( poParm );
+        ret ++;
+      }
+    }
+  }
+  return ret;
+}
+
+/************************************************************************/
+/*                                   RemapGeogCSName()                  */
+/*                                                                      */
+/*      Convert names to ESRI style                                     */
+/************************************************************************/
+int RemapGeogCSName( OGRSpatialReference* pOgr, const char *pszGeogCSName )
+{
+  static const char *keyNamesG[] = {
+    "GEOGCS"};
+  int ret = -1;
+
+  const char* pszUnitName = pOgr->GetAttrValue( "GEOGCS|UNIT");
+  if(pszUnitName)
+    ret = RemapNamesBasedOnTwo( pOgr, pszGeogCSName+4, pszUnitName, (char**)apszGcsNameMappingBasedOnUnit, 3, (char**)keyNamesG, 1);
+  if(ret < 0)
+  {
+    const char* pszPrimeName = pOgr->GetAttrValue("PRIMEM");
+    if(pszPrimeName)
+      ret = RemapNamesBasedOnTwo( pOgr, pszGeogCSName+4, pszPrimeName, (char**)apszGcsNameMappingBasedPrime, 3, (char**)keyNamesG, 1);
+    if(ret < 0)
+      ret = RemapNameBasedOnKeyName( pOgr, pszGeogCSName+4, "GEOGCS", (char**)apszGcsNameMapping);
+  }
+  if(ret < 0)
+  {
+    const char* pszProjCS = pOgr->GetAttrValue( "PROJCS" );
+    ret = RemapNamesBasedOnTwo( pOgr, pszProjCS, pszGeogCSName, (char**)apszGcsNameMappingBasedOnProjCS, 3, (char**)keyNamesG, 1);
+  }
+  return ret;
+}
+
