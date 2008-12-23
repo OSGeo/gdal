@@ -867,7 +867,7 @@ const char* GeoRasterDataset::GetProjectionRef( void )
         return NULL;
     }
 
-    if( poGeoRaster->nSRID == UNKNOW_CRS )
+    if( poGeoRaster->nSRID == UNKNOWN_CRS )
     {
         return NULL;
     }
