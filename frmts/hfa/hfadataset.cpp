@@ -50,6 +50,9 @@ CPL_C_END
 #  define D2R	(PI/180)
 #endif
 
+OGRBoolean WritePeStringIfNeeded(OGRSpatialReference*	poSRS, HFAHandle hHFA);
+void ClearSR(HFAHandle hHFA);
+
 static const char *apszDatumMap[] = {
     /* Imagine name, WKT name */
     "NAD27", "North_American_Datum_1927",
@@ -413,7 +416,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
                     &nBlockXSize, &nBlockYSize, &nOverviews, &nCompression );
     
     if( nCompression != 0 )
-        GDALMajorObject::SetMetadataItem( "COMPRESSION", "RLC", 
+        GDALMajorObject::SetMetadataItem( "COMPRESSION", "RLE", 
                                           "IMAGE_STRUCTURE" );
 
     switch( nHFADataType )
@@ -471,7 +474,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     {
         GDALMajorObject::SetMetadataItem( 
             "NBITS", 
-            CPLString().Printf("%d", HFAGetDataTypeBits( nHFADataType ) ) );
+            CPLString().Printf( "%d", HFAGetDataTypeBits( nHFADataType ) ), "IMAGE_STRUCTURE" );
     }
 
     if( nHFADataType == EPT_s8 )
@@ -654,7 +657,6 @@ void HFARasterBand::ReadAuxMetadata()
             CPLAssert( FALSE );
         }
     }
-
     // now try to read the histogram
     HFAEntry *poEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
     if ( poEntry != NULL )
@@ -1510,6 +1512,7 @@ CPLErr HFADataset::WriteProjection()
     OGRSpatialReference *poGeogSRS = NULL;
     int                 bHaveSRS;
     char		*pszP = pszProjection;
+    OGRBoolean peStrStored = FALSE;
 
     bGeoDirty = FALSE;
 
@@ -1574,6 +1577,9 @@ CPLErr HFADataset::WriteProjection()
             /* we will default to this (effectively WGS84) for now */
             sDatum.type = EPRJ_DATUM_PARAMETRIC;
         }
+
+        /* Verify if we need to write a ESRI PE string */
+        peStrStored = WritePeStringIfNeeded(&oSRS, hHFA);
 
         sPro.proSpheroid.sphereName = (char *)
             poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
@@ -1842,7 +1848,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
-    else if( EQUAL(pszProjName,SRS_PT_ECKERT_VI) )
+    else if( EQUAL(pszProjName,SRS_PT_ECKERT_V) )
     {
         sPro.proNumber = EPRJ_ECKERT_V;
         sPro.proName = (char*) "Eckert V";
@@ -1939,12 +1945,16 @@ CPLErr HFADataset::WriteProjection()
     // Anything we can't map, we store as an ESRI PE_STRING 
     else if( oSRS.IsProjected() || oSRS.IsGeographic() )
     {
+      if(!peStrStored)
+      {
         char *pszPEString = NULL;
         oSRS.morphToESRI();
         oSRS.exportToWkt( &pszPEString );
         // need to transform this into ESRI format.
         HFASetPEString( hHFA, pszPEString );
         CPLFree( pszPEString );
+        peStrStored = TRUE;
+      }
     }
     else
     {
@@ -2030,11 +2040,13 @@ CPLErr HFADataset::WriteProjection()
                             adfGeoTransform );
     }
 
-    if( bHaveSRS && sPro.proName != NULL )
+    if( bHaveSRS && sPro.proName != NULL)
     {
         HFASetProParameters( hHFA, &sPro );
         HFASetDatum( hHFA, &sDatum );
     }
+    else if( !peStrStored )
+      ClearSR(hHFA);
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -2043,6 +2055,145 @@ CPLErr HFADataset::WriteProjection()
         delete poGeogSRS;
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                       WritePeStringIfNeeded()                        */
+/************************************************************************/
+OGRBoolean WritePeStringIfNeeded(OGRSpatialReference*	poSRS, HFAHandle hHFA)
+{
+  OGRBoolean ret = FALSE;
+  if(!poSRS || !hHFA)
+    return ret;
+
+  const char *pszGEOGCS = poSRS->GetAttrValue( "GEOGCS" );
+  const char *pszDatum = poSRS->GetAttrValue( "DATUM" );
+  int gcsNameOffset = 0;
+  int datumNameOffset = 0;
+  if(strstr(pszGEOGCS, "GCS_"))
+    gcsNameOffset = strlen("GCS_");
+  if(strstr(pszDatum, "D_"))
+    datumNameOffset = strlen("D_");
+
+  if(!EQUAL(pszGEOGCS+gcsNameOffset, pszDatum+datumNameOffset))
+    ret = TRUE;
+  else
+  {
+    const char* name = poSRS->GetAttrValue("PRIMEM");
+    if(name && !EQUAL(name,"Greenwich"))
+      ret = TRUE;
+    if(!ret)
+    {
+      OGR_SRSNode * poAUnits = poSRS->GetAttrNode( "GEOGCS|UNIT" );
+      name = poAUnits->GetChild(0)->GetValue();
+      if(name && !EQUAL(name,"Degree"))
+        ret = TRUE;
+    }
+    if(!ret)
+    {
+      name = poSRS->GetAttrValue("UNIT");
+      if(name)
+      {
+        ret = TRUE;
+        for(int i=0; apszUnitMap[i] != NULL; i+=2)
+          if(EQUAL(name, apszUnitMap[i]))
+            ret = FALSE;
+      }
+    }
+    if(!ret)
+    {
+        int nGCS = poSRS->GetEPSGGeogCS();
+        switch(nGCS)
+        {
+          case 4326:
+            if(!EQUAL(pszDatum+datumNameOffset, "WGS_84"))
+              ret = TRUE;
+            break;
+          case 4322:
+            if(!EQUAL(pszDatum+datumNameOffset, "WGS_72"))
+              ret = TRUE;
+            break;
+          case 4267:
+            if(!EQUAL(pszDatum+datumNameOffset, "North_America_1927"))
+              ret = TRUE;
+            break;
+          case 4269:
+            if(!EQUAL(pszDatum+datumNameOffset, "North_America_1983"))
+              ret = TRUE;
+            break;
+        }
+    }
+  }
+  if(ret)
+  {
+    char *pszPEString = NULL;
+    poSRS->morphToESRI();
+    poSRS->exportToWkt( &pszPEString );
+    HFASetPEString( hHFA, pszPEString );
+    CPLFree( pszPEString );
+  }
+
+  return ret;
+}
+
+/************************************************************************/
+/*                              ClearSR()                               */
+/************************************************************************/
+void ClearSR(HFAHandle hHFA)
+{
+    for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
+    {
+        HFAEntry	*poMIEntry;
+        if( hHFA->papoBand[iBand]->poNode && (poMIEntry = hHFA->papoBand[iBand]->poNode->GetNamedChild("Projection")) != NULL )
+        {
+            poMIEntry->MarkDirty();
+            poMIEntry->SetIntField( "proType", 0 );
+            poMIEntry->SetIntField( "proNumber", 0 );
+            poMIEntry->SetStringField( "proExeName", "");
+            poMIEntry->SetStringField( "proName", "");
+            poMIEntry->SetIntField( "proZone", 0 );
+            poMIEntry->SetDoubleField( "proParams[0]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[1]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[2]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[3]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[4]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[5]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[6]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[7]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[8]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[9]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[10]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[11]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[12]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[13]", 0.0 );
+            poMIEntry->SetDoubleField( "proParams[14]", 0.0 );
+            poMIEntry->SetStringField( "proSpheroid.sphereName", "" );
+            poMIEntry->SetDoubleField( "proSpheroid.a", 0.0 );
+            poMIEntry->SetDoubleField( "proSpheroid.b", 0.0 );
+            poMIEntry->SetDoubleField( "proSpheroid.eSquared", 0.0 );
+            poMIEntry->SetDoubleField( "proSpheroid.radius", 0.0 );
+            HFAEntry* poDatumEntry = poMIEntry->GetNamedChild("Datum");
+            if( poDatumEntry != NULL )
+            {
+                poDatumEntry->MarkDirty();
+                poDatumEntry->SetStringField( "datumname", "" );
+                poDatumEntry->SetIntField( "type", 0 );
+                poDatumEntry->SetDoubleField( "params[0]", 0.0 );
+                poDatumEntry->SetDoubleField( "params[1]", 0.0 );
+                poDatumEntry->SetDoubleField( "params[2]", 0.0 );
+                poDatumEntry->SetDoubleField( "params[3]", 0.0 );
+                poDatumEntry->SetDoubleField( "params[4]", 0.0 );
+                poDatumEntry->SetDoubleField( "params[5]", 0.0 );
+                poDatumEntry->SetDoubleField( "params[6]", 0.0 );
+                poDatumEntry->SetStringField( "gridname", "" );
+            }
+            poMIEntry->FlushToDisk();
+            char* peStr = HFAGetPEString( hHFA );
+            if( peStr != NULL && strlen(peStr) > 0 )           
+                HFASetPEString( hHFA, "" );
+        }  
+    }
+    return;
 }
 
 /************************************************************************/
@@ -2480,13 +2631,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     if( oSRS.GetAttrNode("GEOGCS") == NULL
         && oSRS.GetAttrNode("LOCAL_CS") == NULL )
     {
-        if( EQUAL(pszDatumName,"WGS 84") )
+        if( EQUAL(pszDatumName,"WGS 84") 
+            ||  EQUAL(pszDatumName,"WGS_1984") )
             oSRS.SetWellKnownGeogCS( "WGS84" );
         else if( strstr(pszDatumName,"NAD27") != NULL 
                  || EQUAL(pszDatumName,"North_American_Datum_1927") )
             oSRS.SetWellKnownGeogCS( "NAD27" );
-        else if( EQUAL(pszDatumName,"North_American_Datum_1983") 
-                 || strstr(pszDatumName,"NAD83") != NULL )
+        else if( strstr(pszDatumName,"NAD83") != NULL
+                 || EQUAL(pszDatumName,"North_American_Datum_1983"))
             oSRS.SetWellKnownGeogCS( "NAD83" );
         else
             oSRS.SetGeogCS( pszDatumName, pszDatumName, pszEllipsoidName,
@@ -2539,7 +2691,7 @@ CPLErr HFADataset::ReadProjection()
 /*      Special logic for PE string in ProjectionX node.                */
 /* -------------------------------------------------------------------- */
     pszPE_COORDSYS = HFAGetPEString( hHFA );
-    if( pszPE_COORDSYS != NULL 
+    if( pszPE_COORDSYS != NULL
         && oSRS.SetFromUserInput( pszPE_COORDSYS ) == OGRERR_NONE )
     {
         CPLFree( pszPE_COORDSYS );
@@ -2572,6 +2724,16 @@ CPLErr HFADataset::ReadProjection()
     }
 
     CPLFree( pszProjection );
+
+    if( !psDatum || !psPro || !psMapInfo ||
+        (strlen(psDatum->datumname) == 0 || EQUAL(psDatum->datumname, "Unknown")) && 
+        (strlen(psPro->proName) == 0 || EQUAL(psPro->proName, "Unknown")) &&
+        (strlen(psMapInfo->proName) == 0 || EQUAL(psMapInfo->proName, "Unknown")) && 
+        psPro->proZone == 0 )
+    {
+      pszProjection = CPLStrdup("LOCAL_CS[\"\"]");
+      return CE_None;
+    }
     pszProjection = HFAPCSStructToWKT( psDatum, psPro, psMapInfo, 
                                        poMapInformation );
 

@@ -297,6 +297,8 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 #define EPRJ_STEREOGRAPHIC_EXTENDED             50
 #define EPRJ_CASSINI                            51
 #define EPRJ_TWO_POINT_EQUIDISTANT              52
+#define EPRJ_STEREOGRAPHIC_NORTH_POLE           53
+#define EPRJ_STEREOGRAPHIC_SOUTH_POLE           54
 
 #define EPRJ_EXTERNAL_RSO			"eprj_rso"
 #define EPRJ_EXTERNAL_NZMG                      "nzmg"
