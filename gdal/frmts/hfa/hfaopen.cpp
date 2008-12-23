@@ -898,7 +898,7 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
 }
 
 /************************************************************************/
-/*                         HFAInvGeoTransform()                         */
+/*                        HFAInvGeoTransform()                          */
 /************************************************************************/
 
 static int HFAInvGeoTransform( double *gt_in, double *gt_out )
@@ -1187,6 +1187,9 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /*      Prepare the data area with some extra space just in case.       */
 /* -------------------------------------------------------------------- */
         GByte *pabyData = poProX->MakeData( 700 + strlen(pszPEString) );
+        if( !pabyData ) 
+          return CE_Failure;
+
         memset( pabyData, 0, 250+strlen(pszPEString) );
 
         poProX->SetPosition();
@@ -1201,8 +1204,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /*      handling for MIFObjects.                                        */
 /* -------------------------------------------------------------------- */
         pabyData = poProX->GetData();
-        
-        int       nDataSize = poProX->GetDataSize();
+        int    nDataSize = poProX->GetDataSize();
         GUInt32   iOffset = poProX->GetDataPos();
         GUInt32   nSize;
 
@@ -1874,7 +1876,7 @@ CPLErr HFAFlush( HFAHandle hHFA )
         eErr = hHFA->poRoot->FlushToDisk();
         if( eErr != CE_None )
             return eErr;
-        
+
         hHFA->bTreeDirty = FALSE;
     }
 
