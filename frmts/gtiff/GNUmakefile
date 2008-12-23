@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o \
+OBJ	=	geotiff.o gt_wkt_srs.o gt_citation.o  gt_overview.o \
 		tif_float.o tifvsi.o
 
 SUBLIBS 	=
