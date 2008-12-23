@@ -60,7 +60,7 @@ struct OverviewLink {
 // Geographic system without EPSG parameters
 //  ---------------------------------------------------------------------------
 
-#define UNKNOW_CRS 999999
+#define UNKNOWN_CRS 999999
 
 //  ---------------------------------------------------------------------------
 //  GeoRasterDriver, extends GDALDriver to support GeoRaster Server Connections
