@@ -1851,6 +1851,34 @@ def tiff_write_57():
 
     return 'success'
 
+###############################################################################
+# Test writing partial end strips (#2748)
+
+def tiff_write_58():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+
+    for compression in ('NONE', 'JPEG', 'LZW', 'DEFLATE', 'PACKBITS'):
+
+        if string.find(md['DMD_CREATIONOPTIONLIST'],compression) != -1:
+            ds = drv.Create('tmp/tiff_write_58.tif', 4, 4000, 1, options = ['COMPRESS=' + compression] )
+            ds.GetRasterBand(1).Fill(255)
+            ds = None
+
+            ds = gdal.Open('tmp/tiff_write_58.tif')
+            if ds.GetRasterBand(1).Checksum() != 65241:
+                gdaltest.post_reason( 'wrong checksum' )
+                return 'fail'
+
+            drv.Delete('tmp/tiff_write_58.tif')
+        else:
+            print 'Skipping compression method %s' % compression
+
+
+    return 'success'
+
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -1914,6 +1942,7 @@ gdaltest_list = [
     tiff_write_55,
     tiff_write_56,
     tiff_write_57,
+    tiff_write_58,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
