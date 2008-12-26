@@ -92,9 +92,10 @@ static const char *papszDatumEquiv[] =
 
 void SetLinearUnitCitation(GTIF* psGTIF, char* pszLinearUOMName);
 void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitName, int nDatum, short nSpheroid);
-OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, geokey_t geoKey, 
-              OGRSpatialReference* poSRS, OGRBoolean* linearUnitIsSet);
-void GetGeogCSFromCitation(char* szGCSName, geokey_t geoKey, 
+OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
+                            geokey_t geoKey, OGRSpatialReference* poSRS, OGRBoolean* linearUnitIsSet);
+void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
+                           geokey_t geoKey, 
                           char	**ppszGeogName,
                           char	**ppszDatumName,
                           char	**ppszPMName,
@@ -309,14 +310,16 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         else if(hGTIF && GTIFKeyGet( hGTIF, PCSCitationGeoKey, szCTString, 0, 
                        sizeof(szCTString)) )  
         {
-            SetCitationToSRS(hGTIF, szCTString, PCSCitationGeoKey, &oSRS, &linearUnitIsSet);
+            SetCitationToSRS(hGTIF, szCTString, sizeof(szCTString),
+                             PCSCitationGeoKey, &oSRS, &linearUnitIsSet);
         }
         else
         {
           if( hGTIF )
           {
             GTIFKeyGet( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) );
-            if(!SetCitationToSRS(hGTIF, szCTString, GTCitationGeoKey, &oSRS, &linearUnitIsSet))
+            if(!SetCitationToSRS(hGTIF, szCTString, sizeof(szCTString),
+                                 GTCitationGeoKey, &oSRS, &linearUnitIsSet))
               oSRS.SetNode( "PROJCS", szCTString );
           }
           else
@@ -340,7 +343,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         && hGTIF != NULL 
         && GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, 
                        sizeof(szGCSName)) )
-      GetGeogCSFromCitation(szGCSName, GeogCitationGeoKey, 
+      GetGeogCSFromCitation(szGCSName, sizeof(szGCSName),
+                            GeogCitationGeoKey, 
                           &pszGeogName, &pszDatumName,
                           &pszPMName, &pszSpheroidName,
                           &pszAngularUnits);
@@ -1551,12 +1555,11 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         int peStrLen = strlen(pszPEString);
         if(peStrLen > 0)
         {
-            char *outPeStr = new char[peStrLen + strlen("ESRI PE String = ")+1];
-            strcpy(outPeStr, "ESRI PE String = ");
-            strcat(outPeStr, pszPEString);
-            GTIFKeySet( psGTIF, PCSCitationGeoKey, TYPE_ASCII, 0, outPeStr );
+            CPLString osPeStr;
+            osPeStr = "ESRI PE String = ";
+            osPeStr += pszPEString;
+            GTIFKeySet( psGTIF, PCSCitationGeoKey, TYPE_ASCII, 0, osPeStr.c_str() );
             peStrStored = TRUE;
-            delete outPeStr;
         }
         if(pszPEString)
             CPLFree( pszPEString );
