@@ -588,14 +588,61 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         int	i, nBlockPixels;
         GByte	*pabyImage;
-        
+        GByte   *pabyImageDest = (GByte*)pImage;
+        int      nBands = poGDS->nBands;
+
         pabyImage = poGDS->pabyBlockBuf + nBand - 1;
 
         nBlockPixels = nBlockXSize * nBlockYSize;
-        for( i = 0; i < nBlockPixels; i++ )
+
+/* ==================================================================== */
+/*     Optimization for high number of words to transfer and some       */
+/*     typical band numbers : we unroll the loop.                       */
+/* ==================================================================== */
+#define COPY_TO_DST_BUFFER(nBands) \
+        if (nBlockPixels > 100) \
+        { \
+            for ( i = nBlockPixels / 16; i != 0; i -- ) \
+            { \
+                pabyImageDest[0] = pabyImage[0*nBands]; \
+                pabyImageDest[1] = pabyImage[1*nBands]; \
+                pabyImageDest[2] = pabyImage[2*nBands]; \
+                pabyImageDest[3] = pabyImage[3*nBands]; \
+                pabyImageDest[4] = pabyImage[4*nBands]; \
+                pabyImageDest[5] = pabyImage[5*nBands]; \
+                pabyImageDest[6] = pabyImage[6*nBands]; \
+                pabyImageDest[7] = pabyImage[7*nBands]; \
+                pabyImageDest[8] = pabyImage[8*nBands]; \
+                pabyImageDest[9] = pabyImage[9*nBands]; \
+                pabyImageDest[10] = pabyImage[10*nBands]; \
+                pabyImageDest[11] = pabyImage[11*nBands]; \
+                pabyImageDest[12] = pabyImage[12*nBands]; \
+                pabyImageDest[13] = pabyImage[13*nBands]; \
+                pabyImageDest[14] = pabyImage[14*nBands]; \
+                pabyImageDest[15] = pabyImage[15*nBands]; \
+                pabyImageDest += 16; \
+                pabyImage += 16*nBands; \
+            } \
+            nBlockPixels = nBlockPixels % 16; \
+        } \
+        for( i = 0; i < nBlockPixels; i++ ) \
+        { \
+            pabyImageDest[i] = *pabyImage; \
+            pabyImage += nBands; \
+        }
+
+        switch (nBands)
         {
-            ((GByte *) pImage)[i] = *pabyImage;
-            pabyImage += poGDS->nBands;
+            case 3:  COPY_TO_DST_BUFFER(3); break;
+            case 4:  COPY_TO_DST_BUFFER(4); break;
+            default:
+            {
+                for( i = 0; i < nBlockPixels; i++ )
+                {
+                    pabyImageDest[i] = *pabyImage;
+                    pabyImage += nBands;
+                }
+            }
         }
     }
 
