@@ -384,7 +384,7 @@ def ogr_csv_10():
 
 ###############################################################################
 # Verify handling of csvt with width and precision specified
-#
+# Test NULL handling of non string columns too (#2756)
 
 def ogr_csv_11():
     gdaltest.csv_ds = None
@@ -395,21 +395,21 @@ def ogr_csv_11():
 
     lyr = gdaltest.csv_ds.GetLayerByName( 'testcsvt' )
 
-    expect = [ 12 ]
+    expect = [ 12, None ]
     tr = ogrtest.check_features_against_list( lyr,'INTCOL',expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
 
-    expect = [ 5.7 ]
+    expect = [ 5.7, None ]
     tr = ogrtest.check_features_against_list( lyr,'REALCOL',expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
 
-    expect = [ 'foo' ]
+    expect = [ 'foo', '' ]
     tr = ogrtest.check_features_against_list( lyr,'STRINGCOL',expect)
     if not tr:
         return 'fail'
