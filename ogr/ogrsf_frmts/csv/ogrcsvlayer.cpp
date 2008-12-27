@@ -285,7 +285,13 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
     
     for( iAttr = 0; iAttr < nAttrCount; iAttr++)
     {
-        poFeature->SetField( iAttr, papszTokens[iAttr] );
+        if (poFeatureDefn->GetFieldDefn(iAttr)->GetType() != OFTString)
+        {
+            if (papszTokens[iAttr][0] != '\0')
+                poFeature->SetField( iAttr, papszTokens[iAttr] );
+        }
+        else
+            poFeature->SetField( iAttr, papszTokens[iAttr] );
     }
 
     CSLDestroy( papszTokens );
