@@ -138,6 +138,9 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         if( EQUAL(papszNames[i],".") || EQUAL(papszNames[i],"..") )
             continue;
 
+        if (EQUAL(CPLGetExtension(oSubFilename),"csvt"))
+            continue;
+
         if( VSIStatL( oSubFilename, &sStatBuf ) != 0 
             || !VSI_ISREG(sStatBuf.st_mode) 
             || !EQUAL(CPLGetExtension(oSubFilename),"csv") )
@@ -351,6 +354,14 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Should we create a CSVT file ?                                  */
+/* -------------------------------------------------------------------- */
+
+    const char *pszCreateCSVT = CSLFetchNameValue( papszOptions, "CREATE_CSVT");
+    if (pszCreateCSVT)
+        papoLayers[nLayers-1]->SetCreateCSVT(CSLTestBoolean(pszCreateCSVT));
+
     return papoLayers[nLayers-1];
 }
 
@@ -362,6 +373,7 @@ OGRErr OGRCSVDataSource::DeleteLayer( int iLayer )
 
 {
     char *pszFilename;
+    char *pszFilenameCSVT;
 
     if( iLayer < 0 || iLayer >= nLayers )
     {
@@ -373,6 +385,8 @@ OGRErr OGRCSVDataSource::DeleteLayer( int iLayer )
 
     pszFilename = 
         CPLStrdup(CPLFormFilename(pszName,papoLayers[iLayer]->GetLayerDefn()->GetName(),"csv"));
+    pszFilenameCSVT = 
+        CPLStrdup(CPLFormFilename(pszName,papoLayers[iLayer]->GetLayerDefn()->GetName(),"csvt"));
 
     delete papoLayers[iLayer];
 
@@ -386,6 +400,8 @@ OGRErr OGRCSVDataSource::DeleteLayer( int iLayer )
 
     VSIUnlink( pszFilename );
     CPLFree( pszFilename );
+    VSIUnlink( pszFilenameCSVT );
+    CPLFree( pszFilenameCSVT );
 
     return OGRERR_NONE;
 }
