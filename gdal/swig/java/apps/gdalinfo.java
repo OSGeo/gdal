@@ -35,7 +35,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import org.gdal.gdal.Band;
-//import org.gdal.gdal.ColorTable;
+import org.gdal.gdal.ColorTable;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.GCP;
@@ -70,11 +70,12 @@ public class gdalinfo {
 			int i, iBand;
 			double[] adfGeoTransform = new double[6];
 			Driver hDriver;
-			Hashtable papszMetadata;
+			Vector papszMetadata;
 			boolean bComputeMinMax = false, bSample = false;
 			boolean bShowGCPs = true, bShowMetadata = true;
 			boolean bStats = false;
 			String pszFilename = null;
+                        Vector papszFileList;
 
 			gdal.AllRegister();
 
@@ -134,6 +135,19 @@ public class gdalinfo {
 			System.out.println("Driver: " + hDriver.getShortName() + "/"
 					+ hDriver.getLongName());
 
+                        papszFileList = hDataset.GetFileList( );
+                        if( papszFileList.size() == 0 )
+                        {
+                            System.out.println( "Files: none associated" );
+                        }
+                        else
+                        {
+                            Enumeration e = papszFileList.elements();
+                            System.out.println( "Files: " + (String)e.nextElement() );
+                            while(e.hasMoreElements())
+                                System.out.println( "       " +  (String)e.nextElement() );
+                        }
+
 			System.out.println("Size is " + hDataset.getRasterXSize() + ", "
 					+ hDataset.getRasterYSize());
 
@@ -172,12 +186,13 @@ public class gdalinfo {
 
 					System.out.println("Pixel Size = (" + adfGeoTransform[1]
 							+ "," + adfGeoTransform[5] + ")");
-				} else
+				} else {
 					System.out.println("GeoTransform =");
-				System.out.println("  " + adfGeoTransform[0] + ", "
-						+ adfGeoTransform[1] + ", " + adfGeoTransform[2]);
-				System.out.println("  " + adfGeoTransform[3] + ", "
-						+ adfGeoTransform[4] + ", " + adfGeoTransform[5]);
+                                        System.out.println("  " + adfGeoTransform[0] + ", "
+                                                        + adfGeoTransform[1] + ", " + adfGeoTransform[2]);
+                                        System.out.println("  " + adfGeoTransform[3] + ", "
+                                                        + adfGeoTransform[4] + ", " + adfGeoTransform[5]);
+                                }
 			}
 
 			/* -------------------------------------------------------------------- */
@@ -206,43 +221,49 @@ public class gdalinfo {
 			/* -------------------------------------------------------------------- */
 			/*      Report metadata.                                                */
 			/* -------------------------------------------------------------------- */
-			papszMetadata = hDataset.GetMetadata_Dict("");
+			papszMetadata = hDataset.GetMetadata_List("");
 			if (bShowMetadata && papszMetadata.size() > 0) {
-				Enumeration keys = papszMetadata.keys();
+				Enumeration keys = papszMetadata.elements();
 				System.out.println("Metadata:");
 				while (keys.hasMoreElements()) {
-					String key = (String) keys.nextElement();
-					System.out.println("  " + key + "="
-							+ papszMetadata.get(key));
+					System.out.println("  " + (String) keys.nextElement());
 				}
 			}
-
+                        /* -------------------------------------------------------------------- */
+                        /*      Report "IMAGE_STRUCTURE" metadata.                              */
+                        /* -------------------------------------------------------------------- */
+                        papszMetadata = hDataset.GetMetadata_List("IMAGE_STRUCTURE" );
+                        if( bShowMetadata && papszMetadata.size() > 0) {
+				Enumeration keys = papszMetadata.elements();
+				System.out.println("Image Structure Metadata:");
+				while (keys.hasMoreElements()) {
+					System.out.println("  " + (String) keys.nextElement());
+				}
+			}
 			/* -------------------------------------------------------------------- */
 			/*      Report subdatasets.                                             */
 			/* -------------------------------------------------------------------- */
-			papszMetadata = hDataset.GetMetadata_Dict("SUBDATASETS");
+			papszMetadata = hDataset.GetMetadata_List("SUBDATASETS");
 			if (papszMetadata.size() > 0) {
 				System.out.println("Subdatasets:");
-				Enumeration keys = papszMetadata.keys();
+				Enumeration keys = papszMetadata.elements();
 				while (keys.hasMoreElements()) {
-					String key = (String) keys.nextElement();
-					System.out.println("  " + key + "="
-							+ papszMetadata.get(key));
+					System.out.println("  " + (String) keys.nextElement());
 				}
 			}
 
 			/* -------------------------------------------------------------------- */
 			/*      Report corners.                                                 */
 			/* -------------------------------------------------------------------- */
-			System.out.println("Corner Coordinates:\n");
-			GDALInfoReportCorner(hDataset, "Upper Left", 0.0, 0.0);
-			GDALInfoReportCorner(hDataset, "Lower Left", 0.0, hDataset
+			System.out.println("Corner Coordinates:");
+			GDALInfoReportCorner(hDataset, "Upper Left ", 0.0, 0.0);
+			GDALInfoReportCorner(hDataset, "Lower Left ", 0.0, hDataset
 					.getRasterYSize());
 			GDALInfoReportCorner(hDataset, "Upper Right", hDataset
 					.getRasterXSize(), 0.0);
 			GDALInfoReportCorner(hDataset, "Lower Right", hDataset
 					.getRasterXSize(), hDataset.getRasterYSize());
-			GDALInfoReportCorner(hDataset, "Center",
+			GDALInfoReportCorner(hDataset, "Center     ",
 					hDataset.getRasterXSize() / 2.0,
 					hDataset.getRasterYSize() / 2.0);
 
@@ -252,7 +273,7 @@ public class gdalinfo {
 			for (iBand = 0; iBand < hDataset.getRasterCount(); iBand++) {
 				Double[] pass1 = new Double[1], pass2 = new Double[1];
 				double[] adfCMinMax = new double[2];
-//				ColorTable hTable;
+				ColorTable hTable;
 
 				hBand = hDataset.GetRasterBand(iBand + 1);
 
@@ -306,7 +327,7 @@ public class gdalinfo {
 				if (hBand.GetOverviewCount() > 0) {
 					int iOverview;
 
-					System.out.println("  Overviews: ");
+					System.out.print("  Overviews: ");
 					for (iOverview = 0; iOverview < hBand.GetOverviewCount(); iOverview++) {
 						Band hOverview;
 
@@ -317,7 +338,7 @@ public class gdalinfo {
 						System.out.print(hOverview.getXSize() + "x"
 								+ hOverview.getYSize());
 					}
-					System.out.println("");
+					System.out.print("\n");
 				}
 
 				/*if( GDALHasArbitraryOverviews( hBand ) )
@@ -349,19 +370,14 @@ public class gdalinfo {
 					System.out.println(",   Scale:" + pass1[0]);
 				}
 
-				papszMetadata = hBand.GetMetadata_Dict("");
+				papszMetadata = hBand.GetMetadata_List("");
 				 if( bShowMetadata && papszMetadata.size() > 0 ) {
-						Enumeration keys = papszMetadata.keys();
+						Enumeration keys = papszMetadata.elements();
 						System.out.println("Metadata:");
 						while (keys.hasMoreElements()) {
-							String key = (String) keys.nextElement();
-							System.out.println("  " + key + "="
-									+ papszMetadata.get(key));
+							System.out.println("  " + (String) keys.nextElement());
 						}
 				 }
-
-/** ColorTable not supported in GDAL 1.5 and 1.6. 
-
 				if (hBand.GetRasterColorInterpretation() == gdalconstConstants.GCI_PaletteIndex
 						&& (hTable = hBand.GetRasterColorTable()) != null) {
 					int count;
@@ -376,7 +392,6 @@ public class gdalinfo {
 								+ hTable.GetColorEntry(count));
 					}
 				}
-**/
 			}
 
 			hDataset.delete();
