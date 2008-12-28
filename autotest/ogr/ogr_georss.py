@@ -415,7 +415,10 @@ def ogr_georss_10():
 
     ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/test32631.rss')
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    lyr = ds.CreateLayer('georss', srs = srs)
+    try:
+        lyr = ds.CreateLayer('georss', srs = srs)
+    except:
+        lyr = None
     gdal.PopErrorHandler()
     if lyr is not None:
         gdal.post_reason('should not have accepted EPSG:32631 with GEOM_DIALECT != GML')
@@ -494,7 +497,10 @@ def ogr_georss_12():
 
     open('tmp/broken.rss', 'wt').write('<?xml version="1.0"?><rss><item><a></item></rss>')
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    ds = ogr.Open('tmp/broken.rss')
+    try:
+        ds = ogr.Open('tmp/broken.rss')
+    except:
+        ds = None
     gdal.PopErrorHandler()
     if ds is not None:
         return 'fail'
