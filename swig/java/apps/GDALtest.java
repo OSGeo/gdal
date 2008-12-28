@@ -292,7 +292,7 @@ public class GDALtest extends JFrame implements ActionListener{
 			data_type = BufferedImage.TYPE_BYTE_INDEXED;
 			cm = poBand.GetRasterColorTable().getIndexColorModel(
 								gdal.GetDataTypeSize(buf_type));
-			img = new BufferedImage(cm, raster, true, null);
+			img = new BufferedImage(cm, raster, false, null);
 		} else {
 			ColorSpace cs = null;
 			if(bandCount > 2){
@@ -330,7 +330,12 @@ public class GDALtest extends JFrame implements ActionListener{
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		new GDALtest();
+		GDALtest test = new GDALtest();
+                if (args.length >= 1)
+                {
+                    BufferedImage tmpImage = test.openFile(new File(args[0]));
+                    test.setImage(tmpImage);
+                }
 	}
 
 }
