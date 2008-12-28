@@ -444,9 +444,7 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 // Define the ColorTable object.
 //
 //************************************************************************
-#if !defined(SWIGJAVA)
 %include "ColorTable.i"
-#endif
 
 //************************************************************************
 //
