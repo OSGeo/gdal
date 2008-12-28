@@ -50,6 +50,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
     this->bInWriteMode = bInWriteMode;
     this->bNew = bNew;
+    this->pszFilename = CPLStrdup(pszFilename);
 
     bUseCRLF = FALSE;
     bNeedRewind = FALSE;
@@ -60,6 +61,8 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
+
+    bCreateCSVT = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If this is not a new file, read ahead to establish if it is     */
@@ -233,6 +236,7 @@ OGRCSVLayer::~OGRCSVLayer()
     }
 
     poFeatureDefn->Release();
+    CPLFree(pszFilename);
     
     VSIFClose( fpCSV );
 }
@@ -434,32 +438,59 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 
 /* -------------------------------------------------------------------- */
 /*      Write field names if we haven't written them yet.               */
+/*      Write .csvt file if needed                                      */
 /* -------------------------------------------------------------------- */
     if( !bHasFieldNames )
     {
+        FILE* fpCSVT = NULL;
+        if (bCreateCSVT)
+        {
+            char* pszDirName = CPLStrdup(CPLGetDirname(pszFilename));
+            char* pszBaseName = CPLStrdup(CPLGetBasename(pszFilename));
+            fpCSVT = fopen(CPLFormFilename(pszDirName, pszBaseName, ".csvt"), "wt");
+            CPLFree(pszDirName);
+            CPLFree(pszBaseName);
+        }
+
         if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT)
         {
             VSIFPrintf( fpCSV, "%s", "WKT");
+            if (fpCSVT) VSIFPrintf( fpCSVT, "%s", "String");
             if (poFeatureDefn->GetFieldCount() > 0)
+            {
                 VSIFPrintf( fpCSV, "%s", "," );
+                if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
+            }
         }
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
         {
             VSIFPrintf( fpCSV, "%s", "X,Y,Z");
+            if (fpCSVT) VSIFPrintf( fpCSVT, "%s", "Real,Real,Real");
             if (poFeatureDefn->GetFieldCount() > 0)
+            {
                 VSIFPrintf( fpCSV, "%s", "," );
+                if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
+            }
         }
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_XY)
         {
             VSIFPrintf( fpCSV, "%s", "X,Y");
+            if (fpCSVT) VSIFPrintf( fpCSVT, "%s", "Real,Real");
             if (poFeatureDefn->GetFieldCount() > 0)
+            {
                 VSIFPrintf( fpCSV, "%s", "," );
+                if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
+            }
         }
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_YX)
         {
             VSIFPrintf( fpCSV, "%s", "Y,X");
+            if (fpCSVT) VSIFPrintf( fpCSVT, "%s", "Real,Real");
             if (poFeatureDefn->GetFieldCount() > 0)
+            {
                 VSIFPrintf( fpCSV, "%s", "," );
+                if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
+            }
         }
 
         for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
@@ -467,7 +498,10 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
             char *pszEscaped;
 
             if( iField > 0 )
+            {
                 VSIFPrintf( fpCSV, "%s", "," );
+                if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
+            }
 
             pszEscaped = 
                 CPLEscapeString( poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), 
@@ -475,10 +509,38 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 
             VSIFPrintf( fpCSV, "%s", pszEscaped );
             CPLFree( pszEscaped );
+
+            if (fpCSVT)
+            {
+                switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
+                {
+                    case OFTInteger:  VSIFPrintf( fpCSVT, "%s", "Integer"); break;
+                    case OFTReal:     VSIFPrintf( fpCSVT, "%s", "Real"); break;
+                    case OFTDate:     VSIFPrintf( fpCSVT, "%s", "Date"); break;
+                    case OFTTime:     VSIFPrintf( fpCSVT, "%s", "Time"); break;
+                    case OFTDateTime: VSIFPrintf( fpCSVT, "%s", "DateTime"); break;
+                    default:          VSIFPrintf( fpCSVT, "%s", "String"); break;
+                }
+
+                int nWidth = poFeatureDefn->GetFieldDefn(iField)->GetWidth();
+                int nPrecision = poFeatureDefn->GetFieldDefn(iField)->GetPrecision();
+                if (nWidth != 0)
+                {
+                    if (nPrecision != 0)
+                        VSIFPrintf( fpCSVT, "(%d.%d)", nWidth, nPrecision);
+                    else
+                        VSIFPrintf( fpCSVT, "(%d)", nWidth);
+                }
+            }
         }
         if( bUseCRLF )
+        {
             VSIFPutc( 13, fpCSV );
+            if (fpCSVT) VSIFPutc( 13, fpCSVT );
+        }
         VSIFPutc( '\n', fpCSV );
+        if (fpCSVT) VSIFPutc( '\n', fpCSVT );
+        if (fpCSVT) VSIFClose(fpCSVT);
 
         bHasFieldNames = TRUE;
     }
@@ -583,4 +645,13 @@ void OGRCSVLayer::SetCRLF( int bNewValue )
 void OGRCSVLayer::SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat)
 {
     this->eGeometryFormat = eGeometryFormat;
+}
+
+/************************************************************************/
+/*                          SetCreateCSVT()                             */
+/************************************************************************/
+
+void OGRCSVLayer::SetCreateCSVT(int bCreateCSVT)
+{
+    this->bCreateCSVT = bCreateCSVT;
 }
