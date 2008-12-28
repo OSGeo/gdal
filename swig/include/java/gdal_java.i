@@ -63,13 +63,13 @@
 }
 } /* extend */
 
-%typemap(javaimports) GDALColorTable %{
+%typemap(javaimports) GDALColorTableShadow %{
 /* imports for getIndexColorModel */
 import java.awt.image.IndexColorModel;
 import java.awt.Color;
 %}
 
-%typemap(javacode) GDALColorTable %{
+%typemap(javacode) GDALColorTableShadow %{
 /* convienance method */
   public IndexColorModel getIndexColorModel(int bits) {
     int size = GetCount();
@@ -85,7 +85,7 @@ import java.awt.Color;
       greens[i] = (byte)entry.getGreen();
       blues[i] = (byte)entry.getBlue();
       byte alpha = (byte)entry.getAlpha();
-      alphas[i] = (alpha != -1) ? alpha : 0;
+      alphas[i] = alpha;
     }
     return new IndexColorModel(bits, size, reds, greens, blues, alphas);
   }
