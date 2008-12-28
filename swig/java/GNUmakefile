@@ -45,11 +45,11 @@ $(JAVA_MODULES): lib%jni.so: %_wrap.o
 	$(LD) -shared $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
 
 %.o: %.cpp
-	$(CXX) -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fno-strict-aliasing -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
 
 %.o: %.cxx
-	$(CXX) -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fno-strict-aliasing -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
 
 %.o: %.c
-	$(CC) -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CC) -fno-strict-aliasing -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
 
