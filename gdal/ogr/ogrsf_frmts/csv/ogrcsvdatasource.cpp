@@ -138,6 +138,9 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         if( EQUAL(papszNames[i],".") || EQUAL(papszNames[i],"..") )
             continue;
 
+        if (EQUAL(CPLGetExtension(oSubFilename),"csvt"))
+            continue;
+
         if( VSIStatL( oSubFilename, &sStatBuf ) != 0 
             || !VSI_ISREG(sStatBuf.st_mode) 
             || !EQUAL(CPLGetExtension(oSubFilename),"csv") )
@@ -254,7 +257,7 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to create layer %s, but file %s already exists.",
-                  pszFilename );
+                  pszLayerName, pszFilename );
         return NULL;
     }
 
