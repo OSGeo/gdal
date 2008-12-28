@@ -65,6 +65,9 @@ class OGRCSVLayer : public OGRLayer
     int                 bNeedRewind;
     OGRCSVGeometryFormat eGeometryFormat;
 
+    char*               pszFilename;
+    int                 bCreateCSVT;
+
   public:
     OGRCSVLayer( const char *pszName, FILE *fp, const char *pszFilename,
                                      int bNew, int bInWriteMode );
@@ -86,6 +89,7 @@ class OGRCSVLayer : public OGRLayer
 
     void                SetCRLF(int);
     void                SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat);
+    void                SetCreateCSVT(int bCreateCSVT);
 };
 
 /************************************************************************/
