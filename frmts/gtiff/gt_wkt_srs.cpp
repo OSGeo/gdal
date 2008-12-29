@@ -1555,11 +1555,12 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         int peStrLen = strlen(pszPEString);
         if(peStrLen > 0)
         {
-            CPLString osPeStr;
-            osPeStr = "ESRI PE String = ";
-            osPeStr += pszPEString;
-            GTIFKeySet( psGTIF, PCSCitationGeoKey, TYPE_ASCII, 0, osPeStr.c_str() );
+            char *outPeStr = new char[peStrLen + strlen("ESRI PE String = ")+1];
+            strcpy(outPeStr, "ESRI PE String = "); 
+            strcat(outPeStr, pszPEString); 
+            GTIFKeySet( psGTIF, PCSCitationGeoKey, TYPE_ASCII, 0, outPeStr ); 
             peStrStored = TRUE;
+            delete[] outPeStr; 
         }
         if(pszPEString)
             CPLFree( pszPEString );
