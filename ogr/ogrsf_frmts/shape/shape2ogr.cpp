@@ -590,8 +590,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                     CPLFree( papoRings );
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "Attempt to write non-polygon (%s) geometry to "
-                              " type shapefile.",
-                              poGeom->getGeometryName() );
+                              "POLYGON type shapefile.",
+                              poGeom->getGeometryName());
 
                     return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }
@@ -630,7 +630,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-polygon (%s) geometry to "
-                      " type shapefile.",
+                      "POLYGON type shapefile.",
                       poGeom->getGeometryName() );
 
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
