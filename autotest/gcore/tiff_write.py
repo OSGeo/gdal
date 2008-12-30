@@ -1878,6 +1878,55 @@ def tiff_write_58():
 
     return 'success'
 
+###############################################################################
+# Test fix for #2759
+
+def tiff_write_59():
+    import struct
+
+    ret = 'success'
+
+    for nbands in (1,2):
+        for nbits in (1,8,9,12,16,17,24,32):
+            drv = gdal.GetDriverByName( 'GTiff' )
+    
+            if nbits <= 8:
+                gdal_type = gdal.GDT_Byte
+                ctype = 'B'
+            elif nbits <= 16:
+                gdal_type = gdal.GDT_UInt16
+                ctype = 'h'
+            else:
+                gdal_type = gdal.GDT_UInt32
+                ctype = 'i'
+    
+            ds = drv.Create("tmp/tiff_write_60.tif", 10, 10, nbands, gdal_type, options = [ 'NBITS=%d' % nbits ])
+            ds.GetRasterBand(1).Fill(1)
+    
+            ds = None
+            ds = gdal.Open("tmp/tiff_write_60.tif", gdal.GA_Update);
+    
+            data = struct.pack(ctype * 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+            ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, data)
+    
+            ds = None
+            ds = gdal.Open("tmp/tiff_write_60.tif");
+    
+            data = ds.GetRasterBand(1).ReadRaster(0, 0, 10, 1)
+    
+            # We expect zeros
+            got = struct.unpack(ctype * 10, data)
+            for i in range(len(got)):
+                if got[i] != 0:
+                    print 'nbands=%d, NBITS=%d' % (nbands, nbits)
+                    print got
+                    ret = 'fail'
+                    break
+    
+            ds = None
+            drv.Delete( 'tmp/tiff_write_60.tif' )
+
+    return ret
 
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -1943,6 +1992,7 @@ gdaltest_list = [
     tiff_write_56,
     tiff_write_57,
     tiff_write_58,
+    tiff_write_59,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
