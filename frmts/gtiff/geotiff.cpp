@@ -1440,6 +1440,10 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
+        /* Initialize to zero as we set the buffer with binary or operations */
+        if (poGDS->nBitsPerSample != 24)
+            memset(poGDS->pabyBlockBuf, 0, (nBitsPerLine / 8) * nBlockYSize);
+
         iPixel = 0;
         for( iY = 0; iY < nBlockYSize; iY++ )
         {
@@ -1591,6 +1595,9 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     {
                         if (nInWord & (1 << (poGDS->nBitsPerSample - 1 - iBit)))
                             poGDS->pabyBlockBuf[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
+                        else
+                            /* We must explictly unset the bit as we may update an existing block */
+                            poGDS->pabyBlockBuf[iBitOffset>>3] &= ~(0x80 >>(iBitOffset & 7));
                         iBitOffset++;
                     }
                 } 
@@ -2433,7 +2440,18 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, int bReadFromDisk )
             return( CE_Failure );
         }
     }
-    
+
+/* -------------------------------------------------------------------- */
+/*  When called from ::IWriteBlock in separate cases (or in single band */
+/*  geotiffs), the ::IWriteBlock will override the content of the buffer*/
+/*  with pImage, so we don't need to read data from disk                */
+/* -------------------------------------------------------------------- */
+    if( !bReadFromDisk )
+    {
+        nLoadedBlock = nBlockId;
+        return CE_None;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      The bottom most partial tiles and strips are sometimes only     */
 /*      partially encoded.  This code reduces the requested data so     */
@@ -2458,12 +2476,6 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, int bReadFromDisk )
     if( !IsBlockAvailable( nBlockId ) )
     {
         memset( pabyBlockBuf, 0, nBlockBufSize );
-        nLoadedBlock = nBlockId;
-        return CE_None;
-    }
-
-    if( !bReadFromDisk )
-    {
         nLoadedBlock = nBlockId;
         return CE_None;
     }
