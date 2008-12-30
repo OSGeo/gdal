@@ -1886,9 +1886,9 @@ def tiff_write_59():
 
     ret = 'success'
 
+    drv = gdal.GetDriverByName( 'GTiff' )
     for nbands in (1,2):
         for nbits in (1,8,9,12,16,17,24,32):
-            drv = gdal.GetDriverByName( 'GTiff' )
     
             if nbits <= 8:
                 gdal_type = gdal.GDT_Byte
@@ -1900,17 +1900,17 @@ def tiff_write_59():
                 gdal_type = gdal.GDT_UInt32
                 ctype = 'i'
     
-            ds = drv.Create("tmp/tiff_write_60.tif", 10, 10, nbands, gdal_type, options = [ 'NBITS=%d' % nbits ])
+            ds = drv.Create("tmp/tiff_write_59.tif", 10, 10, nbands, gdal_type, options = [ 'NBITS=%d' % nbits ])
             ds.GetRasterBand(1).Fill(1)
     
             ds = None
-            ds = gdal.Open("tmp/tiff_write_60.tif", gdal.GA_Update);
+            ds = gdal.Open("tmp/tiff_write_59.tif", gdal.GA_Update);
     
             data = struct.pack(ctype * 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
             ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, data)
     
             ds = None
-            ds = gdal.Open("tmp/tiff_write_60.tif");
+            ds = gdal.Open("tmp/tiff_write_59.tif");
     
             data = ds.GetRasterBand(1).ReadRaster(0, 0, 10, 1)
     
@@ -1924,9 +1924,56 @@ def tiff_write_59():
                     break
     
             ds = None
-            drv.Delete( 'tmp/tiff_write_60.tif' )
+            drv.Delete( 'tmp/tiff_write_59.tif' )
 
     return ret
+
+###############################################################################
+# Test fix for #2760
+
+def tiff_write_60():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    tuples = [ ('TFW=YES', 'tmp/tiff_write_60.tfw'),
+               ('WORLDFILE=YES', 'tmp/tiff_write_60.wld') ]
+
+    for tuple in tuples:
+        # Create case
+        ds = drv.Create('tmp/tiff_write_60.tif', 10, 10, options = [ tuple[0], 'PROFILE=BASELINE' ])
+        gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0 )
+        ds.SetGeoTransform(gt)
+        ds = None
+    
+        ds = gdal.Open('tmp/tiff_write_60.tif')
+        if ds.GetGeoTransform() != gt:
+            print 'case1'
+            print ds.GetGeoTransform()
+            return 'fail'
+    
+        ds = None
+        drv.Delete( 'tmp/tiff_write_60.tif' )
+        os.remove( tuple[1] )
+    
+        # CreateCopy case
+        src_ds = gdal.Open('data/byte.tif')
+        ds = drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options = [ tuple[0], 'PROFILE=BASELINE' ])
+        gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0 )
+        ds.SetGeoTransform(gt)
+        ds = None
+    
+        ds = gdal.Open('tmp/tiff_write_60.tif')
+        if ds.GetGeoTransform() != gt:
+            print 'case2'
+            print ds.GetGeoTransform()
+            return 'fail'
+    
+        ds = None
+        drv.Delete( 'tmp/tiff_write_60.tif' )
+        os.remove( tuple[1] )
+
+
+    return 'success'
 
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -1993,6 +2040,7 @@ gdaltest_list = [
     tiff_write_57,
     tiff_write_58,
     tiff_write_59,
+    tiff_write_60,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
