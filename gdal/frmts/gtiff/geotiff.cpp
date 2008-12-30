@@ -3083,11 +3083,10 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	}
 
         // Do we need a world file?
-        if( CSLFetchBoolean( papszCreationOptions, "TFW", FALSE ) 
-            || CSLFetchBoolean( papszCreationOptions, "WORLDFILE", FALSE ) )
-        {
+        if( CSLFetchBoolean( papszCreationOptions, "TFW", FALSE ) )
             GDALWriteWorldFile( osFilename, "tfw", adfGeoTransform );
-        }
+        else if( CSLFetchBoolean( papszCreationOptions, "WORLDFILE", FALSE ) )
+            GDALWriteWorldFile( osFilename, "wld", adfGeoTransform );
     }
     else if( GetGCPCount() > 0 )
     {
@@ -5465,6 +5464,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->bNewDataset = TRUE;
     poDS->bCrystalized = FALSE;
     poDS->nSamplesPerPixel = (uint16) nBands;
+    poDS->osFilename = pszFilename;
 
     TIFFGetField( hTIFF, TIFFTAG_SAMPLEFORMAT, &(poDS->nSampleFormat) );
     TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(poDS->nPlanarConfig) );
@@ -6000,6 +6000,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     poDS->osProfile = pszProfile;
     poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    poDS->papszCreationOptions = CSLDuplicate( papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      CloneInfo() doesn't merge metadata, it just replaces it totally */
