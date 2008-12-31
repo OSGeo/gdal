@@ -62,6 +62,7 @@ INST_BIN	=	@bindir@
 INST_PYMOD      =       @pymoddir@
 INST_DOCS	=	@exec_prefix@/doc
 INST_MAN	=	@mandir@
+INST_HTML	=	$(HOME)/www/gdal
 
 CPPFLAGS	= @CPPFLAGS@ -I$(GDAL_ROOT)/port @EXTRA_INCLUDES@
 CFLAGS		= @CFLAGS@ @C_WFLAGS@ $(USER_DEFS)
