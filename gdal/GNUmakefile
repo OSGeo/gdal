@@ -1,6 +1,4 @@
 
-WEB_DIR		= $(HOME)/www/gdal
-
 include GDALmake.opt
 
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
@@ -160,7 +158,8 @@ install-man:
 	for f in $(wildcard man/man1/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
 
 web-update:	docs
-	cp html/*.* $(WEB_DIR)
+	cp html/*.* $(INST_HTML)
+	(cd ogr; make web-update)
 
 install:	default install-actions
 
