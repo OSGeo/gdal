@@ -55,8 +55,6 @@ CPL_C_END
 const char      *pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
-static const char szWGS84[] = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]";
-
 /************************************************************************/
 /* ==================================================================== */
 /*  List of HDF-EOS Swath product types.                                */
@@ -1682,7 +1680,7 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
 /* -------------------------------------------------------------------- */
     CPLString  osWrk;
     
-    SetMetadataItem( "SRS", szWGS84, "GEOLOCATION" );
+    SetMetadataItem( "SRS", SRS_WKT_WGS84, "GEOLOCATION" );
     
     osWrk.Printf( "HDF4_SDS:UNKNOWN:\"%s\":%d", 
                   pszFilename, iXIndex );
@@ -2142,7 +2140,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         // MODIS L1B
         else if ( eProduct == PROD_MODIS_L1B )
         {
-            pszGCPProjection = CPLStrdup( szWGS84 );
+            pszGCPProjection = CPLStrdup( SRS_WKT_WGS84 );
         }
     }
 
