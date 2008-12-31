@@ -401,90 +401,91 @@ int DGifGetLine(GifFileType *GifFile, GifPixelType *Line, int LineLen)
     if (!LineLen) LineLen = GifFile->Image.Width;
 
 #if defined(__MSDOS__) || defined(__GNUC__)
-    if ((Private->PixelCount -= LineLen) > 0xffff0000UL) {
+    if ((Private->PixelCount -= LineLen) > 0xffff0000UL) 
 #else
-    if ((Private->PixelCount -= LineLen) > 0xffff0000) {
+    if ((Private->PixelCount -= LineLen) > 0xffff0000) 
 #endif /* __MSDOS__ */
-	_GifError = D_GIF_ERR_DATA_TOO_BIG;
-	return GIF_ERROR;
+    {
+        _GifError = D_GIF_ERR_DATA_TOO_BIG;
+        return GIF_ERROR;
     }
 
     if (DGifDecompressLine(GifFile, Line, LineLen) == GIF_OK) {
-	if (Private->PixelCount == 0) {
-	    /* We probably would not be called any more, so lets clean 	     */
-	    /* everything before we return: need to flush out all rest of    */
-	    /* image until empty block (size 0) detected. We use GetCodeNext.*/
-	    do if (DGifGetCodeNext(GifFile, &Dummy) == GIF_ERROR)
-		return GIF_ERROR;
-	    while (Dummy != NULL);
-	}
-	return GIF_OK;
+        if (Private->PixelCount == 0) {
+            /* We probably would not be called any more, so lets clean 	     */
+            /* everything before we return: need to flush out all rest of    */
+            /* image until empty block (size 0) detected. We use GetCodeNext.*/
+            do if (DGifGetCodeNext(GifFile, &Dummy) == GIF_ERROR)
+                   return GIF_ERROR;
+            while (Dummy != NULL);
+        }
+        return GIF_OK;
     }
     else
-	return GIF_ERROR;
+        return GIF_ERROR;
 }
 
 /******************************************************************************
-* Put one pixel (Pixel) into GIF file.					      *
-******************************************************************************/
+ * Put one pixel (Pixel) into GIF file.					      *
+ ******************************************************************************/
 int DGifGetPixel(GifFileType *GifFile, GifPixelType Pixel)
 {
     GifByteType *Dummy;
     GifFilePrivateType *Private = (GifFilePrivateType *) GifFile->Private;
 
     if (!IS_READABLE(Private)) {
-	/* This file was NOT open for reading: */
-	_GifError = D_GIF_ERR_NOT_READABLE;
-	return GIF_ERROR;
+        /* This file was NOT open for reading: */
+        _GifError = D_GIF_ERR_NOT_READABLE;
+        return GIF_ERROR;
     }
 
 #if defined(__MSDOS__) || defined(__GNUC__)
     if (--Private->PixelCount > 0xffff0000UL)
 #else
-    if (--Private->PixelCount > 0xffff0000)
+        if (--Private->PixelCount > 0xffff0000)
 #endif /* __MSDOS__ */
-    {
-	_GifError = D_GIF_ERR_DATA_TOO_BIG;
-	return GIF_ERROR;
-    }
+        {
+            _GifError = D_GIF_ERR_DATA_TOO_BIG;
+            return GIF_ERROR;
+        }
 
     if (DGifDecompressLine(GifFile, &Pixel, 1) == GIF_OK) {
-	if (Private->PixelCount == 0) {
-	    /* We probably would not be called any more, so lets clean 	     */
-	    /* everything before we return: need to flush out all rest of    */
-	    /* image until empty block (size 0) detected. We use GetCodeNext.*/
-	    do if (DGifGetCodeNext(GifFile, &Dummy) == GIF_ERROR)
-		return GIF_ERROR;
-	    while (Dummy != NULL);
-	}
-	return GIF_OK;
+        if (Private->PixelCount == 0) {
+            /* We probably would not be called any more, so lets clean 	     */
+            /* everything before we return: need to flush out all rest of    */
+            /* image until empty block (size 0) detected. We use GetCodeNext.*/
+            do if (DGifGetCodeNext(GifFile, &Dummy) == GIF_ERROR)
+                   return GIF_ERROR;
+            while (Dummy != NULL);
+        }
+        return GIF_OK;
     }
     else
-	return GIF_ERROR;
+        return GIF_ERROR;
 }
 
 /******************************************************************************
-*   Get an extension block (see GIF manual) from gif file. This routine only  *
-* returns the first data block, and DGifGetExtensionNext shouldbe called      *
-* after this one until NULL extension is returned.			      *
-*   The Extension should NOT be freed by the user (not dynamically allocated).*
-*   Note it is assumed the Extension desc. header ('!') has been read.	      *
-******************************************************************************/
+ *   Get an extension block (see GIF manual) from gif file. This routine only  *
+ * returns the first data block, and DGifGetExtensionNext shouldbe called      *
+ * after this one until NULL extension is returned.			      *
+ *   The Extension should NOT be freed by the user (not dynamically allocated).*
+ *   Note it is assumed the Extension desc. header ('!') has been read.	      *
+ ******************************************************************************/
 int DGifGetExtension(GifFileType *GifFile, int *ExtCode,
-						    GifByteType **Extension)
+                     GifByteType **Extension)
 {
     GifByteType Buf;
     GifFilePrivateType *Private = (GifFilePrivateType *) GifFile->Private;
 
     if (!IS_READABLE(Private)) {
-	/* This file was NOT open for reading: */
-	_GifError = D_GIF_ERR_NOT_READABLE;
-	return GIF_ERROR;
+        /* This file was NOT open for reading: */
+        _GifError = D_GIF_ERR_NOT_READABLE;
+        return GIF_ERROR;
     }
 
     if (READ(GifFile,&Buf, 1) != 1) {
-	_GifError = D_GIF_ERR_READ_FAILED;
-	return GIF_ERROR;
+        _GifError = D_GIF_ERR_READ_FAILED;
+        return GIF_ERROR;
     }
     *ExtCode = Buf;
 
@@ -492,36 +493,36 @@ int DGifGetExtension(GifFileType *GifFile, int *ExtCode,
 }
 
 /******************************************************************************
-*   Get a following extension block (see GIF manual) from gif file. This      *
-* routine sould be called until NULL Extension is returned.		      *
-*   The Extension should NOT be freed by the user (not dynamically allocated).*
-******************************************************************************/
+ *   Get a following extension block (see GIF manual) from gif file. This      *
+ * routine sould be called until NULL Extension is returned.		      *
+ *   The Extension should NOT be freed by the user (not dynamically allocated).*
+ ******************************************************************************/
 int DGifGetExtensionNext(GifFileType *GifFile, GifByteType **Extension)
 {
     GifByteType Buf;
     GifFilePrivateType *Private = (GifFilePrivateType *) GifFile->Private;
 
     if (READ(GifFile,&Buf, 1) != 1) {
-	_GifError = D_GIF_ERR_READ_FAILED;
-	return GIF_ERROR;
+        _GifError = D_GIF_ERR_READ_FAILED;
+        return GIF_ERROR;
     }
     if (Buf > 0) {
-	*Extension = Private->Buf;           /* Use private unused buffer. */
-	(*Extension)[0] = Buf;  /* Pascal strings notation (pos. 0 is len.). */
-	if (READ(GifFile,&((*Extension)[1]), Buf) != Buf) {
-	    _GifError = D_GIF_ERR_READ_FAILED;
-	    return GIF_ERROR;
-	}
+        *Extension = Private->Buf;           /* Use private unused buffer. */
+        (*Extension)[0] = Buf;  /* Pascal strings notation (pos. 0 is len.). */
+        if (READ(GifFile,&((*Extension)[1]), Buf) != Buf) {
+            _GifError = D_GIF_ERR_READ_FAILED;
+            return GIF_ERROR;
+        }
     }
     else
-	*Extension = NULL;
+        *Extension = NULL;
 
     return GIF_OK;
 }
 
 /******************************************************************************
-*   This routine should be called last, to close the GIF file.		      *
-******************************************************************************/
+ *   This routine should be called last, to close the GIF file.		      *
+ ******************************************************************************/
 int DGifCloseFile(GifFileType *GifFile)
 {
     GifFilePrivateType *Private;
@@ -532,40 +533,40 @@ int DGifCloseFile(GifFileType *GifFile)
     Private = (GifFilePrivateType *) GifFile->Private;
 
     if (!IS_READABLE(Private)) {
-	/* This file was NOT open for reading: */
-	_GifError = D_GIF_ERR_NOT_READABLE;
-	return GIF_ERROR;
+        /* This file was NOT open for reading: */
+        _GifError = D_GIF_ERR_NOT_READABLE;
+        return GIF_ERROR;
     }
 
     File = Private->File;
 
     if (GifFile->Image.ColorMap)
-	FreeMapObject(GifFile->Image.ColorMap);
+        FreeMapObject(GifFile->Image.ColorMap);
     if (GifFile->SColorMap)
-	FreeMapObject(GifFile->SColorMap);
+        FreeMapObject(GifFile->SColorMap);
     if (Private)
-	free((char *) Private);
+        free((char *) Private);
     if (GifFile->SavedImages)
-	FreeSavedImages(GifFile);
+        FreeSavedImages(GifFile);
     free(GifFile);
 
     if ( File && (fclose(File) != 0)) {
-	  _GifError = D_GIF_ERR_CLOSE_FAILED;
-	  return GIF_ERROR;
+        _GifError = D_GIF_ERR_CLOSE_FAILED;
+        return GIF_ERROR;
     }
     return GIF_OK;
 }
 
 /******************************************************************************
-*   Get 2 bytes (word) from the given file:				      *
-******************************************************************************/
+ *   Get 2 bytes (word) from the given file:				      *
+ ******************************************************************************/
 static int DGifGetWord(GifFileType *GifFile, int *Word)
 {
     unsigned char c[2];
 
     if (READ(GifFile,c, 2) != 2) {
-	_GifError = D_GIF_ERR_READ_FAILED;
-	return GIF_ERROR;
+        _GifError = D_GIF_ERR_READ_FAILED;
+        return GIF_ERROR;
     }
 
     *Word = (((unsigned int) c[1]) << 8) + c[0];
@@ -573,20 +574,20 @@ static int DGifGetWord(GifFileType *GifFile, int *Word)
 }
 
 /******************************************************************************
-*   Get the image code in compressed form.  his routine can be called if the  *
-* information needed to be piped out as is. Obviously this is much faster     *
-* than decoding and encoding again. This routine should be followed by calls  *
-* to DGifGetCodeNext, until NULL block is returned.			      *
-*   The block should NOT be freed by the user (not dynamically allocated).    *
-******************************************************************************/
+ *   Get the image code in compressed form.  his routine can be called if the  *
+ * information needed to be piped out as is. Obviously this is much faster     *
+ * than decoding and encoding again. This routine should be followed by calls  *
+ * to DGifGetCodeNext, until NULL block is returned.			      *
+ *   The block should NOT be freed by the user (not dynamically allocated).    *
+ ******************************************************************************/
 int DGifGetCode(GifFileType *GifFile, int *CodeSize, GifByteType **CodeBlock)
 {
     GifFilePrivateType *Private = (GifFilePrivateType *) GifFile->Private;
 
     if (!IS_READABLE(Private)) {
-	/* This file was NOT open for reading: */
-	_GifError = D_GIF_ERR_NOT_READABLE;
-	return GIF_ERROR;
+        /* This file was NOT open for reading: */
+        _GifError = D_GIF_ERR_NOT_READABLE;
+        return GIF_ERROR;
     }
 
     *CodeSize = Private->BitsPerPixel;
@@ -595,40 +596,40 @@ int DGifGetCode(GifFileType *GifFile, int *CodeSize, GifByteType **CodeBlock)
 }
 
 /******************************************************************************
-*   Continue to get the image code in compressed form. This routine should be *
-* called until NULL block is returned.					      *
-*   The block should NOT be freed by the user (not dynamically allocated).    *
-******************************************************************************/
+ *   Continue to get the image code in compressed form. This routine should be *
+ * called until NULL block is returned.					      *
+ *   The block should NOT be freed by the user (not dynamically allocated).    *
+ ******************************************************************************/
 int DGifGetCodeNext(GifFileType *GifFile, GifByteType **CodeBlock)
 {
     GifByteType Buf;
     GifFilePrivateType *Private = (GifFilePrivateType *) GifFile->Private;
 
     if (READ(GifFile,&Buf, 1) != 1) {
-	_GifError = D_GIF_ERR_READ_FAILED;
-	return GIF_ERROR;
+        _GifError = D_GIF_ERR_READ_FAILED;
+        return GIF_ERROR;
     }
 
     if (Buf > 0) {
-	*CodeBlock = Private->Buf;	       /* Use private unused buffer. */
-	(*CodeBlock)[0] = Buf;  /* Pascal strings notation (pos. 0 is len.). */
-	if (READ(GifFile,&((*CodeBlock)[1]), Buf) != Buf) {
-	    _GifError = D_GIF_ERR_READ_FAILED;
-	    return GIF_ERROR;
-	}
+        *CodeBlock = Private->Buf;	       /* Use private unused buffer. */
+        (*CodeBlock)[0] = Buf;  /* Pascal strings notation (pos. 0 is len.). */
+        if (READ(GifFile,&((*CodeBlock)[1]), Buf) != Buf) {
+            _GifError = D_GIF_ERR_READ_FAILED;
+            return GIF_ERROR;
+        }
     }
     else {
-	*CodeBlock = NULL;
-	Private->Buf[0] = 0;		   /* Make sure the buffer is empty! */
-	Private->PixelCount = 0;   /* And local info. indicate image read. */
+        *CodeBlock = NULL;
+        Private->Buf[0] = 0;		   /* Make sure the buffer is empty! */
+        Private->PixelCount = 0;   /* And local info. indicate image read. */
     }
 
     return GIF_OK;
 }
 
 /******************************************************************************
-*   Setup the LZ decompression for this image:				      *
-******************************************************************************/
+ *   Setup the LZ decompression for this image:				      *
+ ******************************************************************************/
 static int DGifSetupDecompress(GifFileType *GifFile)
 {
     int i, BitsPerPixel;
@@ -658,13 +659,13 @@ static int DGifSetupDecompress(GifFileType *GifFile)
 }
 
 /******************************************************************************
-*   The LZ decompression routine:					      *
-*   This version decompress the given gif file into Line of length LineLen.   *
-*   This routine can be called few times (one per scan line, for example), in *
-* order the complete the whole image.					      *
-******************************************************************************/
+ *   The LZ decompression routine:					      *
+ *   This version decompress the given gif file into Line of length LineLen.   *
+ *   This routine can be called few times (one per scan line, for example), in *
+ * order the complete the whole image.					      *
+ ******************************************************************************/
 static int DGifDecompressLine(GifFileType *GifFile, GifPixelType *Line,
-								int LineLen)
+                              int LineLen)
 {
     int i = 0, j, CrntCode, EOFCode, ClearCode, CrntPrefix, LastCode, StackPtr;
     GifByteType *Stack, *Suffix;
@@ -680,105 +681,105 @@ static int DGifDecompressLine(GifFileType *GifFile, GifPixelType *Line,
     LastCode = Private->LastCode;
 
     if (StackPtr != 0) {
-	/* Let pop the stack off before continueing to read the gif file: */
-	while (StackPtr != 0 && i < LineLen) Line[i++] = Stack[--StackPtr];
+        /* Let pop the stack off before continueing to read the gif file: */
+        while (StackPtr != 0 && i < LineLen) Line[i++] = Stack[--StackPtr];
     }
 
     while (i < LineLen) {			    /* Decode LineLen items. */
-	if (DGifDecompressInput(GifFile, &CrntCode) == GIF_ERROR)
-    	    return GIF_ERROR;
+        if (DGifDecompressInput(GifFile, &CrntCode) == GIF_ERROR)
+            return GIF_ERROR;
 
-	if (CrntCode == EOFCode) {
-	    /* Note however that usually we will not be here as we will stop */
-	    /* decoding as soon as we got all the pixel, or EOF code will    */
-	    /* not be read at all, and DGifGetLine/Pixel clean everything.   */
-	    if (i != LineLen - 1 || Private->PixelCount != 0) {
-		_GifError = D_GIF_ERR_EOF_TOO_SOON;
-		return GIF_ERROR;
-	    }
-	    i++;
-	}
-	else if (CrntCode == ClearCode) {
-	    /* We need to start over again: */
-	    for (j = 0; j <= LZ_MAX_CODE; j++) Prefix[j] = NO_SUCH_CODE;
-	    Private->RunningCode = Private->EOFCode + 1;
-	    Private->RunningBits = Private->BitsPerPixel + 1;
-	    Private->MaxCode1 = 1 << Private->RunningBits;
-	    LastCode = Private->LastCode = NO_SUCH_CODE;
-	}
-	else {
-	    /* Its regular code - if in pixel range simply add it to output  */
-	    /* stream, otherwise trace to codes linked list until the prefix */
-	    /* is in pixel range:					     */
-	    if (CrntCode < ClearCode) {
-		/* This is simple - its pixel scalar, so add it to output:   */
-		Line[i++] = CrntCode;
-	    }
-	    else {
-		/* Its a code to needed to be traced: trace the linked list  */
-		/* until the prefix is a pixel, while pushing the suffix     */
-		/* pixels on our stack. If we done, pop the stack in reverse */
-		/* (thats what stack is good for!) order to output.	     */
-		if (Prefix[CrntCode] == NO_SUCH_CODE) {
-		    /* Only allowed if CrntCode is exactly the running code: */
-		    /* In that case CrntCode = XXXCode, CrntCode or the	     */
-		    /* prefix code is last code and the suffix char is	     */
-		    /* exactly the prefix of last code!			     */
-		    if (CrntCode == Private->RunningCode - 2) {
-			CrntPrefix = LastCode;
-			Suffix[Private->RunningCode - 2] =
-			Stack[StackPtr++] = DGifGetPrefixChar(Prefix,
-							LastCode, ClearCode);
-		    }
-		    else {
-			_GifError = D_GIF_ERR_IMAGE_DEFECT;
-			return GIF_ERROR;
-		    }
-		}
-		else
-		    CrntPrefix = CrntCode;
+        if (CrntCode == EOFCode) {
+            /* Note however that usually we will not be here as we will stop */
+            /* decoding as soon as we got all the pixel, or EOF code will    */
+            /* not be read at all, and DGifGetLine/Pixel clean everything.   */
+            if (i != LineLen - 1 || Private->PixelCount != 0) {
+                _GifError = D_GIF_ERR_EOF_TOO_SOON;
+                return GIF_ERROR;
+            }
+            i++;
+        }
+        else if (CrntCode == ClearCode) {
+            /* We need to start over again: */
+            for (j = 0; j <= LZ_MAX_CODE; j++) Prefix[j] = NO_SUCH_CODE;
+            Private->RunningCode = Private->EOFCode + 1;
+            Private->RunningBits = Private->BitsPerPixel + 1;
+            Private->MaxCode1 = 1 << Private->RunningBits;
+            LastCode = Private->LastCode = NO_SUCH_CODE;
+        }
+        else {
+            /* Its regular code - if in pixel range simply add it to output  */
+            /* stream, otherwise trace to codes linked list until the prefix */
+            /* is in pixel range:					     */
+            if (CrntCode < ClearCode) {
+                /* This is simple - its pixel scalar, so add it to output:   */
+                Line[i++] = CrntCode;
+            }
+            else {
+                /* Its a code to needed to be traced: trace the linked list  */
+                /* until the prefix is a pixel, while pushing the suffix     */
+                /* pixels on our stack. If we done, pop the stack in reverse */
+                /* (thats what stack is good for!) order to output.	     */
+                if (Prefix[CrntCode] == NO_SUCH_CODE) {
+                    /* Only allowed if CrntCode is exactly the running code: */
+                    /* In that case CrntCode = XXXCode, CrntCode or the	     */
+                    /* prefix code is last code and the suffix char is	     */
+                    /* exactly the prefix of last code!			     */
+                    if (CrntCode == Private->RunningCode - 2) {
+                        CrntPrefix = LastCode;
+                        Suffix[Private->RunningCode - 2] =
+                            Stack[StackPtr++] = DGifGetPrefixChar(Prefix,
+                                                                  LastCode, ClearCode);
+                    }
+                    else {
+                        _GifError = D_GIF_ERR_IMAGE_DEFECT;
+                        return GIF_ERROR;
+                    }
+                }
+                else
+                    CrntPrefix = CrntCode;
 
-		/* Now (if image is O.K.) we should not get an NO_SUCH_CODE  */
-		/* During the trace. As we might loop forever, in case of    */
-		/* defective image, we count the number of loops we trace    */
-		/* and stop if we got LZ_MAX_CODE. obviously we can not      */
-		/* loop more than that.					     */
-		j = 0;
-		while (j++ <= LZ_MAX_CODE &&
-		       CrntPrefix > ClearCode &&
-		       CrntPrefix <= LZ_MAX_CODE) {
-		    Stack[StackPtr++] = Suffix[CrntPrefix];
-		    CrntPrefix = Prefix[CrntPrefix];
-		}
-		if (j >= LZ_MAX_CODE || CrntPrefix > LZ_MAX_CODE) {
-		    _GifError = D_GIF_ERR_IMAGE_DEFECT;
-		    return GIF_ERROR;
-		}
-		/* Push the last character on stack: */
-		Stack[StackPtr++] = CrntPrefix;
+                /* Now (if image is O.K.) we should not get an NO_SUCH_CODE  */
+                /* During the trace. As we might loop forever, in case of    */
+                /* defective image, we count the number of loops we trace    */
+                /* and stop if we got LZ_MAX_CODE. obviously we can not      */
+                /* loop more than that.					     */
+                j = 0;
+                while (j++ <= LZ_MAX_CODE &&
+                       CrntPrefix > ClearCode &&
+                       CrntPrefix <= LZ_MAX_CODE) {
+                    Stack[StackPtr++] = Suffix[CrntPrefix];
+                    CrntPrefix = Prefix[CrntPrefix];
+                }
+                if (j >= LZ_MAX_CODE || CrntPrefix > LZ_MAX_CODE) {
+                    _GifError = D_GIF_ERR_IMAGE_DEFECT;
+                    return GIF_ERROR;
+                }
+                /* Push the last character on stack: */
+                Stack[StackPtr++] = CrntPrefix;
 
-		/* Now lets pop all the stack into output: */
-		while (StackPtr != 0 && i < LineLen)
-		    Line[i++] = Stack[--StackPtr];
-	    }
-	    if (LastCode != NO_SUCH_CODE) {
-		Prefix[Private->RunningCode - 2] = LastCode;
+                /* Now lets pop all the stack into output: */
+                while (StackPtr != 0 && i < LineLen)
+                    Line[i++] = Stack[--StackPtr];
+            }
+            if (LastCode != NO_SUCH_CODE) {
+                Prefix[Private->RunningCode - 2] = LastCode;
 
-		if (CrntCode == Private->RunningCode - 2) {
-		    /* Only allowed if CrntCode is exactly the running code: */
-		    /* In that case CrntCode = XXXCode, CrntCode or the	     */
-		    /* prefix code is last code and the suffix char is	     */
-		    /* exactly the prefix of last code!			     */
-		    Suffix[Private->RunningCode - 2] =
-			DGifGetPrefixChar(Prefix, LastCode, ClearCode);
-		}
-		else {
-		    Suffix[Private->RunningCode - 2] =
-			DGifGetPrefixChar(Prefix, CrntCode, ClearCode);
-		}
-	    }
-	    LastCode = CrntCode;
-	}
+                if (CrntCode == Private->RunningCode - 2) {
+                    /* Only allowed if CrntCode is exactly the running code: */
+                    /* In that case CrntCode = XXXCode, CrntCode or the	     */
+                    /* prefix code is last code and the suffix char is	     */
+                    /* exactly the prefix of last code!			     */
+                    Suffix[Private->RunningCode - 2] =
+                        DGifGetPrefixChar(Prefix, LastCode, ClearCode);
+                }
+                else {
+                    Suffix[Private->RunningCode - 2] =
+                        DGifGetPrefixChar(Prefix, CrntCode, ClearCode);
+                }
+            }
+            LastCode = CrntCode;
+        }
     }
 
     Private->LastCode = LastCode;
@@ -788,11 +789,11 @@ static int DGifDecompressLine(GifFileType *GifFile, GifPixelType *Line,
 }
 
 /******************************************************************************
-* Routine to trace the Prefixes linked list until we get a prefix which is    *
-* not code, but a pixel value (less than ClearCode). Returns that pixel value.*
-* If image is defective, we might loop here forever, so we limit the loops to *
-* the maximum possible if image O.k. - LZ_MAX_CODE times.		      *
-******************************************************************************/
+ * Routine to trace the Prefixes linked list until we get a prefix which is    *
+ * not code, but a pixel value (less than ClearCode). Returns that pixel value.*
+ * If image is defective, we might loop here forever, so we limit the loops to *
+ * the maximum possible if image O.k. - LZ_MAX_CODE times.		      *
+ ******************************************************************************/
 static int DGifGetPrefixChar(unsigned int *Prefix, int Code, int ClearCode)
 {
     int i = 0;
@@ -802,68 +803,68 @@ static int DGifGetPrefixChar(unsigned int *Prefix, int Code, int ClearCode)
 }
 
 /******************************************************************************
-*   Interface for accessing the LZ codes directly. Set Code to the real code  *
-* (12bits), or to -1 if EOF code is returned.				      *
-******************************************************************************/
+ *   Interface for accessing the LZ codes directly. Set Code to the real code  *
+ * (12bits), or to -1 if EOF code is returned.				      *
+ ******************************************************************************/
 int DGifGetLZCodes(GifFileType *GifFile, int *Code)
 {
     GifByteType *CodeBlock;
     GifFilePrivateType *Private = (GifFilePrivateType *) GifFile->Private;
 
     if (!IS_READABLE(Private)) {
-	/* This file was NOT open for reading: */
-	_GifError = D_GIF_ERR_NOT_READABLE;
-	return GIF_ERROR;
+        /* This file was NOT open for reading: */
+        _GifError = D_GIF_ERR_NOT_READABLE;
+        return GIF_ERROR;
     }
 
     if (DGifDecompressInput(GifFile, Code) == GIF_ERROR)
-	return GIF_ERROR;
+        return GIF_ERROR;
 
     if (*Code == Private->EOFCode) {
-	/* Skip rest of codes (hopefully only NULL terminating block): */
-	do if (DGifGetCodeNext(GifFile, &CodeBlock) == GIF_ERROR)
-    	    return GIF_ERROR;
-	while (CodeBlock != NULL);
+        /* Skip rest of codes (hopefully only NULL terminating block): */
+        do if (DGifGetCodeNext(GifFile, &CodeBlock) == GIF_ERROR)
+               return GIF_ERROR;
+        while (CodeBlock != NULL);
 
-	*Code = -1;
+        *Code = -1;
     }
     else if (*Code == Private->ClearCode) {
-	/* We need to start over again: */
-	Private->RunningCode = Private->EOFCode + 1;
-	Private->RunningBits = Private->BitsPerPixel + 1;
-	Private->MaxCode1 = 1 << Private->RunningBits;
+        /* We need to start over again: */
+        Private->RunningCode = Private->EOFCode + 1;
+        Private->RunningBits = Private->BitsPerPixel + 1;
+        Private->MaxCode1 = 1 << Private->RunningBits;
     }
 
     return GIF_OK;
 }
 
 /******************************************************************************
-*   The LZ decompression input routine:					      *
-*   This routine is responsable for the decompression of the bit stream from  *
-* 8 bits (bytes) packets, into the real codes.				      *
-*   Returns GIF_OK if read succesfully.					      *
-******************************************************************************/
+ *   The LZ decompression input routine:					      *
+ *   This routine is responsable for the decompression of the bit stream from  *
+ * 8 bits (bytes) packets, into the real codes.				      *
+ *   Returns GIF_OK if read succesfully.					      *
+ ******************************************************************************/
 static int DGifDecompressInput(GifFileType *GifFile, int *Code)
 {
     GifFilePrivateType *Private = (GifFilePrivateType *)GifFile->Private;
 
     GifByteType NextByte;
     static unsigned int CodeMasks[] = {
-	0x0000, 0x0001, 0x0003, 0x0007,
-	0x000f, 0x001f, 0x003f, 0x007f,
-	0x00ff, 0x01ff, 0x03ff, 0x07ff,
-	0x0fff
+        0x0000, 0x0001, 0x0003, 0x0007,
+        0x000f, 0x001f, 0x003f, 0x007f,
+        0x00ff, 0x01ff, 0x03ff, 0x07ff,
+        0x0fff
     };
 
     while (Private->CrntShiftState < Private->RunningBits) {
-	/* Needs to get more bytes from input stream for next code: */
-	if (DGifBufferedInput(GifFile, Private->Buf, &NextByte)
-	    == GIF_ERROR) {
-	    return GIF_ERROR;
-	}
-	Private->CrntShiftDWord |=
-		((unsigned long) NextByte) << Private->CrntShiftState;
-	Private->CrntShiftState += 8;
+        /* Needs to get more bytes from input stream for next code: */
+        if (DGifBufferedInput(GifFile, Private->Buf, &NextByte)
+            == GIF_ERROR) {
+            return GIF_ERROR;
+        }
+        Private->CrntShiftDWord |=
+            ((unsigned long) NextByte) << Private->CrntShiftState;
+        Private->CrntShiftState += 8;
     }
     *Code = Private->CrntShiftDWord & CodeMasks[Private->RunningBits];
 
@@ -873,51 +874,51 @@ static int DGifDecompressInput(GifFileType *GifFile, int *Code)
     /* If code cannt fit into RunningBits bits, must raise its size. Note */
     /* however that codes above 4095 are used for special signaling.      */
     if (++Private->RunningCode > Private->MaxCode1 &&
-	Private->RunningBits < LZ_BITS) {
-	Private->MaxCode1 <<= 1;
-	Private->RunningBits++;
+        Private->RunningBits < LZ_BITS) {
+        Private->MaxCode1 <<= 1;
+        Private->RunningBits++;
     }
     return GIF_OK;
 }
 
 /******************************************************************************
-*   This routines read one gif data block at a time and buffers it internally *
-* so that the decompression routine could access it.			      *
-*   The routine returns the next byte from its internal buffer (or read next  *
-* block in if buffer empty) and returns GIF_OK if succesful.		      *
-******************************************************************************/
+ *   This routines read one gif data block at a time and buffers it internally *
+ * so that the decompression routine could access it.			      *
+ *   The routine returns the next byte from its internal buffer (or read next  *
+ * block in if buffer empty) and returns GIF_OK if succesful.		      *
+ ******************************************************************************/
 static int DGifBufferedInput(GifFileType *GifFile, GifByteType *Buf,
-						      GifByteType *NextByte)
+                             GifByteType *NextByte)
 {
     if (Buf[0] == 0) {
-	/* Needs to read the next buffer - this one is empty: */
-	if (READ(GifFile, Buf, 1) != 1)
-	{
-	    _GifError = D_GIF_ERR_READ_FAILED;
-	    return GIF_ERROR;
-	}
-	if (READ(GifFile,&Buf[1], Buf[0]) != Buf[0])
-	{
-	    _GifError = D_GIF_ERR_READ_FAILED;
-	    return GIF_ERROR;
-	}
-	*NextByte = Buf[1];
-	Buf[1] = 2;	   /* We use now the second place as last char read! */
-	Buf[0]--;
+        /* Needs to read the next buffer - this one is empty: */
+        if (READ(GifFile, Buf, 1) != 1)
+        {
+            _GifError = D_GIF_ERR_READ_FAILED;
+            return GIF_ERROR;
+        }
+        if (READ(GifFile,&Buf[1], Buf[0]) != Buf[0])
+        {
+            _GifError = D_GIF_ERR_READ_FAILED;
+            return GIF_ERROR;
+        }
+        *NextByte = Buf[1];
+        Buf[1] = 2;	   /* We use now the second place as last char read! */
+        Buf[0]--;
     }
     else {
-	*NextByte = Buf[Buf[1]++];
-	Buf[0]--;
+        *NextByte = Buf[Buf[1]++];
+        Buf[0]--;
     }
 
     return GIF_OK;
 }
 
 /******************************************************************************
-* This routine reads an entire GIF into core, hanging all its state info off  *
-* the GifFileType pointer.  Call DGifOpenFileName() or DGifOpenFileHandle()   *
-* first to initialize I/O.  Its inverse is EGifSpew().			      *
-* 
+ * This routine reads an entire GIF into core, hanging all its state info off  *
+ * the GifFileType pointer.  Call DGifOpenFileName() or DGifOpenFileHandle()   *
+ * first to initialize I/O.  Its inverse is EGifSpew().			      *
+ * 
  ******************************************************************************/
 int DGifSlurp(GifFileType *GifFile)
 {
@@ -931,71 +932,71 @@ int DGifSlurp(GifFileType *GifFile)
     temp_save.ExtensionBlockCount=0;
   
     do {
-	if (DGifGetRecordType(GifFile, &RecordType) == GIF_ERROR)
-	    return(GIF_ERROR);
+        if (DGifGetRecordType(GifFile, &RecordType) == GIF_ERROR)
+            return(GIF_ERROR);
 
-	switch (RecordType) {
-	    case IMAGE_DESC_RECORD_TYPE:
-		if (DGifGetImageDesc(GifFile) == GIF_ERROR)
-		    return(GIF_ERROR);
+        switch (RecordType) {
+          case IMAGE_DESC_RECORD_TYPE:
+            if (DGifGetImageDesc(GifFile) == GIF_ERROR)
+                return(GIF_ERROR);
 
-		sp = &GifFile->SavedImages[GifFile->ImageCount-1];
-                if( (double) sp->ImageDesc.Width 
-                    * (double) sp->ImageDesc.Height > 100000000.0 )
-                {
-                    /* for GDAL we prefer to not process very large images. */
-                    /* http://trac.osgeo.org/gdal/ticket/2542 */
-                    return D_GIF_ERR_DATA_TOO_BIG;
-                }
+            sp = &GifFile->SavedImages[GifFile->ImageCount-1];
+            if( (double) sp->ImageDesc.Width 
+                * (double) sp->ImageDesc.Height > 100000000.0 )
+            {
+                /* for GDAL we prefer to not process very large images. */
+                /* http://trac.osgeo.org/gdal/ticket/2542 */
+                return D_GIF_ERR_DATA_TOO_BIG;
+            }
 
-		ImageSize = sp->ImageDesc.Width * sp->ImageDesc.Height;
+            ImageSize = sp->ImageDesc.Width * sp->ImageDesc.Height;
 
-		sp->RasterBits
-		    = (GifPixelType*) malloc(ImageSize * sizeof(GifPixelType));
+            sp->RasterBits
+                = (GifPixelType*) malloc(ImageSize * sizeof(GifPixelType));
 
-		if (DGifGetLine(GifFile, sp->RasterBits, ImageSize)
-		    == GIF_ERROR)
-		    return(GIF_ERROR);
+            if (DGifGetLine(GifFile, sp->RasterBits, ImageSize)
+                == GIF_ERROR)
+                return(GIF_ERROR);
 
-        if (temp_save.ExtensionBlocks) {
-            sp->ExtensionBlocks = temp_save.ExtensionBlocks;
-            sp->ExtensionBlockCount = temp_save.ExtensionBlockCount;
+            if (temp_save.ExtensionBlocks) {
+                sp->ExtensionBlocks = temp_save.ExtensionBlocks;
+                sp->ExtensionBlockCount = temp_save.ExtensionBlockCount;
 
-            temp_save.ExtensionBlocks = NULL;
-            temp_save.ExtensionBlockCount=0;
+                temp_save.ExtensionBlocks = NULL;
+                temp_save.ExtensionBlockCount=0;
 
-        /* FIXME: The following is wrong.  It is left in only for backwards
-         * compatibility.  Someday it should go away.  Use the
-         * sp->ExtensionBlocks->Function variable instead.
-         */
-            sp->Function = sp->ExtensionBlocks[0].Function;
+                /* FIXME: The following is wrong.  It is left in only for backwards
+                 * compatibility.  Someday it should go away.  Use the
+                 * sp->ExtensionBlocks->Function variable instead.
+                 */
+                sp->Function = sp->ExtensionBlocks[0].Function;
 
+            }
+
+            break;
+
+          case EXTENSION_RECORD_TYPE:
+            if (DGifGetExtension(GifFile,&temp_save.Function,&ExtData)==GIF_ERROR)
+                return(GIF_ERROR);
+            while (ExtData != NULL) {
+            
+                /* Create an extension block with our data */
+                if (AddExtensionBlock(&temp_save, ExtData[0], &ExtData[1])
+                    == GIF_ERROR)
+                    return (GIF_ERROR); 
+            
+                if (DGifGetExtensionNext(GifFile, &ExtData) == GIF_ERROR)
+                    return(GIF_ERROR);
+                temp_save.Function = 0;
+            }
+            break;
+
+          case TERMINATE_RECORD_TYPE:
+            break;
+
+          default:	/* Should be trapped by DGifGetRecordType */
+            break;
         }
-
-		break;
-
-	    case EXTENSION_RECORD_TYPE:
-		if (DGifGetExtension(GifFile,&temp_save.Function,&ExtData)==GIF_ERROR)
-		    return(GIF_ERROR);
-		while (ExtData != NULL) {
-            
-            /* Create an extension block with our data */
-            if (AddExtensionBlock(&temp_save, ExtData[0], &ExtData[1])
-               == GIF_ERROR)
-                return (GIF_ERROR); 
-            
-		    if (DGifGetExtensionNext(GifFile, &ExtData) == GIF_ERROR)
-			    return(GIF_ERROR);
-            temp_save.Function = 0;
-		}
-		break;
-
-	    case TERMINATE_RECORD_TYPE:
-		break;
-
-	    default:	/* Should be trapped by DGifGetRecordType */
-		break;
-	}
     } while (RecordType != TERMINATE_RECORD_TYPE);
 
     /* Just in case the Gif has an extension block without an associated
