@@ -42,7 +42,7 @@ typedef void OGRGeometryShadow;
 /*                            TermProgress()                            */
 /************************************************************************/
 
-#ifndef SWIGCSHARP
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %rename (TermProgress_nocb) GDALTermProgress_nocb;
 %feature( "kwargs" ) GDALTermProgress_nocb;
 %inline %{
