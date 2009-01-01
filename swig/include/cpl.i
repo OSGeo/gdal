@@ -136,7 +136,12 @@ void CPLFinderClean();
 
 const char * CPLFindFile( const char *, const char * );
 
+#if defined(SWIGPYTHON)
+%apply (char **out_ppsz_and_free) {char **};
+#else
+/* FIXME: wrong typemap. VSIReadDir() return should be CSLDestroy'ed */
 %apply (char **options) {char **};
+#endif
 char **VSIReadDir( const char * );
 %clear char **;
 
