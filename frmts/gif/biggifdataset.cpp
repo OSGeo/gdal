@@ -94,8 +94,6 @@ class BIGGifRasterBand : public GDALPamRasterBand
     
     GDALColorTable *poColorTable;
 
-    int		nTransparentColor;
-
   public:
 
                    BIGGifRasterBand( BIGGIFDataset *, int );
@@ -103,7 +101,6 @@ class BIGGifRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
@@ -163,11 +160,7 @@ BIGGifRasterBand::BIGGifRasterBand( BIGGIFDataset *poDS, int nBackground )
         oEntry.c1 = psGifCT->Colors[iColor].Red;
         oEntry.c2 = psGifCT->Colors[iColor].Green;
         oEntry.c3 = psGifCT->Colors[iColor].Blue;
-
-        if( iColor == nTransparentColor )
-            oEntry.c4 = 0;
-        else
-            oEntry.c4 = 255;
+        oEntry.c4 = 255;
 
         poColorTable->SetColorEntry( iColor, &oEntry );
     }
@@ -221,7 +214,7 @@ CPLErr BIGGifRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poGDS->poWorkDS != NULL && nBlockYOff <= poGDS->nLastLineRead )
     {
         return poGDS->poWorkDS->
-            RasterIO( GF_Read, 0, poGDS->nLastLineRead, nBlockXSize, 1, 
+            RasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
                       pImage, nBlockXSize, 1, GDT_Byte, 
                       1, NULL, 0, 0, 0 );
     }
@@ -280,19 +273,6 @@ GDALColorTable *BIGGifRasterBand::GetColorTable()
 
 {
     return poColorTable;
-}
-
-/************************************************************************/
-/*                           GetNoDataValue()                           */
-/************************************************************************/
-
-double BIGGifRasterBand::GetNoDataValue( int *pbSuccess )
-
-{
-    if( pbSuccess != NULL )
-        *pbSuccess = nTransparentColor != -1;
-
-    return nTransparentColor;
 }
 
 /************************************************************************/
