@@ -136,7 +136,7 @@ void CPLFinderClean();
 
 const char * CPLFindFile( const char *, const char * );
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined (SWIGJAVA)
 %apply (char **out_ppsz_and_free) {char **};
 #else
 /* FIXME: wrong typemap. VSIReadDir() return should be CSLDestroy'ed */

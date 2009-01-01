@@ -522,7 +522,35 @@ OGRErrMessages( int rc ) {
     return $jnicall;
   }
 
+/* Almost same as %typemap(out) char **options */
+/* but we CSLDestroy the char** pointer at the end */
+%typemap(out) char **out_ppsz_and_free
+{
+  /* %typemap(out) char ** -> ( string ) */
+  char **stringarray = $1;
+  const jclass vector = jenv->FindClass("java/util/Vector");
+  const jmethodID constructor = jenv->GetMethodID(vector, "<init>", "()V");
+  const jmethodID add = jenv->GetMethodID(vector, "add", "(Ljava/lang/Object;)Z");
 
+  $result = jenv->NewObject(vector, constructor);
+  if ( stringarray != NULL ) {
+    while(*stringarray != NULL) {
+      /*printf("working on string %s\n", *stringarray);*/
+      jstring value = (jstring)jenv->NewStringUTF(*stringarray);
+      jenv->CallBooleanMethod($result, add, value);
+      stringarray++;
+    }
+  }
+  CSLDestroy($1);
+}
+
+%typemap(jni) (char **out_ppsz_and_free) "jobject"
+%typemap(jtype) (char **out_ppsz_and_free) "java.util.Vector"
+%typemap(jstype) (char **out_ppsz_and_free) "java.util.Vector"
+%typemap(javain) (char **out_ppsz_and_free) "$javainput"
+%typemap(javaout) (char **out_ppsz_and_free) {
+    return $jnicall;
+  }
 
 %define OPTIONAL_POD(type,argstring)
 %typemap(in) (type *optional_##type)
@@ -706,22 +734,23 @@ OPTIONAL_POD(int,i);
   }
 
 
-
-
-%typemap(in) void * {
-  /* %typemap(in) void * */
-  $1 = jenv->GetDirectBufferAddress($input);
+%typemap(in) (void * nioBuffer, long nioBufferSize) 
+{
+    if ($input == 0)
+    {
+        SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null array");
+        return $null;
+    }
+    $1 = jenv->GetDirectBufferAddress($input);
+    $2 = jenv->GetDirectBufferCapacity($input);
 }
 
+
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
-%typemap(jni) void * "jobject"
-%typemap(jtype) void * "java.nio.ByteBuffer"
-%typemap(jstype) void * "java.nio.ByteBuffer"
-%typemap(javain) void * "$javainput"
-%typemap(javaout) void * {
+%typemap(jni) (void * nioBuffer, long nioBufferSize)  "jobject"
+%typemap(jtype) (void * nioBuffer, long nioBufferSize)  "java.nio.ByteBuffer"
+%typemap(jstype) (void * nioBuffer, long nioBufferSize)  "java.nio.ByteBuffer"
+%typemap(javain) (void * nioBuffer, long nioBufferSize)  "$javainput"
+%typemap(javaout) (void * nioBuffer, long nioBufferSize) {
     return $jnicall;
   }
-  
-  
-  
-
