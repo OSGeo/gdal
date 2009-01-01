@@ -46,6 +46,11 @@ def gif_1():
         gdaltest.post_reason( 'GIF driver not found!' )
         return 'false'
     
+    # Move the BIGGIF driver after the GIF driver.
+    drv = gdal.GetDriverByName( 'BIGGIF' )
+    drv.Deregister();
+    drv.Register()
+    
     drv_md = gdaltest.gif_drv.GetMetadata()
     if drv_md['DMD_MIMETYPE'] != 'image/gif':
         gdaltest.post_reason( 'mime type is wrong' )
@@ -150,6 +155,20 @@ def gif_6():
 
 
 ###############################################################################
+# Confirm reading with the BIGGIF driver.
+
+def gif_7():
+
+    # Move the GIF driver after the BIGGIF driver.
+    drv = gdal.GetDriverByName( 'GIF' )
+    drv.Deregister();
+    drv.Register()
+    
+    tst = gdaltest.GDALTest( 'GIF', 'bug407.gif', 1, 57921 )
+    
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup.
 
 def gif_cleanup():
@@ -163,6 +182,7 @@ gdaltest_list = [
     gif_4,
     gif_5,
     gif_6,
+    gif_7,
     gif_cleanup ]
 
 if __name__ == '__main__':
