@@ -375,6 +375,8 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         PyObject *nm = PyString_FromString( keyptr );
         PyObject *val = PyString_FromString( valptr );
         PyDict_SetItem($result, nm, val );
+        Py_DECREF(nm);
+        Py_DECREF(val);
         CPLFree( keyptr );
       }
       stringarray++;
@@ -483,6 +485,28 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     }
   }
 }
+
+/* Almost same as %typemap(out) char **options */
+/* but we CSLDestroy the char** pointer at the end */
+%typemap(out) char **out_ppsz_and_free
+{
+  /* %typemap(out) char **options -> ( string ) */
+  char **stringarray = $1;
+  if ( stringarray == NULL ) {
+    $result = Py_None;
+    Py_INCREF( $result );
+  }
+  else {
+    int len = CSLCount( stringarray );
+    $result = PyList_New( len );
+    for ( int i = 0; i < len; ++i ) {
+      PyObject *o = PyString_FromString( stringarray[i] );
+      PyList_SetItem($result, i, o );
+    }
+  }
+  CSLDestroy($1);
+}
+
 
 /*
  * Typemaps map mutable char ** arguments from PyStrings.  Does not

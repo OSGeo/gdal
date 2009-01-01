@@ -187,7 +187,12 @@ public:
       return GDALCreateDatasetMaskBand( self, nFlags );
   }
 
+#if defined(SWIGPYTHON)
+%apply (char **out_ppsz_and_free) {char **};
+#else
+/* FIXME: wrong typemap. GetFileList() return should be CSLDestroy'ed */
 %apply (char **options) {char **};
+#endif
   char **GetFileList() {
     return GDALGetFileList( self );
   }
