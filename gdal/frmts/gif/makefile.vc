@@ -1,6 +1,6 @@
 
 OBJ	=	\
-	gifdataset.obj
+	gifdataset.obj biggifdataset.obj
 
 GDAL_ROOT	=	..\..
 

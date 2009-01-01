@@ -392,11 +392,14 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
         DGifCloseFile(hGifFile);
 
         if( nGifErr == D_GIF_ERR_DATA_TOO_BIG )
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+        {
+            CPLDebug( "GIF",
                       "DGifSlurp() failed for %s because it was too large.\n"
                       "Due to limitations of the GDAL GIF driver we deliberately avoid\n"
                       "opening large GIF files (larger than 100 megapixels).",
                       poOpenInfo->pszFilename );
+            return NULL;
+        }
         else
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "DGifSlurp() failed for %s.\n"
