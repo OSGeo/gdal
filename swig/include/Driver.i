@@ -34,6 +34,7 @@
 *
 *************************************************************************/
 
+%include constraints.i
 
 %rename (Driver) GDALDriverShadow;
 
@@ -49,6 +50,8 @@ public:
   char const *LongName;
   char const *HelpTopic;
 %mutable;
+
+%apply Pointer NONNULL { const char *, GDALDatasetShadow*  };
 
 %newobject Create;
 %feature( "kwargs" ) Create;
@@ -103,6 +106,7 @@ public:
   void Deregister() {
     GDALDeregisterDriver( self );
   }
+%clear const char *, GDALDatasetShadow* ;
 
 }
 };
