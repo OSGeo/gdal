@@ -187,7 +187,7 @@ public:
       return GDALCreateDatasetMaskBand( self, nFlags );
   }
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined (SWIGJAVA)
 %apply (char **out_ppsz_and_free) {char **};
 #else
 /* FIXME: wrong typemap. GetFileList() return should be CSLDestroy'ed */

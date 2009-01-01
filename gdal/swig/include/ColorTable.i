@@ -74,10 +74,12 @@ public:
     GDALColorEntry* GetColorEntry (int entry) {
         return (GDALColorEntry*) GDALGetColorEntry(self, entry);
     }
-    
+
+#if !defined(SWIGJAVA)
     int GetColorEntryAsRGB(int entry, GDALColorEntry* centry) {
         return GDALGetColorEntryAsRGB(self, entry, centry);
     }
+#endif
 
     void SetColorEntry( int entry, const GDALColorEntry* centry) {
         GDALSetColorEntry(self, entry, centry);
