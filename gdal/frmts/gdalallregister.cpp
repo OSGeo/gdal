@@ -154,6 +154,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_gif
     GDALRegister_GIF();
+    GDALRegister_BIGGIF();
 #endif
 
 #ifdef FRMT_envisat
