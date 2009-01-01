@@ -375,6 +375,8 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         PyObject *nm = PyString_FromString( keyptr );
         PyObject *val = PyString_FromString( valptr );
         PyDict_SetItem($result, nm, val );
+        Py_DECREF(nm);
+        Py_DECREF(val);
         CPLFree( keyptr );
       }
       stringarray++;
