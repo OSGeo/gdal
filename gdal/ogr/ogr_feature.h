@@ -32,6 +32,7 @@
 
 #include "ogr_geometry.h"
 #include "ogr_featurestyle.h"
+#include "cpl_atomic_ops.h"
 
 /**
  * \file ogr_feature.h
@@ -112,7 +113,7 @@ class CPL_DLL OGRFieldDefn
 class CPL_DLL OGRFeatureDefn
 {
   private:
-    int         nRefCount;
+    volatile int nRefCount;
     
     int         nFieldCount;
     OGRFieldDefn **papoFieldDefn;
@@ -138,8 +139,8 @@ class CPL_DLL OGRFeatureDefn
 
     OGRFeatureDefn *Clone();
 
-    int         Reference() { return ++nRefCount; }
-    int         Dereference() { return --nRefCount; }
+    int         Reference() { return CPLAtomicInc(&nRefCount); }
+    int         Dereference() { return CPLAtomicDec(&nRefCount); }
     int         GetReferenceCount() { return nRefCount; }
     void        Release();
 
