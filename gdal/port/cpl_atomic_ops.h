@@ -58,7 +58,7 @@ CPL_C_START
   * @param increment the amount to add to the pointed integer
   * @return the pointed value AFTER the result of the addition
   */
-int CPLAtomicAdd(volatile int* ptr, int increment);
+int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
 
 /** Increment of 1 the pointed integer in a thread and SMP-safe way
   * and return the resulting value of the operation.
