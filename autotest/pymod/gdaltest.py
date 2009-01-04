@@ -912,6 +912,25 @@ def download_file(url, filename, download_size = -1):
             count_skipped_tests = count_skipped_tests + 1
             return False
 
+
+###############################################################################
+# GDAL data type to python struct format
+def gdal_data_type_to_python_struct_format(datatype):
+    type_char = 'B'
+    if datatype == gdal.GDT_Int16:
+        type_char = 'h'
+    elif datatype == gdal.GDT_UInt16:
+        type_char = 'H'
+    elif datatype == gdal.GDT_Int32:
+        type_char = 'i'
+    elif datatype == gdal.GDT_UInt32:
+        type_char = 'I'
+    elif datatype == gdal.GDT_Float32:
+        type_char = 'f'
+    elif datatype == gdal.GDT_Float64:
+        type_char = 'd'
+    return type_char
+
 ###############################################################################
 # Compare the values of the pixels
 
@@ -921,15 +940,17 @@ def compare_ds(ds1, ds2):
     width = ds1.RasterXSize
     height = ds1.RasterYSize
     data1 = ds1.GetRasterBand(1).ReadRaster(0, 0, width, height)
-    byte_array1 = struct.unpack('B' * width * height, data1)
+    type_char = gdal_data_type_to_python_struct_format(ds1.GetRasterBand(1).DataType)
+    val_array1 = struct.unpack(type_char * width * height, data1)
 
     data2 = ds2.GetRasterBand(1).ReadRaster(0, 0, width, height)
-    byte_array2 = struct.unpack('B' * width * height, data2)
+    type_char = gdal_data_type_to_python_struct_format(ds2.GetRasterBand(1).DataType)
+    val_array2 = struct.unpack(type_char * width * height, data2)
 
     maxdiff = 0
     ndiffs = 0
     for i in range(width*height):
-        diff = byte_array1[i] - byte_array2[i]
+        diff = val_array1[i] - val_array2[i]
         if diff != 0:
             ndiffs = ndiffs + 1
             if abs(diff) > maxdiff:
