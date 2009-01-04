@@ -253,8 +253,8 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
     }
     // FIXME: Figure out optimal block size!
     // Should the block size be fixed or determined dynamically?
-    nBlockXSize = 256;
-    nBlockYSize = 256;
+    nBlockXSize = MIN(256, poDS->nRasterXSize);
+    nBlockYSize = MIN(256, poDS->nRasterYSize);
     psMatrix = jas_matrix_create(nBlockYSize, nBlockXSize);
 }
 
@@ -292,12 +292,29 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     // Now we can calculate the pixel offset of the top left by multiplying
     // block offset with the block size.
+
+    /* In case the dimensions of the image are not multiple of the block dimensions */
+    /* take care of not requesting more pixels than available for the blocks at the */
+    /* right or bottom of the image */
+    int nWidthToRead = MIN(nBlockXSize, poGDS->nRasterXSize - nBlockXOff * nBlockXSize);
+    int nHeightToRead = MIN(nBlockYSize, poGDS->nRasterYSize - nBlockYOff * nBlockYSize);
+
     jas_image_readcmpt( poGDS->psImage, nBand - 1,
                         nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-                        nBlockXSize, nBlockYSize, psMatrix );
+                        nWidthToRead, nHeightToRead, psMatrix );
 
-    for( i = 0; i < jas_matrix_numrows(psMatrix); i++ )
-        for( j = 0; j < jas_matrix_numcols(psMatrix); j++ )
+    int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
+    int nLineSize = nBlockXSize * nWordSize;
+    GByte* ptr = (GByte*)pImage;
+
+    /* Pad incomplete blocks at the right or bottom of the image */
+    if (nWidthToRead != nBlockXSize || nHeightToRead != nBlockYSize)
+        memset(pImage, 0, nLineSize * nBlockYSize);
+
+    for( i = 0; i < nHeightToRead; i++, ptr += nLineSize )
+    {
+        for( j = 0; j < nWidthToRead; j++ )
+        {
             // XXX: We need casting because matrix element always
             // has 32 bit depth in JasPer
             // FIXME: what about float values?
@@ -305,46 +322,33 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 case GDT_Int16:
                 {
-                    GInt16* ptr = (GInt16*)pImage;
-                    *ptr = (GInt16)jas_matrix_get(psMatrix, i, j);
-                    ptr++;
-                    pImage = ptr;
+                    ((GInt16*)ptr)[j] = (GInt16)jas_matrix_get(psMatrix, i, j);
                 }
                 break;
                 case GDT_Int32:
                 {
-                    GInt32* ptr = (GInt32*)pImage;
-                    *ptr = (GInt32)jas_matrix_get(psMatrix, i, j);
-                    ptr++;
-                    pImage = ptr;
+                    ((GInt32*)ptr)[j] = (GInt32)jas_matrix_get(psMatrix, i, j);
                 }
                 break;
                 case GDT_UInt16:
                 {
-                    GUInt16* ptr = (GUInt16*)pImage;
-                    *ptr = (GUInt16)jas_matrix_get(psMatrix, i, j);
-                    ptr++;
-                    pImage = ptr;
+                    ((GUInt16*)ptr)[j] = (GUInt16)jas_matrix_get(psMatrix, i, j);
                 }
                 break;
                 case GDT_UInt32:
                 {
-                    GUInt32* ptr = (GUInt32*)pImage;
-                    *ptr = (GUInt32)jas_matrix_get(psMatrix, i, j);
-                    ptr++;
-                    pImage = ptr;
+                    ((GUInt32*)ptr)[j] = (GUInt32)jas_matrix_get(psMatrix, i, j);
                 }
                 break;
                 case GDT_Byte:
                 default:
                 {
-                    GByte* ptr = (GByte*)pImage;
-                    *ptr = (GByte)jas_matrix_get(psMatrix, i, j);
-                    ptr++;
-                    pImage = ptr;
+                    ((GByte*)ptr)[j] = (GByte)jas_matrix_get(psMatrix, i, j);
                 }
                 break;
             }
+        }
+    }
 
     return CE_None;
 }
