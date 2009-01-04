@@ -43,6 +43,10 @@ import gdaltest
 
 def ecw_1():
 
+    gdaltest.jp2kak_drv = None
+    gdaltest.jpeg2000_drv = None
+    gdaltest.jp2mrsid_drv = None
+
     try:
         gdaltest.ecw_drv = gdal.GetDriverByName( 'ECW' )
         gdaltest.jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
@@ -51,15 +55,29 @@ def ecw_1():
         gdaltest.jp2ecw_drv = None
         return 'skip'
 
+    # Deregister other potential conflicting JPEG2000 drivers that will
+    # be re-registered in the cleanup
     try:
-        gdaltest.jp2kak = None
-        gdaltest.jpeg2000 = None
         if gdal.GetDriverByName( 'JP2KAK' ):
-            gdaltest.jp2kak = gdal.GetDriverByName('JP2KAK')
-            gdaltest.jp2kak.Deregister()
+            print 'Deregistering JP2KAK'
+            gdaltest.jp2kak_drv = gdal.GetDriverByName('JP2KAK')
+            gdaltest.jp2kak_drv.Deregister()
+    except:
+        pass
+
+    try: 
         if gdal.GetDriverByName( 'JPEG2000' ):
-            gdaltest.jpeg2000 = gdal.GetDriverByName('JPEG2000')
-            gdaltest.jpeg2000.Deregister()
+            print 'Deregistering JPEG2000'
+            gdaltest.jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
+            gdaltest.jpeg2000_drv.Deregister()
+    except:
+        pass
+
+    try:
+        if gdal.GetDriverByName( 'JP2MrSID' ):
+            print 'Deregistering JP2MrSID'
+            gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
+            gdaltest.jp2mrsid_drv.Deregister()
     except:
         pass
 
@@ -458,6 +476,177 @@ def ecw_15():
     ds = None
 
     return 'success'
+		
+###############################################################################
+# Open byte.jp2
+
+def ecw_16():
+
+    if gdaltest.jp2ecw_drv is None:
+	return 'skip'
+
+    srs = """PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.9786982138982,
+                AUTHORITY["EPSG","7008"]],
+            AUTHORITY["EPSG","6267"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4267"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AUTHORITY["EPSG","26711"]]
+"""  
+    gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+    
+    tst = gdaltest.GDALTest( 'JP2ECW', 'byte.jp2', 1, 50054 )
+    return tst.testOpen( check_prj = srs, check_gt = gt )
+
+###############################################################################
+# Open int16.jp2
+
+def ecw_17():
+
+    if gdaltest.jp2ecw_drv is None:
+	return 'skip'
+
+    ds = gdal.Open( 'data/int16.jp2' )
+    ds_ref = gdal.Open( 'data/int16.tif' )
+    
+    maxdiff = gdaltest.compare_ds(ds, ds_ref)
+    print ds.GetRasterBand(1).Checksum()
+    print ds_ref.GetRasterBand(1).Checksum()
+
+    ds = None
+    ds_ref = None
+    
+    # Quite a bit of difference...
+    if maxdiff > 6:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ecw_online_1():
+    if gdaltest.jp2ecw_drv is None:
+	return 'skip'
+    
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
+        return 'skip'
+
+    # checksum = 32316 on my PC
+    tst = gdaltest.GDALTest( 'JP2ECW', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute = 1 )
+
+    if tst.testOpen() != 'success':
+        return 'fail'
+
+    ds = gdal.Open('tmp/cache/7sisters200.j2k')
+    ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    return 'success'
+
+###############################################################################
+def ecw_online_2():
+    if gdaltest.jp2ecw_drv is None:
+	return 'skip'
+    
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
+        return 'skip'
+
+    # checksum = 1292 on my PC
+    tst = gdaltest.GDALTest( 'JP2ECW', 'tmp/cache/gcp.jp2', 1, None, filename_absolute = 1 )
+
+    if tst.testOpen() != 'success':
+        return 'fail'
+
+    ds = gdal.Open('tmp/cache/gcp.jp2')
+    ds.GetRasterBand(1).Checksum()
+    if len(ds.GetGCPs()) != 15:
+        gdaltest.post_reason('bad number of GCP')
+        return 'fail'
+
+    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235629972,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
+    if ds.GetGCPProjection() != expected_wkt:
+        gdaltest.post_reason('bad GCP projection')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+def ecw_online_3():
+    if gdaltest.jp2ecw_drv is None:
+	return 'skip'
+
+    if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
+        return 'skip'
+    if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.bmp', 'Bretagne1.bmp'):
+        return 'skip'
+
+    # checksum = 16481 on my PC
+    tst = gdaltest.GDALTest( 'JP2ECW', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute = 1 )
+
+    if tst.testOpen() != 'success':
+        return 'fail'
+
+    ds = gdal.Open('tmp/cache/Bretagne1.j2k')
+    ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref)
+    print ds.GetRasterBand(1).Checksum()
+    print ds_ref.GetRasterBand(1).Checksum()
+
+    ds = None
+    ds_ref = None
+
+    # Difference between the image before and after compression
+    if maxdiff > 16:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ecw_online_4():
+
+    if gdaltest.jp2ecw_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.j2k', 'Bretagne2.j2k'):
+        return 'skip'
+    if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
+        return 'skip'
+
+    # Checksum = 53054 on my PC
+    tst = gdaltest.GDALTest( 'JP2ECW', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1 )
+
+    if tst.testOpen() != 'success':
+        return 'fail'
+
+    ds = gdal.Open('tmp/cache/Bretagne2.j2k')
+    ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, width = 256, height = 256)
+    print ds.GetRasterBand(1).Checksum()
+    print ds_ref.GetRasterBand(1).Checksum()
+
+    ds = None
+    ds_ref = None
+
+    # Difference between the image before and after compression
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 def ecw_cleanup():
@@ -465,12 +654,20 @@ def ecw_cleanup():
     #gdaltest.clean_tmp()
 
     try:
-        gdaltest.jp2kak.Register()
+        gdaltest.jp2kak_drv.Register()
+        print 'Registering JP2KAK'
     except:
         pass
     
     try:
-        gdaltest.jpeg2000.Register()
+        gdaltest.jpeg2000_drv.Register()
+        print 'Registering JPEG2000'
+    except:
+        pass
+    
+    try:
+        gdaltest.jp2mrsid_drv.Register()
+        print 'Registering JP2MrSID'
     except:
         pass
     
@@ -492,6 +689,12 @@ gdaltest_list = [
     ecw_13,
     ecw_14,
     ecw_15,
+    ecw_16,
+    ecw_17,
+    ecw_online_1,
+    ecw_online_2,
+    ecw_online_3,
+    ecw_online_4,
     ecw_cleanup ]
 
 if __name__ == '__main__':
