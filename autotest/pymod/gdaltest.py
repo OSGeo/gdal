@@ -41,6 +41,7 @@ cur_name = 'default'
 
 success_counter = 0
 failure_counter = 0
+expected_failure_counter = 0
 blow_counter = 0
 skip_counter = 0
 failure_summary = []
@@ -61,7 +62,7 @@ def setup_run( name ):
 ###############################################################################
 
 def run_tests( test_list ):
-    global success_counter, failure_counter, blow_counter, skip_counter
+    global success_counter, failure_counter, expected_failure_counter, blow_counter, skip_counter
     global reason, failure_summary, cur_name
 
     had_errors_this_script = 0
@@ -113,6 +114,8 @@ def run_tests( test_list ):
 
         if result == 'success':
             success_counter = success_counter + 1
+        elif result == 'expected_fail':
+            expected_failure_counter = expected_failure_counter + 1
         elif result == 'fail':
             failure_counter = failure_counter + 1
         elif result == 'skip':
@@ -140,6 +143,7 @@ def summarize():
     print 'Failed:    %d (%d blew exceptions)' \
           % (failure_counter+blow_counter, blow_counter)
     print 'Skipped:   %d' % skip_counter
+    print 'Expected fail:%d' % expected_failure_counter
     if count_skipped_tests != 0:
         print 'As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests
     print
@@ -934,16 +938,18 @@ def gdal_data_type_to_python_struct_format(datatype):
 ###############################################################################
 # Compare the values of the pixels
 
-def compare_ds(ds1, ds2):
+def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0):
     import struct
 
-    width = ds1.RasterXSize
-    height = ds1.RasterYSize
-    data1 = ds1.GetRasterBand(1).ReadRaster(0, 0, width, height)
+    if width == 0:
+        width = ds1.RasterXSize
+    if height == 0:
+        height = ds1.RasterYSize
+    data1 = ds1.GetRasterBand(1).ReadRaster(xoff, yoff, width, height)
     type_char = gdal_data_type_to_python_struct_format(ds1.GetRasterBand(1).DataType)
     val_array1 = struct.unpack(type_char * width * height, data1)
 
-    data2 = ds2.GetRasterBand(1).ReadRaster(0, 0, width, height)
+    data2 = ds2.GetRasterBand(1).ReadRaster(xoff, yoff, width, height)
     type_char = gdal_data_type_to_python_struct_format(ds2.GetRasterBand(1).DataType)
     val_array2 = struct.unpack(type_char * width * height, data2)
 
