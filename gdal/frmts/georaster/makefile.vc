@@ -29,4 +29,4 @@ clean:
 plugin:	gdal_GEOR.dll
 
 gdal_GEOR.dll: $(OBJ)
-	link /nologo /dll /debug /out:gdal_GEOR.dll $(OBJ) $(GDALLIB) $(OCI_LIB)
+	link /dll $(LDEBUG) /out:gdal_GEOR.dll $(OBJ) $(GDALLIB) $(OCI_LIB) ..\zlib\*.obj
