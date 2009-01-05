@@ -1598,7 +1598,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
         oCodeStream.map_region( 0, dims, dims_roi );
         oCodeStream.apply_input_restrictions( nBandCount, component_indices, 
                                               nDiscardLevels, 0, &dims_roi,
-                                              KDU_WANT_CODESTREAM_COMPONENTS);
+                                              KDU_WANT_OUTPUT_COMPONENTS);
 
 /* -------------------------------------------------------------------- */
 /*      Special case where the data is being requested exactly at       */
