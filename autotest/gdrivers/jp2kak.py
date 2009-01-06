@@ -215,6 +215,46 @@ def jp2kak_8():
                                new_filename = '/vsimem/jp2kak_8.jpc' )
     
 ###############################################################################
+# Test checksum values for a YCbCr color model file.
+#
+
+def jp2kak_9():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+    
+    tst = gdaltest.GDALTest( 'JP2KAK', 'rgbwcmyk01_YeGeo_kakadu.jp2', 2, 32141 )
+    return tst.testOpen()
+    
+###############################################################################
+# Confirm that we can also read this file using the DirectRasterIO()
+# function and get appropriate values.
+#
+
+def jp2kak_10():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/rgbwcmyk01_YeGeo_kakadu.jp2')
+    data = ds.ReadRaster( 0, 0, 800, 100, band_list = [2,3] )
+    ds = None
+
+    expected = [ (0,0), (255,0), (0, 255), (255,255),
+                 (255,255), (0,255), (255,0), (0,0)]
+    got = []
+    
+    for x in range(8):
+        got.append( (ord(data[x*100]), ord(data[80000 + x*100])) )
+
+    if got != expected:
+        print got
+        gdaltest.post_reason( 'did not get expected values.' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -231,6 +271,8 @@ gdaltest_list = [
     jp2kak_6,
     jp2kak_7,
     jp2kak_8,
+    jp2kak_9,
+    jp2kak_10,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':
