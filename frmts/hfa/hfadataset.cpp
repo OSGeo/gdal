@@ -2725,14 +2725,15 @@ CPLErr HFADataset::ReadProjection()
 
     CPLFree( pszProjection );
 
-    if( !psDatum || !psPro || !psMapInfo ||
+    if( !psDatum || !psPro ||
+        (psMapInfo == NULL && poMapInformation == NULL) ||
         (strlen(psDatum->datumname) == 0 || EQUAL(psDatum->datumname, "Unknown")) && 
         (strlen(psPro->proName) == 0 || EQUAL(psPro->proName, "Unknown")) &&
-        (strlen(psMapInfo->proName) == 0 || EQUAL(psMapInfo->proName, "Unknown")) && 
+        (psMapInfo && (strlen(psMapInfo->proName) == 0 || EQUAL(psMapInfo->proName, "Unknown"))) && 
         psPro->proZone == 0 )
     {
-      pszProjection = CPLStrdup("LOCAL_CS[\"\"]");
-      return CE_None;
+        pszProjection = CPLStrdup("LOCAL_CS[\"\"]");
+        return CE_None;
     }
     pszProjection = HFAPCSStructToWKT( psDatum, psPro, psMapInfo, 
                                        poMapInformation );
