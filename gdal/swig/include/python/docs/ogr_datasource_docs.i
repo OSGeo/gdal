@@ -1,10 +1,17 @@
 %extend OGRDataSourceShadow {
 // File: ogrdatasource_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrdatasource.cpp
-12064 2007-09-04 15:35:47Z warmerdam $\") ";
+14432 2008-05-10 18:47:46Z warmerdam $\") ";
 
 %feature("docstring")  Destroy "void OGR_DS_Destroy(OGRDataSourceH
-hDS) ";
+hDS)
+
+Closes opened datasource and releases allocated resources.
+
+Parameters:
+-----------
+
+hDataSource:  handle to allocated datasource object. ";
 
 %feature("docstring")  Reference "int OGR_DS_Reference(OGRDataSourceH
 hDataSource) ";
@@ -74,7 +81,7 @@ Parameters:
 
 hDS:  handle to the data source from which to get the layer.
 
-psz:  Layer the layer name of the layer to fetch.
+pszLayerName:  Layer the layer name of the layer to fetch.
 
 an handle to the layer, or NULL if the layer is not found or an error
 occurs. ";
@@ -145,9 +152,9 @@ One of the following data source capability names can be passed into
 this function, and a TRUE or FALSE value will be returned indicating
 whether or not the capability is available for this object.
 
-ODsCreateLayer: True if this datasource can create new layers.
+ODsCCreateLayer: True if this datasource can create new layers.
 
-The define macro forms of the capability names should be used in
+The #define macro forms of the capability names should be used in
 preference to the strings themselves to avoid mispelling.
 
 This function is the same as the C++ method
