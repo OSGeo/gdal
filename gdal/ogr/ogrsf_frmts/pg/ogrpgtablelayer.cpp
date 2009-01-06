@@ -1463,9 +1463,25 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 
         if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         {
-            hCursorResult = hResult;
-            poFeature = RecordToFeature( 0 );
-            hCursorResult = NULL;
+            int nRows = PQntuples(hResult);
+            if (nRows > 0)
+            {
+                hCursorResult = hResult;
+                poFeature = RecordToFeature( 0 );
+                hCursorResult = NULL;
+
+                if (nRows > 1)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%d rows in response to the WHERE %s = %ld clause !",
+                             nRows, pszFIDColumn, nFeatureId );
+                }
+            }
+            else
+            {
+                 CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to read feature with unknown feature id (%ld).", nFeatureId );
+            }
         }
     }
 
