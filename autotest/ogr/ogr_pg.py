@@ -1688,6 +1688,19 @@ def ogr_pg_39():
     return 'success'
 
 ###############################################################################
+# Test GetFeature() with an invalid id
+
+def ogr_pg_40():
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    layer = gdaltest.pg_ds.GetLayerByName('tpoly')
+    if layer.GetFeature(0) != None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -1779,6 +1792,7 @@ gdaltest_list_internal = [
     ogr_pg_37,
     ogr_pg_38,
     ogr_pg_39,
+    ogr_pg_40,
     ogr_pg_cleanup ]
 
 
