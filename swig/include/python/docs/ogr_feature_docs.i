@@ -1,7 +1,7 @@
 %extend OGRFeatureShadow {
 // File: ogrfeature_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeature.cpp
-11888 2007-08-17 15:09:26Z mloskot $\") ";
+15749 2008-11-17 19:36:50Z rouault $\") ";
 
 %feature("docstring")  Create "OGRFeatureH
 OGR_F_Create(OGRFeatureDefnH hDefn)
@@ -354,6 +354,9 @@ OGR_F_GetFieldAsStringList(OGRFeatureH hFeat, int iField)
 Fetch field value as a list of strings.
 
 Currently this method only works for OFTStringList fields.
+
+The returned list is terminated by a NULL pointer. The number of
+elements can also be calculated using CSLCount().
 
 This function is the same as the C++ method
 OGRFeature::GetFieldAsStringList().

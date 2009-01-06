@@ -1,7 +1,7 @@
 %extend OGRLayerShadow {
 // File: ogrlayer_8cpp.xml
-%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrlayer.cpp 12038
-2007-09-03 03:48:15Z mloskot $\") ";
+%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrlayer.cpp 14828
+2008-07-05 17:51:09Z rouault $\") ";
 
 %feature("docstring")  Reference "int OGR_L_Reference(OGRLayerH
 hLayer) ";
@@ -13,7 +13,30 @@ hLayer) ";
 hLayer) ";
 
 %feature("docstring")  GetFeatureCount "int
-OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce) ";
+OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
+
+Fetch the feature count in this layer.
+
+Returns the number of features in the layer. For dynamic databases the
+count may not be exact. If bForce is FALSE, and it would be expensive
+to establish the feature count a value of -1 may be returned
+indicating that the count isn't know. If bForce is TRUE some
+implementations will actually scan the entire layer once to count
+objects.
+
+The returned count takes the spatial filter into account.
+
+This function is the same as the CPP OGRLayer::GetFeatureCount().
+
+Parameters:
+-----------
+
+hLayer:  handle to the layer that owned the features.
+
+bForce:  Flag indicating whether the count should be computed even if
+it is expensive.
+
+feature count, -1 if count not known. ";
 
 %feature("docstring")  GetExtent "OGRErr OGR_L_GetExtent(OGRLayerH
 hLayer, OGREnvelope *psExtent, int bForce)
@@ -26,10 +49,9 @@ will be returned indicating that the extent isn't know. If bForce is
 TRUE then some implementations will actually scan the entire layer
 once to compute the MBR of all the features in the layer.
 
-The returned extent does not take the spatial filter into account. If
-a spatial filter was previously set then it should be ignored but some
-implementations may be unable to do that, so it is safer to call
-OGR_L_GetExtent() without setting a spatial filter.
+Depending on the drivers, the returned extent may or may not take the
+spatial filter into account. So it is safer to call OGR_L_GetExtent()
+without setting a spatial filter.
 
 Layers without any geometry may return OGRERR_FAILURE just indicating
 that no meaningful extents could be collected.
@@ -216,7 +238,10 @@ OGRERR_NONE on success. ";
 %feature("docstring")  StartTransaction "OGRErr
 OGR_L_StartTransaction(OGRLayerH hLayer)
 
-What does this do?.
+For datasources which support transactions, StartTransaction creates a
+transaction. If starting the transaction fails, will return
+OGRERR_FAILURE. Datasources which do not support transactions will
+always return OGRERR_NONE.
 
 This function is the same as the C++ method
 OGRLayer::StartTransaction().
@@ -224,14 +249,17 @@ OGRLayer::StartTransaction().
 Parameters:
 -----------
 
-hLayer:  handle to the layer ?
+hLayer:  handle to the layer
 
 OGRERR_NONE on success. ";
 
 %feature("docstring")  CommitTransaction "OGRErr
 OGR_L_CommitTransaction(OGRLayerH hLayer)
 
-What does this do?.
+For datasources which support transactions, CommitTransaction commits
+a transaction. If no transaction is active, or the commit fails, will
+return OGRERR_FAILURE. Datasources which do not support transactions
+will always return OGRERR_NONE.
 
 This function is the same as the C++ method
 OGRLayer::CommitTransaction().
@@ -239,14 +267,18 @@ OGRLayer::CommitTransaction().
 Parameters:
 -----------
 
-hLayer:  handle to the layer?
+hLayer:  handle to the layer
 
 OGRERR_NONE on success. ";
 
 %feature("docstring")  RollbackTransaction "OGRErr
 OGR_L_RollbackTransaction(OGRLayerH hLayer)
 
-What does this do?.
+For datasources which support transactions, RollbackTransaction will
+roll back a datasource to its state before the start of the current
+transaction. If no transaction is active, or the rollback fails, will
+return OGRERR_FAILURE. Datasources which do not support transactions
+will always return OGRERR_NONE.
 
 This function is the same as the C++ method
 OGRLayer::RollbackTransaction().
@@ -254,7 +286,7 @@ OGRLayer::RollbackTransaction().
 Parameters:
 -----------
 
-hLayer:  handle to the layer?
+hLayer:  handle to the layer
 
 OGRERR_NONE on success. ";
 
@@ -299,7 +331,7 @@ OGR_L_TestCapability(OGRLayerH hLayer, const char *pszCap)
 Test if this layer supported the named capability.
 
 The capability codes that can be tested are represented as strings,
-but defined constants exists to ensure correct spelling. Specific
+but #defined constants exists to ensure correct spelling. Specific
 layer types may implement class specific capabilities, but this can't
 generally be discovered by the caller.
 
@@ -403,7 +435,38 @@ cleared, but no new one instituted. ";
 
 %feature("docstring")  SetSpatialFilterRect "void
 OGR_L_SetSpatialFilterRect(OGRLayerH hLayer, double dfMinX, double
-dfMinY, double dfMaxX, double dfMaxY) ";
+dfMinY, double dfMaxX, double dfMaxY)
+
+Set a new rectangular spatial filter.
+
+This method set rectangle to be used as a spatial filter when fetching
+features via the GetNextFeature() method. Only features that
+geometrically intersect the given rectangle will be returned.
+
+The x/y values should be in the same coordinate system as the layer as
+a whole (as returned by OGRLayer::GetSpatialRef()). Internally this
+method is normally implemented as creating a 5 vertex closed
+rectangular polygon and passing it to OGRLayer::SetSpatialFilter(). It
+exists as a convenience.
+
+The only way to clear a spatial filter set with this method is to call
+OGRLayer::SetSpatialFilter(NULL).
+
+This method is the same as the C++ method
+OGRLayer::SetSpatialFilterRect().
+
+Parameters:
+-----------
+
+hLayer:  handle to the layer on which to set the spatial filter.
+
+dfMinX:  the minimum X coordinate for the rectangular region.
+
+dfMinY:  the minimum Y coordinate for the rectangular region.
+
+dfMaxX:  the maximum X coordinate for the rectangular region.
+
+dfMaxY:  the maximum Y coordinate for the rectangular region. ";
 
 %feature("docstring")  ResetReading "void
 OGR_L_ResetReading(OGRLayerH hLayer)
@@ -437,7 +500,9 @@ This method is the same as the C++ method OGRLayer::DeleteFeature().
 Parameters:
 -----------
 
-poFeature:  the feature to write to disk.
+hLayer:  handle to the layer
+
+nFID:  the feature id to be deleted from the layer
 
 OGRERR_NONE on success. ";
 
