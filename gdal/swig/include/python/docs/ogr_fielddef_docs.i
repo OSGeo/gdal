@@ -1,7 +1,7 @@
 %extend OGRFieldDefnShadow {
 // File: ogrfielddefn_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfielddefn.cpp
-10645 2007-01-18 02:22:39Z warmerdam $\") ";
+14372 2008-04-30 04:53:13Z warmerdam $\") ";
 
 %feature("docstring")  Create "OGRFieldDefnH OGR_Fld_Create(const
 char *pszName, OGRFieldType eType)

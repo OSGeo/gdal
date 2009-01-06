@@ -1,7 +1,7 @@
 %extend OGRFeatureDefnShadow {
 // File: ogrfeaturedefn_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeaturedefn.cpp
-11294 2007-04-19 18:15:42Z mloskot $\") ";
+14442 2008-05-10 22:09:37Z warmerdam $\") ";
 
 %feature("docstring")  Create "OGRFeatureDefnH OGR_FD_Create(const
 char *pszName)
@@ -117,7 +117,7 @@ to.
 hNewField:  handle to the new field definition. ";
 
 %feature("docstring")  GetGeomType "OGRwkbGeometryType
-OGR_FD_GetGeomType(OGRFieldDefnH hDefn)
+OGR_FD_GetGeomType(OGRFeatureDefnH hDefn)
 
 Fetch the geometry base type of the passed feature definition.
 
