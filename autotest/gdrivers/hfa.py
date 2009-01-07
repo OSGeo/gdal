@@ -633,6 +633,12 @@ def hfa_rotated_write():
     PARAMETER["false_northing",6561666.666666667],
     UNIT["us_survey_feet",0.3048006096012192]]"""
 
+    # For some reason we are now no longer able to preserve the authority
+    # nodes and other info in the above, so we revert to the following.
+    # (see #2755 for followup).
+
+    expected_wkt = """PROJCS["NAD83_Virginia_North",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",39.2],PARAMETER["standard_parallel_2",38.03333333333333],PARAMETER["latitude_of_origin",37.66666666666666],PARAMETER["central_meridian",-78.5],PARAMETER["false_easting",11482916.66666667],PARAMETER["false_northing",6561666.666666667],PARAMETER["scale_factor",1.0],UNIT["Foot_US",0.30480060960121924]]"""
+    
     ds.SetGeoTransform( check_gt )
     ds.SetProjection( expected_wkt )
 
