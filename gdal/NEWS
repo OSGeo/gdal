@@ -1,3 +1,42 @@
+= GDAL/OGR 1.5.4 = 
+
+ * #2462 (HDF5): Fix SUBDATSET numbering from zero to from one.
+ * #???? (PG): Fix crash on GetFeature(fid) where fid is invalid.
+ * #2732 (JP2KAK): fix ycbcr to rgb converted images in DirectRasterIO
+ * #2399 (JPEG2000): Fix handling of images with dimensions not multiple of 256
+ * #2757 (CSV): Ignore .csvt files when opening a CSV datasource.
+ * #2741 (gdaltindex): Fix handle, memory leak for skipped files.
+ * #2724 (VRT): Honour INIT_DEST warp option for warped VRT files. 
+ * #2724 (VRT): Fix reading of nodata values from XML.
+ * #2716 (HFA): Support reading 3rd order XFORMs. 
+ * #1242 (OGDI): Improve finding PROJ.4 include files for OGDI driver.
+ * #2709 (GML): Treat feature class name tests as case sensitive.
+ * #2708 (GML): Fix potential buffer overflow in parser.
+ * #2688 (python): Fix win32 error handling crash. 
+ * #2445 (warper): Avoid divide by zero if source size is zero.
+ * #2040 (NITF): Add support for RPC00A ordering.
+ * #1866 (GPX/KML): Add support for building against expat 1.95.0 to 1.95.7
+ * #2699 (GTiff): Avoid calling TIFFFreeDirectory() with old libtiffs. 
+ * #2690 (Interlis): Support GCC 4.4. 
+ * #2689 (MRSID): Fix overflow in window calc for very large files.
+ * #2659 (SRS): Support Cylindrical Equal Area projections from EPSG. 
+ * #2474 (Shape): Support writing datetime fields in .dbf
+ * #2681 (SRS): Support Mercator_2SP in ValidateProjection().
+ * #2679 (JPEG2000): Fix FORMAT option support. 
+ * #2678 (SRS): Support EXTENSION nodes in WKT. 
+ * #2645 (GTiff): Fix creation of YCbCr JPEG compressed files. 
+ * #1484 (PGeo): treat type 50 geometries as SHPT_ARC.
+ * #2642 (GTiff): Ensure zip/jpeg quality preserved over crystalize().
+ * #1526 (S57): Corrections to handle double type 8211 attributes better.
+ * #2629 (MRSID): 64 bit fix in metadata formatting.
+ * #1983 (GRASS): Use G_free() instead of free.
+ * #2237 (gdalgrid): fix nearest neighbour interpolation regression.
+ * #2622 (GTiff): Add mechanism to split up large one block one bit files.
+ * #2619 (PG): Allow VACUUM in ExecuteSQL() without a transaction.
+ * #2609 (HDF4): Support building with HDF4.2r3.
+ * #2615 (warper): Fix support for TPS transformer with negative coordinates.
+ * #2428 (shape): Performan fix for organizePolygon() in one outer ring case.
+  
 = GDAL/OGR 1.5.3 = 
 
  * #601 (GTiff): Correct handling of non-degree angular units.
