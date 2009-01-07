@@ -829,7 +829,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 	}
 	strcat( szDim,szTemp );
 	
-	sprintf( szTemp, "SUBDATASET_%d_NAME", poDS->nSubDataCount );
+	sprintf( szTemp, "SUBDATASET_%d_NAME", ++(poDS->nSubDataCount) );
 
 
 	poDS->papszSubDatasets =
@@ -838,7 +838,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 					poDS->pszFilename,
 					poRootGroup->pszUnderscorePath ) );
 	
-	sprintf(  szTemp, "SUBDATASET_%d_DESC", poDS->nSubDataCount++ );
+	sprintf(  szTemp, "SUBDATASET_%d_DESC", poDS->nSubDataCount );
 	
 	poDS->papszSubDatasets =
 	    CSLSetNameValue( poDS->papszSubDatasets, szTemp,
