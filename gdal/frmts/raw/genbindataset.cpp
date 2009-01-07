@@ -186,12 +186,14 @@ static const int anUsgsEsriZones[] =
 
 /************************************************************************/
 /* ==================================================================== */
-/*				EHdrDataset				*/
+/*				GenBinDataset				*/
 /* ==================================================================== */
 /************************************************************************/
 
 class GenBinDataset : public RawDataset
 {
+    friend class GenBinBitRasterBand;
+
     FILE	*fpImage;	// image data file.
 
     int         bGotTransform;
@@ -214,6 +216,97 @@ class GenBinDataset : public RawDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                       GenBinBitRasterBand                            */
+/* ==================================================================== */
+/************************************************************************/
+
+class GenBinBitRasterBand : public GDALPamRasterBand
+{
+    int            nBits;
+    long           nStartBit;
+    int            nPixelOffsetBits;
+    int            nLineOffsetBits;
+
+  public:
+    GenBinBitRasterBand( GenBinDataset *poDS );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+};
+
+/************************************************************************/
+/*                        GenBinBitRasterBand()                         */
+/************************************************************************/
+
+GenBinBitRasterBand::GenBinBitRasterBand( GenBinDataset *poDS )
+{
+    SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
+
+    this->poDS = poDS;
+    nBand = 1;
+
+    eDataType = GDT_Byte;
+
+    nBlockXSize = poDS->nRasterXSize;
+    nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr GenBinBitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                        void * pImage )
+
+{
+    GenBinDataset *poGDS = (GenBinDataset *) poDS;
+    vsi_l_offset   nLineStart;
+    unsigned int   nLineBytes;
+    int            iBitOffset;
+    GByte         *pabyBuffer;
+
+/* -------------------------------------------------------------------- */
+/*      Establish desired position.                                     */
+/* -------------------------------------------------------------------- */
+    nLineStart = (((vsi_l_offset)nBlockXSize) * nBlockYOff) / 8;
+    iBitOffset = (((vsi_l_offset)nBlockXSize) * nBlockYOff) % 8;
+    nLineBytes = (((vsi_l_offset)nBlockXSize) * (nBlockYOff+1) + 7) / 8
+        - nLineStart;
+
+/* -------------------------------------------------------------------- */
+/*      Read data into buffer.                                          */
+/* -------------------------------------------------------------------- */
+    pabyBuffer = (GByte *) CPLCalloc(nLineBytes,1);
+
+    if( VSIFSeekL( poGDS->fpImage, nLineStart, SEEK_SET ) != 0 
+        || VSIFReadL( pabyBuffer, 1, nLineBytes, poGDS->fpImage) != nLineBytes )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to read %u bytes at offset %lu.\n%s",
+                  nLineBytes, (unsigned long)nLineStart, 
+                  VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy data, promoting to 8bit.                                   */
+/* -------------------------------------------------------------------- */
+    int iX;
+
+    for( iX = 0; iX < nBlockXSize; iX++, iBitOffset++ )
+    {
+        if( pabyBuffer[iBitOffset>>3]  & (0x80 >>(iBitOffset & 7)) )
+            ((GByte *) pImage)[iX] = 1;
+        else
+            ((GByte *) pImage)[iX] = 0;
+    }
+
+    CPLFree( pabyBuffer );
+
+    return CE_None;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -602,6 +695,11 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_Float64;
     else if( EQUAL(pszDataType,"U8") )
         eDataType = GDT_Byte;
+    else if( EQUAL(pszDataType,"U1") )
+    {
+        eDataType = GDT_Byte;
+        CPLAssert( nBands == 1 );
+    }
     else
     {
         eDataType = GDT_Byte;
@@ -669,10 +767,16 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = nBands;
     for( i = 0; i < poDS->nBands; i++ )
     {
-        poDS->SetBand( 
-            i+1, new RawRasterBand( poDS, i+1, poDS->fpImage,
-                                    nBandOffset * i, nPixelOffset, nLineOffset,
-                                    eDataType, bNative, TRUE ) );
+        if( EQUAL(pszDataType,"U1") )
+        {
+            poDS->SetBand( i+1, new GenBinBitRasterBand( poDS ) );
+        }
+        else
+            poDS->SetBand( 
+                i+1, 
+                new RawRasterBand( poDS, i+1, poDS->fpImage,
+                                   nBandOffset * i, nPixelOffset, nLineOffset,
+                                   eDataType, bNative, TRUE ) );
     }
 
 /* -------------------------------------------------------------------- */
