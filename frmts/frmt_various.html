@@ -319,6 +319,26 @@ reading/writing of data values from/to the file.
 
 <p>NOTE: Implemented as <tt>gdal/frmts/fits/fitsdataset.cpp</tt>.<p>
 
+<h2><a name="GenBin">GenBin - Generic Binary (.hdr labelled)</a>
+
+This driver supporting reading "Generic Binary" files labelled with a .hdr
+file, but distinct from the more common ESRI labelled .hdr format (EHdr driver).
+The origin of this format is not entirely clear.  The .hdr
+files supported by this driver are look something like this:
+
+{{{
+BANDS:      1
+ROWS:    6542
+COLS:    9340
+...
+}}}
+
+Pixel data types of U8, U16, S16, F32, F64, and U1 (bit) are supported.  
+Georeferencing and coordinate system information should be supported
+when provided. 
+
+<p>NOTE: Implemented as <tt>gdal/frmts/raw/genbindataset.cpp</tt>.<p>
+
 <h2><a name="GSAG">GSAG -- Golden Software ASCII Grid File Format</a></h2>
 
 This is the ASCII-based (human-readable) version of one of the raster formats
