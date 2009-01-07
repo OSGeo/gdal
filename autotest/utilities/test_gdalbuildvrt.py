@@ -42,7 +42,7 @@ import test_cli_utilities
 ###############################################################################
 def test_gdalbuildvrt_check():
 
-    wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235629972,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]'
+    wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235630016,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]'
     ds = gdal.Open('tmp/mosaic.vrt')
     if ds.GetProjectionRef() != wkt:
         gdaltest.post_reason('Expected : %s\nGot : %s' % (wkt, ds.GetProjectionRef()) )
