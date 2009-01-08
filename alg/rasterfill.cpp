@@ -364,6 +364,7 @@ if( quad_value != nNoDataVal ) 						\
  * @param hMaskBand a mask band indicating pixels to be interpolated (zero valued
  * @param dfMaxSearchDist the maximum number of pixels to search in all 
  * directions to find values to interpolate from.
+ * @param bDeprecatedOption unused argument, should be zero.
  * @param nSmoothingIterations the number of 3x3 smoothing filter passes to 
  * run (0 or more).
  * @param papszOptions additional name=value options in a string list (none 
@@ -378,6 +379,7 @@ CPLErr
 GDALFillNodata( GDALRasterBandH hTargetBand, 
                 GDALRasterBandH hMaskBand,
                 double dfMaxSearchDist, 
+                int bDeprecatedOption,
                 int nSmoothingIterations,
                 char **papszOptions,
                 GDALProgressFunc pfnProgress, 
