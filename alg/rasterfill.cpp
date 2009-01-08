@@ -378,7 +378,6 @@ CPLErr
 GDALFillNodata( GDALRasterBandH hTargetBand, 
                 GDALRasterBandH hMaskBand,
                 double dfMaxSearchDist, 
-                int bConicSearch, 
                 int nSmoothingIterations,
                 char **papszOptions,
                 GDALProgressFunc pfnProgress, 

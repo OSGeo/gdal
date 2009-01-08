@@ -73,7 +73,6 @@ CPLErr CPL_DLL CPL_STDCALL
 GDALFillNodata( GDALRasterBandH hTargetBand, 
                 GDALRasterBandH hMaskBand,
                 double dfMaxSearchDist, 
-                int bConicSearch, 
                 int nSmoothingIterations,
                 char **papszOptions,
                 GDALProgressFunc pfnProgress, 
