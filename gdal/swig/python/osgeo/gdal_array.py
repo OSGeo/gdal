@@ -1,8 +1,3 @@
-import sys
-sys.path.insert(0,'../build/lib.darwin-8.8.1-i386-2.3/')
-
-
-
 import numpy
 import _gdal_array
 
