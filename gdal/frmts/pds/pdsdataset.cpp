@@ -768,6 +768,25 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
                                poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
+/*      Transfer a few interesting keywords as metadata.                */
+/* -------------------------------------------------------------------- */
+    static const char *apszKeywords[] = 
+        { "FILTER_NAME", "DATA_SET_ID", "PRODUCT_ID", 
+          "PRODUCER_INSTITUTION_NAME", "PRODUCT_TYPE", "MISSION_NAME",
+          "SPACECRAFT_NAME", "INSTRUMENT_NAME", "INSTRUMENT_ID", 
+          "TARGET_NAME", "CENTER_FILTER_WAVELENGTH", "BANDWIDTH",
+          "PRODUCT_CREATION_TIME", "NOTE",
+          NULL };
+    
+    for( i = 0; apszKeywords[i] != NULL; i++ )
+    {
+        const char *pszKeywordValue = poDS->GetKeyword( apszKeywords[i] );
+
+        if( pszKeywordValue != NULL )
+            poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
