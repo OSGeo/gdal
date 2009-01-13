@@ -268,6 +268,55 @@ OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
 }
 
 /************************************************************************/
+/*                             FetchShape()                             */
+/*                                                                      */
+/*      Take a shape id, a geometry, and a feature, and set the feature */
+/*      if the shapeid bbox intersects the geometry.                    */
+/************************************************************************/
+
+OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
+
+{
+    OGRFeature *poFeature;
+
+    if (m_poFilterGeom != NULL && hSHP != NULL ) 
+    {
+        SHPObject   *psShape;
+        
+        psShape = SHPReadObject( hSHP, iShapeId );
+
+        // do not trust degenerate bounds or bounds on null shapes.
+        if( psShape->dfXMin == psShape->dfXMax
+            || psShape->dfYMin == psShape->dfYMax 
+            || psShape->nSHPType == SHPT_NULL )
+        {
+            poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
+                                           iShapeId, psShape );
+        }
+        else if( m_sFilterEnvelope.MaxX < psShape->dfXMin 
+                 || m_sFilterEnvelope.MaxY < psShape->dfYMin
+                 || psShape->dfXMax  < m_sFilterEnvelope.MinX
+                 || psShape->dfYMax < m_sFilterEnvelope.MinY ) 
+        {
+            SHPDestroyObject(psShape);
+            poFeature = NULL;
+        } 
+        else 
+        {
+            poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
+                                           iShapeId, psShape );
+        }                
+    } 
+    else 
+    {
+        poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
+                                       iShapeId, NULL );
+    }    
+    
+    return poFeature;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
@@ -298,9 +347,13 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
             {
                 return NULL;
             }
+            
+            // Check the shape object's geometry, and if it matches
+            // any spatial filter, return it.  
+            poFeature = FetchShape(panMatchingFIDs[iMatchingFID]);
+            
+            iMatchingFID++;
 
-            poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, 
-                                           panMatchingFIDs[iMatchingFID++] );
         }
         else
         {
@@ -309,15 +362,16 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
                 return NULL;
             }
     
-            if( hDBF && DBFIsRecordDeleted( hDBF, iNextShapeId ) )
+            if ( hDBF && DBFIsRecordDeleted( hDBF, iNextShapeId ) ) {
                 poFeature = NULL;
-            else
-                poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                               iNextShapeId );
-
+            } else {
+                // Check the shape object's geometry, and if it matches
+                // any spatial filter, return it.  
+                poFeature = FetchShape(iNextShapeId);
+            }
             iNextShapeId++;
         }
-
+        
         if( poFeature != NULL )
         {
             if( poFeature->GetGeometryRef() != NULL )
@@ -351,7 +405,7 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 
 {
     OGRFeature *poFeature = NULL;
-    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
+    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL);
 
     if( poFeature != NULL )
     {
