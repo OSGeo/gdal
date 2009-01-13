@@ -38,8 +38,9 @@
 /*      Functions from Shape2ogr.cpp.                                   */
 /* ==================================================================== */
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
-                               OGRFeatureDefn * poDefn, int iShape );
-OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
+                               OGRFeatureDefn * poDefn, int iShape, 
+                               SHPObject *psShape );
+OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF );
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
@@ -95,6 +96,7 @@ class OGRShapeLayer : public OGRLayer
                         ~OGRShapeLayer();
 
     void                ResetReading();
+    OGRFeature *        FetchShape(int iShapeId);
     OGRFeature *        GetNextFeature();
     virtual OGRErr      SetNextByIndex( long nIndex );
 
