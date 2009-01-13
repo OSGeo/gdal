@@ -95,14 +95,14 @@ OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
 /*      representation.                                                 */
 /************************************************************************/
 
-OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
+OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 {
     // CPLDebug( "Shape", "SHPReadOGRObject( iShape=%d )\n", iShape );
 
-    SHPObject   *psShape;
     OGRGeometry *poOGR = NULL;
 
-    psShape = SHPReadObject( hSHP, iShape );
+    if( psShape == NULL )
+        psShape = SHPReadObject( hSHP, iShape );
 
     if( psShape == NULL )
     {
@@ -804,7 +804,8 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 /************************************************************************/
 
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
-                               OGRFeatureDefn * poDefn, int iShape )
+                               OGRFeatureDefn * poDefn, int iShape,
+                               SHPObject *psShape )
 
 {
     if( iShape < 0 
@@ -833,7 +834,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     if( hSHP != NULL )
     {
         OGRGeometry* poGeometry = NULL;
-        poGeometry = SHPReadOGRObject( hSHP, iShape );
+        poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
 
         /*
          * NOTE - mloskot:
