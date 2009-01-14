@@ -918,7 +918,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLString osDSName;
 
-        osDSName.Printf( "J2K_SUBFILE:%d,%d,%s", 
+        osDSName.Printf( "/vsisubfile/%d_%d,%s", 
                          psFile->pasSegmentInfo[iSegment].nSegmentStart,
                          psFile->pasSegmentInfo[iSegment].nSegmentSize,
                          pszFilename );
