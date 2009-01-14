@@ -923,6 +923,20 @@ This method is the same as the C function OGRReleaseDataSource().
 */
 
 /**
+ \fn void OGRDataSource::DestroyDataSource(OGRDataSource*);
+
+ Destroy a datasource.
+
+ This static method will close and destroy a datasource.  It is
+ equivelent to calling delete on the object, but it ensures that the
+ deallocation is properly executed within the GDAL libraries heap on
+ platforms where this can matter (win32).  
+
+ This method is the same as the C function OGR_DS_Destroy().
+
+*/
+
+/**
  \fn OGRErr OGRDataSource::SyncToDisk();
 
 Flush pending changes to disk.
