@@ -583,6 +583,7 @@ VSIFileManager *VSIFileManager::Get()
     {
         poManager = new VSIFileManager;
         VSIInstallLargeFileHandler();
+        VSIInstallSubFileHandler();
         VSIInstallMemFileHandler();
 #ifdef HAVE_LIBZ
         VSIInstallGZipFileHandler();
