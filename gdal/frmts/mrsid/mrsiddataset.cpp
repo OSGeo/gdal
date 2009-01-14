@@ -1290,18 +1290,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( bIsJP2 )
     {
         J2KImageReader  *reader = J2KImageReader::create();
-
-        // FIXME: for some weird reason the following initialization from the
-        // stream object does not work with DSDK 7.0.0.2167 (possible bug in
-        // DSDK).
-        //eStat = reader->initialize( poDS->oStream );
-
-        // So we are using the file object to initialize from loosing the
-        // added value of our custom stream implementation.
-        LTFileSpec      filespec( poOpenInfo->pszFilename );
-        eStat = reader->initialize( filespec );
-        poDS->oStream.close();
-
+        eStat = reader->initialize( poDS->oStream );
         poDS->poImageReader = reader;
     }
     else
