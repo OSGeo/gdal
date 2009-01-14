@@ -248,6 +248,8 @@ class MrSIDRasterBand : public GDALPamRasterBand
     int             bNoDataSet;
     double          dfNoDataValue;
 
+    MrSIDDataset    *poGDS;
+
   public:
 
                 MrSIDRasterBand( MrSIDDataset *, int );
@@ -279,6 +281,7 @@ class MrSIDRasterBand : public GDALPamRasterBand
 MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 {
     this->poDS = poDS;
+    poGDS = poDS;
     this->nBand = nBand;
     this->eDataType = poDS->eDataType;
 
@@ -375,8 +378,6 @@ MrSIDRasterBand::~MrSIDRasterBand()
 CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 {
-    MrSIDDataset    *poGDS = (MrSIDDataset *)poDS;
-
 #ifdef MRSID_ESDK
     if( poGDS->eAccess == GA_Update )
     {
@@ -453,8 +454,6 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 CPLErr MrSIDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 {
-    MrSIDDataset    *poGDS = (MrSIDDataset *)poDS;
-
     CPLAssert( poGDS != NULL
                && nBlockXOff >= 0
                && nBlockYOff >= 0
@@ -508,8 +507,6 @@ CPLErr MrSIDRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                    int nPixelSpace, int nLineSpace )
     
 {
-    MrSIDDataset *poGDS = (MrSIDDataset *) poDS;
-
 /* -------------------------------------------------------------------- */
 /*      Fallback to default implementation if the whole scanline        */
 /*      without subsampling requested.                                  */
@@ -538,8 +535,6 @@ CPLErr MrSIDRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 GDALColorInterp MrSIDRasterBand::GetColorInterpretation()
 {
-    MrSIDDataset      *poGDS = (MrSIDDataset *) poDS;
-
     switch( poGDS->eColorSpace )
     {
         case LTI_COLORSPACE_RGB:
@@ -623,8 +618,6 @@ double MrSIDRasterBand::GetNoDataValue( int * pbSuccess )
 int MrSIDRasterBand::GetOverviewCount()
 
 {
-    MrSIDDataset        *poGDS = (MrSIDDataset *) poDS;
-
     return poGDS->nOverviewCount;
 }
 
@@ -635,8 +628,6 @@ int MrSIDRasterBand::GetOverviewCount()
 GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 
 {
-    MrSIDDataset        *poGDS = (MrSIDDataset *) poDS;
-
     if( i < 0 || i >= poGDS->nOverviewCount )
         return NULL;
     else
