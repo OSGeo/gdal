@@ -202,7 +202,7 @@ VSISubFileFilesystemHandler::~VSISubFileFilesystemHandler()
 /************************************************************************/
 /*                           DecomposePath()                            */
 /*                                                                      */
-/*      Parse a path like /vsisubfile/1000_2000/data/abc.tif into an    */
+/*      Parse a path like /vsisubfile/1000_2000,data/abc.tif into an    */
 /*      offset (1000), a size (2000) and a path (data/abc.tif).         */
 /************************************************************************/
 
@@ -227,15 +227,15 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
     {
         if( pszPath[i] == '_' && nSubFileSize == 0 )
             nSubFileSize = atoi(pszPath + i + 1);
-        else if( strncmp(pszPath+i,"/root/",6) == 0 )
+        else if( pszPath[i] == ',' )
         {
-            osFilename = pszPath + i + 5;
+            osFilename = pszPath + i + 1;
             return TRUE;
         }
         else if( pszPath[i] == '/' )
         {
-            osFilename = pszPath + i + 1;
-            return TRUE;
+            // missing comma!
+            return FALSE;
         }
     }
 
