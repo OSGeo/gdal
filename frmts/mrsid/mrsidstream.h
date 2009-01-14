@@ -67,6 +67,7 @@ class LTIVSIStream : public LTIOStreamInf
     VSIVirtualHandle    *poFileHandle;
     int                 nError;
     int                 *pnRefCount;
+    int                 bIsOpen;
 };
 
 #endif /* MRSIDSTREAM_H_INCLUDED */
