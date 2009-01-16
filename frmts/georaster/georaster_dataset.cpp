@@ -469,7 +469,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     poGRW->nRasterColumns   = nXSize;
     poGRW->nRasterRows      = nYSize;
     poGRW->nRasterBands     = nBands;
-    poGRW->pszCellDepth     = CPLStrdup( OWSetDataType( eType ) );
+    poGRW->pszCellDepth     = CPLStrdup( pszCellDepth );
     poGRW->nColumnBlockSize = 256;
     poGRW->nRowBlockSize    = 256;
     poGRW->nBandBlockSize   = 1;
@@ -779,7 +779,9 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
                 eErr = poSrcBand->RasterIO( GF_Read,
                     iXOffset, iYOffset,
                     nBlockCols, nBlockRows, pData,
-                    nBlockCols, nBlockRows, eType, 1, ( nBlockXSize * nPixelSize ) );
+                    nBlockCols, nBlockRows, eType, 
+                    nPixelSize,
+                    nPixelSize * nBlockXSize );
 
                 if( eErr != CE_None )
                 {
@@ -956,6 +958,8 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
 void GeoRasterDataset::FlushCache()
 {
     GDALDataset::FlushCache();
+
+    this->poGeoRaster->FlushMetadata();
 }
 
 //  ---------------------------------------------------------------------------
