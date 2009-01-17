@@ -5135,7 +5135,17 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
 
     else
+    {
         bCreateBigTIFF = CSLTestBoolean( pszBIGTIFF );
+        if (!bCreateBigTIFF && nCompression == COMPRESSION_NONE &&
+             dfUncompressedImageSize > 4200000000.0 )
+        {
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                "The TIFF file will be larger than 4GB, so BigTIFF is necessary.\n"
+                "Creation failed.");
+            return NULL;
+        }
+    }
 
 #ifndef BIGTIFF_SUPPORT
     if( bCreateBigTIFF )
