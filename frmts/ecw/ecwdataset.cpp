@@ -1021,29 +1021,41 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+    int bIsVirtualFile = FALSE;
+try_again:
+    if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) ||
+        bIsVirtualFile )
     {
         int            subfile_offset=-1, subfile_size=-1;
-        char *real_filename = NULL;
+        const char *real_filename = NULL;
 
-        if( sscanf( poOpenInfo->pszFilename, "J2K_SUBFILE:%d,%d", 
-                    &subfile_offset, &subfile_size ) != 2 )
+          if (EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12))
           {
-              CPLError( CE_Failure, CPLE_OpenFailed, 
-                        "Failed to parse J2K_SUBFILE specification." );
-              return NULL;
-          }
+            if( sscanf( poOpenInfo->pszFilename, "J2K_SUBFILE:%d,%d", 
+                        &subfile_offset, &subfile_size ) != 2 )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed, 
+                            "Failed to parse J2K_SUBFILE specification." );
+                return NULL;
+            }
 
-          real_filename = (char *) strstr(poOpenInfo->pszFilename,",");
-          if( real_filename != NULL )
-              real_filename = (char *) strstr(real_filename+1,",");
-          if( real_filename != NULL )
-              real_filename++;
+            real_filename = strstr(poOpenInfo->pszFilename,",");
+            if( real_filename != NULL )
+                real_filename = strstr(real_filename+1,",");
+            if( real_filename != NULL )
+                real_filename++;
+            else
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed, 
+                            "Failed to parse J2K_SUBFILE specification." );
+                return NULL;
+            }
+
+          }
           else
           {
-              CPLError( CE_Failure, CPLE_OpenFailed, 
-                        "Failed to parse J2K_SUBFILE specification." );
-              return NULL;
+              real_filename = poOpenInfo->pszFilename;
+              subfile_offset = 0;
           }
 
           fpVSIL = VSIFOpenL( real_filename, "rb" );
@@ -1127,7 +1139,9 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
                     sizeof(jpc_header) ) == 0
             || memcmp( poOpenInfo->pabyHeader, jp2_header, 
                     sizeof(jp2_header) ) == 0) )
-        /* accept JPEG2000 files */;
+    {
+        /* accept JPEG2000 files */
+    }
     else if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
               || poOpenInfo->nHeaderBytes == 0)
              && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
@@ -1145,6 +1159,21 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename, (int) eErr );
         if( eErr != NCS_SUCCESS )
         {
+            delete poFileView;
+
+            /* If the file is not a 'real' file but recognized as a */
+            /* virtual file by the VSIL API, try again by using a */
+            /* VSIIOStream object, like in the J2K_SUBFILE case */
+            VSIStatBuf sBuf;
+            VSIStatBufL sBufL;
+            if (!bIsVirtualFile &&
+                VSIStat(poOpenInfo->pszFilename, &sBuf) != 0 &&
+                VSIStatL(poOpenInfo->pszFilename, &sBufL) == 0)
+            {
+                bIsVirtualFile = TRUE;
+                goto try_again;
+            }
+
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "%s", NCSGetErrorText(eErr) );
             return NULL;
