@@ -1267,25 +1267,22 @@ try_again:
 /* -------------------------------------------------------------------- */
 /*      Look for supporting coordinate system information.              */
 /* -------------------------------------------------------------------- */
-    if( fpVSIL == NULL )
-    {
-        GDALJP2Metadata oJP2Geo;
+    GDALJP2Metadata oJP2Geo;
 
-        if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
-        {
-            poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-            poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
-            memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
-                    sizeof(double) * 6 );
-            poDS->nGCPCount = oJP2Geo.nGCPCount;
-            poDS->pasGCPList = oJP2Geo.pasGCPList;
-            oJP2Geo.pasGCPList = NULL;
-            oJP2Geo.nGCPCount = 0;
-        }
-        else
-        {
-            poDS->ECW2WKTProjection();
-        }
+    if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
+    {
+        poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+        poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
+        memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
+                sizeof(double) * 6 );
+        poDS->nGCPCount = oJP2Geo.nGCPCount;
+        poDS->pasGCPList = oJP2Geo.pasGCPList;
+        oJP2Geo.pasGCPList = NULL;
+        oJP2Geo.nGCPCount = 0;
+    }
+    else
+    {
+        poDS->ECW2WKTProjection();
     }
 
 /* -------------------------------------------------------------------- */
