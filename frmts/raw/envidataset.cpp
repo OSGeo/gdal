@@ -1846,11 +1846,11 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         if(!EQUAL(pszEnviFileType, "ENVI Standard") &&
            !EQUAL(pszEnviFileType, "ENVI Classification"))
         {
-            delete poDS;
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "File %s contains an invalid file type in the ENVI .hdr\n"
                       "GDAL does not support '%s' type files.",
                       poOpenInfo->pszFilename, pszEnviFileType );
+            delete poDS;
             return NULL;
         }
     }
