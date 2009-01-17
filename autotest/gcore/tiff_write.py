@@ -1975,6 +1975,92 @@ def tiff_write_60():
 
     return 'success'
 
+###############################################################################
+# Test BigTIFF=IF_NEEDED creation option
+
+def tiff_write_61():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 50000, 50000, 1,
+                                   options = ['BIGTIFF=IF_NEEDED', 'SPARSE_OK=TRUE'] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/bigtiff.tif' )
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    fileobj = open( 'tmp/bigtiff.tif', mode='rb')
+    binvalues = array.array('b')
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    gdaltest.tiff_drv.Delete( 'tmp/bigtiff.tif' )
+
+    # Check classical TIFF signature
+    if ((binvalues[2] != 0x2A or binvalues[3] != 0) \
+        and (binvalues[3] != 0x2A or binvalues[2] != 0)):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test BigTIFF=IF_SAFER creation option
+
+def tiff_write_62():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 50000, 50000, 1,
+                                   options = ['BIGTIFF=IF_SAFER', 'SPARSE_OK=TRUE'] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/bigtiff.tif' )
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    fileobj = open( 'tmp/bigtiff.tif', mode='rb')
+    binvalues = array.array('b')
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    gdaltest.tiff_drv.Delete( 'tmp/bigtiff.tif' )
+
+    # Check BigTIFF signature
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test BigTIFF=NO creation option when creating a BigTIFF file would be required
+
+def tiff_write_63():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 150000, 150000, 1,
+                                   options = ['BIGTIFF=NO'] )
+    gdal.PopErrorHandler()
+
+    if ds is None:
+        return 'success'
+
+    return 'fail'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2041,6 +2127,9 @@ gdaltest_list = [
     tiff_write_58,
     tiff_write_59,
     tiff_write_60,
+    tiff_write_61,
+    tiff_write_62,
+    tiff_write_63,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
