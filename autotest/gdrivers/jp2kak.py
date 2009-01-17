@@ -45,30 +45,7 @@ def jp2kak_1():
     if gdaltest.jp2kak_drv is None:
         return 'skip'
 
-    # Clear out potentially conflicting drivers.  Re-register them after us.
-    try:
-	drv = gdal.GetDriverByName( 'JP2ECW' )
-	drv.Deregister();
-	drv.Register()
-	print 'Moved JP2ECW'
-    except:
-        pass
-
-    try:
-	drv = gdal.GetDriverByName( 'JP2MRSID' )
-	drv.Deregister();
-	drv.Register()
-	print 'Moved JP2MRSID'
-    except:
-        pass
-
-    try:
-	drv = gdal.GetDriverByName( 'JPEG2000' )
-	drv.Deregister();
-	drv.Register()
-	print 'Moved JPEG2000'
-    except:
-        pass
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2KAK')
 
     tst = gdaltest.GDALTest( 'JP2KAK', 'byte.jp2', 1, 50054 )
     return tst.testOpen()
@@ -258,7 +235,8 @@ def jp2kak_10():
 # Cleanup.
 
 def jp2kak_cleanup():
-    gdaltest.jp2kak_drv = None
+
+    gdaltest.reregister_all_jpeg2000_drivers()
 
     return 'success'
 

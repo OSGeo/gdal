@@ -527,39 +527,12 @@ def nitf_28_jp2ecw():
         jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
     except:
         jp2ecw_drv = None
-        return 'skip'
 
     if jp2ecw_drv is None:
         return 'skip'
 
-
     # Deregister other potential conflicting JPEG2000 drivers
-    jp2kak_drv = None
-    jpeg2000_drv = None
-    jp2mrsid_drv = None
-    try:
-        if gdal.GetDriverByName( 'JP2KAK' ):
-            print 'Deregistering JP2KAK'
-            jp2kak_drv = gdal.GetDriverByName('JP2KAK')
-            jp2kak_drv.Deregister()
-    except:
-        pass
-
-    try: 
-        if gdal.GetDriverByName( 'JPEG2000' ):
-            print 'Deregistering JPEG2000'
-            jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
-            jpeg2000_drv.Deregister()
-    except:
-        pass
-
-    try:
-        if gdal.GetDriverByName( 'JP2MrSID' ):
-            print 'Deregistering JP2MrSID'
-            jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
-            jp2mrsid_drv.Deregister()
-    except:
-        pass
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
     if nitf_create([ 'ICORDS=G', 'IC=C8' ]) == 'success':
         ret = nitf_check_created_file(32398, 42502, 38882)
@@ -568,23 +541,7 @@ def nitf_28_jp2ecw():
     else:
         ret = 'fail'
 
-    try:
-        jp2kak_drv.Register()
-        print 'Registering JP2KAK'
-    except:
-        pass
-
-    try:
-        jpeg2000_drv.Register()
-        print 'Registering JPEG2000'
-    except:
-        pass
-
-    try:
-        jp2mrsid_drv.Register()
-        print 'Registering JP2MrSID'
-    except:
-        pass
+    gdaltest.reregister_all_jpeg2000_drivers()
 
     return ret
 
@@ -596,62 +553,21 @@ def nitf_28_jp2ecw():
 def nitf_28_jp2mrsid():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
         return 'skip'
-    try:
-        jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
-    except:
-        jp2ecw_drv = None
-        return 'skip'
-
-    if jp2ecw_drv is None:
-        return 'skip'
 
     try:
         jp2mrsid_drv = gdal.GetDriverByName( 'JP2MrSID' )
     except:
         jp2mrsid_drv = None
-        return 'skip'
 
     if jp2mrsid_drv is None:
         return 'skip'
 
     # Deregister other potential conflicting JPEG2000 drivers
-    jp2kak_drv = None
-    jpeg2000_drv = None
-    try:
-        if gdal.GetDriverByName( 'JP2KAK' ):
-            print 'Deregistering JP2KAK'
-            jp2kak_drv = gdal.GetDriverByName('JP2KAK')
-            jp2kak_drv.Deregister()
-    except:
-        pass
-
-    try: 
-        if gdal.GetDriverByName( 'JPEG2000' ):
-            print 'Deregistering JPEG2000'
-            jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
-            jpeg2000_drv.Deregister()
-    except:
-        pass
-
-    jp2ecw_drv.Deregister()
-    print 'Deregistering JP2ECW'
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
 
     ret = nitf_check_created_file(32398, 42502, 38882)
 
-    jp2ecw_drv.Register()
-    print 'Registering JP2ECW'
-
-    try:
-        jp2kak_drv.Register()
-        print 'Registering JP2KAK'
-    except:
-        pass
-
-    try:
-        jpeg2000_drv.Register()
-        print 'Registering JPEG2000'
-    except:
-        pass
+    gdaltest.reregister_all_jpeg2000_drivers()
 
     return ret
 
@@ -666,62 +582,21 @@ def nitf_28_jp2mrsid():
 def nitf_28_jp2kak():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
         return 'skip'
-    try:
-        jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
-    except:
-        jp2ecw_drv = None
-        return 'skip'
-
-    if jp2ecw_drv is None:
-        return 'skip'
 
     try:
         jp2kak_drv = gdal.GetDriverByName( 'JP2KAK' )
     except:
         jp2kak_drv = None
-        return 'skip'
 
     if jp2kak_drv is None:
         return 'skip'
 
     # Deregister other potential conflicting JPEG2000 drivers
-    jp2mrsid_drv = None
-    jpeg2000_drv = None
-    try:
-        if gdal.GetDriverByName( 'JP2MrSID' ):
-            print 'Deregistering JP2MrSID'
-            jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
-            jp2mrsid_drv.Deregister()
-    except:
-        pass
-
-    try: 
-        if gdal.GetDriverByName( 'JPEG2000' ):
-            print 'Deregistering JPEG2000'
-            jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
-            jpeg2000_drv.Deregister()
-    except:
-        pass
-
-    jp2ecw_drv.Deregister()
-    print 'Deregistering JP2ECW'
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2KAK')
 
     ret = nitf_check_created_file(32398, 42502, 38882)
 
-    jp2ecw_drv.Register()
-    print 'Registering JP2ECW'
-
-    try:
-        jp2mrsid_drv.Register()
-        print 'Registering JP2MrSID'
-    except:
-        pass
-
-    try:
-        jpeg2000_drv.Register()
-        print 'Registering JPEG2000'
-    except:
-        pass
+    gdaltest.reregister_all_jpeg2000_drivers()
 
     return ret
 

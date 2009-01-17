@@ -43,10 +43,6 @@ import gdaltest
 
 def ecw_1():
 
-    gdaltest.jp2kak_drv = None
-    gdaltest.jpeg2000_drv = None
-    gdaltest.jp2mrsid_drv = None
-
     try:
         gdaltest.ecw_drv = gdal.GetDriverByName( 'ECW' )
         gdaltest.jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
@@ -55,31 +51,7 @@ def ecw_1():
         gdaltest.jp2ecw_drv = None
         return 'skip'
 
-    # Deregister other potential conflicting JPEG2000 drivers that will
-    # be re-registered in the cleanup
-    try:
-        if gdal.GetDriverByName( 'JP2KAK' ):
-            print 'Deregistering JP2KAK'
-            gdaltest.jp2kak_drv = gdal.GetDriverByName('JP2KAK')
-            gdaltest.jp2kak_drv.Deregister()
-    except:
-        pass
-
-    try: 
-        if gdal.GetDriverByName( 'JPEG2000' ):
-            print 'Deregistering JPEG2000'
-            gdaltest.jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
-            gdaltest.jpeg2000_drv.Deregister()
-    except:
-        pass
-
-    try:
-        if gdal.GetDriverByName( 'JP2MrSID' ):
-            print 'Deregistering JP2MrSID'
-            gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
-            gdaltest.jp2mrsid_drv.Deregister()
-    except:
-        pass
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
     return 'success'
 
@@ -685,23 +657,7 @@ def ecw_cleanup():
 
     #gdaltest.clean_tmp()
 
-    try:
-        gdaltest.jp2kak_drv.Register()
-        print 'Registering JP2KAK'
-    except:
-        pass
-    
-    try:
-        gdaltest.jpeg2000_drv.Register()
-        print 'Registering JPEG2000'
-    except:
-        pass
-    
-    try:
-        gdaltest.jp2mrsid_drv.Register()
-        print 'Registering JP2MrSID'
-    except:
-        pass
+    gdaltest.reregister_all_jpeg2000_drivers()
     
     return 'success'
 

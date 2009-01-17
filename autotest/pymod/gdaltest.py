@@ -49,6 +49,15 @@ failure_summary = []
 reason = None
 count_skipped_tests = 0
 
+jp2kak_drv = None
+jpeg2000_drv = None
+jp2ecw_drv = None
+jp2mrsid_drv = None
+jp2kak_drv_unregistered = False
+jpeg2000_drv_unregistered = False
+jp2ecw_drv_unregistered = False
+jp2mrsid_drv_unregistered = False
+
 # Process commandline arguments for stuff like --debug, --locale, --config
 
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
@@ -969,3 +978,94 @@ def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0):
         print "Number of diffs : %d" % (ndiffs)
 
     return maxdiff
+
+
+
+###############################################################################
+# Deregister all JPEG2000 drivers, except the one passed as an argument
+
+def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv
+    global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered
+
+    # Deregister other potential conflicting JPEG2000 drivers that will
+    # be re-registered in the cleanup
+    try:
+        jp2kak_drv = gdal.GetDriverByName('JP2KAK')
+        if name_of_driver_to_keep != 'JP2KAK' and jp2kak_drv:
+            print 'Deregistering JP2KAK'
+            jp2kak_drv.Deregister()
+            jp2kak_drv_unregistered = True
+    except:
+        pass
+
+    try:
+        jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
+        if name_of_driver_to_keep != 'JPEG2000' and jpeg2000_drv:
+            print 'Deregistering JPEG2000'
+            jpeg2000_drv.Deregister()
+            jpeg2000_drv_unregistered = True
+    except:
+        pass
+
+    try:
+        jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
+        if name_of_driver_to_keep != 'JP2ECW' and jp2ecw_drv:
+            print 'Deregistering JP2ECW'
+            jp2ecw_drv.Deregister()
+            jp2ecw_drv_unregistered = True
+    except:
+        pass
+
+    try:
+        jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
+        if name_of_driver_to_keep != 'JP2MrSID' and jp2mrsid_drv:
+            print 'Deregistering JP2MrSID'
+            jp2mrsid_drv.Deregister()
+            jp2mrsid_drv_unregistered = True
+    except:
+        pass
+
+    return True
+
+###############################################################################
+# Re-register all JPEG2000 drivers previously disabled by
+# deregister_all_jpeg2000_drivers_but
+
+def reregister_all_jpeg2000_drivers():
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv
+    global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered
+
+    try:
+        if jp2kak_drv_unregistered:
+            jp2kak_drv.Register()
+            jp2kak_drv_unregistered = False
+            print 'Registering JP2KAK'
+    except:
+        pass
+
+    try:
+        if jpeg2000_drv_unregistered:
+            jpeg2000_drv.Register()
+            jpeg2000_drv_unregistered = False
+            print 'Registering JPEG2000'
+    except:
+        pass
+
+    try:
+        if jp2ecw_drv_unregistered:
+            jp2ecw_drv.Register()
+            jp2ecw_drv_unregistered = False
+            print 'Registering JP2ECW'
+    except:
+        pass
+
+    try:
+        if jp2mrsid_drv_unregistered:
+            jp2mrsid_drv.Register()
+            jp2mrsid_drv_unregistered = False
+            print 'Registering JP2MrSID'
+    except:
+        pass
+
+    return True

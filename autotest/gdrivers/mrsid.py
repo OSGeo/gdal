@@ -193,39 +193,11 @@ def mrsid_4():
 # Test JP2MrSID driver
 
 def mrsid_5():
-    gdaltest.jp2kak_drv = None
-    gdaltest.jpeg2000_drv = None
-    gdaltest.jp2ecw_drv = None
-
     gdaltest.jp2mrsid_drv = gdal.GetDriverByName( 'JP2MrSID' )
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
 
-    # Deregister other potential conflicting JPEG2000 drivers that will
-    # be re-registered in the cleanup
-    try:
-        if gdal.GetDriverByName( 'JP2KAK' ):
-            print 'Deregistering JP2KAK'
-            gdaltest.jp2kak_drv = gdal.GetDriverByName('JP2KAK')
-            gdaltest.jp2kak_drv.Deregister()
-    except:
-        pass
-
-    try:
-        if gdal.GetDriverByName( 'JPEG2000' ):
-            print 'Deregistering JPEG2000'
-            gdaltest.jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
-            gdaltest.jpeg2000_drv.Deregister()
-    except:
-        pass
-
-    try:
-        if gdal.GetDriverByName( 'JP2ECW' ):
-            print 'Deregistering JP2ECW'
-            gdaltest.jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
-            gdaltest.jp2ecw_drv.Deregister()
-    except:
-        pass
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
 
     return 'success'
 	
@@ -408,7 +380,6 @@ def mrsid_online_4():
 # Cleanup.
 
 def mrsid_cleanup():
-    gdaltest.mrsid_drv = None
 
     try:
         os.remove( 'data/mercator.sid.aux.xml' )
@@ -416,23 +387,7 @@ def mrsid_cleanup():
     except:
         pass
     
-    try:
-        gdaltest.jp2kak_drv.Register()
-        print 'Registering JP2KAK'
-    except:
-        pass
-    
-    try:
-        gdaltest.jpeg2000_drv.Register()
-        print 'Registering JPEG2000'
-    except:
-        pass
-    
-    try:
-        gdaltest.jp2ecw_drv.Register()
-        print 'Registering JP2ECW'
-    except:
-        pass
+    gdaltest.reregister_all_jpeg2000_drivers()
     
     return 'success'
 
