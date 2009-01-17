@@ -250,6 +250,8 @@ class MrSIDRasterBand : public GDALPamRasterBand
 
     MrSIDDataset    *poGDS;
 
+    GDALColorInterp eBandInterp;
+
   public:
 
                 MrSIDRasterBand( MrSIDDataset *, int );
@@ -261,6 +263,7 @@ class MrSIDRasterBand : public GDALPamRasterBand
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
+    CPLErr                  SetColorInterpretation( GDALColorInterp eNewInterp );
     virtual double          GetNoDataValue( int * );
     virtual int             GetOverviewCount();
     virtual GDALRasterBand  *GetOverview( int );
@@ -359,6 +362,54 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
         dfNoDataValue = 0.0;
         bNoDataSet = FALSE;
      }
+
+    switch( poGDS->eColorSpace )
+    {
+        case LTI_COLORSPACE_RGB:
+            if( nBand == 1 )
+                eBandInterp = GCI_RedBand;
+            else if( nBand == 2 )
+                eBandInterp = GCI_GreenBand;
+            else if( nBand == 3 )
+                eBandInterp = GCI_BlueBand;
+            else
+                eBandInterp = GCI_Undefined;
+            break;
+
+        case LTI_COLORSPACE_RGBK:
+            if( nBand == 1 )
+                eBandInterp = GCI_RedBand;
+            else if( nBand == 2 )
+                eBandInterp = GCI_GreenBand;
+            else if( nBand == 3 )
+                eBandInterp = GCI_BlueBand;
+            else if( nBand == 4 )
+                eBandInterp = GCI_AlphaBand;
+            else
+                eBandInterp = GCI_Undefined;
+            break;
+
+        case LTI_COLORSPACE_CMYK:
+            if( nBand == 1 )
+                eBandInterp = GCI_CyanBand;
+            else if( nBand == 2 )
+                eBandInterp = GCI_MagentaBand;
+            else if( nBand == 3 )
+                eBandInterp = GCI_YellowBand;
+            else if( nBand == 4 )
+                eBandInterp = GCI_BlackBand;
+            else
+                eBandInterp = GCI_Undefined;
+            break;
+
+        case LTI_COLORSPACE_GRAYSCALE:
+            eBandInterp = GCI_GrayIndex;
+            break;
+
+        default:
+            eBandInterp = GCI_Undefined;
+            break;
+    }
 }
 
 /************************************************************************/
@@ -534,46 +585,26 @@ CPLErr MrSIDRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 GDALColorInterp MrSIDRasterBand::GetColorInterpretation()
-{
-    switch( poGDS->eColorSpace )
-    {
-        case LTI_COLORSPACE_RGB:
-            if( nBand == 1 )
-                return GCI_RedBand;
-            else if( nBand == 2 )
-                return GCI_GreenBand;
-            else if( nBand == 3 )
-                return GCI_BlueBand;
-            else
-                return GCI_Undefined;
-        case LTI_COLORSPACE_RGBK:
-            if( nBand == 1 )
-                return GCI_RedBand;
-            else if( nBand == 2 )
-                return GCI_GreenBand;
-            else if( nBand == 3 )
-                return GCI_BlueBand;
-            else if( nBand == 4 )
-                return GCI_AlphaBand;
-            else
-                return GCI_Undefined;
-        case LTI_COLORSPACE_CMYK:
-            if( nBand == 1 )
-                return GCI_CyanBand;
-            else if( nBand == 2 )
-                return GCI_MagentaBand;
-            else if( nBand == 3 )
-                return GCI_YellowBand;
-            else if( nBand == 4 )
-                return GCI_BlackBand;
-            else
-                return GCI_Undefined;
-        case LTI_COLORSPACE_GRAYSCALE:
-            return GCI_GrayIndex;
-        default:
-            return GCI_Undefined;
-    }
 
+{
+    return eBandInterp;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/*                                                                      */
+/*      This would normally just be used by folks using the MrSID code  */
+/*      to read JP2 streams in other formats (such as NITF) and         */
+/*      providing their own color interpretation regardless of what     */
+/*      MrSID might think the stream itself says.                       */
+/************************************************************************/
+
+CPLErr MrSIDRasterBand::SetColorInterpretation( GDALColorInterp eNewInterp )
+
+{
+    eBandInterp = eNewInterp;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1215,7 +1246,7 @@ static GDALDataset *JP2Open( GDALOpenInfo *poOpenInfo )
         
         if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
             && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
-            && !EQUAL(pszExtension,"j2c") )
+            && !EQUAL(pszExtension,"j2c") && !EQUAL(pszExtension,"ntf"))
             return NULL;
     }
     else if( !EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
