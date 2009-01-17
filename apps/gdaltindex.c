@@ -80,6 +80,9 @@ int main(int argc, char *argv[])
     char** existingFilesTab = NULL;
     int alreadyExistingProjectionRefValid = FALSE;
     char* alreadyExistingProjectionRef = NULL;
+    char* index_filename_mod;
+    int bExists;
+    VSIStatBuf sStatBuf;
 
     /* Check that we are running against at least GDAL 1.4 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -135,7 +138,22 @@ int main(int argc, char *argv[])
 /* -------------------------------------------------------------------- */
 /*      Open or create the target shapefile and DBF file.               */
 /* -------------------------------------------------------------------- */
-    hSHP = SHPOpen( index_filename, "r+" );
+    index_filename_mod = CPLStrdup(CPLResetExtension(index_filename, "shp"));
+
+    bExists = (VSIStat(index_filename_mod, &sStatBuf) == 0);
+    if (!bExists)
+    {
+        CPLFree(index_filename_mod);
+        index_filename_mod = CPLStrdup(CPLResetExtension(index_filename, "SHP"));
+        bExists = (VSIStat(index_filename_mod, &sStatBuf) == 0);
+    }
+    CPLFree(index_filename_mod);
+
+    if (bExists)
+        hSHP = SHPOpen( index_filename, "r+" );
+    else
+        hSHP = NULL;
+
     if( hSHP == NULL )
     {
         printf( "Creating new index file...\n" );
