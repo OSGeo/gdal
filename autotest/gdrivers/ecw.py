@@ -533,6 +533,38 @@ def ecw_17():
         return 'fail'
 
     return 'success'
+		
+###############################################################################
+# Open byte.jp2.gz (test use of the VSIL API)
+
+def ecw_18():
+
+    if gdaltest.jp2ecw_drv is None:
+	return 'skip'
+
+    srs = """PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.9786982138982,
+                AUTHORITY["EPSG","7008"]],
+            AUTHORITY["EPSG","6267"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4267"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AUTHORITY["EPSG","26711"]]
+"""  
+    gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+    
+    tst = gdaltest.GDALTest( 'JP2ECW', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
+    return tst.testOpen( check_prj = srs, check_gt = gt )
 
 ###############################################################################
 def ecw_online_1():
@@ -691,6 +723,7 @@ gdaltest_list = [
     ecw_15,
     ecw_16,
     ecw_17,
+    ecw_18,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,
