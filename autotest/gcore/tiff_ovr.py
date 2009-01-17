@@ -33,6 +33,7 @@ import sys
 import gdal
 import shutil
 import string
+import array
 
 sys.path.append( '../pymod' )
 
@@ -746,6 +747,195 @@ def tiff_ovr_19():
 
     return 'success'
 
+
+###############################################################################
+# Test BIGTIFF_OVERVIEW=YES option
+
+def tiff_ovr_20():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/ovr20.tif', 100, 100, 1 )
+    ds = None
+
+    ds = gdal.Open( 'tmp/ovr20.tif' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'YES')
+    err = ds.BuildOverviews( 'NEAREST', overviewlist = [2, 4] )
+    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
+
+    ds = None
+
+    fileobj = open( 'tmp/ovr20.tif.ovr', mode='rb')
+    binvalues = array.array('b')
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    # Check BigTIFF signature
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test BIGTIFF_OVERVIEW=IF_NEEDED option
+
+def tiff_ovr_21():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/ovr21.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/ovr21.tif' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    # 170 k * 100 k = 17 GB. 17 GB / (2^2) = 4.25 GB > 4.2 GB
+    # so BigTIFF is needed
+    err = ds.BuildOverviews( 'NONE', overviewlist = [2] )
+
+    ds = None
+
+    fileobj = open( 'tmp/ovr21.tif.ovr', mode='rb')
+    binvalues = array.array('b')
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    # Check BigTIFF signature
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test BIGTIFF_OVERVIEW=NO option when BigTIFF is really needed
+
+def tiff_ovr_22():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/ovr22.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/ovr22.tif' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    # 170 k * 100 k = 17 GB. 17 GB / (2^2) = 4.25 GB > 4.2 GB
+    # so BigTIFF is needed
+    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'NO')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    err = ds.BuildOverviews( 'NONE', overviewlist = [2] )
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
+
+    ds = None
+
+    if err != 0:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Same as before, but BigTIFF might be not needed as we use a compression
+# method for the overviews.
+
+def tiff_ovr_23():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/ovr23.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/ovr23.tif' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'NO')
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
+    err = ds.BuildOverviews( 'NONE', overviewlist = [2] )
+    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
+
+    ds = None
+
+    fileobj = open( 'tmp/ovr23.tif.ovr', mode='rb')
+    binvalues = array.array('b')
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    # Check Classical TIFF signature
+    if ((binvalues[2] != 0x2A or binvalues[3] != 0) \
+        and (binvalues[3] != 0x2A or binvalues[2] != 0)):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test BIGTIFF_OVERVIEW=IF_SAFER option
+
+def tiff_ovr_24():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/ovr24.tif', 85000, 100000, 1, options = ['SPARSE_OK=YES'] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/ovr24.tif' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    # 85 k * 100 k = 8.5 GB, so BigTIFF might be needed as
+    # 8.5 GB / 2 > 4.2 GB
+    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_SAFER')
+    err = ds.BuildOverviews( 'NONE', overviewlist = [16] )
+    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
+
+    ds = None
+
+    fileobj = open( 'tmp/ovr24.tif.ovr', mode='rb')
+    binvalues = array.array('b')
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    # Check BigTIFF signature
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -765,6 +955,11 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr17.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr18.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr19.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr20.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr21.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr22.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr23.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr24.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -790,6 +985,11 @@ gdaltest_list_internal = [
     tiff_ovr_17,
     tiff_ovr_18,
     tiff_ovr_19,
+    tiff_ovr_20,
+    tiff_ovr_21,
+    tiff_ovr_22,
+    tiff_ovr_23,
+    tiff_ovr_24,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
