@@ -8,6 +8,8 @@ OBJ = oci_wrapper.obj \
       georaster_rasterband.obj \
       georaster_wrapper.obj
 
+PLUGIN_DLL = gdal_GEOR.dll
+
 EXTRAFLAGS = $(OCI_INCLUDE) -I..\zlib
 
 default: $(OBJ)
@@ -19,14 +21,17 @@ fastread:
 	
 clean:
 	-del *.obj
-        -del *.dll
-        -del *.exp
-        -del *.ilk
-        -del *.lib
-        -del *.pdb
-	cd ..
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
 
-plugin:	gdal_GEOR.dll
+plugin:	$(PLUGIN_DLL)
 
-gdal_GEOR.dll: $(OBJ)
-	link /nologo /dll /debug /out:gdal_GEOR.dll $(OBJ) $(GDALLIB) $(OCI_LIB)
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(OCI_LIB) ..\zlib\*.obj
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
