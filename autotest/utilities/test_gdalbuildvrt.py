@@ -35,6 +35,7 @@ sys.path.append( '../pymod' )
 
 import gdal
 import ogr
+import osr
 import gdaltest
 import test_cli_utilities
 
@@ -42,10 +43,9 @@ import test_cli_utilities
 ###############################################################################
 def test_gdalbuildvrt_check():
 
-    wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235630016,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]'
     ds = gdal.Open('tmp/mosaic.vrt')
-    if ds.GetProjectionRef() != wkt:
-        gdaltest.post_reason('Expected : %s\nGot : %s' % (wkt, ds.GetProjectionRef()) )
+    if ds.GetProjectionRef().find('WGS 84') == -1:
+        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()) )
         return 'fail'
 
     gt = ds.GetGeoTransform()
@@ -74,7 +74,9 @@ def test_gdalbuildvrt_1():
         return 'skip'
 
     drv = gdal.GetDriverByName('GTiff')
-    wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235629972,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]'
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS( 'WGS84' )
+    wkt = srs.ExportToWkt()
 
     ds = drv.Create('tmp/gdalbuildvrt1.tif', 10, 10, 1)
     ds.SetProjection( wkt )
@@ -177,7 +179,9 @@ def test_gdalbuildvrt_5():
         return 'skip'
 
     drv = gdal.GetDriverByName('GTiff')
-    wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572235629972,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]'
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS( 'WGS84' )
+    wkt = srs.ExportToWkt()
 
     ds = drv.Create('tmp/gdalbuildvrt5.tif', 10, 10, 2)
     ds.SetProjection( wkt )
