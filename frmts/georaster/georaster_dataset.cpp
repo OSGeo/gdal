@@ -958,8 +958,6 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
 void GeoRasterDataset::FlushCache()
 {
     GDALDataset::FlushCache();
-
-    this->poGeoRaster->FlushMetadata();
 }
 
 //  ---------------------------------------------------------------------------

@@ -2134,7 +2134,7 @@ bool GeoRasterWrapper::UncompressDeflate( unsigned long nDestLen,
 
 bool GeoRasterWrapper::CompressDeflate( void* pData )
 {
-    unsigned long nLen = (nBlockBytes * 1.1) + 12;
+    unsigned long nLen = ((unsigned long)(nBlockBytes * 1.1)) + 12;
 
     GByte* pabyBuf = (GByte*) CPLMalloc( nLen );
 
