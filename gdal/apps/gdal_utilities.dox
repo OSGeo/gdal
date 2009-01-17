@@ -407,6 +407,18 @@ To produce the smallest possible JPEG-In-TIFF overviews, you should use :
 --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR --config INTERLEAVE_OVERVIEW PIXEL
 \endverbatim
 
+Starting with GDAL 1.7.0, external overviews can be created in the BigTIFF format by using
+the BIGTIFF_OVERVIEW configuration option : --config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO}.
+The default value is IF_NEEDED. The behaviour of this option is exactly the same as the BIGTIFF creation option
+documented in the GeoTIFF driver documentation.
+<ul>
+    <li>YES forces BigTIFF.
+    <li>NO forces classic TIFF.
+    <li>IF_NEEDED will only create a BigTIFF if it is clearly needed (uncompressed, and overviews larger than 4GB).
+    <li>IF_SAFER will create BigTIFF if the resulting file *might* exceed 4GB.
+</ul>
+<br>
+
 Most drivers also support an alternate overview format using Erdas Imagine 
 format.  To trigger this use the USE_RRD=YES configuration option.  This will 
 place the overviews in an associated .aux file suitable for direct use with 

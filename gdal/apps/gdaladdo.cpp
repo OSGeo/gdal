@@ -52,6 +52,7 @@ static void Usage()
             "  --config COMPRESS_OVERVIEW {JPEG,LZW,PACKBITS,DEFLATE} : TIFF compression method\n"
             "  --config PHOTOMETRIC_OVERVIEW {RGB,YCBCR,...} : TIFF photometric interpretation\n"
             "  --config INTERLEAVE_OVERVIEW {PIXEL|BAND} : TIFF interleaving method\n"
+            "  --config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO} : whether BigTIFF must be used\n"
             "\n"
             "Examples:\n"
             " %% gdaladdo -r average abc.tif 2 4 8 16\n"
