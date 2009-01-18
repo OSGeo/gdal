@@ -102,7 +102,7 @@ HDF5ImageDataset::HDF5ImageDataset()
 {
 
     fp=NULL;
-    nGCPCount       = -1;
+    nGCPCount       = 0;
     pszProjection   = NULL;
     pszGCPProjection= NULL;
     pasGCPList      = NULL;
