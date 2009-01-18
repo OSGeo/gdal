@@ -2061,6 +2061,33 @@ def tiff_write_63():
 
     return 'fail'
 
+###############################################################################
+# Test returned projection in WKT format for a WGS84 GeoTIFF (#2787)
+
+def tiff_write_64():
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_64.tif', 1, 1, 1 )
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('WGS84')
+    ds.SetProjection(srs.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_64.tif' )
+    wkt = ds.GetProjection()
+    ds = None
+
+    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
+
+    if wkt != expected_wkt:
+        print wkt
+        print expected_wkt
+        gdaltest.post_reason( 'coordinate system does not exactly match.' )
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_64.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2130,6 +2157,7 @@ gdaltest_list = [
     tiff_write_61,
     tiff_write_62,
     tiff_write_63,
+    tiff_write_64,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
