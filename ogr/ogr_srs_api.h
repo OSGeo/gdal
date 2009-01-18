@@ -124,7 +124,7 @@ typedef enum {
 #define SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP                              \
                                 "Lambert_Conformal_Conic_2SP"
 #define SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM                      \
-                                "Lambert_Conformal_Conic_2SP_Belgium)"
+                                "Lambert_Conformal_Conic_2SP_Belgium"
 #define SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA                     \
                                 "Lambert_Azimuthal_Equal_Area"
 #define SRS_PT_MERCATOR_1SP     "Mercator_1SP"
