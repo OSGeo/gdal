@@ -451,6 +451,77 @@ def ogr_sql_19():
     return 'success'
 
 ###############################################################################
+# Test query "SELECT * from my_layer" on layer without any field (#2788)
+
+def ogr_sql_20():
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    mem_lyr = mem_ds.CreateLayer( "my_layer")
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    mem_lyr.CreateFeature( feat )
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    mem_lyr.CreateFeature( feat )
+
+    sql_lyr = mem_ds.ExecuteSQL("SELECT * from my_layer")
+    if sql_lyr.GetFeatureCount() != 2:
+        return 'fail'
+    mem_ds.ReleaseResultSet(sql_lyr)
+    mem_ds = None
+
+    return 'success'
+
+###############################################################################
+# Test query "SELECT *, fid from my_layer" on layer without any field (#2788)
+
+def ogr_sql_21():
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    mem_lyr = mem_ds.CreateLayer( "my_layer")
+
+    sql_lyr = mem_ds.ExecuteSQL("SELECT *, fid from my_layer")
+    if sql_lyr.GetLayerDefn().GetFieldCount() != 1:
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'fid':
+        return 'fail'
+    mem_ds.ReleaseResultSet(sql_lyr)
+    mem_ds = None
+
+    return 'success'
+
+###############################################################################
+# Test multiple expansion of '*' as in "SELECT *, fid, *, my_layer.* from my_layer" (#2788)
+
+def ogr_sql_22():
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    mem_lyr = mem_ds.CreateLayer( "my_layer")
+    mem_lyr.CreateField( ogr.FieldDefn("test", ogr.OFTString) )
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    mem_lyr.CreateFeature( feat )
+
+    sql_lyr = mem_ds.ExecuteSQL("SELECT *, fid, *, my_layer.* from my_layer")
+    if sql_lyr.GetLayerDefn().GetFieldCount() != 4:
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'test':
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(1).GetName() != 'fid':
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(2).GetName() != 'test':
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(3).GetName() != 'my_layer.test':
+        return 'fail'
+    mem_ds.ReleaseResultSet(sql_lyr)
+    mem_ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -480,6 +551,9 @@ gdaltest_list = [
     ogr_sql_17,
     ogr_sql_18,
     ogr_sql_19,
+    ogr_sql_20,
+    ogr_sql_21,
+    ogr_sql_22,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
