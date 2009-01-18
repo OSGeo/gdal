@@ -387,7 +387,14 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     }
     else if( dfInvFlattening == 0.0 && ((psDefn->SemiMinor / psDefn->SemiMajor) < 0.99999999999999999
              || (psDefn->SemiMinor / psDefn->SemiMajor) > 1.00000000000000001 ) )
+    {
           dfInvFlattening = -1.0 / (psDefn->SemiMinor/psDefn->SemiMajor - 1.0);
+
+          /* Take official inverse flattening definition in the WGS84 case */
+          if (dfSemiMajor == SRS_WGS84_SEMIMAJOR &&
+              fabs(dfInvFlattening - SRS_WGS84_INVFLATTENING) < 1e-10)
+              dfInvFlattening = SRS_WGS84_INVFLATTENING;
+    }
     if(!pszGeogName || strlen(pszGeogName) == 0)
       pszGeogName = CPLStrdup( pszDatumName );
     if(aUnitGot)
