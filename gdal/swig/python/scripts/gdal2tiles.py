@@ -183,7 +183,7 @@ class GlobalMercator(object):
 	     PROJCS["Google Maps Global Mercator",
 	         GEOGCS["WGS 84",
 	             DATUM["WGS_1984",
-	                 SPHEROID["WGS 84",6378137,298.2572235630016,
+	                 SPHEROID["WGS 84",6378137,298.257223563,
 	                     AUTHORITY["EPSG","7030"]],
 	                 AUTHORITY["EPSG","6326"]],
 	             PRIMEM["Greenwich",0],
