@@ -1888,34 +1888,49 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
             }
         }
 
+        if (new_fields > 0)
+        {
 /* -------------------------------------------------------------------- */
 /*      Reallocate the column list larger.                              */
 /* -------------------------------------------------------------------- */
-        SWQ_FREE( select_info->column_defs[isrc].field_name );
-        select_info->column_defs = (swq_col_def *) 
-            swq_realloc( select_info->column_defs, 
-                         sizeof(swq_col_def) * select_info->result_columns, 
-                         sizeof(swq_col_def) * 
-                         (select_info->result_columns + new_fields - 1 ) );
+            SWQ_FREE( select_info->column_defs[isrc].field_name );
+            select_info->column_defs = (swq_col_def *) 
+                swq_realloc( select_info->column_defs, 
+                            sizeof(swq_col_def) * select_info->result_columns, 
+                            sizeof(swq_col_def) * 
+                            (select_info->result_columns + new_fields - 1 ) );
 
 /* -------------------------------------------------------------------- */
 /*      Push the old definitions that came after the one to be          */
 /*      replaced further up in the array.                               */
 /* -------------------------------------------------------------------- */
-        for( i = select_info->result_columns-1; i > isrc; i-- )
-        {
-            memcpy( select_info->column_defs + i + new_fields - 1,
-                    select_info->column_defs + i,
-                    sizeof( swq_col_def ) );
-        }
+            for( i = select_info->result_columns-1; i > isrc; i-- )
+            {
+                memcpy( select_info->column_defs + i + new_fields - 1,
+                        select_info->column_defs + i,
+                        sizeof( swq_col_def ) );
+            }
 
-        select_info->result_columns += (new_fields - 1 );
+            select_info->result_columns += (new_fields - 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Zero out all the stuff in the target column definitions.        */
 /* -------------------------------------------------------------------- */
-        memset( select_info->column_defs + i, 0, 
-                new_fields * sizeof(swq_col_def) );
+            memset( select_info->column_defs + i, 0, 
+                    new_fields * sizeof(swq_col_def) );
+        }
+        else
+        {
+/* -------------------------------------------------------------------- */
+/*      The wildcard expands to nothing                                 */
+/* -------------------------------------------------------------------- */
+            SWQ_FREE( select_info->column_defs[isrc].field_name );
+            memmove( select_info->column_defs + isrc,
+                     select_info->column_defs + isrc + 1,
+                     sizeof( swq_col_def ) * (select_info->result_columns-1-isrc) );
+
+            select_info->result_columns --;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Assign the selected fields.                                     */
@@ -1978,7 +1993,11 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
                parse operation. */
         }
 
-        return NULL;
+        /* If there are several occurrences of '*', go on, but stay on the */
+        /* same index in case '*' is expanded to nothing */
+        /* (the -- is to compensate the fact that isrc will be incremented in */
+        /*  the after statement of the for loop) */
+        isrc --;
     }
 
     
@@ -2105,6 +2124,10 @@ const char *swq_select_parse( swq_select *select_info,
         && select_info->query_mode == SWQM_DISTINCT_LIST )
     {
         return "SELECTing more than one DISTINCT field is a query not supported.";
+    }
+    else if (select_info->result_columns == 0)
+    {
+        select_info->query_mode = SWQM_RECORDSET;
     }
 
 /* -------------------------------------------------------------------- */
