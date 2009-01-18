@@ -453,6 +453,10 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         {
             osCommand += CPLString().Printf(" AND f_geometry_column='%s'", pszGeomColumn);
         }
+        if (pszSchemaNameIn)
+        {
+            osCommand += CPLString().Printf(" AND f_table_schema='%s'", pszSchemaNameIn);
+        }
 
         hResult = PQexec(hPGConn,osCommand);
 
