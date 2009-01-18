@@ -901,7 +901,7 @@ def ogr_pg_22():
     # Create Schema 
 
     schema_name = 'AutoTest-schema'
-    layer_name = schema_name + '.tpoly2'
+    layer_name = schema_name + '.tpoly'
 
     gdaltest.pg_ds.ExecuteSQL( 'CREATE SCHEMA \"' + schema_name + '\"')
 
@@ -1727,7 +1727,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( "DELETE FROM geometry_columns WHERE f_table_name='testview'")
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
-    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly2' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
     # Drop 'AutoTest-schema' (here, double qoutes are required)
     gdaltest.pg_ds.ExecuteSQL( 'DROP SCHEMA \"AutoTest-schema\" CASCADE')
     gdal.PopErrorHandler()
