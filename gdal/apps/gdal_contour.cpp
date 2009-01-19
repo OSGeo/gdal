@@ -158,6 +158,18 @@ int main( int argc, char ** argv )
         Usage();
     }
 
+    if (pszSrcFilename == NULL)
+    {
+        fprintf(stderr, "Missing source filename.\n");
+        Usage();
+    }
+
+    if (pszDstFilename == NULL)
+    {
+        fprintf(stderr, "Missing destination filename.\n");
+        Usage();
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Open source raster file.                                        */
 /* -------------------------------------------------------------------- */
