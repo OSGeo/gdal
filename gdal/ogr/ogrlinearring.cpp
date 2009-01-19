@@ -427,9 +427,10 @@ double OGRLinearRing::get_Area() const
         dfAreaSum += 0.5 * ( paoPoints[i].x * paoPoints[i+1].y 
                              - paoPoints[i+1].x * paoPoints[i].y );
     }
-
-    dfAreaSum += 0.5 * ( paoPoints[nPointCount-1].x * paoPoints[0].y 
-                         - paoPoints[0].x * paoPoints[nPointCount-1].y );
+    
+    if( nPoint > 0 )
+        dfAreaSum += 0.5 * ( paoPoints[nPointCount-1].x * paoPoints[0].y 
+                             - paoPoints[0].x * paoPoints[nPointCount-1].y );
 
     return fabs(dfAreaSum);
 }
