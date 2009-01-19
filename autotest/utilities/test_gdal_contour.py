@@ -167,8 +167,8 @@ def test_gdal_contour_2():
     i = 0
     feat = lyr.GetNextFeature()
     while feat is not None:
-        if feat.GetGeometryRef().GetPoint(0)[2] != expected_height[i]:
-            print 'Got %f as z. Expected %f' % (feat.GetGeometryRef().GetPoint(0)[2], expected_height[i])
+        if feat.GetGeometryRef().GetZ(0) != expected_height[i]:
+            print 'Got %f as z. Expected %f' % (feat.GetGeometryRef().GetZ(0), expected_height[i])
             return 'fail'
         envelope = feat.GetGeometryRef().GetEnvelope()
         if feat.GetField('elev') != expected_height[i]:
