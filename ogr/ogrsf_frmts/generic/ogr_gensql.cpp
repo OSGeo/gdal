@@ -386,7 +386,19 @@ int OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
-    if( psSelectInfo->query_mode != SWQM_RECORDSET )
+    if( psSelectInfo->query_mode == SWQM_DISTINCT_LIST )
+    {
+        if( !PrepareSummary() )
+            return 0;
+
+        swq_summary *psSummary = psSelectInfo->column_summary + 0;
+
+        if( psSummary == NULL )
+            return 0;
+
+        return psSummary->count;
+    }
+    else if( psSelectInfo->query_mode != SWQM_RECORDSET )
         return 1;
     else if( m_poAttrQuery == NULL )
         return poSrcLayer->GetFeatureCount( bForce );
