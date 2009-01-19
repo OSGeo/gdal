@@ -272,6 +272,21 @@ def ogr_geom_build_from_edges():
     return 'success'
 
 ###############################################################################
+# Test GetArea() on empty linear ring (#2792)
+
+def ogr_geom_area_empty_linearring():
+
+    geom = ogr.Geometry( type = ogr.wkbLinearRing )
+
+    area = geom.GetArea()
+    if area != 0:
+        return 'fail'
+
+    geom.Destroy()
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -287,6 +302,7 @@ gdaltest_list = [
     ogr_geom_boundary_linestring,
     ogr_geom_boundary_polygon,
     ogr_geom_build_from_edges,
+    ogr_geom_area_empty_linearring,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
