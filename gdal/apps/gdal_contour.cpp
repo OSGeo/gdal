@@ -113,7 +113,8 @@ int main( int argc, char ** argv )
             while( i < argc-1 
                    && nFixedLevelCount 
                              < (int)(sizeof(adfFixedLevels)/sizeof(double))
-                   && (atof(argv[i+1]) != 0 || EQUAL(argv[i+1],"0")) )
+                   && (atof(argv[i+1]) != 0 || EQUAL(argv[i+1],"0"))
+                   && !EQUAL(argv[i+1], "-3d"))
                 adfFixedLevels[nFixedLevelCount++] = atof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
