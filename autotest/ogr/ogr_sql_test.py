@@ -522,6 +522,33 @@ def ogr_sql_22():
     return 'success'
 
 ###############################################################################
+# Test query "SELECT DISTINCT test from my_layer" (#2788)
+
+def ogr_sql_23():
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    mem_lyr = mem_ds.CreateLayer( "my_layer")
+    mem_lyr.CreateField( ogr.FieldDefn("test", ogr.OFTString) )
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+    feat.SetField("test", 0)
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    mem_lyr.CreateFeature( feat )
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+    feat.SetField("test", 1)
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    mem_lyr.CreateFeature( feat )
+
+    sql_lyr = mem_ds.ExecuteSQL("SELECT DISTINCT test from my_layer")
+    if sql_lyr.GetFeatureCount() != 2:
+        return 'fail'
+    mem_ds.ReleaseResultSet(sql_lyr)
+    mem_ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -554,6 +581,7 @@ gdaltest_list = [
     ogr_sql_20,
     ogr_sql_21,
     ogr_sql_22,
+    ogr_sql_23,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
