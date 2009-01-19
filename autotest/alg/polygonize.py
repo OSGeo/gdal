@@ -72,8 +72,9 @@ def polygonize_1():
 
     # Confirm we get the set of expected features in the output layer.
 
-    if mem_layer.GetFeatureCount() != 13:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 11' % mem_layer.GetFeatureCount() )
+    expected_feature_number = 13
+    if mem_layer.GetFeatureCount() != expected_feature_number:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number) )
         return 'fail'
 
     expect = [ 107, 123, 115, 115, 140, 148, 123, 140, 156,
@@ -119,8 +120,9 @@ def polygonize_2():
 
     # Confirm we get the set of expected features in the output layer.
 
-    if mem_layer.GetFeatureCount() != 17:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 11' % mem_layer.GetFeatureCount() )
+    expected_feature_number = 17
+    if mem_layer.GetFeatureCount() != expected_feature_number:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number) )
         return 'fail'
 
     expect = [ 107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
@@ -158,8 +160,9 @@ def polygonize_3():
 
     # Confirm we get the expected count of features.
 
-    if mem_layer.GetFeatureCount() != 125:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 125' % mem_layer.GetFeatureCount() )
+    expected_feature_number = 125
+    if mem_layer.GetFeatureCount() != expected_feature_number:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number) )
         return 'fail'
 
     # check at least one geometry.
