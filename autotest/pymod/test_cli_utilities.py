@@ -133,3 +133,8 @@ def get_ogrtindex_path():
 # 
 def get_gdalbuildvrt_path():
     return get_cli_utility_path('gdalbuildvrt')
+
+###############################################################################
+# 
+def get_gdal_contour_path():
+    return get_cli_utility_path('gdal_contour')
