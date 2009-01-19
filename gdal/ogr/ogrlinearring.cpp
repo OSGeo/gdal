@@ -335,7 +335,7 @@ OGRGeometry *OGRLinearRing::clone() const
 /************************************************************************/
 
 /**
- * Returns TRUE if the ring has clockwise winding.
+ * Returns TRUE if the ring has clockwise winding (or less than 2 points)
  *
  * @return TRUE if clockwise otherwise FALSE.
  */
@@ -344,6 +344,9 @@ int OGRLinearRing::isClockwise() const
 
 {
     double dfSum = 0.0;
+
+    if( nPointCount < 2 )
+        return TRUE;
 
     for( int iVert = 0; iVert < nPointCount-1; iVert++ )
     {
@@ -422,15 +425,17 @@ double OGRLinearRing::get_Area() const
     double dfAreaSum = 0.0;
     int i;
 
+    if( nPointCount < 2 )
+        return 0;
+
     for( i = 0; i < nPointCount-1; i++ )
     {
         dfAreaSum += 0.5 * ( paoPoints[i].x * paoPoints[i+1].y 
                              - paoPoints[i+1].x * paoPoints[i].y );
     }
 
-    if( nPoint > 0 )
-        dfAreaSum += 0.5 * ( paoPoints[nPointCount-1].x * paoPoints[0].y 
-                             - paoPoints[0].x * paoPoints[nPointCount-1].y );
+    dfAreaSum += 0.5 * ( paoPoints[nPointCount-1].x * paoPoints[0].y 
+                         - paoPoints[0].x * paoPoints[nPointCount-1].y );
 
     return fabs(dfAreaSum);
 }
