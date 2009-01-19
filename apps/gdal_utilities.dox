@@ -582,12 +582,6 @@ This program generates a vector contour file from the input raster elevation
 model (DEM). 
 
 <dl>
-<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference
- set. The coordinate systems that can be passed are anything supported
- by the OGRSpatialReference.SetFromUserInput() call, which includes
- EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above),
- or the name of a .prf file containing well known text.</dd>
-</dl
 
 <dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
 
