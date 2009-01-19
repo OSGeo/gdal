@@ -186,6 +186,7 @@ int main( int argc, char ** argv )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Band %d does not exist on dataset.", 
                   nBandIn );
+        exit(2);
     }
 
     if( !bNoDataSet && !bIgnoreNoData )
