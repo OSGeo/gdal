@@ -29,6 +29,18 @@ Starting with GDAL 1.6.0, the set of tables to be scanned can be overridden by s
 If the parameter is found, the driver skips enumeration of the tables as
 described in the next paragraph.<p>
 
+Starting with GDAL 1.7.0, it is possible to restrict the schemas that will be scanned while establishing
+the list of tables. This can be done by specifying <i>schemas=schema_name[,schema_name2]</i> within the connection string. This can also be a way of speeding up the connection to a PostgreSQL database if there are a lot of schemas. Note that if only one schema is listed, it will also be made automatically the active schema (and the schema name will not prefix the layer name). Otherwise, the active schema is still 'public', unless otherwise specified by the <i>active_schema=</i> option.<p>
+
+Starting with GDAL 1.7.0, the active schema ('public' being the default) can be overridden by specifying
+<i>active_schema=schema_name</i> within the connection string. The active schema is the schema where tables
+are created or looked for when their name is not explicitly prefixed by a schema name.
+Note that this does not restrict the tables that will be listed (see <i>schemas=</i> option above).
+When getting the list of tables, the name of the tables within that active schema will
+not be prefixed by the schema name. For example, if you have a table 'foo' within the public
+schema, and a table 'foo' within the 'bar_schema' schema, and that you specify
+active_schema=bar_schema, 2 layers will be listed : 'foo' (implicetly within 'bar_schema') and 'public.foo'.<p>
+
 <h2>Geometry columns</h2>
 
 If the <i>geometry_columns</i> table exists (i.e. PostGIS is enabled for the accessed
@@ -243,7 +255,7 @@ ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
 
 <li>
 <p>
-This example shows using ogrinfo to list only the layers specified by the <i>tables=</i> options.<p>
+This example shows using ogrinfo to list only the layers specified by the <i>tables=</i> options. (Starting with GDAL 1.6.0)<p>
 
 <pre>
 ogrinfo -ro PG:'dbname=warmerda tables=table1,table2'
@@ -252,10 +264,47 @@ ogrinfo -ro PG:'dbname=warmerda tables=table1,table2'
 
 <li>
 <p>
-This example shows using ogrinfo to query a table 'foo' with multiple geometry columns ('geom1' and 'geom2').<p>
+This example shows using ogrinfo to query a table 'foo' with multiple geometry columns ('geom1' and 'geom2'). (Starting with GDAL 1.6.0) <p>
 
 <pre>
 ogrinfo -ro -al PG:dbname=warmerda 'foo(geom2)'
+</pre>
+</li>
+
+<li>
+<p>
+This example show how to list only the layers inside the schema apt200810 and apt200812. The layer names will be prefixed by the name of the schema they belong to. (Starting with GDAL 1.7.0)<p>
+
+<pre>
+ogrinfo -ro PG:'dbname=warmerda schemas=apt200810,apt200812'
+</pre>
+</li>
+
+<li>
+<p>
+This example shows using ogrinfo to list only the layers inside the schema named apt200810. Note that the layer names will not be prefixed by apt200810 as only one schema is listed. (Starting with GDAL 1.7.0)<p>
+
+<pre>
+ogrinfo -ro PG:'dbname=warmerda schemas=apt200810'
+</pre>
+</li>
+
+<li>
+<p>
+This example shows how to convert a set of shapefiles inside the apt200810 directory into an
+existing Postgres schema apt200810. In that example, we could have use the schemas= option instead. (Starting with GDAL 1.7.0)<p>
+
+<pre>
+ogr2ogr -f PostgreSQL "PG:dbname=warmerda active_schema=apt200810" apt200810
+</pre>
+</li>
+
+<li>
+<p>
+This example shows how to convert all the tables inside the schema apt200810 as a set of shapefiles inside the apt200810 directory.  Note that the layer names will not be prefixed by apt200810 as only one schema is listed (Starting with GDAL 1.7.0)<p>
+
+<pre>
+ogr2ogr apt200810 PG:'dbname=warmerda schemas=apt200810'
 </pre>
 </li>
 
