@@ -65,15 +65,11 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bUseCopy = USE_COPY_UNSET;  // unknown
 
     pszTableName = CPLStrdup( pszTableNameIn );
-    if (pszSchemaNameIn)
-      pszSchemaName = CPLStrdup( pszSchemaNameIn );
-    else
-      pszSchemaName = NULL;
-
+    pszSchemaName = NULL; // set in ReadTableDefinition
     pszSqlTableName = NULL; //set in ReadTableDefinition
     pszSqlGeomParentTableName = NULL;
 
-    poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaName, pszGeomColumnIn, bAdvertizeGeomColumn );
+    poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaNameIn, pszGeomColumnIn, bAdvertizeGeomColumn );
 
     if( poFeatureDefn )
     {
@@ -141,9 +137,14 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         OGRPGClearResult( hResult );
     }
 
+    if (pszSchemaNameIn)
+      pszSchemaName = CPLStrdup( pszSchemaNameIn );
+    else if (strlen(osCurrentSchema))
+      pszSchemaName = CPLStrdup( osCurrentSchema );
+
     CPLString osSchemaClause;
-    if( pszSchemaNameIn )
-        osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaNameIn);
+    if( pszSchemaName )
+        osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaName);
 
     const char* pszTypnameEqualsAnyClause;
     if (poDS->sPostgreSQLVersion.nMajor == 7 && poDS->sPostgreSQLVersion.nMinor <= 3)
@@ -203,10 +204,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         OGRPGClearResult( hResult );
-
-        CPLString osSchemaClause;
-        if( pszSchemaNameIn )
-            osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaNameIn);
 
         osCommand.Printf(
                  "DECLARE mycursor CURSOR for "
@@ -453,9 +450,9 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         {
             osCommand += CPLString().Printf(" AND f_geometry_column='%s'", pszGeomColumn);
         }
-        if (pszSchemaNameIn)
+        if (pszSchemaName)
         {
-            osCommand += CPLString().Printf(" AND f_table_schema='%s'", pszSchemaNameIn);
+            osCommand += CPLString().Printf(" AND f_table_schema='%s'", pszSchemaName);
         }
 
         hResult = PQexec(hPGConn,osCommand);
