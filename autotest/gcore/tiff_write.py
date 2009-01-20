@@ -2088,6 +2088,31 @@ def tiff_write_64():
 
     return 'success'
 
+###############################################################################
+# Verify that we can write XML metadata.
+
+def tiff_write_65():
+
+    driver = gdal.GetDriverByName( 'GTiff' )
+    ds = driver.Create( 'tmp/tiff_write_65.tif', 10, 10 )
+
+    doc = '<doc><test xml:attr="abc"/></doc>'
+    ds.SetMetadata( [ doc ], 'xml:test' )
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_65.tif' )
+    md = ds.GetMetadata( 'xml:test' )
+    ds = None
+
+    if len(md) != 1 or md[0] != doc:
+        gdaltest.post_reason( 'did not get xml back clean' )
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_65.tif' )
+    
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2158,6 +2183,7 @@ gdaltest_list = [
     tiff_write_62,
     tiff_write_63,
     tiff_write_64,
+    tiff_write_65,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
