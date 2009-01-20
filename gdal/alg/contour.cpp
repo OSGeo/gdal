@@ -159,7 +159,7 @@ public:
 /************************************************************************/
 
 GDALContourGeneratorH 
-GDAL_CT_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue, 
+GDAL_CG_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue, 
                 double dfContourInterval, double dfContourBase, 
                 GDALContourWriter pfnWriter, void *pCBData )
 
