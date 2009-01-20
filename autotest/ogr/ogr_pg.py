@@ -1701,6 +1701,165 @@ def ogr_pg_40():
     return 'success'
 
 ###############################################################################
+# Test active_schema= option
+
+def ogr_pg_41():
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' active_schema=AutoTest-schema', update = 1 )
+
+    # tpoly without schema refers to the active schema, that is to say AutoTest-schema
+    found = ogr_pg_check_layer_in_list(ds, 'tpoly')
+    if found is False:
+        gdaltest.post_reason( 'layer tpoly not listed' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('tpoly')
+    if layer.GetFeatureCount() != 3:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    found = ogr_pg_check_layer_in_list(ds, 'AutoTest-schema.tpoly')
+    if found is True:
+        gdaltest.post_reason( 'layer AutoTest-schema.tpoly is listed, but should not' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('AutoTest-schema.tpoly')
+    if layer.GetFeatureCount() != 3:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    found = ogr_pg_check_layer_in_list(ds, 'public.tpoly')
+    if found is False:
+        gdaltest.post_reason( 'layer tpoly not listed' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('public.tpoly')
+    if layer.GetFeatureCount() != 19:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test41' )
+    gdal.PopErrorHandler()
+
+    ds.CreateLayer( 'test41')
+
+    found = ogr_pg_check_layer_in_list(ds, 'test41')
+    if found is False:
+        gdaltest.post_reason( 'layer test41 not listed' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('test41')
+    if layer.GetFeatureCount() != 0:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    layer = ds.GetLayerByName('AutoTest-schema.test41')
+    if layer.GetFeatureCount() != 0:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test schemas= option
+
+def ogr_pg_42():
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' schemas=AutoTest-schema', update = 1 )
+
+    # tpoly without schema refers to the active schema, that is to say AutoTest-schema
+    found = ogr_pg_check_layer_in_list(ds, 'tpoly')
+    if found is False:
+        gdaltest.post_reason( 'layer tpoly not listed' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('tpoly')
+    if layer.GetFeatureCount() != 3:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    found = ogr_pg_check_layer_in_list(ds, 'AutoTest-schema.tpoly')
+    if found is True:
+        gdaltest.post_reason( 'layer AutoTest-schema.tpoly is listed, but should not' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('AutoTest-schema.tpoly')
+    if layer.GetFeatureCount() != 3:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    found = ogr_pg_check_layer_in_list(ds, 'public.tpoly')
+    if found is True:
+        gdaltest.post_reason( 'layer public.tpoly is listed, but should not' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('public.tpoly')
+    if layer.GetFeatureCount() != 19:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    found = ogr_pg_check_layer_in_list(ds, 'test41')
+    if found is False:
+        gdaltest.post_reason( 'layer test41 not listed' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('test41')
+    if layer.GetFeatureCount() != 0:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    layer = ds.GetLayerByName('AutoTest-schema.test41')
+    if layer.GetFeatureCount() != 0:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+
+###############################################################################
+# Test schemas= option
+
+def ogr_pg_43():
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' schemas=public,AutoTest-schema', update = 1 )
+
+    # tpoly without schema refers to the active schema, that is to say public
+    found = ogr_pg_check_layer_in_list(ds, 'tpoly')
+    if found is False:
+        gdaltest.post_reason( 'layer tpoly not listed' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('tpoly')
+    if layer.GetFeatureCount() != 19:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    found = ogr_pg_check_layer_in_list(ds, 'AutoTest-schema.tpoly')
+    if found is False:
+        gdaltest.post_reason( 'layer AutoTest-schema.tpoly not listed' )
+        return 'fail'
+
+    layer = ds.GetLayerByName('AutoTest-schema.tpoly')
+    if layer.GetFeatureCount() != 3:
+        print layer.GetFeatureCount()
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -1728,6 +1887,7 @@ def ogr_pg_table_cleanup():
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.test41' )
     # Drop 'AutoTest-schema' (here, double qoutes are required)
     gdaltest.pg_ds.ExecuteSQL( 'DROP SCHEMA \"AutoTest-schema\" CASCADE')
     gdal.PopErrorHandler()
@@ -1793,6 +1953,9 @@ gdaltest_list_internal = [
     ogr_pg_38,
     ogr_pg_39,
     ogr_pg_40,
+    ogr_pg_41,
+    ogr_pg_42,
+    ogr_pg_43,
     ogr_pg_cleanup ]
 
 
