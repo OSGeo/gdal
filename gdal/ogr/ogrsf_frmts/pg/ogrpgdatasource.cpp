@@ -1024,6 +1024,15 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     char                *pszSchemaName = NULL;
     int                 nDimension = 3;
 
+    if (pszLayerNameIn == NULL)
+        return NULL;
+
+    if (strncmp(pszLayerNameIn, "pg", 2) == 0)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "The layer name should not begin by 'pg' as it is a reserved prefix");
+    }
+
     if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
     {
         pszLayerName = LaunderName( pszLayerNameIn );
