@@ -796,7 +796,7 @@ CPLErr GTiffRasterBand::SetMetadataItem( const char *pszName,
                                          const char *pszDomain )
 
 {
-    if( pszDomain == NULL || EQUAL(pszDomain,"_temporary_") )
+    if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
         poGDS->bMetadataChanged = TRUE;
 
     return oGTiffMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
@@ -2750,6 +2750,12 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
     {
         char **papszMD = poMDMD->GetMetadata( papszDomainList[iDomain] );
         int iItem;
+        int bIsXML = FALSE;
+
+        if( EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") )
+            continue; // ignored
+        if( EQUALN(papszDomainList[iDomain], "xml:",4 ) )
+            bIsXML = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Process each item in this domain.                               */
@@ -2758,8 +2764,16 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         {
             const char *pszItemValue;
             char *pszItemName = NULL;
-            
-            pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName );
+
+            if( bIsXML )
+            {
+                pszItemName = CPLStrdup("doc");
+                pszItemValue = papszMD[iItem];
+            }
+            else
+            {
+                pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName);
+            }
             
 /* -------------------------------------------------------------------- */
 /*      Convert into XML item or handle as a special TIFF tag.          */
@@ -3777,7 +3791,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         {
             const char *pszKey, *pszValue, *pszRole, *pszDomain; 
             char *pszUnescapedValue;
-            int nBand;
+            int nBand, bIsXML = FALSE;
 
             if( psItem->eType != CXT_Element
                 || !EQUAL(psItem->pszValue,"Item") )
@@ -3792,10 +3806,21 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
             if( pszKey == NULL || pszValue == NULL )
                 continue;
 
+            if( EQUALN(pszDomain,"xml:",4) )
+                bIsXML = TRUE;
+
             pszUnescapedValue = CPLUnescapeString( pszValue, NULL, 
                                                    CPLES_XML );
             if( nBand == 0 )
-                SetMetadataItem( pszKey, pszUnescapedValue, pszDomain );
+            {
+                if( bIsXML )
+                {
+                    char *apszMD[2] = { pszUnescapedValue, NULL };
+                    SetMetadata( apszMD, pszDomain );
+                }
+                else
+                    SetMetadataItem( pszKey, pszUnescapedValue, pszDomain );
+            }
             else
             {
                 GDALRasterBand *poBand = GetRasterBand(nBand);
@@ -3806,8 +3831,16 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     else if( EQUAL(pszRole,"offset") )
                         poBand->SetOffset( atof(pszUnescapedValue) );
                     else
-                        poBand->SetMetadataItem(pszKey,pszUnescapedValue,
-                                                pszDomain );
+                    {
+                        if( bIsXML )
+                        {
+                            char *apszMD[2] = { pszUnescapedValue, NULL };
+                            poBand->SetMetadata( apszMD, pszDomain );
+                        }
+                        else
+                            poBand->SetMetadataItem(pszKey,pszUnescapedValue,
+                                                    pszDomain );
+                    }
                 }
             }
             CPLFree( pszUnescapedValue );
@@ -5025,7 +5058,7 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
 CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
 
 {
-    if( pszDomain == NULL || EQUAL(pszDomain,"_temporary_") )
+    if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
         bMetadataChanged = TRUE;
 
     return oGTiffMDMD.SetMetadata( papszMD, pszDomain );
