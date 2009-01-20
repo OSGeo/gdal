@@ -246,6 +246,75 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
 /* -------------------------------------------------------------------- */
 /*      Determine if the connection string contains an optional         */
+/*      ACTIVE_SCHEMA portion. If so, parse it out.                     */
+/* -------------------------------------------------------------------- */
+    char             *pszActiveSchemaStart;
+    CPLString         osActiveSchema;
+    pszActiveSchemaStart = strstr(pszName, "active_schema=");
+    if (pszActiveSchemaStart == NULL)
+        pszActiveSchemaStart = strstr(pszName, "ACTIVE_SCHEMA=");
+    if (pszActiveSchemaStart != NULL)
+    {
+        char           *pszActiveSchema;
+        const char     *pszEnd = NULL;
+
+        pszActiveSchema = CPLStrdup( pszActiveSchemaStart + strlen("active_schema=") );
+
+        pszEnd = strchr(pszActiveSchemaStart, ' ');
+        if( pszEnd == NULL )
+            pszEnd = pszName + strlen(pszName);
+
+        // Remove ACTIVE_SCHEMA=xxxxx from pszName string
+        memmove( pszActiveSchemaStart, pszEnd, strlen(pszEnd) + 1 );
+
+        pszActiveSchema[pszEnd - pszActiveSchemaStart - strlen("active_schema=")] = '\0';
+
+        osActiveSchema = pszActiveSchema;
+        CPLFree(pszActiveSchema);
+    }
+    else
+    {
+        osActiveSchema = "public";
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Determine if the connection string contains an optional         */
+/*      SCHEMAS portion. If so, parse it out.                           */
+/* -------------------------------------------------------------------- */
+    char             *pszSchemasStart;
+    char            **papszSchemaList = NULL;
+    pszSchemasStart = strstr(pszName, "schemas=");
+    if (pszSchemasStart == NULL)
+        pszSchemasStart = strstr(pszName, "SCHEMAS=");
+    if (pszSchemasStart != NULL)
+    {
+        char           *pszSchemas;
+        const char     *pszEnd = NULL;
+
+        pszSchemas = CPLStrdup( pszSchemasStart + strlen("schemas=") );
+
+        pszEnd = strchr(pszSchemasStart, ' ');
+        if( pszEnd == NULL )
+            pszEnd = pszName + strlen(pszName);
+
+        // Remove SCHEMAS=xxxxx from pszName string
+        memmove( pszSchemasStart, pszEnd, strlen(pszEnd) + 1 );
+
+        pszSchemas[pszEnd - pszSchemasStart - strlen("schemas=")] = '\0';
+
+        papszSchemaList = CSLTokenizeString2( pszSchemas, ",", 0 );
+
+        CPLFree(pszSchemas);
+
+        /* If there is only one schema specified, make it the active schema */
+        if (CSLCount(papszSchemaList) == 1)
+        {
+            osActiveSchema = papszSchemaList[0];
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Determine if the connection string contains an optional         */
 /*      TABLES portion. If so, parse it out. The expected               */
 /*      connection string in this case will be, e.g.:                   */
 /*                                                                      */
@@ -272,15 +341,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         pszTableSpec = CPLStrdup( pszTableStart + 7 );
 
-        for( i = 0; pszTableStart[i] != '\0'; i++ )
-        {
-            if( pszTableStart[i] == ' ' )
-            {
-                pszEnd = pszTableStart + i;
-                break;
-            }
-        }
-
+        pszEnd = strchr(pszTableStart, ' ');
         if( pszEnd == NULL )
             pszEnd = pszName + strlen(pszName);
 
@@ -324,7 +385,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             }
             else if( CSLCount( papszQualifiedParts ) == 1 )
             {
-                papszSchemaNames = CSLAddString( papszSchemaNames, "public");
+                papszSchemaNames = CSLAddString( papszSchemaNames, osActiveSchema.c_str());
                 papszTableNames = CSLAddString( papszTableNames,
                                                 papszQualifiedParts[0] );
             }
@@ -342,6 +403,11 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     hPGConn = PQconnectdb( pszName + (bUseBinaryCursor ? 4 : 3) );
     if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
     {
+        CSLDestroy( papszSchemaList );
+        CSLDestroy( papszSchemaNames );
+        CSLDestroy( papszTableNames );
+        CSLDestroy( papszGeomColumnNames );
+
         CPLFree(pszName);
         pszName = NULL;
 
@@ -399,6 +465,31 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     CPLDebug( "PG", "DBName=\"%s\"", pszDBName );
 
+/* -------------------------------------------------------------------- */
+/*      Set active schema if different from 'public'                    */
+/* -------------------------------------------------------------------- */
+    if (strcmp(osActiveSchema, "public") != 0)
+    {
+        CPLString osCommand;
+        osCommand.Printf("SET search_path='%s',public", osActiveSchema.c_str());
+        PGresult    *hResult = PQexec(hPGConn, osCommand );
+
+        if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            OGRPGClearResult( hResult );
+
+            CSLDestroy( papszSchemaList );
+            CSLDestroy( papszSchemaNames );
+            CSLDestroy( papszTableNames );
+            CSLDestroy( papszGeomColumnNames );
+
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", PQerrorMessage(hPGConn) );
+            return FALSE;
+        }
+
+        OGRPGClearResult(hResult);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Find out PostgreSQL version                                     */
@@ -603,6 +694,11 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             OGRPGClearResult( hResult );
             CPLHashSetDestroy(hSetTables);
 
+            CSLDestroy( papszSchemaList );
+            CSLDestroy( papszSchemaNames );
+            CSLDestroy( papszTableNames );
+            CSLDestroy( papszGeomColumnNames );
+
             CPLError( CE_Failure, CPLE_AppDefined,
                     "%s", PQerrorMessage(hPGConn) );
             return FALSE;
@@ -677,6 +773,11 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                 OGRPGClearResult( hResult );
 
                 CPLHashSetDestroy(hSetTables);
+
+                CSLDestroy( papszSchemaList );
+                CSLDestroy( papszSchemaNames );
+                CSLDestroy( papszTableNames );
+                CSLDestroy( papszGeomColumnNames );
 
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "%s", PQerrorMessage(hPGConn) );
@@ -767,6 +868,14 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         sEntry.pszSchemaName = (char*) papszSchemaNames[iRecord];
         psEntry = (PGTableEntry* )CPLHashSetLookup(hSetTables, &sEntry);
 
+        /* If SCHEMAS= is specified, only take into account tables inside */
+        /* one of the specified schemas */
+        if (papszSchemaList != NULL &&
+            CSLFindString(papszSchemaList, papszSchemaNames[iRecord]) == -1)
+        {
+            continue;
+        }
+
         /* Some heuristics to preserve backward compatibility with the way that */
         /* layers were reported in GDAL <= 1.5.0 */
         /* That is to say : */
@@ -798,6 +907,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     CPLHashSetDestroy(hSetTables);
 
+    CSLDestroy( papszSchemaList );
     CSLDestroy( papszSchemaNames );
     CSLDestroy( papszTableNames );
     CSLDestroy( papszGeomColumnNames );
@@ -1267,22 +1377,12 @@ OGRLayer *OGRPGDataSource::GetLayer( int iLayer )
 OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
 
 {
-    char* pszNameWithoutBracket;
+    char* pszTableName = NULL;
+    char *pszGeomColumnName = NULL;
+    char *pszSchemaName = NULL;
+
     if ( ! pszName )
         return NULL;
-    char *pszGeomColumnName = NULL;
-
-    pszNameWithoutBracket = CPLStrdup(pszName);
-
-    char *pos = strchr(pszNameWithoutBracket, '(');
-    if (pos != NULL)
-    {
-        *pos = '\0';
-        pszGeomColumnName = pos+1;
-        int len = strlen(pszGeomColumnName);
-        if (len > 0)
-            pszGeomColumnName[len - 1] = '\0';
-    }
 
     int  i;
     
@@ -1294,7 +1394,6 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
 
         if( strcmp( pszName, poLayer->GetLayerDefn()->GetName() ) == 0 )
         {
-            CPLFree(pszNameWithoutBracket);
             return poLayer;
         }
     }
@@ -1306,19 +1405,45 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
 
         if( EQUAL( pszName, poLayer->GetLayerDefn()->GetName() ) )
         {
-            CPLFree(pszNameWithoutBracket);
             return poLayer;
         }
     }
 
-    if( OpenTable( pszNameWithoutBracket, NULL, pszGeomColumnName, TRUE, FALSE, TRUE ) )
+    char* pszNameWithoutBracket = CPLStrdup(pszName);
+    char *pos = strchr(pszNameWithoutBracket, '(');
+    if (pos != NULL)
     {
-        CPLFree(pszNameWithoutBracket);
+        *pos = '\0';
+        pszGeomColumnName = pos+1;
+        int len = strlen(pszGeomColumnName);
+        if (len > 0)
+            pszGeomColumnName[len - 1] = '\0';
+    }
+
+    pos = strchr(pszNameWithoutBracket, '.');
+    if (pos != NULL)
+    {
+        *pos = '\0';
+        pszSchemaName = CPLStrdup(pszNameWithoutBracket);
+        pszTableName = CPLStrdup(pos + 1);
+    }
+    else
+    {
+        pszTableName = CPLStrdup(pszNameWithoutBracket);
+    }
+    CPLFree(pszNameWithoutBracket);
+    pszNameWithoutBracket = NULL;
+
+    int bRet = OpenTable( pszTableName, pszSchemaName, pszGeomColumnName, TRUE, FALSE, TRUE );
+    CPLFree(pszTableName);
+    CPLFree(pszSchemaName);
+
+    if (bRet)
+    {
         return GetLayer(count);
     }
     else
     {
-        CPLFree(pszNameWithoutBracket);
         return NULL;
     }
 }
