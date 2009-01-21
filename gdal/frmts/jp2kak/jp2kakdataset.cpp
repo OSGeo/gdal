@@ -1705,6 +1705,9 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     CPLFree( component_indices );
     CPLFree( stripe_heights );
+    CPLFree( sample_offsets );
+    CPLFree( sample_gaps );
+    CPLFree( row_gaps );
 
     return eErr;
 }
