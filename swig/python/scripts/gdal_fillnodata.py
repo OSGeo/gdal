@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #******************************************************************************
-#  $Id$
+#  $Id: gdal_sieve.py 15700 2008-11-10 15:29:13Z warmerdam $
 # 
 #  Project:  GDAL Python Interface
-#  Purpose:  Application for applying sieve filter to raster data.
+#  Purpose:  Application for filling nodata areas in a raster by interpolation
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 # 
 #******************************************************************************
@@ -39,8 +39,9 @@ import os.path
 
 def Usage():
     print """
-gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
-           srcfile [-nomask] [-mask filename] [-of format] [dstfile]
+gdal_nodatafill [-q] [-md max_distance] [-si smooth_iterations]
+                [-o name=value] [-b band]
+                srcfile [-nomask] [-mask filename] [-of format] [dstfile]
 """
     sys.exit(1)
     
@@ -48,11 +49,12 @@ gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
 # 	Mainline
 # =============================================================================
 
-threshold = 2
-connectedness = 4
+max_distance = 100
+smoothing_iterations = 0
 options = []
 quiet_flag = 0
 src_filename = None
+src_band = 1
 
 dst_filename = None
 format = 'GTiff'
@@ -73,18 +75,20 @@ while i < len(argv):
         i = i + 1
         format = argv[i]
 
-    elif arg == '-4':
-        connectedness = 4
-        
-    elif arg == '-8':
-        connectedness = 8
-        
     elif arg == '-q':
         quiet_flag = 1
         
-    elif arg == '-st':
+    elif arg == '-si':
         i = i + 1
-        threshold = int(argv[i])
+        smoothing_iterations = int(argv[i])
+        
+    elif arg == '-b':
+        i = i + 1
+        src_band = int(argv[i])
+        
+    elif arg == '-md':
+        i = i + 1
+        max_distance = float(argv[i])
         
     elif arg == '-nomask':
         mask = 'none'
@@ -118,10 +122,10 @@ if src_filename is None:
 # 	Verify we have next gen bindings with the sievefilter method.
 # =============================================================================
 try:
-    gdal.SieveFilter
+    gdal.FillNodata
 except:
     print
-    print 'gdal.SieveFilter() not available.  You are likely using "old gen"'
+    print 'gdal.FillNodata() not available.  You are likely using "old gen"'
     print 'bindings or an older version of the next gen bindings.'
     print
     sys.exit(1)
@@ -139,7 +143,7 @@ if src_ds is None:
     print 'Unable to open ', src_filename
     sys.exit(1)
 
-srcband = src_ds.GetRasterBand(1)
+srcband = src_ds.GetRasterBand(src_band)
 
 if mask is 'default':
     maskband = srcband.GetMaskBand()
@@ -176,13 +180,9 @@ if quiet_flag:
 else:
     prog_func = gdal.TermProgress
     
-result = gdal.SieveFilter( srcband, maskband, dstband,
-                           threshold, connectedness, 
-                           callback = prog_func )
-    
-
-
-
+result = gdal.FillNodata( dstband, maskband,
+                          max_distance, smoothing_iterations, options,
+                          callback = prog_func )
 
 
 
