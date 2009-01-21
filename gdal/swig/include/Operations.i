@@ -234,6 +234,28 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
 %} 
 
 /************************************************************************/
+/*                             FillNodata()                             */
+/************************************************************************/
+
+%feature( "kwargs" ) FillNodata;
+%inline %{
+int  FillNodata( GDALRasterBandShadow *targetBand,
+     		 GDALRasterBandShadow *maskBand,
+                 double maxSearchDist,
+                 int smoothingIterations,
+                 char **options = NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALFillNodata( targetBand, maskBand, maxSearchDist, 
+    	   		   0, smoothingIterations, options, 
+			   callback, callback_data );
+}
+%} 
+
+/************************************************************************/
 /*                            SieveFilter()                             */
 /************************************************************************/
 

@@ -990,6 +990,7 @@ ReprojectImage = _gdal.ReprojectImage
 ComputeProximity = _gdal.ComputeProximity
 RasterizeLayer = _gdal.RasterizeLayer
 Polygonize = _gdal.Polygonize
+FillNodata = _gdal.FillNodata
 SieveFilter = _gdal.SieveFilter
 RegenerateOverviews = _gdal.RegenerateOverviews
 RegenerateOverview = _gdal.RegenerateOverview
