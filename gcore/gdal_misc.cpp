@@ -238,7 +238,6 @@ int CPL_STDCALL GDALGetDataTypeSize( GDALDataType eDataType )
         return 128;
 
       default:
-        CPLAssert( FALSE );
         return 0;
     }
 }
