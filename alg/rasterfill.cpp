@@ -375,7 +375,7 @@ if( quad_value != nNoDataVal ) 						\
  * @return CE_None on success or CE_Failure if something goes wrong. 
  */
 
-CPLErr
+CPLErr CPL_STDCALL
 GDALFillNodata( GDALRasterBandH hTargetBand, 
                 GDALRasterBandH hMaskBand,
                 double dfMaxSearchDist, 
