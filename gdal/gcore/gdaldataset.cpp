@@ -1029,8 +1029,16 @@ void GDALDataset::MarkAsShared()
     psStruct->nPID = nPID;
     psStruct->eAccess = eAccess;
     psStruct->pszDescription = CPLStrdup(GetDescription());
-    CPLAssert(CPLHashSetLookup(phSharedDatasetSet, psStruct) == NULL);
-    CPLHashSetInsert(phSharedDatasetSet, psStruct);
+    if(CPLHashSetLookup(phSharedDatasetSet, psStruct) != NULL)
+    {
+        CPLFree(psStruct);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An existing shared dataset has already this description. This should not happen");
+    }
+    else
+    {
+        CPLHashSetInsert(phSharedDatasetSet, psStruct);
+    }
 }
 
 /************************************************************************/
@@ -2036,7 +2044,19 @@ GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 
     poDataset = (GDALDataset *) GDALOpen( pszFilename, eAccess );
     if( poDataset != NULL )
-        poDataset->MarkAsShared();
+    {
+        if (strcmp(pszFilename, poDataset->GetDescription()) != 0)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "A dataset opened by GDALOpenShared should have the same filename (%s) "
+                     "and description (%s)",
+                     pszFilename, poDataset->GetDescription());
+        }
+        else
+        {
+            poDataset->MarkAsShared();
+        }
+    }
     
     return (GDALDatasetH) poDataset;
 }
