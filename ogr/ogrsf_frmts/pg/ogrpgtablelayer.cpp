@@ -1847,36 +1847,6 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
         {
             nSRSId = atoi(PQgetvalue(hResult,0,0));
         }
-        else // I think perhaps an older version used f_schema_name.
-        {
-            OGRPGClearResult( hResult );
-
-            poDS->SoftCommit();
-            poDS->SoftStartTransaction();
-
-            osCommand.Printf(
-                     "SELECT srid FROM geometry_columns "
-                     "WHERE f_table_name = '%s'",
-                     (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName );
-
-            if (pszGeomColumn)
-            {
-                osCommand += CPLString().Printf(" AND f_geometry_column = '%s'", pszGeomColumn);
-            }
-
-            if (pszSchemaName)
-            {
-                osCommand += CPLString().Printf(" AND f_schema_name = '%s'", pszSchemaName);
-            }
-
-            hResult = PQexec(hPGConn, osCommand.c_str() );
-            if( hResult
-                && PQresultStatus(hResult) == PGRES_TUPLES_OK
-                && PQntuples(hResult) == 1 )
-            {
-                nSRSId = atoi(PQgetvalue(hResult,0,0));
-            }
-        }
 
         OGRPGClearResult( hResult );
 
