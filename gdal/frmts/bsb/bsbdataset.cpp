@@ -244,15 +244,14 @@ const char *BSBDataset::GetProjectionRef()
 
 /************************************************************************/
 /*                            ScanForGCPs( isNos, *pszFilename )        */
+/* Modified by Chaitanya kumar CH, chaitanyach@gmail.com to make the    */
+/* pasGCPList length dynamic.                                           */
 /************************************************************************/
 
 void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 
 {
-#define MAX_GCP		256
-
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),MAX_GCP);
 
     if ( isNos )
     {
@@ -286,6 +285,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
     char **Tokens;
     const char *geofile;
     const char *extension;
+    int fileGCPCount=0;
 
     extension = CPLGetExtension(pszFilename);
 
@@ -306,26 +306,40 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
     }
 
     char *thisLine = (char *) CPLMalloc( 80 ); // FIXME
+
+    // Count the GCPs (reference points) and seek the file pointer 'gfp' to the starting point
+    while (fgets(thisLine, 80, gfp))
+    {
+        if( EQUALN(thisLine, "Point", 5) )
+            fileGCPCount++;
+    }
+    VSIRewind( gfp );
+
+    // Memory has not been allocated to fileGCPCount yet
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),fileGCPCount+1);
+
     while (fgets(thisLine, 80, gfp))
     {
         if( EQUALN(thisLine, "Point", 5) )
         {
             // got a point line, turn it into a gcp
-            Tokens = CSLTokenizeStringComplex(thisLine, "=", FALSE, FALSE);
-            Tokens = CSLTokenizeStringComplex(Tokens[1], " ", FALSE, FALSE);
+            Tokens = CSLTokenizeStringComplex(thisLine, "= ", FALSE, FALSE);
+            if (CSLCount(Tokens) >= 5)
+            {
+                GDALInitGCPs( 1, pasGCPList + nGCPCount );
+                pasGCPList[nGCPCount].dfGCPX = atof(Tokens[1]);
+                pasGCPList[nGCPCount].dfGCPY = atof(Tokens[2]);
+                pasGCPList[nGCPCount].dfGCPPixel = atof(Tokens[4]);
+                pasGCPList[nGCPCount].dfGCPLine = atof(Tokens[3]);
 
-            GDALInitGCPs( 1, pasGCPList + nGCPCount );
-            pasGCPList[nGCPCount].dfGCPX = atof(Tokens[0]);
-            pasGCPList[nGCPCount].dfGCPY = atof(Tokens[1]);
-            pasGCPList[nGCPCount].dfGCPPixel = atof(Tokens[3]);
-            pasGCPList[nGCPCount].dfGCPLine = atof(Tokens[2]);
+                CPLFree( pasGCPList[nGCPCount].pszId );
+                char	szName[50];
+                sprintf( szName, "GCP_%d", nGCPCount+1 );
+                pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
 
-            CPLFree( pasGCPList[nGCPCount].pszId );
-            char	szName[50];
-            sprintf( szName, "GCP_%d", nGCPCount+1 );
-            pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
-
-            nGCPCount++;
+                nGCPCount++;
+            }
+            CSLDestroy(Tokens);
         }
     }
 
@@ -346,7 +360,16 @@ void BSBDataset::ScanForGCPsBSB()
 /*      REF/1,115,2727,32.346666666667,-60.881666666667			*/
 /*      REF/n,pixel,line,lat,long                                       */
 /* -------------------------------------------------------------------- */
+    int fileGCPCount=0;
     int i;
+
+    // Count the GCPs (reference points) in psInfo->papszHeader
+    for( i = 0; psInfo->papszHeader[i] != NULL; i++ )
+        if( EQUALN(psInfo->papszHeader[i],"REF/",4) )
+            fileGCPCount++;
+
+    // Memory has not been allocated to fileGCPCount yet
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),fileGCPCount+1);
 
     for( i = 0; psInfo->papszHeader[i] != NULL; i++ )
     {
@@ -360,7 +383,7 @@ void BSBDataset::ScanForGCPsBSB()
             CSLTokenizeStringComplex( psInfo->papszHeader[i]+4, ",", 
                                       FALSE, FALSE );
 
-        if( CSLCount(papszTokens) >= 4 )
+        if( CSLCount(papszTokens) > 4 )
         {
             GDALInitGCPs( 1, pasGCPList + nGCPCount );
 
@@ -372,7 +395,7 @@ void BSBDataset::ScanForGCPsBSB()
             CPLFree( pasGCPList[nGCPCount].pszId );
             if( CSLCount(papszTokens) > 5 )
             {
-                pasGCPList[nGCPCount].pszId = papszTokens[5];
+                pasGCPList[nGCPCount].pszId = CPLStrdup(papszTokens[5]);
             }
             else
             {

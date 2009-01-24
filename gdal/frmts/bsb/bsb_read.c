@@ -250,7 +250,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         char	**papszTokens = NULL;
         int      nCount = 0;
 
-        if( pszLine[3] == '/' )
+        if( pszLine[0] != '\0' && pszLine[1] != '\0' && pszLine[2] != '\0' && pszLine[3] == '/' )
         {
             psInfo->papszHeader = CSLAddString( psInfo->papszHeader, pszLine );
             papszTokens = CSLTokenizeStringComplex( pszLine+4, ",=", 
@@ -263,7 +263,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             int		nRAIndex;
 
             nRAIndex = CSLFindString(papszTokens, "RA" );
-            if( nRAIndex < 0 || nRAIndex > nCount - 2 )
+            if( nRAIndex < 0 || nRAIndex+2 >= nCount )
             {
                 CSLDestroy( papszTokens );
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -279,7 +279,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             int  nRAIndex;
             
             nRAIndex = CSLFindString(papszTokens, "RA" );
-            if( nRAIndex < 0 || nRAIndex > nCount - 2 )
+            if( nRAIndex < 0 || nRAIndex+4 >= nCount )
             {
                 CSLDestroy( papszTokens );
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -395,7 +395,14 @@ BSBInfo *BSBOpen( const char *pszFilename )
         && psInfo->nColorSize >= 0x31 && psInfo->nColorSize <= 0x38 )
         psInfo->nColorSize -= 0x30;
 
-    CPLAssert( psInfo->nColorSize > 0 && psInfo->nColorSize < 9 );
+    if( ! (psInfo->nColorSize > 0 && psInfo->nColorSize < 9) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "BSBOpen : Bad value for nColorSize (%d). Probably due to corrupted BSB file",
+                  psInfo->nColorSize );
+        BSBClose( psInfo );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize line offset list.                                    */
