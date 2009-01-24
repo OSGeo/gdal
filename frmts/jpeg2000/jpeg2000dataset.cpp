@@ -736,6 +736,13 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
 
+    if( nBands == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unable to export files with zero bands." );
+        return NULL;
+    }
+
     if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 

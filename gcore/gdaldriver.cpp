@@ -129,6 +129,15 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do some rudimentary argument checking.                          */
 /* -------------------------------------------------------------------- */
+    if (nBands < 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create dataset with %d bands is illegal,"
+                  "Must be >= 0.",
+                  nBands );
+        return NULL;
+    }
+
     if( nXSize < 1 || nYSize < 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -257,11 +266,15 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
 {
     CPLErr eErr = CE_None;	
 
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+        return CE_None;
+
 /* -------------------------------------------------------------------- */
 /*      Try to copy mask if it seems appropriate.                       */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; 
-         eErr == CE_None && iBand < poSrcDS->GetRasterCount(); 
+         eErr == CE_None && iBand < nBands; 
          iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
@@ -329,10 +342,18 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     GDALDataset  *poDstDS;
     int          nXSize = poSrcDS->GetRasterXSize();
     int          nYSize = poSrcDS->GetRasterYSize();
-    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    int          nBands = poSrcDS->GetRasterCount();
+    GDALDataType eType;
     CPLErr       eErr = CE_None;
 
     CPLDebug( "GDAL", "Using default GDALDriver::CreateCopy implementation." );
+
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "GDALDriver::DefaultCreateCopy does not support zero band" );
+        return NULL;
+    }
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
@@ -340,8 +361,9 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         return NULL;
     }
 
+    eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     poDstDS = Create( pszFilename, nXSize, nYSize, 
-                      poSrcDS->GetRasterCount(), eType, papszOptions );
+                      nBands, eType, papszOptions );
 
     if( poDstDS == NULL )
         return NULL;
@@ -404,7 +426,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; 
-         eErr == CE_None && iBand < poSrcDS->GetRasterCount(); 
+         eErr == CE_None && iBand < nBands; 
          iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );

@@ -1583,7 +1583,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->pszFilename = strdup( pszNETCDFFilename );
 
 
-    }	
+    }
+
+    if (CSLCount(poDS->papszName) < 3)
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open the NETCDF subdataset NETCDF:"filename":subdataset         */
@@ -1591,6 +1597,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     var=-1;
     nc_inq_varid( cdfid, poDS->papszName[2], &var);
+    nd = 0;
     nc_inq_varndims ( cdfid, var, &nd );
 
     poDS->paDimIds = (int *)CPLCalloc(nd, sizeof( int ) );
@@ -1606,6 +1613,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( nd < 2 ) {
 	CPLFree( poDS->paDimIds );
 	CPLFree( poDS->panBandDimPos );
+        delete poDS;
 	return NULL;
     }
 
@@ -1812,6 +1820,12 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int    bWriteGeoTransform = FALSE;
     char  pszNetcdfProjection[ NC_MAX_NAME ];
 
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "NetCDF driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;

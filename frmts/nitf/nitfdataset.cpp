@@ -2820,13 +2820,22 @@ NITFDataset::NITFCreateCopy(
 
 {
     GDALDataType eType;
-    GDALRasterBand *poBand1 = poSrcDS->GetRasterBand(1);
+    GDALRasterBand *poBand1;
     char  **papszFullOptions = CSLDuplicate( papszOptions );
     int   bJPEG2000 = FALSE;
     int   bJPEG = FALSE;
     NITFDataset *poDstDS = NULL;
     GDALDriver *poJ2KDriver = NULL;
 
+    int  nBands = poSrcDS->GetRasterCount();
+    if( nBands == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unable to export files with zero bands." );
+        return NULL;
+    }
+
+    poBand1 = poSrcDS->GetRasterBand(1);
     if( poBand1 == NULL )
         return NULL;
 

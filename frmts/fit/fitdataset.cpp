@@ -1085,6 +1085,14 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 {
     CPLDebug("FIT", "CreateCopy %s - %i", pszFilename, bStrict);
 
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "FIT driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
@@ -1125,7 +1133,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     gst_swapb(head->ySize);
     head->zSize = 1;
     gst_swapb(head->zSize);
-    int nBands = poSrcDS->GetRasterCount();
+
     head->cSize = nBands;
     gst_swapb(head->cSize);
 
