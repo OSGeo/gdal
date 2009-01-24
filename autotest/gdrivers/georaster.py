@@ -32,6 +32,7 @@ import os
 import sys
 import gdal
 import ogr
+import string
 
 sys.path.append( '../pymod' )
 
@@ -118,6 +119,9 @@ def georaster_2():
 # 
 
 def georaster_cleanup():
+
+    if gdaltest.georasterDriver is None:
+        return 'skip'
 
     if gdaltest.oci_ds is None:
         return 'skip'
