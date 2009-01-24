@@ -937,7 +937,14 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
     if( pfnProgress == NULL )
 	pfnProgress = GDALDummyProgress;
 
-    if( poSrcDS->GetRasterCount() > 1 )
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "GSBG driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+    else if (nBands > 1)
     {
 	if( bStrict )
 	{
