@@ -1531,6 +1531,13 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
+    if (nBands <= 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "EHdr driver does not support %d bands.\n", nBands);
+        return NULL;
+    }
+
     if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
         && eType != GDT_Int16 && eType != GDT_Int32 && eType != GDT_UInt32 )
     {
@@ -1638,6 +1645,14 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
 {
     char **papszAdjustedOptions = CSLDuplicate( papszOptions );
     GDALDataset *poOutDS;
+
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "EHdr driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
 
     if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", 
                                                     "IMAGE_STRUCTURE" ) !=NULL

@@ -397,10 +397,18 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename, GDALDataset 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
-    if( nBands != 1)
+    if (nBands == 0)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "SRTMHGT driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+    else if (nBands != 1)
+    {
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
                   "SRTMHGT driver only uses the first band of the dataset.\n");
+        if (bStrict)
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */

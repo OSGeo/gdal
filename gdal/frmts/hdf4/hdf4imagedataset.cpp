@@ -657,6 +657,7 @@ double HDF4ImageRasterBand::GetScale( int *pbSuccess )
 HDF4ImageDataset::HDF4ImageDataset()
 {
     pszFilename = NULL;
+    hHDF4 = 0;
     hSD = 0;
     hGR = 0;
     iGR = 0;
@@ -3078,6 +3079,13 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     int                 iBand;
     int32               iSDS = -1;
     int32               aiDimSizes[H4_MAX_VAR_DIMS];
+
+    if( nBands == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unable to export files with zero bands." );
+        return NULL;
+    }
 
     poDS = new HDF4ImageDataset();
 
