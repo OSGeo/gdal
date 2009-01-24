@@ -269,7 +269,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             int		nRAIndex;
 
             nRAIndex = CSLFindString(papszTokens, "RA" );
-            if( nRAIndex < 0 || nRAIndex > nCount - 2 )
+            if( nRAIndex < 0 || nRAIndex+2 >= nCount )
             {
                 CSLDestroy( papszTokens );
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -285,7 +285,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             int  nRAIndex;
             
             nRAIndex = CSLFindString(papszTokens, "RA" );
-            if( nRAIndex < 0 || nRAIndex > nCount - 2 )
+            if( nRAIndex < 0 || nRAIndex+4 >= nCount )
             {
                 CSLDestroy( papszTokens );
                 CPLError( CE_Failure, CPLE_AppDefined,
