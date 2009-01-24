@@ -509,6 +509,25 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     (void) papszOptions;
     (void) bStrict;
 
+
+/* -------------------------------------------------------------------- */
+/*      Some some rudimentary checks                                    */
+/* -------------------------------------------------------------------- */
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "DTED driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+    else if (nBands != 1)
+    {
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+                  "DTED driver only uses the first band of the dataset.\n");
+        if (bStrict)
+            return NULL;
+    }
+
     if( pfnProgress && !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
 

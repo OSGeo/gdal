@@ -365,15 +365,17 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Figure out general characteristics.                             */
 /* -------------------------------------------------------------------- */
     nc_type nc_datatype;
-    GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
+    GDALRasterBand *poBand;
     int nXSize, nYSize;
 
-    if( poSrcDS->GetRasterCount() != 1 || poBand == NULL )
+    if( poSrcDS->GetRasterCount() != 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Currently GMT export only supports 1 band datasets." );
         return NULL;
     }
+
+    poBand = poSrcDS->GetRasterBand(1);
 
     nXSize = poSrcDS->GetRasterXSize();
     nYSize = poSrcDS->GetRasterYSize();

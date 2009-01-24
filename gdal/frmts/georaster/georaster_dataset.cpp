@@ -645,6 +645,14 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 {
     (void) bStrict;
 
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "GeoRaster driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+
     GDALRasterBand* poBand = poSrcDS->GetRasterBand( 1 );
     GDALDataType    eType  = poBand->GetRasterDataType();
 

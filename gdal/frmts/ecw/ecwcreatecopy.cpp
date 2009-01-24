@@ -948,6 +948,14 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
+
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "ECW driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
     const char *pszWKT = poSrcDS->GetProjectionRef();
@@ -1034,6 +1042,14 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
                   GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "ECW driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+
     if( !EQUAL(CPLGetExtension(pszFilename),"ecw") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1090,6 +1106,14 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
                        GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JP2ECW driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+
     if( EQUAL(CPLGetExtension(pszFilename),"ecw") )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

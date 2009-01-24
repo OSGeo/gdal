@@ -997,6 +997,13 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Verify settings.                                                */
 /* -------------------------------------------------------------------- */
+    if (nBands <= 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "ERS driver does not support %d bands.\n", nBands);
+        return NULL;
+    }
+
     if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_UInt16
         && eType != GDT_Int32 && eType != GDT_UInt32
         && eType != GDT_Float32 && eType != GDT_Float64 )
@@ -1072,6 +1079,7 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Failed to write %s:\n%s", 
                   osBinFile.c_str(), VSIStrerror( errno ) );
+        VSIFCloseL( fpBin );
         return NULL;
     }
     VSIFCloseL( fpBin );
