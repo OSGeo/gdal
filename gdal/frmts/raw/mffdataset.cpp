@@ -1069,6 +1069,13 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
+    if (nBands <= 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "MFF driver does not support %d bands.\n", nBands);
+        return NULL;
+    }
+
     if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16 
         && eType != GDT_CInt16 && eType != GDT_CFloat32 )
     {
@@ -1114,6 +1121,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Couldn't create %s.\n", pszFilename );
+        CPLFree(pszBaseFilename);
         return NULL;
     }
 
@@ -1156,6 +1164,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Couldn't create %s.\n", pszFilename );
+            CPLFree(pszBaseFilename);
             return NULL;
         }
 
@@ -1186,10 +1195,19 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 {
     MFFDataset	*poDS;
-    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    GDALDataType eType;
     int          iBand;
     char **newpapszOptions=NULL;
 
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "MFF driver does not support source dataset with zero band.\n");
+        return NULL;
+    }
+
+    eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
 
@@ -1327,6 +1345,7 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Couldn't open %s for appending.\n", pszFilenameGEO );
+        CPLFree(pszBaseFilename);
         return NULL;
     }  
     
@@ -1574,10 +1593,12 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GDALDriver *poMFFDriver = 
             (GDALDriver *) GDALGetDriverByName( "MFF" );
         poMFFDriver->Delete( pszFilename );
+        CPLFree(pszBaseFilename);
         return NULL;
     }
 
     poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    CPLFree(pszBaseFilename);
 
     return poDS;
 }
