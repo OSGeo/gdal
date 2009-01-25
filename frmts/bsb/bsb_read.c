@@ -39,7 +39,8 @@
 CPL_CVSID("$Id$");
 
 static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, int bNO1 );
-
+static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
+                                           int bVerboseIfError );
 /************************************************************************
 
 Background:
@@ -111,6 +112,7 @@ file format and I want to break it open! Chart data for the People!
 /*                             BSBUngetc()                              */
 /************************************************************************/
 
+static
 void BSBUngetc( BSBInfo *psInfo, int nCharacter )
 
 {
@@ -122,7 +124,8 @@ void BSBUngetc( BSBInfo *psInfo, int nCharacter )
 /*                              BSBGetc()                               */
 /************************************************************************/
 
-int BSBGetc( BSBInfo *psInfo, int bNO1 )
+static
+int BSBGetc( BSBInfo *psInfo, int bNO1, int* pbErrorFlag )
 
 {
     int nByte;
@@ -141,7 +144,11 @@ int BSBGetc( BSBInfo *psInfo, int bNO1 )
             VSIFReadL( psInfo->pabyBuffer, 1, psInfo->nBufferAllocation,
                        psInfo->fp );
         if( psInfo->nBufferSize <= 0 )
+        {
+            if (pbErrorFlag)
+                *pbErrorFlag = TRUE;
             return 0;
+        }
     }
 
     nByte = psInfo->pabyBuffer[psInfo->nBufferOffset++];
@@ -173,6 +180,8 @@ BSBInfo *BSBOpen( const char *pszFilename )
     BSBInfo     *psInfo;
     int    nSkipped = 0;
     const char *pszPalette;
+    int         nOffsetFirstLine;
+    int         bErrorFlag = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Which palette do we want to use?                                */
@@ -300,6 +309,15 @@ BSBInfo *BSBOpen( const char *pszFilename )
                  && nCount >= 4 )
         {
             int	iPCT = atoi(papszTokens[0]);
+            if (iPCT < 0 || iPCT > 128)
+            {
+                CSLDestroy( papszTokens );
+                CPLError( CE_Failure, CPLE_OutOfMemory, 
+                            "BSBOpen : Invalid color table index. Probably due to corrupted BSB file (iPCT = %d).",
+                            iPCT);
+                BSBClose( psInfo );
+                return NULL;
+            }
             if( iPCT > psInfo->nPCTSize-1 )
             {
                 psInfo->pabyPCT = (unsigned char *) 
@@ -342,6 +360,15 @@ BSBInfo *BSBOpen( const char *pszFilename )
         return NULL;
     }
 
+    if( psInfo->nXSize <= 0 || psInfo->nYSize <= 0 )
+    {
+        BSBClose( psInfo );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Wrong dimensions found in header : %d x %d.",
+                  psInfo->nXSize, psInfo->nYSize );
+        return NULL;
+    }
+
     if( psInfo->nVersion == 0 )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -370,8 +397,9 @@ BSBInfo *BSBOpen( const char *pszFilename )
         int    nChar = -1;
 
         while( nSkipped < 100 
-              && (BSBGetc( psInfo, bNO1 ) != 0x1A 
-                  || (nChar = BSBGetc( psInfo, bNO1 )) != 0x00) )
+              && (BSBGetc( psInfo, bNO1, &bErrorFlag ) != 0x1A 
+                  || (nChar = BSBGetc( psInfo, bNO1, &bErrorFlag )) != 0x00) 
+              && !bErrorFlag)
         {
             if( nChar == 0x1A )
             {
@@ -379,6 +407,14 @@ BSBInfo *BSBOpen( const char *pszFilename )
                 nChar = -1;
             }
             nSkipped++;
+        }
+
+        if( bErrorFlag )
+        {
+            BSBClose( psInfo );
+            CPLError( CE_Failure, CPLE_FileIO, 
+                        "Truncated BSB file or I/O error." );
+            return NULL;
         }
 
         if( nSkipped == 100 )
@@ -393,7 +429,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Read the number of bit size of color numbers.                   */
 /* -------------------------------------------------------------------- */
-    psInfo->nColorSize = BSBGetc( psInfo, bNO1 );
+    psInfo->nColorSize = BSBGetc( psInfo, bNO1, NULL );
 
     /* The USGS files like 83116_1.KAP seem to use the ASCII number instead
        of the binary number for the colorsize value. */
@@ -412,7 +448,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Initialize line offset list.                                    */
+/*      Initialize memory for line offset list.                         */
 /* -------------------------------------------------------------------- */
     psInfo->panLineOffset = (int *) 
         VSIMalloc2(sizeof(int), psInfo->nYSize);
@@ -424,11 +460,97 @@ BSBInfo *BSBOpen( const char *pszFilename )
         BSBClose( psInfo );
         return NULL;
     }
-    for( i = 0; i < psInfo->nYSize; i++ )
-        psInfo->panLineOffset[i] = -1;
 
-    psInfo->panLineOffset[0] = 
-        VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
+    /* This is the offset to the data of first line, if there is no index table */
+    nOffsetFirstLine = VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
+
+/* -------------------------------------------------------------------- */
+/*       Read the line offset list                                      */
+/* -------------------------------------------------------------------- */
+    if ( ! CSLTestBoolean(CPLGetConfigOption("BSB_DISABLE_INDEX", "NO")) )
+    {
+        /* build the list from file's index table */
+        /* To overcome endian compatibility issues individual
+         * bytes are being read instead of the whole integers. */
+        int nVal;
+        int listIsOK = 1;
+        int nOffsetIndexTable;
+        int nFileLen;
+
+        /* Seek fp to point the last 4 byte integer which points
+        * the offset of the first line */
+        VSIFSeekL( fp, 0, SEEK_END );
+        nFileLen = VSIFTellL( fp );
+        VSIFSeekL( fp, nFileLen - 4, SEEK_SET );
+
+        VSIFReadL(&nVal, 1, 4, fp);//last 4 bytes
+        CPL_MSBPTR32(&nVal);
+        nOffsetIndexTable = nVal;
+
+        /* For some charts, like 1115A_1.KAP, coming from */
+        /* http://www.nauticalcharts.noaa.gov/mcd/Raster/index.htm, */
+        /* the index table can have one row less than nYSize */
+        /* If we look into the file closely, there is no data for */
+        /* that last row (the end of line psInfo->nYSize - 1 is the start */
+        /* of the index table), so we can decrement psInfo->nYSize */
+        if (nOffsetIndexTable + 4 * (psInfo->nYSize - 1) == nFileLen - 4)
+        {
+            CPLDebug("BSB", "Index size is one row shorter than declared image height. Correct this");
+            psInfo->nYSize --;
+        }
+
+        if( nOffsetIndexTable <= nOffsetFirstLine ||
+            nOffsetIndexTable + 4 * psInfo->nYSize > nFileLen - 4)
+        {
+            /* The last 4 bytes are not the value of the offset to the index table */
+        }
+        else if (VSIFSeekL( fp, nOffsetIndexTable, SEEK_SET ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                "Seek to offset 0x%08x for first line offset failed.", 
+                nOffsetIndexTable);
+        }
+        else
+        {
+            int nIndexSize = (nFileLen - 4 - nOffsetIndexTable) / 4;
+            if (nIndexSize != psInfo->nYSize)
+            {
+                CPLDebug("BSB", "Index size is %d. Expected %d",
+                        nIndexSize, psInfo->nYSize);
+            }
+
+            for(i=0; i < psInfo->nYSize; i++)
+            {
+                VSIFReadL(&nVal, 1, 4, fp);
+                CPL_MSBPTR32(&nVal);
+                psInfo->panLineOffset[i] = nVal;
+            }
+            /* Simple checks for the integrity of the list */
+            for(i=0; i < psInfo->nYSize; i++)
+            {
+                if( psInfo->panLineOffset[i] < nOffsetFirstLine ||
+                    psInfo->panLineOffset[i] >= nOffsetIndexTable ||
+                    (i < psInfo->nYSize - 1 && psInfo->panLineOffset[i] > psInfo->panLineOffset[i+1]) ||
+                    !BSBSeekAndCheckScanlineNumber(psInfo, i, FALSE) )
+                {
+                    CPLDebug("BSB", "Index table is invalid at index %d", i);
+                    listIsOK = 0;
+                    break;
+                }
+            }
+            if ( listIsOK )
+            {
+                CPLDebug("BSB", "Index table is valid");
+                return psInfo;
+            }
+        }
+    }
+
+    /* If we can't build the offset list for some reason we just
+     * initialize the offset list to indicate "no value" (except for the first). */
+    psInfo->panLineOffset[0] = nOffsetFirstLine;
+    for( i = 1; i < psInfo->nYSize; i++ )
+        psInfo->panLineOffset[i] = -1;
 
     return psInfo;
 }
@@ -450,7 +572,7 @@ static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, i
 
     while( !VSIFEofL(psInfo->fp) && nLineLen < nLineMaxLen-1 )
     {
-        chNext = (char) BSBGetc( psInfo, bNO1 );
+        chNext = (char) BSBGetc( psInfo, bNO1, NULL );
         if( chNext == 0x1A )
         {
             BSBUngetc( psInfo, chNext );
@@ -462,7 +584,7 @@ static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, i
         {
             char	chLF;
 
-            chLF = (char) BSBGetc( psInfo, bNO1 );
+            chLF = (char) BSBGetc( psInfo, bNO1, NULL );
             if( chLF != 10 && chLF != 13 )
                 BSBUngetc( psInfo, chLF );
             chNext = '\n';
@@ -475,7 +597,7 @@ static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, i
         {
             char chTest;
 
-            chTest = (char) BSBGetc(psInfo, bNO1);
+            chTest = (char) BSBGetc(psInfo, bNO1, NULL);
             /* Are we done? */
             if( chTest != ' ' )
             {
@@ -486,7 +608,7 @@ static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, i
 
             /* eat pending spaces */
             while( chTest == ' ' )
-                chTest = (char) BSBGetc(psInfo,bNO1);
+                chTest = (char) BSBGetc(psInfo,bNO1, NULL);
             BSBUngetc( psInfo,chTest );
 
             /* insert comma in data stream */
@@ -502,14 +624,100 @@ static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, i
 }
 
 /************************************************************************/
+/*                  BSBSeekAndCheckScanlineNumber()                     */
+/*                                                                      */
+/*       Seek to the beginning of the scanline and check that the       */
+/*       scanline number in file is consistant with what we expect      */
+/*                                                                      */
+/* @param nScanline zero based line number                              */
+/************************************************************************/
+
+static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
+                                           int bVerboseIfError )
+{
+    int		nLineMarker = 0;
+    int         byNext;
+    FILE	*fp = psInfo->fp;
+    int         bErrorFlag = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Seek to requested scanline.                                     */
+/* -------------------------------------------------------------------- */
+    psInfo->nBufferSize = 0;
+    if( VSIFSeekL( fp, psInfo->panLineOffset[nScanline], SEEK_SET ) != 0 )
+    {
+        if (bVerboseIfError)
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                    "Seek to offset %d for scanline %d failed.", 
+                    psInfo->panLineOffset[nScanline], nScanline );
+        }
+        else
+        {
+            CPLDebug("BSB", "Seek to offset %d for scanline %d failed.", 
+                     psInfo->panLineOffset[nScanline], nScanline );
+        }
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the line number.  Pre 2.0 BSB seemed to expect the line    */
+/*      numbers to be zero based, while 2.0 and later seemed to         */
+/*      expect it to be one based, and for a 0 to be some sort of       */
+/*      missing line marker.                                            */
+/* -------------------------------------------------------------------- */
+    do {
+        byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
+
+        /* Special hack to skip over extra zeros in some files, such
+        ** as optech/sample1.kap.
+        */
+        while( nScanline != 0 && nLineMarker == 0 && byNext == 0 && !bErrorFlag )
+            byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
+
+        nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
+    } while( (byNext & 0x80) != 0 );
+
+    if ( bErrorFlag )
+    {
+        if (bVerboseIfError)
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                    "Truncated BSB file or I/O error." );
+        }
+        return FALSE;
+    }
+
+    if( nLineMarker != nScanline 
+        && nLineMarker != nScanline + 1 )
+    {
+        if (bVerboseIfError)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                     "Got scanline id %d when looking for %d @ offset %d.", 
+                     nLineMarker, nScanline+1, psInfo->panLineOffset[nScanline]);
+        }
+        else
+        {
+            CPLDebug("BSB", "Got scanline id %d when looking for %d @ offset %d.", 
+                     nLineMarker, nScanline+1, psInfo->panLineOffset[nScanline]);
+        }
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                          BSBReadScanline()                           */
+/* @param nScanline zero based line number                              */
 /************************************************************************/
 
 int BSBReadScanline( BSBInfo *psInfo, int nScanline, 
                      unsigned char *pabyScanlineBuf )
 
 {
-    int		nLineMarker = 0, nValueShift, iPixel = 0;
+    int		nValueShift, iPixel = 0;
     unsigned char byValueMask, byCountMask;
     FILE	*fp = psInfo->fp;
     int         byNext, i;
@@ -539,41 +747,11 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Seek to requested scanline.                                     */
+/*       Seek to the beginning of the scanline and check that the       */
+/*       scanline number in file is consistant with what we expect      */
 /* -------------------------------------------------------------------- */
-    psInfo->nBufferSize = 0;
-    if( VSIFSeekL( fp, psInfo->panLineOffset[nScanline], SEEK_SET ) != 0 )
+    if ( !BSBSeekAndCheckScanlineNumber(psInfo, nScanline, TRUE) )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Seek to offset %d for scanline %d failed.", 
-                  psInfo->panLineOffset[nScanline], nScanline );
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read the line number.  Pre 2.0 BSB seemed to expect the line    */
-/*      numbers to be zero based, while 2.0 and later seemed to         */
-/*      expect it to be one based, and for a 0 to be some sort of       */
-/*      missing line marker.                                            */
-/* -------------------------------------------------------------------- */
-    do {
-        byNext = BSBGetc( psInfo, psInfo->bNO1 );
-
-        /* Special hack to skip over extra zeros in some files, such
-        ** as optech/sample1.kap.
-        */
-        while( nScanline != 0 && nLineMarker == 0 && byNext == 0 )
-            byNext = BSBGetc( psInfo, psInfo->bNO1 );
-
-        nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
-    } while( (byNext & 0x80) != 0 );
-
-    if( nLineMarker != nScanline 
-        && nLineMarker != nScanline + 1 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Got scanline id %d when looking for %d @ offset %ld.", 
-                  nLineMarker, nScanline+1, (long) VSIFTellL( fp ) );
         return FALSE;
     }
 
@@ -588,28 +766,45 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     
 /* -------------------------------------------------------------------- */
 /*      Read and expand runs.                                           */
+/*      If for some reason the buffer is not filled,                    */
+/*      just repeat the process until the buffer is filled.             */
+/*      This is the case for IS1612_4.NOS (#2782)                       */
 /* -------------------------------------------------------------------- */
-    while( (byNext = BSBGetc(psInfo,psInfo->bNO1)) != 0 )
+    do
     {
-        int	nPixValue;
-        int     nRunCount, i;
-
-        nPixValue = (byNext & byValueMask) >> nValueShift;
-
-        nRunCount = byNext & byCountMask;
-
-        while( (byNext & 0x80) != 0 )
+        int bErrorFlag = FALSE;
+        while( (byNext = BSBGetc(psInfo,psInfo->bNO1, &bErrorFlag)) != 0 &&
+                !bErrorFlag)
         {
-            byNext = BSBGetc( psInfo, psInfo->bNO1 );
-            nRunCount = nRunCount * 128 + (byNext & 0x7f);
+            int	    nPixValue;
+            int     nRunCount, i;
+
+            nPixValue = (byNext & byValueMask) >> nValueShift;
+
+            nRunCount = byNext & byCountMask;
+
+            while( (byNext & 0x80) != 0 && !bErrorFlag)
+            {
+                byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
+                nRunCount = nRunCount * 128 + (byNext & 0x7f);
+            }
+
+            /* Prevent over-run of line data */
+            if( iPixel + nRunCount + 1 > psInfo->nXSize )
+                nRunCount = psInfo->nXSize - iPixel - 1;
+
+            for( i = 0; i < nRunCount+1; i++ )
+                pabyScanlineBuf[iPixel++] = (unsigned char) nPixValue;
+
+            if (iPixel == psInfo->nXSize)
+                break;
         }
-
-        if( iPixel + nRunCount + 1 > psInfo->nXSize )
-            nRunCount = psInfo->nXSize - iPixel - 1;
-
-        for( i = 0; i < nRunCount+1; i++ )
-            pabyScanlineBuf[iPixel++] = (unsigned char) nPixValue;
-    }
+        if ( bErrorFlag )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                    "Truncated BSB file or I/O error." );
+            return FALSE;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      For reasons that are unclear, some scanlines are exactly one    */
@@ -617,15 +812,24 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /*      NDI/CHS) but are otherwise OK.  Just add a zero if this         */
 /*      appear to have occured.                                         */
 /* -------------------------------------------------------------------- */
-    if( iPixel == psInfo->nXSize - 1 )
-        pabyScanlineBuf[iPixel++] = 0;
+        if( iPixel == psInfo->nXSize - 1 )
+            pabyScanlineBuf[iPixel++] = 0;
+    }
+    while ( iPixel < psInfo->nXSize &&
+            (nScanline == psInfo->nYSize-1 ||
+             psInfo->panLineOffset[nScanline+1] == -1 ||
+             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset < psInfo->panLineOffset[nScanline+1]) );
 
 /* -------------------------------------------------------------------- */
 /*      Remember the start of the next line.                            */
+/*      But only if it is not already known.                            */
 /* -------------------------------------------------------------------- */
-    if( iPixel == psInfo->nXSize && nScanline < psInfo->nYSize-1 )
+    if( iPixel == psInfo->nXSize && nScanline < psInfo->nYSize-1 &&
+        psInfo->panLineOffset[nScanline+1] == -1 )
+    {
         psInfo->panLineOffset[nScanline+1] = 
             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
+    }
 
     if( iPixel != psInfo->nXSize )
     {
