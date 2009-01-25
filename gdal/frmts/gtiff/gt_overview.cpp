@@ -439,8 +439,7 @@ GTIFFBuildOverviews( const char * pszFilename,
             CPLError( CE_Failure, CPLE_NotSupported, 
                     "The overview file would be larger than 4GB\n"
                     "but this is the largest size a TIFF can be, and BigTIFF is unavailable.\n"
-                    "Creation failed.",
-                    nXSize, nYSize, nBands, GDALGetDataTypeName(eType) );
+                    "Creation failed." );
             return CE_Failure;
     #endif
         }
