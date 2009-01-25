@@ -122,7 +122,8 @@ void BSBUngetc( BSBInfo *psInfo, int nCharacter )
 /*                              BSBGetc()                               */
 /************************************************************************/
 
-int BSBGetc( BSBInfo *psInfo, int bNO1 )
+static
+int BSBGetc( BSBInfo *psInfo, int bNO1, int* pbErrorFlag )
 
 {
     int nByte;
@@ -141,7 +142,11 @@ int BSBGetc( BSBInfo *psInfo, int bNO1 )
             VSIFReadL( psInfo->pabyBuffer, 1, psInfo->nBufferAllocation,
                        psInfo->fp );
         if( psInfo->nBufferSize <= 0 )
+        {
+            if (pbErrorFlag)
+                *pbErrorFlag = TRUE;
             return 0;
+        }
     }
 
     nByte = psInfo->pabyBuffer[psInfo->nBufferOffset++];
@@ -293,6 +298,15 @@ BSBInfo *BSBOpen( const char *pszFilename )
         else if( EQUALN(pszLine,"RGB/",4) && nCount >= 4 )
         {
             int	iPCT = atoi(papszTokens[0]);
+            if (iPCT < 0 || iPCT > 128)
+            {
+                CSLDestroy( papszTokens );
+                CPLError( CE_Failure, CPLE_OutOfMemory, 
+                            "BSBOpen : Invalid color table index. Probably due to corrupted BSB file (iPCT = %d).",
+                            iPCT);
+                BSBClose( psInfo );
+                return NULL;
+            }
             if( iPCT > psInfo->nPCTSize-1 )
             {
                 psInfo->pabyPCT = (unsigned char *) 
@@ -335,6 +349,15 @@ BSBInfo *BSBOpen( const char *pszFilename )
         return NULL;
     }
 
+    if( psInfo->nXSize <= 0 || psInfo->nYSize <= 0 )
+    {
+        BSBClose( psInfo );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Wrong dimensions found in header : %d x %d.",
+                  psInfo->nXSize, psInfo->nYSize );
+        return NULL;
+    }
+
     if( psInfo->nVersion == 0 )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -361,10 +384,12 @@ BSBInfo *BSBOpen( const char *pszFilename )
 
     {
         int    nChar = -1;
+        int    bErrorFlag = FALSE;
 
         while( nSkipped < 100 
-              && (BSBGetc( psInfo, bNO1 ) != 0x1A 
-                  || (nChar = BSBGetc( psInfo, bNO1 )) != 0x00) )
+              && (BSBGetc( psInfo, bNO1, &bErrorFlag ) != 0x1A 
+                  || (nChar = BSBGetc( psInfo, bNO1, &bErrorFlag )) != 0x00) 
+              && !bErrorFlag)
         {
             if( nChar == 0x1A )
             {
@@ -372,6 +397,14 @@ BSBInfo *BSBOpen( const char *pszFilename )
                 nChar = -1;
             }
             nSkipped++;
+        }
+
+        if( bErrorFlag )
+        {
+            BSBClose( psInfo );
+            CPLError( CE_Failure, CPLE_FileIO, 
+                        "Truncated BSB file or I/O error." );
+            return NULL;
         }
 
         if( nSkipped == 100 )
@@ -386,7 +419,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Read the number of bit size of color numbers.                   */
 /* -------------------------------------------------------------------- */
-    psInfo->nColorSize = BSBGetc( psInfo, bNO1 );
+    psInfo->nColorSize = BSBGetc( psInfo, bNO1, NULL );
 
     /* The USGS files like 83116_1.KAP seem to use the ASCII number instead
        of the binary number for the colorsize value. */
@@ -445,7 +478,7 @@ static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 )
 
     while( !VSIFEofL(psInfo->fp) && nLineLen < sizeof(szLine)-1 )
     {
-        chNext = (char) BSBGetc( psInfo, bNO1 );
+        chNext = (char) BSBGetc( psInfo, bNO1, NULL );
         if( chNext == 0x1A )
         {
             BSBUngetc( psInfo, chNext );
@@ -457,7 +490,7 @@ static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 )
         {
             char	chLF;
 
-            chLF = (char) BSBGetc( psInfo, bNO1 );
+            chLF = (char) BSBGetc( psInfo, bNO1, NULL );
             if( chLF != 10 && chLF != 13 )
                 BSBUngetc( psInfo, chLF );
             chNext = '\n';
@@ -470,7 +503,7 @@ static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 )
         {
             char chTest;
 
-            chTest = (char) BSBGetc(psInfo, bNO1);
+            chTest = (char) BSBGetc(psInfo, bNO1, NULL);
             /* Are we done? */
             if( chTest != ' ' )
             {
@@ -481,7 +514,7 @@ static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 )
 
             /* eat pending spaces */
             while( chTest == ' ' )
-                chTest = (char) BSBGetc(psInfo,bNO1);
+                chTest = (char) BSBGetc(psInfo,bNO1, NULL);
             BSBUngetc( psInfo,chTest );
 
             /* insert comma in data stream */
@@ -508,6 +541,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     unsigned char byValueMask, byCountMask;
     FILE	*fp = psInfo->fp;
     int         byNext, i;
+    int	        bErrorFlag = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Do we know where the requested line is?  If not, read all       */
@@ -552,16 +586,23 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /*      missing line marker.                                            */
 /* -------------------------------------------------------------------- */
     do {
-        byNext = BSBGetc( psInfo, psInfo->bNO1 );
+        byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
 
         /* Special hack to skip over extra zeros in some files, such
         ** as optech/sample1.kap.
         */
-        while( nScanline != 0 && nLineMarker == 0 && byNext == 0 )
-            byNext = BSBGetc( psInfo, psInfo->bNO1 );
+        while( nScanline != 0 && nLineMarker == 0 && byNext == 0 && !bErrorFlag)
+            byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
 
         nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
     } while( (byNext & 0x80) != 0 );
+
+    if ( bErrorFlag )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Truncated BSB file or I/O error." );
+        return FALSE;
+    }
 
     if( nLineMarker != nScanline 
         && nLineMarker != nScanline + 1 )
@@ -583,28 +624,44 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     
 /* -------------------------------------------------------------------- */
 /*      Read and expand runs.                                           */
+/*      If for some reason the buffer is not filled,                    */
+/*      just repeat the process until the buffer is filled.             */
+/*      This is the case for IS1612_4.NOS (#2782)                       */
 /* -------------------------------------------------------------------- */
-    while( (byNext = BSBGetc(psInfo,psInfo->bNO1)) != 0 )
+    do
     {
-        int	nPixValue;
-        int     nRunCount, i;
-
-        nPixValue = (byNext & byValueMask) >> nValueShift;
-
-        nRunCount = byNext & byCountMask;
-
-        while( (byNext & 0x80) != 0 )
+        while( (byNext = BSBGetc(psInfo,psInfo->bNO1, &bErrorFlag)) != 0 &&
+                !bErrorFlag)
         {
-            byNext = BSBGetc( psInfo, psInfo->bNO1 );
-            nRunCount = nRunCount * 128 + (byNext & 0x7f);
+            int	    nPixValue;
+            int     nRunCount, i;
+
+            nPixValue = (byNext & byValueMask) >> nValueShift;
+
+            nRunCount = byNext & byCountMask;
+
+            while( (byNext & 0x80) != 0 && !bErrorFlag)
+            {
+                byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
+                nRunCount = nRunCount * 128 + (byNext & 0x7f);
+            }
+
+            /* Prevent over-run of line data */
+            if( iPixel + nRunCount + 1 > psInfo->nXSize )
+                nRunCount = psInfo->nXSize - iPixel - 1;
+
+            for( i = 0; i < nRunCount+1; i++ )
+                pabyScanlineBuf[iPixel++] = (unsigned char) nPixValue;
+
+            if (iPixel == psInfo->nXSize)
+                break;
         }
-
-        if( iPixel + nRunCount + 1 > psInfo->nXSize )
-            nRunCount = psInfo->nXSize - iPixel - 1;
-
-        for( i = 0; i < nRunCount+1; i++ )
-            pabyScanlineBuf[iPixel++] = (unsigned char) nPixValue;
-    }
+        if ( bErrorFlag )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                    "Truncated BSB file or I/O error." );
+            return FALSE;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      For reasons that are unclear, some scanlines are exactly one    */
@@ -612,8 +669,10 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /*      NDI/CHS) but are otherwise OK.  Just add a zero if this         */
 /*      appear to have occured.                                         */
 /* -------------------------------------------------------------------- */
-    if( iPixel == psInfo->nXSize - 1 )
-        pabyScanlineBuf[iPixel++] = 0;
+        if( iPixel == psInfo->nXSize - 1 )
+            pabyScanlineBuf[iPixel++] = 0;
+    }
+    while ( iPixel < psInfo->nXSize );
 
 /* -------------------------------------------------------------------- */
 /*      Remember the start of the next line.                            */
