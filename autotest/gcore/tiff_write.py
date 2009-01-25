@@ -241,8 +241,15 @@ def tiff_write_5():
 
 ###############################################################################
 # Test a mixture of reading and writing on a DEFLATE compressed file.
+# May crash with libtiff <= 3.8.2, so skip it if BigTIFF is not supported
+# (this is a sign of an older libtiff...)
 
 def tiff_write_6():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
 
     options= [ 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32',
                'COMPRESS=DEFLATE', 'PREDICTOR=2' ]
