@@ -133,6 +133,36 @@ def bsb_6():
 
     return ret
 
+
+###############################################################################
+# Test a NOAA chart
+# Under following user agreement : http://www.charts.noaa.gov/RNCs/Agreement.shtml?14850
+
+def bsb_online_1():
+
+    if not gdaltest.download_file('http://www.charts.noaa.gov/RNCs/14850.zip', '14850.zip'):
+        return 'skip'
+
+    try:
+        os.stat('tmp/cache/14850_1.KAP')
+        file_to_test = 'tmp/cache/14850_1.KAP'
+    except:
+        try:
+            print 'Uncompressing ZIP file...'
+            import zipfile
+            zfobj = zipfile.ZipFile('tmp/cache/14850.zip')
+            outfile = open('tmp/cache/14850_1.KAP', 'wb')
+            outfile.write(zfobj.read('BSB_ROOT/14850/14850_1.KAP'))
+            outfile.close()
+            file_to_test = 'tmp/cache/14850_1.KAP'
+        except:
+            print 'Reading BSB from ZIP file (slow)...'
+            file_to_test = '/vsizip/tmp/cache/14850.zip/BSB_ROOT/14850/14850_1.KAP'
+
+    tst = gdaltest.GDALTest('BSB', file_to_test, 1, 54674, filename_absolute = 1 )
+    return tst.testOpen()
+
+
 gdaltest_list = [
     bsb_0,
     bsb_1,
@@ -140,7 +170,8 @@ gdaltest_list = [
     bsb_3,
     bsb_4,
     bsb_5,
-    bsb_6
+    bsb_6,
+    bsb_online_1
     ]
 
 
