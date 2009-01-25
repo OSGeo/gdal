@@ -818,7 +818,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     while ( iPixel < psInfo->nXSize &&
             (nScanline == psInfo->nYSize-1 ||
              psInfo->panLineOffset[nScanline+1] == -1 ||
-             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset < psInfo->panLineOffset[nScanline+1]) );
+             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset <= psInfo->panLineOffset[nScanline+1]) );
 
 /* -------------------------------------------------------------------- */
 /*      Remember the start of the next line.                            */
