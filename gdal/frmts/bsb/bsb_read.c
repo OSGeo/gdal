@@ -795,9 +795,6 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 
             for( i = 0; i < nRunCount+1; i++ )
                 pabyScanlineBuf[iPixel++] = (unsigned char) nPixValue;
-
-            if (iPixel == psInfo->nXSize)
-                break;
         }
         if ( bErrorFlag )
         {
@@ -814,29 +811,58 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /* -------------------------------------------------------------------- */
         if( iPixel == psInfo->nXSize - 1 )
             pabyScanlineBuf[iPixel++] = 0;
+
+/* -------------------------------------------------------------------- */
+/*   If we have not enough data and no offset table, check that the     */
+/*   next bytes are not the expected next scanline number. If they are  */
+/*   not, then we can use them to fill the row again                    */
+/* -------------------------------------------------------------------- */
+        else if (iPixel < psInfo->nXSize &&
+                 nScanline != psInfo->nYSize-1 &&
+                 psInfo->panLineOffset[nScanline+1] == -1)
+        {
+            int nCurOffset = VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
+            psInfo->panLineOffset[nScanline+1] = nCurOffset;
+            if (BSBSeekAndCheckScanlineNumber(psInfo, nScanline + 1, FALSE))
+            {
+                CPLDebug("BSB", "iPixel=%d, nScanline=%d, nCurOffset=%d --> found new row marker", iPixel, nScanline, nCurOffset);
+                break;
+            }
+            else
+            {
+                CPLDebug("BSB", "iPixel=%d, nScanline=%d, nCurOffset=%d --> did NOT find new row marker", iPixel, nScanline, nCurOffset);
+
+                /* The next bytes are not the expected next scanline number, so */
+                /* use them to fill the row */
+                VSIFSeekL( fp, nCurOffset, SEEK_SET );
+                psInfo->panLineOffset[nScanline+1] = -1;
+                psInfo->nBufferOffset = 0;
+                psInfo->nBufferSize = 0;
+            }
+        }
     }
     while ( iPixel < psInfo->nXSize &&
             (nScanline == psInfo->nYSize-1 ||
              psInfo->panLineOffset[nScanline+1] == -1 ||
-             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset <= psInfo->panLineOffset[nScanline+1]) );
+             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset < psInfo->panLineOffset[nScanline+1]) );
+
+/* -------------------------------------------------------------------- */
+/*      If the line buffer is not filled after reading the line in the  */
+/*      file upto the next line offset, just fill it with zeros.        */
+/*      (The last pixel value from nPixValue could be a better value?)  */
+/* -------------------------------------------------------------------- */
+    while( iPixel < psInfo->nXSize )
+        pabyScanlineBuf[iPixel++] = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Remember the start of the next line.                            */
 /*      But only if it is not already known.                            */
 /* -------------------------------------------------------------------- */
-    if( iPixel == psInfo->nXSize && nScanline < psInfo->nYSize-1 &&
+    if( nScanline < psInfo->nYSize-1 &&
         psInfo->panLineOffset[nScanline+1] == -1 )
     {
         psInfo->panLineOffset[nScanline+1] = 
             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
-    }
-
-    if( iPixel != psInfo->nXSize )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Got %d pixels when looking for %d pixels.",
-                  iPixel, psInfo->nXSize );
-        return FALSE;
     }
 
     return TRUE;
