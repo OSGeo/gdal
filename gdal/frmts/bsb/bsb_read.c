@@ -39,7 +39,8 @@
 CPL_CVSID("$Id$");
 
 static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 );
-
+static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
+                                           int bVerboseIfError );
 /************************************************************************
 
 Background:
@@ -111,6 +112,7 @@ file format and I want to break it open! Chart data for the People!
 /*                             BSBUngetc()                              */
 /************************************************************************/
 
+static
 void BSBUngetc( BSBInfo *psInfo, int nCharacter )
 
 {
@@ -530,18 +532,103 @@ static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 )
 }
 
 /************************************************************************/
+/*                  BSBSeekAndCheckScanlineNumber()                     */
+/*                                                                      */
+/*       Seek to the beginning of the scanline and check that the       */
+/*       scanline number in file is consistant with what we expect      */
+/*                                                                      */
+/* @param nScanline zero based line number                              */
+/************************************************************************/
+
+static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
+                                           int bVerboseIfError )
+{
+    int		nLineMarker = 0;
+    int         byNext;
+    FILE	*fp = psInfo->fp;
+    int         bErrorFlag = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Seek to requested scanline.                                     */
+/* -------------------------------------------------------------------- */
+    psInfo->nBufferSize = 0;
+    if( VSIFSeekL( fp, psInfo->panLineOffset[nScanline], SEEK_SET ) != 0 )
+    {
+        if (bVerboseIfError)
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                    "Seek to offset %d for scanline %d failed.", 
+                    psInfo->panLineOffset[nScanline], nScanline );
+        }
+        else
+        {
+            CPLDebug("BSB", "Seek to offset %d for scanline %d failed.", 
+                     psInfo->panLineOffset[nScanline], nScanline );
+        }
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the line number.  Pre 2.0 BSB seemed to expect the line    */
+/*      numbers to be zero based, while 2.0 and later seemed to         */
+/*      expect it to be one based, and for a 0 to be some sort of       */
+/*      missing line marker.                                            */
+/* -------------------------------------------------------------------- */
+    do {
+        byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
+
+        /* Special hack to skip over extra zeros in some files, such
+        ** as optech/sample1.kap.
+        */
+        while( nScanline != 0 && nLineMarker == 0 && byNext == 0 && !bErrorFlag )
+            byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
+
+        nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
+    } while( (byNext & 0x80) != 0 );
+
+    if ( bErrorFlag )
+    {
+        if (bVerboseIfError)
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                    "Truncated BSB file or I/O error." );
+        }
+        return FALSE;
+    }
+
+    if( nLineMarker != nScanline 
+        && nLineMarker != nScanline + 1 )
+    {
+        if (bVerboseIfError)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                     "Got scanline id %d when looking for %d @ offset %d.", 
+                     nLineMarker, nScanline+1, psInfo->panLineOffset[nScanline]);
+        }
+        else
+        {
+            CPLDebug("BSB", "Got scanline id %d when looking for %d @ offset %d.", 
+                     nLineMarker, nScanline+1, psInfo->panLineOffset[nScanline]);
+        }
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                          BSBReadScanline()                           */
+/* @param nScanline zero based line number                              */
 /************************************************************************/
 
 int BSBReadScanline( BSBInfo *psInfo, int nScanline, 
                      unsigned char *pabyScanlineBuf )
 
 {
-    int		nLineMarker = 0, nValueShift, iPixel = 0;
+    int		nValueShift, iPixel = 0;
     unsigned char byValueMask, byCountMask;
     FILE	*fp = psInfo->fp;
     int         byNext, i;
-    int	        bErrorFlag = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Do we know where the requested line is?  If not, read all       */
@@ -568,48 +655,11 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Seek to requested scanline.                                     */
+/*       Seek to the beginning of the scanline and check that the       */
+/*       scanline number in file is consistant with what we expect      */
 /* -------------------------------------------------------------------- */
-    psInfo->nBufferSize = 0;
-    if( VSIFSeekL( fp, psInfo->panLineOffset[nScanline], SEEK_SET ) != 0 )
+    if ( !BSBSeekAndCheckScanlineNumber(psInfo, nScanline, TRUE) )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Seek to offset %d for scanline %d failed.", 
-                  psInfo->panLineOffset[nScanline], nScanline );
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read the line number.  Pre 2.0 BSB seemed to expect the line    */
-/*      numbers to be zero based, while 2.0 and later seemed to         */
-/*      expect it to be one based, and for a 0 to be some sort of       */
-/*      missing line marker.                                            */
-/* -------------------------------------------------------------------- */
-    do {
-        byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
-
-        /* Special hack to skip over extra zeros in some files, such
-        ** as optech/sample1.kap.
-        */
-        while( nScanline != 0 && nLineMarker == 0 && byNext == 0 && !bErrorFlag)
-            byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
-
-        nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
-    } while( (byNext & 0x80) != 0 );
-
-    if ( bErrorFlag )
-    {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Truncated BSB file or I/O error." );
-        return FALSE;
-    }
-
-    if( nLineMarker != nScanline 
-        && nLineMarker != nScanline + 1 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Got scanline id %d when looking for %d @ offset %ld.", 
-                  nLineMarker, nScanline+1, VSIFTellL( fp ) );
         return FALSE;
     }
 
@@ -630,6 +680,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /* -------------------------------------------------------------------- */
     do
     {
+        int bErrorFlag = FALSE;
         while( (byNext = BSBGetc(psInfo,psInfo->bNO1, &bErrorFlag)) != 0 &&
                 !bErrorFlag)
         {
@@ -652,9 +703,6 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 
             for( i = 0; i < nRunCount+1; i++ )
                 pabyScanlineBuf[iPixel++] = (unsigned char) nPixValue;
-
-            if (iPixel == psInfo->nXSize)
-                break;
         }
         if ( bErrorFlag )
         {
@@ -671,22 +719,58 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /* -------------------------------------------------------------------- */
         if( iPixel == psInfo->nXSize - 1 )
             pabyScanlineBuf[iPixel++] = 0;
+
+/* -------------------------------------------------------------------- */
+/*   If we have not enough data and no offset table, check that the     */
+/*   next bytes are not the expected next scanline number. If they are  */
+/*   not, then we can use them to fill the row again                    */
+/* -------------------------------------------------------------------- */
+        else if (iPixel < psInfo->nXSize &&
+                 nScanline != psInfo->nYSize-1 &&
+                 psInfo->panLineOffset[nScanline+1] == -1)
+        {
+            int nCurOffset = VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
+            psInfo->panLineOffset[nScanline+1] = nCurOffset;
+            if (BSBSeekAndCheckScanlineNumber(psInfo, nScanline + 1, FALSE))
+            {
+                CPLDebug("BSB", "iPixel=%d, nScanline=%d, nCurOffset=%d --> found new row marker", iPixel, nScanline, nCurOffset);
+                break;
+            }
+            else
+            {
+                CPLDebug("BSB", "iPixel=%d, nScanline=%d, nCurOffset=%d --> did NOT find new row marker", iPixel, nScanline, nCurOffset);
+
+                /* The next bytes are not the expected next scanline number, so */
+                /* use them to fill the row */
+                VSIFSeekL( fp, nCurOffset, SEEK_SET );
+                psInfo->panLineOffset[nScanline+1] = -1;
+                psInfo->nBufferOffset = 0;
+                psInfo->nBufferSize = 0;
+            }
+        }
     }
-    while ( iPixel < psInfo->nXSize );
+    while ( iPixel < psInfo->nXSize &&
+            (nScanline == psInfo->nYSize-1 ||
+             psInfo->panLineOffset[nScanline+1] == -1 ||
+             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset < psInfo->panLineOffset[nScanline+1]) );
+
+/* -------------------------------------------------------------------- */
+/*      If the line buffer is not filled after reading the line in the  */
+/*      file upto the next line offset, just fill it with zeros.        */
+/*      (The last pixel value from nPixValue could be a better value?)  */
+/* -------------------------------------------------------------------- */
+    while( iPixel < psInfo->nXSize )
+        pabyScanlineBuf[iPixel++] = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Remember the start of the next line.                            */
+/*      But only if it is not already known.                            */
 /* -------------------------------------------------------------------- */
-    if( iPixel == psInfo->nXSize && nScanline < psInfo->nYSize-1 )
+    if( nScanline < psInfo->nYSize-1 &&
+        psInfo->panLineOffset[nScanline+1] == -1 )
+    {
         psInfo->panLineOffset[nScanline+1] = 
             VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
-
-    if( iPixel != psInfo->nXSize )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Got %d pixels when looking for %d pixels.",
-                  iPixel, psInfo->nXSize );
-        return FALSE;
     }
 
     return TRUE;
