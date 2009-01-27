@@ -106,6 +106,9 @@ http://spatialreference.org/ref/user/north-pacific-albers-conic-equal-area/.
 See <a href="http://hobu.biz/2007/12/13/importing-spatial-references-from-urls-in-gdal-15">this blog entry</a>
 for more reference. <p>
 
+<li> <i>filename</i>: The name of a file containing WKT, PROJ.4 strings, or 
+XML/GML coordinate system definitions can be provided. <p>
+
 </ul>
 </dd>
 </dl>
