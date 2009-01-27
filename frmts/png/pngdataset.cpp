@@ -994,16 +994,17 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16
-        && bStrict )
+        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
                   "PNG driver doesn't support data type %s. "
-                  "Only eight bit (Byte) and sixteen bit (UInt16) bands supported.\n", 
+                  "Only eight bit (Byte) and sixteen bit (UInt16) bands supported. %s\n", 
                   GDALGetDataTypeName( 
-                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()),
+                  (bStrict) ? "" : "Defaulting to Byte" );
 
-        return NULL;
+        if (bStrict)
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */
