@@ -1135,6 +1135,28 @@ def ogr_shape_26():
     return 'success'
 
 ###############################################################################
+# Test alternate date formatting (#2746)
+
+def ogr_shape_27():
+
+    result = 'success'
+    
+    ds = ogr.Open( 'data/water_main_dist.dbf' )
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if feat.installe_1 != '1989/04/25':
+        print feat.installe_1
+        gdaltest.post_reason( 'got wrong date result!' )
+        result = 'fail'
+
+    feat = None
+    lyr = None
+    ds = None
+    
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1178,6 +1200,7 @@ gdaltest_list = [
     ogr_shape_24,
     ogr_shape_25,
     ogr_shape_26,
+    ogr_shape_27,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
