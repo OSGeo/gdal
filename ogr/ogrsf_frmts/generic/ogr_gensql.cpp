@@ -578,6 +578,8 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
     poDstFeat->SetFID( poSrcFeat->GetFID() );
 
     poDstFeat->SetGeometry( poSrcFeat->GetGeometryRef() );
+
+    poDstFeat->SetStyleString( poSrcFeat->GetStyleString() );
     
 /* -------------------------------------------------------------------- */
 /*      Copy fields from primary record to the destination feature.     */
