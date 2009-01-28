@@ -734,16 +734,14 @@ const char *OGRStyleTable::GetStyleName(const char *pszStyleString)
 GBool OGRStyleTable::AddStyle(const char *pszName, const char *pszStyleString)
 {
     int nPos;
-    const char *pszNewString = NULL;
     
     if (pszName && pszStyleString)
     {
         if ((nPos = IsExist(pszName)) != -1)
           return FALSE;
-        
-        pszNewString = CPLString().Printf("%s:%s",pszName,pszStyleString);
-        
-        m_papszStyleTable = CSLAddString(m_papszStyleTable,pszNewString);
+
+        m_papszStyleTable = CSLAddString(m_papszStyleTable,
+                              CPLString().Printf("%s:%s",pszName,pszStyleString));
         return TRUE;
     }
     return FALSE;
@@ -870,14 +868,16 @@ void OGRStyleTable::Print(FILE *fpOut)
 int OGRStyleTable::IsExist(const char *pszName)
 {
     int i;
+    int nCount;
     const char *pszNewString;
 
     if (pszName == NULL)
       return -1;
 
-    pszNewString = CPLString().Printf("%s:",pszName);
+    nCount = CSLCount(m_papszStyleTable);
+    pszNewString = CPLSPrintf("%s:",pszName);
 
-    for (i=0;i<CSLCount(m_papszStyleTable);i++)
+    for (i=0;i<nCount;i++)
     {
         if (strstr(m_papszStyleTable[i],pszNewString) != NULL)
         {
