@@ -549,6 +549,28 @@ def ogr_sql_23():
     return 'success'
 
 ###############################################################################
+# Test that style strings get carried with OGR SQL SELECT results. (#2808)
+
+def ogr_sql_24():
+
+    result = 'success'
+    
+    ds = ogr.Open( 'data/smalltest.dgn' )
+
+    sql_layer = ds.ExecuteSQL( 'SELECT * from elements where colorindex=83 and type=3' )
+
+    feat = sql_layer.GetNextFeature()
+    if len(feat.GetStyleString()) < 10:
+        print feat.GetStyleString()
+        gdaltest.post_reason( 'style string apparently not propagated to OGR SQL results.' )
+        result = 'fail'
+    feat = None
+    ds.ReleaseResultSet( sql_layer )
+    ds = None
+
+    return result
+
+###############################################################################
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -582,6 +604,7 @@ gdaltest_list = [
     ogr_sql_21,
     ogr_sql_22,
     ogr_sql_23,
+    ogr_sql_24,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
