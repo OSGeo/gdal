@@ -252,7 +252,8 @@ GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
 
 {
     int i;
-    double dfX_PM_Min, dfX_PM_Max, dfX_Dateline_Min, dfX_Dateline_Max;
+    /* Following inits are useless but keep GCC happy */
+    double dfX_PM_Min = 0, dfX_PM_Max = 0, dfX_Dateline_Min = 0, dfX_Dateline_Max = 0;
     int    bUsePMWrap;
 
     if( nPointCount < 2 )
@@ -435,6 +436,8 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
             }
 
             osGCPProjection = osUnderlyingSRS;
+
+            delete poCT;
         }
     }
 
