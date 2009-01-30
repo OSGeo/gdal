@@ -83,22 +83,14 @@ filename is not of the format supported by the driver.  If it is the target
 format, then a new OGRDataSource object for the datasource should be returned.
 
 Is is common for the Open() method to be delegated to an Open() method on
-the actual format's OGRDataSource class.  In the case of the SPF format
-update in place is not supported, so we always fail if bUpdate is FALSE. 
+the actual format's OGRDataSource class.
 
 \verbatim
 OGRDataSource *OGRSPFDriver::Open( const char * pszFilename, int bUpdate )
 {
-    if( bUpdate )
-    {
-	CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Update access not supported by the SPF driver." );
-        return NULL;
-    }
-
     OGRSPFDataSource   *poDS = new OGRSPFDataSource();
 
-    if( !poDS->Open( pszFilename ) )
+    if( !poDS->Open( pszFilename, bUpdate ) )
     {
         delete poDS;
 	return NULL;
@@ -164,7 +156,7 @@ class OGRSPFDataSource : public OGRDataSource
                         OGRSPFDataSource();
                         ~OGRSPFDataSource();
 
-    int                 Open( const char * pszFilename );
+    int                 Open( const char * pszFilename, int bUpdate );
     
     const char          *GetName() { return pszName; }
 
@@ -211,8 +203,11 @@ reached.  In this particular Open() we just test the file extension but this
 is generally a poor way of identifying a file format.  If available, checking
 "magic header values" or something similar is preferrable. 
 
+In the case of the SPF format, update in place is not supported, 
+so we always fail if bUpdate is FALSE. 
+
 \verbatim
-int  OGRSPFDataSource::Open( const char *pszFilename )
+int  OGRSPFDataSource::Open( const char *pszFilename, int bUpdate )
 
 {
 // -------------------------------------------------------------------- 
@@ -220,6 +215,13 @@ int  OGRSPFDataSource::Open( const char *pszFilename )
 // --------------------------------------------------------------------
     if( !EQUAL( CPLGetExtension(pszFilename), "spf" ) )
         return FALSE;
+
+    if( bUpdate )
+    {
+	CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Update access not supported by the SPF driver." );
+        return FALSE;
+    }
 
 // -------------------------------------------------------------------- 
 //      Create a corresponding layer.
