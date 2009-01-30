@@ -394,6 +394,10 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         {
             const char *pszPR = strstr(psInfo->papszHeader[i],"PR=");
 
+            // Capture whole line as metadata so some apps can do more
+            // specific processing.
+            SetMetadataItem( "BSB_KNP", psInfo->papszHeader[i] + 4 );
+
             if( pszPR == NULL )
             {
                 /* no match */
