@@ -965,7 +965,8 @@ gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
 
 This utility will automatically mosaic a set of images.  All the images must
 be in the same coordinate system and have a matching number of bands, but 
-they may be overlapping, and at different resolutions.
+they may be overlapping, and at different resolutions. In areas of overlap,
+the last image will be copied over earlier ones.
 
 <dl>
 <dt> <b>-o</b> <i>out_filename</i>:</dt><dd> The name of the output file,
