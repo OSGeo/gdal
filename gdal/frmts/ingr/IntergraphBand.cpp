@@ -91,9 +91,13 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         {
         case EnvironVColorTable:
             INGR_GetEnvironVColors( poDS->fp, nBandOffset, nEntries, poColorTable );
+            if (poColorTable->GetColorEntryCount() == 0)
+                return;
             break;
         case IGDSColorTable:
             INGR_GetIGDSColors( poDS->fp, nBandOffset, nEntries, poColorTable );
+            if (poColorTable->GetColorEntryCount() == 0)
+                return;
             break;
         default:
             CPLDebug( "INGR", "Wrong Color table type (%d), number of colors (%d)", 
@@ -127,6 +131,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
                                         nRasterYSize,
                                         &hTileDir, 
                                         &pahTiles );
+        if (nTiles == 0)
+            return;
 
         eFormat = (INGR_Format) hTileDir.DataTypeCode;
 
@@ -158,7 +164,12 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     nBlockBufSize = nBlockXSize * nBlockYSize * 
                     GDALGetDataTypeSize( eDataType ) / 8;
         
-    pabyBlockBuf = (GByte*) CPLMalloc( nBlockBufSize );
+    pabyBlockBuf = (GByte*) VSIMalloc( nBlockBufSize );
+    if (pabyBlockBuf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBlockBufSize);
+        return;
+    }
 
     // -------------------------------------------------------------------- 
     // More Metadata Information
@@ -254,9 +265,9 @@ GDALColorInterp IntergraphRasterBand::GetColorInterpretation()
         case 1: 
             return GCI_RedBand;
         case 2: 
-            return GCI_BlueBand;
-        case 3: 
             return GCI_GreenBand;
+        case 3: 
+            return GCI_BlueBand;
         }
         return GCI_GrayIndex;
     }
@@ -333,6 +344,8 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     // --------------------------------------------------------------------
     // Load Block Buffer
     // --------------------------------------------------------------------
+    if (HandleUninstantiatedTile( nBlockXOff, nBlockYOff, pImage ))
+        return CE_None;
 
     uint32 nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
 
@@ -375,6 +388,36 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
 }
 
 //  ----------------------------------------------------------------------------
+//                                        IntergraphRasterBand::HandleUninstantiatedTile()
+//  ----------------------------------------------------------------------------
+
+int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff, 
+                                                   int nBlockYOff,
+                                                   void* pImage)
+{
+    if( bTiled && pahTiles[nBlockXOff + nBlockYOff * nBlocksPerRow].Start == 0 ) 
+    {
+        // ------------------------------------------------------------
+        // Uninstantieted tile, unique value
+        // ------------------------------------------------------------
+        int nColor = pahTiles[nBlockXOff + nBlockYOff * nBlocksPerRow].Used;
+        switch( GetColorInterpretation() )
+        {
+            case GCI_RedBand: 
+                nColor >>= 16; break;
+            case GCI_GreenBand: 
+                nColor >>= 8; break;
+            default:
+                break;
+        }
+        memset( pImage, nColor, nBlockBufSize );
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+//  ----------------------------------------------------------------------------
 //                                        IntergraphRGBBand::IntergraphRGBBand()
 //  ----------------------------------------------------------------------------
 
@@ -384,6 +427,9 @@ IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDS,
                                      int nRGorB )
     : IntergraphRasterBand( poDS, nBand, nBandOffset )
 {
+    if (pabyBlockBuf == NULL)
+        return;
+
     nRGBIndex     = (uint8) nRGorB;
 
     // -------------------------------------------------------------------- 
@@ -392,7 +438,11 @@ IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDS,
 
     nBlockBufSize *= 3;
     CPLFree( pabyBlockBuf );
-    pabyBlockBuf = (GByte*) CPLMalloc( nBlockBufSize );
+    pabyBlockBuf = (GByte*) VSIMalloc( nBlockBufSize );
+    if (pabyBlockBuf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBlockBufSize);
+    }
 }
 
 //  ----------------------------------------------------------------------------
@@ -439,7 +489,11 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
     nRLESize         = 0;
     nRGBIndex        = (uint8) nRGorB;
     bRLEBlockLoaded  = FALSE;
+    pabyRLEBlock     = NULL;
     panRLELineOffset = NULL;
+
+    if (pabyBlockBuf == NULL)
+        return;
 
     if( ! this->bTiled )
     {
@@ -492,13 +546,21 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
     }
 
     CPLFree( pabyBlockBuf );
-    pabyBlockBuf = (GByte*) CPLMalloc( nBlockBufSize );
+    pabyBlockBuf = (GByte*) VSIMalloc( nBlockBufSize );
+    if (pabyBlockBuf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBlockBufSize);
+    }
 
     // ----------------------------------------------------------------
     // Create a RLE buffer
     // ----------------------------------------------------------------
 
-    pabyRLEBlock = (GByte*) CPLMalloc( nRLESize );
+    pabyRLEBlock = (GByte*) VSIMalloc( nRLESize );
+    if (pabyRLEBlock == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nRLESize);
+    }
 
     // ----------------------------------------------------------------
     // Set a black and white Color Table
@@ -537,6 +599,9 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     
     if( bTiled || !bRLEBlockLoaded )
     {
+        if (HandleUninstantiatedTile( nBlockXOff, nBlockYOff, pImage ))
+            return CE_None;
+
         nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nRLESize, pabyRLEBlock );
         bRLEBlockLoaded = TRUE;
     }
@@ -660,6 +725,11 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS,
 {
     nBMPSize    = 0;
     nRGBBand    = nRGorB;
+    pabyBMPBlock = NULL;
+
+    if (pabyBlockBuf == NULL)
+        return;
+
 
     if( ! this->bTiled )
     {
@@ -689,7 +759,11 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS,
     // Create a Bitmap buffer
     // ----------------------------------------------------------------
 
-    pabyBMPBlock = (GByte*) CPLMalloc( nBMPSize );
+    pabyBMPBlock = (GByte*) VSIMalloc( nBMPSize );
+    if (pabyBMPBlock == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBMPSize);
+    }
 
     // ----------------------------------------------------------------
     // Set a black and white Color Table
@@ -724,6 +798,39 @@ IntergraphBitmapBand::~IntergraphBitmapBand()
 }
 
 //  ----------------------------------------------------------------------------
+//                                IntergraphBitmapBand::GetColorInterpretation()
+//  ----------------------------------------------------------------------------
+
+GDALColorInterp IntergraphBitmapBand::GetColorInterpretation()
+{
+    if( eFormat == JPEGRGB)
+    {
+        switch( nRGBBand )
+        {
+        case 1: 
+            return GCI_RedBand;
+        case 2: 
+            return GCI_GreenBand;
+        case 3: 
+            return GCI_BlueBand;
+        }
+        return GCI_GrayIndex;
+    }
+    else
+    {
+        if( poColorTable->GetColorEntryCount() > 0 )
+        {
+            return GCI_PaletteIndex;
+        }
+        else
+        {
+            return GCI_GrayIndex;
+        }
+    }
+
+}
+
+//  ----------------------------------------------------------------------------
 //                                            IntergraphBitmapBand::IReadBlock()
 //  ----------------------------------------------------------------------------
 
@@ -736,6 +843,8 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     // ----------------------------------------------------------------
 	// Load the block of a tile or a whole image
     // ----------------------------------------------------------------
+    if (HandleUninstantiatedTile( nBlockXOff, nBlockYOff, pImage ))
+        return CE_None;
 
     uint32 nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBMPSize, pabyBMPBlock );
 
@@ -837,12 +946,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
 
         if( pahTiles[nBlockId].Start == 0 ) 
         {
-            // ------------------------------------------------------------
-            // Uninstantieted tile, unique value
-            // ------------------------------------------------------------
-
-            memset( pabyBlock, pahTiles[nBlockId].Used, nBlockBufSize );
-            return nBlockBufSize;
+            return 0;
         }
 
         nSeekOffset   = pahTiles[nBlockId].Start + nDataOffset;
