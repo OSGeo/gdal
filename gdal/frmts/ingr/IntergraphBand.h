@@ -75,6 +75,7 @@ public:
     virtual CPLErr SetStatistics( double dfMin, double dfMax, double dfMean, double dfStdDev );
 
 protected:
+    int  HandleUninstantiatedTile( int nBlockXOff, int nBlockYOff, void* pImage);
     int  LoadBlockBuf( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
     void ReshapeBlock( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
     void FlushBandHeader( void );
@@ -102,6 +103,8 @@ public:
 
 class IntergraphBitmapBand : public IntergraphRasterBand
 {
+    friend class IntergraphDataset;
+
 private:
     GByte	       *pabyBMPBlock;
     uint32          nBMPSize;
@@ -116,6 +119,7 @@ public:
     ~IntergraphBitmapBand();
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual GDALColorInterp GetColorInterpretation();
 };
 
 //  ----------------------------------------------------------------------------
@@ -124,6 +128,8 @@ public:
 
 class IntergraphRLEBand : public IntergraphRasterBand
 {
+    friend class IntergraphDataset;
+
 private:
     GByte	       *pabyRLEBlock;
     uint32          nRLESize;

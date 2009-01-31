@@ -428,6 +428,13 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
 
     INGR_TileHeaderDiskToMem( pTileDir, abyBuf );
 
+    if (pTileDir->TileSize == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Invalid tile size : %d", pTileDir->TileSize);
+        return 0;
+    }
+
     // ----------------------------------------------------------------
     // Calculate the number of tiles
     // ----------------------------------------------------------------
@@ -441,8 +448,17 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
     // Load the tile table (first tile s already read)
     // ----------------------------------------------------------------
 
-    *pahTiles  = (INGR_TileItem*) CPLCalloc( nTiles, SIZEOF_TILE );
-    GByte *pabyBuf  = (GByte*) CPLCalloc( ( nTiles - 1 ), SIZEOF_TILE );
+    *pahTiles  = (INGR_TileItem*) VSICalloc( nTiles, SIZEOF_TILE );
+    GByte *pabyBuf  = (GByte*) VSICalloc( ( nTiles - 1 ), SIZEOF_TILE );
+
+    if (*pahTiles == NULL || pabyBuf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        CPLFree( *pahTiles );
+        *pahTiles = NULL;
+        CPLFree( pabyBuf );
+        return 0;
+    }
 
     (*pahTiles)[0].Start      = pTileDir->First.Start;
     (*pahTiles)[0].Allocated  = pTileDir->First.Allocated;
@@ -452,7 +468,10 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
       ( VSIFReadL( pabyBuf, ( nTiles - 1 ), SIZEOF_TILE, fp ) == 0 ) )
     {
         CPLDebug("INGR", "Error reading tiles table");
-        return 1;
+        CPLFree( *pahTiles );
+        *pahTiles = NULL;
+        CPLFree( pabyBuf );
+        return 0;
     }
 
     unsigned int i;
@@ -478,6 +497,7 @@ void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
 {
     if( fp == NULL ||
         nEntries == 0 ||
+        nEntries > 256 ||
         poColorTable == NULL )
     {
         return;
@@ -491,11 +511,13 @@ void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
 
     INGR_ColorTable256 hIGDSColors;
 
+    /* nEntries >= 0 && nEntries <= 256, so alloc is safe */
     GByte *pabyBuf = (GByte*) CPLCalloc( nEntries, SIZEOF_IGDS );
 
     if( ( VSIFSeekL( fp, nStart, SEEK_SET ) == -1 ) ||
         ( VSIFReadL( pabyBuf, nEntries, SIZEOF_IGDS, fp ) == 0 ) )
     {
+        CPLFree( pabyBuf );
         return;
     }
 
@@ -575,13 +597,22 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
 
     INGR_ColorTableVar hVLTColors;
 
-    hVLTColors.Entry = (vlt_slot*) CPLCalloc( nEntries, SIZEOF_VLTS );
+    hVLTColors.Entry = (vlt_slot*) VSICalloc( nEntries, SIZEOF_VLTS );
 
-    GByte *pabyBuf = (GByte*) CPLCalloc( nEntries, SIZEOF_VLTS );
+    GByte *pabyBuf = (GByte*) VSICalloc( nEntries, SIZEOF_VLTS );
+
+    if (hVLTColors.Entry == NULL || pabyBuf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        CPLFree( pabyBuf );
+        CPLFree( hVLTColors.Entry );
+        return;
+    }
 
     if( ( VSIFSeekL( fp, nStart, SEEK_SET ) == -1 ) ||
         ( VSIFReadL( pabyBuf, nEntries, SIZEOF_VLTS, fp ) == 0 ) )
     {
+        CPLFree( pabyBuf );
         CPLFree( hVLTColors.Entry );
         return;
     }
@@ -596,6 +627,8 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
         BUF2STRC( pabyBuf, n, hVLTColors.Entry[i].v_green );
         BUF2STRC( pabyBuf, n, hVLTColors.Entry[i].v_blue );
     }
+
+    CPLFree( pabyBuf );
 
     // -------------------------------------------------------------
     // Sort records by crescent order of "slot" 
@@ -947,7 +980,7 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
     iInput = 0;
     iOutput = 0;
 
-    do
+    while( ( iInput < nSrcBytes ) && ( iOutput < nBlockSize ) )
     {
         cAtomHead = (char) pabySrcData[iInput++];
 
@@ -955,7 +988,7 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
         {
             nRun = cAtomHead;
 
-            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            for( i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
             {
                 pabyDstData[iOutput++] = pabySrcData[iInput++];
             }
@@ -964,17 +997,16 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
         {
             nRun = abs( cAtomHead );
 
-            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            for( i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
             {
                 pabyDstData[iOutput++] = pabySrcData[iInput];
             }
             iInput++;
         }
     }
-    while( ( iInput < nSrcBytes ) && ( iOutput < nBlockSize ) );
 
     if( pnBytesConsumed != NULL )
-        *pnBytesConsumed = iInput * 2;
+        *pnBytesConsumed = iInput;
 
     return iOutput;
 }
@@ -1004,6 +1036,9 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
     iInput = 0;
     iOutput = 0;
 
+    if (nSrcShorts == 0)
+        return 0;
+
     do
     {
         nColor = CPL_LSBWORD16(pauiSrc[ iInput ]);
@@ -1011,17 +1046,25 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 
         if( nColor == 0x5900 )
         {
-            nSize = CPL_LSBWORD16(pauiSrc[ iInput ]);
-            iInput++;
-            nLine = CPL_LSBWORD16(pauiSrc[ iInput ]);
-            iInput++;
-            nRun  = CPL_LSBWORD16(pauiSrc[ iInput ]);
-            iInput++;
+            if ( iInput + 2 < nSrcShorts)
+            {
+                nSize = CPL_LSBWORD16(pauiSrc[ iInput ]);
+                iInput++;
+                nLine = CPL_LSBWORD16(pauiSrc[ iInput ]);
+                iInput++;
+                nRun  = CPL_LSBWORD16(pauiSrc[ iInput ]);
+                iInput++;
+            }
             continue;
         }
 
-        nCount = CPL_LSBWORD16(pauiSrc[iInput]);
-        iInput++;
+        if ( iInput < nSrcShorts )
+        {
+            nCount = CPL_LSBWORD16(pauiSrc[iInput]);
+            iInput++;
+        }
+        else
+            nCount = 0;
 
         for( i = 0; i < nCount && iOutput < nBlockSize; i++ )
         {
@@ -1052,6 +1095,9 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
     unsigned int   nSrcShorts = nSrcBytes / 2;
     unsigned short nRun;
     unsigned char  nValue = 0;
+
+    if (nSrcShorts == 0)
+        return 0;
 
     if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
         nValue = 1;
@@ -1100,6 +1146,9 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     unsigned short nRun = 0;
     unsigned char  nValue = 0;
     unsigned short previous = 0;
+
+    if (nSrcShorts == 0)
+        return 0;
 
     if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
     {
