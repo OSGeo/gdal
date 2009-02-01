@@ -215,6 +215,8 @@ public:
     virtual int         GetOverviewCount();
     virtual GDALRasterBand*
                         GetOverview( int );
+
+    void                SetHoldWritingBlock( bool bValue );
 };
 
 //  ---------------------------------------------------------------------------
@@ -246,9 +248,7 @@ private:
     int                 nCellSizeGDAL;
 
     bool                bIOInitialized;
-    bool                bBlobInitialized;
     bool                bFlushMetadata;
-    bool                bFlushBuffer;
 
     void                InitializeLayersNode();
     bool                InitializeIO( int nLevel, bool bUpdate = false );
@@ -256,11 +256,10 @@ private:
 
     void                UnpackNBits( GByte* pabyData );
     void                PackNBits( GByte* pabyOutBuf, void* pData );
-    void                CompressJpeg();
-    void                UncompressJpeg( unsigned long nInSize );
-    bool                UncompressDeflate( unsigned long nDestLen,
-                            unsigned long nSourceLen );
-    bool                CompressDeflate( void* pData );
+    unsigned long       CompressJpeg();
+    void                UncompressJpeg( unsigned long nBufferSize );
+    bool                UncompressDeflate( unsigned long nBufferSize );
+    unsigned long       CompressDeflate( void* pData );
 
 public:
 
@@ -287,7 +286,8 @@ public:
     bool                HasColorMap( int nBand );
     void                GetColorMap( int nBand, GDALColorTable* poCT );
     void                SetColorMap( int nBand, GDALColorTable* poCT );
-    bool                SetGeoReference( int nSRIDIn );
+    void                SetGeoReference( int nSRIDIn );
+    void                SetCompression( const char* pszType, int nQualityn );
     char*               GetWKText( int nSRIDin );
     bool                GetDataBlock(
                             int nBand,
@@ -310,6 +310,7 @@ public:
                             int nLevels,
                             const char* pszResampling,
                             bool bNodata = false );
+    void                PrepareToOverwrite( void );
 
 public:
 
@@ -327,6 +328,7 @@ public:
     CPLXMLNode*         phMetadata;
     char*               pszCellDepth;
     char*               pszCompressionType;
+    int                 nCompressQuality;
 
     int                 nRasterColumns;
     int                 nRasterRows;
@@ -353,4 +355,6 @@ public:
     int                 nPyramidMaxLevel;
 
     int                 bPackingOrCompress;
+
+    boolean             bHoldWritingBlock;
 };
