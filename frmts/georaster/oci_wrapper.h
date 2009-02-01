@@ -31,9 +31,26 @@
 #ifndef _ORCL_WRAP_H_INCLUDED
 #define _ORCL_WRAP_H_INCLUDED
 
+// GDAL supporting types 
+
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "cpl_string.h"
+
+// DEFLATE compression support
+
+#include <zlib.h>
+
+// JPEG compression support
+
+CPL_C_START
+#include <jpeglib.h>
+CPL_C_END
+
+void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
+void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
+
+// Oracle Class Interface
 
 #include <oci.h>
 

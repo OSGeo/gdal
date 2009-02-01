@@ -12,9 +12,17 @@ OBJ		=	georaster_driver.o \
 			oci_wrapper.o \
 			georaster_wrapper.o
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS) -I../ingr
 
 PLUGIN_SO	= gdal_GEOR.so
+
+ifneq ($(JPEG_SETTING),no)
+CPPFLAGS	:=	$(CPPFLAGS) -DJPEG_SUPPORTED
+endif
+
+ifeq ($(JPEG_SETTING),internal)
+CPPFLAGS	:=	$(CPPFLAGS) -I../jpeg/libjpeg
+endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
