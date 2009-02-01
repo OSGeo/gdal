@@ -38,6 +38,9 @@
 /**
  * Fetch number of points from a geometry.
  *
+ * Only wkbPoint[25D] or wkbLineString[25D] may return a valid value.
+ * Other geometry types will silently return 0.
+ *
  * @param hGeom handle to the geometry from which to get the number of points.
  * @return the number of points.
  */
@@ -57,6 +60,8 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
       }
 
       default:
+        // autotest/pymod/ogrtest.py calls this method on any geometry. So keep silent
+        //CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         return 0;
     }
 }
@@ -82,13 +87,17 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
           if( i == 0 )
               return ((OGRPoint *) hGeom)->getX();
           else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
               return 0.0;
+          }
       }
 
       case wkbLineString:
         return ((OGRLineString *) hGeom)->getX( i );
 
       default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         return 0.0;
     }
 }
@@ -114,13 +123,17 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
           if( i == 0 )
               return ((OGRPoint *) hGeom)->getY();
           else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
               return 0.0;
+          }
       }
 
       case wkbLineString:
           return ((OGRLineString *) hGeom)->getY( i );
 
       default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         return 0.0;
     }
 }
@@ -146,13 +159,17 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
           if( i == 0 )
               return ((OGRPoint *) hGeom)->getZ();
           else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
               return 0.0;
+          }
       }
 
       case wkbLineString:
           return ((OGRLineString *) hGeom)->getZ( i );
 
       default:
+          CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
           return 0.0;
     }
 }
@@ -179,13 +196,16 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
     {
       case wkbPoint:
       {
-          CPLAssert( i == 0 );
           if( i == 0 )
           {
               *pdfX = ((OGRPoint *)hGeom)->getX();
               *pdfY = ((OGRPoint *)hGeom)->getY();
               if( pdfZ != NULL )
                   *pdfZ = ((OGRPoint *)hGeom)->getZ();
+          }
+          else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
           }
       }
       break;
@@ -200,7 +220,7 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
       break;
 
       default:
-        CPLAssert( FALSE );
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         break;
     }
 }
@@ -231,12 +251,15 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
     {
       case wkbPoint:
       {
-          CPLAssert( i == 0 );
           if( i == 0 )
           {
               ((OGRPoint *) hGeom)->setX( dfX );
               ((OGRPoint *) hGeom)->setY( dfY );
               ((OGRPoint *) hGeom)->setZ( dfZ );
+          }
+          else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
           }
       }
       break;
@@ -246,7 +269,7 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         break;
     }
 }
@@ -276,11 +299,14 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
     {
       case wkbPoint:
       {
-          CPLAssert( i == 0 );
           if( i == 0 )
           {
               ((OGRPoint *) hGeom)->setX( dfX );
               ((OGRPoint *) hGeom)->setY( dfY );
+          }
+          else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
           }
       }
       break;
@@ -290,7 +316,7 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         break;
     }
 }
@@ -329,7 +355,7 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         break;
     }
 }
@@ -366,7 +392,7 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         break;
     }
 }
@@ -377,6 +403,10 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
 /**
  * Fetch the number of elements in a geometry or number of geometries in
  * container.
+ *
+ * Only geometries of type wkbPolygon[25D], wkbMultiPoint[25D], wkbMultiLineString[25D],
+ * wkbMultiPolygon[25D] or wkbGeometryCollection[25D] may return a valid value.
+ * Other geometry types will silently return 0.
  *
  * @param hGeom single geometry or geometry container from which to get
  * the number of elements.
@@ -401,6 +431,8 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
         return ((OGRGeometryCollection *)hGeom)->getNumGeometries();
 
       default:
+        // autotest/pymod/ogrtest.py calls this method on any geometry. So keep silent
+        //CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         return 0;
     }
 }
@@ -451,6 +483,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
             ((OGRGeometryCollection *)hGeom)->getGeometryRef( iSubGeom );
 
       default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         return 0;
     }
 }
