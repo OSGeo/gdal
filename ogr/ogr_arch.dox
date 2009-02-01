@@ -11,7 +11,7 @@ simple features inspired API.<p>
 Because OGR is modelled on the OpenGIS simple features data model, it is
 very helpful to review the SFCOM, or other simple features interface
 specifications which can be retrieved from the 
-<a href="http://www.opengis.org">Open GIS Consortium</a> web site.  Data
+<a href="http://www.opengeospatial.org">Open Geospatial Consortium</a> web site.  Data
 types, and method names are modelled on those from the interface 
 specifications.<p>
 
