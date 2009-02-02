@@ -56,7 +56,12 @@ void	GDALRegister_PNG(void);
 CPL_C_END
 
 // Define SUPPORT_CREATE if you want Create() call supported.
-// Note: callers must provide blocks in increasing Y order. 
+// Note: callers must provide blocks in increasing Y order.
+
+// Disclaimer (E. Rouault) : this code is NOT production ready at all.
+// A lot of issues remains : uninitialized variables, unclosed file,
+// inability to handle properly multiband case, inability to read&write
+// at the same time. Do NOT use it unless you're ready to fix it
 //#define SUPPORT_CREATE
 
 
