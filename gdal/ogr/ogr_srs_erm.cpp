@@ -158,9 +158,10 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     const char *pszWKTDatum = GetAttrValue( "DATUM" );
 
     if( pszWKTDatum != NULL 
-        && oSRSWork.importFromDict( pszWKTDatum, "ecw_cs.wkt" ) == OGRERR_NONE)
+        && oSRSWork.importFromDict( "ecw_cs.wkt", pszWKTDatum ) == OGRERR_NONE)
     {
-        strcpy( pszDatum, pszWKTDatum );
+        strncpy( pszDatum, pszWKTDatum, 32 );
+        pszDatum[31] = '\0';
     }
 
 /* -------------------------------------------------------------------- */
@@ -246,11 +247,12 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         const char *pszPROJCS = GetAttrValue( "PROJCS" );
 
-        if( pszWKTDatum != NULL 
-            && oSRSWork.importFromDict( pszPROJCS, "ecw_cs.wkt" ) == OGRERR_NONE 
+        if( pszPROJCS != NULL 
+            && oSRSWork.importFromDict( "ecw_cs.wkt", pszPROJCS ) == OGRERR_NONE 
             && oSRSWork.IsProjected() )
         {
-            strcpy( pszProj, pszPROJCS );
+            strncpy( pszProj, pszPROJCS, 32 );
+            pszProj[31] = '\0';
         }
     }
 
