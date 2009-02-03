@@ -1685,13 +1685,15 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     //  --------------------------------------------------------------------
     //  Optimize the number of writings
     //  --------------------------------------------------------------------
-
+/*
+ *      Experimental, not be commited on SVN.
+ *
     if( bHoldWritingBlock && 
         nBandBlockSize > 1 )
     {
         return true;
     }
-
+*/
     //  --------------------------------------------------------------------
     //  Compress
     //  --------------------------------------------------------------------
