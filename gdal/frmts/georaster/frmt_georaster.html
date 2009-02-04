@@ -6,12 +6,23 @@
 
 
 
+
+
+  
+  
   
   
   
   
   
   <title>GeoRaster --- Oracle Spatial GeoRaster</title>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
+  <meta name="GENERATOR" content="OpenOffice.org 2.4  (Linux)">
+  <style type="text/css">
+	<!--
+		@page { size: 8.5in 11in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	--></style>
 </head>
 
 
@@ -21,7 +32,11 @@
 
 
 
+
+
 <h1>Oracle Spatial GeoRaster</h1>
+
+
 
 
 
@@ -37,9 +52,13 @@ built as a GDAL plugin, but it requires Oracle client libraries.
 
 
 
+
+
 <p>
 When opening a GeoRaster, it's name should be specified in the form:
 </p>
+
+
 
 
 
@@ -52,13 +71,19 @@ georaster:&lt;user&gt;{,/}&lt;pwd&gt;{,@}[db],[table],[column],[where]<br>
 
 
 
+
+
 georaster:&lt;user&gt;{,/}&lt;pwd&gt;{,@}[db],&lt;rdt&gt;,&lt;rid&gt;</p>
 
 
 
 
 
+
+
 <p>Where:</p>
+
+
 
 
 
@@ -71,7 +96,11 @@ user &nbsp; = Oracle server user's name login<br>
 
 
 
+
+
 pwd &nbsp; &nbsp;= user password<br>
+
+
 
 
 
@@ -83,7 +112,11 @@ db &nbsp; &nbsp; = Oracle server identification (database name)<br>
 
 
 
+
+
 table &nbsp;= name of a GeoRaster table (table that contains&nbsp;GeoRaster columns)<br>
+
+
 
 
 
@@ -95,13 +128,19 @@ column = name of a column&nbsp;data type&nbsp;MDSYS.SDO_GEORASTER<br>
 
 
 
+
+
 where &nbsp;= a simple where clause to identify one or multiples GeoRaster<br>
 
 
 
 
 
-rtd &nbsp; &nbsp;= name of a raster data table<br>
+
+
+rdt &nbsp; &nbsp;= name of a raster data table<br>
+
+
 
 
 
@@ -109,7 +148,11 @@ rtd &nbsp; &nbsp;= name of a raster data table<br>
 
 rid &nbsp; &nbsp;= numeric identification of one GeoRaster</p>
 
+
+
 <p>Examples:</p>
+
+
 
 
 
@@ -118,7 +161,11 @@ rid &nbsp; &nbsp;= numeric identification of one GeoRaster</p>
 <p style="font-family: Courier New,Courier,monospace; margin-left: 40px;">geor:scott,tiger,demodb,table,column,id=1<br>
 
 
+
+
 geor:scott,tiger,demodb,table,column,"id = 1"<br>
+
+
 
 
 
@@ -130,7 +177,11 @@ geor:scott,tiger,demodb,table,column,"id = 1"<br>
 
 
 
+
+
 "georaster:scott/tiger@demodb,table,column,city='Brasilia'"<br>
+
+
 
 
 
@@ -142,13 +193,19 @@ georaster:scott,tiger,,rdt_10$,10<br>
 
 
 
+
+
 geor:scott/tiger,,rdt_10$,10</p>
 
 
 
 
 
+
+
 <p>Note: do note use space around the field values and the commas.</p>
+
+
 
 
 
@@ -161,7 +218,11 @@ geor:scott/tiger,,rdt_10$,10</p>
 
 
 
+
+
 </h3>
+
+
 
 
 
@@ -170,6 +231,8 @@ geor:scott/tiger,,rdt_10$,10</p>
 <p>By providing some basic information the
 GeoRaster driver is capable of listing the existing rasters stored on
 the server:</p>
+
+
 
 
 
@@ -184,11 +247,17 @@ gdalinfo georasters:scott/tiger@db1</font></p>
 
 
 
+
+
 To list&nbsp;all the GeoRaster type columns that exist&nbsp;in that table:<br>
+
+
 
 
 <div style="margin-left: 40px;"><font face="Courier, monospace">%
 gdalinfo georasters:scott/tiger@db1,table_name</font></div>
+
+
 
 
 
@@ -202,6 +271,8 @@ objects stored in that table.
 
 
 
+
+
 <div style="margin-left: 40px;"><font face="Courier, monospace">%
 gdalinfo georasters:scott/tiger@db1,table_name,georaster_column</font></div>
 
@@ -209,9 +280,13 @@ gdalinfo georasters:scott/tiger@db1,table_name,georaster_column</font></div>
 
 
 
+
+
 <p>That will list all the GeoRaster 
-existing on that table occording to a Where clause.
+existing on that table according to a Where clause.
 </p>
+
+
 
 
 
@@ -221,13 +296,19 @@ existing on that table occording to a Where clause.
 gdalinfo georasters:scott/tiger@db1,table_name,georaster_column,city='Brasilia'</font></div>
 
 
+
+
 <br>
+
+
 
 
 Note that the result of those queries
 are returned&nbsp;as GDAL metadata sub-datasets, e.g.:
 <p style="margin-left: 40px;"><font face="Courier, monospace">%
 gdalinfo georaster:scott/tiger<br>
+
+
 
 
 
@@ -240,7 +321,11 @@ GeoRaster/Oracle Spatial GeoRaster<br>
 
 
 
+
+
 Subdatasets:</font><br>
+
+
 
 
 
@@ -253,7 +338,11 @@ SUBDATASET_1_NAME=georaster:scott,tiger,,LANDSAT<br>
 
 
 
+
+
 SUBDATASET_1_DESC=Table:LANDSAT<br>
+
+
 
 
 
@@ -265,7 +354,11 @@ SUBDATASET_2_NAME=georaster:scott,tiger,,GDAL_IMPORT<br>
 
 
 
+
+
 SUBDATASET_2_DESC=Table:GDAL_IMPORT</font></span></p>
+
+
 
 
 
@@ -277,13 +370,19 @@ SUBDATASET_2_DESC=Table:GDAL_IMPORT</font></span></p>
 
 
 
+
+
 <ul>
+
+
 
 
 
 
   <li><strong>BLOCKXSIZE</strong>: The number of pixel columns on&nbsp;raster block.
   </li>
+
+
 
 
 
@@ -305,13 +404,19 @@ block.
 
 
 
+
+
   <li>
     <strong>BLOCKBSIZE</strong>: The number of bands&nbsp;on&nbsp;raster block.</li>
 
 
 
 
-  <li><span style="font-weight: bold;">SRID</span>: Assign a specific EPSG projecton/reference system identification to the GeoRaster.</li>
+
+
+  <li><span style="font-weight: bold;">SRID</span>: Assign a specific EPSG projection/reference system identification to the GeoRaster.</li>
+
+
 
 
 
@@ -332,8 +437,12 @@ band sequential, Line or Pixel interleaving.&nbsp;</li>
 
 
 
+
+
   <li><strong>DESCRIPTION</strong>: A simple description of a newly created table in 
 SQL syntax. If the table already exist, this create option will be ignored, e.g.:</li>
+
+
 
 
 
@@ -343,12 +452,18 @@ SQL syntax. If the table already exist, this create option will be ignored, e.g.
 
 
 
+
+
 <span style="font-family: Courier New,Courier,monospace;">% gdal_translate -of georaster landsat_823.tif geor:scott/tiger@orcl,landsat,raster \<br>
 
 
 
 
+
+
 &nbsp; -co DESCRIPTION="(ID NUMBER, NAME VARCHAR2(40), RASTER MDSYS.SDO_GEORASTER)" \<br>
+
+
 
 
 
@@ -362,8 +477,12 @@ SQL syntax. If the table already exist, this create option will be ignored, e.g.
 
 
 
-  <li><strong>INSERT</strong>: A simple SQL insert/values clause to informe the 
+
+
+  <li><strong>INSERT</strong>: A simple SQL insert/values clause to inform the 
 driver what values to fill up when inserting a new row on the table, e.g.:</li>
+
+
 
 
 
@@ -379,12 +498,32 @@ driver what values to fill up when inserting a new row on the table, e.g.:</li>
 
 
 
+
+
 <span style="font-family: Courier New,Courier,monospace;">% gdal_translate -of georaster landsat_825.tif geor:scott/tiger@orcl,landsat,raster \<br>
 
 
 
 
-&nbsp; -co INSERT="ID, RASTER VALUES (2,</span><span style="font-family: Courier New,Courier,monospace;"></span><span style="font-family: Courier New,Courier,monospace;">SDO_GEOR.INIT()</span><span style="font-family: Courier New,Courier,monospace;"></span><span style="font-family: Courier New,Courier,monospace;">)"</span><strong></strong>
+
+
+&nbsp; -co INSERT="ID, RASTER VALUES (2,</span><span style="font-family: Courier New,Courier,monospace;"></span><span style="font-family: Courier New,Courier,monospace;">SDO_GEOR.INIT()</span><span style="font-family: Courier New,Courier,monospace;"></span><span style="font-family: Courier New,Courier,monospace;">)"</span><br>
+
+<ul>
+
+  <li><strong>COMPRESS</strong>: Compression options, JPEG-F, JPEG-B,
+DEFLATE or NONE. The two JPEG options are lossy, meaning that the
+original pixel values are changed. The JPEG-F store a full JPEG
+structure on each block while JPEG-B are smaller since they don't store
+Huffman and Quantization tables.</li>
+
+  <li><span style="font-weight: bold;">QUALITY</span>: Quality compression option for JPEG ranging from 0 to 100. The default is 75.</li>
+
+  <li><span style="font-weight: bold;">NBITS</span>: Sub byte data type, options: 1, 2 or 4.</li>
+
+</ul>
+
+<strong></strong>
 
 
 
@@ -394,6 +533,8 @@ driver what values to fill up when inserting a new row on the table, e.g.:</li>
 
 
 <h3>Importing GeoRaster</h3>
+
+
 
 
 
@@ -419,9 +560,13 @@ created row. The following example does that:</p>
 
 
 
+
+
 <p style="margin-bottom: 0in;"><font face="Courier, monospace">%
 gdal_translate -of georaster landsat_1.tif&nbsp;georaster:scott/tiger,,landsat,scene
 \<br>
+
+
 
 
 
@@ -439,7 +584,11 @@ MDSYS.SDO_GEORASTER)" \<br>
 
 
 
+
+
 &nbsp; -co "INSERT=VALUES(1,'West fields',&nbsp;</font><span style="font-family: Courier New,Courier,monospace;">SDO_GEOR.INIT()</span><font face="Courier, monospace">)"</font></p>
+
+
 
 
 
@@ -457,9 +606,13 @@ requires to inform&nbsp;table name (in bold). And column name
 
 
 
+
+
 <p style="margin-bottom: 0in;"><font face="Courier, monospace">%
 gdal_translate -of georaster landsat_1.tif&nbsp;georaster:scott/tiger,,<span style="font-weight: bold;">landsat</span>,<span style="text-decoration: underline;">scene</span>
 \<br>
+
+
 
 
 
@@ -477,7 +630,11 @@ MDSYS.SDO_GEORASTER)" \<br>
 
 
 
+
+
 &nbsp; -co "INSERT=VALUES(1,'West fields',&nbsp;</font><span style="font-family: Courier New,Courier,monospace;">SDO_GEOR.INIT()</span><font face="Courier, monospace">)"</font></p>
+
+
 
 
 
@@ -500,6 +657,8 @@ value of their choice.</p>
 
 
 
+
+
 <p style="margin-bottom: 0in;"><font face="Courier, monospace">%
 gdal_translate -of georaster landsat_1.tif&nbsp;georaster:scott/tiger,,landsat,scene
 \<br>
@@ -509,7 +668,11 @@ gdal_translate -of georaster landsat_1.tif&nbsp;georaster:scott/tiger,,landsat,s
 
 
 
+
+
 &nbsp; -co "INSERT=VALUES(10,'Main building',&nbsp;</font><span style="font-family: Courier New,Courier,monospace;">SDO_GEOR.INIT("RDT", 10)</span><font face="Courier, monospace">)"</font></p>
+
+
 
 
 
@@ -531,8 +694,12 @@ named RASTER, example:</p>
 
 
 
+
+
 <p style="margin-bottom: 0in;"><font face="Courier, monospace">%
 gdal_translate -of georaster input.tif &ldquo;geor:scott/tiger@dbdemo&rdquo;</font><br>
+
+
 
 
 
@@ -548,7 +715,11 @@ gdal_translate -of georaster input.tif &ldquo;geor:scott/tiger@dbdemo&rdquo;</fo
 
 
 
+
+
 <h3>Exporting GeoRaster</h3>
+
+
 
 
 
@@ -564,7 +735,11 @@ A GeoRaster can be identified by a Where clause or by a pair of RDT &amp; RID:<b
 
 
 
+
+
 <br>
+
+
 
 
 
@@ -580,44 +755,68 @@ A GeoRaster can be identified by a Where clause or by a pair of RDT &amp; RID:<b
 
 
 
+
+
 </span><span style="font-family: Courier New,Courier,monospace;">% gdal_translate -of gtiff geor:scott/tiger@dbdemo,st_rdt_1,130 output.tif<br>
+
+
 
 
 </span>
 <h3>General use of GeoRaster</h3>
 
 
+
+
 GeoRaster can be used in any GDAL command line tool with all the
 available options. Like a image subset extraction of re-project:<br>
 
 
+
+
 <br>
+
+
 
 
 <span style="font-family: Courier New,Courier,monospace;">% gdal_translate -of gtiff geor:scott/tiger@dbdemo,landsat,scene,id=54 output.tif \<br>
 
 
+
+
 &nbsp; -srcwin 0 0 800 600<br>
 
 
-<br>
-
-
-
-
-
-
-
-</span><span style="font-family: Courier New,Courier,monospace;">% gdalwarp -of png geor:scott/tiger@dbdemo,st_rdt_1,130 output.png -t_srs EPGS:9000913<br>
 
 
 <br>
 
 
-</span>Two diferent GeoRaster can be used as input and output on the same operation:<br>
+
+
+
+
+
+
+
+</span><span style="font-family: Courier New,Courier,monospace;">% gdalwarp -of png geor:scott/tiger@dbdemo,st_rdt_1,130 output.png -t_srs EPSG:9000913<br>
+
+
 
 
 <br>
+
+
+
+
+</span>Two different GeoRaster can be used as input and output on the same operation:<br>
+
+
+
+
+<br>
+
+
 
 
 <span style="font-family: Courier New,Courier,monospace;">%
@@ -626,16 +825,29 @@ geor:scott/tiger@dbdemo,landsat,scene,id=54
 geor:scott/tiger@proj1,projview,image -co INSERT="VALUES (102,&nbsp;</span><span style="font-family: Courier New,Courier,monospace;">SDO_GEOR.INIT()</span><span style="font-family: Courier New,Courier,monospace;">)"<br>
 
 
+
+
 <br>
 
 
-</span>Application that use GDAL can theoricamente read and write from
+
+
+</span>
+
+
+
+
+Applications that use GDAL can&nbsp;theoretically read and write from
 GeoRaster just like any other format but most of then are more inclined
 to try to access files on the file system so one alternative is to
 create VRT to represent the GeoRaster description, e.g.:<br>
 
 
+
+
 <br>
+
+
 
 
 <span style="font-family: Courier New,Courier,monospace;">%
@@ -643,16 +855,26 @@ gdal_translate -of VRT
 geor:scott/tiger@dbdemo,landsat,scene,id=54 view_54.vrt<br>
 
 
+
+
 % openenv view_54.vrt<br>
+
+
 
 
 <br>
 
 
+
+
 </span><span style="font-family: Courier New,Courier,monospace;"></span><br>
 
 
+
+
 <h3></h3>
+
+
 
 
 
