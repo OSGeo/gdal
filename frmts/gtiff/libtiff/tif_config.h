@@ -74,4 +74,11 @@
 /* Unsigned 8-bit type */
 #define TIFF_UINT8_T unsigned char
 
+#define TIFF_UINT64_FORMAT "%lud"
+#define TIFF_INT64_FORMAT "%ld"
+
+#define TIFF_SSIZE_FORMAT TIFF_UINT64_FORMAT
+
+
+
 

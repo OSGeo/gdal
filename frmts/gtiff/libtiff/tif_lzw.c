@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.39 2008/09/03 07:16:09 dron Exp $ */
+/* $Id: tif_lzw.c,v 1.39 2008-09-03 07:16:09 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
