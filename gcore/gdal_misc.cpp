@@ -738,6 +738,11 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         poBlock = poBand->GetLockedBlockRef( iXBlock, iYBlock );
         if( poBlock == NULL )
             continue;
+        if( poBlock->GetDataRef() == NULL )
+        {
+            poBlock->DropLock();
+            continue;
+        }
 
         if( (iXBlock + 1) * nBlockXSize > poBand->GetXSize() )
             iXValid = poBand->GetXSize() - iXBlock * nBlockXSize;
