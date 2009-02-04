@@ -357,7 +357,7 @@ CPLErr GDALRasterBlock::Internalize()
     int         nSizeInBytes;
     int         nCurCacheMax = GDALGetCacheMax();
 
-    //FIXME? : risk of overflow in multiplication
+    /* No risk of overflow as it is checked in GDALRasterBand::InitBlockInfo() */
     nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
 
     pNewData = VSIMalloc( nSizeInBytes );
