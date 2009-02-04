@@ -87,6 +87,8 @@ class GTiffDataset : public GDALPamDataset
     friend class GTiffOddBitsBand;
     
     TIFF	*hTIFF;
+    GTiffDataset **ppoActiveDSRef;
+    GTiffDataset *poActiveDS; /* only used in actual base */
 
     toff_t      nDirOffset;
     int		bBase;
@@ -116,7 +118,6 @@ class GTiffDataset : public GDALPamDataset
     double	adfGeoTransform[6];
     int		bGeoTransformValid;
 
-    int		bNewDataset;            /* product of Create() */
     int         bTreatAsRGBA;
     int         bCrystalized;
 
@@ -137,11 +138,11 @@ class GTiffDataset : public GDALPamDataset
 
     int         bGeoTIFFInfoChanged;
     int         bNoDataSet;
-    int         bNoDataChanged;
-    int         bColorTableChanged;
     double      dfNoDataValue;
 
     int	        bMetadataChanged;
+
+    int         bNeedsRewrite;
 
     void        ApplyPamInfo();
     void        PushMetadataToPam();
@@ -167,6 +168,8 @@ class GTiffDataset : public GDALPamDataset
     int          bFillEmptyTiles;
     void         FillEmptyTiles(void);
 
+    void         FlushDirectory();
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -186,7 +189,9 @@ class GTiffDataset : public GDALPamDataset
     virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *, 
                                     GDALProgressFunc, void * );
 
-    CPLErr	   OpenOffset( TIFF *, toff_t nDirOffset, int, GDALAccess, int bAllowRGBAInterface = TRUE);
+    CPLErr	   OpenOffset( TIFF *, GTiffDataset **ppoActiveDSRef, 
+                               toff_t nDirOffset, int, GDALAccess, 
+                               int bAllowRGBAInterface = TRUE);
 
     static GDALDataset *OpenDir( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -812,7 +817,8 @@ double GTiffRasterBand::GetOffset( int *pbSuccess )
 CPLErr GTiffRasterBand::SetOffset( double dfNewValue )
 
 {
-    poGDS->bMetadataChanged = TRUE;
+    if( !bHaveOffsetScale || dfNewValue != dfOffset )
+        poGDS->bMetadataChanged = TRUE;
 
     bHaveOffsetScale = TRUE;
     dfOffset = dfNewValue;
@@ -838,7 +844,8 @@ double GTiffRasterBand::GetScale( int *pbSuccess )
 CPLErr GTiffRasterBand::SetScale( double dfNewValue )
 
 {
-    poGDS->bMetadataChanged = TRUE;
+    if( !bHaveOffsetScale || dfNewValue != dfScale )
+        poGDS->bMetadataChanged = TRUE;
 
     bHaveOffsetScale = TRUE;
     dfScale = dfNewValue;
@@ -863,7 +870,10 @@ CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
 
 {
     if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
-        poGDS->bMetadataChanged = TRUE;
+    {
+        if( papszMD != NULL )
+            poGDS->bMetadataChanged = TRUE;
+    }
 
     return oGTiffMDMD.SetMetadata( papszMD, pszDomain );
 }
@@ -984,7 +994,12 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
         return CE_Failure;
     }
 
-    poGDS->SetDirectory();
+/* -------------------------------------------------------------------- */
+/*      We are careful about calling SetDirectory() to avoid            */
+/*      prematurely crystalizing the directory.  (#2820)                */
+/* -------------------------------------------------------------------- */
+    if( poGDS->bCrystalized )
+        poGDS->SetDirectory();
 
 /* -------------------------------------------------------------------- */
 /*      Is this really a request to clear the color table?              */
@@ -1007,7 +1022,6 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
             poGDS->poColorTable = NULL;
         }
 
-        poGDS->bColorTableChanged = TRUE;
         return CE_None;
     }
 
@@ -1055,9 +1069,10 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 
     if( poGDS->poColorTable )
         delete poGDS->poColorTable;
+    else
+        poGDS->bNeedsRewrite = TRUE; // more space required!
 
     poGDS->poColorTable = poCT->Clone();
-    poGDS->bColorTableChanged = TRUE;
 
     return CE_None;
 }
@@ -1087,9 +1102,14 @@ double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 
 {
+    poGDS->SetDirectory();  // needed to call TIFFSetField().
+
     poGDS->bNoDataSet = TRUE;
-    poGDS->bNoDataChanged = TRUE;
     poGDS->dfNoDataValue = dfNoData;
+
+    poGDS->WriteNoDataValue( poGDS->hTIFF, dfNoData );
+
+    poGDS->bNeedsRewrite = TRUE;
 
     return CE_None;
 }
@@ -2090,14 +2110,12 @@ GTiffDataset::GTiffDataset()
     bLoadedBlockDirty = FALSE;
     pabyBlockBuf = NULL;
     hTIFF = NULL;
-    bNewDataset = FALSE;
+    bNeedsRewrite = FALSE;
     bMetadataChanged = FALSE;
     bGeoTIFFInfoChanged = FALSE;
     bCrystalized = TRUE;
     poColorTable = NULL;
-    bColorTableChanged = FALSE;
     bNoDataSet = FALSE;
-    bNoDataChanged = FALSE;
     dfNoDataValue = -9999.0;
     pszProjection = CPLStrdup("");
     bBase = TRUE;
@@ -2106,6 +2124,8 @@ GTiffDataset::GTiffDataset()
     nOverviewCount = 0;
     papoOverviewDS = NULL;
     nDirOffset = 0;
+    poActiveDS = NULL;
+    ppoActiveDSRef = NULL;
 
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -2140,14 +2160,30 @@ GTiffDataset::~GTiffDataset()
 {
     Crystalize();
 
-    FlushCache();
+/* -------------------------------------------------------------------- */
+/*      Ensure any blocks write cached by GDAL gets pushed through libtiff.*/
+/* -------------------------------------------------------------------- */
+    GDALPamDataset::FlushCache();
 
+/* -------------------------------------------------------------------- */
+/*      Fill in missing blocks with empty data.                         */
+/* -------------------------------------------------------------------- */
     if( bFillEmptyTiles )
     {
         FillEmptyTiles();
         bFillEmptyTiles = FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Force a complete flush, including either rewriting(moving)      */
+/*      of writing in place the current directory.                      */
+/* -------------------------------------------------------------------- */
+    FlushCache();
+
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup overviews.                                              */
+/* -------------------------------------------------------------------- */
     if( bBase )
     {
         for( int i = 0; i < nOverviewCount; i++ )
@@ -2165,31 +2201,6 @@ GTiffDataset::~GTiffDataset()
     /* we are not the base image */
     if (poMaskDS)
         delete poMaskDS;
-
-    SetDirectory();
-
-    if( GetAccess() == GA_Update && bBase )
-    {
-        if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
-                           papszCreationOptions );
-        
-        if( bNewDataset || bGeoTIFFInfoChanged )
-            WriteGeoTIFFInfo();
-
-	if( bNoDataChanged )
-            WriteNoDataValue( hTIFF, dfNoDataValue );
-        
-        if( bNewDataset || bMetadataChanged || bGeoTIFFInfoChanged 
-            || bNoDataChanged || bColorTableChanged )
-        {
-#if defined(TIFFLIB_VERSION)
-#if  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
-            TIFFRewriteDirectory( hTIFF );
-#endif
-#endif
-        }
-    }
 
     if( poColorTable != NULL )
         delete poColorTable;
@@ -2210,6 +2221,9 @@ GTiffDataset::~GTiffDataset()
     CSLDestroy( papszCreationOptions );
 
     CPLFree(pabyTempWriteBuffer);
+
+    if( *ppoActiveDSRef == this )
+        *ppoActiveDSRef = NULL;
 }
 
 /************************************************************************/
@@ -2531,9 +2545,13 @@ void GTiffDataset::Crystalize()
 {
     if( !bCrystalized )
     {
-        if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
-                           papszCreationOptions );
+        WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
+                       papszCreationOptions );
+        WriteGeoTIFFInfo();
+
+        bMetadataChanged = FALSE;
+        bGeoTIFFInfoChanged = FALSE;
+        bNeedsRewrite = FALSE;
 
         bCrystalized = TRUE;
 
@@ -2548,6 +2566,7 @@ void GTiffDataset::Crystalize()
 
         TIFFWriteDirectory( hTIFF );
         TIFFSetDirectory( hTIFF, 0 );
+
 
         // Now, reset zip and tiff quality and jpegcolormode. 
         if(jquality > 0) 
@@ -2609,6 +2628,48 @@ void GTiffDataset::FlushCache()
     nLoadedBlock = -1;
     bLoadedBlockDirty = FALSE;
 
+    FlushDirectory();
+}
+
+/************************************************************************/
+/*                           FlushDirectory()                           */
+/************************************************************************/
+
+void GTiffDataset::FlushDirectory()
+
+{
+    if( GetAccess() == GA_Update )
+    {
+        if( bMetadataChanged )
+        {
+            bNeedsRewrite = 
+                WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
+                               papszCreationOptions );
+            bMetadataChanged = FALSE;
+        }
+        
+        if( bGeoTIFFInfoChanged )
+            WriteGeoTIFFInfo();
+
+        if( bNeedsRewrite )
+        {
+#if defined(TIFFLIB_VERSION)
+#if  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
+            TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
+
+            nDirOffset = pfnSizeProc( TIFFClientdata( hTIFF ) );
+            if( (nDirOffset % 2) == 1 )
+                nDirOffset++;
+
+            TIFFRewriteDirectory( hTIFF );
+
+            TIFFSetSubDirectory( hTIFF, nDirOffset );
+#endif
+#endif
+            bNeedsRewrite = FALSE;
+        }
+    }
+
     TIFFFlush( hTIFF );
 }
 
@@ -2661,14 +2722,12 @@ CPLErr GTiffDataset::IBuildOverviews(
 
     SetDirectory();
 
-    TIFFFlush( hTIFF );
-
 /* -------------------------------------------------------------------- */
 /*      If we don't have read access, then create the overviews externally.*/
 /* -------------------------------------------------------------------- */
     if( GetAccess() != GA_Update )
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
+        CPLDebug( "GTiff",
                   "File open for read-only accessing, "
                   "creating overviews externally." );
 
@@ -2829,7 +2888,7 @@ CPLErr GTiffDataset::IBuildOverviews(
             }
 
             poODS = new GTiffDataset();
-            if( poODS->OpenOffset( hTIFF, nOverviewOffset, FALSE, 
+            if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nOverviewOffset, FALSE, 
                                    GA_Update ) != CE_None )
             {
                 delete poODS;
@@ -2882,7 +2941,8 @@ CPLErr GTiffDataset::IBuildOverviews(
                 }
 
                 poODS = new GTiffDataset();
-                if( poODS->OpenOffset( hTIFF, nOverviewOffset, FALSE, 
+                if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, 
+                                       nOverviewOffset, FALSE, 
                                        GA_Update ) != CE_None )
                 {
                     delete poODS;
@@ -3094,6 +3154,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
         || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 )
     {
+        bNeedsRewrite = TRUE;
+
 /* -------------------------------------------------------------------- */
 /*      Clear old tags to ensure we don't end up with conflicting       */
 /*      information. (#2625)                                            */
@@ -3158,6 +3220,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
     {
 	double	*padfTiePoints;
 	int		iGCP;
+        bNeedsRewrite = TRUE;
 	
 	padfTiePoints = (double *) 
 	    CPLMalloc( 6 * sizeof(double) * GetGCPCount() );
@@ -3186,6 +3249,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
         && !EQUAL(osProfile,"BASELINE") )
     {
         GTIF	*psGTIF;
+
+        bNeedsRewrite = TRUE;
 
         // If we have existing geokeys, try to wipe them
         // by writing a dummy goekey directory. (#2546)
@@ -3760,15 +3825,20 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
     if( nNewOffset == 0 )
         nNewOffset = nDirOffset;
 
-    if( nNewOffset == 0)
-        return TRUE;
-
     if( TIFFCurrentDirOffset(hTIFF) == nNewOffset )
         return TRUE;
 
     if( GetAccess() == GA_Update )
-        TIFFFlush( hTIFF );
+    {
+        if( *ppoActiveDSRef != NULL )
+            (*ppoActiveDSRef)->FlushDirectory();
+    }
     
+    if( nNewOffset == 0)
+        return TRUE;
+
+    (*ppoActiveDSRef) = this;
+
     int nSetDirResult = TIFFSetSubDirectory( hTIFF, nNewOffset );
 
 /* -------------------------------------------------------------------- */
@@ -3901,9 +3971,12 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new GTiffDataset();
     poDS->SetDescription( pszFilename );
     poDS->osFilename = pszFilename;
+    poDS->poActiveDS = poDS;
 
-    if( poDS->OpenOffset( hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE,
-                          poOpenInfo->eAccess, bAllowRGBAInterface ) != CE_None )
+    if( poDS->OpenOffset( hTIFF, &(poDS->poActiveDS),
+                          TIFFCurrentDirOffset(hTIFF), TRUE,
+                          poOpenInfo->eAccess, 
+                          bAllowRGBAInterface ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -4073,6 +4146,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     poDS = new GTiffDataset();
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->osFilename = poOpenInfo->pszFilename;
+    poDS->poActiveDS = poDS;
 
     if( !EQUAL(pszFilename,poOpenInfo->pszFilename) 
         && !EQUALN(poOpenInfo->pszFilename,"GTIFF_RAW:",10) )
@@ -4088,7 +4162,8 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
                   "Opening a specific TIFF directory is not supported in update mode. Switching to read-only" );
     }
 
-    if( poDS->OpenOffset( hTIFF, nOffset, FALSE, GA_ReadOnly, bAllowRGBAInterface ) != CE_None )
+    if( poDS->OpenOffset( hTIFF, &(poDS->poActiveDS),
+                          nOffset, FALSE, GA_ReadOnly, bAllowRGBAInterface ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -4108,7 +4183,9 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 /*      full res, and overview pages.                                   */
 /************************************************************************/
 
-CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn, 
+CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, 
+                                 GTiffDataset **ppoActiveDSRef,
+                                 toff_t nDirOffsetIn, 
 				 int bBaseIn, GDALAccess eAccess,
                                  int bAllowRGBAInterface)
 
@@ -4118,7 +4195,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     int         bTreatAsOdd = FALSE;
     int         bTreatAsSplit = FALSE;
 
+    this->eAccess = eAccess;
+
     hTIFF = hTIFFIn;
+    this->ppoActiveDSRef = ppoActiveDSRef;
 
     nDirOffset = nDirOffsetIn;
 
@@ -4362,8 +4442,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         }
     }
     
-    bColorTableChanged = FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -4788,8 +4866,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         dfNoDataValue = atof( pszText );
     }
 
-    bNoDataChanged = FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      If this is a "base" raster, we should scan for any              */
 /*      associated overviews, internal mask bands and subdatasets.      */
@@ -4818,7 +4894,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                 GTiffDataset	*poODS;
                 
                 poODS = new GTiffDataset();
-                if( poODS->OpenOffset( hTIFF, nThisDir, FALSE, 
+                if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, FALSE, 
                                        eAccess ) != CE_None 
                     || poODS->GetRasterCount() != GetRasterCount() )
                 {
@@ -4853,8 +4929,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                    the main image, what we don't support here
                 */
 
-                if( poMaskDS->OpenOffset( hTIFF, nThisDir, FALSE, 
-                                          eAccess ) != CE_None 
+                if( poMaskDS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, 
+                                          FALSE, eAccess ) != CE_None 
                     || poMaskDS->GetRasterCount() == 0
                     || !(poMaskDS->GetRasterCount() == 1 || poMaskDS->GetRasterCount() == GetRasterCount())
                     || poMaskDS->GetRasterXSize() != GetRasterXSize()
@@ -4876,7 +4952,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
             else if (nSubType & (FILETYPE_REDUCEDIMAGE | FILETYPE_MASK))
             {
                 GTiffDataset* poDS = new GTiffDataset();
-                if( poDS->OpenOffset( hTIFF, nThisDir, FALSE, 
+                if( poDS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, FALSE, 
                                       eAccess ) != CE_None
                     || poDS->GetRasterCount() == 0
                     || poDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
@@ -5563,11 +5639,12 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     poDS = new GTiffDataset();
     poDS->hTIFF = hTIFF;
+    poDS->poActiveDS = poDS;
+    poDS->ppoActiveDSRef = &(poDS->poActiveDS);
 
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
-    poDS->bNewDataset = TRUE;
     poDS->bCrystalized = FALSE;
     poDS->nSamplesPerPixel = (uint16) nBands;
     poDS->osFilename = pszFilename;
@@ -6504,7 +6581,8 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
             return CE_Failure;
 
         poMaskDS = new GTiffDataset();
-        if( poMaskDS->OpenOffset( hTIFF, nOffset, FALSE, GA_Update ) != CE_None)
+        if( poMaskDS->OpenOffset( hTIFF, ppoActiveDSRef, nOffset, 
+                                  FALSE, GA_Update ) != CE_None)
         {
             delete poMaskDS;
             poMaskDS = NULL;
