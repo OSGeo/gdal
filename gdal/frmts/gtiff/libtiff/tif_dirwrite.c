@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.69 2008/09/01 23:18:20 fwarmerdam Exp $ */
+/* $Id: tif_dirwrite.c,v 1.71 2009-01-23 06:21:29 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -828,6 +828,8 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 			o++;
 		}
 		nTmp = (uint32)tif->tif_nextdiroff;
+		if (tif->tif_flags&TIFF_SWAB)
+			TIFFSwabLong(&nTmp);
 		_TIFFmemcpy(n,&nTmp,4);
 	}
 	else
@@ -859,6 +861,8 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 			o++;
 		}
 		_TIFFmemcpy(n,&tif->tif_nextdiroff,8);
+		if (tif->tif_flags&TIFF_SWAB)
+			TIFFSwabLong8((uint64*)n);
 	}
 	_TIFFfree(dir);
 	dir=NULL;
@@ -1740,9 +1744,10 @@ TIFFWriteDirectoryTagSubifd(TIFF* tif, uint32* ndir, TIFFDirEntry* dir)
 		}
 		pa=tif->tif_dir.td_subifd;
 		pb=o;
-		for (p=0; p<tif->tif_dir.td_nsubifd; p++)
+		for (p=0; p < tif->tif_dir.td_nsubifd; p++)
 		{
-			assert(*pa<=0xFFFFFFFFUL);
+                        assert(pa != 0);
+			assert(*pa <= 0xFFFFFFFFUL);
 			*pb++=(uint32)(*pa++);
 		}
 		n=TIFFWriteDirectoryTagCheckedIfdArray(tif,ndir,dir,TIFFTAG_SUBIFD,tif->tif_dir.td_nsubifd,o);

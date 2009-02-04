@@ -7,12 +7,3 @@
  * string returned by TIFFGetVersion.
  */
 #define TIFFLIB_VERSION 20081217
-
-/*
- * This define contains the library version number encode as 
- * two digits each for major, minor and point.  So, for instance,
- * 3.9.8 would be 030908.  This define was only introduced in libtiff4. 
- */
-#define TIFFLIB_RELEASE 040000
-
-
