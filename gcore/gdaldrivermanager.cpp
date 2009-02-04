@@ -108,7 +108,7 @@ GDALDriverManager::GDALDriverManager()
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
     {
-        CPLPushFinderLocation( CPLGetConfigOption( "GDAL_DATA", NULL ) );
+        // this one is picked up automatically by finder initialization.
     }
     else if( pszUpdatableINST_DATA[19] != ' ' )
     {
