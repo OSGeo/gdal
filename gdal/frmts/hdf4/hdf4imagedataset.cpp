@@ -723,7 +723,7 @@ HDF4ImageDataset::~HDF4ImageDataset()
 
         CPLFree( pasGCPList );
     }
-    if ( hHDF4 )
+    if ( hHDF4 > 0 )
     {
         switch ( iDatasetType )
         {
@@ -2306,10 +2306,32 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     papszSubdatasetName = CSLTokenizeString2( poOpenInfo->pszFilename,
                                               ":", CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
     if ( CSLCount( papszSubdatasetName ) != 4
-         && CSLCount( papszSubdatasetName ) != 5 )
+         && CSLCount( papszSubdatasetName ) != 5
+         && CSLCount( papszSubdatasetName ) != 6 )
     {
         CSLDestroy( papszSubdatasetName );
+        delete poDS;
         return NULL;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*    Check for drive name in windows HDF4:"D:\...                      */
+    /* -------------------------------------------------------------------- */
+    if (strlen(papszSubdatasetName[2]) == 1)
+    {
+        char* pszFilename = (char*) CPLMalloc( 2 + strlen(papszSubdatasetName[3]) + 1);
+        sprintf(pszFilename, "%s:%s", papszSubdatasetName[2], papszSubdatasetName[3]);
+        CPLFree(papszSubdatasetName[2]);
+        CPLFree(papszSubdatasetName[3]);
+        papszSubdatasetName[2] = pszFilename;
+
+        /* Move following arguments one rank upper */
+        papszSubdatasetName[3] = papszSubdatasetName[4];
+        if (papszSubdatasetName[4] != NULL)
+        {
+            papszSubdatasetName[4] = papszSubdatasetName[5];
+            papszSubdatasetName[5] = NULL;
+        }
     }
 
     poDS->pszFilename = CPLStrdup( papszSubdatasetName[2] );
@@ -2342,7 +2364,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( !Hishdf( poDS->pszFilename ) )
     {
         CSLDestroy( papszSubdatasetName );
-        CPLFree( poDS->pszFilename );
+        delete poDS;
         return NULL;
     }
 
@@ -2372,6 +2394,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poDS->iDatasetType == HDF4_EOS )
     {
         poDS->pszSubdatasetName = CPLStrdup( papszSubdatasetName[3] );
+        if (papszSubdatasetName[4] == NULL)
+        {
+            delete poDS;
+            return NULL;
+        }
         poDS->pszFieldName = CPLStrdup( papszSubdatasetName[4] );
     }
     else
@@ -2405,9 +2432,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     CPLDebug( "HDF4Image", "Can't open HDF4 file %s",
                               poDS->pszFilename );
-                    CPLFree( poDS->pszFilename );
-                    CPLFree( poDS->pszSubdatasetName );
-                    CPLFree( poDS->pszFieldName );
+                    delete poDS;
                     return( NULL );
                 }
 
@@ -2416,9 +2441,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     CPLDebug( "HDF4Image", "Can't attach to subdataset %s",
                               poDS->pszSubdatasetName );
-                    CPLFree( poDS->pszFilename );
-                    CPLFree( poDS->pszSubdatasetName );
-                    CPLFree( poDS->pszFieldName );
+                    delete poDS;
                     return( NULL );
                 }
 
@@ -2513,7 +2536,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->hHDF4 = GDopen( poDS->pszFilename, DFACC_WRITE );
                     
                 if( poDS->hHDF4 <= 0 )
+                {
+                    delete poDS;
                     return( NULL );
+                }
 
                 hGD = GDattach( poDS->hHDF4, poDS->pszSubdatasetName );
 
@@ -2649,14 +2675,23 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_WRITE, 0 );
             
           if( poDS->hHDF4 <= 0 )
+          {
+              delete poDS;
               return( NULL );
+          }
 
           poDS->hSD = SDstart( poDS->pszFilename, DFACC_READ );
           if ( poDS->hSD == -1 )
+          {
+              delete poDS;
               return NULL;
+          }
                 
           if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
+          {
+              delete poDS;
               return NULL;
+          }
 
           memset( poDS->aiDimSizes, 0, sizeof(int32) * H4_MAX_VAR_DIMS );
           iSDS = SDselect( poDS->hSD, poDS->iDataset );
@@ -2763,18 +2798,27 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_WRITE, 0 );
             
         if( poDS->hHDF4 <= 0 )
+        {
+            delete poDS;
             return( NULL );
+        }
 
         poDS->hGR = GRstart( poDS->hHDF4 );
         if ( poDS->hGR == -1 )
+        {
+            delete poDS;
             return NULL;
+        }
                 
         poDS->iGR = GRselect( poDS->hGR, poDS->iDataset );
         if ( GRgetiminfo( poDS->iGR, poDS->szName,
                           &poDS->iRank, &poDS->iNumType,
                           &poDS->iInterlaceMode, poDS->aiDimSizes,
                           &poDS->nAttrs ) != 0 )
+        {
+            delete poDS;
             return NULL;
+        }
 
         // We will duplicate global metadata for every subdataset
         poDS->papszLocalMetadata = CSLDuplicate( poDS->papszGlobalMetadata );
@@ -2817,6 +2861,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nBandCount = poDS->iRank;
         break;
       default:
+        delete poDS;
         return NULL;
     }
     
