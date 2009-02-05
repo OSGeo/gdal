@@ -43,8 +43,8 @@ void	GDALRegister_GIF(void);
 GifFileType * EGifOpen(void* userData, OutputFunc writeFunc);
 CPL_C_END
 
-static int InterlacedOffset[] = { 0, 4, 2, 1 }; 
-static int InterlacedJumps[] = { 8, 8, 4, 2 };  
+static const int InterlacedOffset[] = { 0, 4, 2, 1 }; 
+static const int InterlacedJumps[] = { 8, 8, 4, 2 };  
 
 static int VSIGIFReadFunc( GifFileType *, GifByteType *, int);
 static int VSIGIFWriteFunc( GifFileType *, const GifByteType *, int );
