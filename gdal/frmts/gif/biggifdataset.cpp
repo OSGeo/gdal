@@ -389,7 +389,9 @@ CPLErr BIGGIFDataset::ReOpen()
         
         if( poGTiffDriver != NULL )
         {
-            char *apszOptions[] = { "COMPRESS=LZW", NULL };
+            /* Create as a sparse file to avoid filling up the whole file */
+            /* while closing and then destroying this temporary dataset */
+            char *apszOptions[] = { "COMPRESS=LZW", "SPARSE_OK=YES", NULL };
             CPLString osTempFilename = CPLGenerateTempFilename("biggif");
 
             osTempFilename += ".tif";
