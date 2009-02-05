@@ -918,12 +918,17 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 GDinqfields( hGD, pszFieldList, paiRank, paiNumType );
 
 #if DEBUG
-                CPLDebug( "HDF4", "Number of fields in grid %d: %d",
-                          (int) i, (int) nFields );
-                CPLDebug( "HDF4", "List of fields in grid %d: %s",
-                          (int) i, pszFieldList );
-                CPLDebug( "HDF4", "Fields ranks: %s",
-                          SPrintArray( GDT_UInt32, paiRank, nFields, "," ) );
+                {
+                    char* pszTmp =
+                            SPrintArray( GDT_UInt32, paiRank, nFields, "," );
+                    CPLDebug( "HDF4", "Number of fields in grid %d: %d",
+                            (int) i, (int) nFields );
+                    CPLDebug( "HDF4", "List of fields in grid %d: %s",
+                            (int) i, pszFieldList );
+                    CPLDebug( "HDF4", "Fields ranks: %s",
+                            pszTmp );
+                    CPLFree( pszTmp );
+                }
 #endif
 
                 papszFields = CSLTokenizeString2( pszFieldList, ",",
