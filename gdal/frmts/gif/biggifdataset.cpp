@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gifdataset.cpp 15186 2008-08-22 21:58:17Z warmerdam $
+ * $Id$
  *
  * Project:  BIGGIF Driver
  * Purpose:  Implement GDAL support for reading large GIF files in a 
@@ -32,7 +32,7 @@
 #include "gdal_pam.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: gifdataset.cpp 15186 2008-08-22 21:58:17Z warmerdam $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 #include "gif_lib.h"
@@ -389,7 +389,9 @@ CPLErr BIGGIFDataset::ReOpen()
         
         if( poGTiffDriver != NULL )
         {
-            char *apszOptions[] = { "COMPRESS=LZW", NULL };
+            /* Create as a sparse file to avoid filling up the whole file */
+            /* while closing and then destroying this temporary dataset */
+            char *apszOptions[] = { "COMPRESS=LZW", "SPARSE_OK=YES", NULL };
             CPLString osTempFilename = CPLGenerateTempFilename("biggif");
 
             osTempFilename += ".tif";
