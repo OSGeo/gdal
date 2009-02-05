@@ -700,7 +700,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /* Partial cell indicator: 0 for complete coverage; 1-99 for incomplete */
 /* -------------------------------------------------------------------- */
-    char pszPartialCell[2];
+    char szPartialCell[3];
 
     if ( dfNodataCount == 0 )
         iPartialCell = 0;
@@ -711,8 +711,8 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (iPartialCell < 1)
            iPartialCell=1;
     }
-    sprintf(pszPartialCell,"%02d",iPartialCell);
-    strncpy((char *) (psDTED->pachDSIRecord+289), pszPartialCell, 2 );
+    sprintf(szPartialCell,"%02d",iPartialCell);
+    strncpy((char *) (psDTED->pachDSIRecord+289), szPartialCell, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Try to copy any matching available metadata.                    */
