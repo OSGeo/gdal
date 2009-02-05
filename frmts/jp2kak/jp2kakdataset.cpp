@@ -2154,6 +2154,13 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     bool   bReversible = false;
     int    bFlushEnabled = CSLFetchBoolean( papszOptions, "FLUSH", TRUE );
 
+    if( poSrcDS->GetRasterCount() == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Creating zero band files not supported by JP2KAK driver." );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize Kakadu warning/error reporting subsystem.            */
 /* -------------------------------------------------------------------- */
