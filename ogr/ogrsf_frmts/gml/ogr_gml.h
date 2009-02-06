@@ -47,6 +47,8 @@ class OGRGMLLayer : public OGRLayer
 
     int                 iNextGMLId;
     int                 nTotalGMLCount;
+    int                 bInvalidFIDFound;
+    char                *pszFIDPrefix;
 
     int                 bWriter;
 
