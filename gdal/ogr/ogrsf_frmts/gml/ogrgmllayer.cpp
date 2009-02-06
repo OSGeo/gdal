@@ -51,7 +51,9 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
     
     iNextGMLId = 0;
     nTotalGMLCount = -1;
-    
+    bInvalidFIDFound = FALSE;
+    pszFIDPrefix = NULL;
+        
     poDS = poDSIn;
 
     if ( EQUALN(pszName, "ogr:", 4) )
@@ -145,7 +147,64 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         if( poGMLFeature->GetClass() != poFClass )
             continue;
 
-        iNextGMLId++;
+/* -------------------------------------------------------------------- */
+/*      Extract the fid:                                                */
+/*      -Assumes the fids are non-negative integers with an optional    */
+/*       prefix                                                         */
+/*      -If a prefix differs from the prefix of the first feature from  */
+/*       the poDS then the fids from the poDS are ignored and are       */
+/*       assigned serially thereafter                                   */
+/* -------------------------------------------------------------------- */
+        int nFID;
+        if( bInvalidFIDFound )
+        {
+            nFID = iNextGMLId++;
+        }
+        else if( poGMLFeature->GetFID() == NULL )
+        {
+            bInvalidFIDFound = TRUE;
+            nFID = iNextGMLId++;
+        }
+        else if( iNextGMLId == 0 )
+        {
+            int i = strlen( poGMLFeature->GetFID() )-1;
+            while( i >= 0 && *(poGMLFeature->GetFID()+i) >= '0'
+                          && *(poGMLFeature->GetFID()+i) <= '9')
+                i--;
+            /* i points the last character of the fid */
+            if( i >= 0 )
+            {
+                pszFIDPrefix = (char *) CPLMalloc(i+2);
+                pszFIDPrefix[i+1] = '\0';
+                strncpy(pszFIDPrefix, poGMLFeature->GetFID(), i+1);
+            }
+            /* pszFIDPrefix now contains the prefix or NULL if no prefix is found */
+            if (sscanf(poGMLFeature->GetFID()+i+1, "%d", &nFID)==1)
+            {
+                if( iNextGMLId <= nFID )
+                    iNextGMLId = nFID + 1;
+            }
+            else
+            {
+                bInvalidFIDFound = TRUE;
+                nFID = iNextGMLId++;
+            }
+        }
+        else if( iNextGMLId != 0 )
+        {
+            const char * pszGML_FID = poGMLFeature->GetFID();
+            if( (pszFIDPrefix == NULL || strstr( pszGML_FID, pszFIDPrefix) == pszGML_FID) &&
+                sscanf(poGMLFeature->GetFID()+(pszFIDPrefix==NULL?0:strlen(pszFIDPrefix)), "%d", &nFID) == 1 )
+            { /* fid with the prefix. Using its numerical part */
+                if( iNextGMLId < nFID )
+                    iNextGMLId = nFID + 1;
+            }
+            else
+            { /* fid without the aforementioned prefix or a valid numerical part */
+                bInvalidFIDFound = TRUE;
+                nFID = iNextGMLId++;
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Does it satisfy the spatial query, if there is one?             */
@@ -172,7 +231,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         int iField;
         OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
 
-        poOGRFeature->SetFID( iNextGMLId );
+        poOGRFeature->SetFID( nFID );
 
         for( iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
         {
