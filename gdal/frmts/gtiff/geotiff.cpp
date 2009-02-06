@@ -1102,6 +1102,9 @@ double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 
 {
+    if( poGDS->bNoDataSet && poGDS->dfNoDataValue == dfNoData )
+        return CE_None;
+
     poGDS->SetDirectory();  // needed to call TIFFSetField().
 
     poGDS->bNoDataSet = TRUE;
@@ -2642,6 +2645,7 @@ void GTiffDataset::FlushDirectory()
     {
         if( bMetadataChanged )
         {
+            SetDirectory();
             bNeedsRewrite = 
                 WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
                                papszCreationOptions );
@@ -2649,12 +2653,17 @@ void GTiffDataset::FlushDirectory()
         }
         
         if( bGeoTIFFInfoChanged )
+        {
+            SetDirectory();
             WriteGeoTIFFInfo();
+        }
 
         if( bNeedsRewrite )
         {
 #if defined(TIFFLIB_VERSION)
 #if  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
+            SetDirectory();
+
             TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
 
             nDirOffset = pfnSizeProc( TIFFClientdata( hTIFF ) );
@@ -2670,7 +2679,11 @@ void GTiffDataset::FlushDirectory()
         }
     }
 
-    TIFFFlush( hTIFF );
+    // there are some circumstances in which we can reach this point
+    // without having made this our directory (SetDirectory()) in which
+    // case we should not risk a flush. 
+    if( TIFFCurrentDirOffset(hTIFF) == nDirOffset )
+        TIFFFlush( hTIFF );
 }
 
 /************************************************************************/
