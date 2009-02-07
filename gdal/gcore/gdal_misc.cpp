@@ -1563,7 +1563,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 /*      deallocating the returned memory in this case since in the      */
 /*      future we may resolve the leak issue internally.                */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszRequest,"LICENSE") )
+    if( pszRequest != NULL && EQUAL(pszRequest,"LICENSE") )
     {
         const char *pszFilename = CPLFindFile( "etc", "LICENSE.TXT" );
         FILE *fp = NULL;
