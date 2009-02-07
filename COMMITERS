@@ -85,7 +85,8 @@ kosta         Dr. Konstantin Baumann       MySQL, SQLite
 rayg          Ray Gardener                 DEM drivers, leveller, terragen
               rayg@daylongraphics.com
 
-rouault       Even Rouault                 NITF/RPFTOC, BNA, GPX, ADRG
+rouault       Even Rouault                 NITF/RPFTOC, BNA, GPX, ADRG,
+                                           XPlane, GeoRSS, PostgreSQL
               even.rouault at mines-paris.org
 
 retsios       Bas Retsios                  ILWIS, GRIB
