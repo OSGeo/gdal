@@ -2733,8 +2733,6 @@ CPLErr GTiffDataset::IBuildOverviews(
         return CE_Failure;
     }
 
-    SetDirectory();
-
 /* -------------------------------------------------------------------- */
 /*      If we don't have read access, then create the overviews externally.*/
 /* -------------------------------------------------------------------- */
@@ -2771,6 +2769,9 @@ CPLErr GTiffDataset::IBuildOverviews(
                   "Operation failed.\n" );
         return CE_Failure;
     }
+
+    SetDirectory();
+    FlushDirectory();
 
 /* -------------------------------------------------------------------- */
 /*      If we are averaging bit data to grayscale we need to create     */
