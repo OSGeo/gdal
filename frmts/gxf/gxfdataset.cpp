@@ -307,7 +307,16 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     GXFGetRawInfo( hGXF, &(poDS->nRasterXSize), &(poDS->nRasterYSize), NULL,
                    NULL, NULL, &(poDS->dfNoDataValue) );
-    
+
+    if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid dimensions : %d x %d", 
+                  poDS->nRasterXSize, poDS->nRasterYSize); 
+        delete poDS;
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
