@@ -384,6 +384,49 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    /* The following code enables us to detect GIF datasets eligible */
+    /* for BIGGIF driver even with an unpatched giflib  */
+
+    /* -------------------------------------------------------------------- */
+    /*      Find the first image record.                                    */
+    /* -------------------------------------------------------------------- */
+    GifRecordType RecordType = TERMINATE_RECORD_TYPE;
+
+    while( DGifGetRecordType(hGifFile, &RecordType) != GIF_ERROR
+        && RecordType != TERMINATE_RECORD_TYPE
+        && RecordType != IMAGE_DESC_RECORD_TYPE ) {}
+
+    if( RecordType == IMAGE_DESC_RECORD_TYPE  &&
+        DGifGetImageDesc(hGifFile) != GIF_ERROR)
+    {
+        int width = hGifFile->SavedImages[0].ImageDesc.Width;
+        int height = hGifFile->SavedImages[0].ImageDesc.Height;
+        if ((double) width * (double) height > 100000000.0 )
+        {
+            CPLDebug( "GIF",
+                      "Due to limitations of the GDAL GIF driver we deliberately avoid\n"
+                      "opening large GIF files (larger than 100 megapixels).");
+            DGifCloseFile( hGifFile );
+            VSIFCloseL( fp );
+            return NULL;
+        }
+    }
+
+    DGifCloseFile( hGifFile );
+
+    VSIFSeekL( fp, 0, SEEK_SET);
+    hGifFile = DGifOpen( fp, VSIGIFReadFunc );
+    if( hGifFile == NULL )
+    {
+        VSIFCloseL( fp );
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "DGifOpen() failed for %s.\n"
+                  "Perhaps the gif file is corrupt?\n",
+                  poOpenInfo->pszFilename );
+
+        return NULL;
+    }
+
     nGifErr = DGifSlurp( hGifFile );
 
     if( nGifErr != GIF_OK )
@@ -393,18 +436,18 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( nGifErr == D_GIF_ERR_DATA_TOO_BIG )
         {
-            CPLDebug( "GIF",
-                      "DGifSlurp() failed for %s because it was too large.\n"
-                      "Due to limitations of the GDAL GIF driver we deliberately avoid\n"
-                      "opening large GIF files (larger than 100 megapixels).",
-                      poOpenInfo->pszFilename );
+             CPLDebug( "GIF",
+                       "DGifSlurp() failed for %s because it was too large.\n"
+                       "Due to limitations of the GDAL GIF driver we deliberately avoid\n"
+                       "opening large GIF files (larger than 100 megapixels).",
+                       poOpenInfo->pszFilename );
             return NULL;
-        }
-        else
+         }
+         else
             CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "DGifSlurp() failed for %s.\n"
-                      "Perhaps the gif file is corrupt?\n",
-                      poOpenInfo->pszFilename );
+                        "DGifSlurp() failed for %s.\n"
+                        "Perhaps the gif file is corrupt?\n",
+                        poOpenInfo->pszFilename );
 
         return NULL;
     }
@@ -483,8 +526,7 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Check for interlaced option.                                    */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszOptions, "INTERLACING" ) != NULL )
-        bInterlace = TRUE;
+    bInterlace = CSLFetchBoolean(papszOptions, "INTERLACING", FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -493,6 +535,14 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "GIF driver only supports one band images.\n" );
+
+        return NULL;
+    }
+
+    if (nXSize > 65535 || nYSize > 65535)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "GIF driver only supports datasets up to 65535x65535 size.\n" );
 
         return NULL;
     }
@@ -588,6 +638,8 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         PrintGifError();
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Error writing gif file." );
+        EGifCloseFile(hGifFile);
+        VSIFCloseL( fp );
         return NULL;
     }
     
@@ -612,16 +664,22 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         PrintGifError();
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Error writing gif file." );
+        EGifCloseFile(hGifFile);
+        VSIFCloseL( fp );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    GByte 	*pabyScanline;
     CPLErr      eErr;
+    GDALPamDataset *poDS;
+    GByte      *pabyScanline;
 
     pabyScanline = (GByte *) CPLMalloc( nXSize );
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        eErr = CE_Failure;
 
     if( !bInterlace )
     {
@@ -630,35 +688,61 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                      pabyScanline, nXSize, 1, GDT_Byte,
                                      nBands, nBands * nXSize );
-            
-            if( EGifPutLine( hGifFile, pabyScanline, nXSize ) == GIF_ERROR )
+
+            if( eErr != CE_None || EGifPutLine( hGifFile, pabyScanline, nXSize ) == GIF_ERROR )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Error writing gif file." );
-                return NULL;
+                goto error;
             }
+
+            if( !pfnProgress( (iLine + 1) * 1.0 / nYSize, NULL, pProgressData ) )
+            {
+                goto error;
+            }
+
         }
     }
     else
     {
         int 	i, j;
-
-	/* Need to perform 4 passes on the images: */
-	for ( i = 0; i < 4; i++)
+        int nLinesRead = 0;
+        int nLinesToRead = 0;
+        for ( i = 0; i < 4; i++)
         {
-	    for (j = InterlacedOffset[i]; j < nYSize; j += InterlacedJumps[i]) 
+            for (j = InterlacedOffset[i]; j < nYSize; j += InterlacedJumps[i]) 
             {
-                poBand->RasterIO( GF_Read, 0, j, nXSize, 1, 
-                                  pabyScanline, nXSize, 1, GDT_Byte,
-                                  1, nXSize );
-            
-		if (EGifPutLine(hGifFile, pabyScanline, nXSize)
-		    == GIF_ERROR) return GIF_ERROR;
-	    }
+                nLinesToRead ++;
+            }
+        }
+
+        /* Need to perform 4 passes on the images: */
+        for ( i = 0; i < 4; i++)
+        {
+            for (j = InterlacedOffset[i]; j < nYSize; j += InterlacedJumps[i]) 
+            {
+                eErr= poBand->RasterIO( GF_Read, 0, j, nXSize, 1, 
+                                        pabyScanline, nXSize, 1, GDT_Byte,
+                                        1, nXSize );
+
+                if (eErr != CE_None || EGifPutLine(hGifFile, pabyScanline, nXSize) == GIF_ERROR)
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                            "Error writing gif file." );
+                    goto error;
+                }
+
+                nLinesRead ++;
+                if( !pfnProgress( nLinesRead * 1.0 / nYSize, NULL, pProgressData ) )
+                {
+                    goto error;
+                }
+            }
         }
     }
 
     CPLFree( pabyScanline );
+    pabyScanline = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
@@ -667,9 +751,11 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "EGifCloseFile() failed.\n" );
-        return NULL;
+        hGifFile = NULL;
+        goto error;
     }
-    
+    hGifFile = NULL;
+
     /* This is a hack to write a GIF89a instead of GIF87a */
     /* (we have to, since we are using graphical extension block) */
     /* EGifSpew would write GIF89a when it detects an extension block if we were using it */
@@ -684,10 +770,11 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Error writing gif file." );
-        return NULL;
+        goto error;
     }
-    
+
     VSIFCloseL( fp );
+    fp = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                          */
@@ -703,13 +790,22 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *) 
+    poDS = (GDALPamDataset *) 
         GDALOpen( pszFilename, GA_ReadOnly );
 
     if( poDS )
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
+
+error:
+    if (hGifFile)
+        EGifCloseFile(hGifFile);
+    if (fp)
+        VSIFCloseL( fp );
+    if (pabyScanline)
+        CPLFree( pabyScanline );
+    return NULL;
 }
 
 /************************************************************************/
