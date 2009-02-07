@@ -430,11 +430,14 @@ def tiff_ovr_11():
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr11.tif', src_ds )
     src_ds = None
 
-    # The two following lines are necessary with inverted endianness
-    # for the moment
-    # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-    ds = None
-    ds = gdal.Open('tmp/ovr11.tif', gdal.GA_Update)
+    md = gdaltest.tiff_drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+       int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+        # The two following lines are necessary with inverted endianness
+        # for the moment with older libtiff
+        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
+       ds = None
+       ds = gdal.Open('tmp/ovr11.tif', gdal.GA_Update)
 
     ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
 
@@ -473,11 +476,15 @@ def tiff_ovr_12():
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr12.tif', src_ds, options = [ 'COMPRESS=DEFLATE' ] )
     src_ds = None
 
-    # The two following lines are necessary with inverted endianness
-    # for the moment
-    # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-    ds = None
-    ds = gdal.Open('tmp/ovr12.tif', gdal.GA_Update)
+    md = gdaltest.tiff_drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+       int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+        # The two following lines are necessary with inverted endianness
+        # for the moment with older libtiff
+        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
+       ds = None
+       ds = gdal.Open('tmp/ovr12.tif', gdal.GA_Update)
+
 
     ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
 
@@ -581,11 +588,14 @@ def tiff_ovr_15():
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr15.tif', src_ds, options = [ 'COMPRESS=DEFLATE' ] )
     src_ds = None
 
-    # The two following lines are necessary with inverted endianness
-    # for the moment
-    # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-    ds = None
-    ds = gdal.Open('tmp/ovr15.tif', gdal.GA_Update)
+    md = gdaltest.tiff_drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+       int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+        # The two following lines are necessary with inverted endianness
+        # for the moment with older libtiff
+        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
+       ds = None
+       ds = gdal.Open('tmp/ovr15.tif', gdal.GA_Update)
 
     ds.BuildOverviews( 'GAUSS', overviewlist = [2] )
 
@@ -937,6 +947,33 @@ def tiff_ovr_24():
     return 'success'
 
 ###############################################################################
+# Test creating overviews after some blocks have been written in the main
+# band and actually flushed
+
+def tiff_ovr_25():
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr25.tif',100,100,1)
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(1).FlushCache()
+    ds.BuildOverviews('NEAR', overviewlist = [2])
+    ds = None
+
+    ds = gdal.Open('tmp/ovr25.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 10000:
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverviewCount() == 0:
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 2500:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -954,12 +991,15 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr16.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr17.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr18.tif' )
-    gdaltest.tiff_drv.Delete( 'tmp/ovr19.tif' )
-    gdaltest.tiff_drv.Delete( 'tmp/ovr20.tif' )
-    gdaltest.tiff_drv.Delete( 'tmp/ovr21.tif' )
-    gdaltest.tiff_drv.Delete( 'tmp/ovr22.tif' )
-    gdaltest.tiff_drv.Delete( 'tmp/ovr23.tif' )
-    gdaltest.tiff_drv.Delete( 'tmp/ovr24.tif' )
+    md = gdaltest.tiff_drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') != -1:
+        gdaltest.tiff_drv.Delete( 'tmp/ovr19.tif' )
+        gdaltest.tiff_drv.Delete( 'tmp/ovr20.tif' )
+        gdaltest.tiff_drv.Delete( 'tmp/ovr21.tif' )
+        gdaltest.tiff_drv.Delete( 'tmp/ovr22.tif' )
+        gdaltest.tiff_drv.Delete( 'tmp/ovr23.tif' )
+        gdaltest.tiff_drv.Delete( 'tmp/ovr24.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr25.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -990,6 +1030,7 @@ gdaltest_list_internal = [
     tiff_ovr_22,
     tiff_ovr_23,
     tiff_ovr_24,
+    tiff_ovr_25,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():

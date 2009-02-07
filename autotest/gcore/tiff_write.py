@@ -1738,6 +1738,43 @@ def tiff_write_53():
 
 
 ###############################################################################
+# Same as before except we create an overview before reopening the file and
+# adding the color table
+
+def tiff_write_53_bis():
+    test_ct_data = [ (255,0,0), (0,255,0), (0,0,255), (255,255,255,0)]
+
+    test_ct = gdal.ColorTable()
+    for i in range(len(test_ct_data)):
+        test_ct.SetColorEntry( i, test_ct_data[i] )
+
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_53_bis.tif',
+                                              30, 50, 1,
+                                              options=['PHOTOMETRIC=PALETTE'] )
+    ds.GetRasterBand(1).Fill(10)
+    ds.BuildOverviews( 'NONE', overviewlist = [2] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_53_bis.tif', gdal.GA_Update )
+    ds.GetRasterBand(1).SetRasterColorTable( test_ct )
+    ds = None
+
+    ds = gdal.Open( 'tmp/tiff_write_53_bis.tif' )
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+
+    if ct.GetColorEntry(0) != (255,0,0,255):
+        print ct.GetColorEntry(0)
+        gdaltest.post_reason( 'Did not get expected color 0.' )
+        return 'fail'
+
+    ct = None
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_53_bis.tif' )
+
+    return 'success'
+
+###############################################################################
 # Test the ability to create a JPEG compressed TIFF, with PHOTOMETRIC=YCBCR
 # and write data into it without closing it and re-opening it (#2645)
 
@@ -2179,6 +2216,7 @@ gdaltest_list = [
     tiff_write_51,
     tiff_write_52,
     tiff_write_53,
+    tiff_write_53_bis,
     tiff_write_54,
     tiff_write_55,
     tiff_write_56,
