@@ -163,10 +163,39 @@ def gif_7():
     drv = gdal.GetDriverByName( 'GIF' )
     drv.Deregister();
     drv.Register()
-    
-    tst = gdaltest.GDALTest( 'GIF', 'bug407.gif', 1, 57921 )
-    
-    return tst.testOpen()
+
+    tst = gdaltest.GDALTest( 'BIGGIF', 'bug407.gif', 1, 57921 )
+
+    if tst.testOpen() != 'success':
+        return 'fail'
+
+    ds = gdal.Open('data/bug407.gif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetDriver().ShortName != 'BIGGIF':
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Confirm that BIGGIF driver is selected for huge gifs
+
+def gif_8():
+
+    # Move the BIGGIF driver after the GIF driver.
+    drv = gdal.GetDriverByName( 'BIGGIF' )
+    drv.Deregister();
+    drv.Register()
+
+    ds = gdal.Open('data/fakebig.gif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetDriver().ShortName != 'BIGGIF':
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Cleanup.
@@ -183,6 +212,7 @@ gdaltest_list = [
     gif_5,
     gif_6,
     gif_7,
+    gif_8,
     gif_cleanup ]
 
 if __name__ == '__main__':
