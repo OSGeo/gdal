@@ -41,11 +41,21 @@ import gdaltest
 
 def mff_1():
 
-    tst = gdaltest.GDALTest( 'JDEM', 'fakemff.hdr', 1, 1 )
+    tst = gdaltest.GDALTest( 'MFF', 'fakemff.hdr', 1, 1 )
     return tst.testOpen()
 
+###############################################################################
+# Test reading a - fake - tiled MFF dataset
+
+def mff_2():
+
+    tst = gdaltest.GDALTest( 'MFF', 'fakemfftiled.hdr', 1, 1 )
+    return tst.testOpen()
+
+
 gdaltest_list = [
-    mff_1 ]
+    mff_1,
+    mff_2 ]
 
 if __name__ == '__main__':
 
