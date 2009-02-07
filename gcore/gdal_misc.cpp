@@ -30,6 +30,7 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 #include <ctype.h>
 #include <string>
 
@@ -1397,9 +1398,8 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
  * <li> "--version": Returns one line version message suitable for use in 
  * response to --version requests.  ie. "GDAL 1.1.7, released 2002/04/16"
  * <li> "LICENCE": Returns the content of the LICENSE.TXT file from the GDAL_DATA directory.
- *      Currently, the returned string is leaking memory but applications are discouraged from
- *      deallocating the returned memory in this case since in the
- *      future we may resolve the leak issue internally.
+ *      Before GDAL 1.7.0, the returned string was leaking memory but this is now resolved.
+ *      So the result should not been freed by the caller.
  * </ul>
  *
  * @param pszRequest the type of version info desired, as listed above.
@@ -1410,65 +1410,71 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
 const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 
 {
-    static char szResult[128];
-    
 /* -------------------------------------------------------------------- */
 /*      LICENSE is a special case. We try to find and read the          */
-/*      LICENSE.TXT file from the GDAL_DATA directory and return        */
-/*      it.  We leak memory. Applications are discouraged from          */
-/*      deallocating the returned memory in this case since in the      */
-/*      future we may resolve the leak issue internally.                */
+/*      LICENSE.TXT file from the GDAL_DATA directory and return it     */
 /* -------------------------------------------------------------------- */
     if( pszRequest != NULL && EQUAL(pszRequest,"LICENSE") )
     {
+        char* pszResultLicence = (char*) CPLGetTLS( CTLS_VERSIONINFO_LICENCE );
+        if( pszResultLicence != NULL )
+        {
+            return pszResultLicence;
+        }
+
         const char *pszFilename = CPLFindFile( "etc", "LICENSE.TXT" );
         FILE *fp = NULL;
         int  nLength;
-        char *pszLICENSE;
 
         if( pszFilename != NULL )
             fp = VSIFOpenL( pszFilename, "r" );
 
-        if( fp == NULL )
+        if( fp != NULL )
         {
-            sprintf( szResult, 
+            VSIFSeekL( fp, 0, SEEK_END );
+            nLength = VSIFTellL( fp ) + 1;
+            VSIFSeekL( fp, SEEK_SET, 0 );
+
+            pszResultLicence = (char *) VSICalloc(1,nLength);
+            if (pszResultLicence)
+                VSIFReadL( pszResultLicence, 1, nLength-1, fp );
+
+            VSIFCloseL( fp );
+        }
+
+        if (!pszResultLicence)
+        {
+            pszResultLicence = CPLStrdup(
                      "GDAL/OGR is released under the MIT/X license.\n"
                      "The LICENSE.TXT distributed with GDAL/OGR should\n"
                      "contain additional details.\n" );
-            return szResult;
         }
-        
-        VSIFSeekL( fp, 0, SEEK_END );
-        nLength = VSIFTellL( fp ) + 1;
-        VSIFSeekL( fp, SEEK_SET, 0 );
 
-        pszLICENSE = (char *) CPLCalloc(1,nLength);
-        VSIFReadL( pszLICENSE, 1, nLength-1, fp );
-        
-        VSIFCloseL( fp );
-
-        return pszLICENSE;
+        CPLSetTLS( CTLS_VERSIONINFO_LICENCE, pszResultLicence, TRUE );
+        return pszResultLicence;
     }
 
-    // NOTE: There is a slight risk of a multithreaded race condition if
-    // one thread is in the process of sprintf()ing into this buffer while
-    // another is using it but that seems pretty low risk.  All threads
-    // want the same value in the buffer.
+    char* pszResultSmall = (char*) CPLGetTLS( CTLS_VERSIONINFO );
+    if( pszResultSmall == NULL )
+    {
+        pszResultSmall = (char*) CPLCalloc(128, 1);
+        CPLSetTLS( CTLS_VERSIONINFO, pszResultSmall, TRUE );
+    }
 
     if( pszRequest == NULL || EQUAL(pszRequest,"VERSION_NUM") )
-        sprintf( szResult, "%d", GDAL_VERSION_NUM );
+        sprintf(pszResultSmall, "%d", GDAL_VERSION_NUM );
     else if( EQUAL(pszRequest,"RELEASE_DATE") )
-        sprintf( szResult, "%d", GDAL_RELEASE_DATE );
+        sprintf(pszResultSmall, "%d", GDAL_RELEASE_DATE );
     else if( EQUAL(pszRequest,"RELEASE_NAME") )
-        sprintf( szResult, "%s", GDAL_RELEASE_NAME );
+        sprintf(pszResultSmall, GDAL_RELEASE_NAME );
     else // --version
-        sprintf( szResult, "GDAL %s, released %d/%02d/%02d",
+        sprintf(pszResultSmall, "GDAL %s, released %d/%02d/%02d",
                  GDAL_RELEASE_NAME, 
                  GDAL_RELEASE_DATE / 10000, 
                  (GDAL_RELEASE_DATE % 10000) / 100,
                  GDAL_RELEASE_DATE % 100 );
 
-    return szResult;
+    return pszResultSmall;
 }
 
 /************************************************************************/
