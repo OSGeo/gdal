@@ -104,6 +104,8 @@ class CPL_DLL CPLMutexHolder
 #define CTLS_SWQ_ERRBUF                 9         /* swq.c */
 #define CTLS_CPLSPRINTF                10         /* cpl_string.h */
 #define CTLS_RESPONSIBLEPID            11         /* gdaldataset.cpp */
+#define CTLS_VERSIONINFO               12         /* gdal_misc.cpp */
+#define CTLS_VERSIONINFO_LICENCE       13         /* gdal_misc.cpp */
 
 #define CTLS_MAX                       32         
 
