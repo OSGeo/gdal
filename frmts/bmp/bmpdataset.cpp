@@ -285,9 +285,15 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
     nBlockXSize = poDS->GetRasterXSize();
-    // FIXME? : risk of overflow in multiplication and addition
-    nScanSize =
-        ((poDS->GetRasterXSize() * poDS->sInfoHeader.iBitCount + 31) & ~31) / 8;
+
+    if (nBlockXSize < (INT_MAX - 31) / poDS->sInfoHeader.iBitCount)
+        nScanSize =
+            ((poDS->GetRasterXSize() * poDS->sInfoHeader.iBitCount + 31) & ~31) / 8;
+    else
+    {
+        pabyScan = NULL;
+        return;
+    }
     nBlockYSize = 1;
 
 #ifdef BMP_DEBUG
@@ -687,8 +693,25 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
     GUInt32         iComprSize, iUncomprSize;
 
     iComprSize = poDS->sFileHeader.iSize - poDS->sFileHeader.iOffBits;
-    // FIXME? : risk of overflow in multiplication
     iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
+
+#ifdef DEBUG
+    CPLDebug( "BMP", "RLE compression detected." );
+    CPLDebug ( "BMP", "Size of compressed buffer %ld bytes,"
+               " size of uncompressed buffer %ld bytes.",
+               (long) iComprSize, (long) iUncomprSize );
+#endif
+    /* TODO: it might be interesting to avoid uncompressing the whole data */
+    /* in a single pass, especially if nXSize * nYSize is big */
+    /* We could read incrementally one row at a time */
+    if (poDS->GetRasterXSize() > INT_MAX / poDS->GetRasterYSize())
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Too big dimensions : %d x %d",
+                 poDS->GetRasterXSize(), poDS->GetRasterYSize());
+        pabyComprBuf = NULL;
+        pabyUncomprBuf = NULL;
+        return;
+    }
     pabyComprBuf = (GByte *) VSIMalloc( iComprSize );
     pabyUncomprBuf = (GByte *) VSIMalloc( iUncomprSize );
     if (pabyComprBuf == NULL ||
@@ -700,13 +723,6 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
         pabyUncomprBuf = NULL;
         return;
     }
-
-#ifdef DEBUG
-    CPLDebug( "BMP", "RLE compression detected." );
-    CPLDebug ( "BMP", "Size of compressed buffer %ld bytes,"
-               " size of uncompressed buffer %ld bytes.",
-               (long) iComprSize, (long) iUncomprSize );
-#endif
 
     VSIFSeekL( poDS->fp, poDS->sFileHeader.iOffBits, SEEK_SET );
     VSIFReadL( pabyComprBuf, 1, iComprSize, poDS->fp );
@@ -751,7 +767,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
                 }
                 else                                // Absolute mode
                 {
-                    iLength = pabyComprBuf[i++];
+                    if (i < iComprSize)
+                        iLength = pabyComprBuf[i++];
                     for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                         pabyUncomprBuf[j++] = pabyComprBuf[i++];
                     if ( i & 0x01 )
@@ -802,7 +819,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
                 }
                 else                                // Absolute mode
                 {
-                    iLength = pabyComprBuf[i++];
+                    if (i < iComprSize)
+                        iLength = pabyComprBuf[i++];
                     for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                     {
                         if ( k & 0x01 )
@@ -1125,6 +1143,16 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = poDS->sInfoHeader.iWidth;
     poDS->nRasterYSize = (poDS->sInfoHeader.iHeight > 0)?
         poDS->sInfoHeader.iHeight:-poDS->sInfoHeader.iHeight;
+
+    if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid dimensions : %d x %d", 
+                  poDS->nRasterXSize, poDS->nRasterYSize); 
+        delete poDS;
+        return NULL;
+    }
+
     switch ( poDS->sInfoHeader.iBitCount )
     {
         case 1:
