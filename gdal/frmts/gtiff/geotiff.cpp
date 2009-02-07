@@ -1069,8 +1069,14 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 
     if( poGDS->poColorTable )
         delete poGDS->poColorTable;
+
+    /* libtiff 3.X needs setting this in all cases (creation or update) */
+    /* whereas libtiff 4.X would just need it if there */
+    /* was no color table before */
+#if 0
     else
-        poGDS->bNeedsRewrite = TRUE; // more space required!
+#endif
+        poGDS->bNeedsRewrite = TRUE;
 
     poGDS->poColorTable = poCT->Clone();
 
