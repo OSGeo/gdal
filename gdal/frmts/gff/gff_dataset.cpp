@@ -49,20 +49,20 @@ class GFFDataset : public GDALDataset
     GDALDataType eDataType;
     unsigned int nEndianess;
     /* Some relevant headers */
-    unsigned int nVersionMajor;
-    unsigned int nVersionMinor;
-    unsigned long nLength;
+    unsigned short nVersionMajor;
+    unsigned short nVersionMinor;
+    unsigned int nLength;
     char *pszCreator;
     /* I am taking this at face value (are they freakin' insane?) */
     float fBPP;
     unsigned int nBPP;
 
     /* Good information to know */
-    unsigned long nFrameCnt;
-    unsigned long nImageType;
-    unsigned long nRowMajor;
-    unsigned long nRgCnt;
-    unsigned long nAzCnt;
+    unsigned int nFrameCnt;
+    unsigned int nImageType;
+    unsigned int nRowMajor;
+    unsigned int nRgCnt;
+    unsigned int nAzCnt;
     long nScaleExponent;
     long nScaleMantissa;
     long nOffsetExponent;
@@ -144,7 +144,8 @@ CPLErr GFFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     VSIFSeek(poGDS->fp, nOffset + (poGDS->GetRasterXSize() * nBlockYOff * (nSampleSize)),SEEK_SET);
 
     /* Ingest entire range line */
-    VSIFRead(pImage,nRasterBandMemory,1,poGDS->fp);
+    if (VSIFRead(pImage,nRasterBandMemory,1,poGDS->fp) != 1)
+        return CE_Failure;
 
     return CE_None;
 	
@@ -176,7 +177,7 @@ int GFFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo ) 
 {
-    unsigned int nCreatorLength = 0;
+    unsigned short nCreatorLength = 0;
 
     /* Check that the dataset is indeed a GSAT File Format (GFF) file */
     if (!GFFDataset::Identify(poOpenInfo)) 
@@ -193,11 +194,21 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
     VSIFSeek(poDS->fp,54,SEEK_SET);
     VSIFRead(&(poDS->nEndianess),2,1,poDS->fp);
 
+#if defined(CPL_LSB)
+    int bSwap = 0;
+#else
+    int bSwap = 1;
+#endif
+
     VSIFSeek(poDS->fp,8,SEEK_SET);
     VSIFRead(&poDS->nVersionMinor,2,1,poDS->fp);
+    if (bSwap) CPL_SWAP16PTR(&poDS->nVersionMinor);
     VSIFRead(&poDS->nVersionMajor,2,1,poDS->fp);
+    if (bSwap) CPL_SWAP16PTR(&poDS->nVersionMajor);
     VSIFRead(&poDS->nLength,4,1,poDS->fp);
+    if (bSwap) CPL_SWAP32PTR(&poDS->nLength);
     VSIFRead(&nCreatorLength,2,1,poDS->fp);
+    if (bSwap) CPL_SWAP16PTR(&nCreatorLength);
     /* Hack for now... I should properly load the date metadata, for
      * example
      */
@@ -214,12 +225,18 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
     else*/
     {
         VSIFRead(&poDS->nBPP,4,1,poDS->fp);
+        if (bSwap) CPL_SWAP32PTR(&poDS->nBPP);
     }
     VSIFRead(&poDS->nFrameCnt,4,1,poDS->fp);
+    if (bSwap) CPL_SWAP32PTR(&poDS->nFrameCnt);
     VSIFRead(&poDS->nImageType,4,1,poDS->fp);
+    if (bSwap) CPL_SWAP32PTR(&poDS->nImageType);
     VSIFRead(&poDS->nRowMajor,4,1,poDS->fp);
+    if (bSwap) CPL_SWAP32PTR(&poDS->nRowMajor);
     VSIFRead(&poDS->nRgCnt,4,1,poDS->fp);
+    if (bSwap) CPL_SWAP32PTR(&poDS->nRgCnt);
     VSIFRead(&poDS->nAzCnt,4,1,poDS->fp);
+    if (bSwap) CPL_SWAP32PTR(&poDS->nAzCnt);
 
     /* We now have enough information to determine the number format */
     switch (poDS->nImageType) {
@@ -239,7 +256,8 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         break;
 
       default:
-        printf("Unknown image type found! ABORT!\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown image type found!");
+        delete poDS;
         return NULL;
     }
 
@@ -256,6 +274,14 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
     else {
         poDS->nRasterXSize = poDS->nAzCnt/(poDS->nImageType == 0 ? 1 : 2);
         poDS->nRasterYSize = poDS->nRgCnt;
+    }
+
+    if (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid raster dimensions : %d x %d",
+                 poDS->nRasterXSize, poDS->nRasterYSize);
+        delete poDS;
+        return NULL;
     }
 
     poDS->SetBand(1, new GFFRasterBand(poDS, 1, poDS->eDataType));
