@@ -2273,7 +2273,13 @@ void GTiffDataset::FillEmptyTiles()
     else
         nBlockBytes = TIFFStripSize(hTIFF);
 
-    GByte *pabyData = (GByte *) CPLCalloc(nBlockBytes,1);
+    GByte *pabyData = (GByte *) VSICalloc(nBlockBytes,1);
+    if (pabyData == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Cannot allocate %d bytes", nBlockBytes);
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check all blocks, writing out data for uninitialized blocks.    */
@@ -5136,6 +5142,16 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         return NULL;
     }
 
+    if (nBands > 65535)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to create %dx%dx%d TIFF file, but bands\n"
+                  "must be lesser or equal to 65535.", 
+                  nXSize, nYSize, nBands );
+
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*	Setup values based on options.					*/
 /* -------------------------------------------------------------------- */
@@ -5556,8 +5572,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         if( nBlockYSize == 0 )
             nBlockYSize = 256;
 
-        TIFFSetField( hTIFF, TIFFTAG_TILEWIDTH, nBlockXSize );
-        TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize );
+        if (!TIFFSetField( hTIFF, TIFFTAG_TILEWIDTH, nBlockXSize ) ||
+            !TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize ))
+        {
+            XTIFFClose(hTIFF);
+            return NULL;
+        }
     }
     else
     {
