@@ -147,6 +147,18 @@ CPLErr GFFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (VSIFRead(pImage,nRasterBandMemory,1,poGDS->fp) != 1)
         return CE_Failure;
 
+#if defined(CPL_MSB)
+    if( GDALDataTypeIsComplex( eDataType ) )
+    {
+        int nWordSize;
+
+        nWordSize = GDALGetDataTypeSize(eDataType)/16;
+        GDALSwapWords( pImage, nWordSize, nBlockXSize, 2*nWordSize );
+        GDALSwapWords( ((GByte *) pImage)+nWordSize, 
+                        nWordSize, nBlockXSize, 2*nWordSize );
+    }
+#endif
+
     return CE_None;
 	
 }
