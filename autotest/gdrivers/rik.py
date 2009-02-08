@@ -42,6 +42,12 @@ import gdaltest
 
 def rik_online_1():
 
+    try:
+        if gdal.GetDriverByName('RIK') is None:
+            return 'skip'
+    except:
+        return 'skip'
+
     if not gdaltest.download_file('http://www.lantmateriet.se/upload/filer/kartor/programvaror/sverige500_swe99.zip', 'sverige500_swe99.zip'):
         return 'skip'
 
