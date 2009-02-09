@@ -129,6 +129,7 @@ void CPL_DLL GDALRegister_GFF(void);
 void CPL_DLL GDALRegister_COSAR(void);
 void CPL_DLL GDALRegister_TSX(void);
 void CPL_DLL GDALRegister_ADRG(void);
+void CPL_DLL GDALRegister_ASRP(void);
 void CPL_DLL GDALRegister_COASP(void);
 void CPL_DLL GDALRegister_BLX(void);
 void CPL_DLL GDALRegister_LCP(void);
