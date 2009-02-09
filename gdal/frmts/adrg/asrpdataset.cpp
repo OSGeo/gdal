@@ -35,8 +35,6 @@
 
 CPL_CVSID("$Id: geotiff.cpp 16147 2009-01-20 21:18:58Z warmerdam $");
 
-#define N_ELEMENTS(x)  (sizeof(x)/sizeof(x[0]))
-
 class ASRPDataset : public GDALPamDataset
 {
     friend class ASRPRasterBand;
@@ -206,7 +204,7 @@ CPLErr ASRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             offset = poDS->offsetInIMG + (poDS->TILEINDEX[nBlock] - 1);
     }
     else
-        offset = poDS->offsetInIMG + nBlock * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+        offset = poDS->offsetInIMG + nBlock * 128 * 128;
     
 /* -------------------------------------------------------------------- */
 /*      Seek to target location.                                        */
