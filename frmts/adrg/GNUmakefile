@@ -2,7 +2,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	adrgdataset.o
+OBJ	=	adrgdataset.o asrpdataset.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../iso8211
 
