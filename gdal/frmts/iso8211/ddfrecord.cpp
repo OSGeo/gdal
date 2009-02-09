@@ -682,10 +682,17 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 
 /* -------------------------------------------------------------------- */
 /*      Return the extracted value.                                     */
+/*                                                                      */
+/*      Assume an error has occured if no bytes are consumed.           */
 /* -------------------------------------------------------------------- */
-    *pnSuccess = TRUE;
+    int nConsumedBytes = 0;
+    int nResult = poSFDefn->ExtractIntData( pachData, nBytesRemaining, 
+                                            &nConsumedBytes );
 
-    return( poSFDefn->ExtractIntData( pachData, nBytesRemaining, NULL ) );
+    if( nConsumedBytes > 0 )
+        *pnSuccess = TRUE;
+
+    return nResult;
 }
 
 /************************************************************************/
@@ -749,9 +756,14 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
 /*      Return the extracted value.                                     */
 /* -------------------------------------------------------------------- */
-    *pnSuccess = TRUE;
+    int nConsumedBytes = 0;
+    double dfResult = poSFDefn->ExtractFloatData( pachData, nBytesRemaining, 
+                                                  &nConsumedBytes );
 
-    return( poSFDefn->ExtractFloatData( pachData, nBytesRemaining, NULL ) );
+    if( nConsumedBytes > 0 )
+        *pnSuccess = TRUE;
+
+    return dfResult;
 }
 
 /************************************************************************/
