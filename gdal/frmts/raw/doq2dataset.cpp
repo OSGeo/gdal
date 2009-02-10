@@ -179,7 +179,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
             break;
         }
         
-        if( EQUAL(papszTokens[0],"SAMPLES_AND_LINES") )
+        if( EQUAL(papszTokens[0],"SAMPLES_AND_LINES") && CSLCount(papszTokens) >= 3 )
         {
             nWidth = atoi(papszTokens[1]);
             nHeight = atoi(papszTokens[2]);
@@ -188,7 +188,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         {
             nSkipBytes = atoi(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"XY_ORIGIN") )
+        else if( EQUAL(papszTokens[0],"XY_ORIGIN") && CSLCount(papszTokens) >= 3 )
         {
             dfULXMap = atof(papszTokens[1]);
             dfULYMap = atof(papszTokens[2]);
@@ -280,23 +280,21 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             /* we want to generically capture all the other metadata */
-        
-            char szMetaDataValue[81];
+            CPLString osMetaDataValue;
             int  iToken;
 
-            szMetaDataValue[0] = '\0';
             for( iToken = 1; papszTokens[iToken] != NULL; iToken++ )
             {
                 if( EQUAL(papszTokens[iToken],"*") )
                     continue;
 
                 if( iToken > 1 )
-                    strcat( szMetaDataValue, " " );
-                strcat( szMetaDataValue, papszTokens[iToken] );
+                    osMetaDataValue += " " ;
+                osMetaDataValue += papszTokens[iToken];
             }
             papszMetadata = CSLAddNameValue( papszMetadata, 
                                              papszTokens[0], 
-                                             szMetaDataValue );
+                                             osMetaDataValue );
         }
 	
         CSLDestroy( papszTokens );
