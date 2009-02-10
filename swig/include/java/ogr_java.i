@@ -16,6 +16,11 @@
  *
  *
 */
+#ifdef SWIGJAVA
+%{
+typedef char retStringAndCPLFree;
+%}
+#endif
 
 %pragma(java) jniclasscode=%{
   private static boolean available = false;
@@ -67,5 +72,117 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;
 %}
 
+// Add a Java reference to prevent premature garbage collection and resulting use
+// of dangling C++ pointer. Intended for methods that return pointers or
+// references to a member variable.
+%typemap(javaout) OGRGeometryShadow* GetSpatialFilter {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRFeatureDefnShadow* GetLayerDefn {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRLayerShadow* CreateLayer {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRLayerShadow* CopyLayer {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRLayerShadow* GetLayerByIndex {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRLayerShadow* GetLayerByName {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRLayerShadow* ExecuteSQL {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRFeatureDefnShadow* GetDefnRef {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRFieldDefnShadow* GetFieldDefnRef {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRFieldDefnShadow* GetFieldDefn {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) OGRGeometryShadow* GetGeometryRef {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
 
 %include typemaps_java.i

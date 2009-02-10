@@ -33,6 +33,7 @@
  * Define the extensions for Band (nee GDALRasterBandShadow)
  *
 *************************************************************************/
+#if !defined(SWIGJAVA)
 %{
 static
 CPLErr ReadRaster_internal( GDALRasterBandShadow *obj, 
@@ -79,6 +80,7 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
 		        (void *) buffer, buf_xsize, buf_ysize, buf_type, 0, 0 );
 }
 %}
+#endif
 
 %rename (Band) GDALRasterBandShadow;
 
@@ -166,6 +168,11 @@ public:
     return (GDALRasterBandShadow*) GDALGetOverview( self, i );
   }
 
+#if defined (SWIGJAVA)
+  int Checksum( int xoff, int yoff, int xsize, int ysize) {
+    return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
+  }
+#else
 %apply (int *optional_int) {(int*)};
 %feature ("kwargs") Checksum;
   int Checksum( int xoff = 0, int yoff = 0, int *xsize = 0, int *ysize = 0) {
@@ -174,6 +181,7 @@ public:
     return GDALChecksumImage( self, xoff, yoff, nxsize, nysize );
   }
 %clear (int*);
+#endif
 
   void ComputeRasterMinMax( double argout[2], int approx_ok = 0) {
     GDALComputeRasterMinMax( self, approx_ok, argout );
@@ -188,7 +196,7 @@ public:
     return GDALFillRaster( self, real_fill, imag_fill );
   }
 
-#ifndef SWIGCSHARP
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) ReadRaster;
@@ -224,7 +232,7 @@ public:
   }
 %clear (int buf_len, char *buf_string);
 %clear (int*);
-#endif /* SWIGCSHARP */
+#endif /* !defined(SWIGCSHARP) && !defined(SWIGJAVA) */
 
   void FlushCache() {
     GDALFlushRasterCache( self );
@@ -275,7 +283,10 @@ public:
 #elif defined(SWIGPERL)
 %apply (int len, int *output) {(int buckets, int *panHistogram)};
 %apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
-#else
+#elif defined(SWIGJAVA)
+%apply (int nList, int* pListOut) {(int buckets, int *panHistogram)};
+#endif
+#ifndef SWIGJAVA
 %feature( "kwargs" ) GetHistogram;
 #endif
   CPLErr GetHistogram( double min=-0.5,
@@ -297,8 +308,24 @@ public:
 #elif defined(SWIGPERL)
 %clear (int buckets, int *panHistogram);
 %clear (CPLErr);
+#elif defined(SWIGJAVA)
+%clear (int buckets, int *panHistogram);
 #endif
 
+#if defined(SWIGJAVA)
+%apply (int* pnList, int** ppListOut) {(int* buckets_ret, int **ppanHistogram)};
+%apply (double *OUTPUT){double *min_ret, double *max_ret}
+CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int* buckets_ret, 
+                            int **ppanHistogram, int force = 1, 
+			    GDALProgressFunc callback = NULL,
+                            void* callback_data=NULL ) {
+    return GDALGetDefaultHistogram( self, min_ret, max_ret, buckets_ret,
+                                    ppanHistogram, force, 
+                                    callback, callback_data );
+}
+%clear (double *min_ret, double *max_ret);
+%clear (int* buckets_ret, int **ppanHistogram);
+#else
 #if defined(SWIGPERL)
 %apply (double *OUTPUT){double *min_ret, double *max_ret}
 %apply (int *nLen, const int **pList) {(int *buckets_ret, int **ppanHistogram)};
@@ -318,8 +345,9 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 %clear (int *buckets_ret, int **ppanHistogram);
 %clear (CPLErr);
 #endif
+#endif
 
-#if defined(SWIGPERL) || defined(SWIGPYTHON)
+#if defined(SWIGPERL) || defined(SWIGPYTHON) || defined(SWIGJAVA)
 %apply (int nList, int* pList) {(int buckets_in, int *panHistogram_in)}
 #endif
 CPLErr SetDefaultHistogram( double min, double max, 
@@ -327,7 +355,7 @@ CPLErr SetDefaultHistogram( double min, double max,
     return GDALSetDefaultHistogram( self, min, max, 
     	   			    buckets_in, panHistogram_in );
 }
-#if defined(SWIGPERL) || defined(SWIGPYTHON)
+#if defined(SWIGPERL) || defined(SWIGPYTHON) || defined(SWIGJAVA)
 %clear (int buckets_in, int *panHistogram_in);
 #endif
 
