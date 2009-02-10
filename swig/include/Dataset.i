@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#if !defined(SWIGJAVA)
 %{
-
 
 static
 CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
@@ -62,6 +62,8 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
   return result;
 }
 %}
+#endif
+
 //************************************************************************
 //
 // Define the extensions for Dataset (nee GDALDatasetShadow)
@@ -129,18 +131,22 @@ public:
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
 #ifndef SWIGCSHARP  
+#ifndef SWIGJAVA
 %feature("kwargs") BuildOverviews;
+#endif
 %apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
 #else
 %apply (void *buffer_ptr) {int *pOverviews};
+#endif
+#ifdef SWIGJAVA
+%apply (const char* stringWithDefaultValue) {const char* resampling};
 #endif
   int BuildOverviews( const char *resampling = "NEAREST",
                       int overviewlist = 0 , int *pOverviews = 0,
                       GDALProgressFunc callback = NULL,
                       void* callback_data=NULL ) {
-                      
     return GDALBuildOverviews(  self, 
-                                resampling, 
+                                resampling ? resampling : "NEAREST", 
                                 overviewlist, 
                                 pOverviews, 
                                 0, 
@@ -152,6 +158,9 @@ public:
 %clear (int overviewlist, int *pOverviews);
 #else
 %clear (int *pOverviews);
+#endif
+#ifdef SWIGJAVA
+%clear (const char *resampling);
 #endif
 
   int GetGCPCount() {
@@ -171,13 +180,16 @@ public:
   CPLErr SetGCPs( int nGCPs, GDAL_GCP const *pGCPs, const char *pszGCPProjection ) {
     return GDALSetGCPs( self, nGCPs, pGCPs, pszGCPProjection );
   }
+
 #endif
 
   void FlushCache() {
     GDALFlushCache( self );
   }
 
+#ifndef SWIGJAVA
 %feature ("kwargs") AddBand;
+#endif
 /* uses the defined char **options typemap */
   CPLErr AddBand( GDALDataType datatype = GDT_Byte, char **options = 0 ) {
     return GDALAddBand( self, datatype, options );
@@ -198,7 +210,7 @@ public:
   }
 %clear char **;
 
-#ifndef SWIGCSHARP
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %feature("kwargs") WriteRaster;
 %apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
 %apply (int *optional_int) { (int*) };
@@ -247,7 +259,7 @@ public:
 %clear (int buf_len, char *buf_string);
 #endif
 
-#ifndef SWIGCSHARP
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %feature("kwargs") ReadRaster;
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };

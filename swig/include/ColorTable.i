@@ -43,7 +43,9 @@ public:
 
 %extend {
 
+#ifndef SWIGJAVA
     %feature("kwargs") GDALColorTableShadow;
+#endif
     GDALColorTableShadow(GDALPaletteInterp palette = GPI_RGB ) {
         return (GDALColorTableShadow*) GDALCreateColorTable(palette);
     }

@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%include constraints.i
+
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::OSR"
 #elif defined(SWIGCSHARP)
@@ -39,7 +41,9 @@
 %include swig_csharp_extensions.i
 #endif
 
+#ifndef SWIGJAVA
 %feature("compactdefaultargs");
+#endif
 
 #ifdef SWIGCSHARP
 %csconst(1);
@@ -183,6 +187,7 @@ typedef int OGRErr;
 /************************************************************************/
 /*                        GetWellKnownGeogCSAsWKT()                     */
 /************************************************************************/
+%apply Pointer NONNULL {const char* name};
 %inline %{
 OGRErr GetWellKnownGeogCSAsWKT( const char *name, char **argout ) {
   OGRSpatialReferenceH srs = OSRNewSpatialReference("");
@@ -222,16 +227,29 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 
 #if !defined(SWIGPYTHON)
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
+#ifdef SWIGJAVA
+%apply (char **out_ppsz_and_free) {(char **)};
+#else
 %apply (char **CSL) {(char **)};
+#endif
 char **OPTGetProjectionMethods();
 %clear (char **);
 
 %rename (GetProjectionMethodParameterList) OPTGetParameterList;
+#ifdef SWIGJAVA
+%apply (char **retAsStringArrayAndFree) {(char **)};
+%apply (char **OUTPUT) { char **username };
+#else
 %apply (char **CSL) {(char **)};
+#endif
 char **OPTGetParameterList( char *method, char **username );
 %clear (char **);
 
 %rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
+#ifdef SWIGJAVA
+%apply (char **OUTPUT) { char **usrname, char **type };
+%apply (double *OUTPUT) { double *defaultval };
+#endif
 void OPTGetParameterInfo( char *method, char *param, char **usrname,
                           char **type, double *defaultval );
 #endif
@@ -250,7 +268,9 @@ public:
 %extend {
 
 
+#ifndef SWIGJAVA
   %feature("kwargs") OSRSpatialReferenceShadow;
+#endif
   OSRSpatialReferenceShadow( char const * wkt = "" ) {
     return (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
   }
@@ -269,6 +289,7 @@ public:
     return buf;
   }
 
+%apply Pointer NONNULL {OSRSpatialReferenceShadow* rhs};
   int IsSame( OSRSpatialReferenceShadow *rhs ) {
     return OSRIsSame( self, rhs );
   }
@@ -870,8 +891,12 @@ public:
 
 // Need to apply argin typemap second so the numinputs=1 version gets applied
 // instead of the numinputs=0 version from argout.
+#ifdef SWIGJAVA
+%apply (double argout[ANY]) {(double inout[3])};
+#else
 %apply (double argout[ANY]) {(double inout[3])};
 %apply (double argin[ANY]) {(double inout[3])};
+#endif
   void TransformPoint( double inout[3] ) {
     OCTTransform( self, 1, &inout[0], &inout[1], &inout[2] );
   }

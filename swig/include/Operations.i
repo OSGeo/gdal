@@ -61,7 +61,10 @@ int GDALTermProgress( double, const char *, void * );
 /************************************************************************/
 /*                        ComputeMedianCutPCT()                         */
 /************************************************************************/
+#ifndef SWIGJAVA
 %feature( "kwargs" ) ComputeMedianCutPCT;
+#endif
+%apply Pointer NONNULL { GDALRasterBandShadow *red, GDALRasterBandShadow *green, GDALRasterBandShadow *blue, GDALRasterBandShadow *target, GDALColorTableShadow* colors };
 %inline %{
 int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
                               GDALRasterBandShadow *green,
@@ -89,7 +92,9 @@ int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
 /************************************************************************/
 /*                           DitherRGB2PCT()                            */
 /************************************************************************/
+#ifndef SWIGJAVA
 %feature( "kwargs" ) DitherRGB2PCT;
+#endif
 %inline %{
 int  DitherRGB2PCT ( GDALRasterBandShadow *red,
                      GDALRasterBandShadow *green,
@@ -112,6 +117,7 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
     return err;
 }
 %}
+%clear GDALRasterBandShadow *red, GDALRasterBandShadow *green, GDALRasterBandShadow *blue, GDALRasterBandShadow *target, GDALColorTableShadow* colors;
 
 /************************************************************************/
 /*                           ReprojectImage()                           */
@@ -147,8 +153,9 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
 /************************************************************************/
 /*                          ComputeProximity()                          */
 /************************************************************************/
-
+#ifndef SWIGJAVA
 %feature( "kwargs" ) ComputeProximity;
+#endif
 %inline %{
 int  ComputeProximity( GDALRasterBandShadow *srcBand,
                        GDALRasterBandShadow *proximityBand,
@@ -167,6 +174,50 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 /*                        RasterizeLayer()                              */
 /************************************************************************/
 
+%apply Pointer NONNULL {GDALDatasetShadow *dataset, OGRLayerShadow *layer};
+
+#ifdef SWIGJAVA
+%apply (int nList, int *pList ) { (int bands, int *band_list ) };
+%apply (int nList, double *pList ) { (int burn_values, double *burn_values_list ) };
+%inline %{
+int  RasterizeLayer( GDALDatasetShadow *dataset,
+                 int bands, int *band_list,
+                 OGRLayerShadow *layer,
+		 int burn_values = 0, double *burn_values_list = NULL, 
+                 char **options = NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL) {
+
+    CPLErr eErr;
+
+    CPLErrorReset();
+
+    if( burn_values == 0 )
+    {
+        burn_values_list = (double *) CPLMalloc(sizeof(double)*bands);
+        for( int i = 0; i < bands; i++ )
+            burn_values_list[i] = 255.0;
+    }
+    else if( burn_values != bands )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Did not get the expected number of burn values in RasterizeLayer()" );
+        return CE_Failure;
+    }
+
+    eErr = GDALRasterizeLayers( dataset, bands, band_list,
+                                1, &layer, 
+                                NULL, NULL,
+                                burn_values_list, options, 
+                                callback, callback_data );
+
+    if( burn_values == 0 )
+        CPLFree( burn_values_list );
+
+    return eErr;
+}
+%} 
+#else
 %feature( "kwargs" ) RasterizeLayer;
 %apply (int nList, int *pList ) { (int bands, int *band_list ) };
 %apply (int nList, double *pList ) { (int burn_values, double *burn_values_list ) };
@@ -211,12 +262,15 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
     return eErr;
 }
 %} 
+#endif
 
 /************************************************************************/
 /*                             Polygonize()                             */
 /************************************************************************/
 
+#ifndef SWIGJAVA
 %feature( "kwargs" ) Polygonize;
+#endif
 %inline %{
 int  Polygonize( GDALRasterBandShadow *srcBand,
      		 GDALRasterBandShadow *maskBand,
@@ -237,7 +291,9 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
 /*                             FillNodata()                             */
 /************************************************************************/
 
+#ifndef SWIGJAVA
 %feature( "kwargs" ) FillNodata;
+#endif
 %inline %{
 int  FillNodata( GDALRasterBandShadow *targetBand,
      		 GDALRasterBandShadow *maskBand,
@@ -259,7 +315,9 @@ int  FillNodata( GDALRasterBandShadow *targetBand,
 /*                            SieveFilter()                             */
 /************************************************************************/
 
+#ifndef SWIGJAVA
 %feature( "kwargs" ) SieveFilter;
+#endif
 %inline %{
 int  SieveFilter( GDALRasterBandShadow *srcBand,
      		  GDALRasterBandShadow *maskBand,
@@ -282,31 +340,44 @@ int  SieveFilter( GDALRasterBandShadow *srcBand,
 /************************************************************************/
 
 #ifndef SWIGPERL
+#ifndef SWIGJAVA
 %feature( "kwargs" ) RegenerateOverviews;
+#endif
 #ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int overviewBandCount, GDALRasterBandShadow **overviewBands)};
 #endif
+#ifdef SWIGJAVA
+%apply (const char* stringWithDefaultValue) {const char *resampling};
+#endif
+%apply Pointer NONNULL { GDALRasterBandShadow* srcBand };
 %inline %{
 int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
      			  int overviewBandCount,
                           GDALRasterBandShadow **overviewBands,
-                          char *resampling = "average",
+                          const char *resampling = "average",
                           GDALProgressFunc callback=NULL,
                           void* callback_data=NULL) {
 
     CPLErrorReset();
 
     return GDALRegenerateOverviews( srcBand, overviewBandCount, overviewBands,
-    	   			    resampling, callback, callback_data );
+    	   			    resampling ? resampling : "average", callback, callback_data );
 }
 %}
+#ifdef SWIGJAVA
+%clear (const char* resampling);
+#endif
+%clear GDALRasterBandShadow* srcBand;
 #endif
 
 /************************************************************************/
 /*                         RegenerateOverview()                         */
 /************************************************************************/
 
+#ifndef SWIGJAVA
 %feature( "kwargs" ) RegenerateOverview;
+#endif
+%apply Pointer NONNULL { GDALRasterBandShadow* srcBand, GDALRasterBandShadow* overviewBand, char *resampling};
 %inline %{
 int  RegenerateOverview( GDALRasterBandShadow *srcBand,
                           GDALRasterBandShadow *overviewBand,
@@ -320,6 +391,7 @@ int  RegenerateOverview( GDALRasterBandShadow *srcBand,
     	   			    resampling, callback, callback_data );
 }
 %}
+%clear GDALRasterBandShadow* srcBand, GDALRasterBandShadow* overviewBand, char* resampling;
 
 /************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
@@ -370,8 +442,12 @@ public:
 
 // Need to apply argin typemap second so the numinputs=1 version gets applied
 // instead of the numinputs=0 version from argout.
+#ifdef SWIGJAVA
+%apply (double argout[ANY]) {(double inout[3])};
+#else
 %apply (double argout[ANY]) {(double inout[3])};
 %apply (double argin[ANY]) {(double inout[3])};
+#endif
   int TransformPoint( int bDstToSrc, double inout[3] ) {
     int nRet, nSuccess = TRUE;
 
@@ -396,7 +472,7 @@ public:
 
     return nRet && nSuccess;
   }
-  
+
 #ifdef SWIGCSHARP
   %apply (double *inout) {(double*)};
   %apply (double *inout) {(int*)};

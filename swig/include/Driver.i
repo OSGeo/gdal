@@ -51,10 +51,12 @@ public:
   char const *HelpTopic;
 %mutable;
 
-%apply Pointer NONNULL { const char *, GDALDatasetShadow*  };
+%apply Pointer NONNULL { const char *name, const char* newName, const char* oldName, GDALDatasetShadow* src };
 
 %newobject Create;
+#ifndef SWIGJAVA
 %feature( "kwargs" ) Create;
+#endif
   GDALDatasetShadow *Create(    const char *name, 
                                 int xsize, 
                                 int ysize, 
@@ -73,7 +75,11 @@ public:
   }
 
 %newobject CreateCopy;
+#ifndef SWIGJAVA
+#ifndef SWIGJAVA
 %feature( "kwargs" ) CreateCopy;
+#endif
+#endif
   GDALDatasetShadow *CreateCopy(    const char *name, 
                                     GDALDatasetShadow* src, 
                                     int strict = 1, 
@@ -106,8 +112,6 @@ public:
   void Deregister() {
     GDALDeregisterDriver( self );
   }
-%clear const char *, GDALDatasetShadow* ;
-
 }
 };
 

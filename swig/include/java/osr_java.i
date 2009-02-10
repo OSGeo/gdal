@@ -58,3 +58,112 @@
   }
 %}
 
+%typemap(javacode) OSRSpatialReferenceShadow %{
+
+  public String toString() {
+    return __str__();
+  }
+
+  public String ExportToWkt() {
+    String array[] = new String[] {null};
+    ExportToWkt(array);
+    return array[0];
+  }
+
+  public String ExportToPrettyWkt(int simplify) {
+    String array[] = new String[] {null};
+    ExportToPrettyWkt(array, simplify);
+    return array[0];
+  }
+
+  public String ExportToPrettyWkt() {
+    String array[] = new String[] {null};
+    ExportToPrettyWkt(array);
+    return array[0];
+  }
+
+  public String ExportToProj4() {
+    String array[] = new String[] {null};
+    ExportToProj4(array);
+    return array[0];
+  }
+
+  public String ExportToXML( String dialect) {
+    String array[] = new String[] {null};
+    ExportToXML(array, dialect);
+    return array[0];
+  }
+
+  public String ExportToXML() {
+    String array[] = new String[] {null};
+    ExportToXML(array);
+    return array[0];
+  }
+
+  public String ExportToMICoordSys() {
+    String array[] = new String[] {null};
+    ExportToMICoordSys(array);
+    return array[0];
+  }
+
+  public double[] GetTOWGS84()
+  {
+      double array[] = new double[7];
+      GetTOWGS84(array);
+      return array;
+  }
+%}
+
+
+%typemap(javacode) OSRCoordinateTransformationShadow %{
+  public double[] TransformPoint(double x, double y, double z) {
+    double[] ret = new double[3];
+    TransformPoint(ret, x, y, z);
+    return ret;
+  }
+
+  public double[] TransformPoint(double x, double y) {
+    return TransformPoint(x, y, 0);
+  }
+%}
+    
+/******************************************************************************
+ *
+ *  Global methods
+ *
+ */
+
+/************************************************************************/
+/*                        GetWellKnownGeogCSAsWKT()                     */
+/************************************************************************/
+
+%{
+typedef char retStringAndCPLFree;
+%}
+
+%inline %{
+retStringAndCPLFree* GetWellKnownGeogCSAsWKT( const char *name ) {
+  char* argout = NULL;
+  OGRSpatialReferenceH srs = OSRNewSpatialReference("");
+  OGRErr rcode = OSRSetWellKnownGeogCS( srs, name );
+  if( rcode == OGRERR_NONE )
+      rcode = OSRExportToWkt ( srs, &argout );  
+  OSRDestroySpatialReference( srs );
+  return argout;
+}
+%}
+
+/************************************************************************/
+/*                           GetUserInputAsWKT()                        */
+/************************************************************************/
+%inline %{
+retStringAndCPLFree* GetUserInputAsWKT( const char *name ) {
+  char* argout = NULL;
+  OGRSpatialReferenceH srs = OSRNewSpatialReference("");
+  OGRErr rcode = OSRSetFromUserInput( srs, name );
+  if( rcode == OGRERR_NONE )
+      rcode = OSRExportToWkt ( srs, &argout );  
+  OSRDestroySpatialReference( srs );
+  return argout;
+}
+%}
