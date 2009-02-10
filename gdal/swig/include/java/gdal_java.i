@@ -36,15 +36,142 @@
   }
 %}
 
+%typemap(javaimports) GDALDriverShadow %{
+import java.util.Vector;
+import org.gdal.gdalconst.gdalconstConstants;
+%}
+
+%typemap(javacode) GDALDriverShadow %{
+
+  private static Vector StringArrayToVector(String[] options)
+  {
+      if (options == null)
+        return null;
+      Vector v = new Vector();
+      for(int i=0;i<options.length;i++)
+        v.addElement(options[i]);
+      return v;
+  }
+
+  public Dataset Create(String name, int xsize, int ysize, int bands, int eType, String[] options) {
+    return Create(name, xsize, ysize, bands, eType, StringArrayToVector(options));
+  }
+
+  public Dataset Create(String name, int xsize, int ysize, int bands, String[] options) {
+    return Create(name, xsize, ysize, bands, gdalconstConstants.GDT_Byte, StringArrayToVector(options));
+  }
+
+  public Dataset CreateCopy(String name, Dataset src, int strict, String[] options) {
+    return CreateCopy(name, src, strict, StringArrayToVector(options), null);
+  }
+
+  public Dataset CreateCopy(String name, Dataset src, Vector options) {
+    return CreateCopy(name, src, 1, options, null);
+  }
+
+  public Dataset CreateCopy(String name, Dataset src, String[] options) {
+    return CreateCopy(name, src, 1, StringArrayToVector(options), null);
+  }
+
+%}
+
+
+%typemap(javacode) GDALDatasetShadow %{
+  public int BuildOverviews(int[] overviewlist, ProgressCallback callback) {
+    return BuildOverviews(null, overviewlist, callback);
+  }
+
+  public int BuildOverviews(int[] overviewlist) {
+    return BuildOverviews(null, overviewlist, null);
+  }
+
+  public java.util.Vector GetGCPs() {
+      java.util.Vector gcps = new java.util.Vector();
+      GetGCPs(gcps);
+      return gcps;
+  }
+  
+  public double[] GetGeoTransform() {
+      double adfGeoTransform[] = new double[6];
+      GetGeoTransform(adfGeoTransform);
+      return adfGeoTransform;
+  }
+%}
+
+%extend GDALDatasetShadow {
+%apply (int nList, int* pList) { (int band_list, int *pband_list) };
+%apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
+  CPLErr ReadRaster_Direct( int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            void *nioBuffer, long nioBufferSize,
+                            int band_list, int *pband_list)
+{
+  int nBands;
+  if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined, "Invalid buffer type");
+      return CE_Failure;
+  }
+  if (band_list)
+          nBands = band_list;
+  else
+          nBands = GDALGetRasterCount(self);
+  if (nioBufferSize < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * nBands)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined, "Inconsitant buffer size");
+      return CE_Failure;
+  }
+  return GDALDatasetRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
+                              nioBuffer, buf_xsize, buf_ysize,
+                              buf_type, band_list, pband_list, 0, 0, 0 );
+
+}
+
+  CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            void *nioBuffer, long nioBufferSize,
+                            int band_list, int *pband_list)
+{
+  int nBands;
+  if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined, "Invalid buffer type");
+      return CE_Failure;
+  }
+  if (band_list)
+          nBands = band_list;
+  else
+          nBands = GDALGetRasterCount(self);
+  if (nioBufferSize < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * nBands)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined, "Inconsitant buffer size");
+      return CE_Failure;
+  }
+  return GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
+                              nioBuffer, buf_xsize, buf_ysize,
+                              buf_type, band_list, pband_list, 0, 0, 0 );
+
+}
+//%clear (void *nioBuffer, long nioBufferSize);
+%clear (int band_list, int *pband_list);
+
+} /* extend */
 
 %extend GDALRasterBandShadow {
-%apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
+//%apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
   CPLErr ReadRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
                             void *nioBuffer, long nioBufferSize )
 {
-  if (nioBufferSize != buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8))
+  if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined, "Invalid buffer type");
+      return CE_Failure;
+  }
+  if (nioBufferSize < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8))
   {
       CPLError(CE_Failure, CPLE_AppDefined, "Inconsitant buffer size");
       return CE_Failure;
@@ -60,7 +187,12 @@
                             GDALDataType buf_type,
                             void *nioBuffer, long nioBufferSize )
 {
-  if (nioBufferSize != buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8))
+  if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined, "Invalid buffer type");
+      return CE_Failure;
+  }
+  if (nioBufferSize < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8))
   {
       CPLError(CE_Failure, CPLE_AppDefined, "Inconsitant buffer size");
       return CE_Failure;
@@ -104,18 +236,64 @@ import java.awt.Color;
 %}
 
 
+%typemap(javaimports) GDALRasterBandShadow %{
+import org.gdal.gdalconst.gdalconstConstants;
+%}
+
 
 %typemap(javacode) GDALRasterBandShadow %{
-  /* Ensure that the GC doesn't collect any Dataset instance set from Java */
-  private Dataset datasetReference;
-  protected void addReference(Dataset dataset) {
-    datasetReference = dataset;
+  public int Checksum() {
+    return Checksum(0, 0, getXSize(), getYSize());
   }
-  /* Ensure that the GC doesn't collect any Band instance set from Java */
-  private Band bandReference;
-  protected void addReference(Band band) {
-    bandReference = band;
-  }
+
+   public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize,
+                                int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer) {
+       return ReadRaster_Direct(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, gdalconstConstants.GDT_Byte, nioBuffer);
+   }
+
+   public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize,
+                                java.nio.ByteBuffer nioBuffer) {
+       return ReadRaster_Direct(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte, nioBuffer);
+   }
+
+   public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize,
+                                                int buf_xsize, int buf_ysize, int buf_type)
+   {
+       long buf_size = buf_xsize * buf_ysize * (gdal.GetDataTypeSize(buf_type) / 8);
+       if ((int)buf_size != buf_size)
+               throw new OutOfMemoryError();
+       java.nio.ByteBuffer nioBuffer = java.nio.ByteBuffer.allocateDirect((int)buf_size);
+       int ret = ReadRaster_Direct(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, buf_type, nioBuffer);
+       if (ret == gdalconstConstants.CE_None)
+               return nioBuffer;
+       else
+               return null;
+   }
+
+   public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_type)
+   {
+       return ReadRaster_Direct(xoff, yoff, xsize, ysize, xsize, ysize, buf_type);
+   }
+
+   public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize)
+   {
+       return ReadRaster_Direct(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte);
+   }
+
+   public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize,
+                                int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer) {
+       return WriteRaster_Direct(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, gdalconstConstants.GDT_Byte, nioBuffer);
+   }
+
+   public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize,
+                                 int buf_type, java.nio.ByteBuffer nioBuffer) {
+       return WriteRaster_Direct(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, nioBuffer);
+   }
+
+   public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize,
+                                 java.nio.ByteBuffer nioBuffer) {
+       return WriteRaster_Direct(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte, nioBuffer);
+   }
 %}
 
 // Add a Java reference to prevent premature garbage collection and resulting use
@@ -141,7 +319,6 @@ import java.awt.Color;
     return ret;
   }
 
-
 %typemap(javaout) GDALRasterBandShadow* GetMaskBand {
     long cPtr = $jnicall;
     $javaclassname ret = null;
@@ -151,6 +328,27 @@ import java.awt.Color;
     }
     return ret;
   }
+
+%typemap(javaout) GDALColorTableShadow* GetColorTable {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) GDALColorTableShadow* GetRasterColorTable {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
 /************************************************************************/
 /*                       Stuff for progress callback                    */
 /************************************************************************/
@@ -224,7 +422,11 @@ JavaProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         $1 = JavaProgressProxy;
         $2 = &sProgressInfo;
     }
-
+    else
+    {
+        $1 = NULL;
+        $2 = NULL;
+    }
 }
 
 
@@ -236,5 +438,21 @@ JavaProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 %typemap(javaout) (GDALProgressFunc callback = NULL, void* callback_data=NULL) {
     return $jnicall;
   }
+
+%typemap(in) (OGRLayerShadow*)
+{
+    if ($input != NULL)
+    {
+        const jclass klass = jenv->FindClass("org/gdal/ogr/Layer");
+        const jmethodID getCPtr = jenv->GetStaticMethodID(klass, "getCPtr", "(Lorg/gdal/ogr/Layer;)J");
+        $1 = (OGRLayerShadow*) jenv->CallStaticLongMethod(klass, getCPtr, $input);
+    }
+}
+
+%typemap(jni) (OGRLayerShadow*)  "jobject"
+%typemap(jtype) (OGRLayerShadow*)  "org.gdal.ogr.Layer"
+%typemap(jstype) (OGRLayerShadow*)  "org.gdal.ogr.Layer"
+%typemap(javain) (OGRLayerShadow*)  "$javainput"
+
 
 %include typemaps_java.i

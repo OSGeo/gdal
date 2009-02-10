@@ -40,7 +40,9 @@
 %include swig_csharp_extensions.i
 #endif
 
+#ifndef SWIGJAVA
 %feature ("compactdefaultargs");
+#endif
 
 //
 // We register all the drivers upon module initialization
@@ -188,7 +190,7 @@ typedef enum {
 // Define the XMLNode object
 //
 //************************************************************************
-#if defined(SWIGCSHARP)
+#if defined(SWIGCSHARP) || defined(SWIGJAVA)
 %include "XMLNode.i"
 #endif
 
@@ -419,11 +421,22 @@ void GDAL_GCP_set_Id( GDAL_GCP *h, const char * val ) {
 
 %} //%inline 
 
+#ifdef SWIGJAVA
+%rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
+%inline
+{
+int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
+    	                             double argout[6], int bApproxOK = 1 )
+{
+    return GDALGCPsToGeoTransform(nGCPs, pGCPs, argout, bApproxOK);
+}
+}
+#else
 %apply (IF_FALSE_RETURN_NONE) { (FALSE_IS_ERR) };
 FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
     	                             double argout[6], int bApproxOK = 1 ); 
 %clear (FALSE_IS_ERR);
-
+#endif
 
 //************************************************************************
 //
@@ -461,7 +474,19 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //************************************************************************
 %include "Operations.i"
 
+#ifdef SWIGJAVA
+%apply (const char* stringWithDefaultValue) {const char *request};
+%rename (VersionInfo) wrapper_GDALVersionInfo;
+%inline {
+const char *wrapper_GDALVersionInfo( const char *request = "VERSION_NUM" )
+{
+    return GDALVersionInfo(request ? request : "VERSION_NUM");
+}
+}
+%clear (const char* request);
+#else
 const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
+#endif
 
 void GDALAllRegister();
 
@@ -472,7 +497,7 @@ int GDALGetCacheMax();
 void GDALSetCacheMax( int nBytes );
     
 int GDALGetCacheUsed();
-    
+
 int GDALGetDataTypeSize( GDALDataType );
 
 int GDALDataTypeIsComplex( GDALDataType );
@@ -485,14 +510,27 @@ const char *GDALGetColorInterpretationName( GDALColorInterp );
 
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
+#ifdef SWIGJAVA
+%apply (const char* stringWithDefaultValue) {const char *request};
+%rename (DecToDMS) wrapper_GDALDecToDMS;
+%inline {
+const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
+                                  int nPrecision = 2 )
+{
+    return GDALDecToDMS(dfAngle, pszAxis, nPrecision);
+}
+}
+%clear (const char* request);
+#else
 const char *GDALDecToDMS( double, const char *, int = 2 );
+#endif
 
 double GDALPackedDMSToDec( double );
 
 double GDALDecToPackedDMS( double );
 
 
-#if defined(SWIGCSHARP)
+#if defined(SWIGCSHARP) || defined(SWIGJAVA)
 %newobject CPLParseXMLString;
 #endif
 CPLXMLNode *CPLParseXMLString( char * );
@@ -514,6 +552,7 @@ int GetDriverCount() {
 }
 %}
 
+%apply Pointer NONNULL { char const *name };
 %inline %{
 GDALDriverShadow* GetDriverByName( char const *name ) {
   return (GDALDriverShadow*) GDALGetDriverByName( name );
@@ -526,6 +565,29 @@ GDALDriverShadow* GetDriver( int i ) {
 }
 %}
 
+#ifdef SWIGJAVA
+%newobject Open;
+%inline %{
+GDALDatasetShadow* Open( char const* name, GDALAccess eAccess) {
+  CPLErrorReset();
+  GDALDatasetShadow *ds = GDALOpen( name, eAccess );
+  if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
+  {
+      if ( GDALDereferenceDataset( ds ) <= 0 )
+          GDALClose(ds);
+      ds = NULL;
+  }
+  return (GDALDatasetShadow*) ds;
+}
+%}
+
+%newobject Open;
+%inline %{
+GDALDatasetShadow* Open( char const* name ) {
+  return Open( name, GA_ReadOnly );
+}
+%}
+#else
 %newobject Open;
 %inline %{
 GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
@@ -540,6 +602,7 @@ GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
   return (GDALDatasetShadow*) ds;
 }
 %}
+#endif
 
 %newobject OpenShared;
 %inline %{
@@ -559,7 +622,7 @@ GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnl
 %apply (char **options) {char **papszSiblings};
 %inline %{
 GDALDriverShadow *IdentifyDriver( const char *pszDatasource, 
-				  char **papszSiblings = NULL ) {
+                                  char **papszSiblings = NULL ) {
     return (GDALDriverShadow *) GDALIdentifyDriver( pszDatasource, 
 	                                            papszSiblings );
 }
