@@ -12,7 +12,6 @@
  * OGR WKB import and  export. Both extensions make sure byte[] is used in    *
  * java instead of char[]                                                     *
  ******************************************************************************/
- 
 
 %extend OGRGeometryShadow 
 {
@@ -35,10 +34,12 @@
     else return 0;
   }
 
-  %feature("kwargs") ExportToWkb;
-  OGRErr ExportToWkb(int nLen, unsigned char *pBuf, OGRwkbByteOrder byte_order) {
-    return OGR_G_ExportToWkb((OGRGeometryH) self, byte_order, pBuf);
-  }
+   retStringAndCPLFree* ExportToWkt()
+   {
+       char* argout = NULL;
+       OGR_G_ExportToWkt(self, &argout);
+       return argout;
+   }
 
   %newobject Centroid;
   OGRGeometryShadow* Centroid() {

@@ -101,15 +101,34 @@ typedef enum
 
 #endif
 
+#ifndef SWIGJAVA
 void CPLPushErrorHandler( CPLErrorHandler );
+#endif
 
 void CPLPopErrorHandler();
 
 void CPLErrorReset();
 
-
+#ifndef SWIGJAVA
 %feature( "kwargs" ) EscapeString;
+#endif
 
+#ifdef SWIGJAVA
+%{
+typedef char retStringAndCPLFree;
+%}
+%apply (int nLen, unsigned char *pBuf ) {( int len, unsigned char *bin_string )};
+%inline %{
+retStringAndCPLFree* EscapeString(int len, unsigned char *bin_string , int scheme=CPLES_SQL) {
+    return CPLEscapeString((const char*)bin_string, len, scheme);
+} 
+
+retStringAndCPLFree* EscapeString(const char* str, int scheme=CPLES_SQL) {
+    return CPLEscapeString(str, (str) ? strlen(str) : 0, scheme);
+} 
+%}
+%clear (int len, unsigned char *bin_string);
+#else
 #ifndef SWIGCSHARP
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 #endif
@@ -120,6 +139,7 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 %}
 #ifndef SWIGCSHARP
 %clear (int len, char *bin_string);
+#endif
 #endif
 
 int CPLGetLastErrorNo();
@@ -150,6 +170,19 @@ void CPLSetConfigOption( const char *, const char * );
 const char * CPLGetConfigOption( const char *, const char * );
 
 /* Provide hooks to hex encoding methods */
-char *CPLBinaryToHex( int nBytes, const GByte *pabyData );
-GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
+#ifdef SWIGJAVA
+%apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
+retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
+%clear ( int nBytes, const GByte *pabyData );
+#else
+/* FIXME : wrong typemap. The string should be freed */
+char * CPLBinaryToHex( int nBytes, const GByte *pabyData );
+#endif
 
+#ifdef SWIGJAVA
+%apply (GByte* outBytes) {GByte*};
+#endif
+GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
+#ifdef SWIGJAVA
+%clear GByte*;
+#endif
