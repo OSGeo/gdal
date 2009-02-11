@@ -60,12 +60,52 @@ init_list = [ \
     ('byte_nearest_200pct.vrt', 1, 18784, None),
     ('byte_averaged_200pct.vrt', 1, 18784, None)]
 
+###############################################################################
+# The VRT references a non existing TIF file
+
+def vrt_read_1():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/idontexist.vrt')
+    gdal.PopErrorHandler()
+
+    if ds is None:
+        return 'success'
+
+    return 'fail'
+
+###############################################################################
+# The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
+
+def vrt_read_2():
+
+    ds = gdal.Open('data/idontexist2.vrt')
+    if ds is None:
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    cs = ds.GetRasterBand(1).Checksum()
+    gdal.PopErrorHandler()
+
+    if cs != 0:
+        return 'fail'
+
+    ds.GetMetadata()
+    ds.GetRasterBand(1).GetMetadata()
+    ds.GetGCPs()
+
+    ds = None
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
 	print( 'VRT tests skipped' )
 	sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
+    
+gdaltest_list.append( vrt_read_1 )
+gdaltest_list.append( vrt_read_2 )
 
 if __name__ == '__main__':
 
