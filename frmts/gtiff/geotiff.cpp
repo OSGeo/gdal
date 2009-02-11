@@ -152,6 +152,8 @@ class GTiffDataset : public GDALPamDataset
     CPLString   osProfile;
     char      **papszCreationOptions;
 
+    int         bLoadingOtherBands;
+
     static void WriteRPCTag( TIFF *, char ** );
     void        ReadRPCTag();
 
@@ -678,10 +680,16 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Our following logic actually depends on the fact that the       */
 /*      this block is already loaded, so subsequent calls will end      */
 /*      up back in this method and pull from the loaded block.          */
+/*                                                                      */
+/*      Be careful not entering this portion of code from               */
+/*      the other bands, otherwise we'll get very deep nested calls     */
+/*      and O(nBands^2) performance !                                   */
 /* -------------------------------------------------------------------- */
-    if( poGDS->nBands != 1 && eErr == CE_None )
+    if( poGDS->nBands != 1 && eErr == CE_None && !poGDS->bLoadingOtherBands)
     {
         int iOtherBand;
+
+        poGDS->bLoadingOtherBands = TRUE;
 
         for( iOtherBand = 1; iOtherBand <= poGDS->nBands; iOtherBand++ )
         {
@@ -693,9 +701,14 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             poBlock = poGDS->GetRasterBand(iOtherBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff);
             if (poBlock == NULL)
-                return CE_Failure;
+            {
+                eErr = CE_Failure;
+                break;
+            }
             poBlock->DropLock();
         }
+
+        poGDS->bLoadingOtherBands = FALSE;
     }
 
     return eErr;
@@ -2158,6 +2171,7 @@ GTiffDataset::GTiffDataset()
     poBaseDS = NULL;
 
     bFillEmptyTiles = FALSE;
+    bLoadingOtherBands = FALSE;
 }
 
 /************************************************************************/
