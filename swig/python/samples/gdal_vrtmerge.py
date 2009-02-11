@@ -265,12 +265,14 @@ if __name__ == '__main__':
 		band_n = 0
 		for fi in file_infos:
 			band_n = band_n + 1
+                        if len(fi.band_types) != 2:
+                            print 'File %s has %d bands. Only first band will be taken into accout' % (fi.filename, len(fi.band_types)-1)
 			dataType = gdal.GetDataTypeName(fi.band_types[1])
 
 			t_fh.write('\t<VRTRasterBand dataType="%s" band="%i">\n'
 				% (dataType, band_n))
 			t_fh.write('\t\t<ColorInterp>%s</ColorInterp>\n' %
-				gdal.GetColorInterpretationName(fi.color_interps[i]))
+				gdal.GetColorInterpretationName(fi.color_interps[1]))
 			fi.write_source(t_fh, geotransform, xsize, ysize, 1)
 			t_fh.write('\t</VRTRasterBand>\n')
 	else:
