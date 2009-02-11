@@ -2157,6 +2157,57 @@ def tiff_write_65():
     
     return 'success'
 
+
+###############################################################################
+# Verify that we can write and read a band-interleaved GeoTIFF with 65535 bands (#2838)
+
+def tiff_write_66():
+
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_66.tif',1,1,65535, options = ['INTERLEAVE=BAND'])
+    ds = None
+    
+    ds = gdal.Open('tmp/tiff_write_66.tif')
+    if ds.RasterCount != 65535:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 0:
+        return 'fail'
+
+    if ds.GetRasterBand(65535).Checksum() != 0:
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_66.tif' )
+
+    return 'success'
+
+
+###############################################################################
+# Verify that we can write and read a pixel-interleaved GeoTIFF with 65535 bands (#2838)
+
+def tiff_write_67():
+
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_67.tif',1,1,65535, options = ['INTERLEAVE=PIXEL'])
+    ds = None
+    
+    ds = gdal.Open('tmp/tiff_write_67.tif')
+    if ds.RasterCount != 65535:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 0:
+        return 'fail'
+
+    if ds.GetRasterBand(65535).Checksum() != 0:
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_67.tif' )
+
+    return 'success'
+
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2229,6 +2280,8 @@ gdaltest_list = [
     tiff_write_63,
     tiff_write_64,
     tiff_write_65,
+    tiff_write_66,
+    tiff_write_67,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
