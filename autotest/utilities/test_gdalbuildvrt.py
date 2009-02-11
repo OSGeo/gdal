@@ -59,6 +59,10 @@ def test_gdalbuildvrt_check():
         gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
         return 'fail'
 
+    if ds.RasterCount != 1:
+        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount) )
+        return 'fail'
+
     if ds.GetRasterBand(1).Checksum() != 3508:
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
@@ -193,6 +197,41 @@ def test_gdalbuildvrt_5():
     return test_gdalbuildvrt_check()
 
 ###############################################################################
+# Test -separate option
+
+def test_gdalbuildvrt_6():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -separate tmp/stacked.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif').read()
+
+    ds = gdal.Open('tmp/stacked.vrt')
+    if ds.GetProjectionRef().find('WGS 84') == -1:
+        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()) )
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = [ 2, 0.1, 0, 49, 0, -0.1 ]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i] > 1e-5):
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (gt, expected_gt) )
+            return 'fail'
+
+    if ds.RasterXSize != 20 or ds.RasterYSize != 20:
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        return 'fail'
+
+    if ds.RasterCount != 4:
+        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount) )
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 0:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
@@ -200,6 +239,7 @@ def test_gdalbuildvrt_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/tileindex.shp')
 
     gdal.GetDriverByName('GTiff').Delete('tmp/mosaic.vrt')
+    gdal.GetDriverByName('GTiff').Delete('tmp/stacked.vrt')
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -222,6 +262,7 @@ gdaltest_list = [
     test_gdalbuildvrt_3,
     test_gdalbuildvrt_4,
     test_gdalbuildvrt_5,
+    test_gdalbuildvrt_6,
     test_gdalbuildvrt_cleanup
     ]
 
