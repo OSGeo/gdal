@@ -684,8 +684,12 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Be careful not entering this portion of code from               */
 /*      the other bands, otherwise we'll get very deep nested calls     */
 /*      and O(nBands^2) performance !                                   */
+/*                                                                      */
+/*      If there are many bands and the block cache size is not big     */
+/*      enough to accomodate the size of all the blocks, don't enter    */
 /* -------------------------------------------------------------------- */
-    if( poGDS->nBands != 1 && eErr == CE_None && !poGDS->bLoadingOtherBands)
+    if( poGDS->nBands != 1 && eErr == CE_None && !poGDS->bLoadingOtherBands &&
+        nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) < GDALGetCacheMax() / poGDS->nBands)
     {
         int iOtherBand;
 
