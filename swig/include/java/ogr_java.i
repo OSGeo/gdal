@@ -87,6 +87,40 @@ import org.gdal.osr.SpatialReference;
 
 %}
 
+%typemap(javacode) OGRLayerShadow %{
+  private Object parentReference;
+
+  protected static long getCPtrAndDisown($javaclassname obj) {
+    if (obj != null) obj.swigCMemOwn= false;
+    obj.parentReference = null;
+    return getCPtr(obj);
+  }
+
+  /* Ensure that the GC doesn't collect any parent instance set from Java */
+  protected void addReference(Object reference) {
+    parentReference = reference;
+  }
+
+  public int GetExtent(double[] argout, boolean force)
+  {
+      return GetExtent(argout, (force) ? 1 : 0);
+  }
+  
+  public double[] GetExtent(boolean force)
+  {
+      double[] argout = new double[4];
+      try
+      {
+          GetExtent(argout, force);
+          return argout;
+      }
+      catch(RuntimeException e)
+      {
+          return null;
+      }
+  }
+%}
+
 %typemap(javaimports) OGRGeometryShadow %{
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;

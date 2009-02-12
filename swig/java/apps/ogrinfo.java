@@ -299,15 +299,9 @@ public class ogrinfo
             
             System.out.println( "Feature Count: " + poLayer.GetFeatureCount() );
             
-            try
-            {
-                double oExt[] = new double[4];
-                poLayer.GetExtent(oExt, 1);
-                System.out.println("Extent: (" + oExt[0] + ", " + oExt[1] + ") - (" + oExt[2] + ", " + oExt[3] + ")");
-            }
-            catch (java.lang.RuntimeException e)
-            {
-            }
+            double oExt[] = poLayer.GetExtent(true);
+            if (oExt != null)
+                System.out.println("Extent: (" + oExt[0] + ", " + oExt[2] + ") - (" + oExt[1] + ", " + oExt[3] + ")");
     
             String pszWKT;
             
