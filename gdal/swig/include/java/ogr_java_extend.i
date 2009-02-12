@@ -13,6 +13,13 @@
  * java instead of char[]                                                     *
  ******************************************************************************/
 
+%pragma(java) modulecode=%{
+    public static DataSource Open(String filename, boolean update)
+    {
+        return Open(filename, (update)?1:0);
+    }
+%}
+
 %extend OGRGeometryShadow 
 {
   
