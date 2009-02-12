@@ -16,19 +16,9 @@
 %extend OGRGeometryShadow 
 {
   
-  %feature("kwargs") OGRGeometryShadow;
-  OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int nLen= 0, unsigned char *pBuf = 0, char *gml = 0 ) {
+  OGRGeometryShadow( OGRwkbGeometryType type ) {
     if (type != wkbUnknown ) {
       return (OGRGeometryShadow*) OGR_G_CreateGeometry( type );
-    }
-    else if ( wkt != 0 ) {
-      return CreateGeometryFromWkt( &wkt );
-    }
-    else if ( nLen != 0 ) {
-      return CreateGeometryFromWkb( nLen, pBuf );
-    }
-    else if ( gml != 0 ) {
-      return CreateGeometryFromGML( gml );
     }
     // throw?
     else return 0;
@@ -43,8 +33,8 @@
 
   %newobject Centroid;
   OGRGeometryShadow* Centroid() {
-    OGRGeometryShadow *pt = new_OGRGeometryShadow( wkbPoint );
+    OGRGeometryH pt = OGR_G_CreateGeometry( wkbPoint );
     OGR_G_Centroid( (OGRGeometryH) self, (OGRGeometryH) pt );
-    return pt;
+    return (OGRGeometryShadow*) pt;
   }
 }
