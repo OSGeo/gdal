@@ -67,6 +67,21 @@ import org.gdal.osr.SpatialReference;
 %typemap(javaimports) OGRDataSourceShadow %{
 import org.gdal.osr.SpatialReference;
 %}
+
+%typemap(javacode) OGRDataSourceShadow %{
+
+  public Layer GetLayer(int index)
+  {
+      return GetLayerByIndex(index);
+  }
+
+  public Layer GetLayer(String layerName)
+  {
+      return GetLayerByName(layerName);
+  }
+
+%}
+
 %typemap(javaimports) OGRGeometryShadow %{
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;
