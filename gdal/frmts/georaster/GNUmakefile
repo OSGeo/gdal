@@ -12,7 +12,7 @@ OBJ		=	georaster_driver.o \
 			oci_wrapper.o \
 			georaster_wrapper.o
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS) -I../ingr
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
 
 PLUGIN_SO	= gdal_GEOR.so
 

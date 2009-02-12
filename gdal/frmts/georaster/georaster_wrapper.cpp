@@ -1438,7 +1438,7 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
     // Allocate buffer for one raster block
     // --------------------------------------------------------------------
 
-    pabyBlockBuf    = (GByte*) VSIMalloc( nBlockBytes );
+    pabyBlockBuf    = (GByte*) VSIMalloc( nBlockBytesGDAL );
 
     if ( pabyBlockBuf == NULL )
     {
@@ -1657,9 +1657,9 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     if( EQUAL( szInterleaving, "BSQ" ) || nBandBlockSize == 1 )
     {
-        nStart *= nBlockBytesGDAL;
+        nStart *= nBlockBytes;
 
-        memcpy( &pabyBlockBuf[nStart], pabyOutBuf, nBlockBytesGDAL );
+        memcpy( &pabyBlockBuf[nStart], pabyOutBuf, nBlockBytes );
     }
     else
     {
@@ -1676,7 +1676,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
         unsigned long ii = 0;
         unsigned long jj = nStart * nCellSizeGDAL;
 
-        for( ii = 0; ii < nBlockBytesGDAL; ii += nSize, jj += nIncr )
+        for( ii = 0; ii < nBlockBytes; ii += nSize, jj += nIncr )
         {
             memcpy( &pabyBlockBuf[jj], &pabyOutBuf[ii], nSize );
         }
@@ -2325,7 +2325,10 @@ unsigned long GeoRasterWrapper::CompressJpeg()
     sCInfo.input_components = nBandBlockSize;
     sCInfo.in_color_space = ( nBandBlockSize == 1 ? JCS_GRAYSCALE : JCS_RGB );
     jpeg_set_defaults( &sCInfo );
+    sCInfo.JFIF_major_version = 1;
+    sCInfo.JFIF_minor_version = 2;
     jpeg_set_quality( &sCInfo, nCompressQuality, TRUE );
+    jpeg_suppress_tables( &sCInfo, ! write_all_tables );
     jpeg_start_compress( &sCInfo, write_all_tables );
 
     GByte* pabyScanline = pabyBlockBuf;
