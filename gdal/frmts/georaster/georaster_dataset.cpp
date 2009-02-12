@@ -516,6 +516,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     if( ! poGRW->pszTable )
     {
         poGRW->pszTable     = CPLStrdup( "GDAL_IMPORT" );
+        poGRW->pszDataTable = CPLStrdup( "GDAL_RDT" );
     }
 
     if( ! poGRW->pszColumn )
@@ -549,6 +550,14 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     if( pszFetched )
     {
         poGRW->nBandBlockSize   = atoi( pszFetched );
+    }
+
+    pszFetched = CSLFetchNameValue( papszOptions, "NBITS" );
+
+    if( pszFetched != NULL )
+    {
+        poGRW->pszCellDepth = CPLStrdup( 
+            CPLSPrintf( "%dBIT", atoi( pszFetched ) ) );
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "COMPRESS" );
@@ -677,10 +686,9 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
             EQUAL( poGRW->szInterleaving, "BIP" ) == false )
         {
             CPLError( CE_Failure, CPLE_IllegalArg, 
-                "For (COMPRESS=%s) and (INTERLEAVE=%s) BLOCKBSIZE must be 1 "
-                "or INTERLEAVE must be PIXEL.",
-                poGRW->pszCompressionType,
-                poGRW->szInterleaving );
+                "(COMPRESS=%s) and BLOCKBSIZE > 1 must select "
+                "INTERLEAVE as PIXEL.",
+                poGRW->pszCompressionType );
             delete poGRD;
             return NULL;
         }
