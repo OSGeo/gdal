@@ -641,6 +641,34 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 
 
 %apply (char **options) {char **};
+#ifdef SWIGJAVA
+%inline %{
+  char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
+    int nResArgCount;
+    
+    /* We must add a 'dummy' element in front of the real argument list */
+    /* as Java doesn't include the binary name as the first */
+    /* argument, as C does... */
+    char** papszArgvMod = CSLInsertString(CSLDuplicate(papszArgv), 0, "dummy");
+
+    nResArgCount = 
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgvMod), &papszArgvMod, nOptions ); 
+
+    if( nResArgCount <= 0 )
+    {
+        CSLDestroy(papszArgvMod);
+        return NULL;
+    }
+    else
+    {
+        /* Now, remove the first dummy element */
+        char** papszRet = CSLDuplicate(papszArgvMod + 1);
+        CSLDestroy(papszArgvMod);
+        return papszRet;
+    }
+  }
+%}
+#else
 %inline %{
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
     int nResArgCount;
@@ -654,6 +682,7 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
         return papszArgv;
   }
 %}
+#endif
 %clear char **;
 
 
