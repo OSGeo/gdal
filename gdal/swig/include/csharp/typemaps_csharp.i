@@ -189,6 +189,36 @@ OPTIONAL_POD(int, int);
         return ret;
 }
 
+%typemap(imtype, out="IntPtr") int *intList "int[]"
+%typemap(cstype) int *intList %{int[]%}
+%typemap(in) int *intList %{ $1 = ($1_ltype)$input; %}
+%typemap(out) int *intList %{ $result = $1; %}
+%typemap(csout, excode=SWIGEXCODE) int *intList {
+        /* %typemap(csout) int *intList */
+        IntPtr cPtr = $imcall;
+        int[] ret = new int[count];
+        if (count > 0) {       
+	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, count);
+        }
+        $excode
+        return ret;
+}
+
+%typemap(imtype, out="IntPtr") double *doubleList "double[]"
+%typemap(cstype) double *doubleList %{double[]%}
+%typemap(in) double *doubleList %{ $1 = ($1_ltype)$input; %}
+%typemap(out) double *doubleList %{ $result = $1; %}
+%typemap(csout, excode=SWIGEXCODE) double *doubleList {
+        /* %typemap(csout) int *intList */
+        IntPtr cPtr = $imcall;
+        double[] ret = new double[count];
+        if (count > 0) {       
+	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, count);
+        }
+        $excode
+        return ret;
+}
+
 /*
  * Typemap for char **argout. 
  */
