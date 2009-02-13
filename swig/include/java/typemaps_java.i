@@ -84,6 +84,11 @@
 %typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) {
   /* %typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) */
   $1 = NULL;
+  if ($input == NULL)
+  {
+      SWIG_JavaException(jenv, SWIG_ValueError, "Received a NULL pointer.");
+      return $null;
+  }
   float *colorptr = 0;
   const jclass Color = jenv->FindClass("java/awt/Color");
   const jmethodID colors = jenv->GetMethodID(Color, "getRGBComponents",
