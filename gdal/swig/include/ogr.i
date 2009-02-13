@@ -714,6 +714,31 @@ public:
   }
   %clear (int *);
 
+ 
+
+#if defined(SWIGCSHARP)
+  %apply (int *intList) {const int *};
+  %apply (int *hasval) {int *count};
+  const int *GetFieldAsIntegerList(int id, int *count) {
+      return OGR_F_GetFieldAsIntegerList(self, id, count);
+  }
+  %clear (const int *);
+  %clear (int *count);
+  
+  %apply (double *doubleList) {const double *};
+  %apply (int *hasval) {int *count};
+  const double *GetFieldAsDoubleList(int id, int *count) {
+      return OGR_F_GetFieldAsDoubleList(self, id, count);
+  }
+  %clear (const double *);
+  %clear (int *count);
+
+  %apply (char **options) {char **};
+  char **GetFieldAsStringList(int id) {
+      return OGR_F_GetFieldAsStringList(self, id);
+  }
+  %clear (char **);
+#else
   void GetFieldAsIntegerList(int id, int *nLen, const int **pList) {
       *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
   }
@@ -725,6 +750,7 @@ public:
   void GetFieldAsStringList(int id, char ***pList) {
       *pList = OGR_F_GetFieldAsStringList(self, id);
   }
+#endif
   
   /* ---- IsFieldSet --------------------------- */
   bool IsFieldSet(int id) {
