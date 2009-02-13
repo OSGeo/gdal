@@ -36,5 +36,12 @@
   }
 %}
 
+%pragma(java) modulecode=%{
+
+    /* Uninstanciable class */
+    private gdalconst()
+    {
+    }
+%}
 
 %include typemaps_java.i
