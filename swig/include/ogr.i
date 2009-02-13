@@ -333,6 +333,7 @@ public:
     return OGR_Dr_DeleteDataSource( self, name );
   }
 
+%apply Pointer NONNULL {const char * cap};
   bool TestCapability (const char *cap) {
     return (OGR_Dr_TestCapability(self, cap) > 0);
   }
@@ -524,15 +525,16 @@ public:
     return OGR_L_SetNextByIndex(self, new_index);
   }
   
+%apply Pointer NONNULL {OGRFeatureShadow *feature};
   OGRErr SetFeature(OGRFeatureShadow *feature) {
     return OGR_L_SetFeature(self, feature);
   }
-  
 
   OGRErr CreateFeature(OGRFeatureShadow *feature) {
     return OGR_L_CreateFeature(self, feature);
   }
-  
+%clear OGRFeatureShadow *feature;
+
   OGRErr DeleteFeature(long fid) {
     return OGR_L_DeleteFeature(self, fid);
   }
@@ -573,9 +575,11 @@ public:
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CreateField;
 #endif
+%apply Pointer NONNULL {OGRFieldDefnShadow *field_def};
   OGRErr CreateField(OGRFieldDefnShadow* field_def, int approx_ok = 1) {
     return OGR_L_CreateField(self, field_def, approx_ok);
   }
+%clear OGRFieldDefnShadow *field_def;
   
   OGRErr StartTransaction() {
     return OGR_L_StartTransaction(self);
@@ -630,7 +634,8 @@ public:
 #ifndef SWIGJAVA
   %feature("kwargs") OGRFeatureShadow;
 #endif
-  OGRFeatureShadow( OGRFeatureDefnShadow *feature_def = 0 ) {
+%apply Pointer NONNULL {OGRFeatureDefnShadow *feature_def};
+  OGRFeatureShadow( OGRFeatureDefnShadow *feature_def ) {
       return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
 
@@ -659,9 +664,11 @@ public:
     return (OGRFeatureShadow*) OGR_F_Clone(self);
   }
   
+%apply Pointer NONNULL {OGRFeatureShadow *feature};
   bool Equal(OGRFeatureShadow *feature) {
     return (OGR_F_Equal(self, feature) > 0);
   }
+%clear OGRFeatureShadow *feature;
   
   int GetFieldCount() {
     return OGR_F_GetFieldCount(self);
@@ -934,9 +941,11 @@ public:
 #ifndef SWIGJAVA
   %feature("kwargs") SetFrom;
 #endif
+%apply Pointer NONNULL {OGRFeatureShadow *other};
   OGRErr SetFrom(OGRFeatureShadow *other, int forgiving=1) {
     return OGR_F_SetFrom(self, other, forgiving);
   }
+%clear OGRFeatureShadow *other;
   
   const char *GetStyleString() {
     return (const char*) OGR_F_GetStyleString(self);
@@ -1009,9 +1018,11 @@ public:
       return OGR_FD_GetFieldIndex(self, name);
   }
   
+%apply Pointer NONNULL {OGRFieldDefnShadow* defn};
   void AddFieldDefn(OGRFieldDefnShadow* defn) {
     OGR_FD_AddFieldDefn(self, defn);
   }
+%clear OGRFieldDefnShadow* defn;
   
   OGRwkbGeometryType GetGeomType() {
     return (OGRwkbGeometryType) OGR_FD_GetGeomType(self);
@@ -1438,6 +1449,7 @@ public:
     return (OGRGeometryShadow*) OGR_G_Buffer( self, distance, quadsecs );
   }
 
+%apply Pointer NONNULL {OGRGeometryShadow* other};
   %newobject Intersection;
   OGRGeometryShadow* Intersection( OGRGeometryShadow* other ) {
     return (OGRGeometryShadow*) OGR_G_Intersection( self, other );
@@ -1461,6 +1473,7 @@ public:
   double Distance( OGRGeometryShadow* other) {
     return OGR_G_Distance(self, other);
   }
+%clear OGRGeometryShadow* other;
   
   void Empty () {
     OGR_G_Empty(self);
@@ -1482,6 +1495,7 @@ public:
     return (OGR_G_IsRing(self) > 0);
   }  
   
+%apply Pointer NONNULL {OGRGeometryShadow* other};
   bool Intersect (OGRGeometryShadow* other) {
     return (OGR_G_Intersect(self, other) > 0);
   }
@@ -1513,14 +1527,19 @@ public:
   bool Overlaps (OGRGeometryShadow* other) {
     return (OGR_G_Overlaps(self, other) > 0);
   }
+%clear OGRGeometryShadow* other;
 
+%apply Pointer NONNULL {OSRSpatialReferenceShadow* reference};
   OGRErr TransformTo(OSRSpatialReferenceShadow* reference) {
     return OGR_G_TransformTo(self, reference);
   }
+%clear OSRSpatialReferenceShadow* reference;
   
+%apply Pointer NONNULL {OSRCoordinateTransformationShadow* trans};
   OGRErr Transform(OSRCoordinateTransformationShadow* trans) {
     return OGR_G_Transform(self, trans);
   }
+%clear OSRCoordinateTransformationShadow* trans;
   
   %newobject GetSpatialReference;
   OSRSpatialReferenceShadow* GetSpatialReference() {
