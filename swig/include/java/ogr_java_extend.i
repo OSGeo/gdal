@@ -14,6 +14,32 @@
  ******************************************************************************/
 
 %pragma(java) modulecode=%{
+
+    public static String[] GeneralCmdLineProcessor(String[] args, int nOptions)
+    {
+        java.util.Vector vArgs = new java.util.Vector();
+        int i;
+        for(i=0;i<args.length;i++)
+            vArgs.addElement(args[i]);
+
+        vArgs = GeneralCmdLineProcessor(vArgs, nOptions);
+        java.util.Enumeration eArgs = vArgs.elements();
+        args = new String[vArgs.size()];
+        i = 0;
+        while(eArgs.hasMoreElements())
+        {
+            String arg = (String)eArgs.nextElement();
+            args[i++] = arg;
+        }
+
+        return args;
+    }
+
+    public static String[] GeneralCmdLineProcessor(String[] args)
+    {
+        return GeneralCmdLineProcessor(args, 0);
+    }
+
     public static DataSource Open(String filename, boolean update)
     {
         return Open(filename, (update)?1:0);
