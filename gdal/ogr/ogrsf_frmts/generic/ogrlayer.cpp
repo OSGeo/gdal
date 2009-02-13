@@ -580,6 +580,7 @@ int OGR_L_TestCapability( OGRLayerH hLayer, const char *pszCap )
 
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_TestCapability", 0 );
+    VALIDATE_POINTER1( pszCap, "OGR_L_TestCapability", 0 );
 
     return ((OGRLayer *) hLayer)->TestCapability( pszCap );
 }
