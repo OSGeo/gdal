@@ -193,14 +193,21 @@ void GDALColorTable::SetColorEntry( int i, const GDALColorEntry * poEntry )
     if( i < 0 )
         return;
     
-    if( i >= static_cast<int>(aoEntries.size()) )
+    try
     {
-        GDALColorEntry oBlack;
-        oBlack.c1 = oBlack.c2 = oBlack.c3 = oBlack.c4 = 0;
-        aoEntries.resize(i+1, oBlack);
+        if( i >= static_cast<int>(aoEntries.size()) )
+        {
+            GDALColorEntry oBlack;
+            oBlack.c1 = oBlack.c2 = oBlack.c3 = oBlack.c4 = 0;
+            aoEntries.resize(i+1, oBlack);
+        }
+    
+        aoEntries[i] = *poEntry;
     }
-
-    aoEntries[i] = *poEntry;
+    catch(std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+    }
 }
 
 /************************************************************************/
@@ -212,6 +219,7 @@ void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i,
 
 {
     VALIDATE_POINTER0( hTable, "GDALSetColorEntry" );
+    VALIDATE_POINTER0( poEntry, "GDALSetColorEntry" );
 
     ((GDALColorTable *) hTable)->SetColorEntry( i, poEntry );
 }
