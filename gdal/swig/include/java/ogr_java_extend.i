@@ -15,6 +15,11 @@
 
 %pragma(java) modulecode=%{
 
+    /* Uninstanciable class */
+    private ogr()
+    {
+    }
+
     public static String[] GeneralCmdLineProcessor(String[] args, int nOptions)
     {
         java.util.Vector vArgs = new java.util.Vector();
