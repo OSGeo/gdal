@@ -887,6 +887,7 @@ int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCap )
 
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_TestCapability", 0 );
+    VALIDATE_POINTER1( pszCap, "OGR_DS_TestCapability", 0 );
 
     return ((OGRDataSource *) hDS)->TestCapability( pszCap );
 }
