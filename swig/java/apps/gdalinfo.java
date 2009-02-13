@@ -55,7 +55,7 @@ public class gdalinfo {
 	{
 		System.out
 				.println("Usage: gdalinfo [--help-general] [-mm] [-nogcp] [-nomd] "
-						+ "datasetname");
+						+ " [-checksum] datasetname");
 		System.exit(1);
 	}
 
@@ -74,16 +74,18 @@ public class gdalinfo {
 			boolean bComputeMinMax = false, bSample = false;
 			boolean bShowGCPs = true, bShowMetadata = true;
 			boolean bStats = false;
+                        boolean bComputeChecksum = false;
 			String pszFilename = null;
                         Vector papszFileList;
 
 			gdal.AllRegister();
 
+                        args = gdal.GeneralCmdLineProcessor(args);
+
 			if (args.length < 1) {
 				Usage();
 				System.exit(0);
 			}
-
 			/* -------------------------------------------------------------------- */
 			/*      Parse arguments.                                                */
 			/* -------------------------------------------------------------------- */
@@ -98,6 +100,8 @@ public class gdalinfo {
 					bShowGCPs = false;
 				else if (args[i].equals("-nomd"))
 					bShowMetadata = false;
+                                else if (args[i].equals("-checksum"))
+					bComputeChecksum = true;
 				else if (args[i].startsWith("-"))
 					Usage();
 				else if (pszFilename == null)
@@ -161,7 +165,7 @@ public class gdalinfo {
 				pszProjection = hDataset.GetProjectionRef();
 
 				hSRS = new SpatialReference(pszProjection);
-				if (hSRS != null) {
+				if (hSRS != null && pszProjection.length() != 0) {
 					String[] pszPrettyWkt = new String[1];
 
 					hSRS.ExportToPrettyWkt(pszPrettyWkt, 0);
@@ -251,6 +255,30 @@ public class gdalinfo {
 					System.out.println("  " + (String) keys.nextElement());
 				}
 			}
+                    
+                    /* -------------------------------------------------------------------- */
+                    /*      Report geolocation.                                             */
+                    /* -------------------------------------------------------------------- */
+                        papszMetadata = hDataset.GetMetadata_List("GEOLOCATION" );
+                        if (papszMetadata.size() > 0) {
+                            System.out.println( "Geolocation:" );
+                            Enumeration keys = papszMetadata.elements();
+                            while (keys.hasMoreElements()) {
+                                    System.out.println("  " + (String) keys.nextElement());
+                            }
+                        }
+                    
+                    /* -------------------------------------------------------------------- */
+                    /*      Report RPCs                                                     */
+                    /* -------------------------------------------------------------------- */
+                        papszMetadata = hDataset.GetMetadata_List("RPC" );
+                        if (papszMetadata.size() > 0) {
+                            System.out.println( "RPC Metadata:" );
+                            Enumeration keys = papszMetadata.elements();
+                            while (keys.hasMoreElements()) {
+                                    System.out.println("  " + (String) keys.nextElement());
+                            }
+                        }
 
 			/* -------------------------------------------------------------------- */
 			/*      Report corners.                                                 */
@@ -286,8 +314,13 @@ public class gdalinfo {
 				 System.out.println( "Got " + nCount + " samples." );
 				 }*/
 
+                                int[] blockXSize = new int[1];
+                                int[] blockYSize = new int[1];
+                                hBand.GetBlockSize(blockXSize, blockYSize);
 				System.out.println("Band "
 						+ (iBand+1)
+                                                + " Block="
+                                                + blockXSize[0] + "x" + blockYSize[0]
 						+ " Type="
 						+ gdal.GetDataTypeName(hBand.getDataType())
 						+ ", ColorInterp="
@@ -318,6 +351,11 @@ public class gdalinfo {
 				 dfMin, dfMax, dfMean, dfStdDev );
 				 }*/
 
+                                if ( bComputeChecksum)
+                                {
+                                    System.out.println( "  Checksum=" + hBand.Checksum());
+                                }
+
 				hBand.GetNoDataValue(pass1);
 				if(pass1[0] != null)
 				{
@@ -339,6 +377,24 @@ public class gdalinfo {
 								+ hOverview.getYSize());
 					}
 					System.out.print("\n");
+
+                                        if ( bComputeChecksum)
+                                        {
+                                            System.out.print( "  Overviews checksum: " );
+                                            for( iOverview = 0; 
+                                                iOverview < hBand.GetOverviewCount();
+                                                iOverview++ )
+                                            {
+                                                Band	hOverview;
+                            
+                                                if( iOverview != 0 )
+                                                    System.out.print( ", " );
+                            
+                                                hOverview = hBand.GetOverview(iOverview);
+                                                System.out.print( hOverview.Checksum());
+                                            }
+                                            System.out.print( "\n" );
+                                        }
 				}
 
 				/*if( GDALHasArbitraryOverviews( hBand ) )
@@ -346,6 +402,47 @@ public class gdalinfo {
 				 System.out.println( "  Overviews: arbitrary\n" );
 				 }*/
 
+
+                                int nMaskFlags = hBand.GetMaskFlags(  );
+                                if( (nMaskFlags & (gdalconstConstants.GMF_NODATA|gdalconstConstants.GMF_ALL_VALID)) == 0 )
+                                {
+                                    Band hMaskBand = hBand.GetMaskBand() ;
+                        
+                                    System.out.print( "  Mask Flags: " );
+                                    if( (nMaskFlags & gdalconstConstants.GMF_PER_DATASET) != 0 )
+                                        System.out.print( "PER_DATASET " );
+                                    if( (nMaskFlags & gdalconstConstants.GMF_ALPHA) != 0 )
+                                        System.out.print( "ALPHA " );
+                                    if( (nMaskFlags & gdalconstConstants.GMF_NODATA) != 0 )
+                                        System.out.print( "NODATA " );
+                                    if( (nMaskFlags & gdalconstConstants.GMF_ALL_VALID) != 0 )
+                                        System.out.print( "ALL_VALID " );
+                                    System.out.print( "\n" );
+                        
+                                    if( hMaskBand != null &&
+                                        hMaskBand.GetOverviewCount() > 0 )
+                                    {
+                                        int		iOverview;
+                        
+                                        System.out.print( "  Overviews of mask band: " );
+                                        for( iOverview = 0; 
+                                            iOverview < hMaskBand.GetOverviewCount();
+                                            iOverview++ )
+                                        {
+                                            Band	hOverview;
+                        
+                                            if( iOverview != 0 )
+                                                System.out.print( ", " );
+                        
+                                            hOverview = hMaskBand.GetOverview( iOverview );
+                                            System.out.print( 
+                                                    hOverview.getXSize() + "x" +
+                                                    hOverview.getYSize() );
+                                        }
+                                        System.out.print( "\n" );
+                                    }
+                                }
+                                
 				/*if( strlen(GDALGetRasterUnitType(hBand)) > 0 )
 				 {
 				 System.out.println( "  Unit Type: %s\n", GDALGetRasterUnitType(hBand) );
@@ -361,12 +458,12 @@ public class gdalinfo {
 				 System.out.println( "    %3d: %s\n", i, papszCategories[i] );
 				 }*/
 
-				hBand.GetScale(pass1);
-				if(pass1[0] != null) {
+				hBand.GetOffset(pass1);
+				if(pass1[0] != null && pass1[0].doubleValue() != 0) {
 					System.out.print("  Offset: " + pass1[0]);
 				}
-				hBand.GetOffset(pass1);
-				if(pass1[0] != null) {
+				hBand.GetScale(pass1);
+				if(pass1[0] != null && pass1[0].doubleValue() != 1) {
 					System.out.println(",   Scale:" + pass1[0]);
 				}
 
@@ -396,7 +493,8 @@ public class gdalinfo {
 
 			hDataset.delete();
 
-			//gdal.DestroyDriverManager();
+                        /* Optional */
+			gdal.GDALDestroyDriverManager();
 
 			System.exit(0);
 		}
