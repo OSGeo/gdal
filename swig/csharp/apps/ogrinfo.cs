@@ -171,7 +171,39 @@ class OGRInfo {
 				fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
 
 			if( feat.IsFieldSet( iField ) )
-				Console.WriteLine( feat.GetFieldAsString( iField ) );
+            {
+                if (fdef.GetFieldType() == FieldType.OFTStringList)
+                {
+                    string[] sList = feat.GetFieldAsStringList(iField);
+                    foreach (string s in sList)
+                    {
+                        Console.Write("\"" + s + "\" ");
+                    }
+                    Console.WriteLine();
+                }
+                else if (fdef.GetFieldType() == FieldType.OFTIntegerList)
+                {
+                    int count;
+                    int[] iList = feat.GetFieldAsIntegerList(iField, out count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        Console.Write(iList[i] + " ");
+                    }
+                    Console.WriteLine();
+                }
+                else if (fdef.GetFieldType() == FieldType.OFTRealList)
+                {
+                    int count;
+                    double[] iList = feat.GetFieldAsDoubleList(iField, out count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        Console.Write(iList[i].ToString() + " ");
+                    }
+                    Console.WriteLine();
+                }
+                else
+                    Console.WriteLine(feat.GetFieldAsString(iField));
+            }
 			else
 				Console.WriteLine( "(null)" );
             
