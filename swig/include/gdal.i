@@ -640,7 +640,14 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 // GCPsToGeoTransform
 
 
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+/* FIXME: other bindings should also use those typemaps to avoid memory leaks */
+%apply (char **options) {char ** papszArgv};
+%apply (char **out_ppsz_and_free) {(char **)};
+#else
 %apply (char **options) {char **};
+#endif
+
 #ifdef SWIGJAVA
 %inline %{
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
@@ -649,21 +656,23 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
     /* We must add a 'dummy' element in front of the real argument list */
     /* as Java doesn't include the binary name as the first */
     /* argument, as C does... */
-    char** papszArgvMod = CSLInsertString(CSLDuplicate(papszArgv), 0, "dummy");
+    char** papszArgvModBefore = CSLInsertString(CSLDuplicate(papszArgv), 0, "dummy");
+    char** papszArgvModAfter = papszArgvModBefore;
 
     nResArgCount = 
-      GDALGeneralCmdLineProcessor( CSLCount(papszArgvMod), &papszArgvMod, nOptions ); 
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgvModBefore), &papszArgvModAfter, nOptions ); 
+
+    CSLDestroy(papszArgvModBefore);
 
     if( nResArgCount <= 0 )
     {
-        CSLDestroy(papszArgvMod);
         return NULL;
     }
     else
     {
         /* Now, remove the first dummy element */
-        char** papszRet = CSLDuplicate(papszArgvMod + 1);
-        CSLDestroy(papszArgvMod);
+        char** papszRet = CSLDuplicate(papszArgvModAfter + 1);
+        CSLDestroy(papszArgvModAfter);
         return papszRet;
     }
   }
