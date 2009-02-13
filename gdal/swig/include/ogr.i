@@ -117,6 +117,7 @@ typedef enum
 using namespace std;
 
 #include "ogr_api.h"
+#include "ogr_p.h"
 #include "ogr_core.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -1670,6 +1671,60 @@ OGRDriverShadow* GetDriver(int driver_number) {
 }
 %}
 #endif
+
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+/* FIXME: other bindings should also use those typemaps to avoid memory leaks */
+%apply (char **options) {char ** papszArgv};
+%apply (char **out_ppsz_and_free) {(char **)};
+#else
+%apply (char **options) {char **};
+#endif
+
+#ifdef SWIGJAVA
+%inline %{
+  char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
+    int nResArgCount;
+    
+    /* We must add a 'dummy' element in front of the real argument list */
+    /* as Java doesn't include the binary name as the first */
+    /* argument, as C does... */
+    char** papszArgvModBefore = CSLInsertString(CSLDuplicate(papszArgv), 0, "dummy");
+    char** papszArgvModAfter = papszArgvModBefore;
+
+    nResArgCount = 
+      OGRGeneralCmdLineProcessor( CSLCount(papszArgvModBefore), &papszArgvModAfter, nOptions ); 
+
+    CSLDestroy(papszArgvModBefore);
+
+    if( nResArgCount <= 0 )
+    {
+        return NULL;
+    }
+    else
+    {
+        /* Now, remove the first dummy element */
+        char** papszRet = CSLDuplicate(papszArgvModAfter + 1);
+        CSLDestroy(papszArgvModAfter);
+        return papszRet;
+    }
+  }
+%}
+#else
+%inline %{
+  char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
+    int nResArgCount;
+
+    nResArgCount = 
+      OGRGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
+
+    if( nResArgCount <= 0 )
+        return NULL;
+    else
+        return papszArgv;
+  }
+%}
+#endif
+%clear char **;
 
 //************************************************************************
 //
