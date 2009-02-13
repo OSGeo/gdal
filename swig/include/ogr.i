@@ -745,12 +745,12 @@ public:
   }
   %clear (int *);
 
-#if definied(SWIGJAVA)
+#if defined(SWIGJAVA)
   retIntArray GetFieldAsIntegerList(int id, int *nLen, const int **pList) {
       *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
       return (retIntArray)*pList;
   }
-#else if definied(SWIGCSHARP)
+#elif defined(SWIGCSHARP)
   %apply (int *intList) {const int *};
   %apply (int *hasval) {int *count};
   const int *GetFieldAsIntegerList(int id, int *count) {
@@ -764,12 +764,12 @@ public:
   }
 #endif
 
-#if definied(SWIGJAVA)
+#if defined(SWIGJAVA)
   retDoubleArray GetFieldAsDoubleList(int id, int *nLen, const double **pList) {
       *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
       return (retDoubleArray)*pList;
   }
-#else if definied(SWIGCSHARP)
+#elif defined(SWIGCSHARP)
   %apply (double *doubleList) {const double *};
   %apply (int *hasval) {int *count};
   const double *GetFieldAsDoubleList(int id, int *count) {
@@ -783,13 +783,13 @@ public:
   }
 #endif
 
-#if definied(SWIGJAVA)
+#if defined(SWIGJAVA)
   %apply (char** retAsStringArrayNoFree) {(char**)};
   char** GetFieldAsStringList(int id) {
       return OGR_F_GetFieldAsStringList(self, id);
   }
   %clear char**;
-#else if definied(SWIGCSHARP)
+#elif defined(SWIGCSHARP)
   %apply (char **options) {char **};
   char **GetFieldAsStringList(int id) {
       return OGR_F_GetFieldAsStringList(self, id);
