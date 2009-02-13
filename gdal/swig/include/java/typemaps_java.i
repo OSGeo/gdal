@@ -824,18 +824,31 @@
   if($input != 0) {
     const jclass hashtable = jenv->FindClass("java/util/Hashtable");
     const jclass enumeration = jenv->FindClass("java/util/Enumeration");
+    const jclass stringClass = jenv->FindClass("java/lang/String");
     const jmethodID get = jenv->GetMethodID(hashtable, "get",
       "(Ljava/lang/Object;)Ljava/lang/Object;");
     const jmethodID keys = jenv->GetMethodID(hashtable, "keys",
-      "()Ljava/lang/Enumeration;");
+      "()Ljava/util/Enumeration;");
     const jmethodID hasMoreElements = jenv->GetMethodID(enumeration, 
       "hasMoreElements", "()Z");
-    const jmethodID getNextElement = jenv->GetMethodID(enumeration,
-      "getNextElement", "()Ljava/lang/Object;");
+    const jmethodID nextElement = jenv->GetMethodID(enumeration,
+      "nextElement", "()Ljava/lang/Object;");
     for (jobject keyset = jenv->CallObjectMethod($input, keys);
           jenv->CallBooleanMethod(keyset, hasMoreElements) == JNI_TRUE;) {
-      jstring key = (jstring)jenv->CallObjectMethod(keyset, getNextElement);
+      jstring key = (jstring)jenv->CallObjectMethod(keyset, nextElement);
+      if (key == NULL || !jenv->IsInstanceOf(key, stringClass))
+      {
+          CSLDestroy($1);
+          SWIG_JavaThrowException(jenv, SWIG_JavaIllegalArgumentException, "a key in the hashtable is not a string");
+          return $null;
+      }
       jstring value = (jstring)jenv->CallObjectMethod($input, get, key);
+      if (value != NULL && !jenv->IsInstanceOf(value, stringClass))
+      {
+          CSLDestroy($1);
+          SWIG_JavaThrowException(jenv, SWIG_JavaIllegalArgumentException, "a value in the hashtable is not a string");
+          return $null;
+      }
       const char *keyptr = jenv->GetStringUTFChars(key, 0);
       const char *valptr = jenv->GetStringUTFChars(value, 0);
       $1 = CSLAddNameValue($1, keyptr, valptr);
@@ -900,6 +913,7 @@
   if($input != 0) {
     const jclass vector = jenv->FindClass("java/util/Vector");
     const jclass enumeration = jenv->FindClass("java/util/Enumeration");
+    const jclass stringClass = jenv->FindClass("java/lang/String");
     const jmethodID elements = jenv->GetMethodID(vector, "elements",
       "()Ljava/util/Enumeration;");
     const jmethodID hasMoreElements = jenv->GetMethodID(enumeration, 
@@ -914,6 +928,12 @@
     for (jobject keys = jenv->CallObjectMethod($input, elements);
           jenv->CallBooleanMethod(keys, hasMoreElements) == JNI_TRUE;) {
       jstring value = (jstring)jenv->CallObjectMethod(keys, getNextElement);
+      if (value == NULL || !jenv->IsInstanceOf(value, stringClass))
+      {
+          CSLDestroy($1);
+          SWIG_JavaThrowException(jenv, SWIG_JavaIllegalArgumentException, "an element in the vector is not a string");
+          return $null;
+      }
       const char *valptr = jenv->GetStringUTFChars(value, 0);
       $1 = CSLAddString($1,  valptr);
       jenv->ReleaseStringUTFChars(value, valptr);
