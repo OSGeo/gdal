@@ -68,8 +68,7 @@ public class ogrinfo
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
-        // FIXME: should be ogr.GeneralCmdLineProcessor rather
-        args = gdal.GeneralCmdLineProcessor(args);
+        args = ogr.GeneralCmdLineProcessor(args);
 
         for(int i=0;i<args.length;i++)
         {
