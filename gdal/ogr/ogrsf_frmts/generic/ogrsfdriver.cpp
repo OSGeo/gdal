@@ -152,6 +152,7 @@ int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap )
 
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_TestCapability", 0 );
+    VALIDATE_POINTER1( pszCap, "OGR_Dr_TestCapability", 0 );
 
     return ((OGRSFDriver *) hDriver)->TestCapability( pszCap );
 }
