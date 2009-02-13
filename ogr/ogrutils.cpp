@@ -392,7 +392,6 @@ void OGRFree( void * pMemory )
  * commandline options:
  *  
  *  --formats: report all format drivers configured.
- *  --format [format]: report details of one format driver. 
  *  --optfile filename: expand an option file into the argument list. 
  *  --config key value: set system configuration option. 
  *  --debug [on/off/value]: set debug level.
@@ -401,7 +400,7 @@ void OGRFree( void * pMemory )
  * The argument array is replaced "in place" and should be freed with 
  * CSLDestroy() when no longer needed.  The typical usage looks something
  * like the following.  Note that the formats should be registered so that
- * the --formats and --format options will work properly.
+ * the --formats option will work properly.
  *
  *  int main( int argc, char ** argv )
  *  { 
