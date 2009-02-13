@@ -39,6 +39,14 @@
   }
 %}
 
+%pragma(java) modulecode=%{
+
+    /* Uninstanciable class */
+    private osr()
+    {
+    }
+%}
+
 /*
  *  Needed to make the Constructor and getCptr 'public' and not 'protected'.
  *   There is likely a better way to do this (with javamethodmodifiers) but
