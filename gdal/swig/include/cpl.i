@@ -49,9 +49,9 @@ typedef enum
     CPLError( msg_class, err_code, msg );
   }
 
-  CPLErr PushErrorHandler( char const * pszCallbackName = "CPLQuietErrorHandler" ) {
+  CPLErr PushErrorHandler( char const * pszCallbackName = NULL ) {
     CPLErrorHandler pfnHandler = NULL;
-    if( EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
+    if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
       pfnHandler = CPLQuietErrorHandler;
     else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
       pfnHandler = CPLDefaultErrorHandler;
