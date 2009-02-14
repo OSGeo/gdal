@@ -173,10 +173,17 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
 /*      Allocate rotating buffers.                                      */
 /* -------------------------------------------------------------------- */
-    pabyTMaskBuf = (GByte *) CPLMalloc(nXSize * nBufLines);
-    pabyFMaskBuf = (GByte *) CPLMalloc(nXSize * nBufLines);
+    pabyTMaskBuf = (GByte *) VSIMalloc2(nXSize, nBufLines);
+    pabyFMaskBuf = (GByte *) VSIMalloc2(nXSize, nBufLines);
 
-    paf3PassLineBuf = (float *) CPLCalloc(nXSize*nBufLines*3,sizeof(float));
+    paf3PassLineBuf = (float *) VSIMalloc3(nXSize, nBufLines, 3 * sizeof(float));
+    if (pabyTMaskBuf == NULL || pabyFMaskBuf == NULL || paf3PassLineBuf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Could not allocate enough memory for temporary buffers");
+        eErr = CE_Failure;
+        goto end;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Process rotating buffers.                                       */
@@ -309,6 +316,7 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
+end:
     CPLFree( pabyTMaskBuf );
     CPLFree( pabyFMaskBuf );
     CPLFree( paf3PassLineBuf );
@@ -486,16 +494,27 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     float   *pafLastValue, *pafThisValue, *pafScanline, *pafTopDownValue;
     GByte   *pabyMask, *pabyFiltMask;
     int     iX;
+    int     iY;
 
-    panLastY = (GUInt32 *) CPLCalloc(nXSize,4);
-    panThisY = (GUInt32 *) CPLCalloc(nXSize,4);
-    panTopDownY = (GUInt32 *) CPLCalloc(nXSize,4);
-    pafLastValue = (float *) CPLCalloc(nXSize,sizeof(float));
-    pafThisValue = (float *) CPLCalloc(nXSize,sizeof(float));
-    pafTopDownValue = (float *) CPLCalloc(nXSize,sizeof(float));
-    pafScanline = (float *) CPLCalloc(nXSize,sizeof(float));
-    pabyMask = (GByte *) CPLCalloc(nXSize,1);
-    pabyFiltMask = (GByte *) CPLCalloc(nXSize,1);
+    panLastY = (GUInt32 *) VSICalloc(nXSize,sizeof(GUInt32));
+    panThisY = (GUInt32 *) VSICalloc(nXSize,sizeof(GUInt32));
+    panTopDownY = (GUInt32 *) VSICalloc(nXSize,sizeof(GUInt32));
+    pafLastValue = (float *) VSICalloc(nXSize,sizeof(float));
+    pafThisValue = (float *) VSICalloc(nXSize,sizeof(float));
+    pafTopDownValue = (float *) VSICalloc(nXSize,sizeof(float));
+    pafScanline = (float *) VSICalloc(nXSize,sizeof(float));
+    pabyMask = (GByte *) VSICalloc(nXSize,1);
+    pabyFiltMask = (GByte *) VSICalloc(nXSize,1);
+    if (panLastY == NULL || panThisY == NULL || panTopDownY == NULL ||
+        pafLastValue == NULL || pafThisValue == NULL || pafTopDownValue == NULL ||
+        pafScanline == NULL || pabyMask == NULL || pabyFiltMask == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Could not allocate enough memory for temporary buffers");
+
+        eErr = CE_Failure;
+        goto end;
+    }
 
     for( iX = 0; iX < nXSize; iX++ )
     {
@@ -507,7 +526,6 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /*      known value" for each column and writing it out to the work     */
 /*      files.                                                          */
 /* ==================================================================== */
-    int     iY;
     
     for( iY = 0; iY < nYSize && eErr == CE_None; iY++ )
     {
@@ -787,8 +805,19 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Close and clean up temporary files.                             */
+/*      Close and clean up temporary files. Free working buffers        */
 /* -------------------------------------------------------------------- */
+end:
+    CPLFree(panLastY);
+    CPLFree(panThisY);
+    CPLFree(panTopDownY);
+    CPLFree(pafLastValue);
+    CPLFree(pafThisValue);
+    CPLFree(pafTopDownValue);
+    CPLFree(pafScanline);
+    CPLFree(pabyMask);
+    CPLFree(pabyFiltMask);
+
     GDALClose( hYDS );
     GDALClose( hValDS );
     GDALClose( hFiltMaskDS );
