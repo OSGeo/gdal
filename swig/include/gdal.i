@@ -293,9 +293,15 @@ struct GDAL_GCP {
   char *Id;
 %immutable;
 
+#ifdef SWIGJAVA
+  GDAL_GCP( double x, double y, double z,
+            double pixel, double line,
+            const char *info, const char *id) {
+#else
   GDAL_GCP( double x = 0.0, double y = 0.0, double z = 0.0,
             double pixel = 0.0, double line = 0.0,
             const char *info = "", const char *id = "" ) {
+#endif
     GDAL_GCP *self = (GDAL_GCP*) CPLMalloc( sizeof( GDAL_GCP ) );
     self->dfGCPX = x;
     self->dfGCPY = y;
