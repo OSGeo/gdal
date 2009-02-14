@@ -75,6 +75,17 @@ import org.gdal.osr.SpatialReference;
 
 %typemap(javacode) OGRDataSourceShadow %{
 
+  public boolean equals(Object obj) {
+    boolean equal = false;
+    if (obj instanceof $javaclassname)
+      equal = ((($javaclassname)obj).swigCPtr == this.swigCPtr);
+    return equal;
+  }
+
+  public int hashCode() {
+     return (int)swigCPtr;
+  }
+
   public Layer GetLayer(int index)
   {
       return GetLayerByIndex(index);
@@ -101,11 +112,22 @@ import org.gdal.osr.SpatialReference;
     parentReference = reference;
   }
 
+  public boolean equals(Object obj) {
+    boolean equal = false;
+    if (obj instanceof $javaclassname)
+      equal = ((($javaclassname)obj).swigCPtr == this.swigCPtr);
+    return equal;
+  }
+
+  public int hashCode() {
+     return (int)swigCPtr;
+  }
+
   public int GetExtent(double[] argout, boolean force)
   {
       return GetExtent(argout, (force) ? 1 : 0);
   }
-  
+
   public double[] GetExtent(boolean force)
   {
       double[] argout = new double[4];
