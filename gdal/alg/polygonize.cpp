@@ -493,6 +493,9 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                 void * pProgressArg )
 
 {
+    VALIDATE_POINTER1( hSrcBand, "GDALPolygonize", CE_Failure );
+    VALIDATE_POINTER1( hOutLayer, "GDALPolygonize", CE_Failure );
+
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 

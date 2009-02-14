@@ -386,6 +386,8 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                 void * pProgressArg )
 
 {
+    VALIDATE_POINTER1( hTargetBand, "GDALFillNodata", CE_Failure );
+
     int nXSize = GDALGetRasterBandXSize( hTargetBand );
     int nYSize = GDALGetRasterBandYSize( hTargetBand );
     CPLErr eErr = CE_None;

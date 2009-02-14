@@ -189,6 +189,9 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
                  void * pProgressArg )
 
 {
+    VALIDATE_POINTER1( hSrcBand, "GDALSieveFilter", CE_Failure );
+    VALIDATE_POINTER1( hDstBand, "GDALSieveFilter", CE_Failure );
+
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
