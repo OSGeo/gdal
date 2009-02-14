@@ -62,14 +62,12 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 static CPLErr 
-GPMaskImageData( GDALRasterBandH hMaskBand, int iY, int nXSize, 
+GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine, int iY, int nXSize, 
                  GInt32 *panImageLine )
 
 {
-    GByte *pabyMaskLine;
     CPLErr eErr;
 
-    pabyMaskLine = (GByte *) CPLMalloc(nXSize);
     eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1, 
                          pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
     if( eErr == CE_None )
@@ -81,8 +79,6 @@ GPMaskImageData( GDALRasterBandH hMaskBand, int iY, int nXSize,
                 panImageLine[i] = GP_NODATA_MARKER;
         }
     }
-
-    CPLFree( pabyMaskLine );
 
     return eErr;
 }
@@ -201,11 +197,27 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     CPLErr eErr = CE_None;
     int nXSize = GDALGetRasterBandXSize( hSrcBand );
     int nYSize = GDALGetRasterBandYSize( hSrcBand );
-    GInt32 *panLastLineVal = (GInt32 *) CPLMalloc(4 * nXSize);
-    GInt32 *panThisLineVal = (GInt32 *) CPLMalloc(4 * nXSize);
-    GInt32 *panLastLineId =  (GInt32 *) CPLMalloc(4 * nXSize);
-    GInt32 *panThisLineId =  (GInt32 *) CPLMalloc(4 * nXSize);
-    GInt32 *panThisLineWriteVal = (GInt32 *) CPLMalloc(4 * nXSize);
+    GInt32 *panLastLineVal = (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
+    GInt32 *panThisLineVal = (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
+    GInt32 *panLastLineId =  (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
+    GInt32 *panThisLineId =  (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
+    GInt32 *panThisLineWriteVal = (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
+    GByte *pabyMaskLine = (hMaskBand != NULL) ? (GByte *) VSIMalloc(nXSize) : NULL;
+    if (panLastLineVal == NULL || panThisLineVal == NULL ||
+        panLastLineId == NULL || panThisLineId == NULL ||
+        panThisLineWriteVal == NULL ||
+        (hMaskBand != NULL && pabyMaskLine == NULL))
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Could not allocate enough memory for temporary buffers");
+        CPLFree( panThisLineId );
+        CPLFree( panLastLineId );
+        CPLFree( panThisLineVal );
+        CPLFree( panLastLineVal );
+        CPLFree( panThisLineWriteVal );
+        CPLFree( pabyMaskLine );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      The first pass over the raster is only used to build up the     */
@@ -224,7 +236,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
             panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
         
         if( eErr == CE_None && hMaskBand != NULL )
-            eErr = GPMaskImageData( hMaskBand, iY, nXSize, panThisLineVal );
+            eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize, panThisLineVal );
 
         if( iY == 0 )
             oFirstEnum.ProcessLine( 
@@ -317,7 +329,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
                              panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
 
         if( eErr == CE_None && hMaskBand != NULL )
-            eErr = GPMaskImageData( hMaskBand, iY, nXSize, panThisLineVal );
+            eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize, panThisLineVal );
 
         if( eErr != CE_None )
             continue;
@@ -478,7 +490,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         memcpy( panThisLineWriteVal, panThisLineVal, 4 * nXSize );
 
         if( eErr == CE_None && hMaskBand != NULL )
-            eErr = GPMaskImageData( hMaskBand, iY, nXSize, panThisLineVal );
+            eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize, panThisLineVal );
 
         if( eErr != CE_None )
             continue;
@@ -549,6 +561,8 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     CPLFree( panLastLineId );
     CPLFree( panThisLineVal );
     CPLFree( panLastLineVal );
+    CPLFree( panThisLineWriteVal );
+    CPLFree( pabyMaskLine );
 
     return eErr;
 }
