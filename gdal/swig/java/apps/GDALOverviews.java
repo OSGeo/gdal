@@ -5,11 +5,12 @@
  * Project:  GDAL Java Interface
  * Purpose:  A sample app to create GDAL raster overviews.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-
+ *
  * Port from GDALOverviews.cs by Tamas Szekeres
-
+ *
  ******************************************************************************
  * Copyright (c) 2009, Even Rouault
+ * Copyright (c) 2007, Tamas Szekeres
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
