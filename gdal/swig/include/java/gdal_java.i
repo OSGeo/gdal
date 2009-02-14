@@ -70,6 +70,24 @@
     }
 %}
 
+%typemap(javacode) GDAL_GCP %{
+  public GCP(double x, double y, double z, double pixel, double line)
+  {
+      this(x, y, z, pixel, line, "", "");
+  }
+
+  public GCP(double x, double y, double pixel, double line, String info, String id)
+  {
+      this(x, y, 0.0, pixel, line, info, id);
+  }
+
+  public GCP(double x, double y, double pixel, double line)
+  {
+      this(x, y, 0.0, pixel, line, "", "");
+  }
+%}
+
+
 %typemap(javaimports) GDALDriverShadow %{
 import java.util.Vector;
 import org.gdal.gdalconst.gdalconstConstants;
