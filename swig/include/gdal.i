@@ -324,6 +324,8 @@ struct GDAL_GCP {
 
 } /* extend */
 }; /* GDAL_GCP */
+
+%apply Pointer NONNULL {GDAL_GCP *h};
 %inline %{
 
 double GDAL_GCP_GCPX_get( GDAL_GCP *h ) {
@@ -426,6 +428,7 @@ void GDAL_GCP_set_Id( GDAL_GCP *h, const char * val ) {
 }
 
 %} //%inline 
+%clear GDAL_GCP *h;
 
 #ifdef SWIGJAVA
 %rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
@@ -504,17 +507,17 @@ void GDALSetCacheMax( int nBytes );
     
 int GDALGetCacheUsed();
 
-int GDALGetDataTypeSize( GDALDataType );
+int GDALGetDataTypeSize( GDALDataType eDataType );
 
-int GDALDataTypeIsComplex( GDALDataType );
+int GDALDataTypeIsComplex( GDALDataType eDataType );
 
-const char *GDALGetDataTypeName( GDALDataType );
+const char *GDALGetDataTypeName( GDALDataType eDataType );
 
-GDALDataType GDALGetDataTypeByName( const char * );
+GDALDataType GDALGetDataTypeByName( const char * pszDataTypeName );
 
-const char *GDALGetColorInterpretationName( GDALColorInterp );
+const char *GDALGetColorInterpretationName( GDALColorInterp eColorInterp );
 
-const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
+const char *GDALGetPaletteInterpretationName( GDALPaletteInterp ePaletteInterp );
 
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *request};
@@ -531,15 +534,15 @@ const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
 const char *GDALDecToDMS( double, const char *, int = 2 );
 #endif
 
-double GDALPackedDMSToDec( double );
+double GDALPackedDMSToDec( double dfPacked );
 
-double GDALDecToPackedDMS( double );
+double GDALDecToPackedDMS( double dfDec );
 
 
 #if defined(SWIGCSHARP) || defined(SWIGJAVA)
 %newobject CPLParseXMLString;
 #endif
-CPLXMLNode *CPLParseXMLString( char * );
+CPLXMLNode *CPLParseXMLString( char * pszXMLString );
 
 char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 
