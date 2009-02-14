@@ -186,11 +186,50 @@ def sieve_4():
     else:
         return 'success' 
 
+
+###############################################################################
+# Same as sieve_1, but we provide a mask band
+# This should yield the same result as we use an opaque band
+
+def sieve_5():
+
+    try:
+        x = gdal.SieveFilter
+    except:
+        return 'skip'
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    src_ds = gdal.Open('data/sieve_src.grd')
+    src_band = src_ds.GetRasterBand(1)
+    
+    dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte )
+    dst_band = dst_ds.GetRasterBand(1)
+    
+    gdal.SieveFilter( src_band, dst_band.GetMaskBand(), dst_band, 2, 4 )
+
+    cs_expected = 364
+    cs = dst_band.Checksum()
+    
+    dst_band = None
+    dst_ds = None
+
+    if cs == cs_expected \
+       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+        drv.Delete( 'tmp/sieve_1.tif' )
+    
+    if cs != cs_expected:
+        print 'Got: ', cs
+        gdaltest.post_reason( 'got wrong checksum' )
+        return 'fail'
+    else:
+        return 'success' 
+
 gdaltest_list = [
     sieve_1,
     sieve_2,
     sieve_3,
-    sieve_4
+    sieve_4,
+    sieve_5
     ]
 
 if __name__ == '__main__':
