@@ -443,10 +443,10 @@ public class gdalinfo {
                                     }
                                 }
                                 
-				/*if( strlen(GDALGetRasterUnitType(hBand)) > 0 )
-				 {
-				 System.out.println( "  Unit Type: %s\n", GDALGetRasterUnitType(hBand) );
-				 }*/
+				if( hBand.GetUnitType() != null && hBand.GetUnitType().length() > 0)
+				{
+				     System.out.println( "  Unit Type: " + hBand.GetUnitType() );
+				}
 
 				/*if( GDALGetRasterCategoryNames(hBand) != null )
 				 {
