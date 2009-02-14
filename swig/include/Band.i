@@ -119,6 +119,10 @@ public:
     return GDALSetRasterNoDataValue( self, d );
   }
   
+  const char* GetUnitType() {
+      return GDALGetRasterUnitType( self );
+  }
+  
   %apply (char **options) { (char **) };
   char** GetRasterCategoryNames( ) {
     return GDALGetRasterCategoryNames( self );
