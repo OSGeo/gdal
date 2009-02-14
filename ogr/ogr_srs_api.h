@@ -30,6 +30,7 @@
 #ifndef _OGR_SRS_API_H_INCLUDED
 #define _OGR_SRS_API_H_INCLUDED
 
+#ifndef SWIG
 #include "ogr_core.h"
 
 CPL_C_START
@@ -79,6 +80,8 @@ typedef enum {
     ODT_LD_Min=10000,
     ODT_LD_Max=32767
 } OGRDatumType; 
+
+#endif // ndef SWIG
 
 /* ==================================================================== */
 /*      Some standard WKT geographic coordinate systems.                */
@@ -235,6 +238,7 @@ typedef enum {
 #define SRS_WGS84_SEMIMAJOR     6378137.0                                
 #define SRS_WGS84_INVFLATTENING 298.257223563
 
+#ifndef SWIG
 /* -------------------------------------------------------------------- */
 /*      C Wrappers for C++ objects and methods.                         */
 /* -------------------------------------------------------------------- */
@@ -647,5 +651,7 @@ int CPL_DLL OPTGetParameterInfo( const char * pszProjectionMethod,
                                  double *pdfDefaultValue );
 
 CPL_C_END
+
+#endif /* ndef SWIG */
 
 #endif /* ndef _OGR_SRS_API_H_INCLUDED */
