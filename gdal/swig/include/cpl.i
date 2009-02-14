@@ -148,13 +148,13 @@ CPLErr CPLGetLastErrorType();
 
 char const *CPLGetLastErrorMsg();
 
-void CPLPushFinderLocation( const char * );
+void CPLPushFinderLocation( const char * pszLocation );
 
 void CPLPopFinderLocation();
 
 void CPLFinderClean();
 
-const char * CPLFindFile( const char *, const char * );
+const char * CPLFindFile( const char *pszClass, const char *pszBasename );
 
 #if defined(SWIGPYTHON) || defined (SWIGJAVA)
 %apply (char **out_ppsz_and_free) {char **};
@@ -162,12 +162,12 @@ const char * CPLFindFile( const char *, const char * );
 /* FIXME: wrong typemap. VSIReadDir() return should be CSLDestroy'ed */
 %apply (char **options) {char **};
 #endif
-char **VSIReadDir( const char * );
+char **VSIReadDir( const char * pszDirName );
 %clear char **;
 
-void CPLSetConfigOption( const char *, const char * );
+void CPLSetConfigOption( const char * pszKey, const char * pszValue );
 
-const char * CPLGetConfigOption( const char *, const char * );
+const char * CPLGetConfigOption( const char * pszKey, const char * pszDefault );
 
 /* Provide hooks to hex encoding methods */
 #ifdef SWIGJAVA
