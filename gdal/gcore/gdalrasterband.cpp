@@ -1354,15 +1354,7 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
 /************************************************************************/
 
 /** 
- * Fill this band with a constant value. Set \a dfImaginaryValue to
- * zero non-complex rasters.
- * 
- * @param dfRealvalue Real component of fill value
- * @param dfImaginaryValue Imaginary component of fill value
- * 
  * @see GDALRasterBand::Fill()
- * 
- * @return CE_Failure if the write fails, otherwise CE_None
  */
 CPLErr CPL_STDCALL GDALFillRaster(GDALRasterBandH hBand, double dfRealValue, 
 		      double dfImaginaryValue)
@@ -2079,6 +2071,10 @@ GDALRasterBand *GDALRasterBand::GetRasterSampleOverview( int nDesiredSamples )
 /*                    GDALGetRasterSampleOverview()                     */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetRasterSampleOverview()
+ */
+
 GDALRasterBandH CPL_STDCALL 
 GDALGetRasterSampleOverview( GDALRasterBandH hBand, int nDesiredSamples )
 
@@ -2174,6 +2170,10 @@ double GDALRasterBand::GetOffset( int *pbSuccess )
 /*                        GDALGetRasterOffset()                         */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetOffset()
+ */
+
 double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
 
 {
@@ -2210,6 +2210,10 @@ CPLErr GDALRasterBand::SetOffset( double dfNewOffset )
 /************************************************************************/
 /*                        GDALSetRasterOffset()                         */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::SetOffset()
+ */
 
 CPLErr CPL_STDCALL 
 GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset )
@@ -2258,6 +2262,10 @@ double GDALRasterBand::GetScale( int *pbSuccess )
 /*                         GDALGetRasterScale()                         */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetScale()
+ */
+
 double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
 
 {
@@ -2294,6 +2302,10 @@ CPLErr GDALRasterBand::SetScale( double dfNewScale )
 /************************************************************************/
 /*                        GDALSetRasterScale()                          */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::SetScale()
+ */
 
 CPLErr CPL_STDCALL 
 GDALSetRasterScale( GDALRasterBandH hBand, double dfNewOffset )
@@ -3025,6 +3037,10 @@ CPLErr
 /*                      GDALGetDefaultHistogram()                       */
 /************************************************************************/
 
+/**
+  * @see GDALRasterBand::GetDefaultHistogram()
+  */
+
 CPLErr CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand, 
                                 double *pdfMin, double *pdfMax, 
                                 int *pnBuckets, int **ppanHistogram, 
@@ -3093,6 +3109,11 @@ CPLErr GDALRasterBand::AdviseRead(
 /************************************************************************/
 /*                        GDALRasterAdviseRead()                        */
 /************************************************************************/
+
+
+/**
+ * @see GDALRasterBand::AdviseRead()
+ */
 
 CPLErr CPL_STDCALL 
 GDALRasterAdviseRead( GDALRasterBandH hRB, 
@@ -3212,6 +3233,10 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
 /************************************************************************/
 /*                      GDALGetRasterStatistics()                       */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetStatistics()
+ */
 
 CPLErr CPL_STDCALL GDALGetRasterStatistics( 
         GDALRasterBandH hBand, int bApproxOK, int bForce, 
@@ -3596,6 +3621,10 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /*                    GDALComputeRasterStatistics()                     */
 /************************************************************************/
 
+/**
+  * @see GDALRasterBand::ComputeStatistics()
+  */
+
 CPLErr CPL_STDCALL GDALComputeRasterStatistics( 
         GDALRasterBandH hBand, int bApproxOK, 
         double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev,
@@ -3661,6 +3690,10 @@ CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax,
 /************************************************************************/
 /*                      GDALSetRasterStatistics()                       */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::SetStatistics()
+ */
 
 CPLErr CPL_STDCALL GDALSetRasterStatistics( 
         GDALRasterBandH hBand,  
@@ -3986,25 +4019,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 /************************************************************************/
 
 /**
- * Compute the min/max values for a band.
- * 
- * If approximate is OK, then the band's GetMinimum()/GetMaximum() will
- * be trusted.  If it doesn't work, a subsample of blocks will be read to
- * get an approximate min/max.  If the band has a nodata value it will
- * be excluded from the minimum and maximum.
- *
- * If bApprox is FALSE, then all pixels will be read and used to compute
- * an exact range.
- *
- * This method is the same as the method GDALRasterBand::ComputeRasterMinMax().
- * 
- * @param hBand the band to operate on.
- * @param bApproxOK TRUE if an approximate (faster) answer is OK, otherwise
- * FALSE.
- * @param adfMinMax the array in which the minimum (adfMinMax[0]) and the
- * maximum (adfMinMax[1]) are returned.
- *
- * @return CE_None on success or CE_Failure on failure.
+ * @see GDALRasterBand::ComputeRasterMinMax()
  */
 
 void CPL_STDCALL 
@@ -4036,6 +4051,10 @@ CPLErr GDALRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 /************************************************************************/
 /*                      GDALSetDefaultHistogram()                       */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::SetDefaultHistogram()
+ */
 
 CPLErr CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand, 
                                             double dfMin, double dfMax, 
@@ -4071,6 +4090,10 @@ const GDALRasterAttributeTable *GDALRasterBand::GetDefaultRAT()
 /************************************************************************/
 /*                         GDALGetDefaultRAT()                          */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetDefaultRAT()
+ */
 
 GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
 
@@ -4112,6 +4135,10 @@ CPLErr GDALRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
 /*                         GDALSetDefaultRAT()                          */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GDALSetDefaultRAT()
+ */
+
 CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
                                       GDALRasterAttributeTableH hRAT )
 
@@ -4127,6 +4154,38 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
 /*                            GetMaskBand()                             */
 /************************************************************************/
 
+/**
+ * Return the mask band associated with the band.
+ *
+ * The GDALRasterBand class includes a default implementation of GetMaskBand() that
+ * returns one of four default implementations :
+ * <ul>
+ * <li>If a corresponding .msk file exists it will be used for the mask band.</li>
+ * <li>If the dataset has a NODATA_VALUES metadata item, an instance of the
+ *     new GDALNoDataValuesMaskBand class will be returned.
+ *     GetMaskFlags() will return GMF_NODATA | GMF_PER_DATASET. @since GDAL 1.6.0</li>
+ * <li>If the band has a nodata value set, an instance of the new
+ *     GDALNodataMaskRasterBand class will be returned.
+ *     GetMaskFlags() will return GMF_NODATA.</li>
+ * <li>If there is no nodata value, but the dataset has an alpha band that seems
+ *     to apply to this band (specific rules yet to be determined) and that is
+ *     of type GDT_Byte then that alpha band will be returned, and the flags
+ *     GMF_PER_DATASET and GMF_ALPHA will be returned in the flags.</li>
+ * <li>If neither of the above apply, an instance of the new GDALAllValidRasterBand
+ *     class will be returned that has 255 values for all pixels.
+ *     The null flags will return GMF_ALL_VALID.</li>
+ * </ul>
+ *
+ * Note that the GetMaskBand() should always return a GDALRasterBand mask, even if it is only
+ * an all 255 mask with the flags indicating GMF_ALL_VALID. 
+ *
+ * @return a valid mask band.
+ *
+ * @since GDAL 1.5.0
+ *
+ * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ *
+ */
 GDALRasterBand *GDALRasterBand::GetMaskBand()
 
 {
@@ -4257,6 +4316,10 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 /*                          GDALGetMaskBand()                           */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetMaskBand()
+ */
+
 GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
 
 {
@@ -4268,6 +4331,47 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
 /*                            GetMaskFlags()                            */
 /************************************************************************/
 
+/**
+ * Return the status flags of the mask band associated with the band.
+ *
+ * The GetMaskFlags() method returns an bitwise OR-ed set of status flags with
+ * the following available definitions that may be extended in the future:
+ * <ul>
+ * <li>GMF_ALL_VALID(0x01): There are no invalid pixels, all mask values will be 255.
+ *     When used this will normally be the only flag set.</li>
+ * <li>GMF_PER_DATASET(0x02): The mask band is shared between all bands on the dataset.</li>
+ * <li>GMF_ALPHA(0x04): The mask band is actually an alpha band and may have values
+ *     other than 0 and 255.</li>
+ * <li>GMF_NODATA(0x08): Indicates the mask is actually being generated from nodata values.
+ *     (mutually exclusive of GMF_ALPHA)</li>
+ * </ul>
+ *
+ * The GDALRasterBand class includes a default implementation of GetMaskBand() that
+ * returns one of four default implementations :
+ * <ul>
+ * <li>If a corresponding .msk file exists it will be used for the mask band.</li>
+ * <li>If the dataset has a NODATA_VALUES metadata item, an instance of the
+ *     new GDALNoDataValuesMaskBand class will be returned.
+ *     GetMaskFlags() will return GMF_NODATA | GMF_PER_DATASET. @since GDAL 1.6.0</li>
+ * <li>If the band has a nodata value set, an instance of the new
+ *     GDALNodataMaskRasterBand class will be returned.
+ *     GetMaskFlags() will return GMF_NODATA.</li>
+ * <li>If there is no nodata value, but the dataset has an alpha band that seems
+ *     to apply to this band (specific rules yet to be determined) and that is
+ *     of type GDT_Byte then that alpha band will be returned, and the flags
+ *     GMF_PER_DATASET and GMF_ALPHA will be returned in the flags.</li>
+ * <li>If neither of the above apply, an instance of the new GDALAllValidRasterBand
+ *     class will be returned that has 255 values for all pixels.
+ *     The null flags will return GMF_ALL_VALID.</li>
+ * </ul>
+ *
+ * @since GDAL 1.5.0
+ *
+ * @return a valid mask band.
+ *
+ * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ *
+ */
 int GDALRasterBand::GetMaskFlags()
 
 {
@@ -4284,6 +4388,10 @@ int GDALRasterBand::GetMaskFlags()
 /*                          GDALGetMaskFlags()                          */
 /************************************************************************/
 
+/**
+ * @see GDALRasterBand::GetMaskFlags()
+ */
+
 int CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand )
 
 {
@@ -4294,6 +4402,25 @@ int CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand )
 /************************************************************************/
 /*                           CreateMaskBand()                           */
 /************************************************************************/
+
+/**
+ * Adds a mask band to the current band
+ *
+ * The default implementation of the CreateMaskBand() method is implemented
+ * based on similar rules to the .ovr handling implemented using the
+ * GDALDefaultOverviews object. A TIFF file with the extension .msk will
+ * be created with the same basename as the original file, and it will have
+ * as many bands as the original image (or just one for GMF_PER_DATASET).
+ * The mask images will be deflate compressed tiled images with the same
+ * block size as the original image if possible.
+ *
+ * @since GDAL 1.5.0
+ *
+ * @return CE_None on success or CE_Failure on an error.
+ *
+ * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ *
+ */
 
 CPLErr GDALRasterBand::CreateMaskBand( int nFlags )
 
@@ -4310,6 +4437,10 @@ CPLErr GDALRasterBand::CreateMaskBand( int nFlags )
 /************************************************************************/
 /*                         GDALCreateMaskBand()                         */
 /************************************************************************/
+
+/**
+ * @see GDALRasterBand::CreateMaskBand()
+ */
 
 CPLErr CPL_STDCALL GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
 
