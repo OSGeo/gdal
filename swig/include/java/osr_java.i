@@ -67,6 +67,16 @@
 %}
 
 %typemap(javacode) OSRSpatialReferenceShadow %{
+  public boolean equals(Object obj) {
+    boolean equal = false;
+    if (obj instanceof $javaclassname)
+      equal = ((($javaclassname)obj).swigCPtr == this.swigCPtr);
+    return equal;
+  }
+
+  public int hashCode() {
+     return (int)swigCPtr;
+  }
 
   public String toString() {
     return __str__();
