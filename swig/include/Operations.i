@@ -122,6 +122,7 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
 /************************************************************************/
 /*                           ReprojectImage()                           */
 /************************************************************************/
+%apply Pointer NONNULL {GDALDatasetShadow *src_ds, GDALDatasetShadow *dst_ds};
 %inline %{
 CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          GDALDatasetShadow *dst_ds,
@@ -149,6 +150,7 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
     return err;
 }
 %} 
+%clear GDALDatasetShadow *src_ds, GDALDatasetShadow *dst_ds;
 
 /************************************************************************/
 /*                          ComputeProximity()                          */
@@ -156,6 +158,7 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
 #ifndef SWIGJAVA
 %feature( "kwargs" ) ComputeProximity;
 #endif
+%apply Pointer NONNULL {GDALRasterBandShadow *srcBand, GDALRasterBandShadow *proximityBand};
 %inline %{
 int  ComputeProximity( GDALRasterBandShadow *srcBand,
                        GDALRasterBandShadow *proximityBand,
@@ -169,6 +172,7 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
                                  callback, callback_data );
 }
 %} 
+%clear GDALRasterBandShadow *srcBand, GDALRasterBandShadow *proximityBand;
 
 /************************************************************************/
 /*                        RasterizeLayer()                              */
@@ -268,6 +272,7 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
 /*                             Polygonize()                             */
 /************************************************************************/
 
+%apply Pointer NONNULL {GDALRasterBandShadow *srcBand, OGRLayerShadow *outLayer};
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Polygonize;
 #endif
@@ -286,11 +291,13 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
                            options, callback, callback_data );
 }
 %} 
+%clear GDALRasterBandShadow *srcBand, OGRLayerShadow *outLayer;
 
 /************************************************************************/
 /*                             FillNodata()                             */
 /************************************************************************/
 
+%apply Pointer NONNULL {GDALRasterBandShadow *targetBand};
 #ifndef SWIGJAVA
 %feature( "kwargs" ) FillNodata;
 #endif
@@ -310,11 +317,13 @@ int  FillNodata( GDALRasterBandShadow *targetBand,
 			   callback, callback_data );
 }
 %} 
+%clear GDALRasterBandShadow *targetBand;
 
 /************************************************************************/
 /*                            SieveFilter()                             */
 /************************************************************************/
 
+%apply Pointer NONNULL {GDALRasterBandShadow *srcBand, GDALRasterBandShadow *dstBand};
 #ifndef SWIGJAVA
 %feature( "kwargs" ) SieveFilter;
 #endif
@@ -334,6 +343,7 @@ int  SieveFilter( GDALRasterBandShadow *srcBand,
                             options, callback, callback_data );
 }
 %} 
+%clear GDALRasterBandShadow *srcBand, GDALRasterBandShadow *dstBand;
 
 /************************************************************************/
 /*                        RegenerateOverviews()                         */
@@ -398,6 +408,7 @@ int  RegenerateOverview( GDALRasterBandShadow *srcBand,
 /************************************************************************/
 
 %newobject AutoCreateWarpedVRT;
+%apply Pointer NONNULL { GDALDatasetShadow *src_ds };
 %inline %{
 GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
                                         const char *src_wkt = 0,
@@ -416,6 +427,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
   
 }
 %}
+%clear GDALDatasetShadow *src_ds;
 
 /************************************************************************/
 /*                             Transformer                              */
