@@ -86,7 +86,8 @@ rayg          Ray Gardener                 DEM drivers, leveller, terragen
               rayg@daylongraphics.com
 
 rouault       Even Rouault                 NITF/RPFTOC, BNA, GPX, ADRG,
-                                           XPlane, GeoRSS, PostgreSQL
+                                           XPlane, GeoRSS, PostgreSQL,
+                                           swig java bindings
               even.rouault at mines-paris.org
 
 retsios       Bas Retsios                  ILWIS, GRIB
