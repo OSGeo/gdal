@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%include constraints.i
+
 #ifdef SWIGCSHARP
 typedef enum
 {
@@ -79,7 +81,7 @@ typedef enum
 %rename (find_file) CPLFindFile;
 %rename (read_dir) VSIReadDir;
 %rename (set_config_option) CPLSetConfigOption;
-%rename (get_config_option) CPLGetConfigOption;
+%rename (get_config_option) wrapper_CPLGetConfigOption;
 %rename (binary_to_hex) CPLBinaryToHex;
 %rename (hex_to_binary) CPLHexToBinary;
 #else
@@ -95,7 +97,7 @@ typedef enum
 %rename (FindFile) CPLFindFile;
 %rename (ReadDir) VSIReadDir;
 %rename (SetConfigOption) CPLSetConfigOption;
-%rename (GetConfigOption) CPLGetConfigOption;
+%rename (GetConfigOption) wrapper_CPLGetConfigOption;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
 
@@ -165,9 +167,16 @@ const char * CPLFindFile( const char *pszClass, const char *pszBasename );
 char **VSIReadDir( const char * pszDirName );
 %clear char **;
 
+%apply Pointer NONNULL {const char * pszKey};
 void CPLSetConfigOption( const char * pszKey, const char * pszValue );
 
-const char * CPLGetConfigOption( const char * pszKey, const char * pszDefault );
+%inline {
+const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDefault = NULL )
+{
+    return CPLGetConfigOption( pszKey, pszDefault );
+}
+}
+%clear const char * pszKey;
 
 /* Provide hooks to hex encoding methods */
 #ifdef SWIGJAVA
