@@ -1400,11 +1400,19 @@ public:
     return OGR_G_GetZ(self, point);
   } 
 
+#ifdef SWIGJAVA
+  void GetPoint(int iPoint, double argout[3]) {
+#else
   void GetPoint(int iPoint = 0, double argout[3] = NULL) {
+#endif
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, argout+2 );
   }
 
+#ifdef SWIGJAVA
+  void GetPoint_2D(int iPoint, double argout[2]) {
+#else
   void GetPoint_2D(int iPoint = 0, double argout[2] = NULL) {
+#endif
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, NULL );
   }
 
