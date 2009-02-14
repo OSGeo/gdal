@@ -144,9 +144,79 @@ import org.gdal.osr.SpatialReference;
 %}
 
 %typemap(javaimports) OGRGeometryShadow %{
+import org.gdal.ogr.ogr;
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;
 %}
+
+
+%typemap(javainterfaces) OGRGeometryShadow "Cloneable"
+
+%typemap(javacode) OGRGeometryShadow %{
+  private Object parentReference;
+
+  protected static long getCPtrAndDisown($javaclassname obj) {
+    if (obj != null) obj.swigCMemOwn= false;
+    obj.parentReference = null;
+    return getCPtr(obj);
+  }
+
+  /* Ensure that the GC doesn't collect any parent instance set from Java */
+  protected void addReference(Object reference) {
+    parentReference = reference;
+  }
+
+  public boolean equals(Object obj) {
+    boolean equal = false;
+    if (obj instanceof $javaclassname)
+      equal = Equal(($javaclassname)obj);
+    return equal;
+  }
+
+  public int hashCode() {
+     return (int)swigCPtr;
+  }
+
+  public Object clone()
+  {
+      return Clone();
+  }
+
+  public double[] GetPoint_2D(int iPoint)
+  {
+      double[] coords = new double[2];
+      GetPoint_2D(iPoint, coords);
+      return coords;
+  }
+
+  public double[] GetPoint(int iPoint)
+  {
+      double[] coords = new double[3];
+      GetPoint(iPoint, coords);
+      return coords;
+  }
+
+  public static Geometry CreateFromWkt(String wkt)
+  {
+      return ogr.CreateGeometryFromWkt(wkt);
+  }
+
+  public static Geometry CreateFromWkb(byte wkb[])
+  {
+      return ogr.CreateGeometryFromWkb(wkb);
+  }
+
+  public static Geometry CreateFromGML(String gml)
+  {
+      return ogr.CreateGeometryFromGML(gml);
+  }
+
+  public static Geometry CreateFromJson(String json)
+  {
+      return ogr.CreateGeometryFromJson(json);
+  }
+%}
+
 
 // Add a Java reference to prevent premature garbage collection and resulting use
 // of dangling C++ pointer. Intended for methods that return pointers or
