@@ -193,6 +193,14 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   }
 }
 
+%typemap(freearg) (int nList, int* pList)
+{
+  /* %typemap(freearg) (int nList, int* pList) */
+  if ($2) {
+    free((void*) $2);
+  }
+}
+
 /*
  *  Typemap for counted arrays of doubles <- PySequence
  */
