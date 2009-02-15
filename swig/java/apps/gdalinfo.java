@@ -7,6 +7,7 @@
  * Author:   Benjamin Collins, The MITRE Corporation
  *
  * ****************************************************************************
+ * Copyright (c) 2009, Even Rouault
  * Copyright (c) 1998, Frank Warmerdam
  * Copyright (c) 2006, The MITRE Corporation
  *
