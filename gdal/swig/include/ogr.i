@@ -1047,6 +1047,30 @@ public:
 
 %rename (FieldDefn) OGRFieldDefnShadow;
 
+%{
+    static int ValidateOGRFieldType(OGRFieldType field_type)
+    {
+        switch(field_type)
+        {
+            case OFTInteger:
+            case OFTIntegerList:
+            case OFTReal:
+            case OFTRealList:
+            case OFTString:
+            case OFTStringList:
+            case OFTBinary:
+            case OFTDate:
+            case OFTTime:
+            case OFTDateTime:
+                return TRUE;
+            default:
+                CPLError(CE_Failure, CPLE_IllegalArg, "Illegal field type value");
+                return FALSE;
+        }
+    }
+%}
+
+
 class OGRFieldDefnShadow {
   OGRFieldDefnShadow();
 public:
@@ -1061,7 +1085,10 @@ public:
 #endif
   OGRFieldDefnShadow( const char* name_null_ok="unnamed", 
                       OGRFieldType field_type=OFTString) {
-    return (OGRFieldDefnShadow*) OGR_Fld_Create(name_null_ok, field_type);
+    if (ValidateOGRFieldType(field_type))
+        return (OGRFieldDefnShadow*) OGR_Fld_Create(name_null_ok, field_type);
+    else
+        return NULL;
   }
 
   const char * GetName() {
@@ -1081,7 +1108,8 @@ public:
   }
 
   void SetType(OGRFieldType type) {
-    OGR_Fld_SetType(self, type);
+    if (ValidateOGRFieldType(type))
+        OGR_Fld_SetType(self, type);
   }
   
   OGRJustification GetJustify() {
@@ -1108,6 +1136,12 @@ public:
     OGR_Fld_SetPrecision(self, precision);
   }
 
+  const char * GetTypeName()
+  {
+      return OGR_GetFieldTypeName(OGR_Fld_GetType(self));
+  }
+
+  /* Should be static */
   const char * GetFieldTypeName(OGRFieldType type) {
     return OGR_GetFieldTypeName(type);
   }
