@@ -356,7 +356,6 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
         return "DateTime";
 
       default:
-        CPLAssert( FALSE );
         return "(unknown)";
     }
 }
