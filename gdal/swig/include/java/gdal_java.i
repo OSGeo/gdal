@@ -401,6 +401,45 @@ import org.gdal.gdalconst.gdalconstConstants;
     return ret;
   }
 
+%typemap(javaout) CPLXMLNode* getChild {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) CPLXMLNode* getNext {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) CPLXMLNode* GetXMLNode {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
+
+%typemap(javaout) CPLXMLNode* SearchXMLNode {
+    long cPtr = $jnicall;
+    $javaclassname ret = null;
+    if (cPtr != 0) {
+      ret = new $javaclassname(cPtr, $owner);
+      ret.addReference(this);
+    }
+    return ret;
+  }
 /************************************************************************/
 /*                       Stuff for progress callback                    */
 /************************************************************************/
