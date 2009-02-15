@@ -453,6 +453,12 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
             papoBands = (GDALRasterBand **)
                 VSIRealloc(papoBands, sizeof(GDALRasterBand*) *
                            MAX(nNewBand,nBands));
+        if (papoBands == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate band array");
+            return;
+        }
 
         for( i = nBands; i < nNewBand; i++ )
             papoBands[i] = NULL;
@@ -463,7 +469,12 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /* -------------------------------------------------------------------- */
 /*      Set the band.  Resetting the band is currently not permitted.   */
 /* -------------------------------------------------------------------- */
-    CPLAssert( papoBands[nNewBand-1] == NULL );
+    if( papoBands[nNewBand-1] != NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot set band %d as it is already set", nNewBand);
+        return;
+    }
 
     papoBands[nNewBand-1] = poBand;
 
@@ -560,12 +571,12 @@ int CPL_STDCALL GDALGetRasterYSize( GDALDatasetH hDataset )
 
  Fetch a band object for a dataset.
 
- Equivelent of the C function GDALGetRasterBand().
+ Equivalent of the C function GDALGetRasterBand().
 
  @param nBandId the index number of the band to fetch, from 1 to
                 GetRasterCount().
 
- @return the height in pixels of raster bands in this GDALDataset.
+ @return the nBandId th band object
 
 */
 
@@ -1481,6 +1492,8 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                   "  Buffer = %dx%d\n",
                   nXOff, nYOff, nXSize, nYSize, 
                   nBufXSize, nBufYSize );
+
+        return CE_None;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1498,7 +1511,20 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 
     if( panBandMap == NULL )
     {
-        panBandMap = (int *) CPLMalloc(sizeof(int) * nBandCount);
+        if (nBandCount > GetRasterCount())
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg, 
+                      "nBandCount cannot be greater than %d",
+                      GetRasterCount() );
+            return CE_Failure;
+        }
+        panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
+        if (panBandMap == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Out of memory while allocating band map array" );
+            return CE_Failure;
+        }
         for( i = 0; i < nBandCount; i++ )
             panBandMap[i] = i+1;
 
