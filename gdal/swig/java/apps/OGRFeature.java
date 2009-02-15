@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Name:     OGRFeature.java
  * Project:  OGR Java Interface
@@ -94,7 +94,7 @@ public class OGRFeature
 
             if ((i % 100000) == 0)
             {
-                /* Due to the fact that the Feature class has a dispose() method */
+                /* Due to the fact that the Feature class has a finalize() method */
                 /* the garbage collector will differ finalization. So we have to do */
                 /* wait that the cleanup thread has forced finalizations */
                 while(featureDefn.GetReferenceCount() > 100000)
