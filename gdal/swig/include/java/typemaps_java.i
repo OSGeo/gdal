@@ -20,6 +20,22 @@
 %include "arrays_java.i";
 %include "typemaps.i"
 
+%typemap(javabody) SWIGTYPE %{
+  private long swigCPtr;
+  protected boolean swigCMemOwn;
+
+  protected $javaclassname(long cPtr, boolean cMemoryOwn) {
+    if (cPtr == 0)
+        throw new RuntimeException();
+    swigCMemOwn = cMemoryOwn;
+    swigCPtr = cPtr;
+  }
+  
+  protected static long getCPtr($javaclassname obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+%}
+
 /* DISOWN implementation */
 %typemap(javacode) SWIGTYPE %{
   private Object parentReference;
@@ -383,7 +399,7 @@
   }
 
 /***************************************************
- * Typemaps for  (char **ignorechange)
+ * Typemaps for  (retStringAndCPLFree*)
  ***************************************************/
 %typemap(out) (retStringAndCPLFree*)
 {
