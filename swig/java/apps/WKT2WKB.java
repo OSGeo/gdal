@@ -5,9 +5,9 @@
  * Project:  GDAL Java Interface
  * Purpose:  A sample app for demonstrating the usage of ExportToWkb.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-
+ *
  * Port from WKT2WKB.cs by Tamas Szekeres
-
+ *
  ******************************************************************************
  * Copyright (c) 2009, Even Rouault
  * Copyright (c) 2007, Tamas Szekeres

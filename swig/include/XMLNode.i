@@ -59,15 +59,39 @@ typedef struct _CPLXMLNode
         return CPLParseXMLString( pszString );     
     }
 
+    CPLXMLNode(CPLXMLNodeType eType, const char *pszText )
+    {
+        return CPLCreateXMLNode(NULL, eType, pszText);
+    }
+
     ~CPLXMLNode() 
     {
         CPLDestroyXMLNode( self );
     }
     
+#ifdef SWIGJAVA
+    %newobject ParseXMLFile;
+    static CPLXMLNode* ParseXMLFile( const char *pszFilename )
+    {
+        return CPLParseXMLFile(pszFilename);
+    }
+#endif
+    
+#ifdef SWIGJAVA
+    retStringAndCPLFree *SerializeXMLTree( )
+#else
     char *SerializeXMLTree( )
+#endif
     {
         return CPLSerializeXMLTree( self );
     }
+
+#ifdef SWIGJAVA
+    retStringAndCPLFree * toString()
+    {
+        return CPLSerializeXMLTree( self );
+    }
+#endif
     
     CPLXMLNode *SearchXMLNode( const char *pszElement )
     {
@@ -85,6 +109,23 @@ typedef struct _CPLXMLNode
         return CPLGetXMLValue( self, pszPath, pszDefault );                    
     }
     
+    // for Java, I don't want to deal with ownerships issues
+    // so I just clone
+#ifdef SWIGJAVA
+    %apply Pointer NONNULL {CPLXMLNode *psChild};
+    void AddXMLChild( CPLXMLNode *psChild )
+    {
+        CPLAddXMLChild( self, CPLCloneXMLTree(psChild) );
+    }
+    %clear CPLXMLNode *psChild;
+
+    %apply Pointer NONNULL {CPLXMLNode *psNewSibling};
+    void AddXMLSibling( CPLXMLNode *psNewSibling )
+    {
+        CPLAddXMLSibling( self, CPLCloneXMLTree(psNewSibling) );
+    }
+    %clear CPLXMLNode *psNewSibling;
+#else
     void AddXMLChild( CPLXMLNode *psChild )
     {
         return CPLAddXMLChild( self, psChild );
@@ -110,6 +151,13 @@ typedef struct _CPLXMLNode
     CPLXMLNode *CloneXMLTree( CPLXMLNode *psTree )
     {
         return CPLCloneXMLTree( psTree );
+    }
+#endif
+    
+    %newobject Clone;
+    CPLXMLNode *Clone()
+    {
+        return CPLCloneXMLTree( self );
     }
     
     int SetXMLValue( const char *pszPath,
