@@ -31,6 +31,7 @@
  ****************************************************************************/
 
 import java.util.Vector;
+import java.util.StringTokenizer;
 
 import org.gdal.gdal.gdal;
 import org.gdal.ogr.ogr;
@@ -164,8 +165,8 @@ public class ogr2ogr
                     eGType = ogr.wkbMultiLineString;
                 else if( args[iArg+1].equalsIgnoreCase("MULTIPOLYGON") )
                     eGType = ogr.wkbMultiPolygon;
-                /*else if( args[iArg+1].equalsIgnoreCase("GEOMETRY25D") )
-                    eGType = ogr.wkbUnknown | ogr.wkb25DBit;*/
+                else if( args[iArg+1].equalsIgnoreCase("GEOMETRY25D") )
+                    eGType = ogr.wkbUnknown | ogr.wkb25DBit;
                 else if( args[iArg+1].equalsIgnoreCase("POINT25D") )
                     eGType = ogr.wkbPoint25D;
                 else if( args[iArg+1].equalsIgnoreCase("LINESTRING25D") )
@@ -228,8 +229,9 @@ public class ogr2ogr
             else if( args[iArg].equalsIgnoreCase("-select") && args[iArg+1] != null)
             {
                 pszSelect = args[++iArg];
-                /*papszSelFields = CSLTokenizeStringComplex(pszSelect, " ,", 
-                                                        false, false );*/
+                StringTokenizer tokenizer = new StringTokenizer(pszSelect, " ,");
+                while(tokenizer.hasMoreElements())
+                    papszSelFields.addElement(tokenizer.nextToken());
             }
             else if( args[iArg].equalsIgnoreCase("-segmentize") && iArg < args.length-1 )
             {
@@ -442,6 +444,8 @@ public class ogr2ogr
     /* -------------------------------------------------------------------- */
     /*      Close down.                                                     */
     /* -------------------------------------------------------------------- */
+        /* We must explicetely destroy the output dataset in order the file */
+        /* to be properly closed ! */
         poODS.delete();
         poDS.delete();
     }
@@ -738,7 +742,9 @@ public class ogr2ogr
                         poFDefn.GetName() );
                 
                 poFeature.delete();
+                poFeature = null;
                 poDstFeature.delete();
+                poDstFeature = null;
                 return false;
             }
     
@@ -760,7 +766,9 @@ public class ogr2ogr
                     if( !bSkipFailures )
                     {
                         poFeature.delete();
+                        poFeature = null;
                         poDstFeature.delete();
+                        poDstFeature = null;
                         return false;
                     }
                 }
@@ -781,6 +789,7 @@ public class ogr2ogr
             }*/
                         
             poFeature.delete();
+            poFeature = null;
     
             gdal.ErrorReset();
             if( poDstLayer.CreateFeature( poDstFeature ) != 0 
@@ -790,10 +799,12 @@ public class ogr2ogr
                     poDstLayer.RollbackTransaction();
     
                 poDstFeature.delete();
+                poDstFeature = null;
                 return false;
             }
     
             poDstFeature.delete();
+            poDstFeature = null;
         }
     
         if( nGroupTransactions > 0 )

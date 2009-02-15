@@ -149,7 +149,11 @@ typedef void OGRFieldDefnShadow;
 %}
 
 #ifndef SWIGCSHARP
+
+/* typo : deprecated */
 %constant wkb25Bit = wkb25DBit;
+
+%constant wkb25DBit = wkb25DBit;
 %constant wkbUnknown = 0;
 
 %constant wkbPoint = 1;
