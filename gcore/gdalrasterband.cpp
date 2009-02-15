@@ -2955,33 +2955,15 @@ GDALGetRasterHistogram( GDALRasterBandH hBand,
 /**
  * Fetch default raster histogram. 
  *
- * Note that the bucket size is (dfMax-dfMin) / nBuckets.  
+ * The default method in GDALRasterBand will compute a default histogram. This
+ * method is overriden by derived classes (such as GDALPamRasterBand, VRTDataset, HFADataset...)
+ * that may be able to fetch efficiently an already stored histogram.
  *
- * For example to compute a simple 256 entry histogram of eight bit data, 
- * the following would be suitable.  The unusual bounds are to ensure that
- * bucket boundaries don't fall right on integer values causing possible errors
- * due to rounding after scaling. 
-<pre>
-    int anHistogram[256];
-
-    poBand->GetHistogram( -0.5, 255.5, 256, anHistogram, FALSE, FALSE, 
-                          GDALDummyProgress, NULL );
-</pre>
- *
- * Note that setting bApproxOK will generally result in a subsampling of the
- * file, and will utilize overviews if available.  It should generally 
- * produce a representative histogram for the data that is suitable for use
- * in generating histogram based luts for instance.  Generally bApproxOK is
- * much faster than an exactly computed histogram.
- *
- * @param dfMin the lower bound of the histogram.
- * @param dfMax the upper bound of the histogram.
- * @param nBuckets the number of buckets in panHistogram.
- * @param panHistogram array into which the histogram totals are placed.
- * @param bIncludeOutOfRange if TRUE values below the histogram range will
- * mapped into panHistogram[0], and values above will be mapped into 
- * panHistogram[nBuckets-1] otherwise out of range values are discarded.
- * @param bApproxOK TRUE if an approximate, or incomplete histogram OK.
+ * @param pdfMin pointer to double value that will contain the lower bound of the histogram.
+ * @param pdfMax pointer to double value that will contain the upper bound of the histogram.
+ * @param pnBuckets pointer to int value that will contain the number of buckets in *ppanHistogram.
+ * @param ppanHistogram pointer to array into which the histogram totals are placed. To be freed with VSIFree
+ * @param bForce TRUE to force the computation. If FALSE and no default histogram is available, the method will return CE_Warning
  * @param pfnProgress function to report progress to completion. 
  * @param pProgressData application data to pass to pfnProgress. 
  *
