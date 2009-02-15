@@ -299,17 +299,14 @@ public:
       return GDALCreateMaskBand( self, nFlags );
   }
 
+#ifndef SWIGJAVA
 #if defined(SWIGCSHARP)
 %apply (int inout[ANY]) {int *panHistogram};
 #elif defined(SWIGPERL)
 %apply (int len, int *output) {(int buckets, int *panHistogram)};
 %apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
-#elif defined(SWIGJAVA)
-%apply (int nList, int* pListOut) {(int buckets, int *panHistogram)};
 #endif
-#ifndef SWIGJAVA
 %feature( "kwargs" ) GetHistogram;
-#endif
   CPLErr GetHistogram( double min=-0.5,
                      double max=255.5,
                      int buckets=256,
@@ -329,24 +326,10 @@ public:
 #elif defined(SWIGPERL)
 %clear (int buckets, int *panHistogram);
 %clear (CPLErr);
-#elif defined(SWIGJAVA)
-%clear (int buckets, int *panHistogram);
+#endif
 #endif
 
-#if defined(SWIGJAVA)
-%apply (int* pnList, int** ppListOut) {(int* buckets_ret, int **ppanHistogram)};
-%apply (double *OUTPUT){double *min_ret, double *max_ret}
-CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int* buckets_ret, 
-                            int **ppanHistogram, int force = 1, 
-			    GDALProgressFunc callback = NULL,
-                            void* callback_data=NULL ) {
-    return GDALGetDefaultHistogram( self, min_ret, max_ret, buckets_ret,
-                                    ppanHistogram, force, 
-                                    callback, callback_data );
-}
-%clear (double *min_ret, double *max_ret);
-%clear (int* buckets_ret, int **ppanHistogram);
-#else
+#ifndef SWIGJAVA
 #if defined(SWIGPERL)
 %apply (double *OUTPUT){double *min_ret, double *max_ret}
 %apply (int *nLen, const int **pList) {(int *buckets_ret, int **ppanHistogram)};

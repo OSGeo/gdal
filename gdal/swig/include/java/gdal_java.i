@@ -129,6 +129,16 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 
 %typemap(javacode) GDALDatasetShadow %{
+
+  // Preferred name to match C++ API
+  public int GetRasterXSize() { return getRasterXSize(); }
+
+  // Preferred name to match C++ API
+  public int GetRasterYSize() { return getRasterYSize(); }
+
+  // Preferred name to match C++ API
+  public int GetRasterCount() { return getRasterCount(); }
+
   public int BuildOverviews(int[] overviewlist, ProgressCallback callback) {
     return BuildOverviews(null, overviewlist, callback);
   }
@@ -150,6 +160,164 @@ import org.gdal.gdalconst.gdalconstConstants;
   }
 %}
 
+%{
+    static
+    CPLErr DatasetRasterIO_Validate(GDALDatasetH hDS, int xoff, int yoff, int xsize, int ysize,
+                                int buf_xsize, int buf_ysize,
+                                GDALDataType buf_type,
+                                void *nioBuffer, long nioBufferSize,
+                                int band_list, int *pband_list,
+                                int &nPixelSpace, int &nLineSpace, int &nBandSpace)
+    {
+        int nBands;
+        if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for buffer type");
+            return CE_Failure;
+        }
+        if (buf_xsize <= 0 || buf_ysize <= 0)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
+            return CE_Failure;
+        }
+        
+        if (nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for space arguments");
+            return CE_Failure;
+        }
+        
+        int nPixelSize = GDALGetDataTypeSize( buf_type ) / 8;
+        
+        if( nPixelSpace == 0 )
+            nPixelSpace = nPixelSize;
+        
+        if( nLineSpace == 0 )
+        {
+            if (nPixelSpace > INT_MAX / buf_xsize)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+                return CE_Failure;
+            }
+            nLineSpace = nPixelSpace * buf_xsize;
+        }
+        
+        if( nBandSpace == 0 )
+        {
+            if (nLineSpace > INT_MAX / buf_ysize)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+                return CE_Failure;
+            }
+            nBandSpace = nLineSpace * buf_ysize;
+        }
+        
+        nBands = band_list;
+        if (nBands == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid band count");
+            return CE_Failure;
+        }
+        
+        if ((buf_ysize - 1) > INT_MAX / nLineSpace ||
+            (buf_xsize - 1) > INT_MAX / nPixelSpace ||
+            (nBands - 1) > INT_MAX / nBandSpace ||
+            (buf_ysize - 1) * nLineSpace > INT_MAX - (buf_xsize - 1) * nPixelSpace ||
+            (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace > INT_MAX - (nBands - 1) * nBandSpace ||
+            (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + (nBands - 1) * nBandSpace > INT_MAX - nPixelSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return CE_Failure;
+        }
+        
+        int nMinBufferSize = (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + (nBands - 1) * nBandSpace + nPixelSize;
+        if (nioBufferSize < nMinBufferSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Buffer not big enough");
+            return CE_Failure;
+        }
+        
+        return CE_None;
+    }
+
+    static
+    CPLErr BandRasterIO_Validate(int buf_xsize, int buf_ysize,
+                                 GDALDataType buf_type,
+                                 void *nioBuffer, long nioBufferSize,
+                                 int &nPixelSpace, int &nLineSpace)
+    {
+        if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for buffer type");
+            return CE_Failure;
+        }
+
+        if (buf_xsize <= 0 || buf_ysize <= 0)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
+            return CE_Failure;
+        }
+
+        if (nPixelSpace < 0 || nLineSpace < 0)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for space arguments");
+            return CE_Failure;
+        }
+
+        int nPixelSize = GDALGetDataTypeSize( buf_type ) / 8;
+        if( nPixelSpace == 0 )
+            nPixelSpace = nPixelSize;
+
+        if( nLineSpace == 0 )
+        {
+            if (nPixelSpace > INT_MAX / buf_xsize)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+                return CE_Failure;
+            }
+            nLineSpace = nPixelSpace * buf_xsize;
+        }
+
+        if ((buf_ysize - 1) > INT_MAX / nLineSpace ||
+            (buf_xsize - 1) > INT_MAX / nPixelSpace ||
+            (buf_ysize - 1) * nLineSpace > INT_MAX - (buf_xsize - 1) * nPixelSpace ||
+            (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace > INT_MAX - nPixelSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return CE_Failure;
+        }
+
+        int nMinBufferSize = (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + nPixelSize;
+        if (nioBufferSize < nMinBufferSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Buffer not big enough");
+            return CE_Failure;
+        }
+
+        return CE_None;
+    }
+    
+    static CPLErr BandBlockReadWrite_Validate(GDALRasterBandH self, void *nioBuffer, long nioBufferSize)
+    {
+        int nBlockXSize, nBlockYSize;
+        GDALDataType eDataType;
+        GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
+        eDataType = GDALGetRasterDataType(self);
+        int nDataTypeSize = GDALGetDataTypeSize( eDataType ) / 8;
+        if (nBlockXSize > (INT_MAX / nDataTypeSize) / nBlockYSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return CE_Failure;
+        }
+        if (nioBufferSize < nBlockXSize * nBlockYSize * nDataTypeSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Buffer not big enough");
+            return CE_Failure;
+        }
+        return CE_None;
+    }
+%}
+
 %extend GDALDatasetShadow {
 %apply (int nList, int* pList) { (int band_list, int *pband_list) };
 %apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
@@ -157,54 +325,58 @@ import org.gdal.gdalconst.gdalconstConstants;
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
                             void *nioBuffer, long nioBufferSize,
-                            int band_list, int *pband_list)
+                            int band_list, int *pband_list,
+                            int nPixelSpace = 0, int nLineSpace = 0, int nBandSpace = 0)
 {
-  int nBands;
-  if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+  if (band_list == 0)
   {
-      CPLError(CE_Failure, CPLE_AppDefined, "Invalid buffer type");
-      return CE_Failure;
-  }
-  if (band_list)
-          nBands = band_list;
-  else
-          nBands = GDALGetRasterCount(self);
-  if (nioBufferSize < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * nBands)
-  {
-      CPLError(CE_Failure, CPLE_AppDefined, "Inconsitant buffer size");
-      return CE_Failure;
-  }
-  return GDALDatasetRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
-                              nioBuffer, buf_xsize, buf_ysize,
-                              buf_type, band_list, pband_list, 0, 0, 0 );
+      if (pband_list != NULL)
+          return CE_Failure;
 
+      band_list = GDALGetRasterCount(self);
+  }
+
+  CPLErr eErr;
+
+  eErr = DatasetRasterIO_Validate( (GDALDatasetH)self, xoff, yoff, xsize, ysize, buf_xsize,
+                            buf_ysize, buf_type, nioBuffer, nioBufferSize,
+                            band_list, pband_list,
+                            nPixelSpace, nLineSpace, nBandSpace);
+  if (eErr == CE_None)
+    eErr = GDALDatasetRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
+                                nioBuffer, buf_xsize, buf_ysize,
+                                buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
+
+  return eErr;
 }
 
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
                             void *nioBuffer, long nioBufferSize,
-                            int band_list, int *pband_list)
+                            int band_list, int *pband_list,
+                            int nPixelSpace = 0, int nLineSpace = 0, int nBandSpace = 0)
 {
-  int nBands;
-  if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+  if (band_list == 0)
   {
-      CPLError(CE_Failure, CPLE_AppDefined, "Invalid buffer type");
-      return CE_Failure;
-  }
-  if (band_list)
-          nBands = band_list;
-  else
-          nBands = GDALGetRasterCount(self);
-  if (nioBufferSize < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * nBands)
-  {
-      CPLError(CE_Failure, CPLE_AppDefined, "Inconsitant buffer size");
-      return CE_Failure;
-  }
-  return GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
-                              nioBuffer, buf_xsize, buf_ysize,
-                              buf_type, band_list, pband_list, 0, 0, 0 );
+      if (pband_list != NULL)
+          return CE_Failure;
 
+      band_list = GDALGetRasterCount(self);
+  }
+
+  CPLErr eErr;
+
+  eErr = DatasetRasterIO_Validate( (GDALDatasetH)self, xoff, yoff, xsize, ysize, buf_xsize,
+                            buf_ysize, buf_type, nioBuffer, nioBufferSize,
+                            band_list, pband_list,
+                            nPixelSpace, nLineSpace, nBandSpace);
+  if (eErr == CE_None)
+    eErr = GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
+                                nioBuffer, buf_xsize, buf_ysize,
+                                buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
+
+  return eErr;
 }
 //%clear (void *nioBuffer, long nioBufferSize);
 %clear (int band_list, int *pband_list);
@@ -216,45 +388,113 @@ import org.gdal.gdalconst.gdalconstConstants;
   CPLErr ReadRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            void *nioBuffer, long nioBufferSize )
-{
-  if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+                            void *nioBuffer, long nioBufferSize,
+                            int nPixelSpace = 0, int nLineSpace = 0)
   {
-      CPLError(CE_Failure, CPLE_AppDefined, "Invalid buffer type");
+    if (BandRasterIO_Validate(buf_xsize, buf_ysize, buf_type, nioBuffer, nioBufferSize,
+                              nPixelSpace, nLineSpace) != CE_None)
       return CE_Failure;
-  }
-  if (nioBufferSize < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8))
-  {
-      CPLError(CE_Failure, CPLE_AppDefined, "Inconsitant buffer size");
-      return CE_Failure;
-  }
-  return GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
-                                 nioBuffer, buf_xsize, buf_ysize,
-                                 buf_type, 0, 0 );
 
-}
+    return GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
+                                   nioBuffer, buf_xsize, buf_ysize,
+                                   buf_type, nPixelSpace, nLineSpace );
+
+  }
 
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            void *nioBuffer, long nioBufferSize )
-{
-  if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
+                            void *nioBuffer, long nioBufferSize,
+                            int nPixelSpace = 0, int nLineSpace = 0)
   {
-      CPLError(CE_Failure, CPLE_AppDefined, "Invalid buffer type");
+    if (BandRasterIO_Validate(buf_xsize, buf_ysize, buf_type, nioBuffer, nioBufferSize,
+                              nPixelSpace, nLineSpace) != CE_None)
       return CE_Failure;
-  }
-  if (nioBufferSize < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8))
-  {
-      CPLError(CE_Failure, CPLE_AppDefined, "Inconsitant buffer size");
-      return CE_Failure;
-  }
-  return GDALRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
-                                 nioBuffer, buf_xsize, buf_ysize,
-                                 buf_type, 0, 0 );
 
-}
+    return GDALRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
+                                    nioBuffer, buf_xsize, buf_ysize,
+                                    buf_type, nPixelSpace, nLineSpace );
+  }
+
+  CPLErr ReadBlock_Direct( int nXBlockOff, int nYBlockOff, void *nioBuffer, long nioBufferSize )
+  {
+    if (BandBlockReadWrite_Validate((GDALRasterBandH)self, nioBuffer, nioBufferSize) != CE_None)
+      return CE_Failure;
+
+    return GDALReadBlock(self, nXBlockOff, nYBlockOff, nioBuffer);
+  }
+
+  CPLErr WriteBlock_Direct( int nXBlockOff, int nYBlockOff, void *nioBuffer, long nioBufferSize )
+  {
+    if (BandBlockReadWrite_Validate((GDALRasterBandH)self, nioBuffer, nioBufferSize) != CE_None)
+      return CE_Failure;
+
+    return GDALWriteBlock(self, nXBlockOff, nYBlockOff, nioBuffer);
+  }
 %clear (void *nioBuffer, long nioBufferSize);
+
+%apply (int nList, int* pListOut) {(int buckets, int *panHistogram)};
+  CPLErr GetHistogram(double min,
+                     double max,
+                     int buckets,
+                     int *panHistogram,
+                     bool include_out_of_range,
+                     bool approx_ok,
+                     GDALProgressFunc callback,
+                     void* callback_data) {
+    CPLErrorReset(); 
+    CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
+                                         include_out_of_range, approx_ok,
+                                         callback, callback_data );
+    return err;
+  }
+
+  CPLErr GetHistogram(double min,
+                      double max,
+                      int buckets,
+                      int *panHistogram,
+                      bool include_out_of_range,
+                      bool approx_ok) {
+    CPLErrorReset(); 
+    CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
+                                         include_out_of_range, approx_ok,
+                                         NULL, NULL);
+    return err;
+  }
+
+  CPLErr GetHistogram(double min,
+                      double max,
+                      int buckets,
+                      int *panHistogram) {
+    CPLErrorReset(); 
+    CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
+                                         0, 1,
+                                         NULL, NULL);
+    return err;
+  }
+
+  CPLErr GetHistogram(int buckets,
+                        int *panHistogram) {
+    CPLErrorReset(); 
+    CPLErr err = GDALGetRasterHistogram( self, -0.5, 225.5, buckets, panHistogram,
+                                         0, 1,
+                                         NULL, NULL);
+    return err;
+  }
+%clear (int buckets, int *panHistogram);
+
+%apply (int* pnList, int** ppListOut) {(int* buckets_ret, int **ppanHistogram)};
+%apply (double *OUTPUT){double *min_ret, double *max_ret}
+  CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int* buckets_ret, 
+                              int **ppanHistogram, bool force = 1, 
+                              GDALProgressFunc callback = NULL,
+                              void* callback_data=NULL ) {
+      return GDALGetDefaultHistogram( self, min_ret, max_ret, buckets_ret,
+                                      ppanHistogram, force, 
+                                      callback, callback_data );
+  }
+%clear (double *min_ret, double *max_ret);
+%clear (int* buckets_ret, int **ppanHistogram);
 
 } /* extend */
 
@@ -294,6 +534,32 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 
 %typemap(javacode) GDALRasterBandShadow %{
+
+  // Preferred name to match C++ API
+  public int GetXSize() { return getXSize(); }
+
+  // Preferred name to match C++ API
+  public int GetYSize() { return getYSize(); }
+
+  // Preferred name to match C++ API
+  public int GetRasterDataType() { return getDataType(); }
+
+  public int GetBlockXSize()
+  {
+      int[] anBlockXSize = new int[1];
+      int[] anBlockYSize = new int[1];
+      GetBlockSize(anBlockXSize, anBlockYSize);
+      return anBlockXSize[0];
+  }
+
+  public int GetBlockYSize()
+  {
+      int[] anBlockXSize = new int[1];
+      int[] anBlockYSize = new int[1];
+      GetBlockSize(anBlockXSize, anBlockYSize);
+      return anBlockYSize[0];
+  }
+
   public int Checksum() {
     return Checksum(0, 0, getXSize(), getYSize());
   }
@@ -351,7 +617,15 @@ import org.gdal.gdalconst.gdalconstConstants;
 // Add a Java reference to prevent premature garbage collection and resulting use
 // of dangling C++ pointer. Intended for methods that return pointers or
 // references to a member variable.
-%typemap(javaout) GDALRasterBandShadow* GetRasterBand {
+%typemap(javaout) GDALRasterBandShadow* GetRasterBand,
+                  GDALRasterBandShadow* GetOverview,
+                  GDALRasterBandShadow* GetMaskBand,
+                  GDALColorTableShadow* GetColorTable,
+                  GDALColorTableShadow* GetRasterColorTable,
+                  CPLXMLNode* getChild,
+                  CPLXMLNode* getNext,
+                  CPLXMLNode* GetXMLNode,
+                  CPLXMLNode* SearchXMLNode {
     long cPtr = $jnicall;
     $javaclassname ret = null;
     if (cPtr != 0) {
@@ -361,85 +635,6 @@ import org.gdal.gdalconst.gdalconstConstants;
     return ret;
   }
 
-%typemap(javaout) GDALRasterBandShadow* GetOverview {
-    long cPtr = $jnicall;
-    $javaclassname ret = null;
-    if (cPtr != 0) {
-      ret = new $javaclassname(cPtr, $owner);
-      ret.addReference(this);
-    }
-    return ret;
-  }
-
-%typemap(javaout) GDALRasterBandShadow* GetMaskBand {
-    long cPtr = $jnicall;
-    $javaclassname ret = null;
-    if (cPtr != 0) {
-      ret = new $javaclassname(cPtr, $owner);
-      ret.addReference(this);
-    }
-    return ret;
-  }
-
-%typemap(javaout) GDALColorTableShadow* GetColorTable {
-    long cPtr = $jnicall;
-    $javaclassname ret = null;
-    if (cPtr != 0) {
-      ret = new $javaclassname(cPtr, $owner);
-      ret.addReference(this);
-    }
-    return ret;
-  }
-
-%typemap(javaout) GDALColorTableShadow* GetRasterColorTable {
-    long cPtr = $jnicall;
-    $javaclassname ret = null;
-    if (cPtr != 0) {
-      ret = new $javaclassname(cPtr, $owner);
-      ret.addReference(this);
-    }
-    return ret;
-  }
-
-%typemap(javaout) CPLXMLNode* getChild {
-    long cPtr = $jnicall;
-    $javaclassname ret = null;
-    if (cPtr != 0) {
-      ret = new $javaclassname(cPtr, $owner);
-      ret.addReference(this);
-    }
-    return ret;
-  }
-
-%typemap(javaout) CPLXMLNode* getNext {
-    long cPtr = $jnicall;
-    $javaclassname ret = null;
-    if (cPtr != 0) {
-      ret = new $javaclassname(cPtr, $owner);
-      ret.addReference(this);
-    }
-    return ret;
-  }
-
-%typemap(javaout) CPLXMLNode* GetXMLNode {
-    long cPtr = $jnicall;
-    $javaclassname ret = null;
-    if (cPtr != 0) {
-      ret = new $javaclassname(cPtr, $owner);
-      ret.addReference(this);
-    }
-    return ret;
-  }
-
-%typemap(javaout) CPLXMLNode* SearchXMLNode {
-    long cPtr = $jnicall;
-    $javaclassname ret = null;
-    if (cPtr != 0) {
-      ret = new $javaclassname(cPtr, $owner);
-      ret.addReference(this);
-    }
-    return ret;
-  }
 /************************************************************************/
 /*                       Stuff for progress callback                    */
 /************************************************************************/
