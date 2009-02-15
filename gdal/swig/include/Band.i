@@ -97,16 +97,33 @@ public:
   GDALDataType DataType;
 %mutable;
 
+  int GetBand()
+  {
+    return GDALGetBandNumber(self);
+  }
+
 %apply (int *OUTPUT){int *pnBlockXSize, int *pnBlockYSize}
 
   void GetBlockSize(int *pnBlockXSize, int *pnBlockYSize) {
       GDALGetBlockSize(self, pnBlockXSize, pnBlockYSize);
   }
 
+  // Preferred name to match C++ API
+  GDALColorInterp GetColorInterpretation() {
+    return GDALGetRasterColorInterpretation( self );
+  }
+
+  // Deprecated name
   GDALColorInterp GetRasterColorInterpretation() {
     return GDALGetRasterColorInterpretation( self );
   }
 
+  // Preferred name to match C++ API
+  CPLErr SetColorInterpretation( GDALColorInterp val ) {
+    return GDALSetRasterColorInterpretation( self, val );
+  }
+
+  // Deprecated name
   CPLErr SetRasterColorInterpretation( GDALColorInterp val ) {
     return GDALSetRasterColorInterpretation( self, val );
   }
@@ -247,7 +264,7 @@ public:
     return (GDALColorTableShadow*) GDALGetRasterColorTable( self );
   }
 
-  // Preferred name 
+  // Preferred name to match C++ API
   GDALColorTableShadow *GetColorTable() {
     return (GDALColorTableShadow*) GDALGetRasterColorTable( self );
   }
@@ -257,7 +274,7 @@ public:
     return GDALSetRasterColorTable( self, arg );
   }
  
-  // Preferred name.
+  // Preferred name to match C++ API
   int SetColorTable( GDALColorTableShadow *arg ) {
     return GDALSetRasterColorTable( self, arg );
   }
