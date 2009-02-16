@@ -8,6 +8,8 @@
 <h1>Various Support GDAL Raster Formats</h1>
 
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="AAIGrid">AAIGrid -- Arc/Info ASCII Grid</a></h2>
 
 Supported for read and write access, including reading of an affine
@@ -41,6 +43,8 @@ for Arc/Info Binary Grid format.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/aaigrid/aaigriddataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="ADRG">ADRG/ARC Digitized Raster Graphics (.gen/.thf)</a></h2>
 <p>Supported by GDAL for read access. Creation is possible, but it must be
 considered as experimental and a means of testing read access (although files created
@@ -54,6 +58,8 @@ GDAL will report the images it is composed of as subdatasets. If the THF referen
 <p>This is an alternative to using the <a href="frmt_ogdi.html">OGDI Bridge</a> for ADRG datasets.</p>
 
 See also : the <a href="http://earth-info.nga.mil/publications/specs/printed/89007/89007_ADRG.pdf"> ADRG specification (MIL-A-89007)</a>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="AIG">AIG -- Arc/Info Binary Grid</a></h2>
 
@@ -77,6 +83,8 @@ limited.  Additional sample prj.adf files may be sent to the maintainer,
 
 NOTE: Implemented as <tt>gdal/frmts/aigrid/aigdataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="BSB">BSB -- Maptech/NOAA BSB Nautical Chart Format</a></h2>
 
 BSB Nautical Chart format is supported for read access, including reading 
@@ -96,6 +104,8 @@ via the BSB_PALETTE configuration option. The default value is RGB.
 Other common values that can be found are : DAY, DSK, NGT, NGR, GRY, PRC, PRG...<p>
 
 NOTE: Implemented as <tt>gdal/frmts/bsb/bsbdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="BT">BT -- VTP .bt Binary Terrain Format</a></h2>
 
@@ -121,6 +131,8 @@ See Also: The <a href="http://www.vterrain.org/Implementation/Formats/BT.html">
 BT file format</a> is defined on the <a href="http://www.vterrain.org/">
 VTP</a> web site.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="CEOS">CEOS -- CEOS Image</a></h2>
 
 This is a simple, read-only reader for ceos image files.  To use, select
@@ -135,6 +147,8 @@ See the separate <a href="#SAR_CEOS">SAR_CEOS</a> driver for access to
 SAR CEOS data products.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/ceos/ceosdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="DIMAP">DIMAP -- Spot DIMAP</a></h2>
 
@@ -153,6 +167,8 @@ be considered as a deprecated way of getting this information.
 
 NOTE: Implemented as <tt>gdal/frmts/dimap/dimapdataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="DODS"><a name="OPeNDAP">
 DODS/OPeNDAP -- Read rasters from DODS/OPeNDAP servers</a></a></h2>
 
@@ -163,6 +179,8 @@ tell the driver which dimensions are to be interpreted as distinct bands as
 well as which correspond to Latitude and Longitude. See the file README.DODS
 for more detailed information.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="DOQ1">DOQ1 -- First Generation USGS DOQ</a></h2>
 
 Support for read access, including reading of an affine georeferencing 
@@ -170,6 +188,8 @@ transform, and capture of the projection string.   This format is the old,
 unlabelled DOQ (Digital Ortho Quad) format from the USGS.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/doq1dataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="DOQ2">DOQ2 -- New Labelled USGS DOQ</a></h2>
 
@@ -184,6 +204,8 @@ NOTE: Implemented as <tt>gdal/frmts/raw/doq2dataset.cpp</tt>.<p>
 
 See Also: <a href="http://rockyweb.cr.usgs.gov/nmpstds/doqstds.html">
 USGS DOQ Standards</a><p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="EHdr">EHdr -- ESRI .hdr Labelled</h2>
 
@@ -229,6 +251,8 @@ See Also: <p>
    <li> <a href="#SRTMHGT">SRTMHGT Driver</a>
 </ul>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="EIR">EIR -- Erdas Imagine Raw</h2>
 
 GDAL supports the Erdas Imagine Raw format for read access including 1, 2, 4, 8,
@@ -241,6 +265,8 @@ file the "raw" file and it may have the extension .raw while the image file that
 contains the actual raw data may have the extension .bl.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/eirdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="ENVI">ENVI - ENVI .hdr Labelled Raster</h2>
 
@@ -277,6 +303,8 @@ Creation Options:<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/envidataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="Envisat">Envisat -- Envisat Image Product</h2>
 
 GDAL supports the Envisat product format for read access.  All sample
@@ -294,6 +322,8 @@ NOTE: Implemented as <tt>gdal/frmts/envisat/envisatdataset.cpp</tt>.<p>
 
 See Also: <a href="http://envisat.esa.int/dataproducts/">
 Envisat Data Products</a> at ESA.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="FITS">FITS -- Flexible Image Transport System</h2>
 
@@ -323,6 +353,8 @@ reading/writing of data values from/to the file.
 
 <p>NOTE: Implemented as <tt>gdal/frmts/fits/fitsdataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="GenBin">GenBin - Generic Binary (.hdr labelled)</a>
 
 This driver supporting reading "Generic Binary" files labelled with a .hdr
@@ -343,6 +375,8 @@ when provided.
 
 <p>NOTE: Implemented as <tt>gdal/frmts/raw/genbindataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="GSAG">GSAG -- Golden Software ASCII Grid File Format</a></h2>
 
 This is the ASCII-based (human-readable) version of one of the raster formats
@@ -353,6 +387,8 @@ supported.<p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/gsg/gsagdataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="GSBG">GSBG -- Golden Software Binary Grid File Format</a></h2>
 
 This is the binary (non-human-readable) version of one of the raster formats
@@ -362,6 +398,8 @@ create, delete, and copy).  Currently the associated formats for color,
 metadata, and shapes are not supported.<p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/gsg/gsbgdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="GS7BG">
 	GS7BG -- Golden Software Surfer 7 Binary Grid File Format</a></h2>
@@ -374,6 +412,8 @@ supported for reading only.<p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/gsg/gs7bgdataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="GXF">GXF -- Grid eXchange File</a></h2>
 
 This is a raster exchange format propagated by Geosoft, and made a standard
@@ -385,6 +425,8 @@ Details on the supporting code, and format can be found on the
 <a href="http://home.gdal.org/projects/gxf/index.html">GXF-3</a> page.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/gxf/gxfdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="IDA">IDA -- Image Display and Analysis</h2>
 
@@ -407,6 +449,8 @@ NOTE: Implemented as <tt>gdal/frmts/raw/idadataset.cpp</tt>. <p>
 
 See Also: <A href="http://www.fao.org/giews/english/windisp/windisp.htm">WinDisp</a><p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="ILWIS">ILWIS -- Raster Map</h2>
 
 This driver implements reading and writing of ILWIS raster maps and map lists. Select the raster files with the.mpr (for raster map) or .mpl (for maplist) extensions
@@ -425,6 +469,8 @@ Limitations:
 <li>ILWIS domain (.dom) and representation (.rpr) files are currently ignored.</li>
 </ul>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="JDEM">JDEM -- Japanese DEM (.mem)</a></h2>
 
 GDAL includes read support for Japanese DEM files, normally having the
@@ -441,6 +487,8 @@ NOTE: Implemented as <tt>gdal/frmts/jdem/jdemdataset.cpp</tt>.<p>
 
 See Also: <a href="http://www.gsi.go.jp/ENGLISH/">Geographic Survey 
 Institute (GSI) Web Site.</a><p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="LAN">LAN -- Erdas 7.x .LAN and .GIS</a></h2>
 
@@ -459,6 +507,8 @@ NOTE: Implemented as <tt>gdal/frmts/raw/landataset.cpp</tt><p>
 
 Development of this driver was financially supported by Kevin Flanders of
 (<a href="http://www.peoplegis.com">PeopleGIS</a>). <p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="MFF">MFF -- Vexcel MFF Raster</a></h2>
 
@@ -488,6 +538,8 @@ be manually added to the .hdr file if required.<p>
 NOTE: Implemented as <tt>gdal/frmts/raw/mffdataset.cpp</tt>.<p>
 
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="NDF">NDF -- NLAPS Data Format</a></h2>
 
 GDAL has limited support for reading NLAPS Data Format files.  This is a
@@ -505,6 +557,8 @@ NOTE: Implemented as <tt>gdal/frmts/raw/ndfdataset.cpp</tt>.<p>
 
 See Also: <a href="http://landsat.usgs.gov/documents/NLAPSII.pdf">NLAPS
 Data Format Specification</a>.<p>					
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="GMT">GMT -- GMT Compatible netCDF</a></h2>
 
@@ -531,6 +585,8 @@ NOTE: Implemented as <tt>gdal/frmts/netcdf/gmtdataset.cpp</tt>.<p>
 
 See Also: <a href="http://www.unidata.ucar.edu/packages/netcdf/">Unidata NetCDF Page</a><p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="PAux">PAux -- PCI .aux Labelled Raw Format</a></h2>
 
 GDAL includes a partial implementation of the PCI .aux labelled raw raster 
@@ -546,6 +602,8 @@ NOTE: Implemented as <tt>gdal/frmts/raw/pauxdataset.cpp</tt>.<p>
 
 See Also: <a href="http://www.pcigeomatics.com/cgi-bin/pcihlp/GDB|Supported+File+Formats|Raw+Binary+Image+Format+(RAW)|Raw+.aux+Format">PCI's .aux Format
 Description</a><p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="PCRaster">PCRaster raster file format</a></h2>
 <p>GDAL includes support for reading and writing PCRaster raster files. PCRaster is a dynamic modelling system for distributed simulation models. The main applications of PCRaster are found in environmental modelling: geography, hydrology, ecology to name a few. Examples include rainfall-runoff models, vegetation competition models and slope stability models.</p>
@@ -649,6 +707,8 @@ Description</a><p>
 
 See also: <a href="http://pcraster.geog.uu.nl">PCRaster website at Utrecht University</a> and <a href="http://www.pcraster.nl">PCRaster Environmental Software company website</a>.
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="PNG">PNG -- Portable Network Graphics</a></h2>
 
 GDAL includes support for reading, and creating .png files.  Greyscale, 
@@ -687,6 +747,8 @@ PNG support is implemented based on the libpng reference library.
 More information is available at <a href="http://www.libpng.org/pub/png">
 http://www.libpng.org/pub/png</a>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="PNM">PNM -- Netpbm (.pgm, .ppm)</a></h2>
 
 GDAL includes support for reading, and creating .pgm (greyscale), and
@@ -705,6 +767,8 @@ software which is not liberal to this value.<p>
 </ul>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/pnmdataset.cpp</tt>. 
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="RPFTOC">Raster Product Format/RPF (a.toc)</a></h2>
 
@@ -758,6 +822,8 @@ See Also:<p>
 OGDI library, that can be accessed through the  <a href="frmt_ogdi.html">OGDI Bridge</a></p>
 
 NOTE: Implemented as <tt>gdal/frmts/nitf/rpftocdataset.cpp</tt>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="SAR_CEOS">SAR_CEOS -- CEOS SAR Image</a></h2>
 
@@ -816,6 +882,8 @@ The identities of the bands are also reflected in the metadata.  <p>
 
 NOTE: Implemented as <tt>gdal/frmts/ceos2/sar_ceosdataset.cpp</tt>.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="SDTS">SDTS -- USGS SDTS DEM</a></h2>
 
 GDAL includes support for reading USGS SDTS formatted DEMs.  USGS DEMs are
@@ -830,6 +898,8 @@ The elevation units of DEMs may be feet or meters.  The GetType() method on a
 band will attempt to return if the units are Feet ("ft") or Meters ("m").
 
 NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="SGI">SGI - SGI Image Format</a></h2>
 
@@ -852,6 +922,24 @@ See Also:<p>
 NOTE: Implemented as <tt>gdal/frmts/sgi/sgidataset.cpp</tt>.<p>
 
 
+<!-- --------------------------------------------------------------------- -->
+
+<h2><a name="SRP">Standard Product Format (ASRP/USRP) (.gen)</a></h2>
+
+The ASRP and USRP raster products (as defined by DGIWG) are variations on a
+common standard product format and are supported for reading by GDAL.  ASRP and
+USRP datasets are made of several files - typically a .GEN, .IMG, .SOU and .QAL 
+file with a common basename.  While the bulk of the imagery is stored in the
+.IMG file, the .GEN file should be selected to access the dataset.<p>
+
+ASRP (in a geographic coordinate system) and USRP (in a UTM/UPS coordinate
+system) products are single band images with a palette and georeferencing.
+<p>
+
+NOTE: Implemented as <tt>gdal/frmts/adrg/srpdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="SRTMHGT">SRTMHGT - SRTM HGT Format</a></h2>
 
 The SRTM HGT driver currently supports the reading of SRTM-3 and SRTM-1 V2 (HGT) files.<p>
@@ -869,6 +957,8 @@ See Also:<p>
 </ul>
 
 NOTE: Implemented as <tt>gdal/frmts/srtmhgt/srtmhgtdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="WLD">WLD -- ESRI World File</a></h2>
 
@@ -900,6 +990,8 @@ You can construct that file simply by using your favorite text editor.<p>
 World file usually has suffix .wld, but sometimes it may has .tfw, tifw, .jgw
 or other suffixes depending on the image file it comes with.<p>
 
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="XPM">XPM - X11 Pixmap</a></h2>
 
 GDAL includes support for reading and writing XPM (X11 Pixmap Format) 
@@ -914,6 +1006,8 @@ XPM files must be colormapped or greyscale, and colortables will be reduced
 to about 70 colors automatically.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/xpm/xpmdataset.cpp</tt>.<p>
+
+<!-- --------------------------------------------------------------------- -->
 
 <h2><a name="GFF">GFF - Sandia National Laboratories GSAT File Format</a></h2>
 
