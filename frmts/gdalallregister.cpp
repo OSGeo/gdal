@@ -390,7 +390,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_adrg
     GDALRegister_ADRG();
-    GDALRegister_ASRP();
+    GDALRegister_SRP();
 #endif
 
 #ifdef FRMT_blx
