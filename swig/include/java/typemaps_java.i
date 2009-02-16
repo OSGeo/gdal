@@ -41,8 +41,11 @@
   private Object parentReference;
 
   protected static long getCPtrAndDisown($javaclassname obj) {
-    if (obj != null) obj.swigCMemOwn= false;
-    obj.parentReference = null;
+    if (obj != null)
+    {
+        obj.swigCMemOwn= false;
+        obj.parentReference = null;
+    }
     return getCPtr(obj);
   }
 

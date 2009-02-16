@@ -652,6 +652,7 @@ public:
   }
 
 /* The feature takes over owernship of the geometry. */
+/* Don't change the 'geom' name as Java bindings depends on it */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
   OGRErr SetGeometryDirectly(OGRGeometryShadow* geom) {
     return OGR_F_SetGeometryDirectly(self, geom);
@@ -1386,6 +1387,7 @@ public:
   }
 
 /* The geometry now owns an inner geometry */
+/* Don't change the 'other_disown' name as Java bindings depends on it */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow* other_disown};
   OGRErr AddGeometryDirectly( OGRGeometryShadow* other_disown ) {
     return OGR_G_AddGeometryDirectly( self, other_disown );
@@ -1790,6 +1792,19 @@ OGRDriverShadow* GetDriver(int driver_number) {
 %}
 #endif
 %clear char **;
+
+
+#ifdef SWIGJAVA
+class FeatureNative {
+  FeatureNative();
+  ~FeatureNative();
+};
+
+class GeometryNative {
+  GeometryNative();
+  ~GeometryNative();
+};
+#endif
 
 //************************************************************************
 //
