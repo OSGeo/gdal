@@ -31,6 +31,9 @@
 import org.gdal.ogr.Feature;
 import org.gdal.ogr.FeatureDefn;
 
+/* The nasty things below are necessary if the Feature class has a finalize() */
+/* method, which is no longer the case. See OGRTestGC.java */
+
 public class OGRFeature
 {
     static int i;
