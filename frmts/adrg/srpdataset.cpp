@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Purpose:  ASRP Reader
+ * Purpose:  ASRP/USRP Reader
  * Author:   Frank Warmerdam (warmerdam@pobox.com)
  *
  * Derived from ADRG driver by Even Rouault, even.rouault at mines-paris.org.
@@ -35,40 +35,36 @@
 
 CPL_CVSID("$Id: geotiff.cpp 16147 2009-01-20 21:18:58Z warmerdam $");
 
-class ASRPDataset : public GDALPamDataset
+class SRPDataset : public GDALPamDataset
 {
-    friend class ASRPRasterBand;
+    friend class SRPRasterBand;
 
     FILE*        fdIMG;
     int*         TILEINDEX;
     int          offsetInIMG;
+    CPLString    osProduct;
+    CPLString    osSRS;
     int          NFC;
     int          NFL;
+    int          ZNA;
     double       LSO;
     double       PSO;
+    double       LOD;
+    double       LAD;
     int          ARV;
     int          BRV;
     int          PCB;
     int          PVB;
 
-    char**       papszSubDatasets;
-    
-    ASRPDataset* poOverviewDS;
-    
-    /* For creation */
-    int          bCreation;
-    FILE*        fdGEN;
-    FILE*        fdTHF;
+
     int          bGeoTransformValid;
     double       adfGeoTransform[6];
-    int          nNextAvailableBlock;
-    CPLString    osBaseFileName;
 
     GDALColorTable oCT;
 
   public:
-                 ASRPDataset();
-    virtual     ~ASRPDataset();
+                 SRPDataset();
+    virtual     ~SRPDataset();
     
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * padfGeoTransform );
@@ -78,8 +74,9 @@ class ASRPDataset : public GDALPamDataset
 
     void                AddSubDataset(const char* pszFilename);
 
-    static char** GetGENListFromTHF(const char* pszFileName);
-    static ASRPDataset* GetFromRecord(const char* pszFileName, DDFRecord * record);
+    int                 GetFromRecord( const char* pszFileName, 
+                                       DDFRecord * record);
+
     static GDALDataset *Open( GDALOpenInfo * );
     
     static double GetLongitudeFromString(const char* str);
@@ -88,16 +85,16 @@ class ASRPDataset : public GDALPamDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*                            ASRPRasterBand                            */
+/*                            SRPRasterBand                            */
 /* ==================================================================== */
 /************************************************************************/
 
-class ASRPRasterBand : public GDALPamRasterBand
+class SRPRasterBand : public GDALPamRasterBand
 {
-    friend class ASRPDataset;
+    friend class SRPDataset;
 
   public:
-                            ASRPRasterBand( ASRPDataset *, int );
+                            SRPRasterBand( SRPDataset *, int );
 
     virtual CPLErr          IReadBlock( int, int, void * );
 
@@ -109,10 +106,10 @@ class ASRPRasterBand : public GDALPamRasterBand
 
 
 /************************************************************************/
-/*                           ASRPRasterBand()                            */
+/*                           SRPRasterBand()                            */
 /************************************************************************/
 
-ASRPRasterBand::ASRPRasterBand( ASRPDataset *poDS, int nBand )
+SRPRasterBand::SRPRasterBand( SRPDataset *poDS, int nBand )
 
 {
     this->poDS = poDS;
@@ -128,7 +125,7 @@ ASRPRasterBand::ASRPRasterBand( ASRPDataset *poDS, int nBand )
 /*                            GetNoDataValue()                          */
 /************************************************************************/
 
-double  ASRPRasterBand::GetNoDataValue( int *pbSuccess )
+double  SRPRasterBand::GetNoDataValue( int *pbSuccess )
 {
     if (pbSuccess)
         *pbSuccess = TRUE;
@@ -140,10 +137,10 @@ double  ASRPRasterBand::GetNoDataValue( int *pbSuccess )
 /*                       GetColorInterpretation()                       */
 /************************************************************************/
 
-GDALColorInterp ASRPRasterBand::GetColorInterpretation()
+GDALColorInterp SRPRasterBand::GetColorInterpretation()
 
 {
-    ASRPDataset* poDS = (ASRPDataset*)this->poDS;
+    SRPDataset* poDS = (SRPDataset*)this->poDS;
 
     if( poDS->oCT.GetColorEntryCount() > 0 )
         return GCI_PaletteIndex;
@@ -155,10 +152,10 @@ GDALColorInterp ASRPRasterBand::GetColorInterpretation()
 /*                           GetColorTable()                            */
 /************************************************************************/
 
-GDALColorTable *ASRPRasterBand::GetColorTable()
+GDALColorTable *SRPRasterBand::GetColorTable()
 
 {
-    ASRPDataset* poDS = (ASRPDataset*)this->poDS;
+    SRPDataset* poDS = (SRPDataset*)this->poDS;
 
     if( poDS->oCT.GetColorEntryCount() > 0 )
         return &(poDS->oCT);
@@ -170,11 +167,11 @@ GDALColorTable *ASRPRasterBand::GetColorTable()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ASRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
-    ASRPDataset* poDS = (ASRPDataset*)this->poDS;
+    SRPDataset* poDS = (SRPDataset*)this->poDS;
     int offset;
     int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;
     if (nBlockXOff >= poDS->NFC || nBlockYOff >= poDS->NFL)
@@ -199,7 +196,7 @@ CPLErr ASRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (poDS->TILEINDEX)
     {
         if( poDS->PCB == 0 ) // uncompressed 
-            offset = poDS->offsetInIMG + (poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+            offset = poDS->offsetInIMG + (poDS->TILEINDEX[nBlock] - 1) * 128 * 128;
         else // compressed 
             offset = poDS->offsetInIMG + (poDS->TILEINDEX[nBlock] - 1);
     }
@@ -235,8 +232,8 @@ CPLErr ASRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     else if( poDS->PCB != 0 )
     {
-        int    nBufSize = 128*128 + 500;
-        int    nBytesRead, iPixel, iSrc;
+        int    nBufSize = 128*128*2;
+        int    nBytesRead, iPixel, iSrc, bHalfByteUsed = FALSE;
         GByte *pabyCData = (GByte *) CPLCalloc(nBufSize,1);
 
         nBytesRead = VSIFReadL(pabyCData, 1, nBufSize, poDS->fdIMG);
@@ -247,7 +244,8 @@ CPLErr ASRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             return CE_Failure;
         }
         
-        CPLAssert( poDS->PCB == 8 && poDS->PVB == 8 );
+        CPLAssert( poDS->PVB == 8 );
+        CPLAssert( poDS->PCB == 4 || poDS->PCB == 8 );
 
         for( iSrc = 0, iPixel = 0; iPixel < 128 * 128; )
         {
@@ -260,8 +258,37 @@ CPLErr ASRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 return CE_Failure;
             }
 
-            int nCount = pabyCData[iSrc++];
-            int nValue = pabyCData[iSrc++];
+            int nCount;
+            int nValue;
+
+            if( poDS->PCB == 8 )
+            {
+                nCount = pabyCData[iSrc++];
+                nValue = pabyCData[iSrc++];
+            }
+            else if( poDS->PCB == 4 )
+            {
+                if( (iPixel % 128) == 0 && bHalfByteUsed )
+                {
+                    iSrc++;
+                    bHalfByteUsed = FALSE;
+                }
+
+                if( bHalfByteUsed )
+                {
+                    nCount = pabyCData[iSrc++] & 0xf;
+                    nValue = pabyCData[iSrc++];
+                    bHalfByteUsed = FALSE;
+                }
+                else
+                {
+                    nCount = pabyCData[iSrc] >> 4;
+                    nValue = ((pabyCData[iSrc] & 0xf) << 4)
+                        + (pabyCData[iSrc+1] >> 4);
+                    bHalfByteUsed = TRUE;
+                    iSrc++;
+                }
+            }
 
             if( iPixel + nCount > 128 * 128 )
             {
@@ -285,47 +312,27 @@ CPLErr ASRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                          ASRPDataset()                               */
+/*                          SRPDataset()                               */
 /************************************************************************/
 
-ASRPDataset::ASRPDataset()
+SRPDataset::SRPDataset()
 {
-    bCreation = FALSE;
-    poOverviewDS = NULL;
     fdIMG = NULL;
-    fdGEN = NULL;
-    fdTHF = NULL;
     TILEINDEX = NULL;
-    papszSubDatasets = NULL;
+    offsetInIMG = 0;
 }
 
 /************************************************************************/
-/*                          ~ASRPDataset()                              */
+/*                          ~SRPDataset()                              */
 /************************************************************************/
 
-ASRPDataset::~ASRPDataset()
+SRPDataset::~SRPDataset()
 {
-    if (poOverviewDS)
-    {
-        delete poOverviewDS;
-    }
-    
-    CSLDestroy(papszSubDatasets);
-
     if (fdIMG)
     {
         VSIFCloseL(fdIMG);
     }
     
-    if (fdGEN)
-    {
-        VSIFCloseL(fdGEN);
-    }
-    if (fdTHF)
-    {
-        VSIFCloseL(fdTHF);
-    }
-
     if (TILEINDEX)
     {
         delete [] TILEINDEX;
@@ -333,33 +340,12 @@ ASRPDataset::~ASRPDataset()
 }
 
 /************************************************************************/
-/*                           AddSubDataset()                            */
-/************************************************************************/
-
-void ASRPDataset::AddSubDataset( const char* pszFilename)
-{
-    char	szName[80];
-    int		nCount = CSLCount(papszSubDatasets ) / 2;
-
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
-    papszSubDatasets = 
-        CSLSetNameValue( papszSubDatasets, szName, pszFilename);
-
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
-    papszSubDatasets = 
-        CSLSetNameValue( papszSubDatasets, szName, pszFilename);
-}
-
-/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **ASRPDataset::GetMetadata( const char *pszDomain )
+char **SRPDataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
-        return papszSubDatasets;
-
     return GDALPamDataset::GetMetadata( pszDomain );
 }
 
@@ -367,35 +353,47 @@ char **ASRPDataset::GetMetadata( const char *pszDomain )
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 
-const char* ASRPDataset::GetProjectionRef()
+const char* SRPDataset::GetProjectionRef()
 {
-    return( SRS_WKT_WGS84 );
+    return osSRS;
 }
 
 /************************************************************************/
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-CPLErr ASRPDataset::GetGeoTransform( double * padfGeoTransform)
+CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
 {
-    if (papszSubDatasets != NULL)
-        return CE_Failure;
+    if( EQUAL(osProduct,"ASRP") )
+    {
+        padfGeoTransform[0] = LSO/3600.0;
+        padfGeoTransform[1] = 360. / ARV;
+        padfGeoTransform[2] = 0.0;
+        padfGeoTransform[3] = PSO/3600.0;
+        padfGeoTransform[4] = 0.0;
+        padfGeoTransform[5] = - 360. / BRV;
 
-    padfGeoTransform[0] = LSO/3600.0;
-    padfGeoTransform[1] = 360. / ARV;
-    padfGeoTransform[2] = 0.0;
-    padfGeoTransform[3] = PSO/3600.0;
-    padfGeoTransform[4] = 0.0;
-    padfGeoTransform[5] = - 360. / BRV;
+        return CE_None;
+    }
+    else if( EQUAL(osProduct,"USRP") )
+    {
+        padfGeoTransform[0] = LSO;
+        padfGeoTransform[1] = LOD;
+        padfGeoTransform[2] = 0.0;
+        padfGeoTransform[3] = PSO;
+        padfGeoTransform[4] = 0.0;
+        padfGeoTransform[5] = -LAD;
+        return CE_None;
+    }
 
-    return CE_None;
+    return CE_Failure;
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ASRPDataset::SetGeoTransform( double * padfGeoTransform )
+CPLErr SRPDataset::SetGeoTransform( double * padfGeoTransform )
 
 {
     memcpy( adfGeoTransform, padfGeoTransform, sizeof(double)*6 );
@@ -407,7 +405,7 @@ CPLErr ASRPDataset::SetGeoTransform( double * padfGeoTransform )
 /*                     GetLongitudeFromString()                         */
 /************************************************************************/
 
-double ASRPDataset::GetLongitudeFromString(const char* str)
+double SRPDataset::GetLongitudeFromString(const char* str)
 {
     char ddd[3+1] = { 0 };
     char mm[2+1] = { 0 };
@@ -426,7 +424,7 @@ double ASRPDataset::GetLongitudeFromString(const char* str)
 /*                      GetLatitudeFromString()                         */
 /************************************************************************/
 
-double ASRPDataset::GetLatitudeFromString(const char* str)
+double SRPDataset::GetLatitudeFromString(const char* str)
 {
     char ddd[2+1] = { 0 };
     char mm[2+1] = { 0 };
@@ -446,20 +444,9 @@ double ASRPDataset::GetLatitudeFromString(const char* str)
 /*                           GetFromRecord()                            */
 /************************************************************************/
 
-ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
+int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 {
-    int SCA = 0;
-    int ZNA = 0;
-    double PSP;
-    int ARV;
-    int BRV;
-    double LSO;
-    double PSO;
-    int NFL;
-    int NFC;
     CPLString osBAD;
-    int TIF;
-    int* TILEINDEX = NULL;
     int i;
 
     DDFField* field;
@@ -474,65 +461,62 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
     nSTR = record->GetIntSubfield( "GEN", 0, "STR", 0, &bSuccess );
     if( !bSuccess || nSTR != 4 )
     {
-        CPLDebug( "ASRP", "Failed to extract STR, or not 4." );
-        return NULL;
+        CPLDebug( "SRP", "Failed to extract STR, or not 4." );
+        return FALSE;
     }
         
-    SCA = record->GetIntSubfield( "GEN", 0, "SCA", 0, &bSuccess );
-    CPLDebug("ASRP", "SCA=%d", SCA);
+    int SCA = record->GetIntSubfield( "GEN", 0, "SCA", 0, &bSuccess );
+    CPLDebug("SRP", "SCA=%d", SCA);
         
     ZNA = record->GetIntSubfield( "GEN", 0, "ZNA", 0, &bSuccess );
-    CPLDebug("ASRP", "ZNA=%d", ZNA);
+    CPLDebug("SRP", "ZNA=%d", ZNA);
         
-    if (ZNA == 9 || ZNA == 18)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Polar cases are not handled by ASRP driver");
-        return NULL;
-    }
-    
-    PSP = record->GetFloatSubfield( "GEN", 0, "PSP", 0, &bSuccess );
-    CPLDebug("ASRP", "PSP=%f", PSP);
+    double PSP = record->GetFloatSubfield( "GEN", 0, "PSP", 0, &bSuccess );
+    CPLDebug("SRP", "PSP=%f", PSP);
 
     if (PSP != 100)
-        return NULL;
+        return FALSE;
         
     ARV = record->GetIntSubfield( "GEN", 0, "ARV", 0, &bSuccess );
-    CPLDebug("ASRP", "ARV=%d", ARV);
+    CPLDebug("SRP", "ARV=%d", ARV);
 
     BRV = record->GetIntSubfield( "GEN", 0, "BRV", 0, &bSuccess );
-    CPLDebug("ASRP", "BRV=%d", BRV);
+    CPLDebug("SRP", "BRV=%d", BRV);
 
     LSO = record->GetFloatSubfield( "GEN", 0, "LSO", 0, &bSuccess );
-    CPLDebug("ASRP", "LSO=%f", LSO);
+    CPLDebug("SRP", "LSO=%f", LSO);
 
     PSO = record->GetFloatSubfield( "GEN", 0, "PSO", 0, &bSuccess );
-    CPLDebug("ASRP", "PSO=%f", PSO);
+    CPLDebug("SRP", "PSO=%f", PSO);
+
+    LAD = record->GetFloatSubfield( "GEN", 0, "LAD", 0 );
+    LOD = record->GetFloatSubfield( "GEN", 0, "LOD", 0 );
 
     NFL = record->GetIntSubfield( "SPR", 0, "NFL", 0, &bSuccess );
-    CPLDebug("ASRP", "NFL=%d", NFL);
+    CPLDebug("SRP", "NFL=%d", NFL);
 
     NFC = record->GetIntSubfield( "SPR", 0, "NFC", 0, &bSuccess );
-    CPLDebug("ASRP", "NFC=%d", NFC);
+    CPLDebug("SRP", "NFC=%d", NFC);
 
     int PNC = record->GetIntSubfield( "SPR", 0, "PNC", 0, &bSuccess );
-    CPLDebug("ASRP", "PNC=%d", PNC);
+    CPLDebug("SRP", "PNC=%d", PNC);
 
     int PNL = record->GetIntSubfield( "SPR", 0, "PNL", 0, &bSuccess );
-    CPLDebug("ASRP", "PNL=%d", PNL);
+    CPLDebug("SRP", "PNL=%d", PNL);
 
     if( PNL != 128 || PNC != 128 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,"Unsupported PNL or PNC value.");
-        return NULL;
+        return FALSE;
     }
 
-    int PCB = record->GetIntSubfield( "SPR", 0, "PCB", 0 );
-    int PVB = record->GetIntSubfield( "SPR", 0, "PVB", 0 );
-    if( (PCB != 8 && PCB != 0) || PVB != 8 )
+    PCB = record->GetIntSubfield( "SPR", 0, "PCB", 0 );
+    PVB = record->GetIntSubfield( "SPR", 0, "PVB", 0 );
+    if( (PCB != 8 && PCB != 4 && PCB != 0) || PVB != 8 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PCB(%d) or PVB(%d) value unsupported.", PCB, PVB );
-        return NULL;
+        return FALSE;
     }
 
     osBAD = record->GetStringSubfield( "SPR", 0, "BAD", 0, &bSuccess );
@@ -541,30 +525,30 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
         if (c)
             *c = 0;
     }
-    CPLDebug("ASRP", "BAD=%s", osBAD.c_str());
+    CPLDebug("SRP", "BAD=%s", osBAD.c_str());
     
 /* -------------------------------------------------------------------- */
 /*      Read the tile map if available.                                 */
 /* -------------------------------------------------------------------- */
-    TIF = EQUAL(record->GetStringSubfield( "SPR", 0, "TIF", 0 ),"Y");
-    CPLDebug("ASRP", "TIF=%d", TIF);
+    int TIF = EQUAL(record->GetStringSubfield( "SPR", 0, "TIF", 0 ),"Y");
+    CPLDebug("SRP", "TIF=%d", TIF);
     
     if (TIF)
     {
         field = record->FindField( "TIM" );
         if( field == NULL )
-            return NULL;
+            return FALSE;
 
         fieldDefn = field->GetFieldDefn();
         DDFSubfieldDefn *subfieldDefn = fieldDefn->FindSubfieldDefn( "TSI" );
         if( subfieldDefn == NULL )
-            return NULL;
+            return FALSE;
 
         int nIndexValueWidth = subfieldDefn->GetWidth();
 
         if (field->GetDataSize() != nIndexValueWidth * NFL * NFC + 1)
         {
-            return NULL;
+            return FALSE;
         }
     
         TILEINDEX = new int [NFL * NFC];
@@ -577,7 +561,7 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
             strncpy(offset, ptr, nIndexValueWidth);
             ptr += nIndexValueWidth;
             TILEINDEX[i] = atoi(offset);
-            //CPLDebug("ASRP", "TSI[%d]=%d", i, TILEINDEX[i]);
+            //CPLDebug("SRP", "TSI[%d]=%d", i, TILEINDEX[i]);
         }
     }
     
@@ -588,7 +572,7 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
     CPLString osDirname = CPLGetDirname(pszFileName);
     CPLString osImgName = CPLFormCIFilename(osDirname, osBAD, NULL);
 
-    FILE* fdIMG = VSIFOpenL(osImgName, "rb");
+    fdIMG = VSIFOpenL(osImgName, "rb");
     
 /* -------------------------------------------------------------------- */
 /*      Establish the offset to the first byte of actual image data     */
@@ -596,12 +580,11 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
 /*                                                                      */
 /*      This code is awfully fragile!                                   */
 /* -------------------------------------------------------------------- */
-    int offsetInIMG = 0;
     char c;
     char recordName[3];
     if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
     {
-        return NULL;
+        return FALSE;
     }
     while (!VSIFEofL(fdIMG))
     {
@@ -609,7 +592,7 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
         {
             if (VSIFReadL(recordName, 1, 3, fdIMG) != 3)
             {
-                return NULL;
+                return FALSE;
             }
             offsetInIMG += 3;
             if (strncmp(recordName,"IMG",3) == 0)
@@ -617,18 +600,18 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
                 offsetInIMG += 4;
                 if (VSIFSeekL(fdIMG,3,SEEK_CUR) != 0)
                 {
-                    return NULL;
+                    return FALSE;
                 }
                 if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
                 {
-                    return NULL;
+                    return FALSE;
                 }
                 while(c ==' ' || c== '^')
                 {
                     offsetInIMG ++;
                     if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
                     {
-                        return NULL;
+                        return FALSE;
                     }
                 }
                 offsetInIMG ++;
@@ -639,44 +622,30 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
         offsetInIMG ++;
         if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
         {
-            return NULL;
+            return FALSE;
         }
     }
     
     if (VSIFEofL(fdIMG))
     {
-        return NULL;
+        return FALSE;
     }
     
-    CPLDebug("ASRP", "Img offset data = %d", offsetInIMG);
+    CPLDebug("SRP", "Img offset data = %d", offsetInIMG);
     
 /* -------------------------------------------------------------------- */
-/*      Establish the ASRP Dataset.                                     */
+/*      Establish the SRP Dataset.                                     */
 /* -------------------------------------------------------------------- */
-    ASRPDataset* poDS = new ASRPDataset();
-    
-    poDS->NFC = NFC;
-    poDS->NFL = NFL;
-    poDS->nRasterXSize = NFC * 128;
-    poDS->nRasterYSize = NFL * 128;
-    poDS->LSO = LSO;
-    poDS->PSO = PSO;
-    poDS->ARV = ARV;
-    poDS->BRV = BRV;
-    poDS->PCB = PCB;
-    poDS->PVB = PVB;
-    poDS->TILEINDEX = TILEINDEX;
-    poDS->fdIMG = fdIMG;
-    poDS->offsetInIMG = offsetInIMG;
-    poDS->poOverviewDS = NULL;
+    nRasterXSize = NFC * 128;
+    nRasterYSize = NFL * 128;
     
     char pszValue[32];
     sprintf(pszValue, "%d", SCA);
-    poDS->SetMetadataItem( "ASRP_SCA", pszValue );
+    SetMetadataItem( "SRP_SCA", pszValue );
     
-    poDS->nBands = 1;
-    for( i = 0; i < poDS->nBands; i++ )
-        poDS->SetBand( i+1, new ASRPRasterBand( poDS, i+1 ) );
+    nBands = 1;
+    for( i = 0; i < nBands; i++ )
+        SetBand( i+1, new SRPRasterBand( this, i+1 ) );
 
 /* -------------------------------------------------------------------- */
 /*      Try to collect a color map from the .QAL file.                  */
@@ -717,7 +686,7 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
                 sEntry.c3 = nNSB;
                 sEntry.c4 = 255;
 
-                poDS->oCT.SetColorEntry( nCCD, &sEntry );
+                oCT.SetColorEntry( nCCD, &sEntry );
             }
         }
     }
@@ -725,18 +694,54 @@ ASRPDataset* ASRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to find .QAL file, no color table applied." );
 
-    return poDS;
+/* -------------------------------------------------------------------- */
+/*      Derive the coordinate system.                                   */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(osProduct,"ASRP") )
+    {
+        osSRS = SRS_WKT_WGS84;
+
+        if (ZNA == 9 || ZNA == 18)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Polar cases are not handled by SRP driver");
+            return FALSE;
+        }
+    }
+    else
+    {
+        OGRSpatialReference oSRS;
+
+        if( ABS(ZNA) >= 1 && ABS(ZNA) <= 60 )
+        {
+            oSRS.SetUTM( ABS(ZNA), ZNA > 0 );
+            oSRS.SetWellKnownGeogCS( "WGS84" );
+        }
+        else if( ZNA == 61 )
+        {
+            oSRS.importFromEPSG( 32661 ); // WGS84 UPS North 
+        }
+        else if( ZNA == -61 )
+        {
+            oSRS.importFromEPSG( 32761 ); // WGS84 UPS South 
+        }
+
+        char *pszWKT = NULL;
+        oSRS.exportToWkt( &pszWKT );
+        osSRS = pszWKT;
+        CPLFree( pszWKT );
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *ASRPDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     DDFModule module;
     DDFRecord * record;
-    ASRPDataset* overviewDS = NULL;
     CPLString osFileName(poOpenInfo->pszFilename);
     CPLString osNAM;
 
@@ -752,11 +757,15 @@ GDALDataset *ASRPDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "The ASRP driver does not support update access to existing"
+                  "The SRP driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Loop processing records - we are basically looking for the      */
+/*      GIN record which is normally first in the .GEN file.            */
+/* -------------------------------------------------------------------- */
     while (TRUE)
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -771,69 +780,71 @@ GDALDataset *ASRPDataset::Open( GDALOpenInfo * poOpenInfo )
             continue;
 
         const char *PRT = record->GetStringSubfield( "DSI", 0, "PRT", 0 );
-        if( PRT == NULL || !EQUALN(PRT,"ASRP",4) )
+        if( PRT == NULL )
             continue;
-        
+
+        CPLString osPRT = PRT;
+        osPRT.resize(4);
+        if( !EQUAL(osPRT,"ASRP") && !EQUAL(osPRT,"USRP") )
+            continue;
+
         osNAM = record->GetStringSubfield( "DSI", 0, "NAM", 0 );
-        CPLDebug("ASRP", "NAM=%s", osNAM.c_str());
+        CPLDebug("SRP", "NAM=%s", osNAM.c_str());
+
+        SRPDataset *poDS = new SRPDataset();
         
-        ASRPDataset* poDS = GetFromRecord(osFileName, record);
-        if (poDS)
+        poDS->osProduct = osPRT;
+        poDS->SetMetadataItem( "SRP_NAM", osNAM );
+        poDS->SetMetadataItem( "SRP_PRODUCT", osPRT );
+
+        if (!poDS->GetFromRecord( osFileName, record ) )
         {
-            poDS->SetMetadataItem( "ASRP_NAM", osNAM );
-            
-            poDS->poOverviewDS = overviewDS;
-                
-            /* ---------------------------------------------------------- */
-            /*      Check for external overviews.                         */
-            /* ---------------------------------------------------------- */
-            poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-                
-            /* ---------------------------------------------------------- */
-            /*      Initialize any PAM information.                       */
-            /* ---------------------------------------------------------- */
-            poDS->SetDescription( poOpenInfo->pszFilename );
-            poDS->TryLoadXML();
+            delete poDS;
+            continue;
         }
-        else if (overviewDS)
-        {
-            delete overviewDS;
-        }
+        
+        /* ---------------------------------------------------------- */
+        /*      Check for external overviews.                         */
+        /* ---------------------------------------------------------- */
+        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+        
+        /* ---------------------------------------------------------- */
+        /*      Initialize any PAM information.                       */
+        /* ---------------------------------------------------------- */
+        poDS->SetDescription( poOpenInfo->pszFilename );
+        poDS->TryLoadXML();
 
         return poDS;
     }
-    
-    if (overviewDS)
-        delete overviewDS;
     
     return NULL;
 }
 
 /************************************************************************/
-/*                         GDALRegister_ASRP()                          */
+/*                         GDALRegister_SRP()                          */
 /************************************************************************/
 
-void GDALRegister_ASRP()
+void GDALRegister_SRP()
 
 {
     GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "ASRP" ) == NULL )
+    if( GDALGetDriverByName( "SRP" ) == NULL )
     {
         poDriver = new GDALDriver();
         
-        poDriver->SetDescription( "ASRP" );
+        poDriver->SetDescription( "SRP" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ARC Standard Raster Product" );
-//        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-//                                   "frmt_various.html#ASRP" );
+                                   "Standard Raster Product (SRP/USRP)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#SRP" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = ASRPDataset::Open;
+        poDriver->pfnOpen = SRPDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
