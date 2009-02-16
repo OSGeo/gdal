@@ -573,6 +573,11 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
     CPLString osImgName = CPLFormCIFilename(osDirname, osBAD, NULL);
 
     fdIMG = VSIFOpenL(osImgName, "rb");
+    if (fdIMG == NULL)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Cannot find %s", osImgName.c_str());
+        return FALSE;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Establish the offset to the first byte of actual image data     */
@@ -835,7 +840,7 @@ void GDALRegister_SRP()
         
         poDriver->SetDescription( "SRP" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Standard Raster Product (SRP/USRP)" );
+                                   "Standard Raster Product (ASRP/USRP)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#SRP" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
