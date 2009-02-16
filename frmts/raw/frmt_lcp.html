@@ -10,16 +10,16 @@
 <p>FARSITE v. 4 landscape file (LCP) is a multi-band raster format used by 
 wildland fire behavior and fire effect simulation models such as FARSITE, 
 FLAMMAP, and FBAT (<a href="http://www.fire.org">www.fire.org</a>). The bands of an LCP file store data describing 
-topography, tree canopy, and ground fuel. The
+terrain, tree canopy, and surface fuel. The
 <a href="http://landfire.cr.usgs.gov/viewer">USGS National Map for LANDFIRE</a>
 distributes data in LCP format, and 
-programs such as FARSITE and FBAT can create LCP files from a set of input rasters. 
+programs such as FARSITE and <a href="http://www.landfire.gov/datatool.php">LFDAT</a> can create LCP files from a set of input rasters. 
 The GDAL driver for LCP supports reading only.</p>
 <p>An LCP file (.lcp) is basically a raw format with a 7,316-byte header 
 described below. The data type for all bands is 16-bit signed integer. Bands are 
 interleaved by pixel. Five bands are required: elevation, slope, aspect, fuel 
 model, and tree canopy cover. Crown fuel bands (canopy height, canopy base 
-height, canopy bulk density), and ground fuel bands (duff, coarse woody debris) 
+height, canopy bulk density), and surface fuel bands (duff, coarse woody debris) 
 are optional.</p>
 <p>The LCP driver reads the linear unit, cell size, and extent, but the LCP file 
 does not specify the projection. UTM projections are typical, but other 
@@ -603,7 +603,7 @@ in gdal/frmts/raw. It should be implemented as gdal/frmts/raw/lcpdataset.cpp.</p
   </tr>
 </table>
 
-<p><i>C. Toney, 2008-05-06</i></p>
+<p><i>Chris Toney, 2009-02-14</i></p>
 
 </body>
 
