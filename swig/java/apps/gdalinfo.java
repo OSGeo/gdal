@@ -41,6 +41,8 @@ import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.GCP;
 import org.gdal.gdal.gdal;
+import org.gdal.gdal.TermProgressCallback;
+import org.gdal.gdal.RasterAttributeTable;
 import org.gdal.gdalconst.gdalconstConstants;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
@@ -55,8 +57,8 @@ public class gdalinfo {
 
 	{
 		System.out
-				.println("Usage: gdalinfo [--help-general] [-mm] [-nogcp] [-nomd] "
-						+ " [-checksum] datasetname");
+				.println("Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
+				        + "               [-norat] [-noct] [-mdd domain]* [-checksum] datasetname");
 		System.exit(1);
 	}
 
@@ -74,10 +76,13 @@ public class gdalinfo {
 			Vector papszMetadata;
 			boolean bComputeMinMax = false, bSample = false;
 			boolean bShowGCPs = true, bShowMetadata = true;
-			boolean bStats = false;
-                        boolean bComputeChecksum = false;
+			boolean bStats = false, bApproxStats = true;
+                        boolean bShowColorTable = true, bComputeChecksum = false;
+                        boolean bReportHistograms = false;
+                        boolean bShowRAT = true;
 			String pszFilename = null;
                         Vector papszFileList;
+                        Vector papszExtraMDDomains = new Vector();
 
 			gdal.AllRegister();
 
@@ -93,16 +98,30 @@ public class gdalinfo {
 			for (i = 0; i < args.length; i++) {
 				if (args[i].equals("-mm"))
 					bComputeMinMax = true;
+                                else if (args[i].equals("-hist"))
+					bReportHistograms = true;
 				else if (args[i].equals("-stats"))
+                                {
 					bStats = true;
-				else if (args[i].equals("-sample"))
-					bSample = true;
+                                        bApproxStats = false;
+                                }
+				else if (args[i].equals("-approx_stats"))
+				{
+					bStats = true;
+                                        bApproxStats = true;
+                                }
 				else if (args[i].equals("-nogcp"))
 					bShowGCPs = false;
+                                else if( args[i].equals("-noct"))
+                                        bShowColorTable = false;
 				else if (args[i].equals("-nomd"))
 					bShowMetadata = false;
+                                else if (args[i].equals("-norat"))
+					bShowRAT = false;
                                 else if (args[i].equals("-checksum"))
 					bComputeChecksum = true;
+                                else if (args[i].equals("-mdd") && i + 1 < args.length)
+					papszExtraMDDomains.addElement(args[++i]);
 				else if (args[i].startsWith("-"))
 					Usage();
 				else if (pszFilename == null)
@@ -110,7 +129,6 @@ public class gdalinfo {
 				else
 					Usage();
 			}
-
 			if (pszFilename == null)
 				Usage();
 
@@ -234,6 +252,21 @@ public class gdalinfo {
 					System.out.println("  " + (String) keys.nextElement());
 				}
 			}
+                        
+                        Enumeration eExtraMDDDomains = papszExtraMDDomains.elements();
+                        while(eExtraMDDDomains.hasMoreElements())
+                        {
+                            String pszDomain = (String)eExtraMDDDomains.nextElement();
+                            papszMetadata = hDataset.GetMetadata_List(pszDomain);
+                            if( bShowMetadata && papszMetadata.size() > 0 )
+                            {
+                                Enumeration keys = papszMetadata.elements();
+                                System.out.println("Metadata (" + pszDomain + "):");
+                                while (keys.hasMoreElements()) {
+					System.out.println("  " + (String) keys.nextElement());
+				}
+                            }
+                        }
                         /* -------------------------------------------------------------------- */
                         /*      Report "IMAGE_STRUCTURE" metadata.                              */
                         /* -------------------------------------------------------------------- */
@@ -335,22 +368,48 @@ public class gdalinfo {
 				hBand.GetMinimum(pass1);
 				hBand.GetMaximum(pass2);
 				if(pass1[0] != null || pass2[0] != null || bComputeMinMax) {
-					System.out.println("  Min=" + pass1[0] + " Max="
-							+ pass2[0]);
-				}
-				if (bComputeMinMax) {
-					hBand.ComputeRasterMinMax(adfCMinMax, 0);
-					System.out.println("   Computed Min/Max=" + adfCMinMax[0]
+                                    System.out.print( "  " );
+                                    if( pass1[0] != null )
+                                        System.out.print( "Min=" + pass1[0] + " ");
+                                    if( pass2[0] != null )
+                                        System.out.print( "Max=" + pass2[0] + " ");
+                                
+                                    if( bComputeMinMax )
+                                    {
+                                        hBand.ComputeRasterMinMax(adfCMinMax, 0);
+                                        System.out.print( "  Computed Min/Max=" + adfCMinMax[0]
 							+ "," + adfCMinMax[1]);
+                                    }
+                        
+                                    System.out.print( "\n" );
 				}
 
-				/*eErr = hBand.GetRasterStatistics( hBand, false, bStats, 
-				 dfMin, dfMax, dfMean, dfStdDev );
-				 if( eErr == CE_None )
-				 {
-				 System.out.println( "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f\n",
-				 dfMin, dfMax, dfMean, dfStdDev );
-				 }*/
+                                double dfMin[] = new double[1];
+                                double dfMax[] = new double[1];
+                                double dfMean[] = new double[1];
+                                double dfStdDev[] = new double[1];
+				if( hBand.GetStatistics( bApproxStats, bStats,
+                                                         dfMin, dfMax, dfMean, dfStdDev ) == gdalconstConstants.CE_None )
+				{
+				    System.out.println( "  Minimum=" + dfMin[0] + ", Maximum=" + dfMax[0] +
+                                                        ", Mean=" + dfMean[0] + ", StdDev=" + dfStdDev[0] );
+				}
+
+                                if( bReportHistograms )
+                                {
+                                    int[][] panHistogram = new int[1][];
+                                    int eErr = hBand.GetDefaultHistogram(dfMin, dfMax, panHistogram, true, new TermProgressCallback());
+                                    if( eErr == gdalconstConstants.CE_None )
+                                    {
+                                        int iBucket;
+                                        int nBucketCount = panHistogram[0].length;
+                                        System.out.print( "  " + nBucketCount + " buckets from " +
+                                                           dfMin[0] + " to " + dfMax[0] + ":\n  " );
+                                        for( iBucket = 0; iBucket < nBucketCount; iBucket++ )
+                                            System.out.print( panHistogram[0][iBucket] + " ");
+                                        System.out.print( "\n" );
+                                    }
+                                }
 
                                 if ( bComputeChecksum)
                                 {
@@ -398,10 +457,10 @@ public class gdalinfo {
                                         }
 				}
 
-				/*if( GDALHasArbitraryOverviews( hBand ) )
-				 {
-				 System.out.println( "  Overviews: arbitrary\n" );
-				 }*/
+				if( hBand.HasArbitraryOverviews() )
+				{
+				    System.out.println( "  Overviews: arbitrary" );
+				}
 
 
                                 int nMaskFlags = hBand.GetMaskFlags(  );
@@ -449,15 +508,17 @@ public class gdalinfo {
 				     System.out.println( "  Unit Type: " + hBand.GetUnitType() );
 				}
 
-				/*if( GDALGetRasterCategoryNames(hBand) != null )
-				 {
-				 String[][] papszCategories = GDALGetRasterCategoryNames(hBand);
-				 int i;
-
-				 System.out.println( "  Categories:\n" );
-				 for( i = 0; papszCategories[i] != null; i++ )
-				 System.out.println( "    %3d: %s\n", i, papszCategories[i] );
-				 }*/
+                                Vector papszCategories = hBand.GetRasterCategoryNames();
+                                if (papszCategories.size() > 0)
+                                {
+                                    System.out.println( "  Categories:" );
+                                    Enumeration eCategories = papszCategories.elements();
+                                    i = 0;
+				    while (eCategories.hasMoreElements()) {
+                                            System.out.println("    " + i + ": " + (String) eCategories.nextElement());
+                                            i ++;
+                                    }
+                                }
 
 				hBand.GetOffset(pass1);
 				if(pass1[0] != null && pass1[0].doubleValue() != 0) {
@@ -471,9 +532,9 @@ public class gdalinfo {
 				papszMetadata = hBand.GetMetadata_List("");
 				 if( bShowMetadata && papszMetadata.size() > 0 ) {
 						Enumeration keys = papszMetadata.elements();
-						System.out.println("Metadata:");
+						System.out.println("  Metadata:");
 						while (keys.hasMoreElements()) {
-							System.out.println("  " + (String) keys.nextElement());
+							System.out.println("    " + (String) keys.nextElement());
 						}
 				 }
 				if (hBand.GetRasterColorInterpretation() == gdalconstConstants.GCI_PaletteIndex
@@ -485,11 +546,47 @@ public class gdalinfo {
 									.GetPaletteInterpretation()) + " with "
 							+ hTable.GetCount() + " entries)");
 
-					for (count = 0; count < hTable.GetCount(); count++) {
-						System.out.println(" " + count + ": "
-								+ hTable.GetColorEntry(count));
-					}
+                                        if (bShowColorTable)
+                                        {
+                                            for (count = 0; count < hTable.GetCount(); count++) {
+                                                    System.out.println(" " + count + ": "
+                                                                    + hTable.GetColorEntry(count));
+                                            }
+                                        }
 				}
+
+                                RasterAttributeTable rat = hBand.GetDefaultRAT();
+                                if( bShowRAT && rat != null )
+                                {
+                                    System.out.print("<GDALRasterAttributeTable ");
+                                    double[] pdfRow0Min = new double[1];
+                                    double[] pdfBinSize = new double[1];
+                                    if (rat.GetLinearBinning(pdfRow0Min, pdfBinSize))
+                                    {
+                                        System.out.print("Row0Min=\"" + pdfRow0Min[0] + "\" BinSize=\"" + pdfBinSize[0] + "\">");
+                                    }
+                                    System.out.print("\n");
+                                    int colCount = rat.GetColumnCount();
+                                    for(int col=0;col<colCount;col++)
+                                    {
+                                        System.out.println("  <FieldDefn index=\"" + col + "\">");
+                                        System.out.println("    <Name>" + rat.GetNameOfCol(col) + "</Name>");
+                                        System.out.println("    <Type>" + rat.GetTypeOfCol(col) + "</Type>");
+                                        System.out.println("    <Usage>" + rat.GetUsageOfCol(col) + "</Usage>");
+                                        System.out.println("  </FieldDefn>");
+                                    }
+                                    int rowCount = rat.GetRowCount();
+                                    for(int row=0;row<rowCount;row++)
+                                    {
+                                        System.out.println("  <Row index=\"" + row + "\">");
+                                        for(int col=0;col<colCount;col++)
+                                        {
+                                            System.out.println("    <F>" + rat.GetValueAsString(row, col)+ "</F>");
+                                        }
+                                        System.out.println("  </Row>");
+                                    }
+                                    System.out.println("</GDALRasterAttributeTable>");
+                                }
 			}
 
 			hDataset.delete();
