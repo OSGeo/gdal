@@ -297,6 +297,7 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
 /*                             FillNodata()                             */
 /************************************************************************/
 
+/* Interface method added for GDAL 1.7.0 */
 %apply Pointer NONNULL {GDALRasterBandShadow *targetBand};
 #ifndef SWIGJAVA
 %feature( "kwargs" ) FillNodata;

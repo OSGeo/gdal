@@ -97,6 +97,7 @@ public:
   GDALDataType DataType;
 %mutable;
 
+  /* Interface method added for GDAL 1.7.0 */
   int GetBand()
   {
     return GDALGetBandNumber(self);
@@ -109,6 +110,7 @@ public:
   }
 
   // Preferred name to match C++ API
+  /* Interface method added for GDAL 1.7.0 */
   GDALColorInterp GetColorInterpretation() {
     return GDALGetRasterColorInterpretation( self );
   }
@@ -119,6 +121,7 @@ public:
   }
 
   // Preferred name to match C++ API
+  /* Interface method added for GDAL 1.7.0 */
   CPLErr SetColorInterpretation( GDALColorInterp val ) {
     return GDALSetRasterColorInterpretation( self, val );
   }
@@ -136,6 +139,7 @@ public:
     return GDALSetRasterNoDataValue( self, d );
   }
   
+  /* Interface method added for GDAL 1.7.0 */
   const char* GetUnitType() {
       return GDALGetRasterUnitType( self );
   }
@@ -174,6 +178,15 @@ public:
                       double *min, double *max, double *mean, double *stddev ){
     return GDALGetRasterStatistics( self, approx_ok, force, 
 				    min, max, mean, stddev );
+  }
+%clear (CPLErr);
+
+  /* Interface method added for GDAL 1.7.0 */
+%apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
+  CPLErr ComputeStatistics( bool approx_ok, double *min = NULL, double *max = NULL, double *mean = NULL, double *stddev = NULL,
+                            GDALProgressFunc callback = NULL, void* callback_data=NULL){
+    return GDALComputeRasterStatistics( self, approx_ok, min, max, mean, stddev, callback, callback_data );
   }
 %clear (CPLErr);
 
@@ -363,10 +376,10 @@ CPLErr SetDefaultHistogram( double min, double max,
 %clear (int buckets_in, int *panHistogram_in);
 #endif
 
-/* NEEDED */
-/* GetStatistics */
-/* SetStatistics */
-/* ComputeStatistics */
+  /* Interface method added for GDAL 1.7.0 */
+  bool HasArbitraryOverviews() {
+      return GDALHasArbitraryOverviews( self );
+  }
 
 } /* %extend */
 
