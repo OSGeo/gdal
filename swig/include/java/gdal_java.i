@@ -564,6 +564,10 @@ import org.gdal.gdalconst.gdalconstConstants;
     return Checksum(0, 0, getXSize(), getYSize());
   }
 
+  public int GetStatistics(boolean approx_ok, boolean force, double[] min, double[] max, double[] mean, double[] stddev) {
+    return GetStatistics((approx_ok) ? 1 : 0, (force) ? 1 : 0, min, max, mean, stddev);
+  }
+
    public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize,
                                 int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer) {
        return ReadRaster_Direct(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, gdalconstConstants.GDT_Byte, nioBuffer);
@@ -635,6 +639,20 @@ import org.gdal.gdalconst.gdalconstConstants;
     return ret;
   }
 
+%typemap(javainterfaces) GDALRasterAttributeTableShadow "Cloneable"
+
+%typemap(javacode) GDALRasterAttributeTableShadow %{
+
+  public int hashCode() {
+     return (int)swigCPtr;
+  }
+
+  public Object clone()
+  {
+      return Clone();
+  }
+%}
+  
 /************************************************************************/
 /*                       Stuff for progress callback                    */
 /************************************************************************/
