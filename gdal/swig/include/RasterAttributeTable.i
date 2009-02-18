@@ -150,7 +150,19 @@ public:
         return GDALRATCreateColumn( self, pszName, eType, eUsage );
     }
 
-    /* TODO: omit linear binning for now */
+    /* Interface method added for GDAL 1.7.0 */
+    %apply (double *OUTPUT){double *pdfRow0Min, double *pdfBinSize};
+    bool GetLinearBinning( double *pdfRow0Min, double *pdfBinSize )
+    {
+        return GDALRATGetLinearBinning(self, pdfRow0Min, pdfBinSize);
+    }
+    %clear double *pdfRow0Min, double *pdfBinSize;
+
+    /* Interface method added for GDAL 1.7.0 */
+    int	SetLinearBinning (double dfRow0Min, double dfBinSize)
+    {
+        return GDALRATSetLinearBinning(self, dfRow0Min, dfBinSize);
+    }
 
     /* TODO: omit color table translation,and dump readable */
 
