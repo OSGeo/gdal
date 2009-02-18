@@ -360,6 +360,9 @@ def GetDriverByName(name):
         return None
     else:
         return Driver( driver_o )
+
+def GetDriverCount():
+    return _gdal.GDALGetDriverCount()
     
 def Open(file,access=GA_ReadOnly):
     if _gdal.GDALGetDriverCount() == 0:
