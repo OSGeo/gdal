@@ -153,6 +153,7 @@ typedef void OGRFieldDefnShadow;
 /* typo : deprecated */
 %constant wkb25Bit = wkb25DBit;
 
+/* Interface constant added for GDAL 1.7.0 */
 %constant wkb25DBit = wkb25DBit;
 %constant wkbUnknown = 0;
 
@@ -1141,6 +1142,7 @@ public:
     OGR_Fld_SetPrecision(self, precision);
   }
 
+  /* Interface method added for GDAL 1.7.0 */
   const char * GetTypeName()
   {
       return OGR_GetFieldTypeName(OGR_Fld_GetType(self));
@@ -1747,6 +1749,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
 %apply (char **options) {char **};
 #endif
 
+/* Interface method added for GDAL 1.7.0 */
 #ifdef SWIGJAVA
 %inline %{
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
