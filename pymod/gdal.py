@@ -363,6 +363,9 @@ def GetDriverByName(name):
 
 def GetDriverCount():
     return _gdal.GDALGetDriverCount()
+
+def GetDriver( iDriver ):
+    return Driver(_gdal.GDALGetDriver( iDriver ))
     
 def Open(file,access=GA_ReadOnly):
     if _gdal.GDALGetDriverCount() == 0:
