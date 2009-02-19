@@ -556,7 +556,7 @@
 {
   /* %typemap(freearg) (int nList, int* pList) */
   if ($2) {
-    jenv->ReleaseIntArrayElements($input, $2, JNI_ABORT);
+    jenv->ReleaseIntArrayElements($input, (jint*)$2, JNI_ABORT);
   }
 }
 
@@ -599,7 +599,7 @@
 {
   /* %typemap(freearg) (int nList, int* pListOut) */
   if ($2) {
-    jenv->SetIntArrayRegion($input, 0, $1, $2);
+    jenv->SetIntArrayRegion($input, 0, $1, (jint*)$2);
     free((void*) $2);
   }
 }
@@ -631,7 +631,7 @@
   if($input && jenv->GetArrayLength($input) >= 1)
   {
     jintArray intArray = jenv->NewIntArray(nLen$argnum);
-    jenv->SetIntArrayRegion(intArray, (jsize)0, (jsize)nLen$argnum, pBuf$argnum);
+    jenv->SetIntArrayRegion(intArray, (jsize)0, (jsize)nLen$argnum, (jint*)pBuf$argnum);
     jenv->SetObjectArrayElement($input,0,intArray);
     jenv->DeleteLocalRef(intArray);
   }
@@ -668,7 +668,7 @@
 {
   /* %typemap(argout) (int id, int *nLen, const int **pList) */
   jintArray intArray = jenv->NewIntArray(nLen$argnum);
-  jenv->SetIntArrayRegion(intArray, (jsize)0, (jsize)nLen$argnum, pList$argnum);
+  jenv->SetIntArrayRegion(intArray, (jsize)0, (jsize)nLen$argnum, (jint*)pList$argnum);
   $result = intArray;
 }
 
@@ -1523,7 +1523,7 @@ OPTIONAL_POD(int,i);
 {
     /* %typemap(argout) ( int *panSuccess ) */
     if ($input)
-        jenv->SetIntArrayRegion($input, (jsize)0, (jsize)xyzLen3, $1);
+        jenv->SetIntArrayRegion($input, (jsize)0, (jsize)xyzLen3, (jint*)$1);
     CPLFree($1);
 }
 
