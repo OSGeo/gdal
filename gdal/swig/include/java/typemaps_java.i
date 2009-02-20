@@ -1395,7 +1395,11 @@ OPTIONAL_POD(int,i);
         return $null;
     }
     $1 = jenv->GetDirectBufferAddress($input);
-    $2 = jenv->GetDirectBufferCapacity($input);
+
+    /* The cast to long is actually not that correct, but anyway afterwards */
+    /* we check that the theoretical minimum buffer size is not larger than INT_MAX */
+    /* so truncating to INT_MAX is OK */
+    $2 = (long) ((jenv->GetDirectBufferCapacity($input) > INT_MAX) ? INT_MAX : jenv->GetDirectBufferCapacity($input));
 }
 
 
