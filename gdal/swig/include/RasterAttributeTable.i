@@ -154,7 +154,7 @@ public:
     %apply (double *OUTPUT){double *pdfRow0Min, double *pdfBinSize};
     bool GetLinearBinning( double *pdfRow0Min, double *pdfBinSize )
     {
-        return GDALRATGetLinearBinning(self, pdfRow0Min, pdfBinSize);
+        return (GDALRATGetLinearBinning(self, pdfRow0Min, pdfBinSize) != 0) ? true : false;
     }
     %clear double *pdfRow0Min, double *pdfBinSize;
 
