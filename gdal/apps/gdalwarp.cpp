@@ -38,10 +38,12 @@ CPL_CVSID("$Id$");
 //static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT );
 
 static void
-LoadCutline( GDALDatasetH hDstDS, 
-             const char *pszCutlineDSName, const char *pszCLayer, 
+LoadCutline( const char *pszCutlineDSName, const char *pszCLayer, 
              const char *pszCWHERE, const char *pszCSQL, 
-             char ***ppapszWarpOptions );
+             void **phCutlineRet );
+static void
+TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
+                          char ***ppapszWarpOptions );
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, char **papszTO,
@@ -281,6 +283,7 @@ int main( int argc, char ** argv )
     char                **papszTO = NULL;
     char                *pszCutlineDSName = NULL;
     char                *pszCLayer = NULL, *pszCWHERE = NULL, *pszCSQL = NULL;
+    void                *hCutline = NULL;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -591,8 +594,8 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( pszCutlineDSName != NULL )
     {
-        LoadCutline( hDstDS, pszCutlineDSName, pszCLayer, pszCWHERE, pszCSQL, 
-                     &papszWarpOptions );
+        LoadCutline( pszCutlineDSName, pszCLayer, pszCWHERE, pszCSQL, 
+                     &hCutline );
     }
 
 /* -------------------------------------------------------------------- */
@@ -854,6 +857,16 @@ int main( int argc, char ** argv )
         }
 
 /* -------------------------------------------------------------------- */
+/*      If we have a cutline, transform it into the source              */
+/*      pixel/line coordinate system and insert into warp options.      */
+/* -------------------------------------------------------------------- */
+        if( hCutline != NULL )
+        {
+            TransformCutlineToSource( hSrcDS, hCutline, 
+                                      &(psWO->papszWarpOptions) );
+        }
+
+/* -------------------------------------------------------------------- */
 /*      If we are producing VRT output, then just initialize it with    */
 /*      the warp options and write out now rather than proceeding       */
 /*      with the operations.                                            */
@@ -936,6 +949,12 @@ int main( int argc, char ** argv )
 
     GDALDestroyDriverManager();
     
+#ifdef OGR_ENABLED
+    if( hCutline != NULL )
+        OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+    OGRCleanupAll();
+#endif
+
     return 0;
 }
 
@@ -1371,10 +1390,9 @@ public:
 /************************************************************************/
 
 static void
-LoadCutline( GDALDatasetH hDstDS, 
-             const char *pszCutlineDSName, const char *pszCLayer, 
+LoadCutline( const char *pszCutlineDSName, const char *pszCLayer, 
              const char *pszCWHERE, const char *pszCSQL, 
-             char ***ppapszWarpOptions )
+             void **phCutlineRet )
 
 {
 #ifndef OGR_ENABLED
@@ -1418,51 +1436,6 @@ LoadCutline( GDALDatasetH hDstDS,
         OGR_L_SetAttributeFilter( hLayer, pszCWHERE );
 
 /* -------------------------------------------------------------------- */
-/*      Checkout that SRS are the same.                                 */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReferenceH  hDstSRS = NULL;
-
-    if( GDALGetProjectionRef( hDstDS ) != NULL )
-    {
-        char *pszProjection;
-
-        pszProjection = (char *) GDALGetProjectionRef( hDstDS );
-
-        hDstSRS = OSRNewSpatialReference(NULL);
-        if( OSRImportFromWkt( hDstSRS, &pszProjection ) != CE_None )
-        {
-            OSRDestroySpatialReference(hDstSRS);
-            hDstSRS = NULL;
-        }
-    }
-
-    OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hLayer);
-    if( hDstSRS != NULL && hSrcSRS != NULL )
-    {
-        if( OSRIsSame(hSrcSRS, hDstSRS) == FALSE )
-        {
-            fprintf(stderr,
-                    "Warning : the output raster dataset and the input vector layer do not have the same SRS. "
-                    "Results will be probably incorrect.\n");
-        }
-    }
-    else if( hDstSRS != NULL && hSrcSRS == NULL )
-    {
-        fprintf(stderr,
-                "Warning : the output raster dataset has a SRS, but the input vector layer not. "
-                "Results may be incorrect.\n");
-    }
-    else if( hDstSRS == NULL && hLayer != NULL )
-    {
-        fprintf(stderr,
-                "Warning : the input vector layer has a SRS, but the output raster dataset not. "
-                "Results may be incorrect.\n");
-    }
-
-    if( hDstSRS != NULL )
-        OSRDestroySpatialReference(hDstSRS);
-
-/* -------------------------------------------------------------------- */
 /*      Collect the geometries from this layer, and build list of       */
 /*      burn values.                                                    */
 /* -------------------------------------------------------------------- */
@@ -1500,12 +1473,87 @@ LoadCutline( GDALDatasetH hDstDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Ensure the coordinate system gets set on the geometry.          */
+/* -------------------------------------------------------------------- */
+    OGR_G_AssignSpatialReference(
+        hMultiPolygon, OGR_L_GetSpatialRef(hLayer) );
+
+    *phCutlineRet = (void *) hMultiPolygon;
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    if( pszCSQL != NULL )
+        OGR_DS_ReleaseResultSet( hSrcDS, hLayer );
+
+    OGR_DS_Destroy( hSrcDS );
+#endif
+}
+
+/************************************************************************/
+/*                      TransformCutlineToSource()                      */
+/************************************************************************/
+
+static void
+TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
+                          char ***ppapszWarpOptions )
+
+{
+#ifdef OGR_ENABLED
+    OGRGeometryH hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
+
+/* -------------------------------------------------------------------- */
+/*      Checkout that SRS are the same.                                 */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReferenceH  hRasterSRS = NULL;
+
+    if( GDALGetProjectionRef( hSrcDS ) != NULL )
+    {
+        char *pszProjection;
+
+        pszProjection = (char *) GDALGetProjectionRef( hSrcDS );
+
+        hRasterSRS = OSRNewSpatialReference(NULL);
+        if( OSRImportFromWkt( hRasterSRS, &pszProjection ) != CE_None )
+        {
+            OSRDestroySpatialReference(hRasterSRS);
+            hRasterSRS = NULL;
+        }
+    }
+
+    OGRSpatialReferenceH hSrcSRS = OGR_G_GetSpatialReference( hMultiPolygon );
+    if( hRasterSRS != NULL && hSrcSRS != NULL )
+    {
+        if( OSRIsSame(hSrcSRS, hRasterSRS) == FALSE )
+        {
+            fprintf(stderr,
+                    "Warning : the source raster dataset and the input vector layer do not have\n"
+                    "the same SRS.  Results will be probably incorrect.\n");
+        }
+    }
+    else if( hRasterSRS != NULL && hSrcSRS == NULL )
+    {
+        fprintf(stderr,
+                "Warning : the output raster dataset has a SRS, but the input vector layer\n"
+                "not.  Results may be incorrect.\n");
+    }
+    else if( hRasterSRS == NULL && hSrcSRS != NULL )
+    {
+        fprintf(stderr,
+                "Warning : the input vector layer has a SRS, but the output raster dataset not.\n"
+                "Results may be incorrect.\n");
+    }
+
+    if( hRasterSRS != NULL )
+        OSRDestroySpatialReference(hRasterSRS);
+
+/* -------------------------------------------------------------------- */
 /*      Transform the geometry to pixel/line coordinates.               */
 /* -------------------------------------------------------------------- */
     GeoTransform_Transformer oTransformer;
     double adfGT[6];
 
-    GDALGetGeoTransform( hDstDS, adfGT );
+    GDALGetGeoTransform( hSrcDS, adfGT );
     GDALInvGeoTransform( adfGT, oTransformer.adfGeoTransform );
 
     OGR_G_Transform( hMultiPolygon, 
@@ -1517,22 +1565,14 @@ LoadCutline( GDALDatasetH hDstDS,
     char *pszWKT = NULL;
 
     OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
+    OGR_G_DestroyGeometry( hMultiPolygon );
 
     *ppapszWarpOptions = CSLSetNameValue( *ppapszWarpOptions, 
                                           "CUTLINE", pszWKT );
     CPLFree( pszWKT );
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    if( pszCSQL != NULL )
-        OGR_DS_ReleaseResultSet( hSrcDS, hLayer );
-
-    OGR_DS_Destroy( hSrcDS );
-
-    OGR_G_DestroyGeometry( hMultiPolygon );
 #endif
 }
+
 
 /************************************************************************/
 /*                          InsertCenterLong()                          */
