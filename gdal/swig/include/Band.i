@@ -378,7 +378,7 @@ CPLErr SetDefaultHistogram( double min, double max,
 
   /* Interface method added for GDAL 1.7.0 */
   bool HasArbitraryOverviews() {
-      return GDALHasArbitraryOverviews( self );
+      return (GDALHasArbitraryOverviews( self ) != 0) ? true : false;
   }
 
 } /* %extend */
