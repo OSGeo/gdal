@@ -1466,6 +1466,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp", 
                   real_filename );
+        delete poDS;
         return NULL;
     }
 
@@ -1530,7 +1531,10 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      pretty risky.                                                   */
 /* -------------------------------------------------------------------- */
     if (setjmp(poDS->setjmp_buffer)) 
+    {
+        delete poDS;
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*	Read pre-image data after ensuring the file is rewound.         */
@@ -1608,10 +1612,10 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        delete poDS;
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Unrecognised jpeg_color_space value of %d.\n", 
                   poDS->sDInfo.jpeg_color_space );
+        delete poDS;
         return NULL;
     }
 
@@ -1707,7 +1711,14 @@ void JPGDataset::CheckForMask()
 /*      We seem to have a mask.  Read it in.                            */
 /* -------------------------------------------------------------------- */
     nCMaskSize = (int) (nFileSize - nImageSize - 4);
-    pabyCMask = (GByte *) CPLMalloc(nCMaskSize);
+    pabyCMask = (GByte *) VSIMalloc(nCMaskSize);
+    if (pabyCMask == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Cannot allocate memory (%d bytes) for mask compressed buffer",
+                 nCMaskSize);
+        return;
+    }
     VSIFReadL( pabyCMask, nCMaskSize, 1, fpImage );
 
     CPLDebug( "JPEG", "Got %d byte compressed bitmask.",
@@ -1728,7 +1739,16 @@ void JPGDataset::DecompressMask()
 /*      Allocate 1bit buffer - may be slightly larger than needed.      */
 /* -------------------------------------------------------------------- */
     int nBufSize = nRasterYSize * ((nRasterXSize+7)/8);
-    pabyBitMask = (GByte *) CPLMalloc( nBufSize );
+    pabyBitMask = (GByte *) VSIMalloc( nBufSize );
+    if (pabyBitMask == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Cannot allocate memory (%d bytes) for mask uncompressed buffer",
+                 nBufSize);
+        CPLFree(pabyCMask);
+        pabyCMask = NULL;
+        return;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Decompress                                                      */
