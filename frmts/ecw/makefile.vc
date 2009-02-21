@@ -11,6 +11,10 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+!IF $(MSVC_VER) == 1500
+EXTRAFLAGS = $(EXTRAFLAGS) -D_WIN32_WINNT=0x0500
+!ENDIF
+
 default:	$(OBJ)
 	$(INSTALL) *.obj ..\o
 
