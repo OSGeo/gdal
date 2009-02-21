@@ -790,6 +790,36 @@ with a newline."""
     return 'success'
 
 ###############################################################################
+# Create and read a JPEG encoded NITF file with several blocks
+
+def nitf_36():
+
+    src_ds = gdal.Open( 'data/rgbsmall.tif' )
+    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf36.ntf', src_ds,
+                                                  options = ['IC=C3', 'BLOCKSIZE=32', 'QUALITY=100'] )
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open( 'tmp/nitf36.ntf' )
+    
+    (exp_mean, exp_stddev) = (65.4208, 47.254550335)
+    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    
+    if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
+        print mean, stddev
+        gdaltest.post_reason( 'did not get expected mean or standard dev.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['COMPRESSION'] != 'JPEG':
+        gdaltest.post_reason( 'Did not get expected compression value.' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -1055,6 +1085,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf36.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -1095,6 +1130,7 @@ gdaltest_list = [
     nitf_33,
     nitf_34,
     nitf_35,
+    nitf_36,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
