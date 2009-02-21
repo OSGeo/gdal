@@ -1,9 +1,9 @@
 
 /* png.c - location for general purpose libpng functions
  *
- * Last changed in libpng 1.2.15 January 5, 2007
+ * Last changed in libpng 1.2.34 [December 18, 2008]
  * For conditions of distribution and use, see copyright notice in png.h
- * Copyright (c) 1998-2007 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2008 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  */
@@ -13,20 +13,20 @@
 #include "png.h"
 
 /* Generate a compiler error if there is an old png.h in the search path. */
-typedef version_1_2_15 Your_png_h_is_not_version_1_2_15;
+typedef version_1_2_34 Your_png_h_is_not_version_1_2_34;
 
 /* Version information for C files.  This had better match the version
  * string defined in png.h.  */
 
 #ifdef PNG_USE_GLOBAL_ARRAYS
 /* png_libpng_ver was changed to a function in version 1.0.5c */
-const char png_libpng_ver[18] = PNG_LIBPNG_VER_STRING;
+PNG_CONST char png_libpng_ver[18] = PNG_LIBPNG_VER_STRING;
 
 #ifdef PNG_READ_SUPPORTED
 
 /* png_sig was changed to a function in version 1.0.5c */
 /* Place to hold the signature string for a PNG file. */
-const png_byte FARDATA png_sig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+PNG_CONST png_byte FARDATA png_sig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 #endif /* PNG_READ_SUPPORTED */
 
 /* Invoke global declarations for constant strings for known chunk types */
@@ -56,32 +56,27 @@ PNG_zTXt;
 /* arrays to facilitate easy interlacing - use pass (0 - 6) as index */
 
 /* start of interlace block */
-const int FARDATA png_pass_start[] = {0, 4, 0, 2, 0, 1, 0};
+PNG_CONST int FARDATA png_pass_start[] = {0, 4, 0, 2, 0, 1, 0};
 
 /* offset to next interlace block */
-const int FARDATA png_pass_inc[] = {8, 8, 4, 4, 2, 2, 1};
+PNG_CONST int FARDATA png_pass_inc[] = {8, 8, 4, 4, 2, 2, 1};
 
 /* start of interlace block in the y direction */
-const int FARDATA png_pass_ystart[] = {0, 0, 4, 0, 2, 0, 1};
+PNG_CONST int FARDATA png_pass_ystart[] = {0, 0, 4, 0, 2, 0, 1};
 
 /* offset to next interlace block in the y direction */
-const int FARDATA png_pass_yinc[] = {8, 8, 8, 4, 4, 2, 2};
-
-/* width of interlace block (used in assembler routines only) */
-#ifdef PNG_HAVE_ASSEMBLER_COMBINE_ROW
-const int FARDATA png_pass_width[] = {8, 4, 4, 2, 2, 1, 1};
-#endif
+PNG_CONST int FARDATA png_pass_yinc[] = {8, 8, 8, 4, 4, 2, 2};
 
 /* Height of interlace block.  This is not currently used - if you need
  * it, uncomment it here and in png.h
-const int FARDATA png_pass_height[] = {8, 8, 4, 4, 2, 2, 1};
+PNG_CONST int FARDATA png_pass_height[] = {8, 8, 4, 4, 2, 2, 1};
 */
 
 /* Mask to determine which pixels are valid in a pass */
-const int FARDATA png_pass_mask[] = {0x80, 0x08, 0x88, 0x22, 0xaa, 0x55, 0xff};
+PNG_CONST int FARDATA png_pass_mask[] = {0x80, 0x08, 0x88, 0x22, 0xaa, 0x55, 0xff};
 
 /* Mask to determine which pixels to overwrite while displaying */
-const int FARDATA png_pass_dsp_mask[]
+PNG_CONST int FARDATA png_pass_dsp_mask[]
    = {0xff, 0x0f, 0xff, 0x33, 0xff, 0x55, 0xff};
 
 #endif /* PNG_READ_SUPPORTED */
@@ -97,8 +92,8 @@ const int FARDATA png_pass_dsp_mask[]
 void PNGAPI
 png_set_sig_bytes(png_structp png_ptr, int num_bytes)
 {
-   if(png_ptr == NULL) return;
-   png_debug(1, "in png_set_sig_bytes\n");
+   if (png_ptr == NULL) return;
+   png_debug(1, "in png_set_sig_bytes");
    if (num_bytes > 8)
       png_error(png_ptr, "Too many bytes for PNG signature.");
 
@@ -134,7 +129,7 @@ png_sig_cmp(png_bytep sig, png_size_t start, png_size_t num_to_check)
 #if defined(PNG_1_0_X) || defined(PNG_1_2_X)
 /* (Obsolete) function to check signature bytes.  It does not allow one
  * to check a partial signature.  This function might be removed in the
- * future - use png_sig_cmp().  Returns true (nonzero) if the file is a PNG.
+ * future - use png_sig_cmp().  Returns true (nonzero) if the file is PNG.
  */
 int PNGAPI
 png_check_sig(png_bytep sig, int num)
@@ -158,7 +153,7 @@ png_zalloc(voidpf png_ptr, uInt items, uInt size)
    png_uint_32 save_flags=p->flags;
    png_uint_32 num_bytes;
 
-   if(png_ptr == NULL) return (NULL);
+   if (png_ptr == NULL) return (NULL);
    if (items > PNG_UINT_32_MAX/size)
    {
      png_warning (p, "Potential overflow in png_zalloc()");
@@ -245,8 +240,8 @@ png_create_info_struct(png_structp png_ptr)
 {
    png_infop info_ptr;
 
-   png_debug(1, "in png_create_info_struct\n");
-   if(png_ptr == NULL) return (NULL);
+   png_debug(1, "in png_create_info_struct");
+   if (png_ptr == NULL) return (NULL);
 #ifdef PNG_USER_MEM_SUPPORTED
    info_ptr = (png_infop)png_create_struct_2(PNG_STRUCT_INFO,
       png_ptr->malloc_fn, png_ptr->mem_ptr);
@@ -268,9 +263,9 @@ void PNGAPI
 png_destroy_info_struct(png_structp png_ptr, png_infopp info_ptr_ptr)
 {
    png_infop info_ptr = NULL;
-   if(png_ptr == NULL) return;
+   if (png_ptr == NULL) return;
 
-   png_debug(1, "in png_destroy_info_struct\n");
+   png_debug(1, "in png_destroy_info_struct");
    if (info_ptr_ptr != NULL)
       info_ptr = *info_ptr_ptr;
 
@@ -307,11 +302,11 @@ png_info_init_3(png_infopp ptr_ptr, png_size_t png_info_struct_size)
 {
    png_infop info_ptr = *ptr_ptr;
 
-   if(info_ptr == NULL) return;
+   if (info_ptr == NULL) return;
 
-   png_debug(1, "in png_info_init_3\n");
+   png_debug(1, "in png_info_init_3");
 
-   if(png_sizeof(png_info) > png_info_struct_size)
+   if (png_sizeof(png_info) > png_info_struct_size)
      {
        png_destroy_struct(info_ptr);
        info_ptr = (png_infop)png_create_struct(PNG_STRUCT_INFO);
@@ -319,7 +314,7 @@ png_info_init_3(png_infopp ptr_ptr, png_size_t png_info_struct_size)
      }
 
    /* set everything to 0 */
-   png_memset(info_ptr, 0, png_sizeof (png_info));
+   png_memset(info_ptr, 0, png_sizeof(png_info));
 }
 
 #ifdef PNG_FREE_ME_SUPPORTED
@@ -327,12 +322,12 @@ void PNGAPI
 png_data_freer(png_structp png_ptr, png_infop info_ptr,
    int freer, png_uint_32 mask)
 {
-   png_debug(1, "in png_data_freer\n");
+   png_debug(1, "in png_data_freer");
    if (png_ptr == NULL || info_ptr == NULL)
       return;
-   if(freer == PNG_DESTROY_WILL_FREE_DATA)
+   if (freer == PNG_DESTROY_WILL_FREE_DATA)
       info_ptr->free_me |= mask;
-   else if(freer == PNG_USER_WILL_FREE_DATA)
+   else if (freer == PNG_USER_WILL_FREE_DATA)
       info_ptr->free_me &= ~mask;
    else
       png_warning(png_ptr,
@@ -344,7 +339,7 @@ void PNGAPI
 png_free_data(png_structp png_ptr, png_infop info_ptr, png_uint_32 mask,
    int num)
 {
-   png_debug(1, "in png_free_data\n");
+   png_debug(1, "in png_free_data");
    if (png_ptr == NULL || info_ptr == NULL)
       return;
 
@@ -385,11 +380,11 @@ if ((mask & PNG_FREE_TRNS) && (png_ptr->flags & PNG_FLAG_FREE_TRNS))
 #endif
 {
     png_free(png_ptr, info_ptr->trans);
+    info_ptr->trans = NULL;
     info_ptr->valid &= ~PNG_INFO_tRNS;
 #ifndef PNG_FREE_ME_SUPPORTED
     png_ptr->flags &= ~PNG_FLAG_FREE_TRNS;
 #endif
-    info_ptr->trans = NULL;
 }
 #endif
 
@@ -464,7 +459,7 @@ if (mask & PNG_FREE_SPLT)
 {
    if (num != -1)
    {
-      if(info_ptr->splt_palettes)
+      if (info_ptr->splt_palettes)
       {
           png_free(png_ptr, info_ptr->splt_palettes[num].name);
           png_free(png_ptr, info_ptr->splt_palettes[num].entries);
@@ -474,7 +469,7 @@ if (mask & PNG_FREE_SPLT)
    }
    else
    {
-       if(info_ptr->splt_palettes_num)
+       if (info_ptr->splt_palettes_num)
        {
          int i;
          for (i = 0; i < (int)info_ptr->splt_palettes_num; i++)
@@ -490,6 +485,12 @@ if (mask & PNG_FREE_SPLT)
 #endif
 
 #if defined(PNG_UNKNOWN_CHUNKS_SUPPORTED)
+  if (png_ptr->unknown_chunk.data)
+  {
+    png_free(png_ptr, png_ptr->unknown_chunk.data);
+    png_ptr->unknown_chunk.data = NULL;
+  }
+
 #ifdef PNG_FREE_ME_SUPPORTED
 if ((mask & PNG_FREE_UNKN) & info_ptr->free_me)
 #else
@@ -498,7 +499,7 @@ if (mask & PNG_FREE_UNKN)
 {
    if (num != -1)
    {
-       if(info_ptr->unknown_chunks)
+       if (info_ptr->unknown_chunks)
        {
           png_free(png_ptr, info_ptr->unknown_chunks[num].data);
           info_ptr->unknown_chunks[num].data = NULL;
@@ -508,7 +509,7 @@ if (mask & PNG_FREE_UNKN)
    {
        int i;
 
-       if(info_ptr->unknown_chunks_num)
+       if (info_ptr->unknown_chunks_num)
        {
          for (i = 0; i < (int)info_ptr->unknown_chunks_num; i++)
             png_free_data(png_ptr, info_ptr, PNG_FREE_UNKN, i);
@@ -562,7 +563,7 @@ if ((mask & PNG_FREE_ROWS) & info_ptr->free_me)
 if (mask & PNG_FREE_ROWS)
 #endif
 {
-    if(info_ptr->row_pointers)
+    if (info_ptr->row_pointers)
     {
        int row;
        for (row = 0; row < (int)info_ptr->height; row++)
@@ -578,7 +579,7 @@ if (mask & PNG_FREE_ROWS)
 #endif
 
 #ifdef PNG_FREE_ME_SUPPORTED
-   if(num == -1)
+   if (num == -1)
      info_ptr->free_me &= ~mask;
    else
      info_ptr->free_me &= ~(mask & ~PNG_FREE_MUL);
@@ -592,7 +593,7 @@ if (mask & PNG_FREE_ROWS)
 void /* PRIVATE */
 png_info_destroy(png_structp png_ptr, png_infop info_ptr)
 {
-   png_debug(1, "in png_info_destroy\n");
+   png_debug(1, "in png_info_destroy");
 
    png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
 
@@ -601,7 +602,7 @@ png_info_destroy(png_structp png_ptr, png_infop info_ptr)
    {
        png_free(png_ptr, png_ptr->chunk_list);
        png_ptr->chunk_list=NULL;
-       png_ptr->num_chunk_list=0;
+       png_ptr->num_chunk_list = 0;
    }
 #endif
 
@@ -616,7 +617,7 @@ png_info_destroy(png_structp png_ptr, png_infop info_ptr)
 png_voidp PNGAPI
 png_get_io_ptr(png_structp png_ptr)
 {
-   if(png_ptr == NULL) return (NULL);
+   if (png_ptr == NULL) return (NULL);
    return (png_ptr->io_ptr);
 }
 
@@ -631,8 +632,8 @@ png_get_io_ptr(png_structp png_ptr)
 void PNGAPI
 png_init_io(png_structp png_ptr, png_FILE_p fp)
 {
-   png_debug(1, "in png_init_io\n");
-   if(png_ptr == NULL) return;
+   png_debug(1, "in png_init_io");
+   if (png_ptr == NULL) return;
    png_ptr->io_ptr = (png_voidp)fp;
 }
 #endif
@@ -648,7 +649,7 @@ png_convert_to_rfc1123(png_structp png_ptr, png_timep ptime)
         {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-   if(png_ptr == NULL) return (NULL);
+   if (png_ptr == NULL) return (NULL);
    if (png_ptr->time_buffer == NULL)
    {
       png_ptr->time_buffer = (png_charp)png_malloc(png_ptr, (png_uint_32)(29*
@@ -669,7 +670,7 @@ png_convert_to_rfc1123(png_structp png_ptr, png_timep ptime)
 #ifdef USE_FAR_KEYWORD
    {
       char near_time_buf[29];
-      sprintf(near_time_buf, "%d %s %d %02d:%02d:%02d +0000",
+      png_snprintf6(near_time_buf, 29, "%d %s %d %02d:%02d:%02d +0000",
           ptime->day % 32, short_months[(ptime->month - 1) % 12],
           ptime->year, ptime->hour % 24, ptime->minute % 60,
           ptime->second % 61);
@@ -677,7 +678,7 @@ png_convert_to_rfc1123(png_structp png_ptr, png_timep ptime)
           29*png_sizeof(char));
    }
 #else
-   sprintf(png_ptr->time_buffer, "%d %s %d %02d:%02d:%02d +0000",
+   png_snprintf6(png_ptr->time_buffer, 29, "%d %s %d %02d:%02d:%02d +0000",
        ptime->day % 32, short_months[(ptime->month - 1) % 12],
        ptime->year, ptime->hour % 24, ptime->minute % 60,
        ptime->second % 61);
@@ -687,25 +688,16 @@ png_convert_to_rfc1123(png_structp png_ptr, png_timep ptime)
 }
 #endif /* PNG_TIME_RFC1123_SUPPORTED */
 
-#if 0
-/* Signature string for a PNG file. */
-png_bytep PNGAPI
-png_sig_bytes(void)
-{
-   return ((png_bytep)"\211\120\116\107\015\012\032\012");
-}
-#endif
 #endif /* defined(PNG_READ_SUPPORTED) || defined(PNG_WRITE_SUPPORTED) */
 
 png_charp PNGAPI
 png_get_copyright(png_structp png_ptr)
 {
-   if (&png_ptr != NULL)  /* silence compiler warning about unused png_ptr */
-   return ((png_charp) "\n libpng version 1.2.15 - January 5, 2007\n\
-   Copyright (c) 1998-2007 Glenn Randers-Pehrson\n\
+   png_ptr = png_ptr;  /* silence compiler warning about unused png_ptr */
+   return ((png_charp) "\n libpng version 1.2.34 - December 18, 2008\n\
+   Copyright (c) 1998-2008 Glenn Randers-Pehrson\n\
    Copyright (c) 1996-1997 Andreas Dilger\n\
    Copyright (c) 1995-1996 Guy Eric Schalnat, Group 42, Inc.\n");
-   return ((png_charp) "");
 }
 
 /* The following return the library version as a short string in the
@@ -720,27 +712,28 @@ png_charp PNGAPI
 png_get_libpng_ver(png_structp png_ptr)
 {
    /* Version of *.c files used when building libpng */
-   if (&png_ptr != NULL)  /* silence compiler warning about unused png_ptr */
-      return ((png_charp) PNG_LIBPNG_VER_STRING);
-   return ((png_charp) "");
+   png_ptr = png_ptr;  /* silence compiler warning about unused png_ptr */
+   return ((png_charp) PNG_LIBPNG_VER_STRING);
 }
 
 png_charp PNGAPI
 png_get_header_ver(png_structp png_ptr)
 {
    /* Version of *.h files used when building libpng */
-   if (&png_ptr != NULL)  /* silence compiler warning about unused png_ptr */
-      return ((png_charp) PNG_LIBPNG_VER_STRING);
-   return ((png_charp) "");
+   png_ptr = png_ptr;  /* silence compiler warning about unused png_ptr */
+   return ((png_charp) PNG_LIBPNG_VER_STRING);
 }
 
 png_charp PNGAPI
 png_get_header_version(png_structp png_ptr)
 {
    /* Returns longer string containing both version and date */
-   if (&png_ptr != NULL)  /* silence compiler warning about unused png_ptr */
-      return ((png_charp) PNG_HEADER_VERSION_STRING);
-   return ((png_charp) "");
+   png_ptr = png_ptr;  /* silence compiler warning about unused png_ptr */
+   return ((png_charp) PNG_HEADER_VERSION_STRING
+#ifndef PNG_READ_SUPPORTED
+   "     (NO READ SUPPORT)"
+#endif
+   "\n");
 }
 
 #if defined(PNG_READ_SUPPORTED) || defined(PNG_WRITE_SUPPORTED)
@@ -751,12 +744,12 @@ png_handle_as_unknown(png_structp png_ptr, png_bytep chunk_name)
    /* check chunk_name and return "keep" value if it's on the list, else 0 */
    int i;
    png_bytep p;
-   if((png_ptr == NULL && chunk_name == NULL) || png_ptr->num_chunk_list<=0)
+   if (png_ptr == NULL || chunk_name == NULL || png_ptr->num_chunk_list<=0)
       return 0;
-   p=png_ptr->chunk_list+png_ptr->num_chunk_list*5-5;
-   for (i = png_ptr->num_chunk_list; i; i--, p-=5)
+   p = png_ptr->chunk_list + png_ptr->num_chunk_list*5 - 5;
+   for (i = png_ptr->num_chunk_list; i; i--, p -= 5)
       if (!png_memcmp(chunk_name, p, 4))
-        return ((int)*(p+4));
+        return ((int)*(p + 4));
    return 0;
 }
 #endif
@@ -781,65 +774,15 @@ png_access_version_number(void)
 
 #if defined(PNG_READ_SUPPORTED) && defined(PNG_ASSEMBLER_CODE_SUPPORTED)
 #if !defined(PNG_1_0_X)
-#if defined(PNG_MMX_CODE_SUPPORTED)
-/* this INTERNAL function was added to libpng 1.2.0 */
-void /* PRIVATE */
-png_init_mmx_flags (png_structp png_ptr)
-{
-    if(png_ptr == NULL) return;
-    png_ptr->mmx_rowbytes_threshold = 0;
-    png_ptr->mmx_bitdepth_threshold = 0;
-
-#  if (defined(PNG_USE_PNGVCRD) || defined(PNG_USE_PNGGCCRD))
-
-    png_ptr->asm_flags |= PNG_ASM_FLAG_MMX_SUPPORT_COMPILED;
-
-    if (png_mmx_support() > 0) {
-        png_ptr->asm_flags |= PNG_ASM_FLAG_MMX_SUPPORT_IN_CPU
-#    ifdef PNG_HAVE_ASSEMBLER_COMBINE_ROW
-                              | PNG_ASM_FLAG_MMX_READ_COMBINE_ROW
-#    endif
-#    ifdef PNG_HAVE_ASSEMBLER_READ_INTERLACE
-                              | PNG_ASM_FLAG_MMX_READ_INTERLACE
-#    endif
-#    ifndef PNG_HAVE_ASSEMBLER_READ_FILTER_ROW
-                              ;
-#    else
-                              | PNG_ASM_FLAG_MMX_READ_FILTER_SUB
-                              | PNG_ASM_FLAG_MMX_READ_FILTER_UP
-                              | PNG_ASM_FLAG_MMX_READ_FILTER_AVG
-                              | PNG_ASM_FLAG_MMX_READ_FILTER_PAETH ;
-
-        png_ptr->mmx_rowbytes_threshold = PNG_MMX_ROWBYTES_THRESHOLD_DEFAULT;
-        png_ptr->mmx_bitdepth_threshold = PNG_MMX_BITDEPTH_THRESHOLD_DEFAULT;
-#    endif
-    } else {
-        png_ptr->asm_flags &= ~( PNG_ASM_FLAG_MMX_SUPPORT_IN_CPU
-                               | PNG_MMX_READ_FLAGS
-                               | PNG_MMX_WRITE_FLAGS );
-    }
-
-#  else /* !(PNGVCRD || PNGGCCRD) */
-
-    /* clear all MMX flags; no support is compiled in */
-    png_ptr->asm_flags &= ~( PNG_MMX_FLAGS );
-
-#  endif /* ?(PNGVCRD || PNGGCCRD) */
-}
-
-#endif /* !(PNG_MMX_CODE_SUPPORTED) */
-
 /* this function was added to libpng 1.2.0 */
-#if !defined(PNG_USE_PNGGCCRD) && \
-    !(defined(PNG_MMX_CODE_SUPPORTED) && defined(PNG_USE_PNGVCRD))
 int PNGAPI
 png_mmx_support(void)
 {
+   /* obsolete, to be removed from libpng-1.4.0 */
     return -1;
 }
-#endif
-#endif /* PNG_1_0_X  && PNG_ASSEMBLER_CODE_SUPPORTED */
-#endif /* PNG_READ_SUPPORTED */
+#endif /* PNG_1_0_X */
+#endif /* PNG_READ_SUPPORTED && PNG_ASSEMBLER_CODE_SUPPORTED */
 
 #if defined(PNG_READ_SUPPORTED) || defined(PNG_WRITE_SUPPORTED)
 #ifdef PNG_SIZE_T
@@ -853,4 +796,116 @@ png_convert_size(size_t size)
   return ((png_size_t)size);
 }
 #endif /* PNG_SIZE_T */
+
+/* Added at libpng version 1.2.34 and 1.4.0 (moved from pngset.c) */
+#if defined(PNG_cHRM_SUPPORTED)
+#if !defined(PNG_NO_CHECK_cHRM)
+/*
+ Multiply two 32-bit numbers, V1 and V2, using 32-bit
+ arithmetic, to produce a 64 bit result in the HI/LO words.
+
+          A B
+        x C D
+       ------
+      AD || BD
+AC || CB || 0
+
+ where A and B are the high and low 16-bit words of V1,
+ C and D are the 16-bit words of V2, AD is the product of
+ A and D, and X || Y is (X << 16) + Y.
+*/
+
+void png_64bit_product (long v1, long v2, unsigned long *hi_product,
+   unsigned long *lo_product)
+{
+ int a, b, c, d;
+ long lo, hi, x, y;
+
+ a = (v1 >> 16) & 0xffff;
+ b = v1 & 0xffff;
+ c = (v2 >> 16) & 0xffff;
+ d = v2 & 0xffff;
+
+ lo = b * d;                   /* BD */
+ x = a * d + c * b;            /* AD + CB */
+ y = ((lo >> 16) & 0xffff) + x;
+
+ lo = (lo & 0xffff) | ((y & 0xffff) << 16);
+ hi = (y >> 16) & 0xffff;
+
+ hi += a * c;                  /* AC */
+
+ *hi_product = (unsigned long)hi;
+ *lo_product = (unsigned long)lo;
+}
+int /* private */
+png_check_cHRM_fixed(png_structp png_ptr,
+   png_fixed_point white_x, png_fixed_point white_y, png_fixed_point red_x,
+   png_fixed_point red_y, png_fixed_point green_x, png_fixed_point green_y,
+   png_fixed_point blue_x, png_fixed_point blue_y)
+{
+   int ret = 1;
+   unsigned long xy_hi,xy_lo,yx_hi,yx_lo;
+
+   png_debug(1, "in function png_check_cHRM_fixed");
+   if (png_ptr == NULL)
+      return 0;
+
+   if (white_x < 0 || white_y <= 0 ||
+         red_x < 0 ||   red_y <  0 ||
+       green_x < 0 || green_y <  0 ||
+        blue_x < 0 ||  blue_y <  0)
+   {
+      png_warning(png_ptr,
+        "Ignoring attempt to set negative chromaticity value");
+      ret = 0;
+   }
+   if (white_x > (png_fixed_point) PNG_UINT_31_MAX ||
+       white_y > (png_fixed_point) PNG_UINT_31_MAX ||
+         red_x > (png_fixed_point) PNG_UINT_31_MAX ||
+         red_y > (png_fixed_point) PNG_UINT_31_MAX ||
+       green_x > (png_fixed_point) PNG_UINT_31_MAX ||
+       green_y > (png_fixed_point) PNG_UINT_31_MAX ||
+        blue_x > (png_fixed_point) PNG_UINT_31_MAX ||
+        blue_y > (png_fixed_point) PNG_UINT_31_MAX )
+   {
+      png_warning(png_ptr,
+        "Ignoring attempt to set chromaticity value exceeding 21474.83");
+      ret = 0;
+   }
+   if (white_x > 100000L - white_y)
+   {
+      png_warning(png_ptr, "Invalid cHRM white point");
+      ret = 0;
+   }
+   if (red_x > 100000L - red_y)
+   {
+      png_warning(png_ptr, "Invalid cHRM red point");
+      ret = 0;
+   }
+   if (green_x > 100000L - green_y)
+   {
+      png_warning(png_ptr, "Invalid cHRM green point");
+      ret = 0;
+   }
+   if (blue_x > 100000L - blue_y)
+   {
+      png_warning(png_ptr, "Invalid cHRM blue point");
+      ret = 0;
+   }
+
+   png_64bit_product(green_x - red_x, blue_y - red_y, &xy_hi, &xy_lo);
+   png_64bit_product(green_y - red_y, blue_x - red_x, &yx_hi, &yx_lo);
+
+   if (xy_hi == yx_hi && xy_lo == yx_lo)
+   {
+      png_warning(png_ptr,
+         "Ignoring attempt to set cHRM RGB triangle with zero area");
+      ret = 0;
+   }
+
+   return ret;
+}
+#endif /* NO_PNG_CHECK_cHRM */
+#endif /* PNG_cHRM_SUPPORTED */
 #endif /* defined(PNG_READ_SUPPORTED) || defined(PNG_WRITE_SUPPORTED) */
