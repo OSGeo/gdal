@@ -5120,7 +5120,7 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
 /* -------------------------------------------------------------------- */
 /*      If they are LOCALCS/PROJCS, do they have the same units?        */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(GetRoot()->GetValue(),"LOCALCS") || IsProjected() )
+    if( IsLocal() || IsProjected() )
     {
         if( GetLinearUnits() != 0.0 )
         {
