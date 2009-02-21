@@ -2487,7 +2487,7 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 /* -------------------------------------------------------------------- */
     panJPEGBlockOffset = (int *) 
         CPLCalloc(sizeof(int),
-                  psImage->nBlocksPerRow*psImage->nBlocksPerColumn+1);
+                  psImage->nBlocksPerRow*psImage->nBlocksPerColumn);
     panJPEGBlockOffset[0] = nJPEGStart;
 
     for( iBlock = psImage->nBlocksPerRow * psImage->nBlocksPerColumn - 1;
@@ -2530,11 +2530,13 @@ CPLErr NITFDataset::ScanJPEGBlocks()
         {
             if( abyBlock[i] == 0xff && abyBlock[i+1] == 0xd8 )
             {
-                CPLAssert( iNextBlock 
-                          <= psImage->nBlocksPerRow*psImage->nBlocksPerColumn );
-
                 panJPEGBlockOffset[iNextBlock++] 
                     = panJPEGBlockOffset[0] + iSegOffset + i; 
+
+                if( iNextBlock == psImage->nBlocksPerRow*psImage->nBlocksPerColumn)
+                {
+                    return CE_None;
+                }
             }
         }
 
@@ -2577,7 +2579,12 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
                     nQLevel = ScanJPEGQLevel(&nOffset);
                     /* The beginning of the JPEG stream should be the offset */
                     /* from the panBlockStart table */
-                    CPLAssert(nOffset == (GUInt32)panJPEGBlockOffset[i]);
+                    if (nOffset != (GUInt32)panJPEGBlockOffset[i])
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "JPEG block doesn't start at expected offset");
+                        return CE_Failure;
+                    }
                 }
             }
         }
@@ -2634,6 +2641,7 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "JPEG block %d not same size as NITF blocksize.", 
                   iBlock );
+        delete poDS;
         return CE_Failure;
     }
                        
@@ -2832,12 +2840,16 @@ NITFDataset::NITFCreateCopy(
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unable to export files with zero bands." );
+        CSLDestroy(papszFullOptions);
         return NULL;
     }
 
     poBand1 = poSrcDS->GetRasterBand(1);
     if( poBand1 == NULL )
+    {
+        CSLDestroy(papszFullOptions);
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Only allow supported compression values.                        */
@@ -2857,6 +2869,7 @@ NITFDataset::NITFCreateCopy(
                     "Unable to write JPEG2000 compressed NITF file.\n"
                     "No 'subfile' JPEG2000 write supporting drivers are\n"
                     "configured." );
+                CSLDestroy(papszFullOptions);
                 return NULL;
             }
             bJPEG2000 = TRUE;
@@ -2869,6 +2882,7 @@ NITFDataset::NITFCreateCopy(
                 CE_Failure, CPLE_AppDefined, 
                 "Unable to write JPEG compressed NITF file.\n"
                 "Libjpeg is not configured into build." );
+            CSLDestroy(papszFullOptions);
             return NULL;
 #endif
         }
@@ -2877,6 +2891,7 @@ NITFDataset::NITFCreateCopy(
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Only IC=NC (uncompressed), IC=C3 (JPEG) and IC=C8 (JPEG2000)\n"
                       "allowed with NITF CreateCopy method." );
+            CSLDestroy(papszFullOptions);
             return NULL;
         }
     }
@@ -3007,7 +3022,10 @@ NITFDataset::NITFCreateCopy(
             CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                     "NITF only supports WGS84 geographic and UTM projections.\n");
             if (bStrict)
+            {
+                CSLDestroy(papszFullOptions);
                 return NULL;
+            }
         }
 
         if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 
@@ -3036,7 +3054,10 @@ NITFDataset::NITFCreateCopy(
             CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                     "NITF only supports WGS84 geographic and UTM projections.\n");
             if (bStrict)
+            {
+                CSLDestroy(papszFullOptions);
                 return NULL;
+            }
         }
     }
 
@@ -3048,13 +3069,21 @@ NITFDataset::NITFCreateCopy(
     const char *pszPVType = GDALToNITFDataType( eType );
 
     if( pszPVType == NULL )
+    {
+        CSLDestroy(papszFullOptions);
         return NULL;
+    }
 
-    NITFCreate( pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
+    if (!NITFCreate( pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
                 GDALGetDataTypeSize( eType ), pszPVType, 
-                papszFullOptions );
+                papszFullOptions ))
+    {
+        CSLDestroy( papszFullOptions );
+        return NULL;
+    }
 
     CSLDestroy( papszFullOptions );
+    papszFullOptions = NULL;
 
 /* ==================================================================== */
 /*      JPEG2000 case.  We need to write the data through a J2K         */
@@ -3441,6 +3470,12 @@ CPL_C_END
 void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
 void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
 
+static int 
+NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
+                    int nBlockXOff, int nBlockYOff,
+                    int nBlockXSize, int nBlockYSize,
+                    int bProgressive, int nQuality,
+                    GDALProgressFunc pfnProgress, void * pProgressData );
 
 static int 
 NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset, 
@@ -3450,7 +3485,6 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
-    int  anBandList[3] = {1,2,3};
     int  nQuality = 75;
     int  bProgressive = FALSE;
 
@@ -3521,6 +3555,75 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
     bProgressive = CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE );
 
 /* -------------------------------------------------------------------- */
+/*      Compute blocking factors                                        */
+/* -------------------------------------------------------------------- */
+    int nNPPBH = nXSize;
+    int nNPPBV = nYSize;
+
+    if( CSLFetchNameValue( papszOptions, "BLOCKSIZE" ) != NULL )
+        nNPPBH = nNPPBV = atoi(CSLFetchNameValue( papszOptions, "BLOCKSIZE" ));
+
+    if( CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ) != NULL )
+        nNPPBH = atoi(CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ));
+
+    if( CSLFetchNameValue( papszOptions, "BLOCKYSIZE" ) != NULL )
+        nNPPBV = atoi(CSLFetchNameValue( papszOptions, "BLOCKYSIZE" ));
+    
+    if( CSLFetchNameValue( papszOptions, "NPPBH" ) != NULL )
+        nNPPBH = atoi(CSLFetchNameValue( papszOptions, "NPPBH" ));
+    
+    if( CSLFetchNameValue( papszOptions, "NPPBV" ) != NULL )
+        nNPPBV = atoi(CSLFetchNameValue( papszOptions, "NPPBV" ));
+    
+    if( nNPPBH <= 0 || nNPPBV <= 0 ||
+        nNPPBH > 9999 || nNPPBV > 9999  )
+        nNPPBH = nNPPBV = 256;
+
+    int nNBPR = (nXSize + nNPPBH - 1) / nNPPBH;
+    int nNBPC = (nYSize + nNPPBV - 1) / nNPPBV;
+
+    VSIFSeekL( fp, nStartOffset, SEEK_SET );
+
+/* -------------------------------------------------------------------- */
+/*      Copy each block                                                 */
+/* -------------------------------------------------------------------- */
+    int nBlockXOff, nBlockYOff;
+    for(nBlockYOff=0;nBlockYOff<nNBPC;nBlockYOff++)
+    {
+        for(nBlockXOff=0;nBlockXOff<nNBPR;nBlockXOff++)
+        {
+            /*CPLDebug("NITF", "nBlockXOff=%d/%d, nBlockYOff=%d/%d",
+                     nBlockXOff, nNBPR, nBlockYOff, nNBPC);*/
+            if (!NITFWriteJPEGBlock(poSrcDS, fp,
+                                    nBlockXOff, nBlockYOff,
+                                    nNPPBH, nNPPBV,
+                                    bProgressive, nQuality,
+                                    pfnProgress, pProgressData))
+            {
+                return FALSE;
+            }
+        }
+    }
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         NITFWriteJPEGBlock()                         */
+/************************************************************************/
+
+static int 
+NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
+                    int nBlockXOff, int nBlockYOff,
+                    int nBlockXSize, int nBlockYSize,
+                    int bProgressive, int nQuality,
+                    GDALProgressFunc pfnProgress, void * pProgressData )
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+    int  anBandList[3] = {1,2,3};
+
+/* -------------------------------------------------------------------- */
 /*      Initialize JPG access to the file.                              */
 /* -------------------------------------------------------------------- */
     struct jpeg_compress_struct sCInfo;
@@ -3529,11 +3632,10 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
     sCInfo.err = jpeg_std_error( &sJErr );
     jpeg_create_compress( &sCInfo );
 
-    VSIFSeekL( fp, nStartOffset, SEEK_SET );
     jpeg_vsiio_dest( &sCInfo, fp );
     
-    sCInfo.image_width = nXSize;
-    sCInfo.image_height = nYSize;
+    sCInfo.image_width = nBlockXSize;
+    sCInfo.image_height = nBlockYSize;
     sCInfo.input_components = nBands;
 
     if( nBands == 1 )
@@ -3574,23 +3676,53 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
     GByte 	*pabyScanline;
     CPLErr      eErr = CE_None;
 
-    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * 2 );
+    pabyScanline = (GByte *) CPLMalloc( nBands * nBlockXSize * 2 );
 
-    for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
+    double nTotalPixels = (double)nXSize * nYSize;
+
+    int nBlockXSizeToRead = nBlockXSize;
+    if (nBlockXSize * nBlockXOff + nBlockXSize > nXSize)
+    {
+        nBlockXSizeToRead = nXSize - nBlockXSize * nBlockXOff;
+    }
+    int nBlockYSizeToRead = nBlockYSize;
+    if (nBlockYSize * nBlockYOff + nBlockYSize > nYSize)
+    {
+        nBlockYSizeToRead = nYSize - nBlockYSize * nBlockYOff;
+    }
+
+    for( int iLine = 0; iLine < nBlockYSize && eErr == CE_None; iLine++ )
     {
         JSAMPLE      *ppSamples;
 
+        if (iLine < nBlockYSizeToRead)
+        {
 #ifdef JPEG_LIB_MK1
-        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                  pabyScanline, nXSize, 1, GDT_UInt16,
-                                  nBands, anBandList, 
-                                  nBands*2, nBands * nXSize * 2, 2 );
+            eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1, 
+                                    pabyScanline, nBlockXSizeToRead, 1, GDT_UInt16,
+                                    nBands, anBandList, 
+                                    nBands*2, nBands * nBlockXSize * 2, 2 );
 #else
-        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                  pabyScanline, nXSize, 1, GDT_Byte,
-                                  nBands, anBandList, 
-                                  nBands, nBands * nXSize, 1 );
+            eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1, 
+                                    pabyScanline, nBlockXSizeToRead, 1, GDT_Byte,
+                                    nBands, anBandList, 
+                                    nBands, nBands * nBlockXSize, 1 );
+
+            /* Repeat the last pixel till the end of the line */
+            /* to minimize discontinuity */
+            if (nBlockXSizeToRead < nBlockXSize)
+            {
+                for (int iBand = 0; iBand < nBands; iBand++)
+                {
+                    GByte bVal = pabyScanline[nBands * (nBlockXSizeToRead - 1) + iBand];
+                    for(int iX = nBlockXSizeToRead; iX < nBlockXSize; iX ++)
+                    {
+                        pabyScanline[nBands * iX + iBand ] = bVal;
+                    }
+                }
+            }
 #endif
+        }
 
         // Should we clip values over 4095 (12bit)? 
 
@@ -3599,9 +3731,10 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
         if( eErr == CE_None )
             jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
 
+        double nCurPixels = (double)nBlockYOff * nBlockYSize * nXSize +
+                            (double)nBlockXOff * nBlockYSize * nBlockXSize + (iLine + 1) * nBlockXSizeToRead;
         if( eErr == CE_None 
-            && !pfnProgress( (iLine+1) / (double) nYSize,
-                             NULL, pProgressData ) )
+            && !pfnProgress( nCurPixels / nTotalPixels, NULL, pProgressData ) )
         {
             eErr = CE_Failure;
             CPLError( CE_Failure, CPLE_UserInterrupt, 
