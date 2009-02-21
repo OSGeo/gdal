@@ -31,6 +31,7 @@
 #include "ogr_p.h"
 #include "cpl_csv.h"
 #include "cpl_http.h"
+#include "cpl_atomic_ops.h"
 
 CPL_CVSID("$Id$");
 
@@ -227,7 +228,7 @@ OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
 int OGRSpatialReference::Reference()
 
 {
-    return ++nRefCount;
+    return CPLAtomicInc(&nRefCount);
 }
 
 /************************************************************************/
@@ -262,7 +263,7 @@ int OGRSpatialReference::Dereference()
                   "Dereference() called on an object with refcount %d,"
                   "likely already destroyed!", 
                   nRefCount );
-    return --nRefCount;
+    return CPLAtomicDec(&nRefCount);
 }
 
 /************************************************************************/
