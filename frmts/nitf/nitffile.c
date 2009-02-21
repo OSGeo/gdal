@@ -360,21 +360,15 @@ int NITFCreate( const char *pszFilename,
     int nUDIDLOffset;
     const char *pszVersion;
 
-    if( pszIC == NULL )
-        pszIC = "NC";
-
-/* -------------------------------------------------------------------- */
-/*      Open new file.                                                  */
-/* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "wb+" );
-    if( fp == NULL )
+    if (nBands <= 0 || nBands > 9)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create file %s,\n"
-                  "check path and permissions.",
-                  pszFilename );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Invalid band number : %d", nBands);
         return FALSE;
     }
+
+    if( pszIC == NULL )
+        pszIC = "NC";
 
 /* -------------------------------------------------------------------- */
 /*      Fetch some parameter overrides.                                 */
@@ -408,16 +402,40 @@ int NITFCreate( const char *pszFilename,
     if( CSLFetchNameValue( papszOptions, "NPPBV" ) != NULL )
         nNPPBV = atoi(CSLFetchNameValue( papszOptions, "NPPBV" ));
     
-    if( nNPPBH > 9999 || nNPPBV > 9999  )
+    if( nNPPBH <= 0 || nNPPBV <= 0 ||
+        nNPPBH > 9999 || nNPPBV > 9999  )
         nNPPBH = nNPPBV = 256;
 
     nNBPR = (nPixels + nNPPBH - 1) / nNPPBH;
     nNBPC = (nLines + nNPPBV - 1) / nNPPBV;
+    if ( nNBPR > 9999 || nNBPC > 9999 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to create file %s,\n"
+                  "Too many blocks : %d x %d",
+                 pszFilename, nNBPR, nNBPC);
+        return FALSE;
+    }
 
     nImageSize = 
         ((nBitsPerSample)/8) 
         * ((GIntBig) nNBPR * nNBPC)
         * nNPPBH * nNPPBV * nBands;
+
+
+/* -------------------------------------------------------------------- */
+/*      Open new file.                                                  */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpenL( pszFilename, "wb+" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create file %s,\n"
+                  "check path and permissions.",
+                  pszFilename );
+        return FALSE;
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Work out the version we are producing.  For now we really       */
