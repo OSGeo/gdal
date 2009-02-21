@@ -2490,6 +2490,9 @@ CPLErr NITFDataset::ScanJPEGBlocks()
                   psImage->nBlocksPerRow*psImage->nBlocksPerColumn);
     panJPEGBlockOffset[0] = nJPEGStart;
 
+    if ( psImage->nBlocksPerRow * psImage->nBlocksPerColumn == 1)
+        return CE_None;
+
     for( iBlock = psImage->nBlocksPerRow * psImage->nBlocksPerColumn - 1;
          iBlock > 0; iBlock-- )
         panJPEGBlockOffset[iBlock] = -1;
