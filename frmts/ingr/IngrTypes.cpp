@@ -633,14 +633,6 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
 
     CPLFree( pabyBuf );
 
-    // -------------------------------------------------------------
-    // Sort records by crescent order of "slot" 
-    // -------------------------------------------------------------
-
-    vlt_slot hSwapSlot;
-    bool bContinue = true; // Inproved bubble sort.
-    unsigned j = 0;        // This is the best sort techique when you
-                           // suspect that the data is already sorted
 
 #if defined(CPL_MSB)
     for (i = 0; i < nEntries; i++)
@@ -652,34 +644,16 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
     }
 #endif
 
-    for( j = 1; j < nEntries && bContinue; j++ )
-    {
-        bContinue = false;
-        for( i = 0; i < nEntries - j; i++ )
-        {
-            if( hVLTColors.Entry[i].v_slot > 
-                hVLTColors.Entry[i + 1].v_slot )
-            {
-                hSwapSlot = hVLTColors.Entry[i];
-                hVLTColors.Entry[i]   = hVLTColors.Entry[i+1];
-                hVLTColors.Entry[i+1] = hSwapSlot;
-                bContinue = true;
-            }
-        }
-    }
-
     // -------------------------------------------------------------
     // Get Maximum Intensity and Index Values
     // -------------------------------------------------------------
 
-    uint32 nMaxIndex    = 0;
     real32 fMaxRed      = 0.0;
     real32 fMaxGreen    = 0.0;
     real32 fMaxBlues    = 0.0;
 
     for( i = 0; i < nEntries; i++ )
     {
-        nMaxIndex = MAX( nMaxIndex, hVLTColors.Entry[i].v_slot );
         fMaxRed   = MAX( fMaxRed  , hVLTColors.Entry[i].v_red );
         fMaxGreen = MAX( fMaxGreen, hVLTColors.Entry[i].v_green );
         fMaxBlues = MAX( fMaxBlues, hVLTColors.Entry[i].v_blue );
@@ -693,35 +667,22 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
 
     fNormFactor  = ( fMaxRed > fMaxGreen ? fMaxRed : fMaxGreen );
     fNormFactor  = ( fNormFactor > fMaxBlues ? fNormFactor : fMaxBlues );
-    fNormFactor  = 255 / fNormFactor;
+    if (fNormFactor)
+        fNormFactor  = 255 / fNormFactor;
 
     // -------------------------------------------------------------
     // Loads GDAL Color Table ( filling the wholes )
     // -------------------------------------------------------------
 
     GDALColorEntry oEntry;
-    GDALColorEntry oNullEntry;
 
-    oNullEntry.c1 = (short) 0;
-    oNullEntry.c2 = (short) 0;
-    oNullEntry.c3 = (short) 0;
-    oNullEntry.c4 = (short) 255;
-
-    for( i = 0, j = 0; i <= nMaxIndex; i++ )
+    for( i = 0;  i < nEntries; i++ )
     {
-        if( hVLTColors.Entry[i].v_slot == i )
-        {
-            oEntry.c1 = (short) ( hVLTColors.Entry[i].v_red   * fNormFactor );
-            oEntry.c2 = (short) ( hVLTColors.Entry[i].v_green * fNormFactor );
-            oEntry.c3 = (short) ( hVLTColors.Entry[i].v_blue  * fNormFactor );
-            oEntry.c4 = (short) 255;
-            poColorTable->SetColorEntry( i, &oEntry );
-            j++;
-        }
-        else
-        {
-            poColorTable->SetColorEntry( i, &oNullEntry );
-        }
+        oEntry.c1 = (short) ( hVLTColors.Entry[i].v_red   * fNormFactor );
+        oEntry.c2 = (short) ( hVLTColors.Entry[i].v_green * fNormFactor );
+        oEntry.c3 = (short) ( hVLTColors.Entry[i].v_blue  * fNormFactor );
+        oEntry.c4 = (short) 255;
+        poColorTable->SetColorEntry( hVLTColors.Entry[i].v_slot, &oEntry );
     }
 
     CPLFree( hVLTColors.Entry );
