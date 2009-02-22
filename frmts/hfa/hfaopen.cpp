@@ -349,7 +349,6 @@ CPLErr HFAParseBandInfo( HFAInfo_t *psInfo )
             else if( poNode->GetIntField("width") != psInfo->nXSize
                      || poNode->GetIntField("height") != psInfo->nYSize )
             {
-                CPLAssert( FALSE );
                 return CE_Failure;
             }
 
