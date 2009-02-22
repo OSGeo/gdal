@@ -982,6 +982,10 @@ CPLErr JPGDataset::LoadScanline( int iLine )
     if( nLoadedScanline == iLine )
         return CE_None;
 
+    // setup to trap a fatal error.
+    if (setjmp(setjmp_buffer)) 
+        return CE_Failure;
+
     if (!bHasDoneJpegStartDecompress)
     {
         jpeg_start_decompress( &sDInfo );
@@ -1012,10 +1016,6 @@ CPLErr JPGDataset::LoadScanline( int iLine )
         pabyScanline = (GByte *)
             CPLMalloc(nJPEGBands * GetRasterXSize() * 2);
     }
-
-    // setup to trap a fatal error.
-    if (setjmp(setjmp_buffer)) 
-        return CE_Failure;
 
     if( iLine < nLoadedScanline )
         Restart();
