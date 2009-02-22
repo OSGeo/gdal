@@ -1541,6 +1541,10 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
 
     dfABSAngle = ABS(dfAngle) + dfEpsilon;
+    if (dfABSAngle > 361)
+    {
+        return "Invalid angle";
+    }
 
     nDegrees = (int) dfABSAngle;
     nMinutes = (int) ((dfABSAngle - nDegrees) * 60);
