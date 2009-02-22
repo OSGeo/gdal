@@ -717,7 +717,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 /* -------------------------------------------------------------------- */
         if( nPixelsOutput + nRepeatCount > nMaxPixels )
         {
-            CPLAssert( FALSE );
+            CPLDebug("HFA", "Repeat count too big : %d", nRepeatCount);
             nRepeatCount = nMaxPixels - nPixelsOutput;
         }
         
