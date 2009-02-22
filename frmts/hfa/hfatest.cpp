@@ -141,7 +141,7 @@ int main( int argc, char ** argv )
             }
 
             if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen, 
-			   &padfBlue, &padfAlpha )
+			   &padfBlue, &padfAlpha, NULL )
                 == CE_None )
             {
                 int	j;

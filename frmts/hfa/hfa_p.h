@@ -170,7 +170,7 @@ class HFABand
     int		nOverviews;
     HFABand     **papoOverviews;
     
-    CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData );
+    CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDataSize );
     CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
     
     const char * GetBandName();
