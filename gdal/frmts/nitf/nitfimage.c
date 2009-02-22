@@ -86,7 +86,13 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Read the image subheader.                                       */
 /* -------------------------------------------------------------------- */
-    pachHeader = (char*) CPLMalloc(psSegInfo->nSegmentHeaderSize);
+    pachHeader = (char*) VSIMalloc(psSegInfo->nSegmentHeaderSize);
+    if (pachHeader == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory for segment header");
+        return NULL;
+    }
+
     if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart, 
                   SEEK_SET ) != 0 
         || VSIFReadL( pachHeader, 1, psSegInfo->nSegmentHeaderSize, 
@@ -96,6 +102,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                   "Failed to read %d byte image subheader from %d.",
                   psSegInfo->nSegmentHeaderSize,
                   psSegInfo->nSegmentHeaderStart );
+        CPLFree(pachHeader);
         return NULL;
     }
 
@@ -346,6 +353,15 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         nOffset += 5;
     }
 
+    if (psImage->nBands <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid band number");
+        NITFImageDeaccess(psImage);
+        GDALDeinitGCPs( nIGEOLOGCPCount, psIGEOLOGCPs );
+        CPLFree( psIGEOLOGCPs );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Read per-band information.                                      */
 /* -------------------------------------------------------------------- */
@@ -471,6 +487,18 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         nOffset += 3;                   /* IALVL */
         nOffset += 10;                  /* ILOC */
         nOffset += 4;                   /* IMAG */
+    }
+
+    if (psImage->nBlocksPerRow <= 0 ||
+        psImage->nBlocksPerColumn <= 0 ||
+        psImage->nBlockWidth <= 0 ||
+        psImage->nBlockHeight <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid values");
+        NITFImageDeaccess(psImage);
+        GDALDeinitGCPs( nIGEOLOGCPCount, psIGEOLOGCPs );
+        CPLFree( psIGEOLOGCPs );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */

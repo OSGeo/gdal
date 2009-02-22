@@ -266,7 +266,14 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
     if( psFile->nTREBytes != 0 )
     {
-        psFile->pachTRE = (char *) CPLMalloc(psFile->nTREBytes);
+        psFile->pachTRE = (char *) VSIMalloc(psFile->nTREBytes);
+        if (psFile->pachTRE == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate %d bytes", psFile->nTREBytes);
+            NITFClose(psFile);
+            return NULL;
+        }
         memcpy( psFile->pachTRE, pachHeader + nOffset, 
                 psFile->nTREBytes );
     }
@@ -290,8 +297,15 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         if( nXHDL != 0 )
         {
             psFile->pachTRE = (char *) 
-                CPLRealloc( psFile->pachTRE, 
+                VSIRealloc( psFile->pachTRE, 
                             psFile->nTREBytes + nXHDL );
+            if (psFile->pachTRE == NULL)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate %d bytes", psFile->nTREBytes + nXHDL);
+                NITFClose(psFile);
+                return NULL;
+            }
             memcpy( psFile->pachTRE, pachHeader + nOffset, nXHDL );
             psFile->nTREBytes += nXHDL;
         }
@@ -937,7 +951,7 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
 
     nCount = atoi(szTemp);
 
-    if( nCount == 0 )
+    if( nCount <= 0 )
         return nOffset + 3;
 
     if( psFile->pasSegmentInfo == NULL )
@@ -955,7 +969,12 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
     nSegDefSize = nCount * (nHeaderLenSize + nDataLenSize);
     pachSegDef = (char *) CPLMalloc(nCount * (nHeaderLenSize + nDataLenSize));
     
-    VSIFReadL( pachSegDef, 1, nSegDefSize, psFile->fp );
+    if (VSIFReadL( pachSegDef, 1, nSegDefSize, psFile->fp ) != nSegDefSize )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read segment info");
+        CPLFree( pachSegDef );
+        return nOffset + 3;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Collect detailed about segment.                                 */
@@ -976,6 +995,12 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                               iSegment * (nHeaderLenSize+nDataLenSize) 
                               + nHeaderLenSize,
                               nDataLenSize));
+        if (psInfo->nSegmentHeaderSize <= 0 ||
+            psInfo->nSegmentSize <= 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment info");
+            break;
+        }
 
         psInfo->nSegmentHeaderStart = *pnNextData;
         psInfo->nSegmentStart = *pnNextData + psInfo->nSegmentHeaderSize;
