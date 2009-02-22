@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.148 2009-01-22 19:06:49 fwarmerdam Exp $ */
+/* $Id: tif_dirread.c,v 1.153 2009-02-09 14:29:08 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -42,6 +42,7 @@
 #include "tiffiop.h"
 
 #define IGNORE 0          /* tag placeholder used below */
+#define FAILED_FII    ((uint32) -1)
 
 #ifdef HAVE_IEEEFP
 # define TIFFCvtIEEEFloatToNative(tif, n, fp)
@@ -765,16 +766,21 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArray(TIFF* tif, TIFFDirEntry* d
 		return(TIFFReadDirEntryErrOk);
 	}
         (void) desttypesize;
-#ifdef notdef
-	if ((uint64)(4*1024*1024/typesize)<direntry->tdir_count)
+
+        /* 
+         * As a sanity check, make sure we have no more than a 2GB tag array 
+         * in either the current data type or the dest data type.  This also
+         * avoids problems with overflow of tmsize_t on 32bit systems.
+         */
+	if ((uint64)(2147483647/typesize)<direntry->tdir_count)
 		return(TIFFReadDirEntryErrSizesan);
-	if ((uint64)(4*1024*1024/desttypesize)<direntry->tdir_count)
+	if ((uint64)(2147483647/desttypesize)<direntry->tdir_count)
 		return(TIFFReadDirEntryErrSizesan);
-#endif
+
 	*count=(uint32)direntry->tdir_count;
 	datasize=(*count)*typesize;
 	assert((tmsize_t)datasize>0);
-	data=_TIFFmalloc(datasize);
+	data=_TIFFCheckMalloc(tif, *count, typesize, "ReadDirEntryArray");
 	if (data==0)
 		return(TIFFReadDirEntryErrAlloc);
 	if (!(tif->tif_flags&TIFF_BIGTIFF))
@@ -3483,7 +3489,7 @@ TIFFReadDirectory(TIFF* tif)
 		if (dp->tdir_tag!=IGNORE)
 		{
 			TIFFReadDirectoryFindFieldInfo(tif,dp->tdir_tag,&fii);
-			if (fii==(uint32)(-1))
+			if (fii == FAILED_FII)
 			{
 				TIFFWarningExt(tif->tif_clientdata, module,
 				    "Unknown field with tag %d (0x%x) encountered",
@@ -3503,7 +3509,7 @@ TIFFReadDirectory(TIFF* tif)
 					dp->tdir_tag=IGNORE;
 				} else {
 					TIFFReadDirectoryFindFieldInfo(tif,dp->tdir_tag,&fii);
-					assert(fii!=(uint32)(-1));
+					assert(fii != FAILED_FII);
 				}
 			}
 		}
@@ -4021,7 +4027,7 @@ TIFFReadDirectoryFindFieldInfo(TIFF* tif, uint16 tagid, uint32* fii)
 	{
 		if (ma+1==mc)
 		{
-			*fii=(uint32)(-1);
+			*fii = FAILED_FII;
 			return;
 		}
 		mb=(ma+mc)/2;
@@ -4072,7 +4078,7 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 	for (di=0, dp=dir; di<dircount; di++, dp++)
 	{
 		TIFFReadDirectoryFindFieldInfo(tif,dp->tdir_tag,&fii);
-		if (fii==0xFFFF)
+		if (fii == FAILED_FII)
 		{
 			TIFFWarningExt(tif->tif_clientdata, module,
 			    "Unknown field with tag %d (0x%x) encountered",
@@ -4087,7 +4093,7 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 				dp->tdir_tag=IGNORE;
 			} else {
 				TIFFReadDirectoryFindFieldInfo(tif,dp->tdir_tag,&fii);
-				assert(fii!=0xFFFF);
+				assert( fii != FAILED_FII );
 			}
 		}
 		if (dp->tdir_tag!=IGNORE)
@@ -4580,8 +4586,7 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 	uint32 fii;
 	const TIFFField* fip;
 	TIFFReadDirectoryFindFieldInfo(tif,dp->tdir_tag,&fii);
-	assert(fii!=0xFFFFFFFF);
-        if( fii == 0xFFFFFFFF )
+        if( fii == FAILED_FII )
         {
             TIFFErrorExt(tif->tif_clientdata, "TIFFFetchNormalTag",
                          "No definition found for tag %d",
@@ -4747,7 +4752,7 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				assert(fip->field_readcount>=1);
 				assert(fip->field_passcount==0);
 				if (dp->tdir_count!=(uint64)fip->field_readcount)
-					assert(0);
+                                    /* corrupt file */;
 				else
 				{
 					err=TIFFReadDirEntryByteArray(tif,dp,&data);
@@ -4769,7 +4774,7 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				assert(fip->field_readcount>=1);
 				assert(fip->field_passcount==0);
 				if (dp->tdir_count!=(uint64)fip->field_readcount)
-					assert(0);
+                                    /* corrupt file */;
 				else
 				{
 					err=TIFFReadDirEntryShortArray(tif,dp,&data);
@@ -4791,7 +4796,7 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				assert(fip->field_readcount>=1);
 				assert(fip->field_passcount==0);
 				if (dp->tdir_count!=(uint64)fip->field_readcount)
-					assert(0);
+                                    /* corrupt file */;
 				else
 				{
 					err=TIFFReadDirEntryLongArray(tif,dp,&data);
@@ -4813,7 +4818,7 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				assert(fip->field_readcount>=1);
 				assert(fip->field_passcount==0);
 				if (dp->tdir_count!=(uint64)fip->field_readcount)
-					assert(0);
+                                    /* corrupt file */;
 				else
 				{
 					err=TIFFReadDirEntryFloatArray(tif,dp,&data);
