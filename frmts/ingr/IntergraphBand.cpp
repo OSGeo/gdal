@@ -144,6 +144,13 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         nBlockYSize = MIN( hTileDir.TileSize, (uint32) nRasterYSize );
     }
 
+    if (nBlockXSize <= 0 || nBlockYSize <= 0)
+    {
+        pabyBlockBuf = NULL;
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid block dimensions");
+        return;
+    }
+
     // -------------------------------------------------------------------- 
     // Incomplete tiles have Block Offset greater than: 
     // -------------------------------------------------------------------- 
@@ -164,7 +171,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     nBlockBufSize = nBlockXSize * nBlockYSize * 
                     GDALGetDataTypeSize( eDataType ) / 8;
         
-    pabyBlockBuf = (GByte*) VSIMalloc( nBlockBufSize );
+    pabyBlockBuf = (GByte*) VSIMalloc3( nBlockXSize, nBlockYSize,
+                                        GDALGetDataTypeSize( eDataType ) / 8);
     if (pabyBlockBuf == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBlockBufSize);

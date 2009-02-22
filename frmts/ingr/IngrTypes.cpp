@@ -231,7 +231,10 @@ const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode )
 
 const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex )
 {
-    return IngrOrientation[nIndex];
+    if (nIndex < sizeof(IngrOrientation) / sizeof(IngrOrientation[0]))
+        return IngrOrientation[nIndex];
+    else
+        return "invalid orientation";
 }
 
 // -----------------------------------------------------------------------------
