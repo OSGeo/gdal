@@ -239,9 +239,16 @@ HFAType::SetInstValue( const char * pszFieldPath,
             break;
         }
 
-        nByteOffset +=
-            papoFields[iField]->GetInstBytes( pabyData+nByteOffset,
+        int nInc = papoFields[iField]->GetInstBytes( pabyData+nByteOffset,
                                               nDataSize - nByteOffset );
+
+        if (nInc < 0 || nByteOffset > INT_MAX - nInc)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
+            return CE_Failure;
+        }
+
+        nByteOffset += nInc;
     }
 
     if( iField == nFields || nByteOffset >= nDataSize )
@@ -312,9 +319,16 @@ HFAType::GetInstCount( const char * pszFieldPath,
             break;
         }
 
-        nByteOffset +=
-            papoFields[iField]->GetInstBytes( pabyData + nByteOffset,
+        int nInc = papoFields[iField]->GetInstBytes( pabyData+nByteOffset,
                                               nDataSize - nByteOffset );
+
+        if (nInc < 0 || nByteOffset > INT_MAX - nInc)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
+            return -1;
+        }
+
+        nByteOffset += nInc;
     }
 
     if( iField == nFields || nByteOffset >= nDataSize )
@@ -402,9 +416,16 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
             break;
         }
 
-        nByteOffset +=
-            papoFields[iField]->GetInstBytes( pabyData + nByteOffset,
+        int nInc = papoFields[iField]->GetInstBytes( pabyData+nByteOffset,
                                               nDataSize - nByteOffset );
+
+        if (nInc < 0 || nByteOffset > INT_MAX - nInc)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
+            return FALSE;
+        }
+
+        nByteOffset += nInc;
     }
 
     if( iField == nFields || nByteOffset >= nDataSize )
@@ -442,6 +463,11 @@ void HFAType::DumpInstValue( FILE * fpOut,
                                 nDataSize, pszPrefix );
 
         nInstBytes = poField->GetInstBytes( pabyData, nDataSize );
+        if (nInstBytes < 0 || nDataOffset > UINT_MAX - nInstBytes)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
+            return;
+        }
 
         pabyData += nInstBytes;
         nDataOffset += nInstBytes;
@@ -471,6 +497,11 @@ int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
 
             int nInstBytes = poField->GetInstBytes( pabyData,
                                                     nDataSize - nTotal );
+            if (nInstBytes < 0 || nTotal > INT_MAX - nInstBytes)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
+                return -1;
+            }
 
             pabyData += nInstBytes;
             nTotal += nInstBytes;

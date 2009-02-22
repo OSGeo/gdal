@@ -702,9 +702,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
         }
         else
         {
-            printf( "nNumBits = %d\n", nNumBits );
-            CPLAssert( FALSE );
-            nDataValue = 0;
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "nNumBits = %d", nNumBits );
+            return CE_Failure;
         }
 
 /* -------------------------------------------------------------------- */
@@ -942,7 +942,7 @@ void HFABand::NullBlock( void *pData )
 /*                           GetRasterBlock()                           */
 /************************************************************************/
 
-CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
+CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDataSize )
 
 {
     int		iBlock;
@@ -1056,6 +1056,14 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Read uncompressed data directly into the return buffer.         */
 /* -------------------------------------------------------------------- */
+    if ( nDataSize != -1 && (nBlockSize > INT_MAX ||
+                             (int)nBlockSize > nDataSize) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Invalid block size : %d", (int)nBlockSize);
+        return CE_Failure;
+    }
+
     if( VSIFReadL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
     {
 	memset( pData, 0, 

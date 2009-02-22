@@ -681,21 +681,34 @@ void HFARasterBand::ReadAuxMetadata()
             if ( nBinSize == 8 )
             {
                 double dfValue;
-                VSIFReadL( &dfValue, nBinSize, 1, hHFA->fp );
+                if (VSIFReadL( &dfValue, nBinSize, 1, hHFA->fp ) != 1)
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "Cannot read value");
+                    break;
+                }
                 HFAStandard( nBinSize, &dfValue );
                 snprintf( szBuf, 31, "%.14g", dfValue );
             }
             else
             {
                 int nValue;
-                VSIFReadL( &nValue, nBinSize, 1, hHFA->fp );
+                if (VSIFReadL( &nValue, nBinSize, 1, hHFA->fp ) != 1)
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "Cannot read value");
+                    break;
+                }
                 HFAStandard( nBinSize, &nValue );
                 snprintf( szBuf, 31, "%d", nValue );
             }
             if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
             {
                 nBufSize *= 2;
-                pszBinValues = (char *)CPLRealloc( pszBinValues, nBufSize );
+                pszBinValues = (char *)VSIRealloc( pszBinValues, nBufSize );
+                if (pszBinValues == NULL)
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory");
+                    break;
+                }
             }
             strcat( pszBinValues+nBinValuesLen, szBuf );
             strcat( pszBinValues+nBinValuesLen, "|" );
@@ -816,13 +829,15 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int         nThisDataType = nHFADataType; // overview may differ.
 
     if( nThisOverview == -1 )
-        eErr = HFAGetRasterBlock( hHFA, nBand, nBlockXOff, nBlockYOff,
-                                  pImage );
+        eErr = HFAGetRasterBlockEx( hHFA, nBand, nBlockXOff, nBlockYOff,
+                                    pImage,
+                                    nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) );
     else
     {
-        eErr =  HFAGetOverviewRasterBlock( hHFA, nBand, nThisOverview,
+        eErr =  HFAGetOverviewRasterBlockEx( hHFA, nBand, nThisOverview,
                                            nBlockXOff, nBlockYOff,
-                                           pImage );
+                                           pImage,
+                                           nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8));
         nThisDataType = 
             hHFA->papoBand[nBand-1]->papoOverviews[nThisOverview]->nDataType;
     }
@@ -1325,16 +1340,22 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             
         if( EQUAL(pszType,"real") )
         {
-            double *padfColData = (double*)VSIMalloc(nRowCount*sizeof(double));
+            double *padfColData = (double*)VSIMalloc2(nRowCount, sizeof(double));
             if (padfColData == NULL)
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
-                 "HFARasterBand::ReadNamedRAT : Out of memory\n");
+                 "HFARasterBand::ReadNamedRAT : Out of memory");
                 return NULL;
             }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            VSIFReadL( padfColData, nRowCount, sizeof(double), hHFA->fp );
+            if (VSIFReadL( padfColData, nRowCount, sizeof(double), hHFA->fp ) != sizeof(double))
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                            "HFARasterBand::ReadNamedRAT : Cannot read values");
+                CPLFree(padfColData);
+                return NULL;
+            }
 #ifdef CPL_MSB
             GDALSwapWords( padfColData, 8, nRowCount, 8 );
 #endif
@@ -1351,12 +1372,18 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             if (pachColData == NULL)
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
-                 "HFARasterBand::ReadNamedRAT : Out of memory\n");
+                 "HFARasterBand::ReadNamedRAT : Out of memory");
                 return NULL;
             }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            VSIFReadL( pachColData, nRowCount, nMaxNumChars, hHFA->fp );
+            if ((int)VSIFReadL( pachColData, nRowCount, nMaxNumChars, hHFA->fp ) != nMaxNumChars)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                            "HFARasterBand::ReadNamedRAT : Cannot read values");
+                CPLFree(pachColData);
+                return NULL;
+            }
 
             poRAT->CreateColumn(poDTChild->GetName(),GFT_String,eType);
             for( i = 0; i < nRowCount; i++ )
@@ -1372,16 +1399,22 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
         }
         else if( EQUALN(pszType,"int",3) )
         {
-            GInt32 *panColData = (GInt32*)VSIMalloc(nRowCount*sizeof(GInt32));
+            GInt32 *panColData = (GInt32*)VSIMalloc2(nRowCount, sizeof(GInt32));
             if (panColData == NULL)
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
-                 "HFARasterBand::ReadNamedRAT : Out of memory\n");
+                 "HFARasterBand::ReadNamedRAT : Out of memory");
                 return NULL;
             }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            VSIFReadL( panColData, nRowCount, sizeof(GInt32), hHFA->fp );
+            if (VSIFReadL( panColData, nRowCount, sizeof(GInt32), hHFA->fp ) != sizeof(GInt32))
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                            "HFARasterBand::ReadNamedRAT : Cannot read values");
+                CPLFree(panColData);
+                return NULL;
+            }
 #ifdef CPL_MSB
             GDALSwapWords( panColData, 4, nRowCount, 4 );
 #endif
