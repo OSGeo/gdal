@@ -200,6 +200,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( ! poDS->oKeywords.Ingest( fpQube, nOffset ) )
     {
         delete poDS;
+        VSIFCloseL( fpQube );
         return NULL;
     }
     VSIFCloseL( fpQube );
