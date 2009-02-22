@@ -120,7 +120,6 @@ OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference( const char *pszWKT )
         }
     }
 
-    CPLAssert( NULL != poSRS );
     return (OGRSpatialReferenceH) poSRS;
 }
 
