@@ -664,10 +664,21 @@ CPLErr HFAGetRasterBlock( HFAHandle hHFA, int nBand,
                           int nXBlock, int nYBlock, void * pData )
 
 {
+    return HFAGetRasterBlockEx(hHFA, nBand, nXBlock, nYBlock, pData, -1);
+}
+
+/************************************************************************/
+/*                        HFAGetRasterBlockEx()                         */
+/************************************************************************/
+
+CPLErr HFAGetRasterBlockEx( HFAHandle hHFA, int nBand,
+                            int nXBlock, int nYBlock, void * pData, int nDataSize )
+
+{
     if( nBand < 1 || nBand > hHFA->nBands )
         return CE_Failure;
 
-    return( hHFA->papoBand[nBand-1]->GetRasterBlock(nXBlock,nYBlock,pData) );
+    return( hHFA->papoBand[nBand-1]->GetRasterBlock(nXBlock,nYBlock,pData,nDataSize) );
 }
 
 /************************************************************************/
@@ -678,6 +689,17 @@ CPLErr HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand, int iOverview,
                                   int nXBlock, int nYBlock, void * pData )
 
 {
+    return HFAGetOverviewRasterBlockEx(hHFA, nBand, iOverview, nXBlock, nYBlock, pData, -1);
+}
+
+/************************************************************************/
+/*                   HFAGetOverviewRasterBlockEx()                      */
+/************************************************************************/
+
+CPLErr HFAGetOverviewRasterBlockEx( HFAHandle hHFA, int nBand, int iOverview,
+                                  int nXBlock, int nYBlock, void * pData, int nDataSize )
+
+{
     if( nBand < 1 || nBand > hHFA->nBands )
         return CE_Failure;
 
@@ -685,7 +707,7 @@ CPLErr HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand, int iOverview,
         return CE_Failure;
 
     return( hHFA->papoBand[nBand-1]->papoOverviews[iOverview]->
-            GetRasterBlock(nXBlock,nYBlock,pData) );
+            GetRasterBlock(nXBlock,nYBlock,pData, nDataSize) );
 }
 
 /************************************************************************/

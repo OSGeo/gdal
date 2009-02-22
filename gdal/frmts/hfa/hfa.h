@@ -166,9 +166,14 @@ CPLErr CPL_DLL HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview,
                                    int * pnHFADataType );
 CPLErr CPL_DLL HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, 
                                   int nYBlock, void * pData );
+CPLErr CPL_DLL HFAGetRasterBlockEx( HFAHandle hHFA, int nBand, int nXBlock, 
+                                    int nYBlock, void * pData, int nDataSize );
 CPLErr CPL_DLL HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand, 
                                           int iOverview,
                                    int nXBlock, int nYBlock, void * pData );
+CPLErr CPL_DLL HFAGetOverviewRasterBlockEx( HFAHandle hHFA, int nBand, 
+                                          int iOverview,
+                                   int nXBlock, int nYBlock, void * pData, int nDataSize );
 CPLErr CPL_DLL HFASetRasterBlock( HFAHandle hHFA, int nBand, 
                                   int nXBlock, int nYBlock,
                                   void * pData );
