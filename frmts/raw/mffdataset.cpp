@@ -364,9 +364,13 @@ void MFFDataset::ScanForGCPs()
     
     if( CSLFetchNameValue(papszHdrLines, "NUM_GCPS") != NULL )
         NUM_GCPS = atoi(CSLFetchNameValue(papszHdrLines, "NUM_GCPS"));
+    if (NUM_GCPS < 0)
+        return;
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),5+NUM_GCPS);
+    pasGCPList = (GDAL_GCP *) VSICalloc(sizeof(GDAL_GCP),5+NUM_GCPS);
+    if (pasGCPList == NULL)
+        return;
 
     for( nCorner = 0; nCorner < 5; nCorner++ )
     {
@@ -466,6 +470,8 @@ void MFFDataset::ScanForGCPs()
 
             nGCPCount++;
         }
+
+        CSLDestroy(papszTokens);
     }
 }
 
@@ -524,7 +530,7 @@ void MFFDataset::ScanForProjectionInfo()
             nZone = 31 + (int) floor(atof(pszOriginLong)/6.0);
 
 
-        if( pasGCPList[4].dfGCPY < 0 )
+        if( nGCPCount >= 5 && pasGCPList[4].dfGCPY < 0 )
             oProj.SetUTM( nZone, 0 );
         else
             oProj.SetUTM( nZone, 1 );
@@ -637,6 +643,10 @@ void MFFDataset::ScanForProjectionInfo()
             transform_ok = GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0);
 
         }
+
+        if (poTransform)
+            delete poTransform;
+
         CPLFree(dfPrjX);
         CPLFree(dfPrjY);
 
@@ -749,15 +759,19 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( CSLFetchNameValue(papszHdrLines,"no_rows") != NULL
         && CSLFetchNameValue(papszHdrLines,"no_columns") != NULL )
     {
-        poDS->RasterInitialize( 
-            atoi(CSLFetchNameValue(papszHdrLines,"no_columns")),
-            atoi(CSLFetchNameValue(papszHdrLines,"no_rows")) );
+        poDS->nRasterXSize = atoi(CSLFetchNameValue(papszHdrLines,"no_columns"));
+        poDS->nRasterYSize = atoi(CSLFetchNameValue(papszHdrLines,"no_rows"));
     }
     else
     {
-        poDS->RasterInitialize( 
-            atoi(CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES")),
-            atoi(CSLFetchNameValue(papszHdrLines,"IMAGE_LINES")) );
+        poDS->nRasterXSize = atoi(CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES"));
+        poDS->nRasterYSize = atoi(CSLFetchNameValue(papszHdrLines,"IMAGE_LINES"));
+    }
+
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    {
+        delete poDS;
+        return NULL;
     }
 
     if( CSLFetchNameValue( papszHdrLines, "BYTE_ORDER" ) != NULL )
@@ -786,6 +800,14 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         if( CSLFetchNameValue(papszHdrLines,"tile_size_columns") )
             nTileXSize = 
                 atoi(CSLFetchNameValue(papszHdrLines,"tile_size_columns"));
+
+        if (nTileXSize <= 0 || nTileYSize <= 0 ||
+            poDS->nRasterXSize > INT_MAX - (nTileXSize - 1) ||
+            poDS->nRasterYSize > INT_MAX - (nTileYSize - 1))
+        {
+            delete poDS;
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -799,7 +821,12 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     pszTargetBase = CPLStrdup(CPLGetBasename( poOpenInfo->pszFilename ));
     papszDirFiles = CPLReadDir( CPLGetPath( poOpenInfo->pszFilename ) );
     if( papszDirFiles == NULL )
+    {
+        CPLFree(pszTargetPath);
+        CPLFree(pszTargetBase);
+        delete poDS;
         return NULL;
+    }
 
     for( nRawBand = 0; TRUE; nRawBand++ )
     {
@@ -814,7 +841,8 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                 continue;
 
             pszExtension = CPLGetExtension(papszDirFiles[i]);
-            if( isdigit(pszExtension[1])
+            if( strlen(pszExtension) >= 2
+                && isdigit(pszExtension[1])
                 && atoi(pszExtension+1) == nRawBand 
                 && strchr("bBcCiIjJrRxXzZ",pszExtension[0]) != NULL )
                 break;
@@ -929,6 +957,14 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else
         {
+            if (poDS->GetRasterXSize() > INT_MAX / nPixelOffset)
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,  "Int overflow occured... skipping");
+                nSkipped++;
+                VSIFCloseL(fpRaw);
+                continue;
+            }
+
             poBand = 
                 new RawRasterBand( poDS, nBand, fpRaw, 0, nPixelOffset,
                                    nPixelOffset * poDS->GetRasterXSize(),
@@ -965,17 +1001,6 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
     }
-    
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Set all information from the .hdr that isn't well know to be    */
@@ -1013,6 +1038,17 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->ScanForGCPs();
     poDS->ScanForProjectionInfo();
+    
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

@@ -1352,9 +1352,14 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         || CSLFetchNameValue( papszAttrib, "extent.rows" ) == NULL )
         return NULL;
 
-    poDS->RasterInitialize( 
-        atoi(CSLFetchNameValue(papszAttrib,"extent.cols")),
-        atoi(CSLFetchNameValue(papszAttrib,"extent.rows")) );
+    poDS->nRasterXSize = atoi(CSLFetchNameValue(papszAttrib,"extent.cols"));
+    poDS->nRasterYSize = atoi(CSLFetchNameValue(papszAttrib,"extent.rows"));
+
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    {
+        delete poDS;
+        return NULL;
+    }
 
     pszValue = CSLFetchNameValue(papszAttrib,"pixel.order");
     if( pszValue == NULL )
@@ -1380,6 +1385,12 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         nRawBands = atoi(pszValue);
     else
         nRawBands = 1;
+
+    if (!GDALCheckBandCount(nRawBands, TRUE))
+    {
+        delete poDS;
+        return NULL;
+    }
 
     pszValue = CSLFetchNameValue(papszAttrib,"pixel.field");
     if( pszValue != NULL && strstr(pszValue,"*complex") != NULL )

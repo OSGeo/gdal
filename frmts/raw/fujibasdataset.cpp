@@ -141,7 +141,10 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     pszOrgFile = CSLFetchNameValue(papszHeader,"OrgFile");
 
     if( nXSize < 1 || nYSize < 1 )
+    {
+        CSLDestroy( papszHeader );
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the original data file.                             */
@@ -164,6 +167,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
                   "Perhaps the raw file needs to be renamed to match expected?",
                   poOpenInfo->pszFilename, 
                   pszRawFile );
+        CSLDestroy( papszHeader );
         return NULL;
     }
 

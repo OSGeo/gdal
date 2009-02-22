@@ -388,6 +388,9 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError( CE_Failure, CPLE_NotSupported, 
                   "EIR driver does not support DATATYPE %s.", 
                   papszTokens[1] );
+                CSLDestroy( papszTokens );
+                CSLDestroy( papszHDR );
+                VSIFCloseL( fp );
                 return NULL;
             }
         }
@@ -417,7 +420,13 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszHDR );
         return NULL;
     }
-    
+
+    if (!GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(nBands, FALSE))
+    {
+        CSLDestroy( papszHDR );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */

@@ -68,11 +68,11 @@ class CPGDataset : public RawDataset
 
     int nInterleave;
     static int  AdjustFilename( char **, const char *, const char * );
-    static int FindType1( char *pszWorkname );
-    static int FindType2( char *pszWorkname );
-    static int FindType3( char *pszWorkname );
-    static GDALDataset *InitializeType1Or2Dataset( char *pszWorkname );
-    static GDALDataset *InitializeType3Dataset( char *pszWorkname );
+    static int FindType1( const char *pszWorkname );
+    static int FindType2( const char *pszWorkname );
+    static int FindType3( const char *pszWorkname );
+    static GDALDataset *InitializeType1Or2Dataset( const char *pszWorkname );
+    static GDALDataset *InitializeType3Dataset( const char *pszWorkname );
   CPLErr LoadStokesLine( int iLine, int bNativeOrder );
 
   public:
@@ -134,9 +134,7 @@ CPGDataset::~CPGDataset()
 
     if( nGCPCount > 0 )
     {
-        for( int i = 0; i < nGCPCount; i++ )
-            CPLFree( pasGCPList[i].pszId );
-
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
 
@@ -263,7 +261,7 @@ int CPGDataset::AdjustFilename( char **pszFilename,
 /*         Search for the various types of Convair filesets             */
 /*         Return TRUE for a match, FALSE for no match                  */
 /************************************************************************/
-int CPGDataset::FindType1( char *pszFilename )
+int CPGDataset::FindType1( const char *pszFilename )
 {
   int nNameLen;
 
@@ -279,20 +277,26 @@ int CPGDataset::FindType1( char *pszFilename )
       return FALSE;
 
   /* Expect all bands and headers to be present */
-  if ( !AdjustFilename( &pszFilename, "hh", "img" ) 
-    || !AdjustFilename( &pszFilename, "hh", "hdr" ) 
-    || !AdjustFilename( &pszFilename, "hv", "img" ) 
-    || !AdjustFilename( &pszFilename, "hv", "hdr" ) 
-    || !AdjustFilename( &pszFilename, "vh", "img" ) 
-    || !AdjustFilename( &pszFilename, "vh", "hdr" ) 
-    || !AdjustFilename( &pszFilename, "vv", "img" ) 
-    || !AdjustFilename( &pszFilename, "vv", "hdr" ) )
+  char* pszTemp = CPLStrdup(pszFilename);
+
+  int bNotFound = !AdjustFilename( &pszTemp, "hh", "img" ) 
+    || !AdjustFilename( &pszTemp, "hh", "hdr" ) 
+    || !AdjustFilename( &pszTemp, "hv", "img" ) 
+    || !AdjustFilename( &pszTemp, "hv", "hdr" ) 
+    || !AdjustFilename( &pszTemp, "vh", "img" ) 
+    || !AdjustFilename( &pszTemp, "vh", "hdr" ) 
+    || !AdjustFilename( &pszTemp, "vv", "img" ) 
+    || !AdjustFilename( &pszTemp, "vv", "hdr" );
+
+  CPLFree(pszTemp);
+
+  if (bNotFound)
       return FALSE;
 
   return TRUE;
 }
 
-int CPGDataset::FindType2( char *pszFilename )
+int CPGDataset::FindType2( const char *pszFilename )
 {
   int nNameLen;
 
@@ -303,14 +307,18 @@ int CPGDataset::FindType2( char *pszFilename )
        && !EQUAL(pszFilename+nNameLen-8,"SIRC.img")))
       return FALSE;
 
-  if ( !AdjustFilename( &pszFilename, "", "img" ) 
-       || !AdjustFilename( &pszFilename, "", "hdr" ))
-    return FALSE;
+  char* pszTemp = CPLStrdup(pszFilename);
+  int bNotFound =  !AdjustFilename( &pszTemp, "", "img" ) 
+                || !AdjustFilename( &pszTemp, "", "hdr" );
+  CPLFree(pszTemp);
+
+  if (bNotFound)
+      return FALSE;
 
   return TRUE;
 }
 
-int CPGDataset::FindType3( char *pszFilename )
+int CPGDataset::FindType3( const char *pszFilename )
 {
   int nNameLen;
 
@@ -325,9 +333,13 @@ int CPGDataset::FindType3( char *pszFilename )
        && !EQUAL(pszFilename+nNameLen-8,".img_def")))
       return FALSE;
 
-  if ( !AdjustFilename( &pszFilename, "stokes", "img" ) 
-       || !AdjustFilename( &pszFilename, "stokes", "img_def" ))
-    return FALSE;
+  char* pszTemp = CPLStrdup(pszFilename);
+  int bNotFound =  !AdjustFilename( &pszTemp, "stokes", "img" ) 
+                || !AdjustFilename( &pszTemp, "stokes", "img_def" );
+  CPLFree(pszTemp);
+
+  if (bNotFound)
+      return FALSE;
 
   return TRUE;
 }
@@ -440,7 +452,7 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
 /*       Returns dataset if successful; NULL if there was a problem.    */
 /************************************************************************/
 
-GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
+GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 {
 
 /* -------------------------------------------------------------------- */
@@ -463,6 +475,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
     int iUTMParamsFound = 0, iUTMZone=0, iCorner=0;
     double dfnorth = 0.0, dfeast = 0.0;
 
+    char* pszWorkname = CPLStrdup(pszFilename);
     AdjustFilename( &pszWorkname, "hh", "hdr" );
     papszHdrLines = CSLLoad( pszWorkname );
 
@@ -570,13 +583,17 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
 /*      Check for successful completion.                                */
 /* -------------------------------------------------------------------- */
     if( nError )
+    {
+        CPLFree(pszWorkname);
         return NULL;
+    }
 
-    if( nLines == 0 || nSamples == 0 )
+    if( nLines <= 0 || nSamples <= 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
           "Did not find valid number_lines or number_samples keywords in %s.",
                   pszWorkname );
+        CPLFree(pszWorkname);
         return NULL;
     }
 
@@ -609,6 +626,8 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Failed to open .img file: %s", 
                       pszWorkname );
+            CPLFree(pszWorkname);
+            delete poDS;
             return NULL;
         }
         for( iBand = 0; iBand < 4; iBand++ )
@@ -635,6 +654,8 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
                 CPLError( CE_Failure, CPLE_OpenFailed, 
                           "Failed to open .img file: %s", 
                           pszWorkname );
+                CPLFree(pszWorkname);
+                delete poDS;
                 return NULL;
             }
 
@@ -705,7 +726,8 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
         double dfgcpLine, dfgcpPixel, dfgcpX, dfgcpY, dftemp;
 
         poDS->nGCPCount = 16;
-        poDS->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),16);
+        poDS->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),poDS->nGCPCount);
+        GDALInitGCPs(poDS->nGCPCount, poDS->pasGCPList);
 
         for( ngcp = 0; ngcp < 16; ngcp ++ )
         {
@@ -756,18 +778,22 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
             poDS->pasGCPList[ngcp].dfGCPPixel = dfgcpPixel;
             poDS->pasGCPList[ngcp].dfGCPLine = dfgcpLine;
 
+            CPLFree(poDS->pasGCPList[ngcp].pszId);
             poDS->pasGCPList[ngcp].pszId = CPLStrdup( szID );
-            poDS->pasGCPList[ngcp].pszInfo = (char *)"";
 
         }
+
+        CPLFree(poDS->pszGCPProjection);
         poDS->pszGCPProjection = CPLStrdup("LOCAL_CS[\"Ground range view / unreferenced meters\",UNIT[\"Meter\",1.0]]"); 
 
     }
 
+    CPLFree(pszWorkname);
+
     return poDS;
 }
 
-GDALDataset *CPGDataset::InitializeType3Dataset( char *pszWorkname )
+GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
 {
 
     char **papszHdrLines;
@@ -780,6 +806,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( char *pszWorkname )
     double dfnorth = 0.0, dfeast = 0.0, dfOffsetX = 0.0, dfOffsetY = 0.0;
     double dfxsize = 0.0, dfysize = 0.0;
 
+    char* pszWorkname = CPLStrdup(pszWorkname);
     AdjustFilename( &pszWorkname, "stokes", "img_def" );
     papszHdrLines = CSLLoad( pszWorkname );
 
@@ -930,14 +957,19 @@ GDALDataset *CPGDataset::InitializeType3Dataset( char *pszWorkname )
 /*      Check for successful completion.                                */
 /* -------------------------------------------------------------------- */
     if( nError )
+    {
+        CPLFree(pszWorkname);
         return NULL;
+    }
 
-    if( nLines == 0 || nSamples == 0 || iInterleave == -1 ||
-        nBands == 0 || iBytesPerPixel == 0 )
+    if (!GDALCheckDatasetDimensions(nSamples, nLines) ||
+        !GDALCheckBandCount(nBands, FALSE) || iInterleave == -1 ||
+        iBytesPerPixel == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
           "%s is missing a required parameter (number of pixels, number of lines,\nnumber of bands, bytes per pixel, or data organization).",
                   pszWorkname );
+        CPLFree(pszWorkname);
         return NULL;
     }
 
@@ -970,6 +1002,8 @@ GDALDataset *CPGDataset::InitializeType3Dataset( char *pszWorkname )
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open .img file: %s", 
                   pszWorkname );
+        CPLFree(pszWorkname);
+        delete poDS;
         return NULL;
     }
     for( iBand = 0; iBand < 16; iBand++ )
@@ -1046,12 +1080,9 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     int nNameLen = strlen(poOpenInfo->pszFilename);
     int CPGType = 0;
 
-    /* scratch workspace that gets freed and reallocated by the tests */
-    char *pszWorkname = CPLStrdup(poOpenInfo->pszFilename);
-
-    if ( FindType1( pszWorkname ))
+    if ( FindType1( poOpenInfo->pszFilename ))
       CPGType = 1;
-    else if ( FindType2( pszWorkname ))
+    else if ( FindType2( poOpenInfo->pszFilename ))
       CPGType = 2;
    
     /* Stokes matrix convair data: not quite working yet- something
@@ -1061,22 +1092,20 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
      * C12 = hh*conj(hv), etc.  Used geogratis data in both scattering
      * matrix and stokes format for comparison.
      */
-    //else if ( FindType3( pszWorkname ))
+    //else if ( FindType3( poOpenInfo->pszFilename ))
     //  CPGType = 3;
 
     /* Set working name back to original */
-    CPLFree( pszWorkname );
-    pszWorkname = CPLStrdup(poOpenInfo->pszFilename);
 
     if ( CPGType == 0 )
     {
-      nNameLen = strlen(pszWorkname);
+      nNameLen = strlen(poOpenInfo->pszFilename);
       if ( (nNameLen > 8) && 
-           ( ( strstr(pszWorkname,"sso") != NULL ) ||
-             ( strstr(pszWorkname,"polgasp") != NULL ) ) &&
-           ( EQUAL(pszWorkname+nNameLen-4,"img") ||
-             EQUAL(pszWorkname+nNameLen-4,"hdr") ||
-             EQUAL(pszWorkname+nNameLen-7,"img_def") ) )
+           ( ( strstr(poOpenInfo->pszFilename,"sso") != NULL ) ||
+             ( strstr(poOpenInfo->pszFilename,"polgasp") != NULL ) ) &&
+           ( EQUAL(poOpenInfo->pszFilename+nNameLen-4,"img") ||
+             EQUAL(poOpenInfo->pszFilename+nNameLen-4,"hdr") ||
+             EQUAL(poOpenInfo->pszFilename+nNameLen-7,"img_def") ) )
       {
         CPLError( CE_Failure, CPLE_OpenFailed, 
               "Apparent attempt to open Convair PolGASP data failed as\n"
@@ -1084,15 +1113,14 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
               "are expected for scattering matrix format, two for Stokes)." );
       }
       else if ( (nNameLen > 8) && 
-                ( strstr(pszWorkname,"SIRC") != NULL )  &&
-           ( EQUAL(pszWorkname+nNameLen-4,"img") ||
-             EQUAL(pszWorkname+nNameLen-4,"hdr")))
+                ( strstr(poOpenInfo->pszFilename,"SIRC") != NULL )  &&
+           ( EQUAL(poOpenInfo->pszFilename+nNameLen-4,"img") ||
+             EQUAL(poOpenInfo->pszFilename+nNameLen-4,"hdr")))
       {
           CPLError( CE_Failure, CPLE_OpenFailed, 
                 "Apparent attempt to open SIRC Convair PolGASP data failed \n"
                 "as one of the expected files is missing (hdr or img)!" );
       }
-      CPLFree( pszWorkname );
       return NULL;
     }
 
@@ -1100,9 +1128,9 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPGDataset     *poDS;
  
     if ( CPGType < 3 )
-      poDS = (CPGDataset *) InitializeType1Or2Dataset( pszWorkname );
+      poDS = (CPGDataset *) InitializeType1Or2Dataset( poOpenInfo->pszFilename );
     else
-      poDS = (CPGDataset *) InitializeType3Dataset( pszWorkname );
+      poDS = (CPGDataset *) InitializeType3Dataset( poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */

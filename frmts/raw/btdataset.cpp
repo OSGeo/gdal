@@ -580,6 +580,12 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
     memcpy( &nIntTemp, poDS->abyHeader + 14, 4 );
     poDS->nRasterYSize = CPL_LSBWORD32( nIntTemp );
 
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    {
+        delete poDS;
+        return NULL;
+    }
+
     memcpy( &nDataSize, poDS->abyHeader+18, 2 );
     nDataSize = CPL_LSBWORD16( nDataSize );
 
@@ -594,6 +600,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   ".bt file data type unknown, got datasize=%d.", 
                   nDataSize );
+        delete poDS;
         return NULL;
     }
 

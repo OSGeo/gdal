@@ -256,6 +256,13 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->pabyHeader[1] == '5' )
     {
+        if (nWidth > INT_MAX / iPixelSize)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Int overflow occured.");
+            delete poDS;
+            return NULL;
+        }
         poDS->SetBand(
             1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, iPixelSize,
                                   nWidth*iPixelSize, eDataType, bMSBFirst, TRUE ));
@@ -263,6 +270,13 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
+        if (nWidth > INT_MAX / (3 * iPixelSize))
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Int overflow occured.");
+            delete poDS;
+            return NULL;
+        }
         poDS->SetBand(
             1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, 3*iPixelSize,
                                   nWidth*3*iPixelSize, eDataType, bMSBFirst, TRUE ));
