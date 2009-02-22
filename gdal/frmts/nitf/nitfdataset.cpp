@@ -679,7 +679,8 @@ NITFDataset::~NITFDataset()
     int nImageStart = -1;
     if( psFile != NULL )
     {
-        nImageStart = psFile->pasSegmentInfo[0].nSegmentStart;
+        if (psFile->nSegmentCount > 0)
+            nImageStart = psFile->pasSegmentInfo[0].nSegmentStart;
 
         NITFClose( psFile );
         psFile = NULL;
