@@ -2454,3 +2454,57 @@ void CPL_STDCALL GDALDestroyProjDef( void * )
 }
 
 CPL_C_END
+
+/************************************************************************/
+/* Infrastructure to check that dataset characteristics are valid       */
+/************************************************************************/
+
+CPL_C_START
+
+/**
+  * Return TRUE if the dataset dimensions are valid.
+  *
+  * @param nXSize raster width
+  * @param nYSize raster height
+  */
+int GDALCheckDatasetDimensions( int nXSize, int nYSize )
+{
+    if (nXSize <= 0 || nYSize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid dataset dimensions : %d x %d", nXSize, nYSize);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**
+  * Return TRUE if the band count is valid.
+  *
+  * If the configuration option GDAL_MAX_BAND_COUNT is defined,
+  * the band count will be compared to the maximum number of band allowed.
+  *
+  * @param nBands the band count
+  * @param bIsZeroAllowed TRUE if band count == 0 is allowed
+  */
+
+int GDALCheckBandCount( int nBands, int bIsZeroAllowed )
+{
+    int nMaxBands = -1;
+    const char* pszMaxBandCount = CPLGetConfigOption("GDAL_MAX_BAND_COUNT", NULL);
+    if (pszMaxBandCount != NULL)
+    {
+        nMaxBands = atoi(pszMaxBandCount);
+    }
+    if (nBands < 0 || (!bIsZeroAllowed && nBands == 0) ||
+        (nMaxBands >= 0 && nBands > nMaxBands) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid band count : %d", nBands);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+CPL_C_END
+

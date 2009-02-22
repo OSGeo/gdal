@@ -780,7 +780,14 @@ CPLErr CPL_DLL GDALParseGMLCoverage( CPLXMLNode *psTree,
                                      int *pnXSize, int *pnYSize,
                                      double *padfGeoTransform,
                                      char **ppszProjection );
-                                  
+
+/* ==================================================================== */
+/*  Infrastructure to check that dataset characteristics are valid      */
+/* ==================================================================== */
+
+int CPL_DLL GDALCheckDatasetDimensions( int nXSize, int nYSize );
+int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
+
 CPL_C_END
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */
