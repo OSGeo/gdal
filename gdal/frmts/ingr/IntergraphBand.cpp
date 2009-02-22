@@ -359,7 +359,8 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
 
     if( nBytesRead == 0 )
     {
-        memset( pImage, 0, nBlockBufSize );
+        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+                    GDALGetDataTypeSize( eDataType ) / 8 );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n", 
             ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff );
@@ -418,7 +419,8 @@ int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff,
             default:
                 break;
         }
-        memset( pImage, nColor, nBlockBufSize );
+        memset( pImage, nColor, nBlockXSize * nBlockYSize * 
+                    GDALGetDataTypeSize( eDataType ) / 8 );
         return TRUE;
     }
     else
@@ -618,7 +620,8 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
 
     if( nBytesRead == 0 )
     {
-        memset( pImage, 0, nBlockBufSize );
+        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+                    GDALGetDataTypeSize( eDataType ) / 8 );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
             ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff, 
@@ -858,7 +861,8 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 
     if( nBytesRead == 0 )
     {
-        memset( pImage, 0, nBlockBufSize );
+        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+                    GDALGetDataTypeSize( eDataType ) / 8 );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
             ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff, 
@@ -899,7 +903,8 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 
     if( poGDS->hVirtual.poDS == NULL )
     {
-        memset( pImage, 0, nBlockBufSize );
+        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+                    GDALGetDataTypeSize( eDataType ) / 8 );
         CPLError( CE_Failure, CPLE_AppDefined, 
 			"Unable to open virtual file.\n"
 			"Is the GTIFF and JPEG driver available?" );
