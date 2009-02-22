@@ -189,13 +189,17 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
        return NULL;
    }
 
-   pszList = (char*)CPLMalloc(2048);
-
    nWidth = CPL_LSBINT32PTR (poDS->pachHeader + 4164);
    nHeight = CPL_LSBINT32PTR (poDS->pachHeader + 4168);
 
    poDS->nRasterXSize = nWidth;
    poDS->nRasterYSize = nHeight;
+
+   if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+   {
+       delete poDS;
+       return NULL;
+   }
 
    // crown fuels = canopy height, canopy base height, canopy bulk density
    // 21 = have them, 20 = don't have them
@@ -241,11 +245,20 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
    iPixelSize = nBands * 2;
    int          bNativeOrder;
 
+   if (nWidth > INT_MAX / iPixelSize)
+   {
+       CPLError( CE_Failure, CPLE_AppDefined,  "Int overflow occured");
+       delete poDS;
+       return NULL;
+   }
+
 #ifdef CPL_LSB
    bNativeOrder = TRUE;
 #else
    bNativeOrder = FALSE;
 #endif
+
+   pszList = (char*)CPLMalloc(2048);
 
    for( int iBand = 1; iBand <= nBands; iBand++ )
    {

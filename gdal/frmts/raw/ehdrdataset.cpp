@@ -1100,7 +1100,14 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszHDR );
         return NULL;
     }
-    
+
+    if (!GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(nBands, FALSE))
+    {
+        CSLDestroy( papszHDR );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Has the user selected the .hdr file to open?                    */
 /* -------------------------------------------------------------------- */

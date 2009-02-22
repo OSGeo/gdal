@@ -286,6 +286,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Header read error on %s.\n",
                   poOpenInfo->pszFilename );
+        delete poDS;
         return NULL;
     }
 
@@ -298,6 +299,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Header read error on %s.\n",
                   poOpenInfo->pszFilename );
+        delete poDS;
         return NULL;
     }
 

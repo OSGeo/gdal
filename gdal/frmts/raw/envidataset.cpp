@@ -1746,13 +1746,15 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszInterleave = CSLFetchNameValue(poDS->papszHeader,"interleave");
 
-    if( nLines == 0 || nSamples == 0 || nBands == 0 || pszInterleave == NULL )
+    
+    if (!GDALCheckDatasetDimensions(nSamples, nLines) || !GDALCheckBandCount(nBands, FALSE) ||
+        pszInterleave == NULL )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The file appears to have an associated ENVI header, but\n"
                   "one or more of the samples, lines, bands and interleave\n"
-                  "keywords appears to be missing." );
+                  "keywords appears to be missing or invalid." );
         return NULL;
     }
 
@@ -1903,10 +1905,12 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     int	nDataSize = GDALGetDataTypeSize(eType)/8;
     int nPixelOffset, nLineOffset;
     vsi_l_offset nBandOffset;
+    int bIntOverflow = FALSE;
     
     if( EQUALN(pszInterleave, "bsq", 3) )
     {
         poDS->interleave = BSQ;
+        if (nSamples > INT_MAX / nDataSize) bIntOverflow = TRUE;
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nLineOffset * nLines;
@@ -1914,6 +1918,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( EQUALN(pszInterleave, "bil", 3) )
     {
         poDS->interleave = BIL;
+        if (nSamples > INT_MAX / (nDataSize * nBands)) bIntOverflow = TRUE;
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nDataSize * nSamples;
@@ -1921,6 +1926,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( EQUALN(pszInterleave, "bip", 3) )
     {
         poDS->interleave = BIP;
+        if (nSamples > INT_MAX / nBands) bIntOverflow = TRUE;
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize * nBands;
         nBandOffset = nDataSize;
@@ -1931,6 +1937,14 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The interleaving type of the file (%s) is not supported.",
                   pszInterleave );
+        return NULL;
+    }
+
+    if (bIntOverflow)
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Int overflow occured.");
         return NULL;
     }
     

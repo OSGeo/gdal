@@ -444,6 +444,13 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 
     nBandCount = *((GInt16 *) (poDS->pachHeader + 8));
 
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(nBandCount, FALSE))
+    {
+        delete poDS;
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
