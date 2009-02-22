@@ -245,7 +245,9 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
 
     SkipWhite();
 
-    if( pszHeaderNext == '\0' )
+    if( !(*pszHeaderNext != '\0' 
+           && *pszHeaderNext != '=' 
+           && !isspace(*pszHeaderNext)) )
         return FALSE;
 
     while( *pszHeaderNext != '\0' 
