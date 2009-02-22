@@ -617,11 +617,25 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     // Read acquisition date
     pszTemp = GetValue( pszHeader, ACQUISITION_DATE,
                         ACQUISITION_DATE_SIZE, TRUE );
+    if (pszTemp == NULL)
+    {
+        CPLDebug( "FAST", "Cannot get ACQUISITION_DATE" );
+        CPLFree(pszHeader);
+        delete poDS;
+        return NULL;
+    }
     poDS->SetMetadataItem( "ACQUISITION_DATE", pszTemp );
     CPLFree( pszTemp );
 
     // Read satellite name (will read the first one only)
     pszTemp = GetValue( pszHeader, SATELLITE_NAME, SATELLITE_NAME_SIZE, TRUE );
+    if (pszTemp == NULL)
+    {
+        CPLDebug( "FAST", "Cannot get SATELLITE_NAME" );
+        CPLFree(pszHeader);
+        delete poDS;
+        return NULL;
+    }
     poDS->SetMetadataItem( "SATELLITE", pszTemp );
     if ( EQUALN(pszTemp, "LANDSAT", 7) )
 	poDS->iSatellite = LANDSAT;
@@ -633,6 +647,13 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Read sensor name (will read the first one only)
     pszTemp = GetValue( pszHeader, SENSOR_NAME, SENSOR_NAME_SIZE, TRUE );
+    if (pszTemp == NULL)
+    {
+        CPLDebug( "FAST", "Cannot get SENSOR_NAME" );
+        CPLFree(pszHeader);
+        delete poDS;
+        return NULL;
+    }
     poDS->SetMetadataItem( "SENSOR", pszTemp );
     CPLFree( pszTemp );
 
@@ -761,6 +782,15 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree(pszHeader);
         delete poDS;
 	return NULL;
+    }
+
+
+    
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    {
+        CPLFree(pszHeader);
+        delete poDS;
+        return NULL;
     }
 
     pszTemp = GetValue( pszHeader, BITS_PER_PIXEL, BITS_PER_PIXEL_SIZE, FALSE );

@@ -241,8 +241,22 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a raw raster band for each file.                         */
 /* -------------------------------------------------------------------- */
     int iBand;
-    int nBands = atoi(CSLFetchNameValue(papszHeader, 
-                                        "NUMBER_OF_BANDS_IN_VOLUME"));
+    const char* pszBand = CSLFetchNameValue(papszHeader, 
+                                        "NUMBER_OF_BANDS_IN_VOLUME");
+    if (pszBand == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find band count");
+        delete poDS;
+        return NULL;
+    }
+    int nBands = atoi(pszBand);
+
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(nBands, FALSE))
+    {
+        delete poDS;
+        return NULL;
+    }
 
     for( iBand = 0; iBand < nBands; iBand++ )
     {
@@ -310,7 +324,9 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         for( i = 0; i < 15; i++ )
             adfUSGSParms[i] = atof(papszParmTokens[i]);
     }
-            
+    CSLDestroy(papszParmTokens);
+    papszParmTokens = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Minimal georef support ... should add full USGS style           */
 /*      support at some point.                                          */

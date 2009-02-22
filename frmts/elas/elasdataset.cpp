@@ -343,6 +343,13 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nBands = CPL_MSBWORD32( poDS->sHeader.NC );
 
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(poDS->nBands, FALSE))
+    {
+        delete poDS;
+        return NULL;
+    }
+
     nELASDataType = (poDS->sHeader.IH19[2] & 0x7e) >> 2;
     nBytesPerSample = poDS->sHeader.IH19[3];
     

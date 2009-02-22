@@ -449,7 +449,7 @@ void PAuxDataset::ScanForGCPs()
             CPLFree( pasGCPList[nGCPCount].pszId );
             if( CSLCount(papszTokens) > 5 )
             {
-                pasGCPList[nGCPCount].pszId = papszTokens[5];
+                pasGCPList[nGCPCount].pszId = CPLStrdup(papszTokens[5]);
             }
             else
             {
@@ -460,11 +460,13 @@ void PAuxDataset::ScanForGCPs()
             if( CSLCount(papszTokens) > 6 )
             {
                 CPLFree( pasGCPList[nGCPCount].pszInfo );
-                pasGCPList[nGCPCount].pszInfo = papszTokens[6];
+                pasGCPList[nGCPCount].pszInfo = CPLStrdup(papszTokens[6]);
             }
 
             nGCPCount++;
         }
+
+        CSLDestroy(papszTokens);
     }
 }
 
@@ -726,7 +728,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "RawDefinition missing or corrupt in %s.",
                   poOpenInfo->pszFilename );
-
+        CSLDestroy( papszTokens );
         return NULL;
     }
 
@@ -736,7 +738,14 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->eAccess = poOpenInfo->eAccess;
 
     CSLDestroy( papszTokens );
-    
+
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(poDS->nBands, FALSE))
+    {
+        delete poDS;
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -773,6 +782,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Collect raw definitions of each channel and create              */
 /*      corresponding bands.                                            */
 /* -------------------------------------------------------------------- */
+    int iBand = 0;
     for( i = 0; i < poDS->nBands; i++ )
     {
         char	szDefnName[32];
@@ -782,11 +792,16 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         sprintf( szDefnName, "ChanDefinition-%d", i+1 );
 
         pszLine = CSLFetchNameValue(poDS->papszAuxLines, szDefnName);
+        if (pszLine == NULL)
+        {
+            continue;
+        }
+
         papszTokens = CSLTokenizeString(pszLine);
         if( CSLCount(papszTokens) < 4 )
         {
             // Skip the band with broken description
-            poDS->nBands--;
+            CSLDestroy( papszTokens );
             continue;
         }
 
@@ -808,15 +823,29 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
         }
 
-        poDS->SetBand( i+1, 
-            new PAuxRasterBand( poDS, i+1, poDS->fpImage,
-                                CPLScanUIntBig(papszTokens[1],
-                                               strlen(papszTokens[1])),
-                                atoi(papszTokens[2]),
-                                atoi(papszTokens[3]), eType, bNative ) );
+        vsi_l_offset nBandOffset = CPLScanUIntBig(papszTokens[1],
+                                               strlen(papszTokens[1]));
+        int nPixelOffset = atoi(papszTokens[2]);
+        int nLineOffset = atoi(papszTokens[3]);
+
+        if (nPixelOffset <= 0 || nLineOffset <= 0)
+        {
+            // Skip the band with broken offsets
+            CSLDestroy( papszTokens );
+            continue;
+        }
+
+        poDS->SetBand( iBand+1, 
+            new PAuxRasterBand( poDS, iBand+1, poDS->fpImage,
+                                nBandOffset,
+                                nPixelOffset,
+                                nLineOffset, eType, bNative ) );
+        iBand ++;
 
         CSLDestroy( papszTokens );
     }
+
+    poDS->nBands = iBand;
 
 /* -------------------------------------------------------------------- */
 /*      Get the projection.                                             */
