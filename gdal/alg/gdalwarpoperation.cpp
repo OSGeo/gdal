@@ -432,6 +432,7 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 /*      resolution input type to ensure we can identify nodata values.  */
 /* -------------------------------------------------------------------- */
     if( psOptions->eWorkingDataType == GDT_Unknown 
+        && psOptions->hSrcDS != NULL 
         && psOptions->hDstDS != NULL 
         && psOptions->nBandCount >= 1 )
     {
