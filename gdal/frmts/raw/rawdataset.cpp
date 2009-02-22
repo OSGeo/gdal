@@ -75,8 +75,16 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 /*      Allocate working scanline.                                      */
 /* -------------------------------------------------------------------- */
     nLoadedScanline = -1;
-    nLineSize = nPixelOffset * nBlockXSize;
-    pLineBuffer = (nLineSize <= 0 ) ? NULL : VSIMalloc2( nPixelOffset, nBlockXSize );
+    if (nPixelOffset <= 0 || nBlockXSize <= 0 || nPixelOffset > INT_MAX / nBlockXSize)
+    {
+        nLineSize = 0;
+        pLineBuffer = NULL;
+    }
+    else
+    {
+        nLineSize = nPixelOffset * nBlockXSize;
+        pLineBuffer = VSIMalloc2( nPixelOffset, nBlockXSize );
+    }
     if (pLineBuffer == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -122,13 +130,26 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
     nBlockYSize = 1;
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
+    if (!GDALCheckDatasetDimensions(nXSize, nYSize))
+    {
+        pLineBuffer = NULL;
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate working scanline.                                      */
 /* -------------------------------------------------------------------- */
     nLoadedScanline = -1;
-    nLineSize = nPixelOffset * nBlockXSize;
-    pLineBuffer = (nLineSize <= 0 ) ? NULL : VSIMalloc2( nPixelOffset, nBlockXSize );
+    if (nPixelOffset <= 0 || nPixelOffset > INT_MAX / nBlockXSize)
+    {
+        nLineSize = 0;
+        pLineBuffer = NULL;
+    }
+    else
+    {
+        nLineSize = nPixelOffset * nBlockXSize;
+        pLineBuffer = VSIMalloc2( nPixelOffset, nBlockXSize );
+    }
     if (pLineBuffer == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
