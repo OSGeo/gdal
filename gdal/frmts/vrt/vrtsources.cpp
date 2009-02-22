@@ -397,7 +397,10 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     int bSrcWinSet = nSrcXOff != -1 || nSrcXSize != -1 
         || nSrcYOff != -1 || nSrcYSize != -1;
 
-    CPLAssert( bSrcWinSet == bDstWinSet );
+    if( bSrcWinSet != bDstWinSet )
+    {
+        return FALSE;
+    }
 #endif
 
 /* -------------------------------------------------------------------- */
