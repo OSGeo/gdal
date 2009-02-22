@@ -420,12 +420,20 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
        /******* Get Tile Sizes *********/
        tileSizeX = atoi(poDS->GetKeyword("IsisCube.Core.TileSamples",""));
        tileSizeY = atoi(poDS->GetKeyword("IsisCube.Core.TileLines",""));
+       if (tileSizeX <= 0 || tileSizeY <= 0)
+       {
+           CPLError( CE_Failure, CPLE_OpenFailed, "Wrong tile dimensions : %d x %d",
+                     tileSizeX, tileSizeY);
+           delete poDS;
+           return NULL;
+       }
     }
     else if (EQUAL(value,"BandSequential") )
         strcpy(szLayout,"BSQ");
     else {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "%s layout not supported. Abort\n\n", value);
+        delete poDS;
         return NULL;
     }
 
@@ -461,6 +469,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     else {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "%s layout type not supported. Abort\n\n", itype);
+        delete poDS;
         return NULL;
     }
 
@@ -679,6 +688,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( nRows < 1 || nCols < 1 || nBands < 1 )
     {
+        delete poDS;
         return NULL;
     }
 
