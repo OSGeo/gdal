@@ -1532,7 +1532,6 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if (setjmp(poDS->setjmp_buffer)) 
     {
-        delete poDS;
         return NULL;
     }
 
