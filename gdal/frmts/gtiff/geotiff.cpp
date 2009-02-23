@@ -1286,16 +1286,9 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( poGDS->pabyBlockBuf == NULL )
     {
-        poGDS->pabyBlockBuf = (GByte *) VSICalloc( 1, nBlockBufSize );
+        poGDS->pabyBlockBuf = (GByte *) VSIMalloc3( 4, nBlockXSize, nBlockYSize );
         if( poGDS->pabyBlockBuf == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Unable to allocate %d bytes for a temporary strip "
-                      "buffer in GTIFF driver.",
-                      nBlockBufSize );
-            
             return( CE_Failure );
-        }
     }
     
 /* -------------------------------------------------------------------- */
