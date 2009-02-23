@@ -9,6 +9,11 @@
  *    here with your own calls. No "libtiff" dependencies occur
  *    anywhere else in this code.
  *
+ * copyright (c) 1995   Niles D. Ritter
+ *
+ * Permission granted to use this software, so long as this copyright
+ * notice accompanies any products derived therefrom.
+ *
  **********************************************************************/
  
 #include "geotiff.h"    /* public GTIFF interface */

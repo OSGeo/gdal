@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c,v 1.23 2007/03/13 18:04:33 fwarmerdam Exp $
+ * $Id: geotiff_proj4.c 1538 2009-02-23 15:19:59Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -28,7 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * $Log: geotiff_proj4.c,v $
+ * $Log$
+ * Revision 1.25  2008/05/21 04:25:01  fwarmerdam
+ * avoid warnings.
+ *
+ * Revision 1.24  2008/05/21 04:12:57  fwarmerdam
+ * added preliminary GTIFSetFromProj4() support
+ *
  * Revision 1.23  2007/03/13 18:04:33  fwarmerdam
  * added new zealand map grid support per bug 1519
  *
@@ -108,6 +114,809 @@
 #include "geovalues.h"
 
 /************************************************************************/
+/*                          OSRProj4Tokenize()                          */
+/*                                                                      */
+/*      Custom tokenizing function for PROJ.4 strings.  The main        */
+/*      reason we can't just use CSLTokenizeString is to handle         */
+/*      strings with a + sign in the exponents of parameter values.     */
+/************************************************************************/
+
+static char **OSRProj4Tokenize( const char *pszFull )
+
+{
+    char *pszStart = NULL;
+    char *pszFullWrk;
+    char **papszTokens;
+    int  i;
+    int  nTokens = 0;
+    static const int nMaxTokens = 200;
+
+    if( pszFull == NULL )
+        return NULL;
+
+    papszTokens = (char **) calloc(sizeof(char*),nMaxTokens);
+
+    pszFullWrk = strdup( pszFull );
+
+    for( i=0; pszFullWrk[i] != '\0' && nTokens != nMaxTokens-1; i++ )
+    {
+        switch( pszFullWrk[i] )
+        {
+          case '+':
+            if( i == 0 || pszFullWrk[i-1] == '\0' )
+            {
+                if( pszStart != NULL )
+                {
+                    if( strstr(pszStart,"=") != NULL )
+                    {
+                        papszTokens[nTokens++] = strdup(pszStart);
+                    }
+                    else
+                    {
+                        char szAsBoolean[100];
+                        strncpy( szAsBoolean,pszStart, sizeof(szAsBoolean)-1-4);
+                        strcat( szAsBoolean,"=yes" );
+                        papszTokens[nTokens++] = strdup(szAsBoolean);
+                    }
+                }
+                pszStart = pszFullWrk + i + 1;
+            }
+            break;
+
+          case ' ':
+          case '\t':
+          case '\n':
+            pszFullWrk[i] = '\0';
+            break;
+
+          default:
+            break;
+        }
+    }
+
+    if( pszStart != NULL && strlen(pszStart) > 0 )
+    {
+        if (nTokens != 199)
+            papszTokens[nTokens++] = strdup( pszStart );
+    }
+
+    free( pszFullWrk );
+
+    return papszTokens;
+}
+
+
+/************************************************************************/
+/*                              OSR_GSV()                               */
+/************************************************************************/
+
+static const char *OSR_GSV( char **papszNV, const char * pszField )
+
+{
+    int field_len = strlen(pszField);
+    int i;
+    
+    if( !papszNV )
+        return NULL;
+
+    for( i = 0; papszNV[i] != NULL; i++ )
+    {
+        if( EQUALN(papszNV[i],pszField,field_len) )
+        {
+            if( papszNV[i][field_len] == '=' )
+                return papszNV[i] + field_len + 1;
+
+            if( strlen(papszNV[i]) == field_len )
+                return "";
+        }
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                              OSR_GDV()                               */
+/*                                                                      */
+/*      Fetch a particular parameter out of the parameter list, or      */
+/*      the indicated default if it isn't available.  This is a         */
+/*      helper function for importFromProj4().                          */
+/************************************************************************/
+
+static double OSR_GDV( char **papszNV, const char * pszField, 
+                       double dfDefaultValue )
+
+{
+    const char *pszValue = OSR_GSV( papszNV, pszField );
+
+    // special hack to use k_0 if available.
+    if( pszValue == NULL && EQUAL(pszField,"k") )
+        return OSR_GDV( papszNV, "k_0", dfDefaultValue );
+
+    if( pszValue == NULL )
+        return dfDefaultValue;
+    else
+        return atof(pszValue);
+}
+
+/************************************************************************/
+/*                         OSRFreeStringList()                          */
+/************************************************************************/
+
+static void OSRFreeStringList( char ** list )
+
+{
+    int i;
+
+    for( i = 0; list != NULL && list[i] != NULL; i++ )
+        free( list[i] );
+    free(list);
+}
+
+
+/************************************************************************/
+/*                          GTIFSetFromProj4()                          */
+/************************************************************************/
+
+int GTIFSetFromProj4( GTIF *gtif, const char *proj4 )
+
+{
+    char **papszNV = OSRProj4Tokenize( proj4 );
+    short nSpheroid = KvUserDefined;
+    double dfSemiMajor, dfSemiMinor=0.0, dfInvFlattening=0.0;
+    int	   nDatum = KvUserDefined;
+    int    nGCS = KvUserDefined;    
+    const char  *value;
+
+/* -------------------------------------------------------------------- */
+/*      Get the ellipsoid definition.                                   */
+/* -------------------------------------------------------------------- */
+    value = OSR_GSV( papszNV, "ellps" );
+
+    if( value == NULL )
+    {
+        /* nothing */;
+    }
+    else if( EQUAL(value,"WGS84") )
+        nSpheroid = Ellipse_WGS_84;
+    else if( EQUAL(value,"clrk66") )
+        nSpheroid = Ellipse_Clarke_1866;
+    else if( EQUAL(value,"clrk80") )
+        nSpheroid = Ellipse_Clarke_1880;
+    else if( EQUAL(value,"GRS80") )
+        nSpheroid = Ellipse_GRS_1980;
+
+    if( nSpheroid == KvUserDefined )
+    {
+        dfSemiMajor = OSR_GDV(papszNV,"a",0.0);
+        dfSemiMinor = OSR_GDV(papszNV,"b",0.0);
+        dfInvFlattening = OSR_GDV(papszNV,"rf",0.0);
+        if( dfSemiMinor != 0.0 && dfInvFlattening == 0.0 )
+            dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Get the GCS/Datum code.                                         */
+/* -------------------------------------------------------------------- */
+    value = OSR_GSV( papszNV, "datum" );
+
+    if( value == NULL ) 
+    {
+    }
+    else if( EQUAL(value,"WGS84") )
+    {
+        nGCS = GCS_WGS_84;
+        nDatum = Datum_WGS84;
+    }
+    else if( EQUAL(value,"NAD83") )
+    {
+        nGCS = GCS_NAD83;
+        nDatum = Datum_North_American_Datum_1983;
+    }
+    else if( EQUAL(value,"NAD27") )
+    {
+        nGCS = GCS_NAD27;
+        nDatum = Datum_North_American_Datum_1927;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Operate on the basis of the projection name.                    */
+/* -------------------------------------------------------------------- */
+    value = OSR_GSV(papszNV,"proj");
+
+    if( value == NULL )
+    {
+        OSRFreeStringList( papszNV );
+        return FALSE;
+    }
+
+    else if( EQUAL(value,"longlat") || EQUAL(value,"latlong") )
+    {
+    }
+    
+    else if( EQUAL(value,"tmerc") )
+    {
+	GTIFKeySet(gtif, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+	GTIFKeySet(gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+	GTIFKeySet(gtif, ProjectionGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+
+	GTIFKeySet(gtif, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
+		   CT_TransverseMercator );
+
+        GTIFKeySet(gtif, ProjNatOriginLatGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "lat_0", 0.0 ) );
+
+        GTIFKeySet(gtif, ProjNatOriginLongGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "lon_0", 0.0 ) );
+        
+        GTIFKeySet(gtif, ProjScaleAtNatOriginGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "k", 1.0 ) );
+        
+        GTIFKeySet(gtif, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "x_0", 0.0 ) );
+        
+        GTIFKeySet(gtif, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"utm") )
+    {
+        int nZone = (int) OSR_GDV(papszNV,"zone",0);
+        const char *south = OSR_GSV(papszNV,"south");
+                         
+	GTIFKeySet(gtif, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+	GTIFKeySet(gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+	GTIFKeySet(gtif, ProjectionGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+
+	GTIFKeySet(gtif, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
+		   CT_TransverseMercator );
+
+        GTIFKeySet(gtif, ProjNatOriginLatGeoKey, TYPE_DOUBLE, 1, 
+                   0.0 );
+
+        GTIFKeySet(gtif, ProjNatOriginLongGeoKey, TYPE_DOUBLE, 1,
+                   nZone * 6 - 183.0 );
+        
+        GTIFKeySet(gtif, ProjScaleAtNatOriginGeoKey, TYPE_DOUBLE, 1,
+                   0.9996 );
+        
+        GTIFKeySet(gtif, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
+                   500000.0 );
+
+        if( south != NULL )
+            GTIFKeySet(gtif, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+                       10000000.0 );
+        else
+            GTIFKeySet(gtif, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+                       0.0 );
+    }
+
+    else if( EQUAL(value,"lcc") 
+             && OSR_GDV(papszNV, "lat_0", 0.0 ) 
+             == OSR_GDV(papszNV, "lat_1", 0.0 ) )
+    {
+	GTIFKeySet(gtif, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+	GTIFKeySet(gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+	GTIFKeySet(gtif, ProjectionGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+
+	GTIFKeySet(gtif, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
+		   CT_LambertConfConic_1SP );
+
+        GTIFKeySet(gtif, ProjNatOriginLatGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "lat_0", 0.0 ) );
+
+        GTIFKeySet(gtif, ProjNatOriginLongGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "lon_0", 0.0 ) );
+        
+        GTIFKeySet(gtif, ProjScaleAtNatOriginGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "k", 1.0 ) );
+        
+        GTIFKeySet(gtif, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "x_0", 0.0 ) );
+        
+        GTIFKeySet(gtif, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"lcc") 
+             && OSR_GDV(papszNV, "lat_0", 0.0 ) 
+             == OSR_GDV(papszNV, "lat_1", 0.0 ) )
+    {
+	GTIFKeySet(gtif, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+	GTIFKeySet(gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+	GTIFKeySet(gtif, ProjectionGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+
+	GTIFKeySet(gtif, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
+		   CT_LambertConfConic_2SP );
+
+        GTIFKeySet(gtif, ProjFalseOriginLatGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "lat_0", 0.0 ) );
+
+        GTIFKeySet(gtif, ProjFalseOriginLongGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "lon_0", 0.0 ) );
+        
+        GTIFKeySet(gtif, ProjStdParallel1GeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "lat_1", 0.0 ) );
+        
+        GTIFKeySet(gtif, ProjStdParallel2GeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "lat_2", 0.0 ) );
+        
+        GTIFKeySet(gtif, ProjFalseOriginEastingGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "x_0", 0.0 ) );
+        
+        GTIFKeySet(gtif, ProjFalseOriginNorthingGeoKey, TYPE_DOUBLE, 1,
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+#ifdef notdef
+    else if( EQUAL(value,"bonne") )
+    {
+        SetBonne( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                  OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                  OSR_GDV( papszNV, "x_0", 0.0 ), 
+                  OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"cass") )
+    {
+        SetCS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"nzmg") )
+    {
+        SetNZMG( OSR_GDV( papszNV, "lat_0", -41.0 ), 
+                 OSR_GDV( papszNV, "lon_0", 173.0 ), 
+                 OSR_GDV( papszNV, "x_0", 2510000.0 ), 
+                 OSR_GDV( papszNV, "y_0", 6023150.0 ) );
+    }
+
+    else if( EQUAL(value,"cea") )
+    {
+        SetCEA( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
+                OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"merc") /* 2SP form */
+             && OSR_GDV(papszNV, "lat_ts", 1000.0) < 999.0 )
+    {
+        SetMercator2SP( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
+                        0.0,
+                        OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                        OSR_GDV( papszNV, "x_0", 0.0 ), 
+                        OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"merc") ) /* 1SP form */
+    {
+        SetMercator( 0.0,
+                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "k", 1.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"stere") 
+             && ABS(OSR_GDV( papszNV, "lat_0", 0.0 ) - 90) < 0.001 )
+    {
+        SetPS( OSR_GDV( papszNV, "lat_ts", 90.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "k", 1.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"stere") 
+             && ABS(OSR_GDV( papszNV, "lat_0", 0.0 ) + 90) < 0.001 )
+    {
+        SetPS( OSR_GDV( papszNV, "lat_ts", -90.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "k", 1.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUALN(value,"stere",5) /* mostly sterea */
+             && CSLFetchNameValue(papszNV,"k") != NULL )
+    {
+        SetOS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "k", 1.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"stere") )
+    {
+        SetStereographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                          OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                          1.0, 
+                          OSR_GDV( papszNV, "x_0", 0.0 ), 
+                          OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"eqc") )
+    {
+        if( OSR_GDV( papszNV, "lat_0", 0.0 ) != OSR_GDV( papszNV, "lat_ts", 0.0 ) )
+          SetEquirectangular2( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                               OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich,
+                               OSR_GDV( papszNV, "lat_ts", 0.0 ),
+                               OSR_GDV( papszNV, "x_0", 0.0 ),
+                               OSR_GDV( papszNV, "y_0", 0.0 ) );
+        else
+          SetEquirectangular( OSR_GDV( papszNV, "lat_ts", 0.0 ),
+                              OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich,
+                              OSR_GDV( papszNV, "x_0", 0.0 ),
+                              OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+   else if( EQUAL(value,"glabsgm") )
+   {
+       SetGaussLabordeReunion( OSR_GDV( papszNV, "lat_0", -21.116666667 ),
+                               OSR_GDV( papszNV, "lon_0", 55.53333333309)+dfFromGreenwich,
+                               OSR_GDV( papszNV, "k_0", 1.0 ),
+                               OSR_GDV( papszNV, "x_0", 160000.000 ),
+                               OSR_GDV( papszNV, "y_0", 50000.000 ) );
+   }
+
+    else if( EQUAL(value,"gnom") )
+    {
+        SetGnomonic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"ortho") )
+    {
+        SetOrthographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                         OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                         OSR_GDV( papszNV, "x_0", 0.0 ), 
+                         OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"laea") )
+    {
+        SetLAEA( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                 OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"aeqd") )
+    {
+        SetAE( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"eqdc") )
+    {
+        SetEC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+               OSR_GDV( papszNV, "lat_2", 0.0 ), 
+               OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"mill") )
+    {
+        SetMC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"moll") )
+    {
+        SetMollweide( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                      OSR_GDV( papszNV, "x_0", 0.0 ), 
+                      OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"eck4") )
+    {
+        SetEckertIV( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"eck6") )
+    {
+        SetEckertVI( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"poly") )
+    {
+        SetPolyconic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                      OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                      OSR_GDV( papszNV, "x_0", 0.0 ), 
+                      OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"aea") )
+    {
+        SetACEA( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                 OSR_GDV( papszNV, "lat_2", 0.0 ), 
+                 OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                 OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"robin") )
+    {
+        SetRobinson( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"vandg") )
+    {
+        SetVDG( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"sinu") )
+    {
+        SetSinusoidal( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                       OSR_GDV( papszNV, "x_0", 0.0 ), 
+                       OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"gall") )
+    {
+        SetGS( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"goode") )
+    {
+        SetGH( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"geos") )
+    {
+        SetGEOS( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                 OSR_GDV( papszNV, "h", 35785831.0 ), 
+                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"lcc") ) 
+    {
+        if( OSR_GDV(papszNV, "lat_0", 0.0 ) 
+            == OSR_GDV(papszNV, "lat_1", 0.0 ) )
+        {
+            /* 1SP form */
+            SetLCC1SP( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                       OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                       OSR_GDV( papszNV, "k_0", 1.0 ), 
+                       OSR_GDV( papszNV, "x_0", 0.0 ), 
+                       OSR_GDV( papszNV, "y_0", 0.0 ) );
+        }
+        else
+        {
+            /* 2SP form */
+            SetLCC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                    OSR_GDV( papszNV, "lat_2", 0.0 ), 
+                    OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                    OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                    OSR_GDV( papszNV, "x_0", 0.0 ), 
+                    OSR_GDV( papszNV, "y_0", 0.0 ) );
+        }
+    }
+
+    else if( EQUAL(value,"omerc") )
+    {
+        SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                OSR_GDV( papszNV, "lonc", 0.0 ), 
+                OSR_GDV( papszNV, "alpha", 0.0 ), 
+                0.0, /* ??? */
+                OSR_GDV( papszNV, "k", 1.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"somerc") )
+    {
+        SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                90.0,  90.0, 
+                OSR_GDV( papszNV, "k", 1.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"krovak") )
+    {
+        SetKrovak( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                   OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                   OSR_GDV( papszNV, "alpha", 0.0 ), 
+                   0.0, // pseudo_standard_parallel_1
+                   OSR_GDV( papszNV, "k", 1.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value, "iwm_p") )
+    {
+        SetIWMPolyconic( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                         OSR_GDV( papszNV, "lat_2", 0.0 ),
+                         OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                         OSR_GDV( papszNV, "x_0", 0.0 ), 
+                         OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value, "wag1") )
+    {
+        SetWagner( 1, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value, "wag2") )
+    {
+        SetWagner( 2, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value, "wag3") )
+    {
+        SetWagner( 3,
+                   OSR_GDV( papszNV, "lat_ts", 0.0 ),
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value, "wag1") )
+    {
+        SetWagner( 4, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value, "wag1") )
+    {
+        SetWagner( 5, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value, "wag1") )
+    {
+        SetWagner( 6, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value, "wag1") )
+    {
+        SetWagner( 7, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(value,"tpeqd") )
+    {
+        SetTPED( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                 OSR_GDV( papszNV, "lon_1", 0.0 ), 
+                 OSR_GDV( papszNV, "lat_2", 0.0 ), 
+                 OSR_GDV( papszNV, "lon_2", 0.0 ), 
+                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+#endif
+    else
+    {
+        /* unsupported coordinate system */
+        OSRFreeStringList( papszNV );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the GCS if we have it, otherwise write the datum.         */
+/* -------------------------------------------------------------------- */
+    if( nGCS != KvUserDefined )
+    {
+        GTIFKeySet( gtif, GeographicTypeGeoKey, TYPE_SHORT,
+                    1, nGCS );
+    }
+    else
+    {
+        GTIFKeySet( gtif, GeographicTypeGeoKey, TYPE_SHORT, 1, 
+                    KvUserDefined );
+        GTIFKeySet( gtif, GeogGeodeticDatumGeoKey, TYPE_SHORT,
+                    1, nDatum );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the ellipsoid if we don't know the GCS.                   */
+/* -------------------------------------------------------------------- */
+    if( nGCS == KvUserDefined )
+    {
+        if( nSpheroid != KvUserDefined )
+            GTIFKeySet( gtif, GeogEllipsoidGeoKey, TYPE_SHORT, 1, 
+                        nSpheroid );
+        else
+        {
+            GTIFKeySet( gtif, GeogEllipsoidGeoKey, TYPE_SHORT, 1, 
+                        KvUserDefined );
+            GTIFKeySet( gtif, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1,
+                        dfSemiMajor );
+            if( dfInvFlattening == 0.0 )
+                GTIFKeySet( gtif, GeogSemiMinorAxisGeoKey, TYPE_DOUBLE, 1,
+                            dfSemiMajor );
+            else
+                GTIFKeySet( gtif, GeogInvFlatteningGeoKey, TYPE_DOUBLE, 1,
+                            dfInvFlattening );
+        }
+        
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Linear units translation                                        */
+/* -------------------------------------------------------------------- */
+    value = OSR_GSV( papszNV, "units" );
+
+    if( value == NULL )
+    {
+        value = OSR_GSV( papszNV, "to_meter" );
+        if( value )
+        {
+            GTIFKeySet( gtif, ProjLinearUnitsGeoKey, TYPE_SHORT, 1, 
+                        KvUserDefined );
+            GTIFKeySet( gtif, ProjLinearUnitSizeGeoKey, TYPE_DOUBLE, 1, 
+                        atof(value) );
+        }
+    }
+    else if( EQUAL(value,"meter") || EQUAL(value,"m") )
+    {
+        GTIFKeySet( gtif, ProjLinearUnitsGeoKey, TYPE_SHORT, 1, 
+                    Linear_Meter );
+    } 
+    else if( EQUAL(value,"us-ft") )
+    {
+        GTIFKeySet( gtif, ProjLinearUnitsGeoKey, TYPE_SHORT, 1, 
+                    Linear_Foot_US_Survey );
+    } 
+    else if( EQUAL(value,"ft") )
+    {
+        GTIFKeySet( gtif, ProjLinearUnitsGeoKey, TYPE_SHORT, 1, 
+                    Linear_Foot );
+    } 
+
+
+    OSRFreeStringList( papszNV );
+    
+    return TRUE;
+}
+
+/************************************************************************/
 /*                          GTIFGetProj4Defn()                          */
 /************************************************************************/
 
@@ -115,7 +924,7 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 
 {
     char	szProjection[512];
-    char	szUnits[24];
+    char	szUnits[64];
     double      dfFalseEasting, dfFalseNorthing;
 
     szProjection[0] = '\0';
@@ -719,7 +1528,6 @@ int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
 
     return TRUE;
 }
-
 
 #endif /* has projects.h and -lproj */
 

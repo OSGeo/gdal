@@ -4,14 +4,10 @@
  *
  *   Written By: Niles D. Ritter
  *
- *  Revision History:
+ *  copyright (c) 1995   Niles D. Ritter
  *
- *     Rev.#  Author     Date     Key Changes/Additions
- *     -----  ------  ----------  -------------------------------------
- *      0.1     ndr    10 Jun 95     Inital Beta Release
- *      0.2     ndr    12 Jul 95     New EPSG Tables installed.
- *      0.2.1   ndr    28 Jul 95     Added ModelType aliases to Model's
- *      1.0     ndr    18 Sep 95     Promoted to Revision 1.0
+ *  Permission granted to use this software, so long as this copyright
+ *  notice accompanies any products derived therefrom.
  *
  **********************************************************************/
 
