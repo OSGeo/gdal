@@ -896,10 +896,16 @@ def download_file(url, filename, download_size = -1):
             val = None
             try:
                 handle = urllib2.urlopen(url)
-                print 'Downloading %s...' % (url)
                 if download_size == -1:
+                    try:
+                        handle_info = handle.info()
+                        content_length = handle_info['content-length']
+                        print 'Downloading %s (length = %s bytes)...' % (url, content_length)
+                    except:
+                        print 'Downloading %s...' % (url)
                     val = handle.read()
                 else:
+                    print 'Downloading %d bytes from %s...' % (download_size, url)
                     val = handle.read(download_size)
             except urllib2.HTTPError, e:
                 print 'HTTP service for %s is down (HTTP Error: %d)' % (url, e.code)
