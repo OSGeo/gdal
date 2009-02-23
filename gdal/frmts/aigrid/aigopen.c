@@ -96,12 +96,44 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /*      Compute the number of pixels and lines, and the number of       */
 /*      tile files.                                                     */
 /* -------------------------------------------------------------------- */
+    if (psInfo->dfCellSizeX <= 0 || psInfo->dfCellSizeY <= 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal cell size : %f x %f",
+                  psInfo->dfCellSizeX, psInfo->dfCellSizeY );
+        AIGClose( psInfo );
+        return NULL;
+    }
+
     psInfo->nPixels = (int)
         ((psInfo->dfURX - psInfo->dfLLX + 0.5 * psInfo->dfCellSizeX) 
 		/ psInfo->dfCellSizeX);
     psInfo->nLines = (int)
         ((psInfo->dfURY - psInfo->dfLLY + 0.5 * psInfo->dfCellSizeY) 
 		/ psInfo->dfCellSizeY);
+    
+    if (psInfo->nPixels <= 0 || psInfo->nLines <= 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid raster dimensions : %d x %d",
+                  psInfo->nPixels, psInfo->nLines );
+        AIGClose( psInfo );
+        return NULL;
+    }
+
+    if (psInfo->nBlockXSize <= 0 || psInfo->nBlockYSize <= 0 ||
+        psInfo->nBlocksPerRow <= 0 || psInfo->nBlocksPerColumn <= 0 ||
+        psInfo->nBlockXSize > INT_MAX / psInfo->nBlocksPerRow ||
+        psInfo->nBlockYSize > INT_MAX / psInfo->nBlocksPerColumn)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid block characteristics: nBlockXSize=%d, "
+                  "nBlockYSize=%d, nBlocksPerRow=%d, nBlocksPerColumn=%d",
+                  psInfo->nBlockXSize, psInfo->nBlockYSize,
+                  psInfo->nBlocksPerRow, psInfo->nBlocksPerColumn);
+        AIGClose( psInfo );
+        return NULL;
+    }
 
     psInfo->nTileXSize = psInfo->nBlockXSize * psInfo->nBlocksPerRow;
     psInfo->nTileYSize = psInfo->nBlockYSize * psInfo->nBlocksPerColumn;
@@ -109,12 +141,26 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     psInfo->nTilesPerRow = (psInfo->nPixels-1) / psInfo->nTileXSize + 1;
     psInfo->nTilesPerColumn = (psInfo->nLines-1) / psInfo->nTileYSize + 1;
 
+    if (psInfo->nTilesPerRow > INT_MAX / psInfo->nTilesPerColumn)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too many tiles");
+        AIGClose( psInfo );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Setup tile infos, but defer reading of tile data.               */
 /* -------------------------------------------------------------------- */
     psInfo->pasTileInfo = (AIGTileInfo *) 
-        CPLCalloc(sizeof(AIGTileInfo),
+        VSICalloc(sizeof(AIGTileInfo),
                   psInfo->nTilesPerRow * psInfo->nTilesPerColumn);
+    if (psInfo->pasTileInfo == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate tile info array");
+        AIGClose( psInfo );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Read the statistics.                                            */
 /* -------------------------------------------------------------------- */
