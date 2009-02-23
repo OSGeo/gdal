@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_trans.c,v 1.10 2003/07/08 17:31:30 warmerda Exp $
+ * $Id: geo_trans.c 546 2003-07-08 17:31:30Z warmerda $
  *
  * Project:  libgeotiff
  * Purpose:  Code to abstract translation between pixel/line and PCS
@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * $Log: geo_trans.c,v $
+ * $Log$
  * Revision 1.10  2003/07/08 17:31:30  warmerda
  * cleanup various warnings
  *

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_extra.c,v 1.4 2002/12/01 23:44:34 warmerda Exp $
+ * $Id: geo_extra.c 475 2002-12-01 23:44:34Z warmerda $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize a few common PCS values without use of CSV
@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * $Log: geo_extra.c,v $
+ * $Log$
  * Revision 1.4  2002/12/01 23:44:34  warmerda
  * Fixed typo in last fix.
  *

@@ -17,7 +17,7 @@
  *    28 July,  1995      NDR                  Made parser more strict.
  *    29  Sep,  1995      NDR                  Fixed matrix printing.
  *
- * $Log: geo_print.c,v $
+ * $Log$
  * Revision 1.9  2004/10/19 14:24:09  fwarmerdam
  * dynamically allocate tag list so large lists work: Oliver Colin
  *
