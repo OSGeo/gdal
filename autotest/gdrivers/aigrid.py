@@ -121,6 +121,102 @@ def aigrid_5():
         return 'fail'
 
     return 'success'    
+
+###############################################################################
+# Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
+
+def aigrid_online_1():
+
+    list_files = [ 'info/arc.dir',
+                   'info/arc0000.dat',
+                   'info/arc0000.nit',
+                   'info/arc0001.dat',
+                   'info/arc0001.nit',
+                   'info/arc0002.dat',
+                   'info/arc0002.nit',
+                   'info/arc0002r.001',
+                   'nzdem500/dblbnd.adf',
+                   'nzdem500/hdr.adf',
+                   'nzdem500/log',
+                   'nzdem500/sta.adf',
+                   'nzdem500/vat.adf',
+                   'nzdem500/w001001.adf',
+                   'nzdem500/w001001x.adf' ]
+
+    try:
+        os.mkdir('tmp/cache/nzdem')
+        os.mkdir('tmp/cache/nzdem/info')
+        os.mkdir('tmp/cache/nzdem/nzdem500')
+    except:
+        pass
+
+    for filename in list_files:
+        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/nzdem/' + filename , 'nzdem/' + filename):
+            return 'skip'
+
+    tst = gdaltest.GDALTest( 'AIG', 'tmp/cache/nzdem/nzdem500/hdr.adf', 1, 45334, filename_absolute = 1 )
+    ret = tst.testOpen()
+    if ret != 'success':
+        return ret
+
+    ds = gdal.Open('tmp/cache/nzdem/nzdem500/hdr.adf')
+
+    try:
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+    except:
+        print 'Skipping RAT checking... OG Python bindings have no RAT API'
+        return 'sucess'
+
+    if rat is None:
+        gdaltest.post_reason( 'No RAT found' )
+        return 'fail'
+
+    if rat.GetRowCount() != 2642:
+        gdaltest.post_reason( 'Wrong row count in RAT' )
+        return 'fail'
+
+    if rat.GetColumnCount() != 2:
+        gdaltest.post_reason( 'Wrong column count in RAT' )
+        return 'fail'
+
+    if rat.GetNameOfCol(0) != 'VALUE':
+        gdaltest.post_reason( 'Wrong name of col 0' )
+        return 'fail'
+
+    if rat.GetTypeOfCol(0) != gdal.GFT_Integer:
+        gdaltest.post_reason( 'Wrong type of col 0' )
+        return 'fail'
+
+    if rat.GetUsageOfCol(0) != gdal.GFU_MinMax:
+        gdaltest.post_reason( 'Wrong usage of col 0' )
+        return 'fail'
+
+    if rat.GetNameOfCol(1) != 'COUNT':
+        gdaltest.post_reason( 'Wrong name of col 1' )
+        return 'fail'
+
+    if rat.GetTypeOfCol(1) != gdal.GFT_Integer:
+        gdaltest.post_reason( 'Wrong type of col 1' )
+        return 'fail'
+
+    if rat.GetUsageOfCol(1) != gdal.GFU_PixelCount:
+        gdaltest.post_reason( 'Wrong usage of col 1' )
+        return 'fail'
+
+    if rat.GetValueAsInt(2641, 0) != 3627:
+        gdaltest.post_reason( 'Wrong value in RAT' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMinimum() != 0.0:
+        gdaltest.post_reason( 'Wrong minimum' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMaximum() != 3627.0:
+        gdaltest.post_reason( 'Wrong maximum' )
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 gdaltest_list = [
@@ -128,7 +224,8 @@ gdaltest_list = [
     aigrid_2,
     aigrid_3,
     aigrid_4,
-    aigrid_5    ]
+    aigrid_5,
+    aigrid_online_1 ]
 
 if __name__ == '__main__':
 
