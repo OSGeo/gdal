@@ -151,8 +151,9 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( poODS->psInfo->nCellType == AIG_CELLTYPE_INT )
     {
-        panGridRaster = (GInt32 *) CPLMalloc(4*nBlockXSize*nBlockYSize);
-        if( AIGReadTile( poODS->psInfo, nBlockXOff, nBlockYOff, panGridRaster )
+        panGridRaster = (GInt32 *) VSIMalloc3(4,nBlockXSize,nBlockYSize);
+        if( panGridRaster == NULL ||
+            AIGReadTile( poODS->psInfo, nBlockXOff, nBlockYOff, panGridRaster )
             != CE_None )
         {
             CPLFree( panGridRaster );
