@@ -6,12 +6,10 @@
  *
  *  Written By: Niles Ritter
  *
- *  Revision History:
+ *  copyright (c) 1995   Niles D. Ritter
  *
- *      Author     Date     Key Changes/Additions
- *      ------  ----------  -------------------------------------
- *      ndr    10 Jun 95     Inital Beta Release
- *      ndr    28 Jul 95     Added ModelType aliases, Kv aliases.
+ *  Permission granted to use this software, so long as this copyright
+ *  notice accompanies any products derived therefrom.
  */
 
 #ifndef __geonames_h

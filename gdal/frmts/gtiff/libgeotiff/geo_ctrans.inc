@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_ctrans.inc,v 1.3 2005/03/04 03:59:11 fwarmerdam Exp $
+ * $Id: geo_ctrans.inc 657 2005-03-04 03:59:11Z fwarmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  GeoTIFF Projection Method codes. 
@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * $Log: geo_ctrans.inc,v $
+ * $Log$
  * Revision 1.3  2005/03/04 03:59:11  fwarmerdam
  * Added header.
  *

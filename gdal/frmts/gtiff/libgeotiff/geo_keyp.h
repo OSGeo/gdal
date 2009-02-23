@@ -4,6 +4,10 @@
  *
  *     Written by: Niles D. Ritter
  *
+ *  copyright (c) 1995   Niles D. Ritter
+ *
+ *  Permission granted to use this software, so long as this copyright
+ *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
 #ifndef __geo_keyp_h_
@@ -66,7 +70,7 @@ typedef struct TempKeyData TempKeyData;
 
 struct gtiff {
    tiff_t*    gt_tif;      /* TIFF file descriptor  */
-   TIFFMethod gt_methods;  /* TIFF i/o methods      */
+   struct _TIFFMethod gt_methods;  /* TIFF i/o methods      */
    int        gt_flags;    /* file flags            */
    
    pinfo_t    gt_version;  /* GeoTIFF Version       */

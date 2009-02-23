@@ -9,7 +9,10 @@
  *  Permission granted to use this software, so long as this copyright
  *  notice accompanies any products derived therefrom.
  *
- * $Log: geo_set.c,v $
+ * $Log$
+ * Revision 1.12  2008/02/29 17:23:29  fwarmerdam
+ * clarify docs on multiple arguments.
+ *
  * Revision 1.11  2004/04/27 21:32:33  warmerda
  * reformat for clarity
  *
@@ -88,7 +91,8 @@ used to request an existing key be deleted, in which no value is passed.<p>
 
 The actual value is passed at the end of the argument list, and should be
 a short, a double, or a char * value.  Note that short and double values
-are passed as is, not as pointers.<p>
+are passed by value rather than as pointers when count is 1, but as pointers
+if count is larger than 1.<p>
 
 Note that key values aren't actually flushed to the file until
 GTIFWriteKeys() is called.  Till then 

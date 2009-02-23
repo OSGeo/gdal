@@ -11,11 +11,10 @@
  *   here, and replace the implementations in geo_tiffp.c. No other
  *   modules have any explicit dependence on external TIFF modules.
  *
- *  Revision History;
+ *  copyright (c) 1995   Niles D. Ritter
  *
- *    20 June, 1995      Niles D. Ritter         New
- *    6 July,  1995      Niles D. Ritter         Fix prototypes
- *
+ *  Permission granted to use this software, so long as this copyright
+ *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
 #ifndef __geo_tiffp_h_
@@ -88,7 +87,7 @@ typedef struct     _TIFFMethod {
 	GTGetFunction get;
 	GTSetFunction set;
 	GTTypeFunction type;
-} TIFFMethod;
+} TIFFMethod_t;
 
 /**********************************************************************
  *
