@@ -456,7 +456,11 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                     else
                         dfValue = GXFParseBase90( psGXF, pszLine, TRUE );
 
-                    CPLAssert( nValuesRead + nCount <= nValuesSought );
+                    if( nValuesRead + nCount > nValuesSought )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "Wrong count value");
+                        return CE_Failure;
+                    }
                     
                     for( i=0; i < nCount && nValuesRead < nValuesSought; i++ )
                         padfLineBuf[nValuesRead++] = dfValue;
