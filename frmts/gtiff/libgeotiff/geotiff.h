@@ -2,9 +2,12 @@
  *
  *  geotiff.h - Public interface for Geotiff tag parsing.
  *
- *
  *   Written By: Niles D. Ritter
  *
+ *  copyright (c) 1995   Niles D. Ritter
+ *
+ *  Permission granted to use this software, so long as this copyright
+ *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
 #ifndef __geotiff_h_
@@ -27,7 +30,7 @@
  */
 #define GvCurrentVersion   1
 
-#define LIBGEOTIFF_VERSION 1240
+#define LIBGEOTIFF_VERSION 1250
 
 #include "geo_config.h"
 #include "geokeys.h"
@@ -54,6 +57,7 @@ extern "C" {
 #endif
 
 typedef struct gtiff GTIF;   /* struct gtiff is private */
+typedef struct _TIFFMethod TIFFMethod;
 typedef unsigned short tifftag_t;
 typedef unsigned short geocode_t;
 typedef int (*GTIFPrintMethod)(char *string, void *aux);
@@ -82,6 +86,8 @@ typedef enum {
 
 /* TIFF-level interface */
 GTIF CPL_DLL *GTIFNew(void *tif);
+GTIF CPL_DLL *GTIFNewSimpleTags(void *tif);
+GTIF CPL_DLL *GTIFNewWithMethods(void *tif, TIFFMethod*);
 void CPL_DLL  GTIFFree(GTIF *gtif);
 int  CPL_DLL  GTIFWriteKeys(GTIF *gtif);
 void CPL_DLL  GTIFDirectoryInfo(GTIF *gtif, int *versions, int *keycount);
