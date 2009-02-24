@@ -140,7 +140,14 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
 /*      Read the whole file header.                                     */
 /* -------------------------------------------------------------------- */
-    pachHeader = (char *) CPLMalloc(nHeaderLen);
+    pachHeader = (char *) VSIMalloc(nHeaderLen);
+    if (pachHeader == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, 
+                  "Cannot allocate memory for NITF header");
+        VSIFCloseL(fp);
+        return NULL;
+    }
     VSIFSeekL( fp, 0, SEEK_SET );
     VSIFReadL( pachHeader, 1, nHeaderLen, fp );
 
@@ -254,18 +261,29 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
 /*      Is there User Define Header Data? (TREs)                        */
 /* -------------------------------------------------------------------- */
+    if (nHeaderLen < nOffset + 5)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "NITF header too small");
+        NITFClose(psFile);
+        return NULL;
+    }
+
     psFile->nTREBytes = 
         atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
     nOffset += 5;
 
-    if( psFile->nTREBytes > 0 )
+    if( psFile->nTREBytes > 3 )
     {
         nOffset += 3; /* UDHOFL */
         psFile->nTREBytes -= 3;
-    }
 
-    if( psFile->nTREBytes != 0 )
-    {
+        if (nHeaderLen < nOffset + psFile->nTREBytes)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "NITF header too small");
+            NITFClose(psFile);
+            return NULL;
+        }
+
         psFile->pachTRE = (char *) VSIMalloc(psFile->nTREBytes);
         if (psFile->pachTRE == NULL)
         {
@@ -288,14 +306,18 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
         nOffset += 5; /* XHDL */
 
-        if( nXHDL != 0 )
+        if( nXHDL > 3 )
         {
             nOffset += 3; /* XHDLOFL */
             nXHDL -= 3;
-        }
 
-        if( nXHDL != 0 )
-        {
+            if (nHeaderLen < nOffset + nXHDL)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "NITF header too small");
+                NITFClose(psFile);
+                return NULL;
+            }
+
             psFile->pachTRE = (char *) 
                 VSIRealloc( psFile->pachTRE, 
                             psFile->nTREBytes + nXHDL );
