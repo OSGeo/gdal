@@ -404,12 +404,12 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     else /* nBlockResult == BLKREAD_NULL */ 
     {
-        if( psImage->bNoDataSet )
+        if( psImage->bNoDataSet && eDataType == GDT_Byte )
             memset( pImage, psImage->nNoDataValue, 
-                    psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
+                    psImage->nBlockWidth*psImage->nBlockHeight);
         else
             memset( pImage, 0, 
-                    psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
+                    psImage->nBlockWidth*psImage->nBlockHeight*(GDALGetDataTypeSize(eDataType)/8));
 
         return CE_None;
     }
