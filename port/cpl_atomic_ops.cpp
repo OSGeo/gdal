@@ -39,7 +39,7 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
   return OSAtomicAdd32(increment, (int*)(ptr));
 }
 
-#elif defined(_MSC_VER) && defined(_M_IX86)
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 
 #include <windows.h>
 
