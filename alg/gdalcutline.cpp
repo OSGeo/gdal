@@ -240,6 +240,9 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     CPLErr eErr;
     GDALDriverH hMemDriver;
 
+    if( nXSize < 1 || nYSize < 1 )
+        return CE_None;
+
 /* -------------------------------------------------------------------- */
 /*      Do some minimal checking.                                       */
 /* -------------------------------------------------------------------- */
