@@ -212,7 +212,8 @@ GUInt32   CPL_DLL NITFIHFieldOffset( NITFImage *psImage,
 #define BLKREAD_NULL  1
 #define BLKREAD_FAIL  2
 
-int NITFUncompressARIDPCM( NITFImage *psImage, GByte *pabyInputData,
+int NITFUncompressARIDPCM( NITFImage *psImage,
+                           GByte *pabyInputData, int nInputBytes,
                            GByte *pabyOutputImage );
 int NITFUncompressBILEVEL( NITFImage *psImage, 
                            GByte *pabyInputData, int nInputBytes,

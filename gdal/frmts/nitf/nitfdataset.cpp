@@ -205,7 +205,7 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
         eDataType = GDT_Float64;
     else
     {
-        eDataType = GDT_Byte;
+        eDataType = GDT_Unknown;
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "Unsupported combination of PVTYPE(%s) and NBPP(%d).",
                   psImage->szPVType, psImage->nBitsPerSample );
@@ -1061,7 +1061,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetBand( iBand+1, 
                            poDS->poJPEGDataset->GetRasterBand(iBand+1) );
         else
-            poDS->SetBand( iBand+1, new NITFRasterBand( poDS, iBand+1 ) );
+        {
+            GDALRasterBand* poBand = new NITFRasterBand( poDS, iBand+1 );
+            if (poBand->GetRasterDataType() == GDT_Unknown)
+            {
+                delete poBand;
+                delete poDS;
+                return NULL;
+            }
+            poDS->SetBand( iBand+1, poBand );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1418,7 +1427,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "COMPRESSION", "BILEVEL", 
                                "IMAGE_STRUCTURE" );
     else if( psImage->szIC[1] == '2' )
-        poDS->SetMetadataItem( "COMPRESSION", "???", 
+        poDS->SetMetadataItem( "COMPRESSION", "ARIDPCM", 
                                "IMAGE_STRUCTURE" );
     else if( psImage->szIC[1] == '3' )
         poDS->SetMetadataItem( "COMPRESSION", "JPEG", 
@@ -1774,11 +1783,23 @@ void NITFDataset::CheckGeoSDEInfo()
 /* -------------------------------------------------------------------- */
 /*      Collect projection parameters.                                  */
 /* -------------------------------------------------------------------- */
+    int nRemainingBytesPRJPSB = psFile->nTREBytes - (pszPRJPSB - psFile->pachTRE);
+
     char szParm[16];
+    if (nRemainingBytesPRJPSB < 82 + 1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read PRJPSB TRE. Not enough bytes");
+    }
     int nParmCount = atoi(NITFGetField(szParm,pszPRJPSB,82,1));
     int i;
     double adfParm[8], dfFN, dfFE;
 
+    if (nRemainingBytesPRJPSB < 83+15*nParmCount+15+15)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read PRJPSB TRE. Not enough bytes");
+    }
     for( i = 0; i < nParmCount; i++ )
         adfParm[i] = atof(NITFGetField(szParm,pszPRJPSB,83+15*i,15));
 
@@ -1872,6 +1893,12 @@ void NITFDataset::CheckGeoSDEInfo()
 /* -------------------------------------------------------------------- */
 /*      Try to apply the datum.                                         */
 /* -------------------------------------------------------------------- */
+    int nRemainingBytesGEOPSB = psFile->nTREBytes - (pszGEOPSB - psFile->pachTRE);
+    if (nRemainingBytesGEOPSB < 86 + 4)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read GEOPSB TRE. Not enough bytes");
+    }
     LoadDODDatum( &oSRS, NITFGetField(szParm,pszGEOPSB,86,4) );
 
 /* -------------------------------------------------------------------- */
@@ -1879,6 +1906,12 @@ void NITFDataset::CheckGeoSDEInfo()
 /* -------------------------------------------------------------------- */
     double adfGT[6];
 
+    int nRemainingBytesMAPLOB = psImage->nTREBytes - (pszMAPLOB - psImage->pachTRE);
+    if (nRemainingBytesMAPLOB < 28 + 15)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read MAPLOB TRE. Not enough bytes");
+    }
     adfGT[0] = atof(NITFGetField(szParm,pszMAPLOB,13,15));
     adfGT[1] = atof(NITFGetField(szParm,pszMAPLOB,3,5));
     adfGT[2] = 0.0;
@@ -2298,6 +2331,12 @@ void NITFDataset::InitializeTREMetadata()
             char szTag[7];
             char *pszEscapedData;
             int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+
+            if (nThisTRESize > nTREBytes - 11)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Not enough bytes in TRE");
+                return;
+            }
 
             strncpy( szTag, pszTREData, 6 );
             szTag[6] = '\0';
