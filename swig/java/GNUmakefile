@@ -26,6 +26,7 @@ JAVA_MODULES = libgdaljni.so libogrjni.so libgdalconstjni.so libosrjni.so
 clean:
 	-rm -f ${JAVA_MODULES}
 	-rm *.o *.lo
+	ant clean
 
 veryclean: clean
 	-rm -f ${WRAPPERS}
