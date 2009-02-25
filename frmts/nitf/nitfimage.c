@@ -1320,6 +1320,14 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         int success;
         GByte *pabyRawData;
 
+        if (psImage->nBitsPerSample != 8)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unsupported bits per sample value (%d) for C2/M2 compression",
+                      psImage->nBitsPerSample);
+            return BLKREAD_FAIL;
+        }
+
         if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
             nRawBytes = psImage->panBlockStart[iFullBlock+1] 
                 - psImage->panBlockStart[iFullBlock];
@@ -1331,8 +1339,13 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         }
 
         pabyRawData = (GByte *) VSIMalloc( nRawBytes );
-        
-        
+        if (pabyRawData == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Cannot allocate working buffer" );
+            return BLKREAD_FAIL;
+        }
+
         /* Read the codewords */
         if( VSIFSeekL(psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
                       SEEK_SET ) != 0 
@@ -1346,7 +1359,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
         
-        success = NITFUncompressARIDPCM( psImage, pabyRawData, pData );
+        success = NITFUncompressARIDPCM( psImage, pabyRawData, nRawBytes, pData );
         
         CPLFree( pabyRawData );
 
@@ -1365,6 +1378,14 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         NITFSegmentInfo *psSegInfo;
         int success;
         GByte *pabyRawData;
+
+        if (psImage->nBitsPerSample != 1)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Invalid bits per sample value (%d) for C1/M1 compression",
+                      psImage->nBitsPerSample);
+            return BLKREAD_FAIL;
+        }
 
         if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
             nRawBytes = psImage->panBlockStart[iFullBlock+1] 
