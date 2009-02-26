@@ -820,6 +820,21 @@ def nitf_36():
     return 'success'
 
 ###############################################################################
+# Create and read a NITF file with 69999 bands
+
+def nitf_37():
+
+    ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf37.ntf', 1, 1, 69999)
+    ds = None
+
+    ds = gdal.Open( 'tmp/nitf37.ntf' )
+    if ds.RasterCount != 69999:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -1090,6 +1105,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf37.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -1131,6 +1151,7 @@ gdaltest_list = [
     nitf_34,
     nitf_35,
     nitf_36,
+    nitf_37,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
