@@ -35,12 +35,13 @@
 
 CPL_CVSID("$Id$");
 
-static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, 
-                            int *pnOffset, int nBytesAvailable,
+static int NITFWriteBLOCKA( FILE* fp, int nOffsetUDIDL, int nOffsetTRE, 
+                            int *pnOffset,
                             char **papszOptions );
 static int NITFWriteTREsFromOptions(
-    char *pachUDIDL, char *pachTRE,
-    int *pnOffset, int nBytesAvailable,
+    FILE* fp,
+    int nOffsetUDIDL, int nOffsetTRE,
+    int *pnOffset,
     char **papszOptions );
 
 static int 
@@ -369,6 +370,32 @@ void NITFClose( NITFFile *psFile )
     CPLFree( psFile );
 }
 
+static void NITFGotoOffset(FILE* fp, int nLocation)
+{
+    int nCurrentLocation = (int)VSIFTellL(fp);
+    if (nLocation > nCurrentLocation)
+    {
+        int nFileSize;
+        int iFill;
+        char cSpace = ' ';
+
+        VSIFSeekL(fp, 0, SEEK_END);
+        nFileSize = VSIFTellL(fp);
+        if (nLocation > nFileSize)
+        {
+            for(iFill = 0; iFill < nLocation - nFileSize; iFill++)
+                VSIFWriteL(&cSpace, 1, 1, fp);
+        }
+        else
+            VSIFSeekL(fp, nLocation, SEEK_SET);
+    }
+    else if (nLocation < nCurrentLocation)
+    {
+        VSIFSeekL(fp, nLocation, SEEK_SET);
+    }
+
+}
+
 /************************************************************************/
 /*                             NITFCreate()                             */
 /*                                                                      */
@@ -382,8 +409,6 @@ int NITFCreate( const char *pszFilename,
 
 {
     FILE	*fp;
-    char        *pachIMHDR;
-    char        achHeader[5000];
     int         nHeaderUsed = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
     GIntBig     nImageSize;
@@ -396,7 +421,7 @@ int NITFCreate( const char *pszFilename,
     int nUDIDLOffset;
     const char *pszVersion;
 
-    if (nBands <= 0 || nBands > 9)
+    if (nBands <= 0 || nBands > 99999)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid band number : %d", nBands);
@@ -504,125 +529,154 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Prepare the file header.                                        */
 /* -------------------------------------------------------------------- */
-    memset( achHeader, ' ', sizeof(achHeader) );
 
-#define PLACE(location,name,text)  strncpy(location,text,strlen(text))
+#define PLACE(location,name,text)  { \
+    const char* _text = text; \
+    NITFGotoOffset(fp, location); \
+    VSIFWriteL(_text, 1, strlen(_text), fp); }
+
 #define OVR(width,location,name,text) { 				\
+    const char* _text = text; \
     const char *pszParmValue; 						\
     pszParmValue = CSLFetchNameValue( papszOptions, #name ); 		\
     if( pszParmValue == NULL )						\
-        pszParmValue = text;						\
-    strncpy(location,pszParmValue,MIN(width,strlen(pszParmValue))); }   
+        pszParmValue = _text;						\
+    NITFGotoOffset(fp, location); \
+    VSIFWriteL(pszParmValue, 1, MIN(width,strlen(pszParmValue)), fp); }
 
-    PLACE (achHeader+  0, FDHR_FVER,    pszVersion                      );
-    OVR( 2,achHeader+  9, CLEVEL,       pszCLevel                       );
-    PLACE (achHeader+ 11, STYPE        ,"BF01"                          );
-    OVR(10,achHeader+ 15, OSTAID       ,"GDAL"                          );
-    OVR(14,achHeader+ 25, FDT          ,"20021216151629"                );
-    OVR(80,achHeader+ 39, FTITLE       ,""                              );
-    OVR( 1,achHeader+119, FSCLAS       ,"U"                             );
-    OVR( 2,achHeader+120, FSCLSY       ,""                              );
-    OVR(11,achHeader+122, FSCODE       ,""                              );
-    OVR( 2,achHeader+133, FSCTLH       ,""                              );
-    OVR(20,achHeader+135, FSREL        ,""                              );
-    OVR( 2,achHeader+155, FSDCTP       ,""                              );
-    OVR( 8,achHeader+157, FSDCDT       ,""                              );
-    OVR( 4,achHeader+165, FSDCXM       ,""                              );
-    OVR( 1,achHeader+169, FSDG         ,""                              );
-    OVR( 8,achHeader+170, FSDGDT       ,""                              );
-    OVR(43,achHeader+178, FSCLTX       ,""                              );
-    OVR( 1,achHeader+221, FSCATP       ,""                              );
-    OVR(40,achHeader+222, FSCAUT       ,""                              );
-    OVR( 1,achHeader+262, FSCRSN       ,""                              );
-    OVR( 8,achHeader+263, FSSRDT       ,""                              );
-    OVR(15,achHeader+271, FSCTLN       ,""                              );
-    OVR( 5,achHeader+286, FSCOP        ,"00000"                         );
-    OVR( 5,achHeader+291, FSCPYS       ,"00000"                         );
-    PLACE (achHeader+296, ENCRYP       ,"0"                             );
-    achHeader[297] = achHeader[298] = achHeader[299] = 0x00; /* FBKGC */
-    OVR(24,achHeader+300, ONAME        ,""                              );
-    OVR(18,achHeader+324, OPHONE       ,""                              );
-    PLACE (achHeader+342, FL           ,"????????????"                  );
-    PLACE (achHeader+354, HL           ,"??????"                        );
-    PLACE (achHeader+360, NUMI         ,"001"                           );
-    PLACE (achHeader+363, LISH1        ,"??????"                        );
-    PLACE (achHeader+369, LI1          ,CPLSPrintf("%010ud",(GUInt32) nImageSize)  );
-    PLACE (achHeader+379, NUMS         ,"000"                           );
-    PLACE (achHeader+382, NUMX         ,"000"                           );
-    PLACE (achHeader+385, NUMT         ,CPLSPrintf("%03d",nNUMT)        );
+#define WRITE_BYTE(location, val) { \
+    char cVal = val; \
+    NITFGotoOffset(fp, location); \
+    VSIFWriteL(&cVal, 1, 1, fp); }
 
-    PLACE (achHeader+388, LTSHnLTn     ,""                              );
+    VSIFSeekL(fp, 0, SEEK_SET);
+
+    PLACE (  0, FDHR_FVER,    pszVersion                      );
+    OVR( 2,  9, CLEVEL,       pszCLevel                       );
+    PLACE ( 11, STYPE        ,"BF01"                          );
+    OVR(10, 15, OSTAID       ,"GDAL"                          );
+    OVR(14, 25, FDT          ,"20021216151629"                );
+    OVR(80, 39, FTITLE       ,""                              );
+    OVR( 1,119, FSCLAS       ,"U"                             );
+    OVR( 2,120, FSCLSY       ,""                              );
+    OVR(11,122, FSCODE       ,""                              );
+    OVR( 2,133, FSCTLH       ,""                              );
+    OVR(20,135, FSREL        ,""                              );
+    OVR( 2,155, FSDCTP       ,""                              );
+    OVR( 8,157, FSDCDT       ,""                              );
+    OVR( 4,165, FSDCXM       ,""                              );
+    OVR( 1,169, FSDG         ,""                              );
+    OVR( 8,170, FSDGDT       ,""                              );
+    OVR(43,178, FSCLTX       ,""                              );
+    OVR( 1,221, FSCATP       ,""                              );
+    OVR(40,222, FSCAUT       ,""                              );
+    OVR( 1,262, FSCRSN       ,""                              );
+    OVR( 8,263, FSSRDT       ,""                              );
+    OVR(15,271, FSCTLN       ,""                              );
+    OVR( 5,286, FSCOP        ,"00000"                         );
+    OVR( 5,291, FSCPYS       ,"00000"                         );
+    PLACE (296, ENCRYP       ,"0"                             );
+    WRITE_BYTE(297, 0x00); /* FBKGC */
+    WRITE_BYTE(298, 0x00);
+    WRITE_BYTE(299, 0x00);
+    OVR(24,300, ONAME        ,""                              );
+    OVR(18,324, OPHONE       ,""                              );
+    PLACE (342, FL           ,"????????????"                  );
+    PLACE (354, HL           ,"??????"                        );
+    PLACE (360, NUMI         ,"001"                           );
+    PLACE (363, LISH1        ,"??????"                        );
+    PLACE (369, LI1          ,CPLSPrintf("%010u",(GUInt32) nImageSize)  );
+    PLACE (379, NUMS         ,"000"                           );
+    PLACE (382, NUMX         ,"000"                           );
+    PLACE (385, NUMT         ,CPLSPrintf("%03d",nNUMT)        );
+
+    PLACE (388, LTSHnLTn     ,""                              );
 
     nHL = 388 + (4+5) * nNUMT;
 
-    PLACE (achHeader+nHL, NUMDES       ,"000"                           );
+    PLACE (nHL, NUMDES       ,"000"                           );
     nHL += 3;
-    PLACE (achHeader+nHL, NUMRES       ,"000"                           );
+    PLACE (nHL, NUMRES       ,"000"                           );
     nHL += 3;
-    PLACE (achHeader+nHL, UDHDL        ,"00000"                         );
+    PLACE (nHL, UDHDL        ,"00000"                         );
     nHL += 5;
-    PLACE (achHeader+nHL, XHDL         ,"00000"                         );
+    PLACE (nHL, XHDL         ,"00000"                         );
     nHL += 5;
 
     // update header length
-    PLACE (achHeader+354, HL           ,CPLSPrintf("%06d",nHL)          );
-    
+    PLACE (354, HL           ,CPLSPrintf("%06d",nHL)          );
+
     nHeaderUsed = nHL;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the image header.                                       */
 /* -------------------------------------------------------------------- */
-    pachIMHDR = achHeader + nHeaderUsed;
 
-    PLACE (pachIMHDR+  0, IM           , "IM"                           );
-    OVR(10,pachIMHDR+  2, IID1         , "Missing"                      );
-    OVR(14,pachIMHDR+ 12, IDATIM       , "20021216151629"               );
-    OVR(17,pachIMHDR+ 26, TGTID        , ""                             );
-    OVR(80,pachIMHDR+ 43, IID2         , ""                             );
-    OVR( 1,pachIMHDR+123, ISCLAS       , "U"                            );
-    OVR( 2,pachIMHDR+124, ISCLSY       , ""                             );
-    OVR(11,pachIMHDR+126, ISCODE       , ""                             );
-    OVR( 2,pachIMHDR+137, ISCTLH       , ""                             );
-    OVR(20,pachIMHDR+139, ISREL        , ""                             );
-    OVR( 2,pachIMHDR+159, ISDCTP       , ""                             );
-    OVR( 8,pachIMHDR+161, ISDCDT       , ""                             );
-    OVR( 4,pachIMHDR+169, ISDCXM       , ""                             );
-    OVR( 1,pachIMHDR+173, ISDG         , ""                             );
-    OVR( 8,pachIMHDR+174, ISDGDT       , ""                             );
-    OVR(43,pachIMHDR+182, ISCLTX       , ""                             );
-    OVR( 1,pachIMHDR+225, ISCATP       , ""                             );
-    OVR(40,pachIMHDR+226, ISCAUT       , ""                             );
-    OVR( 1,pachIMHDR+266, ISCRSN       , ""                             );
-    OVR( 8,pachIMHDR+267, ISSRDT       , ""                             );
-    OVR(15,pachIMHDR+275, ISCTLN       , ""                             );
-    PLACE (pachIMHDR+290, ENCRYP       , "0"                            );
-    OVR(42,pachIMHDR+291, ISORCE       , "Unknown"                      );
-    PLACE (pachIMHDR+333, NROWS        , CPLSPrintf("%08d", nLines)     );
-    PLACE (pachIMHDR+341, NCOLS        , CPLSPrintf("%08d", nPixels)    );
-    PLACE (pachIMHDR+349, PVTYPE       , pszPVType                      );
-    PLACE (pachIMHDR+352, IREP         , pszIREP                        );
-    OVR( 8,pachIMHDR+360, ICAT         , "VIS"                          );
-    OVR( 2,pachIMHDR+368, ABPP         , CPLSPrintf("%02d",nBitsPerSample) );
-    OVR( 1,pachIMHDR+370, PJUST        , "R"                            );
-    OVR( 1,pachIMHDR+371, ICORDS       , " "                            );
+    PLACE (nHeaderUsed+  0, IM           , "IM"                           );
+    OVR(10,nHeaderUsed+  2, IID1         , "Missing"                      );
+    OVR(14,nHeaderUsed+ 12, IDATIM       , "20021216151629"               );
+    OVR(17,nHeaderUsed+ 26, TGTID        , ""                             );
+    OVR(80,nHeaderUsed+ 43, IID2         , ""                             );
+    OVR( 1,nHeaderUsed+123, ISCLAS       , "U"                            );
+    OVR( 2,nHeaderUsed+124, ISCLSY       , ""                             );
+    OVR(11,nHeaderUsed+126, ISCODE       , ""                             );
+    OVR( 2,nHeaderUsed+137, ISCTLH       , ""                             );
+    OVR(20,nHeaderUsed+139, ISREL        , ""                             );
+    OVR( 2,nHeaderUsed+159, ISDCTP       , ""                             );
+    OVR( 8,nHeaderUsed+161, ISDCDT       , ""                             );
+    OVR( 4,nHeaderUsed+169, ISDCXM       , ""                             );
+    OVR( 1,nHeaderUsed+173, ISDG         , ""                             );
+    OVR( 8,nHeaderUsed+174, ISDGDT       , ""                             );
+    OVR(43,nHeaderUsed+182, ISCLTX       , ""                             );
+    OVR( 1,nHeaderUsed+225, ISCATP       , ""                             );
+    OVR(40,nHeaderUsed+226, ISCAUT       , ""                             );
+    OVR( 1,nHeaderUsed+266, ISCRSN       , ""                             );
+    OVR( 8,nHeaderUsed+267, ISSRDT       , ""                             );
+    OVR(15,nHeaderUsed+275, ISCTLN       , ""                             );
+    PLACE (nHeaderUsed+290, ENCRYP       , "0"                            );
+    OVR(42,nHeaderUsed+291, ISORCE       , "Unknown"                      );
+    PLACE (nHeaderUsed+333, NROWS        , CPLSPrintf("%08d", nLines)     );
+    PLACE (nHeaderUsed+341, NCOLS        , CPLSPrintf("%08d", nPixels)    );
+    PLACE (nHeaderUsed+349, PVTYPE       , pszPVType                      );
+    PLACE (nHeaderUsed+352, IREP         , pszIREP                        );
+    OVR( 8,nHeaderUsed+360, ICAT         , "VIS"                          );
+    OVR( 2,nHeaderUsed+368, ABPP         , CPLSPrintf("%02d",nBitsPerSample) );
+    OVR( 1,nHeaderUsed+370, PJUST        , "R"                            );
+    OVR( 1,nHeaderUsed+371, ICORDS       , " "                            );
 
     nOffset = 372;
-    if( pachIMHDR[371] != ' ' )
+
     {
-        OVR(60,pachIMHDR+nOffset, IGEOLO, ""                            );
-        nOffset += 60;
+        const char *pszParmValue;
+        pszParmValue = CSLFetchNameValue( papszOptions, "ICORDS" );
+        if( pszParmValue == NULL )
+            pszParmValue = " ";
+        if( *pszParmValue != ' ' )
+        {
+            OVR(60,nHeaderUsed+nOffset, IGEOLO, ""                            );
+            nOffset += 60;
+        }
     }
 
-    PLACE (pachIMHDR+nOffset, NICOM    , "0"                            );
-    OVR( 2,pachIMHDR+nOffset+1, IC     , "NC"                           );
+    PLACE (nHeaderUsed+nOffset, NICOM    , "0"                            );
+    OVR( 2,nHeaderUsed+nOffset+1, IC     , "NC"                           );
 
     if( pszIC[0] != 'N' )
     {
-        OVR( 4,pachIMHDR+nOffset+3, COMRAT , "    "                     );
+        OVR( 4,nHeaderUsed+nOffset+3, COMRAT , "    "                     );
         nOffset += 4;
     }
 
-    PLACE (pachIMHDR+nOffset+3, NBANDS , CPLSPrintf("%d",nBands)        );
+    if (nBands <= 9)
+    {
+        PLACE (nHeaderUsed+nOffset+3, NBANDS , CPLSPrintf("%d",nBands)        );
+    }
+    else
+    {
+        PLACE (nHeaderUsed+nOffset+3, NBANDS , "0"        );
+        PLACE (nHeaderUsed+nOffset+4, XBANDS , CPLSPrintf("%05d",nBands)        );
+        nOffset += 5;
+    }
 
     nOffset += 4;
 
@@ -654,14 +708,14 @@ int NITFCreate( const char *pszFilename,
                 pszIREPBAND = "Cr";
         }
 
-        PLACE(pachIMHDR+nOffset+ 0, IREPBANDn, pszIREPBAND                 );
-//      PLACE(pachIMHDR+nOffset+ 2, ISUBCATn, ""                           );
-        PLACE(pachIMHDR+nOffset+ 8, IFCn  , "N"                            );
-//      PLACE(pachIMHDR+nOffset+ 9, IMFLTn, ""                             );
+        PLACE(nHeaderUsed+nOffset+ 0, IREPBANDn, pszIREPBAND                 );
+//      PLACE(nHeaderUsed+nOffset+ 2, ISUBCATn, ""                           );
+        PLACE(nHeaderUsed+nOffset+ 8, IFCn  , "N"                            );
+//      PLACE(nHeaderUsed+nOffset+ 9, IMFLTn, ""                             );
 
         if( !EQUAL(pszIREP,"RGB/LUT") )
         {
-            PLACE(pachIMHDR+nOffset+12, NLUTSn, "0"                        );
+            PLACE(nHeaderUsed+nOffset+12, NLUTSn, "0"                        );
             nOffset += 13;
         }
         else
@@ -671,14 +725,20 @@ int NITFCreate( const char *pszFilename,
             if( CSLFetchNameValue(papszOptions,"LUT_SIZE") != NULL )
                 nCount = atoi(CSLFetchNameValue(papszOptions,"LUT_SIZE"));
 
-            PLACE(pachIMHDR+nOffset+12, NLUTSn, "3"                        );
-            PLACE(pachIMHDR+nOffset+13, NELUTn, CPLSPrintf("%05d",nCount)  );
+            if (!(nCount >= 0 && nCount <= 99999))
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid LUT value : %d. Defaulting to 256", nCount);
+                nCount = 256;
+            }
+            PLACE(nHeaderUsed+nOffset+12, NLUTSn, "3"                        );
+            PLACE(nHeaderUsed+nOffset+13, NELUTn, CPLSPrintf("%05d",nCount)  );
 
             for( iC = 0; iC < nCount; iC++ )
             {
-                pachIMHDR[nOffset+18+iC+       0] = (char) iC;
-                pachIMHDR[nOffset+18+iC+nCount*1] = (char) iC;
-                pachIMHDR[nOffset+18+iC+nCount*2] = (char) iC;
+                WRITE_BYTE(nHeaderUsed+nOffset+18+iC+       0, (char) iC);
+                WRITE_BYTE(nHeaderUsed+nOffset+18+iC+nCount*1, (char) iC);
+                WRITE_BYTE(nHeaderUsed+nOffset+18+iC+nCount*2, (char) iC);
             }
             nOffset += 18 + nCount*3;
         }
@@ -687,19 +747,19 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Remainder of image header info.                                 */
 /* -------------------------------------------------------------------- */
-    PLACE(pachIMHDR+nOffset+  0, ISYNC , "0"                            );
-    PLACE(pachIMHDR+nOffset+  1, IMODE , "B"                            );
-    PLACE(pachIMHDR+nOffset+  2, NBPR  , CPLSPrintf("%04d",nNBPR)       );
-    PLACE(pachIMHDR+nOffset+  6, NBPC  , CPLSPrintf("%04d",nNBPC)       );
-    PLACE(pachIMHDR+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nNPPBH)      );
-    PLACE(pachIMHDR+nOffset+ 14, NPPBV , CPLSPrintf("%04d",nNPPBV)      );
-    PLACE(pachIMHDR+nOffset+ 18, NBPP  , CPLSPrintf("%02d",nBitsPerSample) );
-    PLACE(pachIMHDR+nOffset+ 20, IDLVL , "001"                          );
-    PLACE(pachIMHDR+nOffset+ 23, IALVL , "000"                          );
-    PLACE(pachIMHDR+nOffset+ 26, ILOC  , "0000000000"                   );
-    PLACE(pachIMHDR+nOffset+ 36, IMAG  , "1.0 "                         );
-    PLACE(pachIMHDR+nOffset+ 40, UDIDL , "00000"                        );
-    PLACE(pachIMHDR+nOffset+ 45, IXSHDL, "00000"                        );
+    PLACE(nHeaderUsed+nOffset+  0, ISYNC , "0"                            );
+    PLACE(nHeaderUsed+nOffset+  1, IMODE , "B"                            );
+    PLACE(nHeaderUsed+nOffset+  2, NBPR  , CPLSPrintf("%04d",nNBPR)       );
+    PLACE(nHeaderUsed+nOffset+  6, NBPC  , CPLSPrintf("%04d",nNBPC)       );
+    PLACE(nHeaderUsed+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nNPPBH)      );
+    PLACE(nHeaderUsed+nOffset+ 14, NPPBV , CPLSPrintf("%04d",nNPPBV)      );
+    PLACE(nHeaderUsed+nOffset+ 18, NBPP  , CPLSPrintf("%02d",nBitsPerSample) );
+    PLACE(nHeaderUsed+nOffset+ 20, IDLVL , "001"                          );
+    PLACE(nHeaderUsed+nOffset+ 23, IALVL , "000"                          );
+    PLACE(nHeaderUsed+nOffset+ 26, ILOC  , "0000000000"                   );
+    PLACE(nHeaderUsed+nOffset+ 36, IMAG  , "1.0 "                         );
+    PLACE(nHeaderUsed+nOffset+ 40, UDIDL , "00000"                        );
+    PLACE(nHeaderUsed+nOffset+ 45, IXSHDL, "00000"                        );
 
     nUDIDLOffset = nOffset + 40;
     nOffset += 50;
@@ -709,20 +769,20 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL )
     {
-        NITFWriteBLOCKA( pachIMHDR + nUDIDLOffset, 
-                         pachIMHDR + nOffset, 
+        NITFWriteBLOCKA( fp,
+                         nHeaderUsed + nUDIDLOffset, 
+                         nHeaderUsed + nOffset, 
                          &nOffset, 
-                         sizeof(achHeader) - (pachIMHDR+nOffset-achHeader),
                          papszOptions );
     }
 
     if( CSLFetchNameValue(papszOptions,"TRE") != NULL )
     {
-        NITFWriteTREsFromOptions( 
-            pachIMHDR + nUDIDLOffset, 
-            pachIMHDR + nOffset, 
+        NITFWriteTREsFromOptions(
+            fp,
+            nHeaderUsed + nUDIDLOffset, 
+            nHeaderUsed + nOffset, 
             &nOffset, 
-            sizeof(achHeader) - (pachIMHDR+nOffset-achHeader),
             papszOptions );
     }
 
@@ -731,17 +791,23 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     nIHSize = nOffset;
 
-    PLACE(achHeader+ 363, LISH1, CPLSPrintf("%06d",nIHSize)      );
+    if (nIHSize > 999999)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too big image header length : %d", nIHSize);
+        VSIFCloseL( fp );
+        return FALSE;
+    }
+
+    PLACE( 363, LISH1, CPLSPrintf("%06d",nIHSize)      );
 
     nHeaderUsed += nIHSize;
 
 /* -------------------------------------------------------------------- */
 /*      Update total file length, and write header info to file.        */
 /* -------------------------------------------------------------------- */
-    PLACE(achHeader+ 342, FL,
+    PLACE( 342, FL,
           CPLSPrintf( "%012d", (int) (nHeaderUsed + nImageSize) ) );
-
-    VSIFWriteL( achHeader, 1, nIHSize+nHL, fp );
 
 /* -------------------------------------------------------------------- */
 /*      Grow file to full required size by writing one byte at the end. */
@@ -753,9 +819,9 @@ int NITFCreate( const char *pszFilename,
             /* don't extend file */;
         else
         {
-            VSIFSeekL( fp, nImageSize-1, SEEK_CUR );
-            achHeader[0] = '\0';
-            VSIFWriteL( achHeader, 1, 1, fp );
+            char cNul = 0;
+            VSIFSeekL( fp, nIHSize+nHL+nImageSize-1, SEEK_SET );
+            VSIFWriteL( &cNul, 1, 1, fp );
         }
     }
 
@@ -768,48 +834,48 @@ int NITFCreate( const char *pszFilename,
 /*                            NITFWriteTRE()                            */
 /************************************************************************/
 
-static int NITFWriteTRE( char *pachUDIDL, 
-                         char *pachTREInHeader, 
-                         int  *pnOffset, int nBytesAvailable,
-                         char *pszTREName, char *pabyTREData, int nTREDataSize )
+static int NITFWriteTRE( FILE* fp,
+                         int nOffsetUDIDL, 
+                         int nOffsetTREInHeader, 
+                         int  *pnOffset,
+                         const char *pszTREName, char *pabyTREData, int nTREDataSize )
 
 {
-    char szTemp[200];
+    char szTemp[12];
     int  nOldOffset;
-
-/* -------------------------------------------------------------------- */
-/*      Try to allocate space in the header for for this BLOCKA         */
-/*      TRE.                                                            */
-/* -------------------------------------------------------------------- */
-    if( nBytesAvailable < nTREDataSize+14 )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "%s TRE not written due to lack of header space.",
-                  pszTREName );
-        return FALSE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Update IXSHDL.                                                  */
 /* -------------------------------------------------------------------- */
-    nOldOffset = atoi(NITFGetField( szTemp, pachUDIDL, 5, 5 ));
+    VSIFSeekL(fp, nOffsetUDIDL + 5, SEEK_SET);
+    VSIFReadL(szTemp, 1, 5, fp);
+    szTemp[5] = 0;
+    nOldOffset = atoi(szTemp);
 
     if( nOldOffset == 0 )
     {
         nOldOffset = 3;
-        PLACE(pachUDIDL+10, IXSOFL, "000" );
+        PLACE(nOffsetUDIDL+10, IXSOFL, "000" );
         *pnOffset += 3;
     }
+
+    if (nOldOffset + 11 + nTREDataSize > 99999 || nTREDataSize > 99999)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big TRE to be written");
+        return FALSE;
+    }
+
     sprintf( szTemp, "%05d", nOldOffset + 11 + nTREDataSize );
-    PLACE( pachUDIDL + 5, IXSHDL, szTemp );
+    PLACE( nOffsetUDIDL + 5, IXSHDL, szTemp );
 
 /* -------------------------------------------------------------------- */
 /*      Create TRE prefix.                                              */
 /* -------------------------------------------------------------------- */
-    sprintf( pachTREInHeader + nOldOffset, "%-6s%05d", 
+    sprintf( szTemp, "%-6s%05d", 
              pszTREName, nTREDataSize );
-    memcpy( pachTREInHeader + nOldOffset + 11, 
-            pabyTREData, nTREDataSize );
+    VSIFSeekL(fp, nOffsetTREInHeader + nOldOffset, SEEK_SET);
+    VSIFWriteL(szTemp, 11, 1, fp);
+    VSIFWriteL(pabyTREData, nTREDataSize, 1, fp);
 
 /* -------------------------------------------------------------------- */
 /*      Increment values.                                               */
@@ -824,8 +890,9 @@ static int NITFWriteTRE( char *pachUDIDL,
 /************************************************************************/
 
 static int NITFWriteTREsFromOptions(
-    char *pachUDIDL, char *pachTRE,
-    int *pnOffset, int nBytesAvailable,
+    FILE* fp,
+    int nOffsetUDIDL, int nOffsetTRE,
+    int *pnOffset,
     char **papszOptions )    
 
 {
@@ -863,15 +930,20 @@ static int NITFWriteTREsFromOptions(
             CPLUnescapeString( pszEscapedContents, &nContentLength,
                                CPLES_BackslashQuotable );
 
-        if( !NITFWriteTRE( pachUDIDL, pachTRE,
-                           pnOffset, nBytesAvailable, 
+        if( !NITFWriteTRE( fp,
+                           nOffsetUDIDL, nOffsetTRE,
+                           pnOffset,
                            pszTREName, pszUnescapedContents, 
                            nContentLength ) )
+        {
+            CPLFree( pszTREName );
+            CPLFree( pszUnescapedContents );
             return FALSE;
+        }
         
         CPLFree( pszTREName );
         CPLFree( pszUnescapedContents );
-        nBytesAvailable -= (nContentLength + 14);
+
     }
 
     return TRUE;
@@ -881,8 +953,8 @@ static int NITFWriteTREsFromOptions(
 /*                          NITFWriteBLOCKA()                           */
 /************************************************************************/
 
-static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE,
-                            int *pnOffset, int nBytesAvailable,
+static int NITFWriteBLOCKA( FILE* fp, int nOffsetUDIDL, int nOffsetTRE, 
+                            int *pnOffset,
                             char **papszOptions )
 
 {
@@ -927,6 +999,13 @@ static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE,
             if( pszValue == NULL )
                 pszValue = "";
 
+            if (iStart + MAX(0,iSize-strlen(pszValue)) + MIN(iSize,strlen(pszValue)) >
+                sizeof(szBLOCKA))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too much data for BLOCKA");
+                return FALSE;
+            }
+
             memset( szBLOCKA + iStart, ' ', iSize );
             memcpy( szBLOCKA + iStart + MAX(0,iSize-strlen(pszValue)), 
                     pszValue, MIN(iSize,strlen(pszValue)) );
@@ -935,12 +1014,11 @@ static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE,
         // required field - semantics unknown. 
         memcpy( szBLOCKA + 118, "010.0", 5);
 
-        if( !NITFWriteTRE( pachUDIDL, pachTRE, 
-                           pnOffset, nBytesAvailable, 
+        if( !NITFWriteTRE( fp,
+                           nOffsetUDIDL, nOffsetTRE, 
+                           pnOffset,
                            "BLOCKA", szBLOCKA, 123 ) )
             return FALSE;
-
-        nBytesAvailable -= (123 + 14);
     }
     
     return TRUE;
