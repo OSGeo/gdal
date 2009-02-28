@@ -3502,31 +3502,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poCT = poBand->GetColorTable();
         if( poCT != NULL )
         {
-            double	*padfRed, *padfGreen, *padfBlue, *padfAlpha;
-            int         nColors = poCT->GetColorEntryCount(), iColor;
-
-            padfRed   = (double *) CPLMalloc(sizeof(double) * nColors);
-            padfGreen = (double *) CPLMalloc(sizeof(double) * nColors);
-            padfBlue  = (double *) CPLMalloc(sizeof(double) * nColors);
-            padfAlpha  = (double *) CPLMalloc(sizeof(double) * nColors);
-            for( iColor = 0; iColor < nColors; iColor++ )
-            {
-                GDALColorEntry  sEntry;
-
-                poCT->GetColorEntryAsRGB( iColor, &sEntry );
-                padfRed[iColor]   = sEntry.c1 / 255.0;
-                padfGreen[iColor] = sEntry.c2 / 255.0;
-                padfBlue[iColor]  = sEntry.c3 / 255.0;
-                padfAlpha[iColor]  = sEntry.c4 / 255.0;
-            }
-
-            HFASetPCT( poDS->hHFA, iBand+1, nColors,
-                       padfRed, padfGreen, padfBlue, padfAlpha );
-
-            CPLFree( padfRed );
-            CPLFree( padfGreen );
-            CPLFree( padfBlue );
-            CPLFree( padfAlpha );
+            poDS->GetRasterBand(iBand+1)->SetColorTable(poCT);
         }
     }
 
@@ -3541,6 +3517,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         poDS->GetRasterBand(iBand+1)->SetMetadata( poSrcBand->GetMetadata() );
+        poDS->GetRasterBand(iBand+1)->SetDescription( poSrcBand->GetDescription() );
     }
 
 /* -------------------------------------------------------------------- */
