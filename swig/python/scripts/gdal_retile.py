@@ -655,7 +655,7 @@ def Usage():
      print '        [ -tileIndex tileIndexName [-tileIndexField fieldName]]'
      print '        [ -csv fileName [-csvDelim delimiter]]'
      print '        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels'
-     print '        [-r {near/bilinear/cubic/cubicspline}]'
+     print '        [-r {near/bilinear/cubic/cubicspline/lanczos}]'
      print '        -targetDir TileDirectory input_files'
 
 # =============================================================================
@@ -745,6 +745,8 @@ def main(args):
                  ResamplingMethod=GRA_Cubic
             elif ResamplingMethodString=="cubicspline":
                  ResamplingMethod=GRA_CubicSpline
+	    elif ResamplingMethodString=="lanczos":
+		 ResamplingMethod=GRA_Lanczos
             else:
                 print "Unknown resampling method:" ,ResamplingMethodString
                 return 1
