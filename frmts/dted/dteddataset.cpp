@@ -326,6 +326,12 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = psDTED->nXSize;
     poDS->nRasterYSize = psDTED->nYSize;
     
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    {
+        delete poDS;
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
