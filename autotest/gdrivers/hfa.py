@@ -820,7 +820,7 @@ def hfa_xforms_3rd():
     return 'success'
 
 ###############################################################################
-# Verify reading of 3rd order XFORM polynomials.
+# Verify that we can clear an existing color table
 
 def hfa_delete_colortable():
 
@@ -841,6 +841,34 @@ def hfa_delete_colortable():
     ds = None
 
     gdal.GetDriverByName('HFA').Delete('tmp/i8u.img')
+
+    return 'success'
+
+###############################################################################
+# Verify that we can clear an existing color table (#2842)
+
+def hfa_delete_colortable2():
+
+    # copy a file to tmp dir to modify.
+    src_ds = gdal.Open('../gcore/data/8bit_pal.bmp')
+    ds = gdal.GetDriverByName('HFA').CreateCopy('tmp/hfa_delete_colortable2.img', src_ds)
+    src_ds = None
+    ds = None
+
+    # clear color table.
+    ds = gdal.Open( 'tmp/hfa_delete_colortable2.img', gdal.GA_Update )
+    ds.GetRasterBand(1).SetColorTable(None)
+    ds = None
+
+    # check color table gone.
+    ds = gdal.Open( 'tmp/hfa_delete_colortable2.img' )
+    if ds.GetRasterBand(1).GetColorTable() != None:
+        gdaltest.post_reason( 'failed to remove color table' )
+        return 'fail'
+
+    ds = None
+
+    gdal.GetDriverByName('HFA').Delete('tmp/hfa_delete_colortable2.img')
 
     return 'success'
 
@@ -873,7 +901,8 @@ gdaltest_list = [
     hfa_read_empty_compressed,
     hfa_unique_values_color_table,
     hfa_xforms_3rd,
-    hfa_delete_colortable
+    hfa_delete_colortable,
+    hfa_delete_colortable2
     ]
 
 if __name__ == '__main__':
