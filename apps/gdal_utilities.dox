@@ -1172,7 +1172,7 @@ gdal_retile.py [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeig
                [ -tileIndex tileIndexName [-tileIndexField tileIndexFieldName]]
                [ -csv fileName [-csvDelim delimiter]]
                [-s_srs srs_def]  [-pyramidOnly]
-               [-r {near/bilinear/cubic/cubicspline}]
+               [-r {near/bilinear/cubic/cubicspline/lanczos}]
                -levels numberoflevels
                -targetDir TileDirectory input_files
 
