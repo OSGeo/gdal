@@ -561,6 +561,7 @@ CPLErr RMFRasterBand::SetUnitType( const char *pszNewValue )
 {
     RMFDataset   *poGDS = (RMFDataset *) poDS;
 
+    CPLFree(poGDS->pszUnitType);
     poGDS->pszUnitType = CPLStrdup( pszNewValue );
 
     return CE_None;
@@ -1401,6 +1402,7 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if ( poDS->eRMFType == RMFT_MTW )
     {
+        CPLFree(poDS->pszUnitType);
         switch ( poDS->sHeader.iElevationUnit )
         {
             case 0:
