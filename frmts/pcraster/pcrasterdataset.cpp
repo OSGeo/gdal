@@ -216,6 +216,7 @@ GDALDataset* PCRasterDataset::createCopy(
   if(RuseAs(map, appCellRepresentation)) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot convert cells: %s", MstrError());
+    Mclose(map);
     return 0;
   }
 
