@@ -82,6 +82,7 @@ int OGRGmtDataSource::Open( const char *pszFilename, int bUpdate )
     papoLayers = (OGRGmtLayer **) CPLMalloc(sizeof(void*));
     papoLayers[0] = poLayer;
 
+    CPLFree (pszName);
     pszName = CPLStrdup( pszFilename );
 
     return TRUE;
