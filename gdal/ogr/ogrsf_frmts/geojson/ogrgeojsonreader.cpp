@@ -762,6 +762,7 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
         OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference(poObj);
         if (poSRS != NULL) {
             poGeometry->assignSpatialReference(poSRS);
+            poSRS->Release();
         }
     }
     return poGeometry;
