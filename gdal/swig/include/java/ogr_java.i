@@ -298,7 +298,7 @@ import org.gdal.osr.CoordinateTransformation;
                 try
                 {
                     type ## Native nativeObject =
-                        (type ## Native) refQueue.remove(1000);
+                        (type ## Native) refQueue.remove();
                     if (nativeObject != null)
                         nativeObject.delete();
                 }
