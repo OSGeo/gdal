@@ -1024,3 +1024,15 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
   Py_XDECREF(psList);
 }
 
+/***************************************************
+ * Typemaps for  (retStringAndCPLFree*)
+ ***************************************************/
+%typemap(out) (retStringAndCPLFree*)
+{
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if(result)
+    {
+        $result = PyString_FromString( (const char *)result);
+        CPLFree(result);
+    }
+}
