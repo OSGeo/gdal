@@ -429,6 +429,35 @@ def test_ogr2ogr_15():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
     return 'success'
 
+###############################################################################
+# Test -fid
+
+def test_ogr2ogr_16():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+
+    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -fid 8 tmp/poly.shp ../ogr/data/poly.shp').read()
+
+    src_ds = ogr.Open('../ogr/data/poly.shp')
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
+        return 'fail'
+    src_feat = src_ds.GetLayer(0).GetFeature(8)
+    feat = ds.GetLayer(0).GetNextFeature()
+    if feat.GetField("EAS_ID") != src_feat.GetField("EAS_ID"):
+        return 'fail'
+    ds.Destroy()
+    src_ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    return 'success'
 
 gdaltest_list = [
     test_ogr2ogr_1,
@@ -445,7 +474,8 @@ gdaltest_list = [
     test_ogr2ogr_12,
     test_ogr2ogr_13,
     test_ogr2ogr_14,
-    test_ogr2ogr_15
+    test_ogr2ogr_15,
+    test_ogr2ogr_16
     ]
 
 
