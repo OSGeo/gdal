@@ -499,6 +499,11 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
         adfGeoTransform[5] = (-dydelta) / 3600.0;
     }
 
+    if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
+    {
+        return FALSE;
+    }
+
     return TRUE;
 }
 
