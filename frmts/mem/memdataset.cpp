@@ -617,26 +617,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new MEMDataset();
 
     poDS->nRasterXSize = atoi(CSLFetchNameValue(papszOptions,"PIXELS"));
-    if (poDS->nRasterXSize <= 0)
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Invalid value : PIXELS=%s.", CSLFetchNameValue(papszOptions,"PIXELS"));
-
-        CSLDestroy( papszOptions );
-        delete poDS;
-        return NULL;
-    }
     poDS->nRasterYSize = atoi(CSLFetchNameValue(papszOptions,"LINES"));
-    if (poDS->nRasterYSize <= 0)
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Invalid value : LINES=%s.", CSLFetchNameValue(papszOptions,"LINES"));
-
-        CSLDestroy( papszOptions );
-        delete poDS;
-        return NULL;
-    }
-
     poDS->eAccess = GA_Update;
 
 /* -------------------------------------------------------------------- */
@@ -655,15 +636,14 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         nBands = atoi(pszOption);
-        if (nBands > 10000)
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                    "Invalid value : BANDS=%s.", CSLFetchNameValue(papszOptions,"BANDS"));
+    }
 
-            CSLDestroy( papszOptions );
-            delete poDS;
-            return NULL;
-        }
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(nBands, TRUE))
+    {
+        CSLDestroy( papszOptions );
+        delete poDS;
+        return NULL;
     }
 
     pszOption = CSLFetchNameValue(papszOptions,"DATATYPE");
@@ -759,11 +739,21 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
     int   	iBand;
     int         nWordSize = GDALGetDataTypeSize(eType) / 8;
 
-    papBandData = (GByte **) CPLCalloc(sizeof(void *),nBands);
+    papBandData = (GByte **) VSICalloc(sizeof(void *),nBands);
+    if (papBandData == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Unable to create band arrays ... out of memory." );
+        return NULL;
+    }
+
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        // FIXME? : risk of overflow in multiplication
-        papBandData[iBand] = (GByte *) VSICalloc( nWordSize, nXSize * nYSize );
+        size_t nMulResult = ((size_t)nXSize) * nYSize;
+        if ( nMulResult / nXSize != (size_t)nYSize )
+            papBandData[iBand] = NULL;
+        else
+            papBandData[iBand] = (GByte *) VSICalloc( nWordSize, nMulResult );
         if( papBandData[iBand] == NULL )
         {
             for( iBand = 0; iBand < nBands; iBand++ )
