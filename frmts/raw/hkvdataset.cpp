@@ -828,13 +828,11 @@ CPLErr HKVDataset::SetGCPProjection( const char *pszNewProjection )
 CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
 
 {
-    OGRSpatialReference *oSRS;
     HKVSpheroidList *hkvEllipsoids;
     double eq_radius, inv_flattening;
     OGRErr ogrerrorEq=OGRERR_NONE;
     OGRErr ogrerrorInvf=OGRERR_NONE;
     OGRErr ogrerrorOl=OGRERR_NONE;
-    char *modifiableProjection = NULL;
 
     char *spheroid_name = NULL;
 
@@ -865,24 +863,20 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
     pszProjection = (char *) CPLStrdup(pszNewProjection);
    
 
-    /* importFromWkt updates the pointer, so don't use pszNewProjection directly */
-    modifiableProjection=CPLStrdup(pszNewProjection);
+    OGRSpatialReference oSRS(pszNewProjection);
 
-    oSRS = new OGRSpatialReference;
-    oSRS->importFromWkt(&modifiableProjection);
-
-    if ((oSRS->GetAttrValue("PROJECTION") != NULL) && 
-        (EQUAL(oSRS->GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
+    if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
+        (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
     {
       char *ol_txt;
         ol_txt=(char *) CPLMalloc(255);
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "utm" );
-        sprintf(ol_txt,"%f",oSRS->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
+        sprintf(ol_txt,"%f",oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.origin_longitude",
         ol_txt );
         CPLFree(ol_txt);
     }
-    else if ((oSRS->GetAttrValue("PROJECTION") == NULL) && (oSRS->IsGeographic()))
+    else if ((oSRS.GetAttrValue("PROJECTION") == NULL) && (oSRS.IsGeographic()))
     {
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
     }
@@ -892,8 +886,8 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
                 "Unrecognized projection.");
       return CE_Failure;
     }
-    eq_radius = oSRS->GetSemiMajor(&ogrerrorEq);
-    inv_flattening = oSRS->GetInvFlattening(&ogrerrorInvf);
+    eq_radius = oSRS.GetSemiMajor(&ogrerrorEq);
+    inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
     if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE)) 
     {
         hkvEllipsoids = new HKVSpheroidList;
@@ -903,6 +897,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
             papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
                                            spheroid_name );
         }
+        CPLFree(spheroid_name);
         delete hkvEllipsoids;
     }
     else
@@ -922,7 +917,6 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
         }                                   
     }
     bGeorefChanged = TRUE;
-    delete oSRS;
     return CE_None;
 }
 
