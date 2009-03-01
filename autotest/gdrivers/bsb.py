@@ -159,7 +159,7 @@ def bsb_online_1():
             print 'Reading BSB from ZIP file (slow)...'
             file_to_test = '/vsizip/tmp/cache/14850.zip/BSB_ROOT/14850/14850_1.KAP'
 
-    tst = gdaltest.GDALTest('BSB', file_to_test, 1, 54674, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('BSB', file_to_test, 1, 63005, filename_absolute = 1 )
     return tst.testOpen()
 
 
