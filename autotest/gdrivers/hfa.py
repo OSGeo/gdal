@@ -825,7 +825,7 @@ def hfa_xforms_3rd():
 def hfa_delete_colortable():
 
     # copy a file to tmp dir to modify.
-    open('tmp/i8u.img','w').write(open('data/i8u_c_i.img').read())
+    open('tmp/i8u.img','wb').write(open('data/i8u_c_i.img', 'rb').read())
 
     # clear color table.
     ds = gdal.Open( 'tmp/i8u.img', gdal.GA_Update )
