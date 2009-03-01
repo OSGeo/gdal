@@ -169,6 +169,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     double val;
     PyArg_Parse(o, "d", &val );
     $1[i] =  val;
+    Py_DECREF(o);
   }
 }
 
@@ -190,6 +191,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     if ( !PyArg_Parse(o,"i",&$2[i]) ) {
       SWIG_fail;
     }
+    Py_DECREF(o);
   }
 }
 
@@ -219,6 +221,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     if ( !PyArg_Parse(o,"d",&$2[i]) ) {
       SWIG_fail;
     }
+    Py_DECREF(o);
   }
 }
 
@@ -330,6 +333,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     }
     memcpy( (void*) tmpGCPList, (void*) item, sizeof( GDAL_GCP ) );
     ++tmpGCPList;
+    Py_DECREF(o);
   }
 }
 %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
@@ -410,11 +414,13 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     int size = PySequence_Size($input);
     for (int i = 0; i < size; i++) {
       char *pszItem = NULL;
-      if ( ! PyArg_Parse( PySequence_GetItem($input,i), "s", &pszItem ) ) {
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
+      PyObject* pyObj = PySequence_GetItem($input,i);
+      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
       }
       $1 = CSLAddString( $1, pszItem );
+      Py_DECREF(pyObj);
     }
   }
   else if ( PyMapping_Check( $input ) ) {
@@ -428,6 +434,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         char *val;
         PyArg_ParseTuple( it, "ss", &nm, &val );
         $1 = CSLAddNameValue( $1, nm, val );
+        Py_DECREF(it);
       }
     }
   }
@@ -457,11 +464,13 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   int size = PySequence_Size($input);
   for (int i = 0; i < size; i++) {
     char *pszItem = NULL;
-    if ( ! PyArg_Parse( PySequence_GetItem($input,i), "s", &pszItem ) ) {
-      PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-      SWIG_fail;
+    PyObject* pyObj = PySequence_GetItem($input,i);
+    if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
     }
     $1 = CSLAddString( $1, pszItem );
+    Py_DECREF(pyObj);
   }
 }
 %typemap(freearg) char **options
@@ -920,6 +929,7 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
       /* FIXME remove this when Frank confirms this typemap works */
       int v = GDALGetRasterBandXSize(rawobjectpointer);
       $2[i] = rawobjectpointer;
+      Py_DECREF(o);
 
   }
 }
