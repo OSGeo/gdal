@@ -1139,13 +1139,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     GDALRasterBand *firstBand = poSrcDS->GetRasterBand(1);
     if (! firstBand) {
-        //free(head);
+        VSIFCloseL(fpImage);
         return NULL;
     }
 
     head->dtype = fitGetDataType(firstBand->GetRasterDataType());
     if (! head->dtype) {
-        //free(head);
+        VSIFCloseL(fpImage);
         return NULL;
     }
     gst_swapb(head->dtype);
