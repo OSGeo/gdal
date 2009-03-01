@@ -1423,7 +1423,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     if (pos != NULL)
     {
         *pos = '\0';
-        pszGeomColumnName = pos+1;
+        pszGeomColumnName = CPLStrdup(pos+1);
         int len = strlen(pszGeomColumnName);
         if (len > 0)
             pszGeomColumnName[len - 1] = '\0';
@@ -1446,6 +1446,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     int bRet = OpenTable( pszTableName, pszSchemaName, pszGeomColumnName, TRUE, FALSE, TRUE );
     CPLFree(pszTableName);
     CPLFree(pszSchemaName);
+    CPLFree(pszGeomColumnName);
 
     if (bRet)
     {
