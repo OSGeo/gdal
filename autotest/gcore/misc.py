@@ -119,10 +119,22 @@ def misc_4():
 
 def misc_5_internal(drv, datatype, nBands):
     #print 'drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-    os.mkdir('tmp/tmp')
+    try:
+        os.mkdir('tmp/tmp')
+    except:
+        reason = 'Cannot create tmp/tmp for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+        gdaltest.post_reason(reason)
+        return
+
     ds = drv.Create('tmp/tmp/foo', 100, 100, nBands, datatype)
     ds = None
-    shutil.rmtree('tmp/tmp')
+
+    try:
+        shutil.rmtree('tmp/tmp')
+    except:
+        reason = 'Cannot remove tmp/tmp for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+        gdaltest.post_reason(reason)
+        return
 
     return
 
@@ -196,7 +208,12 @@ def misc_6_internal(datatype, nBands):
                     os.mkdir('tmp/tmp')
                     dst_ds = drv.CreateCopy('tmp/tmp/foo', ds)
                     dst_ds = None
-                    shutil.rmtree('tmp/tmp')
+                    try:
+                        shutil.rmtree('tmp/tmp')
+                    except:
+                        reason = 'Cannot remove tmp/tmp after drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+                        gdaltest.post_reason(reason)
+                        return False
         ds = None
         if nBands == 0:
             gdal.GetDriverByName('ILWIS').Delete('tmp/tmp.mpl')
