@@ -364,6 +364,12 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPL_LSBPTR32( &nCols );
     poDS->nRasterXSize = nCols;
 
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    {
+        delete poDS;
+        return NULL;
+    }
+
     /* --------------------------------------------------------------------*/
     /*      Create band information objects.                               */
     /* --------------------------------------------------------------------*/
