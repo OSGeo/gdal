@@ -15,6 +15,9 @@
   
 %}
 
+%{
+typedef char retStringAndCPLFree;
+%}
 
 /*%{
     

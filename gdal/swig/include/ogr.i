@@ -1344,7 +1344,7 @@ public:
 #endif
 #endif
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGPYTHON)
   retStringAndCPLFree* ExportToGML() {
     return (retStringAndCPLFree*) OGR_G_ExportToGML(self);
   }
@@ -1355,7 +1355,7 @@ public:
   }
 #endif
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGPYTHON)
   retStringAndCPLFree* ExportToKML(const char* altitude_mode=NULL) {
     return (retStringAndCPLFree *) OGR_G_ExportToKML(self, altitude_mode);
   }
@@ -1366,7 +1366,7 @@ public:
   }
 #endif
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGPYTHON)
   retStringAndCPLFree* ExportToJson() {
     return (retStringAndCPLFree *) OGR_G_ExportToJson(self);
   }
