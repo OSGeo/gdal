@@ -1008,6 +1008,9 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 (uint_fast8_t *)jas_malloc( poBox->GetDataLength() - 16 );
             memcpy( box->data.uuid.data, poBox->GetWritableData() + 16,
                     poBox->GetDataLength() - 16 );
+            delete poBox;
+            poBox = NULL;
+
             if ( jp2_encode_uuid( psImage, psStream, pszOptionBuf, box) < 0 )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -1020,7 +1023,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 jas_image_clearfmts();
                 return NULL;
             }
-        jp2_box_destroy( box );
+            jp2_box_destroy( box );
         }
         else
         {

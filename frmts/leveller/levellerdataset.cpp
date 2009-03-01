@@ -641,7 +641,8 @@ double LevellerRasterBand::GetOffset(int* pbSuccess)
 LevellerDataset::LevellerDataset()
 {
     m_fp = NULL;
-	m_pszProjection = NULL;
+    m_pszProjection = NULL;
+    m_pszFilename = NULL;
 }
 
 /************************************************************************/
@@ -652,7 +653,8 @@ LevellerDataset::~LevellerDataset()
 {
     FlushCache();
 
-	CPLFree(m_pszProjection);
+    CPLFree(m_pszProjection);
+    CPLFree(m_pszFilename);
 
     if( m_fp != NULL )
         VSIFCloseL( m_fp );

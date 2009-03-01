@@ -1055,8 +1055,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 int GetMFFProjectionType(const char *pszNewProjection)
 {
-    OGRSpatialReference *oSRS;
-    char *modifiableProjection = NULL;
+    OGRSpatialReference oSRS(pszNewProjection);
 
     if( !EQUALN(pszNewProjection,"GEOGCS",6)
        && !EQUALN(pszNewProjection,"PROJCS",6)
@@ -1070,18 +1069,12 @@ int GetMFFProjectionType(const char *pszNewProjection)
       }
       else
       {
-          /* importFromWkt updates the pointer, so don't use pszNewProjection directly */
-             modifiableProjection=CPLStrdup(pszNewProjection);
-
-             oSRS = new OGRSpatialReference;
-             oSRS->importFromWkt(&modifiableProjection);
-
-             if ((oSRS->GetAttrValue("PROJECTION") != NULL) && 
-                 (EQUAL(oSRS->GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
+             if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
+                 (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
              {
                return MFFPRJ_UTM;
              }
-             else if ((oSRS->GetAttrValue("PROJECTION") == NULL) && (oSRS->IsGeographic()))
+             else if ((oSRS.GetAttrValue("PROJECTION") == NULL) && (oSRS.IsGeographic()))
              {
                   return MFFPRJ_LL;
              }
@@ -1406,10 +1399,7 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
           || tempGeoTransform[2] != 0.0 || tempGeoTransform[3] != 0.0
               || tempGeoTransform[4] != 0.0 || ABS(tempGeoTransform[5]) != 1.0 ))
       {
-          OGRSpatialReference oUTMorLL;
-          OGRSpatialReference oLL;
           OGRCoordinateTransformation *poTransform = NULL;          
-          char *srcProjection=NULL;
           char *newGCPProjection=NULL;
 
           padfTiepoints[0]=tempGeoTransform[0] + tempGeoTransform[1]*0.5 +\
@@ -1446,10 +1436,12 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                            tempGeoTransform[4]*(poSrcDS->GetRasterXSize())/2.0+\
                            tempGeoTransform[5]*(poSrcDS->GetRasterYSize())/2.0;
 
-          srcProjection = CPLStrdup(poSrcDS->GetProjectionRef());
-          oUTMorLL.importFromWkt(&srcProjection);
+          OGRSpatialReference oUTMorLL(poSrcDS->GetProjectionRef());
           (oUTMorLL.GetAttrNode("GEOGCS"))->exportToWkt(&newGCPProjection);
-          oLL.importFromWkt(&newGCPProjection);
+          OGRSpatialReference oLL(newGCPProjection);
+          CPLFree(newGCPProjection);
+          newGCPProjection = NULL;
+
           if EQUALN(poSrcDS->GetProjectionRef(),"PROJCS",6)
           {
             // projected coordinate system- need to translate gcps */
@@ -1524,50 +1516,40 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* --------------------------------------------------------------------*/
 
           
-          OGRSpatialReference *oSRS;
           MFFSpheroidList *mffEllipsoids;
           double eq_radius, inv_flattening;
           OGRErr ogrerrorEq=OGRERR_NONE;
           OGRErr ogrerrorInvf=OGRERR_NONE;
           OGRErr ogrerrorOl=OGRERR_NONE;
-          char *modifiableProjection = NULL;
-          char *pszNewProjection;
+          const char *pszSrcProjection = poSrcDS->GetProjectionRef();
           char *spheroid_name = NULL;
 
-          pszNewProjection = CPLStrdup( poSrcDS->GetProjectionRef() );
- 
-          if( !EQUALN(pszNewProjection,"GEOGCS",6)
-           && !EQUALN(pszNewProjection,"PROJCS",6)
-           && !EQUAL(pszNewProjection,"") )
+          if( !EQUALN(pszSrcProjection,"GEOGCS",6)
+           && !EQUALN(pszSrcProjection,"PROJCS",6)
+           && !EQUAL(pszSrcProjection,"") )
           {
             CPLError( CE_Warning, CPLE_AppDefined,
                     "Only OGC WKT Projections supported for writing to MFF.\n"
                     "%s not supported.",
-                      pszNewProjection );
+                      pszSrcProjection );
           }
-          else if (!EQUAL(pszNewProjection,""))
+          else if (!EQUAL(pszSrcProjection,""))
           {
-           
+             OGRSpatialReference oSRS(pszSrcProjection);
 
-          /* importFromWkt updates the pointer, so don't use pszNewProjection directly */
-             modifiableProjection=CPLStrdup(pszNewProjection);
-
-             oSRS = new OGRSpatialReference;
-             oSRS->importFromWkt(&modifiableProjection);
-
-             if ((oSRS->GetAttrValue("PROJECTION") != NULL) && 
-                 (EQUAL(oSRS->GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
+             if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
+                 (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
              {
                  char *ol_txt;
     
                  ol_txt=(char *) CPLMalloc(255);
                  fprintf(fp,"PROJECTION_NAME = UTM\n");
                  sprintf(ol_txt,"PROJECTION_ORIGIN_LONGITUDE = %f\n",
-                         oSRS->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
+                         oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
                  fprintf(fp,ol_txt);
                  CPLFree(ol_txt);
              }
-             else if ((oSRS->GetAttrValue("PROJECTION") == NULL) && (oSRS->IsGeographic()))
+             else if ((oSRS.GetAttrValue("PROJECTION") == NULL) && (oSRS.IsGeographic()))
              {
                   fprintf(fp,"PROJECTION_NAME = LL\n");
              }
@@ -1577,8 +1559,8 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   "Unrecognized projection- no georeferencing information transferred.");
                   fprintf(fp,"PROJECTION_NAME = LL\n");
              }
-             eq_radius = oSRS->GetSemiMajor(&ogrerrorEq);
-             inv_flattening = oSRS->GetInvFlattening(&ogrerrorInvf);
+             eq_radius = oSRS.GetSemiMajor(&ogrerrorEq);
+             inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
              if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE)) 
              {
                  char *ol_txt;
@@ -1603,7 +1585,6 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  CPLFree(spheroid_name);
               }
           } 
-          CPLFree(pszNewProjection);         
     } 
       
     CPLFree( padfTiepoints );
