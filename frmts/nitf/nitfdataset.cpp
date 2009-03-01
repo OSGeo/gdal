@@ -3417,6 +3417,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
                   "is not currently supported by the GDAL NITF driver." );
 
         VSIFCloseL( fpVSIL );
+        CPLFree( pachLT );
         return;
     }
 
@@ -3498,6 +3499,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
                 1, 12, fpVSIL );
     
     VSIFCloseL( fpVSIL );
+    CPLFree( pachLT );
 }
         
 /************************************************************************/
