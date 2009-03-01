@@ -49,13 +49,15 @@ coordinate system, layer schema, extents, and feature count. </dd>
 <dt> <b>-where</b> <i>restricted_where</i>:</dt><dd> An attribute query in a restricted
 form of the queries used in the SQL WHERE statement.   Only features matching
 the attribute query will be reported.</dd>
-<dt> <b>-sql</b> <i>statement</i>:</dt><dd> Execute the indicated statement
+<dt> <b>-sql</b> <i>statement</i>:</dt><dd> Execute the indicated SQL statement
 and return the result.</dd>
 <dt> <b>-spat</b> <i>xmin ymin xmax ymax</i>:</dt><dd> The area of interest.  Only
 features within the rectangle will be reported.</dd>
 <dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
 id will be reported.  Operates exclusive of the spatial or attribute 
-queries.</dd>
+queries. Note: if you want to select several features based on their feature id, you can
+also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-where "fid in (1,3,5)"'
+would select features 1, 3 and 5.</dd>
 <dt> <b>--formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
@@ -217,7 +219,9 @@ Add "25D" to the name to get 2.5D versions.</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
 <dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
 id will be reported.  Operates exclusive of the spatial or attribute 
-queries.</dd>
+queries.  Note: if you want to select several features based on their feature id, you can
+also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-where "fid in (1,3,5)"'
+would select features 1, 3 and 5.</dd>
 </dl>
 
 Srs_def can be a full WKT definition (hard to escape properly), or a well
