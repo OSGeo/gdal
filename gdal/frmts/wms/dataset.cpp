@@ -109,6 +109,12 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         const char *block_size_y = CPLGetXMLValue(config, "BlockSizeY", "1024");
         m_block_size_x = atoi(block_size_x);
         m_block_size_y = atoi(block_size_y);
+        if (m_block_size_x <= 0 || m_block_size_y <= 0)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "GDALWMS: Invalid value in BlockSizeX or BlockSizeY" );
+            ret = CE_Failure;
+        }
     }
     if (ret == CE_None)
     {
@@ -270,6 +276,13 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     if (ret == CE_None) {
         nRasterXSize = m_data_window.m_sx;
         nRasterYSize = m_data_window.m_sy;
+
+        if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) ||
+            !GDALCheckBandCount(m_bands_count, TRUE))
+        {
+            return CE_Failure;
+        }
+
         for (int i = 0; i < m_bands_count; ++i) {
             GDALWMSRasterBand *band = new GDALWMSRasterBand(this, i, 1.0);
             SetBand(i + 1, band);
