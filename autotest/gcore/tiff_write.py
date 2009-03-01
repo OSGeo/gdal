@@ -1874,7 +1874,7 @@ def tiff_write_57():
         return 'skip'
 
     # copy a file to tmp dir to modify.
-    open('tmp/tiff57.tif','w').write(open('data/byte.tif').read())
+    open('tmp/tiff57.tif','wb').write(open('data/byte.tif', 'rb').read())
 
     # open and set a non-northup geotransform.
 
@@ -1914,6 +1914,7 @@ def tiff_write_58():
             if ds.GetRasterBand(1).Checksum() != 65241:
                 gdaltest.post_reason( 'wrong checksum' )
                 return 'fail'
+            ds = None
 
             drv.Delete('tmp/tiff_write_58.tif')
         else:
