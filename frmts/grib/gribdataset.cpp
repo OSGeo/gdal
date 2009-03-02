@@ -89,6 +89,9 @@ public:
     virtual ~GRIBRasterBand();
     virtual CPLErr IReadBlock( int, int, void * );
     virtual const char *GetDescription() const;
+
+    void    FindPDSTemplate();
+
 private:
     static void ReadGribData( DataSource &, sInt4, int, double**, grib_MetaData**);
     sInt4 start;
@@ -128,26 +131,39 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand,
                      CPLString().Printf("%12.0f sec UTC", psInv->validTime ) );
     SetMetadataItem( "GRIB_FORECAST_SECONDS", 
                      CPLString().Printf("%.0f sec", psInv->foreSec ) );
+}
+
+/************************************************************************/
+/*                          FindPDSTemplate()                           */
+/*                                                                      */
+/*      Scan the file for the PDS template info and represent it as     */
+/*      metadata.                                                       */
+/************************************************************************/
+
+void GRIBRasterBand::FindPDSTemplate()
+
+{
+    GRIBDataset *poGDS = (GRIBDataset *) poDS;
 
 /* -------------------------------------------------------------------- */
 /*      Collect section 4 octet information ... we read the file        */
 /*      ourselves since the GRIB API does not appear to preserve all    */
 /*      this for us.                                                    */
 /* -------------------------------------------------------------------- */
-    GIntBig nOffset = VSIFTellL( poDS->fp );
+    GIntBig nOffset = VSIFTellL( poGDS->fp );
     GByte abyHead[5];
     GUInt32 nSectSize;
 
-    VSIFSeekL( poDS->fp, psInv->start+16, SEEK_SET );
-    VSIFReadL( abyHead, 5, 1, poDS->fp );
+    VSIFSeekL( poGDS->fp, start+16, SEEK_SET );
+    VSIFReadL( abyHead, 5, 1, poGDS->fp );
 
     while( abyHead[4] != 4 )
     {
         memcpy( &nSectSize, abyHead, 4 );
         CPL_MSBPTR32( &nSectSize );
 
-        if( VSIFSeekL( poDS->fp, nSectSize-5, SEEK_CUR ) != 0
-            || VSIFReadL( abyHead, 5, 1, poDS->fp ) != 1 )
+        if( VSIFSeekL( poGDS->fp, nSectSize-5, SEEK_CUR ) != 0
+            || VSIFReadL( abyHead, 5, 1, poGDS->fp ) != 1 )
             break;
     }
         
@@ -163,7 +179,7 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand,
         CPL_MSBPTR32( &nSectSize );
 
         pabyBody = (GByte *) CPLMalloc(nSectSize-5);
-        VSIFReadL( pabyBody, 1, nSectSize-5, poDS->fp );
+        VSIFReadL( pabyBody, 1, nSectSize-5, poGDS->fp );
 
         memcpy( &nCoordCount, pabyBody + 5 - 5, 2 );
         CPL_MSBPTR16( &nCoordCount );
@@ -190,7 +206,7 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand,
         CPLFree( pabyBody );
     }
 
-    VSIFSeekL( poDS->fp, nOffset, SEEK_SET );
+    VSIFSeekL( poGDS->fp, nOffset, SEEK_SET );
 }
 
 /************************************************************************/
@@ -436,6 +452,10 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 
             poDS->SetGribMetaData(metaData); // set the DataSet's x,y size, georeference and projection from the first GRIB band
             GRIBRasterBand* gribBand = new GRIBRasterBand( poDS, bandNr, Inv+i);
+
+            if( Inv->GribVersion == 2 )
+                gribBand->FindPDSTemplate();
+
             gribBand->m_Grib_Data = data;
             gribBand->m_Grib_MetaData = metaData;
             poDS->SetBand( bandNr, gribBand);
