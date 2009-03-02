@@ -496,7 +496,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
                             CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
                             CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
                             dfSemiMajor, 
-                            1.0 / (1.0 - dfSemiMajor/dfSemiMinor) );
+                            1.0 / (1.0 - dfSemiMinor/dfSemiMajor) );
         }
         else // fallback default.
             oSRS.SetWellKnownGeogCS( "WGS84" );
