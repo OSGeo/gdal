@@ -1727,9 +1727,6 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 
    /* Make room for entire message, and read it in. */
    /* nd5 needs to be gribLen in (sInt4) units rounded up. */
-#ifdef DEBUG
-   printf ("GribLen == %d\n", gribLen);
-#endif
    nd5 = (gribLen + 3) / 4;
    if (nd5 > IS->ipackLen) {
       IS->ipackLen = nd5;
