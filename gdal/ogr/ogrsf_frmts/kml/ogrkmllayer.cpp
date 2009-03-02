@@ -424,6 +424,16 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
         }
     }
 
+    if ( wkbPolygon == poFeatureDefn_->GetGeomType()
+         || wkbMultiPolygon == poFeatureDefn_->GetGeomType()
+         || wkbLineString == poFeatureDefn_->GetGeomType()
+         || wkbMultiLineString == poFeatureDefn_->GetGeomType() )
+    {
+        //If we're dealing with a polygon, add a line style that will stand out a bit
+        VSIFPrintf( fp, "  <Style><LineStyle><color>ff0000ff</color></LineStyle>");
+        VSIFPrintf( fp, "  <PolyStyle><fill>0</fill></PolyStyle></Style>\n" );
+    }
+
     int bHasFoundOtherField = FALSE;
 
     // Write all fields as SchemaData
@@ -492,16 +502,6 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
         }
     }
     
-    if ( wkbPolygon == poFeatureDefn_->GetGeomType()
-         || wkbMultiPolygon == poFeatureDefn_->GetGeomType()
-         || wkbLineString == poFeatureDefn_->GetGeomType()
-         || wkbMultiLineString == poFeatureDefn_->GetGeomType() )
-    {
-        //If we're dealing with a polygon, add a line style that will stand out a bit
-        VSIFPrintf( fp, "  <Style><LineStyle><color>ff0000ff</color></LineStyle>");
-        VSIFPrintf( fp, "  <PolyStyle><fill>0</fill></PolyStyle></Style>\n" );
-    }
-
     VSIFPrintf( fp, "  </Placemark>\n" );
     nWroteFeatureCount_++;
     return OGRERR_NONE;
