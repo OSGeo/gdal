@@ -373,7 +373,7 @@ void AIGDataset::ReadRAT()
     VSIStatBufL sStatBuf;
 
     osInfoPath = psInfo->pszCoverName;
-    osInfoPath += "/../info/";
+    osInfoPath += "/../info";
     
     if( VSIStatL( osInfoPath, &sStatBuf ) != 0 )
     {
@@ -381,6 +381,8 @@ void AIGDataset::ReadRAT()
                   osInfoPath.c_str() );
         return;
     }
+    
+    osInfoPath += "/";
 
 /* -------------------------------------------------------------------- */
 /*      Attempt to open the VAT table associated with this coverage.    */
