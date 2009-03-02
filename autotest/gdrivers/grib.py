@@ -51,8 +51,21 @@ def grib_1():
     return tst.testOpen()
 
 
+###############################################################################
+# Test a small GRIB 1 sample file.
+
+def grib_2():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+    
+    tst = gdaltest.GDALTest( 'GRIB', 'Sample_QuikSCAT.grb', 4, 50714 )
+    return tst.testOpen()
+
 gdaltest_list = [
-    grib_1 ]
+    grib_1,
+    grib_2
+    ]
 
 if __name__ == '__main__':
 
