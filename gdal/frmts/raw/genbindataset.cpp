@@ -231,7 +231,7 @@ class GenBinBitRasterBand : public GDALPamRasterBand
     int            nLineOffsetBits;
 
   public:
-    GenBinBitRasterBand( GenBinDataset *poDS );
+    GenBinBitRasterBand( GenBinDataset *poDS, int nBits );
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -240,11 +240,14 @@ class GenBinBitRasterBand : public GDALPamRasterBand
 /*                        GenBinBitRasterBand()                         */
 /************************************************************************/
 
-GenBinBitRasterBand::GenBinBitRasterBand( GenBinDataset *poDS )
+GenBinBitRasterBand::GenBinBitRasterBand( GenBinDataset *poDS, int nBitsIn )
 {
-    SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
+    SetMetadataItem( "NBITS", 
+                     CPLString().Printf("%d",nBitsIn), 
+                     "IMAGE_STRUCTURE" );
 
     this->poDS = poDS;
+    nBits = nBitsIn;
     nBand = 1;
 
     eDataType = GDT_Byte;
@@ -270,9 +273,9 @@ CPLErr GenBinBitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Establish desired position.                                     */
 /* -------------------------------------------------------------------- */
-    nLineStart = (((vsi_l_offset)nBlockXSize) * nBlockYOff) / 8;
-    iBitOffset = (((vsi_l_offset)nBlockXSize) * nBlockYOff) % 8;
-    nLineBytes = (((vsi_l_offset)nBlockXSize) * (nBlockYOff+1) + 7) / 8
+    nLineStart = (((vsi_l_offset)nBlockXSize) * nBlockYOff * nBits) / 8;
+    iBitOffset = (((vsi_l_offset)nBlockXSize) * nBlockYOff * nBits) % 8;
+    nLineBytes = (((vsi_l_offset)nBlockXSize) * (nBlockYOff+1) * nBits + 7) / 8
         - nLineStart;
 
 /* -------------------------------------------------------------------- */
@@ -295,13 +298,36 @@ CPLErr GenBinBitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     int iX;
 
-    for( iX = 0; iX < nBlockXSize; iX++, iBitOffset++ )
+    if( nBits == 1 )
     {
-        if( pabyBuffer[iBitOffset>>3]  & (0x80 >>(iBitOffset & 7)) )
-            ((GByte *) pImage)[iX] = 1;
-        else
-            ((GByte *) pImage)[iX] = 0;
+        for( iX = 0; iX < nBlockXSize; iX++, iBitOffset += nBits )
+        {
+            if( pabyBuffer[iBitOffset>>3]  & (0x80 >>(iBitOffset & 7)) )
+                ((GByte *) pImage)[iX] = 1;
+            else
+                ((GByte *) pImage)[iX] = 0;
+        }
     }
+    else if( nBits == 2 )
+    {
+        for( iX = 0; iX < nBlockXSize; iX++, iBitOffset += nBits )
+        {
+            ((GByte *) pImage)[iX] = 
+                ((pabyBuffer[iBitOffset>>3]) >> (6-(iBitOffset&0x7)) & 0x3);
+        }
+    }
+    else if( nBits == 4 )
+    {
+        for( iX = 0; iX < nBlockXSize; iX++, iBitOffset += nBits )
+        {
+            if( iBitOffset == 0 )
+                ((GByte *) pImage)[iX] = (pabyBuffer[iBitOffset>>3]) >> 4;
+            else
+                ((GByte *) pImage)[iX] = (pabyBuffer[iBitOffset>>3]) & 0xf;
+        }
+    }
+    else
+        CPLAssert( FALSE );
 
     CPLFree( pabyBuffer );
 
@@ -470,7 +496,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
         else
             pszUnits = NULL;
 
-        oSRS.SetStatePlane( nZone, 
+        oSRS.SetStatePlane( ABS(nZone), 
                             pszDatumName==NULL || !EQUAL(pszDatumName,"NAD27"),
                             pszUnits, dfUnits );
     }
@@ -527,7 +553,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Now we need to tear apart the filename to form a .HDR           */
+/*      Now we need to tear apart tfhe filename to form a .HDR           */
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
     CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
@@ -682,6 +708,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char *pszDataType = CSLFetchNameValue( papszHdr, "DATATYPE" );
     GDALDataType eDataType;
+    int nBits = -1; // Only needed for partial byte types
 
     if( pszDataType == NULL )
         eDataType = GDT_Byte;
@@ -695,10 +722,19 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_Float64;
     else if( EQUAL(pszDataType,"U8") )
         eDataType = GDT_Byte;
-    else if( EQUAL(pszDataType,"U1") )
+    else if( EQUAL(pszDataType,"U1") 
+             || EQUAL(pszDataType,"U2")
+             || EQUAL(pszDataType,"U4") )
     {
+        nBits = atoi(pszDataType+1);
         eDataType = GDT_Byte;
-        CPLAssert( nBands == 1 );
+        if( nBands != 1 )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Only one band is supported for U1/U2/U4 data type" );
+            delete poDS;
+            return NULL;
+        }
     }
     else
     {
@@ -711,15 +747,15 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Do we need byte swapping?                                       */
 /* -------------------------------------------------------------------- */
-    const char *pszBYTE_ORDER = CSLFetchNameValue(papszHdr,"BYHTE_ORDER");
+    const char *pszBYTE_ORDER = CSLFetchNameValue(papszHdr,"BYTE_ORDER");
     int bNative = TRUE;
     
     if( pszBYTE_ORDER != NULL )
     {
 #ifdef CPL_LSB
-        bNative = EQUAL(pszBYTE_ORDER,"INTEL");
+        bNative = EQUALN(pszBYTE_ORDER,"INTEL",5);
 #else
-        bNative = !EQUAL(pszBYTE_ORDER,"INTEL");
+        bNative = !EQUALN(pszBYTE_ORDER,"INTEL",5);
 #endif        
     }
 
@@ -767,9 +803,9 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = nBands;
     for( i = 0; i < poDS->nBands; i++ )
     {
-        if( EQUAL(pszDataType,"U1") )
+        if( nBits != -1 )
         {
-            poDS->SetBand( i+1, new GenBinBitRasterBand( poDS ) );
+            poDS->SetBand( i+1, new GenBinBitRasterBand( poDS, nBits ) );
         }
         else
             poDS->SetBand( 
