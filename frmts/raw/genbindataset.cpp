@@ -760,9 +760,9 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszBYTE_ORDER != NULL )
     {
 #ifdef CPL_LSB
-        bNative = EQUALN(pszBYTE_ORDER,"INTEL",5);
+        bNative = EQUALN(pszBYTE_ORDER,"LSB",3);
 #else
-        bNative = !EQUALN(pszBYTE_ORDER,"INTEL",5);
+        bNative = !EQUALN(pszBYTE_ORDER,"LSB",3);
 #endif        
     }
 
