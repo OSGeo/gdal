@@ -37,6 +37,12 @@ except ImportError:
 import sys
 import os.path
 
+def CopyBand( srcband, dstband ):
+    for line in range(srcband.YSize):
+        line_data = srcband.ReadRaster( 0, line, srcband.XSize, 1 )
+        dstband.WriteRaster( 0, line, srcband.XSize, 1, line_data,
+                             buf_type = srcband.DataType )
+        
 def Usage():
     print """
 gdal_nodatafill [-q] [-md max_distance] [-si smooth_iterations]
@@ -168,6 +174,8 @@ if dst_filename is not None:
     dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
     
     dstband = dst_ds.GetRasterBand(1)
+    CopyBand( srcband, dstband )
+    
 else:
     dstband = srcband
 
