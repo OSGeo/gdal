@@ -132,11 +132,11 @@ typedef char retStringAndCPLFree;
 %}
 %apply (int nLen, unsigned char *pBuf ) {( int len, unsigned char *bin_string )};
 %inline %{
-retStringAndCPLFree* EscapeString(int len, unsigned char *bin_string , int scheme=CPLES_SQL) {
+retStringAndCPLFree* EscapeString(int len, unsigned char *bin_string , int scheme) {
     return CPLEscapeString((const char*)bin_string, len, scheme);
 } 
 
-retStringAndCPLFree* EscapeString(const char* str, int scheme=CPLES_SQL) {
+retStringAndCPLFree* EscapeString(const char* str, int scheme) {
     return CPLEscapeString(str, (str) ? strlen(str) : 0, scheme);
 } 
 %}
