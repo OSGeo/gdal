@@ -1348,6 +1348,19 @@ void CPLVerifyConfiguration()
 /*                         CPLGetConfigOption()                         */
 /************************************************************************/
 
+/**
+  * Get the value of a configuration option.
+  * 
+  * The value is the value of a (key, value) option set with CPLSetConfigOption().
+  * If the given option was no defined with CPLSetConfigOption(), it tries to find
+  * it in environment variables.
+  *
+  * @param pszKey the key of the option to retrieve
+  * @param pszDefault a default value if the key does not match existing defined options (may be NULL)
+  * @return the value associated to the key, or the default value if not found
+  *
+  * @see CPLSetConfigOption()
+  */
 const char * CPL_STDCALL
 CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 
@@ -1375,6 +1388,26 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 /*                         CPLSetConfigOption()                         */
 /************************************************************************/
 
+/**
+  * Set a configuration option for GDAL/OGR use.
+  *
+  * Those options are defined as a (key, value) couple. The value corresponding
+  * to a key can be got later with the CPLGetConfigOption() method.
+  *
+  * This mechanism is similar to environment variables, but options set with
+  * CPLSetConfigOption() overrides, for CPLGetConfigOption() point of view,
+  * values defined in the environment.
+  *
+  * If CPLSetConfigOption() is called several times with the same key, the
+  * value provided during the last call will be used.
+  *
+  * Options can also be passed on the command line of most GDAL utilities
+  * with the with '--config KEY VALUE'. For example,
+  * ogrinfo --config CPL_DEBUG ON ~/data/test/point.shp
+  *
+  * @param pszKey the key of the option
+  * @param pszValue the value of the option
+  */
 void CPL_STDCALL 
 CPLSetConfigOption( const char *pszKey, const char *pszValue )
 
