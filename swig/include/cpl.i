@@ -45,9 +45,6 @@ typedef enum
   void Debug( const char *msg_class, const char *message ) {
     CPLDebug( msg_class, message );
   }
-  void Error( CPLErr msg_class = CE_Failure, int err_code = 0, const char* msg = "error" ) {
-    CPLError( msg_class, err_code, msg );
-  }
 
   CPLErr PushErrorHandler( char const * pszCallbackName = NULL ) {
     CPLErrorHandler pfnHandler = NULL;
@@ -67,6 +64,20 @@ typedef enum
   }
 
 %}
+
+#ifdef SWIGJAVA
+%inline%{
+  void Error( CPLErr msg_class, int err_code, const char* msg ) {
+    CPLError( msg_class, err_code, msg );
+  }
+%}
+#else
+%inline%{
+  void Error( CPLErr msg_class = CE_Failure, int err_code = 0, const char* msg = "error" ) {
+    CPLError( msg_class, err_code, msg );
+  }
+%}
+#endif
 
 #ifdef SWIGRUBY
 %rename (push_error_handler) CPLPushErrorHandler;
