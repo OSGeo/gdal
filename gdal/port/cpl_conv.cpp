@@ -260,7 +260,7 @@ char *CPLStrlwr( char *pszString )
 
         while (*pszTemp)
         {
-            *pszTemp = tolower (*pszTemp);
+            *pszTemp = (char) tolower (*pszTemp);
             pszTemp++;
         }
     }
@@ -1206,6 +1206,8 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
         // Set locale to the specified value
         setlocale( LC_ALL, pszLocale );
     }
+#else
+    (void) pszLocale;
 #endif
 
 #if defined(HAVE_SNPRINTF)
@@ -1288,6 +1290,8 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
         // Set locale to the specified value
         setlocale( LC_ALL, pszLocale );
     }
+#else
+    (void) pszLocale;
 #endif
     
     if ( !strftime( pszTemp, nMaxLen + 1, pszFormat, poBrokenTime ) )
