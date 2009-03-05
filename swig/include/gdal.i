@@ -325,54 +325,54 @@ struct GDAL_GCP {
 } /* extend */
 }; /* GDAL_GCP */
 
-%apply Pointer NONNULL {GDAL_GCP *h};
+%apply Pointer NONNULL {GDAL_GCP *gcp};
 %inline %{
 
-double GDAL_GCP_GCPX_get( GDAL_GCP *h ) {
-  return h->dfGCPX;
+double GDAL_GCP_GCPX_get( GDAL_GCP *gcp ) {
+  return gcp->dfGCPX;
 }
-void GDAL_GCP_GCPX_set( GDAL_GCP *h, double val ) {
-  h->dfGCPX = val;
+void GDAL_GCP_GCPX_set( GDAL_GCP *gcp, double dfGCPX ) {
+  gcp->dfGCPX = dfGCPX;
 }
-double GDAL_GCP_GCPY_get( GDAL_GCP *h ) {
-  return h->dfGCPY;
+double GDAL_GCP_GCPY_get( GDAL_GCP *gcp ) {
+  return gcp->dfGCPY;
 }
-void GDAL_GCP_GCPY_set( GDAL_GCP *h, double val ) {
-  h->dfGCPY = val;
+void GDAL_GCP_GCPY_set( GDAL_GCP *gcp, double dfGCPY ) {
+  gcp->dfGCPY = dfGCPY;
 }
-double GDAL_GCP_GCPZ_get( GDAL_GCP *h ) {
-  return h->dfGCPZ;
+double GDAL_GCP_GCPZ_get( GDAL_GCP *gcp ) {
+  return gcp->dfGCPZ;
 }
-void GDAL_GCP_GCPZ_set( GDAL_GCP *h, double val ) {
-  h->dfGCPZ = val;
+void GDAL_GCP_GCPZ_set( GDAL_GCP *gcp, double dfGCPZ ) {
+  gcp->dfGCPZ = dfGCPZ;
 }
-double GDAL_GCP_GCPPixel_get( GDAL_GCP *h ) {
-  return h->dfGCPPixel;
+double GDAL_GCP_GCPPixel_get( GDAL_GCP *gcp ) {
+  return gcp->dfGCPPixel;
 }
-void GDAL_GCP_GCPPixel_set( GDAL_GCP *h, double val ) {
-  h->dfGCPPixel = val;
+void GDAL_GCP_GCPPixel_set( GDAL_GCP *gcp, double dfGCPPixel ) {
+  gcp->dfGCPPixel = dfGCPPixel;
 }
-double GDAL_GCP_GCPLine_get( GDAL_GCP *h ) {
-  return h->dfGCPLine;
+double GDAL_GCP_GCPLine_get( GDAL_GCP *gcp ) {
+  return gcp->dfGCPLine;
 }
-void GDAL_GCP_GCPLine_set( GDAL_GCP *h, double val ) {
-  h->dfGCPLine = val;
+void GDAL_GCP_GCPLine_set( GDAL_GCP *gcp, double dfGCPLine ) {
+  gcp->dfGCPLine = dfGCPLine;
 }
-const char * GDAL_GCP_Info_get( GDAL_GCP *h ) {
-  return h->pszInfo;
+const char * GDAL_GCP_Info_get( GDAL_GCP *gcp ) {
+  return gcp->pszInfo;
 }
-void GDAL_GCP_Info_set( GDAL_GCP *h, const char * val ) {
-  if ( h->pszInfo ) 
-    CPLFree( h->pszInfo );
-  h->pszInfo = CPLStrdup(val);
+void GDAL_GCP_Info_set( GDAL_GCP *gcp, const char * pszInfo ) {
+  if ( gcp->pszInfo ) 
+    CPLFree( gcp->pszInfo );
+  gcp->pszInfo = CPLStrdup(pszInfo);
 }
-const char * GDAL_GCP_Id_get( GDAL_GCP *h ) {
-  return h->pszId;
+const char * GDAL_GCP_Id_get( GDAL_GCP *gcp ) {
+  return gcp->pszId;
 }
-void GDAL_GCP_Id_set( GDAL_GCP *h, const char * val ) {
-  if ( h->pszId ) 
-    CPLFree( h->pszId );
-  h->pszId = CPLStrdup(val);
+void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
+  if ( gcp->pszId ) 
+    CPLFree( gcp->pszId );
+  gcp->pszId = CPLStrdup(pszId);
 }
 
 
@@ -380,55 +380,55 @@ void GDAL_GCP_Id_set( GDAL_GCP *h, const char * val ) {
 /* Duplicate, but transposed names for C# because 
 *  the C# module outputs backwards names
 */
-double GDAL_GCP_get_GCPX( GDAL_GCP *h ) {
-  return h->dfGCPX;
+double GDAL_GCP_get_GCPX( GDAL_GCP *gcp ) {
+  return gcp->dfGCPX;
 }
-void GDAL_GCP_set_GCPX( GDAL_GCP *h, double val ) {
-  h->dfGCPX = val;
+void GDAL_GCP_set_GCPX( GDAL_GCP *gcp, double dfGCPX ) {
+  gcp->dfGCPX = dfGCPX;
 }
-double GDAL_GCP_get_GCPY( GDAL_GCP *h ) {
-  return h->dfGCPY;
+double GDAL_GCP_get_GCPY( GDAL_GCP *gcp ) {
+  return gcp->dfGCPY;
 }
-void GDAL_GCP_set_GCPY( GDAL_GCP *h, double val ) {
-  h->dfGCPY = val;
+void GDAL_GCP_set_GCPY( GDAL_GCP *gcp, double dfGCPY ) {
+  gcp->dfGCPY = dfGCPY;
 }
-double GDAL_GCP_get_GCPZ( GDAL_GCP *h ) {
-  return h->dfGCPZ;
+double GDAL_GCP_get_GCPZ( GDAL_GCP *gcp ) {
+  return gcp->dfGCPZ;
 }
-void GDAL_GCP_set_GCPZ( GDAL_GCP *h, double val ) {
-  h->dfGCPZ = val;
+void GDAL_GCP_set_GCPZ( GDAL_GCP *gcp, double dfGCPZ ) {
+  gcp->dfGCPZ = dfGCPZ;
 }
-double GDAL_GCP_get_GCPPixel( GDAL_GCP *h ) {
-  return h->dfGCPPixel;
+double GDAL_GCP_get_GCPPixel( GDAL_GCP *gcp ) {
+  return gcp->dfGCPPixel;
 }
-void GDAL_GCP_set_GCPPixel( GDAL_GCP *h, double val ) {
-  h->dfGCPPixel = val;
+void GDAL_GCP_set_GCPPixel( GDAL_GCP *gcp, double dfGCPPixel ) {
+  gcp->dfGCPPixel = dfGCPPixel;
 }
-double GDAL_GCP_get_GCPLine( GDAL_GCP *h ) {
-  return h->dfGCPLine;
+double GDAL_GCP_get_GCPLine( GDAL_GCP *gcp ) {
+  return gcp->dfGCPLine;
 }
-void GDAL_GCP_set_GCPLine( GDAL_GCP *h, double val ) {
-  h->dfGCPLine = val;
+void GDAL_GCP_set_GCPLine( GDAL_GCP *gcp, double dfGCPLine ) {
+  gcp->dfGCPLine = dfGCPLine;
 }
-const char * GDAL_GCP_get_Info( GDAL_GCP *h ) {
-  return h->pszInfo;
+const char * GDAL_GCP_get_Info( GDAL_GCP *gcp ) {
+  return gcp->pszInfo;
 }
-void GDAL_GCP_set_Info( GDAL_GCP *h, const char * val ) {
-  if ( h->pszInfo ) 
-    CPLFree( h->pszInfo );
-  h->pszInfo = CPLStrdup(val);
+void GDAL_GCP_set_Info( GDAL_GCP *gcp, const char * pszInfo ) {
+  if ( gcp->pszInfo ) 
+    CPLFree( gcp->pszInfo );
+  gcp->pszInfo = CPLStrdup(pszInfo);
 }
-const char * GDAL_GCP_get_Id( GDAL_GCP *h ) {
-  return h->pszId;
+const char * GDAL_GCP_get_Id( GDAL_GCP *gcp ) {
+  return gcp->pszId;
 }
-void GDAL_GCP_set_Id( GDAL_GCP *h, const char * val ) {
-  if ( h->pszId ) 
-    CPLFree( h->pszId );
-  h->pszId = CPLStrdup(val);
+void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
+  if ( gcp->pszId ) 
+    CPLFree( gcp->pszId );
+  gcp->pszId = CPLStrdup(pszId);
 }
 
 %} //%inline 
-%clear GDAL_GCP *h;
+%clear GDAL_GCP *gcp;
 
 #ifdef SWIGJAVA
 %rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
