@@ -137,7 +137,20 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     if ( nPixelSpace == GDALGetDataTypeSize(eBufType)/8 &&
          (!bNoDataValueSet || dfNoDataValue == 0) )
-        memset( pData, 0, nBufXSize * nBufYSize * nPixelSpace );
+    {
+        if (nLineSpace == nBufXSize * nPixelSpace)
+        {
+             memset( pData, 0, nBufYSize * nLineSpace );
+        }
+        else
+        {
+            int    iLine;
+            for( iLine = 0; iLine < nBufYSize; iLine++ )
+            {
+                memset( ((GByte*)pData) + iLine * nLineSpace, 0, nBufXSize * nPixelSpace );
+            }
+        }
+    }
     else if ( !bEqualAreas || bNoDataValueSet )
     {
         double dfWriteValue = 0.0;
