@@ -97,6 +97,40 @@ def vrt_read_2():
     ds = None
     return 'success'
 
+###############################################################################
+# Test init of band data in case of cascaded VRT (ticket #2867)
+
+def vrt_read_3():
+
+    driver_tif = gdal.GetDriverByName("GTIFF")
+
+    output_dst = driver_tif.Create( 'tmp/test_mosaic1.tif', 100, 100, 3, gdal.GDT_Byte)
+    output_dst.GetRasterBand(1).Fill(255)
+    output_dst = None
+
+    output_dst = driver_tif.Create( 'tmp/test_mosaic2.tif', 100, 100, 3, gdal.GDT_Byte)
+    output_dst.GetRasterBand(1).Fill(127)
+    output_dst = None
+    
+    ds = gdal.Open('data/test_mosaic.vrt')
+    # A simple Checksum() cannot detect if the fix works or not as
+    # Checksum() reads line per line, and we must use IRasterIO() on multi-line request
+    data = ds.GetRasterBand(1).ReadRaster(90,0,20,100)
+    import struct
+    got = struct.unpack('B' * 20*100, data)
+    for i in range(100):
+        if got[i*20 + 9 ] != 255:
+            gdaltest.post_reason('at line %d, did not find 255' % i)
+            return 'fail'
+    ds = None
+    
+    driver_tif.Delete('tmp/test_mosaic1.tif')
+    driver_tif.Delete('tmp/test_mosaic2.tif')
+
+    return 'success'
+
+    
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -106,6 +140,7 @@ for item in init_list:
     
 gdaltest_list.append( vrt_read_1 )
 gdaltest_list.append( vrt_read_2 )
+gdaltest_list.append( vrt_read_3 )
 
 if __name__ == '__main__':
 
