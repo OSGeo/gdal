@@ -47,8 +47,8 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  * Register all known configured GDAL drivers.
  *
  * This function will drive any of the following that are configured into
- * GDAL.  Possible others as well that haven't been updated in this
- * documentation:
+ * GDAL.  Many others as well haven't been updated in this
+ * documentation (see <a href="http://gdal.org/formats_list.html">full list</a>):
  *
  * <ul>
  * <li> GeoTIFF (GTiff)
@@ -67,6 +67,7 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  * <li> GSBG Golden Software Binary Grid
  * </ul>
  *
+ * This function should generally be called once at the beginning of the application.
  */
 
 void CPL_STDCALL GDALAllRegister()
