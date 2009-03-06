@@ -372,6 +372,18 @@ GDALDataType CPL_STDCALL GDALGetDataTypeByName( const char *pszName )
 /*                  GDALGetPaletteInterpretationName()                  */
 /************************************************************************/
 
+/**
+ * Get name of palette interpretation
+ *
+ * Returns a symbolic name for the palette interpretation.  This is the
+ * the enumerated item name with the GPI_ prefix removed.  So GPI_Gray returns
+ * "Gray".  The returned strings are static strings and should not be modified
+ * or freed by the application.
+ *
+ * @param eInterp palette interpretation to get name of.
+ * @return string corresponding to palette interpretation.
+ */
+
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp eInterp )
 
 {
@@ -397,6 +409,19 @@ const char *GDALGetPaletteInterpretationName( GDALPaletteInterp eInterp )
 /************************************************************************/
 /*                   GDALGetColorInterpretationName()                   */
 /************************************************************************/
+
+/**
+ * Get name of color interpretation
+ *
+ * Returns a symbolic name for the color interpretation.  This is derived from
+ * the enumerated item name with the GCI_ prefix removed, but there are some
+ * variations. So GCI_GrayIndex returns "Gray" and GCI_RedBand returns "Red".
+ * The returned strings are static strings and should not be modified
+ * or freed by the application.
+ *
+ * @param eInterp color interpretation to get name of.
+ * @return string corresponding to color interpretation.
+ */
 
 const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
 
