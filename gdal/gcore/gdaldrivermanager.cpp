@@ -230,7 +230,7 @@ int CPL_STDCALL GDALGetDriverCount()
  *
  * @param iDriver the driver index from 0 to GetDriverCount()-1.
  *
- * @return the number of registered drivers.
+ * @return the driver identified by the index or NULL if the index is invalid
  */
 
 GDALDriver * GDALDriverManager::GetDriver( int iDriver )
