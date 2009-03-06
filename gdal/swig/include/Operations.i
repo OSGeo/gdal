@@ -388,18 +388,18 @@ int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
 #ifndef SWIGJAVA
 %feature( "kwargs" ) RegenerateOverview;
 #endif
-%apply Pointer NONNULL { GDALRasterBandShadow* srcBand, GDALRasterBandShadow* overviewBand, char *resampling};
+%apply Pointer NONNULL { GDALRasterBandShadow* srcBand, GDALRasterBandShadow* overviewBand};
 %inline %{
 int  RegenerateOverview( GDALRasterBandShadow *srcBand,
                           GDALRasterBandShadow *overviewBand,
-                          char *resampling,
+                          const char *resampling = "average",
                           GDALProgressFunc callback=NULL,
                           void* callback_data=NULL) {
 
     CPLErrorReset();
 
     return GDALRegenerateOverviews( srcBand, 1, &overviewBand,
-    	   			    resampling, callback, callback_data );
+    	   			    resampling ? resampling : "average", callback, callback_data );
 }
 %}
 %clear GDALRasterBandShadow* srcBand, GDALRasterBandShadow* overviewBand, char* resampling;
