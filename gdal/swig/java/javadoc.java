@@ -4,7 +4,7 @@
  * Class gdal is an uninstanciable class providing various utility functions as static methods.
  * In particular, it provides :
  * <ul>
- * <li>gdal.AllRegister() and gdal.Open() methods.
+ * <li>gdal.<a href="#AllRegister()">AllRegister()</a> and gdal.<a href="#Open(java.lang.String, int)">Open()</a> methods.
  * <li>bindings for various GDAL algorithms.
  * <li>bindings for some general purpose CPL functions.
  * </ul>
@@ -53,6 +53,29 @@ public class gdal:public static String[] GeneralCmdLineProcessor(String[] args, 
     * @see #GeneralCmdLineProcessor(String[] args, int options)
     */
 public class gdal:public static String[] GeneralCmdLineProcessor(String[] args)
+
+   /**
+    * General utility option processing.
+    *
+    * Same as below but with arguments as a Vector of strings
+    *
+    * @return updated argument list as a new Vector of strings
+    *
+    * @see #GeneralCmdLineProcessor(String[] args, int options)
+    */
+public class gdal:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args, int options)
+
+   /**
+    * General utility option processing.
+    *
+    * Same as below but with arguments as a Vector of strings and options == 0
+    *
+    * @return updated argument list as a new Vector of strings
+    *
+    * @see #GeneralCmdLineProcessor(String[] args, int options)
+    */
+public class gdal:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args)
+
 
 /**
  * Display a debugging message.
@@ -950,3 +973,290 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds)
+
+/**
+ * Get runtime version information.
+ *
+ * Available request values:
+ * <ul>
+ * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a string.  
+ * ie. "20020416".
+ * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "1.1.7"
+ * <li> "--version": Returns one line version message suitable for use in 
+ * response to --version requests.  ie. "GDAL 1.1.7, released 2002/04/16"
+ * <li> "LICENCE": Returns the content of the LICENSE.TXT file from the GDAL_DATA directory.
+ * </ul>
+ *
+ * @param request the type of version info desired, as listed above.
+ *
+ * @return a string containing the requested information.
+ */
+public class gdal:public static String VersionInfo(String request)
+
+/**
+ * Get runtime version information.
+ *
+ * @return a string containing GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ */
+public class gdal:public static String VersionInfo()
+
+
+/**
+ * Register all known configured GDAL drivers.
+ *
+ * This function will drive any of the following that are configured into
+ * GDAL.  Many others as well that haven't been updated in this
+ * documentation (see <a href="http://gdal.org/formats_list.html">full list</a>):
+ * <p>
+ * <ul>
+ * <li> GeoTIFF (GTiff)
+ * <li> Geosoft GXF (GXF)
+ * <li> Erdas Imagine (HFA)
+ * <li> CEOS (CEOS)
+ * <li> ELAS (ELAS)
+ * <li> Arc/Info Binary Grid (AIGrid)
+ * <li> SDTS Raster DEM (SDTS)
+ * <li> OGDI (OGDI)
+ * <li> ESRI Labelled BIL (EHdr)
+ * <li> PCI .aux Labelled Raw Raster (PAux)
+ * <li> HDF4 Hierachal Data Format Release 4
+ * <li> HDF5 Hierachal Data Format Release 5
+ * <li> GSAG Golden Software ASCII Grid
+ * <li> GSBG Golden Software Binary Grid
+ * </ul>
+ * <p>
+ * This function should generally be called once at the beginning of the application.
+ */
+public class gdal:public static void AllRegister()
+
+/**
+ * Get maximum cache memory.
+ *
+ * Gets the maximum amount of memory available to the GDALRasterBlock
+ * caching system for caching GDAL read/write imagery. 
+ *
+ * @return maximum in bytes. 
+ */
+public class gdal:public static int GetCacheMax()
+
+/**
+ * Set maximum cache memory.
+ *
+ * This function sets the maximum amount of memory that GDAL is permitted
+ * to use for GDALRasterBlock caching.
+ *
+ * @param newSize the maximum number of bytes for caching.  Maximum is 2GB.
+ */
+public class gdal:public static void SetCacheMax(int newSize)
+
+/**
+ * Get cache memory used.
+ *
+ * @return the number of bytes of memory currently in use by the 
+ * GDALRasterBlock memory caching.
+ */
+public class gdal:public static int GetCacheUsed()
+
+
+/**
+ * Get data type size in bits.
+ *
+ * Returns the size of a a GDT_* type <b>in bits</b>, not bytes!
+ *
+ * @param eDataType type, such as gdalconst.GDT_Byte. 
+ * @return the number of bits or zero if it is not recognised.
+ */
+public class gdal:public static int GetDataTypeSize(int eDataType)
+
+/**
+ * Is data type complex? 
+ *
+ * @return TRUE if the passed type is complex (one of gdalconst.GDT_CInt16, GDT_CInt32, 
+ * GDT_CFloat32 or GDT_CFloat64), that is it consists of a real and imaginary
+ * component. 
+ */
+public class gdal:public static int DataTypeIsComplex(int eDataType)
+
+/**
+ * Get name of data type.
+ *
+ * Returns a symbolic name for the data type.  This is essentially the
+ * the enumerated item name with the GDT_ prefix removed.  So gdalconst.GDT_Byte returns
+ * "Byte". These strings are useful for reporting
+ * datatypes in debug statements, errors and other user output. 
+ *
+ * @param eDataType type to get name of.
+ * @return string corresponding to type.
+ */
+public class gdal:public static String GetDataTypeName(int eDataType)
+
+/**
+ * Get data type by symbolic name.
+ *
+ * Returns a data type corresponding to the given symbolic name. This
+ * function is opposite to the gdal.GetDataTypeName().
+ *
+ * @param dataTypeName string containing the symbolic name of the type.
+ * 
+ * @return GDAL data type.
+ */
+public class gdal:public static int GetDataTypeByName(String dataTypeName)
+
+/**
+ * Get name of color interpretation.
+ *
+ * Returns a symbolic name for the color interpretation.  This is derived from
+ * the enumerated item name with the GCI_ prefix removed, but there are some
+ * variations. So GCI_GrayIndex returns "Gray" and GCI_RedBand returns "Red".
+ * The returned strings are static strings and should not be modified
+ * or freed by the application.
+ *
+ * @param eColorInterp color interpretation to get name of.
+ * @return string corresponding to color interpretation.
+ */
+public class gdal:public static String GetColorInterpretationName(int eColorInterp)
+
+
+/**
+ * Get name of palette interpretation.
+ *
+ * Returns a symbolic name for the palette interpretation.  This is the
+ * the enumerated item name with the GPI_ prefix removed.  So GPI_Gray returns
+ * "Gray".  The returned strings are static strings and should not be modified
+ * or freed by the application.
+ *
+ * @param ePaletteInterp palette interpretation to get name of.
+ * @return string corresponding to palette interpretation.
+ */
+public class gdal:public static String GetPaletteInterpretationName(int ePaletteInterp)
+
+/**
+ * Fetch the number of registered drivers.
+ *
+ * @return the number of registered drivers.
+ */
+public class gdal:public static int GetDriverCount()
+
+/**
+ * Fetch a driver based on the short name.
+ *
+ * @param name the short name, such as "GTiff", being searched for.
+ *
+ * @return the identified driver, or null if no match is found.
+ */
+public class gdal:public static Driver GetDriverByName(String name)
+
+/**
+ * Fetch driver by index.
+ *
+ * @param iDriver the driver index from 0 to gdal.GetDriverCount()-1.
+ *
+ * @return the driver identified by the index or null if the index is invalid
+ */
+public class gdal:public static Driver GetDriver(int iDriver)
+
+/**
+ * Open a raster file as a Dataset object.
+ *
+ * This function will try to open the passed file, or virtual dataset
+ * name by invoking the Open method of each registered Driver in turn. 
+ * The first successful open will result in a returned dataset.  If all
+ * drivers fail then null is returned.
+ * <p>
+ * It is required that you explicitely close a dataset opened in update
+ * mode with the Dataset.delete() method. Otherwise the data might not be
+ * flushed to the disk. Don't rely only on Java garbage collection.
+ *
+ * @param name the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param eAccess the desired access, either gdalconst.GA_Update or gdalconst.GA_ReadOnly.  Many
+ * drivers support only read only access.
+ *
+ * @return A Dataset object or null on failure.
+ *
+ * @see #OpenShared(String name, int eAccess)
+ */
+public class gdal:public static Dataset Open(String name, int eAccess)
+
+/**
+ * Open a raster file as a Dataset object.
+ *
+ * Same as below with eAccess == gdalconst.GA_ReadOnly
+ *
+ * @see #Open(String name, int eAccess)
+ */
+public class gdal:public static Dataset Open(String name)
+
+/**
+ * Open a raster file as a GDALDataset.
+ *
+ * This function works the same as gdal.Open(), but allows the sharing of
+ * GDALDataset handles for a dataset with other callers to gdal.OpenShared().
+ * <p>
+ * In particular, gdal.OpenShared() will first consult it's list of currently
+ * open and shared Dataset's, and if the GetDescription() name for one
+ * exactly matches the name passed to gdal.OpenShared() it will be
+ * referenced and returned.
+ *
+ * @param name the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param eAccess the desired access, either gdalconst.GA_Update or gdalconst.GA_ReadOnly.  Many
+ * drivers support only read only access.
+ *
+ * @return A Dataset object or null on failure.
+ *
+ * @see #Open(String name, int eAccess)
+ */
+public class gdal:public static Dataset OpenShared(String name, int eAccess)
+
+/**
+ * Open a raster file as a Dataset object.
+ *
+ * Same as below with eAccess == gdalconst.GA_ReadOnly
+ *
+ * @see #OpenShared(String name, int eAccess)
+ */
+public class gdal:public static Dataset OpenShared(String name)
+
+
+/**
+ * Identify the driver that can open a raster file.
+ *
+ * This function will try to identify the driver that can open the passed file
+ * name by invoking the Identify method of each registered Driver in turn. 
+ * The first driver that successful identifies the file name will be returned.
+ * If all drivers fail then null is returned.
+ * <p>
+ * In order to reduce the need for such searches touch the operating system
+ * file system machinery, it is possible to give an optional list of files.
+ * This is the list of all files at the same level in the file system as the
+ * target file, including the target file. The filenames will not include any
+ * path components, are an essentially just the output of CPLReadDir() on the
+ * parent directory. If the target object does not have filesystem semantics
+ * then the file list should be NULL.
+ *
+ * @param name the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param fileList a veector of strings.
+ * These strings are filenames that are auxiliary to the main filename. The passed
+ * value may be null.
+ *
+ * @return A Driver object or null on failure.
+ */
+public class gdal:public static Driver IdentifyDriver(String name, java.util.Vector fileList)
+
+/**
+ * Identify the driver that can open a raster file.
+ *
+ * Same as below with fileList == null
+ *
+ * @see #IdentifyDriver(String name, java.util.Vector fileList)
+ */
+public class gdal:public static Driver IdentifyDriver(String name)
