@@ -898,14 +898,10 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
       PyObject *o = PySequence_GetItem($input,i);
       PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
       type* rawobjectpointer = NULL;
-      if (sobj) {
-          Py_DECREF(sobj);
-      } else {
+      if (!sobj) {
           SWIG_fail;
       }
       rawobjectpointer = (type*) sobj->ptr;
-      /* FIXME remove this when Frank confirms this typemap works */
-      int v = GDALGetRasterBandXSize(rawobjectpointer);
       $2[i] = rawobjectpointer;
       Py_DECREF(o);
 
@@ -915,11 +911,6 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 %typemap(freearg)  (int object_list_count, type **poObjects)
 {
   /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, type **poObjects)*/
-  if ( $2 ) {
-      for (int i = 0; i< $1; i++) {
-          CPLFree($2[i]);
-      }
-  }
   CPLFree( $2 );
 }
 %enddef
