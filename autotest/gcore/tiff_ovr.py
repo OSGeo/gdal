@@ -974,6 +974,65 @@ def tiff_ovr_25():
     return 'success'
 
 ###############################################################################
+# Test gdal.RegenerateOverview()
+
+def tiff_ovr_26():
+
+    try:
+        x = gdal.RegenerateOverview
+    except:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr26.tif',100,100,1)
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(1).FlushCache()
+    ds.BuildOverviews('NEAR', overviewlist = [2])
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds.GetRasterBand(1).GetOverview(0).Fill(0)
+    cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs_new != 0:
+        return 'fail'
+    gdal.RegenerateOverview(ds.GetRasterBand(1), ds.GetRasterBand(1).GetOverview(0), 'NEAR')
+    cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != cs_new:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdal.RegenerateOverviews()
+
+def tiff_ovr_27():
+
+    try:
+        x = gdal.RegenerateOverviews
+    except:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr27.tif',100,100,1)
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(1).FlushCache()
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    ds.GetRasterBand(1).GetOverview(0).Fill(0)
+    ds.GetRasterBand(1).GetOverview(1).Fill(0)
+    cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs2_new = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs_new != 0 or cs2_new != 0:
+        return 'fail'
+    gdal.RegenerateOverviews(ds.GetRasterBand(1), [ds.GetRasterBand(1).GetOverview(0), ds.GetRasterBand(1).GetOverview(1)], 'NEAR')
+    cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs2_new = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != cs_new:
+        return 'fail'
+    if cs2 != cs2_new:
+        return 'fail'
+    ds = None
+
+    return 'success'
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1000,6 +1059,8 @@ def tiff_ovr_cleanup():
         gdaltest.tiff_drv.Delete( 'tmp/ovr23.tif' )
         gdaltest.tiff_drv.Delete( 'tmp/ovr24.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr25.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr26.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr27.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -1031,6 +1092,8 @@ gdaltest_list_internal = [
     tiff_ovr_23,
     tiff_ovr_24,
     tiff_ovr_25,
+    tiff_ovr_26,
+    tiff_ovr_27,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
