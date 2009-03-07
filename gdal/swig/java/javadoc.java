@@ -1303,7 +1303,9 @@ public class gdal:public static String SerializeXMLTree(XMLNode xmlnode)
 /* Class Dataset */
 
 /**
- * Class Dataset is an uninstanciable class providing various methods to access GDAL dataset objects.
+ * Class Dataset is an uninstanciable class providing various methods to access a set of associated raster bands, usually from one file.
+ * <p>
+ * A dataset encapsulating one or more raster bands. Details are further discussed in the <a href="http://gdal.org/gdal_datamodel.html#GDALDataset">GDAL Data Model</a>.
  * <p>
  * Dataset objects are returned by methods from other classes, such as
  * gdal.<a href="gdal.html#Open(java.lang.String, int)">Open()</a> or
@@ -1431,7 +1433,7 @@ public class Dataset:public int CreateMaskBand(int nFlags)
   * all native resources will have been destroyed, so it will be illegal to use
   * any derived relative Java objects, such as Band objects of this Dataset.
   * <p>
-  * The delete() method <b>must</b> called when a dataset has been opened in update
+  * The delete() method <b>must</b> be called when a dataset has been opened in update
   * or creation mode, otherwise data might not be properly flushed to the disk.
   */
 public class Dataset:public void delete()
@@ -1867,13 +1869,12 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
 /* Class Band */
 
 /**
- * Class Band is an uninstanciable class providing various methods to access GDAL raster band objects.
+ * Class Band is an uninstanciable class providing various methods to access a single raster band (or channel).
  * <p>
  * Band objects are returned by methods from other classes, such as
  * Dataset.<a href="Dataset.html#GetRasterBand(int)">GetRasterBand()</a>
  */
 public class Band
-
 
 /**
  * Compute checksum for image region. 
@@ -2970,3 +2971,266 @@ public class Band:public int SetRasterCategoryNames(java.util.Vector names)
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on failure. 
  */
 public class Band:public int SetStatistics(double min, double max, double mean, double stddev)
+
+/* Class Driver */
+
+/**
+ * Class Driver is an uninstanciable class providing various methods for a format specific driver.
+ * <p>
+ * An instance of this class is created for each supported format, and manages information about the format.
+ * This roughly corresponds to a file format, though some drivers may be gateways to many formats through a secondary multi-library.
+ * <p>
+ * Drivers are loaded and registered with the gdal.<a href="gdal.html#AllRegister()">AllRegister()</a> method
+ */
+public class Driver
+
+/**
+ * Create a new dataset with this driver.
+ *
+ * What argument values are legal for particular drivers is driver specific,
+ * and there is no way to query in advance to establish legal values (except
+ * querying driver.GetMetadataItem(gdalconst.DMD_CREATIONOPTIONLIST)
+ * <p>
+ * That function will try to validate the creation option list passed to the driver
+ * with the GDALValidateCreationOptions() method. This check can be disabled
+ * by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS=NO.
+ * <p>
+ * At the end of dataset manipulation, the delete() method <b>must</b> be called
+ * on the returned dataset otherwise data might not be properly flushed to the disk.
+ *
+ * @param name the name of the dataset to create.
+ * @param xsize width of created raster in pixels.
+ * @param ysize height of created raster in pixels.
+ * @param nBands number of bands.
+ * @param eType type of raster.
+ * @param options list of driver specific control parameters (may be null)
+ *
+ * @return null on failure, or a Dataset object
+ */
+public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+
+/**
+ * Create a new dataset with this driver.
+ *
+ * Same as below but options are passed as a Vector of String.
+ *
+ * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ */
+public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType, java.util.Vector options)
+
+/**
+ * Create a new dataset with this driver.
+ *
+ * Same as below with eType == gdalconst.GDT_Byte
+ *
+ * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ */
+public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, String[] options)
+
+/**
+ * Create a new dataset with this driver.
+ *
+ * Same as below with options == null
+ *
+ * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ */
+public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType)
+
+/**
+ * Create a new dataset with this driver.
+ *
+ * Same as below with eType == gdalconst.GDT_Byte and options == null
+ *
+ * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ */
+public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands)
+
+/**
+ * Create a new dataset with this driver.
+ *
+ * Same as below with nbands == 1, eType == gdalconst.GDT_Byte and options == null
+ *
+ * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ */
+public class Driver:public Dataset Create(String name, int xsize, int ysize)
+
+/**
+ * Create a copy of a dataset.
+ *
+ * This method will attempt to create a copy of a raster dataset with the
+ * indicated filename, and in this drivers format.  Band number, size, 
+ * type, projection, geotransform and so forth are all to be copied from
+ * the provided template dataset.  
+ * <p>
+ * Note that many sequential write once formats (such as JPEG and PNG) don't
+ * implement the Create() method but do implement this CreateCopy() method.
+ * If the driver doesn't implement CreateCopy(), but does implement Create()
+ * then the default CreateCopy() mechanism built on calling Create() will
+ * be used.
+ * <p>
+ * It is intended that CreateCopy() will often be used with a source dataset
+ * which is a virtual dataset allowing configuration of band types, and
+ * other information without actually duplicating raster data (see the VRT driver).
+ * This is what is done by the gdal_translate utility for example.
+ * <p>
+ * That function will try to validate the creation option list passed to the driver
+ * with the GDALValidateCreationOptions() method. This check can be disabled
+ * by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS=NO.
+ * <p>
+ * At the end of dataset manipulation, the delete() method <b>must</b> be called
+ * on the returned dataset otherwise data might not be properly flushed to the disk.
+ *
+ * @param name the name for the new dataset. 
+ * @param src_ds the dataset being duplicated. 
+ * @param strict 1 if the copy must be strictly equivelent, or more
+ * normally 0 indicating that the copy may adapt as needed for the 
+ * output format. 
+ * @param options additional format dependent options controlling 
+ * creation of the output file. 
+ * @param callback for reporting algorithm progress. May be null
+ *
+ * @return a pointer to the newly created dataset (may be read-only access).
+ */
+public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+
+/**
+ * Create a copy of a dataset.
+ *
+ * Same as below with callback == null
+ *
+ * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ */
+public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options)
+
+/**
+ * Create a copy of a dataset.
+ *
+ * Same as below with strict == 1 and callback == null
+ *
+ * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ */
+public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, Vector options)
+
+/**
+ * Create a copy of a dataset.
+ *
+ * Same as below with options == null and callback == null
+ *
+ * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ */
+public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict)
+
+/**
+ * Create a copy of a dataset.
+ *
+ * Same as below with strict == 1, options == null and callback == null
+ *
+ * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ */
+public class Driver:public Dataset CreateCopy(String name, Dataset src_ds)
+
+/**
+ * Create a copy of a dataset.
+ *
+ * Same as below with callback == null and options as an array of strings
+ *
+ * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ */
+public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, String[] options)
+
+/**
+ * Create a copy of a dataset.
+ *
+ * Same as below with strict == 1, callback == null and options as an array of strings
+ *
+ * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ */
+public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, String[] options)
+
+/**
+ * Delete named dataset.
+ *
+ * The driver will attempt to delete the named dataset in a driver specific
+ * fashion.  Full featured drivers will delete all associated files,
+ * database objects, or whatever is appropriate.  The default behaviour when
+ * no driver specific behaviour is provided is to attempt to delete the
+ * passed name as a single file.
+ * <p>
+ * It is unwise to have open dataset handles on this dataset when it is
+ * deleted.
+ *
+ * @param name name of dataset to delete.
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if the operation fails.
+ */
+public class Driver:public int Delete(String name)
+
+/**
+ * Rename a dataset.
+ *
+ * Rename a dataset. This may including moving the dataset to a new directory
+ * or even a new filesystem.  
+ * <p>
+ * It is unwise to have open dataset handles on this dataset when it is
+ * being renamed. 
+ *
+ * @param newName new name for the dataset.
+ * @param oldName old name for the dataset.
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if the operation fails.
+ */
+public class Driver:public int Rename(String newName, String oldName)
+
+
+/**
+ * Register a driver for use.
+ *
+ * Normally this method is used by format specific C callable registration
+ * entry points such as GDALRegister_GTiff() rather than being called
+ * directly by application level code.
+ * <p>
+ * If this driver is already
+ * registered, then no change is made, and the index of the existing driver
+ * is returned.  Otherwise the driver list is extended, and the new driver
+ * is added at the end.
+ *
+ * @return the index of the new installed driver.
+ */
+public class Driver:public int Register()
+
+/**
+ * Deregister the driver.
+ */
+public class Driver:public void Deregister()
+
+/**
+ * Return the short name of a driver.
+ *
+ * This is the string that can be
+ * passed to the GDALGetDriverByName() function.
+ * <p>
+ * For the GeoTIFF driver, this is "GTiff"
+ *
+ * @return the short name of the driver.
+ */
+public class Driver:public String getShortName()
+
+/**
+ * Return the long name of a driver
+ *
+ * For the GeoTIFF driver, this is "GeoTIFF"
+ *
+ * @return the long name of the driver or empty string.
+ */
+public class Driver:public String getLongName()
+
+/**
+ * Return the URL to the help that describes the driver
+ *
+ * That URL is relative to the GDAL documentation directory.
+ * <p>
+ * For the GeoTIFF driver, this is "frmt_gtiff.html"
+ *
+ * @return the URL to the help that describes the driver or null
+ */
+public class Driver:public String getHelpTopic()
