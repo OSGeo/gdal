@@ -2980,9 +2980,9 @@ public class Band:public int SetStatistics(double min, double max, double mean, 
  * An instance of this class is created for each supported format, and manages information about the format.
  * This roughly corresponds to a file format, though some drivers may be gateways to many formats through a secondary multi-library.
  * <p>
- * Drivers are loaded and registered with the gdal.<a href="gdal.html#AllRegister()">AllRegister()</a> method
+ * Drivers are loaded and registered with the gdal.<a href="./gdal.html#AllRegister()">AllRegister()</a> method
  */
-public class Driver
+public class org.gdal.gdal.Driver
 
 /**
  * Create a new dataset with this driver.
@@ -3007,7 +3007,7 @@ public class Driver
  *
  * @return null on failure, or a Dataset object
  */
-public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
 
 /**
  * Create a new dataset with this driver.
@@ -3016,7 +3016,7 @@ public class Driver:public Dataset Create(String name, int xsize, int ysize, int
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  */
-public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType, java.util.Vector options)
+public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType, java.util.Vector options)
 
 /**
  * Create a new dataset with this driver.
@@ -3025,7 +3025,7 @@ public class Driver:public Dataset Create(String name, int xsize, int ysize, int
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  */
-public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, String[] options)
+public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, String[] options)
 
 /**
  * Create a new dataset with this driver.
@@ -3034,7 +3034,7 @@ public class Driver:public Dataset Create(String name, int xsize, int ysize, int
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  */
-public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType)
+public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType)
 
 /**
  * Create a new dataset with this driver.
@@ -3043,7 +3043,7 @@ public class Driver:public Dataset Create(String name, int xsize, int ysize, int
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  */
-public class Driver:public Dataset Create(String name, int xsize, int ysize, int nBands)
+public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands)
 
 /**
  * Create a new dataset with this driver.
@@ -3052,7 +3052,7 @@ public class Driver:public Dataset Create(String name, int xsize, int ysize, int
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
  */
-public class Driver:public Dataset Create(String name, int xsize, int ysize)
+public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize)
 
 /**
  * Create a copy of a dataset.
@@ -3091,7 +3091,7 @@ public class Driver:public Dataset Create(String name, int xsize, int ysize)
  *
  * @return a pointer to the newly created dataset (may be read-only access).
  */
-public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
 
 /**
  * Create a copy of a dataset.
@@ -3100,7 +3100,7 @@ public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int s
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  */
-public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options)
+public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options)
 
 /**
  * Create a copy of a dataset.
@@ -3109,7 +3109,7 @@ public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int s
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  */
-public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, Vector options)
+public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, Vector options)
 
 /**
  * Create a copy of a dataset.
@@ -3118,7 +3118,7 @@ public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, Vecto
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  */
-public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict)
+public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict)
 
 /**
  * Create a copy of a dataset.
@@ -3127,7 +3127,7 @@ public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int s
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  */
-public class Driver:public Dataset CreateCopy(String name, Dataset src_ds)
+public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds)
 
 /**
  * Create a copy of a dataset.
@@ -3136,7 +3136,7 @@ public class Driver:public Dataset CreateCopy(String name, Dataset src_ds)
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  */
-public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, String[] options)
+public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, String[] options)
 
 /**
  * Create a copy of a dataset.
@@ -3145,7 +3145,7 @@ public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, int s
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
  */
-public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, String[] options)
+public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, String[] options)
 
 /**
  * Delete named dataset.
@@ -3163,7 +3163,7 @@ public class Driver:public Dataset CreateCopy(String name, Dataset src_ds, Strin
  *
  * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if the operation fails.
  */
-public class Driver:public int Delete(String name)
+public class org.gdal.gdal.Driver:public int Delete(String name)
 
 /**
  * Rename a dataset.
@@ -3179,7 +3179,7 @@ public class Driver:public int Delete(String name)
  *
  * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if the operation fails.
  */
-public class Driver:public int Rename(String newName, String oldName)
+public class org.gdal.gdal.Driver:public int Rename(String newName, String oldName)
 
 
 /**
@@ -3196,12 +3196,12 @@ public class Driver:public int Rename(String newName, String oldName)
  *
  * @return the index of the new installed driver.
  */
-public class Driver:public int Register()
+public class org.gdal.gdal.Driver:public int Register()
 
 /**
  * Deregister the driver.
  */
-public class Driver:public void Deregister()
+public class org.gdal.gdal.Driver:public void Deregister()
 
 /**
  * Return the short name of a driver.
@@ -3213,7 +3213,7 @@ public class Driver:public void Deregister()
  *
  * @return the short name of the driver.
  */
-public class Driver:public String getShortName()
+public class org.gdal.gdal.Driver:public String getShortName()
 
 /**
  * Return the long name of a driver
@@ -3222,7 +3222,7 @@ public class Driver:public String getShortName()
  *
  * @return the long name of the driver or empty string.
  */
-public class Driver:public String getLongName()
+public class org.gdal.gdal.Driver:public String getLongName()
 
 /**
  * Return the URL to the help that describes the driver
@@ -3233,4 +3233,4 @@ public class Driver:public String getLongName()
  *
  * @return the URL to the help that describes the driver or null
  */
-public class Driver:public String getHelpTopic()
+public class org.gdal.gdal.Driver:public String getHelpTopic()
