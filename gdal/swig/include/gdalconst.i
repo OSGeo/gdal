@@ -85,6 +85,9 @@
 %constant GCI_MagentaBand   = GCI_MagentaBand;
 %constant GCI_YellowBand    = GCI_YellowBand;
 %constant GCI_BlackBand     = GCI_BlackBand;
+%constant GCI_YCbCr_YBand     = GCI_YCbCr_YBand;
+%constant GCI_YCbCr_CrBand     = GCI_YCbCr_CrBand;
+%constant GCI_YCbCr_CbBand     = GCI_YCbCr_CbBand;
 
 // GDALResampleAlg
 
