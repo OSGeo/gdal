@@ -3499,3 +3499,115 @@ public class MajorObject:public int SetMetadataItem( String name, String value, 
 
 public class MajorObject:public int SetMetadataItem( String name, String value )
 
+
+/* Class Transformer */
+
+/**
+  * Class used for image to image transformer.
+  */
+public class Transformer
+
+
+/**
+ * Create image to image transformer.
+ *
+ * This function creates a transformation object that maps from pixel/line
+ * coordinates on one image to pixel/line coordinates on another image.  The
+ * images may potentially be georeferenced in different coordinate systems, 
+ * and may used GCPs to map between their pixel/line coordinates and 
+ * georeferenced coordinates (as opposed to the default assumption that their
+ * geotransform should be used). 
+ * <p>
+ * This transformer potentially performs three concatenated transformations.
+ * <p>
+ * The first stage is from source image pixel/line coordinates to source
+ * image georeferenced coordinates, and may be done using the geotransform, 
+ * or if not defined using a polynomial model derived from GCPs.  If GCPs
+ * are used this stage is accomplished using GDALGCPTransform(). 
+ * <p>
+ * The second stage is to change projections from the source coordinate system
+ * to the destination coordinate system, assuming they differ.  This is 
+ * accomplished internally using GDALReprojectionTransform().
+ * <p>
+ * The third stage is converting from destination image georeferenced
+ * coordinates to destination image coordinates.  This is done using the
+ * destination image geotransform, or if not available, using a polynomial 
+ * model derived from GCPs. If GCPs are used this stage is accomplished using 
+ * GDALGCPTransform().  This stage is skipped if hDstDS is NULL when the
+ * transformation is created. 
+ *
+ * Supported Options:
+ * <ul>
+ * <li> SRC_SRS: WKT SRS to be used as an override for src_ds.
+ * <li> DST_SRS: WKT SRS to be used as an override for dst_ds.
+ * <li> GCPS_OK: If FALSE, GCPs will not be used, default is TRUE. 
+ * <li> MAX_GCP_ORDER: the maximum order to use for GCP derived polynomials if
+ * possible.  The default is to autoselect based on the number of GCPs.  
+ * A value of -1 triggers use of Thin Plate Spline instead of polynomials.
+ * <li> METHOD: may have a value which is one of GEOTRANSFORM, GCP_POLYNOMIAL,
+ * GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation method to be
+ * considered on the source dataset. 
+ * <li> RPC_HEIGHT: A fixed height to be used with RPC calculations.
+ * <li> RPC_DEM: The name of a DEM file to be used with RPC calculations.
+ * </ul>
+ * 
+ * @param src_ds source dataset, or null.
+ * @param dst_ds destination dataset (or null).
+ * @param options options provides as a vector of strings of the format "NAME=VALUE" (or null)
+ */
+public class Transformer:public Transformer(Dataset src_ds, Dataset dst_ds, java.util.Vector options)
+
+/**
+  * Transform a 3D point.
+  *
+  * The method will use the provided 3 double values and update them.
+  *
+  * @param inout array of 3 double values (x, y, z) used for input and output.
+  * @param bDstToSrc 1 for inverse transformation, 0 for forward transformation.
+  * @return 1 in case of success, 0 otherwise
+  */
+public class Transformer:public int TransformPoint(int bDstToSrc, double[] inout)
+
+/**
+  * Transform a 3D point.
+  *
+  * The method will use the provided (x, y, z) values and put the transformed
+  * values into argout
+  *
+  * @param argout array of 3 double values where the transformed coordinates will be put.
+  * @param bDstToSrc 1 for inverse transformation, 0 for forward transformation.
+  * @param x input x value
+  * @param y input y value
+  * @param z input z value
+  * @return 1 in case of success, 0 otherwise
+  */
+public class Transformer:public int TransformPoint(double[] argout, int bDstToSrc, double x, double y, double z)
+
+/**
+  * Transform a 2D point.
+  *
+  * The method will use the provided (x, y) values and put the transformed
+  * values into argout
+  *
+  * @param argout array of <b>3</b> double values where the transformed coordinates will be put.
+  * @param bDstToSrc 1 for inverse transformation, 0 for forward transformation.
+  * @param x input x value
+  * @param y input y value
+  * @return 1 in case of success, 0 otherwise
+  */
+public class Transformer:public int TransformPoint(double[] argout, int bDstToSrc, double x, double y)
+
+/**
+  * Transform an array of coordinates.
+  *
+  * The method will use the provided array of values and put the update coordinates
+  * into it.
+  *
+  * @param arrayOfCoords array of 2D or 3D values.
+  * @param bDstToSrc 1 for inverse transformation, 0 for forward transformation.
+  * @param panSuccess array where to put the success flag for each transformation.
+  *                   May be null, otherwise panSuccess.length must be equal to arrayOfCoords.length
+  * 
+  * @return 1 in case of success, 0 otherwise
+  */
+public class Transformer:public int TransformPoints(int bDstToSrc, double[][] arrayOfCoords, int[] panSuccess)
