@@ -506,6 +506,13 @@ import java.awt.Color;
 %}
 
 %typemap(javacode) GDALColorTableShadow %{
+  private Object parentReference;
+
+  /* Ensure that the GC doesn't collect any parent instance set from Java */
+  protected void addReference(Object reference) {
+    parentReference = reference;
+  }
+
 /* convienance method */
   public IndexColorModel getIndexColorModel(int bits) {
     int size = GetCount();
@@ -656,7 +663,36 @@ import org.gdal.gdalconst.gdalconstConstants;
       return Clone();
   }
 %}
-  
+
+%typemap(javacode) GDALMajorObjectShadow %{
+  private Object parentReference;
+
+  /* Ensure that the GC doesn't collect any parent instance set from Java */
+  protected void addReference(Object reference) {
+    parentReference = reference;
+  }
+
+  /* For backward compatibilty */
+  public int SetMetadata(java.util.Hashtable metadata, String domain)
+  {
+      if (metadata == null)
+          return SetMetadata((java.util.Vector)null, domain);
+      java.util.Vector v = new java.util.Vector();
+      java.util.Enumeration values = metadata.elements();
+      java.util.Enumeration keys = metadata.keys();
+      while(keys.hasMoreElements())
+      {
+          v.add((String)keys.nextElement() + "=" + (String)values.nextElement());
+      }
+      return SetMetadata(v, domain);
+  }
+
+  public int SetMetadata(java.util.Hashtable metadata)
+  {
+      return SetMetadata(metadata, null);
+  }
+%}
+
 /************************************************************************/
 /*                       Stuff for progress callback                    */
 /************************************************************************/
