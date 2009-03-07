@@ -1710,10 +1710,10 @@ public class Dataset:public int GetRasterCount()
  * @param ysize The height of the region of the band to be accessed in lines.
 
  * @param buf_xsize the width of the buffer image into which the desired region
- * is to be read, or from which it is to be written.
+ * is to be read.
  *
  * @param buf_ysize the height of the buffer image into which the desired
- * region is to be read, or from which it is to be written.
+ * region is to be read.
  *
  * @param buf_type the type of the pixel values in the nioBuffer data buffer.  The
  * pixel values will automatically be translated to/from the Band
@@ -1801,11 +1801,9 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  *
  * @param ysize The height of the region of the band to be accessed in lines.
 
- * @param buf_xsize the width of the buffer image into which the desired region
- * is to be read, or from which it is to be written.
+ * @param buf_xsize the width of the buffer image from which the desired region is to be written.
  *
- * @param buf_ysize the height of the buffer image into which the desired
- * region is to be read, or from which it is to be written.
+ * @param buf_ysize the height of the buffer image from which the desired region is to be written.
  *
  * @param buf_type the type of the pixel values in the nioBuffer data buffer.  The
  * pixel values will automatically be translated to/from the Band
@@ -1864,3 +1862,1111 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
  */
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
+
+
+/* Class Band */
+
+/**
+ * Class Band is an uninstanciable class providing various methods to access GDAL raster band objects.
+ * <p>
+ * Band objects are returned by methods from other classes, such as
+ * Dataset.<a href="Dataset.html#GetRasterBand(int)">GetRasterBand()</a>
+ */
+public class Band
+
+
+/**
+ * Compute checksum for image region. 
+ *
+ * Computes a 16bit (0-65535) checksum from a region of raster data on the raster band.
+ * Floating point data is converted to 32bit integer 
+ * so decimal portions of such raster data will not affect the checksum.
+ * Real and Imaginary components of complex bands influence the result. 
+ *
+ * @param xoff pixel offset of window to read.
+ * @param yoff line offset of window to read.
+ * @param xsize pixel size of window to read.
+ * @param ysize line size of window to read.
+ *
+ * @return Checksum value. 
+ */
+public class Band:public int Checksum(int xoff, int yoff, int xsize, int ysize)
+
+/**
+ * Compute checksum for while image.
+ *
+ * Computes a 16bit (0-65535) checksum from data on the raster band.
+ * Floating point data is converted to 32bit integer 
+ * so decimal portions of such raster data will not affect the checksum.
+ * Real and Imaginary components of complex bands influence the result. 
+ *
+ * @return Checksum value. 
+ */
+public class Band:public int Checksum()
+
+/**
+ * Compute mean and standard deviation values.
+ *
+ * @param meanAndStdDevArray the allocated array of 2 doubles in which the mean value (meanAndStdDevArray[0])
+ *                           and the standard deviation (meanAndStdDevArray[1]) are returned
+ * @param samplestep step in number of lines
+ */
+public class Band:public void ComputeBandStats(double[] meanAndStdDevArray, int samplestep)
+
+/**
+ * Compute mean and standard deviation values.
+ *
+ * Same as below with samplestep == 1
+ *
+ * @see #ComputeBandStats(double[] meanAndStdDevArray, int samplestep)
+ */
+public class Band:public void ComputeBandStats(double[] meanAndStdDevArray)
+
+/**
+ * Compute the min/max values for a band.
+ * 
+ * If approximate is OK, then the band's GetMinimum()/GetMaximum() will
+ * be trusted.  If it doesn't work, a subsample of blocks will be read to
+ * get an approximate min/max.  If the band has a nodata value it will
+ * be excluded from the minimum and maximum.
+ * <p>
+ * If approx_ok is 0, then all pixels will be read and used to compute
+ * an exact range.
+ * 
+ * @param minMaxArray the allocated array of 2 doubles in which the minimum (minMaxArray[0]) and the
+ * maximum (minMaxArray[1]) are returned.
+ * @param approx_ok 1 if an approximate (faster) answer is OK, otherwise 0.
+ */
+public class Band:public void ComputeRasterMinMax(double[] minMaxArray, int approx_ok)
+
+/**
+ * Compute the min/max values for a band.
+ * 
+ * Same as below with approx_ok == 0
+ *
+ * @see #ComputeRasterMinMax(double[] minMaxArray, int approx_ok)
+ */
+public class Band:public void ComputeRasterMinMax(double[] minMaxArray)
+
+/**
+ * Compute image statistics. 
+ *
+ * Returns the minimum, maximum, mean and standard deviation of all
+ * pixel values in this band.  If approximate statistics are sufficient,
+ * the approx_ok flag can be set to true in which case overviews, or a
+ * subset of image tiles may be used in computing the statistics.  
+ * <p>
+ * Once computed, the statistics will generally be "set" back on the 
+ * raster band using SetStatistics(). 
+ *
+ * @param approx_ok If true statistics may be computed based on overviews
+ * or a subset of all tiles. 
+ * 
+ * @param min Allocated array of one double into which to load image minimum (may be null).
+ *
+ * @param max Allocated array of one double into which to load image maximum (may be null).
+ *
+ * @param mean Allocated array of one double into which to load image mean (may be null).
+ *
+ * @param stddev Allocated array of one double into which to load image standard deviation 
+ * (may be null).
+ *
+ * @param callback for reporting algorithm progress. May be null
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if an error occurs or processing
+ * is terminated by the user.
+ */
+public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+
+/**
+ * Compute image statistics. 
+ *
+ * Same as below with callback == null
+ *
+ * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ */
+public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev)
+
+/**
+ * Compute image statistics. 
+ *
+ * Same as below with stddev == null and callback == null
+ *
+ * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ */
+public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean)
+
+/**
+ * Compute image statistics. 
+ *
+ * Same as below with mean == null, stddev == null and callback == null
+ *
+ * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ */
+public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max)
+
+/**
+ * Compute image statistics. 
+ *
+ * Same as below with max == null, mean == null, stddev == null and callback == null
+ *
+ * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ */
+public class Band:public int ComputeStatistics(boolean approx_ok, double[] min)
+
+/**
+ * Compute image statistics. 
+ *
+ * Same as below with min == null, max == null, mean == null, stddev == null and callback == null
+ *
+ * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ */
+public class Band:public int ComputeStatistics(boolean approx_ok)
+
+/**
+ * Adds a mask band to the current band.
+ *
+ * The default implementation of the CreateMaskBand() method is implemented
+ * based on similar rules to the .ovr handling implemented using the
+ * GDALDefaultOverviews object. A TIFF file with the extension .msk will
+ * be created with the same basename as the original file, and it will have
+ * as many bands as the original image (or just one for GMF_PER_DATASET).
+ * The mask images will be deflate compressed tiled images with the same
+ * block size as the original image if possible.
+ *
+ * @since GDAL 1.5.0
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
+ *
+ * @see <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15 - No data bit mask</a>
+ *
+ */
+public class Band:public int CreateMaskBand(int nFlags)
+
+/** 
+ * Fill this band with a constant value.
+ *
+ * GDAL makes no guarantees
+ * about what values pixels in newly created files are set to, so this
+ * method can be used to clear a band to a specified "default" value.
+ * The fill value is passed in as a double but this will be converted
+ * to the underlying type before writing to the file. An optional
+ * second argument allows the imaginary component of a complex
+ * constant value to be specified.
+ * 
+ * @param real_fill Real component of fill value
+ * @param imag_fill Imaginary component of fill value, defaults to zero
+ * 
+ * @return gdalconst.CE_Failure if the write fails, otherwise gdalconst.CE_None
+ */
+public class Band:public int Fill(double real_fill, double imag_fill)
+
+/** 
+ * Fill this band with a constant value.
+ *
+ * Same as below with image_fill == 0
+ *
+ * @see #Fill(double real_fill, double imag_fill)
+ */
+public class Band:public int Fill(double real_fill)
+
+/**
+ * Flush raster data cache.
+ *
+ * This call will recover memory used to cache data blocks for this raster
+ * band, and ensure that new requests are referred to the underlying driver.
+ */
+public class Band:public void FlushCache()
+
+/**
+ * Fetch the band number.
+ *
+ * This method returns the band that this Band object represents
+ * within its dataset.  This method may return a value of 0 to indicate
+ * Band objects without an apparently relationship to a dataset,
+ * such as Band's serving as overviews.
+ *
+ * @return band number (1+) or 0 if the band number isn't known.
+ */
+public class Band:public int GetBand()
+
+/**
+ * Fetch the "natural" block size of this band.
+ *
+ * GDAL contains a concept of the natural block size of rasters so that
+ * applications can organized data access efficiently for some file formats.
+ * The natural block size is the block size that is most efficient for
+ * accessing the format.  For many formats this is simple a whole scanline
+ * in which case pnBlockXSize[0] is set to GetXSize(), and pnBlockXSize[1] is set to 1.
+ * <p>
+ * However, for tiled images this will typically be the tile size.
+ * <p>
+ * Note that the X and Y block sizes don't have to divide the image size
+ * evenly, meaning that right and bottom edge blocks may be incomplete.
+ * See <a href="#ReadBlock_Direct(int, int, java.nio.ByteBuffer)">ReadBlock_Direct()</a> for an example of code dealing with these issues.
+ *
+ * @param pnBlockXSize allocated array of 1 integer to put the X block size into or null.
+ *
+ * @param pnBlockYSize allocated array of 1 integer to put the Y block size into or null.
+ */
+public class Band:public void GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSize)
+
+/**
+ * Fetch the "natural" block width of this band
+ * @return the X block size
+ * @see #GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSize)
+ */
+public class Band:public int GetBlockXSize()
+
+/**
+ * Fetch the "natural" block height of this band
+ * @return the Y block size
+ * @see #GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSize)
+ */
+public class Band:public int GetBlockYSize()
+
+/**
+ * How should this band be interpreted as color?
+ *
+ * gdalconst.GCI_Undefined is returned when the format doesn't know anything
+ * about the color interpretation. 
+ *
+ * @return color interpretation value for band.
+ */
+public class Band:public int GetColorInterpretation()
+
+/**
+ * Fetch the color table associated with band.
+ *
+ * If there is no associated color table, the return result is null.  The
+ * returned color table remains owned by the Band object.
+ * It should not be modified by the caller.
+ *
+ * @return color table, or null.
+ */
+public class Band:public ColorTable GetColorTable()
+
+/**
+ * Return the data type of the band.
+ *
+ * A value such as gdalconst.GDT_Byte, gdalconst.GDT_Int16, ...
+ * @return the data type of the band.
+ */
+public class Band:public int getDataType()
+
+
+/**
+ * Fetch default raster histogram. 
+ *
+ * The default method in GDALRasterBand will compute a default histogram. This
+ * method is overriden by derived classes (such as GDALPamRasterBand, VRTDataset, HFADataset...)
+ * that may be able to fetch efficiently an already stored histogram.
+ * <p>
+ * For example,
+ * <pre>
+ *  double[] dfMin = new double[1];
+ *  double[] dfMax = new double[1];
+ *  int[][] panHistogram = new int[1][];
+ *  int eErr = hBand.GetDefaultHistogram(dfMin, dfMax, panHistogram, true, new TermProgressCallback());
+ *  if( eErr == gdalconstConstants.CE_None )
+ *  {
+ *      int iBucket;
+ *      int nBucketCount = panHistogram[0].length;
+ *      System.out.print( "  " + nBucketCount + " buckets from " +
+ *                         dfMin[0] + " to " + dfMax[0] + ":\n  " );
+ *      for( iBucket = 0; iBucket < nBucketCount; iBucket++ )
+ *          System.out.print( panHistogram[0][iBucket] + " ");
+ *      System.out.print( "\n" );
+ *  }
+ * </pre>
+ *
+ * @param min_ret allocated array of one double that will contain the lower bound of the histogram.
+ * @param max_ret allocated array of one double that will contain the upper bound of the histogram.
+ * @param histogram_ret allocated array of one int[] into which the histogram totals are placed.
+ * @param force true to force the computation. If false and no default histogram is available, the method will return CE_Warning
+ * @param callback for reporting algorithm progress. May be null
+ *
+ * @return gdalconst.CE_None on success, gdalconst.CE_Failure if something goes wrong, or 
+ * gdalconst.CE_Warning if no default histogram is available.
+ */
+public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
+
+/**
+ * Fetch default raster histogram. 
+ *
+ * Same as below with callback == null
+ *
+ * @see #GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
+ */
+public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force)
+
+/**
+ * Fetch default raster histogram. 
+ *
+ * Same as below with force == true and callback == null
+ *
+ * @see #GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
+ */
+public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret)
+
+/**
+ * Fetch default Raster Attribute Table.
+ *
+ * A RAT will be returned if there is a default one associated with the
+ * band, otherwise null is returned.  The returned RAT is owned by the
+ * band and should not be altered by the application. 
+ * 
+ * @return null, or a pointer to an internal RAT owned by the band.
+ */
+public class Band:public RasterAttributeTable GetDefaultRAT()
+
+/**
+ * Compute raster histogram. 
+ *
+ * Note that the bucket size is (dfMax-dfMin) / nBuckets.  
+ * <p>
+ * For example to compute a simple 256 entry histogram of eight bit data, 
+ * the following would be suitable.  The unusual bounds are to ensure that
+ * bucket boundaries don't fall right on integer values causing possible errors
+ * due to rounding after scaling. 
+ * <pre>
+ *     int anHistogram = new int[256];
+ * 
+ *     band.GetHistogram( -0.5, 255.5, 256, anHistogram, false, false, null);
+ * </pre>
+ * <p>
+ * Note that setting approx_ok will generally result in a subsampling of the
+ * file, and will utilize overviews if available.  It should generally 
+ * produce a representative histogram for the data that is suitable for use
+ * in generating histogram based luts for instance.  Generally bApproxOK is
+ * much faster than an exactly computed histogram.
+ *
+ * @param min the lower bound of the histogram.
+ * @param max the upper bound of the histogram.
+ * @param histogram allocated array into which the histogram totals are placed.
+ * @param include_out_of_range if true values below the histogram range will
+ * mapped into anHistogram[0], and values above will be mapped into 
+ * anHistogram[anHistogram.length-1] otherwise out of range values are discarded.
+ * @param approx_ok true if an approximate, or incomplete histogram OK.
+ * @param callback for reporting algorithm progress. May be null
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if something goes wrong. 
+ */
+public class Band:public int GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
+
+/**
+ * Compute raster histogram. 
+ *
+ * Same as below with callback == null
+ *
+ * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
+ */
+public class Band:public int GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok)
+
+/**
+ * Compute raster histogram. 
+ *
+ * Same as below with include_out_of_range == 0, approx_ok == true and callback == null
+ *
+ * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
+ */
+public class Band:public int GetHistogram(double min, double max, int[] histogram)
+
+/**
+ * Compute raster histogram. 
+ *
+ * Same as below with include_out_of_range == 0, approx_ok == true and callback == null
+ *
+ * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
+ */
+public class Band:public int GetHistogram(int[] histogram)
+
+/**
+ * Return the mask band associated with the band.
+ *
+ * The GDALRasterBand class includes a default implementation of GetMaskBand() that
+ * returns one of four default implementations :
+ * <ul>
+ * <li>If a corresponding .msk file exists it will be used for the mask band.</li>
+ * <li>If the dataset has a NODATA_VALUES metadata item, an instance of the
+ *     new GDALNoDataValuesMaskBand class will be returned.
+ *     GetMaskFlags() will return GMF_NODATA | GMF_PER_DATASET. @since GDAL 1.6.0</li>
+ * <li>If the band has a nodata value set, an instance of the new
+ *     GDALNodataMaskRasterBand class will be returned.
+ *     GetMaskFlags() will return GMF_NODATA.</li>
+ * <li>If there is no nodata value, but the dataset has an alpha band that seems
+ *     to apply to this band (specific rules yet to be determined) and that is
+ *     of type GDT_Byte then that alpha band will be returned, and the flags
+ *     GMF_PER_DATASET and GMF_ALPHA will be returned in the flags.</li>
+ * <li>If neither of the above apply, an instance of the new GDALAllValidRasterBand
+ *     class will be returned that has 255 values for all pixels.
+ *     The null flags will return GMF_ALL_VALID.</li>
+ * </ul>
+ * <p>
+ * Note that the GetMaskBand() should always return a GDALRasterBand mask, even if it is only
+ * an all 255 mask with the flags indicating GMF_ALL_VALID. 
+ *
+ * @return a valid mask band.
+ *
+ * @since GDAL 1.5.0
+ *
+ * @see <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15 - No data bit mask</a>
+ *
+ */
+public class Band:public Band GetMaskBand()
+
+/**
+ * Return the status flags of the mask band associated with the band.
+ *
+ * The GetMaskFlags() method returns an bitwise OR-ed set of status flags with
+ * the following available definitions that may be extended in the future:
+ * <ul>
+ * <li>GMF_ALL_VALID(0x01): There are no invalid pixels, all mask values will be 255.
+ *     When used this will normally be the only flag set.</li>
+ * <li>GMF_PER_DATASET(0x02): The mask band is shared between all bands on the dataset.</li>
+ * <li>GMF_ALPHA(0x04): The mask band is actually an alpha band and may have values
+ *     other than 0 and 255.</li>
+ * <li>GMF_NODATA(0x08): Indicates the mask is actually being generated from nodata values.
+ *     (mutually exclusive of GMF_ALPHA)</li>
+ * </ul>
+ *
+ * The GDALRasterBand class includes a default implementation of GetMaskBand() that
+ * returns one of four default implementations :
+ * <ul>
+ * <li>If a corresponding .msk file exists it will be used for the mask band.</li>
+ * <li>If the dataset has a NODATA_VALUES metadata item, an instance of the
+ *     new GDALNoDataValuesMaskBand class will be returned.
+ *     GetMaskFlags() will return GMF_NODATA | GMF_PER_DATASET. @since GDAL 1.6.0</li>
+ * <li>If the band has a nodata value set, an instance of the new
+ *     GDALNodataMaskRasterBand class will be returned.
+ *     GetMaskFlags() will return GMF_NODATA.</li>
+ * <li>If there is no nodata value, but the dataset has an alpha band that seems
+ *     to apply to this band (specific rules yet to be determined) and that is
+ *     of type GDT_Byte then that alpha band will be returned, and the flags
+ *     GMF_PER_DATASET and GMF_ALPHA will be returned in the flags.</li>
+ * <li>If neither of the above apply, an instance of the new GDALAllValidRasterBand
+ *     class will be returned that has 255 values for all pixels.
+ *     The null flags will return GMF_ALL_VALID.</li>
+ * </ul>
+ *
+ * @since GDAL 1.5.0
+ *
+ * @return a valid mask band.
+ *
+ * @see <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15 - No data bit mask</a>
+ *
+ */
+public class Band:public int GetMaskFlags()
+
+/**
+ * Fetch the minimum value for this band.
+ * 
+ * For file formats that don't know this intrinsically, no value will be returned
+ *
+ * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * with the minimum value if available, other val[0] will contain null
+ */
+public class Band:public void GetMinimum(Double[] val)
+
+/**
+ * Fetch the maximum value for this band.
+ * 
+ * For file formats that don't know this intrinsically, no value will be returned
+ *
+ * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * with the maximum value if available, other val[0] will contain null
+ */
+public class Band:public void GetMaximum(Double[] val)
+
+/**
+ * Fetch the raster value offset.
+ *
+ * This value (in combination with the GetScale() value) is used to
+ * transform raw pixel values into the units returned by GetUnits().  
+ * For example this might be used to store elevations in GUInt16 bands
+ * with a precision of 0.1, and starting from -100. 
+ * <p>
+ * Units value = (raw value * scale) + offset
+ * <p>
+ * For file formats that don't know this intrinsically, no value will be returned
+ *
+ * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * with the offset value if available, other val[0] will contain null
+ */
+public class Band:public void GetOffset(Double[] val)
+
+/**
+ * Fetch the raster value scale.
+ *
+ * This value (in combination with the GetOffset() value) is used to
+ * transform raw pixel values into the units returned by GetUnits().  
+ * For example this might be used to store elevations in GUInt16 bands
+ * with a precision of 0.1, and starting from -100. 
+ * <p>
+ * Units value = (raw value * scale) + offset
+ * <p>
+ * For file formats that don't know this intrinsically, no value will be returned
+ *
+ * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * with the scale value if available, other val[0] will contain null
+ */
+public class Band:public void GetScale(Double[] val)
+
+/**
+ * Fetch the no data value for this band.
+ * 
+ * The no data value for a band is generally a special marker
+ * value used to mark pixels that are not valid data.  Such pixels should
+ * generally not be displayed, nor contribute to analysis operations.
+ *
+ * @param val empty allocated array of type Doube[] of size 1. val[0] will contain a Double object
+ * with the no data value if available, other val[0] will contain null
+ */
+public class Band:public void GetNoDataValue(Double[] val)
+
+/**
+ * Fetch overview raster band object.
+ * 
+ * @param i overview index between 0 and GetOverviewCount()-1.
+ * 
+ * @return overview Band.
+ */
+public class Band:public Band GetOverview(int i)
+
+/**
+ * Return the number of overview layers available.
+ *
+ * @return overview count, zero if none.
+ */
+public class Band:public int GetOverviewCount()
+
+/**
+ * Fetch the list of category names for this raster.
+ *
+ * Raster values without 
+ * associated names will have an empty string in the returned list.  The
+ * first entry in the list is for raster values of zero, and so on. 
+ * 
+ * @return vector of names, or null if none.
+ */
+public class Band:public java.util.Vector GetRasterCategoryNames()
+
+/**
+ * How should this band be interpreted as color?
+ *
+ * gdalconst.GCI_Undefined is returned when the format doesn't know anything
+ * about the color interpretation. 
+ *
+ * @return color interpretation value for band.
+ */
+public class Band:public int GetRasterColorInterpretation()
+
+/**
+ * Fetch the color table associated with band.
+ *
+ * If there is no associated color table, the return result is null.  The
+ * returned color table remains owned by the Band object.
+ * It should not be modified by the caller.
+ *
+ * @return color table, or null.
+ */
+public class Band:public ColorTable GetRasterColorTable()
+
+/**
+ * Return the data type of the band.
+ *
+ * A value such as gdalconst.GDT_Byte, gdalconst.GDT_Int16, ...
+ * @return the data type of the band.
+ */
+public class Band:public int GetRasterDataType()
+
+/**
+ * Fetch image statistics. 
+ *
+ * Returns the minimum, maximum, mean and standard deviation of all
+ * pixel values in this band.  If approximate statistics are sufficient,
+ * the approx_ok flag can be set to true in which case overviews, or a
+ * subset of image tiles may be used in computing the statistics.  
+ * <p>
+ * If force is false results will only be returned if it can be done 
+ * quickly (ie. without scanning the data).  If force is false and 
+ * results cannot be returned efficiently, the method will return CE_Warning
+ * but no warning will have been issued.   This is a non-standard use of
+ * the CE_Warning return value to indicate "nothing done". 
+ * <p>
+ * Note that file formats using PAM (Persistent Auxilary Metadata) services
+ * will generally cache statistics in the .pam file allowing fast fetch
+ * after the first request. 
+ *
+ * @param approx_ok If true statistics may be computed based on overviews
+ * or a subset of all tiles. 
+ * 
+ * @param force If true statistics will only be returned if it can
+ * be done without rescanning the image. 
+ *
+ * @param min Allocated array of one double into which to load image minimum (may be null).
+ *
+ * @param max Allocated array of one double into which to load image maximum (may be null).
+ *
+ * @param mean Allocated array of one double into which to load image mean (may be null).
+ *
+ * @param stddev Allocated array of one double into which to load image standard deviation 
+ * (may be null).
+ *
+ * @return gdalconst.CE_None on success, gdalconst.CE_Warning if no values returned, 
+ * gdalconst.CE_Failure if an error occurs.
+ */
+public class Band:public int GetStatistics(boolean approx_ok, boolean force, double[] min, double[] max, double[] mean, double[] stddev)
+
+/**
+ * Fetch image statistics. 
+ *
+ * Same as below but boolean value of true should be replaced with 1, and false with 0.
+ *
+ * @see #GetStatistics(boolean approx_ok, boolean force, double[] min, double[] max, double[] mean, double[] stddev)
+ */
+public class Band:public int GetStatistics(int approx_ok, int force, double[] min, double[] max, double[] mean, double[] stddev)
+
+/**
+ * Return raster unit type.
+ *
+ * Return a name for the units of this raster's values.  For instance, it
+ * might be "m" for an elevation model in meters, or "ft" for feet.  If no 
+ * units are available, a value of "" will be returned.
+ *
+ * @return unit name string.
+ */
+public class Band:public String GetUnitType()
+
+/**
+ * Fetch XSize of raster. 
+ *
+ * @return the width in pixels of this band.
+ */
+public class Band:public int getXSize()
+
+/**
+ * Fetch XSize of raster. 
+ *
+ * @return the width in pixels of this band.
+ */
+
+public class Band:public int GetXSize()
+
+/**
+ * Fetch YSize of raster. 
+ *
+ * @return the height in pixels of this band.
+ */
+public class Band:public int getYSize()
+
+/**
+ * Fetch YSize of raster. 
+ *
+ * @return the height in pixels of this band.
+ */
+public class Band:public int GetYSize()
+
+/**
+ * Check for arbitrary overviews.
+ *
+ * This returns true if the underlying datastore can compute arbitrary 
+ * overviews efficiently, such as is the case with OGDI over a network. 
+ * Datastores with arbitrary overviews don't generally have any fixed
+ * overviews, but the RasterIO() method can be used in downsampling mode
+ * to get overview data efficiently.
+ *
+ * @return true if arbitrary overviews available (efficiently), otherwise
+ * false. 
+ */
+public class Band:public boolean HasArbitraryOverviews()
+
+/**
+ * Read a region of image data for this band.
+ *
+ * This method allows reading a region of a GDALRasterBand into a buffer.  It
+ * automatically takes care of data type translation if the data type
+ * (buf_type) of the buffer is different than that of the GDALRasterBand.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (buf_xsize x buf_ysize) is different than the size of the
+ * region being accessed (xsize x yszie).
+ *<p>
+ * The nPixelSpace and nLineSpace parameters allow reading into or
+ * writing from unusually organized buffers.  This is primarily used
+ * for buffers containing more than one bands raster data in interleaved
+ * format. 
+ *<p>
+ * Some formats may efficiently implement decimation into a buffer by
+ * reading from lower resolution overview images.
+ * <p>
+ * For highest performance full resolution data access, read and write
+ * on "block boundaries" as returned by GetBlockSize(), or use the
+ * ReadBlock() and WriteBlock() methods.
+ *
+ * @param xoff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param yoff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param xsize The width of the region of the band to be accessed in pixels.
+ *
+ * @param ysize The height of the region of the band to be accessed in lines.
+ *
+ * @param buf_xsize the width of the buffer image into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param buf_ysize the height of the buffer image into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param buf_type the type of the pixel values in the pData data buffer.  The
+ * pixel values will automatically be translated to/from the GDALRasterBand
+ * data type as needed.
+ *
+ * @param nioBuffer The buffer into which the data should be read.
+ * This buffer must contain at least buf_xsize *
+ * buf_ysize words of type buf_type.  It is organized in left to right,
+ * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+ * and nLineSpace parameters.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * pData to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * pData to the start of the next.  If defaulted the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @return CE_Failure if the access fails, otherwise CE_None.
+ */
+public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with nLineSpace == 0
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below but buffer is allocated by the method
+ *
+ * @return a newly allocated byte buffer with the read region
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
+ */
+public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, nPixelSpace == 0 and nLineSpace == 0 but buffer is allocated by the method
+ *
+ * @return a newly allocated byte buffer with the read region
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_type)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0 but buffer is allocated by the method
+ *
+ * @return a newly allocated byte buffer with the read region
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * This method allows writing data from a buffer into a region 
+ * of the Band.  It
+ * automatically takes care of data type translation if the data type
+ * (buf_type) of the buffer is different than that of the GDALRasterBand.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (buf_xsize x buf_ysize) is different than the size of the
+ * region being accessed (xsize x yszie).
+ *<p>
+ * The nPixelSpace and nLineSpace parameters allow reading into or
+ * writing from unusually organized buffers.  This is primarily used
+ * for buffers containing more than one bands raster data in interleaved
+ * format. 
+ *<p>
+ * Some formats may efficiently implement decimation into a buffer by
+ * reading from lower resolution overview images.
+ * <p>
+ * For highest performance full resolution data access, read and write
+ * on "block boundaries" as returned by GetBlockSize(), or use the
+ * ReadBlock() and WriteBlock() methods.
+ *
+ * @param xoff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param yoff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param xsize The width of the region of the band to be accessed in pixels.
+ *
+ * @param ysize The height of the region of the band to be accessed in lines.
+ *
+ * @param buf_xsize the width of the buffer image from which the desired region is to be written.
+ *
+ * @param buf_ysize the height of the buffer image from which the desired region is to be written.
+ *
+ * @param buf_type the type of the pixel values in the pData data buffer.  The
+ * pixel values will automatically be translated to/from the GDALRasterBand
+ * data type as needed.
+ *
+ * @param nioBuffer The buffer into which the data should be read.
+ * This buffer must contain at least buf_xsize *
+ * buf_ysize words of type buf_type.  It is organized in left to right,
+ * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+ * and nLineSpace parameters.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * pData to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * pData to the start of the next.  If defaulted the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @return CE_Failure if the access fails, otherwise CE_None.
+ */
+public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with nLineSpace == 0
+ *
+ * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_type, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ */
+public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Read a block of image data efficiently.
+ *
+ * This method accesses a "natural" block from the raster band without
+ * resampling, or data type conversion.  For a more generalized, but
+ * potentially less efficient access use RasterIO().
+ *
+ * @param nXBlockOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth. 
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the left most block, 1 the next block and so forth.
+ *
+ * @param nioBuffer the buffer into which the data will be read.  The buffer
+ * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
+ * of type GetRasterDataType().
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
+ *
+ */
+public class Band:public int ReadBlock_Direct(int nXBlockOff, int nYBlockOff, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Write a block of image data efficiently.
+ *
+ * This method accesses a "natural" block from the raster band without
+ * resampling, or data type conversion.  For a more generalized, but
+ * potentially less efficient access use RasterIO().
+ *
+ * @param nXBlockOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth. 
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the left most block, 1 the next block and so forth.
+ *
+ * @param nioBuffer the buffer from which the data will be written.  The buffer
+ * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
+ * of type GetRasterDataType().
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
+ *
+ */
+public class Band:public int WriteBlock_Direct(int nXBlockOff, int nYBlockOff, java.nio.ByteBuffer nioBuffer)
+
+/**
+ * Set color interpretation of a band.
+ *
+ * @param eColorInterp the new color interpretation to apply to this band.
+ * 
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure if method is unsupported by format.
+ */
+public class Band:public int SetColorInterpretation(int eColorInterp)
+
+/**
+ * Set color interpretation of a band.
+ *
+ * @param eColorInterp the new color interpretation to apply to this band.
+ * 
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure if method is unsupported by format.
+ */
+public class Band:public int SetRasterColorInterpretation(int eColorInterp)
+
+/**
+ * Set the raster color table. 
+ *
+ * @param colorTable the color table to apply.  This may be null to clear the color 
+ * table (where supported).
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure on failure.  If the action is
+ * unsupported by the driver, a value of CE_Failure is returned, but no
+ * error is issued.
+ */
+public class Band:public int SetColorTable(ColorTable colorTable)
+
+/**
+ * Set the raster color table. 
+ *
+ * @param colorTable the color table to apply.  This may be null to clear the color 
+ * table (where supported).
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure on failure.  If the action is
+ * unsupported by the driver, a value of CE_Failure is returned, but no
+ * error is issued.
+ */
+public class Band:public int SetRasterColorTable(ColorTable colorTable)
+
+/**
+ * Set default histogram
+ *
+ */
+public class Band:public int SetDefaultHistogram(double min, double max, int[] histogram)
+
+/**
+ * Set default Raster Attribute Table.
+ *
+ * Associates a default RAT with the band.  If not implemented for the
+ * format a CPLE_NotSupported error will be issued.
+ *
+ * @param table the RAT to assign to the band.
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure if unsupported or otherwise 
+ * failing.
+ */
+public class Band:public int SetDefaultRAT(RasterAttributeTable table)
+
+/**
+ * Set the no data value for this band. 
+ *
+ * To clear the nodata value, just set it with an "out of range" value.
+ * Complex band no data values must have an imagery component of zero.
+ *
+ * @param nodataValue the value to set.
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure on failure.  If unsupported
+ * by the driver, CE_Failure is returned by no error message will have
+ * been emitted.
+ */
+public class Band:public int SetNoDataValue(double nodataValue)
+
+/**
+ * Set the category names for this band.
+ *
+ * See the GetCategoryNames() method for more on the interpretation of
+ * category names. 
+ *
+ * @param names a vector of strings with category names.  May
+ * be ,ull to just clear the existing list. 
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure on failure.  If unsupported
+ * by the driver, CE_Failure is returned by no error message will have
+ * been emitted.
+ */
+public class Band:public int SetRasterCategoryNames(java.util.Vector names)
+
+/**
+ * Set statistics on band.
+ *
+ * This method can be used to store min/max/mean/standard deviation
+ * statistics on a raster band.  
+ * <p>
+ * The default implementation stores them as metadata, and will only work 
+ * on formats that can save arbitrary metadata.  This method cannot detect
+ * whether metadata will be properly saved and so may return CE_None even
+ * if the statistics will never be saved.
+ * 
+ * @param min minimum pixel value.
+ * 
+ * @param max maximum pixel value.
+ *
+ * @param mean mean (average) of all pixel values.		
+ *
+ * @param stddev Standard deviation of all pixel values.
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure on failure. 
+ */
+public class Band:public int SetStatistics(double min, double max, double mean, double stddev)
