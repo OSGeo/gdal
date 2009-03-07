@@ -35,7 +35,7 @@
 //************************************************************************
 %rename (ColorTable) GDALColorTableShadow;
 
-class GDALColorTableShadow : public GDALMajorObjectShadow {
+class GDALColorTableShadow {
 private:
   GDALColorTableShadow();
 
