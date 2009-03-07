@@ -456,12 +456,6 @@ CPLErr GDALRasterBand::IWriteBlock( int, int, void * )
  * of type GetRasterDataType().
  *
  * @return CE_None on success or CE_Failure on an error.
- *
- * The following code would efficiently compute a histogram of eight bit
- * raster data.  Note that the final block may be partial ... data beyond
- * the edge of the underlying raster band in these edge blocks is of an
- * undermined value.
- *
  */
 
 CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
