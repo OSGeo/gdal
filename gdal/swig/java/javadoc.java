@@ -1,7 +1,10 @@
 /* This file contains the Javadoc for all classes */
 
+/* Class gdal */
+
 /**
  * Class gdal is an uninstanciable class providing various utility functions as static methods.
+ * <p>
  * In particular, it provides :
  * <ul>
  * <li>gdal.<a href="#AllRegister()">AllRegister()</a> and gdal.<a href="#Open(java.lang.String, int)">Open()</a> methods.
@@ -9,7 +12,7 @@
  * <li>bindings for some general purpose CPL functions.
  * </ul>
  */
-public class gdal:public class gdal
+public class gdal
 
    /**
     * General utility option processing.
@@ -825,7 +828,7 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  *
  * This function will generate one or more overview images from a base
  * image using the requested downsampling algorithm.  It's primary use
- * is for generating overviews via GDALDataset::BuildOverviews(), but it
+ * is for generating overviews via Dataset.<a href="Dataset.html#BuildOverviews(java.lang.String, int[], org.gdal.gdal.ProgressCallback)">BuildOverviews()</a>, but it
  * can also be used to generate downsampled images in one file from another
  * outside the overview architecture.
  * <p>
@@ -840,6 +843,8 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
+ *
+ * @see Dataset#BuildOverviews(java.lang.String resampling, int[] overviewlist, ProgressCallback callback)
  */
 public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
 
@@ -1072,7 +1077,7 @@ public class gdal:public static int GetDataTypeSize(int eDataType)
 /**
  * Is data type complex? 
  *
- * @return TRUE if the passed type is complex (one of gdalconst.GDT_CInt16, GDT_CInt32, 
+ * @return 1 if the passed type is complex (one of gdalconst.GDT_CInt16, GDT_CInt32, 
  * GDT_CFloat32 or GDT_CFloat64), that is it consists of a real and imaginary
  * component. 
  */
@@ -1197,7 +1202,7 @@ public class gdal:public static Dataset Open(String name)
  * GDALDataset handles for a dataset with other callers to gdal.OpenShared().
  * <p>
  * In particular, gdal.OpenShared() will first consult it's list of currently
- * open and shared Dataset's, and if the GetDescription() name for one
+ * open and shared Dataset's, and if the <a href="MajorObject.html#GetDescription()">GetDescription()</a> name for one
  * exactly matches the name passed to gdal.OpenShared() it will be
  * referenced and returned.
  *
@@ -1260,3 +1265,602 @@ public class gdal:public static Driver IdentifyDriver(String name, java.util.Vec
  * @see #IdentifyDriver(String name, java.util.Vector fileList)
  */
 public class gdal:public static Driver IdentifyDriver(String name)
+
+/**
+ * Parse an XML string into tree form.
+ *
+ * The passed document is parsed into a  XMLNode tree representation. 
+ * If the document is not well formed XML then NULL is returned, and errors
+ * are reported via CPLError().  No validation beyond wellformedness is
+ * done.
+ *
+ * If the document has more than one "root level" element then those after the 
+ * first will be attached to the first as siblings (via the psNext pointers)
+ * even though there is no common parent.  A document with no XML structure
+ * (no angle brackets for instance) would be considered well formed, and 
+ * returned as a single CXT_Text node.  
+ * 
+ * @param xmlString the document to parse. 
+ *
+ * @return parsed tree or null on error. 
+ */
+public class gdal:public static XMLNode ParseXMLString(String xmlString)
+
+/**
+ * Convert tree into string document.
+ *
+ * This function converts a XMLNode tree representation of a document
+ * into a flat string representation.  White space indentation is used
+ * visually preserve the tree structure of the document.
+ *
+ * @param xmlnode the root of the tree to serialize
+ *
+ * @return the document on success or null on failure. 
+ */
+public class gdal:public static String SerializeXMLTree(XMLNode xmlnode)
+
+
+/* Class Dataset */
+
+/**
+ * Class Dataset is an uninstanciable class providing various methods to access GDAL dataset objects.
+ * <p>
+ * Dataset objects are returned by methods from other classes, such as
+ * gdal.<a href="gdal.html#Open(java.lang.String, int)">Open()</a> or
+ * Driver.<a href="Driver.html#Create(java.lang.String, int, int, int, int, java.lang.String[])">Create()</a> /
+ * Driver.<a href="Driver.html#CreateCopy(java.lang.String, org.gdal.gdal.Dataset)">CreateCopy()</a>
+ */
+public class Dataset
+
+
+/**
+ * Add a band to a dataset.
+ *
+ * This method will add a new band to the dataset if the underlying format
+ * supports this action.  Except VRT and MEM drivers, most formats do not.
+ *
+ * Note that the new Band object is not returned.  It may be fetched
+ * after successful completion of the method by calling 
+ * ds.GetRasterBand(ds.GetRasterCount()-1) as the newest
+ * band will always be the last band.
+ *
+ * @param datatype the data type of the pixels in the new band. 
+ *
+ * @param options a vector of options strings, each being "NAME=VALUE".  The supported
+ * options are format specific.  null may be passed by default.
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure on failure.  
+ */
+public class Dataset:public int AddBand(int datatype, java.util.Vector options)
+
+/**
+ * Add a band to a dataset.
+ *
+ * Same as below with options == null
+ *
+ * @see #AddBand(int datatype, java.util.Vector options)
+ */
+public class Dataset:public int AddBand(int datatype)
+
+/**
+ * Add a band to a dataset.
+ *
+ * Same as below with datatype == gdalconst.GDT_Byte and options == null
+ *
+ * @see #AddBand(int datatype, java.util.Vector options)
+ */
+public class Dataset:public int AddBand()
+
+
+/**
+ * Build raster overview(s).
+ *
+ * If the operation is unsupported for the indicated dataset, then 
+ * gdalconst.CE_Failure is returned, and gdal.GetLastErrorNo() will return 
+ * gdalconst.CPLE_NotSupported.
+ * <p>
+ *
+ * For example, to build overview level 2, 4 and 8 on all bands the following
+ * call could be made:
+ * <pre>
+ *   ds.BuildOverviews( "NEAREST", new int[] { 2, 4, 8 }, null );
+ * </pre>
+ *
+ * @param resampling one of "NEAREST", "GAUSS", "AVERAGE", 
+ * "AVERAGE_MAGPHASE" or "NONE" controlling the downsampling method applied.
+ * @param overviewlist the list of overview decimation factors to build. 
+ * @param callback for reporting progress or null
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure if the operation doesn't work.
+ *
+ * @see gdal#RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
+ */
+public class Dataset:public int BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
+
+/**
+ * Build raster overview(s).
+ *
+ * Same as below with callback == null
+ *
+ * @see #BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
+ */
+public class Dataset:public int BuildOverviews(String resampling, int[] overviewlist)
+
+/**
+ * Build raster overview(s).
+ *
+ * Same as below with resampling == "NEAREST" and callback == null
+ *
+ * @see #BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
+ */
+public class Dataset:public int BuildOverviews(int[] overviewlist)
+
+/**
+ * Build raster overview(s).
+ *
+ * Same as below with resampling == "NEAREST"
+ *
+ * @see #BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
+ */
+public class Dataset:public int BuildOverviews(int[] overviewlist, ProgressCallback callback)
+
+/**
+ * Adds a mask band to the current band.
+ *
+ * The default implementation of the CreateMaskBand() method is implemented
+ * based on similar rules to the .ovr handling implemented using the
+ * GDALDefaultOverviews object. A TIFF file with the extension .msk will
+ * be created with the same basename as the original file, and it will have
+ * as many bands as the original image (or just one for GMF_PER_DATASET).
+ * The mask images will be deflate compressed tiled images with the same
+ * block size as the original image if possible.
+ *
+ * @since GDAL 1.5.0
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
+ *
+ * @see <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15 - No data bit mask</a>
+ *
+ */
+public class Dataset:public int CreateMaskBand(int nFlags)
+
+/**
+  * Frees the native resource associated to a Dataset object and close the file.
+  *
+  * This method will delete the underlying C++ object. After it has been called,
+  * all native resources will have been destroyed, so it will be illegal to use
+  * any derived relative Java objects, such as Band objects of this Dataset.
+  * <p>
+  * The delete() method <b>must</b> called when a dataset has been opened in update
+  * or creation mode, otherwise data might not be properly flushed to the disk.
+  */
+public class Dataset:public void delete()
+
+/**
+ * Flush all write cached data to disk.
+ *
+ * Any raster (or other GDAL) data written via GDAL calls, but buffered
+ * internally will be written to disk.
+ * <p>
+ * Calling this method is generally not sufficient to ensure that the file is in
+ * a consistent state. You <b>must</b> call <a href="#delete()">delete()</a> for that
+ *
+ * @see #delete()
+ */
+public class Dataset:public void FlushCache()
+
+
+/**
+ * Fetch the driver to which this dataset relates.
+ *
+ * @return the driver on which the dataset was created with gdal.Open() or
+ * Driver.Create().
+ */
+public class Dataset:public Driver GetDriver()
+
+/**
+ *  Fetch a band object for a dataset.
+ *
+ * @param nBandId the index number of the band to fetch, from 1 to
+                  GetRasterCount().
+ * @return the nBandId th band object
+ */
+public class Dataset:public Band GetRasterBand(int nBandId)
+
+/**
+ * Fetch the projection definition string for this dataset.
+ *
+ * The returned string defines the projection coordinate system of the
+ * image in OpenGIS WKT format.  It should be suitable for use with the 
+ * OGRSpatialReference class.
+ *
+ * When a projection definition is not available an empty (but not null)
+ * string is returned.
+ *
+ * @return the projection string.
+ *
+ * @see <a href="http://www.gdal.org/ogr/osr_tutorial.html">OSR tutorial</a>
+ */
+public class Dataset:public String GetProjection()
+
+/**
+ * Fetch the projection definition string for this dataset.
+ *
+ * The returned string defines the projection coordinate system of the
+ * image in OpenGIS WKT format.  It should be suitable for use with the 
+ * OGRSpatialReference class.
+ *
+ * When a projection definition is not available an empty (but not null)
+ * string is returned.
+ *
+ * @return the projection string.
+ *
+ * @see <a href="http://www.gdal.org/ogr/osr_tutorial.html">OSR tutorial</a>
+ */
+public class Dataset:public String GetProjectionRef()
+
+
+/**
+ * Set the projection reference string for this dataset.
+ *
+ * The string should be in OGC WKT or PROJ.4 format.  An error may occur
+ * because of incorrectly specified projection strings, because the dataset
+ * is not writable, or because the dataset does not support the indicated
+ * projection.  Many formats do not support writing projections.
+ *
+ * @param projection projection reference string.
+ *
+ * @return gdalconst.CE_Failure if an error occurs, otherwise gdalconst.CE_None.
+ */
+public class Dataset:public int SetProjection(String projection)
+
+
+/**
+ * Fetch the affine transformation coefficients.
+ *
+ * Fetches the coefficients for transforming between pixel/line (P,L) raster
+ * space, and projection coordinates (Xp,Yp) space.
+ * <p>
+ * <pre>
+ *   Xp = geoTransformArray[0] + P*geoTransformArray[1] + L*geoTransformArray[2];
+ *   Yp = geoTransformArray[3] + P*geoTransformArray[4] + L*geoTransformArray[5];
+ * </pre>
+ * <p>
+ * In a north up image, geoTransformArray[1] is the pixel width, and
+ * geoTransformArray[5] is the pixel height.  The upper left corner of the
+ * upper left pixel is at position (geoTransformArray[0],geoTransformArray[3]).
+ * <p>
+ * The default transform is (0,1,0,0,0,1) and should be returned even when
+ * an error occurs, such as for formats that don't support
+ * transformation to projection coordinates.
+ * <p>
+ * NOTE: GetGeoTransform() isn't expressive enough to handle the variety of
+ * OGC Grid Coverages pixel/line to projection transformation schemes.
+ * Eventually this method will be depreciated in favour of a more general
+ * scheme.
+ *
+ * @param geoTransformArray an existing six double array into which the
+ * transformation will be placed.
+ */
+public class Dataset:public void GetGeoTransform(double[] geoTransformArray)
+
+
+/**
+ * Fetch the affine transformation coefficients.
+ *
+ * Same as below, except the geotransform array is returned by the method
+ *
+ * @see #GetGeoTransform(double[] geoTransformArray)
+ */
+public class Dataset:public double[] GetGeoTransform()
+
+/**
+ * Set the affine transformation coefficients.
+ *
+ * See <a href="#GetGeoTransform(double[])">#GetGeoTransform()</a> for details on the meaning of the geoTransformArray
+ * coefficients.
+ *
+ * @param geoTransformArray a six double array containing the transformation
+ * coefficients to be written with the dataset.
+ *
+ * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if this transform cannot be
+ * written.
+ *
+ * @see #GetGeoTransform(double[] geoTransformArray)
+ */
+public class Dataset:public int SetGeoTransform(double[] geoTransformArray)
+
+/**
+ * Fetch files forming dataset.
+ *
+ * Returns a list of files believed to be part of this dataset.  If it returns
+ * an empty list of files it means there is believed to be no local file
+ * system files associated with the dataset (for instance a virtual dataset).
+ * <p>
+ * The returned filenames will normally be relative or absolute paths 
+ * depending on the path used to originally open the dataset.
+ *
+ * @return null or a vector of strings of file names. 
+ */
+public class Dataset:public java.util.Vector GetFileList()
+
+/**
+ * Get number of GCPs. 
+ *
+ * @return number of GCPs for this dataset.  Zero if there are none.
+ */
+public class Dataset:public int GetGCPCount()
+
+/**
+ * Get output projection for GCPs. 
+ *
+ * The projection string follows the normal rules from <a href="#GetProjectionRef()">GetProjectionRef()</a>.
+ * 
+ * @return projection string or "" if there are no GCPs. 
+ */
+public class Dataset:public String GetGCPProjection()
+
+/**
+ * Fetch GCPs.
+ *
+ * Add to the provided vector the GCPs of the dataset
+ *
+ * @param gcpVector non null Vector object
+ */ 
+public class Dataset:public void GetGCPs(java.util.Vector gcpVector)
+
+/**
+ * Fetch GCPs.
+ *
+ * @return a vector of GCP objects
+ */
+public class Dataset:public java.util.Vector GetGCPs()
+
+
+/**
+ * Assign GCPs.
+ *
+ * This method assigns the passed set of GCPs to this dataset, as well as
+ * setting their coordinate system.  Internally copies are made of the
+ * coordinate system and list of points, so the caller remains resposible for
+ * deallocating these arguments if appropriate. 
+ * <p>
+ * Most formats do not support setting of GCPs, even foramts that can 
+ * handle GCPs.  These formats will return CE_Failure. 
+ *
+ * @param gcpArray array of GCP objects being assigned
+ *
+ * @param GCPProjection the new OGC WKT coordinate system to assign for the 
+ * GCP output coordinates.  This parameter should be "" if no output coordinate
+ * system is known.
+ *
+ * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure (including if action is
+ * not supported for this format). 
+ */ 
+public class Dataset:public int SetGCPs(GCP[] gcpArray, String GCPProjection)
+
+/**
+ * Fetch raster width in pixels.
+ *
+ * @return the width in pixels of raster bands in this Dataset.
+ */
+public class Dataset:public int getRasterXSize()
+
+/**
+ * Fetch raster width in pixels.
+ *
+ * @return the width in pixels of raster bands in this Dataset.
+ */
+public class Dataset:public int GetRasterXSize()
+
+/**
+ * Fetch raster height in pixels.
+ *
+ * @return the heigt in pixels of raster bands in this Dataset.
+ */
+public class Dataset:public int getRasterYSize()
+
+/**
+ * Fetch raster height in pixels.
+ *
+ * @return the heigt in pixels of raster bands in this Dataset.
+ */
+public class Dataset:public int GetRasterYSize()
+
+/**
+ * Fetch the number of raster bands on this dataset.
+ *
+ * @return the number of raster bands.
+ */
+public class Dataset:public int getRasterCount()
+
+/**
+ * Fetch the number of raster bands on this dataset.
+ *
+ * @return the number of raster bands.
+ */
+public class Dataset:public int GetRasterCount()
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * This method allows reading a region of one or more Band's from
+ * this dataset into a buffer. It automatically takes care of data type
+ * translation if the data type (buf_type) of the buffer is different than
+ * that of the Band.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (buf_xsize x buf_ysize) is different than the size of the
+ * region being accessed (xsize x ysize).
+ * <p>
+ * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
+ * writing from various organization of buffers. 
+ * <p>
+ * For highest performance full resolution data access, read and write
+ * on "block boundaries" as returned by GetBlockSize(), or use the
+ * ReadBlock() and WriteBlock() methods.
+ *
+ * @param xoff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param yoff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param xsize The width of the region of the band to be accessed in pixels.
+ *
+ * @param ysize The height of the region of the band to be accessed in lines.
+
+ * @param buf_xsize the width of the buffer image into which the desired region
+ * is to be read, or from which it is to be written.
+ *
+ * @param buf_ysize the height of the buffer image into which the desired
+ * region is to be read, or from which it is to be written.
+ *
+ * @param buf_type the type of the pixel values in the nioBuffer data buffer.  The
+ * pixel values will automatically be translated to/from the Band
+ * data type as needed.
+ *
+ * @param nioBuffer The buffer into which the data should be read, or from which
+ * it should be written.  This buffer must contain at least
+ * buf_xsize * buf_ysize * nBandCount words of type buf_type.  It is organized
+ * in left to right,top to bottom pixel order.  Spacing is controlled by the
+ * nPixelSpace, and nLineSpace parameters.
+ *
+ * @param band_list the list of band numbers being read/written.
+ * Note band numbers are 1 based.   This may be null to select the first 
+ * nBandCount bands.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * pData to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * pData to the start of the next.  If defaulted the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @param nBandSpace the byte offset from the start of one bands data to the
+ * start of the next.  If defaulted (zero) the value will be 
+ * nLineSpace * nBufYSize implying band sequential organization
+ * of the data buffer. 
+ *
+ * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
+ */
+public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * Same as below with nBandSpace == 0
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ */
+public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * Same as below with nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ */
+public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ */
+public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * This method allows writing data from a buffer into a region 
+ * of the Band's.  It automatically takes care of data type
+ * translation if the data type (buf_type) of the buffer is different than
+ * that of the Band.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (buf_xsize x buf_ysize) is different than the size of the
+ * region being accessed (xsize x ysize).
+ * <p>
+ * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
+ * writing from various organization of buffers. 
+ * <p>
+ * For highest performance full resolution data access, read and write
+ * on "block boundaries" as returned by GetBlockSize(), or use the
+ * ReadBlock() and WriteBlock() methods.
+ *
+ * @param xoff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param yoff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param xsize The width of the region of the band to be accessed in pixels.
+ *
+ * @param ysize The height of the region of the band to be accessed in lines.
+
+ * @param buf_xsize the width of the buffer image into which the desired region
+ * is to be read, or from which it is to be written.
+ *
+ * @param buf_ysize the height of the buffer image into which the desired
+ * region is to be read, or from which it is to be written.
+ *
+ * @param buf_type the type of the pixel values in the nioBuffer data buffer.  The
+ * pixel values will automatically be translated to/from the Band
+ * data type as needed.
+ *
+ * @param nioBuffer The buffer into which the data should be read, or from which
+ * it should be written.  This buffer must contain at least
+ * buf_xsize * buf_ysize * nBandCount words of type buf_type.  It is organized
+ * in left to right,top to bottom pixel order.  Spacing is controlled by the
+ * nPixelSpace, and nLineSpace parameters.
+ *
+ * @param band_list the list of band numbers being read/written.
+ * Note band numbers are 1 based.   This may be null to select the first 
+ * nBandCount bands.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * pData to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * pData to the start of the next.  If defaulted the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @param nBandSpace the byte offset from the start of one bands data to the
+ * start of the next.  If defaulted (zero) the value will be 
+ * nLineSpace * nBufYSize implying band sequential organization
+ * of the data buffer. 
+ *
+ * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
+ */
+public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * Same as below with nBandSpace == 0
+ *
+ * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ */
+public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * Same as below with nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ */
+public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ */
+public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
