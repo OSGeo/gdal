@@ -994,7 +994,7 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH hDriver,
 /**
  * Return the short name of a driver
  *
- * Return the short name of a the driver. This is the string that can be
+ * This is the string that can be
  * passed to the GDALGetDriverByName() function.
  *
  * For the GeoTIFF driver, this is "GTiff"
@@ -1018,8 +1018,6 @@ const char * CPL_STDCALL GDALGetDriverShortName( GDALDriverH hDriver )
 
 /**
  * Return the long name of a driver
- *
- * Return the long name of a the driver.
  *
  * For the GeoTIFF driver, this is "GeoTIFF"
  *
@@ -1049,8 +1047,7 @@ const char * CPL_STDCALL GDALGetDriverLongName( GDALDriverH hDriver )
 /**
  * Return the URL to the help that describes the driver
  *
- * Return the URL to the help that describes the driver. That URL is
- * relative to the GDAL documentation directory.
+ * That URL is relative to the GDAL documentation directory.
  *
  * For the GeoTIFF driver, this is "frmt_gtiff.html"
  *
