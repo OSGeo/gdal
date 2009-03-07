@@ -3285,3 +3285,217 @@ public class ProgressCallback:public int run(double dfComplete, String message)
   * </pre>
   */
 public class TermProgressCallback
+
+
+
+/* Class MajorObject */
+
+/**
+  * Class used for object with metadata. 
+  */
+public class MajorObject
+
+/**
+ * Fetch object description. 
+ *
+ * The semantics of the returned description are specific to the derived
+ * type.  For Dataset object it is the dataset name.  For Band object
+ * it is actually a description (if supported) or "".
+ * 
+ * @return description
+ */
+
+public class MajorObject:public String GetDescription()
+
+
+/**
+ * Set object description. 
+ *
+ * The semantics of the returned description are specific to the derived
+ * type.  For Dataset object it is the dataset name.  For Band object
+ * it is actually a description (if supported) or "".
+ *
+ * Normally application code should not set the "description" for 
+ * GDALDatasets.  It is handled internally.
+ *
+ * @param newDescription new description
+ */
+
+public class MajorObject:public void SetDescription(String newDescription)
+
+/**
+ * Fetch metadata.
+ *
+ * Returns metadata as (key, value) tuples in the result table
+ *
+ * @param domain the domain of interest.  Use "" or NULL for the default
+ * domain.
+ * 
+ * @return NULL or a hash table with metadata
+ */
+public class MajorObject:public java.util.Hashtable GetMetadata_Dict(String domain)
+
+/**
+ * Fetch metadata.
+ *
+ * Returns metadata from the default domain as (key, value) tuples in the result table
+ * 
+ * @return NULL or a hash table with metadata
+ */
+public class MajorObject:public java.util.Hashtable GetMetadata_Dict()
+
+
+/**
+ * Fetch metadata.
+ *
+ * Returns metadata as a vector of strings of the format "KEY=VALUE".
+ *
+ * @param domain the domain of interest.  Use "" or NULL for the default
+ * domain.
+ * 
+ * @return NULL or a vector of strings
+ */
+public class MajorObject:public java.util.Vector GetMetadata_List(String domain)
+
+/**
+ * Fetch metadata.
+ *
+ * Returns metadata from the default domain as a vector of strings of the format "KEY=VALUE".
+ * 
+ * @return NULL or a vector of strings
+ */
+public class MajorObject:public java.util.Vector GetMetadata_List()
+
+/** 
+ * Set metadata. 
+ *
+ * The metadata is set into the domain specified.
+ *
+ * @param metadata the metadata as a table of (key, value) tuples to apply
+ * @param domain the domain of interest.  Use "" or NULL for the default
+ * domain. 
+ * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
+ * metadata has been accepted, but is likely not maintained persistently 
+ * by the underlying object between sessions.
+ */
+
+public class MajorObject:public int SetMetadata(java.util.Hashtable metadata, String domain)
+
+
+/** 
+ * Set metadata. 
+ *
+ * The metadata is set into the default domain
+ *
+ * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
+ * metadata has been accepted, but is likely not maintained persistently 
+ * by the underlying object between sessions.
+ */
+
+public class MajorObject:public int SetMetadata(java.util.Hashtable metadata)
+
+/** 
+ * Set metadata.
+ *
+ * The metadata is set into the domain specified.
+ *
+ * @param metadataString the metadata to apply as a string of the format "KEY=VALUE".
+ * @param domain the domain of interest.  Use "" or NULL for the default
+ * domain. 
+ * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
+ * metadata has been accepted, but is likely not maintained persistently 
+ * by the underlying object between sessions.
+ */
+
+public class MajorObject:public int SetMetadata(String metadataString, String domain)
+
+/** 
+ * Set metadata.
+ *
+ * The metadata is set into the default domain
+ *
+ * @param metadataString the metadata to apply as a string of the format "KEY=VALUE".
+ * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
+ * metadata has been accepted, but is likely not maintained persistently 
+ * by the underlying object between sessions.
+ */
+
+public class MajorObject:public int SetMetadata(String metadataString)
+
+/** 
+ * Set metadata.
+ *
+ * The metadata is set into the domain specified.
+ *
+ * @param metadata the metadata to apply as a vector of strings of the format "KEY=VALUE".
+ * @param domain the domain of interest.  Use "" or NULL for the default
+ * domain. 
+ * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
+ * metadata has been accepted, but is likely not maintained persistently 
+ * by the underlying object between sessions.
+ */
+
+public class MajorObject:public int SetMetadata(java.util.Vector metadata, String domain)
+
+/** 
+ * Set metadata.
+ *
+ * The metadata is set into the default domain
+ *
+ * @param metadata the metadata to apply as a vector of strings of the format "KEY=VALUE".
+ * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
+ * metadata has been accepted, but is likely not maintained persistently 
+ * by the underlying object between sessions.
+ */
+
+public class MajorObject:public int SetMetadata(java.util.Vector metadata)
+
+/**
+ * Fetch single metadata item.
+ *
+ * @param name the key for the metadata item to fetch.
+ * @param domain the domain to fetch for, use NULL for the default domain.
+ *
+ * @return null on failure to find the key, or the value string on success.
+ */
+
+public class MajorObject:public String GetMetadataItem( String name, String domain )
+
+/**
+ * Fetch single metadata item.
+ *
+ * The metadata item is searched into the default domain.
+ *
+ * @param name the key for the metadata item to fetch.
+ *
+ * @return null on failure to find the key, or the value string on success.
+ */
+
+public class MajorObject:public String GetMetadataItem( String name )
+
+/**
+ * Set single metadata item.
+ *
+ * @param name the key for the metadata item to fetch.
+ * @param value the value to assign to the key.
+ * @param domain the domain to set within, use null for the default domain.
+ *
+ * @return gdalconst.CE_None on success, or an error code on failure.
+ */
+
+public class MajorObject:public int SetMetadataItem( String name, String value, String domain )
+
+
+/**
+ * Set single metadata item.
+ *
+ * The metadata item is set into the default domain.
+ *
+ * @param name the key for the metadata item to fetch.
+ * @param value the value to assign to the key.
+ *
+ * @return gdalconst.CE_None on success, or an error code on failure.
+ */
+
+public class MajorObject:public int SetMetadataItem( String name, String value )
+
