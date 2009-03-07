@@ -190,6 +190,12 @@ begin:
                     stripline(szClass);
                 }
             }
+            if (strstr(szLine, "synchronized "))
+            {
+                char* c = strstr(szLine, "synchronized ");
+                *c = 0;
+                strcat(szLine, c + 13);
+            }
             if (strstr(szLine, "public") && !strstr(szLine, "native"))
             {
                 if (strchr(szLine, '(') && !strchr(szLine,')'))
@@ -205,7 +211,10 @@ begin:
                     szOriLine = strdup(szMethodName);
                     //fprintf(stderr, "%s\n", szOriLine);
                 }
-                sprintf(szMethodName, "%s:%s", szClass, removeargnames(stripline(szLine)));
+                if (strchr(szLine, '('))
+                    sprintf(szMethodName, "%s:%s", szClass, removeargnames(stripline(szLine)));
+                else
+                    strcpy(szMethodName, szClass);
                 //fprintf(stderr, "%s\n", szMethodName);
                 int j;
                 for(j=0;j<nInstances;j++)
