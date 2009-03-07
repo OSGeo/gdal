@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Name:     gdalmajorobject.java
  * Project:  GDAL Java Interface
