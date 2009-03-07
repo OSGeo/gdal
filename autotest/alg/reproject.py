@@ -81,16 +81,19 @@ def reproject_2():
     except:
         return 'skip'
 
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32611)
+
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromEPSG(4326)
+
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('../gcore/data/byte.tif')
 
     dst_ds = drv.Create('tmp/byte_4326.tif', 22, 18, gdal.GDT_Byte )
-    sr = osr.SpatialReference()
-    sr.ImportFromEPSG(4326)
-    #dst_ds.SetProjection(sr.ExportToWkt())
-    dst_ds.SetGeoTransform([-117.641168620796975,0.000598111918148,0,33.902419561920105,0,-0.000598111918148])
+    dst_ds.SetGeoTransform([-117.641169915168746,0.000598105625684,0,33.900668703925191,0,-0.000598105625684])
 
-    gdal.ReprojectImage( src_ds, dst_ds, None, sr.ExportToWkt())
+    gdal.ReprojectImage( src_ds, dst_ds, sr.ExportToWkt(), sr2.ExportToWkt())
 
     cs_expected = 4727
     cs = dst_ds.GetRasterBand(1).Checksum()
