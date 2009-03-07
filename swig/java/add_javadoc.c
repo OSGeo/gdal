@@ -187,7 +187,7 @@ begin:
             {
                 strcpy(szPackage, szLine);
             }
-            else if (strstr(szLine, "public class"))
+            else if (strstr(szLine, "public class") || strstr(szLine, "public interface"))
             {
                 strcpy(szClass, stripline(szLine));
                 if (strstr(szClass, "extends"))

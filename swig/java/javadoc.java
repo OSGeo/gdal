@@ -3611,3 +3611,413 @@ public class Transformer:public int TransformPoint(double[] argout, int bDstToSr
   * @return 1 in case of success, 0 otherwise
   */
 public class Transformer:public int TransformPoints(int bDstToSrc, double[][] arrayOfCoords, int[] panSuccess)
+
+/* Interface gdalconstConstants */
+
+/**
+  * Various constants used by the org.gdal.gdal package.
+  *
+  * These constants correspond to different enumerations : error codes, XML content type, metadata, palette interpretation,
+  * color interpretation, data type, raster color table attribute type, band mask flags, resampling methods...
+  */
+public interface gdalconstConstants
+
+
+
+/**
+  * Debug error == 1 (message class).
+  */
+public interface gdalconstConstants:public final static int CE_Debug
+
+/**
+  * Failure error == 3 (message class and error return code).
+  */
+public interface gdalconstConstants:public final static int CE_Failure
+
+/**
+  * Fatal error == 4 (message class).
+  */
+public interface gdalconstConstants:public final static int CE_Fatal
+
+/**
+  * No error == 0 (message class and error return code).
+  */
+public interface gdalconstConstants:public final static int CE_None
+
+/**
+  * Warning error == 2 (message class and error return code).
+  */
+public interface gdalconstConstants:public final static int CE_Warning
+
+
+
+/**
+  * CPLE_None == 0 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_None
+
+/**
+  * CPLE_AppDefined == 1 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_AppDefined
+
+/**
+  * CPLE_OutOfMemory == 2 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_OutOfMemory
+
+/**
+  * CPLE_FileIO == 3 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_FileIO
+
+/**
+  * CPLE_OpenFailed == 4 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_OpenFailed
+
+/**
+  * CPLE_IllegalArg == 5 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_IllegalArg
+
+/**
+  * CPLE_NotSupported == 6 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_NotSupported
+
+/**
+  * CPLE_AssertionFailed == 7 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_AssertionFailed
+
+/**
+  * CPLE_NoWriteAccess == 8 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_NoWriteAccess
+
+/**
+  * CPLE_UserInterrupt == 9 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_UserInterrupt
+
+/**
+  * CPLE_ObjectNull == 10 (error code).
+  */
+public interface gdalconstConstants:public final static int CPLE_ObjectNull
+
+/**
+ * CPLES_BackslashQuotable(0).
+ *
+ * This scheme turns a binary string into 
+ * a form suitable to be placed within double quotes as a string constant.
+ * The backslash, quote, '\\0' and newline characters are all escaped in 
+ * the usual C style. 
+ */
+public interface gdalconstConstants:public final static int CPLES_BackslashQuotable
+
+/**
+ * CPLES_XML(1).
+ *
+ * This scheme converts the '<', '<' and '&' characters into
+ * their XML/HTML equivelent (&gt;, &lt; and &amp;) making a string safe
+ * to embed as CDATA within an XML element.  The '\\0' is not escaped and 
+ * should not be included in the input.
+ */
+public interface gdalconstConstants:public final static int CPLES_XML
+
+/**
+ * CPLES_URL(2).
+ *
+ * Everything except alphanumerics and the underscore are 
+ * converted to a percent followed by a two digit hex encoding of the character
+ * (leading zero supplied if needed).  This is the mechanism used for encoding
+ * values to be passed in URLs.
+ */
+public interface gdalconstConstants:public final static int CPLES_URL
+
+/**
+ * CPLES_SQL(3).
+ *
+ * All single quotes are replaced with two single quotes.  
+ * Suitable for use when constructing literal values for SQL commands where
+ * the literal will be enclosed in single quotes.
+ */
+public interface gdalconstConstants:public final static int CPLES_SQL
+
+/**
+ * CPLES_CSV(4).
+ *
+ * If the values contains commas, double quotes, or newlines it 
+ * placed in double quotes, and double quotes in the value are doubled.
+ * Suitable for use when constructing field values for .csv files.  Note that
+ * CPLUnescapeString() currently does not support this format, only 
+ * CPLEscapeString().  See cpl_csv.cpp for csv parsing support.
+ */
+public interface gdalconstConstants:public final static int CPLES_CSV
+
+/**
+ * CTX_Element(0) : node is an element.
+ */
+public interface gdalconstConstants:public final static int CXT_Element
+
+/**
+ * CXT_Text(1) : node is a raw text value
+ */
+public interface gdalconstConstants:public final static int CXT_Text
+
+/**
+ * CXT_Attribute(2) : node is an attribute.
+ */
+public interface gdalconstConstants:public final static int CXT_Attribute
+
+/**
+ * CXT_Comment(3) : node is a XML comment.
+ */
+public interface gdalconstConstants:public final static int CXT_Comment
+
+/**
+ * CXT_Literal(4) : node is a special literal.
+ */
+public interface gdalconstConstants:public final static int CXT_Literal
+
+/**
+ * DCAP_CREATE_COPY.
+ * Driver.GetMetadataItem(gdalconst.DCAP_CREATE) will return "YES" if the driver supports the Create() method
+ */
+public interface gdalconstConstants:public final static String DCAP_CREATE
+
+/**
+ * DCAP_CREATE_COPY.
+ * Driver.GetMetadataItem(gdalconst.DCAP_CREATE_COPY) will return "YES" if the driver supports the CreateCopy() method
+ */
+public interface gdalconstConstants:public final static String DCAP_CREATECOPY
+
+/**
+ * DCAP_VIRTUALIO.
+ * Driver.GetMetadataItem(gdalconst.DCAP_VIRTUALIO) will return "YES" if the driver supports virtual file IO 
+ */
+public interface gdalconstConstants:public final static String DCAP_VIRTUALIO
+
+/**
+ * DMD_CREATIONDATATYPES.
+ * Driver.GetMetadataItem(gdalconst.DMD_CREATIONDATATYPES) will return a string with the supported data types in creation
+ */
+public interface gdalconstConstants:public final static String DMD_CREATIONDATATYPES
+
+/**
+ * DMD_CREATIONOPTIONLIST.
+ * Driver.GetMetadataItem(gdalconst.DMD_CREATIONOPTIONLIST) will return a XML string with the definition of supported creation options
+ */
+public interface gdalconstConstants:public final static String DMD_CREATIONOPTIONLIST
+
+/**
+ * DMD_EXTENSION.
+ * Driver.GetMetadataItem(gdalconst.DMD_EXTENSION) will return a string with the extensions supported by the driver
+ */
+public interface gdalconstConstants:public final static String DMD_EXTENSION
+
+/**
+ * DMD_HELPTOPIC.
+ * Driver.GetMetadataItem(gdalconst.DMD_HELPTOPIC) will return a string with the URL to driver documentation
+ */
+public interface gdalconstConstants:public final static String DMD_HELPTOPIC
+
+/**
+ * DMD_LONGNAME.
+ * Driver.GetMetadataItem(gdalconst.DMD_LONGNAME) will return a string with the long name of the driver
+ */
+public interface gdalconstConstants:public final static String DMD_LONGNAME
+
+/**
+ * DMD_MIMETYPE.
+ * Driver.GetMetadataItem(gdalconst.DMD_MIMETYPE) will return a string with the MIME type supported by the driver
+ */
+public interface gdalconstConstants:public final static String DMD_MIMETYPE
+
+/**
+ * GA_ReadOnly : flag used for opening a dataset in read-only mode with gdal.Open()
+ */
+public interface gdalconstConstants:public final static int GA_ReadOnly
+
+/**
+ * GA_Update : flag used for opening a dataset in update mode with gdal.Open()
+ */
+public interface gdalconstConstants:public final static int GA_Update
+
+/**
+ * GCI_Undefined(0) : undefined (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_Undefined
+
+/**
+ * GCI_GrayIndex(1) : greyscale (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_GrayIndex
+
+/**
+ * GCI_PaletteIndex(2) : paletted with color table (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_PaletteIndex
+
+/**
+ * GCI_RedBand(3) : Red band of RGBA image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_RedBand
+
+/**
+ * GCI_GreenBand(4) : Green band of RGBA image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_GreenBand
+
+/**
+ * GCI_BlueBand(5) : Blue band of RGBA image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_BlueBand
+
+/**
+ * GCI_AlphaBand(6) : Alpha band of RGBA image (0=transparent, 255=opaque) (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_AlphaBand
+
+/**
+ * GCI_HueBand(7) : Hue band of HLS image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_HueBand
+
+/**
+ * GCI_SaturationBand(8) : Saturation band of HLS image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_SaturationBand
+
+/**
+ * GCI_LightnessBand(9) : Lightness band of HLS image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_LightnessBand
+
+/**
+ * GCI_CyanBand(10) : Cyan band of CMYK image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_CyanBand
+
+/**
+ * GCI_MagentaBand(11) : Magenta band of CMYK image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_MagentaBand
+
+/**
+ * GCI_YellowBand(12) : Yellow band of CMYK image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_YellowBand
+
+/**
+ * GCI_BlackBand(13) : Black band of CMYK image (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_BlackBand
+
+/**
+ * GCI_YCbCr_YBand(14) : Y Luminance (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_YCbCr_YBand
+
+/**
+ * GCI_YCbCr_CbBand(15) : Cb Luminance (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_YCbCr_CbBand
+
+/**
+ * GCI_YCbCr_CrBand(16) : Cr Luminance (color interpretation)
+ */
+public interface gdalconstConstants:public final static int GCI_YCbCr_CrBand
+
+
+
+/**
+ * GDT_Unknown(0) : Unknown (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_Unknown
+
+/**
+ * GDT_Byte(1) : Eight bit unsigned integer (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_Byte
+
+/**
+ * GDT_UInt16(2) : Sixteen bit unsigned integer (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_UInt16
+
+/**
+ * GDT_Int16(3) : Sixteen bit signed integer (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_Int16
+
+/**
+ * GDT_UInt32(4) : Thirty two bit unsigned integer (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_UInt32
+
+/**
+ * GDT_Int32(5) : Thirty two bit signed integer (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_Int32
+
+/**
+ * GDT_Float32(6) : Thirty two bit floating point (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_Float32
+
+/**
+ * GDT_Float64(7) : Sixty four bit floating point (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_Float64
+
+/**
+ * GDT_CInt16(8) : Complex Int16  (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_CInt16
+
+/**
+ * GDT_CInt32(9) : Complex Int32  (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_CInt32
+
+/**
+ * GDT_CFloat32(10) : Complex Float32  (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_CFloat32
+
+/**
+ * GDT_CFloat64(11) : Complex Float64  (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_CFloat64
+
+/**
+ * GDT_TypeCount(12) : Maximum type  (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_TypeCount
+
+/**
+ * GRA_NearestNeighbour(0) : Nearest neighbour (select on one input pixel) (warping algorithm)
+ */
+public interface gdalconstConstants:public final static int GRA_NearestNeighbour
+
+/**
+ * GRA_Bilinear(1) : Bilinear (2x2 kernel) (warping algorithm)
+ */
+public interface gdalconstConstants:public final static int GRA_Bilinear
+
+/**
+ * GRA_Cubic(2) : Cubic Convolution Approximation (4x4 kernel) (warping algorithm)
+ */
+public interface gdalconstConstants:public final static int GRA_Cubic
+
+/**
+ * GRA_CubicSpline(3) : Cubic B-Spline Approximation (4x4 kernel)  (warping algorithm)
+ */
+public interface gdalconstConstants:public final static int GRA_CubicSpline
+
+/**
+ * GRA_Lanczos(4) : Lanczos windowed sinc interpolation (6x6 kernel)  (warping algorithm)
+ */
+public interface gdalconstConstants:public final static int GRA_Lanczos
