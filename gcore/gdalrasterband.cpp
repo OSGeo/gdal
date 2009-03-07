@@ -1746,7 +1746,7 @@ GDALGetRasterMinimum( GDALRasterBandH hBand, int *pbSuccess )
 /**
  * How should this band be interpreted as color?
  *
- * CV_Undefined is returned when the format doesn't know anything
+ * GCI_Undefined is returned when the format doesn't know anything
  * about the color interpretation. 
  *
  * This method is the same as the C function 
