@@ -245,7 +245,16 @@ begin:
                     }
                 }
                 if (j == nInstances)
-                    fprintf(fDst, "%s", szOriLine);
+                {
+                    if (strstr(szOriLine, "public") && (strstr(szOriLine, "getCPtr") || strstr(szOriLine, "long cPtr")))
+                    {
+                        char* c = strstr(szOriLine, "public");
+                        *c = 0;
+                        fprintf(fDst, "%s private %s", szOriLine, c + 6);
+                    }
+                    else
+                        fprintf(fDst, "%s", szOriLine);
+                }
             }
             else
                 fprintf(fDst, "%s", szOriLine);
