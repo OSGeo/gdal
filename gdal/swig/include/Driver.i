@@ -115,6 +115,8 @@ public:
 }
 };
 
+%clear const char *name, const char* newName, const char* oldName, GDALDatasetShadow* src;
+
 %{
 char const *GDALDriverShadow_ShortName_get( GDALDriverShadow *h ) {
   return GDALGetDriverShortName( h );
