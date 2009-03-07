@@ -620,6 +620,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 
 %typemap(javadestruct_derived, methodname="delete", methodmodifiers="public") GDALRasterBandShadow ""
+%typemap(javadestruct_derived, methodname="delete", methodmodifiers="public") GDALDriverShadow ""
 
 // Add a Java reference to prevent premature garbage collection and resulting use
 // of dangling C++ pointer. Intended for methods that return pointers or
