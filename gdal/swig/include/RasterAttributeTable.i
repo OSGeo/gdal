@@ -70,7 +70,7 @@ typedef enum {
 
 %rename (RasterAttributeTable) GDALRasterAttributeTableShadow;
 
-class GDALRasterAttributeTableShadow : public GDALMajorObjectShadow {
+class GDALRasterAttributeTableShadow {
 private:
 
 public:
