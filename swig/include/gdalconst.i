@@ -136,6 +136,7 @@
 
 %constant char *DCAP_CREATE     = GDAL_DCAP_CREATE;
 %constant char *DCAP_CREATECOPY = GDAL_DCAP_CREATECOPY;
+%constant char *DCAP_VIRTUALIO = GDAL_DCAP_VIRTUALIO;
 
 %constant CPLES_BackslashQuotable = CPLES_BackslashQuotable;
 %constant CPLES_XML               = CPLES_XML;
