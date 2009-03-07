@@ -3234,3 +3234,54 @@ public class org.gdal.gdal.Driver:public String getLongName()
  * @return the URL to the help that describes the driver or null
  */
 public class org.gdal.gdal.Driver:public String getHelpTopic()
+
+
+/* Class ProgressCallback */
+
+/**
+  * Class used to report progression of long operations.
+  *
+  * This class will not do anything by itself, but it can be subclassed, like <a href="TermProgressCallback.html">TermProgressCallback</a> class.
+  * to do more usefull things.
+  */
+public class ProgressCallback
+
+/**
+  * Callback method called from long processing from GDAL methods.
+  *
+  * This method is called back with the progression percentage. Its return value
+  * is used by the caller to determine whether the processing should go on or be
+  * interrupted.
+  * <p>
+  * This method should be subclassed by classes subclassing ProgressCallback.
+  *
+  * @param dfComplete progression percentage between 0 and 1
+  * @param message processing message, may be null
+  *
+  * @return 0 if you want to interrupt the processing, any value different from 1 to go on
+  */
+public class ProgressCallback:public int run(double dfComplete, String message)
+
+
+/* Class TermProgressCallback */
+
+/**
+  * Class used for simple progress report to terminal.
+  *
+  * This progress reporter prints simple progress report to the
+  * terminal window.  The progress report generally looks something like
+  * this:
+  * <pre>
+  *  0...10...20...30...40...50...60...70...80...90...100 - done.
+  * </pre>
+  * Every 2.5% of progress another number or period is emitted.  Note that
+  * GDALTermProgress() uses internal static data to keep track of the last
+  * percentage reported and will get confused if two terminal based progress
+  * reportings are active at the same time eithin in a single thread or across multiple threads.
+  * <p>
+  * Example :
+  * <pre>
+  * driver.CreateCopy("dest.tif", src_ds, new TermProgressCallback());
+  * </pre>
+  */
+public class TermProgressCallback
