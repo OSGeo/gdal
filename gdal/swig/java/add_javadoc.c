@@ -176,18 +176,32 @@ begin:
         fDst = fopen(szDstName, "wt");
         if (fDst == NULL) continue;
         szClass[0] = 0;
-        
+        char szPackage[256];
+        szPackage[0] = 0;
+
         while(fgets(szLine, 255, fSrc))
         {
             char szMethodName[1024];
             char* szOriLine = strdup(szLine);
-            if (strstr(szLine, "public class"))
+            if (strstr(szLine, "package"))
+            {
+                strcpy(szPackage, szLine);
+            }
+            else if (strstr(szLine, "public class"))
             {
                 strcpy(szClass, stripline(szLine));
                 if (strstr(szClass, "extends"))
                 {
                     *strstr(szClass, "extends") = 0;
                     stripline(szClass);
+                }
+                if (strstr(szLine, "Driver"))
+                {
+                    if (strstr(szPackage, "org.gdal.gdal"))
+                        strcpy(szLine, "public class org.gdal.gdal.Driver");
+                    else
+                        strcpy(szLine, "public class org.gdal.ogr.Driver");
+                    strcpy(szClass, szLine);
                 }
             }
             if (strstr(szLine, "synchronized "))
