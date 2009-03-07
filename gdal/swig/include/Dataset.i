@@ -140,11 +140,16 @@ public:
 #endif
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char* resampling};
-#endif
+  int BuildOverviews( const char *resampling,
+                      int overviewlist, int *pOverviews,
+                      GDALProgressFunc callback = NULL,
+                      void* callback_data=NULL ) {
+#else
   int BuildOverviews( const char *resampling = "NEAREST",
                       int overviewlist = 0 , int *pOverviews = 0,
                       GDALProgressFunc callback = NULL,
                       void* callback_data=NULL ) {
+#endif
     return GDALBuildOverviews(  self, 
                                 resampling ? resampling : "NEAREST", 
                                 overviewlist, 
