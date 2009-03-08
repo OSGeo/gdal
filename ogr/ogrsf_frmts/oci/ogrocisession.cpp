@@ -316,7 +316,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
         case SQLT_CHR:
         case SQLT_AFC: /* CHAR(), NCHAR() */
             poOGRDefn->SetType( OFTString );
-            if( nOCILen < 2048 )
+            if( nOCILen <= 4000 )
                 poOGRDefn->SetWidth( nOCILen );
             break;
 
