@@ -443,7 +443,7 @@ CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
         CXT_Text, "VRTDerivedRasterBand" );
 
     /* ---- Encode DerivedBand-specific fields ---- */
-    if( strlen(this->pszFuncName) > 0 )
+    if( pszFuncName != NULL && strlen(pszFuncName) > 0 )
         CPLSetXMLValue(psTree, "PixelFunctionType", this->pszFuncName);
     if( this->eSourceTransferType != GDT_Unknown)
         CPLSetXMLValue(psTree, "SourceTransferType", 
