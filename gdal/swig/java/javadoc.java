@@ -1430,11 +1430,13 @@ public class Dataset:public int CreateMaskBand(int nFlags)
   * Frees the native resource associated to a Dataset object and close the file.
   *
   * This method will delete the underlying C++ object. After it has been called,
-  * all native resources will have been destroyed, so it will be illegal to use
-  * any derived relative Java objects, such as Band objects of this Dataset.
+  * all native resources will have been destroyed, so it will be illegal (and likely to
+  * cause JVM crashes) to use any method on this object or any derived objects,
+  * such as Band objects of this Dataset.
   * <p>
   * The delete() method <b>must</b> be called when a dataset has been opened in update
-  * or creation mode, otherwise data might not be properly flushed to the disk.
+  * or creation mode, otherwise data might not be properly flushed to the disk. You
+  * cannot rely on the finalization to call delete().
   */
 public class Dataset:public void delete()
 
@@ -4021,3 +4023,199 @@ public interface gdalconstConstants:public final static int GRA_CubicSpline
  * GRA_Lanczos(4) : Lanczos windowed sinc interpolation (6x6 kernel)  (warping algorithm)
  */
 public interface gdalconstConstants:public final static int GRA_Lanczos
+
+/**
+ * GMF_ALL_VALID(0x01) (mask band flag).
+ * There are no invalid pixels, all mask values will be 255.
+ * When used this will normally be the only flag set.
+ */
+public interface gdalconstConstants:public final static int GMF_ALL_VALID
+
+/**
+ * GMF_PER_DATASET(0x02) (mask band flag).
+ * The mask band is shared between all bands on the dataset.
+ */
+public interface gdalconstConstants:public final static int GMF_PER_DATASET
+
+/**
+ * GMF_ALPHA(0x04) (mask band flag).
+ * The mask band is actually an alpha band and may have values
+ * other than 0 and 255.
+ */
+public interface gdalconstConstants:public final static int GMF_ALPHA
+
+/**
+ * GMF_NODATA(0x08) (mask band flag).
+ * Indicates the mask is actually being generated from nodata values.
+ * (mutually exclusive of GMF_ALPHA)
+ */
+public interface gdalconstConstants:public final static int GMF_NODATA
+
+
+/**
+ * GPI_Gray(0) (palette interpretation).
+ * Grayscale (in GDALColorEntry.c1)
+ */
+public interface gdalconstConstants:public final static int GPI_Gray
+
+/**
+ * GPI_RGB(1) (palette interpretation).
+ * Red, Green, Blue and Alpha in (in c1, c2, c3 and c4)
+ */
+public interface gdalconstConstants:public final static int GPI_RGB
+
+/**
+ * GPI_CMYK(2) (palette interpretation).
+ * Cyan, Magenta, Yellow and Black (in c1, c2, c3 and c4)
+ */
+public interface gdalconstConstants:public final static int GPI_CMYK
+
+/**
+ * GPI_HLS(3) (palette interpretation).
+ * Hue, Lightness and Saturation (in c1, c2, and c3)
+ */
+public interface gdalconstConstants:public final static int GPI_HLS
+
+
+/* Class Driver */
+
+/**
+ * Class Driver is an uninstanciable class providing various methods to represents an operational format driver.
+ */
+public class org.gdal.ogr.Driver
+
+/**
+ Attempt to create a new data source based on the passed driver.
+ The papszOptions argument can be used to control driver specific
+ creation options.  These options are normally documented in the format
+ specific documentation.
+ <p>
+ The returned dataset should be properly closed with the
+ DataSource.<a href="DataSource.html#delete()">delete()</a> method.
+
+ @param name the name for the new data source.
+ @param options a vector of strings of the format name=value.  Options are driver
+specific, and driver information can be found at the following url:  
+<a href="http://www.gdal.org/ogr/ogr_formats.html ">OGR Formats</a>
+
+ @return null is returned on failure, or a new DataSource on 
+success. 
+*/
+public class org.gdal.ogr.Driver:public DataSource CreateDataSource(String name, java.util.Vector options)
+
+/**
+ * Attempt to create a new data source based on the passed driver.
+ *
+ * Same as below with options == null.
+ *
+ * @see #CreateDataSource(String name, java.util.Vector options)
+ */
+public class org.gdal.ogr.Driver:public DataSource CreateDataSource(String name)
+
+/**
+   Creates a new datasource by copying all the layers from the
+   source datasource.
+
+ @param src_ds source datasource
+ @param name the name for the new data source.
+ @param options a StringList of name=value options.  Options are driver
+specific, and driver information can be found at the following url:  
+<a href="http://www.gdal.org/ogr/ogr_formats.html ">OGR Formats</a>
+
+ @return null is returned on failure, or a new DataSource on 
+success. 
+*/
+public class org.gdal.ogr.Driver:public DataSource CopyDataSource(DataSource src_ds, String name, java.util.Vector options)
+
+/**
+ * Creates a new datasource by copying all the layers from the
+ * source datasource.
+ *
+ * Same as below with options == null.
+ *
+ * @see #CreateDataSource(String name, java.util.Vector options)
+ */
+public class org.gdal.ogr.Driver:public DataSource CopyDataSource(DataSource src_ds, String name)
+
+/**
+  Attempt to open file with this driver. 
+ <p>
+ The returned dataset should be properly closed with the
+ DataSource.<a href="DataSource.html#delete()">delete()</a> method.
+
+  @param name the name of the file, or data source to try and open.
+  @param update 1 if update access is required, otherwise 0 (the
+  default).
+
+  @return null on error or if the pass name is not supported by this driver,
+  otherwise a pointer to a DataSource.
+*/
+public class org.gdal.ogr.Driver:public DataSource Open(String name, int update)
+
+/**
+ * Attempt to open file with this driver. 
+ *
+ * Same as below with update == 0.
+ *
+ * @see #Open(String name, int update)
+ */
+public class org.gdal.ogr.Driver:public DataSource Open(String name)
+
+/**
+ Destroy a datasource.
+
+ Destroy the named datasource.  Normally it would be safest if the
+ datasource was not open at the time. 
+ <p>
+ Whether this is a supported operation on this driver case be tested
+ using TestCapability() on ODrCDeleteDataSource.
+
+ @param name the name of the datasource to delete. 
+
+ @return OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this
+ is not supported by this driver. 
+*/
+public class org.gdal.ogr.Driver:public int DeleteDataSource(String name)
+
+/**
+ Test if capability is available.
+
+ One of the following data source capability names can be passed into this
+ function, and a TRUE or FALSE value will be returned indicating whether
+ or not the capability is available for this object.
+ <p>
+ <ul>
+  <li> <b>ODrCCreateDataSource</b>: True if this driver can support creating data sources.<p>
+  <li> <b>ODrCDeleteDataSource</b>: True if this driver supports deleting data sources.<p>
+ </ul>
+ <p>
+ The constant forms of the capability names should be used in preference
+ to the strings themselves to avoid mispelling.
+
+ @param cap the capability to test.
+
+ @return true if capability available otherwise false.
+*/
+public class org.gdal.ogr.Driver:public boolean TestCapability(String cap)
+
+/** 
+  Fetch name of driver (file format).
+
+  This name should be relatively short
+  (10-40 characters), and should reflect the underlying file format.  For
+  instance "ESRI Shapefile".
+
+  @return driver name.
+*/
+public class org.gdal.ogr.Driver:public String getName()
+
+/** 
+  Fetch name of driver (file format).
+
+  This name should be relatively short
+  (10-40 characters), and should reflect the underlying file format.  For
+  instance "ESRI Shapefile".
+
+  @return driver name.
+*/
+public class org.gdal.ogr.Driver:public String GetName()
