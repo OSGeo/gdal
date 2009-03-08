@@ -271,6 +271,8 @@ import org.gdal.osr.CoordinateTransformation;
     return ret;
   }
 
+%typemap(javadestruct, methodname="delete", methodmodifiers="public") OGRDriverShadow ""
+
 /* ------------------------------------------------------------------- */
 /* Below an advanced technique to avoid the use of a finalize() method */
 /* in the Feature object, that prevents efficient garbarge collection. */
