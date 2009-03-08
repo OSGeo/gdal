@@ -427,10 +427,11 @@ public:
     return layer;
   }
 
-#ifndef SWIGJAVA
-  %feature( "kwargs" ) GetLayerByIndex;
-#endif
+#ifdef SWIGJAVA
+  OGRLayerShadow *GetLayerByIndex( int index ) {
+#else
   OGRLayerShadow *GetLayerByIndex( int index=0) {
+#endif
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_GetLayer(self, index);
     return layer;
   }
