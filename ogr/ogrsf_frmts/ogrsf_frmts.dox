@@ -607,6 +607,55 @@ success.
 */
 
 /**
+ \fn OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer, 
+                                    const char *pszNewName, 
+                                    char **papszOptions )
+
+ Duplicate an existing layer.
+
+ This method creates a new layer, duplicate the field definitions of the
+ source layer and then duplicate each features of the source layer.
+ The papszOptions argument
+ can be used to control driver specific creation options.  These options are
+ normally documented in the format specific documentation.
+ The source layer may come from another dataset.
+
+ This method is the same as the C function OGR_DS_CopyLayer().
+
+ @param poSrcLayer source layer.
+ @param pszNewName the name of the layer to create.
+ @param papszOptions a StringList of name=value options.  Options are driver
+                     specific.
+
+ @return an handle to the layer, or NULL if an error occurs.
+*/
+
+/**
+ \fn OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS, 
+                            OGRLayerH hSrcLayer, const char *pszNewName,
+                            char **papszOptions )
+
+ Duplicate an existing layer.
+
+ This function creates a new layer, duplicate the field definitions of the
+ source layer and then duplicate each features of the source layer.
+ The papszOptions argument
+ can be used to control driver specific creation options.  These options are
+ normally documented in the format specific documentation.
+ The source layer may come from another dataset.
+
+ This function is the same as the C++ method OGRDataSource::CopyLayer
+
+ @param hDS handle to the data source where to create the new layer
+ @param hSrcLayer handle to the source layer.
+ @param pszNewName the name of the layer to create.
+ @param papszOptions a StringList of name=value options.  Options are driver
+                     specific.
+
+ @return an handle to the layer, or NULL if an error occurs.
+*/
+
+/**
  \fn OGRErr OGRDataSource::DeleteLayer(int iLayer);
 
  Delete the indicated layer from the datasource.  If this method is supported
