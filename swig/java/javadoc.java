@@ -4118,7 +4118,7 @@ public class org.gdal.ogr.Driver:public DataSource CreateDataSource(String name)
 
  @param src_ds source datasource
  @param name the name for the new data source.
- @param options a StringList of name=value options.  Options are driver
+ @param options a vector of strings of the format name=value.  Options are driver
 specific, and driver information can be found at the following url:  
 <a href="http://www.gdal.org/ogr/ogr_formats.html ">OGR Formats</a>
 
@@ -4219,3 +4219,292 @@ public class org.gdal.ogr.Driver:public String getName()
   @return driver name.
 */
 public class org.gdal.ogr.Driver:public String GetName()
+
+
+/* Class DataSource */
+/**
+  * This class represents a data source.
+  * A data source potentially consists of many layers (<a href="Layer.html">Layer</a>). A data source normally consists of one, or a
+  * related set of files, though the name doesn't have to be a real item in the file system.
+  * When an DataSource is destroyed, all it's associated Layer objects are also destroyed.
+  */
+public class DataSource
+
+
+/**
+ Duplicate an existing layer.
+
+ This function creates a new layer, duplicate the field definitions of the
+ source layer and then duplicate each features of the source layer.
+ The papszOptions argument
+ can be used to control driver specific creation options.  These options are
+ normally documented in the format specific documentation.
+ The source layer may come from another dataset.
+
+ @param src_layer source layer.
+ @param new_name the name of the layer to create.
+ @param options a StringList of name=value options.  Options are driver
+specific, and driver information can be found at the following url:  
+<a href="http://www.gdal.org/ogr/ogr_formats.html ">OGR Formats</a>
+
+ @return a new layer, or null if an error occurs.
+*/
+public class DataSource:public Layer CopyLayer(Layer src_layer, String new_name, java.util.Vector options)
+
+/**
+ * Duplicate an existing layer.
+ *
+ * Same as below with options == null.
+ *
+ * @see #CopyLayer(Layer src_layer, String new_name, java.util.Vector options)
+ */
+public class DataSource:public Layer CopyLayer(Layer src_layer, String new_name)
+
+/**
+Create a new layer on the data source with the indicated name, coordinate system, geometry type.
+
+The options argument
+can be used to control driver specific creation options.  These options are
+normally documented in the format specific documentation. 
+<p>
+Example:
+
+<pre>
+	Layer layer;
+        Vector options = new Vector();
+
+	if( !ds.TestCapability( ogrConstants.ODsCCreateLayer ) )
+        {
+	    ...
+        }
+
+        options.add("DIM=2");
+        layer = ds.CreateLayer( "NewLayer", null, ogrConstants.wkbUnknown,
+				options );
+
+        if( layer == null )
+        {
+            ...
+        }        
+</pre>
+
+ @param name the name for the new layer.  This should ideally not 
+match any existing layer on the datasource.
+ @param srs the coordinate system to use for the new layer, or null if
+no coordinate system is available. 
+ @param geom_type the geometry type for the layer.  Use ogrConstants.wkbUnknown if there
+are no constraints on the types geometry to be written. 
+ @param options a vector of strings of the format name=value.  Options are driver
+specific, and driver information can be found at the following url:  
+<a href="http://www.gdal.org/ogr/ogr_formats.html ">OGR Formats</a>
+
+ @return null is returned on failure, or a new Layer on success. 
+*/
+public class DataSource:public Layer CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
+
+/**
+ * Create a new layer on the data source with the indicated name, coordinate system, geometry type.
+ *
+ * Same as below with options == null.
+ *
+ * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
+ */
+public class DataSource:public Layer CreateLayer(String name, SpatialReference srs, int geom_type)
+
+/**
+ * Create a new layer on the data source with the indicated name, coordinate system.
+ *
+ * Same as below with geom_type == ogrConstants.wkbUnknown and options == null.
+ *
+ * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
+ */
+public class DataSource:public Layer CreateLayer(String name, SpatialReference srs)
+
+/**
+ * Create a new layer on the data source with the indicated name.
+ *
+ * Same as below with srs == null, geom_type == ogrConstants.wkbUnknown and options == null.
+ *
+ * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
+ */
+public class DataSource:public Layer CreateLayer(String name)
+
+/**
+ Delete the indicated layer from the datasource.
+ If this method is supported
+ the ODsCDeleteLayer capability will test true on the DataSource.
+
+ @param index the index of the layer to delete. 
+
+ @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+ layers is not supported for this datasource.
+*/
+public class DataSource:public int DeleteLayer(int index)
+
+/**
+ Execute an SQL statement against the data store. 
+
+ The result of an SQL query is either null for statements that are in error,
+ or that have no results set, or an Layer pointer representing a results
+ set from the query.  Note that this Layer is in addition to the layers
+ in the data store and must be destroyed with 
+ ReleaseResultsSet() before the data source is closed  (destroyed).
+ <p>
+ For more information on the SQL dialect supported internally by OGR
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
+
+ @param statement the SQL statement to execute. 
+ @param spatialFilter geometry which represents a spatial filter.
+ @param dialect allows control of the statement dialect.  By default it 
+ is assumed to be "generic" SQL, whatever that is. 
+
+ @return a Layer containing the results of the query.  Deallocate with
+ ReleaseResultsSet().
+*/
+public class DataSource:public Layer ExecuteSQL(String statement, Geometry spatialFilter, String dialect)
+
+/**
+ * Execute an SQL statement against the data store.
+ *
+ * Same as below with dialect = ""
+ *
+ * @see #ExecuteSQL(String statement, Geometry spatialFilter, String dialect)
+ */
+public class DataSource:public Layer ExecuteSQL(String statement, Geometry spatialFilter)
+
+/**
+ * Execute an SQL statement against the data store.
+ *
+ * Same as below with spatialFilter == null and dialect = ""
+ *
+ * @see #ExecuteSQL(String statement, Geometry spatialFilter, String dialect)
+ */
+public class DataSource:public Layer ExecuteSQL(String statement)
+
+/**
+ Release results of ExecuteSQL().
+
+ This method should only be used to deallocate Layers resulting from
+ an ExecuteSQL() call on the same DataSource.  Failure to deallocate a
+ results set before destroying the DataSource may cause errors. 
+
+ @param layer the result of a previous ExecuteSQL() call.
+*/
+public class DataSource:public void ReleaseResultSet(Layer layer)
+
+/**
+ Test if capability is available.
+
+ One of the following data source capability names can be passed into this
+ method, and a true or false value will be returned indicating whether or not
+ the capability is available for this object.
+ <p>
+ <ul>
+  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
+ </ul>
+ <p>
+ The constant forms of the capability names should be used in preference
+ to the strings themselves to avoid mispelling.
+
+ @param cap the capability to test.
+
+ @return true if capability available otherwise false.
+*/ 
+public class DataSource:public boolean TestCapability(String cap)
+
+/**
+ Fetch a layer by index.
+
+ The returned layer remains owned by the 
+ DataSource and should not be deleted by the application.
+
+ @param index a layer number between 0 and GetLayerCount()-1.
+
+ @return the layer, or null if index is out of range or an error occurs.
+*/
+public class DataSource:public Layer GetLayerByIndex(int index)
+
+/**
+ Fetch a layer by index.
+
+ The returned layer remains owned by the 
+ DataSource and should not be deleted by the application.
+
+ @param index a layer number between 0 and GetLayerCount()-1.
+
+ @return the layer, or null if index is out of range or an error occurs.
+*/
+public class DataSource:public Layer GetLayer(int index)
+
+/**
+ Fetch a layer by name.
+
+ The returned layer remains owned by the 
+ OGRDataSource and should not be deleted by the application.
+
+ @param layer_name the layer name of the layer to fetch.
+
+ @return the layer, or null if index is out of range or an error occurs.
+*/
+public class DataSource:public Layer GetLayerByName(String layer_name)
+
+/**
+ Fetch a layer by name.
+
+ The returned layer remains owned by the 
+ OGRDataSource and should not be deleted by the application.
+
+ @param layer_name the layer name of the layer to fetch.
+
+ @return the layer, or null if index is out of range or an error occurs.
+*/
+public class DataSource:public Layer GetLayer(String layer_name)
+
+/**
+ Get the number of layers in this data source.
+
+ @return layer count.
+*/
+public class DataSource:public int GetLayerCount()
+
+/** 
+ Returns the name of the data source.  This string should be sufficient to
+ open the data source if passed to the same Driver that this data
+ source was opened with, but it need not be exactly the same string that
+ was used to open the data source.  Normally this is a filename. 
+
+ @return name of the data source
+*/
+public class DataSource:public String GetName()
+
+/** 
+ Returns the name of the data source.  This string should be sufficient to
+ open the data source if passed to the same Driver that this data
+ source was opened with, but it need not be exactly the same string that
+ was used to open the data source.  Normally this is a filename. 
+
+ @return name of the data source
+*/
+public class DataSource:public String getName()
+
+/**
+  Returns the driver that the dataset was opened with. 
+
+  @return null if driver info is not available, or pointer to a driver
+*/
+public class DataSource:public Driver GetDriver()
+
+/**
+Fetch reference count.
+
+@return the current reference count for the datasource object itself.
+*/
+public class DataSource:public int GetRefCount()
+
+/**
+Fetch reference count of datasource and all owned layers.
+
+@return the current summary reference count for the datasource and its layers.
+*/
+public class DataSource:public int GetSummaryRefCount()
