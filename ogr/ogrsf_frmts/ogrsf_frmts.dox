@@ -430,6 +430,52 @@ http://www.gdal.org/ogr/ogr_formats.html
 success. 
 */
 
+
+/**
+
+   \fn OGRDataSource *OGRSFDriver::CopyDataSource( OGRDataSource *poSrcDS, 
+                                            const char *pszNewName,
+                                            char **papszOptions )
+
+   This method creates a new datasource by copying all the layers from the
+   source datasource.
+
+   This method is the same as the C function OGR_Dr_CopyDataSource().
+
+ @param poSrcDS source datasource
+ @param pszNewName the name for the new data source.
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific, and driver information can be found at the following url:  
+http://www.gdal.org/ogr/ogr_formats.html 
+
+ @return NULL is returned on failure, or a new OGRDataSource handle on 
+success. 
+*/
+
+/**
+
+   \fn OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver, 
+                                      OGRDataSourceH hSrcDS, 
+                                      const char *pszNewName,
+                                      char **papszOptions )
+
+   This function creates a new datasource by copying all the layers from the
+   source datasource.
+
+   This function is the same as the C++ method OGRSFDriver::CopyDataSource().
+
+ @param hDriver handle to the driver on which data source creation is
+based.
+ @param hSrcDS source datasource
+ @param pszNewName the name for the new data source.
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific, and driver information can be found at the following url:  
+http://www.gdal.org/ogr/ogr_formats.html 
+
+ @return NULL is returned on failure, or a new OGRDataSource handle on 
+success. 
+*/
+
 /************************************************************************/
 /*                            OGRDataSource                             */
 /************************************************************************/
