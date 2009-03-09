@@ -195,6 +195,11 @@ begin:
                     *strstr(szClass, "extends") = 0;
                     stripline(szClass);
                 }
+                if (strstr(szClass, "implements"))
+                {
+                    *strstr(szClass, "implements") = 0;
+                    stripline(szClass);
+                }
                 if (strstr(szLine, "Driver"))
                 {
                     if (strstr(szPackage, "org.gdal.gdal"))
