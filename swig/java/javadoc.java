@@ -4851,7 +4851,7 @@ public class Layer:public int SetNextByIndex(int new_index)
  <p>
  Currently this test is may be inaccurately implemented, but it is
  guaranteed that all features who's envelope (as returned by
- OGRGeometry::getEnvelope()) overlaps the envelope of the spatial filter
+ Geometry.getEnvelope()) overlaps the envelope of the spatial filter
  will be returned.  This can result in more shapes being returned that 
  should strictly be the case. 
  <p>
@@ -5548,3 +5548,900 @@ public class Feature:public void UnsetField(int ifield)
  * @param name the name of the field to unset.
  */
 public class Feature:public void UnsetField(String name)
+
+
+/* Class Geometry */
+
+/**
+ * Abstract base class for all geometry classes.
+ *
+ * Note that the family of spatial analysis methods (Equal(), Disjoint(), ...,
+ * ConvexHull(), Buffer(), ...) are not implemented at ths time.  Some other
+ * required and optional geometry methods have also been omitted at this
+ * time.
+ * <p>
+ * Some spatial analysis methods require that OGR is built on the GEOS library
+ * to work properly. The precise meaning of methods that describe spatial relationships
+ * between geometries is described in the SFCOM, or other simple features interface
+ * specifications, like "OpenGIS(R) Implementation Specification for
+ * Geographic information - Simple feature access - Part 1: Common architecture"
+ * (<a href="http://www.opengeospatial.org/standards/sfa">OGC 06-103r3</a>)
+ *
+ */
+public class Geometry
+
+/** 
+ * Create an empty geometry of desired type.
+ *
+ * The type may be one of ogrConstants.wkbPoint, etc..
+ *
+ * @param eGeometryType the type code of the geometry class to be instantiated.
+ */
+public class Geometry:public Geometry(int eGeometryType)
+
+/**
+ * Add a geometry to the container.
+ *
+ * Some subclasses of OGRGeometryCollection restrict the types of geometry
+ * that can be added, and may return an error.  The passed geometry is cloned
+ * to make an internal copy.
+ * <p>
+ * There is no SFCOM analog to this method.
+ *
+ * @param other geometry to add to the container.
+ *
+ * @return 0 if successful, or throws RuntimeException if
+ * the geometry type is illegal for the type of geometry container.
+ */
+public class Geometry:public int AddGeometry(Geometry other)
+
+/**
+ * Add a geometry directly to the container.
+ *
+ * Some subclasses of OGRGeometryCollection restrict the types of geometry
+ * that can be added, and may return an error.  Ownership of the passed
+ * geometry is taken by the container rather than cloning as addGeometry()
+ * does.
+ * <p>
+ * There is no SFCOM analog to this method.
+ *
+ * @param other geometry to add to the container.
+ *
+ * @return 0 if successful, or throws RuntimeException if
+ * the geometry type is illegal for the type of geometry container.
+ */
+public class Geometry:public int AddGeometryDirectly(Geometry other)
+
+/**
+ * Add a point to a geometry (line string or point).
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * @param x x coordinate of point to add.
+ * @param y y coordinate of point to add.
+ */
+public class Geometry:public void AddPoint_2D(double x, double y)
+
+/**
+ * Add a point to a geometry (line string or point).
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * @param x coordinate of point to add.
+ * @param y coordinate of point to add.
+ * @param z coordinate of point to add.
+ */
+public class Geometry:public void AddPoint(double x, double y, double z)
+
+/**
+ * Add a point to a geometry (line string or point).
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * @param x coordinate of point to add.
+ * @param y coordinate of point to add.
+ */
+public class Geometry:public void AddPoint(double x, double y)
+
+/**
+ * Assign spatial reference to this object.  Any existing spatial reference
+ * is replaced, but under no circumstances does this result in the object
+ * being reprojected.  It is just changing the interpretation of the existing
+ * geometry.  Note that assigning a spatial reference increments the
+ * reference count on the SpatialReference, but does not copy it. 
+ *
+ * This is similar to the SFCOM IGeometry::put_SpatialReference() method.
+ *
+ * @param srs new spatial reference system to apply.
+ */
+
+public class Geometry:public void AssignSpatialReference(SpatialReference srs)
+
+/**
+ * Compute buffer of geometry.
+ *
+ * Builds a new geometry containing the buffer region around the geometry
+ * on which it is invoked.  The buffer is a polygon containing the region within
+ * the buffer distance of the original geometry.  
+ * <p>
+ * Some buffer sections are properly described as curves, but are converted to
+ * approximate polygons.  The nQuadSegs parameter can be used to control how many
+ * segements should be used to define a 90 degree curve - a quadrant of a circle. 
+ * A value of 30 is a reasonable default.  Large values result in large numbers
+ * of vertices in the resulting buffer geometry while small numbers reduce the 
+ * accuracy of the result. 
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param distance the buffer distance to be applied. 
+ *
+ * @param quadsecs the number of segments used to approximate a 90 degree (quadrant) of
+ * curvature. 
+ *
+ * @return the newly created geometry, or null if an error occurs. 
+ */
+public class Geometry:public Geometry Buffer(double distance, int quadsecs)
+
+/**
+ * Compute buffer of geometry.
+ *
+ * Same as below with quadsecs == 30.
+ *
+ * @see #Buffer(double distance, int quadsecs)
+ */
+public class Geometry:public Geometry Buffer(double distance)
+
+/**
+ * Compute and return centroid of surface.  The centroid is not necessarily
+ * within the geometry.  
+ * <p>
+ * This method relates to the SFCOM ISurface::get_Centroid() method.
+ * <p>
+ * NOTE: Only implemented when GEOS included in build.
+ *
+ * @return point with the centroid location, or null in case of failure
+ */
+public class Geometry:public Geometry Centroid()
+
+/**
+ * Make a copy of this object.
+ *
+ * This method relates to the SFCOM IGeometry::clone() method.
+ * 
+ * @return a new object instance with the same geometry, and spatial
+ * reference system as the original.
+ */
+public class Geometry:public Geometry Clone()
+
+/**
+ * Force rings to be closed.
+ *
+ * If this geometry, or any contained geometries has polygon rings that 
+ * are not closed, they will be closed by adding the starting point at
+ * the end. 
+ */
+public class Geometry:public void CloseRings()
+
+/**
+ * Test for containment.
+ *
+ * Tests if actual geometry object contains the passed geometry.
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the geometry to compare to this geometry.
+ *
+ * @return true if poOtherGeom contains this geometry, otherwise false
+ */
+public class Geometry:public boolean Contains(Geometry other)
+
+/**
+ * Compute convex hull.
+ *
+ * A new geometry object is created and returned containing the convex
+ * hull of the geometry on which the method is invoked.  
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @return a newly allocated geometry now owned by the caller, or null on failure.
+ */
+public class Geometry:public Geometry ConvexHull()
+
+/**
+ * Create geometry from GML.
+ *
+ * This method translates a fragment of GML containing only the geometry
+ * portion into a corresponding Geometry.  There are many limitations
+ * on the forms of GML geometries supported by this parser, but they are
+ * too numerous to list here. 
+ *
+ * @param gml The GML fragment for the geometry.
+ *
+ * @return a geometry on succes, or null on error.
+ */
+public class Geometry:public static Geometry CreateFromGML(String gml)
+
+/**
+ * Create geometry from GeoJSON.
+ *
+ * @param json GeoJSON content
+ *
+ * @return a geometry on succes, or null on error.
+ */
+public class Geometry:public static Geometry CreateFromJson(String json)
+
+/**
+ * Create a geometry object of the appropriate type from it's well known
+ * binary representation.
+ *
+ * @param wkb input BLOB data.
+ *
+ * @return a geometry on succes, or null on error.
+ */
+public class Geometry:public static Geometry CreateFromWkb(byte[] wkb)
+
+/**
+ * Create a geometry object of the appropriate type from it's well known
+ * text representation.
+ *
+ * @param wkt string containing well known text
+ *                representation of the geometry to be created.
+ *
+ * @return a geometry on succes, or null on error.
+ */
+public class Geometry:public static Geometry CreateFromWkt(String wkt)
+
+/**
+ * Test for crossing.
+ *
+ * Tests if this geometry and the other passed into the method are crossing.
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the geometry to compare to this geometry.
+ *
+ * @return true if they are crossing, otherwise false.  
+ */
+public class Geometry:public boolean Crosses(Geometry other)
+
+/**
+ * Delete a geometry.
+ * Calling this method is not required as normal garbage collection will
+ * reclaim associated resources when the object goes out of scope.
+ * Otherwise calling delete() explicitely will help release resources sooner.
+ * Don't call any method on a deleted object !
+ */
+public class Geometry:public void delete()
+
+/**
+ * Compute difference.
+ *
+ * Generates a new geometry which is the region of this geometry with the
+ * region of the second geometry removed. 
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the other geometry removed from "this" geometry.
+ *
+ * @return a new geometry representing the difference or null if the 
+ * difference is empty or an error occurs.
+ */
+public class Geometry:public Geometry Difference(Geometry other)
+
+/**
+ * Test for disjointness.
+ *
+ * Tests if this geometry and the other passed into the method are disjoint. 
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the geometry to compare to this geometry.
+ *
+ * @return true if they are disjoint, otherwise false.
+ */
+public class Geometry:public boolean Disjoint(Geometry other)
+
+/**
+ * Compute distance between two geometries.
+ *
+ * Returns the shortest distance between the two geometries. 
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the other geometry to compare against.
+ *
+ * @return the distance between the geometries or -1 if an error occurs.
+ */
+public class Geometry:public double Distance(Geometry other)
+
+/**
+ * Clear geometry information.  This restores the geometry to it's initial
+ * state after construction, and before assignment of actual geometry.
+ * <p>
+ * This method relates to the SFCOM IGeometry::Empty() method.
+ */
+public class Geometry:public void Empty()
+
+/**
+ * Returns two if two geometries are equivalent.
+ *
+ * @return true if equivalent or false otherwise.
+ */
+public class Geometry:public boolean Equal(Geometry other)
+
+/**
+ * Convert a geometry into GML format.
+ *
+ * The GML geometry is expressed directly in terms of GML basic data
+ * types assuming the this is available in the gml namespace.
+ *
+ * @return A GML fragment or null in case of error.
+ */
+public class Geometry:public String ExportToGML()
+
+/**
+ * Convert a geometry into KML format.
+ *
+ * @param altitude_mode string which will be inserted in-between the &lt;altitude_mode&gt; tag.
+ *
+ * @return A KML fragment or null in case of error.
+ */
+public class Geometry:public String ExportToKML(String altitude_mode)
+
+/**
+ * Convert a geometry into KML format.
+ *
+ * @return A KML fragment or null in case of error.
+ */
+public class Geometry:public String ExportToKML()
+
+/**
+ * Convert a geometry into GeoJSON format.
+ *
+ * @return A GeoJSON fragment or null in case of error.
+ */
+public class Geometry:public String ExportToJson()
+
+/**
+ * Convert a geometry into well known binary format.
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * @param byte_order One of wkbXDR or wkbNDR indicating MSB or LSB byte order
+ *               respectively.
+ *
+ * @return the wkb content
+ */
+public class Geometry:public byte[] ExportToWkb(int byte_order)
+
+/**
+ * Convert a geometry into well known binary format.
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ * MSB order (wkbXDR) will be used.
+ *
+ * @return the wkb content
+ */
+public class Geometry:public byte[] ExportToWkb()
+
+/**
+ * Convert a geometry into well known text format.
+ *
+ * This method relates to the SFCOM IWks::ExportToWKT() method.
+ *
+ * @param argout an allocated array of 1 string where the WKT output will be inserted
+ *
+ * @return Currently 0 is always returned.
+ */
+public class Geometry:public int ExportToWkt(String[] argout)
+
+/**
+ * Convert a geometry into well known text format.
+ *
+ * This method relates to the SFCOM IWks::ExportToWKT() method.
+ *
+ * @return the WKT string
+ */
+public class Geometry:public String ExportToWkt()
+
+/**
+ * Convert geometry to strictly 2D.  In a sense this converts all Z coordinates
+ * to 0.0.
+ */
+public class Geometry:public void FlattenTo2D()
+
+/**
+ * Compute geometry area.
+ *
+ * Computes the area for an OGRLinearRing, OGRPolygon or OGRMultiPolygon.
+ * Undefined for all other geometry types (returns zero). 
+ *
+ * @return the area or 0.0 for unsupported geometry types.
+ */
+public class Geometry:public double GetArea()
+
+/**
+ * Compute boundary.
+ *
+ * A new geometry object is created and returned containing the boundary
+ * of the geometry on which the method is invoked.  
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @return a newly allocated geometry now owned by the caller, or null on failure.
+ */
+public class Geometry:public Geometry GetBoundary()
+
+/**
+ * Get the dimension of the coordinates in this object.
+ *
+ * This method corresponds to the SFCOM IGeometry::GetDimension() method.
+ *
+ * @return in practice this always returns 2 indicating that coordinates are
+ * specified within a two dimensional space.
+ */
+public class Geometry:public int GetCoordinateDimension()
+
+/**
+ * Get the dimension of this object.
+ *
+ * This method corresponds to the SFCOM IGeometry::GetDimension() method.
+ * It indicates the dimension of the object, but does not indicate the
+ * dimension of the underlying space (as indicated by
+ * GetCoordinateDimension()).
+ *
+ * @return 0 for points, 1 for lines and 2 for surfaces.
+ */
+public class Geometry:public int GetDimension()
+
+/**
+ * Computes and returns the bounding envelope for this geometry.
+ *
+ * @param argout an allocated array of 4 doubles into which to place the result
+ */
+public class Geometry:public void GetEnvelope(double[] argout)
+
+/**
+ * Fetch the number of elements in a geometry or number of geometries in
+ * container.
+ *
+ * Only geometries of type wkbPolygon[25D], wkbMultiPoint[25D], wkbMultiLineString[25D],
+ * wkbMultiPolygon[25D] or wkbGeometryCollection[25D] may return a valid value.
+ * Other geometry types will silently return 0.
+ *
+ * @return the number of elements.
+ */
+public class Geometry:public int GetGeometryCount()
+
+/**
+ * Fetch WKT name for geometry type.
+ *
+ * There is no SFCOM analog to this method.  
+ *
+ * @return name used for this geometry type in well known text format.
+ */
+public class Geometry:public String GetGeometryName()
+
+/**
+ * Fetch geometry from a geometry container.
+ *
+ * This function returns an handle to a geometry within the container.
+ * The returned geometry remains owned by the container, and should not be
+ * modified.  The handle is only valid untill the next change to the
+ * geometry container.  Use Clone() to make a copy.
+ * <p>
+ * This function relates to the SFCOM 
+ * IGeometryCollection::get_Geometry() method.
+ *
+ * @param iSubGeom the index of the geometry to fetch, between 0 and
+ *          GetGeometryCount() - 1.
+ * @return requested geometry.
+ */
+public class Geometry:public Geometry GetGeometryRef(int iSubGeom)
+
+/**
+ * Fetch geometry type.
+ *
+ * Note that the geometry type may include the 2.5D flag.  To get a 2D
+ * flattened version of the geometry type apply the wkbFlatten() macro
+ * to the return result.
+ *
+ * @return the geometry type code.
+ */
+public class Geometry:public int GetGeometryType()
+
+/**
+ * Fetch a point in line string or a point geometry.
+ *
+ * @param iPoint the vertex to fetch, from 0 to GetNumPoints()-1, zero for a point.
+ * @param argout an allocated array of 3 doubles to contain the x, y, z coordinates.
+ */
+public class Geometry:public void GetPoint(int iPoint, double[] argout)
+
+/**
+ * Fetch a point in line string or a point geometry.
+ *
+ * @param iPoint the vertex to fetch, from 0 to GetNumPoints()-1, zero for a point.
+ * @return an allocated array of 3 doubles to contain the x, y, z coordinates.
+ */
+public class Geometry:public double[] GetPoint(int iPoint)
+
+/**
+ * Fetch a point in line string or a point geometry.
+ *
+ * @param iPoint the vertex to fetch, from 0 to GetNumPoints()-1, zero for a point.
+ * @param argout an allocated array of 2 doubles to contain the x, y coordinates.
+ */
+public class Geometry:public void GetPoint_2D(int iPoint, double[] argout)
+
+/**
+ * Fetch a point in line string or a point geometry.
+ *
+ * @param iPoint the vertex to fetch, from 0 to GetNumPoints()-1, zero for a point.
+ * @return an allocated array of 2 doubles to contain the x, y coordinates.
+ */
+public class Geometry:public double[] GetPoint_2D(int iPoint)
+
+/**
+ * Fetch number of points from a geometry.
+ *
+ * Only wkbPoint[25D] or wkbLineString[25D] may return a valid value.
+ * Other geometry types will silently return 0.
+ *
+ * @return the number of points.
+ */
+public class Geometry:public int GetPointCount()
+
+/**
+ * Returns spatial reference system for object.
+ *
+ * This method relates to the SFCOM IGeometry::get_SpatialReference() method.
+ *
+ * @return a reference to the spatial reference object.  The object may be
+ * shared with many geometry objects, and should not be modified.
+ */
+public class Geometry:public SpatialReference GetSpatialReference()
+
+/**
+ * Fetch the x coordinate of a point from a geometry.
+ *
+ * @param ipoint point to get the x coordinate. (must be 0 for a point geometry)
+ * @return the X coordinate of this point. 
+ */
+public class Geometry:public double GetX(int ipoint)
+
+/**
+ * Fetch the y coordinate of a point from a geometry.
+ *
+ * @param ipoint point to get the y coordinate. (must be 0 for a point geometry)
+ * @return the Y coordinate of this point. 
+ */
+public class Geometry:public double GetY(int ipoint)
+
+/**
+ * Fetch the z coordinate of a point from a geometry.
+ *
+ * @param ipoint point to get the z coordinate. (must be 0 for a point geometry)
+ * @return the Z coordinate of this point. 
+ */
+public class Geometry:public double GetZ(int ipoint)
+
+/**
+ * Fetch the x coordinate of the first point from a geometry.
+ *
+ * @return the X coordinate of this point. 
+ */
+public class Geometry:public double GetX()
+
+/**
+ * Fetch the y coordinate of the first point from a geometry.
+ *
+ * @return the Y coordinate of this point. 
+ */
+public class Geometry:public double GetY()
+
+/**
+ * Fetch the z coordinate of the first point from a geometry.
+ *
+ * @return the Z coordinate of this point. 
+ */
+public class Geometry:public double GetZ()
+
+/**
+ * Do these features intersect?
+ *
+ * Determines whether two geometries intersect.  If GEOS is enabled, then
+ * this is done in rigerous fashion otherwise true is returned if the
+ * envelopes (bounding boxes) of the two features overlap. 
+ * <p>
+ * The geom argument may be safely null, but in this case the method
+ * will always return true.   That is, a null geometry is treated as being
+ * everywhere. 
+ *
+ * @param other the other geometry to test against.  
+ *
+ * @return true if the geometries intersect, otherwise false.
+ */
+public class Geometry:public boolean Intersect(Geometry other)
+
+/**
+ * Compute intersection.
+ *
+ * Generates a new geometry which is the region of intersection of the
+ * two geometries operated on.  The Intersect() method can be used to test if
+ * two geometries intersect. 
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the other geometry intersected with "this" geometry.
+ *
+ * @return a new geometry representing the intersection or null if there is
+ * no intersection or an error occurs.
+ */
+public class Geometry:public Geometry Intersection(Geometry other)
+
+/**
+ * Returns true (non-zero) if the object has no points.  Normally this
+ * returns false except between when an object is instantiated and points
+ * have been assigned.
+ *
+ * This method relates to the SFCOM IGeometry::IsEmpty() method.
+ *
+ * @return true if object is empty, otherwise false.
+ */
+public class Geometry:public boolean IsEmpty()
+
+/**
+ * Test if the geometry is valid.
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always return 
+ * false. 
+ *
+ *
+ * @return true if the geometry has no points, otherwise false.  
+ */
+
+public class Geometry:public boolean IsValid()
+
+/**
+ * Test if the geometry is simple.
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always return 
+ * false. 
+ *
+ *
+ * @return true if the geometry has no points, otherwise false.  
+ */
+public class Geometry:public boolean IsSimple()
+
+/**
+ * Test if the geometry is a ring.
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always return 
+ * false. 
+ *
+ *
+ * @return true if the geometry has no points, otherwise false.  
+ */
+public class Geometry:public boolean IsRing()
+
+/**
+ * Test for overlap.
+ *
+ * Tests if this geometry and the other passed into the method overlap, that is
+ * their intersection has a non-zero area. 
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the geometry to compare to this geometry.
+ *
+ * @return true if they are overlapping, otherwise false.  
+ */
+public class Geometry:public boolean Overlaps(Geometry other)
+
+/**
+ * Set the coordinate dimension. 
+ *
+ * This method sets the explicit coordinate dimension.  Setting the coordinate
+ * dimension of a geometry to 2 should zero out any existing Z values.  Setting
+ * the dimension of a geometry collection will not necessarily affect the
+ * children geometries. 
+ *
+ * @param dimension New coordinate dimension value, either 2 or 3.
+ */
+public class Geometry:public void SetCoordinateDimension(int dimension)
+
+/**
+ * Set the location of a vertex in a point or linestring geometry.
+ *
+ * If ipoint is larger than the number of existing
+ * points in the linestring, the point count will be increased to
+ * accomodate the request.
+ *
+ * @param ipoint the index of the vertex to assign (zero based) or
+ *  zero for a point.
+ * @param x input X coordinate to assign.
+ * @param y input Y coordinate to assign.
+ */
+public class Geometry:public void SetPoint_2D(int ipoint, double x, double y)
+
+/**
+ * Set the location of a vertex in a point or linestring geometry.
+ *
+ * If ipoint is larger than the number of existing
+ * points in the linestring, the point count will be increased to
+ * accomodate the request.
+ *
+ * @param ipoint the index of the vertex to assign (zero based) or
+ *  zero for a point.
+ * @param x input X coordinate to assign.
+ * @param y input Y coordinate to assign.
+ * @param z input Z coordinate to assign (defaults to zero).
+ */
+public class Geometry:public void SetPoint(int ipoint, double x, double y, double z)
+
+/**
+ * Set the location of a vertex in a point or linestring geometry.
+ *
+ * If ipoint is larger than the number of existing
+ * points in the linestring, the point count will be increased to
+ * accomodate the request.
+ *
+ * @param ipoint the index of the vertex to assign (zero based) or
+ *  zero for a point.
+ * @param x input X coordinate to assign.
+ * @param y input Y coordinate to assign.
+ */
+public class Geometry:public void SetPoint(int ipoint, double x, double y)
+
+/**
+ * Compute symmetric difference.
+ *
+ * Generates a new geometry which is the symmetric difference of this
+ * geometry and the second geometry passed into the method.
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the other geometry.
+ *
+ * @return a new geometry representing the symmetric difference or null if the 
+ * difference is empty or an error occurs.
+ */
+public class Geometry:public Geometry SymmetricDifference(Geometry other)
+
+/**
+ * Test for touching.
+ *
+ * Tests if this geometry and the other passed into the method are touching.
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the geometry to compare to this geometry.
+ *
+ * @return true if they are touching, otherwise false.  
+ */
+public class Geometry:public boolean Touches(Geometry other)
+
+/**
+ * Transform geometry to new spatial reference system.
+ *
+ * This method will transform the coordinates of a geometry from
+ * their current spatial reference system to a new target spatial
+ * reference system.  Normally this means reprojecting the vectors,
+ * but it could include datum shifts, and changes of units. 
+ * <p>
+ * This method will only work if the geometry already has an assigned
+ * spatial reference system, and if it is transformable to the target
+ * coordinate system.
+ * <p>
+ * Because this method requires internal creation and initialization of an
+ * CoordinateTransformation object it is significantly more expensive to
+ * use this method to transform many geometries than it is to create the
+ * CoordinateTransformation in advance, and call transform() with that
+ * transformation.  This method exists primarily for convenience when only
+ * transforming a single geometry.
+ * 
+ * @param srs spatial reference system to transform to.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException.
+ */
+public class Geometry:public int TransformTo(SpatialReference srs)
+
+
+/**
+ * Apply arbitrary coordinate transformation to geometry.
+ *
+ * This method will transform the coordinates of a geometry from
+ * their current spatial reference system to a new target spatial
+ * reference system.  Normally this means reprojecting the vectors,
+ * but it could include datum shifts, and changes of units. 
+ * <p>
+ * Note that this method does not require that the geometry already
+ * have a spatial reference system.  It will be assumed that they can
+ * be treated as having the source spatial reference system of the
+ * CoordinateTransformation object, and the actual SRS of the geometry
+ * will be ignored.  On successful completion the output OGRSpatialReference
+ * of the CoordinateTransformation will be assigned to the geometry.
+ *
+ * @param ct the transformation to apply.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException.
+ */
+public class Geometry:public int Transform(CoordinateTransformation ct)
+
+/**
+ * Compute union.
+ *
+ * Generates a new geometry which is the region of union of the
+ * two geometries operated on.  
+ * <p>
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the other geometry unioned with "this" geometry.
+ *
+ * @return a new geometry representing the union or null if an error occurs.
+ */
+public class Geometry:public Geometry Union(Geometry other)
+
+/**
+ * Test for containment.
+ *
+ * Tests if actual geometry object is within the passed geometry.
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail.
+ *
+ * @param other the geometry to compare to this geometry.
+ *
+ * @return true if poOtherGeom is within this geometry, otherwise false.
+ */
+public class Geometry:public boolean Within(Geometry other)
+
+/**
+ * Returns size of related binary representation.
+ *
+ * This method returns the exact number of bytes required to hold the
+ * well known binary representation of this geometry object.  Its computation
+ * may be slightly expensive for complex geometries.
+ *
+ * This method relates to the SFCOM IWks::WkbSize() method.
+ *
+ * @return size of binary representation in bytes.
+ */
+public class Geometry:public int WkbSize()
