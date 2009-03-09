@@ -513,6 +513,11 @@ import java.awt.Color;
     parentReference = reference;
   }
 
+  public Object clone()
+  {
+      return Clone();
+  }
+
 /* convienance method */
   public IndexColorModel getIndexColorModel(int bits) {
     int size = GetCount();
@@ -663,10 +668,6 @@ import org.gdal.gdalconst.gdalconstConstants;
 %typemap(javainterfaces) GDALRasterAttributeTableShadow "Cloneable"
 
 %typemap(javacode) GDALRasterAttributeTableShadow %{
-
-  public int hashCode() {
-     return (int)swigCPtr;
-  }
 
   public Object clone()
   {
