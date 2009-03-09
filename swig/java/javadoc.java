@@ -4172,7 +4172,7 @@ public class org.gdal.ogr.Driver:public DataSource Open(String name)
 
  @param name the name of the datasource to delete. 
 
- @return OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this
+ @return 0 on success. Otherwise throws a RuntimeException if this
  is not supported by this driver. 
 */
 public class org.gdal.ogr.Driver:public int DeleteDataSource(String name)
@@ -4336,7 +4336,7 @@ public class DataSource:public Layer CreateLayer(String name)
 
  @param index the index of the layer to delete. 
 
- @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+ @return 0 on success. Otherwise throws a RuntimeException if deleting
  layers is not supported for this datasource.
 */
 public class DataSource:public int DeleteLayer(int index)
@@ -4508,3 +4508,431 @@ Fetch reference count of datasource and all owned layers.
 @return the current summary reference count for the datasource and its layers.
 */
 public class DataSource:public int GetSummaryRefCount()
+
+
+
+/* Class Layer */
+
+/**
+  * This class represents a layer of simple features, with access methods.
+  */
+public class Layer
+
+/**
+ Create and write a new feature within a layer.
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the 
+ passed feature will have been updated with the new feature id. 
+
+ @param feature the feature to write to disk. 
+
+ @return 0 on success. Otherwise throws a RuntimeException.
+
+ @see #SetFeature(Feature)
+*/
+public class Layer:public int CreateFeature(Feature feature)
+
+/**
+Create a new field on a layer.
+
+You must use this to create new fields
+on a real layer. Internally the FeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the FeatureDefn
+used by a layer directly.
+
+@param field_def field definition to write to disk. 
+@param approx_ok If 1, the field may be created in a slightly different
+form depending on the limitations of the format driver.
+
+@return 0 on success. Otherwise throws a RuntimeException.
+*/
+public class Layer:public int CreateField(FieldDefn field_def, int approx_ok)
+
+/**
+  * Create a new field on a layer.
+  *
+  * Same as below with approx_ok == 0.
+  *
+  * @see #CreateField(FieldDefn field_def, int approx_ok)
+  */
+public class Layer:public int CreateField(FieldDefn field_def)
+
+
+/**
+ Fetch the extent of this layer.
+
+ Returns the extent (MBR) of the data in the layer.  If force is 0,
+ and it would be expensive to establish the extent then a RuntimeException
+ will be throwned indicating that the extent isn't know.  If force is 
+ 1 then some implementations will actually scan the entire layer once
+ to compute the MBR of all the features in the layer.
+ <p>
+ Depending on the drivers, the returned extent may or may not take the
+ spatial filter into account.  So it is safer to call GetExtent() without
+ setting a spatial filter.
+ <p>
+ Layers without any geometry may throw a RuntimeException just indicating that
+ no meaningful extents could be collected.
+
+ @param extent an allocated array of 4 doubles in which the extent value will be returned.
+ @param force Flag indicating whether the extent should be computed even
+ if it is expensive (1 for true, 0 for false).
+
+ @return 0 on success. Otherwise throws a RuntimeException.
+*/
+public class Layer:public int GetExtent(double[] extent, int force)
+
+/**
+ Fetch the extent of this layer.
+
+ Returns the extent (MBR) of the data in the layer.  If force is false,
+ and it would be expensive to establish the extent then a null value
+ will be returned indicating that the extent isn't know.  If force is 
+ true then some implementations will actually scan the entire layer once
+ to compute the MBR of all the features in the layer.
+ <p>
+ Depending on the drivers, the returned extent may or may not take the
+ spatial filter into account.  So it is safer to call GetExtent() without
+ setting a spatial filter.
+ <p>
+ Layers without any geometry may return a null value just indicating that
+ no meaningful extents could be collected.
+
+ @param force Flag indicating whether the extent should be computed even
+ if it is expensive
+
+ @return an allocated array of 4 doubles in which the extent value or null in case of failure
+*/
+public class Layer:public double[] GetExtent(boolean force)
+
+/**
+  * Fetch the extent of this layer.
+  *
+  * Same as below with force == true.
+  *
+  * @see #GetExtent(boolean force)
+  */
+public class Layer:public double[] GetExtent()
+
+/**
+ Delete feature from layer.
+
+ The feature with the indicated feature id is deleted from the layer if
+ supported by the driver.  Most drivers do not support feature deletion,
+ and will throw a RuntimeException.  The <a href="#TestCapability(java.lang.String)">TestCapability()</a>
+ layer method may be called with OLCDeleteFeature to check if the driver 
+ supports feature deletion.
+
+ @param fid the feature id to be deleted from the layer 
+
+ @return 0 on success. Otherwise throws a RuntimeException.
+
+*/
+public class Layer:public int DeleteFeature(int fid)
+
+/**
+ Fetch a feature by its identifier.
+
+ This function will attempt to read the identified feature.  The fid
+ value cannot be OGRNullFID.  Success or failure of this operation is
+ unaffected by the spatial or attribute filters.
+ <p>
+ If this method returns a non-NULL feature, it is guaranteed that its 
+ feature id (Feature.GetFID()) will be the same as fid.
+ <p>
+ Use Layer.<a href="#TestCapability(java.lang.String)">TestCapability</a>(ogrConstants.OLCRandomRead) to establish if this layer
+ supports efficient random access reading via GetFeature(); however, the
+ call should always work if the feature exists as a fallback implementation
+ just scans all the features in the layer looking for the desired feature.
+ <p>
+ Sequential reads are generally considered interrupted by a GetFeature() call.
+ <p>
+ The returned feature will be properly handled by the Java garbage collector,
+ but you can help it by explicitely calling the
+ Feature.<a href="Feature.html#delete()">delete()</a> method.
+
+ @param fid the feature id of the feature to read. 
+
+ @return a feature, or null on failure. 
+*/
+public class Layer:public Feature GetFeature(int fid)
+
+/**
+ Fetch the feature count in this layer. 
+
+ Returns the number of features in the layer.  For dynamic databases the
+ count may not be exact.  If force is 0, and it would be expensive
+ to establish the feature count a value of -1 may be returned indicating
+ that the count isn't know.  If force is 1 some implementations will
+ actually scan the entire layer once to count objects. 
+ <p>
+ The returned count takes the spatial filter into account. 
+
+ @param force Flag indicating whether the count should be computed even
+ if it is expensive.
+
+ @return feature count, -1 if count not known. 
+*/
+public class Layer:public int GetFeatureCount(int force)
+
+/**
+  * Fetch the feature count in this layer.
+  *
+  * Same as below with force == 1.
+  *
+  * @see #GetFeatureCount(int force)
+  */
+public class Layer:public int GetFeatureCount()
+
+/**
+  * Return the total number of features read.
+  * Note: not all drivers seem to update properly this count.
+  * @return total number of features read.
+  */
+public class Layer:public long GetFeaturesRead()
+
+/**
+ Returns the name of the FID column.
+
+ This method returns the name of the underlying database column
+ being used as the FID column, or "" if not supported.
+
+ @return fid column name.
+*/
+public class Layer:public String GetFIDColumn()
+
+/**
+ Returns the name of the geometry column.
+
+ This method returns the name of the underlying database column
+ being used as the geometry column, or "" if not supported.
+
+ @return fid column name.
+*/
+public class Layer:public String GetGeometryColumn()
+
+/** 
+ Fetch the schema information for this layer.
+
+ The returned FeatureDefn is owned by the Layer, and should not be
+ modified or freed by the application.  It encapsulates the attribute schema
+ of the features of the layer. 
+
+ @return feature definition.
+*/
+public class Layer:public FeatureDefn GetLayerDefn()
+
+/**
+ * Return the layer name.
+ * This actually an alias for GetLayerDefn().GetName().
+ * @return the layer name
+*/
+public class Layer:public String GetName()
+
+/**
+ Fetch the next available feature from this layer.
+
+ Only features matching the current spatial filter (set with 
+ <a href="#SetSpatialFilter(org.gdal.ogr.Geometry)")>SetSpatialFilter()</a> will be returned. 
+ <p>
+ This method implements sequential access to the features of a layer.  The
+ ResetReading() method can be used to start at the beginning again.  
+ <p>
+ The returned feature will be properly handled by the Java garbage collector,
+ but you can help it by explicitely calling the
+ Feature.<a href="Feature.html#delete()">delete()</a> method.
+
+ @return a feature, or null if no more features are available. 
+*/
+public class Layer:public Feature GetNextFeature()
+
+/**
+ Fetch reference count.
+
+ Should be of little use in Java...
+
+ @return the current reference count for the layer object itself.
+*/
+public class Layer:public int GetRefCount()
+
+/**
+ Return the current spatial filter for this layer.
+
+ @return spatial filter geometry, or null if there isn't one.
+ */
+public class Layer:public Geometry GetSpatialFilter()
+
+/**
+ Fetch the spatial reference system for this layer. 
+
+ @return spatial reference, or null if there isn't one.
+*/
+public class Layer:public SpatialReference GetSpatialRef()
+
+/**
+ Reset feature reading to start on the first feature.  This affects 
+ GetNextFeature().
+*/
+public class Layer:public void ResetReading()
+
+/** 
+ Set a new attribute query.
+
+ This method sets the attribute query string to be used when 
+ fetching features via the <a href="#GetNextFeature()">GetNextFeature()</a> method.  Only features for which
+ the query evaluates as true will be returned.
+ <p>
+ The query string should be in the format of an SQL WHERE clause.  For
+ instance "population > 1000000 and population < 5000000" where population
+ is an attribute in the layer.  The query format is a restricted form of SQL
+ WHERE clause as defined "eq_format=restricted_where" about half way through
+ this document:
+ <pre>
+   <a href="http://ogdi.sourceforge.net/prop/6.2.CapabilitiesMetadata.html">Proposal 6.2: Capabilities Metadata</a>
+  </pre>
+ Note that installing a query string will generally result in resetting
+ the current reading position (ala <a href="#ResetReading()">ResetReading()</a>).  
+
+ @param filter_string query in restricted SQL WHERE format, or null to clear the
+ current query.
+
+ @return 0 if successfully installed. Otherwise throws a RuntimeException.
+ */
+public class Layer:public int SetAttributeFilter(String filter_string)
+
+/**
+ Rewrite an existing feature.
+
+ This method will write a feature to the layer, based on the feature id
+ within the Feature.
+ <p>
+ Use Layer.<a href="#TestCapability(java.lang.String)">TestCapability</a>(ogrConstants.OLCRandomWrite) to establish if this layer
+ supports random access writing via SetFeature().
+
+ @param feature the feature to write.
+
+ @return 0 on success. Otherwise throws a RuntimeException.
+
+ @see #CreateFeature(Feature)
+*/
+public class Layer:public int SetFeature(Feature feature)
+/**
+ Move read cursor to the new_index'th feature in the current resultset. 
+
+ This method allows positioning of a layer such that the <a href="#GetNextFeature()">GetNextFeature()</a>
+ call will read the requested feature, where nIndex is an absolute index
+ into the current result set.   So, setting it to 3 would mean the next
+ feature read with GetNextFeature() would have been the 4th feature to have
+ been read if sequential reading took place from the beginning of the layer,
+ including accounting for spatial and attribute filters. 
+ <p>
+ Only in rare circumstances is SetNextByIndex() efficiently implemented.  
+ In all other cases the default implementation which calls ResetReading()
+ and then calls GetNextFeature() nIndex times is used.  To determine if 
+ fast seeking is available on the current layer use the TestCapability()
+ method with a value of OLCFastSetNextByIndex.  
+
+ @param new_index the index indicating how many steps into the result set
+ to seek. 
+
+ @return 0 on success. Otherwise throws a RuntimeException.
+*/
+public class Layer:public int SetNextByIndex(int new_index)
+
+
+/** 
+ Set a new spatial filter. 
+
+ This method set the geometry to be used as a spatial filter when 
+ fetching features via the <a href="#GetNextFeature()">GetNextFeature()</a> method.  Only features that
+ geometrically intersect the filter geometry will be returned.  
+ <p>
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features who's envelope (as returned by
+ OGRGeometry::getEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that 
+ should strictly be the case. 
+ <p>
+ This method makes an internal copy of the passed geometry. The 
+ passed geometry remains the responsibility of the caller, and may 
+ be safely destroyed. 
+ <p>
+ For the time being the passed filter geometry should be in the same
+ SRS as the layer (as returned by <a href="#GetSpatialRef()">GetSpatialRef()</a>).  In the
+ future this may be generalized. 
+
+ @param filter the geometry to use as a filtering region.  null may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+ */
+public class Layer:public void SetSpatialFilter(Geometry filter)
+
+/** 
+ Set a new rectangular spatial filter. 
+
+ This method set rectangle to be used as a spatial filter when 
+ fetching features via the <a href="#GetNextFeature()">GetNextFeature()</a> method method.  Only features that
+ geometrically intersect the given rectangle will be returned.  
+ <p>
+ The x/y values should be in the same coordinate system as the layer as
+ a whole (as returned by <a href="#GetSpatialRef()">GetSpatialRef()</a>).   Internally this 
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to <a href="#SetSpatialFilter(org.gdal.ogr.Geometry)">SetSpatialFilter()</a>.  It exists as
+ a convenience. 
+ <p>
+ The only way to clear a spatial filter set with this method is to 
+ call SetSpatialFilter(null). 
+
+ @param minx the minimum X coordinate for the rectangular region.
+ @param miny the minimum Y coordinate for the rectangular region.
+ @param maxx the maximum X coordinate for the rectangular region.
+ @param maxy the maximum Y coordinate for the rectangular region.
+ */
+public class Layer:public void SetSpatialFilterRect(double minx, double miny, double maxx, double maxy)
+
+/**
+Flush pending changes to disk.
+
+This call is intended to force the layer to flush any pending writes to
+disk, and leave the disk file in a consistent state.  It would not normally
+have any effect on read-only datasources. 
+<p>
+Some layers do not implement this method, and will still return 
+0.  The default implementation just returns 0.  An error
+is only returned if an error occurs while attempting to flush to disk.
+
+@return 0 if no error occurs (even if nothing is done). Otherwise throws a RuntimeException.
+*/
+public class Layer:public int SyncToDisk()
+
+/**
+ For datasources which support transactions, StartTransaction creates 
+ a transaction. If starting the transaction fails, will throw a RuntimeException.
+ Datasources which do not support transactions will always return 0.
+
+ @return 0 on success. Otherwise throws a RuntimeException.
+*/
+public class Layer:public int StartTransaction()
+
+/**
+ For datasources which support transactions, CommitTransaction commits a 
+ transaction.  If no transaction is active, or the commit fails, will throw a RuntimeException.
+ Datasources which do not support transactions will always return 0.
+
+ @return 0 on success. Otherwise throws a RuntimeException.
+*/
+public class Layer:public int CommitTransaction()
+
+/**
+
+ For datasources which support transactions, RollbackTransaction will roll 
+ back a datasource to its state before the start of the current transaction. 
+ If no transaction is active, or the rollback fails, will throw a RuntimeException.
+ Datasources which do not support transactions will always return 0.
+
+ @return 0 on success. Otherwise throws a RuntimeException.
+*/
+public class Layer:public int RollbackTransaction()
