@@ -272,6 +272,8 @@ import org.gdal.osr.CoordinateTransformation;
   }
 
 %typemap(javadestruct, methodname="delete", methodmodifiers="public") OGRDriverShadow ""
+%typemap(javadestruct, methodname="delete", methodmodifiers="public") OGRLayerShadow ""
+%typemap(javainterfaces) OGRFeatureShadow "Cloneable"
 
 /* ------------------------------------------------------------------- */
 /* Below an advanced technique to avoid the use of a finalize() method */
@@ -417,7 +419,24 @@ SMART_FINALIZER(Feature)
 %typemap(javaimports) OGRFeatureShadow %{
 import org.gdal.ogr.FeatureNative;
 %}
-%typemap(javacode) OGRFeatureShadow ""
+%typemap(javacode) OGRFeatureShadow %{
+
+  public boolean equals(Object obj) {
+    boolean equal = false;
+    if (obj instanceof $javaclassname)
+      equal = Equal(($javaclassname)obj);
+    return equal;
+  }
+
+  public int hashCode() {
+     return (int)swigCPtr;
+  }
+
+  public Object clone()
+  {
+      return Clone();
+  }
+%}
 
 SMART_FINALIZER(Geometry)
 
