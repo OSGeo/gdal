@@ -239,8 +239,7 @@ public class gdal:public static int GetLastErrorType()
  * Get the last error message.
  *
  * Fetches the last error message posted with CPLError(), that hasn't
- * been cleared by gdal.ErrorReset().  The returned pointer is to an internal
- * string that should not be altered or freed.
+ * been cleared by gdal.ErrorReset().
  *
  * @return the last error message, or null if there is no posted error
  * message.
@@ -2219,7 +2218,7 @@ public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_
  * band, otherwise null is returned.  The returned RAT is owned by the
  * band and should not be altered by the application. 
  * 
- * @return null, or a pointer to an internal RAT owned by the band.
+ * @return a RAT or null
  */
 public class Band:public RasterAttributeTable GetDefaultRAT()
 
@@ -3091,7 +3090,7 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  * creation of the output file. 
  * @param callback for reporting algorithm progress. May be null
  *
- * @return a pointer to the newly created dataset (may be read-only access).
+ * @return the newly created dataset (may be read-only access).
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
 
@@ -4148,7 +4147,7 @@ public class org.gdal.ogr.Driver:public DataSource CopyDataSource(DataSource src
   default).
 
   @return null on error or if the pass name is not supported by this driver,
-  otherwise a pointer to a DataSource.
+  otherwise a DataSource.
 */
 public class org.gdal.ogr.Driver:public DataSource Open(String name, int update)
 
@@ -4345,7 +4344,7 @@ public class DataSource:public int DeleteLayer(int index)
  Execute an SQL statement against the data store. 
 
  The result of an SQL query is either null for statements that are in error,
- or that have no results set, or an Layer pointer representing a results
+ or that have no results set, or a Layer representing a results
  set from the query.  Note that this Layer is in addition to the layers
  in the data store and must be destroyed with 
  ReleaseResultsSet() before the data source is closed  (destroyed).
@@ -4491,7 +4490,7 @@ public class DataSource:public String getName()
 /**
   Returns the driver that the dataset was opened with. 
 
-  @return null if driver info is not available, or pointer to a driver
+  @return null if driver info is not available, or the driver
 */
 public class DataSource:public Driver GetDriver()
 
@@ -4936,3 +4935,616 @@ public class Layer:public int CommitTransaction()
  @return 0 on success. Otherwise throws a RuntimeException.
 */
 public class Layer:public int RollbackTransaction()
+
+/**
+ Test if this layer supported the named capability.
+
+ The capability codes that can be tested are represented as strings, but
+ ogrConstants constants exists to ensure correct spelling.  Specific layer 
+ types may implement class specific capabilities, but this can't generally
+ be discovered by the caller. <p>
+
+<ul>
+
+ <li> <b>OLCRandomRead</b> / "RandomRead": true if the GetFeature() method 
+is implemented in an optimized way for this layer, as opposed to the default
+implementation using ResetReading() and GetNextFeature() to find the requested
+feature id.<p>
+
+ <li> <b>OLCSequentialWrite</b> / "SequentialWrite": true if the 
+CreateFeature() method works for this layer.  Note this means that this 
+particular layer is writable.  The same Layer class  may returned false 
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCRandomWrite</b> / "RandomWrite": true if the SetFeature() method
+is operational on this layer.   Note this means that this 
+particular layer is writable.  The same Layer class  may returned false 
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": true if this layer
+implements spatial filtering efficiently.  Layers that effectively read all
+features, and test them with the Feature intersection methods should
+return false.  This can be used as a clue by the application whether it 
+should build and maintain it's own spatial index for features in this layer.<p>
+
+ <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount": 
+true if this layer can return a feature
+count (via GetFeatureCount()) efficiently ... ie. without counting
+the features.  In some cases this will return true until a spatial filter is
+installed after which it will return false.<p>
+
+ <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
+true if this layer can return its data extent (via GetExtent()) efficiently ... ie. without scanning all the features.  In some cases this will return true until a spatial filter is installed after which it will return false.<p>
+
+ <li> <b>OLCFastSetNextByIndex</b> / "FastSetNextByIndex": 
+true if this layer can perform the SetNextByIndex() call efficiently, otherwise
+false.<p>
+
+ <li> <b>OLCCreateField</b> / "CreateField": true if this layer can create 
+new fields on the current layer using CreateField(), otherwise false.<p>
+
+ <li> <b>OLCDeleteFeature</b> / "DeleteFeature": true if the DeleteFeature()
+method is supported on this layer, otherwise false.<p>
+
+ <li> <b>OLCStringsAsUTF8</b> / "StringsAsUTF8": true if values of OFTString
+fields are assured to be in UTF-8 format.  If false the encoding of fields 
+is uncertain, though it might still be UTF-8.<p>
+
+ <li> <b>OLCStringsAsUTF8</b> / "StringsAsUTF8": true if values of OFTString
+fields are assured to be in UTF-8 format.  If false the encoding of fields 
+is uncertain, though it might still be UTF-8.<p>
+
+<li> <b>OLCTransactions</b> / "Transactions": true if the StartTransaction(), CommitTransaction() and RollbackTransaction() methods work in a meaningful way, otherwise false.<p>
+
+<p>
+
+</ul>
+
+ @param cap the name of the capability to test.
+
+ @return true if the layer has the requested capability, or false otherwise.
+Layers will return false for any unrecognised capabilities.<p>
+
+*/
+public class Layer:public boolean TestCapability(String cap)
+
+
+
+/* Class Feature */
+
+/**
+ * A simple feature, including geometry and attributes.
+ */
+public class Feature
+
+/**
+ * Constructor.
+ *
+ * Note that the Feature will increment the reference count of its
+ * defining FeatureDefn.
+ *
+ * @param feature_def feature class (layer) definition to which the feature will
+ * adhere.
+ */
+public class Feature:public Feature(FeatureDefn feature_def)
+
+/**
+ * Duplicate feature.
+ *
+ * The newly created feature is owned by the caller, and will have its own
+ * reference to the FeatureDefn.
+ *
+ * @return new feature, exactly matching this feature.
+ */
+public class Feature:public Feature Clone()
+
+/**
+ * Delete (in memory) a feature.
+ * Calling this method is not required as normal garbage collection will
+ * reclaim associated resources when the object goes out of scope.
+ * Otherwise calling delete() explicitely will help release resources sooner.
+ * Don't call any method on a deleted object !
+ */
+public class Feature:public void delete()
+
+/**
+ * Dump this feature in a human readable form.
+ *
+ * This dumps the attributes, and geometry; however, it doesn't definition
+ * information (other than field types and names), nor does it report the
+ * geometry spatial reference system.
+ * The standard output will be used.
+ */
+public class Feature:public void DumpReadable()
+
+/**
+ * Test if two features are the same.
+ *
+ * Two features are considered equal if they share the (pointer equality)
+ * same FeatureDefn, have the same field values, and the same geometry
+ * (as tested by Geometry.Equal()) as well as the same feature id.
+ *
+ * @param feature the other feature to test this one against.
+ *
+ * @return true if they are equal, otherwise false.
+ */
+public class Feature:public boolean Equal(Feature feature)
+
+/**
+ * Fetch feature definition.
+ *
+ * @return a reference to the feature definition object.
+ */
+public class Feature:public FeatureDefn GetDefnRef()
+
+/**
+ * Get feature identifier.
+ *
+ * @return feature id or OGRNullFID if none has been assigned.
+ */
+public class Feature:public int GetFID()
+
+/**
+ * Fetch field value as date and time.
+ *
+ * Currently this method only works for OFTDate, OFTTime and OFTDateTime fields.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pnYear an allocated array of 1 integer to put the year (including century)
+ * @param pnMonth an allocated array of 1 integer to put the month (1-12)
+ * @param pnDay an allocated array of 1 integer to put the day (1-31)
+ * @param pnHour an allocated array of 1 integer to put the hour (0-23)
+ * @param pnMinute an allocated array of 1 integer to put the minute (0-59)
+ * @param pnSecond an allocated array of 1 integer to put the second (0-59)
+ * @param pnTZFlag an allocated array of 1 integer to put the time zone flag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ */
+public class Feature:public void GetFieldAsDateTime(int ifield, int[] pnYear, int[] pnMonth, int[] pnDay, int[] pnHour, int[] pnMinute, int[] pnSecond, int[] pnTZFlag)
+
+/**
+ * Fetch field value as a double.
+ *
+ * OFTString features will be translated using atof().  OFTInteger fields
+ * will be cast to double.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value.
+ */
+public class Feature:public double GetFieldAsDouble(int ifield)
+
+/**
+ * Fetch field value as a double.
+ *
+ * OFTString features will be translated using atof().  OFTInteger fields
+ * will be cast to double.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param name the name of the field to fetch.
+ *
+ * @return the field value.
+ */
+public class Feature:public double GetFieldAsDouble(String name)
+
+/**
+ * Fetch field value as a list of doubles.
+ *
+ * Currently this method only works for OFTRealList fields.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value. The returned value may be null.
+ */
+public class Feature:public double[] GetFieldAsDoubleList(int ifield)
+
+/**
+ * Fetch field value as integer.
+ *
+ * OFTString features will be translated using atoi().  OFTReal fields
+ * will be cast to integer.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value.
+ */
+public class Feature:public int GetFieldAsInteger(int ifield)
+
+/**
+ * Fetch field value as integer.
+ *
+ * OFTString features will be translated using atoi().  OFTReal fields
+ * will be cast to integer.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param name the name of the field to fetch.
+ *
+ * @return the field value.
+ */
+public class Feature:public int GetFieldAsInteger(String name)
+
+/**
+ * Fetch field value as a list of integers.
+ *
+ * Currently this method only works for OFTIntegerList fields.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value. The returned value may be null.
+ */
+public class Feature:public int[] GetFieldAsIntegerList(int ifield)
+
+/**
+ * Fetch field value as a string.
+ *
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value.
+ */
+public class Feature:public String GetFieldAsString(int ifield)
+
+/**
+ * Fetch field value as a string.
+ *
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ *
+ * @param name the name of the field to fetch.
+ *
+ * @return the field value.
+ */
+public class Feature:public String GetFieldAsString(String name)
+
+/**
+ * Fetch field value as a list of strings.
+ *
+ * Currently this method only works for OFTStringList fields.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value. The returned value may be null.
+ */
+public class Feature:public String[] GetFieldAsStringList(int ifield)
+
+/**
+ *
+ * Fetch number of fields on this feature.  This will always be the same
+ * as the field count for the FeatureDefn.
+ *
+ * @return count of fields.
+ */
+public class Feature:public int GetFieldCount()
+
+/**
+ * Fetch definition for this field.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field definition (from the FeatureDefn).
+ */
+public class Feature:public FieldDefn GetFieldDefnRef(int ifield)
+
+/**
+ * Fetch definition for this field.
+ *
+ * @param name the name of the field to fetch.
+ *
+ * @return the field definition (from the FeatureDefn).
+ */
+public class Feature:public FieldDefn GetFieldDefnRef(String name)
+
+/**
+ * Fetch the field index given field name.
+ *
+ * This is a cover for the FeatureDefn.GetFieldIndex() method. 
+ *
+ * @param name the name of the field to search for. 
+ *
+ * @return the field index, or -1 if no matching field is found.
+ */
+public class Feature:public int GetFieldIndex(String name)
+
+/**
+ * Fetch the field type.
+ *
+ * This is a cover for the FeatureDefn.GetFieldType() method. 
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field type (like ogrConstants.OFTInteger, etc.)
+ */
+public class Feature:public int GetFieldType(int ifield)
+
+/**
+ * Fetch the field type.
+ *
+ * This is a cover for the FeatureDefn.GetFieldType() method. 
+ *
+ * @param name the name of the field to fetch.
+ *
+ * @return the field type (like ogrConstants.OFTInteger, etc.)
+ */
+public class Feature:public int GetFieldType(String name)
+
+/**
+ * Fetch pointer to feature geometry.
+ *
+ * @return internal feature geometry (or null if no geometry).  This object should
+ * not be modified.
+ */
+public class Feature:public Geometry GetGeometryRef()
+
+/**
+ * Fetch style string for this feature.
+ *
+ * Set the OGR Feature Style Specification for details on the format of
+ * this string, and ogr_featurestyle.h for services available to parse it.
+ * 
+ * @return a reference to a representation in string format, or null if 
+ * there isn't one. 
+ */
+public class Feature:public String GetStyleString()
+
+/**
+ * Test if a field has ever been assigned a value or not.
+ *
+ * @param ifield the field to test.
+ *
+ * @return true if the field has been set, otherwise false.
+ */
+public class Feature:public boolean IsFieldSet(int ifield)
+
+/**
+ * Test if a field has ever been assigned a value or not.
+ *
+ * @param name the name of the field to test.
+ *
+ * @return true if the field has been set, otherwise false.
+ */
+public class Feature:public boolean IsFieldSet(String name)
+
+/**
+ * Set the feature identifier.
+ *
+ * For specific types of features this operation may fail on illegal
+ * features ids.  Generally it always succeeds.  Feature ids should be
+ * greater than or equal to zero, with the exception of OGRNullFID (-1)
+ * indicating that the feature id is unknown.
+ *
+ * @param fid the new feature identifier value to assign.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException.
+ */
+public class Feature:public int SetFID(int fid)
+
+/**
+ * Set field to double value. 
+ *
+ * OFTInteger and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ * @param val the value to assign.
+ */
+public class Feature:public void SetField(int ifield, double val)
+
+/**
+ * Set field to integer value. 
+ *
+ * OFTInteger and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ * @param val the value to assign.
+ */
+public class Feature:public void SetField(int ifield, int val)
+
+/**
+ * Set field to date.
+ *
+ * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
+ * fields.
+ *
+ * @param ifield the field to set, from 0 to GetFieldCount()-1.
+ * @param year (including century)
+ * @param month (1-12)
+ * @param day (1-31)
+ * @param hour (0-23)
+ * @param minute (0-59)
+ * @param second (0-59)
+ * @param tzflag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ */
+public class Feature:public void SetField(int ifield, int year, int month, int day, int hour, int minute, int second, int tzflag)
+
+/**
+ * Set field to string value. 
+ *
+ * OFTInteger fields will be set based on an atoi() conversion of the string.
+ * OFTReal fields will be set based on an atof() conversion of the string.
+ * Other field types may be unaffected.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ * @param val the value to assign.
+ */
+public class Feature:public void SetField(int ifield, String val)
+
+/**
+ * Set field to double value. 
+ *
+ * OFTInteger and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param name the name of the field to set.
+ * @param val the value to assign.
+ */
+public class Feature:public void SetField(String name, double val)
+
+/**
+ * Set field to integer value. 
+ *
+ * OFTInteger and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param name the name of the field to set.
+ * @param val the value to assign.
+ */
+public class Feature:public void SetField(String name, int val)
+
+/**
+ * Set field to date.
+ *
+ * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
+ * fields.
+ *
+ * @param name the name of the field to set.
+ * @param year (including century)
+ * @param month (1-12)
+ * @param day (1-31)
+ * @param hour (0-23)
+ * @param minute (0-59)
+ * @param second (0-59)
+ * @param tzflag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ */
+public class Feature:public void SetField(String name, int year, int month, int day, int hour, int minute, int second, int tzflag)
+
+/**
+ * Set field to string value. 
+ *
+ * OFTInteger fields will be set based on an atoi() conversion of the string.
+ * OFTReal fields will be set based on an atof() conversion of the string.
+ * Other field types may be unaffected.
+ *
+ * @param name the name of the field to set.
+ * @param val the value to assign.
+ */
+public class Feature:public void SetField(String name, String val)
+
+/**
+ * Set field to list of doubles value. 
+ *
+ * This method currently on has an effect of OFTRealList fields.
+ *
+ * @param ifield the field to set, from 0 to GetFieldCount()-1.
+ * @param values the values to assign.
+ */
+
+public class Feature:public void SetFieldDoubleList(int ifield, double[] values)
+
+/**
+ * Set field to list of integers value. 
+ *
+ * This method currently on has an effect of OFTIntegerList fields.
+ *
+ * @param ifield the field to set, from 0 to GetFieldCount()-1.
+ * @param values the values to assign.
+ */
+public class Feature:public void SetFieldIntegerList(int ifield, int[] values)
+
+/**
+ * Set field to list of strings value. 
+ *
+ * This method currently on has an effect of OFTStringList fields.
+ *
+ * @param ifield the field to set, from 0 to GetFieldCount()-1.
+ * @param values the values to assign (vector of strings).
+ */
+public class Feature:public void SetFieldStringList(int ifield, java.util.Vector values)
+
+
+/**
+ * Set one feature from another.
+ *
+ * Overwrite the contents of this feature from the geometry and attributes
+ * of another.  The srcFeature does not need to have the same
+ * FeatureDefn.  Field values are copied by corresponding field names.
+ * Field types do not have to exactly match.  SetField() method conversion
+ * rules will be applied as needed.
+ *
+ * @param srcFeature the feature from which geometry, and field values will
+ * be copied.
+ *
+ * @param forgiving 1 if the operation should continue despite lacking
+ * output fields matching some of the source fields.
+ *
+ * @return 0 if the operation succeeds, even if some values are
+ * not transferred, otherwise throws a RuntimeException.
+ */
+public class Feature:public int SetFrom(Feature srcFeature, int forgiving)
+
+
+/**
+ * Set one feature from another.
+ *
+ * Same as below with forgiving == 1
+ *
+ * @see #SetFrom(Feature srcFeature, int forgiving)
+ */
+public class Feature:public int SetFrom(Feature srcFeature)
+
+/**
+ * Set feature geometry.
+ *
+ * This method updates the features geometry, and operate exactly as
+ * SetGeometryDirectly(), except that this method does not assume ownership
+ * of the passed geometry, but instead makes a copy of it. 
+ *
+ * @param geom new geometry to apply to feature. Passing null value here
+ * is correct and it will result in deallocation of currently assigned geometry
+ * without assigning new one.
+ *
+ * @return 0 if successful, or throws a RuntimeException if
+ * the geometry type is illegal for the FeatureDefn (checking not yet
+ * implemented). 
+ */ 
+public class Feature:public int SetGeometry(Geometry geom)
+
+/**
+ * Set feature geometry.
+ *
+ * This method updates the features geometry, and operate exactly as
+ * SetGeometry(), except that this method assumes ownership of the
+ * passed geometry.
+ *
+ * @param geom new geometry to apply to feature. Passing null value here
+ * is correct and it will result in deallocation of currently assigned geometry
+ * without assigning new one.
+ *
+ * @return 0 if successful, or throws a RuntimeException if
+ * the geometry type is illegal for the FeatureDefn (checking not yet
+ * implemented). 
+ */ 
+public class Feature:public int SetGeometryDirectly(Geometry geom)
+
+/**
+ * Set feature style string.
+ *
+ * @param style_string the style string to apply to this feature, cannot be null.
+ */
+public class Feature:public void SetStyleString(String style_string)
+
+/**
+ * Clear a field, marking it as unset.
+ *
+ * @param ifield the field to unset, from 0 to GetFieldCount()-1.
+ */
+public class Feature:public void UnsetField(int ifield)
+
+/**
+ * Clear a field, marking it as unset.
+ *
+ * @param name the name of the field to unset.
+ */
+public class Feature:public void UnsetField(String name)
