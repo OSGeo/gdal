@@ -569,7 +569,7 @@ public:
 #ifndef SWIGJAVA
   %feature( "kwargs" ) GetExtent;
 #endif
-  OGRErr GetExtent(double argout[4], int force=1) {
+  OGRErr GetExtent(double argout[4], int force) {
     return OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
   }
 #endif
