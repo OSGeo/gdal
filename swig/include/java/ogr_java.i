@@ -213,7 +213,7 @@ import org.gdal.osr.CoordinateTransformation;
       return ogr.CreateGeometryFromWkt(wkt);
   }
 
-  public static Geometry CreateFromWkb(byte wkb[])
+  public static Geometry CreateFromWkb(byte[] wkb)
   {
       return ogr.CreateGeometryFromWkb(wkb);
   }
