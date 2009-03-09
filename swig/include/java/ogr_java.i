@@ -128,23 +128,23 @@ import org.gdal.osr.SpatialReference;
      return (int)swigCPtr;
   }
 
-  public int GetExtent(double[] argout, boolean force)
-  {
-      return GetExtent(argout, (force) ? 1 : 0);
-  }
-
   public double[] GetExtent(boolean force)
   {
       double[] argout = new double[4];
       try
       {
-          GetExtent(argout, force);
+          GetExtent(argout, (force) ? 1 : 0);
           return argout;
       }
       catch(RuntimeException e)
       {
           return null;
       }
+  }
+
+  public double[] GetExtent()
+  {
+      return GetExtent(true);
   }
 %}
 
