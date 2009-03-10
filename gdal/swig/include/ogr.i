@@ -568,8 +568,10 @@ public:
 #else
 #ifndef SWIGJAVA
   %feature( "kwargs" ) GetExtent;
-#endif
+  OGRErr GetExtent(double argout[4], int force = 1) {
+#else
   OGRErr GetExtent(double argout[4], int force) {
+#endif
     return OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
   }
 #endif
