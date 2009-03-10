@@ -228,6 +228,19 @@ import org.gdal.osr.CoordinateTransformation;
       return ogr.CreateGeometryFromJson(json);
   }
 
+  public int ExportToWkb(byte[] wkbArray, int byte_order)
+  {
+      if (wkbArray == null)
+          throw new NullPointerException();
+      byte[] srcArray = ExportToWkb(byte_order);
+      if (wkbArray.length < srcArray.length)
+          throw new RuntimeException("Array too small");
+
+      System.arraycopy( srcArray, 0, wkbArray, 0, srcArray.length );
+
+      return 0;
+  }
+
 %}
 
 /* Keep the container object alive while the contained */
@@ -271,8 +284,10 @@ import org.gdal.osr.CoordinateTransformation;
     return ret;
   }
 
-%typemap(javadestruct, methodname="delete", methodmodifiers="public") OGRDriverShadow ""
-%typemap(javadestruct, methodname="delete", methodmodifiers="public") OGRLayerShadow ""
+/* Could be disabled as do nothing, but we keep them for backwards compatibility */
+//%typemap(javadestruct, methodname="delete", methodmodifiers="public") OGRDriverShadow ""
+//%typemap(javadestruct, methodname="delete", methodmodifiers="public") OGRLayerShadow ""
+
 %typemap(javainterfaces) OGRFeatureShadow "Cloneable"
 
 /* ------------------------------------------------------------------- */
