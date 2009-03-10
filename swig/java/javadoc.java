@@ -4290,13 +4290,13 @@ Example:
 	Layer layer;
         Vector options = new Vector();
 
-	if( !ds.TestCapability( ogrConstants.ODsCCreateLayer ) )
+	if( !ds.TestCapability( ogr.ODsCCreateLayer ) )
         {
 	    ...
         }
 
         options.add("DIM=2");
-        layer = ds.CreateLayer( "NewLayer", null, ogrConstants.wkbUnknown,
+        layer = ds.CreateLayer( "NewLayer", null, ogr.wkbUnknown,
 				options );
 
         if( layer == null )
@@ -4309,7 +4309,7 @@ Example:
 match any existing layer on the datasource.
  @param srs the coordinate system to use for the new layer, or null if
 no coordinate system is available. 
- @param geom_type the geometry type for the layer.  Use ogrConstants.wkbUnknown if there
+ @param geom_type the geometry type for the layer.  Use ogr.wkbUnknown if there
 are no constraints on the types geometry to be written. 
  @param options a vector of strings of the format name=value.  Options are driver
 specific, and driver information can be found at the following url:  
@@ -4331,7 +4331,7 @@ public class DataSource:public Layer CreateLayer(String name, SpatialReference s
 /**
  * Create a new layer on the data source with the indicated name, coordinate system.
  *
- * Same as below with geom_type == ogrConstants.wkbUnknown and options == null.
+ * Same as below with geom_type == ogr.wkbUnknown and options == null.
  *
  * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
  */
@@ -4340,7 +4340,7 @@ public class DataSource:public Layer CreateLayer(String name, SpatialReference s
 /**
  * Create a new layer on the data source with the indicated name.
  *
- * Same as below with srs == null, geom_type == ogrConstants.wkbUnknown and options == null.
+ * Same as below with srs == null, geom_type == ogr.wkbUnknown and options == null.
  *
  * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
  */
@@ -4666,7 +4666,7 @@ public class Layer:public int DeleteFeature(int fid)
  If this method returns a non-NULL feature, it is guaranteed that its 
  feature id (Feature.GetFID()) will be the same as fid.
  <p>
- Use Layer.<a href="#TestCapability(java.lang.String)">TestCapability</a>(ogrConstants.OLCRandomRead) to establish if this layer
+ Use Layer.<a href="#TestCapability(java.lang.String)">TestCapability</a>(ogr.OLCRandomRead) to establish if this layer
  supports efficient random access reading via GetFeature(); however, the
  call should always work if the feature exists as a fallback implementation
  just scans all the features in the layer looking for the desired feature.
@@ -4832,7 +4832,7 @@ public class Layer:public int SetAttributeFilter(String filter_string)
  This method will write a feature to the layer, based on the feature id
  within the Feature.
  <p>
- Use Layer.<a href="#TestCapability(java.lang.String)">TestCapability</a>(ogrConstants.OLCRandomWrite) to establish if this layer
+ Use Layer.<a href="#TestCapability(java.lang.String)">TestCapability</a>(ogr.OLCRandomWrite) to establish if this layer
  supports random access writing via SetFeature().
 
  @param feature the feature to write.
@@ -5280,7 +5280,7 @@ public class Feature:public int GetFieldIndex(String name)
  *
  * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
  *
- * @return the field type (like ogrConstants.OFTInteger, etc.)
+ * @return the field type (like ogr.OFTInteger, etc.)
  */
 public class Feature:public int GetFieldType(int ifield)
 
@@ -5291,7 +5291,7 @@ public class Feature:public int GetFieldType(int ifield)
  *
  * @param name the name of the field to fetch.
  *
- * @return the field type (like ogrConstants.OFTInteger, etc.)
+ * @return the field type (like ogr.OFTInteger, etc.)
  */
 public class Feature:public int GetFieldType(String name)
 
@@ -5597,11 +5597,37 @@ public class Geometry
 /** 
  * Create an empty geometry of desired type.
  *
- * The type may be one of ogrConstants.wkbPoint, etc..
+ * The type may be one of ogr.wkbPoint, etc..
  *
  * @param eGeometryType the type code of the geometry class to be instantiated.
  */
 public class Geometry:public Geometry(int eGeometryType)
+
+/** 
+ * Create a new geometry.
+ *
+ * The geometry can be instanciated by 4 different and exclusive way :
+ * <ul>
+ * <li> By specifying the geometry type (ogr.wkbPoint, etc..)</li>
+ * <li> By specifying the well known text representation (wkt)</li>
+ * <li> By specifying the well known binary representation (wkb)</li>
+ * <li> By specifying the GML representation</li>
+ * </ul>
+ * <p>
+ * You should rather use either the Geometry(int) constructor, or the static methods
+ * like Geometry.CreateFromWkt(), Geometry.CreateFromWbt() or Geometry.CreateFromGML().
+ *
+ * @param eGeometryType the type code of the geometry class to be instantiated.
+ * @param wkt the well known text representation
+ * @param wkb the well known binary representation
+ * @param gml the GML representation
+ * @deprecated
+ * @see #Geometry(int eGeometryType)
+ * @see #CreateFromWkt(String wkt)
+ * @see #CreateFromWkb(byte[] wkb)
+ * @see #CreateFromGML(String gml)
+ */
+public class Geometry:public Geometry(int eGeometryType, String wkt, byte[] wkb, String gml)
 
 /**
  * Add a geometry to the container.
