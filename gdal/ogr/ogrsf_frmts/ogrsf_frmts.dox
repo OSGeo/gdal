@@ -220,6 +220,30 @@
 */
 
 /**
+  \fn OGRSFDriver *OGRSFDriverRegistrar::GetDriverByName( const char * pszName );
+
+  Fetch the indicated driver.
+
+  This method is the same as the C function OGRGetDriverByName
+
+  @param pszName the driver name
+
+  @return the driver, or NULL if no driver with that name is found
+*/
+
+/**
+  \fn OGRSFDriverH OGRGetDriverByName( const char *pszName );
+
+  Fetch the indicated driver.
+
+  This method is the same as the C++ method OGRSFDriverRegistrar::GetDriverByName()
+
+  @param pszName the driver name
+
+  @return the driver, or NULL if no driver with that name is found
+*/
+
+/**
 
   \fn int OGRRegisterAll();
 
