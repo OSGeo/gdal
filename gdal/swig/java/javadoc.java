@@ -4247,6 +4247,19 @@ public class org.gdal.ogr.Driver:public String GetName()
   */
 public class DataSource
 
+/**
+  * Frees the native resource associated to a DataSource object and close the file.
+  *
+  * This method will delete the underlying C++ object. After it has been called,
+  * all native resources will have been destroyed, so it will be illegal (and likely to
+  * cause JVM crashes) to use any method on this object or any derived objects,
+  * such as Layer objects of this Dataset.
+  * <p>
+  * The delete() method <b>must</b> be called when a datasource has been opened in update
+  * or creation mode, otherwise data might not be properly flushed to the disk. You
+  * cannot rely on the finalization to call delete().
+  */
+public class DataSource:public void delete()
 
 /**
  Duplicate an existing layer.
@@ -4458,7 +4471,7 @@ public class DataSource:public Layer GetLayer(int index)
  Fetch a layer by name.
 
  The returned layer remains owned by the 
- OGRDataSource and should not be deleted by the application.
+ DataSource and should not be deleted by the application.
 
  @param layer_name the layer name of the layer to fetch.
 
@@ -4470,7 +4483,7 @@ public class DataSource:public Layer GetLayerByName(String layer_name)
  Fetch a layer by name.
 
  The returned layer remains owned by the 
- OGRDataSource and should not be deleted by the application.
+ DataSource and should not be deleted by the application.
 
  @param layer_name the layer name of the layer to fetch.
 
@@ -6754,3 +6767,360 @@ public class FieldDefn:public void SetType(int type)
  * @param width the new width.
  */
 public class FieldDefn:public void SetWidth(int width) 
+
+
+/* Class ogr */
+
+/**
+ * Class ogr is an uninstanciable class providing various utility functions as static methods.
+ * <p>
+ * In particular, it provides ogr.<a href="#RegisterAll()">RegisterAll()</a> and ogr.<a href="#Open(java.lang.String, int)">Open()</a> methods.
+ */
+public class ogr
+
+/**
+ * Build a ring from a bunch of arcs.
+ *
+ * Same as below with bAutoClose == 0 and dfTolerance == 0.
+ *
+ * @see #BuildPolygonFromEdges(Geometry lineCollection, int bBestEffort, int bAutoClose, double dfTolerance)
+*/
+public class ogr:public static Geometry BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort)
+
+/**
+ * Build a ring from a bunch of arcs.
+ *
+ * Same as below with dfTolerance == 0.
+ *
+ * @see #BuildPolygonFromEdges(Geometry lineCollection, int bBestEffort, int bAutoClose, double dfTolerance)
+*/
+public class ogr:public static Geometry BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort, int bAutoClose)
+
+/**
+ * Build a ring from a bunch of arcs.
+ *
+ * @param lineCollection geometry of type OGRGeometryCollection (or OGRMultiLineString) containing the line string geometries to be built into rings.
+ * @param bBestEffort not yet implemented???.
+ * @param bAutoClose indicates if the ring should be close when first and
+ * last points of the ring are the same.
+ * @param dfTolerance tolerance into which two arcs are considered
+ * close enough to be joined.
+
+ * @return a polygon or null in case of failure
+ */
+public class ogr:public static Geometry BuildPolygonFromEdges(Geometry lineCollection, int bBestEffort, int bAutoClose, double dfTolerance)
+
+/**
+ * Create a new Geometry from a GML string.
+ *
+ * @param gml the GML string
+ * @return the new geometry
+ */
+public class ogr:public static Geometry CreateGeometryFromGML(String gml)
+
+/**
+ * Create a new Geometry from a GeoJSON string.
+ *
+ * @param json the GeoJSON string
+ * @return the new geometry
+ */
+public class ogr:public static Geometry CreateGeometryFromJson(String json)
+
+/**
+ * Create a new Geometry from a well known binary (wkb) content.
+ *
+ * @param wkb the wkb content
+ * @return the new geometry
+ */
+public class ogr:public static Geometry CreateGeometryFromWkb(byte[] wkb)
+
+/**
+ * Create a new Geometry from a well known binary (wkb) content.
+ *
+ * @param wkb the wkb content
+ * @param srs the srs to assign to the geometry
+ * @return the new geometry
+ */
+public class ogr:public static Geometry CreateGeometryFromWkb(byte[] wkb, SpatialReference srs)
+
+/**
+ * Create a new Geometry from a well known text (wkt) string.
+ *
+ * @param wkt the wkt content
+ * @return the new geometry
+ */
+public class ogr:public static Geometry CreateGeometryFromWkt(String wkt)
+
+/**
+ * Create a new Geometry from a well known text (wkt) content.
+ *
+ * @param wkt the wkt content
+ * @param srs the srs to assign to the geometry
+ * @return the new geometry
+ */
+public class ogr:public static Geometry CreateGeometryFromWkt(String wkt, SpatialReference srs)
+
+   /**
+    * General utility option processing.
+    *
+    * This function is intended to provide a variety of generic commandline 
+    * options for all OGR commandline utilities.  It takes care of the following
+    * commandline options:
+    * <p><ul>
+    *  <li>--version: report version of OGR in use.
+    *  <li>--license: report OGR license info.
+    *  <li>--formats: report all format drivers configured.
+    *  <li>--format [format]: report details of one format driver. 
+    *  <li>--optfile filename: expand an option file into the argument list. 
+    *  <li>--config key value: set system configuration option. 
+    *  <li>--debug [on/off/value]: set debug level.
+    *  <li>--mempreload dir: preload directory contents into /vsimem
+    *  <li>--help-general: report detailed help on general options. 
+    * </ul><p>
+    * The typical usage looks something like the following.  Note that the formats
+    * should be registered so that the --formats and --format options will work properly.
+    * <pre>
+    *  public static void main( Strings[] args )
+    *  { 
+    *    ogr.RegisterAll();
+    *
+    *    args = ogr.GeneralCmdLineProcessor( args, 0 );
+    *  }
+    * </pre>
+    * @param args the argument list array
+    * @param options currently unused
+    *
+    * @return updated argument list array.
+    */
+public class ogr:public static String[] GeneralCmdLineProcessor(String[] args, int options)
+
+   /**
+    * General utility option processing.
+    *
+    * Same as below with options == 0
+    *
+    * @see #GeneralCmdLineProcessor(String[] args, int options)
+    */
+public class ogr:public static String[] GeneralCmdLineProcessor(String[] args)
+
+   /**
+    * General utility option processing.
+    *
+    * Same as below but with arguments as a Vector of strings
+    *
+    * @return updated argument list as a new Vector of strings
+    *
+    * @see #GeneralCmdLineProcessor(String[] args, int options)
+    */
+public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args, int options)
+
+   /**
+    * General utility option processing.
+    *
+    * Same as below but with arguments as a Vector of strings and options == 0
+    *
+    * @return updated argument list as a new Vector of strings
+    *
+    * @see #GeneralCmdLineProcessor(String[] args, int options)
+    */
+public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args)
+
+/**
+ * Fetch a human readable name corresponding to an OGRwkBGeometryType value.
+ *
+ * @param eType the geometry type.
+ *
+ * @return human readable string, or null on failure.
+ */
+public class ogr:public static String GeometryTypeToName(int eType)
+
+/**
+  Fetch the indicated driver.
+
+  @param iDriver the driver index, from 0 to GetDriverCount()-1.
+
+  @return the driver, or null if iDriver is out of range.
+*/
+public class ogr:public static Driver GetDriver(int iDriver)
+
+/**
+  Fetch the indicated driver.
+
+  @param name the driver name
+
+  @return the driver, or null if no driver with that name is found
+*/
+public class ogr:public static Driver GetDriverByName(String name)
+
+/**
+  Fetch the number of registered drivers.
+
+  @return the drivers count.
+*/
+public class ogr:public static int GetDriverCount()
+
+/**
+ * Fetch human readable name for a field type.
+ *
+ * @param type the field type to get name for.
+ *
+ * @return field type name
+ */
+public class ogr:public static String GetFieldTypeName(int type)
+
+/**
+  Return the iDS th datasource opened.
+
+  @param iDS the index of the dataset to return (between 0 and GetOpenDSCount() - 1)
+*/
+public class ogr:public static DataSource GetOpenDS(int iDS)
+
+/**
+  Return the number of opened datasources.
+
+  @return the number of opened datasources.
+*/
+public class ogr:public static int GetOpenDSCount()
+
+/**
+  * Open a file / data source with one of the registered drivers.
+  *
+  * Same as below with update == 0
+  *
+  * @see #Open(String filename, int update)
+  */
+public class ogr:public static DataSource Open(String filename)
+
+/**
+  * Open a file / data source with one of the registered drivers.
+  *
+  * Same as below with boolean value being transformed to 1 (for true) or 0 (for false)
+  *
+  * @see #Open(String filename, int update)
+  */
+public class ogr:public static DataSource Open(String filename, boolean update)
+
+/**
+  Open a file / data source with one of the registered drivers.
+
+  This method loops through all the drivers registered with the driver
+  manager trying each until one succeeds with the given data source.
+  <p>
+  If this method fails, gdal.GetLastErrorMsg() can be used to check if there
+  is an error message explaining why.
+  <p>
+  The returned dataset should be properly closed with the
+  DataSource.<a href="DataSource.html#delete()">delete()</a> method.
+  <p>
+  <b>Example:</b>
+
+  <pre>
+    DataSource ds = ogr.Open( "polygon.shp" );
+    if( ds == null )
+    {
+        return;
+    }
+
+    ... use the data source ...
+
+    ds.delete();
+  </pre>
+
+  @param filename the name of the file, or data source to open.
+  @param update 0 for read-only access (the default) or 1 for 
+         read-write access.
+
+  @return null on error or if the pass name is not supported by this driver,
+  otherwise a pointer to an DataSource.  This DataSource should be
+  closed by calling the delete() method when it is no longer needed.
+*/
+
+public class ogr:public static DataSource Open(String filename, int update)
+
+/**
+  * Open a file / data source with one of the registered drivers.
+  *
+  * This first try finding an existing open dataset matching exactly
+  * on the original datasource raw name used to open the
+  * datasource.
+  * <p>
+  * NOTE: It is an error, but currently we ignore the bUpdate,
+  * and return whatever is open even if it is read-only and the
+  * application requested update access.
+  *
+  * @see #Open(String filename, int update)
+  */
+public class ogr:public static DataSource OpenShared(String filename)
+
+/**
+  * Open a file / data source with one of the registered drivers.
+  *
+  * This first try finding an existing open dataset matching exactly
+  * on the original datasource raw name used to open the
+  * datasource.
+  * <p>
+  * NOTE: It is an error, but currently we ignore the bUpdate,
+  * and return whatever is open even if it is read-only and the
+  * application requested update access.
+  *
+  * @see #Open(String filename, int update)
+  */
+public class ogr:public static DataSource OpenShared(String filename, int update)
+
+/**
+ * Register all known configured OGR drivers.
+ *
+ * This function will drive any of the following that are configured into
+ * OGR.  Many others as well that haven't been updated in this
+ * documentation (see <a href="http://gdal.org/ogr/ogr_formats.html">full list</a>):
+ * <p>
+ * <ul>
+ * <li>Arc/Info Binary Coverage</li>
+ * <li>Arc/Info .E00 (ASCII) Coverage</li>
+ * <li>Atlas BNA</li>
+ * <li>Comma Separated Value (.csv)</li>
+ * <li>DODS/OPeNDAP</li>
+ * <li>ESRI Personal GeoDatabase</li>
+ * <li>ESRI ArcSDE</li>
+ * <li>ESRI Shapefile</li>
+ * <li>FMEObjects Gateway</li>
+ * <li>GeoJSON</li>
+ * <li>Geoconcept Export</li>
+ * <li>GeoRSS</li>
+ * <li>GML</li>
+ * <li>GMT</li>
+ * <li>GPX</li>
+ * <li>GRASS</li>
+ * <li>Informix DataBlade</li>
+ * <li>INTERLIS</li>
+ * <li>INGRES</li>
+ * <li>KML</li>
+ * <li>Mapinfo File</li>
+ * <li>Microstation DGN</li>
+ * <li>Memory</li>
+ * <li>MySQL</li>
+ * <li>Oracle Spatial</li>
+ * <li>ODBC</li>
+ * <li>OGDI Vectors</li>
+ * <li>PostgreSQL</li>
+ * <li>S-57 (ENC)</li>
+ * <li>SDTS</li>
+ * <li>SQLite</li>
+ * <li>UK .NTF</li>
+ * <li>U.S. Census TIGER/Line</li>
+ * <li>VRT - Virtual Datasource</li>
+ * <li>X-Plane/Flighgear aeronautical data</li>
+ * </ul>
+ * <p>
+ * This function should generally be called once at the beginning of the application.
+ */
+public class ogr:public static void RegisterAll()
+
+/**
+  * Special entry point to enable the hack for generating DB2 V7.2 style WKB.
+  *
+  * DB2 seems to have placed  (and require) an extra 0x30 or'ed with the byte order in
+  * WKB.  This entry point is used to turn on or off the
+  * generation of such WKB.
+  */
+public class ogr:public static int SetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER) 
