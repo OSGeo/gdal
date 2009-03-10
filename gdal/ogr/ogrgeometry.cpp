@@ -1638,14 +1638,15 @@ char *OGRGeometry::exportToJson() const
 
 /************************************************************************/
 /*                 OGRSetGenerate_DB2_V72_BYTE_ORDER()                  */
-/*                                                                      */
-/*      This is a special entry point to enable the hack for            */
-/*      generating DB2 V7.2 style WKB.  DB2 seems to have placed        */
-/*      (and require) an extra 0x30 or'ed with the byte order in        */
-/*      WKB.  This entry point is used to turn on or off the            */
-/*      generation of such WKB.                                         */
 /************************************************************************/
 
+/**
+  * Special entry point to enable the hack for generating DB2 V7.2 style WKB.
+  *
+  * DB2 seems to have placed  (and require) an extra 0x30 or'ed with the byte order in
+  * WKB.  This entry point is used to turn on or off the
+  * generation of such WKB.
+  */
 OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER( int bGenerate_DB2_V72_BYTE_ORDER )
 
 {
