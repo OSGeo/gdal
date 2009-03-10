@@ -1878,6 +1878,12 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
 public class Band
 
 /**
+  * Do not do nothing...
+  * @deprecated
+  */
+public class Band:public void delete()
+
+/**
  * Compute checksum for image region. 
  *
  * Computes a 16bit (0-65535) checksum from a region of raster data on the raster band.
@@ -2986,6 +2992,12 @@ public class Band:public int SetStatistics(double min, double max, double mean, 
 public class org.gdal.gdal.Driver
 
 /**
+  * Do not do nothing...
+  * @deprecated
+  */
+public class org.gdal.gdal.Driver:public void delete()
+
+/**
  * Create a new dataset with this driver.
  *
  * What argument values are legal for particular drivers is driver specific,
@@ -4084,6 +4096,12 @@ public interface gdalconstConstants:public final static int GPI_HLS
 public class org.gdal.ogr.Driver
 
 /**
+  * Do not do nothing...
+  * @deprecated
+  */
+public class org.gdal.ogr.Driver:public void delete()
+
+/**
  Attempt to create a new data source based on the passed driver.
  The papszOptions argument can be used to control driver specific
  creation options.  These options are normally documented in the format
@@ -4516,6 +4534,12 @@ public class DataSource:public int GetSummaryRefCount()
   * This class represents a layer of simple features, with access methods.
   */
 public class Layer
+
+/**
+  * Do not do nothing...
+  * @deprecated
+  */
+public class Layer:public void delete()
 
 /**
  Create and write a new feature within a layer.
@@ -5930,6 +5954,19 @@ public class Geometry:public String ExportToJson()
  * @return the wkb content
  */
 public class Geometry:public byte[] ExportToWkb(int byte_order)
+
+/**
+ * Convert a geometry into well known binary format.
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * @param wkbArray a sufficiently large array (at least WkbSize() large) to receive the wkb content.
+ * @param byte_order One of wkbXDR or wkbNDR indicating MSB or LSB byte order
+ *               respectively.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException
+ */
+public class Geometry:public int ExportToWkb(byte[] wkbArray, int byte_order)
 
 /**
  * Convert a geometry into well known binary format.
