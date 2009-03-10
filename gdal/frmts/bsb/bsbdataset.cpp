@@ -636,6 +636,13 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
     if( i == poOpenInfo->nHeaderBytes - 4 )
         return NULL;
 
+    /* Additional test to avoid false positive. See #2881 */
+    const char* pszRA = strstr((const char*)poOpenInfo->pabyHeader + i, "RA=");
+    if (pszRA == NULL) /* This may be a NO1 file */
+        pszRA = strstr((const char*)poOpenInfo->pabyHeader + i, "[JF");
+    if (pszRA == NULL || pszRA - ((const char*)poOpenInfo->pabyHeader + i) > 100 )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
