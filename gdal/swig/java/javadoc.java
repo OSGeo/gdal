@@ -6508,3 +6508,249 @@ public class Geometry:public boolean Within(Geometry other)
  * @return size of binary representation in bytes.
  */
 public class Geometry:public int WkbSize()
+
+
+/* Class FeatureDefn */
+
+/**
+ * Definition of a feature class or feature layer.
+ *
+ * This object contains schema information for a set of OGRFeatures. In table based systems,
+ * a FeatureDefn is essentially a layer. In more object oriented approaches (such as SF CORBA)
+ * this can represent a class of features but doesn't necessarily relate to all of a layer, or just one layer.
+ * <p>
+ * This object also can contain some other information such as a name, the base geometry type and potentially other metadata.
+ * <p>
+ * It is reasonable for different translators to derive classes from FeatureDefn with additional translator specific information. 
+ */
+public class FeatureDefn
+
+/**
+ * Constructor.
+ *
+ * The FeatureDefn maintains a reference count, but this starts at
+ * zero.  It is mainly intended to represent a count of Feature's
+ * based on this definition.
+ * The FeatureDefn will be unnamed.
+ */
+public class FeatureDefn:public FeatureDefn()
+
+/**
+ * Constructor.
+ *
+ * The FeatureDefn maintains a reference count, but this starts at
+ * zero.  It is mainly intended to represent a count of Feature's
+ * based on this definition.
+ *
+ * @param name the name to be assigned to this layer/class.  It does not
+ * need to be unique. and may be null.
+ */
+public class FeatureDefn:public FeatureDefn(String name)
+
+/**
+ * Add a new field definition.
+ *
+ * This method should only be called while there are no Feature
+ * objects in existance based on this FeatureDefn.  The FieldDefn
+ * passed in is copied, and remains the responsibility of the caller.
+ *
+ * @param defn the definition of the new field.
+ */
+public class FeatureDefn:public void AddFieldDefn(FieldDefn defn)
+
+/**
+ * Fetch number of fields on this feature.
+ *
+ * @return count of fields.
+ */
+public class FeatureDefn:public int GetFieldCount()
+
+/**
+ * Get name of this FeatureDefn.
+ *
+ * @return the name.
+ */
+public class FeatureDefn:public String GetName()
+
+/**
+ * Fetch field definition.
+ *
+ * @param ifield the field to fetch, between 0 and GetFieldCount()-1.
+ *
+ * @return a pointer to an internal field definition object.  This object
+ * should not be modified or freed by the application.
+ */
+public class FeatureDefn:public FieldDefn GetFieldDefn(int ifield)
+
+/**
+ * Find field by name.
+ *
+ * The field index of the first field matching the passed field name (case
+ * insensitively) is returned.
+ *
+ * @param name the field name to search for.
+ *
+ * @return the field index, or -1 if no match found.
+ */
+public class FeatureDefn:public int GetFieldIndex(String name)
+
+/**
+ * Fetch the geometry base type.
+ *
+ * Note that some drivers are unable to determine a specific geometry
+ * type for a layer, in which case wkbUnknown is returned.  A value of
+ * wkbNone indicates no geometry is available for the layer at all.
+ * Many drivers do not properly mark the geometry
+ * type as 25D even if some or all geometries are in fact 25D.  A few (broken)
+ * drivers return wkbPolygon for layers that also include wkbMultiPolygon.  
+ *
+ * @return the base type for all geometry related to this definition.
+ */
+public class FeatureDefn:public int GetGeomType()
+
+/**
+ * Assign the base geometry type for this layer.
+ *
+ * All geometry objects using this type must be of the defined type or
+ * a derived type.  The default upon creation is wkbUnknown which allows for
+ * any geometry type.  The geometry type should generally not be changed
+ * after any Features have been created against this definition. 
+ *
+ * @param geom_type the new type to assign.
+ */
+public class FeatureDefn:public void SetGeomType(int geom_type)
+
+/**
+ * Fetch current reference count.
+ *
+ * @return the current reference count.
+ */
+public class FeatureDefn:public int GetReferenceCount()
+
+
+/* Class FieldDefn */
+
+/**
+  * Definition of an attribute of a FeatureDefn.
+  */
+public class FieldDefn
+
+/**
+ * Constructor.
+ *
+ * The new field will be named "unnamed" and of type OFTString
+ */
+public class FieldDefn:public FieldDefn()
+
+/**
+ * Constructor.
+ *
+ * The new field will be of type OFTString
+ * @param name the name of the new field.
+ */
+public class FieldDefn:public FieldDefn(String name)
+
+/**
+ * Constructor.
+ *
+ * @param name the name of the new field.
+ * @param field_type the type of the new field.
+ */
+public class FieldDefn:public FieldDefn(String name, int field_type)
+
+/**
+ * Return the field type
+ *
+ * @return the field type
+ */
+public class FieldDefn:public int GetFieldType()
+
+/**
+ * Fetch human readable name for a field type.
+ *
+ * @param type the field type to get name for.
+ *
+ * @return field type name
+ */
+public class FieldDefn:public String GetFieldTypeName(int type)
+
+/**
+ * Get the justification for this field.
+ *
+ * @return the justification.
+ */
+public class FieldDefn:public int GetJustify()
+
+/**
+ * Fetch name of this field.
+ *
+ * @return the name of the field
+ */
+public class FieldDefn:public String GetName()
+
+/**
+ * Fetch name of this field.
+ *
+ * @return the name of the field
+ */
+public class FieldDefn:public String GetNameRef()
+
+/**
+ * Get the formatting precision for this field.  This should normally be
+ * zero for fields of types other than OFTReal.
+ *
+ * @return the precision.
+ */
+public class FieldDefn:public int GetPrecision()
+
+/**
+ * Fetch human readable name for the field
+ *
+ * @return field type name
+ */
+public class FieldDefn:public String GetTypeName()
+
+/**
+ * Get the formatting width for this field.
+ *
+ * @return the width, zero means no specified width. 
+ */
+public class FieldDefn:public int GetWidth()
+
+/**
+ * Set the justification for this field.
+ *
+ * @param justify the new justification.
+ */
+public class FieldDefn:public void SetJustify(int justify)
+
+/**
+ * Reset the name of this field.
+ *
+ * @param name the new name to apply.
+ */
+public class FieldDefn:public void SetName(String name)
+
+/**
+ * Set the formatting precision for this field in characters.
+ * 
+ * This should normally be zero for fields of types other than OFTReal. 
+ *
+ * @param precision the new precision. 
+ */
+public class FieldDefn:public void SetPrecision(int precision)
+
+/**
+ * Set the type of this field.  This should never be done to an FieldDefn
+ * that is already part of an FeatureDefn.
+ *
+ * @param type the new field type.
+ */
+public class FieldDefn:public void SetType(int type)
+
+/**
+ * Set the formatting width for this field in characters.
+ *
+ * @param width the new width.
+ */
+public class FieldDefn:public void SetWidth(int width) 
