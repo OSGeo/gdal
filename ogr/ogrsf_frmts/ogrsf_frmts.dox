@@ -236,11 +236,51 @@
 
   Fetch the indicated driver.
 
-  This method is the same as the C++ method OGRSFDriverRegistrar::GetDriverByName()
+  This function is the same as the C++ method OGRSFDriverRegistrar::GetDriverByName()
 
   @param pszName the driver name
 
   @return the driver, or NULL if no driver with that name is found
+*/
+
+/**
+  \fn int OGRSFDriverRegistrar::GetOpenDSCount();
+
+  Return the number of opened datasources.
+
+  This method is the same as the C function OGRGetOpenDSCount()
+
+  @return the number of opened datasources.
+*/
+
+/**
+  \fn int OGRGetOpenDSCount();
+
+  Return the number of opened datasources.
+
+  This function is the same as the C++ method OGRSFDriverRegistrar::GetOpenDSCount()
+
+  @return the number of opened datasources.
+*/
+
+/**
+  \fn OGRDataSource *OGRSFDriverRegistrar::GetOpenDS( int iDS )
+
+  Return the iDS th datasource opened.
+
+  This method is the same as the C function OGRGetOpenDS().
+
+  @param iDS the index of the dataset to return (between 0 and GetOpenDSCount() - 1)
+*/
+
+/**
+  \fn OGRDataSourceH OGRGetOpenDS( int iDS )
+
+  Return the iDS th datasource opened.
+
+  This function is the same as the C++ method OGRSFDriverRegistrar::GetOpenDS.
+
+  @param iDS the index of the dataset to return (between 0 and GetOpenDSCount() - 1)
 */
 
 /**
