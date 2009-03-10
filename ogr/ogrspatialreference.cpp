@@ -486,10 +486,22 @@ OGRSpatialReferenceH CPL_STDCALL OSRClone( OGRSpatialReferenceH hSRS )
 
 /************************************************************************/
 /*                         exportToPrettyWkt()                          */
-/*                                                                      */
-/*      Translate into a nicely formatted string for display to a       */
-/*      person.                                                         */
 /************************************************************************/
+
+/**
+ * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ *
+ * Note that the returned WKT string should be freed with OGRFree() or
+ * CPLFree() when no longer needed.  It is the responsibility of the caller.
+ *
+ * This method is the same as the C function OSRExportToPrettyWkt().
+ *
+ * @param ppszResult the resulting string is returned in this pointer.
+ * @param bSimplify TRUE if the AXIS, AUTHORITY and EXTENSION nodes should be stripped off
+ *
+ * @return currently OGRERR_NONE is always returned, but the future it
+ * is possible error conditions will develop. 
+ */
 
 OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult, 
                                                int bSimplify ) const
@@ -520,6 +532,13 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
 /************************************************************************/
 /*                        OSRExportToPrettyWkt()                        */
 /************************************************************************/
+
+
+/**
+ * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ *
+ * This function is the same as OGRSpatialReference::exportToPrettyWkt().
+ */
 
 OGRErr CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppszReturn,
                              int bSimplify)
