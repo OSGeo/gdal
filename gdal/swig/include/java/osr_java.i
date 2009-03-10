@@ -74,6 +74,11 @@
     return equal;
   }
 
+  public Object clone()
+  {
+      return Clone();
+  }
+
   public int hashCode() {
      return (int)swigCPtr;
   }
@@ -132,6 +137,7 @@
   }
 %}
 
+%typemap(javainterfaces) OSRSpatialReferenceShadow "Cloneable"
 
 %typemap(javacode) OSRCoordinateTransformationShadow %{
   public double[] TransformPoint(double x, double y, double z) {

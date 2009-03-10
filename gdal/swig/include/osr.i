@@ -745,13 +745,10 @@ public:
     return (OSRSpatialReferenceShadow*) OSRCloneGeogCS(self);
   }
 
-/*
- * Commented out until the headers have changed to make OSRClone visible.
 %newobject Clone;
   OSRSpatialReferenceShadow *Clone() {
     return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
-*/
 
   OGRErr Validate() {
     return OSRValidate(self);
