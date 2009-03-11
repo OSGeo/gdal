@@ -301,6 +301,11 @@ USGSGetEllipsoidInfo( int nCode, char ** ppszName,
 /*                         OSRImportFromUSGS()                          */
 /************************************************************************/
 
+/**
+ * Import coordinate system from USGS projection definition.
+ *
+ * This function is the same as OGRSpatialReference::importFromUSGS().
+ */
 OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
                           long iZone, double *padfPrjParams, long iDatum )
 
@@ -910,6 +915,11 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
 /************************************************************************/
 /*                          OSRExportToUSGS()                           */
 /************************************************************************/
+/** 
+ * Export coordinate system in USGS GCTP projection definition.
+ *
+ * This function is the same as OGRSpatialReference::exportToUSGS().
+ */
 
 OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
                         long *piProjSys, long *piZone,
