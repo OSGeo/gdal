@@ -104,6 +104,11 @@ OGRSpatialReference::OGRSpatialReference( const char * pszWKT )
 /*                       OSRNewSpatialReference()                       */
 /************************************************************************/
 
+/**
+ * Constructor.
+ *
+ * This function is the same as OGRSpatialReference::OGRSpatialReference()
+ */
 OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference( const char *pszWKT )
 
 {
@@ -162,6 +167,11 @@ OGRSpatialReference::~OGRSpatialReference()
 /*                     OSRDestroySpatialReference()                     */
 /************************************************************************/
 
+/**
+ * OGRSpatialReference destructor. 
+ *
+ * This function is the same as OGRSpatialReference::~OGRSpatialReference()
+ */
 void CPL_STDCALL OSRDestroySpatialReference( OGRSpatialReferenceH hSRS )
 
 {
@@ -234,6 +244,11 @@ int OGRSpatialReference::Reference()
 /*                            OSRReference()                            */
 /************************************************************************/
 
+/**
+ * Increments the reference count by one.
+ *
+ * This function is the same as OGRSpatialReference::Reference()
+ */
 int OSRReference( OGRSpatialReferenceH hSRS )
 
 {
@@ -269,6 +284,11 @@ int OGRSpatialReference::Dereference()
 /*                           OSRDereference()                           */
 /************************************************************************/
 
+/**
+ * Decrements the reference count by one.
+ *
+ * This function is the same as OGRSpatialReference::Dereference()
+ */
 int OSRDereference( OGRSpatialReferenceH hSRS )
 
 {
@@ -312,6 +332,11 @@ void OGRSpatialReference::Release()
 /*                             OSRRelease()                             */
 /************************************************************************/
 
+/**
+ * Decrements the reference count by one, and destroy if zero.
+ *
+ * This function is the same as OGRSpatialReference::Release()
+ */
 void OSRRelease( OGRSpatialReferenceH hSRS )
 
 {
@@ -438,6 +463,11 @@ const char *OGRSpatialReference::GetAttrValue( const char * pszNodeName,
 /*                          OSRGetAttrValue()                           */
 /************************************************************************/
 
+/**
+ * Fetch indicated attribute of named node.
+ *
+ * This function is the same as OGRSpatialReference::GetAttrValue()
+ */
 const char * CPL_STDCALL OSRGetAttrValue( OGRSpatialReferenceH hSRS,
                              const char * pszKey, int iChild )
 
@@ -476,6 +506,11 @@ OGRSpatialReference *OGRSpatialReference::Clone() const
 /*                              OSRClone()                              */
 /************************************************************************/
 
+/**
+ * Make a duplicate of this OGRSpatialReference.
+ *
+ * This function is the same as OGRSpatialReference::Clone()
+ */
 OGRSpatialReferenceH CPL_STDCALL OSRClone( OGRSpatialReferenceH hSRS )
 
 {
@@ -739,6 +774,11 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
 /*                          OSRSetAttrValue()                           */
 /************************************************************************/
 
+/**
+ * Set attribute value in spatial reference.
+ *
+ * This function is the same as OGRSpatialReference::SetNode()
+ */
 OGRErr CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS, 
                         const char * pszPath, const char * pszValue )
 
@@ -827,6 +867,11 @@ OGRErr OGRSpatialReference::SetAngularUnits( const char * pszUnitsName,
 /*                         OSRSetAngularUnits()                         */
 /************************************************************************/
 
+/**
+ * Set the angular units for the geographic coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::SetAngularUnits()
+ */
 OGRErr OSRSetAngularUnits( OGRSpatialReferenceH hSRS, 
                            const char * pszUnits, double dfInRadians )
 
@@ -891,6 +936,11 @@ double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
 /*                         OSRGetAngularUnits()                         */
 /************************************************************************/
 
+/**
+ * Fetch angular geographic coordinate system units.
+ *
+ * This function is the same as OGRSpatialReference::GetAngularUnits()
+ */
 double OSRGetAngularUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
     
 {
@@ -963,6 +1013,11 @@ OGRErr OGRSpatialReference::SetLinearUnitsAndUpdateParameters(
 /*                OSRSetLinearUnitsAndUpdateParameters()                */
 /************************************************************************/
 
+/**
+ * Set the linear units for the projection.
+ *
+ * This function is the same as OGRSpatialReference::SetLinearUnitsAndUpdateParameters()
+ */
 OGRErr OSRSetLinearUnitsAndUpdateParameters( OGRSpatialReferenceH hSRS, 
                                              const char * pszUnits, 
                                              double dfInMeters )
@@ -1043,6 +1098,11 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
 /*                         OSRSetLinearUnits()                          */
 /************************************************************************/
 
+/**
+ * Set the linear units for the projection.
+ *
+ * This function is the same as OGRSpatialReference::SetLinearUnits()
+ */
 OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS, 
                           const char * pszUnits, double dfInMeters )
 
@@ -1110,6 +1170,11 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
 /*                         OSRGetLinearUnits()                          */
 /************************************************************************/
 
+/**
+ * Fetch linear projection units. 
+ *
+ * This function is the same as OGRSpatialReference::GetLinearUnits()
+ */
 double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
     
 {
@@ -1166,6 +1231,11 @@ double OGRSpatialReference::GetPrimeMeridian( char **ppszName ) const
 /*                        OSRGetPrimeMeridian()                         */
 /************************************************************************/
 
+/**
+ * Fetch prime meridian info.
+ *
+ * This function is the same as OGRSpatialReference::GetPrimeMeridian()
+ */
 double OSRGetPrimeMeridian( OGRSpatialReferenceH hSRS, char **ppszName )
 
 {
@@ -1341,6 +1411,11 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /*                            OSRSetGeogCS()                            */
 /************************************************************************/
 
+/**
+ * Set geographic coordinate system. 
+ *
+ * This function is the same as OGRSpatialReference::SetGeogCS()
+ */
 OGRErr OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                      const char * pszGeogName,
                      const char * pszDatumName,
@@ -1460,6 +1535,11 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
 /*                       OSRSetWellKnownGeogCS()                        */
 /************************************************************************/
 
+/**
+ * Set a GeogCS based on well known name.
+ *
+ * This function is the same as OGRSpatialReference::SetWellKnownGeogCS()
+ */
 OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
 
 {
@@ -1532,6 +1612,11 @@ OGRErr OGRSpatialReference::CopyGeogCSFrom(
 /*                         OSRCopyGeogCSFrom()                          */
 /************************************************************************/
 
+/**
+ * Copy GEOGCS from another OGRSpatialReference.
+ *
+ * This function is the same as OGRSpatialReference::CopyGeogCSFrom()
+ */
 OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS, 
                           OGRSpatialReferenceH hSrcSRS )
 
@@ -1720,6 +1805,11 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /*                        OSRSetFromUserInput()                         */
 /************************************************************************/
 
+/**
+ * Set spatial reference from various text formats.
+ *
+ * This function is the same as OGRSpatialReference::SetFromUserInput()
+ */
 OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS, 
                                         const char *pszDef )
 
@@ -1821,6 +1911,11 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 /*                        OSRimportFromUrl()                            */
 /************************************************************************/
 
+/**
+ * Set spatial reference from a URL.
+ *
+ * This function is the same as OGRSpatialReference::importFromUrl()
+ */
 OGRErr OSRImportFromUrl( OGRSpatialReferenceH hSRS, const char *pszUrl )
 
 {
@@ -2136,6 +2231,11 @@ double OGRSpatialReference::GetSemiMajor( OGRErr * pnErr ) const
 /*                          OSRGetSemiMajor()                           */
 /************************************************************************/
 
+/**
+ * Get spheroid semi major axis.
+ *
+ * This function is the same as OGRSpatialReference::GetSemiMajor()
+ */
 double OSRGetSemiMajor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 
 {
@@ -2184,6 +2284,11 @@ double OGRSpatialReference::GetInvFlattening( OGRErr * pnErr ) const
 /*                        OSRGetInvFlattening()                         */
 /************************************************************************/
 
+/**
+ * Get spheroid inverse flattening.
+ *
+ * This function is the same as OGRSpatialReference::GetInvFlattening()
+ */
 double OSRGetInvFlattening( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 
 {
@@ -2225,6 +2330,11 @@ double OGRSpatialReference::GetSemiMinor( OGRErr * pnErr ) const
 /*                          OSRGetSemiMinor()                           */
 /************************************************************************/
 
+/**
+ * Get spheroid semi minor axis.
+ *
+ * This function is the same as OGRSpatialReference::GetSemiMinor()
+ */
 double OSRGetSemiMinor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 
 {
@@ -2274,6 +2384,11 @@ OGRErr OGRSpatialReference::SetLocalCS( const char * pszName )
 /*                           OSRSetLocalCS()                            */
 /************************************************************************/
 
+/**
+ * Set the user visible LOCAL_CS name.
+ *
+ * This function is the same as OGRSpatialReference::SetLocalCS()
+ */
 OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
 
 {
@@ -2333,6 +2448,11 @@ OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
 /*                            OSRSetProjCS()                            */
 /************************************************************************/
 
+/**
+ * Set the user visible PROJCS name.
+ *
+ * This function is the same as OGRSpatialReference::SetProjCS()
+ */
 OGRErr OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName )
 
 {
@@ -2387,6 +2507,11 @@ OGRErr OGRSpatialReference::SetProjection( const char * pszProjection )
 /*                            OSRSetProjection()                        */
 /************************************************************************/
 
+/**
+ * Set a projection name.
+ *
+ * This function is the same as OGRSpatialReference::SetProjection()
+ */
 OGRErr OSRSetProjection( OGRSpatialReferenceH hSRS,
                          const char * pszProjection )
 
@@ -2462,6 +2587,11 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
 /*                           OSRSetProjParm()                           */
 /************************************************************************/
 
+/**
+ * Set a projection parameter value.
+ *
+ * This function is the same as OGRSpatialReference::SetProjParm()
+ */
 OGRErr OSRSetProjParm( OGRSpatialReferenceH hSRS, 
                        const char * pszParmName, double dfValue )
 
@@ -2584,6 +2714,11 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
 /*                           OSRGetProjParm()                           */
 /************************************************************************/
 
+/**
+ * Fetch a projection parameter value.
+ *
+ * This function is the same as OGRSpatialReference::GetProjParm()
+ */
 double OSRGetProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
                        double dfDefaultValue, OGRErr *pnErr )
 
@@ -2653,6 +2788,11 @@ double OGRSpatialReference::GetNormProjParm( const char * pszName,
 /*                         OSRGetNormProjParm()                         */
 /************************************************************************/
 
+/**
+ * This function is the same as OGRSpatialReference::
+ *
+ * This function is the same as OGRSpatialReference::GetNormProjParm()
+ */
 double OSRGetNormProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
                            double dfDefaultValue, OGRErr *pnErr )
 
@@ -2711,6 +2851,11 @@ OGRErr OGRSpatialReference::SetNormProjParm( const char * pszName,
 /*                         OSRSetNormProjParm()                         */
 /************************************************************************/
 
+/**
+ * Set a projection parameter with a normalized value.
+ *
+ * This function is the same as OGRSpatialReference::SetNormProjParm()
+ */
 OGRErr OSRSetNormProjParm( OGRSpatialReferenceH hSRS, 
                            const char * pszParmName, double dfValue )
 

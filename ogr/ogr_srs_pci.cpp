@@ -285,6 +285,12 @@ PCIGetEllipsoidInfo( int nCode, char ** ppszName,
 /*                         OSRImportFromPCI()                           */
 /************************************************************************/
 
+/**
+ * Import coordinate system from PCI projection definition.
+ *
+ * This function is the same as OGRSpatialReference::importFromPCI().
+ */
+
 OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
                          const char *pszUnits, double *padfPrjParams )
 
@@ -307,7 +313,7 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
  * and datum/ellipsoid. You should supply at least this string to the
  * importFromPCI() function.
  *
- * This function is the equilvelent of the C function OSRImportFromPCI().
+ * This function is the equivalent of the C function OSRImportFromPCI().
  *
  * @param pszProj NULL terminated string containing the definition. Looks
  * like "pppppppppppp Ennn" or "pppppppppppp Dnnn", where "pppppppppppp" is
@@ -724,7 +730,11 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /************************************************************************/
 /*                          OSRExportToPCI()                            */
 /************************************************************************/
-
+/** 
+ * Export coordinate system in PCI projection definition.
+ *
+ * This function is the same as OGRSpatialReference::exportToPCI().
+ */
 OGRErr OSRExportToPCI( OGRSpatialReferenceH hSRS,
                        char **ppszProj, char **ppszUnits,
                        double **ppadfPrjParams )
