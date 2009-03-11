@@ -1878,8 +1878,7 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
 public class Band
 
 /**
-  * Do not do nothing...
-  * @deprecated
+  * @deprecated Do not do anything...
   */
 public class Band:public void delete()
 
@@ -2992,8 +2991,7 @@ public class Band:public int SetStatistics(double min, double max, double mean, 
 public class org.gdal.gdal.Driver
 
 /**
-  * Do not do nothing...
-  * @deprecated
+  * @deprecated Do not do anything...
   */
 public class org.gdal.gdal.Driver:public void delete()
 
@@ -4096,8 +4094,7 @@ public interface gdalconstConstants:public final static int GPI_HLS
 public class org.gdal.ogr.Driver
 
 /**
-  * Do not do nothing...
-  * @deprecated
+  * @deprecated Do not do anything...
   */
 public class org.gdal.ogr.Driver:public void delete()
 
@@ -4549,8 +4546,7 @@ public class DataSource:public int GetSummaryRefCount()
 public class Layer
 
 /**
-  * Do not do nothing...
-  * @deprecated
+  * @deprecated Do not do anything...
   */
 public class Layer:public void delete()
 
@@ -5634,11 +5630,12 @@ public class Geometry:public Geometry(int eGeometryType)
  * @param wkt the well known text representation
  * @param wkb the well known binary representation
  * @param gml the GML representation
- * @deprecated
  * @see #Geometry(int eGeometryType)
  * @see #CreateFromWkt(String wkt)
  * @see #CreateFromWkb(byte[] wkb)
  * @see #CreateFromGML(String gml)
+ *
+ * @deprecated Use referenced methods instead.
  */
 public class Geometry:public Geometry(int eGeometryType, String wkt, byte[] wkb, String gml)
 
@@ -8652,3 +8649,105 @@ public class osr:public static String GetUserInputAsWKT(String definition)
  * @return WKT definition
  */
 public class osr:public static String GetWellKnownGeogCSAsWKT(String definition)
+
+/**
+ * @deprecated This is a typo. Use wkb25DBit instead.
+ */
+public interface ogrConstants:public final static int wkb25Bit
+
+/**
+ * Unknown type, non-standard
+ */
+public interface ogrConstants:public final static int wkbUnknown
+
+/**
+ * 0-dimensional geometric object, standard WKB
+ */
+public interface ogrConstants:public final static int wkbPoint
+
+/**
+ * 1-dimensional geometric object with linear interpolation between Points, standard WKB
+ */
+public interface ogrConstants:public final static int wkbLineString
+
+/**
+ * Planar 2-dimensional geometric object defined
+ * by 1 exterior boundary and 0 or more interior
+ * boundaries, standard WKB
+ */
+public interface ogrConstants:public final static int wkbPolygon
+
+/**
+ * GeometryCollection of Points, standard WKB
+ */
+public interface ogrConstants:public final static int wkbMultiPoint
+
+/**
+ * GeometryCollection of LineStrings, standard WKB
+ */
+public interface ogrConstants:public final static int wkbMultiLineString
+
+/**
+ * GeometryCollection of Polygons, standard WKB
+ */
+public interface ogrConstants:public final static int wkbMultiPolygon
+
+/**
+ * Geometric object that is a collection of 1 or more geometric objects, standard WKB
+ */
+public interface ogrConstants:public final static int wkbGeometryCollection
+
+/**
+ * non-standard, for pure attribute records
+ */
+public interface ogrConstants:public final static int wkbNone
+
+/**
+ * non-standard, just for Geometry() constructor
+ */
+public interface ogrConstants:public final static int wkbLinearRing
+
+/**
+ * 2.5D extension as per 99-402
+ */
+public interface ogrConstants:public final static int wkbPoint25D
+
+/**
+ * 2.5D extension as per 99-402
+ */
+public interface ogrConstants:public final static int wkbLineString25D
+
+/**
+ * 2.5D extension as per 99-402
+ */
+public interface ogrConstants:public final static int wkbPolygon25D
+
+/**
+ * 2.5D extension as per 99-402
+ */
+public interface ogrConstants:public final static int wkbMultiPoint25D
+
+/**
+ * 2.5D extension as per 99-402
+ */
+public interface ogrConstants:public final static int wkbMultiLineString25D
+
+/**
+ * 2.5D extension as per 99-402
+ */
+public interface ogrConstants:public final static int wkbMultiPolygon25D
+
+/**
+ * 2.5D extension as per 99-402
+ */
+public interface ogrConstants:public final static int wkbGeometryCollection25D
+
+/**
+ * MSB/Sun/Motoroloa: Most Significant Byte First
+ */
+public interface ogrConstants:public final static int wkbXDR
+
+/**
+ * LSB/Intel/Vax: Least Significant Byte First
+ */
+public interface ogrConstants:public final static int wkbNDR
