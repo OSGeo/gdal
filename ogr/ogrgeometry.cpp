@@ -88,10 +88,18 @@ OGRGeometry::~OGRGeometry()
 /**
  * Dump geometry in well known text format to indicated output file.
  *
+ * A few options can be defined to change the default dump :
+ * <ul>
+ * <li>DISPLAY_GEOMETRY=NO : to hide the dump of the geometry</li>
+ * <li>DISPLAY_GEOMETRY=WKT or YES (default) : dump the geometry as a WKT</li>
+ * <li>DISPLAY_GEOMETRY=SUMMARY : to get only a summary of the geometry</li>
+ * </ul>
+ *
  * This method is the same as the C function OGR_G_DumpReadable().
  *
  * @param fp the text file to write the geometry to.
  * @param pszPrefix the prefix to put on each line of output.
+ * @param papszOptions NULL terminated list of options (may be NULL)
  */
 
 void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszOptions ) const
@@ -551,7 +559,6 @@ OGRErr OGR_G_Transform( OGRGeometryH hGeom,
  *
  * This function is the same as the C function OGR_G_Segmentize()
  *
- * @param hGeom handle on the geometry to segmentize
  * @param dfMaxLength the maximum distance between 2 points after segmentization
  */
 
