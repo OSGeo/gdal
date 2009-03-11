@@ -693,8 +693,27 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /*                            exportToXML()                             */
 /************************************************************************/
 
+/**
+ * Export coordinate system in XML format.
+ *
+ * Converts the loaded coordinate reference system into XML format
+ * to the extent possible.  The string returned in ppszRawXML should be
+ * deallocated by the caller with CPLFree() when no longer needed.
+ *
+ * LOCAL_CS coordinate systems are not translatable.  An empty string
+ * will be returned along with OGRERR_NONE.  
+ *
+ * This method is the equivelent of the C function OSRExportToXML().
+ *
+ * @param ppszRawXML pointer to which dynamically allocated XML definition 
+ * will be assigned. 
+ * @param pszDialect currently ignored. The dialect used is GML based.
+ *
+ * @return OGRERR_NONE on success or an error code on failure. 
+ */
+
 OGRErr OGRSpatialReference::exportToXML( char **ppszRawXML, 
-                                         const char * /*pszDialect*/ ) const
+                                         const char * pszDialect ) const
 
 {
     CPLXMLNode *psXMLTree = NULL;
@@ -719,6 +738,11 @@ OGRErr OGRSpatialReference::exportToXML( char **ppszRawXML,
 /************************************************************************/
 /*                           OSRExportToXML()                           */
 /************************************************************************/
+/** 
+ * Export coordinate system in XML format.
+ *
+ * This function is the same as OGRSpatialReference::exportToXML().
+ */
 
 OGRErr OSRExportToXML( OGRSpatialReferenceH hSRS, char **ppszRawXML, 
                        const char *pszDialect )

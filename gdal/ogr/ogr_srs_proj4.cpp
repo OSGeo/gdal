@@ -151,7 +151,11 @@ char **OSRProj4Tokenize( const char *pszFull )
 /************************************************************************/
 /*                         OSRImportFromProj4()                         */
 /************************************************************************/
-
+/** 
+ * Import PROJ.4 coordinate string.
+ *
+ * This function is the same as OGRSpatialReference::importFromProj4().
+ */
 OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
 
 {
@@ -1027,7 +1031,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /************************************************************************/
 /*                          OSRExportToProj4()                          */
 /************************************************************************/
-
+/** 
+ * Export coordinate system in PROJ.4 format.
+ *
+ * This function is the same as OGRSpatialReference::exportToProj4().
+ */
 OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS, 
                                      char ** ppszReturn )
 
