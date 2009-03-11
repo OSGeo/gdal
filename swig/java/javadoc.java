@@ -3577,7 +3577,7 @@ public class Transformer:public Transformer(Dataset src_ds, Dataset dst_ds, java
   *
   * @param inout array of 3 double values (x, y, z) used for input and output.
   * @param bDstToSrc 1 for inverse transformation, 0 for forward transformation.
-  * @return 1 in case of success, 0 otherwise
+  * @return 1 on success, 0 otherwise
   */
 public class Transformer:public int TransformPoint(int bDstToSrc, double[] inout)
 
@@ -3592,7 +3592,7 @@ public class Transformer:public int TransformPoint(int bDstToSrc, double[] inout
   * @param x input x value
   * @param y input y value
   * @param z input z value
-  * @return 1 in case of success, 0 otherwise
+  * @return 1 on success, 0 otherwise
   */
 public class Transformer:public int TransformPoint(double[] argout, int bDstToSrc, double x, double y, double z)
 
@@ -3606,7 +3606,7 @@ public class Transformer:public int TransformPoint(double[] argout, int bDstToSr
   * @param bDstToSrc 1 for inverse transformation, 0 for forward transformation.
   * @param x input x value
   * @param y input y value
-  * @return 1 in case of success, 0 otherwise
+  * @return 1 on success, 0 otherwise
   */
 public class Transformer:public int TransformPoint(double[] argout, int bDstToSrc, double x, double y)
 
@@ -3621,7 +3621,7 @@ public class Transformer:public int TransformPoint(double[] argout, int bDstToSr
   * @param panSuccess array where to put the success flag for each transformation.
   *                   May be null, otherwise panSuccess.length must be equal to arrayOfCoords.length
   * 
-  * @return 1 in case of success, 0 otherwise
+  * @return 1 on success, 0 otherwise
   */
 public class Transformer:public int TransformPoints(int bDstToSrc, double[][] arrayOfCoords, int[] panSuccess)
 
@@ -7124,3 +7124,1425 @@ public class ogr:public static void RegisterAll()
   * generation of such WKB.
   */
 public class ogr:public static int SetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER) 
+
+/* Class SpatialReference */
+
+/**
+ * This class respresents a OpenGIS Spatial Reference System, and contains
+ * methods for converting between this object organization and well known
+ * text (WKT) format.  This object is reference counted as one instance of
+ * the object is normally shared between many OGRGeometry objects.
+ * <p>
+ * Normally application code can fetch needed parameter values for this
+ * SRS using GetAttrValue(), but in special cases the underlying parse tree
+ * (or OGR_SRSNode objects) can be accessed more directly.
+ * <p>
+ * See <a href="http://www.gdal.org/ogr/osr_tutorial.html">the tutorial</a> for more information on
+ * how to use this class.
+ */
+public class SpatialReference
+
+/**
+ * Constructor.
+ *
+ * This constructor takes an optional string argument which if passed
+ * should be a WKT representation of an SRS.  Passing this is equivelent
+ * to not passing it, and then calling importFromWkt() with the WKT string.
+ *
+ * Note that newly created objects are given a reference count of one. 
+ *
+ * @param wkt well known text definition to which the object should
+ * be initialized, or null (the default). 
+ */
+public class SpatialReference:public SpatialReference(String wkt)
+
+/**
+ * Constructor.
+ *
+ * Same as below with wkt == null.
+ *
+ * @see #SpatialReference(String wkt)
+ */
+public class SpatialReference:public SpatialReference()
+
+/**
+ * Convert this SRS into a pretty WKT format.
+ *
+ * @return the srs
+ */
+public class SpatialReference:public String __str__()
+
+/**
+ * Set EPSG authority info if possible.
+ *
+ * This method inspects a WKT definition, and adds EPSG authority nodes
+ * where an aspect of the coordinate system can be easily and safely 
+ * corresponded with an EPSG identifier.  In practice, this method will 
+ * evolve over time.  In theory it can add authority nodes for any object
+ * (ie. spheroid, datum, GEOGCS, units, and PROJCS) that could have an 
+ * authority node.  Mostly this is useful to inserting appropriate 
+ * PROJCS codes for common formulations (like UTM n WGS84). 
+ * <p>
+ * If it success the OGRSpatialReference is updated in place, and the 
+ * method return 0.  If the method fails to identify the 
+ * general coordinate system, a RuntimeException() will be throwned
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int AutoIdentifyEPSG()
+
+/**
+ * Make a duplicate of this SpatialReference object.
+ *
+ * @return a new SRS, which becomes the responsibility of the caller. 
+ */
+public class SpatialReference:public SpatialReference Clone()
+
+/**
+ * Make a duplicate of the GEOGCS node of this SpatialReference object.
+ *
+ * @return a new SRS, which becomes the responsibility of the caller. 
+ */
+public class SpatialReference:public SpatialReference CloneGeogCS()
+
+
+/**
+ * Copy GEOGCS from another OGRSpatialReference.
+ *
+ * The GEOGCS information is copied into this SpatialReference from another.
+ * If this object has a PROJCS root already, the GEOGCS is installed within
+ * it, otherwise it is installed as the root.
+ * 
+ * @param src_srs the spatial reference to copy the GEOGCS information from.
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int CopyGeogCSFrom(SpatialReference src_srs)
+
+/**
+ * Export coordinate system in Mapinfo style CoordSys format.
+ * 
+ * @return the coordinate system in Mapinfo style CoordSys format.
+ */
+public class SpatialReference:public String ExportToMICoordSys()
+
+/**
+ * Export coordinate system in Mapinfo style CoordSys format.
+ * 
+ * @param argout an already allocated array of 1 string to receive the output
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ExportToMICoordSys(String[] argout)
+
+/**
+ * Export coordinate system in PCI projection definition.
+ *
+ * Converts the loaded coordinate reference system into PCI projection
+ * definition to the extent possible. 
+ * <p>
+ * LOCAL_CS coordinate systems are not translatable.  An empty string
+ * will be returned along with 0.
+ *
+ * @param proj an already allocated array of 1 string to receive the PCI projection
+ * definition
+ * 
+ * @param units an already allocated array of 1 string to receive units definition
+ *
+ * @param parms an already allocated array of 17 doubles to receive the 17
+ * projection parameters will be assigned. See importFromPCI() for the list of parameters.
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ExportToPCI(String[] proj, String[] units, double[] parms)
+
+/**
+ * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ *
+ * Same as below with simplify == 0 and the string is returned as a return value
+ *
+ * @see #ExportToPrettyWkt(String[] argout, int simplify)
+ */
+public class SpatialReference:public String ExportToPrettyWkt()
+
+/**
+ * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ *
+ * Same as below but the string is returned as a return value
+ *
+ * @see #ExportToPrettyWkt(String[] argout, int simplify)
+ */
+public class SpatialReference:public String ExportToPrettyWkt(int simplify)
+
+/**
+ * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ *
+ * Same as below with simplify == 0.
+ *
+ * @see #ExportToPrettyWkt(String[] argout, int simplify)
+ */
+public class SpatialReference:public int ExportToPrettyWkt(String[] argout)
+
+/**
+ * Convert this SRS into a a nicely formatted WKT string for display to a person.
+ *
+ * @param argout an already allocated array of 1 string to receive the output
+ * @param simplify 1 if the AXIS, AUTHORITY and EXTENSION nodes should be stripped off
+ *
+ * @return 0.
+ */
+public class SpatialReference:public int ExportToPrettyWkt(String[] argout, int simplify)
+
+/**
+ * Export coordinate system in PROJ.4 format.
+ *
+ * Same as below but the string is returned as a return value
+ *
+ * @see #ExportToProj4(String[] argout)
+ */
+public class SpatialReference:public String ExportToProj4()
+
+/**
+ * Export coordinate system in PROJ.4 format.
+ *
+ * Converts the loaded coordinate reference system into PROJ.4 format
+ * to the extent possible. 
+ * <p>
+ * LOCAL_CS coordinate systems are not translatable.  An empty string
+ * will be returned along with 0.  
+ *
+ * @param argout an already allocated array of 1 string to receive the PROJ.4 definition
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ExportToProj4(String[] argout)
+
+/**
+ * Export coordinate system in USGS GCTP projection definition.
+ *
+ * @param projsys an already allocated array of 1 integer to receive the projection system code.
+ *
+ * @param zone an already allocated array of 1 integer to receive the zone for UTM and State Plane
+ * projection.
+ * 
+ * @param parms n already allocated array of 15 doubles to receive 
+ * 15 projection parameters. See importFromUSGS() for
+ * the list of parameters.
+ *
+ * @param datum an already allocated array of 1 integer to receive the datum code.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+
+public class SpatialReference:public int ExportToUSGS(int[] projsys, int[] zone, double[] parms, int[] datum)
+
+/**
+ * Convert this SRS into WKT format.
+ *
+ * Same as below but the string is returned as a return value
+ *
+ * @see #ExportToWkt(String[] argout)
+ */
+public class SpatialReference:public String ExportToWkt()
+
+/**
+ * Convert this SRS into WKT format.
+ *
+ * @param argout an already allocated array of 1 string to receive the output
+ *
+ * @return 0.
+ */
+public class SpatialReference:public int ExportToWkt(String[] argout)
+
+/**
+ * Export coordinate system in XML format.
+ *
+ * @see #ExportToXML(String[] argout, String dialect)
+ */
+public class SpatialReference:public String ExportToXML()
+
+/**
+ * Export coordinate system in XML format.
+ *
+ * @see #ExportToXML(String[] argout, String dialect)
+ */
+public class SpatialReference:public String ExportToXML(String dialect)
+
+/**
+ * Export coordinate system in XML format.
+ *
+ * @see #ExportToXML(String[] argout, String dialect)
+ */
+public class SpatialReference:public int ExportToXML(String[] argout)
+
+/**
+ * Export coordinate system in XML format.
+ *
+ * Converts the loaded coordinate reference system into XML format
+ * to the extent possible.
+ *
+ * LOCAL_CS coordinate systems are not translatable.  An empty string
+ * will be returned along with 0.  
+ *
+ * @param argout an already allocated array of 1 string to receive the XML definition.
+ * @param dialect currently ignored. The dialect used is GML based.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ExportToXML(String[] argout, String dialect)
+
+/**
+ * Fixup as needed.
+ *
+ * Some mechanisms to create WKT using OGRSpatialReference, and some
+ * imported WKT, are not valid according to the OGC CT specification.  This
+ * method attempts to fill in any missing defaults that are required, and
+ * fixup ordering problems (using OSRFixupOrdering()) so that the resulting
+ * WKT is valid. 
+ * <p>
+ * This method should be expected to evolve over time to as problems are
+ * discovered.  The following are amoung the fixup actions this method will
+ * take:
+ * <ul>
+ * <li>Fixup the ordering of nodes to match the BNF WKT ordering, using
+ * the FixupOrdering() method.</li>
+ * <li>Add missing linear or angular units nodes.</li>
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int Fixup()
+
+/**
+ * Correct parameter ordering to match CT Specification.
+ *
+ * Some mechanisms to create WKT using OGRSpatialReference, and some
+ * imported WKT fail to maintain the order of parameters required according
+ * to the BNF definitions in the OpenGIS SF-SQL and CT Specifications.  This
+ * method attempts to massage things back into the required order.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int FixupOrdering()
+
+
+/**
+ * Fetch angular geographic coordinate system units.
+ *
+ * If no units are available, a value of "degree" and SRS_UA_DEGREE_CONV 
+ * will be assumed.  This method only checks directly under the GEOGCS node
+ * for units.
+ *
+ * @return the value to multiply by angular distances to transform them to 
+ * radians.
+ */
+public class SpatialReference:public double GetAngularUnits()
+
+/**
+ * Fetch first attribute of named node.
+ *
+ * This method uses GetAttrNode() to find the named node, and then extracts
+ * the value of the first child.
+ *
+ * @param name the tree node to look for (case insensitive).
+ *
+ * @return the requested value, or null if it fails for any reason. 
+ */
+public class SpatialReference:public String GetAttrValue(String name)
+
+/**
+ * Fetch indicated attribute of named node.
+ *
+ * This method uses GetAttrNode() to find the named node, and then extracts
+ * the value of the indicated child.  Thus a call to GetAttrValue("UNIT",1)
+ * would return the second child of the UNIT node, which is normally the
+ * length of the linear unit in meters.
+ *
+ * @param name the tree node to look for (case insensitive).
+ * @param child the child of the node to fetch (zero based).
+ *
+ * @return the requested value, or null if it fails for any reason. 
+ */
+public class SpatialReference:public String GetAttrValue(String name, int child)
+
+/**
+ * Get the authority code for a node.
+ *
+ * This method is used to query an AUTHORITY[] node from within the 
+ * WKT tree, and fetch the code value.  
+ * <p>
+ * While in theory values may be non-numeric, for the EPSG authority all
+ * code values should be integral.
+ *
+ * @param target_key the partial or complete path to the node to 
+ * get an authority from.  ie. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or null to 
+ * search for an authority node on the root element.
+ *
+ * @return value code from authority node, or null on failure.
+ */
+public class SpatialReference:public String GetAuthorityCode(String target_key)
+
+/**
+ * Get the authority name for a node.
+ *
+ * This method is used to query an AUTHORITY[] node from within the 
+ * WKT tree, and fetch the authority name value.  
+ * <p>
+ * The most common authority is "EPSG".
+ *
+ * @param target_key the partial or complete path to the node to 
+ * get an authority from.  ie. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or null to 
+ * search for an authority node on the root element.
+ *
+ * @return value code from authority node, or null on failure.
+ */
+public class SpatialReference:public String GetAuthorityName(String target_key)
+
+/**
+ * Fetch linear projection units. 
+ *
+ * If no units are available, a value of "Meters" and 1.0 will be assumed.
+ * This method only checks directly under the PROJCS or LOCAL_CS node for 
+ * units.
+ *
+ * @return the value to multiply by linear distances to transform them to 
+ * meters.
+ */
+public class SpatialReference:public double GetLinearUnits()
+
+/**
+ * Fetch linear projection units name.
+ *
+ * If no units are available, a value of "Meters" will be assumed.
+ * This method only checks directly under the PROJCS or LOCAL_CS node for 
+ * units.
+ *
+ * @return the units name
+ */
+public class SpatialReference:public String GetLinearUnitsName()
+
+/**
+ * Fetch a normalized projection parameter value.
+ *
+ * Same as below with default_val == 0
+ *
+ * @see #GetNormProjParm(String name, double default_val)
+ */
+public class SpatialReference:public double GetNormProjParm(String name)
+
+/**
+ * Fetch a normalized projection parameter value.
+ *
+ * This method is the same as GetProjParm() except that the value of
+ * the parameter is "normalized" into degrees or meters depending on 
+ * whether it is linear or angular.
+ *
+ * @param name the name of the parameter to fetch, from the set of 
+ * SRS_PP codes in ogr_srs_api.h.
+ *
+ * @param default_val the value to return if this parameter doesn't exist.
+ *
+ * @return value of parameter.
+ */
+public class SpatialReference:public double GetNormProjParm(String name, double default_val)
+
+/**
+ * Fetch a projection parameter value.
+ *
+ * Same as below with default_val == 0
+ *
+ * @see #GetProjParm(String name, double default_val)
+ */
+public class SpatialReference:public double GetProjParm(String name)
+
+/**
+ * Fetch a projection parameter value.
+ *
+ * NOTE: This code should be modified to translate non degree angles into
+ * degrees based on the GEOGCS unit.  This has not yet been done.
+ *
+ * @param name the name of the parameter to fetch, from the set of 
+ * SRS_PP codes in ogr_srs_api.h.
+ *
+ * @param default_val the value to return if this parameter doesn't exist.
+ *
+ * @return value of parameter.
+ */
+public class SpatialReference:public double GetProjParm(String name, double default_val)
+
+/**
+ * Fetch TOWGS84 parameters, if available. 
+ * 
+ * @return an array of doubles into which up to 7 coefficients are placed.
+ */
+public class SpatialReference:public double[] GetTOWGS84()
+
+/**
+ * Fetch TOWGS84 parameters, if available. 
+ * 
+ * @param argout allocated array of 7 doubles into which up to 7 coefficients are placed.
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int GetTOWGS84(double[] argout)
+
+/**
+ * Initialize SRS based on EPSG GCS or PCS code.
+ *
+ * This method will initialize the spatial reference based on the
+ * passed in EPSG GCS or PCS code.  The coordinate system definitions
+ * are normally read from the EPSG derived support files such as 
+ * pcs.csv, gcs.csv, pcs.override.csv, gcs.override.csv and falling 
+ * back to search for a PROJ.4 epsg init file or a definition in epsg.wkt. 
+ * <p>
+ * These support files are normally searched for in /usr/local/share/gdal
+ * or in the directory identified by the GDAL_DATA configuration option.
+ * See CPLFindFile() for details.
+ * <p>
+ * This method is relatively expensive, and generally involves quite a bit
+ * of text file scanning.  Reasonable efforts should be made to avoid calling
+ * it many times for the same coordinate system. 
+ * <p>
+ * This method is similar to importFromEPSGA() except that EPSG preferred 
+ * axis ordering will *not* be applied for geographic coordinate systems.
+ * EPSG normally defines geographic coordinate systems to use lat/long 
+ * contrary to typical GIS use). 
+ *
+ * @param nCode a GCS or PCS code from the horizontal coordinate system table.
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ImportFromEPSG(int nCode)
+
+/**
+ * Import coordinate system from ESRI .prj format(s).
+ *
+ * This function will read the text loaded from an ESRI .prj file, and
+ * translate it into an OGRSpatialReference definition.  This should support
+ * many (but by no means all) old style (Arc/Info 7.x) .prj files, as well
+ * as the newer pseudo-OGC WKT .prj files.  Note that new style .prj files
+ * are in OGC WKT format, but require some manipulation to correct datum
+ * names, and units on some projection parameters.  This is addressed within
+ * importFromESRI() by an automatical call to morphFromESRI(). 
+ * <p>
+ * Currently only GEOGRAPHIC, UTM, STATEPLANE, GREATBRITIAN_GRID, ALBERS, 
+ * EQUIDISTANT_CONIC, and TRANSVERSE (mercator) projections are supported
+ * from old style files. 
+ * <p>
+ * At this time there is no equivelent exportToESRI() method.  Writing old
+ * style .prj files is not supported by OGRSpatialReference. However the
+ * morphToESRI() and exportToWkt() methods can be used to generate output
+ * suitable to write to new style (Arc 8) .prj files. 
+ *
+ * @param ppszInput vector of strings containing the definition.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ImportFromESRI(java.util.Vector ppszInput)
+
+/**
+ * Import Mapinfo style CoordSys definition.
+ *
+ * The SpatialReference is initialized from the passed Mapinfo style CoordSys definition string.
+ *
+ * @param coord_sys Mapinfo style CoordSys definition string.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ImportFromMICoordSys(String coord_sys)
+
+/**
+ * Import coordinate system from PCI projection definition.
+ *
+ * Same as below with units == null and prjParams == null
+ *
+ * @see #ImportFromPCI(String proj, String units, double[] prjParams)
+ */
+public class SpatialReference:public int ImportFromPCI(String proj)
+
+/**
+ * Import coordinate system from PCI projection definition.
+ *
+ * Same as below with prjParams == null
+ *
+ * @see #ImportFromPCI(String proj, String units, double[] prjParams)
+ */
+public class SpatialReference:public int ImportFromPCI(String proj, String units)
+
+/**
+ * Import coordinate system from PCI projection definition.
+ *
+ * PCI software uses 16-character string to specify coordinate system
+ * and datum/ellipsoid. You should supply at least this string to the
+ * importFromPCI() function.
+ *
+ * @param proj string containing the definition. Looks
+ * like "pppppppppppp Ennn" or "pppppppppppp Dnnn", where "pppppppppppp" is
+ * a projection code, "Ennn" is an ellipsoid code, "Dnnn" --- a datum code.
+ *
+ * @param units Grid units code ("DEGREE" or "METRE"). If null, "METRE" will
+ * be used.
+ *
+ * @param prjParams Array of 16 coordinate system parameters:
+ *
+ * [0]  Spheroid semi major axis
+ * [1]  Spheroid semi minor axis
+ * [2]  Reference Longitude
+ * [3]  Reference Latitude
+ * [4]  First Standard Parallel
+ * [5]  Second Standard Parallel
+ * [6]  False Easting
+ * [7]  False Northing
+ * [8]  Scale Factor
+ * [9]  Height above sphere surface
+ * [10] Longitude of 1st point on center line
+ * [11] Latitude of 1st point on center line
+ * [12] Longitude of 2nd point on center line
+ * [13] Latitude of 2nd point on center line
+ * [14] Azimuth east of north for center line
+ * [15] Landsat satellite number
+ * [16] Landsat path number
+ *
+ * Particular projection uses different parameters, unused ones may be set to
+ * zero. If null supplied instead of array pointer default values will be
+ * used (i.e., zeroes).
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ImportFromPCI(String proj, String units, double[] prjParams)
+
+/**
+ * Import PROJ.4 coordinate string.
+ *
+ * The OGRSpatialReference is initialized from the passed PROJ.4 style
+ * coordinate system string.  In addition to many +proj formulations which
+ * have OGC equivelents, it is also possible to import "+init=epsg:n" style
+ * definitions.  These are passed to importFromEPSG().  Other init strings
+ * (such as the state plane zones) are not currently supported.   
+ * <p><pre>
+ * Example:
+ *   pszProj4 = "+proj=utm +zone=11 +datum=WGS84" 
+ * </pre><p>
+ * Some parameters, such as grids, recognised by PROJ.4 may not be well
+ * understood and translated into the OGRSpatialReference model. It is possible
+ * to add the +wktext parameter which is a special keyword that OGR recognises
+ * as meaning "embed the entire PROJ.4 string in the WKT and use it literally
+ * when converting back to PROJ.4 format".
+ * <p><pre>
+ * For example:
+ * "+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000 +y_0=6023150 +ellps=intl
+ *  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"
+ *</pre><p>
+ * will be translated as :
+ * <pre>
+ * PROJCS["unnamed",
+ *    GEOGCS["International 1909 (Hayford)",
+ *        DATUM["unknown",
+ *            SPHEROID["intl",6378388,297]],
+ *        PRIMEM["Greenwich",0],
+ *        UNIT["degree",0.0174532925199433]],
+ *    PROJECTION["New_Zealand_Map_Grid"],
+ *    PARAMETER["latitude_of_origin",-41],
+ *    PARAMETER["central_meridian",173],
+ *    PARAMETER["false_easting",2510000],
+ *    PARAMETER["false_northing",6023150],
+ *    UNIT["Meter",1],
+ *    EXTENSION["PROJ4","+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000 
+ *               +y_0=6023150 +ellps=intl  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"]]
+ * </pre>
+ *
+ * @param proj4 the PROJ.4 style string. 
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ImportFromProj4(String proj4)
+
+/**
+ * Set spatial reference from a URL.
+ *
+ * This method will download the spatial reference at a given URL and 
+ * feed it into SetFromUserInput for you.  
+ * 
+ * @param url text definition to try to deduce SRS from.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */ 
+public class SpatialReference:public int ImportFromUrl(String url)
+
+/**
+ * Import coordinate system from USGS projection definition.
+ *
+ * Same as below with iZone == 0, padfPrjParams == null and iDatum == 0
+ *
+ * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
+ */
+public class SpatialReference:public int ImportFromUSGS(int iProjSys)
+
+/**
+ * Import coordinate system from USGS projection definition.
+ *
+ * Same as below with padfPrjParams == null and iDatum == 0
+ *
+ * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
+ */
+public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone)
+
+/**
+ * Import coordinate system from USGS projection definition.
+ *
+ * Same as below with iDatum == 0
+ *
+ * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
+ */
+public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams)
+
+/**
+ * Import coordinate system from USGS projection definition.
+ *
+ * This method will import projection definition in style, used by USGS GCTP
+ * software. GCTP operates on angles in packed DMS format (see
+ * CPLDecToPackedDMS() function for details), so all angle values (latitudes,
+ * longitudes, azimuths, etc.) specified in the padfPrjParams array should
+ * be in the packed DMS format.
+ *
+ *  Projection Transformation Package Projection Parameters:
+ * <pre>
+ * ----------------------------------------------------------------------------
+ *                         |                    Array Element                  
+ *  Code & Projection Id   |---------------------------------------------------
+ *                         |   0  |   1  |  2   |  3   |   4   |    5    |6 | 7
+ * ----------------------------------------------------------------------------
+ *  0 Geographic           |      |      |      |      |       |         |  |  
+ *  1 U T M                |Lon/Z |Lat/Z |      |      |       |         |  |  
+ *  2 State Plane          |      |      |      |      |       |         |  |  
+ *  3 Albers Equal Area    |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ *  4 Lambert Conformal C  |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ *  5 Mercator             |SMajor|SMinor|      |      |CentMer|TrueScale|FE|FN
+ *  6 Polar Stereographic  |SMajor|SMinor|      |      |LongPol|TrueScale|FE|FN
+ *  7 Polyconic            |SMajor|SMinor|      |      |CentMer|OriginLat|FE|FN
+ *  8 Equid. Conic A       |SMajor|SMinor|STDPAR|      |CentMer|OriginLat|FE|FN
+ *    Equid. Conic B       |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ *  9 Transverse Mercator  |SMajor|SMinor|Factor|      |CentMer|OriginLat|FE|FN
+ * 10 Stereographic        |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 11 Lambert Azimuthal    |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 12 Azimuthal            |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 13 Gnomonic             |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 14 Orthographic         |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+ * 15 Gen. Vert. Near Per  |Sphere|      |Height|      |CentLon|CenterLat|FE|FN
+ * 16 Sinusoidal           |Sphere|      |      |      |CentMer|         |FE|FN
+ * 17 Equirectangular      |Sphere|      |      |      |CentMer|TrueScale|FE|FN
+ * 18 Miller Cylindrical   |Sphere|      |      |      |CentMer|         |FE|FN
+ * 19 Van der Grinten      |Sphere|      |      |      |CentMer|OriginLat|FE|FN
+ * 20 Hotin Oblique Merc A |SMajor|SMinor|Factor|      |       |OriginLat|FE|FN
+ *    Hotin Oblique Merc B |SMajor|SMinor|Factor|AziAng|AzmthPt|OriginLat|FE|FN
+ * 21 Robinson             |Sphere|      |      |      |CentMer|         |FE|FN
+ * 22 Space Oblique Merc A |SMajor|SMinor|      |IncAng|AscLong|         |FE|FN
+ *    Space Oblique Merc B |SMajor|SMinor|Satnum|Path  |       |         |FE|FN
+ * 23 Alaska Conformal     |SMajor|SMinor|      |      |       |         |FE|FN
+ * 24 Interrupted Goode    |Sphere|      |      |      |       |         |  |  
+ * 25 Mollweide            |Sphere|      |      |      |CentMer|         |FE|FN
+ * 26 Interrupt Mollweide  |Sphere|      |      |      |       |         |  |  
+ * 27 Hammer               |Sphere|      |      |      |CentMer|         |FE|FN
+ * 28 Wagner IV            |Sphere|      |      |      |CentMer|         |FE|FN
+ * 29 Wagner VII           |Sphere|      |      |      |CentMer|         |FE|FN
+ * 30 Oblated Equal Area   |Sphere|      |Shapem|Shapen|CentLon|CenterLat|FE|FN
+ * ----------------------------------------------------------------------------
+ * 
+ *       ----------------------------------------------------
+ *                               |      Array Element       |
+ *         Code & Projection Id  |---------------------------
+ *                               |  8  |  9 |  10 | 11 | 12 |  
+ *       ----------------------------------------------------
+ *        0 Geographic           |     |    |     |    |    |
+ *        1 U T M                |     |    |     |    |    |
+ *        2 State Plane          |     |    |     |    |    |
+ *        3 Albers Equal Area    |     |    |     |    |    |
+ *        4 Lambert Conformal C  |     |    |     |    |    |
+ *        5 Mercator             |     |    |     |    |    |
+ *        6 Polar Stereographic  |     |    |     |    |    |
+ *        7 Polyconic            |     |    |     |    |    |
+ *        8 Equid. Conic A       |zero |    |     |    |    |   
+ *          Equid. Conic B       |one  |    |     |    |    |
+ *        9 Transverse Mercator  |     |    |     |    |    |
+ *       10 Stereographic        |     |    |     |    |    |
+ *       11 Lambert Azimuthal    |     |    |     |    |    |    
+ *       12 Azimuthal            |     |    |     |    |    |    
+ *       13 Gnomonic             |     |    |     |    |    |
+ *       14 Orthographic         |     |    |     |    |    |
+ *       15 Gen. Vert. Near Per  |     |    |     |    |    |
+ *       16 Sinusoidal           |     |    |     |    |    |
+ *       17 Equirectangular      |     |    |     |    |    |
+ *       18 Miller Cylindrical   |     |    |     |    |    |
+ *       19 Van der Grinten      |     |    |     |    |    |
+ *       20 Hotin Oblique Merc A |Long1|Lat1|Long2|Lat2|zero|   
+ *          Hotin Oblique Merc B |     |    |     |    |one |
+ *       21 Robinson             |     |    |     |    |    |
+ *       22 Space Oblique Merc A |PSRev|LRat|PFlag|    |zero|    
+ *          Space Oblique Merc B |     |    |     |    |one |
+ *       23 Alaska Conformal     |     |    |     |    |    |
+ *       24 Interrupted Goode    |     |    |     |    |    |
+ *       25 Mollweide            |     |    |     |    |    |
+ *       26 Interrupt Mollweide  |     |    |     |    |    |
+ *       27 Hammer               |     |    |     |    |    |
+ *       28 Wagner IV            |     |    |     |    |    |
+ *       29 Wagner VII           |     |    |     |    |    |
+ *       30 Oblated Equal Area   |Angle|    |     |    |    |
+ *       ----------------------------------------------------
+ *
+ *   where
+ *
+ *    Lon/Z     Longitude of any point in the UTM zone or zero.  If zero,
+ *              a zone code must be specified.
+ *    Lat/Z     Latitude of any point in the UTM zone or zero.  If zero, a
+ *              zone code must be specified.
+ *    SMajor    Semi-major axis of ellipsoid.  If zero, Clarke 1866 in meters
+ *              is assumed.
+ *    SMinor    Eccentricity squared of the ellipsoid if less than zero,
+ *              if zero, a spherical form is assumed, or if greater than
+ *              zero, the semi-minor axis of ellipsoid.
+ *    Sphere    Radius of reference sphere.  If zero, 6370997 meters is used.
+ *    STDPAR    Latitude of the standard parallel
+ *    STDPR1    Latitude of the first standard parallel
+ *    STDPR2    Latitude of the second standard parallel
+ *    CentMer   Longitude of the central meridian
+ *    OriginLat Latitude of the projection origin
+ *    FE        False easting in the same units as the semi-major axis
+ *    FN        False northing in the same units as the semi-major axis
+ *    TrueScale Latitude of true scale
+ *    LongPol   Longitude down below pole of map
+ *    Factor    Scale factor at central meridian (Transverse Mercator) or
+ *              center of projection (Hotine Oblique Mercator)
+ *    CentLon   Longitude of center of projection
+ *    CenterLat Latitude of center of projection
+ *    Height    Height of perspective point
+ *    Long1     Longitude of first point on center line (Hotine Oblique
+ *              Mercator, format A)
+ *    Long2     Longitude of second point on center line (Hotine Oblique
+ *              Mercator, format A)
+ *    Lat1      Latitude of first point on center line (Hotine Oblique
+ *              Mercator, format A)
+ *    Lat2      Latitude of second point on center line (Hotine Oblique
+ *              Mercator, format A)
+ *    AziAng    Azimuth angle east of north of center line (Hotine Oblique
+ *              Mercator, format B)
+ *    AzmthPt   Longitude of point on central meridian where azimuth occurs
+ *              (Hotine Oblique Mercator, format B)
+ *    IncAng    Inclination of orbit at ascending node, counter-clockwise
+ *              from equator (SOM, format A)
+ *    AscLong   Longitude of ascending orbit at equator (SOM, format A)
+ *    PSRev     Period of satellite revolution in minutes (SOM, format A)
+ *    LRat      Landsat ratio to compensate for confusion at northern end
+ *              of orbit (SOM, format A -- use 0.5201613)
+ *    PFlag     End of path flag for Landsat:  0 = start of path,
+ *              1 = end of path (SOM, format A)
+ *    Satnum    Landsat Satellite Number (SOM, format B)
+ *    Path      Landsat Path Number (Use WRS-1 for Landsat 1, 2 and 3 and
+ *              WRS-2 for Landsat 4, 5 and 6.)  (SOM, format B)
+ *    Shapem    Oblated Equal Area oval shape parameter m
+ *    Shapen    Oblated Equal Area oval shape parameter n
+ *    Angle     Oblated Equal Area oval rotation angle
+ *
+ * Array elements 13 and 14 are set to zero. All array elements with blank
+ * fields are set to zero too.
+ * </pre>
+ *
+ * If the datum code is negative, the first two values in the parameter array
+ * (parm) are used to define the values as follows:
+ *
+ * <ul>
+ *
+ * <li> If padfPrjParams[0] is a non-zero value and padfPrjParams[1] is
+ * greater than one, the semimajor axis is set to padfPrjParams[0] and
+ * the semiminor axis is set to padfPrjParams[1].
+ *
+ * <li> If padfPrjParams[0] is nonzero and padfPrjParams[1] is greater than
+ * zero but less than or equal to one, the semimajor axis is set to
+ * padfPrjParams[0] and the semiminor axis is computed from the eccentricity
+ * squared value padfPrjParams[1]:<p>
+ *
+ * semiminor = sqrt(1.0 - ES) * semimajor<p>
+ *
+ * where<p>
+ *
+ * ES = eccentricity squared
+ *
+ * <li> If padfPrjParams[0] is nonzero and padfPrjParams[1] is equal to zero,
+ * the semimajor axis and semiminor axis are set to padfPrjParams[0].
+ *
+ * <li> If padfPrjParams[0] equals zero and padfPrjParams[1] is greater than
+ * zero, the default Clarke 1866 is used to assign values to the semimajor
+ * axis and semiminor axis.
+ *
+ * <li> If padfPrjParams[0] and padfPrjParams[1] equals zero, the semimajor
+ * axis is set to 6370997.0 and the semiminor axis is set to zero.
+ *
+ * </ul>
+ *
+ * If a datum code is zero or greater, the semimajor and semiminor axis are
+ * defined by the datum code as found in the following table:
+ *
+ * Supported Datums:
+ * <pre>
+ *       0: Clarke 1866 (default)
+ *       1: Clarke 1880
+ *       2: Bessel
+ *       3: International 1967
+ *       4: International 1909
+ *       5: WGS 72
+ *       6: Everest
+ *       7: WGS 66
+ *       8: GRS 1980/WGS 84
+ *       9: Airy
+ *      10: Modified Everest
+ *      11: Modified Airy
+ *      12: Walbeck
+ *      13: Southeast Asia
+ *      14: Australian National
+ *      15: Krassovsky
+ *      16: Hough
+ *      17: Mercury 1960
+ *      18: Modified Mercury 1968
+ *      19: Sphere of Radius 6370997 meters
+ * </pre>
+ *
+ * @param iProjSys Input projection system code, used in GCTP.
+ *
+ * @param iZone Input zone for UTM and State Plane projection systems. For
+ * Southern Hemisphere UTM use a negative zone code. iZone ignored for all
+ * other projections.
+ *
+ * @param padfPrjParams Array of 15 coordinate system parameters. These
+ * parameters differs for different projections.
+ *
+ * @param iDatum Input spheroid.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
+
+/**
+ * Import from WKT string.
+ *
+ * This method will wipe the existing SRS definition, and
+ * reassign it based on the contents of the passed WKT string.  Only as
+ * much of the input string as needed to construct this SRS is consumed from
+ * the input string.
+ *
+ * @param wkt WKT string
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ImportFromWkt(String wkt)
+
+/** 
+ * Import coordinate system from XML format (GML only currently).
+ *
+ * @param xmlString XML string to import
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int ImportFromXML(String xmlString)
+
+/**
+ * Check if geographic coordinate system.
+ *
+ * @return 1 if this spatial reference is geographic ... that is the 
+ * root is a GEOGCS node. 
+ */
+public class SpatialReference:public int IsGeographic()
+
+/**
+ * Check if local coordinate system.
+ *
+ * @return 1 if this spatial reference is local ... that is the 
+ * root is a LOCAL_CS node. 
+ */
+public class SpatialReference:public int IsLocal()
+
+/**
+ * Check if projected coordinate system.
+ *
+ * @return 1 if this contains a PROJCS node indicating a it is a 
+ * projected coordinate system. 
+ */
+public class SpatialReference:public int IsProjected()
+
+/**
+ * Do these two spatial references describe the same system ?
+ *
+ * @param other the SRS being compared to.
+ *
+ * @return 1 if equivalent or 0 otherwise. 
+ */
+public class SpatialReference:public int IsSame(SpatialReference other)
+
+/**
+ * Do the GeogCS'es match?
+ *
+ * @param other the SRS being compared against. 
+ *
+ * @return 1 if they are the same or 0 otherwise. 
+ */
+public class SpatialReference:public int IsSameGeogCS(SpatialReference other)
+
+/**
+ * Convert in place from ESRI WKT format.
+ *
+ * The value notes of this coordinate system are modified in various manners
+ * to adhere more closely to the WKT standard.  This mostly involves
+ * translating a variety of ESRI names for projections, arguments and
+ * datums to "standard" names, as defined by Adam Gawne-Cain's reference
+ * translation of EPSG to WKT for the CT specification.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int MorphFromESRI()
+
+/**
+ * Convert in place to ESRI WKT format.
+ *
+ * The value nodes of this coordinate system are modified in various manners
+ * more closely map onto the ESRI concept of WKT format.  This includes
+ * renaming a variety of projections and arguments, and stripping out 
+ * nodes note recognised by ESRI (like AUTHORITY and AXIS). 
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int MorphToESRI()
+
+/**
+ * Set the angular units for the geographic coordinate system.
+ *
+ * This method creates a UNITS subnode with the specified values as a
+ * child of the GEOGCS node. 
+ *
+ * @param name the units name to be used.  Some preferred units
+ * names can be found in ogr_srs_api.h such as SRS_UA_DEGREE. 
+ *
+ * @param to_radians the value to multiple by an angle in the indicated
+ * units to transform to radians.  Some standard conversion factors can
+ * be found in ogr_srs_api.h. 
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetAngularUnits(String name, double to_radians)
+
+/**
+ * Set attribute value in spatial reference.
+ *
+ * Missing intermediate nodes in the path will be created if not already
+ * in existance.  If the attribute has no children one will be created and
+ * assigned the value otherwise the zeroth child will be assigned the value.
+ *
+ * @param name full path to attribute to be set.  For instance
+ * "PROJCS|GEOGCS|UNITS".
+ * 
+ * @param value value to be assigned to node, such as "meter". 
+ * This may be null if you just want to force creation of the intermediate
+ * path.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetAttrValue(String name, String value)
+
+/**
+ * Set the authority for a node.
+ *
+ * @param target_key the partial or complete path to the node to 
+ * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
+ *
+ * @param authority authority name, such as "EPSG".
+ *
+ * @param code code for value with this authority.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetAuthority(String target_key, String authority, int code)
+
+/**
+ * Set spatial reference from various text formats.
+ *
+ * This method will examine the provided input, and try to deduce the
+ * format, and then use it to initialize the spatial reference system.  It
+ * may take the following forms:
+ *
+ * <ol>
+ * <li> Well Known Text definition - passed on to importFromWkt().
+ * <li> "EPSG:n" - number passed on to importFromEPSG(). 
+ * <li> "EPSGA:n" - number passed on to importFromEPSGA(). 
+ * <li> "AUTO:proj_id,unit_id,lon0,lat0" - WMS auto projections.
+ * <li> "urn:ogc:def:crs:EPSG::n" - ogc urns
+ * <li> PROJ.4 definitions - passed on to importFromProj4().
+ * <li> filename - file read for WKT, XML or PROJ.4 definition.
+ * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
+ * WGS84 or WGS72. 
+ * <li> WKT (directly or in a file) in ESRI format should be prefixed with
+ * ESRI:: to trigger an automatic morphFromESRI().
+ * </ol>
+ *
+ * It is expected that this method will be extended in the future to support
+ * XML and perhaps a simplified "minilanguage" for indicating common UTM and
+ * State Plane definitions. 
+ * <p>
+ * This method is intended to be flexible, but by it's nature it is 
+ * imprecise as it must guess information about the format intended.  When
+ * possible applications should call the specific method appropriate if the
+ * input is known to be in a particular format. 
+ * 
+ * @param definition text definition to try to deduce SRS from.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */ 
+public class SpatialReference:public int SetFromUserInput(String definition)
+
+/**
+ * Set geographic coordinate system. 
+ *
+ * Same as below with pszPMName = "Greenwich", dfPMOffset = 0.0, pszAngularUnits = "degree" and dfConvertToRadians =  0.0174532925199433
+ *
+ * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
+ */
+public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening)
+
+/**
+ * Set geographic coordinate system. 
+ *
+ * Same as below with dfPMOffset = 0.0, pszAngularUnits = "degree" and dfConvertToRadians =  0.0174532925199433
+ *
+ * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
+ */
+public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName)
+
+/**
+ * Set geographic coordinate system. 
+ *
+ * Same as below with pszAngularUnits = "degree" and dfConvertToRadians =  0.0174532925199433
+ *
+ * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
+ */
+public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset)
+
+/**
+ * Set geographic coordinate system. 
+ *
+ * Same as below with dfConvertToRadians =  0.0174532925199433
+ *
+ * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszUnits, double dfConvertToRadians)
+ */
+public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits)
+
+/**
+ * Set geographic coordinate system. 
+ *
+ * This method is used to set the datum, ellipsoid, prime meridian and
+ * angular units for a geographic coordinate system.  It can be used on it's
+ * own to establish a geographic spatial reference, or applied to a 
+ * projected coordinate system to establish the underlying geographic 
+ * coordinate system. 
+ *
+ * @param pszGeogName user visible name for the geographic coordinate system
+ * (not to serve as a key).
+ * 
+ * @param pszDatumName key name for this datum.  The OpenGIS specification 
+ * lists some known values, and otherwise EPSG datum names with a standard
+ * transformation are considered legal keys. 
+ * 
+ * @param pszSpheroidName user visible spheroid name (not to serve as a key)
+ *
+ * @param dfSemiMajor the semi major axis of the spheroid.
+ * 
+ * @param dfInvFlattening the inverse flattening for the spheroid.
+ * This can be computed from the semi minor axis as 
+ * 1/f = 1.0 / (1.0 - semiminor/semimajor).
+ *
+ * @param pszPMName the name of the prime merdidian (not to serve as a key)
+ * If this is NULL a default value of "Greenwich" will be used. 
+ * 
+ * @param dfPMOffset the longitude of greenwich relative to this prime
+ * meridian.
+ *
+ * @param pszAngularUnits the angular units name (see ogr_srs_api.h for some
+ * standard names).  If null a value of "degrees" will be assumed. 
+ * 
+ * @param dfConvertToRadians value to multiply angular units by to transform
+ * them to radians.  A value of SRS_UL_DEGREE_CONV will be used if
+ * pszAngularUnits is null.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
+
+/**
+ * Set the linear units for the projection.
+ *
+ * This method creates a UNITS subnode with the specified values as a
+ * child of the PROJCS or LOCAL_CS node. 
+ *
+ * @param name the units name to be used.  Some preferred units
+ * names can be found in ogr_srs_api.h such as SRS_UL_METER, SRS_UL_FOOT 
+ * and SRS_UL_US_FOOT. 
+ *
+ * @param to_meters the value to multiple by a length in the indicated
+ * units to transform to meters.  Some standard conversion factors can
+ * be found in ogr_srs_api.h. 
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetLinearUnits(String name, double to_meters)
+
+/**
+ * Set the linear units for the projection.
+ *
+ * This method creates a UNITS subnode with the specified values as a
+ * child of the PROJCS or LOCAL_CS node.   It works the same as the
+ * SetLinearUnits() method, but it also updates all existing linear
+ * projection parameter values from the old units to the new units. 
+ *
+ * @param name the units name to be used.  Some preferred units
+ * names can be found in ogr_srs_api.h such as SRS_UL_METER, SRS_UL_FOOT 
+ * and SRS_UL_US_FOOT. 
+ *
+ * @param to_meters the value to multiple by a length in the indicated
+ * units to transform to meters.  Some standard conversion factors can
+ * be found in ogr_srs_api.h. 
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetLinearUnitsAndUpdateParameters(String name, double to_meters)
+
+/**
+ * Set the user visible LOCAL_CS name.
+ *
+ * This method is will ensure a LOCAL_CS node is created as the root, 
+ * and set the provided name on it.  It must be used before SetLinearUnits().
+ *
+ * @param name the user visible name to assign.  Not used as a key.
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetLocalCS(String name)
+
+/**
+ * Set a projection parameter with a normalized value.
+ *
+ * This method is the same as SetProjParm() except that the value of
+ * the parameter passed in is assumed to be in "normalized" form (decimal
+ * degrees for angular values, meters for linear values.  The values are 
+ * converted in a form suitable for the GEOGCS and linear units in effect.
+ *
+ * @param name the parameter name, which should be selected from
+ * the macros in ogr_srs_api.h, such as SRS_PP_CENTRAL_MERIDIAN. 
+ *
+ * @param val value to assign. 
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetNormProjParm(String name, double val)
+
+/**
+ * Set the user visible PROJCS name.
+ *
+ * Same as below with name == null
+ *
+ * @see #SetProjCS(String name)
+ */
+public class SpatialReference:public int SetProjCS()
+
+/**
+ * Set the user visible PROJCS name.
+ *
+ * This method is will ensure a PROJCS node is created as the root, 
+ * and set the provided name on it.  If used on a GEOGCS coordinate system, 
+ * the GEOGCS node will be demoted to be a child of the new PROJCS root.
+ *
+ * @param name the user visible name to assign.  May be null
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetProjCS(String name)
+
+/**
+ * Set a projection name.
+ *
+ * @param name the projection name, which should be selected from
+ * the macros in ogr_srs_api.h, such as SRS_PT_TRANSVERSE_MERCATOR. 
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetProjection(String name)
+
+/**
+ * Set a projection parameter value.
+ *
+ * Adds a new PARAMETER under the PROJCS with the indicated name and value.
+ * <p>
+ * Please check <a href="http://www.remotesensing.org/geotiff/proj_list">http://www.remotesensing.org/geotiff/proj_list</a> pages for
+ * legal parameter names for specific projections.
+ * 
+ * @param name the parameter name, which should be selected from
+ * the macros in ogr_srs_api.h, such as SRS_PP_CENTRAL_MERIDIAN. 
+ *
+ * @param val value to assign. 
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetProjParm(String name, double val)
+
+/**
+ * Set State Plane projection definition.
+ *
+ * Same as below with is_nad83 == 1, unitsname == "" and units == 0
+ *
+ * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
+ */
+public class SpatialReference:public int SetStatePlane(int zone)
+
+/**
+ * Set State Plane projection definition.
+ *
+ * Same as below with unitsname == "" and units == 0
+ *
+ * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
+ */
+public class SpatialReference:public int SetStatePlane(int zone, int is_nad83)
+
+/**
+ * Set State Plane projection definition.
+ *
+ * Same as below with units == 0
+ *
+ * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
+ */
+public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, String unitsname)
+
+/**
+ * Set State Plane projection definition.
+ *
+ * This will attempt to generate a complete definition of a state plane
+ * zone based on generating the entire SRS from the EPSG tables.  If the
+ * EPSG tables are unavailable, it will produce a stubbed LOCAL_CS definition
+ * and return OGRERR_FAILURE.
+ *
+ * @param zone State plane zone number, in the USGS numbering scheme (as
+ * dinstinct from the Arc/Info and Erdas numbering scheme. 
+ *
+ * @param is_nad83 1 if the NAD83 zone definition should be used or 0
+ * if the NAD27 zone definition should be used.  
+ *
+ * @param unitsname Linear unit name to apply overriding the 
+ * legal definition for this zone.
+ *
+ * @param units Linear unit conversion factor to apply overriding
+ * the legal definition for this zone. 
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, String unitsname, double units)
+
+/**
+ * Set the Bursa-Wolf conversion to WGS84. 
+ *
+ * Same as below with dfEX == dfEY == dfEZ == dfPPM == 0
+ *
+ * @see #SetTOWGS84(double dfDX, double dfDY, double dfDZ, double dfEX, double dfEY, double dfEZ, double dfPPM)
+ */
+public class SpatialReference:public int SetTOWGS84(double p1, double p2, double p3)
+
+/**
+ * Set the Bursa-Wolf conversion to WGS84. 
+ * 
+ * This will create the TOWGS84 node as a child of the DATUM.  It will fail
+ * if there is no existing DATUM node.  Unlike most OGRSpatialReference
+ * methods it will insert itself in the appropriate order, and will replace
+ * an existing TOWGS84 node if there is one. 
+ * <p>
+ * The parameters have the same meaning as EPSG transformation 9606
+ * (Position Vector 7-param. transformation). 
+ * 
+ * @param dfDX X child in meters.
+ * @param dfDY Y child in meters.
+ * @param dfDZ Z child in meters.
+ * @param dfEX X rotation in arc seconds (optional, defaults to zero).
+ * @param dfEY Y rotation in arc seconds (optional, defaults to zero).
+ * @param dfEZ Z rotation in arc seconds (optional, defaults to zero).
+ * @param dfPPM scaling factor (parts per million).
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */ 
+public class SpatialReference:public int SetTOWGS84(double dfDX, double dfDY, double dfDZ, double dfEX, double dfEY, double dfEZ, double dfPPM)
+
+/**
+ * Set UTM projection definition.
+ *
+ * Same as below with north == 1
+ *
+ * @see #SetUTM(int zone, int north)
+ */
+public class SpatialReference:public int SetUTM(int zone)
+
+/**
+ * Set UTM projection definition.
+ *
+ * This will generate a projection definition with the full set of 
+ * transverse mercator projection parameters for the given UTM zone.
+ * If no PROJCS[] description is set yet, one will be set to look
+ * like "UTM Zone %d, {Northern, Southern} Hemisphere". 
+ *
+ * @param zone UTM zone.
+ *
+ * @param north 1 for northern hemisphere, or 0 for southern 
+ * hemisphere. 
+ * 
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetUTM(int zone, int north)
+
+/**
+ * Set a GeogCS based on well known name.
+ *
+ * This may be called on an empty OGRSpatialReference to make a geographic
+ * coordinate system, or on something with an existing PROJCS node to 
+ * set the underlying geographic coordinate system of a projected coordinate
+ * system. 
+ * <p>
+ * The following well known text values are currently supported:
+ * <ul>
+ * <li> "WGS84": same as "EPSG:4326" but has no dependence on EPSG data files.
+ * <li> "WGS72": same as "EPSG:4322" but has no dependence on EPSG data files.
+ * <li> "NAD27": same as "EPSG:4267" but has no dependence on EPSG data files.
+ * <li> "NAD83": same as "EPSG:4269" but has no dependence on EPSG data files.
+ * <li> "EPSG:n": same as doing an ImportFromEPSG(n).
+ * </ul>
+ * 
+ * @param name name of well known geographic coordinate system.
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int SetWellKnownGeogCS(String name)
+
+/** 
+ * Strip OGC CT Parameters.
+ *
+ * This method will remove all components of the coordinate system
+ * that are specific to the OGC CT Specification.  That is it will attempt
+ * to strip it down to being compatible with the Simple Features 1.0 
+ * specification.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int StripCTParms()
+
+/**
+ * Convert this SRS into a pretty WKT format.
+ *
+ * @return the srs
+ */
+public class SpatialReference:public String toString()
+
+/**
+ * Validate SRS tokens.
+ *
+ * This method attempts to verify that the spatial reference system is
+ * well formed, and consists of known tokens.  The validation is not
+ * comprehensive. 
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException()
+ */
+public class SpatialReference:public int Validate()
