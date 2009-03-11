@@ -7759,7 +7759,7 @@ public class SpatialReference:public int ImportFromProj4(String proj4)
  * Set spatial reference from a URL.
  *
  * This method will download the spatial reference at a given URL and 
- * feed it into SetFromUserInput for you.  
+ * feed it into SetFromUserInput for you.
  * 
  * @param url text definition to try to deduce SRS from.
  *
@@ -8546,3 +8546,109 @@ public class SpatialReference:public String toString()
  * @return 0 on success. Otherwise throws a RuntimeException()
  */
 public class SpatialReference:public int Validate()
+
+
+
+/* Class CoordinateTransformation */
+
+/**
+ * Object for transforming between coordinate systems.
+ */
+public class CoordinateTransformation
+
+/**
+ * Create transformation object.
+ *
+ * Input spatial reference system objects are assigned 
+ * by copy (calling clone() method) and no ownership transfer occurs.
+ *
+ * @param src source spatial reference system. 
+ * @param dst target spatial reference system. 
+ */
+public class CoordinateTransformation:public CoordinateTransformation(SpatialReference src, SpatialReference dst) 
+
+/**
+ * Transform point from source to destination space.
+ *
+ * The provided array will be modified in place.
+ *
+ * @param inout an array of 3 doubles
+ */
+public class CoordinateTransformation:public void TransformPoint(double[] inout)
+
+/**
+ * Transform point from source to destination space.
+ *
+ * @param argout array of 3 double values where the transformed coordinates will be put.
+ * @param x input x value
+ * @param y input y value
+ */
+public class CoordinateTransformation:public void TransformPoint(double[] argout, double x, double y)
+
+/**
+ * Transform point from source to destination space.
+ *
+ * @param argout array of 3 double values where the transformed coordinates will be put.
+ * @param x input x value
+ * @param y input y value
+ * @param z input z value
+ */
+public class CoordinateTransformation:public void TransformPoint(double[] argout, double x, double y, double z)
+
+/**
+ * Transform point from source to destination space.
+ *
+ * @param x input x value
+ * @param y input y value
+ * @return the transformed coordinates
+ */
+public class CoordinateTransformation:public double[] TransformPoint(double x, double y)
+
+/**
+ * Transform point from source to destination space.
+ *
+ * @param x input x value
+ * @param y input y value
+ * @return the transformed coordinates
+ */
+public class CoordinateTransformation:public double[] TransformPoint(double x, double y, double z)
+
+/**
+ * Transform points from source to destination space.
+ *
+ * The provided array will be modified in place.
+ *
+ * @param pointArray an array of coordinates. Each coordinate can be either 2D or 3D
+ */
+public class CoordinateTransformation:public void TransformPoints(double[][] pointArray) 
+
+
+/* Class osr */
+/**
+ * Class with static methods for utility functions.
+ */
+public class osr
+
+/**
+ * Utility function that returns the WKT definition of the SRS expressed as a user input.
+ *
+ * Such a user input is what can be passed in to
+ * SpatialReference.<a href="SpatialReference.html#SetFromUserInput(java.lang.String)">SetFromUserInput()</a>.
+ *
+ * @param definition text definition to try to deduce SRS from.
+ *
+ * @return WKT definition
+ */
+public class osr:public static String GetUserInputAsWKT(String definition)
+
+/**
+ * Utility function that returns the WKT definition of the SRS expressed as a well known Geog CS.
+ *
+ * Such a user input is what can be passed in to
+ * SpatialReference.<a href="SpatialReference.html#SetWellKnownGeogCS(java.lang.String)">SetWellKnownGeogCS()</a>.
+ *
+ * @param definition text definition to try to deduce SRS from.
+ *
+ * @return WKT definition
+ */
+public class osr:public static String GetWellKnownGeogCSAsWKT(String definition)
