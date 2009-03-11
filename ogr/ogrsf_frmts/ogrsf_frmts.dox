@@ -1835,10 +1835,6 @@ method is supported on this layer, otherwise FALSE.<p>
 fields are assured to be in UTF-8 format.  If FALSE the encoding of fields 
 is uncertain, though it might still be UTF-8.<p>
 
- <li> <b>OLCStringsAsUTF8</b> / "StringsAsUTF8": TRUE if values of OFTString
-fields are assured to be in UTF-8 format.  If FALSE the encoding of fields 
-is uncertain, though it might still be UTF-8.<p>
-
 <li> <b>OLCTransactions</b> / "Transactions": TRUE if the StartTransaction(), CommitTransaction() and RollbackTransaction() methods work in a meaningful way, otherwise FALSE.<p>
 
 <p>
