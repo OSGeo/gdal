@@ -69,6 +69,12 @@ char* stripline(char* pszBuf)
 /* bindings */
 char* removeargnames(char* pszBuf)
 {
+    if (strstr(pszBuf, "="))
+    {
+        *strstr(pszBuf, "=") = 0;
+        stripline(pszBuf);
+    }
+
     if (strstr(pszBuf, "(") == NULL)
         return pszBuf;
     
@@ -77,11 +83,6 @@ char* removeargnames(char* pszBuf)
     if (strstr(pszBuf, "{"))
     {
         *strstr(pszBuf, "{") = 0;
-        stripline(pszBuf);
-    }
-    else if (strstr(pszBuf, "="))
-    {
-        *strstr(pszBuf, "=") = 0;
         stripline(pszBuf);
     }
     else
@@ -230,7 +231,7 @@ begin:
                     szOriLine = strdup(szMethodName);
                     //fprintf(stderr, "%s\n", szOriLine);
                 }
-                if (strchr(szLine, '('))
+                if (strchr(szLine, '(') || strchr(szLine, '='))
                     sprintf(szMethodName, "%s:%s", szClass, removeargnames(stripline(szLine)));
                 else
                     strcpy(szMethodName, szClass);
