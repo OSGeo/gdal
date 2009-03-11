@@ -24,6 +24,8 @@ OGR is a part of the <a href="http://www.gdal.org/">GDAL</a> library.<p>
 
 <li> <a href="ogr__api_8h.html">ogr_api.h</a>: OGR C API
 
+<li> <a href="ogr__srs__api_8h.html">ogr_srs_api.h</a>: OSR C API
+
 <li> <a href="osr_tutorial.html">OGR Projections Tutorial</a>
 
 <li> <a href="ogr_arch.html">OGR Architecture</a>
