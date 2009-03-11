@@ -550,6 +550,8 @@ static double OGRSpatialReferenceUSGSUnpackNoOp(double dfVal)
  *      19: Sphere of Radius 6370997 meters
  * </pre>
  *
+ * @param bAnglesInPackedDMSFormat TRUE if the angle values specified in the padfPrjParams array should
+ * be in the packed DMS format
  * @return OGRERR_NONE on success or an error code in case of failure. 
  */
 
@@ -953,6 +955,9 @@ OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
  * @param ppadfPrjParams Pointer to which dynamically allocated array of
  * 15 projection parameters will be assigned. See importFromUSGS() for
  * the list of parameters. Caller responsible to free this array.
+ *
+ * @param piDatum Pointer to variable, where the datum code will
+ * be returned.
  * 
  * @return OGRERR_NONE on success or an error code on failure. 
  */

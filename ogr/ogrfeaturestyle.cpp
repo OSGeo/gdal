@@ -2197,7 +2197,7 @@ const char *OGR_ST_GetStyleString( OGRStyleToolH hST )
 /*                           OGR_ST_GetRGBFromString()                  */
 /************************************************************************/
 /**
- * Return the r,g,b,a components of a color encoded in #RRGGBB[AA] format
+ * Return the r,g,b,a components of a color encoded in \#RRGGBB[AA] format
  *
  * Maps to OGRStyleTool::GetRGBFromString().
  * 
