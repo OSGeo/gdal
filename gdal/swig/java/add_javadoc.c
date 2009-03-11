@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
     int nInstances = 0;
     char szLine[256];
     char szClass[256];
-    char javadoc[4096];
+    char javadoc[16384];
     szClass[0] = 0;
     while(fgets(szLine, 255, fSrc))
     {
