@@ -451,6 +451,11 @@ static void InitDatumMappingTable()
 /*                         OSRImportFromESRI()                          */
 /************************************************************************/
 
+/**
+ * Import coordinate system from ESRI .prj format(s).
+ *
+ * This function is the same as the C++ method OGRSpatialReference::importFromESRI()
+ */
 OGRErr OSRImportFromESRI( OGRSpatialReferenceH hSRS, char **papszPrj )
 
 {
@@ -893,15 +898,13 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /************************************************************************/
 /*                            morphToESRI()                             */
 /************************************************************************/
-
 /**
- * Convert in place from ESRI WKT format.
+ * Convert in place to ESRI WKT format.
  *
- * The value notes of this coordinate system as modified in various manners
- * to adhere more closely to the WKT standard.  This mostly involves
- * translating a variety of ESRI names for projections, arguments and
- * datums to "standard" names, as defined by Adam Gawne-Cain's reference
- * translation of EPSG to WKT for the CT specification.
+ * The value nodes of this coordinate system are modified in various manners
+ * more closely map onto the ESRI concept of WKT format.  This includes
+ * renaming a variety of projections and arguments, and stripping out 
+ * nodes note recognised by ESRI (like AUTHORITY and AXIS). 
  *
  * This does the same as the C function OSRMorphToESRI().
  *
@@ -1348,6 +1351,11 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*                           OSRMorphToESRI()                           */
 /************************************************************************/
 
+/**
+ * Convert in place to ESRI WKT format.
+ *
+ * This function is the same as the C++ method OGRSpatialReference::morphToESRI()
+ */
 OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
 
 {
@@ -1364,12 +1372,13 @@ OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
 /************************************************************************/
 
 /**
- * Convert in place to ESRI WKT format.
+ * Convert in place from ESRI WKT format.
  *
- * The value nodes of this coordinate system as modified in various manners
- * more closely map onto the ESRI concept of WKT format.  This includes
- * renaming a variety of projections and arguments, and stripping out 
- * nodes note recognised by ESRI (like AUTHORITY and AXIS). 
+ * The value notes of this coordinate system are modified in various manners
+ * to adhere more closely to the WKT standard.  This mostly involves
+ * translating a variety of ESRI names for projections, arguments and
+ * datums to "standard" names, as defined by Adam Gawne-Cain's reference
+ * translation of EPSG to WKT for the CT specification.
  *
  * This does the same as the C function OSRMorphFromESRI().
  *
@@ -1515,6 +1524,11 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /*                          OSRMorphFromESRI()                          */
 /************************************************************************/
 
+/**
+ * Convert in place from ESRI WKT format.
+ *
+ * This function is the same as the C++ method OGRSpatialReference::morphFromESRI()
+ */
 OGRErr OSRMorphFromESRI( OGRSpatialReferenceH hSRS )
 
 {
