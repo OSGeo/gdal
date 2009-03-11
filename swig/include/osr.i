@@ -631,9 +631,15 @@ public:
     return OSRCopyGeogCSFrom( self, rhs );
   }
 
+#ifdef SWIGJAVA
+  OGRErr SetTOWGS84( double p1, double p2, double p3,
+                     double p4, double p5,
+                     double p6, double p7 ) {
+#else
   OGRErr SetTOWGS84( double p1, double p2, double p3,
                      double p4 = 0.0, double p5 = 0.0,
                      double p6 = 0.0, double p7 = 0.0 ) {
+#endif
     return OSRSetTOWGS84( self, p1, p2, p3, p4, p5, p6, p7 );
   }
 
