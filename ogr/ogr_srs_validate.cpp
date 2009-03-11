@@ -846,7 +846,11 @@ OGRErr OGRSpatialReference::Validate()
 /************************************************************************/
 /*                            OSRValidate()                             */
 /************************************************************************/
-
+/** 
+ * Validate SRS tokens.
+ *
+ * This function is the same as the C++ method OGRSpatialReference::Validate().
+ */
 OGRErr OSRValidate( OGRSpatialReferenceH hSRS )
 
 {
@@ -857,11 +861,17 @@ OGRErr OSRValidate( OGRSpatialReferenceH hSRS )
 
 /************************************************************************/
 /*                             IsAliasFor()                             */
-/*                                                                      */
-/*      Is the first string passed in an acceptable alias for the       */
-/*      second string according to the AliasGroupList?                  */
 /************************************************************************/
 
+/**
+ * Return whether the first string passed in an acceptable alias for the
+ * second string according to the AliasGroupList
+ *
+ * @param pszParm1 first string
+ * @param pszParm2 second string
+ *
+ * @return TRUE if both strings are aliases according to the AliasGroupList, FALSE otherwise
+ */
 int OGRSpatialReference::IsAliasFor( const char *pszParm1, 
                                      const char *pszParm2 )
 
@@ -901,10 +911,14 @@ int OGRSpatialReference::IsAliasFor( const char *pszParm1,
 
 /************************************************************************/
 /*                         ValidateProjection()                         */
-/*                                                                      */
-/*      Validate the current PROJECTION's arguments.                    */
 /************************************************************************/
 
+/**
+ * Validate the current PROJECTION's arguments.
+ *
+ * @return OGRERR_NONE if the PROJECTION's arguments validate, an error code
+ *         otherwise
+ */
 OGRErr OGRSpatialReference::ValidateProjection()
 
 {
