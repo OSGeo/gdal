@@ -149,12 +149,15 @@ typedef void OGRFieldDefnShadow;
 %}
 
 #ifndef SWIGCSHARP
+#ifdef SWIGJAVA
+%javaconst(1);
+#endif
+/* Interface constant added for GDAL 1.7.0 */
+%constant wkb25DBit = 0x80000000;
 
 /* typo : deprecated */
-%constant wkb25Bit = wkb25DBit;
+%constant wkb25Bit = 0x80000000;
 
-/* Interface constant added for GDAL 1.7.0 */
-%constant wkb25DBit = wkb25DBit;
 %constant wkbUnknown = 0;
 
 %constant wkbPoint = 1;
@@ -194,6 +197,8 @@ typedef void OGRFieldDefnShadow;
 %constant wkbXDR = 0;
 %constant wkbNDR = 1;
 
+%constant NullFID = -1;
+
 %constant char *OLCRandomRead          = "RandomRead";
 %constant char *OLCSequentialWrite     = "SequentialWrite";
 %constant char *OLCRandomWrite         = "RandomWrite";
@@ -204,6 +209,7 @@ typedef void OGRFieldDefnShadow;
 %constant char *OLCTransactions        = "Transactions";
 %constant char *OLCDeleteFeature       = "DeleteFeature";
 %constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
+%constant char *OLCStringsAsUTF8       = "StringsAsUTF8";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
@@ -238,6 +244,7 @@ typedef int OGRErr;
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
+#define OLCStringsAsUTF8       "StringsAsUTF8"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
