@@ -961,7 +961,7 @@ double OSRGetAngularUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
  * SetLinearUnits() method, but it also updates all existing linear
  * projection parameter values from the old units to the new units. 
  *
- * @param pszUnitsName the units name to be used.  Some preferred units
+ * @param pszName the units name to be used.  Some preferred units
  * names can be found in ogr_srs_api.h such as SRS_UL_METER, SRS_UL_FOOT 
  * and SRS_UL_US_FOOT. 
  *
@@ -1832,7 +1832,7 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
  *
  * This method does the same thing as the OSRImportFromUrl() function.
  * 
- * @param pszDefinition text definition to try to deduce SRS from.
+ * @param pszUrl text definition to try to deduce SRS from.
  *
  * @return OGRERR_NONE on success, or an error code with the curl 
  * error message if it is unable to dowload data.
