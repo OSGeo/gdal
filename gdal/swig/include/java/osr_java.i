@@ -135,6 +135,11 @@
       GetTOWGS84(array);
       return array;
   }
+  
+  public int SetTOWGS84( double p1, double p2, double p3)
+  {
+      return SetTOWGS84(p1, p2, p3, 0, 0, 0, 0);
+  }
 %}
 
 %typemap(javainterfaces) OSRSpatialReferenceShadow "Cloneable"
