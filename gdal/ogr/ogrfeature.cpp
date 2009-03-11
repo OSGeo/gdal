@@ -1568,13 +1568,13 @@ GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
  * This method is the same as the C function OGR_F_GetFieldAsDateTime().
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
- * @param int pnYear (including century)
- * @param int pnMonth (1-12)
- * @param int pnDay (1-31)
- * @param int pnHour (0-23)
- * @param int pnMinute (0-59)
- * @param int pnSecond (0-59)
- * @param int pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ * @param pnYear (including century)
+ * @param pnMonth (1-12)
+ * @param pnDay (1-31)
+ * @param pnHour (0-23)
+ * @param pnMinute (0-59)
+ * @param pnSecond (0-59)
+ * @param pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  *
  * @return TRUE on success or FALSE on failure.
  */
@@ -1636,13 +1636,13 @@ int OGRFeature::GetFieldAsDateTime( int iField,
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
- * @param int pnYear (including century)
- * @param int pnMonth (1-12)
- * @param int pnDay (1-31)
- * @param int pnHour (0-23)
- * @param int pnMinute (0-59)
- * @param int pnSecond (0-59)
- * @param int pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ * @param pnYear (including century)
+ * @param pnMonth (1-12)
+ * @param pnDay (1-31)
+ * @param pnHour (0-23)
+ * @param pnMinute (0-59)
+ * @param pnSecond (0-59)
+ * @param pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  *
  * @return TRUE on success or FALSE on failure.
  */
@@ -2404,10 +2404,19 @@ void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, OGRField *psValue )
  * information (other than field types and names), nor does it report the
  * geometry spatial reference system.
  *
+ * A few options can be defined to change the default dump :
+ * <ul>
+ * <li>DISPLAY_FIELDS=NO : to hide the dump of the attributes</li>
+ * <li>DISPLAY_STYLE=NO : to hide the dump of the style string</li>
+ * <li>DISPLAY_GEOMETRY=NO : to hide the dump of the geometry</li>
+ * <li>DISPLAY_GEOMETRY=SUMMARY : to get only a summary of the geometry</li>
+ * </ul>
+ *
  * This method is the same as the C function OGR_F_DumpReadable().
  *
  * @param fpOut the stream to write to, such as stdout.  If NULL stdout will
  * be used. 
+ * @param papszOptions NULL terminated list of options (may be NULL)
  */
 
 void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
