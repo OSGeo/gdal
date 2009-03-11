@@ -1261,6 +1261,13 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /*                           importFromXML()                            */
 /************************************************************************/
 
+/** 
+ * Import coordinate system from XML format (GML only currently).
+ *
+ * This method is the same as the C function OSRImportFromXML()
+ * @param pszXML XML string to import
+ * @return OGRERR_NONE on success or OGRERR_CORRUPT_DATA on failure.
+ */
 OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 
 {
@@ -1310,6 +1317,11 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 /*                          OSRImportFromXML()                          */
 /************************************************************************/
 
+/** 
+ * Import coordinate system from XML format (GML only currently).
+ *
+ * This function is the same as OGRSpatialReference::importFromXML().
+ */
 OGRErr OSRImportFromXML( OGRSpatialReferenceH hSRS, const char *pszXML )
 
 {
