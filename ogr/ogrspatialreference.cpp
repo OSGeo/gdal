@@ -4778,6 +4778,11 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
 /*                          OSRSetAuthority()                           */
 /************************************************************************/
 
+/**
+ * Set the authority for a node.
+ *
+ * This function is the same as OGRSpatialReference::SetAuthority().
+ */
 OGRErr OSRSetAuthority( OGRSpatialReferenceH hSRS, 
                         const char *pszTargetKey,
                         const char * pszAuthority, 
@@ -4852,6 +4857,11 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
 /*                          OSRGetAuthorityCode()                       */
 /************************************************************************/
 
+/**
+ * Get the authority code for a node.
+ *
+ * This function is the same as OGRSpatialReference::GetAuthorityCode().
+ */
 const char *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS, 
                                  const char *pszTargetKey )
 
@@ -4921,6 +4931,11 @@ OGRSpatialReference::GetAuthorityName( const char *pszTargetKey ) const
 /*                        OSRGetAuthorityName()                         */
 /************************************************************************/
 
+/**
+ * Get the authority name for a node.
+ *
+ * This function is the same as OGRSpatialReference::GetAuthorityName().
+ */
 const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS, 
                                  const char *pszTargetKey )
 
@@ -4981,6 +4996,11 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
 /*                          OSRStripCTParms()                           */
 /************************************************************************/
 
+/** 
+ * Strip OGC CT Parameters.
+ *
+ * This function is the same as OGRSpatialReference::StripCTParms().
+ */
 OGRErr OSRStripCTParms( OGRSpatialReferenceH hSRS )
 
 {
@@ -5017,7 +5037,11 @@ int OGRSpatialReference::IsProjected() const
 /************************************************************************/
 /*                           OSRIsProjected()                           */
 /************************************************************************/
-
+/** 
+ * Check if projected coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::IsProjected().
+ */
 int OSRIsProjected( OGRSpatialReferenceH hSRS ) 
 
 {
@@ -5051,7 +5075,11 @@ int OGRSpatialReference::IsGeographic() const
 /************************************************************************/
 /*                          OSRIsGeographic()                           */
 /************************************************************************/
-
+/** 
+ * Check if geographic coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::IsGeographic().
+ */
 int OSRIsGeographic( OGRSpatialReferenceH hSRS )
 
 {
@@ -5085,7 +5113,11 @@ int OGRSpatialReference::IsLocal() const
 /************************************************************************/
 /*                          OSRIsLocal()                                */
 /************************************************************************/
-
+/** 
+ * Check if local coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::IsLocal().
+ */
 int OSRIsLocal( OGRSpatialReferenceH hSRS )
 
 {
@@ -5208,6 +5240,11 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
 /*                          OSRIsSameGeogCS()                           */
 /************************************************************************/
 
+/** 
+ * Do the GeogCS'es match?
+ *
+ * This function is the same as OGRSpatialReference::IsSameGeogCS().
+ */
 int OSRIsSameGeogCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 
 {
@@ -5223,7 +5260,7 @@ int OSRIsSameGeogCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 /************************************************************************/
 
 /**
- * These two spatial references describe the same system.
+ * Do these two spatial references describe the same system ?
  *
  * @param poOtherSRS the SRS being compared to.
  *
@@ -5303,6 +5340,11 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
 /*                             OSRIsSame()                              */
 /************************************************************************/
 
+/** 
+ * Do these two spatial references describe the same system ?
+ *
+ * This function is the same as OGRSpatialReference::IsSame().
+ */
 int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 
 {
@@ -5566,6 +5608,11 @@ OGRErr OGRSpatialReference::FixupOrdering()
 /*                          OSRFixupOrdering()                          */
 /************************************************************************/
 
+/** 
+ * Correct parameter ordering to match CT Specification.
+ *
+ * This function is the same as OGRSpatialReference::FixupOrdering().
+ */
 OGRErr OSRFixupOrdering( OGRSpatialReferenceH hSRS )
 
 {
@@ -5631,6 +5678,11 @@ OGRErr OGRSpatialReference::Fixup()
 /*                              OSRFixup()                              */
 /************************************************************************/
 
+/** 
+ * Fixup as needed.
+ *
+ * This function is the same as OGRSpatialReference::Fixup().
+ */
 OGRErr OSRFixup( OGRSpatialReferenceH hSRS )
 
 {
