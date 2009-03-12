@@ -837,6 +837,10 @@ GDALRegenerateCascadingOverviews(
  * The full set of resampling algorithms is documented in 
  * GDALDataset::BuildOverviews().
  *
+ * This function will honour properly NODATA_VALUES tuples (special dataset metadata) so
+ * that only a given RGB triplet (in case of a RGB image) will be considered as the
+ * nodata value and not each value of the triplet independantly per band.
+ *
  * @param hSrcBand the source (base level) band. 
  * @param nOverviewCount the number of downsampled bands being generated.
  * @param pahOvrBands the list of downsampled bands to be generated.
@@ -1100,6 +1104,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  *           iterate on columns of the source  by a step of deltax
  *               read the source data of size deltax * deltay for all the bands
  *               generate the corresponding overview block for all the bands
+ *
+ * This function will honour properly NODATA_VALUES tuples (special dataset metadata) so
+ * that only a given RGB triplet (in case of a RGB image) will be considered as the
+ * nodata value and not each value of the triplet independantly per band.
  *
  * @param nBands the number of bands, size of papoSrcBands and size of
  *               first dimension of papapoOverviewBands
