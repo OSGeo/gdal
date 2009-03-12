@@ -19,6 +19,7 @@
 
 %include arrays_java.i
 %include typemaps_java.i
+%include java_exceptions.i
 
 %pragma(java) jniclasscode=%{
   private static boolean available = false;
