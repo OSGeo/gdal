@@ -488,7 +488,7 @@
 %typemap(out,fragment="OGRErrMessages") OGRErr
 {
   /* %typemap(out) OGRErr */
-  if (result != 0) {
+  if (result != 0 && bUseExceptions) {
     SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
       OGRErrMessages(result));
     return $null;
