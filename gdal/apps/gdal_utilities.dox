@@ -392,7 +392,7 @@ so that a 3x3 resampling Gaussian kernel is selected.
 
 gdaladdo will honour properly NODATA_VALUES tuples (special dataset metadata) so
 that only a given RGB triplet (in case of a RGB image) will be considered as the
-nodata value and not each value of the triplet independantly per band.
+nodata value and not each value of the triplet independantly per band. 
 
 Selecting a level value like <i>2</i> causes an overview level that is 1/2
 the resolution (in each dimension) of the base layer to be computed.  If
