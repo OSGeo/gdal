@@ -219,15 +219,6 @@ typedef void OGRFieldDefnShadow;
 #else
 typedef int OGRErr;
 
-#define OGRERR_NONE                0
-#define OGRERR_NOT_ENOUGH_DATA     1    /* not enough data to deserialize */
-#define OGRERR_NOT_ENOUGH_MEMORY   2
-#define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3
-#define OGRERR_UNSUPPORTED_OPERATION 4
-#define OGRERR_CORRUPT_DATA        5
-#define OGRERR_FAILURE             6
-#define OGRERR_UNSUPPORTED_SRS     7
-
 #define wkb25DBit 0x80000000
 #define ogrZMarker 0x21125711
 
@@ -251,6 +242,19 @@ typedef int OGRErr;
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
+#endif
+
+#if defined(SWIGCSHARP) || defined(SWIGJAVA)
+
+#define OGRERR_NONE                0
+#define OGRERR_NOT_ENOUGH_DATA     1    /* not enough data to deserialize */
+#define OGRERR_NOT_ENOUGH_MEMORY   2
+#define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3
+#define OGRERR_UNSUPPORTED_OPERATION 4
+#define OGRERR_CORRUPT_DATA        5
+#define OGRERR_FAILURE             6
+#define OGRERR_UNSUPPORTED_SRS     7
+
 #endif
 
 #if defined(SWIGPYTHON)
@@ -341,7 +345,11 @@ public:
     return ds;
   }
 
+#ifdef SWIGJAVA
+  OGRErr DeleteDataSource( const char *name ) {
+#else
   int DeleteDataSource( const char *name ) {
+#endif
     return OGR_Dr_DeleteDataSource( self, name );
   }
 

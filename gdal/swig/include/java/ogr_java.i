@@ -21,6 +21,7 @@
 typedef char retStringAndCPLFree;
 %}
 #endif
+%include java_exceptions.i
 
 %pragma(java) jniclasscode=%{
   private static boolean available = false;
