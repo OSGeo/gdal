@@ -390,6 +390,10 @@ which can lead to better results than simple averaging in e.g case of sharp edge
 with high contrast or noisy patterns. The advised level values should be 2, 4, 8, ...
 so that a 3x3 resampling Gaussian kernel is selected.
 
+gdaladdo will honour properly NODATA_VALUES tuples (special dataset metadata) so
+that only a given RGB triplet (in case of a RGB image) will be considered as the
+nodata value and not each value of the triplet independantly per band.
+
 Selecting a level value like <i>2</i> causes an overview level that is 1/2
 the resolution (in each dimension) of the base layer to be computed.  If
 the file has existing overview levels at a level selected, those levels will
