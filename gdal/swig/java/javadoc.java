@@ -45,6 +45,8 @@ public class gdal
     * @param options currently unused
     *
     * @return updated argument list array.
+    *
+    * @since Java bindings 1.7.0
     */
 public class gdal:public static String[] GeneralCmdLineProcessor(String[] args, int options)
 
@@ -54,6 +56,8 @@ public class gdal:public static String[] GeneralCmdLineProcessor(String[] args, 
     * Same as below with options == 0
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
+    *
+    * @since Java bindings 1.7.0
     */
 public class gdal:public static String[] GeneralCmdLineProcessor(String[] args)
 
@@ -76,6 +80,8 @@ public class gdal:public static java.util.Vector GeneralCmdLineProcessor(java.ut
     * @return updated argument list as a new Vector of strings
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
+    *
+    * @since Java bindings 1.7.0
     */
 public class gdal:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args)
 
@@ -116,6 +122,8 @@ public class gdal:public static int PushErrorHandler(String callbackName)
  *
  * This pushes a new error handler on the thread-local error handler
  * stack.  This handler will be used untill removed with gdal.PopErrorHandler().
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int PushErrorHandler()
 
@@ -169,6 +177,8 @@ public class gdal:public static void ErrorReset()
  * Apply escaping to string to preserve special characters.
  *
  * @see #EscapeString(String str, int scheme)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static String EscapeString(byte[] byteArray, int scheme)
 
@@ -210,6 +220,8 @@ public class gdal:public static String EscapeString(byte[] byteArray, int scheme
  * @param scheme the encoding scheme to use.  
  *
  * @return an escaped string
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static String EscapeString(String str, int scheme)
 
@@ -292,6 +304,8 @@ public class gdal:public static String GetConfigOption(String key, String defaul
   * Same as below with defaultValue == null
   *
   * @see #GetConfigOption(String key, String defaultValue)
+  *
+  * @since Java bindings 1.7.0
   */
 public class gdal:public static String GetConfigOption(String key)
 
@@ -316,6 +330,8 @@ public class gdal:public static String GetConfigOption(String key)
  * @return 1 on success or 0 if there aren't enough points to prepare a
  * geotransform, the pointers are ill-determined or if bApproxOK is 0 
  * and the fit is poor.
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int GCPsToGeoTransform(GCP[] gcpArray, double[] outGeoTransform, int bApproxOK)
 
@@ -325,6 +341,8 @@ public class gdal:public static int GCPsToGeoTransform(GCP[] gcpArray, double[] 
  * Same as below with bApproxOK == 0
  *
  * @see #GCPsToGeoTransform(GCP[] gcpArray, double[] outGeoTransform, int bApproxOK)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int GCPsToGeoTransform(GCP[] gcpArray, double[] outGeoTransform)
 
@@ -358,6 +376,8 @@ public class gdal:public static int GCPsToGeoTransform(GCP[] gcpArray, double[] 
  * @param callback for reporting algorithm progress. May be null
  *
  * @return returns gdalconst.CE_None on success or gdalconst.CE_Failure if an error occurs. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors, ProgressCallback callback)
 
@@ -368,6 +388,8 @@ public class gdal:public static int ComputeMedianCutPCT(Band red, Band green, Ba
  * Same as below with callback == null
  *
  * @see #ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors)
 
@@ -395,6 +417,8 @@ public class gdal:public static int ComputeMedianCutPCT(Band red, Band green, Ba
  * @param callback for reporting algorithm progress. May be null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if an error occurs. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors, ProgressCallback callback)
 
@@ -403,6 +427,8 @@ public class gdal:public static int DitherRGB2PCT(Band red, Band green, Band blu
  *
  * Same as below with callback == null
  * @see #DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors)
 
@@ -435,6 +461,8 @@ public class gdal:public static int DitherRGB2PCT(Band red, Band green, Band blu
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if something goes wrong.
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
 
@@ -446,6 +474,8 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if something goes wrong.
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError)
 
@@ -455,6 +485,8 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with maxError == 0.0 and callback == null.
  * 
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit)
 
@@ -464,6 +496,8 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with warpMemoryLimit == 0.0, maxError == 0.0 and callback == null.
  * 
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg)
 
@@ -473,6 +507,8 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with resampleAlg == gdalconst.GRA_NearestNeighbour, warpMemoryLimit == 0.0, maxError == 0.0 and callback == null.
  * 
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt)
 
@@ -482,6 +518,8 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with dst_wkt == null, resampleAlg == gdalconst.GRA_NearestNeighbour, warpMemoryLimit == 0.0, maxError == 0.0 and callback == null.
  * 
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt)
 
@@ -491,6 +529,8 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * Same as below with src_wkt == null, dst_wkt == null, resampleAlg == gdalconst.GRA_NearestNeighbour, warpMemoryLimit == 0.0, maxError == 0.0 and callback == null.
  * 
  * @see #ReprojectImage(Dataset src_ds, Dataset dst_ds, String src_wkt, String dst_wkt, int resampleAlg, double warpMemoryLimit, double maxError, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_ds)
 
@@ -532,6 +572,8 @@ public class gdal:public static int ReprojectImage(Dataset src_ds, Dataset dst_d
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if something goes wrong.
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeProximity(Band srcBand, Band proximityBand, java.util.Vector options, ProgressCallback callback)
 
@@ -542,6 +584,8 @@ public class gdal:public static int ComputeProximity(Band srcBand, Band proximit
  *
  * @see #ComputeProximity(Band srcBand, Band proximityBand, java.util.Vector options, ProgressCallback callback)
  *
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeProximity(Band srcBand, Band proximityBand, java.util.Vector options)
 
@@ -552,6 +596,8 @@ public class gdal:public static int ComputeProximity(Band srcBand, Band proximit
  *
  * @see #ComputeProximity(Band srcBand, Band proximityBand, java.util.Vector options, ProgressCallback callback)
  *
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int ComputeProximity(Band srcBand, Band proximityBand)
 
@@ -590,6 +636,8 @@ public class gdal:public static int ComputeProximity(Band srcBand, Band proximit
  * @param callback for reporting progress or null
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on error.
+ *
+ * @since Java bindings 1.7.0
  */
 
 public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options, ProgressCallback callback)
@@ -601,6 +649,7 @@ public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNu
  *
  * @see #RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options)
 
@@ -612,6 +661,7 @@ public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNu
  *
  * @see #RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values)
 
@@ -623,6 +673,7 @@ public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNu
  *
  * @see #RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer, double[] burn_values, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNumbers, org.gdal.ogr.Layer layer)
 
@@ -672,6 +723,8 @@ public class gdal:public static int RasterizeLayer(Dataset dataset, int[] bandNu
  * @param callback for reporting progress or null
  * 
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField, java.util.Vector options, ProgressCallback callback)
 
@@ -682,6 +735,7 @@ public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.
  *
  * @see #Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField, java.util.Vector options)
 
@@ -692,6 +746,7 @@ public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.
  *
  * @see #Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.gdal.ogr.Layer outLayer, int iPixValField)
 
@@ -724,6 +779,8 @@ public class gdal:public static int Polygonize(Band srcBand, Band maskBand, org.
  * @param callback for reporting progress or null
  * 
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, java.util.Vector options, ProgressCallback callback)
 
@@ -734,6 +791,7 @@ public class gdal:public static int FillNodata(Band targetBand, Band maskBand, d
  *
  * @see #FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, java.util.Vector options)
 
@@ -744,6 +802,7 @@ public class gdal:public static int FillNodata(Band targetBand, Band maskBand, d
  *
  * @see #FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations)
 
@@ -789,6 +848,8 @@ public class gdal:public static int FillNodata(Band targetBand, Band maskBand, d
  * @param callback for reporting progress or null
  * 
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options, ProgressCallback callback)
 
@@ -799,6 +860,7 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  *
  * @see #SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options)
 
@@ -809,6 +871,7 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  *
  * @see #SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness)
 
@@ -819,6 +882,7 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  *
  * @see #SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness, java.util.Vector options, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold)
 
@@ -844,6 +908,8 @@ public class gdal:public static int SieveFilter(Band srcBand, Band maskBand, Ban
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on a failure.
  *
  * @see Dataset#BuildOverviews(java.lang.String resampling, int[] overviewlist, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
 
@@ -854,6 +920,7 @@ public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] ove
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling)
 
@@ -864,6 +931,7 @@ public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] ove
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] overviewBands)
 
@@ -874,6 +942,7 @@ public class gdal:public static int RegenerateOverviews(Band srcBand, Band[] ove
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverview(Band srcBand, Band overviewBand, String resampling, ProgressCallback callback)
 
@@ -884,6 +953,7 @@ public class gdal:public static int RegenerateOverview(Band srcBand, Band overvi
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverview(Band srcBand, Band overviewBand, String resampling)
 
@@ -894,6 +964,7 @@ public class gdal:public static int RegenerateOverview(Band srcBand, Band overvi
  *
  * @see #RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static int RegenerateOverview(Band srcBand, Band overviewBand)
 
@@ -945,6 +1016,7 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  * @see #AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg, double maxError)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg)
 
@@ -955,6 +1027,7 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  * @see #AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg, double maxError)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt)
 
@@ -965,6 +1038,7 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  * @see #AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg, double maxError)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, String src_wkt)
 
@@ -975,6 +1049,7 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds, Stri
  *
  * @see #AutoCreateWarpedVRT(Dataset src_ds, String src_wkt, String dst_wkt, int eResampleAlg, double maxError)
  *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds)
 
@@ -1002,6 +1077,8 @@ public class gdal:public static String VersionInfo(String request)
  * Get runtime version information.
  *
  * @return a string containing GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static String VersionInfo()
 
@@ -1191,6 +1268,8 @@ public class gdal:public static Dataset Open(String name, int eAccess)
  * Same as below with eAccess == gdalconst.GA_ReadOnly
  *
  * @see #Open(String name, int eAccess)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset Open(String name)
 
@@ -1224,6 +1303,8 @@ public class gdal:public static Dataset OpenShared(String name, int eAccess)
  * Same as below with eAccess == gdalconst.GA_ReadOnly
  *
  * @see #OpenShared(String name, int eAccess)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static Dataset OpenShared(String name)
 
@@ -1262,6 +1343,8 @@ public class gdal:public static Driver IdentifyDriver(String name, java.util.Vec
  * Same as below with fileList == null
  *
  * @see #IdentifyDriver(String name, java.util.Vector fileList)
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static Driver IdentifyDriver(String name)
 
@@ -1282,6 +1365,8 @@ public class gdal:public static Driver IdentifyDriver(String name)
  * @param xmlString the document to parse. 
  *
  * @return parsed tree or null on error. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static XMLNode ParseXMLString(String xmlString)
 
@@ -1295,6 +1380,8 @@ public class gdal:public static XMLNode ParseXMLString(String xmlString)
  * @param xmlnode the root of the tree to serialize
  *
  * @return the document on success or null on failure. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class gdal:public static String SerializeXMLTree(XMLNode xmlnode)
 
@@ -1340,6 +1427,8 @@ public class Dataset:public int AddBand(int datatype, java.util.Vector options)
  * Same as below with options == null
  *
  * @see #AddBand(int datatype, java.util.Vector options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int AddBand(int datatype)
 
@@ -1349,6 +1438,8 @@ public class Dataset:public int AddBand(int datatype)
  * Same as below with datatype == gdalconst.GDT_Byte and options == null
  *
  * @see #AddBand(int datatype, java.util.Vector options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int AddBand()
 
@@ -1375,6 +1466,8 @@ public class Dataset:public int AddBand()
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if the operation doesn't work.
  *
  * @see gdal#RegenerateOverviews(Band srcBand, Band[] overviewBands, String resampling, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
 
@@ -1393,6 +1486,8 @@ public class Dataset:public int BuildOverviews(String resampling, int[] overview
  * Same as below with resampling == "NEAREST" and callback == null
  *
  * @see #BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int BuildOverviews(int[] overviewlist)
 
@@ -1402,6 +1497,8 @@ public class Dataset:public int BuildOverviews(int[] overviewlist)
  * Same as below with resampling == "NEAREST"
  *
  * @see #BuildOverviews(String resampling, int[] overviewlist, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int BuildOverviews(int[] overviewlist, ProgressCallback callback)
 
@@ -1554,6 +1651,8 @@ public class Dataset:public void GetGeoTransform(double[] geoTransformArray)
  * Same as below, except the geotransform array is returned by the method
  *
  * @see #GetGeoTransform(double[] geoTransformArray)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public double[] GetGeoTransform()
 
@@ -1616,6 +1715,8 @@ public class Dataset:public void GetGCPs(java.util.Vector gcpVector)
  * Fetch GCPs.
  *
  * @return a vector of GCP objects
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public java.util.Vector GetGCPs()
 
@@ -1639,6 +1740,8 @@ public class Dataset:public java.util.Vector GetGCPs()
  *
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure (including if action is
  * not supported for this format). 
+ *
+ * @since Java bindings 1.7.0
  */ 
 public class Dataset:public int SetGCPs(GCP[] gcpArray, String GCPProjection)
 
@@ -1653,6 +1756,8 @@ public class Dataset:public int getRasterXSize()
  * Fetch raster width in pixels.
  *
  * @return the width in pixels of raster bands in this Dataset.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int GetRasterXSize()
 
@@ -1667,6 +1772,8 @@ public class Dataset:public int getRasterYSize()
  * Fetch raster height in pixels.
  *
  * @return the heigt in pixels of raster bands in this Dataset.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int GetRasterYSize()
 
@@ -1681,6 +1788,8 @@ public class Dataset:public int getRasterCount()
  * Fetch the number of raster bands on this dataset.
  *
  * @return the number of raster bands.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int GetRasterCount()
 
@@ -1746,6 +1855,8 @@ public class Dataset:public int GetRasterCount()
  * of the data buffer. 
  *
  * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -1755,6 +1866,8 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  * Same as below with nBandSpace == 0
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace)
 
@@ -1764,6 +1877,8 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  * Same as below with nLineSpace == 0 and nBandSpace == 0
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace)
 
@@ -1773,6 +1888,8 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
 
@@ -1836,6 +1953,8 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  * of the data buffer. 
  *
  * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
@@ -1845,6 +1964,8 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
  * Same as below with nBandSpace == 0
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace)
 
@@ -1854,6 +1975,8 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
  * Same as below with nLineSpace == 0 and nBandSpace == 0
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace)
 
@@ -1863,6 +1986,8 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
  * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
 
@@ -1907,7 +2032,8 @@ public class Band:public int Checksum(int xoff, int yoff, int xsize, int ysize)
  * so decimal portions of such raster data will not affect the checksum.
  * Real and Imaginary components of complex bands influence the result. 
  *
- * @return Checksum value. 
+ * @return Checksum value.
+ * @since Java bindings 1.7.0 
  */
 public class Band:public int Checksum()
 
@@ -1926,6 +2052,7 @@ public class Band:public void ComputeBandStats(double[] meanAndStdDevArray, int 
  * Same as below with samplestep == 1
  *
  * @see #ComputeBandStats(double[] meanAndStdDevArray, int samplestep)
+ * @since Java bindings 1.7.0
  */
 public class Band:public void ComputeBandStats(double[] meanAndStdDevArray)
 
@@ -1952,6 +2079,7 @@ public class Band:public void ComputeRasterMinMax(double[] minMaxArray, int appr
  * Same as below with approx_ok == 0
  *
  * @see #ComputeRasterMinMax(double[] minMaxArray, int approx_ok)
+ * @since Java bindings 1.7.0
  */
 public class Band:public void ComputeRasterMinMax(double[] minMaxArray)
 
@@ -1982,6 +2110,8 @@ public class Band:public void ComputeRasterMinMax(double[] minMaxArray)
  *
  * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if an error occurs or processing
  * is terminated by the user.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
 
@@ -1991,6 +2121,8 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  * Same as below with callback == null
  *
  * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev)
 
@@ -2000,6 +2132,8 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  * Same as below with stddev == null and callback == null
  *
  * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean)
 
@@ -2009,6 +2143,8 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  * Same as below with mean == null, stddev == null and callback == null
  *
  * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max)
 
@@ -2018,6 +2154,8 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  * Same as below with max == null, mean == null, stddev == null and callback == null
  *
  * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min)
 
@@ -2027,6 +2165,8 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min)
  * Same as below with min == null, max == null, mean == null, stddev == null and callback == null
  *
  * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ComputeStatistics(boolean approx_ok)
 
@@ -2074,6 +2214,8 @@ public class Band:public int Fill(double real_fill, double imag_fill)
  * Same as below with image_fill == 0
  *
  * @see #Fill(double real_fill, double imag_fill)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int Fill(double real_fill)
 
@@ -2094,6 +2236,8 @@ public class Band:public void FlushCache()
  * such as Band's serving as overviews.
  *
  * @return band number (1+) or 0 if the band number isn't known.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetBand()
 
@@ -2122,6 +2266,8 @@ public class Band:public void GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSiz
  * Fetch the "natural" block width of this band
  * @return the X block size
  * @see #GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSize)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetBlockXSize()
 
@@ -2129,6 +2275,8 @@ public class Band:public int GetBlockXSize()
  * Fetch the "natural" block height of this band
  * @return the Y block size
  * @see #GetBlockSize(int[] pnBlockXSize, int[] pnBlockYSize)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetBlockYSize()
 
@@ -2139,6 +2287,8 @@ public class Band:public int GetBlockYSize()
  * about the color interpretation. 
  *
  * @return color interpretation value for band.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetColorInterpretation()
 
@@ -2195,6 +2345,8 @@ public class Band:public int getDataType()
  *
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure if something goes wrong, or 
  * gdalconst.CE_Warning if no default histogram is available.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
 
@@ -2204,6 +2356,8 @@ public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_
  * Same as below with callback == null
  *
  * @see #GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force)
 
@@ -2213,6 +2367,8 @@ public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_
  * Same as below with force == true and callback == null
  *
  * @see #GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret, boolean force, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetDefaultHistogram(double[] min_ret, double[] max_ret, int[][] histogram_ret)
 
@@ -2258,6 +2414,8 @@ public class Band:public RasterAttributeTable GetDefaultRAT()
  * @param callback for reporting algorithm progress. May be null
  *
  * @return gdalconst.CE_None on success, or gdalconst.CE_Failure if something goes wrong. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
 
@@ -2267,6 +2425,8 @@ public class Band:public int GetHistogram(double min, double max, int[] histogra
  * Same as below with callback == null
  *
  * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok)
 
@@ -2276,6 +2436,8 @@ public class Band:public int GetHistogram(double min, double max, int[] histogra
  * Same as below with include_out_of_range == 0, approx_ok == true and callback == null
  *
  * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetHistogram(double min, double max, int[] histogram)
 
@@ -2285,6 +2447,8 @@ public class Band:public int GetHistogram(double min, double max, int[] histogra
  * Same as below with include_out_of_range == 0, approx_ok == true and callback == null
  *
  * @see #GetHistogram(double min, double max, int[] histogram, boolean include_out_of_range, boolean approx_ok, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetHistogram(int[] histogram)
 
@@ -2484,6 +2648,8 @@ public class Band:public ColorTable GetRasterColorTable()
  *
  * A value such as gdalconst.GDT_Byte, gdalconst.GDT_Int16, ...
  * @return the data type of the band.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetRasterDataType()
 
@@ -2522,6 +2688,8 @@ public class Band:public int GetRasterDataType()
  *
  * @return gdalconst.CE_None on success, gdalconst.CE_Warning if no values returned, 
  * gdalconst.CE_Failure if an error occurs.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetStatistics(boolean approx_ok, boolean force, double[] min, double[] max, double[] mean, double[] stddev)
 
@@ -2542,6 +2710,8 @@ public class Band:public int GetStatistics(int approx_ok, int force, double[] mi
  * units are available, a value of "" will be returned.
  *
  * @return unit name string.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public String GetUnitType()
 
@@ -2556,6 +2726,8 @@ public class Band:public int getXSize()
  * Fetch XSize of raster. 
  *
  * @return the width in pixels of this band.
+ *
+ * @since Java bindings 1.7.0
  */
 
 public class Band:public int GetXSize()
@@ -2571,6 +2743,8 @@ public class Band:public int getYSize()
  * Fetch YSize of raster. 
  *
  * @return the height in pixels of this band.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int GetYSize()
 
@@ -2585,6 +2759,8 @@ public class Band:public int GetYSize()
  *
  * @return true if arbitrary overviews available (efficiently), otherwise
  * false. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public boolean HasArbitraryOverviews()
 
@@ -2645,6 +2821,8 @@ public class Band:public boolean HasArbitraryOverviews()
  * eBufType * nBufXSize is used.
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
 
@@ -2654,6 +2832,8 @@ public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, in
  * Same as below with nLineSpace == 0
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace)
 
@@ -2672,6 +2852,8 @@ public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, in
  * Same as below with buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer)
 
@@ -2681,6 +2863,8 @@ public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, in
  * Same as below with buf_xsize = xsize, buf_ysize = ysize, buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
 
@@ -2692,6 +2876,8 @@ public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, in
  * @return a newly allocated byte buffer with the read region
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize)
 
@@ -2703,6 +2889,8 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  * @return a newly allocated byte buffer with the read region
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_type)
 
@@ -2714,6 +2902,8 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  * @return a newly allocated byte buffer with the read region
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type)
 
@@ -2773,6 +2963,8 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  * eBufType * nBufXSize is used.
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
 
@@ -2782,6 +2974,8 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  * Same as below with nLineSpace == 0
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace)
 
@@ -2800,6 +2994,8 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  * Same as below with buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer)
 
@@ -2809,6 +3005,8 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  * Same as below with buf_xsize == xsize, buf_ysize == ysize, nPixelSpace == 0 and nLineSpace == 0
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_type, java.nio.ByteBuffer nioBuffer)
 
@@ -2818,6 +3016,8 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  * Same as below with buf_xsize == xsize, buf_ysize == ysize, buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
  *
  * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
 
@@ -2840,6 +3040,7 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
  *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int ReadBlock_Direct(int nXBlockOff, int nYBlockOff, java.nio.ByteBuffer nioBuffer)
 
@@ -2862,6 +3063,7 @@ public class Band:public int ReadBlock_Direct(int nXBlockOff, int nYBlockOff, ja
  *
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on an error.
  *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int WriteBlock_Direct(int nXBlockOff, int nYBlockOff, java.nio.ByteBuffer nioBuffer)
 
@@ -2871,6 +3073,8 @@ public class Band:public int WriteBlock_Direct(int nXBlockOff, int nYBlockOff, j
  * @param eColorInterp the new color interpretation to apply to this band.
  * 
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure if method is unsupported by format.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int SetColorInterpretation(int eColorInterp)
 
@@ -2910,6 +3114,7 @@ public class Band:public int SetRasterColorTable(ColorTable colorTable)
 /**
  * Set default histogram
  *
+ * @since Java bindings 1.7.0
  */
 public class Band:public int SetDefaultHistogram(double min, double max, int[] histogram)
 
@@ -3017,6 +3222,8 @@ public class org.gdal.gdal.Driver:public void delete()
  * @param options list of driver specific control parameters (may be null)
  *
  * @return null on failure, or a Dataset object
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
 
@@ -3035,6 +3242,8 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  * Same as below with eType == gdalconst.GDT_Byte
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, String[] options)
 
@@ -3044,6 +3253,8 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  * Same as below with options == null
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands, int eType)
 
@@ -3053,6 +3264,8 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  * Same as below with eType == gdalconst.GDT_Byte and options == null
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize, int nBands)
 
@@ -3062,6 +3275,8 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  * Same as below with nbands == 1, eType == gdalconst.GDT_Byte and options == null
  *
  * @see #Create(String name, int xsize, int ysize, int nBands, int eType, String[] options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, int ysize)
 
@@ -3101,6 +3316,8 @@ public class org.gdal.gdal.Driver:public Dataset Create(String name, int xsize, 
  * @param callback for reporting algorithm progress. May be null
  *
  * @return the newly created dataset (may be read-only access).
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
 
@@ -3119,6 +3336,8 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  * Same as below with strict == 1 and callback == null
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, Vector options)
 
@@ -3128,6 +3347,8 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  * Same as below with options == null and callback == null
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, int strict)
 
@@ -3137,6 +3358,8 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  * Same as below with strict == 1, options == null and callback == null
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds)
 
@@ -3155,6 +3378,8 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  * Same as below with strict == 1, callback == null and options as an array of strings
  *
  * @see #CreateCopy(String name, Dataset src_ds, int strict, java.util.Vector options, ProgressCallback callback)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset src_ds, String[] options)
 
@@ -3254,6 +3479,8 @@ public class org.gdal.gdal.Driver:public String getHelpTopic()
   *
   * This class will not do anything by itself, but it can be subclassed, like <a href="TermProgressCallback.html">TermProgressCallback</a> class.
   * to do more usefull things.
+  *
+  * @since Java bindings 1.7.0
   */
 public class ProgressCallback
 
@@ -3270,6 +3497,8 @@ public class ProgressCallback
   * @param message processing message, may be null
   *
   * @return 0 if you want to interrupt the processing, any value different from 1 to go on
+  *
+  * @since Java bindings 1.7.0
   */
 public class ProgressCallback:public int run(double dfComplete, String message)
 
@@ -3294,6 +3523,8 @@ public class ProgressCallback:public int run(double dfComplete, String message)
   * <pre>
   * driver.CreateCopy("dest.tif", src_ds, new TermProgressCallback());
   * </pre>
+  *
+  * @since Java bindings 1.7.0
   */
 public class TermProgressCallback
 
@@ -3342,7 +3573,7 @@ public class MajorObject:public void SetDescription(String newDescription)
  * @param domain the domain of interest.  Use "" or NULL for the default
  * domain.
  * 
- * @return NULL or a hash table with metadata
+ * @return null or a hash table with metadata
  */
 public class MajorObject:public java.util.Hashtable GetMetadata_Dict(String domain)
 
@@ -3351,7 +3582,9 @@ public class MajorObject:public java.util.Hashtable GetMetadata_Dict(String doma
  *
  * Returns metadata from the default domain as (key, value) tuples in the result table
  * 
- * @return NULL or a hash table with metadata
+ * @return null or a hash table with metadata
+ *
+ * @since Java bindings 1.7.0
  */
 public class MajorObject:public java.util.Hashtable GetMetadata_Dict()
 
@@ -3364,7 +3597,7 @@ public class MajorObject:public java.util.Hashtable GetMetadata_Dict()
  * @param domain the domain of interest.  Use "" or NULL for the default
  * domain.
  * 
- * @return NULL or a vector of strings
+ * @return null or a vector of strings
  */
 public class MajorObject:public java.util.Vector GetMetadata_List(String domain)
 
@@ -3373,7 +3606,9 @@ public class MajorObject:public java.util.Vector GetMetadata_List(String domain)
  *
  * Returns metadata from the default domain as a vector of strings of the format "KEY=VALUE".
  * 
- * @return NULL or a vector of strings
+ * @return null or a vector of strings
+ *
+ * @since Java bindings 1.7.0
  */
 public class MajorObject:public java.util.Vector GetMetadata_List()
 
@@ -3401,6 +3636,8 @@ public class MajorObject:public int SetMetadata(java.util.Hashtable metadata, St
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
  * metadata has been accepted, but is likely not maintained persistently 
  * by the underlying object between sessions.
+ *
+ * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadata(java.util.Hashtable metadata)
@@ -3429,6 +3666,8 @@ public class MajorObject:public int SetMetadata(String metadataString, String do
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
  * metadata has been accepted, but is likely not maintained persistently 
  * by the underlying object between sessions.
+ *
+ * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadata(String metadataString)
@@ -3444,6 +3683,8 @@ public class MajorObject:public int SetMetadata(String metadataString)
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
  * metadata has been accepted, but is likely not maintained persistently 
  * by the underlying object between sessions.
+ *
+ * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadata(java.util.Vector metadata, String domain)
@@ -3457,6 +3698,8 @@ public class MajorObject:public int SetMetadata(java.util.Vector metadata, Strin
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
  * metadata has been accepted, but is likely not maintained persistently 
  * by the underlying object between sessions.
+ *
+ * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadata(java.util.Vector metadata)
@@ -3480,6 +3723,8 @@ public class MajorObject:public String GetMetadataItem( String name, String doma
  * @param name the key for the metadata item to fetch.
  *
  * @return null on failure to find the key, or the value string on success.
+ *
+ * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public String GetMetadataItem( String name )
@@ -3506,6 +3751,8 @@ public class MajorObject:public int SetMetadataItem( String name, String value, 
  * @param value the value to assign to the key.
  *
  * @return gdalconst.CE_None on success, or an error code on failure.
+ *
+ * @since Java bindings 1.7.0
  */
 
 public class MajorObject:public int SetMetadataItem( String name, String value )
@@ -3605,6 +3852,8 @@ public class Transformer:public int TransformPoint(double[] argout, int bDstToSr
   * @param x input x value
   * @param y input y value
   * @return 1 on success, 0 otherwise
+  *
+  * @since Java bindings 1.7.0
   */
 public class Transformer:public int TransformPoint(double[] argout, int bDstToSrc, double x, double y)
 
@@ -3620,6 +3869,8 @@ public class Transformer:public int TransformPoint(double[] argout, int bDstToSr
   *                   May be null, otherwise panSuccess.length must be equal to arrayOfCoords.length
   * 
   * @return 1 on success, 0 otherwise
+  *
+  * @since Java bindings 1.7.0
   */
 public class Transformer:public int TransformPoints(int bDstToSrc, double[][] arrayOfCoords, int[] panSuccess)
 
@@ -4123,6 +4374,8 @@ public class org.gdal.ogr.Driver:public DataSource CreateDataSource(String name,
  * Same as below with options == null.
  *
  * @see #CreateDataSource(String name, java.util.Vector options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.ogr.Driver:public DataSource CreateDataSource(String name)
 
@@ -4148,6 +4401,8 @@ public class org.gdal.ogr.Driver:public DataSource CopyDataSource(DataSource src
  * Same as below with options == null.
  *
  * @see #CreateDataSource(String name, java.util.Vector options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.ogr.Driver:public DataSource CopyDataSource(DataSource src_ds, String name)
 
@@ -4172,6 +4427,8 @@ public class org.gdal.ogr.Driver:public DataSource Open(String name, int update)
  * Same as below with update == 0.
  *
  * @see #Open(String name, int update)
+ *
+ * @since Java bindings 1.7.0
  */
 public class org.gdal.ogr.Driver:public DataSource Open(String name)
 
@@ -4187,7 +4444,7 @@ public class org.gdal.ogr.Driver:public DataSource Open(String name)
  @param name the name of the datasource to delete. 
 
  @return 0 on success. Otherwise throws a RuntimeException if this
- is not supported by this driver. 
+ is not supported by this driver (or an error code if DontUseExceptions() has been called)
 */
 public class org.gdal.ogr.Driver:public int DeleteDataSource(String name)
 
@@ -4284,6 +4541,8 @@ public class DataSource:public Layer CopyLayer(Layer src_layer, String new_name,
  * Same as below with options == null.
  *
  * @see #CopyLayer(Layer src_layer, String new_name, java.util.Vector options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer CopyLayer(Layer src_layer, String new_name)
 
@@ -4335,6 +4594,8 @@ public class DataSource:public Layer CreateLayer(String name, SpatialReference s
  * Same as below with options == null.
  *
  * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer CreateLayer(String name, SpatialReference srs, int geom_type)
 
@@ -4344,6 +4605,8 @@ public class DataSource:public Layer CreateLayer(String name, SpatialReference s
  * Same as below with geom_type == ogr.wkbUnknown and options == null.
  *
  * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer CreateLayer(String name, SpatialReference srs)
 
@@ -4353,6 +4616,8 @@ public class DataSource:public Layer CreateLayer(String name, SpatialReference s
  * Same as below with srs == null, geom_type == ogr.wkbUnknown and options == null.
  *
  * @see #CreateLayer(String name, SpatialReference srs, int geom_type, java.util.Vector options)
+ *
+ * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer CreateLayer(String name)
 
@@ -4364,7 +4629,7 @@ public class DataSource:public Layer CreateLayer(String name)
  @param index the index of the layer to delete. 
 
  @return 0 on success. Otherwise throws a RuntimeException if deleting
- layers is not supported for this datasource.
+ layers is not supported for this datasource  (or an error code if DontUseExceptions() has been called).
 */
 public class DataSource:public int DeleteLayer(int index)
 
@@ -4397,6 +4662,8 @@ public class DataSource:public Layer ExecuteSQL(String statement, Geometry spati
  * Same as below with dialect = ""
  *
  * @see #ExecuteSQL(String statement, Geometry spatialFilter, String dialect)
+ *
+ * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer ExecuteSQL(String statement, Geometry spatialFilter)
 
@@ -4406,6 +4673,8 @@ public class DataSource:public Layer ExecuteSQL(String statement, Geometry spati
  * Same as below with spatialFilter == null and dialect = ""
  *
  * @see #ExecuteSQL(String statement, Geometry spatialFilter, String dialect)
+ *
+ * @since Java bindings 1.7.0
  */
 public class DataSource:public Layer ExecuteSQL(String statement)
 
@@ -4461,6 +4730,8 @@ public class DataSource:public Layer GetLayerByIndex(int index)
  @param index a layer number between 0 and GetLayerCount()-1.
 
  @return the layer, or null if index is out of range or an error occurs.
+
+ @since Java bindings 1.7.0
 */
 public class DataSource:public Layer GetLayer(int index)
 
@@ -4485,6 +4756,8 @@ public class DataSource:public Layer GetLayerByName(String layer_name)
  @param layer_name the layer name of the layer to fetch.
 
  @return the layer, or null if index is out of range or an error occurs.
+
+ @since Java bindings 1.7.0
 */
 public class DataSource:public Layer GetLayer(String layer_name)
 
@@ -4561,7 +4834,7 @@ public class Layer:public void delete()
 
  @param feature the feature to write to disk. 
 
- @return 0 on success. Otherwise throws a RuntimeException.
+ @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 
  @see #SetFeature(Feature)
 */
@@ -4579,7 +4852,7 @@ used by a layer directly.
 @param approx_ok If 1, the field may be created in a slightly different
 form depending on the limitations of the format driver.
 
-@return 0 on success. Otherwise throws a RuntimeException.
+@return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 */
 public class Layer:public int CreateField(FieldDefn field_def, int approx_ok)
 
@@ -4613,7 +4886,7 @@ public class Layer:public int CreateField(FieldDefn field_def)
  @param force Flag indicating whether the extent should be computed even
  if it is expensive (1 for true, 0 for false).
 
- @return 0 on success. Otherwise throws a RuntimeException.
+ @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 */
 public class Layer:public int GetExtent(double[] extent, int force)
 
@@ -4637,6 +4910,8 @@ public class Layer:public int GetExtent(double[] extent, int force)
  if it is expensive
 
  @return an allocated array of 4 doubles in which the extent value or null in case of failure
+
+ @since Java bindings 1.7.0
 */
 public class Layer:public double[] GetExtent(boolean force)
 
@@ -4646,6 +4921,8 @@ public class Layer:public double[] GetExtent(boolean force)
   * Same as below with force == true.
   *
   * @see #GetExtent(boolean force)
+  *
+  * @since Java bindings 1.7.0
   */
 public class Layer:public double[] GetExtent()
 
@@ -4660,7 +4937,7 @@ public class Layer:public double[] GetExtent()
 
  @param fid the feature id to be deleted from the layer 
 
- @return 0 on success. Otherwise throws a RuntimeException.
+ @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 
 */
 public class Layer:public int DeleteFeature(int fid)
@@ -4716,6 +4993,8 @@ public class Layer:public int GetFeatureCount(int force)
   * Same as below with force == 1.
   *
   * @see #GetFeatureCount(int force)
+  *
+  * @since Java bindings 1.7.0
   */
 public class Layer:public int GetFeatureCount()
 
@@ -4723,6 +5002,8 @@ public class Layer:public int GetFeatureCount()
   * Return the total number of features read.
   * Note: not all drivers seem to update properly this count.
   * @return total number of features read.
+  *
+  * @since Java bindings 1.7.0
   */
 public class Layer:public long GetFeaturesRead()
 
@@ -4831,7 +5112,7 @@ public class Layer:public void ResetReading()
  @param filter_string query in restricted SQL WHERE format, or null to clear the
  current query.
 
- @return 0 if successfully installed. Otherwise throws a RuntimeException.
+ @return 0 if successfully installed. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  */
 public class Layer:public int SetAttributeFilter(String filter_string)
 
@@ -4846,11 +5127,12 @@ public class Layer:public int SetAttributeFilter(String filter_string)
 
  @param feature the feature to write.
 
- @return 0 on success. Otherwise throws a RuntimeException.
+ @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 
  @see #CreateFeature(Feature)
 */
 public class Layer:public int SetFeature(Feature feature)
+
 /**
  Move read cursor to the new_index'th feature in the current resultset. 
 
@@ -4870,7 +5152,7 @@ public class Layer:public int SetFeature(Feature feature)
  @param new_index the index indicating how many steps into the result set
  to seek. 
 
- @return 0 on success. Otherwise throws a RuntimeException.
+ @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 */
 public class Layer:public int SetNextByIndex(int new_index)
 
@@ -4936,25 +5218,25 @@ Some layers do not implement this method, and will still return
 0.  The default implementation just returns 0.  An error
 is only returned if an error occurs while attempting to flush to disk.
 
-@return 0 if no error occurs (even if nothing is done). Otherwise throws a RuntimeException.
+@return 0 if no error occurs (even if nothing is done). Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 */
 public class Layer:public int SyncToDisk()
 
 /**
  For datasources which support transactions, StartTransaction creates 
- a transaction. If starting the transaction fails, will throw a RuntimeException.
+ a transaction. If starting the transaction fails, will throw a RuntimeException (or an error code if DontUseExceptions() has been called).
  Datasources which do not support transactions will always return 0.
 
- @return 0 on success. Otherwise throws a RuntimeException.
+ @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 */
 public class Layer:public int StartTransaction()
 
 /**
  For datasources which support transactions, CommitTransaction commits a 
- transaction.  If no transaction is active, or the commit fails, will throw a RuntimeException.
+ transaction.  If no transaction is active, or the commit fails, will throw a RuntimeException (or an error code if DontUseExceptions() has been called).
  Datasources which do not support transactions will always return 0.
 
- @return 0 on success. Otherwise throws a RuntimeException.
+ @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 */
 public class Layer:public int CommitTransaction()
 
@@ -4962,10 +5244,10 @@ public class Layer:public int CommitTransaction()
 
  For datasources which support transactions, RollbackTransaction will roll 
  back a datasource to its state before the start of the current transaction. 
- If no transaction is active, or the rollback fails, will throw a RuntimeException.
+ If no transaction is active, or the rollback fails, will throw a RuntimeException (or an error code if DontUseExceptions() has been called).
  Datasources which do not support transactions will always return 0.
 
- @return 0 on success. Otherwise throws a RuntimeException.
+ @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 */
 public class Layer:public int RollbackTransaction()
 
@@ -5167,6 +5449,8 @@ public class Feature:public double GetFieldAsDouble(String name)
  * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value. The returned value may be null.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Feature:public double[] GetFieldAsDoubleList(int ifield)
 
@@ -5204,6 +5488,8 @@ public class Feature:public int GetFieldAsInteger(String name)
  * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value. The returned value may be null.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Feature:public int[] GetFieldAsIntegerList(int ifield)
 
@@ -5241,6 +5527,8 @@ public class Feature:public String GetFieldAsString(String name)
  * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value. The returned value may be null.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Feature:public String[] GetFieldAsStringList(int ifield)
 
@@ -5351,7 +5639,7 @@ public class Feature:public boolean IsFieldSet(String name)
  *
  * @param fid the new feature identifier value to assign.
  *
- * @return 0 on success. Otherwise throws a RuntimeException.
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  */
 public class Feature:public int SetFID(int fid)
 
@@ -5493,6 +5781,8 @@ public class Feature:public void SetFieldIntegerList(int ifield, int[] values)
  *
  * @param ifield the field to set, from 0 to GetFieldCount()-1.
  * @param values the values to assign (vector of strings).
+ *
+ * @since Java bindings 1.7.0
  */
 public class Feature:public void SetFieldStringList(int ifield, java.util.Vector values)
 
@@ -5513,7 +5803,7 @@ public class Feature:public void SetFieldStringList(int ifield, java.util.Vector
  * output fields matching some of the source fields.
  *
  * @return 0 if the operation succeeds, even if some values are
- * not transferred, otherwise throws a RuntimeException.
+ * not transferred, otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  */
 public class Feature:public int SetFrom(Feature srcFeature, int forgiving)
 
@@ -5524,6 +5814,8 @@ public class Feature:public int SetFrom(Feature srcFeature, int forgiving)
  * Same as below with forgiving == 1
  *
  * @see #SetFrom(Feature srcFeature, int forgiving)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Feature:public int SetFrom(Feature srcFeature)
 
@@ -5538,7 +5830,7 @@ public class Feature:public int SetFrom(Feature srcFeature)
  * is correct and it will result in deallocation of currently assigned geometry
  * without assigning new one.
  *
- * @return 0 if successful, or throws a RuntimeException if
+ * @return 0 if successful, or throws a RuntimeException (or an error code if DontUseExceptions() has been called) if
  * the geometry type is illegal for the FeatureDefn (checking not yet
  * implemented). 
  */ 
@@ -5555,7 +5847,7 @@ public class Feature:public int SetGeometry(Geometry geom)
  * is correct and it will result in deallocation of currently assigned geometry
  * without assigning new one.
  *
- * @return 0 if successful, or throws a RuntimeException if
+ * @return 0 if successful, or throws a RuntimeException (or an error code if DontUseExceptions() has been called) if
  * the geometry type is illegal for the FeatureDefn (checking not yet
  * implemented). 
  */ 
@@ -5609,6 +5901,8 @@ public class Geometry
  * The type may be one of ogr.wkbPoint, etc..
  *
  * @param eGeometryType the type code of the geometry class to be instantiated.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public Geometry(int eGeometryType)
 
@@ -5650,7 +5944,7 @@ public class Geometry:public Geometry(int eGeometryType, String wkt, byte[] wkb,
  *
  * @param other geometry to add to the container.
  *
- * @return 0 if successful, or throws RuntimeException if
+ * @return 0 if successful, or throws RuntimeException (or an error code if DontUseExceptions() has been called) if
  * the geometry type is illegal for the type of geometry container.
  */
 public class Geometry:public int AddGeometry(Geometry other)
@@ -5667,7 +5961,7 @@ public class Geometry:public int AddGeometry(Geometry other)
  *
  * @param other geometry to add to the container.
  *
- * @return 0 if successful, or throws RuntimeException if
+ * @return 0 if successful, or throws RuntimeException (or an error code if DontUseExceptions() has been called) if
  * the geometry type is illegal for the type of geometry container.
  */
 public class Geometry:public int AddGeometryDirectly(Geometry other)
@@ -5703,6 +5997,8 @@ public class Geometry:public void AddPoint(double x, double y, double z)
  *
  * @param x coordinate of point to add.
  * @param y coordinate of point to add.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public void AddPoint(double x, double y)
 
@@ -5753,6 +6049,8 @@ public class Geometry:public Geometry Buffer(double distance, int quadsecs)
  * Same as below with quadsecs == 30.
  *
  * @see #Buffer(double distance, int quadsecs)
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public Geometry Buffer(double distance)
 
@@ -5827,6 +6125,8 @@ public class Geometry:public Geometry ConvexHull()
  * @param gml The GML fragment for the geometry.
  *
  * @return a geometry on succes, or null on error.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public static Geometry CreateFromGML(String gml)
 
@@ -5836,6 +6136,8 @@ public class Geometry:public static Geometry CreateFromGML(String gml)
  * @param json GeoJSON content
  *
  * @return a geometry on succes, or null on error.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public static Geometry CreateFromJson(String json)
 
@@ -5846,6 +6148,8 @@ public class Geometry:public static Geometry CreateFromJson(String json)
  * @param wkb input BLOB data.
  *
  * @return a geometry on succes, or null on error.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public static Geometry CreateFromWkb(byte[] wkb)
 
@@ -5857,6 +6161,8 @@ public class Geometry:public static Geometry CreateFromWkb(byte[] wkb)
  *                representation of the geometry to be created.
  *
  * @return a geometry on succes, or null on error.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public static Geometry CreateFromWkt(String wkt)
 
@@ -5969,6 +6275,8 @@ public class Geometry:public String ExportToKML(String altitude_mode)
  * Convert a geometry into KML format.
  *
  * @return A KML fragment or null in case of error.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public String ExportToKML()
 
@@ -5988,6 +6296,8 @@ public class Geometry:public String ExportToJson()
  *               respectively.
  *
  * @return the wkb content
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public byte[] ExportToWkb(int byte_order)
 
@@ -6000,7 +6310,7 @@ public class Geometry:public byte[] ExportToWkb(int byte_order)
  * @param byte_order One of wkbXDR or wkbNDR indicating MSB or LSB byte order
  *               respectively.
  *
- * @return 0 on success. Otherwise throws a RuntimeException
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  */
 public class Geometry:public int ExportToWkb(byte[] wkbArray, int byte_order)
 
@@ -6011,6 +6321,8 @@ public class Geometry:public int ExportToWkb(byte[] wkbArray, int byte_order)
  * MSB order (wkbXDR) will be used.
  *
  * @return the wkb content
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public byte[] ExportToWkb()
 
@@ -6031,6 +6343,8 @@ public class Geometry:public int ExportToWkt(String[] argout)
  * This method relates to the SFCOM IWks::ExportToWKT() method.
  *
  * @return the WKT string
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public String ExportToWkt()
 
@@ -6155,6 +6469,8 @@ public class Geometry:public void GetPoint(int iPoint, double[] argout)
  *
  * @param iPoint the vertex to fetch, from 0 to GetNumPoints()-1, zero for a point.
  * @return an allocated array of 3 doubles to contain the x, y, z coordinates.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public double[] GetPoint(int iPoint)
 
@@ -6171,6 +6487,8 @@ public class Geometry:public void GetPoint_2D(int iPoint, double[] argout)
  *
  * @param iPoint the vertex to fetch, from 0 to GetNumPoints()-1, zero for a point.
  * @return an allocated array of 2 doubles to contain the x, y coordinates.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public double[] GetPoint_2D(int iPoint)
 
@@ -6222,6 +6540,8 @@ public class Geometry:public double GetZ(int ipoint)
  * Fetch the x coordinate of the first point from a geometry.
  *
  * @return the X coordinate of this point. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public double GetX()
 
@@ -6229,6 +6549,8 @@ public class Geometry:public double GetX()
  * Fetch the y coordinate of the first point from a geometry.
  *
  * @return the Y coordinate of this point. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public double GetY()
 
@@ -6236,6 +6558,8 @@ public class Geometry:public double GetY()
  * Fetch the z coordinate of the first point from a geometry.
  *
  * @return the Z coordinate of this point. 
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public double GetZ()
 
@@ -6393,6 +6717,8 @@ public class Geometry:public void SetPoint(int ipoint, double x, double y, doubl
  *  zero for a point.
  * @param x input X coordinate to assign.
  * @param y input Y coordinate to assign.
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public void SetPoint(int ipoint, double x, double y)
 
@@ -6449,7 +6775,7 @@ public class Geometry:public boolean Touches(Geometry other)
  * 
  * @param srs spatial reference system to transform to.
  *
- * @return 0 on success. Otherwise throws a RuntimeException.
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  */
 public class Geometry:public int TransformTo(SpatialReference srs)
 
@@ -6471,7 +6797,7 @@ public class Geometry:public int TransformTo(SpatialReference srs)
  *
  * @param ct the transformation to apply.
  *
- * @return 0 on success. Otherwise throws a RuntimeException.
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  */
 public class Geometry:public int Transform(CoordinateTransformation ct)
 
@@ -6554,6 +6880,8 @@ public class FeatureDefn:public FeatureDefn()
  *
  * @param name the name to be assigned to this layer/class.  It does not
  * need to be unique. and may be null.
+ *
+ * @since Java bindings 1.7.0
  */
 public class FeatureDefn:public FeatureDefn(String name)
 
@@ -6649,6 +6977,8 @@ public class FieldDefn
  * Constructor.
  *
  * The new field will be named "unnamed" and of type OFTString
+ *
+ * @since Java bindings 1.7.0
  */
 public class FieldDefn:public FieldDefn()
 
@@ -6657,6 +6987,8 @@ public class FieldDefn:public FieldDefn()
  *
  * The new field will be of type OFTString
  * @param name the name of the new field.
+ *
+ * @since Java bindings 1.7.0
  */
 public class FieldDefn:public FieldDefn(String name)
 
@@ -6776,11 +7108,40 @@ public class FieldDefn:public void SetWidth(int width)
 public class ogr
 
 /**
+ * Use exceptions instead of error return codes.
+ *
+ * This is the default behavious : methods that in C/C++ return an OGRErr return code
+ * would throw a RuntimeException() in case the code it is different
+ * from ogr.OGRERR_NONE. By calling this method, you can get
+ * back to that original state if DontUseExceptions() was called in-between.
+ * This will only apply to the org.gdal.ogr.* package.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class ogr:public static void UseExceptions()
+
+/**
+ * Use return code instead of exceptions.
+ *
+ * By default, methods that in C/C++ return an OGRErr return code
+ * would throw a RuntimeException() in case the code it is different
+ * from ogr.OGRERR_NONE. By calling this method, you can prevent
+ * the exception to be thrown and get the original error code
+ * (ogr.OGRERR_* codes)
+ * This will only apply to the org.gdal.ogr.* package.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class ogr:public static void DontUseExceptions()
+
+/**
  * Build a ring from a bunch of arcs.
  *
  * Same as below with bAutoClose == 0 and dfTolerance == 0.
  *
  * @see #BuildPolygonFromEdges(Geometry lineCollection, int bBestEffort, int bAutoClose, double dfTolerance)
+ *
+ * @since Java bindings 1.7.0
 */
 public class ogr:public static Geometry BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort)
 
@@ -6790,6 +7151,8 @@ public class ogr:public static Geometry BuildPolygonFromEdges(Geometry hLineColl
  * Same as below with dfTolerance == 0.
  *
  * @see #BuildPolygonFromEdges(Geometry lineCollection, int bBestEffort, int bAutoClose, double dfTolerance)
+ *
+ * @since Java bindings 1.7.0
 */
 public class ogr:public static Geometry BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort, int bAutoClose)
 
@@ -6828,6 +7191,8 @@ public class ogr:public static Geometry CreateGeometryFromJson(String json)
  *
  * @param wkb the wkb content
  * @return the new geometry
+ *
+ * @since Java bindings 1.7.0
  */
 public class ogr:public static Geometry CreateGeometryFromWkb(byte[] wkb)
 
@@ -6845,6 +7210,8 @@ public class ogr:public static Geometry CreateGeometryFromWkb(byte[] wkb, Spatia
  *
  * @param wkt the wkt content
  * @return the new geometry
+ *
+ * @since Java bindings 1.7.0
  */
 public class ogr:public static Geometry CreateGeometryFromWkt(String wkt)
 
@@ -6888,6 +7255,8 @@ public class ogr:public static Geometry CreateGeometryFromWkt(String wkt, Spatia
     * @param options currently unused
     *
     * @return updated argument list array.
+    *
+    * @since Java bindings 1.7.0
     */
 public class ogr:public static String[] GeneralCmdLineProcessor(String[] args, int options)
 
@@ -6897,6 +7266,8 @@ public class ogr:public static String[] GeneralCmdLineProcessor(String[] args, i
     * Same as below with options == 0
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
+    *
+    * @since Java bindings 1.7.0
     */
 public class ogr:public static String[] GeneralCmdLineProcessor(String[] args)
 
@@ -6908,6 +7279,8 @@ public class ogr:public static String[] GeneralCmdLineProcessor(String[] args)
     * @return updated argument list as a new Vector of strings
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
+    *
+    * @since Java bindings 1.7.0
     */
 public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args, int options)
 
@@ -6919,6 +7292,8 @@ public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.uti
     * @return updated argument list as a new Vector of strings
     *
     * @see #GeneralCmdLineProcessor(String[] args, int options)
+    *
+    * @since Java bindings 1.7.0
     */
 public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.util.Vector args)
 
@@ -6928,6 +7303,8 @@ public class ogr:public static java.util.Vector GeneralCmdLineProcessor(java.uti
  * @param eType the geometry type.
  *
  * @return human readable string, or null on failure.
+ *
+ * @since Java bindings 1.7.0
  */
 public class ogr:public static String GeometryTypeToName(int eType)
 
@@ -6962,6 +7339,8 @@ public class ogr:public static int GetDriverCount()
  * @param type the field type to get name for.
  *
  * @return field type name
+ *
+ * @since Java bindings 1.7.0
  */
 public class ogr:public static String GetFieldTypeName(int type)
 
@@ -6985,6 +7364,8 @@ public class ogr:public static int GetOpenDSCount()
   * Same as below with update == 0
   *
   * @see #Open(String filename, int update)
+  *
+  * @since Java bindings 1.7.0
   */
 public class ogr:public static DataSource Open(String filename)
 
@@ -6994,6 +7375,8 @@ public class ogr:public static DataSource Open(String filename)
   * Same as below with boolean value being transformed to 1 (for true) or 0 (for false)
   *
   * @see #Open(String filename, int update)
+  *
+  * @since Java bindings 1.7.0
   */
 public class ogr:public static DataSource Open(String filename, boolean update)
 
@@ -7046,6 +7429,8 @@ public class ogr:public static DataSource Open(String filename, int update)
   * application requested update access.
   *
   * @see #Open(String filename, int update)
+  *
+  * @since Java bindings 1.7.0
   */
 public class ogr:public static DataSource OpenShared(String filename)
 
@@ -7159,6 +7544,8 @@ public class SpatialReference:public SpatialReference(String wkt)
  * Same as below with wkt == null.
  *
  * @see #SpatialReference(String wkt)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public SpatialReference()
 
@@ -7184,7 +7571,7 @@ public class SpatialReference:public String __str__()
  * method return 0.  If the method fails to identify the 
  * general coordinate system, a RuntimeException() will be throwned
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int AutoIdentifyEPSG()
 
@@ -7212,7 +7599,7 @@ public class SpatialReference:public SpatialReference CloneGeogCS()
  * 
  * @param src_srs the spatial reference to copy the GEOGCS information from.
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int CopyGeogCSFrom(SpatialReference src_srs)
 
@@ -7220,6 +7607,8 @@ public class SpatialReference:public int CopyGeogCSFrom(SpatialReference src_srs
  * Export coordinate system in Mapinfo style CoordSys format.
  * 
  * @return the coordinate system in Mapinfo style CoordSys format.
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToMICoordSys()
 
@@ -7227,7 +7616,7 @@ public class SpatialReference:public String ExportToMICoordSys()
  * Export coordinate system in Mapinfo style CoordSys format.
  * 
  * @param argout an already allocated array of 1 string to receive the output
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ExportToMICoordSys(String[] argout)
 
@@ -7248,7 +7637,7 @@ public class SpatialReference:public int ExportToMICoordSys(String[] argout)
  * @param parms an already allocated array of 17 doubles to receive the 17
  * projection parameters will be assigned. See importFromPCI() for the list of parameters.
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ExportToPCI(String[] proj, String[] units, double[] parms)
 
@@ -7258,6 +7647,8 @@ public class SpatialReference:public int ExportToPCI(String[] proj, String[] uni
  * Same as below with simplify == 0 and the string is returned as a return value
  *
  * @see #ExportToPrettyWkt(String[] argout, int simplify)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToPrettyWkt()
 
@@ -7267,6 +7658,8 @@ public class SpatialReference:public String ExportToPrettyWkt()
  * Same as below but the string is returned as a return value
  *
  * @see #ExportToPrettyWkt(String[] argout, int simplify)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToPrettyWkt(int simplify)
 
@@ -7276,6 +7669,8 @@ public class SpatialReference:public String ExportToPrettyWkt(int simplify)
  * Same as below with simplify == 0.
  *
  * @see #ExportToPrettyWkt(String[] argout, int simplify)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ExportToPrettyWkt(String[] argout)
 
@@ -7295,6 +7690,8 @@ public class SpatialReference:public int ExportToPrettyWkt(String[] argout, int 
  * Same as below but the string is returned as a return value
  *
  * @see #ExportToProj4(String[] argout)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToProj4()
 
@@ -7309,7 +7706,7 @@ public class SpatialReference:public String ExportToProj4()
  *
  * @param argout an already allocated array of 1 string to receive the PROJ.4 definition
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ExportToProj4(String[] argout)
 
@@ -7327,7 +7724,7 @@ public class SpatialReference:public int ExportToProj4(String[] argout)
  *
  * @param datum an already allocated array of 1 integer to receive the datum code.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 
 public class SpatialReference:public int ExportToUSGS(int[] projsys, int[] zone, double[] parms, int[] datum)
@@ -7338,6 +7735,8 @@ public class SpatialReference:public int ExportToUSGS(int[] projsys, int[] zone,
  * Same as below but the string is returned as a return value
  *
  * @see #ExportToWkt(String[] argout)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToWkt()
 
@@ -7354,6 +7753,8 @@ public class SpatialReference:public int ExportToWkt(String[] argout)
  * Export coordinate system in XML format.
  *
  * @see #ExportToXML(String[] argout, String dialect)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToXML()
 
@@ -7361,6 +7762,8 @@ public class SpatialReference:public String ExportToXML()
  * Export coordinate system in XML format.
  *
  * @see #ExportToXML(String[] argout, String dialect)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public String ExportToXML(String dialect)
 
@@ -7368,6 +7771,8 @@ public class SpatialReference:public String ExportToXML(String dialect)
  * Export coordinate system in XML format.
  *
  * @see #ExportToXML(String[] argout, String dialect)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ExportToXML(String[] argout)
 
@@ -7383,7 +7788,7 @@ public class SpatialReference:public int ExportToXML(String[] argout)
  * @param argout an already allocated array of 1 string to receive the XML definition.
  * @param dialect currently ignored. The dialect used is GML based.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ExportToXML(String[] argout, String dialect)
 
@@ -7404,7 +7809,7 @@ public class SpatialReference:public int ExportToXML(String[] argout, String dia
  * the FixupOrdering() method.</li>
  * <li>Add missing linear or angular units nodes.</li>
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int Fixup()
 
@@ -7416,7 +7821,7 @@ public class SpatialReference:public int Fixup()
  * to the BNF definitions in the OpenGIS SF-SQL and CT Specifications.  This
  * method attempts to massage things back into the required order.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int FixupOrdering()
 
@@ -7441,7 +7846,9 @@ public class SpatialReference:public double GetAngularUnits()
  *
  * @param name the tree node to look for (case insensitive).
  *
- * @return the requested value, or null if it fails for any reason. 
+ * @return the requested value, or null if it fails for any reason.
+ *
+ * @since Java bindings 1.7.0 
  */
 public class SpatialReference:public String GetAttrValue(String name)
 
@@ -7522,6 +7929,8 @@ public class SpatialReference:public String GetLinearUnitsName()
  * Same as below with default_val == 0
  *
  * @see #GetNormProjParm(String name, double default_val)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public double GetNormProjParm(String name)
 
@@ -7547,6 +7956,8 @@ public class SpatialReference:public double GetNormProjParm(String name, double 
  * Same as below with default_val == 0
  *
  * @see #GetProjParm(String name, double default_val)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public double GetProjParm(String name)
 
@@ -7569,6 +7980,8 @@ public class SpatialReference:public double GetProjParm(String name, double defa
  * Fetch TOWGS84 parameters, if available. 
  * 
  * @return an array of doubles into which up to 7 coefficients are placed.
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public double[] GetTOWGS84()
 
@@ -7577,7 +7990,7 @@ public class SpatialReference:public double[] GetTOWGS84()
  * 
  * @param argout allocated array of 7 doubles into which up to 7 coefficients are placed.
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int GetTOWGS84(double[] argout)
 
@@ -7605,7 +8018,7 @@ public class SpatialReference:public int GetTOWGS84(double[] argout)
  *
  * @param nCode a GCS or PCS code from the horizontal coordinate system table.
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ImportFromEPSG(int nCode)
 
@@ -7631,7 +8044,7 @@ public class SpatialReference:public int ImportFromEPSG(int nCode)
  *
  * @param ppszInput vector of strings containing the definition.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ImportFromESRI(java.util.Vector ppszInput)
 
@@ -7642,7 +8055,7 @@ public class SpatialReference:public int ImportFromESRI(java.util.Vector ppszInp
  *
  * @param coord_sys Mapinfo style CoordSys definition string.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ImportFromMICoordSys(String coord_sys)
 
@@ -7652,6 +8065,8 @@ public class SpatialReference:public int ImportFromMICoordSys(String coord_sys)
  * Same as below with units == null and prjParams == null
  *
  * @see #ImportFromPCI(String proj, String units, double[] prjParams)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromPCI(String proj)
 
@@ -7661,6 +8076,8 @@ public class SpatialReference:public int ImportFromPCI(String proj)
  * Same as below with prjParams == null
  *
  * @see #ImportFromPCI(String proj, String units, double[] prjParams)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromPCI(String proj, String units)
 
@@ -7702,7 +8119,7 @@ public class SpatialReference:public int ImportFromPCI(String proj, String units
  * zero. If null supplied instead of array pointer default values will be
  * used (i.e., zeroes).
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ImportFromPCI(String proj, String units, double[] prjParams)
 
@@ -7748,7 +8165,7 @@ public class SpatialReference:public int ImportFromPCI(String proj, String units
  *
  * @param proj4 the PROJ.4 style string. 
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ImportFromProj4(String proj4)
 
@@ -7760,7 +8177,7 @@ public class SpatialReference:public int ImportFromProj4(String proj4)
  * 
  * @param url text definition to try to deduce SRS from.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */ 
 public class SpatialReference:public int ImportFromUrl(String url)
 
@@ -7770,6 +8187,8 @@ public class SpatialReference:public int ImportFromUrl(String url)
  * Same as below with iZone == 0, padfPrjParams == null and iDatum == 0
  *
  * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromUSGS(int iProjSys)
 
@@ -7779,6 +8198,8 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys)
  * Same as below with padfPrjParams == null and iDatum == 0
  *
  * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone)
 
@@ -7788,6 +8209,8 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone)
  * Same as below with iDatum == 0
  *
  * @see #ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams)
 
@@ -8011,7 +8434,7 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone,
  *
  * @param iDatum Input spheroid.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone, double[] padfPrjParams, int iDatum)
 
@@ -8025,7 +8448,7 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone,
  *
  * @param wkt WKT string
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ImportFromWkt(String wkt)
 
@@ -8034,7 +8457,7 @@ public class SpatialReference:public int ImportFromWkt(String wkt)
  *
  * @param xmlString XML string to import
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int ImportFromXML(String xmlString)
 
@@ -8089,7 +8512,7 @@ public class SpatialReference:public int IsSameGeogCS(SpatialReference other)
  * datums to "standard" names, as defined by Adam Gawne-Cain's reference
  * translation of EPSG to WKT for the CT specification.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int MorphFromESRI()
 
@@ -8101,7 +8524,7 @@ public class SpatialReference:public int MorphFromESRI()
  * renaming a variety of projections and arguments, and stripping out 
  * nodes note recognised by ESRI (like AUTHORITY and AXIS). 
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int MorphToESRI()
 
@@ -8118,7 +8541,7 @@ public class SpatialReference:public int MorphToESRI()
  * units to transform to radians.  Some standard conversion factors can
  * be found in ogr_srs_api.h. 
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetAngularUnits(String name, double to_radians)
 
@@ -8136,7 +8559,7 @@ public class SpatialReference:public int SetAngularUnits(String name, double to_
  * This may be null if you just want to force creation of the intermediate
  * path.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetAttrValue(String name, String value)
 
@@ -8150,7 +8573,7 @@ public class SpatialReference:public int SetAttrValue(String name, String value)
  *
  * @param code code for value with this authority.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetAuthority(String target_key, String authority, int code)
 
@@ -8186,7 +8609,7 @@ public class SpatialReference:public int SetAuthority(String target_key, String 
  * 
  * @param definition text definition to try to deduce SRS from.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */ 
 public class SpatialReference:public int SetFromUserInput(String definition)
 
@@ -8196,6 +8619,8 @@ public class SpatialReference:public int SetFromUserInput(String definition)
  * Same as below with pszPMName = "Greenwich", dfPMOffset = 0.0, pszAngularUnits = "degree" and dfConvertToRadians =  0.0174532925199433
  *
  * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening)
 
@@ -8205,6 +8630,8 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  * Same as below with dfPMOffset = 0.0, pszAngularUnits = "degree" and dfConvertToRadians =  0.0174532925199433
  *
  * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName)
 
@@ -8214,6 +8641,8 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  * Same as below with pszAngularUnits = "degree" and dfConvertToRadians =  0.0174532925199433
  *
  * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset)
 
@@ -8223,6 +8652,8 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  * Same as below with dfConvertToRadians =  0.0174532925199433
  *
  * @see #SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszUnits, double dfConvertToRadians)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits)
 
@@ -8263,7 +8694,7 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  * them to radians.  A value of SRS_UL_DEGREE_CONV will be used if
  * pszAngularUnits is null.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetGeogCS(String pszGeogName, String pszDatumName, String pszSpheroidName, double dfSemiMajor, double dfInvFlattening, String pszPMName, double dfPMOffset, String pszAngularUnits, double dfConvertToRadians)
 
@@ -8281,7 +8712,7 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  * units to transform to meters.  Some standard conversion factors can
  * be found in ogr_srs_api.h. 
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetLinearUnits(String name, double to_meters)
 
@@ -8301,7 +8732,7 @@ public class SpatialReference:public int SetLinearUnits(String name, double to_m
  * units to transform to meters.  Some standard conversion factors can
  * be found in ogr_srs_api.h. 
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetLinearUnitsAndUpdateParameters(String name, double to_meters)
 
@@ -8313,7 +8744,7 @@ public class SpatialReference:public int SetLinearUnitsAndUpdateParameters(Strin
  *
  * @param name the user visible name to assign.  Not used as a key.
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetLocalCS(String name)
 
@@ -8330,7 +8761,7 @@ public class SpatialReference:public int SetLocalCS(String name)
  *
  * @param val value to assign. 
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetNormProjParm(String name, double val)
 
@@ -8352,7 +8783,7 @@ public class SpatialReference:public int SetProjCS()
  *
  * @param name the user visible name to assign.  May be null
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetProjCS(String name)
 
@@ -8362,7 +8793,7 @@ public class SpatialReference:public int SetProjCS(String name)
  * @param name the projection name, which should be selected from
  * the macros in ogr_srs_api.h, such as SRS_PT_TRANSVERSE_MERCATOR. 
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetProjection(String name)
 
@@ -8379,7 +8810,7 @@ public class SpatialReference:public int SetProjection(String name)
  *
  * @param val value to assign. 
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetProjParm(String name, double val)
 
@@ -8389,6 +8820,8 @@ public class SpatialReference:public int SetProjParm(String name, double val)
  * Same as below with is_nad83 == 1, unitsname == "" and units == 0
  *
  * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetStatePlane(int zone)
 
@@ -8398,6 +8831,8 @@ public class SpatialReference:public int SetStatePlane(int zone)
  * Same as below with unitsname == "" and units == 0
  *
  * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetStatePlane(int zone, int is_nad83)
 
@@ -8407,6 +8842,8 @@ public class SpatialReference:public int SetStatePlane(int zone, int is_nad83)
  * Same as below with units == 0
  *
  * @see #SetStatePlane(int zone, int is_nad83, String unitsname, double units)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, String unitsname)
 
@@ -8430,7 +8867,7 @@ public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, S
  * @param units Linear unit conversion factor to apply overriding
  * the legal definition for this zone. 
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, String unitsname, double units)
 
@@ -8440,6 +8877,8 @@ public class SpatialReference:public int SetStatePlane(int zone, int is_nad83, S
  * Same as below with dfEX == dfEY == dfEZ == dfPPM == 0
  *
  * @see #SetTOWGS84(double dfDX, double dfDY, double dfDZ, double dfEX, double dfEY, double dfEZ, double dfPPM)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetTOWGS84(double p1, double p2, double p3)
 
@@ -8462,7 +8901,7 @@ public class SpatialReference:public int SetTOWGS84(double p1, double p2, double
  * @param dfEZ Z rotation in arc seconds (optional, defaults to zero).
  * @param dfPPM scaling factor (parts per million).
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */ 
 public class SpatialReference:public int SetTOWGS84(double dfDX, double dfDY, double dfDZ, double dfEX, double dfEY, double dfEZ, double dfPPM)
 
@@ -8472,6 +8911,8 @@ public class SpatialReference:public int SetTOWGS84(double dfDX, double dfDY, do
  * Same as below with north == 1
  *
  * @see #SetUTM(int zone, int north)
+ *
+ * @since Java bindings 1.7.0
  */
 public class SpatialReference:public int SetUTM(int zone)
 
@@ -8488,7 +8929,7 @@ public class SpatialReference:public int SetUTM(int zone)
  * @param north 1 for northern hemisphere, or 0 for southern 
  * hemisphere. 
  * 
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetUTM(int zone, int north)
 
@@ -8510,7 +8951,7 @@ public class SpatialReference:public int SetUTM(int zone, int north)
  * </ul>
  * 
  * @param name name of well known geographic coordinate system.
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int SetWellKnownGeogCS(String name)
 
@@ -8522,7 +8963,7 @@ public class SpatialReference:public int SetWellKnownGeogCS(String name)
  * to strip it down to being compatible with the Simple Features 1.0 
  * specification.
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int StripCTParms()
 
@@ -8540,7 +8981,7 @@ public class SpatialReference:public String toString()
  * well formed, and consists of known tokens.  The validation is not
  * comprehensive. 
  *
- * @return 0 on success. Otherwise throws a RuntimeException()
+ * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 public class SpatialReference:public int Validate()
 
@@ -8579,6 +9020,8 @@ public class CoordinateTransformation:public void TransformPoint(double[] inout)
  * @param argout array of 3 double values where the transformed coordinates will be put.
  * @param x input x value
  * @param y input y value
+ *
+ * @since Java bindings 1.7.0
  */
 public class CoordinateTransformation:public void TransformPoint(double[] argout, double x, double y)
 
@@ -8598,6 +9041,8 @@ public class CoordinateTransformation:public void TransformPoint(double[] argout
  * @param x input x value
  * @param y input y value
  * @return the transformed coordinates
+ *
+ * @since Java bindings 1.7.0
  */
 public class CoordinateTransformation:public double[] TransformPoint(double x, double y)
 
@@ -8607,6 +9052,8 @@ public class CoordinateTransformation:public double[] TransformPoint(double x, d
  * @param x input x value
  * @param y input y value
  * @return the transformed coordinates
+ *
+ * @since Java bindings 1.7.0
  */
 public class CoordinateTransformation:public double[] TransformPoint(double x, double y, double z)
 
@@ -8625,6 +9072,33 @@ public class CoordinateTransformation:public void TransformPoints(double[][] poi
  * Class with static methods for utility functions.
  */
 public class osr
+
+/**
+ * Use exceptions instead of error return codes.
+ *
+ * This is the default behavious : methods that in C/C++ return an OGRErr return code
+ * would throw a RuntimeException() in case the code it is different
+ * from ogr.OGRERR_NONE. By calling this method, you can get
+ * back to that original state if DontUseExceptions() was called in-between.
+ * This will only apply to the org.gdal.osr.* package.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class osr:public static void UseExceptions()
+
+/**
+ * Use return code instead of exceptions.
+ *
+ * By default, methods that in C/C++ return an OGRErr return code
+ * would throw a RuntimeException() in case the code is different
+ * from ogr.OGRERR_NONE. By calling this method, you can prevent
+ * the exception to be thrown and get the original error code
+ * (ogr.OGRERR_* codes)
+ * This will only apply to the org.gdal.osr.* package.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class osr:public static void DontUseExceptions()
 
 /**
  * Utility function that returns the WKT definition of the SRS expressed as a user input.
@@ -8654,6 +9128,13 @@ public class osr:public static String GetWellKnownGeogCSAsWKT(String definition)
  * @deprecated This is a typo. Use wkb25DBit instead.
  */
 public interface ogrConstants:public final static int wkb25Bit
+
+/**
+ * Bit mask to indicate that a geometry type is of 2.5D kind.
+ *
+ * @since Java bindings 1.7.0
+ */
+public interface ogrConstants:public final static int wkb25DBit
 
 /**
  * Unknown type, non-standard
