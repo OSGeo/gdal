@@ -2095,6 +2095,8 @@ def tiff_write_63():
     md = drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+        return 'skip'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 150000, 150000, 1,
@@ -2208,6 +2210,29 @@ def tiff_write_67():
 
     return 'success'
 
+###############################################################################
+# Verify that we can set the color table after a Create() (scenario hit by map.tif in #2820)
+
+def tiff_write_68():
+
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_68.tif',151,161,options=['COMPRESS=LZW'])
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,255,255,255) )
+    ct.SetColorEntry( 1, (255,255,0,255) )
+    ct.SetColorEntry( 2, (255,0,255,255) )
+    ct.SetColorEntry( 3, (0,255,255,255) )
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_68.tif')
+    if ds.GetRasterBand(1).Checksum() == 0:
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_68.tif' )
+
+    return 'success'
 
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -2283,6 +2308,7 @@ gdaltest_list = [
     tiff_write_65,
     tiff_write_66,
     tiff_write_67,
+    tiff_write_68,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
