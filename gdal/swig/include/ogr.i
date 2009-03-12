@@ -1629,6 +1629,11 @@ public:
     OGR_G_FlattenTo2D(self);
   }
 
+  void Segmentize(double dfMaxLength) {
+    OGR_G_Segmentize(self, dfMaxLength);
+  }
+
+
 #if defined(SWIGCSHARP)  
   void GetEnvelope(OGREnvelope *env) {
     OGR_G_GetEnvelope(self, env);
