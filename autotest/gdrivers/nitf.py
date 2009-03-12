@@ -823,6 +823,8 @@ def nitf_36():
 # Create and read a NITF file with 69999 bands
 
 def nitf_37():
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+        return 'skip'
 
     ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf37.ntf', 1, 1, 69999)
     ds = None
