@@ -6666,6 +6666,16 @@ public class Geometry:public boolean IsRing()
 public class Geometry:public boolean Overlaps(Geometry other)
 
 /**
+ * Modify the geometry such it has no segment longer then the given distance.
+ *
+ * Interpolated points will have Z and M values (if needed) set to 0.
+ * Distance computation is performed in 2d only
+ *
+ * @param max_length the maximum distance between 2 points after segmentization
+ */
+public class Geometry:public void Segmentize(double max_length)
+
+/**
  * Set the coordinate dimension. 
  *
  * This method sets the explicit coordinate dimension.  Setting the coordinate
