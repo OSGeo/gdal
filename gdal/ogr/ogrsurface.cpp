@@ -33,7 +33,7 @@
 /**
  * \fn double OGRSurface::get_Area() const;
  *
- * Get the area of the surface object.
+ * \brief Get the area of the surface object.
  *
  * For polygons the area is computed as the area of the outer ring less
  * the area of all internal rings. 
@@ -47,7 +47,8 @@
 /**
  * \fn OGRErr OGRSurface::Centroid( OGRPoint * poPoint ) const;
  *
- * Compute and return centroid of surface.  The centroid is not necessarily
+ * \brief Compute and return centroid of surface.
+ * The centroid is not necessarily
  * within the geometry.  
  *
  * This method relates to the SFCOM ISurface::get_Centroid() method.
@@ -62,7 +63,7 @@
 /**
  * \fn OGRErr OGRSurface::PointOnSurface( OGRPoint * poPoint ) const;
  *
- * This method relates to the SFCOM ISurface::get_PointOnSurface() method.
+ * \brief This method relates to the SFCOM ISurface::get_PointOnSurface() method.
  *
  * NOTE: Only implemented when GEOS included in build.
  *
