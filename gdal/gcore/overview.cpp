@@ -824,7 +824,7 @@ GDALRegenerateCascadingOverviews(
 /************************************************************************/
 
 /**
- * Generate downsampled overviews.
+ * \brief Generate downsampled overviews.
  *
  * This function will generate one or more overview images from a base
  * image using the requested downsampling algorithm.  It's primary use
@@ -1083,7 +1083,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /************************************************************************/
 
 /**
- * Variant of GDALRegenerateOverviews, specialy dedicated for generating
+ * \brief Variant of GDALRegenerateOverviews, specialy dedicated for generating
  * compressed pixel-interleaved overviews (JPEG-IN-TIFF for example)
  *
  * This function will generate one or more overview images from a base

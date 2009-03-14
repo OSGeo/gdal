@@ -48,7 +48,7 @@ static void *hRBMutex = NULL;
 /************************************************************************/
 
 /**
- * Set maximum cache memory.
+ * \brief Set maximum cache memory.
  *
  * This function sets the maximum amount of memory that GDAL is permitted
  * to use for GDALRasterBlock caching.
@@ -81,7 +81,7 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSize )
 /************************************************************************/
 
 /**
- * Get maximum cache memory.
+ * \brief Get maximum cache memory.
  *
  * Gets the maximum amount of memory available to the GDALRasterBlock
  * caching system for caching GDAL read/write imagery. 
@@ -110,7 +110,7 @@ int CPL_STDCALL GDALGetCacheMax()
 /************************************************************************/
 
 /**
- * Get cache memory used.
+ * \brief Get cache memory used.
  *
  * @return the number of bytes of memory currently in use by the 
  * GDALRasterBlock memory caching.
@@ -127,6 +127,15 @@ int CPL_STDCALL GDALGetCacheUsed()
 /*      The workhorse of cache management!                              */
 /************************************************************************/
 
+/**
+ * \brief Try to flush one cached raster block
+ *
+ * This function will search the first unlocked raster block and will
+ * flush it to release the associated memory.
+ *
+ * @return TRUE if one block was flushed, FALSE if there are no cached blocks
+ *         or if they are currently locked.
+ */
 int CPL_STDCALL GDALFlushCacheBlock()
 
 {
@@ -425,7 +434,7 @@ void GDALRasterBlock::MarkClean()
 /************************************************************************/
 
 /**
- * Safely lock block.
+ * \brief Safely lock block.
  *
  * This method locks a GDALRasterBlock (and touches it) in a thread-safe
  * manner.  The global block cache mutex is held while locking the block,
