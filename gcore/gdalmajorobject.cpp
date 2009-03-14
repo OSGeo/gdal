@@ -60,7 +60,7 @@ GDALMajorObject::~GDALMajorObject()
 /************************************************************************/
 
 /**
- * Fetch object description. 
+ * \brief Fetch object description. 
  *
  * The semantics of the returned description are specific to the derived
  * type.  For GDALDatasets it is the dataset name.  For GDALRasterBands
@@ -82,6 +82,8 @@ const char *GDALMajorObject::GetDescription() const
 /************************************************************************/
 
 /**
+ * \brief Fetch object description. 
+ *
  * @see GDALMajorObject::GetDescription()
  */ 
 
@@ -98,7 +100,7 @@ const char * CPL_STDCALL GDALGetDescription( GDALMajorObjectH hObject )
 /************************************************************************/
 
 /**
- * Set object description. 
+ * \brief Set object description. 
  *
  * The semantics of the description are specific to the derived
  * type.  For GDALDatasets it is the dataset name.  For GDALRasterBands
@@ -121,6 +123,8 @@ void GDALMajorObject::SetDescription( const char * pszNewDesc )
 /************************************************************************/
 
 /**
+ * \brief Set object description. 
+ *
  * @see GDALMajorObject::SetDescription()
  */ 
 
@@ -137,7 +141,7 @@ void CPL_STDCALL GDALSetDescription( GDALMajorObjectH hObject, const char *pszNe
 /************************************************************************/
 
 /**
- * Fetch metadata.
+ * \brief Fetch metadata.
  *
  * The returned string list is owned by the object, and may change at
  * any time.  It is formated as a "Name=value" list with the last pointer
@@ -165,6 +169,8 @@ char **GDALMajorObject::GetMetadata( const char * pszDomain )
 /************************************************************************/
 
 /**
+ * \brief Fetch metadata.
+ *
  * @see GDALMajorObject::GetMetadata()
  */ 
 
@@ -182,7 +188,7 @@ GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
 /************************************************************************/
 
 /** 
- * Set metadata. 
+ * \brief Set metadata. 
  *
  * The C function GDALSetMetadata() does the same thing as this method.
  *
@@ -208,6 +214,8 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
 /************************************************************************/
 
 /**
+ * \brief Set metadata. 
+ *
  * @see GDALMajorObject::SetMetadata()
  */ 
 
@@ -227,7 +235,7 @@ GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD,
 /************************************************************************/
 
 /**
- * Fetch single metadata item.
+ * \brief Fetch single metadata item.
  *
  * The C function GDALGetMetadataItem() does the same thing as this method.
  *
@@ -250,6 +258,8 @@ const char *GDALMajorObject::GetMetadataItem( const char * pszName,
 /************************************************************************/
 
 /**
+ * \brief Fetch single metadata item.
+ *
  * @see GDALMajorObject::GetMetadataItem()
  */ 
 
@@ -268,7 +278,7 @@ const char * CPL_STDCALL GDALGetMetadataItem( GDALMajorObjectH hObject,
 /************************************************************************/
 
 /**
- * Set single metadata item.
+ * \brief Set single metadata item.
  *
  * The C function GDALSetMetadataItem() does the same thing as this method.
  *
@@ -293,6 +303,8 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
 /************************************************************************/
 
 /**
+ * \brief Set single metadata item.
+ *
  * @see GDALMajorObject::SetMetadataItem()
  */ 
 

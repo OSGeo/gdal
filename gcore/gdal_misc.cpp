@@ -60,7 +60,7 @@ void __pure_virtual()
 /************************************************************************/
 
 /**
- * Return the smallest data type that can fully express both input data
+ * \brief Return the smallest data type that can fully express both input data
  * types.
  *
  * @param eType1 
@@ -204,7 +204,7 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 /************************************************************************/
 
 /**
- * Get data type size in bits.
+ * \brief Get data type size in bits.
  *
  * Returns the size of a a GDT_* type in bits, <b>not bytes</b>!
  *
@@ -248,7 +248,7 @@ int CPL_STDCALL GDALGetDataTypeSize( GDALDataType eDataType )
 /************************************************************************/
 
 /**
- * Is data type complex? 
+ * \brief Is data type complex? 
  *
  * @return TRUE if the passed type is complex (one of GDT_CInt16, GDT_CInt32, 
  * GDT_CFloat32 or GDT_CFloat64), that is it consists of a real and imaginary
@@ -276,7 +276,7 @@ int CPL_STDCALL GDALDataTypeIsComplex( GDALDataType eDataType )
 /************************************************************************/
 
 /**
- * Get name of data type.
+ * \brief Get name of data type.
  *
  * Returns a symbolic name for the data type.  This is essentially the
  * the enumerated item name with the GDT_ prefix removed.  So GDT_Byte returns
@@ -339,7 +339,7 @@ const char * CPL_STDCALL GDALGetDataTypeName( GDALDataType eDataType )
 /************************************************************************/
 
 /**
- * Get data type by symbolic name.
+ * \brief Get data type by symbolic name.
  *
  * Returns a data type corresponding to the given symbolic name. This
  * function is opposite to the GDALGetDataTypeName().
@@ -373,7 +373,7 @@ GDALDataType CPL_STDCALL GDALGetDataTypeByName( const char *pszName )
 /************************************************************************/
 
 /**
- * Get name of palette interpretation
+ * \brief Get name of palette interpretation
  *
  * Returns a symbolic name for the palette interpretation.  This is the
  * the enumerated item name with the GPI_ prefix removed.  So GPI_Gray returns
@@ -411,7 +411,7 @@ const char *GDALGetPaletteInterpretationName( GDALPaletteInterp eInterp )
 /************************************************************************/
 
 /**
- * Get name of color interpretation
+ * \brief Get name of color interpretation
  *
  * Returns a symbolic name for the color interpretation.  This is derived from
  * the enumerated item name with the GCI_ prefix removed, but there are some
@@ -489,7 +489,7 @@ const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
 /************************************************************************/
 
 /**
- * Stub progress function.
+ * \brief Stub progress function.
  *
  * This is a stub (does nothing) implementation of the GDALProgressFunc()
  * semantics.  It is primarily useful for passing to functions that take
@@ -514,7 +514,7 @@ typedef struct {
 } GDALScaledProgressInfo;
 
 /**
- * Scaled progress transformer.
+ * \brief Scaled progress transformer.
  *
  * This is the progress function that should be passed along with the
  * callback data returned by GDALCreateScaledProgress().
@@ -536,7 +536,7 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
 /************************************************************************/
 
 /**
- * Create scaled progress transformer.
+ * \brief Create scaled progress transformer.
  *
  * Sometimes when an operations wants to report progress it actually
  * invokes several subprocesses which also take GDALProgressFunc()s, 
@@ -605,7 +605,7 @@ void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
 /************************************************************************/
 
 /**
- * Cleanup scaled progress handle.
+ * \brief Cleanup scaled progress handle.
  *
  * This function cleans up the data associated with a scaled progress function
  * as returned by GADLCreateScaledProgress(). 
@@ -624,7 +624,7 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
 /************************************************************************/
 
 /**
- * Simple progress report to terminal.
+ * \brief Simple progress report to terminal.
  *
  * This progress reporter prints simple progress report to the
  * terminal window.  The progress report generally looks something like
@@ -1118,7 +1118,7 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
 /************************************************************************/
 
 /**
- * Read ESRI world file. 
+ * \brief Read ESRI world file. 
  *
  * This function reads an ESRI style world file, and formats a geotransform
  * from its contents.
@@ -1213,7 +1213,7 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
 /************************************************************************/
 
 /**
- * Read ESRI world file. 
+ * \brief Read ESRI world file. 
  *
  * This function reads an ESRI style world file, and formats a geotransform
  * from it's contents.  It does the same as GDALLoadWorldFile() function, but
@@ -1340,7 +1340,7 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
 /************************************************************************/
 
 /**
- * Write ESRI world file. 
+ * \brief Write ESRI world file. 
  *
  * This function writes an ESRI style world file from the passed geotransform.
  *
@@ -1412,7 +1412,7 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /************************************************************************/
 
 /**
- * Get runtime version information.
+ * \brief Get runtime version information.
  *
  * Available pszRequest values:
  * <ul>
@@ -1506,7 +1506,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 /*                         GDALCheckVersion()                           */
 /************************************************************************/
 
-/** Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
+/** \brief Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
 
     The purpose of this method is to ensure that calling code will run with the GDAL
     version it is compiled for. It is primarly intented for external plugins.
@@ -1553,7 +1553,7 @@ const char * CPL_STDCALL GDALDecToDMS( double dfAngle, const char * pszAxis,
 /************************************************************************/
 
 /**
- * Convert a packed DMS value (DDDMMMSSS.SS) into decimal degrees.
+ * \brief Convert a packed DMS value (DDDMMMSSS.SS) into decimal degrees.
  *
  * See CPLPackedDMSToDec().
  */
@@ -1569,7 +1569,7 @@ double CPL_STDCALL GDALPackedDMSToDec( double dfPacked )
 /************************************************************************/
 
 /**
- * Convert decimal degrees into packed DMS value (DDDMMMSSS.SS).
+ * \brief Convert decimal degrees into packed DMS value (DDDMMMSSS.SS).
  *
  * See CPLDecToPackedDMS().
  */
@@ -1585,7 +1585,7 @@ double CPL_STDCALL GDALDecToPackedDMS( double dfDec )
 /************************************************************************/
 
 /**
- * Generate Geotransform from GCPs. 
+ * \brief Generate Geotransform from GCPs. 
  *
  * Given a set of GCPs perform first order fit as a geotransform. 
  *
@@ -1792,7 +1792,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 /************************************************************************/
 
 /**
- * General utility option processing.
+ * \brief General utility option processing.
  *
  * This function is intended to provide a variety of generic commandline 
  * options for all GDAL commandline utilities.  It takes care of the following
@@ -2487,7 +2487,7 @@ CPL_C_END
 CPL_C_START
 
 /**
-  * Return TRUE if the dataset dimensions are valid.
+  * \brief Return TRUE if the dataset dimensions are valid.
   *
   * @param nXSize raster width
   * @param nYSize raster height
@@ -2504,7 +2504,7 @@ int GDALCheckDatasetDimensions( int nXSize, int nYSize )
 }
 
 /**
-  * Return TRUE if the band count is valid.
+  * \brief Return TRUE if the band count is valid.
   *
   * If the configuration option GDAL_MAX_BAND_COUNT is defined,
   * the band count will be compared to the maximum number of band allowed.
