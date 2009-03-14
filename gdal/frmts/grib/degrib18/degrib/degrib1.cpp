@@ -627,6 +627,7 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 gribLen, uInt4 *curLoc,
          printf ("Warning! Problems with ECMWF PDS extension\n");
          return 0;
       }
+      /*
       pds += 12;
       i_temp = GRIB_SIGN_INT2 (pds[3], pds[4]);
       printf ("ID %d Class %d Type %d Stream %d", pds[0], pds[1], pds[2],
@@ -636,6 +637,7 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 gribLen, uInt4 *curLoc,
       pds += 4;
       printf ("Octet-50 %d, Octet-51 %d SectLen %d\n", pds[0], pds[1],
               sectLen);
+      */
    } else {
       printf ("Un-handled possible ensemble section center %d "
               "subcenter %d\n", *center, *subcenter);
