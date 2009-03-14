@@ -286,6 +286,49 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 /*
+ * Typemap argout used in Feature::GetFieldAsIntegerList()
+ */
+%typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList)
+{
+  /* %typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList) */
+  $1 = &nLen;
+  $2 = &pList;
+}
+
+%typemap(argout) (int *nLen, const int **pList )
+{
+  /* %typemap(argout) (int *nLen, const int **pList ) */
+  Py_DECREF($result);
+  PyObject *out = PyTuple_New( *$1 );
+  for( int i=0; i<*$1; i++ ) {
+    PyObject *val = PyInt_FromLong( (*$2)[i] );
+    PyTuple_SetItem( out, i, val );
+  }
+  $result = out;
+}
+
+/*
+ * Typemap argout used in Feature::GetFieldAsDoubleList()
+ */
+%typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList)
+{
+  /* %typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList) */
+  $1 = &nLen;
+  $2 = &pList;
+}
+
+%typemap(argout) (int *nLen, const double **pList )
+{
+  /* %typemap(argout) (int *nLen, const double **pList ) */
+  Py_DECREF($result);
+  PyObject *out = PyTuple_New( *$1 );
+  for( int i=0; i<*$1; i++ ) {
+    PyObject *val = PyFloat_FromDouble( (*$2)[i] );
+    PyTuple_SetItem( out, i, val );
+  }
+  $result = out;
+}
+/*
  * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
  */
 %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )

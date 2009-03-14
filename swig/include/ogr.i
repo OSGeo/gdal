@@ -821,7 +821,7 @@ public:
       return OGR_F_GetFieldAsStringList(self, id);
   }
   %clear char**;
-#elif defined(SWIGCSHARP)
+#elif defined(SWIGCSHARP) || defined(SWIGPYTHON)
   %apply (char **options) {char **};
   char **GetFieldAsStringList(int id) {
       return OGR_F_GetFieldAsStringList(self, id);
