@@ -679,8 +679,8 @@ int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH,
                                                  double *, double * );
 CPLErr CPL_DLL CPL_STDCALL GDALRATInitializeFromColorTable(
     GDALRasterAttributeTableH, GDALColorTableH );
-GDALColorTableH CPL_DLL CPL_STDCALL GDALRATTranslateToColorTable( 
-    int nEntryCount );
+GDALColorTableH CPL_DLL CPL_STDCALL GDALRATTranslateToColorTable(
+    GDALRasterAttributeTableH, int nEntryCount );
 void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH, 
                                               FILE * );
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
