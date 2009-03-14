@@ -44,7 +44,7 @@ static const char *pszUpdatableINST_DATA =
 /************************************************************************/
 
 /**
- * Constructor
+ * \brief Constructor
  *
  * Normally the driver registrar is constucted by the 
  * OGRSFDriverRegistrar::GetRegistrar() accessor which ensures singleton
@@ -115,7 +115,7 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
 /************************************************************************/
 
 /**
- * Cleanup all OGR related resources. 
+ * \brief Cleanup all OGR related resources. 
  *
  * This function will destroy the OGRSFDriverRegistrar along with all registered
  * drivers, and then cleanup long lived OSR (OGRSpatialReference) and CPL
@@ -156,7 +156,7 @@ void OGRCleanupAll()
 /************************************************************************/
 
 /**
- * Fetch registrar.
+ * \brief Fetch registrar.
  *
  * This static method should be used to fetch the singleton 
  * registrar.  It will create a registrar if there is not already
@@ -542,7 +542,25 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver )
             delete poDriver;
             return;
         }
-    }                                                   
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Skip and destroy drivers in the black list.                     */
+/* -------------------------------------------------------------------- */
+    char** papszSkipDrivers =
+            CSLTokenizeStringComplex(CPLGetConfigOption("OGR_SKIP", ""), ",", FALSE, FALSE);
+    char** iter = papszSkipDrivers;
+    while(*iter)
+    {
+        if (strcmp(*iter, poDriver->GetName()) == 0)
+        {
+            CSLDestroy(papszSkipDrivers);
+            delete poDriver;
+            return;
+        }
+        iter ++;
+    }
+    CSLDestroy(papszSkipDrivers);
 
 /* -------------------------------------------------------------------- */
 /*      Add to the end of the driver list.                              */
@@ -653,7 +671,7 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
 /************************************************************************/
 
 /**
- * Auto-load GDAL drivers from shared libraries.
+ * \brief Auto-load GDAL drivers from shared libraries.
  *
  * This function will automatically load drivers from shared libraries.  It
  * searches the "driver path" for .so (or .dll) files that start with the
