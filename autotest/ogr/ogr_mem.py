@@ -384,6 +384,47 @@ def ogr_mem_11():
     print f.GetFieldAsDateTime(idx)
     return 'success'
 
+###############################################################################
+# Test Get/Set on StringList, IntegerList, RealList
+
+def ogr_mem_12():
+
+    if gdaltest.mem_ds is None:
+        return 'skip'
+
+    lyr = gdaltest.mem_ds.CreateLayer( 'listlayer' )
+    field_defn = ogr.FieldDefn( 'stringlist', ogr.OFTStringList )
+    lyr.CreateField( field_defn )
+    field_defn = ogr.FieldDefn( 'intlist', ogr.OFTIntegerList )
+    lyr.CreateField( field_defn )
+    field_defn = ogr.FieldDefn( 'reallist', ogr.OFTRealList )
+    lyr.CreateField( field_defn )
+    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+
+    try:
+        feat.SetFieldStringList
+    except:
+        # OG python bindings
+        return 'skip'
+
+    feat.SetFieldStringList(0, ['a', 'b'])
+    if feat.GetFieldAsStringList(0) != ['a', 'b']:
+        print feat.GetFieldAsStringList(0)
+        return 'fail'
+
+    feat.SetFieldIntegerList(1, [2, 3])
+    if feat.GetFieldAsIntegerList(1) != [2, 3]:
+        print feat.GetFieldAsIntegerList(1)
+        return 'fail'
+
+    feat.SetFieldDoubleList(2, [4., 5.])
+    if feat.GetFieldAsDoubleList(2) != [4., 5.]:
+        print feat.GetFieldAsDoubleList(2)
+        return 'fail'
+
+    return 'success'
+
+
 def ogr_mem_cleanup():
 
     if gdaltest.mem_ds is None:
