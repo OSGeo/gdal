@@ -154,6 +154,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             const char *tlevel = CPLGetXMLValue(data_window_node, "TileLevel", "");
             const char *str_tile_count_x = CPLGetXMLValue(data_window_node, "TileCountX", "1");
             const char *str_tile_count_y = CPLGetXMLValue(data_window_node, "TileCountY", "1");
+            const char *y_origin = CPLGetXMLValue(data_window_node, "YOrigin", "default");
 
             if (ret == CE_None) {
                 if ((ulx[0] != '\0') && (uly[0] != '\0') && (lrx[0] != '\0') && (lry[0] != '\0')) {
@@ -206,6 +207,20 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                     double a = log(static_cast<double>(MIN(m_data_window.m_sx, m_data_window.m_sy))) / log(2.0) 
                                 - log(static_cast<double>(min_overview_size)) / log(2.0);
                     m_overview_count = MAX(0, MIN(static_cast<int>(ceil(a)), 32));
+                }
+            }
+            if (ret == CE_None) {
+                CPLString y_origin_str = y_origin;
+                if (y_origin_str == "top") {
+                    m_data_window.m_y_origin = GDALWMSDataWindow::TOP;
+                } else if (y_origin_str == "bottom") {
+                    m_data_window.m_y_origin = GDALWMSDataWindow::BOTTOM;
+                } else if (y_origin_str == "default") {
+                    m_data_window.m_y_origin = GDALWMSDataWindow::DEFAULT;
+                } else {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: DataWindow YOrigin must be set to " 
+                                "one of 'default', 'top', or 'bottom', not '%s'.", y_origin_str.c_str());
+                    ret = CE_Failure;
                 }
             }
         }
