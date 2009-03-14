@@ -56,7 +56,7 @@ static void *hDMMutex = NULL;
 /************************************************************************/
 
 /**
- * Fetch the global GDAL driver manager.
+ * \brief Fetch the global GDAL driver manager.
  *
  * This function fetches the pointer to the singleton global driver manager.
  * If the driver manager doesn't exist it is automatically created.
@@ -192,7 +192,7 @@ GDALDriverManager::~GDALDriverManager()
 /************************************************************************/
 
 /**
- * Fetch the number of registered drivers.
+ * \brief Fetch the number of registered drivers.
  *
  * This C analog to this is GDALGetDriverCount().
  *
@@ -210,6 +210,8 @@ int GDALDriverManager::GetDriverCount()
 /************************************************************************/
 
 /**
+ * \brief Fetch the number of registered drivers.
+ *
  * @see GDALDriverManager::GetDriverCount()
  */
 
@@ -224,7 +226,7 @@ int CPL_STDCALL GDALGetDriverCount()
 /************************************************************************/
 
 /**
- * Fetch driver by index.
+ * \brief Fetch driver by index.
  *
  * This C analog to this is GDALGetDriver().
  *
@@ -249,6 +251,8 @@ GDALDriver * GDALDriverManager::GetDriver( int iDriver )
 /************************************************************************/
 
 /**
+ * \brief Fetch driver by index.
+ *
  * @see GDALDriverManager::GetDriver()
  */
 
@@ -263,7 +267,7 @@ GDALDriverH CPL_STDCALL GDALGetDriver( int iDriver )
 /************************************************************************/
 
 /**
- * Register a driver for use.
+ * \brief Register a driver for use.
  *
  * The C analog is GDALRegisterDriver().
  *
@@ -330,6 +334,8 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 /************************************************************************/
 
 /**
+ * \brief Register a driver for use.
+ *
  * @see GDALDriverManager::GetRegisterDriver()
  */
 
@@ -347,7 +353,7 @@ int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
 /************************************************************************/
 
 /**
- * Deregister the passed driver.
+ * \brief Deregister the passed driver.
  *
  * If the driver isn't found no change is made.
  *
@@ -384,6 +390,8 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
 /************************************************************************/
 
 /**
+ * \brief Deregister the passed driver.
+ *
  * @see GDALDriverManager::GetDeregisterDriver()
  */
 
@@ -401,7 +409,7 @@ void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
 /************************************************************************/
 
 /**
- * Fetch a driver based on the short name.
+ * \brief Fetch a driver based on the short name.
  *
  * The C analog is the GDALGetDriverByName() function.
  *
@@ -431,6 +439,8 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 /************************************************************************/
 
 /**
+ * \brief Fetch a driver based on the short name.
+ *
  * @see GDALDriverManager::GetDriverByName()
  */
 
@@ -470,7 +480,7 @@ void GDALDriverManager::SetHome( const char * pszNewHome )
 /************************************************************************/
 
 /**
- * This method unload undesirable drivers.
+ * \brief This method unload undesirable drivers.
  *
  * All drivers specified in the space delimited list in the GDAL_SKIP 
  * environmentvariable) will be deregistered and destroyed.  This method 
@@ -513,7 +523,7 @@ void GDALDriverManager::AutoSkipDrivers()
 /************************************************************************/
 
 /**
- * Auto-load GDAL drivers from shared libraries.
+ * \brief Auto-load GDAL drivers from shared libraries.
  *
  * This function will automatically load drivers from shared libraries.  It
  * searches the "driver path" for .so (or .dll) files that start with the
@@ -653,7 +663,7 @@ void GDALDriverManager::AutoLoadDrivers()
 /************************************************************************/
 
 /**
- * Destroy the driver manager.
+ * \brief Destroy the driver manager.
  *
  * Incidently unloads all managed drivers.
  *

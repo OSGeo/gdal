@@ -174,7 +174,7 @@ GDALDataset::GDALDataset()
 /************************************************************************/
 
 /**
- * Destroy an open GDALDataset.
+ * \brief Destroy an open GDALDataset.
  *
  * This is the accepted method of closing a GDAL dataset and deallocating
  * all resources associated with it.
@@ -254,7 +254,7 @@ GDALDataset::~GDALDataset()
 /************************************************************************/
 
 /**
- * Flush all write cached data to disk.
+ * \brief Flush all write cached data to disk.
  *
  * Any raster (or other GDAL) data written via GDAL calls, but buffered
  * internally will be written to disk.
@@ -285,6 +285,8 @@ void GDALDataset::FlushCache()
 /************************************************************************/
 
 /**
+ * \brief Flush all write cached data to disk.
+ *
  * @see GDALDataset::FlushCache().
  */
 
@@ -383,7 +385,7 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
 /************************************************************************/
 
 /**
- * Add a band to a dataset.
+ * \brief Add a band to a dataset.
  *
  * This method will add a new band to the dataset if the underlying format
  * supports this action.  Most formats do not. 
@@ -418,6 +420,8 @@ CPLErr GDALDataset::AddBand( GDALDataType eType, char ** papszOptions )
 /************************************************************************/
 
 /**
+ * \brief Add a band to a dataset.
+ *
  * @see GDALDataset::AddBand().
  */
 
@@ -496,7 +500,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 
 /**
 
- Fetch raster width in pixels.
+ \brief Fetch raster width in pixels.
 
  Equivelent of the C function GDALGetRasterXSize().
 
@@ -515,6 +519,8 @@ int GDALDataset::GetRasterXSize()
 /************************************************************************/
 
 /**
+ * \brief Fetch raster width in pixels.
+ *
  * @see GDALDataset::GetRasterXSize().
  */
 
@@ -533,7 +539,7 @@ int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 
 /**
 
- Fetch raster height in pixels.
+ \brief Fetch raster height in pixels.
 
  Equivelent of the C function GDALGetRasterYSize().
 
@@ -552,6 +558,8 @@ int GDALDataset::GetRasterYSize()
 /************************************************************************/
 
 /**
+ * \brief Fetch raster height in pixels.
+ *
  * @see GDALDataset::GetRasterYSize().
  */
 
@@ -569,7 +577,7 @@ int CPL_STDCALL GDALGetRasterYSize( GDALDatasetH hDataset )
 
 /**
 
- Fetch a band object for a dataset.
+ \brief Fetch a band object for a dataset.
 
  Equivalent of the C function GDALGetRasterBand().
 
@@ -603,6 +611,7 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 /************************************************************************/
 
 /**
+ * \brief Fetch a band object for a dataset.
  * @see GDALDataset::GetRasterBand().
  */
 
@@ -619,7 +628,7 @@ GDALRasterBandH CPL_STDCALL GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 /************************************************************************/
 
 /**
- * Fetch the number of raster bands on this dataset.
+ * \brief Fetch the number of raster bands on this dataset.
  *
  * Same as the C function GDALGetRasterCount().
  *
@@ -637,6 +646,8 @@ int GDALDataset::GetRasterCount()
 /************************************************************************/
 
 /**
+ * \brief Fetch the number of raster bands on this dataset.
+ *
  * @see GDALDataset::GetRasterCount().
  */
 
@@ -653,7 +664,7 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * Fetch the projection definition string for this dataset.
+ * \brief Fetch the projection definition string for this dataset.
  *
  * Same as the C function GDALGetProjectionRef().
  *
@@ -681,6 +692,8 @@ const char *GDALDataset::GetProjectionRef()
 /************************************************************************/
 
 /**
+ * \brief Fetch the projection definition string for this dataset.
+ *
  * @see GDALDataset::GetProjectionRef()
  */
 
@@ -697,7 +710,7 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * Set the projection reference string for this dataset.
+ * \brief Set the projection reference string for this dataset.
  *
  * The string should be in OGC WKT or PROJ.4 format.  An error may occur
  * because of incorrectly specified projection strings, because the dataset
@@ -725,6 +738,8 @@ CPLErr GDALDataset::SetProjection( const char * )
 /************************************************************************/
 
 /**
+ * \brief Set the projection reference string for this dataset.
+ *
  * @see GDALDataset::SetProjection()
  */
 
@@ -741,7 +756,7 @@ CPLErr CPL_STDCALL GDALSetProjection( GDALDatasetH hDS, const char * pszProjecti
 /************************************************************************/
 
 /**
- * Fetch the affine transformation coefficients.
+ * \brief Fetch the affine transformation coefficients.
  *
  * Fetches the coefficients for transforming between pixel/line (P,L) raster
  * space, and projection coordinates (Xp,Yp) space.
@@ -793,6 +808,8 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 
 /**
+ * \brief Fetch the affine transformation coefficients.
+ *
  * @see GDALDataset::GetGeoTransform()
  */
 
@@ -809,7 +826,7 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
 /************************************************************************/
 
 /**
- * Set the affine transformation coefficients.
+ * \brief Set the affine transformation coefficients.
  *
  * See GetGeoTransform() for details on the meaning of the padfTransform
  * coefficients.
@@ -838,6 +855,8 @@ CPLErr GDALDataset::SetGeoTransform( double * )
 /************************************************************************/
 
 /**
+ * \brief Set the affine transformation coefficients.
+ *
  * @see GDALDataset::SetGeoTransform()
  */
 
@@ -855,7 +874,7 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 /************************************************************************/
 
 /**
- * Fetch a format specific internally meaningful handle.
+ * \brief Fetch a format specific internally meaningful handle.
  *
  * This method is the same as the C GDALGetInternalHandle() method. 
  *
@@ -876,6 +895,8 @@ void *GDALDataset::GetInternalHandle( const char * )
 /************************************************************************/
 
 /**
+ * \brief Fetch a format specific internally meaningful handle.
+ *
  * @see GDALDataset::GetInternalHandle()
  */
 
@@ -893,7 +914,7 @@ GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
 /************************************************************************/
 
 /**
- * Fetch the driver to which this dataset relates.
+ * \brief Fetch the driver to which this dataset relates.
  *
  * This method is the same as the C GDALGetDatasetDriver() function.
  *
@@ -912,6 +933,8 @@ GDALDriver * GDALDataset::GetDriver()
 /************************************************************************/
 
 /**
+ * \brief Fetch the driver to which this dataset relates.
+ *
  * @see GDALDataset::GetDriver()
  */
 
@@ -928,7 +951,7 @@ GDALDriverH CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH hDataset )
 /************************************************************************/
 
 /**
- * Add one to dataset reference count.
+ * \brief Add one to dataset reference count.
  *
  * The reference is one after instantiation.
  *
@@ -948,6 +971,8 @@ int GDALDataset::Reference()
 /************************************************************************/
 
 /**
+ * \brief Add one to dataset reference count.
+ *
  * @see GDALDataset::Reference()
  */
 
@@ -964,7 +989,7 @@ int CPL_STDCALL GDALReferenceDataset( GDALDatasetH hDataset )
 /************************************************************************/
 
 /**
- * Subtract one from dataset reference count.
+ * \brief Subtract one from dataset reference count.
  *
  * The reference is one after instantiation.  Generally when the reference
  * count has dropped to zero the dataset may be safely deleted (closed).
@@ -985,6 +1010,8 @@ int GDALDataset::Dereference()
 /************************************************************************/
 
 /**
+ * \brief Subtract one from dataset reference count.
+ *
  * @see GDALDataset::Dereference()
  */
 
@@ -1001,7 +1028,7 @@ int CPL_STDCALL GDALDereferenceDataset( GDALDatasetH hDataset )
 /************************************************************************/
 
 /**
- * Returns shared flag.
+ * \brief Returns shared flag.
  *
  * @return TRUE if the GDALDataset is available for sharing, or FALSE if not.
  */
@@ -1017,7 +1044,7 @@ int GDALDataset::GetShared()
 /************************************************************************/
 
 /**
- * Mark this dataset as available for sharing.
+ * \brief Mark this dataset as available for sharing.
  */
 
 void GDALDataset::MarkAsShared()
@@ -1057,7 +1084,7 @@ void GDALDataset::MarkAsShared()
 /************************************************************************/
 
 /**
- * Get number of GCPs. 
+ * \brief Get number of GCPs. 
  *
  * This method is the same as the C function GDALGetGCPCount(). 
  *
@@ -1075,6 +1102,8 @@ int GDALDataset::GetGCPCount()
 /************************************************************************/
 
 /**
+ * \brief Get number of GCPs. 
+ *
  * @see GDALDataset::GetGCPCount()
  */
 
@@ -1091,7 +1120,7 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * Get output projection for GCPs. 
+ * \brief Get output projection for GCPs. 
  *
  * This method is the same as the C function GDALGetGCPProjection(). 
  *
@@ -1111,6 +1140,8 @@ const char *GDALDataset::GetGCPProjection()
 /************************************************************************/
 
 /**
+ * \brief Get output projection for GCPs. 
+ *
  * @see GDALDataset::GetGCPProjection()
  */
 
@@ -1127,7 +1158,7 @@ const char * CPL_STDCALL GDALGetGCPProjection( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * Fetch GCPs.
+ * \brief Fetch GCPs.
  *
  * This method is the same as the C function GDALGetGCPs(). 
  *
@@ -1146,6 +1177,8 @@ const GDAL_GCP *GDALDataset::GetGCPs()
 /************************************************************************/
 
 /**
+ * \brief Fetch GCPs.
+ *
  * @see GDALDataset::GetGCPs()
  */
 
@@ -1163,7 +1196,7 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * Assign GCPs.
+ * \brief Assign GCPs.
  *
  * This method is the same as the C function GDALSetGCPs(). 
  *
@@ -1208,6 +1241,8 @@ CPLErr GDALDataset::SetGCPs( int nGCPCount,
 /************************************************************************/
 
 /**
+ * \brief Assign GCPs.
+ *
  * @see GDALDataset::SetGCPs()
  */
 
@@ -1227,7 +1262,7 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
 /************************************************************************/
 
 /**
- * Build raster overview(s)
+ * \brief Build raster overview(s)
  *
  * If the operation is unsupported for the indicated dataset, then 
  * CE_Failure is returned, and CPLGetLastErrorNo() will return 
@@ -1296,6 +1331,8 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
 /************************************************************************/
 
 /**
+ * \brief Build raster overview(s)
+ *
  * @see GDALDataset::BuildOverviews()
  */
 
@@ -1397,7 +1434,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 /**
- * Read/write a region of image data from multiple bands.
+ * \brief Read/write a region of image data from multiple bands.
  *
  * This method allows reading a region of one or more GDALRasterBands from
  * this dataset into a buffer,  or writing data from a buffer into a region 
@@ -1610,6 +1647,8 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 /**
+ * \brief Read/write a region of image data from multiple bands.
+ *
  * @see GDALDataset::RasterIO()
  */
 
@@ -1647,7 +1686,7 @@ static int GDALGetOpenDatasetsForeach(void* elt, void* user_data)
 }
 
 /**
- * Fetch all open GDAL dataset handles.
+ * \brief Fetch all open GDAL dataset handles.
  *
  * This method is the same as the C function GDALGetOpenDatasets().
  *
@@ -1685,6 +1724,8 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
 /************************************************************************/
 
 /**
+ * \brief Fetch all open GDAL dataset handles.
+ *
  * @see GDALDataset::GetOpenDatasets()
  */
 
@@ -1702,6 +1743,8 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
 /************************************************************************/
 
 /**
+ * \brief Return access flag
+ *
  * @see GDALDataset::GetAccess()
  */
 
@@ -1717,7 +1760,7 @@ int CPL_STDCALL GDALGetAccess( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * Advise driver of upcoming read requests.
+ * \brief Advise driver of upcoming read requests.
  *
  * Some GDAL drivers operate more efficiently if they know in advance what 
  * set of upcoming read requests will be made.  The AdviseRead() method allows
@@ -1793,6 +1836,11 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /*                       GDALDatasetAdviseRead()                        */
 /************************************************************************/
 
+/**
+ * \brief Advise driver of upcoming read requests.
+ *
+ * @see GDALDataset::AdviseRead()
+ */
 CPLErr CPL_STDCALL 
 GDALDatasetAdviseRead( GDALDatasetH hDS, 
                        int nXOff, int nYOff, int nXSize, int nYSize,
@@ -1813,7 +1861,7 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
 /************************************************************************/
 
 /**
- * Fetch files forming dataset.
+ * \brief Fetch files forming dataset.
  *
  * Returns a list of files believed to be part of this dataset.  If it returns
  * an empty list of files it means there is believed to be no local file
@@ -1878,6 +1926,8 @@ char **GDALDataset::GetFileList()
 /************************************************************************/
 
 /**
+ * \brief Fetch files forming dataset.
+ *
  * @see GDALDataset::GetFileList()
  */
 
@@ -1893,6 +1943,25 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
 /*                           CreateMaskBand()                           */
 /************************************************************************/
 
+/**
+ * \brief Adds a mask band to the dataset
+ *
+ * The default implementation of the CreateMaskBand() method is implemented
+ * based on similar rules to the .ovr handling implemented using the
+ * GDALDefaultOverviews object. A TIFF file with the extension .msk will
+ * be created with the same basename as the original file, and it will have
+ * one band.
+ * The mask images will be deflate compressed tiled images with the same
+ * block size as the original image if possible.
+ *
+ * @since GDAL 1.5.0
+ *
+ * @param nFlags ignored. GMF_PER_DATASET will be assumed.
+ * @return CE_None on success or CE_Failure on an error.
+ *
+ * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ *
+ */
 CPLErr GDALDataset::CreateMaskBand( int nFlags )
 
 {
@@ -1909,6 +1978,10 @@ CPLErr GDALDataset::CreateMaskBand( int nFlags )
 /*                     GDALCreateDatasetMaskBand()                      */
 /************************************************************************/
 
+/**
+ * \brief Adds a mask band to the dataset
+ * @see GDALDataset::CreateMaskBand()
+ */
 CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
 
 {
@@ -1922,7 +1995,7 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
 /************************************************************************/
 
 /**
- * Open a raster file as a GDALDataset.
+ * \brief Open a raster file as a GDALDataset.
  *
  * This function will try to open the passed file, or virtual dataset
  * name by invoking the Open method of each registered GDALDriver in turn. 
@@ -2004,7 +2077,7 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
 /************************************************************************/
 
 /**
- * Open a raster file as a GDALDataset.
+ * \brief Open a raster file as a GDALDataset.
  *
  * This function works the same as GDALOpen(), but allows the sharing of
  * GDALDataset handles for a dataset with other callers to GDALOpenShared().
@@ -2092,7 +2165,7 @@ GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 /************************************************************************/
 
 /**
- * Close GDAL dataset. 
+ * \brief Close GDAL dataset. 
  *
  * For non-shared datasets (opened with GDALOpen()) the dataset is closed
  * using the C++ "delete" operator, recovering all dataset related resources.  
@@ -2193,7 +2266,7 @@ static int GDALDumpOpenDatasetsForeach(void* elt, void* user_data)
 }
 
 /**
- * List open datasets.
+ * \brief List open datasets.
  *
  * Dumps a list of all open datasets (shared or not) to the indicated 
  * text file (may be stdout or stderr).   This function is primariliy intended
