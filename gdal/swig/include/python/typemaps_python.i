@@ -299,10 +299,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(argout) (int *nLen, const int **pList ) */
   Py_DECREF($result);
-  PyObject *out = PyTuple_New( *$1 );
+  PyObject *out = PyList_New( *$1 );
   for( int i=0; i<*$1; i++ ) {
     PyObject *val = PyInt_FromLong( (*$2)[i] );
-    PyTuple_SetItem( out, i, val );
+    PyList_SetItem( out, i, val );
   }
   $result = out;
 }
@@ -321,10 +321,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(argout) (int *nLen, const double **pList ) */
   Py_DECREF($result);
-  PyObject *out = PyTuple_New( *$1 );
+  PyObject *out = PyList_New( *$1 );
   for( int i=0; i<*$1; i++ ) {
     PyObject *val = PyFloat_FromDouble( (*$2)[i] );
-    PyTuple_SetItem( out, i, val );
+    PyList_SetItem( out, i, val );
   }
   $result = out;
 }
