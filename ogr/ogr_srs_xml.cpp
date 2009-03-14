@@ -694,7 +694,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /************************************************************************/
 
 /**
- * Export coordinate system in XML format.
+ * \brief Export coordinate system in XML format.
  *
  * Converts the loaded coordinate reference system into XML format
  * to the extent possible.  The string returned in ppszRawXML should be
@@ -739,7 +739,7 @@ OGRErr OGRSpatialReference::exportToXML( char **ppszRawXML,
 /*                           OSRExportToXML()                           */
 /************************************************************************/
 /** 
- * Export coordinate system in XML format.
+ * \brief Export coordinate system in XML format.
  *
  * This function is the same as OGRSpatialReference::exportToXML().
  */
@@ -1262,7 +1262,7 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /************************************************************************/
 
 /** 
- * Import coordinate system from XML format (GML only currently).
+ * \brief Import coordinate system from XML format (GML only currently).
  *
  * This method is the same as the C function OSRImportFromXML()
  * @param pszXML XML string to import
@@ -1318,7 +1318,7 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 /************************************************************************/
 
 /** 
- * Import coordinate system from XML format (GML only currently).
+ * \brief Import coordinate system from XML format (GML only currently).
  *
  * This function is the same as OGRSpatialReference::importFromXML().
  */
