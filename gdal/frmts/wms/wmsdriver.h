@@ -38,9 +38,11 @@ void URLAppend(CPLString *url, const CPLString &s);
 CPLString BufferToVSIFile(GByte *buffer, size_t size);
 CPLErr MakeDirs(const char *path);
 int StrToBool(const char *p);
+int URLSearchAndReplace (CPLString *base, const char *search, const char *fmt, ...);
 
 /* Convert a.b.c.d to a * 0x1000000 + b * 0x10000 + c * 0x100 + d */
 int VersionStringToInt(const char *version);
+
 
 class GDALWMSImageRequestInfo {
 public:
@@ -55,6 +57,7 @@ public:
     double m_x1, m_y1;
     int m_sx, m_sy;
     int m_tx, m_ty, m_tlevel;
+    enum { BOTTOM = -1, DEFAULT = 0, TOP = 1 } m_y_origin;
 };
 
 class GDALWMSTiledImageRequestInfo {
