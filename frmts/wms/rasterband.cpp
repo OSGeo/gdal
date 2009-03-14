@@ -342,7 +342,8 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
             ret = CE_Failure;
         }
         if (ret == CE_None) {
-            if (ds->GetRasterCount() != m_parent_dataset->m_bands_count) {
+            int nDSRasterCount = ds->GetRasterCount();
+            if (nDSRasterCount != m_parent_dataset->m_bands_count) {
                 /* Maybe its an image with color table */
                 bool accepted_as_ct = false;
                 if ((eDataType == GDT_Byte) && (ds->GetRasterCount() == 1)) {
@@ -372,9 +373,14 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                         }
                     }
                 }
-                if (!accepted_as_ct) {
+
+                if (nDSRasterCount == 4 && m_parent_dataset->m_bands_count == 3)
+                {
+                    /* metacarta TMS service sometimes return a 4 band PNG instead of the expected 3 band... */
+                }
+                else if (!accepted_as_ct) {
                     CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect bands count %d in downloaded block, expected %d.",
-                        ds->GetRasterCount(), m_parent_dataset->m_bands_count);
+                        nDSRasterCount, m_parent_dataset->m_bands_count);
                     ret = CE_Failure;
                 }
             }

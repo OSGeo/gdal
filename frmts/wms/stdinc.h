@@ -18,3 +18,4 @@
 #include "minidriver_wms.h"
 #include "minidriver_tileservice.h"
 #include "minidriver_worldwind.h"
+#include "minidriver_tms.h"
