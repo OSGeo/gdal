@@ -20,24 +20,28 @@ ogr_dir:
 	$(MAKE) /f makefile.vc
 	cd ..
 	link ogr_wrap.obj $(GDALLIB) /out:ogrjni.dll /DLL
+	if exist ogrjni.dll.manifest mt -manifest ogrjni.dll.manifest -outputresource:ogrjni.dll;2
 
 gdal_dir:
 	cd gdal
 	$(MAKE) /f makefile.vc
 	cd ..
 	link gdal_wrap.obj $(GDALLIB) /out:gdaljni.dll /DLL
+	if exist gdaljni.dll.manifest mt -manifest gdaljni.dll.manifest -outputresource:gdaljni.dll;2
 
 const_dir:
 	cd const
 	$(MAKE) /f makefile.vc
 	cd ..
 	link gdalconst_wrap.obj $(GDALLIB) /out:gdalconstjni.dll /DLL
+	if exist gdalconstjni.dll.manifest mt -manifest gdalconstjni.dll.manifest -outputresource:gdalconstjni.dll;2
 
 osr_dir:
 	cd osr
 	$(MAKE) /f makefile.vc
 	cd ..
 	link osr_wrap.obj $(GDALLIB) /out:osrjni.dll /DLL
+	if exist osrjni.dll.manifest mt -manifest osrjni.dll.manifest -outputresource:osrjni.dll;2
 	
 	
 clean:
