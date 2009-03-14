@@ -41,8 +41,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 /**
- * Create a geometry object of the appropriate type from it's well known
- * binary representation.
+ * \brief Create a geometry object of the appropriate type from it's well known binary representation.
  *
  * Note that if nBytes is passed as zero, no checking can be done on whether
  * the pabyData is sufficient.  This can result in a crash if the input
@@ -153,8 +152,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*                        OGR_G_CreateFromWkb()                         */
 /************************************************************************/
 /**
- * Create a geometry object of the appropriate type from it's well known
- * binary representation.
+ * \brief Create a geometry object of the appropriate type from it's well known binary representation.
  *
  * Note that if nBytes is passed as zero, no checking can be done on whether
  * the pabyData is sufficient.  This can result in a crash if the input
@@ -197,8 +195,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
 /************************************************************************/
 
 /**
- * Create a geometry object of the appropriate type from it's well known
- * text representation.
+ * \brief Create a geometry object of the appropriate type from it's well known text representation.
  *
  * The C function OGR_G_CreateFromWkt() is the same as this method.
  *
@@ -317,8 +314,7 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 /*                        OGR_G_CreateFromWkt()                         */
 /************************************************************************/
 /**
- * Create a geometry object of the appropriate type from it's well known
- * text representation.
+ * \brief Create a geometry object of the appropriate type from it's well known text representation.
  *
  * The OGRGeometryFactory::createFromWkt CPP method is the same as this
  * function.
@@ -352,7 +348,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt( char **ppszData,
 /************************************************************************/
 
 /** 
- * Create an empty geometry of desired type.
+ * \brief Create an empty geometry of desired type.
  *
  * This is equivelent to allocating the desired geometry with new, but
  * the allocation is guaranteed to take place in the context of the 
@@ -406,7 +402,7 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
 /*                        OGR_G_CreateGeometry()                        */
 /************************************************************************/
 /** 
- * Create an empty geometry of desired type.
+ * \brief Create an empty geometry of desired type.
  *
  * This is equivelent to allocating the desired geometry with new, but
  * the allocation is guaranteed to take place in the context of the 
@@ -432,7 +428,7 @@ OGRGeometryH OGR_G_CreateGeometry( OGRwkbGeometryType eGeometryType )
 /************************************************************************/
 
 /**
- * Destroy geometry object.
+ * \brief Destroy geometry object.
  *
  * Equivalent to invoking delete on a geometry, but it guaranteed to take 
  * place within the context of the GDAL/OGR heap.
@@ -453,7 +449,7 @@ void OGRGeometryFactory::destroyGeometry( OGRGeometry *poGeom )
 /*                        OGR_G_DestroyGeometry()                       */
 /************************************************************************/
 /**
- * Destroy geometry object.
+ * \brief Destroy geometry object.
  *
  * Equivalent to invoking delete on a geometry, but it guaranteed to take 
  * place within the context of the GDAL/OGR heap.
@@ -475,7 +471,7 @@ void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
 /************************************************************************/
 
 /**
- * Convert to polygon.
+ * \brief Convert to polygon.
  *
  * Tries to force the provided geometry to be a polygon.  Currently
  * this just effects a change on multipolygons.  The passed in geometry is
@@ -524,7 +520,7 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
 /************************************************************************/
 
 /**
- * Convert to multipolygon.
+ * \brief Convert to multipolygon.
  *
  * Tries to force the provided geometry to be a multipolygon.  Currently
  * this just effects a change on polygons.  The passed in geometry is
@@ -590,7 +586,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 /************************************************************************/
 
 /**
- * Convert to multipoint.
+ * \brief Convert to multipoint.
  *
  * Tries to force the provided geometry to be a multipoint.  Currently
  * this just effects a change on points.  The passed in geometry is
@@ -652,7 +648,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
 /************************************************************************/
 
 /**
- * Convert to multilinestring.
+ * \brief Convert to multilinestring.
  *
  * Tries to force the provided geometry to be a multilinestring.
  *
@@ -833,7 +829,7 @@ typedef enum
 } OrganizePolygonMethod;
 
 /**
- * Organize polygons based on geometries.
+ * \brief Organize polygons based on geometries.
  *
  * Analyse a set of rings (passed as simple polygons), and based on a 
  * geometric analysis convert them into a polygon with inner rings, 
@@ -1282,7 +1278,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /************************************************************************/
 
 /**
- * Create geometry from GML.
+ * \brief Create geometry from GML.
  *
  * This method translates a fragment of GML containing only the geometry
  * portion into a corresponding OGRGeometry.  There are many limitations
@@ -1366,7 +1362,7 @@ void *OGRGeometryFactory::getGEOSGeometryFactory()
 /************************************************************************/
 
 /**
- * Test if GEOS enabled.
+ * \brief Test if GEOS enabled.
  *
  * This static method returns TRUE if GEOS support is built into OGR,
  * otherwise it returns FALSE.
@@ -1389,8 +1385,7 @@ int OGRGeometryFactory::haveGEOS()
 /************************************************************************/
 
 /**
- * Create a geometry object of the appropriate type from it's FGF (FDO 
- * Geometry Format) binary representation.
+ * \brief Create a geometry object of the appropriate type from it's FGF (FDO Geometry Format) binary representation.
  *
  * Also note that this is a static method, and that there
  * is no need to instantiate an OGRGeometryFactory object.  

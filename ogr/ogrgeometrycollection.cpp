@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 /**
- * Create an empty geometry collection.
+ * \brief Create an empty geometry collection.
  */
 
 OGRGeometryCollection::OGRGeometryCollection()
@@ -150,7 +150,7 @@ const char * OGRGeometryCollection::getGeometryName() const
 /************************************************************************/
 
 /**
- * Fetch number of geometries in container.
+ * \brief Fetch number of geometries in container.
  *
  * This method relates to the SFCOM IGeometryCollect::get_NumGeometries()
  * method.
@@ -169,7 +169,7 @@ int OGRGeometryCollection::getNumGeometries() const
 /************************************************************************/
 
 /**
- * Fetch geometry from container.
+ * \brief Fetch geometry from container.
  *
  * This method returns a pointer to an geometry within the container.  The
  * returned geometry remains owned by the container, and should not be
@@ -210,7 +210,7 @@ const OGRGeometry * OGRGeometryCollection::getGeometryRef( int i ) const
 /************************************************************************/
 
 /**
- * Add a geometry to the container.
+ * \brief Add a geometry to the container.
  *
  * Some subclasses of OGRGeometryCollection restrict the types of geometry
  * that can be added, and may return an error.  The passed geometry is cloned
@@ -248,7 +248,7 @@ OGRErr OGRGeometryCollection::addGeometry( const OGRGeometry * poNewGeom )
 /************************************************************************/
 
 /**
- * Add a geometry directly to the container.
+ * \brief Add a geometry directly to the container.
  *
  * Some subclasses of OGRGeometryCollection restrict the types of geometry
  * that can be added, and may return an error.  Ownership of the passed
@@ -286,7 +286,7 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
 /************************************************************************/
 
 /**
- * Remove a geometry from the container.
+ * \brief Remove a geometry from the container.
  *
  * Removing a geometry will cause the geometry count to drop by one, and all
  * "higher" geometries will shuffle down one in index.
@@ -791,7 +791,7 @@ void OGRGeometryCollection::setCoordinateDimension( int nNewDimension )
 /************************************************************************/
 
 /**
- * Compute area of geometry collection.
+ * \brief Compute area of geometry collection.
  *
  * The area is computed as the sum of the areas of all members
  * in this collection.

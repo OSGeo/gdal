@@ -45,7 +45,7 @@ OGRCurve::~OGRCurve()
 /************************************************************************/
 
 /**
- * Return TRUE if curve is closed.
+ * \brief Return TRUE if curve is closed.
  *
  * Tests if a curve is closed. A curve is closed if its start point is
  * equal to its end point.
@@ -77,7 +77,7 @@ int OGRCurve::get_IsClosed() const
 /**
  * \fn double OGRCurve::get_Length() const;
  *
- * Returns the length of the curve.
+ * \brief Returns the length of the curve.
  *
  * This method relates to the SFCOM ICurve::get_Length() method.
  *
@@ -88,7 +88,7 @@ int OGRCurve::get_IsClosed() const
 /**
  * \fn void OGRCurve::StartPoint( OGRPoint * poPoint ) const;
  *
- * Return the curve start point.
+ * \brief Return the curve start point.
  *
  * This method relates to the SF COM ICurve::get_StartPoint() method.
  *
@@ -98,7 +98,7 @@ int OGRCurve::get_IsClosed() const
 /**
  * \fn void OGRCurve::EndPoint( OGRPoint * poPoint ) const;
  *
- * Return the curve end point.
+ * \brief Return the curve end point.
  *
  * This method relates to the SF COM ICurve::get_EndPoint() method.
  *
@@ -108,7 +108,7 @@ int OGRCurve::get_IsClosed() const
 /**
  * \fn void OGRCurve::Value( double dfDistance, OGRPoint * poPoint ) const;
  *
- * Fetch point at given distance along curve.
+ * \brief Fetch point at given distance along curve.
  *
  * This method relates to the SF COM ICurve::get_Value() method.
  *

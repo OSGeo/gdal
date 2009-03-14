@@ -335,7 +335,7 @@ OGRGeometry *OGRLinearRing::clone() const
 /************************************************************************/
 
 /**
- * Returns TRUE if the ring has clockwise winding (or less than 2 points)
+ * \brief Returns TRUE if the ring has clockwise winding (or less than 2 points)
  *
  * @return TRUE if clockwise otherwise FALSE.
  */
@@ -409,7 +409,7 @@ void OGRLinearRing::closeRings()
 /************************************************************************/
 
 /**
- * Compute area of ring.
+ * \brief Compute area of ring.
  *
  * The area is computed according to Green's Theorem:  
  *

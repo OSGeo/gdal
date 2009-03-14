@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 /**
- * Constructor.
+ * \brief Constructor.
  *
  * @param pszNameIn the name of the new field.
  * @param eTypeIn the type of the new field.
@@ -55,7 +55,7 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn )
 /************************************************************************/
 
 /**
- * Constructor.
+ * \brief Constructor.
  *
  * Create by cloning an existing field definition.
  *
@@ -77,7 +77,7 @@ OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
 /*                           OGR_Fld_Create()                           */
 /************************************************************************/
 /**
- * Create a new field definition.
+ * \brief Create a new field definition.
  *
  * This function is the same as the CPP method OGRFieldDefn::OGRFieldDefn().
  *
@@ -123,7 +123,7 @@ OGRFieldDefn::~OGRFieldDefn()
 /*                          OGR_Fld_Destroy()                           */
 /************************************************************************/
 /**
- * Destroy a field definition.
+ * \brief Destroy a field definition.
  *
  * @param hDefn handle to the field definition to destroy.
  */
@@ -139,7 +139,7 @@ void OGR_Fld_Destroy( OGRFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * Reset the name of this field.
+ * \brief Reset the name of this field.
  *
  * This method is the same as the C function OGR_Fld_SetName().
  *
@@ -157,7 +157,7 @@ void OGRFieldDefn::SetName( const char * pszNameIn )
 /*                          OGR_Fld_SetName()                           */
 /************************************************************************/
 /**
- * Reset the name of this field.
+ * \brief Reset the name of this field.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetName().
  *
@@ -178,7 +178,7 @@ void OGR_Fld_SetName( OGRFieldDefnH hDefn, const char *pszName )
 /**
  * \fn const char *OGRFieldDefn::GetNameRef();
  *
- * Fetch name of this field.
+ * \brief Fetch name of this field.
  *
  * This method is the same as the C function OGR_Fld_GetNameRef().
  *
@@ -190,7 +190,7 @@ void OGR_Fld_SetName( OGRFieldDefnH hDefn, const char *pszName )
 /*                         OGR_Fld_GetNameRef()                         */
 /************************************************************************/
 /**
- * Fetch name of this field.
+ * \brief Fetch name of this field.
  *
  * This function is the same as the CPP method OGRFieldDefn::GetNameRef().
  *
@@ -212,7 +212,7 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 /**
  * \fn OGRFieldType OGRFieldDefn::GetType();
  *
- * Fetch type of this field.
+ * \brief Fetch type of this field.
  *
  * This method is the same as the C function OGR_Fld_GetType().
  *
@@ -223,7 +223,7 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 /*                          OGR_Fld_GetType()                           */
 /************************************************************************/
 /**
- * Fetch type of this field.
+ * \brief Fetch type of this field.
  *
  * This function is the same as the CPP method OGRFieldDefn::GetType().
  *
@@ -244,7 +244,8 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
 /**
  * \fn void OGRFieldDefn::SetType( OGRFieldType eType );
  *
- * Set the type of this field.  This should never be done to an OGRFieldDefn
+ * \brief Set the type of this field.
+ * This should never be done to an OGRFieldDefn
  * that is already part of an OGRFeatureDefn.
  *
  * This method is the same as the C function OGR_Fld_SetType().
@@ -256,7 +257,8 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
 /*                          OGR_Fld_SetType()                           */
 /************************************************************************/
 /**
- * Set the type of this field.  This should never be done to an OGRFieldDefn
+ * \brief Set the type of this field.
+ * This should never be done to an OGRFieldDefn
  * that is already part of an OGRFeatureDefn.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetType().
@@ -276,7 +278,7 @@ void OGR_Fld_SetType( OGRFieldDefnH hDefn, OGRFieldType eType )
 /************************************************************************/
 
 /**
- * Set default field value.
+ * \brief Set default field value.
  *
  * Currently use of OGRFieldDefn "defaults" is discouraged.  This feature
  * may be fleshed out in the future.
@@ -310,7 +312,7 @@ void OGRFieldDefn::SetDefault( const OGRField * puDefaultIn )
 /************************************************************************/
 
 /**
- * Fetch human readable name for a field type.
+ * \brief Fetch human readable name for a field type.
  *
  * This static method is the same as the C function OGR_GetFieldTypeName().
  *
@@ -364,7 +366,7 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
 /*                        OGR_GetFieldTypeName()                        */
 /************************************************************************/
 /**
- * Fetch human readable name for a field type.
+ * \brief Fetch human readable name for a field type.
  *
  * This function is the same as the CPP method 
  * OGRFieldDefn::GetFieldTypeName().
@@ -386,7 +388,7 @@ const char *OGR_GetFieldTypeName( OGRFieldType eType )
 /**
  * \fn OGRJustification OGRFieldDefn::GetJustify();
  *
- * Get the justification for this field.
+ * \brief Get the justification for this field.
  *
  * This method is the same as the C function OGR_Fld_GetJustify().
  *
@@ -397,7 +399,7 @@ const char *OGR_GetFieldTypeName( OGRFieldType eType )
 /*                         OGR_Fld_GetJustify()                         */
 /************************************************************************/
 /**
- * Get the justification for this field.
+ * \brief Get the justification for this field.
  *
  * This function is the same as the CPP method OGRFieldDefn::GetJustify().
  *
@@ -418,7 +420,7 @@ OGRJustification OGR_Fld_GetJustify( OGRFieldDefnH hDefn )
 /**
  * \fn void OGRFieldDefn::SetJustify( OGRJustification eJustify );
  *
- * Set the justification for this field.
+ * \brief Set the justification for this field.
  *
  * This method is the same as the C function OGR_Fld_SetJustify().
  *
@@ -429,7 +431,7 @@ OGRJustification OGR_Fld_GetJustify( OGRFieldDefnH hDefn )
 /*                         OGR_Fld_SetJustify()                         */
 /************************************************************************/
 /**
- * Set the justification for this field.
+ * \brief Set the justification for this field.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetJustify().
  *
@@ -450,7 +452,7 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
 /**
  * \fn int OGRFieldDefn::GetWidth();
  *
- * Get the formatting width for this field.
+ * \brief Get the formatting width for this field.
  *
  * This method is the same as the C function OGR_Fld_GetWidth().
  *
@@ -461,7 +463,7 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
 /*                          OGR_Fld_GetWidth()                          */
 /************************************************************************/
 /**
- * Get the formatting width for this field.
+ * \brief Get the formatting width for this field.
  *
  * This function is the same as the CPP method OGRFieldDefn::GetWidth().
  *
@@ -482,7 +484,7 @@ int OGR_Fld_GetWidth( OGRFieldDefnH hDefn )
 /**
  * \fn void OGRFieldDefn::SetWidth( int nWidth );
  *
- * Set the formatting width for this field in characters.
+ * \brief Set the formatting width for this field in characters.
  *
  * This method is the same as the C function OGR_Fld_SetWidth().
  *
@@ -493,7 +495,7 @@ int OGR_Fld_GetWidth( OGRFieldDefnH hDefn )
 /*                          OGR_Fld_SetWidth()                          */
 /************************************************************************/
 /**
- * Set the formatting width for this field in characters.
+ * \brief Set the formatting width for this field in characters.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetWidth().
  *
@@ -514,7 +516,8 @@ void OGR_Fld_SetWidth( OGRFieldDefnH hDefn, int nNewWidth )
 /**
  * \fn int OGRFieldDefn::GetPrecision();
  *
- * Get the formatting precision for this field.  This should normally be
+ * \brief Get the formatting precision for this field.
+ * This should normally be
  * zero for fields of types other than OFTReal.
  *
  * This method is the same as the C function OGR_Fld_GetPrecision().
@@ -526,7 +529,8 @@ void OGR_Fld_SetWidth( OGRFieldDefnH hDefn, int nNewWidth )
 /*                        OGR_Fld_GetPrecision()                        */
 /************************************************************************/
 /**
- * Get the formatting precision for this field.  This should normally be
+ * \brief Get the formatting precision for this field.
+ * This should normally be
  * zero for fields of types other than OFTReal.
  *
  * This function is the same as the CPP method OGRFieldDefn::GetPrecision().
@@ -548,7 +552,7 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
 /**
  * \fn void OGRFieldDefn::SetPrecision( int nPrecision );
  *
- * Set the formatting precision for this field in characters.
+ * \brief Set the formatting precision for this field in characters.
  * 
  * This should normally be zero for fields of types other than OFTReal. 
  *
@@ -561,7 +565,7 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
 /*                        OGR_Fld_SetPrecision()                        */
 /************************************************************************/
 /**
- * Set the formatting precision for this field in characters.
+ * \brief Set the formatting precision for this field in characters.
  * 
  * This should normally be zero for fields of types other than OFTReal. 
  *
@@ -582,7 +586,7 @@ void OGR_Fld_SetPrecision( OGRFieldDefnH hDefn, int nPrecision )
 /************************************************************************/
 
 /**
- * Set defining parameters for a field in one call.
+ * \brief Set defining parameters for a field in one call.
  *
  * This method is the same as the C function OGR_Fld_Set().
  *
@@ -612,7 +616,7 @@ void OGRFieldDefn::Set( const char *pszNameIn,
 /*                            OGR_Fld_Set()                             */
 /************************************************************************/
 /**
- * Set defining parameters for a field in one call.
+ * \brief Set defining parameters for a field in one call.
  *
  * This function is the same as the CPP method OGRFieldDefn::Set().
  *
