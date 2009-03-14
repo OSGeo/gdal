@@ -1836,7 +1836,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 /**
- * Copy all dataset raster data.
+ * \brief Copy all dataset raster data.
  *
  * This function copies the complete raster contents of one dataset to 
  * another similarly configured dataset.  The source and destination 
