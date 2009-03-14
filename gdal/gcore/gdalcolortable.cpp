@@ -54,6 +54,11 @@ GDALColorTable::GDALColorTable( GDALPaletteInterp eInterpIn )
 /*                        GDALCreateColorTable()                        */
 /************************************************************************/
 
+/**
+ * Construct a new color table.
+ *
+ * This function is the same as the C++ method GDALColorTable::GDALColorTable()
+ */
 GDALColorTableH CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp eInterp )
 
 {
@@ -80,6 +85,11 @@ GDALColorTable::~GDALColorTable()
 /*                       GDALDestroyColorTable()                        */
 /************************************************************************/
 
+/**
+ * Destroys a color table.
+ *
+ * This function is the same as the C++ method GDALColorTable::~GDALColorTable()
+ */
 void CPL_STDCALL GDALDestroyColorTable( GDALColorTableH hTable )
 
 {
@@ -113,6 +123,12 @@ const GDALColorEntry *GDALColorTable::GetColorEntry( int i ) const
 /*                         GDALGetColorEntry()                          */
 /************************************************************************/
 
+
+/**
+ * Fetch a color entry from table.
+ *
+ * This function is the same as the C++ method GDALColorTable::GetColorEntry()
+ */
 const GDALColorEntry * CPL_STDCALL 
 GDALGetColorEntry( GDALColorTableH hTable, int i )
 
@@ -158,6 +174,11 @@ int GDALColorTable::GetColorEntryAsRGB( int i, GDALColorEntry *poEntry ) const
 /*                       GDALGetColorEntryAsRGB()                       */
 /************************************************************************/
 
+/**
+ * Fetch a table entry in RGB format.
+ *
+ * This function is the same as the C++ method GDALColorTable::GetColorEntryAsRGB()
+ */
 int CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i, 
                             GDALColorEntry *poEntry )
 
@@ -214,6 +235,11 @@ void GDALColorTable::SetColorEntry( int i, const GDALColorEntry * poEntry )
 /*                         GDALSetColorEntry()                          */
 /************************************************************************/
 
+/**
+ * Set entry in color table.
+ *
+ * This function is the same as the C++ method GDALColorTable::SetColorEntry()
+ */
 void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i, 
                         const GDALColorEntry * poEntry )
 
@@ -245,6 +271,11 @@ GDALColorTable *GDALColorTable::Clone() const
 /*                        GDALCloneColorTable()                         */
 /************************************************************************/
 
+/**
+ * Make a copy of a color table.
+ *
+ * This function is the same as the C++ method GDALColorTable::Clone()
+ */
 GDALColorTableH CPL_STDCALL GDALCloneColorTable( GDALColorTableH hTable )
 
 {
@@ -275,6 +306,11 @@ int GDALColorTable::GetColorEntryCount() const
 /*                       GDALGetColorEntryCount()                       */
 /************************************************************************/
 
+/**
+ * Get number of color entries in table.
+ *
+ * This function is the same as the C++ method GDALColorTable::GetColorEntryCount()
+ */
 int CPL_STDCALL GDALGetColorEntryCount( GDALColorTableH hTable )
 
 {
@@ -307,6 +343,11 @@ GDALPaletteInterp GDALColorTable::GetPaletteInterpretation() const
 /*                    GDALGetPaltteInterpretation()                     */
 /************************************************************************/
 
+/**
+ * Fetch palette interpretation.
+ *
+ * This function is the same as the C++ method GDALColorTable::GetPaletteInterpretation()
+ */
 GDALPaletteInterp CPL_STDCALL 
 GDALGetPaletteInterpretation( GDALColorTableH hTable )
 
@@ -403,6 +444,11 @@ int GDALColorTable::CreateColorRamp(
 /*                         GDALCreateColorRamp()                        */
 /************************************************************************/
 
+/**
+ * Create color ramp
+ *
+ * This function is the same as the C++ method GDALColorTable::CreateColorRamp()
+ */
 void CPL_STDCALL 
 GDALCreateColorRamp( GDALColorTableH hTable, 
             int nStartIndex, const GDALColorEntry *psStartColor,
