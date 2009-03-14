@@ -2325,7 +2325,7 @@ public class Band:public int getDataType()
  *  double[] dfMax = new double[1];
  *  int[][] panHistogram = new int[1][];
  *  int eErr = hBand.GetDefaultHistogram(dfMin, dfMax, panHistogram, true, new TermProgressCallback());
- *  if( eErr == gdalconstConstants.CE_None )
+ *  if( eErr == gdalconst.CE_None )
  *  {
  *      int iBucket;
  *      int nBucketCount = panHistogram[0].length;
@@ -3182,6 +3182,261 @@ public class Band:public int SetRasterCategoryNames(java.util.Vector names)
  * @return gdalconst.CE_None on success or gdalconst.CE_Failure on failure. 
  */
 public class Band:public int SetStatistics(double min, double max, double mean, double stddev)
+
+/* Class RasterAttributeTable */
+
+/**
+ * The RasterAttributeTable (or RAT) class is used to encapsulate a table
+ * used to provide attribute information about pixel values.  Each row
+ * in the table applies to a range of pixel values (or a single value in
+ * some cases), and might have attributes such as the histogram count for
+ * that range, the color pixels of that range should be drawn names of classes
+ * or any other generic information. 
+ * <p>
+ * Raster attribute tables can be used to represent histograms, color tables,
+ * and classification information.  
+ * <p>
+ * Each column in a raster attribute table has a name, a type (integer,
+ * floating point or string), and a GDALRATFieldUsage.  The usage distinguishes 
+ * columns with particular understood purposes (such as color, histogram 
+ * count, name) and columns that have specific purposes not understood by 
+ * the library (long label, suitability_for_growing_wheat, etc).  
+ * <p>
+ * In the general case each row has a column indicating the minimum pixel
+ * values falling into that category, and a column indicating the maximum
+ * pixel value.  These are indicated with usage values of GFU_Min, and
+ * GFU_Max.  In other cases where each row is a discrete pixel value, one
+ * column of usage GFU_MinMax can be used.  
+ *  <p>
+ * In other cases all the categories are of equal size and regularly spaced 
+ * and the categorization information can be determine just by knowing the
+ * value at which the categories start, and the size of a category.  This
+ * is called "Linear Binning" and the information is kept specially on 
+ * the raster attribute table as a whole.
+ * <p>
+ * RATs are normally associated with Bands and be be queried
+ * using the Band.GetDefaultRAT() method.
+ */
+public class RasterAttributeTable
+
+/**
+ * Construct empty table.
+ */
+public class RasterAttributeTable:public RasterAttributeTable()
+
+/**
+ * Copy Raster Attribute Table.
+ *
+ * Creates a new copy of an existing raster attribute table.
+ *
+ * @return new copy of the RAT. 
+ */
+public class RasterAttributeTable:public RasterAttributeTable Clone()
+
+/**
+ * Create new column.
+ *
+ * If the table already has rows, all row values for the new column will
+ * be initialized to the default value ("", or zero).  The new column is
+ * always created as the last column, can will be column (field) 
+ * "GetColumnCount()-1" after CreateColumn() has completed successfully.
+ *
+ * @param name the name of the field to create.
+ * @param eFieldType the field type (integer, double or string).
+ * @param eFieldUsage the field usage, GFU_Generic if not known.
+ *
+ * @return gdalconst.CE_None on success or gdalconst.CE_Failure if something goes wrong.
+ */
+public class RasterAttributeTable:public int CreateColumn(String name, int eFieldType, int eFieldUsage)
+
+/**
+ * Fetch column index for given usage.
+ *
+ * Returns the index of the first column of the requested usage type, or -1 
+ * if no match is found. 
+ *
+ * @param eUsage usage type to search for.
+ *
+ * @return column index, or -1 on failure. 
+ */
+public class RasterAttributeTable:public int GetColOfUsage(int eUsage)
+
+/**
+ * Fetch table column count.
+ *
+ * @return the number of columns.
+ */
+public class RasterAttributeTable:public int GetColumnCount()
+
+/**
+ * Get linear binning information.
+ *
+ * Returns linear binning information if any is associated with the RAT.
+ *
+ * @param pdfRow0Min (out) array of 1 double that will contain the lower bound (pixel value) of the first category.
+ * @param pdfBinSize (out) array of 1 double that will contain the width of each category (in pixel value units).
+ *
+ * @return true if linear binning information exists or false if there is none.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class RasterAttributeTable:public boolean GetLinearBinning(double[] pdfRow0Min, double[] pdfBinSize)
+
+/**
+ * Fetch name of indicated column.
+ *
+ * @param iCol the column index (zero based). 
+ *
+ * @return the column name or an empty string for invalid column numbers.
+ */
+public class RasterAttributeTable:public String GetNameOfCol(int iCol)
+
+/**
+ * Fetch row count.
+ *
+ * @return the number of rows. 
+ */
+public class RasterAttributeTable:public int GetRowCount()
+
+/**
+ * Get row for pixel value.
+ *
+ * Given a raw pixel value, the raster attribute table is scanned to 
+ * determine which row in the table applies to the pixel value.  The
+ * row index is returned. 
+ *
+ * @param dfValue the pixel value. 
+ *
+ * @return the row index or -1 if no row is appropriate. 
+ */
+public class RasterAttributeTable:public int GetRowOfValue(double dfValue)
+
+/**
+ * Fetch color type.
+ *
+ * @param iCol the column index (zero based).
+ *
+ * @return column type or GFT_Integer if the column index is illegal.
+ */
+public class RasterAttributeTable:public int GetTypeOfCol(int iCol)
+
+/**
+ * Fetch column usage value. 
+ *
+ * @param iCol the column index (zero based).
+ *
+ * @return the column usage, or GFU_Generic for improper column numbers.
+ */
+public class RasterAttributeTable:public int GetUsageOfCol(int iCol)
+
+/**
+ * Fetch field value as a double.
+ *
+ * The value of the requested column in the requested row is returned
+ * as a double.   Non double fields will be converted to double with
+ * the possibility of data loss.
+ *
+ * @param iRow row to fetch (zero based).
+ * @param iCol column to fetch (zero based).
+ * 
+ * @return field value
+ */
+public class RasterAttributeTable:public double GetValueAsDouble(int iRow, int iCol)
+
+/**
+ * Fetch field value as a integer.
+ *
+ * The value of the requested column in the requested row is returned
+ * as an integer.  Non-integer fields will be converted to integer with
+ * the possibility of data loss.
+ *
+ * @param iRow row to fetch (zero based).
+ * @param iCol column to fetch (zero based).
+ * 
+ * @return field value
+ */
+public class RasterAttributeTable:public int GetValueAsInt(int iRow, int iCol)
+
+/**
+ * Fetch field value as a string.
+ *
+ * The value of the requested column in the requested row is returned
+ * as a string.  If the field is numeric, it is formatted as a string
+ * using default rules, so some precision may be lost.
+ * except it returns a "const char *" result.
+ *
+ * @param iRow row to fetch (zero based).
+ * @param iCol column to fetch (zero based).
+ * 
+ * @return field value
+ */
+public class RasterAttributeTable:public String GetValueAsString(int iRow, int iCol)
+
+/**
+ * Set linear binning information.
+ *
+ * For RATs with equal sized categories (in pixel value space) that are
+ * evenly spaced, this method may be used to associate the linear binning
+ * information with the table.
+ *
+ * @param dfRow0Min the lower bound (pixel value) of the first category.
+ * @param dfBinSize the width of each category (in pixel value units). 
+ *
+ * @return CE_None on success or CE_Failure on failure.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class RasterAttributeTable:public int SetLinearBinning(double dfRow0Min, double dfBinSize)
+
+/**
+ * Set row count.
+ *
+ * Resizes the table to include the indicated number of rows.  Newly created
+ * rows will be initialized to their default values - "" for strings, 
+ * and zero for numeric fields. 
+ *
+ * @param nCount the new number of rows.
+ */
+public class RasterAttributeTable:public void SetRowCount(int nCount)
+
+/**
+ * Set field value from double.
+ *
+ * The indicated field (column) on the indicated row is set from the
+ * passed value.  The value will be automatically converted for other field
+ * types, with a possible loss of precision.
+ *
+ * @param iRow row to fetch (zero based).
+ * @param iCol column to fetch (zero based).
+ * @param dfValue the value to assign.
+ */
+public class RasterAttributeTable:public void SetValueAsDouble(int iRow, int iCol, double dfValue)
+
+/**
+ * Set field value from integer.
+ *
+ * The indicated field (column) on the indicated row is set from the
+ * passed value.  The value will be automatically converted for other field
+ * types, with a possible loss of precision.
+ *
+ * @param iRow row to fetch (zero based).
+ * @param iCol column to fetch (zero based).
+ * @param nValue the value to assign.
+ */
+public class RasterAttributeTable:public void SetValueAsInt(int iRow, int iCol, int nValue)
+
+/**
+ * Set field value from string.
+ *
+ * The indicated field (column) on the indicated row is set from the
+ * passed value.  The value will be automatically converted for other field
+ * types, with a possible loss of precision.
+ *
+ * @param iRow row to fetch (zero based).
+ * @param iCol column to fetch (zero based).
+ * @param pszValue the value to assign.
+ */
+public class RasterAttributeTable:public void SetValueAsString(int iRow, int iCol, String pszValue) 
 
 /* Class Driver */
 
@@ -6672,6 +6927,8 @@ public class Geometry:public boolean Overlaps(Geometry other)
  * Distance computation is performed in 2d only
  *
  * @param max_length the maximum distance between 2 points after segmentization
+ *
+ * @since Java bindings 1.7.0
  */
 public class Geometry:public void Segmentize(double max_length)
 
