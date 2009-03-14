@@ -221,6 +221,104 @@ def wms_6():
     return 'success'
 
 ###############################################################################
+# Test TMS
+
+def wms_7():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    tms = """<GDAL_WMS>
+    <Service name="TMS">
+        <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py</ServerUrl>
+        <Layer>basic</Layer>
+        <Format>png</Format>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>-180.0</UpperLeftX>
+        <UpperLeftY>90.0</UpperLeftY>
+        <LowerRightX>180.0</LowerRightX>
+        <LowerRightY>-90.0</LowerRightY>
+        <TileLevel>19</TileLevel>
+        <TileCountX>2</TileCountX>
+        <TileCountY>1</TileCountY>
+    </DataWindow>
+    <Projection>EPSG:4326</Projection>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+</GDAL_WMS>"""
+
+    ds = gdal.Open( tms )
+
+    if ds is None:
+        gdaltest.post_reason( 'open failed.' )
+        return 'fail'
+
+    if ds.RasterXSize != 268435456 \
+       or ds.RasterYSize != 134217728 \
+       or ds.RasterCount != 3:
+        gdaltest.post_reason( 'wrong size or bands' )
+        print ds.RasterXSize
+        print ds.RasterYSize
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverview(18).XSize != 512 \
+       or ds.GetRasterBand(1).GetOverview(18).YSize != 256:
+        print ds.GetRasterBand(1).GetOverview(18).XSize
+        print ds.GetRasterBand(1).GetOverview(18).YSize
+        return 'fail'
+
+    ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
+
+    ds = None
+
+    return 'success'
+
+
+###############################################################################
+# Test TMS with cache
+
+def wms_8():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    tms = """<GDAL_WMS>
+    <Service name="TMS">
+        <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py</ServerUrl>
+        <Layer>basic</Layer>
+        <Format>png</Format>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>-180.0</UpperLeftX>
+        <UpperLeftY>90.0</UpperLeftY>
+        <LowerRightX>180.0</LowerRightX>
+        <LowerRightY>-90.0</LowerRightY>
+        <TileLevel>19</TileLevel>
+        <TileCountX>2</TileCountX>
+        <TileCountY>1</TileCountY>
+    </DataWindow>
+    <Projection>EPSG:4326</Projection>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+    <Cache><Path>./tmp/gdalwmscache</Path></Cache>
+</GDAL_WMS>"""
+
+    ds = gdal.Open( tms )
+
+    if ds is None:
+        gdaltest.post_reason( 'open failed.' )
+        return 'fail'
+
+    ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -235,6 +333,8 @@ gdaltest_list = [
     wms_4,
     wms_5,
     wms_6,
+    wms_7,
+    wms_8,
     wms_cleanup ]
 
 if __name__ == '__main__':
