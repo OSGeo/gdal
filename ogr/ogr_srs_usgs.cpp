@@ -302,7 +302,7 @@ USGSGetEllipsoidInfo( int nCode, char ** ppszName,
 /************************************************************************/
 
 /**
- * Import coordinate system from USGS projection definition.
+ * \brief Import coordinate system from USGS projection definition.
  *
  * This function is the same as OGRSpatialReference::importFromUSGS().
  */
@@ -327,7 +327,7 @@ static double OGRSpatialReferenceUSGSUnpackNoOp(double dfVal)
 /************************************************************************/
 
 /**
- * Import coordinate system from USGS projection definition.
+ * \brief Import coordinate system from USGS projection definition.
  *
  * This method will import projection definition in style, used by USGS GCTP
  * software. GCTP operates on angles in packed DMS format (see
@@ -918,7 +918,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
 /*                          OSRExportToUSGS()                           */
 /************************************************************************/
 /** 
- * Export coordinate system in USGS GCTP projection definition.
+ * \brief Export coordinate system in USGS GCTP projection definition.
  *
  * This function is the same as OGRSpatialReference::exportToUSGS().
  */
@@ -942,7 +942,7 @@ OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 
 /**
- * Export coordinate system in USGS GCTP projection definition.
+ * \brief Export coordinate system in USGS GCTP projection definition.
  *
  * This method is the equivalent of the C function OSRExportToUSGS().
  *

@@ -1551,7 +1551,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /************************************************************************/
 
 /**
- * Initialize SRS based on EPSG GCS or PCS code.
+ * \brief Initialize SRS based on EPSG GCS or PCS code.
  *
  * This method will initialize the spatial reference based on the
  * passed in EPSG GCS or PCS code.  The coordinate system definitions
@@ -1613,7 +1613,7 @@ OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 /************************************************************************/
 
 /**
- * Initialize SRS based on EPSG GCS or PCS code.
+ * \brief Initialize SRS based on EPSG GCS or PCS code.
  *
  * This method will initialize the spatial reference based on the
  * passed in EPSG GCS or PCS code.  
@@ -1752,7 +1752,7 @@ OGRErr CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH hSRS, int nCode )
 /************************************************************************/
 
 /**
- * Set State Plane projection definition.
+ * \brief Set State Plane projection definition.
  *
  * This will attempt to generate a complete definition of a state plane
  * zone based on generating the entire SRS from the EPSG tables.  If the
@@ -1986,7 +1986,7 @@ int OGRSpatialReference::GetEPSGGeogCS()
 /************************************************************************/
 
 /**
- * Set EPSG authority info if possible.
+ * \brief Set EPSG authority info if possible.
  *
  * This method inspects a WKT definition, and adds EPSG authority nodes
  * where an aspect of the coordinate system can be easily and safely 
@@ -2087,7 +2087,7 @@ OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
 /************************************************************************/
 
 /**
- * This method returns TRUE if EPSG feels this geographic coordinate
+ * \brief This method returns TRUE if EPSG feels this geographic coordinate
  * system should be treated as having lat/long coordinate ordering.
  *
  * Currently this returns TRUE for all geographic coordinate systems

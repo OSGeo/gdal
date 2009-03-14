@@ -152,7 +152,7 @@ char **OSRProj4Tokenize( const char *pszFull )
 /*                         OSRImportFromProj4()                         */
 /************************************************************************/
 /** 
- * Import PROJ.4 coordinate string.
+ * \brief Import PROJ.4 coordinate string.
  *
  * This function is the same as OGRSpatialReference::importFromProj4().
  */
@@ -195,7 +195,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 /************************************************************************/
 
 /**
- * Import PROJ.4 coordinate string.
+ * \brief Import PROJ.4 coordinate string.
  *
  * The OGRSpatialReference is initialized from the passed PROJ.4 style
  * coordinate system string.  In addition to many +proj formulations which
@@ -1032,7 +1032,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*                          OSRExportToProj4()                          */
 /************************************************************************/
 /** 
- * Export coordinate system in PROJ.4 format.
+ * \brief Export coordinate system in PROJ.4 format.
  *
  * This function is the same as OGRSpatialReference::exportToProj4().
  */
@@ -1052,7 +1052,7 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 
 /**
- * Export coordinate system in PROJ.4 format.
+ * \brief Export coordinate system in PROJ.4 format.
  *
  * Converts the loaded coordinate reference system into PROJ.4 format
  * to the extent possible.  The string returned in ppszProj4 should be
