@@ -465,7 +465,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-            "MrSIDRasterBand::IReadBlock(): Failed to set scene position." );
+                      "MrSIDRasterBand::IReadBlock(): Failed to set scene position." );
             return CE_Failure;
         }
 
@@ -869,14 +869,6 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( !oNav.isSceneValid() )
         CPLDebug( "MrSID", "LTINavigator in invalid state." );
 
-#ifdef notdef
-    {
-        lt_uint32 iWidth, iHeight;
-        
-        poImageReader->getDimsAtMag( dfCurrentMag, iWidth, iHeight );
-    }
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      Read into the buffer.                                           */
 /* -------------------------------------------------------------------- */
@@ -889,41 +881,67 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                   getLastStatusString( eLTStatus ) );
         return CE_Failure;
     }
-    
+
 /* -------------------------------------------------------------------- */
-/*      Manually resample to our target buffer.                         */
+/*      If we are pulling the data at a matching resolution, try to     */
+/*      do a more direct copy without subsampling.                      */
 /* -------------------------------------------------------------------- */
     int         iBufLine, iBufPixel;
 
-    for( iBufLine = 0; iBufLine < nBufYSize; iBufLine++ )
+    if( nBufXSize == sceneWidth && nBufYSize == sceneHeight )
     {
-        int iTmpLine = (int) floor(((iBufLine+0.5) / nBufYSize) * sceneHeight);
-
-        for( iBufPixel = 0; iBufPixel < nBufXSize; iBufPixel++ )
+        for( int iBand = 0; iBand < nBandCount; iBand++ )
         {
-            int iTmpPixel = (int) 
-                floor(((iBufPixel+0.5) / nBufXSize) * sceneWidth);
+            GByte *pabySrcBand = (GByte *) 
+                oLTIBuffer.getTotalBandData( panBandMap[iBand] - 1 );
+	  
+            for( int iLine = 0; iLine < nBufYSize; iLine++ )
+	    {
+                GDALCopyWords( pabySrcBand + iLine*nTmpPixelSize*nXSize,
+                               eDataType, nTmpPixelSize, 
+                               ((GByte *)pData) + iLine*nLineSpace 
+                               + iBand * nBandSpace, 
+                               eBufType, nPixelSpace,
+                               nBufXSize );
+	    }
+	}
+    }
 
-            for( int iBand = 0; iBand < nBandCount; iBand++ )
-            {
-                GByte *pabySrc, *pabyDst;
+/* -------------------------------------------------------------------- */
+/*      Manually resample to our target buffer.                         */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        for( iBufLine = 0; iBufLine < nBufYSize; iBufLine++ )
+	{
+            int iTmpLine = (int) floor(((iBufLine+0.5) / nBufYSize)*sceneHeight);
 
-                pabyDst = ((GByte *) pData) 
-                    + nPixelSpace * iBufPixel
-                    + nLineSpace * iBufLine
-                    + nBandSpace * iBand;
+            for( iBufPixel = 0; iBufPixel < nBufXSize; iBufPixel++ )
+	    {
+                int iTmpPixel = (int) 
+                    floor(((iBufPixel+0.5) / nBufXSize) * sceneWidth);
 
-                pabySrc = (GByte *) oLTIBuffer.getTotalBandData( 
-                    panBandMap[iBand] - 1 );
-                pabySrc += (iTmpLine * sceneWidth + iTmpPixel) * nTmpPixelSize;
+                for( int iBand = 0; iBand < nBandCount; iBand++ )
+		{
+                    GByte *pabySrc, *pabyDst;
 
-                if( eDataType == eBufType )
-                    memcpy( pabyDst, pabySrc, nTmpPixelSize );
-                else
-                    GDALCopyWords( pabySrc, eDataType, 0, 
-                                   pabyDst, eBufType, 0, 1 );
-            }
-        }
+                    pabyDst = ((GByte *) pData) 
+                        + nPixelSpace * iBufPixel
+                        + nLineSpace * iBufLine
+                        + nBandSpace * iBand;
+
+                    pabySrc = (GByte *) oLTIBuffer.getTotalBandData( 
+                        panBandMap[iBand] - 1 );
+                    pabySrc += (iTmpLine * sceneWidth + iTmpPixel) * nTmpPixelSize;
+
+                    if( eDataType == eBufType )
+                        memcpy( pabyDst, pabySrc, nTmpPixelSize );
+                    else
+                        GDALCopyWords( pabySrc, eDataType, 0, 
+                                       pabyDst, eBufType, 0, 1 );
+		}
+	    }
+	}
     }
 
     return CE_None;
@@ -1100,7 +1118,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     nBlockXSize = nRasterXSize;
     nBlockYSize = poImageReader->getStripHeight();
 
-    CPLDebug( "MrSID", "Opened zoom level %d with size %dx%d.\n",
+    CPLDebug( "MrSID", "Opened zoom level %d with size %dx%d.",
               iZoom, nRasterXSize, nRasterYSize );
 
     try
@@ -1319,7 +1337,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif /* MRSID_J2K */
     {
         MrSIDImageReader    *reader = MrSIDImageReader::create();
-        eStat = reader->initialize( &poDS->oStream, NULL );             
+	eStat = reader->initialize( &poDS->oStream, NULL );
         poDS->poImageReader = reader;           
     }
 
