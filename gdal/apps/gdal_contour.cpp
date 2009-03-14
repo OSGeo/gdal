@@ -209,7 +209,6 @@ int main( int argc, char ** argv )
     OGRSFDriverH hDriver = OGRGetDriverByName( pszFormat );
     OGRFieldDefnH hFld;
     OGRLayerH hLayer;
-    int nElevField = -1;
 
     if( hDriver == NULL )
     {
@@ -240,7 +239,6 @@ int main( int argc, char ** argv )
         OGR_Fld_SetPrecision( hFld, 3 );
         OGR_L_CreateField( hLayer, hFld, FALSE );
         OGR_Fld_Destroy( hFld );
-        nElevField = 1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -249,10 +247,13 @@ int main( int argc, char ** argv )
     CPLErr eErr;
     
     eErr = GDALContourGenerate( hBand, dfInterval, dfOffset, 
-                                nFixedLevelCount, adfFixedLevels,
-                                bNoDataSet, dfNoData, 
-                                hLayer, 0, nElevField,
-                                GDALTermProgress, NULL );
+                         nFixedLevelCount, adfFixedLevels,
+                         bNoDataSet, dfNoData, hLayer, 
+                         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), 
+                                               "ID" ), 
+                         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), 
+                                               pszElevAttrib ), 
+                         GDALTermProgress, NULL );
 
     OGR_DS_Destroy( hDS );
     GDALClose( hSrcDS );
