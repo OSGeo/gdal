@@ -286,7 +286,7 @@ PCIGetEllipsoidInfo( int nCode, char ** ppszName,
 /************************************************************************/
 
 /**
- * Import coordinate system from PCI projection definition.
+ * \brief Import coordinate system from PCI projection definition.
  *
  * This function is the same as OGRSpatialReference::importFromPCI().
  */
@@ -307,7 +307,7 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
 /************************************************************************/
 
 /**
- * Import coordinate system from PCI projection definition.
+ * \brief Import coordinate system from PCI projection definition.
  *
  * PCI software uses 16-character string to specify coordinate system
  * and datum/ellipsoid. You should supply at least this string to the
@@ -731,7 +731,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /*                          OSRExportToPCI()                            */
 /************************************************************************/
 /** 
- * Export coordinate system in PCI projection definition.
+ * \brief Export coordinate system in PCI projection definition.
  *
  * This function is the same as OGRSpatialReference::exportToPCI().
  */
@@ -755,7 +755,7 @@ OGRErr OSRExportToPCI( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 
 /**
- * Export coordinate system in PCI projection definition.
+ * \brief Export coordinate system in PCI projection definition.
  *
  * Converts the loaded coordinate reference system into PCI projection
  * definition to the extent possible. The strings returned in ppszProj,

@@ -452,7 +452,7 @@ static void InitDatumMappingTable()
 /************************************************************************/
 
 /**
- * Import coordinate system from ESRI .prj format(s).
+ * \brief Import coordinate system from ESRI .prj format(s).
  *
  * This function is the same as the C++ method OGRSpatialReference::importFromESRI()
  */
@@ -592,7 +592,7 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
 /************************************************************************/
 
 /**
- * Import coordinate system from ESRI .prj format(s).
+ * \brief Import coordinate system from ESRI .prj format(s).
  *
  * This function will read the text loaded from an ESRI .prj file, and
  * translate it into an OGRSpatialReference definition.  This should support
@@ -899,7 +899,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /*                            morphToESRI()                             */
 /************************************************************************/
 /**
- * Convert in place to ESRI WKT format.
+ * \brief Convert in place to ESRI WKT format.
  *
  * The value nodes of this coordinate system are modified in various manners
  * more closely map onto the ESRI concept of WKT format.  This includes
@@ -1352,7 +1352,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /************************************************************************/
 
 /**
- * Convert in place to ESRI WKT format.
+ * \brief Convert in place to ESRI WKT format.
  *
  * This function is the same as the C++ method OGRSpatialReference::morphToESRI()
  */
@@ -1372,7 +1372,7 @@ OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
 /************************************************************************/
 
 /**
- * Convert in place from ESRI WKT format.
+ * \brief Convert in place from ESRI WKT format.
  *
  * The value notes of this coordinate system are modified in various manners
  * to adhere more closely to the WKT standard.  This mostly involves
@@ -1525,7 +1525,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /************************************************************************/
 
 /**
- * Convert in place from ESRI WKT format.
+ * \brief Convert in place from ESRI WKT format.
  *
  * This function is the same as the C++ method OGRSpatialReference::morphFromESRI()
  */
