@@ -82,7 +82,7 @@ the passed
 filename is not of the format supported by the driver.  If it is the target
 format, then a new OGRDataSource object for the datasource should be returned.
 
-Is is common for the Open() method to be delegated to an Open() method on
+It is common for the Open() method to be delegated to an Open() method on
 the actual format's OGRDataSource class.
 
 \verbatim
