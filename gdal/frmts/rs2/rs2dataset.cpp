@@ -726,13 +726,13 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         atoi(CPLGetXMLValue( psImageAttributes, 
                              "rasterAttributes.numberofLines", 
                              "-1" ));
-    if (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0) {
-        CPLDestroyXMLNode( psProduct );
-        delete poDS;
+    if (poDS->nRasterXSize <= 1 || poDS->nRasterYSize <= 1) {
         CPLError( CE_Failure, CPLE_OpenFailed,
             "Non-sane raster dimensions provided in product.xml. If this is "
             "a valid RADARSAT-2 scene, please contact your data provider for "
             "a corrected dataset." );
+        delete poDS;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -905,7 +905,16 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         poBandFile = (GDALDataset *) GDALOpen( pszFullname, GA_ReadOnly );
         if( poBandFile == NULL )
+        {
+            CPLFree(pszFullname);
             continue;
+        }
+        if (poBandFile->GetRasterCount() == 0)
+        {
+            GDALClose( (GDALRasterBandH) poBandFile );
+            CPLFree(pszFullname);
+            continue;
+        }
         
         poDS->papszExtraFiles = CSLAddString( poDS->papszExtraFiles,
                                               pszFullname );
