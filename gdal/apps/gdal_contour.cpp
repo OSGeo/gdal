@@ -251,8 +251,9 @@ int main( int argc, char ** argv )
                          bNoDataSet, dfNoData, hLayer, 
                          OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), 
                                                "ID" ), 
-                         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), 
-                                               pszElevAttrib ), 
+                         (pszElevAttrib == NULL) ? -1 :
+                                 OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), 
+                                                       pszElevAttrib ), 
                          GDALTermProgress, NULL );
 
     OGR_DS_Destroy( hDS );
