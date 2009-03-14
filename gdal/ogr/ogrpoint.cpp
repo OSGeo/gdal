@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 /**
- * Create a (0,0) point.
+ * \brief Create a (0,0) point.
  */
 
 OGRPoint::OGRPoint()
@@ -435,7 +435,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /**
  * \fn double OGRPoint::getX() const;
  *
- * Fetch X coordinate.
+ * \brief Fetch X coordinate.
  *
  * Relates to the SFCOM IPoint::get_X() method.
  *
@@ -445,7 +445,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /**
  * \fn double OGRPoint::getY() const;
  *
- * Fetch Y coordinate.
+ * \brief Fetch Y coordinate.
  *
  * Relates to the SFCOM IPoint::get_Y() method.
  *
@@ -455,7 +455,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /**
  * \fn double OGRPoint::getZ() const;
  *
- * Fetch Z coordinate.
+ * \brief Fetch Z coordinate.
  *
  * Relates to the SFCOM IPoint::get_Z() method.
  *
@@ -465,7 +465,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /**
  * \fn void OGRPoint::setX( double xIn );
  *
- * Assign point X coordinate.
+ * \brief Assign point X coordinate.
  *
  * There is no corresponding SFCOM method.
  */ 
@@ -473,7 +473,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /**
  * \fn void OGRPoint::setY( double yIn );
  *
- * Assign point Y coordinate.
+ * \brief Assign point Y coordinate.
  *
  * There is no corresponding SFCOM method.
  */ 
@@ -481,7 +481,8 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /**
  * \fn void OGRPoint::setZ( double zIn );
  *
- * Assign point Z coordinate.  Calling this method will force the geometry
+ * \brief Assign point Z coordinate.
+ * Calling this method will force the geometry
  * coordinate dimension to 3D (wkbPoint|wkbZ).
  *
  * There is no corresponding SFCOM method.  

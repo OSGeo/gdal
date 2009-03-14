@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 /**
- * Create an empty polygon.
+ * \brief Create an empty polygon.
  */
 
 OGRPolygon::OGRPolygon()
@@ -150,7 +150,7 @@ const char * OGRPolygon::getGeometryName() const
 /************************************************************************/
 
 /**
- * Fetch reference to external polygon ring.
+ * \brief Fetch reference to external polygon ring.
  *
  * Note that the returned ring pointer is to an internal data object of
  * the OGRPolygon.  It should not be modified or deleted by the application,
@@ -186,7 +186,7 @@ const OGRLinearRing *OGRPolygon::getExteriorRing() const
 /************************************************************************/
 
 /**
- * Fetch the number of internal rings.
+ * \brief Fetch the number of internal rings.
  *
  * Relates to the SFCOM IPolygon::get_NumInteriorRings() method.
  *
@@ -208,7 +208,7 @@ int OGRPolygon::getNumInteriorRings() const
 /************************************************************************/
 
 /**
- * Fetch reference to indicated internal ring.
+ * \brief Fetch reference to indicated internal ring.
  *
  * Note that the returned ring pointer is to an internal data object of
  * the OGRPolygon.  It should not be modified or deleted by the application,
@@ -246,7 +246,7 @@ const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
 /************************************************************************/
 
 /**
- * Add a ring to a polygon.
+ * \brief Add a ring to a polygon.
  *
  * If the polygon has no external ring (it is empty) this will be used as
  * the external ring, otherwise it is used as an internal ring.  The passed
@@ -277,7 +277,7 @@ void OGRPolygon::addRing( OGRLinearRing * poNewRing )
 /************************************************************************/
 
 /**
- * Add a ring to a polygon.
+ * \brief Add a ring to a polygon.
  *
  * If the polygon has no external ring (it is empty) this will be used as
  * the external ring, otherwise it is used as an internal ring.  Ownership
@@ -708,7 +708,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 /************************************************************************/
 
 /**
- * Compute the polygon centroid.
+ * \brief Compute the polygon centroid.
  *
  * The centroid location is applied to the passed in OGRPoint object.
  *
@@ -976,7 +976,7 @@ void OGRPolygon::closeRings()
 /************************************************************************/
 
 /**
- * Compute area of polygon.
+ * \brief Compute area of polygon.
  *
  * The area is computed as the area of the outer ring less the area of all
  * internal rings. 
