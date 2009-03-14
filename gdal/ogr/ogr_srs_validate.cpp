@@ -487,7 +487,7 @@ static const char *papszAliasGroupList[] = {
 /************************************************************************/
 
 /**
- * Validate SRS tokens.
+ * \brief Validate SRS tokens.
  *
  * This method attempts to verify that the spatial reference system is
  * well formed, and consists of known tokens.  The validation is not
@@ -847,7 +847,7 @@ OGRErr OGRSpatialReference::Validate()
 /*                            OSRValidate()                             */
 /************************************************************************/
 /** 
- * Validate SRS tokens.
+ * \brief Validate SRS tokens.
  *
  * This function is the same as the C++ method OGRSpatialReference::Validate().
  */
@@ -864,7 +864,7 @@ OGRErr OSRValidate( OGRSpatialReferenceH hSRS )
 /************************************************************************/
 
 /**
- * Return whether the first string passed in an acceptable alias for the
+ * \brief Return whether the first string passed in an acceptable alias for the
  * second string according to the AliasGroupList
  *
  * @param pszParm1 first string
@@ -914,7 +914,7 @@ int OGRSpatialReference::IsAliasFor( const char *pszParm1,
 /************************************************************************/
 
 /**
- * Validate the current PROJECTION's arguments.
+ * \brief Validate the current PROJECTION's arguments.
  *
  * @return OGRERR_NONE if the PROJECTION's arguments validate, an error code
  *         otherwise
