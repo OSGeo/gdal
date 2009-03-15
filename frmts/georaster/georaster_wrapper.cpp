@@ -1543,6 +1543,15 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
                 return false;
         }
     }
+    
+#ifndef CPL_MSB
+    if( nCellSizeBits > 8 )
+    {
+        int nWordSize = nCellSizeBits / 8;
+        int nWordCount = nBlockBytes / nWordSize;
+        GDALSwapWords( pabyBlockBuf, nWordSize, nWordCount, nWordSize );
+    }
+#endif
 
     if( bPackingOrCompress )
     {
@@ -1713,8 +1722,17 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     }
 
     //  --------------------------------------------------------------------
-    //  Compress
+    //  Write BLOB
     //  --------------------------------------------------------------------
+
+#ifndef CPL_MSB
+    if( nCellSizeBits > 8 )
+    {
+        int nWordSize = nCellSizeBits / 8;
+        int nWordCount = nActualBlockBytes / nWordSize;
+        GDALSwapWords( pabyBlockBuf, nWordSize, nWordCount, nWordSize );
+    }
+#endif
 
     if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
                                   pabyBlockBuf,
@@ -2330,7 +2348,6 @@ unsigned long GeoRasterWrapper::CompressJpeg()
     jpeg_set_quality( &sCInfo, nCompressQuality, TRUE );
     jpeg_suppress_tables( &sCInfo, ! write_all_tables );
     jpeg_start_compress( &sCInfo, write_all_tables );
-
     GByte* pabyScanline = pabyBlockBuf;
 
     for( int iLine = 0; iLine < nRowBlockSize; iLine++ )
@@ -2381,7 +2398,7 @@ bool GeoRasterWrapper::UncompressDeflate( unsigned long nBufferSize )
     if( nDestLen != nBlockBytes )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-            "ZLib decompressed buffer size (%d) expected (%d)", nDestLen, nBlockBytes );
+            "ZLib decompressed buffer size (%ld) expected (%ld)", nDestLen, nBlockBytes );
         return false;
     }
 
