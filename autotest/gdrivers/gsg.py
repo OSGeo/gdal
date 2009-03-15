@@ -68,7 +68,12 @@ def gsg_5():
     tst = gdaltest.GDALTest( 'gsag', 'gsg_ascii.grd', 1, 4672 )
 
     return tst.testCreateCopy( check_gt = 1 )
-    
+
+def gsg_6():
+
+    tst = gdaltest.GDALTest( 'gsbg', 'gsg_binary.grd', 1, 4672 )
+
+    return tst.testCreate( out_bands = 1 )
 ###############################################################################
 
 gdaltest_list = [
@@ -76,7 +81,8 @@ gdaltest_list = [
     gsg_2,
     gsg_3,
     gsg_4,
-    gsg_5
+    gsg_5,
+    gsg_6
 ]
   
 if __name__ == '__main__':
