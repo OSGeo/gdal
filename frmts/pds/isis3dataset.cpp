@@ -576,7 +576,9 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     } else if (EQUAL( map_proj_name, "LambertConformal" )) {
         oSRS.OGRSpatialReference::SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
     } else {
-        printf("*** no projection define or supported! Are you sure this is a map projected cube?\n\n" );
+        CPLDebug( "ISIS3",
+                  "Dataset projection %s is not supported. Continuing...",
+                  map_proj_name );
         bProjectionSet = FALSE;
     }
 
