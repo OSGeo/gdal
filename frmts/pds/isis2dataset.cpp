@@ -418,9 +418,8 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     } else if (EQUAL( map_proj_name, "LAMBERT_CONFORMAL_CONIC" )) {
         oSRS.OGRSpatialReference::SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
     } else {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Dataset projection %s is not supported.\n"
-                  "Are you sure this is a map projected cube?",
+        CPLDebug( "ISIS2",
+                  "Dataset projection %s is not supported. Continuing...",
                   map_proj_name.c_str() );
         bProjectionSet = FALSE;
     }
