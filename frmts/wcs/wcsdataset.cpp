@@ -264,6 +264,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                   "Got %dx%d instead of %dx%d.", 
                   poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
                   nBlockXSize, nBlockYSize );
+        delete poTileDS;
         return CE_Failure;
     }
 
@@ -273,6 +274,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Returned tile does not match expected band configuration.");
+        delete poTileDS;
         return CE_Failure;
     }
 
@@ -549,6 +551,7 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                   "Got %dx%d instead of %dx%d.", 
                   poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
                   nBufXSize, nBufXSize );
+        delete poTileDS;
         return CE_Failure;
     }
 
@@ -558,6 +561,7 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Returned tile does not match expected band count." );
+        delete poTileDS;
         return CE_Failure;
     }
     
@@ -1654,7 +1658,10 @@ int WCSDataset::EstablishRasterDetails()
 /*      Record details.                                                 */
 /* -------------------------------------------------------------------- */
     if( poDS->GetRasterCount() < 1 )
+    {
+        delete poDS;
         return FALSE;
+    }
     
     if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL )
         CPLCreateXMLElementAndValue( 
@@ -1688,7 +1695,7 @@ void WCSDataset::FlushMemoryResult()
 {
     if( strlen(osResultFilename) > 0 )
     {
-//        VSIUnlink( osResultFilename );
+        VSIUnlink( osResultFilename );
         osResultFilename = "";
     }
 
@@ -1748,7 +1755,10 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
                                      FALSE );
 
     if( fp == NULL )
+    {
+        CPLHTTPDestroyResult(psResult);
         return NULL;
+    }
 
     VSIFCloseL( fp );
 
@@ -1809,6 +1819,8 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 
     if( poDS == NULL )
         FlushMemoryResult();
+
+    CPLHTTPDestroyResult(psResult);
 
     return poDS;
 }
