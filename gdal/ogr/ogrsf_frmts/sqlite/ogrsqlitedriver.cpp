@@ -175,6 +175,24 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
             return NULL;
         }
     }
+    else
+    {
+/* -------------------------------------------------------------------- */
+/*      Close the DB file so we can reopen it normally.                 */
+/* -------------------------------------------------------------------- */
+        sqlite3_close( hDB );
+
+        OGRSQLiteDataSource     *poDS;
+        poDS = new OGRSQLiteDataSource();
+
+        if( !poDS->Open( pszName ) )
+        {
+            delete poDS;
+            return NULL;
+        }
+        else
+            return poDS;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Close the DB file so we can reopen it normally.                 */
