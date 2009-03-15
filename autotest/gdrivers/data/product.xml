@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Completely artificially (and certainly not spec complying) RS2 product.xml -->
+<product xmlns="http://foo.bar/rs2">
+    <sourceAttributes>
+        <satellite>SATELLITE</satellite>
+        <sensor>SENSOR</sensor>
+        <beamModeMnemonic>BEAM_MODE_MNEMONIC</beamModeMnemonic>
+        <rawDataStartTime>2009-03-13T00:00:00Z</rawDataStartTime>
+    </sourceAttributes>
+    <imageGenerationParameters>
+        <generalProcessingInformation>
+            <productType>PRODUCT_TYPE</productType>
+        </generalProcessingInformation>
+        <sarProcessingInformation>
+            <incidenceAngleNearRange>10</incidenceAngleNearRange>
+            <incidenceAngleFarRange>20</incidenceAngleFarRange>
+            <slantRangeNearEdge>30</slantRangeNearEdge>
+        </sarProcessingInformation>
+    </imageGenerationParameters>
+    <imageAttributes>
+        <rasterAttributes>
+            <dataType>Mag</dataType>
+            <bitsPerSample>8</bitsPerSample>
+            <numberOfSamplesPerLine>20</numberOfSamplesPerLine>
+            <numberOfLines>20</numberOfLines>
+            <sampledPixelSpacing>1</sampledPixelSpacing>
+            <sampledLineSpacing>1</sampledLineSpacing>
+        </rasterAttributes>
+        <geographicInformation>
+            <geolocationGrid>
+                <imageTiePoint>
+                    <imageCoordinate>
+                        <line>0</line>
+                        <pixel>0</pixel>
+                    </imageCoordinate>
+                    <geodeticCoordinate>
+                        <latitude>49</latitude>
+                        <longitude>2</longitude>
+                    </geodeticCoordinate>
+                </imageTiePoint>
+                <imageTiePoint>
+                    <imageCoordinate>
+                        <line>0</line>
+                        <pixel>20</pixel>
+                    </imageCoordinate>
+                    <geodeticCoordinate>
+                        <latitude>49</latitude>
+                        <longitude>3</longitude>
+                    </geodeticCoordinate>
+                </imageTiePoint>
+                <imageTiePoint>
+                    <imageCoordinate>
+                        <line>20</line>
+                        <pixel>0</pixel>
+                    </imageCoordinate>
+                    <geodeticCoordinate>
+                        <latitude>48</latitude>
+                        <longitude>2</longitude>
+                    </geodeticCoordinate>
+                </imageTiePoint>
+                <imageTiePoint>
+                    <imageCoordinate>
+                        <line>20</line>
+                        <pixel>20</pixel>
+                    </imageCoordinate>
+                    <geodeticCoordinate>
+                        <latitude>48</latitude>
+                        <longitude>3</longitude>
+                    </geodeticCoordinate>
+                </imageTiePoint>
+            </geolocationGrid>
+            <referenceEllipsoidParameters>
+                <ellipsoidName>WGS84</ellipsoidName>
+                <semiMajorAxis>6378137</semiMajorAxis>
+                <semiMinorAxis>6356752.314245179</semiMinorAxis>
+            </referenceEllipsoidParameters>
+        </geographicInformation>
+        <lookupTable incidenceAngleCorrection="Beta Nought">lut.xml</lookupTable>
+        <lookupTable incidenceAngleCorrection="Sigma Nought">lut.xml</lookupTable>
+        <lookupTable incidenceAngleCorrection="Gamma">lut.xml</lookupTable>
+        <fullResolutionImageData pole="HH">byte_scanline.tif</fullResolutionImageData>
+        <fullResolutionImageData pole="HV">byte_scanline.tif</fullResolutionImageData>
+    </imageAttributes>
+</product>
