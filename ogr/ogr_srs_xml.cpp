@@ -938,8 +938,13 @@ static int getEPSGObjectCodeValue( CPLXMLNode *psNode,
         return nDefault;
     
     CPLString osObjectType, osAuthority, osValue;
+    const char* pszHrefVal;
     
-    if( !ParseOGCDefURN( CPLGetXMLValue( psNode, "xlink:href", NULL ),
+    pszHrefVal = CPLGetXMLValue( psNode, "xlink:href", NULL );
+    if (pszHrefVal == NULL)
+        pszHrefVal = CPLGetXMLValue( psNode, "href", NULL );
+    
+    if( !ParseOGCDefURN( pszHrefVal,
                          &osObjectType, &osAuthority, NULL, &osValue ) )
         return nDefault;
 
