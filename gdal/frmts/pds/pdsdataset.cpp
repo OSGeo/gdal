@@ -530,8 +530,9 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
         // hope Swiss Oblique Cylindrical is the same
         oSRS.SetSOC ( center_lat, center_lon, 0, 0 );
     } else {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "No projection define or supported! Are you sure this is a map projected image?" );
+        CPLDebug( "PDS",
+                  "Dataset projection %s is not supported. Continuing...",
+                  map_proj_name.c_str() );
         bProjectionSet = FALSE;
     }
 
