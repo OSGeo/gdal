@@ -431,13 +431,17 @@ def tiff_ovr_11():
     src_ds = None
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
-       int(gdal.VersionInfo('VERSION_NUM')) < 1700:
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-       ds = None
-       ds = gdal.Open('tmp/ovr11.tif', gdal.GA_Update)
+    try:
+        if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+           int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+            # The two following lines are necessary with inverted endianness
+            # for the moment with older libtiff
+            # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
+            ds = None
+            ds = gdal.Open('tmp/ovr11.tif', gdal.GA_Update)
+    except:
+    # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
+        pass 
 
     ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
 
@@ -477,13 +481,17 @@ def tiff_ovr_12():
     src_ds = None
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
-       int(gdal.VersionInfo('VERSION_NUM')) < 1700:
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-       ds = None
-       ds = gdal.Open('tmp/ovr12.tif', gdal.GA_Update)
+    try:
+        if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+           int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+            # The two following lines are necessary with inverted endianness
+            # for the moment with older libtiff
+            # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
+            ds = None
+            ds = gdal.Open('tmp/ovr12.tif', gdal.GA_Update)
+    except:
+    # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
+        pass 
 
 
     ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
@@ -589,13 +597,18 @@ def tiff_ovr_15():
     src_ds = None
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
-       int(gdal.VersionInfo('VERSION_NUM')) < 1700:
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-       ds = None
-       ds = gdal.Open('tmp/ovr15.tif', gdal.GA_Update)
+    try:
+        if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+           int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+            # The two following lines are necessary with inverted endianness
+            # for the moment with older libtiff
+            # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
+            ds = None
+            ds = gdal.Open('tmp/ovr15.tif', gdal.GA_Update)
+    except:
+    # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
+        pass 
+
 
     ds.BuildOverviews( 'GAUSS', overviewlist = [2] )
 
