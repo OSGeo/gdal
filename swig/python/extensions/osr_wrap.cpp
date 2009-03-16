@@ -3231,6 +3231,7 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_CopyGeogCSFrom(OSRSpatialReferenceSh
     return OSRCopyGeogCSFrom( self, rhs );
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetTOWGS84(OSRSpatialReferenceShadow *self,double p1,double p2,double p3,double p4=0.0,double p5=0.0,double p6=0.0,double p7=0.0){
+
     return OSRSetTOWGS84( self, p1, p2, p3, p4, p5, p6, p7 );
   }
 
@@ -3309,6 +3310,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToMICoordSys(OSRSpatialReferen
   }
 SWIGINTERN OSRSpatialReferenceShadow *OSRSpatialReferenceShadow_CloneGeogCS(OSRSpatialReferenceShadow *self){
     return (OSRSpatialReferenceShadow*) OSRCloneGeogCS(self);
+  }
+SWIGINTERN OSRSpatialReferenceShadow *OSRSpatialReferenceShadow_Clone(OSRSpatialReferenceShadow *self){
+    return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_Validate(OSRSpatialReferenceShadow *self){
     return OSRValidate(self);
@@ -3396,6 +3400,11 @@ SWIGINTERN PyObject *_wrap_GetWellKnownGeogCSAsWKT(PyObject *SWIGUNUSEDPARM(self
   }
   arg1 = reinterpret_cast< char * >(buf1);
   {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (OGRErr)GetWellKnownGeogCSAsWKT((char const *)arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -3472,6 +3481,11 @@ SWIGINTERN PyObject *_wrap_GetUserInputAsWKT(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetUserInputAsWKT" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = reinterpret_cast< char * >(buf1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (OGRErr)GetUserInputAsWKT((char const *)arg1,arg2);
     if ( bUseExceptions ) {
@@ -3651,6 +3665,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_IsSame(PyObject *SWIGUNUSEDPARM(self
   }
   arg2 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp2);
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (int)OSRSpatialReferenceShadow_IsSame(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -3689,6 +3708,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_IsSameGeogCS(PyObject *SWIGUNUSEDPAR
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_IsSameGeogCS" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (int)OSRSpatialReferenceShadow_IsSameGeogCS(arg1,arg2);
     if ( bUseExceptions ) {
@@ -3910,6 +3934,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetAttrValue(PyObject *SWIGUNUSEDPAR
     arg3 = static_cast< int >(val3);
   }
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (char *)OSRSpatialReferenceShadow_GetAttrValue(arg1,(char const *)arg2,arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -3961,6 +3990,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAttrValue(PyObject *SWIGUNUSEDPAR
     SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "SpatialReference_SetAttrValue" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = reinterpret_cast< char * >(buf3);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (OGRErr)OSRSpatialReferenceShadow_SetAttrValue(arg1,(char const *)arg2,(char const *)arg3);
     if ( bUseExceptions ) {
@@ -4030,6 +4064,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAngularUnits(PyObject *SWIGUNUSED
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetAngularUnits" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast< double >(val3);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (OGRErr)OSRSpatialReferenceShadow_SetAngularUnits(arg1,(char const *)arg2,arg3);
     if ( bUseExceptions ) {
@@ -4128,6 +4167,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLinearUnits(PyObject *SWIGUNUSEDP
   } 
   arg3 = static_cast< double >(val3);
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (OGRErr)OSRSpatialReferenceShadow_SetLinearUnits(arg1,(char const *)arg2,arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -4194,6 +4238,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLinearUnitsAndUpdateParameters(Py
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetLinearUnitsAndUpdateParameters" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast< double >(val3);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (OGRErr)OSRSpatialReferenceShadow_SetLinearUnitsAndUpdateParameters(arg1,(char const *)arg2,arg3);
     if ( bUseExceptions ) {
@@ -4667,6 +4716,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetProjParm(PyObject *SWIGUNUSEDPARM
   } 
   arg3 = static_cast< double >(val3);
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (OGRErr)OSRSpatialReferenceShadow_SetProjParm(arg1,(char const *)arg2,arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -4736,6 +4790,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetProjParm(PyObject *SWIGUNUSEDPARM
     arg3 = static_cast< double >(val3);
   }
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (double)OSRSpatialReferenceShadow_GetProjParm(arg1,(char const *)arg2,arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -4786,6 +4845,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetNormProjParm(PyObject *SWIGUNUSED
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetNormProjParm" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast< double >(val3);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (OGRErr)OSRSpatialReferenceShadow_SetNormProjParm(arg1,(char const *)arg2,arg3);
     if ( bUseExceptions ) {
@@ -4854,6 +4918,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetNormProjParm(PyObject *SWIGUNUSED
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_GetNormProjParm" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast< double >(val3);
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
   }
   {
     result = (double)OSRSpatialReferenceShadow_GetNormProjParm(arg1,(char const *)arg2,arg3);
@@ -8405,6 +8474,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetWellKnownGeogCS(PyObject *SWIGUNU
   }
   arg2 = reinterpret_cast< char * >(buf2);
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (OGRErr)OSRSpatialReferenceShadow_SetWellKnownGeogCS(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8463,6 +8537,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetFromUserInput(PyObject *SWIGUNUSE
   }
   arg2 = reinterpret_cast< char * >(buf2);
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (OGRErr)OSRSpatialReferenceShadow_SetFromUserInput(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8519,6 +8598,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_CopyGeogCSFrom(PyObject *SWIGUNUSEDP
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_CopyGeogCSFrom" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     result = (OGRErr)OSRSpatialReferenceShadow_CopyGeogCSFrom(arg1,arg2);
     if ( bUseExceptions ) {
@@ -8960,6 +9044,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetProjCS(PyObject *SWIGUNUSEDPARM(s
     arg2 = reinterpret_cast< char * >(buf2);
   }
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     result = (OGRErr)OSRSpatialReferenceShadow_SetProjCS(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9190,11 +9279,13 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
     int size = PySequence_Size(obj1);
     for (int i = 0; i < size; i++) {
       char *pszItem = NULL;
-      if ( ! PyArg_Parse( PySequence_GetItem(obj1,i), "s", &pszItem ) ) {
+      PyObject* pyObj = PySequence_GetItem(obj1,i);
+      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
       }
       arg2 = CSLAddString( arg2, pszItem );
+      Py_DECREF(pyObj);
     }
   }
   {
@@ -9349,6 +9440,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromPCI(PyObject *SWIGUNUSEDPA
         double val;
         PyArg_Parse(o, "d", &val );
         arg4[i] =  val;
+        Py_DECREF(o);
       }
     }
   }
@@ -9447,6 +9539,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUSGS(PyObject *SWIGUNUSEDP
         double val;
         PyArg_Parse(o, "d", &val );
         arg4[i] =  val;
+        Py_DECREF(o);
       }
     }
   }
@@ -10246,6 +10339,36 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_Clone(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  OSRSpatialReferenceShadow *result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_Clone",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_Clone" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    result = (OSRSpatialReferenceShadow *)OSRSpatialReferenceShadow_Clone(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_Validate(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -10631,6 +10754,7 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoint__SWIG_0(PyObj
       double val;
       PyArg_Parse(o, "d", &val );
       arg2[i] =  val;
+      Py_DECREF(o);
     }
   }
   {
@@ -10953,6 +11077,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_ExportToXML", _wrap_SpatialReference_ExportToXML, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ExportToMICoordSys", _wrap_SpatialReference_ExportToMICoordSys, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_CloneGeogCS", _wrap_SpatialReference_CloneGeogCS, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_Clone", _wrap_SpatialReference_Clone, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_Validate", _wrap_SpatialReference_Validate, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_StripCTParms", _wrap_SpatialReference_StripCTParms, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_FixupOrdering", _wrap_SpatialReference_FixupOrdering, METH_VARARGS, NULL},
@@ -11529,89 +11654,115 @@ SWIGEXPORT void SWIG_init(void) {
   SWIG_InstallConstants(d,swig_const_table);
   
   
-  SWIG_Python_SetConstant(d, "SRS_PT_ALBERS_CONIC_EQUAL_AREA",SWIG_FromCharPtr(SRS_PT_ALBERS_CONIC_EQUAL_AREA));
-  SWIG_Python_SetConstant(d, "SRS_PT_AZIMUTHAL_EQUIDISTANT",SWIG_FromCharPtr(SRS_PT_AZIMUTHAL_EQUIDISTANT));
-  SWIG_Python_SetConstant(d, "SRS_PT_CASSINI_SOLDNER",SWIG_FromCharPtr(SRS_PT_CASSINI_SOLDNER));
-  SWIG_Python_SetConstant(d, "SRS_PT_CYLINDRICAL_EQUAL_AREA",SWIG_FromCharPtr(SRS_PT_CYLINDRICAL_EQUAL_AREA));
-  SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_IV",SWIG_FromCharPtr(SRS_PT_ECKERT_IV));
-  SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_VI",SWIG_FromCharPtr(SRS_PT_ECKERT_VI));
-  SWIG_Python_SetConstant(d, "SRS_PT_EQUIDISTANT_CONIC",SWIG_FromCharPtr(SRS_PT_EQUIDISTANT_CONIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_EQUIRECTANGULAR",SWIG_FromCharPtr(SRS_PT_EQUIRECTANGULAR));
-  SWIG_Python_SetConstant(d, "SRS_PT_GALL_STEREOGRAPHIC",SWIG_FromCharPtr(SRS_PT_GALL_STEREOGRAPHIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_GAUSSSCHREIBERTMERCATOR",SWIG_FromCharPtr(SRS_PT_GAUSSSCHREIBERTMERCATOR));
-  SWIG_Python_SetConstant(d, "SRS_PT_GNOMONIC",SWIG_FromCharPtr(SRS_PT_GNOMONIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_GOODE_HOMOLOSINE",SWIG_FromCharPtr(SRS_PT_GOODE_HOMOLOSINE));
-  SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR",SWIG_FromCharPtr(SRS_PT_HOTINE_OBLIQUE_MERCATOR));
-  SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN",SWIG_FromCharPtr(SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN));
-  SWIG_Python_SetConstant(d, "SRS_PT_LABORDE_OBLIQUE_MERCATOR",SWIG_FromCharPtr(SRS_PT_LABORDE_OBLIQUE_MERCATOR));
-  SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP",SWIG_FromCharPtr(SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP));
-  SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP",SWIG_FromCharPtr(SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP));
-  SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM",SWIG_FromCharPtr(SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM));
-  SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA",SWIG_FromCharPtr(SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA));
-  SWIG_Python_SetConstant(d, "SRS_PT_MERCATOR_1SP",SWIG_FromCharPtr(SRS_PT_MERCATOR_1SP));
-  SWIG_Python_SetConstant(d, "SRS_PT_MERCATOR_2SP",SWIG_FromCharPtr(SRS_PT_MERCATOR_2SP));
-  SWIG_Python_SetConstant(d, "SRS_PT_MILLER_CYLINDRICAL",SWIG_FromCharPtr(SRS_PT_MILLER_CYLINDRICAL));
-  SWIG_Python_SetConstant(d, "SRS_PT_MOLLWEIDE",SWIG_FromCharPtr(SRS_PT_MOLLWEIDE));
-  SWIG_Python_SetConstant(d, "SRS_PT_NEW_ZEALAND_MAP_GRID",SWIG_FromCharPtr(SRS_PT_NEW_ZEALAND_MAP_GRID));
-  SWIG_Python_SetConstant(d, "SRS_PT_OBLIQUE_STEREOGRAPHIC",SWIG_FromCharPtr(SRS_PT_OBLIQUE_STEREOGRAPHIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_ORTHOGRAPHIC",SWIG_FromCharPtr(SRS_PT_ORTHOGRAPHIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_POLAR_STEREOGRAPHIC",SWIG_FromCharPtr(SRS_PT_POLAR_STEREOGRAPHIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_POLYCONIC",SWIG_FromCharPtr(SRS_PT_POLYCONIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_ROBINSON",SWIG_FromCharPtr(SRS_PT_ROBINSON));
-  SWIG_Python_SetConstant(d, "SRS_PT_SINUSOIDAL",SWIG_FromCharPtr(SRS_PT_SINUSOIDAL));
-  SWIG_Python_SetConstant(d, "SRS_PT_STEREOGRAPHIC",SWIG_FromCharPtr(SRS_PT_STEREOGRAPHIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_SWISS_OBLIQUE_CYLINDRICAL",SWIG_FromCharPtr(SRS_PT_SWISS_OBLIQUE_CYLINDRICAL));
-  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR",SWIG_FromCharPtr(SRS_PT_TRANSVERSE_MERCATOR));
-  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED",SWIG_FromCharPtr(SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED));
-  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_22",SWIG_FromCharPtr(SRS_PT_TRANSVERSE_MERCATOR_MI_22));
-  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_23",SWIG_FromCharPtr(SRS_PT_TRANSVERSE_MERCATOR_MI_23));
-  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_24",SWIG_FromCharPtr(SRS_PT_TRANSVERSE_MERCATOR_MI_24));
-  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_25",SWIG_FromCharPtr(SRS_PT_TRANSVERSE_MERCATOR_MI_25));
-  SWIG_Python_SetConstant(d, "SRS_PT_TUNISIA_MINING_GRID",SWIG_FromCharPtr(SRS_PT_TUNISIA_MINING_GRID));
-  SWIG_Python_SetConstant(d, "SRS_PT_VANDERGRINTEN",SWIG_FromCharPtr(SRS_PT_VANDERGRINTEN));
-  SWIG_Python_SetConstant(d, "SRS_PT_KROVAK",SWIG_FromCharPtr(SRS_PT_KROVAK));
-  SWIG_Python_SetConstant(d, "SRS_PP_CENTRAL_MERIDIAN",SWIG_FromCharPtr(SRS_PP_CENTRAL_MERIDIAN));
-  SWIG_Python_SetConstant(d, "SRS_PP_SCALE_FACTOR",SWIG_FromCharPtr(SRS_PP_SCALE_FACTOR));
-  SWIG_Python_SetConstant(d, "SRS_PP_STANDARD_PARALLEL_1",SWIG_FromCharPtr(SRS_PP_STANDARD_PARALLEL_1));
-  SWIG_Python_SetConstant(d, "SRS_PP_STANDARD_PARALLEL_2",SWIG_FromCharPtr(SRS_PP_STANDARD_PARALLEL_2));
-  SWIG_Python_SetConstant(d, "SRS_PP_PSEUDO_STD_PARALLEL_1",SWIG_FromCharPtr(SRS_PP_PSEUDO_STD_PARALLEL_1));
-  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_CENTER",SWIG_FromCharPtr(SRS_PP_LONGITUDE_OF_CENTER));
-  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_CENTER",SWIG_FromCharPtr(SRS_PP_LATITUDE_OF_CENTER));
-  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_ORIGIN",SWIG_FromCharPtr(SRS_PP_LONGITUDE_OF_ORIGIN));
-  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_ORIGIN",SWIG_FromCharPtr(SRS_PP_LATITUDE_OF_ORIGIN));
-  SWIG_Python_SetConstant(d, "SRS_PP_FALSE_EASTING",SWIG_FromCharPtr(SRS_PP_FALSE_EASTING));
-  SWIG_Python_SetConstant(d, "SRS_PP_FALSE_NORTHING",SWIG_FromCharPtr(SRS_PP_FALSE_NORTHING));
-  SWIG_Python_SetConstant(d, "SRS_PP_AZIMUTH",SWIG_FromCharPtr(SRS_PP_AZIMUTH));
-  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_POINT_1",SWIG_FromCharPtr(SRS_PP_LONGITUDE_OF_POINT_1));
-  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_POINT_1",SWIG_FromCharPtr(SRS_PP_LATITUDE_OF_POINT_1));
-  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_POINT_2",SWIG_FromCharPtr(SRS_PP_LONGITUDE_OF_POINT_2));
-  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_POINT_2",SWIG_FromCharPtr(SRS_PP_LATITUDE_OF_POINT_2));
-  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_POINT_3",SWIG_FromCharPtr(SRS_PP_LONGITUDE_OF_POINT_3));
-  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_POINT_3",SWIG_FromCharPtr(SRS_PP_LATITUDE_OF_POINT_3));
-  SWIG_Python_SetConstant(d, "SRS_PP_RECTIFIED_GRID_ANGLE",SWIG_FromCharPtr(SRS_PP_RECTIFIED_GRID_ANGLE));
-  SWIG_Python_SetConstant(d, "SRS_PP_LANDSAT_NUMBER",SWIG_FromCharPtr(SRS_PP_LANDSAT_NUMBER));
-  SWIG_Python_SetConstant(d, "SRS_PP_PATH_NUMBER",SWIG_FromCharPtr(SRS_PP_PATH_NUMBER));
-  SWIG_Python_SetConstant(d, "SRS_PP_PERSPECTIVE_POINT_HEIGHT",SWIG_FromCharPtr(SRS_PP_PERSPECTIVE_POINT_HEIGHT));
-  SWIG_Python_SetConstant(d, "SRS_PP_FIPSZONE",SWIG_FromCharPtr(SRS_PP_FIPSZONE));
-  SWIG_Python_SetConstant(d, "SRS_PP_ZONE",SWIG_FromCharPtr(SRS_PP_ZONE));
-  SWIG_Python_SetConstant(d, "SRS_UL_METER",SWIG_FromCharPtr(SRS_UL_METER));
-  SWIG_Python_SetConstant(d, "SRS_UL_FOOT",SWIG_FromCharPtr(SRS_UL_FOOT));
-  SWIG_Python_SetConstant(d, "SRS_UL_FOOT_CONV",SWIG_FromCharPtr(SRS_UL_FOOT_CONV));
-  SWIG_Python_SetConstant(d, "SRS_UL_US_FOOT",SWIG_FromCharPtr(SRS_UL_US_FOOT));
-  SWIG_Python_SetConstant(d, "SRS_UL_US_FOOT_CONV",SWIG_FromCharPtr(SRS_UL_US_FOOT_CONV));
-  SWIG_Python_SetConstant(d, "SRS_UL_NAUTICAL_MILE",SWIG_FromCharPtr(SRS_UL_NAUTICAL_MILE));
-  SWIG_Python_SetConstant(d, "SRS_UL_NAUTICAL_MILE_CONV",SWIG_FromCharPtr(SRS_UL_NAUTICAL_MILE_CONV));
-  SWIG_Python_SetConstant(d, "SRS_UL_LINK",SWIG_FromCharPtr(SRS_UL_LINK));
-  SWIG_Python_SetConstant(d, "SRS_UL_LINK_CONV",SWIG_FromCharPtr(SRS_UL_LINK_CONV));
-  SWIG_Python_SetConstant(d, "SRS_UL_CHAIN",SWIG_FromCharPtr(SRS_UL_CHAIN));
-  SWIG_Python_SetConstant(d, "SRS_UL_CHAIN_CONV",SWIG_FromCharPtr(SRS_UL_CHAIN_CONV));
-  SWIG_Python_SetConstant(d, "SRS_UL_ROD",SWIG_FromCharPtr(SRS_UL_ROD));
-  SWIG_Python_SetConstant(d, "SRS_UL_ROD_CONV",SWIG_FromCharPtr(SRS_UL_ROD_CONV));
-  SWIG_Python_SetConstant(d, "SRS_DN_NAD27",SWIG_FromCharPtr(SRS_DN_NAD27));
-  SWIG_Python_SetConstant(d, "SRS_DN_NAD83",SWIG_FromCharPtr(SRS_DN_NAD83));
-  SWIG_Python_SetConstant(d, "SRS_DN_WGS72",SWIG_FromCharPtr(SRS_DN_WGS72));
-  SWIG_Python_SetConstant(d, "SRS_DN_WGS84",SWIG_FromCharPtr(SRS_DN_WGS84));
-  SWIG_Python_SetConstant(d, "SRS_WGS84_SEMIMAJOR",SWIG_From_double(static_cast< double >(SRS_WGS84_SEMIMAJOR)));
-  SWIG_Python_SetConstant(d, "SRS_WGS84_INVFLATTENING",SWIG_From_double(static_cast< double >(SRS_WGS84_INVFLATTENING)));
+  SWIG_Python_SetConstant(d, "SRS_WKT_WGS84",SWIG_FromCharPtr("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ALBERS_CONIC_EQUAL_AREA",SWIG_FromCharPtr("Albers_Conic_Equal_Area"));
+  SWIG_Python_SetConstant(d, "SRS_PT_AZIMUTHAL_EQUIDISTANT",SWIG_FromCharPtr("Azimuthal_Equidistant"));
+  SWIG_Python_SetConstant(d, "SRS_PT_CASSINI_SOLDNER",SWIG_FromCharPtr("Cassini_Soldner"));
+  SWIG_Python_SetConstant(d, "SRS_PT_CYLINDRICAL_EQUAL_AREA",SWIG_FromCharPtr("Cylindrical_Equal_Area"));
+  SWIG_Python_SetConstant(d, "SRS_PT_BONNE",SWIG_FromCharPtr("Bonne"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_I",SWIG_FromCharPtr("Eckert_I"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_II",SWIG_FromCharPtr("Eckert_II"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_III",SWIG_FromCharPtr("Eckert_III"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_IV",SWIG_FromCharPtr("Eckert_IV"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_V",SWIG_FromCharPtr("Eckert_V"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_VI",SWIG_FromCharPtr("Eckert_VI"));
+  SWIG_Python_SetConstant(d, "SRS_PT_EQUIDISTANT_CONIC",SWIG_FromCharPtr("Equidistant_Conic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_EQUIRECTANGULAR",SWIG_FromCharPtr("Equirectangular"));
+  SWIG_Python_SetConstant(d, "SRS_PT_GALL_STEREOGRAPHIC",SWIG_FromCharPtr("Gall_Stereographic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_GAUSSSCHREIBERTMERCATOR",SWIG_FromCharPtr("Gauss_Schreiber_Transverse_Mercator"));
+  SWIG_Python_SetConstant(d, "SRS_PT_GEOSTATIONARY_SATELLITE",SWIG_FromCharPtr("Geostationary_Satellite"));
+  SWIG_Python_SetConstant(d, "SRS_PT_GOODE_HOMOLOSINE",SWIG_FromCharPtr("Goode_Homolosine"));
+  SWIG_Python_SetConstant(d, "SRS_PT_GNOMONIC",SWIG_FromCharPtr("Gnomonic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR",SWIG_FromCharPtr("Hotine_Oblique_Mercator"));
+  SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN",SWIG_FromCharPtr("Hotine_Oblique_Mercator_Two_Point_Natural_Origin"));
+  SWIG_Python_SetConstant(d, "SRS_PT_LABORDE_OBLIQUE_MERCATOR",SWIG_FromCharPtr("Laborde_Oblique_Mercator"));
+  SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP",SWIG_FromCharPtr("Lambert_Conformal_Conic_1SP"));
+  SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP",SWIG_FromCharPtr("Lambert_Conformal_Conic_2SP"));
+  SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM",SWIG_FromCharPtr("Lambert_Conformal_Conic_2SP_Belgium"));
+  SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA",SWIG_FromCharPtr("Lambert_Azimuthal_Equal_Area"));
+  SWIG_Python_SetConstant(d, "SRS_PT_MERCATOR_1SP",SWIG_FromCharPtr("Mercator_1SP"));
+  SWIG_Python_SetConstant(d, "SRS_PT_MERCATOR_2SP",SWIG_FromCharPtr("Mercator_2SP"));
+  SWIG_Python_SetConstant(d, "SRS_PT_MILLER_CYLINDRICAL",SWIG_FromCharPtr("Miller_Cylindrical"));
+  SWIG_Python_SetConstant(d, "SRS_PT_MOLLWEIDE",SWIG_FromCharPtr("Mollweide"));
+  SWIG_Python_SetConstant(d, "SRS_PT_NEW_ZEALAND_MAP_GRID",SWIG_FromCharPtr("New_Zealand_Map_Grid"));
+  SWIG_Python_SetConstant(d, "SRS_PT_OBLIQUE_STEREOGRAPHIC",SWIG_FromCharPtr("Oblique_Stereographic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ORTHOGRAPHIC",SWIG_FromCharPtr("Orthographic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_POLAR_STEREOGRAPHIC",SWIG_FromCharPtr("Polar_Stereographic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_POLYCONIC",SWIG_FromCharPtr("Polyconic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_ROBINSON",SWIG_FromCharPtr("Robinson"));
+  SWIG_Python_SetConstant(d, "SRS_PT_SINUSOIDAL",SWIG_FromCharPtr("Sinusoidal"));
+  SWIG_Python_SetConstant(d, "SRS_PT_STEREOGRAPHIC",SWIG_FromCharPtr("Stereographic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_SWISS_OBLIQUE_CYLINDRICAL",SWIG_FromCharPtr("Swiss_Oblique_Cylindrical"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR",SWIG_FromCharPtr("Transverse_Mercator"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED",SWIG_FromCharPtr("Transverse_Mercator_South_Orientated"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_21",SWIG_FromCharPtr("Transverse_Mercator_MapInfo_21"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_22",SWIG_FromCharPtr("Transverse_Mercator_MapInfo_22"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_23",SWIG_FromCharPtr("Transverse_Mercator_MapInfo_23"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_24",SWIG_FromCharPtr("Transverse_Mercator_MapInfo_24"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TRANSVERSE_MERCATOR_MI_25",SWIG_FromCharPtr("Transverse_Mercator_MapInfo_25"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TUNISIA_MINING_GRID",SWIG_FromCharPtr("Tunisia_Mining_Grid"));
+  SWIG_Python_SetConstant(d, "SRS_PT_TWO_POINT_EQUIDISTANT",SWIG_FromCharPtr("Two_Point_Equidistant"));
+  SWIG_Python_SetConstant(d, "SRS_PT_VANDERGRINTEN",SWIG_FromCharPtr("VanDerGrinten"));
+  SWIG_Python_SetConstant(d, "SRS_PT_KROVAK",SWIG_FromCharPtr("Krovak"));
+  SWIG_Python_SetConstant(d, "SRS_PT_IMW_POLYCONIC",SWIG_FromCharPtr("International_Map_of_the_World_Polyconic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_I",SWIG_FromCharPtr("Wagner_I"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_II",SWIG_FromCharPtr("Wagner_II"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_III",SWIG_FromCharPtr("Wagner_III"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_IV",SWIG_FromCharPtr("Wagner_IV"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_V",SWIG_FromCharPtr("Wagner_V"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_VI",SWIG_FromCharPtr("Wagner_VI"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_VII",SWIG_FromCharPtr("Wagner_VII"));
+  SWIG_Python_SetConstant(d, "SRS_PP_CENTRAL_MERIDIAN",SWIG_FromCharPtr("central_meridian"));
+  SWIG_Python_SetConstant(d, "SRS_PP_SCALE_FACTOR",SWIG_FromCharPtr("scale_factor"));
+  SWIG_Python_SetConstant(d, "SRS_PP_STANDARD_PARALLEL_1",SWIG_FromCharPtr("standard_parallel_1"));
+  SWIG_Python_SetConstant(d, "SRS_PP_STANDARD_PARALLEL_2",SWIG_FromCharPtr("standard_parallel_2"));
+  SWIG_Python_SetConstant(d, "SRS_PP_PSEUDO_STD_PARALLEL_1",SWIG_FromCharPtr("pseudo_standard_parallel_1"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_CENTER",SWIG_FromCharPtr("longitude_of_center"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_CENTER",SWIG_FromCharPtr("latitude_of_center"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_ORIGIN",SWIG_FromCharPtr("longitude_of_origin"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_ORIGIN",SWIG_FromCharPtr("latitude_of_origin"));
+  SWIG_Python_SetConstant(d, "SRS_PP_FALSE_EASTING",SWIG_FromCharPtr("false_easting"));
+  SWIG_Python_SetConstant(d, "SRS_PP_FALSE_NORTHING",SWIG_FromCharPtr("false_northing"));
+  SWIG_Python_SetConstant(d, "SRS_PP_AZIMUTH",SWIG_FromCharPtr("azimuth"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_POINT_1",SWIG_FromCharPtr("longitude_of_point_1"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_POINT_1",SWIG_FromCharPtr("latitude_of_point_1"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_POINT_2",SWIG_FromCharPtr("longitude_of_point_2"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_POINT_2",SWIG_FromCharPtr("latitude_of_point_2"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_POINT_3",SWIG_FromCharPtr("longitude_of_point_3"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_POINT_3",SWIG_FromCharPtr("latitude_of_point_3"));
+  SWIG_Python_SetConstant(d, "SRS_PP_RECTIFIED_GRID_ANGLE",SWIG_FromCharPtr("rectified_grid_angle"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LANDSAT_NUMBER",SWIG_FromCharPtr("landsat_number"));
+  SWIG_Python_SetConstant(d, "SRS_PP_PATH_NUMBER",SWIG_FromCharPtr("path_number"));
+  SWIG_Python_SetConstant(d, "SRS_PP_PERSPECTIVE_POINT_HEIGHT",SWIG_FromCharPtr("perspective_point_height"));
+  SWIG_Python_SetConstant(d, "SRS_PP_SATELLITE_HEIGHT",SWIG_FromCharPtr("satellite_height"));
+  SWIG_Python_SetConstant(d, "SRS_PP_FIPSZONE",SWIG_FromCharPtr("fipszone"));
+  SWIG_Python_SetConstant(d, "SRS_PP_ZONE",SWIG_FromCharPtr("zone"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_1ST_POINT",SWIG_FromCharPtr("Latitude_Of_1st_Point"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_1ST_POINT",SWIG_FromCharPtr("Longitude_Of_1st_Point"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LATITUDE_OF_2ND_POINT",SWIG_FromCharPtr("Latitude_Of_2nd_Point"));
+  SWIG_Python_SetConstant(d, "SRS_PP_LONGITUDE_OF_2ND_POINT",SWIG_FromCharPtr("Longitude_Of_2nd_Point"));
+  SWIG_Python_SetConstant(d, "SRS_UL_METER",SWIG_FromCharPtr("Meter"));
+  SWIG_Python_SetConstant(d, "SRS_UL_FOOT",SWIG_FromCharPtr("Foot (International)"));
+  SWIG_Python_SetConstant(d, "SRS_UL_FOOT_CONV",SWIG_FromCharPtr("0.3048"));
+  SWIG_Python_SetConstant(d, "SRS_UL_US_FOOT",SWIG_FromCharPtr("U.S. Foot"));
+  SWIG_Python_SetConstant(d, "SRS_UL_US_FOOT_CONV",SWIG_FromCharPtr("0.3048006"));
+  SWIG_Python_SetConstant(d, "SRS_UL_NAUTICAL_MILE",SWIG_FromCharPtr("Nautical Mile"));
+  SWIG_Python_SetConstant(d, "SRS_UL_NAUTICAL_MILE_CONV",SWIG_FromCharPtr("1852.0"));
+  SWIG_Python_SetConstant(d, "SRS_UL_LINK",SWIG_FromCharPtr("Link"));
+  SWIG_Python_SetConstant(d, "SRS_UL_LINK_CONV",SWIG_FromCharPtr("0.20116684023368047"));
+  SWIG_Python_SetConstant(d, "SRS_UL_CHAIN",SWIG_FromCharPtr("Chain"));
+  SWIG_Python_SetConstant(d, "SRS_UL_CHAIN_CONV",SWIG_FromCharPtr("20.116684023368047"));
+  SWIG_Python_SetConstant(d, "SRS_UL_ROD",SWIG_FromCharPtr("Rod"));
+  SWIG_Python_SetConstant(d, "SRS_UL_ROD_CONV",SWIG_FromCharPtr("5.02921005842012"));
+  SWIG_Python_SetConstant(d, "SRS_UA_DEGREE",SWIG_FromCharPtr("degree"));
+  SWIG_Python_SetConstant(d, "SRS_UA_DEGREE_CONV",SWIG_FromCharPtr("0.0174532925199433"));
+  SWIG_Python_SetConstant(d, "SRS_UA_RADIAN",SWIG_FromCharPtr("radian"));
+  SWIG_Python_SetConstant(d, "SRS_PM_GREENWICH",SWIG_FromCharPtr("Greenwich"));
+  SWIG_Python_SetConstant(d, "SRS_DN_NAD27",SWIG_FromCharPtr("North_American_Datum_1927"));
+  SWIG_Python_SetConstant(d, "SRS_DN_NAD83",SWIG_FromCharPtr("North_American_Datum_1983"));
+  SWIG_Python_SetConstant(d, "SRS_DN_WGS72",SWIG_FromCharPtr("WGS_1972"));
+  SWIG_Python_SetConstant(d, "SRS_DN_WGS84",SWIG_FromCharPtr("WGS_1984"));
+  SWIG_Python_SetConstant(d, "SRS_WGS84_SEMIMAJOR",SWIG_From_double(static_cast< double >(6378137.0)));
+  SWIG_Python_SetConstant(d, "SRS_WGS84_INVFLATTENING",SWIG_From_double(static_cast< double >(298.257223563)));
 }
 
