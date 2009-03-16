@@ -3100,6 +3100,9 @@ SWIGEXPORT void SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GCI_MagentaBand",SWIG_From_int((int)(GCI_MagentaBand)));
   SWIG_Python_SetConstant(d, "GCI_YellowBand",SWIG_From_int((int)(GCI_YellowBand)));
   SWIG_Python_SetConstant(d, "GCI_BlackBand",SWIG_From_int((int)(GCI_BlackBand)));
+  SWIG_Python_SetConstant(d, "GCI_YCbCr_YBand",SWIG_From_int((int)(GCI_YCbCr_YBand)));
+  SWIG_Python_SetConstant(d, "GCI_YCbCr_CrBand",SWIG_From_int((int)(GCI_YCbCr_CrBand)));
+  SWIG_Python_SetConstant(d, "GCI_YCbCr_CbBand",SWIG_From_int((int)(GCI_YCbCr_CbBand)));
   SWIG_Python_SetConstant(d, "GRA_NearestNeighbour",SWIG_From_int((int)(GRA_NearestNeighbour)));
   SWIG_Python_SetConstant(d, "GRA_Bilinear",SWIG_From_int((int)(GRA_Bilinear)));
   SWIG_Python_SetConstant(d, "GRA_Cubic",SWIG_From_int((int)(GRA_Cubic)));
@@ -3137,6 +3140,7 @@ SWIGEXPORT void SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DMD_CREATIONDATATYPES",SWIG_FromCharPtr(GDAL_DMD_CREATIONDATATYPES));
   SWIG_Python_SetConstant(d, "DCAP_CREATE",SWIG_FromCharPtr(GDAL_DCAP_CREATE));
   SWIG_Python_SetConstant(d, "DCAP_CREATECOPY",SWIG_FromCharPtr(GDAL_DCAP_CREATECOPY));
+  SWIG_Python_SetConstant(d, "DCAP_VIRTUALIO",SWIG_FromCharPtr(GDAL_DCAP_VIRTUALIO));
   SWIG_Python_SetConstant(d, "CPLES_BackslashQuotable",SWIG_From_int((int)(CPLES_BackslashQuotable)));
   SWIG_Python_SetConstant(d, "CPLES_XML",SWIG_From_int((int)(CPLES_XML)));
   SWIG_Python_SetConstant(d, "CPLES_URL",SWIG_From_int((int)(CPLES_URL)));

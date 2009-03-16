@@ -153,7 +153,7 @@ def GetLastErrorMsg(*args):
   return _gdal.GetLastErrorMsg(*args)
 
 def PushFinderLocation(*args):
-  """PushFinderLocation(char ?)"""
+  """PushFinderLocation(char pszLocation)"""
   return _gdal.PushFinderLocation(*args)
 
 def PopFinderLocation(*args):
@@ -165,19 +165,19 @@ def FinderClean(*args):
   return _gdal.FinderClean(*args)
 
 def FindFile(*args):
-  """FindFile(char ?, char ?) -> char"""
+  """FindFile(char pszClass, char pszBasename) -> char"""
   return _gdal.FindFile(*args)
 
 def ReadDir(*args):
-  """ReadDir(char ?) -> char"""
+  """ReadDir(char pszDirName) -> char"""
   return _gdal.ReadDir(*args)
 
 def SetConfigOption(*args):
-  """SetConfigOption(char ?, char ?)"""
+  """SetConfigOption(char pszKey, char pszValue)"""
   return _gdal.SetConfigOption(*args)
 
 def GetConfigOption(*args):
-  """GetConfigOption(char ?, char ?) -> char"""
+  """GetConfigOption(char pszKey, char pszDefault=None) -> char"""
   return _gdal.GetConfigOption(*args)
 
 def CPLBinaryToHex(*args):
@@ -236,7 +236,7 @@ MajorObject_swigregister(MajorObject)
 
 def PushErrorHandler(*args):
   """
-    PushErrorHandler(char pszCallbackName="CPLQuietErrorHandler") -> CPLErr
+    PushErrorHandler(char pszCallbackName=None) -> CPLErr
     PushErrorHandler(CPLErrorHandler ?)
     """
   return _gdal.PushErrorHandler(*args)
@@ -383,115 +383,115 @@ GCP_swigregister(GCP)
 
 
 def GDAL_GCP_GCPX_get(*args):
-  """GDAL_GCP_GCPX_get(GCP h) -> double"""
+  """GDAL_GCP_GCPX_get(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_GCPX_get(*args)
 
 def GDAL_GCP_GCPX_set(*args):
-  """GDAL_GCP_GCPX_set(GCP h, double val)"""
+  """GDAL_GCP_GCPX_set(GCP gcp, double dfGCPX)"""
   return _gdal.GDAL_GCP_GCPX_set(*args)
 
 def GDAL_GCP_GCPY_get(*args):
-  """GDAL_GCP_GCPY_get(GCP h) -> double"""
+  """GDAL_GCP_GCPY_get(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_GCPY_get(*args)
 
 def GDAL_GCP_GCPY_set(*args):
-  """GDAL_GCP_GCPY_set(GCP h, double val)"""
+  """GDAL_GCP_GCPY_set(GCP gcp, double dfGCPY)"""
   return _gdal.GDAL_GCP_GCPY_set(*args)
 
 def GDAL_GCP_GCPZ_get(*args):
-  """GDAL_GCP_GCPZ_get(GCP h) -> double"""
+  """GDAL_GCP_GCPZ_get(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_GCPZ_get(*args)
 
 def GDAL_GCP_GCPZ_set(*args):
-  """GDAL_GCP_GCPZ_set(GCP h, double val)"""
+  """GDAL_GCP_GCPZ_set(GCP gcp, double dfGCPZ)"""
   return _gdal.GDAL_GCP_GCPZ_set(*args)
 
 def GDAL_GCP_GCPPixel_get(*args):
-  """GDAL_GCP_GCPPixel_get(GCP h) -> double"""
+  """GDAL_GCP_GCPPixel_get(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_GCPPixel_get(*args)
 
 def GDAL_GCP_GCPPixel_set(*args):
-  """GDAL_GCP_GCPPixel_set(GCP h, double val)"""
+  """GDAL_GCP_GCPPixel_set(GCP gcp, double dfGCPPixel)"""
   return _gdal.GDAL_GCP_GCPPixel_set(*args)
 
 def GDAL_GCP_GCPLine_get(*args):
-  """GDAL_GCP_GCPLine_get(GCP h) -> double"""
+  """GDAL_GCP_GCPLine_get(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_GCPLine_get(*args)
 
 def GDAL_GCP_GCPLine_set(*args):
-  """GDAL_GCP_GCPLine_set(GCP h, double val)"""
+  """GDAL_GCP_GCPLine_set(GCP gcp, double dfGCPLine)"""
   return _gdal.GDAL_GCP_GCPLine_set(*args)
 
 def GDAL_GCP_Info_get(*args):
-  """GDAL_GCP_Info_get(GCP h) -> char"""
+  """GDAL_GCP_Info_get(GCP gcp) -> char"""
   return _gdal.GDAL_GCP_Info_get(*args)
 
 def GDAL_GCP_Info_set(*args):
-  """GDAL_GCP_Info_set(GCP h, char val)"""
+  """GDAL_GCP_Info_set(GCP gcp, char pszInfo)"""
   return _gdal.GDAL_GCP_Info_set(*args)
 
 def GDAL_GCP_Id_get(*args):
-  """GDAL_GCP_Id_get(GCP h) -> char"""
+  """GDAL_GCP_Id_get(GCP gcp) -> char"""
   return _gdal.GDAL_GCP_Id_get(*args)
 
 def GDAL_GCP_Id_set(*args):
-  """GDAL_GCP_Id_set(GCP h, char val)"""
+  """GDAL_GCP_Id_set(GCP gcp, char pszId)"""
   return _gdal.GDAL_GCP_Id_set(*args)
 
 def GDAL_GCP_get_GCPX(*args):
-  """GDAL_GCP_get_GCPX(GCP h) -> double"""
+  """GDAL_GCP_get_GCPX(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_get_GCPX(*args)
 
 def GDAL_GCP_set_GCPX(*args):
-  """GDAL_GCP_set_GCPX(GCP h, double val)"""
+  """GDAL_GCP_set_GCPX(GCP gcp, double dfGCPX)"""
   return _gdal.GDAL_GCP_set_GCPX(*args)
 
 def GDAL_GCP_get_GCPY(*args):
-  """GDAL_GCP_get_GCPY(GCP h) -> double"""
+  """GDAL_GCP_get_GCPY(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_get_GCPY(*args)
 
 def GDAL_GCP_set_GCPY(*args):
-  """GDAL_GCP_set_GCPY(GCP h, double val)"""
+  """GDAL_GCP_set_GCPY(GCP gcp, double dfGCPY)"""
   return _gdal.GDAL_GCP_set_GCPY(*args)
 
 def GDAL_GCP_get_GCPZ(*args):
-  """GDAL_GCP_get_GCPZ(GCP h) -> double"""
+  """GDAL_GCP_get_GCPZ(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_get_GCPZ(*args)
 
 def GDAL_GCP_set_GCPZ(*args):
-  """GDAL_GCP_set_GCPZ(GCP h, double val)"""
+  """GDAL_GCP_set_GCPZ(GCP gcp, double dfGCPZ)"""
   return _gdal.GDAL_GCP_set_GCPZ(*args)
 
 def GDAL_GCP_get_GCPPixel(*args):
-  """GDAL_GCP_get_GCPPixel(GCP h) -> double"""
+  """GDAL_GCP_get_GCPPixel(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_get_GCPPixel(*args)
 
 def GDAL_GCP_set_GCPPixel(*args):
-  """GDAL_GCP_set_GCPPixel(GCP h, double val)"""
+  """GDAL_GCP_set_GCPPixel(GCP gcp, double dfGCPPixel)"""
   return _gdal.GDAL_GCP_set_GCPPixel(*args)
 
 def GDAL_GCP_get_GCPLine(*args):
-  """GDAL_GCP_get_GCPLine(GCP h) -> double"""
+  """GDAL_GCP_get_GCPLine(GCP gcp) -> double"""
   return _gdal.GDAL_GCP_get_GCPLine(*args)
 
 def GDAL_GCP_set_GCPLine(*args):
-  """GDAL_GCP_set_GCPLine(GCP h, double val)"""
+  """GDAL_GCP_set_GCPLine(GCP gcp, double dfGCPLine)"""
   return _gdal.GDAL_GCP_set_GCPLine(*args)
 
 def GDAL_GCP_get_Info(*args):
-  """GDAL_GCP_get_Info(GCP h) -> char"""
+  """GDAL_GCP_get_Info(GCP gcp) -> char"""
   return _gdal.GDAL_GCP_get_Info(*args)
 
 def GDAL_GCP_set_Info(*args):
-  """GDAL_GCP_set_Info(GCP h, char val)"""
+  """GDAL_GCP_set_Info(GCP gcp, char pszInfo)"""
   return _gdal.GDAL_GCP_set_Info(*args)
 
 def GDAL_GCP_get_Id(*args):
-  """GDAL_GCP_get_Id(GCP h) -> char"""
+  """GDAL_GCP_get_Id(GCP gcp) -> char"""
   return _gdal.GDAL_GCP_get_Id(*args)
 
 def GDAL_GCP_set_Id(*args):
-  """GDAL_GCP_set_Id(GCP h, char val)"""
+  """GDAL_GCP_set_Id(GCP gcp, char pszId)"""
   return _gdal.GDAL_GCP_set_Id(*args)
 
 def GCPsToGeoTransform(*args):
@@ -673,13 +673,25 @@ class Band(MajorObject):
     if _newclass:YSize = _swig_property(_gdal.Band_YSize_get)
     __swig_getmethods__["DataType"] = _gdal.Band_DataType_get
     if _newclass:DataType = _swig_property(_gdal.Band_DataType_get)
+    def GetBand(*args):
+        """GetBand(self) -> int"""
+        return _gdal.Band_GetBand(*args)
+
     def GetBlockSize(*args):
         """GetBlockSize(self, int pnBlockXSize, int pnBlockYSize)"""
         return _gdal.Band_GetBlockSize(*args)
 
+    def GetColorInterpretation(*args):
+        """GetColorInterpretation(self) -> GDALColorInterp"""
+        return _gdal.Band_GetColorInterpretation(*args)
+
     def GetRasterColorInterpretation(*args):
         """GetRasterColorInterpretation(self) -> GDALColorInterp"""
         return _gdal.Band_GetRasterColorInterpretation(*args)
+
+    def SetColorInterpretation(*args):
+        """SetColorInterpretation(self, GDALColorInterp val) -> CPLErr"""
+        return _gdal.Band_SetColorInterpretation(*args)
 
     def SetRasterColorInterpretation(*args):
         """SetRasterColorInterpretation(self, GDALColorInterp val) -> CPLErr"""
@@ -692,6 +704,10 @@ class Band(MajorObject):
     def SetNoDataValue(*args):
         """SetNoDataValue(self, double d) -> CPLErr"""
         return _gdal.Band_SetNoDataValue(*args)
+
+    def GetUnitType(*args):
+        """GetUnitType(self) -> char"""
+        return _gdal.Band_GetUnitType(*args)
 
     def GetRasterCategoryNames(*args):
         """GetRasterCategoryNames(self) -> char"""
@@ -723,6 +739,14 @@ class Band(MajorObject):
             double stddev) -> CPLErr
         """
         return _gdal.Band_GetStatistics(*args)
+
+    def ComputeStatistics(*args):
+        """
+        ComputeStatistics(self, bool approx_ok, double min=None, double max=None, double mean=None, 
+            double stddev=None, GDALProgressFunc callback=None, 
+            void callback_data=None) -> CPLErr
+        """
+        return _gdal.Band_ComputeStatistics(*args)
 
     def SetStatistics(*args):
         """SetStatistics(self, double min, double max, double mean, double stddev) -> CPLErr"""
@@ -826,6 +850,10 @@ class Band(MajorObject):
         """SetDefaultHistogram(self, double min, double max, int buckets_in) -> CPLErr"""
         return _gdal.Band_SetDefaultHistogram(*args)
 
+    def HasArbitraryOverviews(*args):
+        """HasArbitraryOverviews(self) -> bool"""
+        return _gdal.Band_HasArbitraryOverviews(*args)
+
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_obj=None):
         import gdalnumeric
@@ -846,13 +874,11 @@ class Band(MajorObject):
 Band_swigregister = _gdal.Band_swigregister
 Band_swigregister(Band)
 
-class ColorTable(MajorObject):
+class ColorTable(_object):
     """Proxy of C++ ColorTable class"""
     __swig_setmethods__ = {}
-    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, ColorTable, name, value)
     __swig_getmethods__ = {}
-    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, ColorTable, name)
     __repr__ = _swig_repr
     def __init__(self, *args, **kwargs): 
@@ -896,13 +922,11 @@ class ColorTable(MajorObject):
 ColorTable_swigregister = _gdal.ColorTable_swigregister
 ColorTable_swigregister(ColorTable)
 
-class RasterAttributeTable(MajorObject):
+class RasterAttributeTable(_object):
     """Proxy of C++ RasterAttributeTable class"""
     __swig_setmethods__ = {}
-    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, RasterAttributeTable, name, value)
     __swig_getmethods__ = {}
-    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, RasterAttributeTable, name)
     __repr__ = _swig_repr
     def __init__(self, *args): 
@@ -971,6 +995,14 @@ class RasterAttributeTable(MajorObject):
     def CreateColumn(*args):
         """CreateColumn(self, char pszName, GDALRATFieldType eType, GDALRATFieldUsage eUsage) -> int"""
         return _gdal.RasterAttributeTable_CreateColumn(*args)
+
+    def GetLinearBinning(*args):
+        """GetLinearBinning(self, double pdfRow0Min, double pdfBinSize) -> bool"""
+        return _gdal.RasterAttributeTable_GetLinearBinning(*args)
+
+    def SetLinearBinning(*args):
+        """SetLinearBinning(self, double dfRow0Min, double dfBinSize) -> int"""
+        return _gdal.RasterAttributeTable_SetLinearBinning(*args)
 
     def GetRowOfValue(*args):
         """GetRowOfValue(self, double dfValue) -> int"""

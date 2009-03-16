@@ -48,6 +48,7 @@ except AttributeError:
 del types
 
 
+wkb25DBit = _ogr.wkb25DBit
 wkb25Bit = _ogr.wkb25Bit
 wkbUnknown = _ogr.wkbUnknown
 wkbPoint = _ogr.wkbPoint
@@ -83,6 +84,7 @@ OJLeft = _ogr.OJLeft
 OJRight = _ogr.OJRight
 wkbXDR = _ogr.wkbXDR
 wkbNDR = _ogr.wkbNDR
+NullFID = _ogr.NullFID
 OLCRandomRead = _ogr.OLCRandomRead
 OLCSequentialWrite = _ogr.OLCSequentialWrite
 OLCRandomWrite = _ogr.OLCRandomWrite
@@ -93,6 +95,7 @@ OLCCreateField = _ogr.OLCCreateField
 OLCTransactions = _ogr.OLCTransactions
 OLCDeleteFeature = _ogr.OLCDeleteFeature
 OLCFastSetNextByIndex = _ogr.OLCFastSetNextByIndex
+OLCStringsAsUTF8 = _ogr.OLCStringsAsUTF8
 ODsCCreateLayer = _ogr.ODsCCreateLayer
 ODsCDeleteLayer = _ogr.ODsCDeleteLayer
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
@@ -404,9 +407,9 @@ class DataSource(_object):
         """
         return _ogr.DataSource_CopyLayer(*args, **kwargs)
 
-    def GetLayerByIndex(*args, **kwargs):
+    def GetLayerByIndex(*args):
         """GetLayerByIndex(self, int index=0) -> Layer"""
-        return _ogr.DataSource_GetLayerByIndex(*args, **kwargs)
+        return _ogr.DataSource_GetLayerByIndex(*args)
 
     def GetLayerByName(*args):
         """
@@ -1351,7 +1354,7 @@ class Feature(_object):
     __swig_destroy__ = _ogr.delete_Feature
     __del__ = lambda self : None;
     def __init__(self, *args, **kwargs): 
-        """__init__(self, FeatureDefn feature_def=0) -> Feature"""
+        """__init__(self, FeatureDefn feature_def) -> Feature"""
         this = _ogr.new_Feature(*args, **kwargs)
         try: self.this.append(this)
         except: self.this = this
@@ -1682,7 +1685,7 @@ class Feature(_object):
 
     def GetFieldAsIntegerList(*args):
         """
-        GetFieldAsIntegerList(self, int id, int nLen, int pList)
+        GetFieldAsIntegerList(self, int id, int nLen)
 
         const int*
         OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField, int
@@ -1712,7 +1715,7 @@ class Feature(_object):
 
     def GetFieldAsDoubleList(*args):
         """
-        GetFieldAsDoubleList(self, int id, int nLen, double pList)
+        GetFieldAsDoubleList(self, int id, int nLen)
 
         const double*
         OGR_F_GetFieldAsDoubleList(OGRFeatureH hFeat, int iField, int
@@ -1742,7 +1745,7 @@ class Feature(_object):
 
     def GetFieldAsStringList(*args):
         """
-        GetFieldAsStringList(self, int id, char pList)
+        GetFieldAsStringList(self, int id) -> char
 
         char**
         OGR_F_GetFieldAsStringList(OGRFeatureH hFeat, int iField)
@@ -2623,6 +2626,10 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetPrecision(*args)
 
+    def GetTypeName(*args):
+        """GetTypeName(self) -> char"""
+        return _ogr.FieldDefn_GetTypeName(*args)
+
     def GetFieldTypeName(*args):
         """GetFieldTypeName(self, OGRFieldType type) -> char"""
         return _ogr.FieldDefn_GetFieldTypeName(*args)
@@ -2739,15 +2746,15 @@ class Geometry(_object):
         return _ogr.Geometry_ExportToWkb(*args, **kwargs)
 
     def ExportToGML(*args):
-        """ExportToGML(self) -> char"""
+        """ExportToGML(self) -> retStringAndCPLFree"""
         return _ogr.Geometry_ExportToGML(*args)
 
     def ExportToKML(*args):
-        """ExportToKML(self, char altitude_mode=None) -> char"""
+        """ExportToKML(self, char altitude_mode=None) -> retStringAndCPLFree"""
         return _ogr.Geometry_ExportToKML(*args)
 
     def ExportToJson(*args):
-        """ExportToJson(self) -> char"""
+        """ExportToJson(self) -> retStringAndCPLFree"""
         return _ogr.Geometry_ExportToJson(*args)
 
     def AddPoint(*args, **kwargs):
@@ -3255,6 +3262,29 @@ class Geometry(_object):
         """
         return _ogr.Geometry_FlattenTo2D(*args)
 
+    def Segmentize(*args):
+        """
+        Segmentize(self, double dfMaxLength)
+
+        void OGR_G_Segmentize(OGRGeometryH
+        hGeom, double dfMaxLength)
+
+        Modify the geometry such it has no segment longer then the given
+        distance. Interpolated points will have Z and M values (if needed) set
+        to 0. Distance computation is performed in 2d only
+
+        This function is the same as the CPP method OGRGeometry::segmentize().
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to segmentize
+
+        dfMaxLength:  the maximum distance between 2 points after
+        segmentization 
+        """
+        return _ogr.Geometry_Segmentize(*args)
+
     def GetEnvelope(*args):
         """
         GetEnvelope(self, double argout)
@@ -3423,5 +3453,9 @@ def GetDriverByName(*args):
 def GetDriver(*args):
   """GetDriver(int driver_number) -> Driver"""
   return _ogr.GetDriver(*args)
+
+def GeneralCmdLineProcessor(*args):
+  """GeneralCmdLineProcessor(char papszArgv, int nOptions=0) -> char"""
+  return _ogr.GeneralCmdLineProcessor(*args)
 
 
