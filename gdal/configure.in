@@ -182,6 +182,27 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if GCC 4.1 atomic builtins are really available
+dnl (some GCC versions are broken w.r.t this on some exotic architectures...)
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([whether GCC 4.1 atomic builtins are available])
+
+rm -f atomicbuiltins.c
+echo 'int main(int argc, char* argv[]) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); return 0; } ' > atomicbuiltins.c
+if test -z "`${CC} atomicbuiltins.c -o atomicbuiltins 2>&1`" ; then
+    HAVE_GCC_ATOMIC_BUILTINS=yes
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_GCC_ATOMIC_BUILTINS,1, [Define to 1 if GCC atomic builtins are available])
+else
+    HAVE_GCC_ATOMIC_BUILTINS=no
+    AC_MSG_RESULT([no])
+fi
+rm -f atomicbuiltins.*
+
+AC_SUBST(HAVE_GCC_ATOMIC_BUILTINS,$HAVE_GCC_ATOMIC_BUILTINS)
+
+dnl ---------------------------------------------------------------------------
 dnl Check if user requests hidding internal symbols
 dnl ---------------------------------------------------------------------------
 
