@@ -156,6 +156,9 @@
 /* Define to 1 if you want to use the -fvisibility GCC flag */
 #undef USE_GCC_VISIBILITY_FLAG
 
+/* Define to 1 if GCC atomic builtins are available */
+#undef HAVE_GCC_ATOMIC_BUILTINS
+
 /* Define to name of 64bit fopen function */
 #undef VSI_FOPEN64
 
