@@ -2095,8 +2095,12 @@ def tiff_write_63():
     md = drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
-    if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
-        return 'skip'
+    try:
+        if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+            return 'skip'
+    except:
+    # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
+        pass 
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 150000, 150000, 1,

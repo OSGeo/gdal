@@ -823,12 +823,22 @@ def hfa_xforms_3rd():
 # Verify that we can clear an existing color table
 
 def hfa_delete_colortable():
-
     # copy a file to tmp dir to modify.
     open('tmp/i8u.img','wb').write(open('data/i8u_c_i.img', 'rb').read())
 
     # clear color table.
     ds = gdal.Open( 'tmp/i8u.img', gdal.GA_Update )
+
+    try:
+        ds.GetRasterBand(1).SetColorTable
+    except:
+        # OG python bindings don't have SetColorTable, and if we use
+        # SetRasterColorTable, it doesn't work either as None isn't a valid
+        # value for them
+        ds = None
+        gdal.GetDriverByName('HFA').Delete('tmp/i8u.img')
+        return 'skip'
+
     ds.GetRasterBand(1).SetColorTable(None)
     ds = None
 
@@ -857,6 +867,17 @@ def hfa_delete_colortable2():
 
     # clear color table.
     ds = gdal.Open( 'tmp/hfa_delete_colortable2.img', gdal.GA_Update )
+
+    try:
+        ds.GetRasterBand(1).SetColorTable
+    except:
+        # OG python bindings don't have SetColorTable, and if we use
+        # SetRasterColorTable, it doesn't work either as None isn't a valid
+        # value for them
+        ds = None
+        gdal.GetDriverByName('HFA').Delete('tmp/hfa_delete_colortable2.img')
+        return 'skip'
+
     ds.GetRasterBand(1).SetColorTable(None)
     ds = None
 
