@@ -1542,17 +1542,16 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         {
                 return false;
         }
+#ifndef CPL_MSB
+        if( nCellSizeBits > 8 )
+        {
+            int nWordSize  = nCellSizeBits / 8;
+            int nWordCount = nColumnBlockSize * nRowBlockSize * nBandBlockSize;
+            GDALSwapWords( pabyBlockBuf, nWordSize, nWordCount, nWordSize );
+        }
+#endif
     }
     
-#ifndef CPL_MSB
-    if( nCellSizeBits > 8 )
-    {
-        int nWordSize = nCellSizeBits / 8;
-        int nWordCount = nBlockBytes / nWordSize;
-        GDALSwapWords( pabyBlockBuf, nWordSize, nWordCount, nWordSize );
-    }
-#endif
-
     if( bPackingOrCompress )
     {
         //  ---------------------------------------------------------------
@@ -1632,6 +1631,15 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
                                      int nYOffset,
                                      void* pData )
 {
+#ifndef CPL_MSB
+    if( nCellSizeBits > 8 )
+    {
+        int nWordSize  = nCellSizeBits / 8;
+        int nWordCount = nColumnBlockSize * nRowBlockSize;
+        GDALSwapWords( pData, nWordSize, nWordCount, nWordSize );
+    }
+#endif
+
     if( bIOInitialized == false || nCurrentLevel != nLevel )
     {
         InitializeIO( nLevel, true );
@@ -1724,15 +1732,6 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     //  --------------------------------------------------------------------
     //  Write BLOB
     //  --------------------------------------------------------------------
-
-#ifndef CPL_MSB
-    if( nCellSizeBits > 8 )
-    {
-        int nWordSize = nCellSizeBits / 8;
-        int nWordCount = nActualBlockBytes / nWordSize;
-        GDALSwapWords( pabyBlockBuf, nWordSize, nWordCount, nWordSize );
-    }
-#endif
 
     if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
                                   pabyBlockBuf,
