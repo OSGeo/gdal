@@ -1206,7 +1206,7 @@ CPLErr  IdrisiDataset::SetGeoTransform( double * padfTransform )
     CSLSetNameValue( papszRDC, rdcMAX_X,      CPLSPrintf( "%.7f", dfMaxX ) );
     CSLSetNameValue( papszRDC, rdcMIN_Y,      CPLSPrintf( "%.7f", dfMinY ) );
     CSLSetNameValue( papszRDC, rdcMAX_Y,      CPLSPrintf( "%.7f", dfMaxY ) );
-    CSLSetNameValue( papszRDC, rdcRESOLUTION, CPLSPrintf( "%.7f", abs( dfYPixSz ) ) );
+    CSLSetNameValue( papszRDC, rdcRESOLUTION, CPLSPrintf( "%.7f", fabs( dfYPixSz ) ) );
 
     // --------------------------------------------------------------------
     // Update the Dataset attribute
