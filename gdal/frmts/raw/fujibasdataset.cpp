@@ -189,9 +189,15 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
+    int bNativeOrder;
+#ifdef CPL_MSB
+    bNativeOrder = TRUE;
+#else
+    bNativeOrder = FALSE;
+#endif
     poDS->SetBand( 1, 
                    new RawRasterBand( poDS, 1, poDS->fpImage, 
-                                      0, 2, nXSize * 2, GDT_UInt16, FALSE ));
+                                      0, 2, nXSize * 2, GDT_UInt16, bNativeOrder ));
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
