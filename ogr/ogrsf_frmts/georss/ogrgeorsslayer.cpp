@@ -1382,7 +1382,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
         {
             if (pszAttributeName != NULL &&
                 ((strcmp(pszElementName, "category") == 0 && strcmp(pszAttributeName, "term") == 0) ||
-                 (strcmp(pszElementName, "link") == 0 & strcmp(pszAttributeName, "href") == 0)))
+                 (strcmp(pszElementName, "link") == 0 && strcmp(pszAttributeName, "href") == 0)))
             {
                 OGRGeoRSSLayerWriteSimpleElement(fp, pszElementName, pszNumber,
                                        apszAllowedATOMFieldNames, poFeatureDefn, poFeature);
