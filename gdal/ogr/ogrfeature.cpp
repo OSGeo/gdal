@@ -1084,10 +1084,10 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
             if( nMinutes == 0 )
                 snprintf( szTempBuffer+strlen(szTempBuffer), 
-                          TEMP_BUFFER_SIZE, "%02d", nHours );
+                          TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
             else
                 snprintf( szTempBuffer+strlen(szTempBuffer), 
-                          TEMP_BUFFER_SIZE, "%02d%02d", nHours, nMinutes );
+                          TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d%02d", nHours, nMinutes );
         }
 
         return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
@@ -1118,7 +1118,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
         {
-            snprintf( szItem, TEMP_BUFFER_SIZE, "%d",
+            snprintf( szItem, sizeof(szItem), "%d",
                       pauFields[iField].IntegerList.paList[i] );
             if( strlen(szTempBuffer) + strlen(szItem) + 6
                 > sizeof(szTempBuffer) )
@@ -1147,7 +1147,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
         if( poFDefn->GetWidth() != 0 )
         {
-            snprintf( szFormat, TEMP_BUFFER_SIZE, "%%%d.%df",
+            snprintf( szFormat, sizeof(szFormat), "%%%d.%df",
                       poFDefn->GetWidth(), poFDefn->GetPrecision() );
         }
         else
@@ -1156,7 +1156,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
         {
-            snprintf( szItem, TEMP_BUFFER_SIZE, szFormat,
+            snprintf( szItem, sizeof(szItem), szFormat,
                       pauFields[iField].RealList.paList[i] );
             if( strlen(szTempBuffer) + strlen(szItem) + 6
                 > sizeof(szTempBuffer) )
