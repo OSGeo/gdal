@@ -1485,7 +1485,7 @@ unzFile VSIZipFilesystemHandler::OpenZIPFile(const char* zipFilename,
                 }
             }
 
-            CPLError(CE_Failure, CPLE_NotSupported, msg.c_str());
+            CPLError(CE_Failure, CPLE_NotSupported, "%s", msg.c_str());
 
             cpl_unzClose(unzF);
             return NULL;

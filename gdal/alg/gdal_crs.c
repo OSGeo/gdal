@@ -213,7 +213,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 
     if (nCRSresult != 1)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, CRS_error_message[-nCRSresult]);
+        CPLError( CE_Failure, CPLE_AppDefined, "%s", CRS_error_message[-nCRSresult]);
         GDALDestroyGCPTransformer( psInfo );
         return NULL;
     }
