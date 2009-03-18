@@ -96,6 +96,11 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
  * with the GDALValidateCreationOptions() method. This check can be disabled
  * by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS=NO.
  *
+ * After you have finished working with the returned dataset, it is <b>required</b>
+ * to close it with GDALClose(). This does not only close the file handle, but
+ * also ensures that all the data and metadata has been written to the dataset
+ * (GDALFlushCache() is not sufficient for that purpose).
+ *
  * Equivelent of the C function GDALCreate().
  * 
  * @param pszFilename the name of the dataset to create.
@@ -545,6 +550,11 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * That function will try to validate the creation option list passed to the driver
  * with the GDALValidateCreationOptions() method. This check can be disabled
  * by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS=NO.
+ *
+ * After you have finished working with the returned dataset, it is <b>required</b>
+ * to close it with GDALClose(). This does not only close the file handle, but
+ * also ensures that all the data and metadata has been written to the dataset
+ * (GDALFlushCache() is not sufficient for that purpose).
  *
  * @param pszFilename the name for the new dataset. 
  * @param poSrcDS the dataset being duplicated. 
