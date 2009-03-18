@@ -36,6 +36,8 @@ CPL_CVSID("$Id$");
 
 typedef struct
 {
+    /* PID of the thread that mark the dataset as shared */
+    /* This may not be the actual PID, but the responsiblePID */
     GIntBig      nPID;
     char        *pszDescription;
     GDALAccess   eAccess;
@@ -43,12 +45,24 @@ typedef struct
     GDALDataset *poDS;
 } SharedDatasetCtxt;
 
+typedef struct
+{
+    GDALDataset *poDS;
+    /* In the case of a shared dataset, memorize the PID of the thread */
+    /* that marked the dataset as shared, so that we can remove it from */
+    /* the phSharedDatasetSet in the destructor of the dataset, even */
+    /* if GDALClose is called from a different thread */
+    /* Ideally, this should be stored in the GDALDataset object itself */
+    /* but this is inconvenient to change the object size at that time */
+    GIntBig      nPIDCreatorForShared; 
+} DatasetCtxt;
+
 /* Set of datasets opened as shared datasets (with GDALOpenShared) */
 /* The values in the set are of type SharedDatasetCtxt */
 static CPLHashSet* phSharedDatasetSet = NULL; 
 
 /* Set of all datasets created in the constructor of GDALDataset */
-/* The values in the set are the dataset pointer themselves */
+/* The values in the set are of type DatasetCtxt */
 static CPLHashSet* phAllDatasetSet = NULL;
 static void *hDLMutex = NULL;
 
@@ -56,13 +70,13 @@ static void *hDLMutex = NULL;
 /* Not thread-safe. See GDALGetOpenDatasets */
 static GDALDataset** ppDatasets = NULL;
 
-unsigned long GDALSharedDatasetHashFunc(const void* elt)
+static unsigned long GDALSharedDatasetHashFunc(const void* elt)
 {
     SharedDatasetCtxt* psStruct = (SharedDatasetCtxt*) elt;
     return CPLHashSetHashStr(psStruct->pszDescription) ^ psStruct->eAccess ^ psStruct->nPID;
 }
 
-int GDALSharedDatasetEqualFunc(const void* elt1, const void* elt2)
+static int GDALSharedDatasetEqualFunc(const void* elt1, const void* elt2)
 {
     SharedDatasetCtxt* psStruct1 = (SharedDatasetCtxt*) elt1;
     SharedDatasetCtxt* psStruct2 = (SharedDatasetCtxt*) elt2;
@@ -71,13 +85,31 @@ int GDALSharedDatasetEqualFunc(const void* elt1, const void* elt2)
            psStruct1->eAccess == psStruct2->eAccess;
 }
 
-void GDALSharedDatasetFreeFunc(void* elt)
+static void GDALSharedDatasetFreeFunc(void* elt)
 {
     SharedDatasetCtxt* psStruct = (SharedDatasetCtxt*) elt;
     CPLFree(psStruct->pszDescription);
     CPLFree(psStruct);
 }
 
+static unsigned long GDALDatasetHashFunc(const void* elt)
+{
+    DatasetCtxt* psStruct = (DatasetCtxt*) elt;
+    return (unsigned long)psStruct->poDS;
+}
+
+static int GDALDatasetEqualFunc(const void* elt1, const void* elt2)
+{
+    DatasetCtxt* psStruct1 = (DatasetCtxt*) elt1;
+    DatasetCtxt* psStruct2 = (DatasetCtxt*) elt2;
+    return psStruct1->poDS == psStruct2->poDS ;
+}
+
+static void GDALDatasetFreeFunc(void* elt)
+{
+    DatasetCtxt* psStruct = (DatasetCtxt*) elt;
+    CPLFree(psStruct);
+}
 
 /************************************************************************/
 /* Functions shared between gdalproxypool.cpp and gdaldataset.cpp */
@@ -157,8 +189,11 @@ GDALDataset::GDALDataset()
         CPLMutexHolderD( &hDLMutex );
 
         if (phAllDatasetSet == NULL)
-            phAllDatasetSet = CPLHashSetNew(NULL, NULL, NULL);
-        CPLHashSetInsert(phAllDatasetSet, this);
+            phAllDatasetSet = CPLHashSetNew(GDALDatasetHashFunc, GDALDatasetEqualFunc, GDALDatasetFreeFunc);
+        DatasetCtxt* ctxt = (DatasetCtxt*)CPLMalloc(sizeof(DatasetCtxt));
+        ctxt->poDS = this;
+        ctxt->nPIDCreatorForShared = -1;
+        CPLHashSetInsert(phAllDatasetSet, ctxt);
     }
 
 /* -------------------------------------------------------------------- */
@@ -209,19 +244,27 @@ GDALDataset::~GDALDataset()
     {
         CPLMutexHolderD( &hDLMutex );
 
-        CPLHashSetRemove(phAllDatasetSet, this);
+        DatasetCtxt sStruct;
+        sStruct.poDS = this;
+        DatasetCtxt* psStruct = (DatasetCtxt*) CPLHashSetLookup(phAllDatasetSet, &sStruct);
+        GIntBig nPIDCreatorForShared = psStruct->nPIDCreatorForShared;
+        CPLHashSetRemove(phAllDatasetSet, psStruct);
 
         if (bShared && phSharedDatasetSet != NULL)
         {
             SharedDatasetCtxt* psStruct;
             SharedDatasetCtxt sStruct;
-            sStruct.nPID = GDALGetResponsiblePIDForCurrentThread();
+            sStruct.nPID = nPIDCreatorForShared;
             sStruct.eAccess = eAccess;
             sStruct.pszDescription = (char*) GetDescription();
             psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
             if (psStruct && psStruct->poDS == this)
             {
                 CPLHashSetRemove(phSharedDatasetSet, psStruct);
+            }
+            else
+            {
+                CPLDebug("GDAL", "Should not happen. Cannot find %s, this=%p in phSharedDatasetSet", GetDescription(), this);
             }
         }
 
@@ -231,6 +274,8 @@ GDALDataset::~GDALDataset()
             phAllDatasetSet = NULL;
             if (phSharedDatasetSet)
                 CPLHashSetDestroy(phSharedDatasetSet);
+            else
+                CPLDebug("GDAL", "Should not happen. phSharedDatasetSet should be NULL at that point");
             phSharedDatasetSet = NULL;
             CPLFree(ppDatasets);
             ppDatasets = NULL;
@@ -1038,6 +1083,11 @@ void GDALDataset::MarkAsShared()
     else
     {
         CPLHashSetInsert(phSharedDatasetSet, psStruct);
+
+        DatasetCtxt sStruct;
+        sStruct.poDS = this;
+        DatasetCtxt* psStruct = (DatasetCtxt*) CPLHashSetLookup(phAllDatasetSet, &sStruct);
+        psStruct->nPIDCreatorForShared = nPID;
     }
 }
 
@@ -1903,6 +1953,17 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * The first successful open will result in a returned dataset.  If all
  * drivers fail then NULL is returned.
  *
+ * Several recommandations :
+ * <ul>
+ * <li>If you open a dataset object with GA_Update access, it is not recommanded
+ * to open a new dataset on the same underlying file.</li>
+ * <li>The returned dataset should only be accessed by one thread at a time. If you
+ * want to use it from different threads, you must add all necessary code (mutexes, etc.)
+ * to avoid concurrent use of the object. (Some drivers, such as GeoTIFF, maintain internal
+ * state variables that are updated each time a new block is read, thus preventing concurrent
+ * use.) </li>
+ * </ul>
+ *
  * \sa GDALOpenShared()
  *
  * @param pszFilename the name of the file to access.  In the case of
@@ -1987,6 +2048,11 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * open and shared GDALDataset's, and if the GetDescription() name for one
  * exactly matches the pszFilename passed to GDALOpenShared() it will be
  * referenced and returned.
+ *
+ * Starting with GDAL 1.6.0, if GDALOpenShared() is called on the same pszFilename
+ * from two different threads, a different GDALDataset object will be returned as
+ * it is not safe to use the same dataset from different threads, unless the user
+ * does explicitely use mutexes in its code.
  *
  * \sa GDALOpen()
  *
