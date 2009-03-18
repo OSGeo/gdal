@@ -304,6 +304,10 @@ GDALDataset::~GDALDataset()
  * Any raster (or other GDAL) data written via GDAL calls, but buffered
  * internally will be written to disk.
  *
+ * Using this method does not prevent use from calling GDALClose()
+ * to properly close a dataset and ensure that important data not addressed
+ * by FlushCache() is written in the file.
+ *
  * This method is the same as the C function GDALFlushCache().
  */
 
