@@ -65,13 +65,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     // Get Header Info
     // -------------------------------------------------------------------- 
 
-    GByte abyBuf[MAX(SIZEOF_HDR1,SIZEOF_HDR2_A)];
-
-    INGR_HeaderOneMemToDisk( &poDS->hHeaderOne, abyBuf );
-    INGR_HeaderOneDiskToMem( &hHeaderOne, abyBuf );
-
-    INGR_HeaderTwoAMemToDisk( &poDS->hHeaderTwo, abyBuf );
-    INGR_HeaderTwoADiskToMem( &hHeaderTwo, abyBuf );
+    memcpy(&hHeaderOne, &poDS->hHeaderOne, sizeof(hHeaderOne));
+    memcpy(&hHeaderTwo, &poDS->hHeaderTwo, sizeof(hHeaderTwo));
 
     // -------------------------------------------------------------------- 
     // Get the image start from Words to Follow (WTF)

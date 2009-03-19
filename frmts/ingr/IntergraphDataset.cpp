@@ -58,6 +58,9 @@ IntergraphDataset::IntergraphDataset()
     hVirtual.poDS = NULL;
     hVirtual.poBand = NULL;
     hVirtual.pszFileName = NULL;
+
+    memset(&hHeaderOne, 0, sizeof(hHeaderOne));
+    memset(&hHeaderTwo, 0, sizeof(hHeaderTwo));
 }
 
 //  ----------------------------------------------------------------------------
