@@ -1176,7 +1176,7 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     return iOutput;
 }
 
-void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, GByte *pabyBuf)
+void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte *pabyBuf)
 {
     unsigned int n = 0;
 
@@ -1244,7 +1244,7 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, GByte *paby
         pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); 
         break;
     case GDT_Float64: 
-        CPL_LSBPTR64(&pHeaderOne->Minimum); CPL_LSBPTR64(&pHeaderOne->Maximum); 
+        CPL_LSBPTR64(&pHeaderOne->Minimum.AsReal64); CPL_LSBPTR64(&pHeaderOne->Maximum.AsReal64); 
         break;
     default: break;
     }
@@ -1297,88 +1297,97 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, GByte *paby
     }
 }
 
-void CPL_STDCALL INGR_HeaderOneMemToDisk(INGR_HeaderOne* pHeaderOne, GByte *pabyBuf)
+void CPL_STDCALL INGR_HeaderOneMemToDisk(const INGR_HeaderOne* pHeaderOne, GByte *pabyBuf)
 {
     unsigned int n = 0;
-
-    STRC2BUF( pabyBuf, n, pHeaderOne->HeaderType );
-    STRC2BUF( pabyBuf, n, pHeaderOne->WordsToFollow );
-    STRC2BUF( pabyBuf, n, pHeaderOne->DataTypeCode );
-    STRC2BUF( pabyBuf, n, pHeaderOne->ApplicationType );
-    STRC2BUF( pabyBuf, n, pHeaderOne->XViewOrigin );
-    STRC2BUF( pabyBuf, n, pHeaderOne->YViewOrigin );
-    STRC2BUF( pabyBuf, n, pHeaderOne->ZViewOrigin );
-    STRC2BUF( pabyBuf, n, pHeaderOne->XViewExtent );
-    STRC2BUF( pabyBuf, n, pHeaderOne->YViewExtent );
-    STRC2BUF( pabyBuf, n, pHeaderOne->ZViewExtent );
-    STRC2BUF( pabyBuf, n, pHeaderOne->TransformationMatrix );
-    STRC2BUF( pabyBuf, n, pHeaderOne->PixelsPerLine );
-    STRC2BUF( pabyBuf, n, pHeaderOne->NumberOfLines );
-    STRC2BUF( pabyBuf, n, pHeaderOne->DeviceResolution );
-    STRC2BUF( pabyBuf, n, pHeaderOne->ScanlineOrientation );
-    STRC2BUF( pabyBuf, n, pHeaderOne->ScannableFlag );
-    STRC2BUF( pabyBuf, n, pHeaderOne->RotationAngle );
-    STRC2BUF( pabyBuf, n, pHeaderOne->SkewAngle );
-    STRC2BUF( pabyBuf, n, pHeaderOne->DataTypeModifier );
-    STRC2BUF( pabyBuf, n, pHeaderOne->DesignFileName );
-    STRC2BUF( pabyBuf, n, pHeaderOne->DataBaseFileName );
-    STRC2BUF( pabyBuf, n, pHeaderOne->ParentGridFileName );
-    STRC2BUF( pabyBuf, n, pHeaderOne->FileDescription );
-    STRC2BUF( pabyBuf, n, pHeaderOne->Minimum );
-    STRC2BUF( pabyBuf, n, pHeaderOne->Maximum );
-    STRC2BUF( pabyBuf, n, pHeaderOne->Reserved );
-    STRC2BUF( pabyBuf, n, pHeaderOne->GridFileVersion );
-
+    INGR_HeaderOne* pLSBHeaderOne;
 #if defined(CPL_MSB)
-    switch (INGR_GetDataType(pHeaderOne->DataTypeCode))
+    pLSBHeaderOne = (INGR_HeaderOne* )CPLMalloc(sizeof(INGR_HeaderOne));
+    memcpy(pLSBHeaderOne, pHeaderOne, sizeof(INGR_HeaderOne));
+
+    switch (INGR_GetDataType(pLSBHeaderOne->DataTypeCode))
     {
-        case GDT_Byte:    *(uint8*)&(pHeaderOne->Minimum) = pHeaderOne->Minimum.AsUint8;
-                          *(uint8*)&(pHeaderOne->Maximum) = pHeaderOne->Maximum.AsUint8; break;
-        case GDT_Int16:   *(uint16*)&(pHeaderOne->Minimum) = CPL_LSBWORD16(pHeaderOne->Minimum.AsUint16);
-                          *(uint16*)&(pHeaderOne->Maximum) = CPL_LSBWORD16(pHeaderOne->Maximum.AsUint16); break;
-        case GDT_UInt16:  *(uint16*)&(pHeaderOne->Minimum) = CPL_LSBWORD16(pHeaderOne->Minimum.AsUint16);
-                          *(uint16*)&(pHeaderOne->Maximum) = CPL_LSBWORD16(pHeaderOne->Maximum.AsUint16); break;
-        case GDT_Int32:   *(uint32*)&(pHeaderOne->Minimum) = CPL_LSBWORD32(pHeaderOne->Minimum.AsUint32);
-                          *(uint32*)&(pHeaderOne->Maximum) = CPL_LSBWORD32(pHeaderOne->Maximum.AsUint32); break;
-        case GDT_UInt32:  *(uint32*)&(pHeaderOne->Minimum) = CPL_LSBWORD32(pHeaderOne->Minimum.AsUint32);
-                          *(uint32*)&(pHeaderOne->Maximum) = CPL_LSBWORD32(pHeaderOne->Maximum.AsUint32); break;
+        case GDT_Byte:    *(uint8*)&(pLSBHeaderOne->Minimum) = pLSBHeaderOne->Minimum.AsUint8;
+                          *(uint8*)&(pLSBHeaderOne->Maximum) = pLSBHeaderOne->Maximum.AsUint8; break;
+        case GDT_Int16:   *(uint16*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD16(pLSBHeaderOne->Minimum.AsUint16);
+                          *(uint16*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD16(pLSBHeaderOne->Maximum.AsUint16); break;
+        case GDT_UInt16:  *(uint16*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD16(pLSBHeaderOne->Minimum.AsUint16);
+                          *(uint16*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD16(pLSBHeaderOne->Maximum.AsUint16); break;
+        case GDT_Int32:   *(uint32*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
+                          *(uint32*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
+        case GDT_UInt32:  *(uint32*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
+                          *(uint32*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
         /* FIXME ? I'm not sure this is correct for floats */
-        case GDT_Float32: *(uint32*)&(pHeaderOne->Minimum) = CPL_LSBWORD32(pHeaderOne->Minimum.AsUint32);
-                          *(uint32*)&(pHeaderOne->Maximum) = CPL_LSBWORD32(pHeaderOne->Maximum.AsUint32); break;
-        case GDT_Float64: CPL_LSBPTR64(&pHeaderOne->Minimum); CPL_LSBPTR64(&pHeaderOne->Maximum); break;
+        case GDT_Float32: *(uint32*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
+                          *(uint32*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
+        case GDT_Float64: CPL_LSBPTR64(&pLSBHeaderOne->Minimum.AsReal64); CPL_LSBPTR64(&pLSBHeaderOne->Maximum.AsReal64); break;
         default: break;
     }
 
-    CPL_LSBPTR16(&pHeaderOne->WordsToFollow);
-    CPL_LSBPTR16(&pHeaderOne->DataTypeCode);
-    CPL_LSBPTR16(&pHeaderOne->ApplicationType);
-    CPL_LSBPTR32(&pHeaderOne->PixelsPerLine);
-    CPL_LSBPTR32(&pHeaderOne->NumberOfLines);
-    CPL_LSBPTR16(&pHeaderOne->DeviceResolution);
-    CPL_LSBPTR16(&pHeaderOne->DataTypeModifier);
+    CPL_LSBPTR16(&pLSBHeaderOne->WordsToFollow);
+    CPL_LSBPTR16(&pLSBHeaderOne->DataTypeCode);
+    CPL_LSBPTR16(&pLSBHeaderOne->ApplicationType);
+    CPL_LSBPTR32(&pLSBHeaderOne->PixelsPerLine);
+    CPL_LSBPTR32(&pLSBHeaderOne->NumberOfLines);
+    CPL_LSBPTR16(&pLSBHeaderOne->DeviceResolution);
+    CPL_LSBPTR16(&pLSBHeaderOne->DataTypeModifier);
 
-    if (pHeaderOne->GridFileVersion == 3)
+    if (pLSBHeaderOne->GridFileVersion == 3)
     {
-        CPL_LSBPTR64( &pHeaderOne->XViewOrigin );
-        CPL_LSBPTR64( &pHeaderOne->YViewOrigin );
-        CPL_LSBPTR64( &pHeaderOne->ZViewOrigin );
-        CPL_LSBPTR64( &pHeaderOne->XViewExtent );
-        CPL_LSBPTR64( &pHeaderOne->YViewExtent );
-        CPL_LSBPTR64( &pHeaderOne->ZViewExtent );
-        CPL_LSBPTR64( &pHeaderOne->RotationAngle );
-        CPL_LSBPTR64( &pHeaderOne->SkewAngle );
+        CPL_LSBPTR64( &pLSBHeaderOne->XViewOrigin );
+        CPL_LSBPTR64( &pLSBHeaderOne->YViewOrigin );
+        CPL_LSBPTR64( &pLSBHeaderOne->ZViewOrigin );
+        CPL_LSBPTR64( &pLSBHeaderOne->XViewExtent );
+        CPL_LSBPTR64( &pLSBHeaderOne->YViewExtent );
+        CPL_LSBPTR64( &pLSBHeaderOne->ZViewExtent );
+        CPL_LSBPTR64( &pLSBHeaderOne->RotationAngle );
+        CPL_LSBPTR64( &pLSBHeaderOne->SkewAngle );
 
         uint8 i;
 
         for( i = 0; i < 16; i++ )
         {
-            CPL_LSBPTR64( &pHeaderOne->TransformationMatrix[i]);
+            CPL_LSBPTR64( &pLSBHeaderOne->TransformationMatrix[i]);
         }
     }
+#else
+    pLSBHeaderOne = (INGR_HeaderOne* )pHeaderOne;
+#endif
+
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->HeaderType );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->WordsToFollow );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->DataTypeCode );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->ApplicationType );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->XViewOrigin );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->YViewOrigin );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->ZViewOrigin );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->XViewExtent );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->YViewExtent );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->ZViewExtent );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->TransformationMatrix );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->PixelsPerLine );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->NumberOfLines );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->DeviceResolution );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->ScanlineOrientation );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->ScannableFlag );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->RotationAngle );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->SkewAngle );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->DataTypeModifier );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->DesignFileName );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->DataBaseFileName );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->ParentGridFileName );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->FileDescription );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->Minimum );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->Maximum );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->Reserved );
+    STRC2BUF( pabyBuf, n, pLSBHeaderOne->GridFileVersion );
+
+#if defined(CPL_MSB)
+    CPLFree(pLSBHeaderOne);
 #endif
 }
 
-void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf)
+void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, const GByte *pabyBuf)
 {
     unsigned int n = 0;
 
@@ -1408,37 +1417,46 @@ void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, GByte *pa
 #endif
 }
 
-void CPL_STDCALL INGR_HeaderTwoAMemToDisk(INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf)
+void CPL_STDCALL INGR_HeaderTwoAMemToDisk(const INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf)
 {
     unsigned int n = 0;
+    INGR_HeaderTwoA* pLSBHeaderTwo;
+#if defined(CPL_MSB)
+    pLSBHeaderTwo = (INGR_HeaderTwoA* )CPLMalloc(sizeof(INGR_HeaderTwoA));
+    memcpy(pLSBHeaderTwo, pHeaderTwo, sizeof(INGR_HeaderTwoA));
 
-    STRC2BUF( pabyBuf, n, pHeaderTwo->Gain );                    
-    STRC2BUF( pabyBuf, n, pHeaderTwo->OffsetThreshold );         
-    STRC2BUF( pabyBuf, n, pHeaderTwo->View1 );                   
-    STRC2BUF( pabyBuf, n, pHeaderTwo->View2 );                   
-    STRC2BUF( pabyBuf, n, pHeaderTwo->ViewNumber );              
-    STRC2BUF( pabyBuf, n, pHeaderTwo->Reserved2 );               
-    STRC2BUF( pabyBuf, n, pHeaderTwo->Reserved3 );               
-    STRC2BUF( pabyBuf, n, pHeaderTwo->AspectRatio );             
-    STRC2BUF( pabyBuf, n, pHeaderTwo->CatenatedFilePointer );    
-    STRC2BUF( pabyBuf, n, pHeaderTwo->ColorTableType );          
-    STRC2BUF( pabyBuf, n, pHeaderTwo->Reserved8 );               
-    STRC2BUF( pabyBuf, n, pHeaderTwo->NumberOfCTEntries );       
-    STRC2BUF( pabyBuf, n, pHeaderTwo->ApplicationPacketPointer );
-    STRC2BUF( pabyBuf, n, pHeaderTwo->ApplicationPacketLength ); 
-    STRC2BUF( pabyBuf, n, pHeaderTwo->Reserved );           
+    CPL_LSBPTR64(&pLSBHeaderTwo->AspectRatio);
+    CPL_LSBPTR32(&pLSBHeaderTwo->CatenatedFilePointer);
+    CPL_LSBPTR16(&pLSBHeaderTwo->ColorTableType);
+    CPL_LSBPTR32(&pLSBHeaderTwo->NumberOfCTEntries);
+    CPL_LSBPTR32(&pLSBHeaderTwo->ApplicationPacketPointer);
+    CPL_LSBPTR32(&pLSBHeaderTwo->ApplicationPacketLength);
+#else
+    pLSBHeaderTwo = (INGR_HeaderTwoA* )pHeaderTwo;
+#endif
+
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Gain );                    
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->OffsetThreshold );         
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->View1 );                   
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->View2 );                   
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ViewNumber );              
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved2 );               
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved3 );               
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->AspectRatio );             
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->CatenatedFilePointer );    
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ColorTableType );          
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved8 );               
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->NumberOfCTEntries );       
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ApplicationPacketPointer );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ApplicationPacketLength ); 
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved );           
 
 #if defined(CPL_MSB)
-    CPL_LSBPTR64(&pHeaderTwo->AspectRatio);
-    CPL_LSBPTR32(&pHeaderTwo->CatenatedFilePointer);
-    CPL_LSBPTR16(&pHeaderTwo->ColorTableType);
-    CPL_LSBPTR32(&pHeaderTwo->NumberOfCTEntries);
-    CPL_LSBPTR32(&pHeaderTwo->ApplicationPacketPointer);
-    CPL_LSBPTR32(&pHeaderTwo->ApplicationPacketLength);
+    CPLFree(pLSBHeaderTwo);
 #endif
 }
 
-void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader, GByte *pabyBuf)
+void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader, const GByte *pabyBuf)
 {
     unsigned int n = 0;
 
@@ -1472,7 +1490,7 @@ void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader, GByte *p
 #endif
 }
 
-void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem, GByte *pabyBuf)
+void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem, const GByte *pabyBuf)
 {
     unsigned int n = 0;
 
@@ -1487,7 +1505,7 @@ void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem, GByte *pabyBuf
 #endif
 }
 
-void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData, GByte *pabyBuf)
+void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData, const GByte *pabyBuf)
 {
     unsigned int n = 0;
 
