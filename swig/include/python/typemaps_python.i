@@ -591,7 +591,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(argout) (char **argout) */
   PyObject *o;
-  if ( $1 ) {
+  if ( $1 != NULL && *$1 != NULL) {
     o = PyString_FromString( *$1 );
   }
   else {
