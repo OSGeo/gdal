@@ -53,6 +53,13 @@ def ogr_georss_init():
         gdaltest.georss_read_support = 1
         ds.Destroy()
 
+    gdaltest.have_gml_reader = 0
+    try:
+        ds = ogr.Open( 'data/ionic_wfs.gml' )
+        ds.Destroy()
+    except:
+        pass
+    gdaltest.have_gml_reader = 1
 
     gdaltest.atom_field_values = [ ('title', 'Atom draft-07 snapshot', ogr.OFTString),
                                     ('link_rel', 'alternate', ogr.OFTString),
@@ -249,6 +256,9 @@ def ogr_georss_2():
 
 def ogr_georss_3():
 
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
     return ogr_georss_test_rss('data/test_georss_gml.xml', False)
 
 ###############################################################################
@@ -376,6 +386,8 @@ def ogr_georss_6():
 # Test reading document created at previous step
 
 def ogr_georss_7():
+    if not gdaltest.have_gml_reader:
+        return 'skip'
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', False)
 
@@ -458,6 +470,8 @@ def ogr_georss_10():
 def ogr_georss_11():
 
     if not gdaltest.georss_read_support:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
         return 'skip'
 
     ds = ogr.Open('tmp/test32631.rss')
