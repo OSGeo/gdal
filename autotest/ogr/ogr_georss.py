@@ -56,10 +56,11 @@ def ogr_georss_init():
     gdaltest.have_gml_reader = 0
     try:
         ds = ogr.Open( 'data/ionic_wfs.gml' )
+        if ds is not None:
+            gdaltest.have_gml_reader = 1
         ds.Destroy()
     except:
         pass
-    gdaltest.have_gml_reader = 1
 
     gdaltest.atom_field_values = [ ('title', 'Atom draft-07 snapshot', ogr.OFTString),
                                     ('link_rel', 'alternate', ogr.OFTString),
