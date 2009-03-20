@@ -258,8 +258,8 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 return CE_Failure;
             }
 
-            int nCount;
-            int nValue;
+            int nCount = 0;
+            int nValue = 0;
 
             if( poDS->PCB == 8 )
             {

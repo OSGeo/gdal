@@ -1222,7 +1222,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      Convert SPHEROID name to use underscores instead of spaces.     */
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poSpheroid;
-    OGR_SRSNode *poSpheroidChild;
+    OGR_SRSNode *poSpheroidChild = NULL;
     poSpheroid = GetAttrNode( "SPHEROID" );
     if( poSpheroid != NULL )
         poSpheroidChild = poSpheroid->GetChild(0);

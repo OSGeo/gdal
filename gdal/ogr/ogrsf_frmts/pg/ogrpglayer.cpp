@@ -1426,7 +1426,7 @@ char *OGRPGLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
 
     /* Convert the 1st byte, which is the endianess flag, to hex. */
     pszHex = CPLBinaryToHex( 1, pabyWKB );
-    sprintf(pszTextBufCurrent, pszHex );
+    strcpy(pszTextBufCurrent, pszHex );
     CPLFree ( pszHex );
     pszTextBufCurrent += 2;
 
@@ -1445,7 +1445,7 @@ char *OGRPGLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
 
     /* Now write the geom type which is 4 bytes */
     pszHex = CPLBinaryToHex( 4, (GByte*) &geomType );
-    sprintf(pszTextBufCurrent, pszHex );
+    strcpy(pszTextBufCurrent, pszHex );
     CPLFree ( pszHex );
     pszTextBufCurrent += 8;
 
@@ -1455,7 +1455,7 @@ char *OGRPGLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
         /* Force the srsid to wkbNDR (little) endianess */
         GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
         pszHex = CPLBinaryToHex( sizeof(nGSRSId),(GByte*) &nGSRSId );
-        sprintf(pszTextBufCurrent, pszHex );
+        strcpy(pszTextBufCurrent, pszHex );
         CPLFree ( pszHex );
         pszTextBufCurrent += 8;
     }
@@ -1463,7 +1463,7 @@ char *OGRPGLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
     /* Copy the rest of the data over - subtract
        5 since we already copied 5 bytes above */
     pszHex = CPLBinaryToHex( nWkbSize - 5, pabyWKB + 5 );
-    sprintf(pszTextBufCurrent, pszHex );
+    strcpy(pszTextBufCurrent, pszHex );
     CPLFree ( pszHex );
 
     CPLFree( pabyWKB );

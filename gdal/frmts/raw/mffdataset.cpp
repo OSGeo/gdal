@@ -39,7 +39,7 @@ CPL_C_START
 void	GDALRegister_MFF(void);
 CPL_C_END
 
-typedef enum {
+enum {
   MFFPRJ_NONE,
   MFFPRJ_LL,
   MFFPRJ_UTM,
@@ -1470,47 +1470,31 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
   
     if (georef_created == TRUE)
     {
-          char *szValue;
-      
-          szValue = (char *) CPLMalloc(255);
     /* -------------------------------------------------------------------- */
     /*      top left                                                        */
     /* -------------------------------------------------------------------- */
-          sprintf( szValue, "TOP_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[1] );
-          fprintf( fp, szValue );
-          sprintf( szValue, "TOP_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[0] );
-          fprintf( fp, szValue );
+          fprintf( fp, "TOP_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[1] );
+          fprintf( fp, "TOP_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[0] );
     /* -------------------------------------------------------------------- */
     /*      top_right                                                       */
     /* -------------------------------------------------------------------- */
-          sprintf( szValue, "TOP_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[3] );
-          fprintf( fp, szValue );
-          sprintf( szValue, "TOP_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[2] );
-          fprintf( fp, szValue );
+          fprintf( fp, "TOP_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[3] );
+          fprintf( fp, "TOP_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[2] );
     /* -------------------------------------------------------------------- */
     /*      bottom_left                                                     */
     /* -------------------------------------------------------------------- */
-          sprintf( szValue, "BOTTOM_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[5] );
-          fprintf( fp, szValue );
-          sprintf( szValue, "BOTTOM_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[4] );
-          fprintf( fp, szValue );
+          fprintf( fp, "BOTTOM_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[5] );
+          fprintf( fp, "BOTTOM_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[4] );
     /* -------------------------------------------------------------------- */
     /*      bottom_right                                                    */
     /* -------------------------------------------------------------------- */
-          sprintf( szValue, "BOTTOM_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[7] );
-          fprintf( fp, szValue );
-          sprintf( szValue, "BOTTOM_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[6] );
-          fprintf( fp, szValue );
+          fprintf( fp, "BOTTOM_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[7] );
+          fprintf( fp, "BOTTOM_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[6] );
     /* -------------------------------------------------------------------- */
     /*      Center                                                          */
     /* -------------------------------------------------------------------- */
-          sprintf( szValue, "CENTRE_LATITUDE = %.10f\n", padfTiepoints[9] );
-          fprintf( fp, szValue );
-          sprintf( szValue, "CENTRE_LONGITUDE = %.10f\n", padfTiepoints[8] );
-          fprintf( fp, szValue );
-
-
-          CPLFree(szValue);
+          fprintf( fp, "CENTRE_LATITUDE = %.10f\n", padfTiepoints[9] );
+          fprintf( fp, "CENTRE_LONGITUDE = %.10f\n", padfTiepoints[8] );
     /* ------------------------------------------------------------------- */
     /*     Ellipsoid/projection                                            */
     /* --------------------------------------------------------------------*/
@@ -1540,14 +1524,9 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
              if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
                  (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
              {
-                 char *ol_txt;
-    
-                 ol_txt=(char *) CPLMalloc(255);
                  fprintf(fp,"PROJECTION_NAME = UTM\n");
-                 sprintf(ol_txt,"PROJECTION_ORIGIN_LONGITUDE = %f\n",
+                 fprintf(fp,"PROJECTION_ORIGIN_LONGITUDE = %f\n",
                          oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
-                 fprintf(fp,ol_txt);
-                 CPLFree(ol_txt);
              }
              else if ((oSRS.GetAttrValue("PROJECTION") == NULL) && (oSRS.IsGeographic()))
              {
@@ -1563,25 +1542,19 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
              inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
              if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE)) 
              {
-                 char *ol_txt;
-    
-                 ol_txt=(char *) CPLMalloc(255);
                  mffEllipsoids = new MFFSpheroidList;
                  spheroid_name = mffEllipsoids->GetSpheroidNameByEqRadiusAndInvFlattening(eq_radius,inv_flattening);
                  if (spheroid_name != NULL)
                  {
-                     sprintf(ol_txt,"SPHEROID_NAME = %s\n",spheroid_name );
-                     fprintf(fp,ol_txt);
+                     fprintf(fp,"SPHEROID_NAME = %s\n",spheroid_name );
                  } 
                  else
                  {
-                     sprintf(ol_txt,
+                     fprintf(fp,
        "SPHEROID_NAME = USER_DEFINED\nSPHEROID_EQUATORIAL_RADIUS = %.10f\nSPHEROID_POLAR_RADIUS = %.10f\n",
                      eq_radius,eq_radius*(1-1.0/inv_flattening) );
-                     fprintf(fp,ol_txt);
                  }
                  delete mffEllipsoids;
-                 CPLFree(ol_txt);
                  CPLFree(spheroid_name);
               }
           } 
