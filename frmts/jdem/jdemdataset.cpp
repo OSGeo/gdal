@@ -174,9 +174,9 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-    VSIFSeek( poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET );
+    VSIFSeekL( poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET );
 
-    VSIFRead( pszRecord, 1, nRecordSize, poGDS->fp );
+    VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
 
     if( !EQUALN((char *) poGDS->abyHeader,pszRecord,6) )
     {
@@ -216,7 +216,7 @@ JDEMDataset::~JDEMDataset()
 {
     FlushCache();
     if( fp != NULL )
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 }
 
 /************************************************************************/
@@ -263,11 +263,10 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Before trying JDEMOpen() we first verify that there is at        */
-/*      least one "\n#keyword" type signature in the first chunk of     */
-/*      the file.                                                       */
+/*      Confirm that the header has what appears to be dates in the     */
+/*      expected locations.  Sadly this is a relatively weak test.      */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
     /* check if century values seem reasonable */
@@ -282,20 +281,29 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     
 /* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The JDEM driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     JDEMDataset 	*poDS;
 
     poDS = new JDEMDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( poDS->fp, 0, SEEK_SET );
-    VSIFRead( poDS->abyHeader, 1, 1012, poDS->fp );
+    VSIFReadL( poDS->abyHeader, 1, 1012, poDS->fp );
 
     poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
     poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
