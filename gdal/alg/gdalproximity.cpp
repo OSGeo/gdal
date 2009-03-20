@@ -101,7 +101,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     int nXSize, nYSize, i, bFixedBufVal = FALSE;
     const char *pszOpt;
     double dfMaxDist;
-    double dfFixedBufVal;
+    double dfFixedBufVal = 0.0;
 
     VALIDATE_POINTER1( hSrcBand, "GDALComputeProximity", CE_Failure );
     VALIDATE_POINTER1( hProximityBand, "GDALComputeProximity", CE_Failure );

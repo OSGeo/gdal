@@ -689,7 +689,7 @@ class BMPComprRasterBand : public BMPRasterBand
 BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
     : BMPRasterBand( poDS, nBand )
 {
-    unsigned int    i, j, k, iLength;
+    unsigned int    i, j, k, iLength = 0;
     GUInt32         iComprSize, iUncomprSize;
 
     iComprSize = poDS->sFileHeader.iSize - poDS->sFileHeader.iOffBits;
