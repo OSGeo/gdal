@@ -44,8 +44,10 @@ First we declare a format
 specific dataset class, JDEMDataset in this case.
 
 \code
-class JDEMDataset : public GDALDataset
+class JDEMDataset : public GDALPamDataset
 {
+    friend class JDEMRasterBand;
+
     FILE	*fp;
     GByte	abyHeader[1012];
 
@@ -53,6 +55,9 @@ class JDEMDataset : public GDALDataset
 		~JDEMDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
+
+    CPLErr 	GetGeoTransform( double * padfTransform );
+    const char *GetProjectionRef();
 };
 \endcode
 
@@ -69,15 +74,14 @@ The open method itself may look something like this:
 GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-// -------------------------------------------------------------------- 
-//      Before trying JDEMOpen() we first verify that there is at       
-//      least one "\n#keyword" type signature in the first chunk of     
-//      the file.                                                       
-// -------------------------------------------------------------------- 
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
+// -------------------------------------------------------------------- //
+//      Confirm that the header has what appears to be dates in the     //
+//      expected locations.  Sadly this is a relatively weak test.      //
+// -------------------------------------------------------------------- //
+    if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
-    // check if century values seem reasonable 
+    // check if century values seem reasonable //
     if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
           && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
         || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
@@ -88,30 +92,52 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     
-// -------------------------------------------------------------------- 
-//      Create a corresponding GDALDataset.                             
-// -------------------------------------------------------------------- 
+// -------------------------------------------------------------------- //
+//      Confirm the requested access is supported.                      //
+// -------------------------------------------------------------------- //
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The JDEM driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+
+// -------------------------------------------------------------------- //
+//      Create a corresponding GDALDataset.                             //
+// -------------------------------------------------------------------- //
     JDEMDataset 	*poDS;
 
     poDS = new JDEMDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     
-// -------------------------------------------------------------------- 
-//      Read the header.                                                
-// -------------------------------------------------------------------- 
-    VSIFSeek( poDS->fp, 0, SEEK_SET );
-    VSIFRead( poDS->abyHeader, 1, 1012, poDS->fp );
+// -------------------------------------------------------------------- //
+//      Read the header.                                                //
+// -------------------------------------------------------------------- //
+    VSIFReadL( poDS->abyHeader, 1, 1012, poDS->fp );
 
     poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
     poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
+    if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid dimensions : %d x %d", 
+                  poDS->nRasterXSize, poDS->nRasterYSize); 
+        delete poDS;
+        return NULL;
+    }
 
-// -------------------------------------------------------------------- 
-//      Create band information objects.                                
-// -------------------------------------------------------------------- 
-    poDS->nBands = 1;
+// -------------------------------------------------------------------- //
+//      Create band information objects.                                //
+// -------------------------------------------------------------------- //
     poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
+
+// -------------------------------------------------------------------- //
+//      Initialize any PAM information.                                 //
+// -------------------------------------------------------------------- //
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }
@@ -130,11 +156,12 @@ data members:
 
 \code
     char	*pszFilename;
+    char        **papszSiblingFiles;
 
     GDALAccess	eAccess; // GA_ReadOnly or GA_Update
 
-    GBool	bStatOK;
-    VSIStatBuf	sStat;
+    int 	bStatOK;
+    int         bIsDirectory;
     
     FILE	*fp;
 
@@ -144,12 +171,8 @@ data members:
 
 The driver can inspect these to establish if the file is supported.  If the
 pszFilename refers to an object in the file system, the <b>bStatOK</b> flag 
-will be set, and the <b>sStat</b> structure will contain normal stat() 
-information about the object (be it directory, file, device).  If the object 
-is a regular readable file, the <b>fp</b> will be non-NULL, and can be used
-for reads on the file (please use the VSI stdio functions from 
-cpl_vsi.h).  As well, if the file was successfully opened, the first kilobyte
-or so is read in, and put in <b>pabyHeader</b>, with the exact size in 
+will be set to TRUE.  As well, if the file was successfully opened, the first 
+kilobyte or so is read in, and put in <b>pabyHeader</b>, with the exact size in
 <b>nHeaderBytes</b>.
 
 In this typical testing example it is verified that the file was successfully
@@ -161,10 +184,10 @@ test fails, we quietly return NULL indicating this file isn't of our supported
 format. 
 
 \code
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
-    // check if century values seem reasonable
+    /* check if century values seem reasonable */
     if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
           && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
         || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
@@ -181,49 +204,81 @@ possible.  In this particular case the test is weak, and a file that happened
 to have 19s or 20s at a few locations could be erroneously recognized as
 JDEM format, causing it to not be handled properly.
 
-Once we are satisfied that the file is of our format, we need to create
-an instance of the database class in which we will set various information
-of interest.
+Once we are satisfied that the file is of our format, we can do any other
+tests that are necessary to validate the file is usable, and in particular
+that we can provide the level of access desired.  Since the JDEM driver 
+
+\code
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The JDEM driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+\endcode
+
+Next we need to create an instance of the database class in which we will 
+set various information of interest.
 
 \code
     JDEMDataset 	*poDS;
 
     poDS = new JDEMDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
 \endcode
 
-Generally at this point we would open the file, to acquire a file handle
-for the dataset; however, if read-only access is sufficient it is permitted
-to <b>assume ownership</b> of the FILE * from the GDALOpenInfo object.  
-Just ensure that it is set to NULL in the GDALOpenInfo to avoid having it
-get closed twice.  It is also important to note that the state of the 
-FILE * adopted is indeterminate.  Ensure that the current location is reset
-with VSIFSeek() before assuming you can read from it.   This is accomplished
-in the following statements which reset the file and read the header.
-
-\code
-    VSIFSeek( poDS->fp, 0, SEEK_SET );
-    VSIFRead( poDS->abyHeader, 1, 1012, poDS->fp );
-\endcode
+At this point we open the file, to acquire a file handle
+for the dataset.  Whenever possible, we try to use the VSI*L GDAL API to
+access files on disk.  This virtualized POSIX-style API allows some 
+special capabilities like supporting large files, in-memory files 
+and zipped files. 
 
 Next the X and Y size are extracted from the header. The nRasterXSize and
 nRasterYSize are data fields inherited from the GDALDataset base class, and
 must be set by the Open() method.
 
 \code
+    VSIFReadL( poDS->abyHeader, 1, 1012, poDS->fp );
+
     poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
     poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
+
+    if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid dimensions : %d x %d", 
+                  poDS->nRasterXSize, poDS->nRasterYSize); 
+        delete poDS;
+        return NULL;
+    }
 \endcode
 
-Finally, all the bands related to this dataset must be attached using
+All the bands related to this dataset must be created and attached using
 the SetBand() method.  We will explore the JDEMRasterBand() class shortly. 
 
 \code
+// -------------------------------------------------------------------- //
+//      Create band information objects.                                //
+// -------------------------------------------------------------------- //
     poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
+\endcode
+
+Finally we assign a name to the dataset object, and call the GDALPamDataset
+TryLoadXML() method which can initialize auxilary information from an 
+.aux.xml file if available.  For more details on these services review
+the GDALPamDataset and related classes.
+
+\code
+// -------------------------------------------------------------------- //
+//      Initialize any PAM information.                                 //
+// -------------------------------------------------------------------- //
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
+}
 \endcode
 
 \section gdal_drivertut_rasterband Implementing the RasterBand
@@ -234,7 +289,7 @@ from GDALRasterBand for access to the band(s) of the JDEM file.  For
 JDEMRasterBand the declaration looks like this:
 
 \code
-class JDEMRasterBand : public GDALRasterBand
+class JDEMRasterBand : public GDALPamRasterBand
 {
   public:
     		JDEMRasterBand( JDEMDataset *, int );
@@ -292,10 +347,10 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int		nRecordSize = nBlockXSize*5 + 9 + 2;
     int		i;
 
-    VSIFSeek( poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET );
+    VSIFSeekL( poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET );
 
     pszRecord = (char *) CPLMalloc(nRecordSize);
-    VSIFRead( pszRecord, 1, nRecordSize, poGDS->fp );
+    VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
 
     if( !EQUALN((char *) poGDS->abyHeader,pszRecord,6) )
     {
