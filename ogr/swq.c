@@ -650,6 +650,7 @@ swq_subexpr_compile( char **tokens, swq_field_list *field_list,
     */
     if( tokens[*tokens_consumed] == NULL || tokens[*tokens_consumed+1] == NULL)
     {
+        swq_expr_free( op );
         sprintf( swq_get_errbuf(), "Not enough tokens to complete expression." );
         return swq_get_errbuf();
     }
