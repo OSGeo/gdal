@@ -103,6 +103,13 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if(poDS->blxcontext==NULL)
 	return NULL;
+    
+    if ((poDS->blxcontext->cell_xsize % (1 << (1+BLX_OVERVIEWLEVELS))) != 0 ||
+        (poDS->blxcontext->cell_ysize % (1 << (1+BLX_OVERVIEWLEVELS))) != 0)
+    {
+        delete poDS;
+        return NULL;
+    }
 
     // Update dataset header from BLX context
     poDS->nRasterXSize = poDS->blxcontext->xsize;
@@ -228,7 +235,6 @@ GDALColorInterp BLXRasterBand::GetColorInterpretation(void) {
 }
 
 /* TODO: check if georeference is the same as for BLX files, WGS84
-         call progress function 
 */
 static GDALDataset *
 BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
@@ -338,6 +344,9 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     pabyTile = (GInt16 *) CPLMalloc( sizeof(GInt16)*ctx->cell_xsize*ctx->cell_ysize );
 
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        eErr = CE_Failure;
+
     for(int i=0; (i < ctx->cell_rows) && (eErr == CE_None); i++)
 	for(int j=0; j < ctx->cell_cols; j++) {
 	    blxdata *celldata;
@@ -349,8 +358,20 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    if(eErr >= CE_Failure) 
 	       break;
 	    celldata = pabyTile;
-	    blx_writecell(ctx, celldata, i, j);
+	    if (blx_writecell(ctx, celldata, i, j) != 0)
+            {
+                eErr = CE_Failure;
+                break;
+            }
+
+            if ( ! pfnProgress( 1.0 * (i * ctx->cell_cols + j) / (ctx->cell_rows * ctx->cell_cols), NULL, pProgressData ))
+            {
+                eErr = CE_Failure;
+                break;
+            }
     }
+
+    pfnProgress( 1.0, NULL, pProgressData );
 
     CPLFree( pabyTile );
 
@@ -366,7 +387,10 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     blxclose(ctx);
     blx_free_context(ctx);
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    if (eErr == CE_None)
+        return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    else
+        return NULL;
 }
 
 
