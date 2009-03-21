@@ -43,8 +43,8 @@ typedef short int blxdata;
 
 struct cellindex_s {
     int offset;	
-    int datasize;       /* Uncompressed size */
-    int compdatasize;   /* Compressed data size */
+    unsigned int datasize;       /* Uncompressed size */
+    unsigned int compdatasize;   /* Compressed data size */
 };
 
 struct blxcontext_s {
@@ -97,7 +97,8 @@ struct component_s {
 #define BLXfread VSIFRead
 #define BLXfwrite VSIFWrite
 #define BLXfseek VSIFSeek
-#define BLXmalloc CPLMalloc
+#define BLXftell VSIFTell
+#define BLXmalloc VSIMalloc
 #define BLXfree CPLFree
 #define BLXdebug0(text)              CPLDebug("BLX", text)
 #define BLXdebug1(text, arg1)        CPLDebug("BLX", text, arg1)
@@ -111,6 +112,7 @@ struct component_s {
 #define BLXfread fread
 #define BLXfwrite fwrite
 #define BLXfseek fseek
+#define BLXftell ftell
 #define BLXmalloc malloc
 #define BLXfree free
 #define BLXdebug0 printf
