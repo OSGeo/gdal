@@ -1050,3 +1050,137 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
   Py_XDECREF(psList);
 }
 
+/***************************************************
+ * Typemaps for CoordinateTransformation.TransformPoints()
+ ***************************************************/
+%typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z)
+{
+  /*  typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z) */
+  if ( $input == Py_None ) {
+    PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
+    SWIG_fail;
+  }
+
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  $1 = PySequence_Size($input);
+  $2 = (double*) CPLMalloc($1*sizeof(double));
+  $3 = (double*) CPLMalloc($1*sizeof(double));
+  $4 = (double*) CPLMalloc($1*sizeof(double));
+
+  for( int i = 0; i<$1; i++ ) {
+
+      PyObject *o = PySequence_GetItem($input,i);
+      if ( !PyTuple_Check(o) ) {
+            PyErr_SetString(PyExc_TypeError, "not a tuple");
+            SWIG_fail;
+      }
+
+      double x, y, z = 0;
+      if ( !PyArg_ParseTuple( o,"dd|d", &x, &y, &z) )
+      {
+          PyErr_SetString(PyExc_TypeError, "not a tuple of 2 or 3 doubles");
+          SWIG_fail;
+      }
+
+      ($2)[i] = x;
+      ($3)[i] = y;
+      ($4)[i] = z;
+  }
+}
+
+%typemap(argout)  (int nCount, double *x, double *y, double *z)
+{
+  /* %typemap(argout)  (int nCount, double *x, double *y, double *z) */
+  Py_DECREF($result);
+  PyObject *out = PyList_New( $1 );
+  for( int i=0; i< $1; i++ ) {
+    PyObject *tuple = PyTuple_New( 3 );
+    PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( ($2)[i] ) );
+    PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( ($3)[i] ) );
+    PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( ($4)[i] ) );
+    PyList_SetItem( out, i, tuple );
+  }
+  $result = out;
+}
+
+%typemap(freearg)  (int nCount, double *x, double *y, double *z)
+{
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z) */
+    free($2);
+    free($3);
+    free($4);
+}
+
+/***************************************************
+ * Typemaps for Transform.TransformPoints()
+ ***************************************************/
+
+%typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z, int* panSuccess)
+{
+  /*  typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z, int* panSuccess) */
+  if ( $input == Py_None ) {
+    PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
+    SWIG_fail;
+  }
+
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  $1 = PySequence_Size($input);
+  $2 = (double*) CPLMalloc($1*sizeof(double));
+  $3 = (double*) CPLMalloc($1*sizeof(double));
+  $4 = (double*) CPLMalloc($1*sizeof(double));
+  $5 = (int*) CPLMalloc($1*sizeof(int));
+
+  for( int i = 0; i<$1; i++ ) {
+
+      PyObject *o = PySequence_GetItem($input,i);
+      if ( !PyTuple_Check(o) ) {
+            PyErr_SetString(PyExc_TypeError, "not a tuple");
+            SWIG_fail;
+      }
+
+      double x, y, z = 0;
+      if ( !PyArg_ParseTuple( o,"dd|d", &x, &y, &z) )
+      {
+          PyErr_SetString(PyExc_TypeError, "not a tuple of 2 or 3 doubles");
+          SWIG_fail;
+      }
+
+      ($2)[i] = x;
+      ($3)[i] = y;
+      ($4)[i] = z;
+  }
+}
+
+%typemap(argout)  (int nCount, double *x, double *y, double *z, int* panSuccess)
+{
+  /* %typemap(argout)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
+  Py_DECREF($result);
+  PyObject *xyz = PyList_New( $1 );
+  PyObject *success = PyList_New( $1 );
+  for( int i=0; i< $1; i++ ) {
+    PyObject *tuple = PyTuple_New( 4 );
+    PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( ($2)[i] ) );
+    PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( ($3)[i] ) );
+    PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( ($4)[i] ) );
+    PyList_SetItem( xyz, i, tuple );
+    PyList_SetItem( success, i, Py_BuildValue( "i",  ($5)[i]) );
+  }
+  $result = PyTuple_New( 2 );
+  PyTuple_SetItem( $result, 0, xyz );
+  PyTuple_SetItem( $result, 1, success );
+}
+
+%typemap(freearg)  (int nCount, double *x, double *y, double *z, int* panSuccess)
+{
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    free($2);
+    free($3);
+    free($4);
+    free($5);
+}
