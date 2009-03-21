@@ -939,7 +939,11 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
   for( int i = 0; i<$1; i++ ) {
 
       PyObject *o = PySequence_GetItem($input,i);
+%#if SWIG_VERSION <= 0x010337
       PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
+%#else
+      SwigPyObject *sobj = SWIG_Python_GetSwigThis(o);
+%#endif
       type* rawobjectpointer = NULL;
       if (!sobj) {
           SWIG_fail;
