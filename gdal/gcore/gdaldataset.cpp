@@ -273,9 +273,10 @@ GDALDataset::~GDALDataset()
             CPLHashSetDestroy(phAllDatasetSet);
             phAllDatasetSet = NULL;
             if (phSharedDatasetSet)
-                CPLHashSetDestroy(phSharedDatasetSet);
-            else
+            {
                 CPLDebug("GDAL", "Should not happen. phSharedDatasetSet should be NULL at that point");
+                CPLHashSetDestroy(phSharedDatasetSet);
+            }
             phSharedDatasetSet = NULL;
             CPLFree(ppDatasets);
             ppDatasets = NULL;
