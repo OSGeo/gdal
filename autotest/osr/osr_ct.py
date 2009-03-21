@@ -136,8 +136,35 @@ def osr_ct_3():
     pnt = None
 
     return 'success'
-    
-    
+
+###############################################################################
+# Actually perform a simple LL to UTM conversion. 
+
+def osr_ct_4():
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    utm_srs = osr.SpatialReference()
+    utm_srs.SetUTM( 11 )
+    utm_srs.SetWellKnownGeogCS( 'WGS84' )
+
+    ll_srs = osr.SpatialReference()
+    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+
+    gdaltest.ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+
+    result = gdaltest.ct.TransformPoints(  [ (-117.5, 32.0, 0.0), (-117.5, 32.0) ] )
+
+    for i in range(2):
+        if abs(result[i][0] - 452772.06) > 0.01 \
+        or abs(result[i][1] - 3540544.89 ) > 0.01 \
+        or abs(result[i][2] - 0.0) > 0.01:
+            gdaltest.post_reason( 'Wrong LL to UTM result' )
+            return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -154,6 +181,7 @@ gdaltest_list = [
     osr_ct_1,
     osr_ct_2,
     osr_ct_3,
+    osr_ct_4,
     osr_ct_cleanup,
     None ]
 
