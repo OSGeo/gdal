@@ -229,12 +229,36 @@ def transformer_5():
     return 'success' 
 
 
+###############################################################################
+# Test Transformer.TransformPoints
+
+def transformer_6():
+
+    if not gdaltest.have_ng:
+        return 'skip'
+
+    ds = gdal.Open('data/byte.tif')
+    tr = gdal.Transformer( ds, None, [] )
+
+    (pnt, success) = tr.TransformPoints( 0, [(20, 10)] )
+
+    if success[0] == 0 \
+       or abs(pnt[0][0]- 441920) > 0.00000001 \
+       or abs(pnt[0][1]-3750720) > 0.00000001 \
+       or pnt[0][2] != 0.0:
+        print success, pnt
+        gdaltest.post_reason( 'got wrong forward transform result.' )
+        return 'fail'
+
+    return 'success' 
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
     transformer_3,
     transformer_4,
-    transformer_5 ]
+    transformer_5,
+    transformer_6 ]
 
 if __name__ == '__main__':
 
