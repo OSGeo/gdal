@@ -2177,7 +2177,7 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
         break;
 
       case 9003:
-        SetLinearUnits( "US survey foot", 0.304800609601 );
+        SetLinearUnits( "US survey foot", CPLAtof(SRS_UL_US_FOOT_CONV) );
         break;
 
       default:
