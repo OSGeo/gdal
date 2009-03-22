@@ -213,8 +213,8 @@ typedef enum {
 #define SRS_UL_METER            "Meter"
 #define SRS_UL_FOOT             "Foot (International)" /* or just "FOOT"? */
 #define SRS_UL_FOOT_CONV                    "0.3048"
-#define SRS_UL_US_FOOT          "U.S. Foot" /* or "US survey foot" */
-#define SRS_UL_US_FOOT_CONV                 "0.3048006"
+#define SRS_UL_US_FOOT          "Foot_US" /* or "US survey foot" from EPSG */
+#define SRS_UL_US_FOOT_CONV                 "0.3048006096012192"
 #define SRS_UL_NAUTICAL_MILE    "Nautical Mile"
 #define SRS_UL_NAUTICAL_MILE_CONV           "1852.0"
 #define SRS_UL_LINK             "Link"          /* Based on US Foot */

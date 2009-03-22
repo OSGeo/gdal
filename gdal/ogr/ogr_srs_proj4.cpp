@@ -973,7 +973,16 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
         if( pszValue != NULL && CPLAtofM(pszValue) > 0.0 )
         {
-            SetLinearUnits( "unknown", CPLAtofM(pszValue) );
+            double dfValue = CPLAtofM(pszValue);
+
+            if( fabs(dfValue - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+                SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
+            else if( fabs(dfValue - CPLAtof(SRS_UL_FOOT_CONV)) < 0.00000001 )
+                SetLinearUnits( SRS_UL_FOOT, CPLAtof(SRS_UL_FOOT_CONV) );
+            else if( dfValue == 1.0 )
+                SetLinearUnits( SRS_UL_METER, 1.0 );
+            else
+                SetLinearUnits( "unknown", CPLAtofM(pszValue) );
         }
         else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
         {
@@ -1943,7 +1952,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( dfLinearConv == 0.0254 )
         pszPROJ4Units = "in";
     
-    else if( EQUAL(pszLinearUnits,SRS_UL_FOOT) )
+    else if( EQUAL(pszLinearUnits,SRS_UL_FOOT) 
+             || fabs(dfLinearConv - atof(SRS_UL_FOOT_CONV)) < 0.000000001 )
         pszPROJ4Units = "ft";
     
     else if( EQUAL(pszLinearUnits,"IYARD") || dfLinearConv == 0.9144 )
@@ -1955,7 +1965,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( dfLinearConv == 0.01 )
         pszPROJ4Units = "cm";
 
-    else if( EQUAL(pszLinearUnits,SRS_UL_US_FOOT) )
+    else if( EQUAL(pszLinearUnits,SRS_UL_US_FOOT) 
+             || fabs(dfLinearConv - atof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
         pszPROJ4Units = "us-ft";
 
     else if( EQUAL(pszLinearUnits,SRS_UL_NAUTICAL_MILE) )
