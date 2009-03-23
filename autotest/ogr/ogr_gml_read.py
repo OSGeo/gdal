@@ -221,6 +221,28 @@ def ogr_gml_5():
     return 'success'
 
 ###############################################################################
+# Test of various FIDs (various prefixes and lengths) (Ticket#1017)
+
+def ogr_gml_6():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    files = ['test_point1.gml', 'test_point2.gml', 'test_point3.gml']
+
+    for file in files:
+        gml_ds = ogr.Open( 'data/' + file )
+        lyr = gml_ds.GetLayer()
+        feat = lyr.GetNextFeature()
+        while feat is not None:
+            if feat.GetFID() < 0:
+                gdaltest.post_reason( 'Wrong FID value' )
+                return 'fail'
+            feat = lyr.GetNextFeature()
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -233,6 +255,7 @@ gdaltest_list = [
     ogr_gml_3,
     ogr_gml_4,
     ogr_gml_5,
+    ogr_gml_6,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
