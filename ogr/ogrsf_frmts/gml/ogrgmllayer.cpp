@@ -82,8 +82,6 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
 OGRGMLLayer::~OGRGMLLayer()
 
 {
-    CPLFree(pszFIDPrefix);
-
     if( poFeatureDefn )
         poFeatureDefn->Release();
 
@@ -169,19 +167,19 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         }
         else if( iNextGMLId == 0 )
         {
-            int i = strlen( poGMLFeature->GetFID() )-1;
+            int i = strlen( poGMLFeature->GetFID() )-1, j = 0;
             while( i >= 0 && *(poGMLFeature->GetFID()+i) >= '0'
-                          && *(poGMLFeature->GetFID()+i) <= '9')
-                i--;
+                          && *(poGMLFeature->GetFID()+i) <= '9' && j<8)
+                i--, j++;
             /* i points the last character of the fid */
-            if( i >= 0 )
+            if( i >= 0 && j < 8)
             {
                 pszFIDPrefix = (char *) CPLMalloc(i+2);
                 pszFIDPrefix[i+1] = '\0';
                 strncpy(pszFIDPrefix, poGMLFeature->GetFID(), i+1);
             }
             /* pszFIDPrefix now contains the prefix or NULL if no prefix is found */
-            if (sscanf(poGMLFeature->GetFID()+i+1, "%d", &nFID)==1)
+            if( j < 8 && sscanf(poGMLFeature->GetFID()+i+1, "%d", &nFID)==1)
             {
                 if( iNextGMLId <= nFID )
                     iNextGMLId = nFID + 1;
@@ -196,6 +194,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         {
             const char * pszGML_FID = poGMLFeature->GetFID();
             if( (pszFIDPrefix == NULL || strstr( pszGML_FID, pszFIDPrefix) == pszGML_FID) &&
+                strlen(pszGML_FID) <= strlen(pszFIDPrefix) + 9 &&
                 sscanf(poGMLFeature->GetFID()+(pszFIDPrefix==NULL?0:strlen(pszFIDPrefix)), "%d", &nFID) == 1 )
             { /* fid with the prefix. Using its numerical part */
                 if( iNextGMLId < nFID )
