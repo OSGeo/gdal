@@ -221,36 +221,32 @@ def ogr_gml_5():
     return 'success'
 
 ###############################################################################
-# Test of various FIDs (various prefixes and lengths) (Ticket#1017)
+# Test of colon terminated prefixes for attribute values (Ticket#2493)
 
-def ogr_gml_6():
+def ogr_gml_7():
 
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    files = ['test_point1', 'test_point2', 'test_point3']
-    fids = []
-
-    for filename in files:
-        fids[:] = []
-        gml_ds = ogr.Open( 'data' + os.sep + filename + '.gml' )
-        lyr = gml_ds.GetLayer()
-        feat = lyr.GetNextFeature()
-        while feat is not None:
-            if ( feat.GetFID() < 0 ) or ( feat.GetFID() in fids ):
-                os.remove( 'data' + os.sep + filename + '.gfs' )
-                gdaltest.post_reason( 'Wrong FID value' )
-                return 'fail'
-            fids.append(feat.GetFID())
-            feat = lyr.GetNextFeature()
-        os.remove( 'data' + os.sep + filename + '.gfs' )
+    gml_ds = ogr.Open( 'data/test_point.gml' )
+    lyr = gml_ds.GetLayer()
+    ldefn = lyr.GetLayerDefn()
+    if ldefn.GetFieldDefn(0).GetFieldTypeName(ldefn.GetFieldDefn(0).GetType())\
+       != 'Real':
+        return 'fail'
+    if ldefn.GetFieldDefn(1).GetFieldTypeName(ldefn.GetFieldDefn(1).GetType())\
+       != 'Integer':
+        return 'fail'
+    if ldefn.GetFieldDefn(2).GetFieldTypeName(ldefn.GetFieldDefn(2).GetType())\
+       != 'String':
+        return 'fail'
 
     return 'success'
 
 ###############################################################################
 #  Cleanup
 
-def ogr_gml_cleanup():    
+def ogr_gml_cleanup():
     gdaltest.clean_tmp()
     return 'success'
 
@@ -260,7 +256,7 @@ gdaltest_list = [
     ogr_gml_3,
     ogr_gml_4,
     ogr_gml_5,
-    ogr_gml_6,
+    ogr_gml_7,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
