@@ -228,24 +228,29 @@ def ogr_gml_6():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    files = ['test_point1.gml', 'test_point2.gml', 'test_point3.gml']
+    files = ['test_point1', 'test_point2', 'test_point3']
+    fids = []
 
-    for file in files:
-        gml_ds = ogr.Open( 'data/' + file )
+    for filename in files:
+        fids[:] = []
+        gml_ds = ogr.Open( 'data' + os.sep + filename + '.gml' )
         lyr = gml_ds.GetLayer()
         feat = lyr.GetNextFeature()
         while feat is not None:
-            if feat.GetFID() < 0:
+            if ( feat.GetFID() < 0 ) or ( feat.GetFID() in fids ):
+                os.remove( 'data' + os.sep + filename + '.gfs' )
                 gdaltest.post_reason( 'Wrong FID value' )
                 return 'fail'
+            fids.append(feat.GetFID())
             feat = lyr.GetNextFeature()
+        os.remove( 'data' + os.sep + filename + '.gfs' )
 
     return 'success'
 
 ###############################################################################
 #  Cleanup
 
-def ogr_gml_cleanup():
+def ogr_gml_cleanup():    
     gdaltest.clean_tmp()
     return 'success'
 
