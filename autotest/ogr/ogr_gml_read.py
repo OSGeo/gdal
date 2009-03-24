@@ -221,6 +221,32 @@ def ogr_gml_5():
     return 'success'
 
 ###############################################################################
+# Test of various FIDs (various prefixes and lengths) (Ticket#1017) 
+def ogr_gml_6():
+
+    if not gdaltest.have_gml_reader: 
+        return 'skip' 
+
+    files = ['test_point1', 'test_point2', 'test_point3'] 
+    fids = [] 
+
+    for filename in files: 
+        fids[:] = [] 
+        gml_ds = ogr.Open( 'data' + os.sep + filename + '.gml' ) 
+        lyr = gml_ds.GetLayer() 
+        feat = lyr.GetNextFeature() 
+        while feat is not None: 
+            if ( feat.GetFID() < 0 ) or ( feat.GetFID() in fids ): 
+                os.remove( 'data' + os.sep + filename + '.gfs' ) 
+                gdaltest.post_reason( 'Wrong FID value' ) 
+                return 'fail' 
+            fids.append(feat.GetFID()) 
+            feat = lyr.GetNextFeature() 
+        os.remove( 'data' + os.sep + filename + '.gfs' ) 
+
+    return 'success'
+
+###############################################################################
 # Test of colon terminated prefixes for attribute values (Ticket#2493)
 
 def ogr_gml_7():
@@ -256,6 +282,7 @@ gdaltest_list = [
     ogr_gml_3,
     ogr_gml_4,
     ogr_gml_5,
+    ogr_gml_6,
     ogr_gml_7,
     ogr_gml_cleanup ]
 
