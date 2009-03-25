@@ -136,6 +136,8 @@ int GMLReader::ParseXSD( const char *pszFile )
         const char *pszType;
 
         pszType = CPLGetXMLValue( psThis, "type", NULL );
+        if( strstr( pszType, ":" ) != NULL )
+            pszType = strstr( pszType, ":" ) + 1;
         if( pszType == NULL || !EQUALN(pszType,pszName,strlen(pszName)) 
             || !EQUAL(pszType+strlen(pszName),"_Type") )
         {
