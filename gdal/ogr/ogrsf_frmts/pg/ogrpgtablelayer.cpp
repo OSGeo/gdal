@@ -1520,12 +1520,12 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
         if( EQUAL(pszCap,OLCSequentialWrite) || EQUAL(pszCap,OLCCreateField) )
             return TRUE;
 
-        else if( EQUAL(pszCap,OLCRandomRead) || EQUAL(pszCap,OLCRandomWrite) )
+        else if( EQUAL(pszCap,OLCRandomWrite) )
             return bHasFid;
     }
 
     if( EQUAL(pszCap,OLCRandomRead) )
-        return FALSE;
+        return bHasFid;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return m_poFilterGeom == NULL || bHasPostGISGeometry;
