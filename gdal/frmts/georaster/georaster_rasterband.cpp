@@ -39,8 +39,9 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
                                           int nLevel )
 {
     poDS                = (GDALDataset*) poGDS;
-    this->nBand         = nBand;
     poGeoRaster         = poGDS->poGeoRaster;
+    this->nBand         = nBand;
+    this->eDataType     = OWGetDataType( poGeoRaster->pszCellDepth );
     poColorTable        = new GDALColorTable();
     poDefaultRAT        = NULL;
     pszVATName          = NULL;
@@ -662,7 +663,7 @@ GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
     GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;
 
     //  -----------------------------------------------------------------------
-    //  Check if there is a previous stored overview links
+    //  Check if there is a previous stored overview link
     //  -----------------------------------------------------------------------
 
     int i = 0;
@@ -703,4 +704,9 @@ GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
     paphOverviewLinks[ nOverviewLinks - 1 ] = phOVRLink;
 
     return (GDALRasterBand*) poOVR;
+}
+
+void GeoRasterRasterBand::SetHoldWritingBlock( bool bValue )
+{
+    poGeoRaster->bHoldWritingBlock = bValue;
 }

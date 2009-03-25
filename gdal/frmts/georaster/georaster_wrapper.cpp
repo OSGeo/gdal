@@ -29,7 +29,6 @@
  *****************************************************************************/
 
 #include "georaster_priv.h"
-#include <zlib.h>
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterWrapper()
@@ -62,6 +61,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     dfYCoefficient[2]   = 0.0;
     pszCellDepth        = NULL;
     pszCompressionType  = NULL;
+    nCompressQuality    = 75;
     pahLocator          = NULL;
     pabyBlockBuf        = NULL;
     bIsReferenced       = false;
@@ -74,14 +74,13 @@ GeoRasterWrapper::GeoRasterWrapper()
     szInterleaving[2]   = 'Q';
     szInterleaving[3]   = '\0';
     bIOInitialized      = false;
-    bBlobInitialized    = false;
     bFlushMetadata      = false;
-    bFlushBuffer        = false;
     nSRID               = -1;
     bRDTRIDOnly         = false;
-    bPackingOrCompress  = 0;
+    bPackingOrCompress  = false;
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0;
+    bHoldWritingBlock   = false;
 }
 
 //  ---------------------------------------------------------------------------
@@ -490,11 +489,10 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                 "cellDepth=%s "
                 "interleaving=%s "
                 "pyramid=FALSE "
-                "compression=%s ",
+                "compression=NONE ",
                 nColumnBlockSize, nRowBlockSize,
                 pszCellDepth,
-                szInterleaving,
-                pszCompressionType ) );
+                szInterleaving ) );
         }
         else
         {
@@ -503,11 +501,10 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                 "cellDepth=%s "
                 "interleaving=%s "
                 "pyramid=FALSE "
-                "compression=%s ",
+                "compression=NONE ",
                 nColumnBlockSize, nRowBlockSize, nBandBlockSize,
                 pszCellDepth,
-                szInterleaving,
-                pszCompressionType ) );
+                szInterleaving ) );
         }
     }
     else
@@ -592,7 +589,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     }
 
     //  -----------------------------------------------------------
-    //  Perare UPDATE or INSERT comand
+    //  Prepare UPDATE or INSERT comand
     //  -----------------------------------------------------------
 
     char szCommand[OWTEXT];
@@ -777,6 +774,48 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 }
 
 //  ---------------------------------------------------------------------------
+//                                                          PrepareToOverwrite()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterWrapper::PrepareToOverwrite( void )
+{
+    nTotalColumnBlocks  = 0;
+    nTotalRowBlocks     = 0;
+    nTotalBandBlocks    = 0;
+    if( sscanf( pszCellDepth, "%dBIT", &nCellSizeBits ) )
+    {
+        nCellSizeGDAL   = GDALGetDataTypeSize( 
+                          OWGetDataType( pszCellDepth ) ) / 8;
+    }
+    else
+    {
+        nCellSizeGDAL   = 1;
+    }
+    dfXCoefficient[0]   = 1.0;
+    dfXCoefficient[1]   = 0.0;
+    dfXCoefficient[2]   = 0.0;
+    dfYCoefficient[0]   = 0.0;
+    dfYCoefficient[1]   = 1.0;
+    dfYCoefficient[2]   = 0.0;
+    pszCompressionType  = NULL;
+    nCompressQuality    = 75;
+    bIsReferenced       = false;
+    nCurrentBlock       = -1;
+    nCurrentLevel       = -1;
+    szInterleaving[0]   = 'B';
+    szInterleaving[1]   = 'S';
+    szInterleaving[2]   = 'Q';
+    szInterleaving[3]   = '\0';
+    bIOInitialized      = false;
+    bFlushMetadata      = false;
+    nSRID               = -1;
+    bPackingOrCompress  = false;
+    nPyramidMaxLevel    = 0;
+    nBlockCount         = 0;
+    bHoldWritingBlock   = false;
+}
+
+//  ---------------------------------------------------------------------------
 //                                                                     Delete()
 //  ---------------------------------------------------------------------------
 
@@ -796,18 +835,53 @@ bool GeoRasterWrapper::Delete( void )
 //                                                            SetGeoReference()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::SetGeoReference( int nSRIDIn )
+void GeoRasterWrapper::SetGeoReference( int nSRIDIn )
 {
     if( nSRIDIn == 0 )
     {
-        return false;
+        nSRIDIn = UNKNOWN_CRS;
     }
 
     nSRID = nSRIDIn;
 
     bFlushMetadata = true;
+}
 
-    return true;
+//  ---------------------------------------------------------------------------
+//                                                            SetGeoReference()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterWrapper::SetCompression( const char* pszType, int nQuality )
+{
+    if( poConnection->GetVersion() > 10 )
+    {
+        return; /* sdo_geor.CreateTemplate alredy did that */
+    }
+
+    bPackingOrCompress = true;
+    pszCompressionType = CPLStrdup( pszType );
+    nCompressQuality = nQuality;
+
+    CPLXMLNode* psRInfo = CPLGetXMLNode( phMetadata, "rasterInfo" );
+    CPLXMLNode* psNode = CPLGetXMLNode( psRInfo, "compression" );
+
+    if( psNode )
+    {
+        CPLRemoveXMLChild( psRInfo, psNode );
+        CPLDestroyXMLNode( psNode );
+    }
+
+    psNode = CPLCreateXMLNode( psRInfo, CXT_Element, "compression" );
+
+    CPLCreateXMLElementAndValue( psNode, "type", pszCompressionType );
+
+    if( EQUALN( pszCompressionType, "JPEG", 4 ) )
+    {
+        CPLCreateXMLElementAndValue( psNode, "quality", 
+            CPLSPrintf( "%d", nCompressQuality ) );
+    }
+
+    bFlushMetadata = true;
 }
 
 //  ---------------------------------------------------------------------------
@@ -929,11 +1003,15 @@ void GeoRasterWrapper::GetRasterInfo( void )
     pszCellDepth        = CPLStrdup( CPLGetXMLValue( phMetadata,
                             "rasterInfo.cellDepth", "8BIT_U" ) );
 
-    sscanf( pszCellDepth, "%dBIT", &nCellSizeBits );
-
-    GDALDataType eType  = OWGetDataType( pszCellDepth );
-
-    nCellSizeGDAL       = GDALGetDataTypeSize( eType ) / 8;
+    if( sscanf( pszCellDepth, "%dBIT", &nCellSizeBits ) )
+    {
+        nCellSizeGDAL   = GDALGetDataTypeSize( 
+                          OWGetDataType( pszCellDepth ) ) / 8;
+    }
+    else
+    {
+        nCellSizeGDAL   = 1;
+    }
 
     //  -------------------------------------------------------------------
     //  Get compression type
@@ -949,13 +1027,12 @@ void GeoRasterWrapper::GetRasterInfo( void )
     pszCompressionType  = CPLStrdup( CPLGetXMLValue( phMetadata,
                             "rasterInfo.compression.type", "NONE" ) );
 
-    if( EQUAL( pszCompressionType, "JPEG-B" ) )
+    if( EQUALN( pszCompressionType, "JPEG", 4 ) )
     {
         bPackingOrCompress = true;
-    }
-    else if ( EQUAL( pszCompressionType, "JPEG-F" ) )
-    {
-        bPackingOrCompress = true;
+
+        nCompressQuality = atoi( CPLGetXMLValue( phMetadata,
+                            "rasterInfo.compression.quality", "75" ) );
     }
     else if ( EQUAL( pszCompressionType, "DEFLATE" ) )
     {
@@ -1361,7 +1438,7 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
     // Allocate buffer for one raster block
     // --------------------------------------------------------------------
 
-    pabyBlockBuf    = (GByte*) VSIMalloc( nBlockBytes );
+    pabyBlockBuf    = (GByte*) VSIMalloc( nBlockBytesGDAL );
 
     if ( pabyBlockBuf == NULL )
     {
@@ -1465,8 +1542,16 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         {
                 return false;
         }
+#ifndef CPL_MSB
+        if( nCellSizeBits > 8 )
+        {
+            int nWordSize  = nCellSizeBits / 8;
+            int nWordCount = nColumnBlockSize * nRowBlockSize * nBandBlockSize;
+            GDALSwapWords( pabyBlockBuf, nWordSize, nWordCount, nWordSize );
+        }
+#endif
     }
-
+    
     if( bPackingOrCompress )
     {
         //  ---------------------------------------------------------------
@@ -1494,7 +1579,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         }
         else if ( EQUAL( pszCompressionType, "DEFLATE" ) )
         {
-            UncompressDeflate( nBlockBytes, nBytesRead );
+            UncompressDeflate( nBytesRead );
         }
     }
 
@@ -1504,7 +1589,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
 
     int nStart = ( nBand - 1 ) % nBandBlockSize;
 
-    if( EQUAL( szInterleaving, "BSQ" ) )
+    if( EQUAL( szInterleaving, "BSQ" ) || nBandBlockSize == 1 )
     {
         nStart *= nBlockBytesGDAL;
 
@@ -1523,11 +1608,11 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         }
 
         GByte* pabyData = (GByte*) pData;
+
         unsigned long ii = 0;
-        unsigned long jj = nStart;
-        for( ii = 0; ii < nBlockBytesGDAL;
-             ii += ( nCellSizeGDAL * nSize ),
-             jj += nIncr )
+        unsigned long jj = nStart * nCellSizeGDAL;
+
+        for( ii = 0; ii < nBlockBytesGDAL; ii += nSize, jj += nIncr )
         {
             memcpy( &pabyData[ii], &pabyBlockBuf[jj], nSize );
         }
@@ -1546,6 +1631,15 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
                                      int nYOffset,
                                      void* pData )
 {
+#ifndef CPL_MSB
+    if( nCellSizeBits > 8 )
+    {
+        int nWordSize  = nCellSizeBits / 8;
+        int nWordCount = nColumnBlockSize * nRowBlockSize;
+        GDALSwapWords( pData, nWordSize, nWordCount, nWordSize );
+    }
+#endif
+
     if( bIOInitialized == false || nCurrentLevel != nLevel )
     {
         InitializeIO( nLevel, true );
@@ -1578,11 +1672,11 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     int nStart = ( nBand - 1 ) % nBandBlockSize;
 
-    if( EQUAL( szInterleaving, "BSQ" ) )
+    if( EQUAL( szInterleaving, "BSQ" ) || nBandBlockSize == 1 )
     {
-        nStart *= nBlockBytesGDAL;
+        nStart *= nBlockBytes;
 
-        memcpy( &pabyBlockBuf[nStart], pabyOutBuf, nBlockBytesGDAL );
+        memcpy( &pabyBlockBuf[nStart], pabyOutBuf, nBlockBytes );
     }
     else
     {
@@ -1597,38 +1691,51 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
         }
 
         unsigned long ii = 0;
-        unsigned long jj = nStart;
-        for( ii = 0; ii < nBlockBytesGDAL;
-             ii += ( nCellSizeGDAL * nSize ),
-             jj += nIncr )
+        unsigned long jj = nStart * nCellSizeGDAL;
+
+        for( ii = 0; ii < nBlockBytes; ii += nSize, jj += nIncr )
         {
             memcpy( &pabyBlockBuf[jj], &pabyOutBuf[ii], nSize );
         }
     }
 
     //  --------------------------------------------------------------------
+    //  Optimize the number of writings
+    //  --------------------------------------------------------------------
+/*
+ *      Experimental, not be commited on SVN.
+ *
+    if( bHoldWritingBlock && 
+        nBandBlockSize > 1 )
+    {
+        return true;
+    }
+*/
+    //  --------------------------------------------------------------------
     //  Compress
     //  --------------------------------------------------------------------
 
+    unsigned long nActualBlockBytes = nBlockBytes;
+
     if( bPackingOrCompress )
     {
-        if( EQUAL( pszCompressionType, "JPEG-B" ) )
+        if( EQUALN( pszCompressionType, "JPEG", 4 ) )
         {
-            CompressJpeg();
-        }
-        else if ( EQUAL( pszCompressionType, "JPEG-F" ) )
-        {
-            CompressJpeg();
+            nActualBlockBytes = CompressJpeg();
         }
         else if ( EQUAL( pszCompressionType, "DEFLATE" ) )
         {
-            CompressDeflate( pData );
+            nActualBlockBytes = CompressDeflate( pData );
         }
     }
 
+    //  --------------------------------------------------------------------
+    //  Write BLOB
+    //  --------------------------------------------------------------------
+
     if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
                                   pabyBlockBuf,
-                                  nBlockBytes ) )
+                                  nActualBlockBytes ) )
     {
         return false;
     }
@@ -1833,10 +1940,9 @@ bool GeoRasterWrapper::FlushMetadata()
 
     int nModelCoordinateLocation = 0;
 
-    if( ! OW_DEFAULT_CENTER )
-    {
-        nModelCoordinateLocation = 1;
-    }
+#if defined(OW_DEFAULT_CENTER)
+    nModelCoordinateLocation = 1;
+#endif
 
     char* pszXML = CPLSerializeXMLTree( phMetadata );
 
@@ -1905,6 +2011,8 @@ bool GeoRasterWrapper::GeneratePyramid( int nLevels,
                                         const char* pszResampling,
                                         bool bNodata )
 {
+    (void) bNodata;
+
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  gr sdo_georaster;\n"
@@ -2038,90 +2146,258 @@ void GeoRasterWrapper::PackNBits( GByte* pabyOutBuf, void* pData )
 //                                                             UncompressJpeg()
 //  ---------------------------------------------------------------------------
 
+const static int Q5table[64] = {
+    4, 4, 4, 4, 
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6,
+    5, 5, 6, 5, 5, 6, 7, 6, 6, 6, 6, 6, 6, 7, 8, 7, 8, 8, 
+    8, 7, 8, 9, 9, 10, 10, 9, 9, 11, 12, 13, 12, 11, 14, 16, 16, 14, 
+    20, 21, 20, 27, 27, 36
+};
+
+static const int AC_BITS[16] = { 
+    0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125 
+};
+
+static const int AC_HUFFVAL[256] = {
+    0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,          
+    0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
+    0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08,
+    0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0,
+    0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16,
+    0x17, 0x18, 0x19, 0x1A, 0x25, 0x26, 0x27, 0x28,
+    0x29, 0x2A, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+    0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
+    0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
+    0x5A, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
+    0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
+    0x7A, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
+    0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,
+    0x99, 0x9A, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
+    0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6,
+    0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5,
+    0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4,
+    0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
+    0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA,
+    0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
+    0xF9, 0xFA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
+};
+
+static const int DC_BITS[16] = { 
+    0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 
+};
+
+static const int DC_HUFFVAL[256] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+    0x08, 0x09, 0x0A, 0x0B 
+};
+
 void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
 {
-    const char* pszFname = CPLSPrintf( "/vsimem/jpeg_%p.virtual", pabyBlockBuf );
+    const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.jpg", pabyBlockBuf );
 
-    // Write jpeg file in memory
+    FILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
+    VSIFWriteL( pabyBlockBuf, nInSize, 1, fpImage );
+    VSIFCloseL( fpImage );
 
-    FILE *fp = VSIFOpenL( pszFname, "w+" );
-    VSIFWriteL( pabyBlockBuf, 1, nInSize, fp );
-    VSIFCloseL( fp );
+    fpImage = VSIFOpenL( pszMemFile, "rb" );
 
-    // Read all jpeg at once
+    struct jpeg_decompress_struct sDInfo;
+    struct jpeg_error_mgr sJErr;
 
-    GDALDatasetH hDS = GDALOpen( pszFname, GA_ReadOnly );
+    sDInfo.err = jpeg_std_error( &sJErr );
+    jpeg_create_decompress( &sDInfo );
 
-    GDALDatasetRasterIO( hDS, GF_Read, 0, 0,
-        nColumnBlockSize, nRowBlockSize, pabyBlockBuf,
-        nColumnBlockSize, nRowBlockSize, GDT_Byte, nBandBlockSize, NULL, 0, 0, 0 );
+    /* -------------------------------------------------------------------- */
+    /*      Load table for abbreviated JPEG-B                               */
+    /* -------------------------------------------------------------------- */
 
-    GDALClose( hDS );
+    int nComponentsToLoad = -1; /* doesn't load any table */
 
-    VSIUnlink( pszFname );
+    if( EQUAL( pszCompressionType, "JPEG-B") )
+    {
+        nComponentsToLoad = 3;
+    }
+
+    for( int n = 0; n < nComponentsToLoad; n++ )
+    {
+        JQUANT_TBL* quant_ptr;
+        int i = 0;
+
+        /* ---------------------------------------------------------------- */
+        /*      Load Quantization table.                                    */
+        /* ---------------------------------------------------------------- */
+
+        if (sDInfo.quant_tbl_ptrs[n] == NULL)
+            sDInfo.quant_tbl_ptrs[n] = 
+                jpeg_alloc_quant_table((j_common_ptr) &(sDInfo));
+        
+        quant_ptr = sDInfo.quant_tbl_ptrs[n];	/* quant_ptr is JQUANT_TBL* */
+
+        for (i = 0; i < 64; i++) {
+            /* Qtable[] is desired quantization table, in natural array order */
+            quant_ptr->quantval[i] = (UINT16) Q5table[i];
+        }
+
+        /* ---------------------------------------------------------------- */
+        /*      Load AC huffman table.                                      */
+        /* ---------------------------------------------------------------- */
+
+        JHUFF_TBL  *huff_ptr;
+
+        if (sDInfo.ac_huff_tbl_ptrs[n] == NULL)
+            sDInfo.ac_huff_tbl_ptrs[n] =
+                jpeg_alloc_huff_table((j_common_ptr)&sDInfo);
+
+        huff_ptr = sDInfo.ac_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
+
+        for (i = 1; i <= 16; i++) {
+            /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
+            huff_ptr->bits[i] = (UINT8) AC_BITS[i-1];
+        }
+
+        for (i = 0; i < 256; i++) {
+            /* symbols[] is the list of Huffman symbols, in code-length order */
+            huff_ptr->huffval[i] = (UINT8) AC_HUFFVAL[i];
+        }
+
+        /* ---------------------------------------------------------------- */
+        /*      Load DC huffman table.                                      */
+        /* ---------------------------------------------------------------- */
+
+        if (sDInfo.dc_huff_tbl_ptrs[n] == NULL)
+            sDInfo.dc_huff_tbl_ptrs[n] =
+                jpeg_alloc_huff_table((j_common_ptr)&sDInfo);
+
+        huff_ptr = sDInfo.dc_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
+
+        for (i = 1; i <= 16; i++) {
+            /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
+            huff_ptr->bits[i] = (UINT8) DC_BITS[i-1];
+        }
+
+        for (i = 0; i < 256; i++) {
+            /* symbols[] is the list of Huffman symbols, in code-length order */
+            huff_ptr->huffval[i] = (UINT8) DC_HUFFVAL[i];
+        }
+    }
+
+    jpeg_vsiio_src( &sDInfo, fpImage );
+    jpeg_read_header( &sDInfo, TRUE );
+
+    sDInfo.out_color_space = sDInfo.jpeg_color_space;
+
+    jpeg_start_decompress( &sDInfo );
+
+    GByte* pabyScanline = pabyBlockBuf;
+
+    for( int iLine = 0; iLine < nRowBlockSize; iLine++ )
+    {
+        JSAMPLE* ppSamples = (JSAMPLE*) pabyScanline;
+        jpeg_read_scanlines( &sDInfo, &ppSamples, 1 );
+        pabyScanline += ( nColumnBlockSize * nBandBlockSize );
+    }
+
+    jpeg_finish_decompress( &sDInfo );
+    jpeg_destroy_decompress( &sDInfo );
+
+    VSIFCloseL( fpImage );
+
+    VSIUnlink( pszMemFile );
 }
 
 //  ---------------------------------------------------------------------------
 //                                                               CompressJpeg()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterWrapper::CompressJpeg()
+unsigned long GeoRasterWrapper::CompressJpeg()
 {
-    // Create a GDAL MEM driver identification string
+    const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.dat", pabyBlockBuf );
 
-    const char* pszFname1 = CPLSPrintf(
-        "MEM:::DATAPOINTER=%p,PIXELS=%d,LINES=%d,"
-        "BANDS=%d,DATATYPE=%s,PIXELOFFSET=%d,LINEOFFSET=%d,BANDOFFSET=%d",
-        pabyBlockBuf, nColumnBlockSize, nRowBlockSize, nBandBlockSize, "Byte", 1,
-        nRowBlockSize, 1 );
+    FILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
 
-    // Open buffer as an in-memory dataset
+    struct jpeg_compress_struct sCInfo;
+    struct jpeg_error_mgr sJErr;
 
-    GDALDatasetH hDS1 = GDALOpen( pszFname1, GA_ReadOnly );
+    boolean write_all_tables = TRUE;
+ 
+    if( EQUAL( pszCompressionType, "JPEG-B") )
+    {
+        write_all_tables = FALSE;
+    }
 
-    // CreateCopy it to a JPEG file in memory
+    sCInfo.err = jpeg_std_error( &sJErr );
+    jpeg_create_compress( &sCInfo );
+    jpeg_vsiio_dest( &sCInfo, fpImage );
+    sCInfo.image_width = nColumnBlockSize;
+    sCInfo.image_height = nRowBlockSize;
+    sCInfo.input_components = nBandBlockSize;
+    sCInfo.in_color_space = ( nBandBlockSize == 1 ? JCS_GRAYSCALE : JCS_RGB );
+    jpeg_set_defaults( &sCInfo );
+    sCInfo.JFIF_major_version = 1;
+    sCInfo.JFIF_minor_version = 2;
+    jpeg_set_quality( &sCInfo, nCompressQuality, TRUE );
+    jpeg_suppress_tables( &sCInfo, ! write_all_tables );
+    jpeg_start_compress( &sCInfo, write_all_tables );
+    GByte* pabyScanline = pabyBlockBuf;
 
-    const char* pszFname2 = CPLSPrintf( "/vsimem/jpeg_%p.virtual", pabyBlockBuf );
+    for( int iLine = 0; iLine < nRowBlockSize; iLine++ )
+    {
+        JSAMPLE* ppSamples = (JSAMPLE*) pabyScanline;
+        jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+        pabyScanline += ( nColumnBlockSize * nBandBlockSize );
+    }
 
-    GDALDriverH hDR1 = GDALGetDriverByName( "JPEG" );
+    jpeg_finish_compress( &sCInfo );
+    jpeg_destroy_compress( &sCInfo );
 
-    GDALDatasetH hDS2 = GDALCreateCopy( hDR1, pszFname2, hDS1,
-        false, NULL, NULL, NULL );
+    VSIFCloseL( fpImage );
 
-    GDALClose( hDS1 );
+    fpImage = VSIFOpenL( pszMemFile, "rb" );
+    unsigned long nSize = VSIFReadL( pabyBlockBuf, 1, nBlockBytes, fpImage );
+    VSIFCloseL( fpImage );
 
-    GDALClose( hDS2 );
+    VSIUnlink( pszMemFile );
 
-    // Copy the memory file to the main buffer
-
-    FILE *fp = VSIFOpenL( pszFname2, "r+" );
-    VSIFReadL( pabyBlockBuf, 1, nBlockBytes, fp );
-    VSIFCloseL( fp );
-
-    VSIUnlink( pszFname2 );
+    return nSize;
 }
-
 
 //  ---------------------------------------------------------------------------
 //                                                          UncompressDeflate()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::UncompressDeflate( unsigned long nDestLen,
-                                          unsigned long nSourceLen )
+bool GeoRasterWrapper::UncompressDeflate( unsigned long nBufferSize )
 {
-    GByte* pabyBuf = (GByte*) CPLMalloc( nSourceLen );
+    GByte* pabyBuf = (GByte*) CPLMalloc( nBufferSize );
 
-    memcpy( pabyBuf, pabyBlockBuf, nSourceLen );
+    memcpy( pabyBuf, pabyBlockBuf, nBufferSize );
 
     // Call ZLib uncompress
 
-    int nRet = uncompress( pabyBlockBuf, &nDestLen, pabyBuf, nSourceLen );
+    unsigned long nDestLen;
+
+    int nRet = uncompress( pabyBlockBuf, &nDestLen, pabyBuf, nBufferSize );
 
     CPLFree( pabyBuf );
 
     if( nRet != Z_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "ZLib return code (%d)", nRet );
+        return false;
+    }
+
+    if( nDestLen != nBlockBytes )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "ZLib decompressed buffer size (%ld) expected (%ld)", nDestLen, nBlockBytes );
         return false;
     }
 
@@ -2132,9 +2408,9 @@ bool GeoRasterWrapper::UncompressDeflate( unsigned long nDestLen,
 //                                                            CompressDeflate()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::CompressDeflate( void* pData )
+unsigned long GeoRasterWrapper::CompressDeflate( void* pData )
 {
-    unsigned long nLen = (nBlockBytes * 1.1) + 12;
+    unsigned long nLen = ((unsigned long)(nBlockBytes * 1.1)) + 12;
 
     GByte* pabyBuf = (GByte*) CPLMalloc( nLen );
 
@@ -2152,5 +2428,5 @@ bool GeoRasterWrapper::CompressDeflate( void* pData )
         return false;
     }
 
-    return true;
+    return nLen;
 }
