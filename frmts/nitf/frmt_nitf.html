@@ -53,12 +53,14 @@ Creation Options:<p>
 
 <ul>
 
-<li> Most file header, and imagery header metadata and security fields can
-be set with appropriate creation options.  For instance setting 
+<li> Most file header, imagery header metadata and security fields can
+be set with appropriate <b>creation options</b> (although they are reported as metadata
+item, but must not be set as metadata).  For instance setting 
 <tt>"FTITLE=Image of abandoned missle silo south west of Karsk"</tt> in the
 creation option list would result in setting of the FTITLE field in the NITF
 file header.  Use the official field names from the NITF specification 
-document.<p>
+document; do not put the "NITF_" prefix that is reported when asking the metadata
+list.<p>
 
 <li> <b>IC=NC/C3/C8</b> : Set the compression method.
 <ul>
