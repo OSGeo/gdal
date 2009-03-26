@@ -30,7 +30,7 @@
 		</tr>
 		<tr>
 			<td class="xml">    &lt;Service name="<span class="value">WMS</span>"&gt;</td>
-			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService. (required)</td>
+			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS. (required)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;Version&gt;<span class="value">1.1.1</span>&lt;/Version&gt;</td>
@@ -222,7 +222,7 @@
   Access to web-based WorldWind tile services. Access is always tile based.
 </p>
 
-<h3>TMS</h3>
+<h3>TMS (GDAL 1.7.0 and later)</h3>
 <p>
   The TMS Minidriver is designed primarily to support the users of the 
   <a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification">TMS
@@ -231,10 +231,10 @@
 <p>
   Because TMS is similar to many other 'x/y/z' flavored services on the web, 
   this service can also be used to access these services. To use it in this
-  fashion, you can use  replacement variables, of the format ${x}, ${y}, etc.
+  fashion, you can use replacement variables, of the format ${x}, ${y}, etc.
 </p>
 <p>
- Supported variables are:
+ Supported variables (name is case sensitive) are :
   <ul>
     <li>${x} -- x position of the tile</li>
     <li>${y} -- y position of the tile. This can be either from the top or the bottom of the tileset, based on whether the YOrigin parameter is set to true or false.</li>
