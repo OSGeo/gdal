@@ -497,7 +497,8 @@ const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
  * to use one of the other progress functions that actually do something.
  */
 
-int CPL_STDCALL GDALDummyProgress( double, const char *, void * )
+int CPL_STDCALL GDALDummyProgress( double dfComplete, const char *pszMessage, 
+                                   void *pData )
 
 {
     return TRUE;
@@ -1506,7 +1507,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 /*                         GDALCheckVersion()                           */
 /************************************************************************/
 
-/** \brief Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
+/** Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
 
     The purpose of this method is to ensure that calling code will run with the GDAL
     version it is compiled for. It is primarly intented for external plugins.
@@ -1516,6 +1517,8 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
     @param pszCallingComponentName If not NULL, in case of version mismatch, the method
                                    will issue a failure mentionning the name of
                                    the calling component.
+
+    @return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor, FALSE otherwise.
   */
 int CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
                                   const char* pszCallingComponentName)

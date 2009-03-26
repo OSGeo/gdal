@@ -36,9 +36,11 @@
  * Public (C callable) GDAL algorithm entry points, and definitions.
  */
 
+#ifndef DOXYGEN_SKIP
 #include "gdal.h"
 #include "cpl_minixml.h"
 #include "ogr_api.h"
+#endif
 
 CPL_C_START
 
@@ -319,7 +321,7 @@ GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 /*  Gridding interface.                                                 */
 /************************************************************************/
 
-/*! Gridding Algorithms */
+/** Gridding Algorithms */
 typedef enum {
   /*! Inverse distance to a power */    GGA_InverseDistanceToAPower = 1,
   /*! Moving Average */                 GGA_MovingAverage = 2,
@@ -432,16 +434,6 @@ GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 double, double, double, double,
                 GUInt32, GUInt32, GDALDataType, void *,
                 GDALProgressFunc, void *);
-
-/************************************************************************/
-/*  Profiling interface.                                                */
-/************************************************************************/
-
-CPLErr CPL_DLL
-GDALProfile( GDALDatasetH, int, int *, GUInt32, GUInt32, GUInt32, GUInt32,
-             void *, GUInt32 * );
-
-
 CPL_C_END
                             
 #endif /* ndef GDAL_ALG_H_INCLUDED */
