@@ -1,6 +1,8 @@
 /*!
 
-\typedef int GDALProgressFunc
+\typedef int (*GDALProgressFunc)(double dfComplete, const char *pszMessage, void *pProgressArg)
+
+\brief Callback progress definition for long operations.
 
 GDALProcessFunc is a typedef defining the signature of functions to be
 used with GDAL as callbacks to report the progress of long running processes.
