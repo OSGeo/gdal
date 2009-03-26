@@ -30,19 +30,19 @@
 
 #include "JpegHelper.h"
 
-static const GByte JPGHLP_1DC_Codes[] = {
+static GByte JPGHLP_1DC_Codes[] = {
     0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
 };
 
-static const GByte JPGHLP_1AC_Codes[] = {
+static GByte JPGHLP_1AC_Codes[] = {
     0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125,
 };
 
-static const GByte JPGHLP_1DC_Symbols[] = {
+static GByte JPGHLP_1DC_Symbols[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 };
 
-static const GByte JPGHLP_1AC_Symbols[] = {
+static GByte JPGHLP_1AC_Symbols[] = {
     0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
     0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
     0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08,
@@ -66,19 +66,19 @@ static const GByte JPGHLP_1AC_Symbols[] = {
     0xf9, 0xfa,
 };
 
-static const GByte JPGHLP_2AC_Codes[] = {
+static GByte JPGHLP_2AC_Codes[] = {
     0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119,
 };
 
-static const GByte JPGHLP_2DC_Codes[] = {
+static GByte JPGHLP_2DC_Codes[] = {
     0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
 };
 
-static const GByte JPGHLP_2DC_Symbols[] = {
+static GByte JPGHLP_2DC_Symbols[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 };
 
-static const GByte JPGHLP_2AC_Symbols[] = {
+static GByte JPGHLP_2AC_Symbols[] = {
     0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
     0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,
     0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91,
@@ -102,7 +102,7 @@ static const GByte JPGHLP_2AC_Symbols[] = {
     0xf9, 0xfa,
 };
 
-static const GByte JPGHLP_DQT_luminace[64] = {
+static GByte JPGHLP_DQT_luminace[64] = {
      10,  7,  6, 10, 14, 24, 31, 37,
       7,  7,  8, 11, 16, 35, 36, 33,
       8,  8, 10, 14, 24, 34, 41, 34,
@@ -113,7 +113,7 @@ static const GByte JPGHLP_DQT_luminace[64] = {
      43, 55, 57, 59, 67, 60, 62, 59
 };
 
-static const GByte JPGHLP_DQT_chrominance[64] = {
+static GByte JPGHLP_DQT_chrominance[64] = {
      10, 11, 14, 28, 59, 59, 59, 59,
      11, 13, 16, 40, 59, 59, 59, 59,
      14, 16, 34, 59, 59, 59, 59, 59,
@@ -124,7 +124,7 @@ static const GByte JPGHLP_DQT_chrominance[64] = {
      59, 59, 59, 59, 59, 59, 59, 59
 };
 
-static const GByte ZIGZAG[64] = { 
+static GByte ZIGZAG[64] = {
       0,  1,  5,  6, 14, 15, 27, 28,
       2,  4,  7, 13, 16, 26, 29, 42,
       3,  8, 12, 17, 25, 30, 41, 43,
@@ -312,6 +312,98 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
     *( pabNext++ )      = 0;            // First DCT coefficient
     *( pabNext++ )      = 63;           // Last DCT coefficient 
     *( pabNext++ )      = 0;            // Spectral selection
+
+    return pabNext - pabyBuffer;
+}
+
+int JPGHLP_AddQuantization( GByte *pabyBuffer,
+                            const int nComponents,
+                            const int nQuality )
+{
+    int i;
+
+    GByte *pabNext = pabyBuffer;
+
+    // ------------------------------------------------------------------------
+    // Quantization Table Segment
+    // ------------------------------------------------------------------------
+
+    GByte abQuantTables[2][64];
+    ZIGZAGCPY( abQuantTables[0], JPGHLP_DQT_luminace );
+    ZIGZAGCPY( abQuantTables[1], JPGHLP_DQT_chrominance );
+
+    if( nQuality == 30 )
+    {
+        ADJUST( abQuantTables[0], *, 0.5 );
+        ADJUST( abQuantTables[1], *, 0.5 );
+    }
+
+    for( i = 0; i < 2 && i < nComponents; i++ )
+    {
+        *( pabNext++ )  = 0xFF;         // Tag Mark
+        *( pabNext++ )  = 0xDB;         // DQT
+        *( pabNext++ )  = 0;            // Segment Length (msb)
+        *( pabNext++ )  = 67;           // Length (msb)
+        *( pabNext++ )  = i;            // Table ID
+        memcpy( pabNext, abQuantTables[i], 64 );
+        pabNext += 64;
+    }
+
+    return pabNext - pabyBuffer;
+}
+
+int JPGHLP_AddHuffmanTable( GByte *pabyBuffer,
+                            const int nComponents )
+{
+    int i;
+
+    GByte *pabNext = pabyBuffer;
+
+    // ------------------------------------------------------------------------
+    // Huffman Table Segments
+    // ------------------------------------------------------------------------
+
+    GByte *pabHuffTab[2][4];
+    pabHuffTab[0][0]    = JPGHLP_1DC_Codes;
+    pabHuffTab[0][1]    = JPGHLP_1AC_Codes;
+    pabHuffTab[0][2]    = JPGHLP_1DC_Symbols;
+    pabHuffTab[0][3]    = JPGHLP_1AC_Symbols;
+
+    pabHuffTab[1][0]    = JPGHLP_2DC_Codes;
+    pabHuffTab[1][1]    = JPGHLP_2AC_Codes;
+    pabHuffTab[1][2]    = JPGHLP_2DC_Symbols;
+    pabHuffTab[1][3]    = JPGHLP_2AC_Symbols;
+
+    int pnHTs[2][4];
+    pnHTs[0][0]         = sizeof(JPGHLP_1DC_Codes);
+    pnHTs[0][1]         = sizeof(JPGHLP_1AC_Codes);
+    pnHTs[0][2]         = sizeof(JPGHLP_1DC_Symbols);
+    pnHTs[0][3]         = sizeof(JPGHLP_1AC_Symbols);
+
+    pnHTs[1][0]         = sizeof(JPGHLP_2DC_Codes);
+    pnHTs[1][1]         = sizeof(JPGHLP_2AC_Codes);
+    pnHTs[1][2]         = sizeof(JPGHLP_2DC_Symbols);
+    pnHTs[1][3]         = sizeof(JPGHLP_2AC_Symbols);
+
+    int j, k;
+    for( i = 0; i < 2 && i < nComponents; i++ )
+    {
+        for( j = 0; j < 2; j++ )
+        {
+            k = j + 2;
+            int nCodes  = pnHTs[i][j];
+            int nSymbols = pnHTs[i][k];
+            *( pabNext++ ) = 0xFF;                  // Tag Mark
+            *( pabNext++ ) = 0xc4;                  // DHT
+            *( pabNext++ ) = 0;                     // Segment Length (msb)
+            *( pabNext++ ) = 3 + nCodes + nSymbols; // Segment Length (lsb)
+            *( pabNext++ ) = (j << 4) | i;          // Table ID
+            memcpy( pabNext, pabHuffTab[i][j], nCodes );
+            pabNext += nCodes;
+            memcpy( pabNext, pabHuffTab[i][k], nSymbols );
+            pabNext += nSymbols;
+        }
+    }
 
     return pabNext - pabyBuffer;
 }
