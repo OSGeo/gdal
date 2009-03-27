@@ -1521,13 +1521,19 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*      the size falls on a byte boundary ... ugg (#2361).              */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = nInWord;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = nInWord >> 8;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = nInWord >> 16;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
+                        (GByte) nInWord;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = 
+                        (GByte) (nInWord >> 8);
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = 
+                        (GByte) (nInWord >> 16);
 #else
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = nInWord >> 16;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = nInWord >> 8;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = nInWord;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
+                        (GByte) (nInWord >> 16);
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = 
+                        (GByte) (nInWord >> 8);
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = 
+                        (GByte) nInWord;
 #endif
                     iBitOffset += 24;
                 }
@@ -1618,13 +1624,19 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*      the size falls on a byte boundary ... ugg (#2361).              */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = nInWord;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = nInWord >> 8;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = nInWord >> 16;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
+                        (GByte) nInWord;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = 
+                        (GByte) (nInWord >> 8);
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = 
+                        (GByte) (nInWord >> 16);
 #else
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = nInWord >> 16;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = nInWord >> 8;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = nInWord;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
+                        (GByte) (nInWord >> 16);
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = 
+                        (GByte) (nInWord >> 8);
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = 
+                        (GByte) nInWord;
 #endif
                     iBitOffset += 24;
                 }
@@ -1895,9 +1907,9 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
                 
                 if( eDataType == GDT_Byte )
-                    ((GByte *) pImage)[iPixel++] = nOutWord;
+                    ((GByte *) pImage)[iPixel++] = (GByte) nOutWord;
                 else if( eDataType == GDT_UInt16 )
-                    ((GUInt16 *) pImage)[iPixel++] = nOutWord;
+                    ((GUInt16 *) pImage)[iPixel++] = (GUInt16) nOutWord;
                 else if( eDataType == GDT_UInt32 )
                     ((GUInt32 *) pImage)[iPixel++] = nOutWord;
                 else
@@ -2059,6 +2071,8 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     GByte              *pabyLineBuf;
 
+    (void) nBlockXOff;
+
     poGDS->SetDirectory();
 
     pabyLineBuf = (GByte *) CPLMalloc(TIFFScanlineSize(poGDS->hTIFF));
@@ -2106,6 +2120,10 @@ CPLErr GTiffSplitBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                           void * pImage )
 
 {
+    (void) nBlockXOff;
+    (void) nBlockYOff;
+    (void) pImage;
+
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Split bitmap bands are read-only." );
     return CE_Failure;
@@ -2750,14 +2768,9 @@ CPLErr GTiffDataset::IBuildOverviews(
     int          i;
     GTiffDataset *poODS;
 
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
-
 /* -------------------------------------------------------------------- */
-/*      If we don't have read access, then create the overviews externally.*/
+/*      If we don't have read access, then create the overviews         */
+/*      externally.                                                     */
 /* -------------------------------------------------------------------- */
     if( GetAccess() != GA_Update )
     {
@@ -2793,6 +2806,18 @@ CPLErr GTiffDataset::IBuildOverviews(
         return CE_Failure;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Initialize progress counter.                                    */
+/* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Move to the directory for this dataset.                         */
+/* -------------------------------------------------------------------- */
     SetDirectory();
     FlushDirectory();
 
@@ -3392,6 +3417,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 {
     int iDomain;
     char **papszDomainList;
+
+    (void) pszProfile;
 
 /* ==================================================================== */
 /*      Process each domain.                                            */
@@ -4426,8 +4453,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
 	    for ( iColor = 0; iColor < nColorCount; iColor++ )
 	    {
-		oEntry.c1 = oEntry.c2 = oEntry.c3 = 
-                    (255 * (nColorCount - 1 - iColor)) / (nColorCount-1);
+		oEntry.c1 = oEntry.c2 = oEntry.c3 = (short) 
+                    ((255 * (nColorCount - 1 - iColor)) / (nColorCount-1));
 		oEntry.c4 = 255;
 		poColorTable->SetColorEntry( iColor, &oEntry );
 	    }
@@ -5130,7 +5157,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     TIFF		*hTIFF;
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
-    int                 nCompression = COMPRESSION_NONE;
+    uint16              nCompression = COMPRESSION_NONE;
     int                 nPredictor = 1, nJpegQuality = -1, nZLevel = -1;
     uint16              nSampleFormat;
     int			nPlanar;
