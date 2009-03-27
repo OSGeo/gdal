@@ -276,16 +276,26 @@ CPLErr HFAEntry::RemoveAndDestroy()
     if( poPrev != NULL )
     {
         poPrev->poNext = poNext;
+        if( poNext != NULL )
+            poPrev->nNextPos = poNext->nFilePos;
+        else
+            poPrev->nNextPos = 0;
         poPrev->MarkDirty();
     }
     if( poParent != NULL && poParent->poChild == this )
     {
         poParent->poChild = poNext;
+        if( poNext )
+            poParent->nChildPos = poNext->nFilePos;
+        else
+            poParent->nChildPos = 0;
         poParent->MarkDirty();
     }
 
     if( poNext != NULL )
+    {
         poNext->poPrev = poPrev;
+    }
     
     poNext = NULL;
     poPrev = NULL;
