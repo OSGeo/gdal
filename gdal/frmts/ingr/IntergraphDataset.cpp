@@ -382,6 +382,12 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
     poDS->nBands = nBands;
 
+    /* -------------------------------------------------------------------- */
+    /*      Check for external overviews.                                   */
+    /* -------------------------------------------------------------------- */
+
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
     // -------------------------------------------------------------------- 
     // Initialize any PAM information                                 
     // -------------------------------------------------------------------- 
