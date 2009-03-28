@@ -954,7 +954,7 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime,
             {
             }
             else if (strlen(*papszVal) == 5 &&
-                     (*papszVal)[0] == '+' || (*papszVal)[0] == '-')
+                     ((*papszVal)[0] == '+' || (*papszVal)[0] == '-'))
             {
                 char szBuf[3];
                 szBuf[0] = (*papszVal)[1];
