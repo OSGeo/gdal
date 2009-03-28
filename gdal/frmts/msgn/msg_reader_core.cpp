@@ -230,8 +230,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
             SEEK_CUR
         );
 
-        // FIXME - mloskot: channelId is unsigned char, so the first comparison is always false
-        if (visir_line.channelId < 0 || visir_line.channelId > MSG_NUM_CHANNELS) {
+        if (visir_line.channelId == 0 || visir_line.channelId > MSG_NUM_CHANNELS) {
             _open_success = false;
             break;
         }
