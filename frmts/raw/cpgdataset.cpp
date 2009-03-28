@@ -806,7 +806,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
     double dfnorth = 0.0, dfeast = 0.0, dfOffsetX = 0.0, dfOffsetY = 0.0;
     double dfxsize = 0.0, dfysize = 0.0;
 
-    char* pszWorkname = CPLStrdup(pszWorkname);
+    char* pszWorkname = CPLStrdup(pszFilename);
     AdjustFilename( &pszWorkname, "stokes", "img_def" );
     papszHdrLines = CSLLoad( pszWorkname );
 
