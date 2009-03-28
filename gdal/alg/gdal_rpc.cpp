@@ -367,7 +367,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /*      geotransform approximate transformation.                        */
 /* -------------------------------------------------------------------- */
     double adfGTFromLL[6], dfRefPixel = -1.0, dfRefLine = -1.0;
-    double dfRefLong, dfRefLat;
+    double dfRefLong = 0.0, dfRefLat = 0.0;
 
     if( psRPCInfo->dfMIN_LONG != -180 || psRPCInfo->dfMAX_LONG != 180 )
     {
