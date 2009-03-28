@@ -3423,7 +3423,7 @@ SWIGINTERN PyObject *_wrap_GetWellKnownGeogCSAsWKT(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
@@ -3505,7 +3505,7 @@ SWIGINTERN PyObject *_wrap_GetUserInputAsWKT(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
@@ -9737,7 +9737,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToWkt(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
@@ -9822,7 +9822,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPrettyWkt(PyObject *SWIGUNUS
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
@@ -9896,7 +9896,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToProj4(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
@@ -9982,7 +9982,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
@@ -9994,7 +9994,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg3 ) {
+    if ( arg3 != NULL && *arg3 != NULL) {
       o = PyString_FromString( *arg3 );
     }
     else {
@@ -10198,7 +10198,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToXML(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
@@ -10274,7 +10274,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToMICoordSys(PyObject *SWIGUNU
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
@@ -10917,46 +10917,50 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoints(PyObject *SW
   double *arg5 = (double *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  void *argp3 = 0 ;
-  int res3 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
-  void *argp5 = 0 ;
-  int res5 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
-  PyObject * obj4 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOOO:CoordinateTransformation_TransformPoints",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO:CoordinateTransformation_TransformPoints",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
   }
   arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
-  ecode2 = SWIG_AsVal_int(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "2"" of type '" "int""'");
-  } 
-  arg2 = static_cast< int >(val2);
-  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "3"" of type '" "double *""'"); 
+  {
+    /*  typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z) */
+    if ( obj1 == Py_None ) {
+      PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
+      SWIG_fail;
+    }
+    
+    if ( !PySequence_Check(obj1) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg2 = PySequence_Size(obj1);
+    arg3 = (double*) CPLMalloc(arg2*sizeof(double));
+    arg4 = (double*) CPLMalloc(arg2*sizeof(double));
+    arg5 = (double*) CPLMalloc(arg2*sizeof(double));
+    
+    for( int i = 0; i<arg2; i++ ) {
+      PyObject *o = PySequence_GetItem(obj1,i);
+      if ( !PyTuple_Check(o) ) {
+        PyErr_SetString(PyExc_TypeError, "not a tuple");
+        SWIG_fail;
+      }
+      
+      double x, y, z = 0;
+      if ( !PyArg_ParseTuple( o,"dd|d", &x, &y, &z) )
+      {
+        PyErr_SetString(PyExc_TypeError, "not a tuple of 2 or 3 doubles");
+        SWIG_fail;
+      }
+      
+      (arg3)[i] = x;
+      (arg4)[i] = y;
+      (arg5)[i] = z;
+    }
   }
-  arg3 = reinterpret_cast< double * >(argp3);
-  res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "4"" of type '" "double *""'"); 
-  }
-  arg4 = reinterpret_cast< double * >(argp4);
-  res5 = SWIG_ConvertPtr(obj4, &argp5,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res5)) {
-    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "5"" of type '" "double *""'"); 
-  }
-  arg5 = reinterpret_cast< double * >(argp5);
   {
     OSRCoordinateTransformationShadow_TransformPoints(arg1,arg2,arg3,arg4,arg5);
     if ( bUseExceptions ) {
@@ -10967,8 +10971,33 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoints(PyObject *SW
     }
   }
   resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout)  (int nCount, double *x, double *y, double *z) */
+    Py_DECREF(resultobj);
+    PyObject *out = PyList_New( arg2 );
+    for( int i=0; i< arg2; i++ ) {
+      PyObject *tuple = PyTuple_New( 3 );
+      PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( (arg3)[i] ) );
+      PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( (arg4)[i] ) );
+      PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( (arg5)[i] ) );
+      PyList_SetItem( out, i, tuple );
+    }
+    resultobj = out;
+  }
+  {
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z) */
+    free(arg3);
+    free(arg4);
+    free(arg5);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z) */
+    free(arg3);
+    free(arg4);
+    free(arg5);
+  }
   return NULL;
 }
 

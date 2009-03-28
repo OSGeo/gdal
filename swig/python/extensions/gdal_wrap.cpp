@@ -14654,7 +14654,11 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
     
     for( int i = 0; i<arg2; i++ ) {
       PyObject *o = PySequence_GetItem(obj1,i);
+#if 0x010331 <= 0x010337
       PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
+#else
+      SwigPyObject *sobj = SWIG_Python_GetSwigThis(o);
+#endif
       GDALRasterBandShadow* rawobjectpointer = NULL;
       if (!sobj) {
         SWIG_fail;
@@ -15292,25 +15296,11 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
-  void *argp5 = 0 ;
-  int res5 = 0 ;
-  void *argp6 = 0 ;
-  int res6 = 0 ;
-  void *argp7 = 0 ;
-  int res7 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
-  PyObject * obj4 = 0 ;
-  PyObject * obj5 = 0 ;
-  PyObject * obj6 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOOOOO:Transformer_TransformPoints",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Transformer_TransformPoints",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTransformerInfoShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Transformer_TransformPoints" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
@@ -15321,31 +15311,42 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Transformer_TransformPoints" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  ecode3 = SWIG_AsVal_int(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Transformer_TransformPoints" "', argument " "3"" of type '" "int""'");
-  } 
-  arg3 = static_cast< int >(val3);
-  res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Transformer_TransformPoints" "', argument " "4"" of type '" "double *""'"); 
+  {
+    /*  typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    if ( obj2 == Py_None ) {
+      PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
+      SWIG_fail;
+    }
+    
+    if ( !PySequence_Check(obj2) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg3 = PySequence_Size(obj2);
+    arg4 = (double*) CPLMalloc(arg3*sizeof(double));
+    arg5 = (double*) CPLMalloc(arg3*sizeof(double));
+    arg6 = (double*) CPLMalloc(arg3*sizeof(double));
+    arg7 = (int*) CPLMalloc(arg3*sizeof(int));
+    
+    for( int i = 0; i<arg3; i++ ) {
+      PyObject *o = PySequence_GetItem(obj2,i);
+      if ( !PyTuple_Check(o) ) {
+        PyErr_SetString(PyExc_TypeError, "not a tuple");
+        SWIG_fail;
+      }
+      
+      double x, y, z = 0;
+      if ( !PyArg_ParseTuple( o,"dd|d", &x, &y, &z) )
+      {
+        PyErr_SetString(PyExc_TypeError, "not a tuple of 2 or 3 doubles");
+        SWIG_fail;
+      }
+      
+      (arg4)[i] = x;
+      (arg5)[i] = y;
+      (arg6)[i] = z;
+    }
   }
-  arg4 = reinterpret_cast< double * >(argp4);
-  res5 = SWIG_ConvertPtr(obj4, &argp5,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res5)) {
-    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "Transformer_TransformPoints" "', argument " "5"" of type '" "double *""'"); 
-  }
-  arg5 = reinterpret_cast< double * >(argp5);
-  res6 = SWIG_ConvertPtr(obj5, &argp6,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res6)) {
-    SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "Transformer_TransformPoints" "', argument " "6"" of type '" "double *""'"); 
-  }
-  arg6 = reinterpret_cast< double * >(argp6);
-  res7 = SWIG_ConvertPtr(obj6, &argp7,SWIGTYPE_p_int, 0 |  0 );
-  if (!SWIG_IsOK(res7)) {
-    SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "Transformer_TransformPoints" "', argument " "7"" of type '" "int *""'"); 
-  }
-  arg7 = reinterpret_cast< int * >(argp7);
   {
     result = (int)GDALTransformerInfoShadow_TransformPoints(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
     if ( bUseExceptions ) {
@@ -15356,8 +15357,39 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(argout)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    Py_DECREF(resultobj);
+    PyObject *xyz = PyList_New( arg3 );
+    PyObject *success = PyList_New( arg3 );
+    for( int i=0; i< arg3; i++ ) {
+      PyObject *tuple = PyTuple_New( 4 );
+      PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( (arg4)[i] ) );
+      PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( (arg5)[i] ) );
+      PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( (arg6)[i] ) );
+      PyList_SetItem( xyz, i, tuple );
+      PyList_SetItem( success, i, Py_BuildValue( "i",  (arg7)[i]) );
+    }
+    resultobj = PyTuple_New( 2 );
+    PyTuple_SetItem( resultobj, 0, xyz );
+    PyTuple_SetItem( resultobj, 1, success );
+  }
+  {
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    free(arg4);
+    free(arg5);
+    free(arg6);
+    free(arg7);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    free(arg4);
+    free(arg5);
+    free(arg6);
+    free(arg7);
+  }
   return NULL;
 }
 

@@ -10114,7 +10114,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkt(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 ) {
+    if ( arg2 != NULL && *arg2 != NULL) {
       o = PyString_FromString( *arg2 );
     }
     else {
