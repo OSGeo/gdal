@@ -656,7 +656,7 @@ class CoordinateTransformation(_object):
         return _osr.CoordinateTransformation_TransformPoint(*args)
 
     def TransformPoints(*args):
-        """TransformPoints(self, int nCount, double x, double y, double z)"""
+        """TransformPoints(self, int nCount)"""
         return _osr.CoordinateTransformation_TransformPoints(*args)
 
 CoordinateTransformation_swigregister = _osr.CoordinateTransformation_swigregister
