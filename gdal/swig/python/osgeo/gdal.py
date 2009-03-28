@@ -1049,10 +1049,7 @@ class Transformer(_object):
         return _gdal.Transformer_TransformPoint(*args)
 
     def TransformPoints(*args):
-        """
-        TransformPoints(self, int bDstToSrc, int nCount, double x, double y, double z, 
-            int panSuccess) -> int
-        """
+        """TransformPoints(self, int bDstToSrc, int nCount) -> int"""
         return _gdal.Transformer_TransformPoints(*args)
 
 Transformer_swigregister = _gdal.Transformer_swigregister
