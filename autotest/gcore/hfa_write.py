@@ -207,7 +207,6 @@ for item in init_list:
     gdaltest_list.append( (ut1.testCreateCopy, item[0]) )
     gdaltest_list.append( (ut1.testCreate, item[0]) )
     gdaltest_list.append( (ut1.testSetGeoTransform, item[0]) )
-    gdaltest_list.append( (ut1.testSetProjection, item[0]) )
     gdaltest_list.append( (ut1.testSetMetadata, item[0]) )
 
 # Just a few for spill file, and compressed support.
