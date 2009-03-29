@@ -5110,6 +5110,7 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
   h= GetGCHandle_GCIO(H);
   n= CountSubTypeFields_GCIO(theSubType);
   iAn= -1;
+  pCS= hCS= 0;
   if( (i= _findFieldByName_GCIO(GetSubTypeFields_GCIO(theSubType),kGraphics_GCIO))==-1 )
   {
     if( (i= _findFieldByName_GCIO(GetSubTypeFields_GCIO(theSubType),kAngle_GCIO))==-1 )
