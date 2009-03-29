@@ -67,6 +67,8 @@ staticlib:
 	if exist gdal.lib del gdal.lib
 	lib /nologo /out:gdal.lib $(LIBOBJ)
 
+target-lib: port_dir ogr_dir core_dir frmts_dir dll
+
 clean:	
 	cd port
 	$(MAKE) /f makefile.vc clean
@@ -163,11 +165,13 @@ lib_dist:	default
 	cp gdal.lib port\*.h gcore\*.h ogr\*.h $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
-$(GDAL_DLL):	staticlib
+$(GDAL_DLL): staticlib
 	link /nologo /dll $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
 		$(EXTERNAL_LIBS) gcore\Version.res \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
     if exist $(GDAL_DLL).manifest mt -manifest $(GDAL_DLL).manifest -outputresource:$(GDAL_DLL);2
+
+dll:	$(GDAL_DLL)
 
 install: $(GDAL_DLL) plugin_dir apps_dir pymod_dir
 	-mkdir $(BINDIR)
