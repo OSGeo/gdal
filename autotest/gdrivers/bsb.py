@@ -159,8 +159,14 @@ def bsb_online_1():
             print 'Reading BSB from ZIP file (slow)...'
             file_to_test = '/vsizip/tmp/cache/14850.zip/BSB_ROOT/14850/14850_1.KAP'
 
-    tst = gdaltest.GDALTest('BSB', file_to_test, 1, 63005, filename_absolute = 1 )
-    return tst.testOpen()
+    ds = gdal.Open(file_to_test)
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 63005 and cs != 50884:
+        gdaltest.post_reason('Bad checksum : %d' % cs)
+        return 'fail'
+    ds = None
+
+    return 'success'
 
 
 gdaltest_list = [
