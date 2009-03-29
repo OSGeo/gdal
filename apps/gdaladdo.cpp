@@ -46,6 +46,8 @@ static void Usage()
             "  -ro : open the dataset in read-only mode, in order to generate\n"
             "        external overview (for GeoTIFF datasets especially)\n"
             "  -clean : remove all overviews\n"
+            "  filename: The file to build overviews for (or whose overviews must be removed).\n"
+            "  levels: A list of integral overview levels to build. Ignored with -clean option.\n"
             "\n"
             "Usefull configuration variables :\n"
             "  --config USE_RRD YES : Use Erdas Imagine format (.aux) as overview format.\n"
