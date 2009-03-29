@@ -102,6 +102,9 @@ extern "C" {
 #define  kCom_GCIO                "//"
 #define  kHeader_GCIO             "//#"
 #define  kPragma_GCIO             "//$"
+#define  kCartesianPlanarRadix        2
+#define  kGeographicPlanarRadix       9
+#define  kElevationRadix              2
 
 #define  kConfigBeginConfig_GCIO  "SECTION CONFIG"
 #define  kConfigEndConfig_GCIO    "ENDSECTION CONFIG"
@@ -296,6 +299,8 @@ struct _tExportHeader_GCIO {
   int                  quotedtext;
   int                  format;
   GCSysCoord*          sysCoord;
+  int                  pCS;
+  int                  hCS;
   char                 delimiter;
 };
 
@@ -403,6 +408,11 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 #define SetMetaFormat_GCIO(header,v) (header)->format= (v)
 #define GetMetaSysCoord_GCIO(header) (header)->sysCoord
 #define SetMetaSysCoord_GCIO(header,v) (header)->sysCoord= (v)
+#define GetMetaPlanarFormat_GCIO(header) (header)->pCS
+#define SetMetaPlanarFormat_GCIO(header, v) (header)->pCS= (v)
+#define GetMetaHeightFormat_GCIO(header) (header)->hCS
+#define SetMetaHeightFormat_GCIO(header, v) (header)->hCS= (v)
+
 #define GetMetaExtent_GCIO(header) (header)->frame
 #define SetMetaExtent_GCIO(header,v) (header)->frame= (v)
 #define GetMetaSRS_GCIO(header) (header)->srs

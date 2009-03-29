@@ -879,6 +879,8 @@ static void GCIOAPI_CALL _InitHeader_GCIO (
   SetMetaUnit_GCIO(header, "m");
   SetMetaFormat_GCIO(header, 2);
   SetMetaSysCoord_GCIO(header, NULL); /* GCSysCoord */
+  SetMetaPlanarFormat_GCIO(header, 0);
+  SetMetaHeightFormat_GCIO(header, 0);
   SetMetaSRS_GCIO(header, NULL);
   SetMetaTypes_GCIO(header, NULL); /* GCType */
   SetMetaFields_GCIO(header, NULL); /* GCField */
@@ -4754,23 +4756,26 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
   H= GetSubTypeGCHandle_GCIO(theSubType);
   h= GetGCHandle_GCIO(H);
   /* Dimension pragma for 3DM et 3D : */
-  if( GetSubTypeDim_GCIO(theSubType)==v3DM_GCIO )
+  if( from==0 )
   {
-    if( VSIFPrintf(h,"%s%s\n", kPragma_GCIO, k3DOBJECTMONO_GCIO)<=0 )
+    if( GetSubTypeDim_GCIO(theSubType)==v3DM_GCIO )
     {
-      CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
-      return WRITEERROR_GCIO;
+      if( VSIFPrintf(h,"%s%s\n", kPragma_GCIO, k3DOBJECTMONO_GCIO)<=0 )
+      {
+        CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
+        return WRITEERROR_GCIO;
+      }
+      SetGCCurrentLinenum_GCIO(H,GetGCCurrentLinenum_GCIO(H)+1L);
     }
-    SetGCCurrentLinenum_GCIO(H,GetGCCurrentLinenum_GCIO(H)+1L);
-  }
-  else if( GetSubTypeDim_GCIO(theSubType)==v3D_GCIO )
-  {
-    if( VSIFPrintf(h,"%s%s\n", kPragma_GCIO, k3DOBJECT_GCIO)<=0 )
+    else if( GetSubTypeDim_GCIO(theSubType)==v3D_GCIO )
     {
-      CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
-      return WRITEERROR_GCIO;
+      if( VSIFPrintf(h,"%s%s\n", kPragma_GCIO, k3DOBJECT_GCIO)<=0 )
+      {
+        CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
+        return WRITEERROR_GCIO;
+      }
+      SetGCCurrentLinenum_GCIO(H,GetGCCurrentLinenum_GCIO(H)+1L);
     }
-    SetGCCurrentLinenum_GCIO(H,GetGCCurrentLinenum_GCIO(H)+1L);
   }
   if( GetMetaQuotedText_GCIO(GetGCMeta_GCIO(H)) )
   {
@@ -4906,7 +4911,9 @@ static int GCIOAPI_CALL _writePoint_GCIO (
                                            char delim,
                                            double x, double y, double z,
                                            GCDim dim,
-                                           GCExtent* e
+                                           GCExtent* e,
+                                           int pCS,
+                                           int hCS
                                          )
 {
   SetExtentULAbscissa_GCIO(e,x);
@@ -4915,11 +4922,12 @@ static int GCIOAPI_CALL _writePoint_GCIO (
   SetExtentLROrdinate_GCIO(e,y);
   if( dim==v3DM_GCIO || dim==v3D_GCIO )
   {
-    if( VSIFPrintf(h,"%s%g%s%c%s%g%s%c%s%g%s", quotes, x, quotes,
-                                               delim,
-                                               quotes, y, quotes,
-                                               delim,
-                                               quotes, z, quotes)<=0 )
+    if( VSIFPrintf(h,"%s%.*f%s%c%s%.*f%s%c%s%.*f%s",
+                   quotes, pCS, x, quotes,
+                   delim,
+                   quotes, pCS, y, quotes,
+                   delim,
+                   quotes, hCS, z, quotes)<=0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
       return FALSE;
@@ -4927,9 +4935,10 @@ static int GCIOAPI_CALL _writePoint_GCIO (
   }
   else
   {
-    if( VSIFPrintf(h,"%s%g%s%c%s%g%s", quotes, x, quotes,
-                                       delim,
-                                       quotes, y, quotes)<=0 )
+    if( VSIFPrintf(h,"%s%.*f%s%c%s%.*f%s",
+                   quotes, pCS, x, quotes,
+                   delim,
+                   quotes, pCS, y, quotes)<=0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
       return FALSE;
@@ -4947,7 +4956,9 @@ static int GCIOAPI_CALL _writeLine_GCIO (
                                            GCTypeKind knd,
                                            GCDim dim,
                                            int fmt,
-                                           GCExtent* e
+                                           GCExtent* e,
+                                           int pCS,
+                                           int hCS
                                         )
 {
   int iP, nP;
@@ -4957,7 +4968,7 @@ static int GCIOAPI_CALL _writeLine_GCIO (
                           OGR_G_GetX(poArc,0),
                           OGR_G_GetY(poArc,0),
                           OGR_G_GetZ(poArc,0),
-                          dim,e) )
+                          dim,e,pCS,hCS) )
   {
     return FALSE;
   }
@@ -4974,7 +4985,7 @@ static int GCIOAPI_CALL _writeLine_GCIO (
                             OGR_G_GetX(poArc,nP-1),
                             OGR_G_GetY(poArc,nP-1),
                             OGR_G_GetZ(poArc,nP-1),
-                            dim,e) )
+                            dim,e,pCS,hCS) )
     {
       return FALSE;
     }
@@ -5009,7 +5020,7 @@ static int GCIOAPI_CALL _writeLine_GCIO (
                             dX,
                             dY,
                             dZ,
-                            dim,e) )
+                            dim,e,pCS,hCS) )
     {
       return FALSE;
     }
@@ -5033,7 +5044,9 @@ static int GCIOAPI_CALL _writePolygon_GCIO (
                                              OGRGeometryH poPoly,
                                              GCDim dim,
                                              int fmt,
-                                             GCExtent* e
+                                             GCExtent* e,
+                                             int pCS,
+                                             int hCS
                                            )
 {
   int iR, nR;
@@ -5050,7 +5063,7 @@ static int GCIOAPI_CALL _writePolygon_GCIO (
     return TRUE;
   }
   poRing= OGR_G_GetGeometryRef(poPoly,0);
-  if( !_writeLine_GCIO(h,quotes,delim,poRing,vPoly_GCIO,dim,fmt,e) )
+  if( !_writeLine_GCIO(h,quotes,delim,poRing,vPoly_GCIO,dim,fmt,e,pCS,hCS) )
   {
     return FALSE;
   }
@@ -5065,7 +5078,7 @@ static int GCIOAPI_CALL _writePolygon_GCIO (
     for( iR= 1; iR<nR; iR++ )
     {
       poRing= OGR_G_GetGeometryRef(poPoly,iR);
-      if( !_writeLine_GCIO(h,quotes,delim,poRing,vPoly_GCIO,dim,fmt,e) )
+      if( !_writeLine_GCIO(h,quotes,delim,poRing,vPoly_GCIO,dim,fmt,e,pCS,hCS) )
       {
         return FALSE;
       }
@@ -5090,7 +5103,7 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
 {
   GCExportFileH* H;
   FILE *h;
-  int n, i, iAn;
+  int n, i, iAn, pCS, hCS;
   char *quotes, delim;
 
   H= GetSubTypeGCHandle_GCIO(theSubType);
@@ -5119,6 +5132,26 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
   }
   delim= GetMetaDelimiter_GCIO(GetGCMeta_GCIO(H));
 
+  if( (pCS= GetMetaPlanarFormat_GCIO(GetGCMeta_GCIO(H)))==0 )
+  {
+    if( OSRIsGeographic(GetMetaSRS_GCIO(GetGCMeta_GCIO(H))) )
+    {
+      pCS= kGeographicPlanarRadix;
+    }
+    else
+    {
+      pCS= kCartesianPlanarRadix;
+    }
+    SetMetaPlanarFormat_GCIO(GetGCMeta_GCIO(H), pCS);
+  }
+
+  if (GetSubTypeDim_GCIO(theSubType)==v3D_GCIO &&
+      (hCS= GetMetaHeightFormat_GCIO(GetGCMeta_GCIO(H)))==0 )
+  {
+    hCS= kElevationRadix;
+    SetMetaHeightFormat_GCIO(GetGCMeta_GCIO(H), hCS);
+  }
+
   switch( OGR_G_GetGeometryType(poGeom) ) {
   case wkbPoint                 :
   case wkbPoint25D              :
@@ -5127,7 +5160,8 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
                             OGR_G_GetY(poGeom,0),
                             OGR_G_GetZ(poGeom,0),
                             GetSubTypeDim_GCIO(theSubType),
-                            GetMetaExtent_GCIO(GetGCMeta_GCIO(H))) )
+                            GetMetaExtent_GCIO(GetGCMeta_GCIO(H)),
+                            pCS, hCS) )
     {
       return WRITEERROR_GCIO;
     }
@@ -5139,7 +5173,8 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
                            vLine_GCIO,
                            GetSubTypeDim_GCIO(theSubType),
                            GetMetaFormat_GCIO(GetGCMeta_GCIO(H)),
-                           GetMetaExtent_GCIO(GetGCMeta_GCIO(H))) )
+                           GetMetaExtent_GCIO(GetGCMeta_GCIO(H)),
+                           pCS, hCS) )
     {
       return WRITEERROR_GCIO;
     }
@@ -5150,7 +5185,8 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
                               poGeom,
                               GetSubTypeDim_GCIO(theSubType),
                               GetMetaFormat_GCIO(GetGCMeta_GCIO(H)),
-                              GetMetaExtent_GCIO(GetGCMeta_GCIO(H))) )
+                              GetMetaExtent_GCIO(GetGCMeta_GCIO(H)),
+                              pCS, hCS) )
     {
       return WRITEERROR_GCIO;
     }
