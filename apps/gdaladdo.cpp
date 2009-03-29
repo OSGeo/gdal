@@ -79,11 +79,11 @@ int main( int nArgc, char ** papszArgv )
     int          bReadOnly = FALSE;
     int          bClean = FALSE;
 
-    /* Check that we are running against at least GDAL 1.4 */
+    /* Check that we are running against at least GDAL 1.7 */
     /* Note to developers : if we use newer API, please change the requirement */
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1400)
+    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1700)
     {
-        fprintf(stderr, "At least, GDAL >= 1.4.0 is required for this version of %s, "
+        fprintf(stderr, "At least, GDAL >= 1.7.0 is required for this version of %s, "
                         "which was compiled against GDAL %s\n", papszArgv[0], GDAL_RELEASE_NAME);
         exit(1);
     }
@@ -141,7 +141,7 @@ int main( int nArgc, char ** papszArgv )
         exit( 2 );
 
 /* -------------------------------------------------------------------- */
-/*      Clean overviews.                                                *
+/*      Clean overviews.                                                */
 /* -------------------------------------------------------------------- */
     if ( bClean &&
         GDALBuildOverviews( hDataset,pszResampling, 0, 0, 
