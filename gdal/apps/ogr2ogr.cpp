@@ -422,45 +422,82 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-    for( int iLayer = 0; 
-         pszSQLStatement == NULL && iLayer < poDS->GetLayerCount(); 
-         iLayer++ )
+    else if ( CSLCount(papszLayers) == 0)
     {
-        OGRLayer        *poLayer = poDS->GetLayer(iLayer);
-
-        if( poLayer == NULL )
+        for( int iLayer = 0; 
+            iLayer < poDS->GetLayerCount(); 
+            iLayer++ )
         {
-            fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %d!\n",
-                    iLayer );
-            exit( 1 );
-        }
+            OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
-        if( CSLCount(papszLayers) == 0
-            || CSLFindString( papszLayers,
-                              poLayer->GetLayerDefn()->GetName() ) != -1 )
-        {
+            if( poLayer == NULL )
+            {
+                fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %d!\n",
+                        iLayer );
+                exit( 1 );
+            }
+
             if( pszWHERE != NULL )
                 poLayer->SetAttributeFilter( pszWHERE );
-            
+
             if( poSpatialFilter != NULL )
                 poLayer->SetSpatialFilter( poSpatialFilter );
-            
+
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
-                                 pszNewLayerName, bTransform, poOutputSRS,
-                                 poSourceSRS, papszSelFields, bAppend, eGType,
-                                 bOverwrite, dfMaxSegmentLength ) 
+                                pszNewLayerName, bTransform, poOutputSRS,
+                                poSourceSRS, papszSelFields, bAppend, eGType,
+                                bOverwrite, dfMaxSegmentLength ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Terminating translation prematurely after failed\n"
-                          "translation of layer %s (use -skipfailures to skip errors)\n", 
-                          poLayer->GetLayerDefn()->GetName() );
+                        "Terminating translation prematurely after failed\n"
+                        "translation of layer %s (use -skipfailures to skip errors)\n", 
+                        poLayer->GetLayerDefn()->GetName() );
 
                 exit( 1 );
             }
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Process specified data source layers.                           */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        for( int iLayer = 0; 
+            papszLayers[iLayer] != NULL; 
+            iLayer++ )
+        {
+            OGRLayer        *poLayer = poDS->GetLayerByName(papszLayers[iLayer]);
+
+            if( poLayer == NULL )
+            {
+                fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %d!\n",
+                        iLayer );
+                exit( 1 );
+            }
+
+            if( pszWHERE != NULL )
+                poLayer->SetAttributeFilter( pszWHERE );
+
+            if( poSpatialFilter != NULL )
+                poLayer->SetSpatialFilter( poSpatialFilter );
+
+            if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
+                                pszNewLayerName, bTransform, poOutputSRS,
+                                poSourceSRS, papszSelFields, bAppend, eGType,
+                                bOverwrite, dfMaxSegmentLength ) 
+                && !bSkipFailures )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                        "Terminating translation prematurely after failed\n"
+                        "translation of layer %s (use -skipfailures to skip errors)\n", 
+                        poLayer->GetLayerDefn()->GetName() );
+
+                exit( 1 );
+            }
+        }
+    }
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
