@@ -29,6 +29,11 @@
 
 #include "stdinc.h"
 
+/* CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and earlier */
+#if LIBCURL_VERSION_NUM < 0x070a07
+#define CURLINFO_RESPONSE_CODE CURLINFO_HTTP_CODE
+#endif
+
 static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *req) {
     CPLHTTPRequest *psRequest = reinterpret_cast<CPLHTTPRequest *>(req);
     size_t size = count * nmemb;
