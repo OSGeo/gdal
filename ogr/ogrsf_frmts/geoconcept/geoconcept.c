@@ -3142,7 +3142,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
                 res= OGRERR_CORRUPT_DATA;
                 goto onError;
               }
-              strncpy(x,k,kExtraSize_GCIO-1), n[kExtraSize_GCIO-1]= '\0';
+              strncpy(x,k,kExtraSize_GCIO-1), x[kExtraSize_GCIO-1]= '\0';
             }
             else
               if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigList_GCIO))!=NULL )
@@ -3330,7 +3330,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
                 res= OGRERR_CORRUPT_DATA;
                 goto onError;
               }
-              strncpy(x,k,kExtraSize_GCIO-1), n[kExtraSize_GCIO-1]= '\0';
+              strncpy(x,k,kExtraSize_GCIO-1), x[kExtraSize_GCIO-1]= '\0';
             }
             else
               if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigList_GCIO))!=NULL )
@@ -3519,7 +3519,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
                 res= OGRERR_CORRUPT_DATA;
                 goto onError;
               }
-              strncpy(x,k,kExtraSize_GCIO-1), n[kExtraSize_GCIO-1]= '\0';
+              strncpy(x,k,kExtraSize_GCIO-1), x[kExtraSize_GCIO-1]= '\0';
             }
             else
               if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigList_GCIO))!=NULL )
