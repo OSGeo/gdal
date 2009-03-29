@@ -183,6 +183,7 @@ class HFABand
     CPLErr	SetPCT( int, double *, double *, double *, double * );
 
     int         CreateOverview( int nOverviewLevel );
+    CPLErr      CleanOverviews();
 };
 
 

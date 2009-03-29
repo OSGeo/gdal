@@ -175,6 +175,8 @@ class CPL_DLL GDALDefaultOverviews
                                GDALProgressFunc pfnProgress,
                                void *pProgressData );
 
+    CPLErr     CleanOverviews();
+
     // Mask Related
 
     CPLErr     CreateMaskBand( int nFlags, int nBand = -1 );
@@ -183,7 +185,7 @@ class CPL_DLL GDALDefaultOverviews
 
     int        HaveMaskFile( char **papszSiblings = NULL, 
                              const char *pszBasename = NULL );
-    
+
 };
 
 /* ******************************************************************** */
