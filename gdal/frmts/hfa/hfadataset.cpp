@@ -344,6 +344,8 @@ class HFARasterBand : public GDALPamRasterBand
     int		nThisOverview;
     HFARasterBand **papoOverviewBands;
 
+    CPLErr      CleanOverviews();
+
     HFAHandle	hHFA;
 
     int         bMetadataDirty;
@@ -1101,6 +1103,74 @@ CPLErr HFARasterBand::SetMetadataItem( const char *pszTag, const char *pszValue,
 }
 
 /************************************************************************/
+/*                           CleanOverviews()                           */
+/************************************************************************/
+
+CPLErr HFARasterBand::CleanOverviews()
+
+{
+    if( nOverviews == 0 )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Clear our reference to overviews as bands.                      */
+/* -------------------------------------------------------------------- */
+    int iOverview;
+
+    for( iOverview = 0; iOverview < nOverviews; iOverview++ )
+        delete papoOverviewBands[iOverview];
+
+    CPLFree( papoOverviewBands );
+    papoOverviewBands = NULL;
+    nOverviews = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Search for any RRDNamesList and destroy it.                     */
+/* -------------------------------------------------------------------- */
+    HFABand *poBand = hHFA->papoBand[nBand-1];
+    HFAEntry *poEntry = poBand->poNode->GetNamedChild( "RRDNamesList" );
+    if( poEntry != NULL )
+    {
+        poEntry->RemoveAndDestroy();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Destroy and subsample layers under our band.                    */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poChild;
+    for( poChild = poBand->poNode->GetChild(); 
+         poChild != NULL; ) 
+    {
+        HFAEntry *poNext = poChild->GetNext();
+
+        if( EQUAL(poChild->GetType(),"Eimg_Layer_SubSample") )
+            poChild->RemoveAndDestroy();
+
+        poChild = poNext;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Clean up dependent file if we are the last band under the       */
+/*      assumption there will be nothing else referencing it after      */
+/*      this.                                                           */
+/* -------------------------------------------------------------------- */
+    if( hHFA->psDependent != hHFA && hHFA->psDependent != NULL )
+    {
+        CPLString osFilename = 
+            CPLFormFilename( hHFA->psDependent->pszPath, 
+                             hHFA->psDependent->pszFilename, NULL );
+        
+        HFAClose( hHFA->psDependent );
+        hHFA->psDependent = NULL;
+        
+        CPLDebug( "HFA", "Unlink(%s)", osFilename.c_str() );
+        VSIUnlink( osFilename );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           BuildOverviews()                           */
 /************************************************************************/
 
@@ -1121,6 +1191,9 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 
         return CE_Failure;
     }
+
+    if( nReqOverviews == 0 )
+        return CleanOverviews();
 
     papoOvBands = (GDALRasterBand **) CPLCalloc(sizeof(void*),nReqOverviews);
 

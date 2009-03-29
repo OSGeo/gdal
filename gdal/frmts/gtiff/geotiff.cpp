@@ -171,6 +171,7 @@ class GTiffDataset : public GDALPamDataset
     void         FillEmptyTiles(void);
 
     void         FlushDirectory();
+    CPLErr       CleanOverviews();
 
   public:
                  GTiffDataset();
@@ -2754,6 +2755,77 @@ static int TIFF_OvLevelAdjust( int nOvLevel, int nXSize )
 }
 
 /************************************************************************/
+/*                           CleanOverviews()                           */
+/************************************************************************/
+
+CPLErr GTiffDataset::CleanOverviews()
+
+{
+    CPLAssert( bBase );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup overviews objects, and get offsets to all overview      */
+/*      directories.                                                    */
+/* -------------------------------------------------------------------- */
+    std::vector<uint64>  anOvDirOffsets;
+    int i;
+
+    for( i = 0; i < nOverviewCount; i++ )
+    {
+        anOvDirOffsets.push_back( papoOverviewDS[i]->nDirOffset );
+        delete papoOverviewDS[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop through all the directories, translating the offsets       */
+/*      into indexes we can use with TIFFUnlinkDirectory().             */
+/* -------------------------------------------------------------------- */
+    std::vector<uint16> anOvDirIndexes;
+    int iThisOffset = 1;
+    
+    TIFFSetDirectory( hTIFF, 0 );
+    
+    for( ; TRUE; ) 
+    {
+        for( i = 0; i < nOverviewCount; i++ )
+        {
+            if( anOvDirOffsets[i] == TIFFCurrentDirOffset( hTIFF ) )
+            {
+                CPLDebug( "GTiff", "%d -> %d", 
+                          (int) anOvDirOffsets[i], iThisOffset );
+                anOvDirIndexes.push_back( iThisOffset );
+            }
+        }
+        
+        if( TIFFLastDirectory( hTIFF ) )
+            break;
+
+        TIFFReadDirectory( hTIFF );
+        iThisOffset++;
+    } 
+
+/* -------------------------------------------------------------------- */
+/*      Actually unlink the target directories.  Note that we do        */
+/*      this from last to first so as to avoid renumbering any of       */
+/*      the earlier directories we need to remove.                      */
+/* -------------------------------------------------------------------- */
+    while( !anOvDirIndexes.empty() )
+    {
+        TIFFUnlinkDirectory( hTIFF, anOvDirIndexes.back() );
+        anOvDirIndexes.pop_back();
+    }
+
+    CPLFree( papoOverviewDS );
+
+    nOverviewCount = 0;
+    papoOverviewDS = NULL;
+
+    SetDirectory();
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
@@ -2813,6 +2885,20 @@ CPLErr GTiffDataset::IBuildOverviews(
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If zero overviews were requested, we need to clear all          */
+/*      existing overviews.                                             */
+/* -------------------------------------------------------------------- */
+    if( nOverviews == 0 )
+    {
+        if( nOverviewCount == 0 )
+            return GDALDataset::IBuildOverviews( 
+                pszResampling, nOverviews, panOverviewList, 
+                nBands, panBandList, pfnProgress, pProgressData );
+        else
+            return CleanOverviews();
     }
 
 /* -------------------------------------------------------------------- */
