@@ -361,7 +361,7 @@ builds or rebuilds overview images
 
 \verbatim
 gdaladdo [-r {nearest,average,gauss,average_mp,average_magphase,mode}]
-         [-ro] [--help-general] filename levels
+         [-ro] [-clean] [--help-general] filename levels
 \endverbatim
 
 \section adescription DESCRIPTION
@@ -375,8 +375,9 @@ most supported file formats with one over several downsampling algorithms.
 Select a resampling algorithm.</dd>
 <dt> <b>-ro</b></dt>:<dd> (available from GDAL 1.6.0) open the dataset in read-only mode, in order to generate
 external overview (for GeoTIFF especially). </dd>
-<dt> <i>filename</i>:</dt><dd> The file to build overviews for. </dd>
-<dt> <i>levels</i>:</dt><dd> A list of integral overview levels to build.  </dd>
+<dt> <b>-clean</b></dt>:<dd> (available from GDAL 1.7.0) remove all overviews. </dd>
+<dt> <i>filename</i>:</dt><dd> The file to build overviews for (or whose overviews must be removed). </dd>
+<dt> <i>levels</i>:</dt><dd> A list of integral overview levels to build. Ignored with -clean option.</dd>
 </dl>
 
 <i>Mode</i> (available from GDAL 1.6.0) selects the value which appears most often of all the sampled points.
