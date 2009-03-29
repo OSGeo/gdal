@@ -150,6 +150,10 @@ corresponds to one of the <code>Name</code> found in the GCT file for a type sec
 The <code>SUBTYPE</code> corresponds to one of the <code>Name</code> found in the GCT file for a
 sub-type section within the previous type section.<p>
 
+At the present moment, coordinates are written with 2 decimales for cartesian
+spatial reference systems (including height) or with 9 decimales for
+geographical spatial reference systems.<p>
+
 <h3>Examples</h3>
 
 <h4>Example of a .gct file :</h4>
@@ -234,11 +238,11 @@ sub-type section within the previous type section.<p>
 //$FORMAT 2
 //$SYSCOORD {Type: 2001}
 //$FIELDS Class=TILE;Subclass=TILE;Kind=4;Fields=Private#Identifier&#x9;Private#Class&#x9;Private#Subclass&#x9;Private#Name&#x9;Private#NbFields&#x9;IDSEL&#x9;NOM&#x9;WITHDATA&#x9;Private#X&#x9;Private#Y&#x9;Private#Graphics
--1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0050-7130-LAMB93&#x9;&#x9;0&#x9;50000&#x9;7.13e+06&#x9;4&#x9;600000&#x9;7.13e+06&#x9;600000&#x9;6.58e+06&#x9;50000&#x9;6.58e+06&#x9;50000&#x9;7.13e+06
--1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0595-7130-LAMB93&#x9;&#x9;0&#x9;595000&#x9;7.13e+06&#x9;4&#x9;1.145e+06&#x9;7.13e+06&#x9;1.145e+06&#x9;6.58e+06&#x9;595000&#x9;6.58e+06&#x9;595000&#x9;7.13e+06
--1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0595-6585-LAMB93&#x9;&#x9;0&#x9;595000&#x9;6.585e+06&#x9;4&#x9;1.145e+06&#x9;6.585e+06&#x9;1.145e+06&#x9;6.035e+06&#x9;595000&#x9;6.035e+06&#x9;595000&#x9;6.585e+06
--1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-1145-6250-LAMB93&#x9;&#x9;0&#x9;1.145e+06&#x9;6.25e+06&#x9;4&#x9;1.265e+06&#x9;6.25e+06&#x9;1.265e+06&#x9;6.03e+06&#x9;1.145e+06&#x9;6.03e+06&#x9;1.145e+06&#x9;6.25e+06
--1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0050-6585-LAMB93&#x9;&#x9;0&#x9;50000&#x9;6.585e+06&#x9;4&#x9;600000&#x9;6.585e+06&#x9;600000&#x9;6.035e+06&#x9;50000&#x9;6.035e+06&#x9;50000&#x9;6.585e+06
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0050-7130-LAMB93&#x9;&#x9;0&#x9;50000.00&#x9;7130000.00&#x9;4&#x9;600000.00&#x9;7130000.00&#x9;600000.00&#x9;6580000.00&#x9;50000.00&#x9;6580000.00&#x9;50000.00&#x9;7130000.00
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0595-7130-LAMB93&#x9;&#x9;0&#x9;595000.00&#x9;7130000.00&#x9;4&#x9;1145000.00&#x9;7130000.00&#x9;1145000.00&#x9;6580000.00&#x9;595000.00&#x9;6580000.00&#x9;595000.00&#x9;7130000.00
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0595-6585-LAMB93&#x9;&#x9;0&#x9;595000.00&#x9;6585000.00&#x9;4&#x9;1145000.00&#x9;6585000.00&#x9;1145000.00&#x9;6035000.00&#x9;595000.00&#x9;6035000.00&#x9;595000.00&#x9;6585000.00
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-1145-6250-LAMB93&#x9;&#x9;0&#x9;1145000.00&#x9;6250000.00&#x9;4&#x9;1265000.00&#x9;6250000.00&#x9;1265000.00&#x9;6030000.00&#x9;1145000.00&#x9;6030000.00&#x9;1145000.00&#x9;6250000.00
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0050-6585-LAMB93&#x9;&#x9;0&#x9;50000.00&#x9;6585000.00&#x9;4&#x9;600000.00&#x9;6585000.00&#x9;600000.00&#x9;6035000.00&#x9;50000.00&#x9;6035000.00&#x9;50000.00&#x9;6585000.00
 </pre>
 
 <h4>Example of use :</h4>
