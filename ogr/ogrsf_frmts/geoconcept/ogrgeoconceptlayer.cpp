@@ -535,8 +535,8 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
         if( GetSubTypeNbFields_GCIO(_gcFeature)==-1)
           SetSubTypeNbFields_GCIO(_gcFeature, 0L);
         if( !(theField= AddSubTypeField_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature),
-                                             GetSubTypeName_GCIO(_gcFeature),
                                              GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature)),
+                                             GetSubTypeName_GCIO(_gcFeature),
                                              FindFeatureFieldIndex_GCIO(_gcFeature,kNbFields_GCIO)
                                             +GetSubTypeNbFields_GCIO(_gcFeature)+1L,
                                              pszName,
