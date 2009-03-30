@@ -201,19 +201,21 @@ def osr_esri_7():
         UNIT["degree",0.01745329251994328,
             AUTHORITY["EPSG","9122"]],
         AUTHORITY["EPSG","4269"]],
+    UNIT["Foot_US",0.3048006096012192],
     PROJECTION["Lambert_Conformal_Conic_2SP"],
     PARAMETER["standard_parallel_1",30.75],
     PARAMETER["standard_parallel_2",29.58333333333333],
     PARAMETER["latitude_of_origin",29],
     PARAMETER["central_meridian",-84.5],
-    PARAMETER["false_easting",1968500.062007752],
+    PARAMETER["false_easting",1968500],
     PARAMETER["false_northing",0],
-    UNIT["U.S. Foot",0.3048006],
-    AUTHORITY["EPSG","26960"]]"""
+    AXIS["X",EAST],
+    AXIS["Y",NORTH]]"""
 
     srs_wkt = osr.SpatialReference(wkt = wkt)
 
     if not srs_prj.IsSame( srs_wkt ):
+        print 'got: ', srs_prj.ExportToPrettyWkt()
         gdaltest.post_reason( 'old style ESRI projection imported wrong, perhaps linear units?' )
         return 'fail'
 
