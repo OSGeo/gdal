@@ -49,7 +49,7 @@ $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(LINK_EXTRAFLAGS)
 	rm -rf $*_csharp.dll.config
 	echo "<configuration>" >> $*_csharp.dll.config
-	echo "<dllmap dll=\""$*"_wrap\" target=\""$@"\" />" >> $*_csharp.dll.config
+	echo "<dllmap dll=\""$*"_wrap\" target=\""$*csharp"\" />" >> $*_csharp.dll.config
 	echo "</configuration>" >> $*_csharp.dll.config
 
 %.$(OBJ_EXT): %.cpp
