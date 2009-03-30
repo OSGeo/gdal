@@ -255,7 +255,7 @@ private:
     bool                FlushMetadata();
 
     void                UnpackNBits( GByte* pabyData );
-    void                PackNBits( GByte* pabyOutBuf, void* pData );
+    void                PackNBits( GByte* pabyData );
     unsigned long       CompressJpeg();
     void                UncompressJpeg( unsigned long nBufferSize );
     bool                UncompressDeflate( unsigned long nBufferSize );
@@ -353,8 +353,6 @@ public:
     int                 iDefaultBlueBand;
 
     int                 nPyramidMaxLevel;
-
-    int                 bPackingOrCompress;
 
     boolean             bHoldWritingBlock;
 };
