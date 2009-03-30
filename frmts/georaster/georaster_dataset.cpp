@@ -919,6 +919,8 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
                 GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand );
                 GDALRasterBand *poDstBand = poGRD->GetRasterBand( iBand );
 
+                ((GeoRasterRasterBand*) poDstBand)->SetHoldWritingBlock( true );
+
                 eErr = poSrcBand->RasterIO( GF_Read,
                     iXOffset, iYOffset,
                     nBlockCols, nBlockRows, pData,
@@ -930,9 +932,6 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
                 {
                     return NULL;
                 }
-
-                ((GeoRasterRasterBand*) poDstBand)->SetHoldWritingBlock(
-                    (bool) ( iBand != nLastBand ) );
 
                 eErr = poDstBand->WriteBlock( iXBlock, iYBlock, pData );
 
@@ -1536,9 +1535,9 @@ void CPL_DLL GDALRegister_GEOR()
 "       <Value>JPEG-B</Value>"
 "       <Value>JPEG-F</Value>"
 "       <Value>DEFLATE</Value>"
+"  </Option>"
 "  <Option name='QUALITY'     type='int'    description='JPEG quality 0..100' "
                                            "default='75'/>"
-"   </Option>"
 "</CreationOptionList>" );
         poDriver->pfnOpen       = GeoRasterDataset::Open;
         poDriver->pfnCreate     = GeoRasterDataset::Create;
