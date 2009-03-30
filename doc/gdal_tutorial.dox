@@ -337,9 +337,13 @@ pixel interleaved data for instance.
 
 Please keep in mind that GDALRasterBand objects are <i>owned</i> by their
 dataset, and they should never be destroyed with the C++ delete operator. 
-GDALDataset's can be closed either by calling GDALClose() or using the
-delete operator on the GDALDataset.   Either will result in proper cleanup,
-and flushing of any pending writes.  
+GDALDataset's can be closed by calling GDALClose() (it is NOT recommended
+to use the delete operator on a GDALDataset for Windows users because of known
+issues when allocating and freeing memory across module boundaries. See the relevant
+<a href="http://trac.osgeo.org/gdal/wiki/FAQMiscellaneous#HowshouldIdeallocateresourcesacquaintedfromGDALonWindows">topic</a> on the FAQ).
+Calling GDALClose will result in proper cleanup, and flushing of any pending writes.
+Forgetting to call GDALClose on a dataset opened in update mode in a popular format
+like GTiff will likely result in being unable to open it afterwards.
 
 \section gdal_tutorial_creation Techniques for Creating Files
 
@@ -432,8 +436,11 @@ In C++:
 
     poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE, 
                                     NULL, NULL, NULL );
+
+    /* Once we're done, close properly the dataset */
     if( poDstDS != NULL )
-        delete poDstDS;
+        GDALClose( (GDALDatasetH) poDstDS );
+    GDALClose( (GDALDatasetH) poSrcDS );
 \endcode
 
 In C:
@@ -443,8 +450,11 @@ In C:
 
     hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE, 
                              NULL, NULL, NULL );
+
+    /* Once we're done, close properly the dataset */
     if( hDstDS != NULL )
         GDALClose( hDstDS );
+    GDALClose(hSrcDS);
 \endcode
 
 In Python:
@@ -452,6 +462,10 @@ In Python:
 \code
     src_ds = gdal.Open( src_filename )
     dst_ds = driver.CreateCopy( dst_filename, src_ds, 0 )
+
+    # Once we're done, close properly the dataset
+    dst_ds = None
+    src_ds = None
 \endcode
 
 Note that the CreateCopy() method returns a writeable dataset, and that it
@@ -477,8 +491,10 @@ In C++:
     papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
     poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE, 
                                     papszOptions, GDALTermProgress, NULL );
+
+    /* Once we're done, close properly the dataset */
     if( poDstDS != NULL )
-        delete poDstDS;
+        GDALClose( (GDALDatasetH) poDstDS );
     CSLDestroy( papszOptions );
 \endcode
 
@@ -492,6 +508,8 @@ In C:
     papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
     hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE, 
                              papszOptions, GDALTermProgres, NULL );
+
+    /* Once we're done, close properly the dataset */
     if( hDstDS != NULL )
         GDALClose( hDstDS );
     CSLDestroy( papszOptions );
@@ -503,6 +521,10 @@ In Python:
     src_ds = gdal.Open( src_filename )
     dst_ds = driver.CreateCopy( dst_filename, src_ds, 0, 
                                 [ 'TILED=YES', 'COMPRESS=PACKBITS' ] )
+
+    # Once we're done, close properly the dataset
+    dst_ds = None
+    src_ds = None
 \endcode
 
 \section gdal_tutorial_create Using Create()
@@ -563,7 +585,8 @@ In C++:
     poBand->RasterIO( GF_Write, 0, 0, 512, 512, 
                       abyRaster, 512, 512, GDT_Byte, 0, 0 );    
 
-    delete poDstDS;
+    /* Once we're done, close properly the dataset */
+    GDALClose( (GDALDatasetH) poDstDS );
 \endcode
 
 In C:
@@ -589,6 +612,7 @@ In C:
     GDALRasterIO( hBand, GF_Write, 0, 0, 512, 512, 
                   abyRaster, 512, 512, GDT_Byte, 0, 0 );    
 
+    /* Once we're done, close properly the dataset */
     GDALClose( hDstDS );
 \endcode
 
@@ -607,6 +631,9 @@ In Python:
 
     raster = numpy.zeros( (512, 512), dtype=numpy.uint8 )    
     dst_ds.GetRasterBand(1).WriteArray( raster )
+
+    # Once we're done, close properly the dataset
+    dst_ds = None
 \endcode
 
 \htmlonly

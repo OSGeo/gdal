@@ -217,6 +217,10 @@ GDALDataset::GDALDataset()
  * Equivelent of the C callable GDALClose().  Except that GDALClose() first
  * decrements the reference count, and then closes only if it has dropped to
  * zero.
+ *
+ * For Windows users, it is not recommanded using the delete operator on the
+ * dataset object because of known issues when allocating and freeing memory across
+ * module boundaries. Calling GDALClose() is then a better option.
  */
 
 GDALDataset::~GDALDataset()
