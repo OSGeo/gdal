@@ -134,41 +134,6 @@ def bsb_6():
     return ret
 
 
-###############################################################################
-# Test a NOAA chart
-# Under following user agreement : http://www.charts.noaa.gov/RNCs/Agreement.shtml?14850
-
-def bsb_online_1():
-
-    if not gdaltest.download_file('http://www.charts.noaa.gov/RNCs/14850.zip', '14850.zip'):
-        return 'skip'
-
-    try:
-        os.stat('tmp/cache/14850_1.KAP')
-        file_to_test = 'tmp/cache/14850_1.KAP'
-    except:
-        try:
-            print 'Uncompressing ZIP file...'
-            import zipfile
-            zfobj = zipfile.ZipFile('tmp/cache/14850.zip')
-            outfile = open('tmp/cache/14850_1.KAP', 'wb')
-            outfile.write(zfobj.read('BSB_ROOT/14850/14850_1.KAP'))
-            outfile.close()
-            file_to_test = 'tmp/cache/14850_1.KAP'
-        except:
-            print 'Reading BSB from ZIP file (slow)...'
-            file_to_test = '/vsizip/tmp/cache/14850.zip/BSB_ROOT/14850/14850_1.KAP'
-
-    ds = gdal.Open(file_to_test)
-    cs = ds.GetRasterBand(1).Checksum()
-    if cs != 63005 and cs != 50884:
-        gdaltest.post_reason('Bad checksum : %d' % cs)
-        return 'fail'
-    ds = None
-
-    return 'success'
-
-
 gdaltest_list = [
     bsb_0,
     bsb_1,
@@ -176,8 +141,7 @@ gdaltest_list = [
     bsb_3,
     bsb_4,
     bsb_5,
-    bsb_6,
-    bsb_online_1
+    bsb_6
     ]
 
 
