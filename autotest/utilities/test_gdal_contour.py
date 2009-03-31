@@ -241,7 +241,7 @@ def test_gdal_contour_cleanup():
     if test_cli_utilities.get_gdal_contour_path() is None:
         return 'skip'
 
-    #ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour.shp')
     try:
         os.remove('tmp/gdal_contour.tif')
     except:
