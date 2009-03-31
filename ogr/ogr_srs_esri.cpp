@@ -942,12 +942,19 @@ OGRErr OGRSpatialReference::morphToESRI()
     
     if( pszProjection != NULL
         && EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR) 
-        && (GetProjParm(SRS_PP_AZIMUTH, 0.0 ) > 0.0 && GetProjParm(SRS_PP_AZIMUTH, 0.0 ) < 90.0001) )
+        && fabs(GetProjParm(SRS_PP_AZIMUTH, 0.0 )-90) < 0.0001 
+        && fabs(GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, 0.0 )-90) < 0.0001 )
     {
         SetNode( "PROJCS|PROJECTION", 
                  "Hotine_Oblique_Mercator_Azimuth_Center" );
 
         /* ideally we should strip out of the rectified_grid_angle */
+        // strip off rectified_grid_angle -- I hope it is 90!
+        OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+        int iRGAChild = FindProjParm( "rectified_grid_angle", poPROJCS );
+        if( iRGAChild != -1 )
+            poPROJCS->DestroyChild( iRGAChild);
+
         pszProjection = GetAttrValue("PROJECTION");
     }
 
@@ -1444,6 +1451,19 @@ OGRErr OGRSpatialReference::morphFromESRI()
                      SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
 
         pszProjection = GetAttrValue("PROJECTION");
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we are remapping Hotine_Oblique_Mercator_Azimuth_Center      */
+/*      add a rectified_grid_angle parameter - to match the azimuth     */
+/*      I guess.                                                        */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL
+        && EQUAL(pszProjection,"Hotine_Oblique_Mercator_Azimuth_Center") )
+    {
+        SetProjParm( SRS_PP_RECTIFIED_GRID_ANGLE , 
+                     GetProjParm( SRS_PP_AZIMUTH, 0.0 ) );
+        FixupOrdering();
     }
 
 /* -------------------------------------------------------------------- */
