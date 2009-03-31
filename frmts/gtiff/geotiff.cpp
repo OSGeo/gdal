@@ -2703,7 +2703,8 @@ void GTiffDataset::FlushDirectory()
         if( bNeedsRewrite )
         {
 #if defined(TIFFLIB_VERSION)
-#if  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
+/* We need at least TIFF 3.7.0 for TIFFGetSizeProc and TIFFClientdata */
+#if  TIFFLIB_VERSION > 20041016
             SetDirectory();
 
             TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( hTIFF );
@@ -2715,6 +2716,10 @@ void GTiffDataset::FlushDirectory()
             TIFFRewriteDirectory( hTIFF );
 
             TIFFSetSubDirectory( hTIFF, nDirOffset );
+#elif  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
+            SetDirectory();
+
+            TIFFRewriteDirectory( hTIFF );
 #endif
 #endif
             bNeedsRewrite = FALSE;
@@ -2767,7 +2772,7 @@ CPLErr GTiffDataset::CleanOverviews()
 /*      Cleanup overviews objects, and get offsets to all overview      */
 /*      directories.                                                    */
 /* -------------------------------------------------------------------- */
-    std::vector<uint64>  anOvDirOffsets;
+    std::vector<toff_t>  anOvDirOffsets;
     int i;
 
     for( i = 0; i < nOverviewCount; i++ )
@@ -5146,7 +5151,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                iDirIndex, iDirIndex, osFilename.c_str() );
                 osDesc.Printf( "SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)", 
                                iDirIndex, iDirIndex, 
-                               nXSize, nYSize, nSPP );
+                               (int)nXSize, (int)nYSize, nSPP );
 
                 papszSubdatasets = 
                     CSLAddString( papszSubdatasets, osName );
