@@ -117,15 +117,41 @@ def test_gdaladdo_3():
         gdaltest.post_reason( 'no external overview.' )
         return 'fail'
 
+    return 'success'
+
+###############################################################################
+# Test -clean
+
+def test_gdaladdo_4():
+    if test_cli_utilities.get_gdaladdo_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdaladdo_path() + ' -clean tmp/test_gdaladdo_3.tif').read()
+
+    ds = gdal.Open('tmp/test_gdaladdo_3.tif')
+    cnt = ds.GetRasterBand(1).GetOverviewCount()
+    ds = None
+
+    if cnt != 0:
+        gdaltest.post_reason( 'did not clean overviews.' )
+        return 'fail'
+
+    try:
+        os.stat('tmp/test_gdaladdo_3.tif.ovr')
+        gdaltest.post_reason( '.ovr file still exists' )
+        return 'fail'
+    except:
+        pass
+
     os.remove('tmp/test_gdaladdo_3.tif')
-    os.remove('tmp/test_gdaladdo_3.tif.ovr')
 
     return 'success'
 
 gdaltest_list = [
     test_gdaladdo_1,
     test_gdaladdo_2,
-    test_gdaladdo_3
+    test_gdaladdo_3,
+    test_gdaladdo_4
     ]
 
 

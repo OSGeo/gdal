@@ -1045,6 +1045,77 @@ def tiff_ovr_27():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test cleaning overviews.
+
+def tiff_ovr_28():
+
+    ds = gdal.Open( 'tmp/ovr25.tif', gdal.GA_Update )
+    if ds.BuildOverviews( overviewlist = [] ) != 0:
+        gdaltest.post_reason( 'BuildOverviews() returned error code.' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason( 'Overview(s) appear to still exist.' )
+        return 'fail'
+
+    # Close and reopen to confirm they are really gone.
+    ds = None
+    ds = gdal.Open( 'tmp/ovr25.tif' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason( 'Overview(s) appear to still exist after reopen.')
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# Test cleaning external overviews (ovr) on a non-TIFF format.
+
+def tiff_ovr_29():
+
+    src_ds = gdal.Open('data/byte.tif') 
+    png_ds = gdal.GetDriverByName('PNG').CreateCopy( 'tmp/ovr29.png', src_ds )
+    src_ds = None
+
+    png_ds.BuildOverviews( overviewlist = [2] )
+
+    if open('tmp/ovr29.png.ovr') is None:
+        gdaltest.post_reason( 'Did not expected .ovr file.' )
+        return 'fail'
+
+    png_ds = None
+    png_ds = gdal.Open( 'tmp/ovr29.png' )
+
+    if png_ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason( 'did not find overview' )
+        return 'fail'
+        
+    png_ds.BuildOverviews( overviewlist = [] )
+    if png_ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason( 'delete overview failed.' )
+        return 'fail'
+
+    png_ds = None
+    png_ds = gdal.Open( 'tmp/ovr29.png' )
+
+    if png_ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason( 'delete overview failed.' )
+        return 'fail'
+        
+    png_ds = None
+
+    try:
+        open('tmp/ovr29.png.ovr')
+        gdaltest.post_reason( '.ovr file still present' )
+        return 'fail'
+    except:
+        pass
+
+    gdal.GetDriverByName('PNG').Delete('tmp/ovr29.png')
+    
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -1107,6 +1178,8 @@ gdaltest_list_internal = [
     tiff_ovr_25,
     tiff_ovr_26,
     tiff_ovr_27,
+    tiff_ovr_28,
+    tiff_ovr_29,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():

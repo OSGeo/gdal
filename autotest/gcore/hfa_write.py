@@ -150,11 +150,48 @@ def hfa_update_overviews():
 
     ds = gdal.Open( 'tmp/small.img', gdal.GA_Update )
     result = ds.BuildOverviews( overviewlist = [2] )
-    print result
+
     if result != 0:
+        print result
         gdaltest.post_reason( 'BuildOverviews() failed.' )
         return 'fail'
     ds = None
+
+    return 'success'
+
+###############################################################################
+# Test cleaning external overviews.
+
+def hfa_clean_external_overviews():
+
+    ds = gdal.Open( 'tmp/small.img', gdal.GA_Update )
+    result = ds.BuildOverviews( overviewlist = [] )
+
+    if result != 0:
+        gdaltest.post_reason( 'BuildOverviews() failed.' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason( 'Overviews still exist.' )
+        return 'fail'
+
+    ds = None
+    ds = gdal.Open( 'tmp/small.img' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason( 'Overviews still exist.' )
+        return 'fail'
+    ds = None
+
+    try:
+        fd = open('tmp/small.rrd')
+    except:
+        fd = None
+
+    if fd is not None:
+        gdaltest.post_reason( 'small.rrd still present.' )
+        return 'fail'
+
+    fd = None
 
     gdal.GetDriverByName('HFA').Delete( 'tmp/small.img' )
 
@@ -196,6 +233,7 @@ gdaltest_list = [ hfa_write_desc,
                   hfa_write_4bit_compressed,
                   hfa_write_nd_invalid,
                   hfa_update_overviews,
+                  hfa_clean_external_overviews,
                   hfa_bug_2525 ]
 
 # full set of tests for normal mode.
