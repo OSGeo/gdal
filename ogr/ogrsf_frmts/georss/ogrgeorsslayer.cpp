@@ -598,6 +598,32 @@ static OGRGeometry* OGRGeoRSS_GetGMLEnvelope(const char* pszGML)
     return poGeom;
 }
 
+
+/************************************************************************/
+/*            OGRGeoRSSLayerTrimLeadingAndTrailingSpaces()              */
+/************************************************************************/
+
+static void OGRGeoRSSLayerTrimLeadingAndTrailingSpaces(char* pszStr)
+{
+    int i;
+
+    /* Trim leading spaces, tabs and newlines */
+    i = 0;
+    while(pszStr[i] != '\0' &&
+          (pszStr[i] == ' ' || pszStr[i] == '\t' || pszStr[i] == '\n'))
+        i ++;
+    memmove(pszStr, pszStr + i, strlen(pszStr + i) + 1);
+
+    /* Trim trailing spaces, tabs and newlines */
+    i = strlen(pszStr) - 1;
+    while(i >= 0 &&
+          (pszStr[i] == ' ' || pszStr[i] == '\t' || pszStr[i] == '\n'))
+    {
+        pszStr[i] = '\0';
+        i --;
+    }
+}
+
 /************************************************************************/
 /*                           endElementCbk()                            */
 /************************************************************************/
@@ -769,10 +795,14 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
             {
                 pszSubElementValue[nSubElementValueLen] = 0;
 
+                /* Trim any leading and trailing spaces, tabs, newlines, etc... */
+                OGRGeoRSSLayerTrimLeadingAndTrailingSpaces(pszSubElementValue);
+
                 /* Caution : Order is latitude, longitude */
                 char** papszTokens =
                         CSLTokenizeStringComplex( pszSubElementValue,
                                                     " ,", TRUE, FALSE );
+
                 int nTokens = CSLCount(papszTokens);
                 if ((nTokens % 2) != 0 ||
                      (eGeomType == wkbPoint && nTokens != 2) ||
