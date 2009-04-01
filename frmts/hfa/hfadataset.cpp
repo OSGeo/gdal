@@ -659,8 +659,12 @@ void HFARasterBand::ReadAuxMetadata()
             CPLAssert( FALSE );
         }
     }
-    // now try to read the histogram
-    HFAEntry *poEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
+
+/* -------------------------------------------------------------------- */
+/*      Now try to read the histogram.                                  */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poEntry = 
+        poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
     if ( poEntry != NULL )
     {
         int nNumBins = poEntry->GetIntField( "numRows" );
@@ -2838,9 +2842,10 @@ CPLErr HFADataset::ReadProjection()
         (psMapInfo && (strlen(psMapInfo->proName) == 0 || EQUAL(psMapInfo->proName, "Unknown"))) && 
         psPro->proZone == 0 )
     {
-        pszProjection = CPLStrdup("LOCAL_CS[\"\"]");
+        pszProjection = CPLStrdup("");
         return CE_None;
     }
+
     pszProjection = HFAPCSStructToWKT( psDatum, psPro, psMapInfo, 
                                        poMapInformation );
 
