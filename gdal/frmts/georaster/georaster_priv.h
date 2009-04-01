@@ -256,10 +256,10 @@ private:
 
     void                UnpackNBits( GByte* pabyData );
     void                PackNBits( GByte* pabyData );
-    unsigned long       CompressJpeg();
+    unsigned long       CompressJpeg( void );
+    unsigned long       CompressDeflate( void );
     void                UncompressJpeg( unsigned long nBufferSize );
     bool                UncompressDeflate( unsigned long nBufferSize );
-    unsigned long       CompressDeflate( void* pData );
 
 public:
 
