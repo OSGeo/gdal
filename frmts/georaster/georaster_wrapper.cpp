@@ -1665,6 +1665,8 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     GByte *pabyInBuf = (GByte *) pData;
 
+    nCurrentBlock = nBlock;
+
     //  --------------------------------------------------------------------
     //  Pack NBits
     //  --------------------------------------------------------------------
@@ -1713,13 +1715,23 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     unsigned long nActualBlockBytes = nBlockBytes;
 
-    if( EQUALN( pszCompressionType, "JPEG", 4 ) )
+    if( ! EQUAL( pszCompressionType, "None" ) )
     {
-        nActualBlockBytes = CompressJpeg();
-    }
-    else if ( EQUAL( pszCompressionType, "DEFLATE" ) )
-    {
-        nActualBlockBytes = CompressDeflate( pData );
+        if( nBand == nBandBlockSize )
+        {
+            if( EQUALN( pszCompressionType, "JPEG", 4 ) )
+            {
+                nActualBlockBytes = CompressJpeg();
+            }
+            else if ( EQUAL( pszCompressionType, "DEFLATE" ) )
+            {
+                nActualBlockBytes = CompressDeflate();
+            }
+        }
+        else
+        {
+            return true;
+        }
     }
 
     //  --------------------------------------------------------------------
@@ -1734,8 +1746,6 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     }
 
     bFlushMetadata = true;
-
-    nCurrentBlock = nBlock;
 
     return true;
 }
@@ -2311,7 +2321,7 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
 //                                                               CompressJpeg()
 //  ---------------------------------------------------------------------------
 
-unsigned long GeoRasterWrapper::CompressJpeg()
+unsigned long GeoRasterWrapper::CompressJpeg( void )
 {
     const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.dat", pabyBlockBuf );
 
@@ -2407,30 +2417,30 @@ bool GeoRasterWrapper::UncompressDeflate( unsigned long nBufferSize )
 //                                                            CompressDeflate()
 //  ---------------------------------------------------------------------------
 
-unsigned long GeoRasterWrapper::CompressDeflate( void* pData )
+unsigned long GeoRasterWrapper::CompressDeflate( void )
 {
     unsigned long nLen = ((unsigned long)(nBlockBytes * 1.1)) + 12;
 
-    GByte* pabyBuf = (GByte*) VSIMalloc( nLen );
+    GByte* pabyBuf = (GByte*) VSIMalloc( nBlockBytes );
 
     if( pabyBuf == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, "CompressDeflate" );
-        return false;
+        return 0;
     }
 
     memcpy( pabyBuf, pabyBlockBuf, nBlockBytes );
 
     // Call ZLib compress
 
-    int nRet = compress( pabyBlockBuf, &nLen, (GByte*) pData, nBlockBytes );
+    int nRet = compress( pabyBlockBuf, &nLen, pabyBuf, nBlockBytes );
 
     CPLFree( pabyBuf );
 
     if( nRet != Z_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "ZLib return code (%d)", nRet );
-        return false;
+        return 0;
     }
 
     return nLen;
