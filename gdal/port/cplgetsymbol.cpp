@@ -35,7 +35,9 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /*                  Unix Implementation                                 */
 /* ==================================================================== */
-#if defined(HAVE_DLFCN_H)
+
+/* MinGW32 might define HAVE_DLFCN_H, so skip the unix implementation */
+#if defined(HAVE_DLFCN_H) && !defined(WIN32)
 
 #define GOT_GETSYMBOL
 
