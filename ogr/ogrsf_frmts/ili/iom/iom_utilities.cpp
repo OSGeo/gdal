@@ -46,13 +46,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef _MSC_VER
+#ifdef __MSVCRT__
 #define stat _stat
 #else
 #include <unistd.h>
 #endif
 
-#ifndef _MSC_VER
+#ifndef __MSVCRT__
 
 #include <stdlib.h>
 #include <string.h>

@@ -824,7 +824,7 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
 /*      Fetch out the result                                            */
 /* -------------------------------------------------------------------- */
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
     iValue = (GUIntBig)_atoi64( pszValue );
 # elif HAVE_ATOLL
     iValue = atoll( pszValue );
@@ -878,7 +878,7 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
     {
         pResult = NULL;
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
         sscanf( szTemp+2, "%p", &pResult );
 #else
         sscanf( szTemp, "%p", &pResult );
@@ -1103,7 +1103,7 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
     if ( nMaxLen >= 64 )
         nMaxLen = 63;
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
     sprintf( szTemp, "%*I64d", nMaxLen, iValue );
 # elif HAVE_LONG_LONG
     sprintf( szTemp, "%*lld", nMaxLen, (long long) iValue );
