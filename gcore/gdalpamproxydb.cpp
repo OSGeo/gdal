@@ -158,6 +158,8 @@ void GDALPamProxyDB::LoadDB()
         aosOriginalFiles.push_back( osOriginal );
         aosProxyFiles.push_back( osProxy );
     }        
+
+    CPLFree( pszDBData );
 }
 
 /************************************************************************/
