@@ -809,15 +809,15 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         
         /* ---------------------------------------------------------- */
-        /*      Check for external overviews.                         */
-        /* ---------------------------------------------------------- */
-        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-        
-        /* ---------------------------------------------------------- */
         /*      Initialize any PAM information.                       */
         /* ---------------------------------------------------------- */
         poDS->SetDescription( poOpenInfo->pszFilename );
         poDS->TryLoadXML();
+
+        /* ---------------------------------------------------------- */
+        /*      Check for external overviews.                         */
+        /* ---------------------------------------------------------- */
+        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
         return poDS;
     }
