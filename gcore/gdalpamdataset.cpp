@@ -1127,9 +1127,6 @@ const char *GDALPamDataset::GetMetadataItem( const char *pszName,
                                              const char *pszDomain )
 
 {
-    CPLDebug( "GDALPamDataset", "GetMetadataItem(%s,%s)", 
-              pszName, pszDomain );
-
     if( pszDomain == NULL || !EQUAL(pszDomain,"ProxyOverviewRequest") )
         return GDALDataset::GetMetadataItem( pszName, pszDomain );
 
