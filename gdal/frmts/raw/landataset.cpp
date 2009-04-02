@@ -471,16 +471,16 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->CheckForStatistics();
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Try to interprete georeferencing.                               */

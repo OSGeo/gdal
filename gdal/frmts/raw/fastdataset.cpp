@@ -1077,15 +1077,15 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPLFree( pszHeader );
 
-    // opens overviews.
-    poDS->oOvManager.Initialize(poDS, poDS->pszFilename);
-
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
     
+    // opens overviews.
+    poDS->oOvManager.Initialize(poDS, poDS->pszFilename);
+
     return( poDS );
 }
 

@@ -1385,15 +1385,15 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->poOverviewDS = overviewDS;
 
                     /* -------------------------------------------------------------------- */
-                    /*      Check for external overviews.                                   */
-                    /* -------------------------------------------------------------------- */
-                    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
-                    /* -------------------------------------------------------------------- */
                     /*      Initialize any PAM information.                                 */
                     /* -------------------------------------------------------------------- */
                     poDS->SetDescription( poOpenInfo->pszFilename );
                     poDS->TryLoadXML();
+
+                    /* -------------------------------------------------------------------- */
+                    /*      Check for external overviews.                                   */
+                    /* -------------------------------------------------------------------- */
+                    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
                 }
                 else if (overviewDS)

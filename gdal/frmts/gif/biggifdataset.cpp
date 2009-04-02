@@ -516,15 +516,15 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
                               poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
-/*      Support overviews.                                              */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Support overviews.                                              */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return poDS;
 }
