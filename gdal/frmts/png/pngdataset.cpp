@@ -945,16 +945,16 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open overviews.                                                 */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
-                                 poOpenInfo->papszSiblingFiles );
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                 poOpenInfo->papszSiblingFiles );
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */

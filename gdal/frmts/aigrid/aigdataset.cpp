@@ -665,15 +665,15 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open overviews.                                                 */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, psInfo->pszCoverName );
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( psInfo->pszCoverName );
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, psInfo->pszCoverName );
 
     return( poDS );
 }

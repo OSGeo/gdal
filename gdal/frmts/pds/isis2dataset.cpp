@@ -676,16 +676,16 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             GDALReadWorldFile( poOpenInfo->pszFilename, "wld", 
                                poDS->adfGeoTransform );
 
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
 /* -------------------------------------------------------------------- */ 
 /*      Initialize any PAM information.                                 */ 
 /* -------------------------------------------------------------------- */ 
     poDS->SetDescription( poOpenInfo->pszFilename ); 
     poDS->TryLoadXML(); 
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }

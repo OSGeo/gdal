@@ -1634,11 +1634,6 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open overviews.                                                 */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
@@ -1647,6 +1642,11 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->TryLoadXML();
     else
         poDS->nPamFlags |= GPF_NOSAVE;
+
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
