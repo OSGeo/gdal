@@ -2571,6 +2571,7 @@ CPLErr NITFDataset::ScanJPEGBlocks()
         
         for( i = 0; i < nReadSize-1; i++ )
         {
+            /* start-of-image markers */
             if( abyBlock[i] == 0xff && abyBlock[i+1] == 0xd8 )
             {
                 panJPEGBlockOffset[iNextBlock++] 
@@ -2579,6 +2580,16 @@ CPLErr NITFDataset::ScanJPEGBlocks()
                 if( iNextBlock == psImage->nBlocksPerRow*psImage->nBlocksPerColumn)
                 {
                     return CE_None;
+                }
+            }
+            /* Skip application-specific data to avoid false positive while detecting */
+            /* start-of-image markers (#2927) */
+            else if( abyBlock[i] == 0xff && (abyBlock[i+1] >= 0xe0 && abyBlock[i+1] < 0xf0) )
+            {
+                if (i+3 < nReadSize)
+                {
+                    int nSkip = abyBlock[i+2]*256 + abyBlock[i+3];
+                    i += nSkip + 2 - 1;
                 }
             }
         }
