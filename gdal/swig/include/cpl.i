@@ -95,6 +95,8 @@ typedef enum
 %rename (get_config_option) wrapper_CPLGetConfigOption;
 %rename (binary_to_hex) CPLBinaryToHex;
 %rename (hex_to_binary) CPLHexToBinary;
+%rename (file_from_mem_buffer) wrapper_VSIFileFromMemBuffer;
+%rename (unlink) VSIUnlink;
 #else
 %rename (PushErrorHandler) CPLPushErrorHandler;
 %rename (PopErrorHandler) CPLPopErrorHandler;
@@ -111,7 +113,8 @@ typedef enum
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
-
+%rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
+%rename (Unlink) VSIUnlink;
 #endif
 
 #ifndef SWIGJAVA
@@ -206,3 +209,28 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 #ifdef SWIGJAVA
 %clear GByte*;
 #endif
+
+%apply Pointer NONNULL {const char * pszFilename};
+/* Added in GDAL 1.7.0 */
+#ifdef SWIGJAVA
+%apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
+#elif defined(SWIGPYTHON)
+%apply (int nLen, char *pBuf) {( int nBytes, const GByte *pabyData )};
+#endif
+%inline {
+void wrapper_VSIFileFromMemBuffer( const char* pszFilename, int nBytes, const GByte *pabyData)
+{
+    GByte* pabyDataDup = (GByte*)VSIMalloc(nBytes);
+    if (pabyDataDup == NULL)
+            return;
+    memcpy(pabyDataDup, pabyData, nBytes);
+    VSIFCloseL(VSIFileFromMemBuffer(pszFilename, (GByte*) pabyDataDup, nBytes, TRUE));
+}
+
+}
+#if defined(SWIGJAVA) || defined(SWIGPYTHON)
+%clear ( int nBytes, const GByte *pabyData );
+#endif
+
+/* Added in GDAL 1.7.0 */
+int VSIUnlink(const char * pszFilename );

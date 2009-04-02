@@ -182,6 +182,40 @@ public class gdal:public static void ErrorReset()
  */
 public class gdal:public static String EscapeString(byte[] byteArray, int scheme)
 
+
+/**
+ * Create memory "file" from a buffer.
+ *
+ * A virtual memory file is created from the passed buffer with the indicated filename. Under normal conditions the filename would need to be absolute and within the /vsimem/ portion of the filesystem.
+ *
+ * The filename then can be used with GDAL and OGR drivers that uses the virtual file API.
+ *
+ * To free the memory associated with the file, you must use Unlink(fileName), otherwise memory leaks will occur.
+ *
+ * @param fileName filename (should begin with "/vsimem/")
+ * @param byteArray data buffer to put in the file
+ *
+ * @since Java bindings 1.7.0
+ *
+ * @see #Unlink(String fileName)
+ */
+public class gdal:public static void FileFromMemBuffer(String fileName, byte[] byteArray)
+
+/**
+ * Delete a file.
+ *
+ * Deletes a file object from the file system. This method goes through the
+ * VSIFileHandler virtualization and may work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX unlink() function.
+ *
+ * @param fileName the path of the file to be deleted.
+ * @return 0 on success or -1 on an error.
+ *
+ * @see #FileFromMemBuffer(String fileName, byte[] byteArray)
+ */
+public class gdal:public static int Unlink(String fileName)
+
 /**
  * Apply escaping to string to preserve special characters.
  *
