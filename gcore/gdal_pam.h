@@ -150,6 +150,9 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
 
     virtual char      **GetFileList(void);
 
