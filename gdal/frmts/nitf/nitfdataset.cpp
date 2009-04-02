@@ -2505,6 +2505,7 @@ CPLErr NITFDataset::ScanJPEGBlocks()
     int iSegSize = psFile->pasSegmentInfo[psImage->iSegment].nSegmentSize
         - (nJPEGStart - psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart);
     GByte abyBlock[512];
+    int ignoreBytes = 0;
 
     while( iSegOffset < iSegSize-1 )
     {
@@ -2525,29 +2526,39 @@ CPLErr NITFDataset::ScanJPEGBlocks()
                       "Read error to jpeg data stream." );
             return CE_Failure;
         }
-        
+
         for( i = 0; i < nReadSize-1; i++ )
         {
-            /* start-of-image markers */
-            if( abyBlock[i] == 0xff && abyBlock[i+1] == 0xd8 )
+            if (ignoreBytes == 0)
             {
-                panJPEGBlockOffset[iNextBlock++] 
-                    = panJPEGBlockOffset[0] + iSegOffset + i; 
-
-                if( iNextBlock == psImage->nBlocksPerRow*psImage->nBlocksPerColumn)
+                if( abyBlock[i] == 0xff )
                 {
-                    return CE_None;
+                    if ( abyBlock[i+1] == 0xd8 )
+                    {
+                        panJPEGBlockOffset[iNextBlock++] 
+                             = panJPEGBlockOffset[0] + iSegOffset + i; 
+
+                        if( iNextBlock == psImage->nBlocksPerRow*psImage->nBlocksPerColumn) 
+                        {
+                            return CE_None;
+                        }
+                    }
+                    else if ( abyBlock[i+1] >= 0xe0 && abyBlock[i+1] < 0xf0 ) 
+                    {
+                        ignoreBytes = -2;
+                    }
                 }
             }
-            /* Skip application-specific data to avoid false positive while detecting */
-            /* start-of-image markers (#2927) */
-            else if( abyBlock[i] == 0xff && (abyBlock[i+1] >= 0xe0 && abyBlock[i+1] < 0xf0) )
+            else if (ignoreBytes < 0)
             {
-                if (i+3 < nReadSize)
-                {
-                    int nSkip = abyBlock[i+2]*256 + abyBlock[i+3];
-                    i += nSkip + 2 - 1;
-                }
+                if (ignoreBytes == -1)
+                    ignoreBytes = abyBlock[i]*256 + abyBlock[i+1];
+                else
+                    ignoreBytes++;
+            }
+            else
+            {
+                ignoreBytes--;
             }
         }
 
