@@ -11773,8 +11773,8 @@ SWIGEXPORT void SWIG_init(void) {
   SWIG_Python_SetConstant(d, "SRS_UL_METER",SWIG_FromCharPtr("Meter"));
   SWIG_Python_SetConstant(d, "SRS_UL_FOOT",SWIG_FromCharPtr("Foot (International)"));
   SWIG_Python_SetConstant(d, "SRS_UL_FOOT_CONV",SWIG_FromCharPtr("0.3048"));
-  SWIG_Python_SetConstant(d, "SRS_UL_US_FOOT",SWIG_FromCharPtr("U.S. Foot"));
-  SWIG_Python_SetConstant(d, "SRS_UL_US_FOOT_CONV",SWIG_FromCharPtr("0.3048006"));
+  SWIG_Python_SetConstant(d, "SRS_UL_US_FOOT",SWIG_FromCharPtr("Foot_US"));
+  SWIG_Python_SetConstant(d, "SRS_UL_US_FOOT_CONV",SWIG_FromCharPtr("0.3048006096012192"));
   SWIG_Python_SetConstant(d, "SRS_UL_NAUTICAL_MILE",SWIG_FromCharPtr("Nautical Mile"));
   SWIG_Python_SetConstant(d, "SRS_UL_NAUTICAL_MILE_CONV",SWIG_FromCharPtr("1852.0"));
   SWIG_Python_SetConstant(d, "SRS_UL_LINK",SWIG_FromCharPtr("Link"));

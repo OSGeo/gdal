@@ -9770,7 +9770,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   {
     Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    PyString_AsStringAndSize(obj0, &arg2, &safeLen );
+    PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen );
     arg1 = (int) safeLen;
   }
   if (obj1) {
@@ -10044,7 +10044,7 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
     {
       Py_ssize_t   safeLen;
       /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-      PyString_AsStringAndSize(obj2, &arg4, &safeLen );
+      PyString_AsStringAndSize(obj2, (char**) &arg4, &safeLen );
       arg3 = (int) safeLen;
     }
   }
