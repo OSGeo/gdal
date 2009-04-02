@@ -234,6 +234,38 @@ def tiff_multi_images():
 
     return 'success'
 
+###############################################################################
+# Test reading a tiff from a memory buffer (#2931)
+
+def tiff_vsimem():
+
+    try:
+        gdal.FileFromMemBuffer
+    except:
+        return 'skip'
+
+    content = open('data/byte.tif').read()
+
+    # Create in-memory file
+    gdal.FileFromMemBuffer('/vsimem/tiffinmem', content)
+
+    ds = gdal.Open('/vsimem/tiffinmem', gdal.GA_Update)
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            return 'fail'
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiffinmem')
+    if ds.GetRasterBand(1).Checksum() != 0:
+            print 'Expected checksum = %d. Got = %d' % (0, ds.GetRasterBand(1).Checksum())
+            return 'fail'
+    ds = None
+
+    # Release memory associated to the in-memory file
+    gdal.Unlink('/vsimem/tiffinmem')
+
+    return 'success'
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -250,6 +282,7 @@ gdaltest_list.append( (tiff_read_zip_2) )
 gdaltest_list.append( (tiff_grads) )
 gdaltest_list.append( (tiff_g4_split) )
 gdaltest_list.append( (tiff_multi_images) )
+gdaltest_list.append( (tiff_vsimem) )
 
 if __name__ == '__main__':
 

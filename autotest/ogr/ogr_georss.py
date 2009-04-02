@@ -610,6 +610,55 @@ def ogr_georss_14():
 
     return 'success'
 
+
+###############################################################################
+# Test reading an in memory file (#2931)
+
+def ogr_georss_15():
+
+    if not gdaltest.georss_read_support:
+        return 'skip'
+
+    try:
+        gdal.FileFromMemBuffer
+    except:
+        return 'skip'
+
+    content = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0" xmlns:georss="http://www.georss.org/georss" xmlns:gml="http://www.opengis.net/gml">
+    <channel>
+        <link>http://mylink.com</link>
+        <title>channel title</title>
+        <item>
+            <guid isPermaLink="false">0</guid>
+            <pubDate>Thu, 2 Apr 2009 23:03:00 +0000</pubDate>
+            <title>item title</title>
+            <georss:point>49 2</georss:point>
+        </item>
+    </channel>
+    </rss>"""
+
+    # Create in-memory file
+    gdal.FileFromMemBuffer('/vsimem/georssinmem', content)
+
+    ds = ogr.Open('/vsimem/georssinmem')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+
+    if feat.GetFieldAsString('title') != 'item title':
+        print 'Expected %s. Got %s' % ('item title', feat.GetFieldAsString('title'))
+        return 'fail'
+
+    feat.Destroy()
+
+    ds.Destroy()
+
+    # Release memory associated to the in-memory file
+    gdal.Unlink('/vsimem/georssinmem')
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -642,6 +691,7 @@ gdaltest_list = [
     ogr_georss_12,
     ogr_georss_13,
     ogr_georss_14,
+    ogr_georss_15,
     ogr_georss_cleanup ]
 
 if __name__ == '__main__':
