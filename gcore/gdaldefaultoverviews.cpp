@@ -477,14 +477,11 @@ GDALDefaultOverviews::BuildOverviews(
         // Probe for proxy overview filename. 
         if( eErr == CE_Failure )
         {
-            CPLDebug( "GDALDefaultOverviews", "GTIFFBuildOverviews failed, request proxy overview" );
             const char *pszProxyOvrFilename = 
                 poDS->GetMetadataItem("FILENAME","ProxyOverviewRequest");
 
             if( pszProxyOvrFilename != NULL )
             {
-                CPLDebug( "GDALDefaultOverviews", 
-                          "got %s", pszProxyOvrFilename );
                 osOvrFilename = pszProxyOvrFilename;
                 eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands, 
                                             nNewOverviews, panNewOverviewList, 
