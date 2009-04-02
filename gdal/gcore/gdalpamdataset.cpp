@@ -1131,7 +1131,7 @@ const char *GDALPamDataset::GetMetadataItem( const char *pszName,
         return GDALDataset::GetMetadataItem( pszName, pszDomain );
 
     CPLString osPrelimOvr = GetDescription();
-    osPrelimOvr += ".ovr";
+    osPrelimOvr += ":::OVR";
 
     const char *pszProxyOvrFilename = PamAllocateProxy( osPrelimOvr );
     if( pszProxyOvrFilename == NULL )
