@@ -2978,6 +2978,17 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
     return CPLGetConfigOption( pszKey, pszDefault );
 }
 
+
+void wrapper_VSIFileFromMemBuffer( const char* pszFilename, int nBytes, const GByte *pabyData)
+{
+    GByte* pabyDataDup = (GByte*)VSIMalloc(nBytes);
+    if (pabyDataDup == NULL)
+            return;
+    memcpy(pabyDataDup, pabyData, nBytes);
+    VSIFCloseL(VSIFileFromMemBuffer(pszFilename, (GByte*) pabyDataDup, nBytes, TRUE));
+}
+
+
 SWIGINTERN char const *GDALMajorObjectShadow_GetDescription(GDALMajorObjectShadow *self){
     return GDALGetDescription( self );
   }
@@ -4401,7 +4412,7 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   {
     Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    PyString_AsStringAndSize(obj0, &arg2, &safeLen );
+    PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen );
     arg1 = (int) safeLen;
   }
   if (obj1) {
@@ -4840,6 +4851,90 @@ SWIGINTERN PyObject *_wrap_CPLHexToBinary(PyObject *SWIGUNUSEDPARM(self), PyObje
     }
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GByte, 0 |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  int arg2 ;
+  GByte *arg3 = (GByte *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:FileFromMemBuffer",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FileFromMemBuffer" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  {
+    Py_ssize_t   safeLen;
+    /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    PyString_AsStringAndSize(obj1, (char**) &arg3, &safeLen );
+    arg2 = (int) safeLen;
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    wrapper_VSIFileFromMemBuffer((char const *)arg1,arg2,(GByte const *)arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Unlink(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  int result;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Unlink",&obj0)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Unlink" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    result = (int)VSIUnlink((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
 fail:
@@ -9180,7 +9275,7 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   {
     Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    PyString_AsStringAndSize(obj5, &arg7, &safeLen );
+    PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen );
     arg6 = (int) safeLen;
   }
   if (obj6) {
@@ -11095,7 +11190,7 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   {
     Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    PyString_AsStringAndSize(obj5, &arg7, &safeLen );
+    PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen );
     arg6 = (int) safeLen;
   }
   if (obj6) {
@@ -16290,6 +16385,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetConfigOption", _wrap_GetConfigOption, METH_VARARGS, NULL},
 	 { (char *)"CPLBinaryToHex", _wrap_CPLBinaryToHex, METH_VARARGS, NULL},
 	 { (char *)"CPLHexToBinary", _wrap_CPLHexToBinary, METH_VARARGS, NULL},
+	 { (char *)"FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, NULL},
+	 { (char *)"Unlink", _wrap_Unlink, METH_VARARGS, NULL},
 	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, NULL},
 	 { (char *)"MajorObject_SetDescription", _wrap_MajorObject_SetDescription, METH_VARARGS, NULL},
 	 { (char *)"MajorObject_GetMetadata_Dict", _wrap_MajorObject_GetMetadata_Dict, METH_VARARGS, NULL},

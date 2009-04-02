@@ -187,6 +187,14 @@ def CPLBinaryToHex(*args):
 def CPLHexToBinary(*args):
   """CPLHexToBinary(char pszHex, int pnBytes) -> GByte"""
   return _gdal.CPLHexToBinary(*args)
+
+def FileFromMemBuffer(*args):
+  """FileFromMemBuffer(char pszFilename, int nBytes)"""
+  return _gdal.FileFromMemBuffer(*args)
+
+def Unlink(*args):
+  """Unlink(char pszFilename) -> int"""
+  return _gdal.Unlink(*args)
 class MajorObject(_object):
     """Proxy of C++ MajorObject class"""
     __swig_setmethods__ = {}
