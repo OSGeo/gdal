@@ -334,9 +334,14 @@ const char *PamAllocateProxy( const char *pszOriginal )
     CPLString osOriginal = pszOriginal;
     CPLString osProxy;
 
-    osProxy.Printf( "%s/proxy_%d.aux.xml", 
-                    poProxyDB->osProxyDBDir.c_str(),
-                    poProxyDB->nUpdateCounter++ );
+    if( osOriginal.find(":::OVR") != CPLString::npos )
+        osProxy.Printf( "%s/proxy_%d.ovr", 
+                        poProxyDB->osProxyDBDir.c_str(),
+                        poProxyDB->nUpdateCounter++ );
+    else
+        osProxy.Printf( "%s/proxy_%d.aux.xml", 
+                        poProxyDB->osProxyDBDir.c_str(),
+                        poProxyDB->nUpdateCounter++ );
 
     poProxyDB->aosOriginalFiles.push_back( osOriginal );
     poProxyDB->aosProxyFiles.push_back( osProxy );
