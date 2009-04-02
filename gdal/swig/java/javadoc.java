@@ -212,6 +212,8 @@ public class gdal:public static void FileFromMemBuffer(String fileName, byte[] b
  * @param fileName the path of the file to be deleted.
  * @return 0 on success or -1 on an error.
  *
+ * @since Java bindings 1.7.0
+ *
  * @see #FileFromMemBuffer(String fileName, byte[] byteArray)
  */
 public class gdal:public static int Unlink(String fileName)
