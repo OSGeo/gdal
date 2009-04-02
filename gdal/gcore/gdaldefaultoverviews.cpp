@@ -164,6 +164,21 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we still don't have an overview, check to see if we have     */
+/*      overview metadata referencing a remote (ie. proxy) dataset.     */
+/* -------------------------------------------------------------------- */
+    if( poODS == NULL )
+    {
+        const char *pszProxyOvrFilename = 
+            poDS->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" );
+        if( pszProxyOvrFilename != NULL )
+        {
+            osOvrFilename = pszProxyOvrFilename;
+            poODS = (GDALDataset *) GDALOpen(osOvrFilename,GA_Update);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If we have an overview dataset, then mark all the overviews     */
 /*      with the base dataset  Used later for finding overviews         */
 /*      masks.  Uggg.                                                   */
@@ -458,6 +473,25 @@ GDALDefaultOverviews::BuildOverviews(
         eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands, 
                                     nNewOverviews, panNewOverviewList, 
                                     pszResampling, pfnProgress, pProgressData );
+        
+        // Probe for proxy overview filename. 
+        if( eErr == CE_Failure )
+        {
+            CPLDebug( "GDALDefaultOverviews", "GTIFFBuildOverviews failed, request proxy overview" );
+            const char *pszProxyOvrFilename = 
+                poDS->GetMetadataItem("FILENAME","ProxyOverviewRequest");
+
+            if( pszProxyOvrFilename != NULL )
+            {
+                CPLDebug( "GDALDefaultOverviews", 
+                          "got %s", pszProxyOvrFilename );
+                osOvrFilename = pszProxyOvrFilename;
+                eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands, 
+                                            nNewOverviews, panNewOverviewList, 
+                                            pszResampling, 
+                                            pfnProgress, pProgressData );
+            }
+        }
 
         if( eErr == CE_None )
         {

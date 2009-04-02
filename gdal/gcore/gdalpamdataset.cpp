@@ -1120,6 +1120,43 @@ CPLErr GDALPamDataset::SetMetadataItem( const char *pszName,
 }
 
 /************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *GDALPamDataset::GetMetadataItem( const char *pszName, 
+                                             const char *pszDomain )
+
+{
+    CPLDebug( "GDALPamDataset", "GetMetadataItem(%s,%s)", 
+              pszName, pszDomain );
+
+    if( pszDomain == NULL || !EQUAL(pszDomain,"ProxyOverviewRequest") )
+        return GDALDataset::GetMetadataItem( pszName, pszDomain );
+
+    CPLString osPrelimOvr = GetDescription();
+    osPrelimOvr += ".ovr";
+
+    const char *pszProxyOvrFilename = PamAllocateProxy( osPrelimOvr );
+    if( pszProxyOvrFilename == NULL )
+        return NULL;
+
+    SetMetadataItem( "OVERVIEW_FILE", pszProxyOvrFilename, "OVERVIEWS" );
+
+    return pszProxyOvrFilename;
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **GDALPamDataset::GetMetadata( const char *pszDomain )
+
+{
+//    if( pszDomain == NULL || !EQUAL(pszDomain,"ProxyOverviewRequest") )
+        return GDALDataset::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
 /*                             TryLoadAux()                             */
 /************************************************************************/
 
