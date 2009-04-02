@@ -607,7 +607,7 @@ static CPLErr EnhancerCallback( void *hCBData,
     int nPixelCount = nXSize * nYSize;
     int iPixel;
     int bHaveNoData;
-    float fNoData = psEInfo->poSrcBand->GetNoDataValue( &bHaveNoData );
+    float fNoData = (float)psEInfo->poSrcBand->GetNoDataValue( &bHaveNoData );
     double dfScale = 
         psEInfo->nLUTBins / (psEInfo->dfScaleMax - psEInfo->dfScaleMin);
     
