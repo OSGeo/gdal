@@ -1296,11 +1296,6 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if (pszGammaLUT) CPLFree(pszGammaLUT);
 
 /* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, osMDFilename );
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     char *pszDescription = NULL;
@@ -1335,9 +1330,17 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->papszExtraFiles = 
             CSLAddString( poDS->papszExtraFiles, osMDFilename );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
     poDS->SetDescription( pszDescription );
     CPLFree( pszDescription );
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, osMDFilename );
 
     return( poDS );
 }

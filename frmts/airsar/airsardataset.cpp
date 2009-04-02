@@ -621,8 +621,6 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 5, new AirSARRasterBand( poDS, 5 ));
     poDS->SetBand( 6, new AirSARRasterBand( poDS, 6 ));
 
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
     poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SYMMETRIZED_COVARIANCE" );
 
 /* -------------------------------------------------------------------- */
@@ -630,6 +628,8 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
+
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }

@@ -859,15 +859,15 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->pszProjection = poDS->PCI2WKT( pszMapUnits, pszProjParms );
     
 /* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, osTarget );
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( osTarget );
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, osTarget );
 
     poDS->ScanForGCPs();
     poDS->bAuxUpdated = FALSE;

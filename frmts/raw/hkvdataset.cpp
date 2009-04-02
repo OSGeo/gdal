@@ -1525,16 +1525,16 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->ProcessGeoref(pszFilename);
 
 /* -------------------------------------------------------------------- */
-/*      Handle overviews.                                               */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, pszOvrFilename, NULL, TRUE );
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( pszOvrFilename );
     poDS->TryLoadXML();
     
+/* -------------------------------------------------------------------- */
+/*      Handle overviews.                                               */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, pszOvrFilename, NULL, TRUE );
+
     CPLFree( pszOvrFilename );
 
     return( poDS );
