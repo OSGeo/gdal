@@ -154,6 +154,41 @@ Note : in this example we map equivalent fields, from the source name to the exp
 <p><br>
 
 
+<li>The following Python script shows how to read the content of a online GeoRSS feed
+<pre>
+    #!/usr/bin/python
+    import gdal
+    import ogr
+    import urllib2
+
+    url = 'http://earthquake.usgs.gov/eqcenter/catalogs/eqs7day-M5.xml'
+    content = None
+    try:
+        handle = urllib2.urlopen(url)
+        content = handle.read()
+    except urllib2.HTTPError, e:
+        print 'HTTP service for %s is down (HTTP Error: %d)' % (url, e.code)
+    except:
+        print 'HTTP service for %s is down.' %(url)
+
+    # Create in-memory file from the downloaded content
+    gdal.FileFromMemBuffer('/vsimem/temp', content)
+
+    ds = ogr.Open('/vsimem/temp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        print feat.GetFieldAsString('title') + ' ' + feat.GetGeometryRef().ExportToWkt()
+        feat.Destroy()
+        feat = lyr.GetNextFeature()
+
+    ds.Destroy()
+
+    # Free memory associated with the in-memory file
+    gdal.Unlink('/vsimem/temp')
+</pre>
+</li>
+
 <h2>See Also</h2>
 
 <ul>
