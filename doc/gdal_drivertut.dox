@@ -139,6 +139,10 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
+// -------------------------------------------------------------------- //
+//      Initialize default overviews.                                   //
+// -------------------------------------------------------------------- //
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
     return( poDS );
 }
 \endverbatim
@@ -410,7 +414,7 @@ implement a registration function:
 
 \code
 CPL_C_START
-void	GDALRegister_JDEM(void);
+void CPL_DLL GDALRegister_JDEM(void);
 CPL_C_END
 
 ...
@@ -628,7 +632,7 @@ with the same name as the dataset, but the extension .ovr appended.  In
 order to enable reading and creation of this style of overviews it is necessary
 for the GDALDataset to initialize the oOvManager object within itself.  This
 is typically accomplished with a call like the following near the end of the
-Open() method. 
+Open() method (after the PAM TryLoadXML()).
 
 \code
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
