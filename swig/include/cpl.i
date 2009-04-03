@@ -210,6 +210,9 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 %clear GByte*;
 #endif
 
+/* Inappropriate typemap for Ruby bindings */
+#ifndef SWIGRUBY
+
 %apply Pointer NONNULL {const char * pszFilename};
 /* Added in GDAL 1.7.0 */
 #ifdef SWIGJAVA
@@ -234,3 +237,5 @@ void wrapper_VSIFileFromMemBuffer( const char* pszFilename, int nBytes, const GB
 
 /* Added in GDAL 1.7.0 */
 int VSIUnlink(const char * pszFilename );
+
+#endif
