@@ -1329,7 +1329,10 @@ public:
       return CreateGeometryFromGML( gml );
     }
     // throw?
-    else return 0;
+    else {
+        CPLError(CE_Failure, 1, "Empty geometries cannot be constructed");
+        return NULL;}
+
   }  
 #ifdef SWIGCSHARP
 %clear (char *wkb_buf);
@@ -1647,7 +1650,7 @@ public:
 #ifndef SWIGJAVA
   %newobject Centroid;
   OGRGeometryShadow* Centroid() {
-    OGRGeometryShadow *pt = new_OGRGeometryShadow( wkbPoint );
+    OGRGeometryShadow *pt = (OGRGeometryShadow*) OGR_G_CreateGeometry( wkbPoint );
     OGR_G_Centroid( self, pt );
     return pt;
   }
