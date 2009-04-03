@@ -35,12 +35,8 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-	from osgeo import gdal
-	from osgeo import osr
-except ImportError:
-	import gdal
-	import osr
+from osgeo import gdal
+from osgeo import osr
 
 import sys
 import os
@@ -494,9 +490,15 @@ class GDAL2Tiles(object):
 		gdal.TermProgress_nocb(complete)
 
 	# -------------------------------------------------------------------------
+	def stop(self):
+		"""Stop the rendering immediately"""
+		self.stopped = True
+
+	# -------------------------------------------------------------------------
 	def __init__(self, arguments ):
 		"""Constructor function - initialization"""
 		
+		self.stopped = False
 		self.input = None
 		self.output = None
 
@@ -614,7 +616,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 			if max:
 				self.tmaxz = int(max)
 			else:
-				self.tmaxz = min 
+				self.tmaxz = int(min) 
 		
 		# KML generation
 		self.kml = self.options.kml
@@ -645,11 +647,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 						  help="Zoom levels to render (format:'2-5' or '10').")
 		p.add_option('-e', '--resume', dest="resume", action="store_true",
 						  help="Resume mode. Generate only missing files.")
-		# TODO: NODATA: ds.GetRasterBand(i).SetNoDataValue( float(null_value) )
-		# But this would have to be done on in memory VRT - created by CreateCopy()
-		# Let's do that together with merging of files later...
-		#p.add_option('-n', '--srcnodata', dest="srcnodata", metavar="NODATA",
-		#				  help="NODATA transparency value to assign to the input data")
+		p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
+			  			  help="NODATA transparency value to assign to the input data")
 		p.add_option("-v", "--verbose",
 						  action="store_true", dest="verbose",
 						  help="Print status messages to stdout")
@@ -731,7 +730,22 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 gdal_translate -of vrt -expand rgba %s temp.vrt
 then run:
 gdal2tiles temp.vrt""" % self.input )
-			
+
+		# Get NODATA value
+		self.in_nodata = []
+		for i in range(1, self.in_ds.RasterCount+1):
+			if self.in_ds.GetRasterBand(i).GetNoDataValue() != None:
+				self.in_nodata.append( self.in_ds.GetRasterBand(i).GetNoDataValue() )
+		if self.options.srcnodata:
+			nds = map( float, self.options.srcnodata.split(','))
+			if len(nds) < self.in_ds.RasterCount:
+				self.in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
+			else:
+				self.in_nodata = nds
+
+		if self.options.verbose:
+			print "NODATA: %s" % self.in_nodata
+
 		#
 		# Here we should have RGBA input dataset opened in self.in_ds
 		#
@@ -786,11 +800,77 @@ gdal2tiles temp.vrt""" % self.input )
 					# Generation of VRT dataset in tile projection, default 'nearest neighbour' warping
 					self.out_ds = gdal.AutoCreateWarpedVRT( self.in_ds, self.in_srs_wkt, self.out_srs.ExportToWkt() )
 					
+					# TODO: HIGH PRIORITY: Correction of AutoCreateWarpedVRT according the max zoomlevel for correct direct warping!!!
+					
 					if self.options.verbose:
 						print "Warping of the raster by AutoCreateWarpedVRT (result saved into 'tiles.vrt')"
 						self.out_ds.GetDriver().CreateCopy("tiles.vrt", self.out_ds)
 						
 					# Note: self.in_srs and self.in_srs_wkt contain still the non-warped reference system!!!
+
+					# Correction of AutoCreateWarpedVRT for NODATA values
+					if self.in_nodata != []:
+						import tempfile
+						tempfilename = tempfile.mktemp('-gdal2tiles.vrt')
+						self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
+						# open as a text file
+						s = open(tempfilename).read()
+						# Add the warping options
+						s = s.replace("""<GDALWarpOptions>""","""<GDALWarpOptions>
+	  <Option name="INIT_DEST">NO_DATA</Option>
+	  <Option name="UNIFIED_SRC_NODATA">YES</Option>""")
+						# replace BandMapping tag for NODATA bands....
+						for i in range(len(self.in_nodata)):
+							s = s.replace("""<BandMapping src="%i" dst="%i"/>""" % ((i+1),(i+1)),"""<BandMapping src="%i" dst="%i">
+	      <SrcNoDataReal>%i</SrcNoDataReal>
+	      <SrcNoDataImag>0</SrcNoDataImag>
+	      <DstNoDataReal>%i</DstNoDataReal>
+	      <DstNoDataImag>0</DstNoDataImag>
+	    </BandMapping>""" % ((i+1), (i+1), self.in_nodata[i], self.in_nodata[i])) # Or rewrite to white by: , 255 ))
+						# save the corrected VRT
+						open(tempfilename,"w").write(s)
+						# open by GDAL as self.out_ds
+						self.out_ds = gdal.Open(tempfilename) #, gdal.GA_ReadOnly)
+						# delete the temporary file
+						os.unlink(tempfilename)
+
+						# set NODATA_VALUE metadata
+						self.out_ds.SetMetadataItem('NODATA_VALUES','%i %i %i' % (self.in_nodata[0],self.in_nodata[1],self.in_nodata[2]))
+
+						if self.options.verbose:
+							print "Modified warping result saved into 'tiles1.vrt'"
+							open("tiles1.vrt","w").write(s)
+
+					# -----------------------------------
+					# Correction of AutoCreateWarpedVRT for Mono (1 band) and RGB (3 bands) files without NODATA:
+					# equivalent of gdalwarp -dstalpha
+					if self.in_nodata == [] and self.out_ds.RasterCount in [1,3]:
+						import tempfile
+						tempfilename = tempfile.mktemp('-gdal2tiles.vrt')
+						self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
+						# open as a text file
+						s = open(tempfilename).read()
+						# Add the warping options
+						s = s.replace("""<BlockXSize>""","""<VRTRasterBand dataType="Byte" band="%i" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Alpha</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>""" % (self.out_ds.RasterCount + 1))
+						s = s.replace("""</GDALWarpOptions>""", """<DstAlphaBand>%i</DstAlphaBand>
+  </GDALWarpOptions>""" % (self.out_ds.RasterCount + 1))
+						s = s.replace("""</WorkingDataType>""", """</WorkingDataType>
+    <Option name="INIT_DEST">0</Option>""")
+						# save the corrected VRT
+						open(tempfilename,"w").write(s)
+						# open by GDAL as self.out_ds
+						self.out_ds = gdal.Open(tempfilename) #, gdal.GA_ReadOnly)
+						# delete the temporary file
+						os.unlink(tempfilename)
+
+						if self.options.verbose:
+							print "Modified -dstalpha warping result saved into 'tiles1.vrt'"
+							open("tiles1.vrt","w").write(s)
+					s = '''
+					'''
 						
 			else:
 				self.error("Input file has unknown SRS.", "Use --s_srs ESPG:xyz (or similar) to provide source reference system." )
@@ -832,9 +912,10 @@ gdal2tiles temp.vrt""" % self.input )
 		
 		# Test the size of the pixel
 		
-		if self.out_gt[1] != (-1 * self.out_gt[5]) and self.options.profile != 'raster':
+		# MAPTILER - COMMENTED
+		#if self.out_gt[1] != (-1 * self.out_gt[5]) and self.options.profile != 'raster':
 			# TODO: Process corectly coordinates with are have swichted Y axis (display in OpenLayers too)
-			self.error("Size of the pixel in the output differ for X and Y axes.")
+			#self.error("Size of the pixel in the output differ for X and Y axes.")
 			
 		# Report error in case rotation/skew is in geotransform (possible only in 'raster' profile)
 		if (self.out_gt[2], self.out_gt[4]) != (0,0):
@@ -959,8 +1040,8 @@ gdal2tiles temp.vrt""" % self.input )
 					pixelsizey = (2**(self.tmaxz-z) * self.out_gt[1]) # Y-pixel size in level (usually -1*pixelsizex)
 					west = self.out_gt[0] + x*self.tilesize*pixelsizex
 					east = west + self.tilesize*pixelsizex
-					north = self.out_gt[3] - (self.tminmax[z][3]-y)*self.tilesize*pixelsizey
-					south = north - self.tilesize*pixelsizey
+					south = self.ominy + y*self.tilesize*pixelsizex
+					north = south + self.tilesize*pixelsizex
 					if not self.isepsg4326:
 						# Transformation to EPSG:4326 (WGS84 datum)
 						west, south = self.ct.TransformPoint(west, south)[:2]
@@ -1093,6 +1174,8 @@ gdal2tiles temp.vrt""" % self.input )
 		for ty in range(tmaxy, tminy-1, -1): #range(tminy, tmaxy+1):
 			for tx in range(tminx, tmaxx+1):
 
+				if self.stopped:
+					break
 				ti += 1
 				tilefilename = os.path.join(self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
 				if self.options.verbose:
@@ -1232,7 +1315,10 @@ gdal2tiles temp.vrt""" % self.input )
 			tminx, tminy, tmaxx, tmaxy = self.tminmax[tz]
 			for ty in range(tmaxy, tminy-1, -1): #range(tminy, tmaxy+1):
 				for tx in range(tminx, tmaxx+1):
-
+					
+					if self.stopped:
+						break
+						
 					ti += 1
 					tilefilename = os.path.join( self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext) )
 
@@ -1284,7 +1370,9 @@ gdal2tiles temp.vrt""" % self.input )
 
 					self.scale_query_to_tile(dsquery, dstile, tilefilename)
 					# Write a copy of tile to png/jpg
-					self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
+					if self.options.resampling != 'antialias':
+						# Write a copy of tile to png/jpg
+						self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
 
 					if self.options.verbose:
 						print "\tbuild from zoom", tz+1," tiles:", (2*tx, 2*ty), (2*tx+1, 2*ty),(2*tx, 2*ty+1), (2*tx+1, 2*ty+1)
@@ -1368,13 +1456,13 @@ gdal2tiles temp.vrt""" % self.input )
 			array = numpy.zeros((querysize, querysize, tilebands), numpy.uint8)
 			for i in range(tilebands):
 				array[:,:,i] = gdalarray.BandReadAsArray(dsquery.GetRasterBand(i+1), 0, 0, querysize, querysize)
-			if tilebands == 4:
-				im = Image.fromarray(array, 'RGBA')
-			else:
-				im = Image.fromarray(array, 'RGB')
+			im = Image.fromarray(array, 'RGBA') # Always four bands
 			im1 = im.resize((tilesize,tilesize), Image.ANTIALIAS)
+			if os.path.exists(tilefilename):
+				im0 = Image.open(tilefilename)
+				im1 = Image.composite(im1, im0, im1) 
 			im1.save(tilefilename,self.tiledriver)
-
+			
 		else:
 
 			# Other algorithms are implemented by gdal.ReprojectImage().
@@ -1458,6 +1546,13 @@ gdal2tiles temp.vrt""" % self.input )
 			tilekml = True
 			args['title'] = "%d/%d/%d.kml" % (tz, tx, ty)
 			args['south'], args['west'], args['north'], args['east'] = self.tileswne(tx, ty, tz)
+
+		if tx == 0: 
+			args['drawOrder'] = 2 * tz + 1 
+		elif tx != None: 
+			args['drawOrder'] = 2 * tz
+		else:
+			args['drawOrder'] = 0
 			
 		url = self.options.url
 		if not url:
@@ -1465,7 +1560,7 @@ gdal2tiles temp.vrt""" % self.input )
 				url = "../../"
 			else:
 				url = ""
-
+				
 		s = """<?xml version="1.0" encoding="utf-8"?>
 	<kml xmlns="http://earth.google.com/kml/2.1">
 	  <Document>
@@ -1491,7 +1586,7 @@ gdal2tiles temp.vrt""" % self.input )
 	      </LatLonAltBox>
 	    </Region>
 	    <GroundOverlay>
-	      <drawOrder>%(tz)d</drawOrder>
+	      <drawOrder>%(drawOrder)d</drawOrder>
 	      <Icon>
 	        <href>%(ty)d.%(tileformat)s</href>
 	      </Icon>
@@ -1602,6 +1697,7 @@ gdal2tiles temp.vrt""" % self.input )
 			        var left = Math.round((CTransparencyLENGTH*pos));
 			        this.slide.left = left;
 			        this.knob.style.left = left+"px";
+			        this.knob.style.top = "0px";
 			    }
 
 			    // This function reads the slider and sets the overlay opacity level
@@ -1796,8 +1892,11 @@ gdal2tiles temp.vrt""" % self.input )
 			       var ge = object;
 
 			       if (ge) {
+			           var url = document.location.toString();
+			           url = url.substr(0,url.lastIndexOf('/'))+'/doc.kml';
 			           var link = ge.createLink("");
-			           link.setHref("%(publishurl)s/doc.kml");
+			           if ("%(publishurl)s") { link.setHref("%(publishurl)s/doc.kml") }
+			           else { link.setHref(url) };
 			           var networkLink = ge.createNetworkLink("");
 			           networkLink.setName("TMS Map Overlay");
 			           networkLink.setFlyToView(true);  
