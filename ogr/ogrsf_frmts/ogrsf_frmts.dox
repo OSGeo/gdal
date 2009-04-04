@@ -1194,7 +1194,7 @@ by the OGRSFDriverManager.
  \brief Fetch the next available feature from this layer.
 
  The returned feature
- becomes the responsiblity of the caller to delete. 
+ becomes the responsiblity of the caller to delete with OGRFeature::DestroyFeature(). 
 
  Only features matching the current spatial filter (set with 
  SetSpatialFilter()) will be returned.  
@@ -1215,7 +1215,7 @@ by the OGRSFDriverManager.
  \brief Fetch the next available feature from this layer.
 
  The returned feature
- becomes the responsiblity of the caller to delete.  It is critical that
+ becomes the responsiblity of the caller to delete with OGR_F_Destroy().  It is critical that
  all features associated with an OGRLayer (more specifically an 
  OGRFeatureDefn) be deleted before that layer/datasource is deleted.
 
@@ -1635,6 +1635,8 @@ by the OGRSFDriverManager.
  just scans all the features in the layer looking for the desired feature.
  
  Sequential reads are generally considered interrupted by a GetFeature() call.
+ 
+ The returned feature should be free with OGRFeature::DestroyFeature().
 
  This method is the same as the C function OGR_L_GetFeature().
 
@@ -1666,7 +1668,9 @@ by the OGRSFDriverManager.
  
  Sequential reads are generally considered interrupted by a 
  OGR_L_GetFeature() call.
-
+ 
+ The returned feature should be free with OGR_F_Destroy().
+ 
  This function is the same as the C++ method OGRLayer::GetFeature( ).
 
  @param hLayer handle to the layer that owned the feature.
