@@ -356,7 +356,8 @@ CPLErr EHdrRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                              OSR_GDS()                               */
 /************************************************************************/
 
-static const char*OSR_GDS( char **papszNV, const char * pszField, 
+static const char*OSR_GDS( char* pszResult, int nResultLen,
+                           char **papszNV, const char * pszField, 
                            const char *pszDefaultValue )
 
 {
@@ -374,18 +375,18 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
         return pszDefaultValue;
     else
     {
-        static char     szResult[80];
         char    **papszTokens;
         
         papszTokens = CSLTokenizeString(papszNV[iLine]);
 
         if( CSLCount(papszTokens) > 1 )
-            strncpy( szResult, papszTokens[1], sizeof(szResult));
+            strncpy( pszResult, papszTokens[1], nResultLen);
         else
-            strncpy( szResult, pszDefaultValue, sizeof(szResult));
+            strncpy( pszResult, pszDefaultValue, nResultLen);
+        pszResult[nResultLen-1] = '\0';
         
         CSLDestroy( papszTokens );
-        return szResult;
+        return pszResult;
     }
 }
 
@@ -1064,7 +1065,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"layout") )
         {
-            strncpy( szLayout, papszTokens[1], sizeof(szLayout)-1 );
+            strncpy( szLayout, papszTokens[1], sizeof(szLayout) );
+            szLayout[sizeof(szLayout)-1] = '\0';
         }
         else if( EQUAL(papszTokens[0],"NODATA_value") 
                  || EQUAL(papszTokens[0],"NODATA") )
@@ -1311,8 +1313,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             // If geographic values are in seconds, we must transform. 
             // Is there a code for minutes too? 
+            char szResult[80];
             if( oSRS.IsGeographic() 
-                && EQUAL(OSR_GDS( papszLines, "Units", ""), "DS") )
+                && EQUAL(OSR_GDS( szResult, sizeof(szResult),
+                                  papszLines, "Units", ""), "DS") )
             {
                 poDS->adfGeoTransform[0] /= 3600.0;
                 poDS->adfGeoTransform[1] /= 3600.0;
