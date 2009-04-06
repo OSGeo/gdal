@@ -1695,15 +1695,18 @@ static OGRErr LoadDODDatum( OGRSpatialReference *poSRS,
 /*      All the rest we will try and load from gt_datum.csv             */
 /*      (Geotrans datum file).                                          */
 /* -------------------------------------------------------------------- */
-    char szExpanded[5];
+    char szExpanded[6];
     const char *pszGTDatum = CSVFilename( "gt_datum.csv" );
 
     strncpy( szExpanded, pszDatumName, 3 );
     szExpanded[3] = '\0';
     if( pszDatumName[3] != ' ' )
     {
+        int nLen;
         strcat( szExpanded, "-" );
-        strncat( szExpanded, pszDatumName + 3, 1 );
+        nLen = strlen(szExpanded);
+        szExpanded[nLen] = pszDatumName[3];
+        szExpanded[nLen + 1] = '\0';
     }
 
     CPLString osDName = CSVGetField( pszGTDatum, "CODE", szExpanded, 
