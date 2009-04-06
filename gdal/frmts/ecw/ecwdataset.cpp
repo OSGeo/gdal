@@ -442,8 +442,10 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 	else
 	{
 	    // Just copy the previous line in this case
-	    memcpy( (GByte *)pData + iDstLineOff,
-		    (GByte *)pData + (iDstLineOff - nLineSpace), nLineSpace );
+            GDALCopyWords( (GByte *)pData + (iDstLineOff - nLineSpace),
+                            eBufType, nPixelSpace,
+                            (GByte *)pData + iDstLineOff,
+                            eBufType, nPixelSpace, nBufXSize );
 	}
     }
 
