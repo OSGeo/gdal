@@ -349,7 +349,8 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"FORMAT") )
         {
-            strncpy( szLayout, papszTokens[1], sizeof(szLayout)-1 );
+            strncpy( szLayout, papszTokens[1], sizeof(szLayout) );
+            szLayout[sizeof(szLayout)-1] = '\0';
         }
         else if( EQUAL(papszTokens[0],"DATATYPE") )
         {
