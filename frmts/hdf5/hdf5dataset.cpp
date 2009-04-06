@@ -226,9 +226,6 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS = new HDF5Dataset();
     
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
-    
     poDS->pszFilename = strdup( poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
