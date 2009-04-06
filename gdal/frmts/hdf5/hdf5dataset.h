@@ -57,12 +57,11 @@ herr_t HDF5CreateGroupObjs(hid_t, const char *,void *);
 /*				HDF5Dataset				*/
 /* ==================================================================== */
 /************************************************************************/
-class HDF5Dataset : public GDALDataset
+class HDF5Dataset : public GDALPamDataset
 {
 
   protected:
 
-  FILE             *fp;
   hid_t            hHDF5;     
   hid_t            hDatasetID;
   hid_t            hGroupID; /* H handler interface */
