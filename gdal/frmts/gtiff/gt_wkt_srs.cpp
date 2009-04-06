@@ -310,8 +310,9 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         else if(hGTIF && GTIFKeyGet( hGTIF, PCSCitationGeoKey, szCTString, 0, 
                        sizeof(szCTString)) )  
         {
-            SetCitationToSRS(hGTIF, szCTString, sizeof(szCTString),
-                             PCSCitationGeoKey, &oSRS, &linearUnitIsSet);
+            if (!SetCitationToSRS(hGTIF, szCTString, sizeof(szCTString),
+                             PCSCitationGeoKey, &oSRS, &linearUnitIsSet))
+              oSRS.SetNode("PROJCS",szCTString);
         }
         else
         {
