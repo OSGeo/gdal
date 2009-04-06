@@ -1968,7 +1968,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( CSLFetchNameValue( poDS->papszHeader, "band_names" ) != NULL ||
         CSLFetchNameValue( poDS->papszHeader, "wavelength" ) != NULL)
     {
-        char pszBandId[1024], pszBandName[1024], pszWavelength[1024];
         char	**papszBandNames = 
             poDS->SplitList( CSLFetchNameValue( poDS->papszHeader, 
                                                 "band_names" ) );
@@ -1993,38 +1992,39 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for( i = 0; i < nBands; i++ )
         {
+            CPLString osBandId, osBandName, osWavelength;
+
             /* First set up the wavelength names and units if available */
             if (papszWL && CSLCount(papszWL) > i) 
             {
-                snprintf(pszWavelength, sizeof(pszWavelength) ,"%s", papszWL[i]);
+                osWavelength = papszWL[i];
                 if (pszWLUnits) 
                 {
-                    strncat(pszWavelength," ", sizeof(pszWavelength));
-                    strncat(pszWavelength,pszWLUnits, sizeof(pszWavelength)); 
+                    osWavelength += " ";
+                    osWavelength += pszWLUnits;
                 }
             }
-            else pszWavelength[0] = '\0';
 
             /* Build the final name for this band */
             if (papszBandNames && CSLCount(papszBandNames) > i)
-            {   
-     	        snprintf(pszBandName, sizeof(pszBandName),  "%s", papszBandNames[i]);
-                if (strlen(pszWavelength) > 0) 
+            {
+                osBandName = papszBandNames[i];
+                if (strlen(osWavelength) > 0) 
                 {
-                    strncat(pszBandName," (", sizeof(pszBandName));
-                    strncat(pszBandName, pszWavelength, sizeof(pszBandName));
-                    strncat(pszBandName,")", sizeof(pszBandName));
+                    osBandName += " (";
+                    osBandName += osWavelength;
+                    osBandName += ")";
                 }
             }
             else   /* WL but no band names */
-                strncpy(pszBandName, pszWavelength, sizeof(pszBandName));
+                osBandName = osWavelength;
 
             /* Description is for internal GDAL usage */
-            poDS->GetRasterBand(i + 1)->SetDescription( pszBandName );
+            poDS->GetRasterBand(i + 1)->SetDescription( osBandName );
 
             /* Metadata field named Band_1, etc. needed for ArcGIS integration */
-            snprintf(pszBandId, sizeof(pszBandId),  "Band_%i", i+1);
-            poDS->SetMetadataItem(pszBandId, pszBandName);
+            osBandId = CPLSPrintf("Band_%i", i+1);
+            poDS->SetMetadataItem(osBandId, osBandName);
         }
         CSLDestroy( papszBandNames );
     }
