@@ -100,8 +100,6 @@ public:
 /************************************************************************/
 HDF5ImageDataset::HDF5ImageDataset()
 {
-
-    fp=NULL;
     nGCPCount       = 0;
     pszProjection   = NULL;
     pszGCPProjection= NULL;
@@ -114,7 +112,6 @@ HDF5ImageDataset::HDF5ImageDataset()
     maxdims         = NULL;
     papszName       = NULL;
     papszMetadata   = NULL;
-
 }
 
 /************************************************************************/
@@ -330,9 +327,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
   
     poDS = new HDF5ImageDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
-  
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
