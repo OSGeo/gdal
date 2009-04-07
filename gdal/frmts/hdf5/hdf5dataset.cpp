@@ -80,7 +80,6 @@ HDF5Dataset::HDF5Dataset()
     papszSubDatasets    = NULL;
     papszMetadata       = NULL;
     poH5RootGroup       = NULL;
-    pszFilename         = NULL;
     nSubDataCount       = 0;
     hHDF5               = -1;
     hDatasetID          = -1;
@@ -94,16 +93,12 @@ HDF5Dataset::HDF5Dataset()
 /************************************************************************/
 HDF5Dataset::~HDF5Dataset()
 {
-    if( papszMetadata )
-	CSLDestroy( papszMetadata );
+    CSLDestroy( papszMetadata );
     if( hHDF5 > 0 )
 	H5Fclose( hHDF5 );
     if( hGroupID > 0 )
 	H5Gclose( hGroupID );
-    if( papszSubDatasets )
-	CSLDestroy( papszSubDatasets );
-    if( pszFilename != NULL )
-	CPLFree( pszFilename );
+    CSLDestroy( papszSubDatasets );
     if( poH5RootGroup != NULL ){
 	DestroyH5Objects( poH5RootGroup );
 	CPLFree( poH5RootGroup->pszName );
@@ -196,9 +191,8 @@ char **HDF5Dataset::GetMetadata( const char *pszDomain )
     if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
         return papszSubDatasets;
     else
-        return GDALDataset::GetMetadata( pszDomain );
+        return GDALPamDataset::GetMetadata( pszDomain );
 }
-
  
 /************************************************************************/
 /*                                Open()                                */
@@ -225,8 +219,8 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create datasource.                                              */
 /* -------------------------------------------------------------------- */
     poDS = new HDF5Dataset();
-    
-    poDS->pszFilename = strdup( poOpenInfo->pszFilename );
+
+    poDS->SetDescription( poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -832,7 +826,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 	poDS->papszSubDatasets =
 	    CSLSetNameValue( poDS->papszSubDatasets, szTemp,
 			    CPLSPrintf( "HDF5:\"%s\":%s",
-					poDS->pszFilename,
+					poDS->GetDescription(),
 					poRootGroup->pszUnderscorePath ) );
 	
 	sprintf(  szTemp, "SUBDATASET_%d_DESC", poDS->nSubDataCount );

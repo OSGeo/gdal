@@ -161,7 +161,7 @@ class CPL_DLL GDALDefaultOverviews
                            char **papszSiblingFiles = NULL,
                            int bNameIsOVR = FALSE );
 
-    int        IsInitialized() { return poDS != NULL && strlen(osOvrFilename) > 0; }
+    int        IsInitialized() { return poDS != NULL; }
 
     // Overview Related
 
@@ -174,6 +174,13 @@ class CPL_DLL GDALDefaultOverviews
                                int nBands, int * panBandList,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData );
+
+    CPLErr     BuildOverviewsSubDataset( const char * pszPhysicalFile,
+                                         const char * pszResampling, 
+                                         int nOverviews, int * panOverviewList,
+                                         int nBands, int * panBandList,
+                                         GDALProgressFunc pfnProgress,
+                                         void *pProgressData );
 
     CPLErr     CleanOverviews();
 

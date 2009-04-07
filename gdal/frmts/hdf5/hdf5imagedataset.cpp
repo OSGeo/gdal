@@ -64,7 +64,6 @@ class HDF5ImageDataset : public HDF5Dataset
     OGRSpatialReference oSRS;
 
     hsize_t      *dims,*maxdims;
-    char          **papszName;
     HDF5GroupObjects *poH5Objects;
     int          ndims,dimensions;
     hid_t        dataset_id;
@@ -82,7 +81,6 @@ public:
     CPLErr CreateProjections( );
     static GDALDataset  *Open( GDALOpenInfo * );
     const char          *GetProjectionRef();
-    virtual CPLErr      SetProjection( const char * );
     virtual int         GetGCPCount( );
     virtual const char  *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs( ); 
@@ -104,13 +102,10 @@ HDF5ImageDataset::HDF5ImageDataset()
     pszProjection   = NULL;
     pszGCPProjection= NULL;
     pasGCPList      = NULL;
-    papszName       = NULL;
-    pszFilename     = NULL;
     poH5Objects     = NULL;
     poH5RootGroup   = NULL;
     dims            = NULL;
     maxdims         = NULL;
-    papszName       = NULL;
     papszMetadata   = NULL;
 }
 
@@ -119,10 +114,7 @@ HDF5ImageDataset::HDF5ImageDataset()
 /************************************************************************/
 HDF5ImageDataset::~HDF5ImageDataset( )
 {
-
-
-    if( papszName != NULL )
-    	CSLDestroy( papszName );
+    FlushCache();
 
     CPLFree(pszProjection);
     CPLFree(pszGCPProjection);
@@ -145,9 +137,6 @@ HDF5ImageDataset::~HDF5ImageDataset( )
 
         CPLFree( pasGCPList );
     }
-
-
-
 }
 
 /************************************************************************/
@@ -162,7 +151,6 @@ class HDF5ImageRasterBand : public GDALPamRasterBand
     int         bNoDataSet;
     double      dfNoDataValue;
     char        *pszFilename;
-    
 
 public:
   
@@ -228,10 +216,15 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
 double HDF5ImageRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    if( pbSuccess )
-	*pbSuccess = bNoDataSet;
-
-    return dfNoDataValue;
+    if( bNoDataSet )
+    {
+        if( pbSuccess )
+            *pbSuccess = bNoDataSet;
+        
+        return dfNoDataValue;
+    }
+    else
+        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
 
 /************************************************************************/
@@ -319,7 +312,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int i;
     HDF5ImageDataset    *poDS;
-    int nDatasetPos = 2;
     char szFilename[2048];
 
     if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) )
@@ -331,38 +323,39 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
     /* printf("poOpenInfo->pszFilename %s\n",poOpenInfo->pszFilename); */
-    poDS->papszName = CSLTokenizeString2(  poOpenInfo->pszFilename,
-				    ":", CSLT_HONOURSTRINGS );
+    char **papszName = CSLTokenizeString2(  poOpenInfo->pszFilename,
+                                            ":", CSLT_HONOURSTRINGS );
 
-    if( !((CSLCount(poDS->papszName) == 3) || 
-          (CSLCount(poDS->papszName) == 4)) ){
-        CSLDestroy(poDS->papszName);
+    if( !((CSLCount(papszName) == 3) || (CSLCount(papszName) == 4)) )
+    {
+        CSLDestroy(papszName);
         delete poDS;
         return NULL;
     }
 
-    poDS->pszFilename = CPLStrdup( poOpenInfo->pszFilename );
-  
-    if( !EQUAL( poDS->papszName[0], "HDF5" ) ) {
-        delete poDS;
-	return NULL;
-    }
+    poDS->SetDescription( poOpenInfo->pszFilename );
   
     /* -------------------------------------------------------------------- */
     /*    Check for drive name in windows HDF5:"D:\...                      */
     /* -------------------------------------------------------------------- */
-    strcpy(szFilename, poDS->papszName[1]);
+    strcpy(szFilename, papszName[1]);
 
-    if( strlen(poDS->papszName[1]) == 1 ) {
+    if( strlen(papszName[1]) == 1 && papszName[3] != NULL ) 
+    {
 	strcat(szFilename, ":");
-	strcat(szFilename, poDS->papszName[2]);
-        nDatasetPos = 3;
+	strcat(szFilename, papszName[2]);
+        
+        poDS->SetSubdatasetName( papszName[3] );
     }
+    else
+        poDS->SetSubdatasetName( papszName[2] );
 
     if( !H5Fis_hdf5(szFilename) ) {
         delete poDS;
         return NULL;
     }
+
+    poDS->SetPhysicalFilename( szFilename );
 
     /* -------------------------------------------------------------------- */
     /*      Try opening the dataset.                                        */
@@ -394,7 +387,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->poH5Objects = 
 	poDS->HDF5FindDatasetObjectsbyPath( poDS->poH5RootGroup, 
-				      poDS->papszName[nDatasetPos] );
+                                            (char *)poDS->GetSubdatasetName() );
 
     if( poDS->poH5Objects == NULL ) {
 	return NULL;
@@ -442,6 +435,17 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->CreateProjections( );
 
     poDS->SetMetadata( poDS->papszMetadata );
+
+/* -------------------------------------------------------------------- */
+/*      Setup/check for pam .aux.xml.                                   */
+/* -------------------------------------------------------------------- */
+    poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Setup overviews.                                                */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
+
     return( poDS );
 }
 
@@ -458,24 +462,18 @@ void GDALRegister_HDF5Image( )
         return;
 
     if(  GDALGetDriverByName( "HDF5Image" ) == NULL )
-	{
-	    poDriver = new GDALDriver( );
+    {
+        poDriver = new GDALDriver( );
         
-	    poDriver->SetDescription( "HDF5Image" );
-	    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-				      "HDF5 Dataset" );
-	    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-				      "frmt_hdf5.html" );
-	    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-				      "Byte Int16 UInt16 Int32 UInt32 Float32 Float64"  );
-	    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
-				      "<CreationOptionList>"
-				      "   <Option name='RANK' type='int' description='Rank of output file'/>"
-				      "</CreationOptionList>" );
-	    poDriver->pfnOpen = HDF5ImageDataset::Open;
+        poDriver->SetDescription( "HDF5Image" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "HDF5 Dataset" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_hdf5.html" );
+        poDriver->pfnOpen = HDF5ImageDataset::Open;
 
-	    GetGDALDriverManager( )->RegisterDriver( poDriver );
-	}
+        GetGDALDriverManager( )->RegisterDriver( poDriver );
+    }
 }
 
 /************************************************************************/
@@ -594,27 +592,16 @@ const char *HDF5ImageDataset::GetProjectionRef( )
 }
 
 /************************************************************************/
-/*                          SetProjection()                             */
-/************************************************************************/
-
-CPLErr HDF5ImageDataset::SetProjection( const char *pszNewProjection )
-
-{
-    if( pszProjection )
-	CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszNewProjection );
-    
-    return CE_None;
-}
-
-/************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
 
 int HDF5ImageDataset::GetGCPCount( )
     
 {
-    return nGCPCount;
+    if( nGCPCount > 0 )
+        return nGCPCount;
+    else
+        return GDALPamDataset::GetGCPCount();
 }
 
 /************************************************************************/
@@ -627,7 +614,7 @@ const char *HDF5ImageDataset::GetGCPProjection( )
     if( nGCPCount > 0 )
 	return pszGCPProjection;
     else
-	return "";
+	return GDALPamDataset::GetGCPProjection();
 }
 
 /************************************************************************/
@@ -636,7 +623,10 @@ const char *HDF5ImageDataset::GetGCPProjection( )
 
 const GDAL_GCP *HDF5ImageDataset::GetGCPs( )
 {
-    return pasGCPList;
+    if( nGCPCount > 0 )
+        return pasGCPList;
+    else
+        return GDALPamDataset::GetGCPs();
 }
 
 

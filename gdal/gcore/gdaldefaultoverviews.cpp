@@ -108,28 +108,31 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
     if( pszBasename == NULL )
         pszBasename = poDS->GetDescription();
 
-    if( bNameIsOVR )
-        osOvrFilename = pszBasename;
-    else
-        osOvrFilename.Printf( "%s.ovr", pszBasename );
+    if( !EQUAL(pszBasename,":::VIRTUAL:::") )
+    {
+        if( bNameIsOVR )
+            osOvrFilename = pszBasename;
+        else
+            osOvrFilename.Printf( "%s.ovr", pszBasename );
 
-    bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
+        bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
                                papszSiblingFiles );
 
 #if !defined(WIN32)
-    if( !bNameIsOVR && !bExists && !papszSiblingFiles )
-    {
-        osOvrFilename.Printf( "%s.OVR", pszBasename );
-        bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
-                                   papszSiblingFiles );
-        if( !bExists )
-            osOvrFilename.Printf( "%s.ovr", pszBasename );
-    }
+        if( !bNameIsOVR && !bExists && !papszSiblingFiles )
+        {
+            osOvrFilename.Printf( "%s.OVR", pszBasename );
+            bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
+                                       papszSiblingFiles );
+            if( !bExists )
+                osOvrFilename.Printf( "%s.ovr", pszBasename );
+        }
 #endif
 
-    if( bExists )
-    {
-        poODS = (GDALDataset *) GDALOpen( osOvrFilename, poDS->GetAccess() );
+        if( bExists )
+        {
+            poODS = (GDALDataset*) GDALOpen( osOvrFilename, poDS->GetAccess() );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -140,7 +143,7 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
 /*      We only use the .aux file for overviews if they already have    */
 /*      overviews existing, or if USE_RRD is set true.                  */
 /* -------------------------------------------------------------------- */
-    if( !poODS )
+    if( !poODS && !EQUAL(pszBasename,":::VIRTUAL:::") )
     {
         poODS = GDALFindAssociatedAuxFile( pszBasename, poDS->GetAccess(),
                                            poDS );
@@ -316,7 +319,45 @@ CPLErr GDALDefaultOverviews::CleanOverviews()
 }
     
 /************************************************************************/
-/*                     GDALDefaultBuildOverviews()                      */
+/*                      BuildOverviewsSubDataset()                      */
+/************************************************************************/
+
+CPLErr
+GDALDefaultOverviews::BuildOverviewsSubDataset( 
+    const char * pszPhysicalFile,
+    const char * pszResampling, 
+    int nOverviews, int * panOverviewList,
+    int nBands, int * panBandList,
+    GDALProgressFunc pfnProgress, void * pProgressData)
+
+{
+    if( osOvrFilename.length() == 0 )
+    {
+        int iSequence = 0;
+        VSIStatBufL sStatBuf;
+
+        for( iSequence = 0; iSequence < 100; iSequence++ )
+        {
+            osOvrFilename.Printf( "%s_%d.ovr", pszPhysicalFile, iSequence );
+            if( VSIStatL( osOvrFilename, &sStatBuf ) != 0 )
+            {
+                poDS->SetMetadataItem( "OVERVIEW_FILE", 
+                                       osOvrFilename, 
+                                       "OVERVIEWS" );
+                break;
+            }
+        }
+
+        if( iSequence == 100 )
+            osOvrFilename = "";
+    }
+
+    return BuildOverviews( NULL, pszResampling, nOverviews, panOverviewList,
+                           nBands, panBandList, pfnProgress, pProgressData );
+}
+
+/************************************************************************/
+/*                           BuildOverviews()                           */
 /************************************************************************/
 
 CPLErr
@@ -331,6 +372,9 @@ GDALDefaultOverviews::BuildOverviews(
     GDALRasterBand **pahBands;
     CPLErr       eErr;
     int          i;
+
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
 
     if( nOverviews == 0 )
         return CleanOverviews();

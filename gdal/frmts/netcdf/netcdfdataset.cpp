@@ -594,8 +594,6 @@ netCDFDataset::netCDFDataset()
     papszSubDatasets = NULL;
     bGotGeoTransform = FALSE;
     pszProjection    = NULL;
-    papszName        = NULL;
-    pszFilename      = NULL;
     cdfid             = 0;
 }
 
@@ -611,11 +609,9 @@ netCDFDataset::~netCDFDataset()
     FlushCache();
 
     CSLDestroy( papszMetadata );
-    CSLDestroy( papszName );
     CSLDestroy( papszSubDatasets );
 
     CPLFree( pszProjection );
-    CPLFree( pszFilename );
 
     if( cdfid ) 
 	nc_close( cdfid );
@@ -1400,7 +1396,7 @@ void netCDFDataset::CreateSubDatasetList( )
 	    poDS->papszSubDatasets =
 		CSLSetNameValue( poDS->papszSubDatasets, szTemp,
 				 CPLSPrintf( "NETCDF:\"%s\":%s",
-					     poDS->pszFilename,
+					     poDS->osFilename.c_str(),
 					     szName) ) ;
 	    
 	    sprintf(  szTemp, "SUBDATASET_%d_DESC", nSub++ );
@@ -1450,27 +1446,42 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*       Check if filename start with NETCDF: tag                       */
 /* -------------------------------------------------------------------- */
-
     netCDFDataset 	*poDS;
     poDS = new netCDFDataset();
+    poDS->SetDescription( poOpenInfo->pszFilename );
 
-    poDS->papszName = 
-        CSLTokenizeString2( poOpenInfo->pszFilename,
-                            ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES );
+    if( EQUALN( poOpenInfo->pszFilename,"NETCDF:",7) )
+    {
+        char **papszName =
+            CSLTokenizeString2( poOpenInfo->pszFilename,
+                                ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES );
 
-    if( EQUAL( poDS->papszName[0], "NETCDF" ) ) {
-	if( ( CSLCount(poDS->papszName) == 3  ) ){
-	    poDS->pszFilename = strdup( poDS->papszName[1] );
-	}
+	if( CSLCount(papszName) == 3 )
+        {
+	    poDS->osFilename = papszName[1];
+            poDS->osSubdatasetName = papszName[2];
+            poDS->bTreatAsSubdataset = TRUE;
+            CSLDestroy( papszName );
+    	}
+        else
+        {
+            CSLDestroy( papszName );
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to parse NETCDF: prefix string into expected three fields." );
+            return NULL;
+        }
     }
-    else {
-	poDS->pszFilename = strdup( poOpenInfo->pszFilename );
+    else 
+    {
+	poDS->osFilename = poOpenInfo->pszFilename;
+        poDS->bTreatAsSubdataset = FALSE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    if( nc_open( poDS->pszFilename, NC_NOWRITE, &cdfid ) != NC_NOERR ) {
+    if( nc_open( poDS->osFilename, NC_NOWRITE, &cdfid ) != NC_NOERR ) {
 	delete poDS;
         return NULL;
     }
@@ -1479,23 +1490,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     status = nc_inq(cdfid, &ndims, &nvars, &ngatts, &unlimdimid);
     if( status != NC_NOERR ) {
-	CPLFree( poDS->pszFilename );
-	CSLDestroy( poDS->papszName );
+        delete poDS;
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Does the request variable exist?                                */
 /* -------------------------------------------------------------------- */
-    if( ( CSLCount(poDS->papszName) == 3  ) ){
-	status = nc_inq_varid( cdfid, poDS->papszName[2], &var);
+    if( poDS->bTreatAsSubdataset )
+    {
+	status = nc_inq_varid( cdfid, poDS->osSubdatasetName, &var);
 	if( status != NC_NOERR ) {
 	    CPLError( CE_Warning, CPLE_AppDefined, 
 		      "%s is a netCDF file, but %s is not a variable.",
 		      poOpenInfo->pszFilename, 
-		      poDS->papszName[2] );
+		      poDS->osSubdatasetName.c_str() );
 	    
 	    nc_close( cdfid );
+            delete poDS;
 	    return NULL;
 	}
     }
@@ -1507,6 +1519,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
 
         nc_close( cdfid );
+        delete poDS;
         return NULL;
     }
 
@@ -1524,10 +1537,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     if ( nc_inq_nvars ( cdfid, &var_count) != NC_NOERR )
-	return NULL;    
+    {
+        delete poDS;
+	return NULL;
+    }    
     
     CPLDebug( "GDAL_netCDF", "var_count = %d\n", var_count );
-    
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -1550,45 +1565,27 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*  We have more than one variable with 2 dimensions in the file        */
+/*      We have more than one variable with 2 dimensions in the         */
+/*      file, then treat this as a subdataset container dataset.        */
 /* -------------------------------------------------------------------- */
-    if( (nCount > 1) && ( !EQUAL( poDS->papszName[0], "NETCDF" ) ) ) {
-	poDS->CreateSubDatasetList( );
+    if( (nCount > 1) && !poDS->bTreatAsSubdataset )
+    {
+	poDS->CreateSubDatasetList();
 	poDS->SetMetadata( poDS->papszMetadata );
+        poDS->TryLoadXML();
 	return( poDS );
     }
-/* -------------------------------------------------------------------- */
-/*  If we have only one varialbe                                        */
-/*  Generate a new filename with format NETCDF:"filename":subdataset    */
-/* -------------------------------------------------------------------- */
-    if( ( nCount == 1 )  && ( !EQUAL( poDS->papszName[0], "NETCDF" ) ) ){
-	CPLFree( poDS->pszFilename );
-	CSLDestroy( poDS->papszName );
 
-	char pszNETCDFFilename[NC_MAX_NAME];
+/* -------------------------------------------------------------------- */
+/*      If we are not treating things as a subdataset, then capture     */
+/*      the name of the single available variable as the subdataset.    */
+/* -------------------------------------------------------------------- */
+    if( !poDS->bTreatAsSubdataset ) // nCount must be 1!
+    {
 	char szVarName[NC_MAX_NAME];
 
 	nc_inq_varname( cdfid, nVarID, szVarName);
-
-	strcpy( pszNETCDFFilename,"NETCDF:\"" );
-	strcat( pszNETCDFFilename,poOpenInfo->pszFilename );
-	strcat( pszNETCDFFilename,"\":" );
-	strcat( pszNETCDFFilename, szVarName );
-
-	CPLDebug( "GDAL_netCDF", "NETCDFFilename = %s\n", 
-		  pszNETCDFFilename);
-
-	poDS->papszName = CSLTokenizeString2(  pszNETCDFFilename,
-					       ":", CSLT_HONOURSTRINGS );
-	poDS->pszFilename = strdup( pszNETCDFFilename );
-
-
-    }
-
-    if (CSLCount(poDS->papszName) < 3)
-    {
-        delete poDS;
-        return NULL;
+        poDS->osSubdatasetName = szVarName;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1596,7 +1593,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     var=-1;
-    nc_inq_varid( cdfid, poDS->papszName[2], &var);
+    nc_inq_varid( cdfid, poDS->osSubdatasetName, &var);
     nd = 0;
     nc_inq_varndims ( cdfid, var, &nd );
 
@@ -1677,6 +1674,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     poDS->SetProjection( var );
+    poDS->SetMetadata( poDS->papszMetadata );
+
 /* -------------------------------------------------------------------- */
 /*      Create bands                                                    */
 /* -------------------------------------------------------------------- */
@@ -1720,10 +1719,18 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetMetadata( poDS->papszMetadata );
+    if( poDS->bTreatAsSubdataset )
+    {
+        poDS->SetPhysicalFilename( poDS->osFilename );
+        poDS->SetSubdatasetName( poDS->osSubdatasetName );
+    }
+    
+    poDS->TryLoadXML();
 
-    poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML( );
+    if( poDS->bTreatAsSubdataset )
+        poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
+    else
+        poDS->oOvManager.Initialize( poDS, poDS->osFilename );
 
     return( poDS );
 }
