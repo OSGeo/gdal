@@ -61,13 +61,13 @@ GDALMultiDomainMetadata::~GDALMultiDomainMetadata()
 void GDALMultiDomainMetadata::Clear()
 
 {
-    int i;
+    int i, nDomainCount;
 
+    nDomainCount = CSLCount( papszDomainList );
     CSLDestroy( papszDomainList );
     papszDomainList = NULL;
 
-    for( i = 0; papapszMetadataLists != NULL 
-                && papapszMetadataLists[i] != NULL; i++ )
+    for( i = 0; i < nDomainCount; i++ )
     {
         CSLDestroy( papapszMetadataLists[i] );
     }
