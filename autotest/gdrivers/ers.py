@@ -78,6 +78,45 @@ def ers_4():
     return tst.testOpen( check_prj = srs, check_gt = gt )
     
 ###############################################################################
+# Confirm we can recognised signed 8bit data.
+
+def ers_5():
+
+    ds = gdal.Open( 'data/8s.ers' )
+    md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
+
+    if md['PIXELTYPE'] != 'SIGNEDBYTE':
+        gdaltest.post_reason( 'Failed to detect SIGNEDBYTE' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
+# Confirm a copy preserves the signed byte info.
+
+def ers_6():
+
+    drv = gdal.GetDriverByName( 'ERS' )
+    
+    src_ds = gdal.Open( 'data/8s.ers' )
+
+    ds = drv.CreateCopy( 'tmp/8s.ers', src_ds )
+    
+    md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
+
+    if md['PIXELTYPE'] != 'SIGNEDBYTE':
+        gdaltest.post_reason( 'Failed to detect SIGNEDBYTE' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/8s.ers' )
+    
+    return 'success'
+    
+###############################################################################
 # Create simple copy and check (greyscale) using progressive option.
 
 def ers_cleanup():
@@ -89,6 +128,8 @@ gdaltest_list = [
     ers_2,
     ers_3,
     ers_4,
+    ers_5,
+    ers_6,
     ers_cleanup
     ]
   
