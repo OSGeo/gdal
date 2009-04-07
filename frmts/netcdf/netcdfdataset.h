@@ -135,11 +135,13 @@ class netCDFRasterBand;
 
 class netCDFDataset : public GDALPamDataset
 {
+    CPLString    osSubdatasetName;
+    int          bTreatAsSubdataset;
+
     double      adfGeoTransform[6];
     char        **papszSubDatasets;
     char        **papszGeolocation;
-    char        **papszName;
-    char        *pszFilename;
+    CPLString    osFilename;
     int          *panBandDimPos;         // X, Y, Z postion in array
     int          *panBandZLev;
     char         *pszProjection;
