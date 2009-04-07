@@ -2031,7 +2031,10 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
            dfIGEOLOLRX, dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY;
 
     bGotGeoTransform = TRUE;
-    memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
+    /* Valgrind would complain because SetGeoTransform() is called */
+    /* from SetProjection() with adfGeoTransform as argument */
+    if (adfGeoTransform != padfGeoTransform)
+        memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
 
     dfIGEOLOULX = padfGeoTransform[0] + 0.5 * padfGeoTransform[1] 
                                       + 0.5 * padfGeoTransform[2];
@@ -2128,7 +2131,8 @@ CPLErr NITFDataset::SetProjection(const char* _pszProjection)
     CPLFree(pszProjection);
     pszProjection = CPLStrdup(_pszProjection);
 
-    SetGeoTransform(adfGeoTransform);
+    if (bGotGeoTransform)
+        SetGeoTransform(adfGeoTransform);
 
     return CE_None;
 }
