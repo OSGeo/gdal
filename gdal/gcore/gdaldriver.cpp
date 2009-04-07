@@ -336,15 +336,18 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     
     CPLErrorReset();
 
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
-/*      Create destination dataset.                                     */
+/*      Validate that we can create the output as requested.            */
 /* -------------------------------------------------------------------- */
-    GDALDataset  *poDstDS;
     int          nXSize = poSrcDS->GetRasterXSize();
     int          nYSize = poSrcDS->GetRasterYSize();
     int          nBands = poSrcDS->GetRasterCount();
-    GDALDataType eType;
-    CPLErr       eErr = CE_None;
 
     CPLDebug( "GDAL", "Using default GDALDriver::CreateCopy implementation." );
 
@@ -355,15 +358,55 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         return NULL;
     }
 
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+/* -------------------------------------------------------------------- */
+/*      Propogate some specific structural metadata as options if it    */
+/*      appears to be supported by the target driver and the caller     */
+/*      didn't provide values.                                          */
+/* -------------------------------------------------------------------- */
+    char **papszCreateOptions = CSLDuplicate( papszOptions );
+    int  iOptItem;
+    static const char *apszOptItems[] = {
+        "NBITS", "IMAGE_STRUCTURE",
+        "PIXELTYPE", "IMAGE_STRUCTURE", 
+        NULL };
+
+    for( iOptItem = 0; apszOptItems[iOptItem] != NULL; iOptItem += 2 )
     {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return NULL;
+        // does the source have this metadata item on the first band?
+        const char *pszValue = 
+            poSrcDS->GetRasterBand(1)->GetMetadataItem( 
+                apszOptItems[iOptItem], apszOptItems[iOptItem+1] );
+
+        if( pszValue == NULL )
+            continue;
+
+        // do not override provided value.
+        if( CSLFetchNameValue( papszCreateOptions, pszValue ) != NULL )
+            continue;
+
+        // Does this appear to be a supported creation option on this driver?
+        const char *pszOptionList =
+            GetMetadataItem( GDAL_DMD_CREATIONDATATYPES );
+
+        if( pszOptionList == NULL 
+            || strstr(pszOptionList,apszOptItems[iOptItem]) != NULL )
+            continue;
+
+        papszCreateOptions = CSLSetNameValue( papszCreateOptions,
+                                              apszOptItems[iOptItem], 
+                                              pszValue );
     }
+    
+/* -------------------------------------------------------------------- */
+/*      Create destination dataset.                                     */
+/* -------------------------------------------------------------------- */
+    GDALDataset  *poDstDS;
+    GDALDataType eType;
+    CPLErr       eErr = CE_None;
 
     eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     poDstDS = Create( pszFilename, nXSize, nYSize, 
-                      nBands, eType, papszOptions );
+                      nBands, eType, papszCreateOptions );
 
     if( poDstDS == NULL )
         return NULL;
