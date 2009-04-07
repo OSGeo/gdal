@@ -130,13 +130,23 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
     else if( H5Tequal( H5T_NATIVE_USHORT, TypeID ) ) 
 	return GDT_UInt16;
     else if( H5Tequal( H5T_NATIVE_INT,    TypeID ) ) 
-	return GDT_Int16;      
-    else if( H5Tequal( H5T_NATIVE_UINT,   TypeID ) ) 
-	return GDT_UInt16;
-    else if( H5Tequal( H5T_NATIVE_LONG,   TypeID ) ) 
 	return GDT_Int32;      
-    else if( H5Tequal( H5T_NATIVE_ULONG,  TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_UINT,   TypeID ) ) 
 	return GDT_UInt32;
+    else if( H5Tequal( H5T_NATIVE_LONG,   TypeID ) ) 
+    {
+        if( sizeof(long) == 4 )
+            return GDT_Int32;      
+        else
+            return GDT_Unknown;
+    }
+    else if( H5Tequal( H5T_NATIVE_ULONG,  TypeID ) ) 
+    {
+        if( sizeof(unsigned long) == 4 )
+            return GDT_UInt32;      
+        else
+            return GDT_Unknown;
+    }
     else if( H5Tequal( H5T_NATIVE_FLOAT,  TypeID ) ) 
 	return GDT_Float32;
     else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) ) 
@@ -163,17 +173,17 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
     else if( H5Tequal( H5T_NATIVE_UCHAR,  TypeID ) ) 
 	return "8-bit unsigned character";    
     else if( H5Tequal( H5T_NATIVE_SHORT,  TypeID ) )
-	return "8-bit integer";
-    else if( H5Tequal( H5T_NATIVE_USHORT, TypeID ) ) 
-	return "8-bit unsigned integer";
-    else if( H5Tequal( H5T_NATIVE_INT,    TypeID ) ) 
 	return "16-bit integer";
-    else if( H5Tequal( H5T_NATIVE_UINT,   TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_USHORT, TypeID ) ) 
 	return "16-bit unsigned integer";
-    else if( H5Tequal( H5T_NATIVE_LONG,   TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_INT,    TypeID ) ) 
 	return "32-bit integer";
-    else if( H5Tequal( H5T_NATIVE_ULONG,  TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_UINT,   TypeID ) ) 
 	return "32-bit unsigned integer";
+    else if( H5Tequal( H5T_NATIVE_LONG,   TypeID ) ) 
+	return "32/64-bit integer";
+    else if( H5Tequal( H5T_NATIVE_ULONG,  TypeID ) ) 
+	return "32/64-bit unsigned integer";
     else if( H5Tequal( H5T_NATIVE_FLOAT,  TypeID ) ) 
 	return "32-bit floating-point";
     else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) ) 
@@ -183,7 +193,7 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
     else if( H5Tequal( H5T_NATIVE_ULLONG, TypeID ) ) 
 	return "64-bit unsigned integer";
     else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) ) 
-      return "64-bit floating-point";
+        return "64-bit floating-point";
     
     return "Unknown";
 }
@@ -807,8 +817,15 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 /* -------------------------------------------------------------------- */
 /*      Create Sub dataset list                                         */
 /* -------------------------------------------------------------------- */
-    if( (poRootGroup->nType == H5G_DATASET ) && bSUBDATASET ) {
-	
+    if( (poRootGroup->nType == H5G_DATASET ) && bSUBDATASET 
+        && poDS->GetDataType( poRootGroup->native ) == GDT_Unknown )
+    {
+        CPLDebug( "HDF5", "Skipping unsupported %s of type %s", 
+                  poRootGroup->pszUnderscorePath, 
+                  poDS->GetDataTypeName( poRootGroup->native ) );
+    }
+    else if( (poRootGroup->nType == H5G_DATASET ) && bSUBDATASET ) 
+    {
 	szDim[0]='\0';
 	switch( poRootGroup->nRank ) {
 	case 3: 
@@ -830,7 +847,6 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 	strcat( szDim,szTemp );
 	
 	sprintf( szTemp, "SUBDATASET_%d_NAME", ++(poDS->nSubDataCount) );
-
 
 	poDS->papszSubDatasets =
 	    CSLSetNameValue( poDS->papszSubDatasets, szTemp,
