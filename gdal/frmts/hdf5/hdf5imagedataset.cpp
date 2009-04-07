@@ -350,6 +350,9 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->SetSubdatasetName( papszName[2] );
 
+    CSLDestroy(papszName);
+    papszName = NULL;
+
     if( !H5Fis_hdf5(szFilename) ) {
         delete poDS;
         return NULL;
