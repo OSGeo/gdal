@@ -17,12 +17,12 @@ but with less functionalities.<p>
 
 To connect to a Postgres datasource, use a connection string specifying the database name,
 with additional parameters as necessary<br>
-<blockquote><pre>PG:dbname=databasename</pre><em> or</em><pre>PG:"dbname='databasename' server='addr' port='5432' user='x' passwd='y'"</pre></blockquote>
+<blockquote><pre>PG:dbname=databasename</pre><em> or</em><pre>PG:"dbname='databasename' host='addr' port='5432' user='x' passwd='y'"</pre></blockquote>
 It's also possible to omit the database name and connect
-to a <em>default</em> database, with the same name as the user name. 
+to a <em>default</em> database, with the same name as the user name.<br>
 <b>Note</b>: We use PQconnectdb() to make the connection, so any other options and defaults
-that would apply to it, apply to the name here.  The PG: prefix is used
-to mark the name as a postgres connection string.<p>
+that would apply to it, apply to the name here (refer to the documentation of the PostgreSQL server).
+The PG: prefix is used to mark the name as a postgres connection string.<p>
 
 Starting with GDAL 1.6.0, the set of tables to be scanned can be overridden by specifying
 <i>tables=[schema.]table[(geom_column_name)][,[schema2.]table2[(geom_column_name2)],...]</i> within the connection string.
