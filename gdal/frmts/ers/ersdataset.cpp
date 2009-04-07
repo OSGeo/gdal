@@ -791,6 +791,10 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
                                        iWordSize,
                                        iWordSize * nBands * poDS->nRasterXSize,
                                        eType, bNative, TRUE ));
+                if( EQUAL(osCellType,"Signed8BitInteger") )
+                    poDS->GetRasterBand(iBand+1)->
+                        SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", 
+                                         "IMAGE_STRUCTURE" );
             }
         }
     }
@@ -1056,6 +1060,15 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Handling for signed eight bit data.                             */
+/* -------------------------------------------------------------------- */
+    const char *pszPixelType = CSLFetchNameValue( papszOptions, "PIXELTYPE" );
+    if( pszPixelType 
+        && EQUAL(pszPixelType,"SIGNEDBYTE") 
+        && eType == GDT_Byte )
+        pszCellType = "Signed8BitInteger";
+
+/* -------------------------------------------------------------------- */
 /*      Write binary file.                                              */
 /* -------------------------------------------------------------------- */
     GUIntBig nSize;
@@ -1155,6 +1168,7 @@ void GDALRegister_ERS()
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
+"   <Option name='PIXELTYPE' type='string' description='By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
 "</CreationOptionList>" );
 
         poDriver->pfnOpen = ERSDataset::Open;
