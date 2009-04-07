@@ -52,6 +52,64 @@ def hdf5_1():
     return 'success'
 
 ###############################################################################
+# Confirm expected subdataset information.
+
+def hdf5_2():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/u8be.h5' )
+
+    sds_list = ds.GetMetadata('SUBDATASETS')
+
+    if len(sds_list) != 2:
+        print sds_list
+        gdaltest.post_reason( 'Did not get expected subdataset count.' )
+        return 'fail'
+
+    if sds_list['SUBDATASET_1_NAME'] != 'HDF5:"data/u8be.h5"://TestArray':
+        print sds_list
+        gdaltest.post_reason( 'did not get expected subdatasets.' )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# Confirm subdataset access, and checksum.
+
+def hdf5_3():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'HDF5:"data/u8be.h5"://TestArray' )
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 135:
+        gdaltest.post_reason( 'did not get expected checksum' )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# Similar check on a 16bit dataset.
+
+def hdf5_4():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'HDF5:"data/groups.h5"://MyGroup/dset1' )
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 9:
+        gdaltest.post_reason( 'did not get expected checksum' )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 # 
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
@@ -78,7 +136,10 @@ class TestHDF5:
 
 
 
-gdaltest_list = [ hdf5_1 ]
+gdaltest_list = [ hdf5_1,
+                  hdf5_2,
+                  hdf5_3,
+                  hdf5_4 ]
 
 hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/hdf_files/hdf5/samples/convert', 'C1979091.h5',
                                      'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
