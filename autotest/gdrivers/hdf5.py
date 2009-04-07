@@ -33,6 +33,7 @@ import sys
 import gdal
 import array
 import string
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -110,6 +111,30 @@ def hdf5_4():
     return 'success'
 
 ###############################################################################
+# Test generating an overview on a subdataset.
+
+def hdf5_5():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    shutil.copyfile( 'data/groups.h5', 'tmp/groups.h5' )
+    
+    ds = gdal.Open( 'HDF5:"tmp/groups.h5"://MyGroup/dset1' )
+    ds.BuildOverviews( overviewlist = [2] )
+    ds = None
+    
+    ds = gdal.Open( 'HDF5:"tmp/groups.h5"://MyGroup/dset1' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason( 'failed to find overview' )
+        return 'fail'
+    ds = None
+
+    gdaltest.clean_tmp()
+    
+    return 'success'
+
+###############################################################################
 # 
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
@@ -139,7 +164,8 @@ class TestHDF5:
 gdaltest_list = [ hdf5_1,
                   hdf5_2,
                   hdf5_3,
-                  hdf5_4 ]
+                  hdf5_4,
+                  hdf5_5 ]
 
 hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/hdf_files/hdf5/samples/convert', 'C1979091.h5',
                                      'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
