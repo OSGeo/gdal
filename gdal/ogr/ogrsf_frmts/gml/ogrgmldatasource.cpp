@@ -387,7 +387,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 
         VSIFPrintf( fpOutput, 
               "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-              "     xsi:schemaLocation=\"http://ogr.maptools.org/%s\"\n", 
+              "     xsi:schemaLocation=\"http://ogr.maptools.org/ %s\"\n", 
                     CPLResetExtension( pszBasename, "xsd" ) );
         CPLFree( pszBasename );
     }
