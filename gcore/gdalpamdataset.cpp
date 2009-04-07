@@ -205,7 +205,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
     psMD = oMDMD.Serialize();
     if( psMD != NULL )
     {
-        if( psMD->psChild == NULL )
+        if( psMD->psChild == NULL && psMD->psNext == NULL )
             CPLDestroyXMLNode( psMD );
         else
             CPLAddXMLChild( psDSTree, psMD );
@@ -514,6 +514,21 @@ void GDALPamDataset::SetPhysicalFilename( const char *pszFilename )
 }
 
 /************************************************************************/
+/*                        GetPhysicalFilename()                         */
+/************************************************************************/
+
+const char *GDALPamDataset::GetPhysicalFilename()
+
+{
+    PamInitialize();
+
+    if( psPam )
+        return psPam->osPhysicalFilename;
+    else
+        return "";
+}
+
+/************************************************************************/
 /*                         SetSubdatasetName()                          */
 /************************************************************************/
 
@@ -524,6 +539,21 @@ void GDALPamDataset::SetSubdatasetName( const char *pszSubdataset )
 
     if( psPam )
         psPam->osSubdatasetName = pszSubdataset;
+}
+
+/************************************************************************/
+/*                         GetSubdatasetName()                          */
+/************************************************************************/
+
+const char *GDALPamDataset::GetSubdatasetName()
+
+{
+    PamInitialize();
+
+    if( psPam )
+        return psPam->osSubdatasetName;
+    else
+        return "";
 }
 
 /************************************************************************/
@@ -706,7 +736,7 @@ CPLErr GDALPamDataset::TrySaveXML()
         if( psOldTree == NULL )
             psOldTree = CPLCreateXMLNode( NULL, CXT_Element, "PAMDataset" );
 
-        for( psSubTree = psTree->psChild; 
+        for( psSubTree = psOldTree->psChild; 
              psSubTree != NULL;
              psSubTree = psSubTree->psNext )
         {
@@ -744,7 +774,6 @@ CPLErr GDALPamDataset::TrySaveXML()
 /* -------------------------------------------------------------------- */
 /*      Try saving the auxilary metadata.                               */
 /* -------------------------------------------------------------------- */
-    const char *pszNewPam;
     int bSaved;
     
     CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -757,20 +786,29 @@ CPLErr GDALPamDataset::TrySaveXML()
 /* -------------------------------------------------------------------- */
     if( bSaved )
         eErr = CE_None;
-    else if( PamGetProxy(GetDescription()) == NULL 
-             && ((pszNewPam = PamAllocateProxy(GetDescription())) != NULL))
-    {
-        CPLErrorReset();
-        CPLFree( psPam->pszPamFilename );
-        psPam->pszPamFilename = CPLStrdup(pszNewPam);
-        eErr = TrySaveXML();
-    }
     else
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Unable to save auxilary information in %s.",
-                  psPam->pszPamFilename );
-        eErr = CE_Warning;
+        const char *pszNewPam;
+        const char *pszBasename = GetDescription();
+
+        if( psPam && psPam->osPhysicalFilename.length() > 0 )
+            pszBasename = psPam->osPhysicalFilename;
+            
+        if( PamGetProxy(pszBasename) == NULL 
+            && ((pszNewPam = PamAllocateProxy(pszBasename)) != NULL))
+        {
+            CPLErrorReset();
+            CPLFree( psPam->pszPamFilename );
+            psPam->pszPamFilename = CPLStrdup(pszNewPam);
+            eErr = TrySaveXML();
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Unable to save auxilary information in %s.",
+                      psPam->pszPamFilename );
+            eErr = CE_Warning;
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -941,6 +979,43 @@ char **GDALPamDataset::GetFileList()
 
     return papszFileList;
 }
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling, 
+                                        int nOverviews, int *panOverviewList, 
+                                        int nListBands, int *panBandList,
+                                        GDALProgressFunc pfnProgress, 
+                                        void * pProgressData )
+    
+{
+/* -------------------------------------------------------------------- */
+/*      Initialize PAM.                                                 */
+/* -------------------------------------------------------------------- */
+    PamInitialize();
+    if( psPam == NULL )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      If we appear to have subdatasets and to have a physical         */
+/*      filename, use that physical filename to derive a name for a     */
+/*      new overview file.                                              */
+/* -------------------------------------------------------------------- */
+    if( oOvManager.IsInitialized() && psPam->osPhysicalFilename.length() != 0 )
+        return oOvManager.BuildOverviewsSubDataset( 
+            psPam->osPhysicalFilename, pszResampling, 
+            nOverviews, panOverviewList,
+            nListBands, panBandList,
+            pfnProgress, pProgressData );
+    else 
+        return GDALDataset::IBuildOverviews( pszResampling, 
+                                             nOverviews, panOverviewList, 
+                                             nListBands, panBandList, 
+                                             pfnProgress, pProgressData );
+}
+
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
