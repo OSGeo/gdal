@@ -1222,6 +1222,71 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Does this look like a CADRG polar tile ? (#2940)                */
+/* -------------------------------------------------------------------- */
+    const char* pszIID1 = (psImage) ? CSLFetchNameValue(psImage->papszMetadata, "NITF_IID1") : NULL;
+    const char* pszITITLE = (psImage) ? CSLFetchNameValue(psImage->papszMetadata, "NITF_ITITLE") : NULL;
+    if( psImage != NULL && !poDS->bGotGeoTransform &&
+        (psImage->chICORDS == 'G' || psImage->chICORDS == 'D') &&
+        pszIID1 != NULL && EQUAL(pszIID1, "CADRG") &&
+        pszITITLE != NULL && strlen(pszITITLE) >= 12 && pszITITLE[strlen(pszITITLE) - 1] == '9' )
+    {
+        /* To get a perfect rectangle in Azimuthal Equidistant projection, we must use */
+        /* the sphere and not WGS84 ellipsoid. That's a big strange... */
+        const char* pszNorthPolarProjection = "+proj=aeqd +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs";
+        const char* pszSouthPolarProjection = "+proj=aeqd +lat_0=-90 +lon_0=0 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs";
+
+        OGRSpatialReference oSRS_AEQD, oSRS_WGS84;
+
+        const char *pszPolarProjection = (psImage->dfULY > 0) ? pszNorthPolarProjection : pszSouthPolarProjection;
+        oSRS_AEQD.importFromProj4(pszPolarProjection);
+
+        oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
+
+        OGRCoordinateTransformationH hCT =
+                (OGRCoordinateTransformationH)OGRCreateCoordinateTransformation(&oSRS_WGS84, &oSRS_AEQD);
+        if (hCT)
+        {
+            double dfULX_AEQD = psImage->dfULX;
+            double dfULY_AEQD = psImage->dfULY;
+            double dfURX_AEQD = psImage->dfURX;
+            double dfURY_AEQD = psImage->dfURY;
+            double dfLLX_AEQD = psImage->dfLLX;
+            double dfLLY_AEQD = psImage->dfLLY;
+            double dfLRX_AEQD = psImage->dfLRX;
+            double dfLRY_AEQD = psImage->dfLRY;
+            double z = 0;
+            int bSuccess = TRUE;
+            bSuccess &= OCTTransform(hCT, 1, &dfULX_AEQD, &dfULY_AEQD, &z);
+            bSuccess &= OCTTransform(hCT, 1, &dfURX_AEQD, &dfURY_AEQD, &z);
+            bSuccess &= OCTTransform(hCT, 1, &dfLLX_AEQD, &dfLLY_AEQD, &z);
+            bSuccess &= OCTTransform(hCT, 1, &dfLRX_AEQD, &dfLRY_AEQD, &z);
+            if (bSuccess)
+            {
+                /* Check that the coordinates of the 4 corners in Azimuthal Equidistant projection */
+                /* are a rectangle */
+                if (fabs((dfULX_AEQD - dfLLX_AEQD) / dfLLX_AEQD) < 1e-6 &&
+                    fabs((dfURX_AEQD - dfLRX_AEQD) / dfLRX_AEQD) < 1e-6 &&
+                    fabs((dfULY_AEQD - dfURY_AEQD) / dfURY_AEQD) < 1e-6 &&
+                    fabs((dfLLY_AEQD - dfLRY_AEQD) / dfLRY_AEQD) < 1e-6)
+                {
+                    CPLFree(poDS->pszProjection);
+                    oSRS_AEQD.exportToWkt( &(poDS->pszProjection) );
+
+                    poDS->bGotGeoTransform = TRUE;
+                    poDS->adfGeoTransform[0] = dfULX_AEQD;
+                    poDS->adfGeoTransform[1] = (dfURX_AEQD - dfULX_AEQD) / poDS->nRasterXSize;
+                    poDS->adfGeoTransform[2] = 0;
+                    poDS->adfGeoTransform[3] = dfULY_AEQD;
+                    poDS->adfGeoTransform[4] = 0;
+                    poDS->adfGeoTransform[5] = (dfLLY_AEQD - dfULY_AEQD) / poDS->nRasterYSize;
+                }
+            }
+            OCTDestroyCoordinateTransformation(hCT);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do we have IGEOLO data that can be treated as a                 */
 /*      geotransform?  Our approach should support images in an         */
 /*      affine rotated frame of reference.                              */
