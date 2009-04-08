@@ -104,7 +104,7 @@ def hdf5_4():
     ds = gdal.Open( 'HDF5:"data/groups.h5"://MyGroup/dset1' )
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 9:
+    if cs != 18:
         gdaltest.post_reason( 'did not get expected checksum' )
         return 'fail'
     
