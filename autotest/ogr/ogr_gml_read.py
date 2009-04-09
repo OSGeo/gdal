@@ -257,6 +257,12 @@ def ogr_gml_7():
     gml_ds = ogr.Open( 'data/test_point.gml' )
     lyr = gml_ds.GetLayer()
     ldefn = lyr.GetLayerDefn()
+
+    try:
+        ldefn.GetFieldDefn(0).GetFieldTypeName
+    except:
+        return 'skip'
+
     if ldefn.GetFieldDefn(0).GetFieldTypeName(ldefn.GetFieldDefn(0).GetType())\
        != 'Real':
         return 'fail'
