@@ -43,7 +43,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
-                          FILE * fp, const char *pszFilename, int bNew, int bInWriteMode )
+                          FILE * fp, const char *pszFilename, int bNew, int bInWriteMode,
+                          char chDelimiter)
 
 {
     fpCSV = fp;
@@ -51,6 +52,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     this->bInWriteMode = bInWriteMode;
     this->bNew = bNew;
     this->pszFilename = CPLStrdup(pszFilename);
+    this->chDelimiter = chDelimiter;
 
     bUseCRLF = FALSE;
     bNeedRewind = FALSE;
@@ -94,7 +96,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
     if( !bNew )
     {
-        papszTokens = CSVReadParseLine( fpCSV );
+        papszTokens = CSVReadParseLine2( fpCSV, chDelimiter );
         nFieldCount = CSLCount( papszTokens );
         bHasFieldNames = TRUE;
     }
@@ -251,7 +253,7 @@ void OGRCSVLayer::ResetReading()
     VSIRewind( fpCSV );
 
     if( bHasFieldNames )
-        CSLDestroy( CSVReadParseLine( fpCSV ) );
+        CSLDestroy( CSVReadParseLine2( fpCSV, chDelimiter ) );
 
     bNeedRewind = FALSE;
 
@@ -268,7 +270,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Read the CSV record.                                            */
 /* -------------------------------------------------------------------- */
-    char **papszTokens = CSVReadParseLine( fpCSV );
+    char **papszTokens = CSVReadParseLine2( fpCSV, chDelimiter );
 
     if( papszTokens == NULL )
         return NULL;
@@ -458,37 +460,37 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
             if (fpCSVT) VSIFPrintf( fpCSVT, "%s", "String");
             if (poFeatureDefn->GetFieldCount() > 0)
             {
-                VSIFPrintf( fpCSV, "%s", "," );
+                VSIFPrintf( fpCSV, "%c", chDelimiter );
                 if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
             }
         }
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
         {
-            VSIFPrintf( fpCSV, "%s", "X,Y,Z");
+            VSIFPrintf( fpCSV, "X%cY%cZ", chDelimiter, chDelimiter);
             if (fpCSVT) VSIFPrintf( fpCSVT, "%s", "Real,Real,Real");
             if (poFeatureDefn->GetFieldCount() > 0)
             {
-                VSIFPrintf( fpCSV, "%s", "," );
+                VSIFPrintf( fpCSV, "%c", chDelimiter );
                 if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
             }
         }
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_XY)
         {
-            VSIFPrintf( fpCSV, "%s", "X,Y");
+            VSIFPrintf( fpCSV, "X%cY", chDelimiter);
             if (fpCSVT) VSIFPrintf( fpCSVT, "%s", "Real,Real");
             if (poFeatureDefn->GetFieldCount() > 0)
             {
-                VSIFPrintf( fpCSV, "%s", "," );
+                VSIFPrintf( fpCSV, "%c", chDelimiter );
                 if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
             }
         }
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_YX)
         {
-            VSIFPrintf( fpCSV, "%s", "Y,X");
+            VSIFPrintf( fpCSV, "Y%cX", chDelimiter);
             if (fpCSVT) VSIFPrintf( fpCSVT, "%s", "Real,Real");
             if (poFeatureDefn->GetFieldCount() > 0)
             {
-                VSIFPrintf( fpCSV, "%s", "," );
+                VSIFPrintf( fpCSV, "%c", chDelimiter );
                 if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
             }
         }
@@ -499,7 +501,7 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 
             if( iField > 0 )
             {
-                VSIFPrintf( fpCSV, "%s", "," );
+                VSIFPrintf( fpCSV, "%c", chDelimiter );
                 if (fpCSVT) VSIFPrintf( fpCSVT, "%s", ",");
             }
 
@@ -567,7 +569,7 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
         }
         CPLFree(pszWKT);
         if (poFeatureDefn->GetFieldCount() > 0)
-            VSIFPrintf( fpCSV, "%s", "," );
+            VSIFPrintf( fpCSV, "%c", chDelimiter);
     }
     else if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ ||
              eGeometryFormat == OGR_CSV_GEOM_AS_XY ||
@@ -588,19 +590,19 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
             while(*pc != '\0')
             {
                 if (*pc == ' ')
-                    *pc = ',';
+                    *pc = chDelimiter;
                 pc ++;
             }
             VSIFPrintf( fpCSV, "%s", szBuffer );
         }
         else
         {
-            VSIFPrintf( fpCSV, "%s", "," );
+            VSIFPrintf( fpCSV, "%c", chDelimiter );
             if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
-                VSIFPrintf( fpCSV, "%s", "," );
+                VSIFPrintf( fpCSV, "%c", chDelimiter );
         }
         if (poFeatureDefn->GetFieldCount() > 0)
-            VSIFPrintf( fpCSV, "%s", "," );
+            VSIFPrintf( fpCSV, "%c", chDelimiter );
     }
 
 /* -------------------------------------------------------------------- */
@@ -611,7 +613,7 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
         char *pszEscaped;
         
         if( iField > 0 )
-            fprintf( fpCSV, "%s", "," );
+            fprintf( fpCSV, "%c", chDelimiter );
         
         pszEscaped = 
             CPLEscapeString( poNewFeature->GetFieldAsString(iField),
