@@ -49,6 +49,35 @@ def ogr_csv_1():
     else:
         return 'fail'
 
+
+###############################################################################
+# Check layer
+
+def ogr_csv_check_layer(lyr, expect_code_as_numeric):
+
+    if expect_code_as_numeric is True:
+        expect = [8901, 8902, 8903, 8904 ]
+    else:
+        expect = ['8901', '8902', '8903', '8904' ]
+
+    tr = ogrtest.check_features_against_list( lyr,'PRIME_MERIDIAN_CODE',expect)
+    if not tr:
+        return 'fail'
+
+    lyr.ResetReading()
+
+    expect = [ '', 'Instituto Geografico e Cadastral; Lisbon',
+               'Institut Geographique National (IGN), Paris',
+               'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota' ]
+
+    tr = ogrtest.check_features_against_list( lyr,'INFORMATION_SOURCE',expect)
+    if not tr:
+        return 'fail'
+
+    lyr.ResetReading()
+
+    return 'success'
+
 ###############################################################################
 # Verify the some attributes read properly.
 #
@@ -59,25 +88,47 @@ def ogr_csv_2():
 
     lyr = gdaltest.csv_ds.GetLayerByName( 'prime_meridian' )
 
-    expect = ['8901', '8902', '8903', '8904' ]
-    
-    tr = ogrtest.check_features_against_list( lyr,'PRIME_MERIDIAN_CODE',expect)
-    if not tr:
-        return 'fail'
+    return ogr_csv_check_layer(lyr, False)
 
-    lyr.ResetReading()
+###############################################################################
+# Copy layer
 
-    expect = [ '', 'Instituto Geografico e Cadastral; Lisbon',
-               'Institut Geographique National (IGN), Paris',
-               'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota' ]
-    
-    tr = ogrtest.check_features_against_list( lyr,'INFORMATION_SOURCE',expect)
-    if not tr:
-        return 'fail'
+def ogr_csv_copy_layer(layer_name, options):
 
-    lyr.ResetReading()
+    #######################################################
+    # Create layer (.csv file)
+    if options is None:
+        new_lyr = gdaltest.csv_tmpds.CreateLayer( layer_name )
+    else:
+        new_lyr = gdaltest.csv_tmpds.CreateLayer( layer_name, options = options )
 
-    return 'success'
+    #######################################################
+    # Setup Schema
+    ogrtest.quick_create_layer_def( new_lyr,
+                                    [ ('PRIME_MERIDIAN_CODE', ogr.OFTInteger),
+                                      ('INFORMATION_SOURCE', ogr.OFTString) ] )
+
+    #######################################################
+    # Copy in matching prime meridian fields.
+
+    dst_feat = ogr.Feature( feature_def = new_lyr.GetLayerDefn() )
+
+    srclyr = gdaltest.csv_ds.GetLayerByName( 'prime_meridian' )
+    srclyr.ResetReading()
+
+    feat = srclyr.GetNextFeature()
+
+    while feat is not None:
+
+        dst_feat.SetFrom( feat )
+        new_lyr.CreateFeature( dst_feat )
+
+        feat.Destroy()
+        feat = srclyr.GetNextFeature()
+
+    dst_feat.Destroy()
+
+    return new_lyr
 
 ###############################################################################
 # Copy prime_meridian.csv to a new subtree under the tmp directory.
@@ -102,35 +153,10 @@ def ogr_csv_3():
 
     #######################################################
     # Create layer (.csv file)
-    gdaltest.csv_lyr1 = gdaltest.csv_tmpds.CreateLayer( 'pm1' )
+    gdaltest.csv_lyr1 = ogr_csv_copy_layer( 'pm1', None )
 
-    #######################################################
-    # Setup Schema
-    ogrtest.quick_create_layer_def( gdaltest.csv_lyr1,
-                                    [ ('PRIME_MERIDIAN_CODE', ogr.OFTInteger),
-                                      ('INFORMATION_SOURCE', ogr.OFTString) ] )
-    
-    #######################################################
-    # Copy in matching prime meridian fields.
-
-    dst_feat = ogr.Feature( feature_def = gdaltest.csv_lyr1.GetLayerDefn() )
-
-    srclyr = gdaltest.csv_ds.GetLayerByName( 'prime_meridian' )
-    
-    feat = srclyr.GetNextFeature()
-    
-    while feat is not None:
-
-        dst_feat.SetFrom( feat )
-        gdaltest.csv_lyr1.CreateFeature( dst_feat )
-
-        feat.Destroy()
-        feat = srclyr.GetNextFeature()
-
-    dst_feat.Destroy()
-        
     return 'success'
-    
+
 
 ###############################################################################
 # Verify the some attributes read properly.
@@ -142,27 +168,7 @@ def ogr_csv_4():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    lyr = gdaltest.csv_lyr1
-
-    expect = [8901, 8902, 8903, 8904 ]
-    
-    tr = ogrtest.check_features_against_list( lyr,'PRIME_MERIDIAN_CODE',expect)
-    if not tr:
-        return 'fail'
-
-    lyr.ResetReading()
-
-    expect = [ '', 'Instituto Geografico e Cadastral; Lisbon',
-               'Institut Geographique National (IGN), Paris',
-               'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota' ]
-    
-    tr = ogrtest.check_features_against_list( lyr,'INFORMATION_SOURCE',expect)
-    if not tr:
-        return 'fail'
-
-    lyr.ResetReading()
-    
-    return 'success'
+    return ogr_csv_check_layer(gdaltest.csv_lyr1, True)
 
 ###############################################################################
 # Copy prime_meridian.csv again, in CRLF mode.
@@ -173,38 +179,9 @@ def ogr_csv_5():
 
     #######################################################
     # Create layer (.csv file)
-    options = ['LINEFORMAT=CRLF',]
-    gdaltest.csv_lyr2 = gdaltest.csv_tmpds.CreateLayer( 'pm2',
-                                                        options = options )
+    gdaltest.csv_lyr2 = ogr_csv_copy_layer( 'pm2', ['LINEFORMAT=CRLF',] )
 
-    #######################################################
-    # Setup Schema
-    ogrtest.quick_create_layer_def( gdaltest.csv_lyr2,
-                                    [ ('PRIME_MERIDIAN_CODE', ogr.OFTInteger),
-                                      ('INFORMATION_SOURCE', ogr.OFTString) ] )
-    
-    #######################################################
-    # Copy in matching prime meridian fields.
-
-    dst_feat = ogr.Feature( feature_def = gdaltest.csv_lyr2.GetLayerDefn() )
-
-    srclyr = gdaltest.csv_ds.GetLayerByName( 'prime_meridian' )
-    srclyr.ResetReading()
-    
-    feat = srclyr.GetNextFeature()
-    
-    while feat is not None:
-
-        dst_feat.SetFrom( feat )
-        gdaltest.csv_lyr2.CreateFeature( dst_feat )
-
-        feat.Destroy()
-        feat = srclyr.GetNextFeature()
-
-    dst_feat.Destroy()
-        
     return 'success'
-    
 
 ###############################################################################
 # Verify the some attributes read properly.
@@ -214,27 +191,7 @@ def ogr_csv_6():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    lyr = gdaltest.csv_lyr2
-
-    expect = [8901, 8902, 8903, 8904 ]
-    
-    tr = ogrtest.check_features_against_list( lyr,'PRIME_MERIDIAN_CODE',expect)
-    if not tr:
-        return 'fail'
-
-    lyr.ResetReading()
-
-    expect = [ '', 'Instituto Geografico e Cadastral; Lisbon',
-               'Institut Geographique National (IGN), Paris',
-               'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota' ]
-    
-    tr = ogrtest.check_features_against_list( lyr,'INFORMATION_SOURCE',expect)
-    if not tr:
-        return 'fail'
-
-    lyr.ResetReading()
-    
-    return 'success'
+    return ogr_csv_check_layer(gdaltest.csv_lyr2, True)
 
 ###############################################################################
 # Delete a layer and verify it seems to have worked properly.
@@ -718,6 +675,47 @@ def ogr_csv_13():
     return 'success'
 
 ###############################################################################
+# Copy prime_meridian.csv again, with SEMICOLON as separator
+
+def ogr_csv_14():
+    if gdaltest.csv_ds is None:
+        return 'skip'
+
+    gdaltest.csv_tmpds = ogr.Open( 'tmp/csvwrk', update = 1 )
+    gdaltest.csv_ds.Destroy()
+    gdaltest.csv_ds = ogr.Open( 'data/prime_meridian.csv'  )
+
+    #######################################################
+    # Create layer (.csv file)
+    gdaltest.csv_lyr1 = ogr_csv_copy_layer( 'pm3', ['SEPARATOR=SEMICOLON',] )
+
+    return 'success'
+
+###############################################################################
+# Verify the some attributes read properly.
+#
+
+def ogr_csv_15():
+    if gdaltest.csv_ds is None:
+        return 'skip'
+
+    return ogr_csv_check_layer(gdaltest.csv_lyr1, True)
+
+###############################################################################
+# Close the file and check again
+#
+
+def ogr_csv_16():
+    if gdaltest.csv_ds is None:
+        return 'skip'
+
+    gdaltest.csv_tmpds.Destroy()
+    gdaltest.csv_tmpds = ogr.Open( 'tmp/csvwrk' )
+    gdaltest.csv_lyr1 = gdaltest.csv_tmpds.GetLayerByName('pm3')
+
+    return ogr_csv_check_layer(gdaltest.csv_lyr1, False)
+
+###############################################################################
 # 
 
 def ogr_csv_cleanup():
@@ -730,6 +728,7 @@ def ogr_csv_cleanup():
 
     try:
         gdaltest.csv_lyr1 = None
+        gdaltest.csv_lyr2 = None
         gdaltest.csv_tmpds.Destroy()
         gdaltest.csv_tmpds = None
     except:
@@ -759,6 +758,9 @@ gdaltest_list = [
     ogr_csv_11,
     ogr_csv_12,
     ogr_csv_13,
+    ogr_csv_14,
+    ogr_csv_15,
+    ogr_csv_16,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
