@@ -58,6 +58,8 @@ typedef struct ctb {
 
     int         bNonUniqueKey;
 
+    char        chDelimiter;
+
     /* Cache for whole file */
     int         nLineCount;
     char        **papszLines;
@@ -84,6 +86,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 {
     CSVTable    *psTable;
     FILE        *fp;
+    const char  *pszLine;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the table, and allocate the thread-local pointer to it    */
@@ -123,6 +126,14 @@ static CSVTable *CSVAccess( const char * pszFilename )
     if( fp == NULL )
         return NULL;
 
+    pszLine = CPLReadLine( fp );
+    if( pszLine == NULL )
+    {
+        VSIFClose( fp );
+        return( NULL );
+    }
+    VSIRewind( fp );
+
 /* -------------------------------------------------------------------- */
 /*      Create an information structure about this table, and add to    */
 /*      the front of the list.                                          */
@@ -133,13 +144,14 @@ static CSVTable *CSVAccess( const char * pszFilename )
     psTable->pszFilename = CPLStrdup( pszFilename );
     psTable->bNonUniqueKey = FALSE; /* as far as we know now */
     psTable->psNext = *ppsCSVTableList;
-    
+    psTable->chDelimiter = CSVDetectSeperator(pszLine);
+
     *ppsCSVTableList = psTable;
 
 /* -------------------------------------------------------------------- */
 /*      Read the table header record containing the field names.        */
 /* -------------------------------------------------------------------- */
-    psTable->papszFieldNames = CSVReadParseLine( fp );
+    psTable->papszFieldNames = CSVReadParseLine2( fp, psTable->chDelimiter );
 
     return( psTable );
 }
@@ -226,7 +238,7 @@ void CSVDeaccess( const char * pszFilename )
 /*      semantics.                                                      */
 /************************************************************************/
 
-static char **CSVSplitLine( const char *pszString )
+static char **CSVSplitLine( const char *pszString, char chDelimiter )
 
 {
     char        **papszRetList = NULL;
@@ -247,7 +259,7 @@ static char **CSVSplitLine( const char *pszString )
         {
 
             /* End if this is a delimeter skip it and break. */
-            if( !bInString && *pszString == ',' )
+            if( !bInString && *pszString == chDelimiter )
             {
                 pszString++;
                 break;
@@ -282,7 +294,7 @@ static char **CSVSplitLine( const char *pszString )
         /* If the last token is an empty token, then we have to catch
          * it now, otherwise we won't reenter the loop and it will be lost. 
          */
-        if ( *pszString == '\0' && *(pszString-1) == ',' )
+        if ( *pszString == '\0' && *(pszString-1) == chDelimiter )
         {
             papszRetList = CSLAddString( papszRetList, "" );
         }
@@ -423,6 +435,24 @@ static void CSVIngest( const char *pszFilename )
 }
 
 /************************************************************************/
+/*                        CSVDetectSeperator()                          */
+/************************************************************************/
+
+char CSVDetectSeperator (const char* pszLine)
+{
+    if (strchr(pszLine, ';') != NULL &&
+        strchr(pszLine, '\t') == NULL &&
+        strchr(pszLine, ',') == NULL)
+        return ';';
+    else if (strchr(pszLine, '\t') != NULL &&
+             strchr(pszLine, ';') == NULL &&
+             strchr(pszLine, ',') == NULL)
+        return '\t';
+    else
+        return ',';
+}
+
+/************************************************************************/
 /*                          CSVReadParseLine()                          */
 /*                                                                      */
 /*      Read one line, and return split into fields.  The return        */
@@ -430,6 +460,11 @@ static void CSVIngest( const char *pszFilename )
 /************************************************************************/
 
 char **CSVReadParseLine( FILE * fp )
+{
+    return CSVReadParseLine2(fp, ',');
+}
+
+char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 
 {
     const char  *pszLine;
@@ -449,7 +484,7 @@ char **CSVReadParseLine( FILE * fp )
 /*      Parse, and return tokens.                                       */
 /* -------------------------------------------------------------------- */
     if( strchr(pszLine,'\"') == NULL )
-        return CSVSplitLine( pszLine );
+        return CSVSplitLine( pszLine, chDelimiter );
 
 /* -------------------------------------------------------------------- */
 /*      We must now count the quotes in our working string, and as      */
@@ -482,7 +517,7 @@ char **CSVReadParseLine( FILE * fp )
         strcat( pszWorkLine, pszLine );
     }
     
-    papszReturn = CSVSplitLine( pszWorkLine );
+    papszReturn = CSVSplitLine( pszWorkLine, chDelimiter );
 
     CPLFree( pszWorkLine );
 
@@ -618,7 +653,7 @@ CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
 /* -------------------------------------------------------------------- */
     psTable->iLastLine = iResult;
     
-    return CSVSplitLine( psTable->papszLines[iResult] );
+    return CSVSplitLine( psTable->papszLines[iResult], psTable->chDelimiter );
 }
 
 /************************************************************************/
@@ -654,7 +689,7 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
 /* -------------------------------------------------------------------- */
     while( !bSelected && psTable->iLastLine+1 < psTable->nLineCount ) {
         psTable->iLastLine++;
-        papszFields = CSVSplitLine( psTable->papszLines[psTable->iLastLine] );
+        papszFields = CSVSplitLine( psTable->papszLines[psTable->iLastLine], psTable->chDelimiter );
 
         if( CSLCount( papszFields ) < iKeyField+1 )
         {
@@ -719,7 +754,7 @@ char **CSVGetNextLine( const char *pszFilename )
     psTable->iLastLine++;
     CSLDestroy( psTable->papszRecFields );
     psTable->papszRecFields = 
-        CSVSplitLine( psTable->papszLines[psTable->iLastLine] );
+        CSVSplitLine( psTable->papszLines[psTable->iLastLine], psTable->chDelimiter );
 
     return psTable->papszRecFields;
 }

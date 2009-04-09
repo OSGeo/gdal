@@ -67,10 +67,11 @@ class OGRCSVLayer : public OGRLayer
 
     char*               pszFilename;
     int                 bCreateCSVT;
+    char                chDelimiter;
 
   public:
     OGRCSVLayer( const char *pszName, FILE *fp, const char *pszFilename,
-                                     int bNew, int bInWriteMode );
+                 int bNew, int bInWriteMode, char chDelimiter );
   ~OGRCSVLayer();
 
     void                ResetReading();

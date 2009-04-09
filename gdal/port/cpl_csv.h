@@ -45,7 +45,10 @@ typedef enum {
 
 const char CPL_DLL *CSVFilename( const char * );
 
-char CPL_DLL  **CSVReadParseLine( FILE * );
+char CPL_DLL CSVDetectSeperator( const char *pszLine );
+
+char CPL_DLL  **CSVReadParseLine( FILE *fp);
+char CPL_DLL  **CSVReadParseLine2( FILE *fp, char chDelimiter );
 char CPL_DLL **CSVScanLines( FILE *, int, const char *, CSVCompareCriteria );
 char CPL_DLL **CSVScanFile( const char *, int, const char *,
                             CSVCompareCriteria );

@@ -193,7 +193,17 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Read and parse a line.  Did we get multiple fields?             */
 /* -------------------------------------------------------------------- */
-    char **papszFields = CSVReadParseLine( fp );
+
+    const char* pszLine = CPLReadLine( fp );
+    if (pszLine == NULL)
+    {
+        VSIFClose( fp );
+        return FALSE;
+    }
+    char chDelimiter = CSVDetectSeperator(pszLine);
+    VSIRewind( fp );
+
+    char **papszFields = CSVReadParseLine2( fp, chDelimiter );
 						
     if( CSLCount(papszFields) < 2 )
     {
@@ -213,7 +223,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
                                              sizeof(void*) * nLayers);
     
     papoLayers[nLayers-1] = 
-        new OGRCSVLayer( CPLGetBasename(pszFilename), fp, pszFilename, FALSE, bUpdate );
+        new OGRCSVLayer( CPLGetBasename(pszFilename), fp, pszFilename, FALSE, bUpdate, chDelimiter );
 
     return TRUE;
 }
@@ -278,6 +288,25 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
         return NULL;
     }
 
+
+    const char *pszDelimiter = CSLFetchNameValue( papszOptions, "SEPARATOR");
+    char chDelimiter = ',';
+    if (pszDelimiter != NULL)
+    {
+        if (EQUAL(pszDelimiter, "COMMA"))
+            chDelimiter = ',';
+        else if (EQUAL(pszDelimiter, "SEMICOLON"))
+            chDelimiter = ';';
+        else if (EQUAL(pszDelimiter, "TAB"))
+            chDelimiter = '\t';
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                  "SEPARATOR=%s not understood, use one of COMMA, SEMICOLON or TAB.",
+                  pszDelimiter );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create a layer.                                                 */
 /* -------------------------------------------------------------------- */
@@ -285,7 +314,7 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
     
-    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, pszFilename, TRUE, TRUE );
+    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, pszFilename, TRUE, TRUE, chDelimiter );
 
 /* -------------------------------------------------------------------- */
 /*      Was a partiuclar CRLF order requested?                          */
