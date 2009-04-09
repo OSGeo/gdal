@@ -19152,8 +19152,8 @@ echo "${ECHO_T}no, CFLAGS=\"$CFLAGS\"" >&6; }
 fi
 
 
-{ echo "$as_me:$LINENO: checking GCC 4.1 atomic builtins are available" >&5
-echo $ECHO_N "checking GCC 4.1 atomic builtins are available... $ECHO_C" >&6; }
+{ echo "$as_me:$LINENO: checking whether GCC 4.1 atomic builtins are available" >&5
+echo $ECHO_N "checking whether GCC 4.1 atomic builtins are available... $ECHO_C" >&6; }
 
 rm -f atomicbuiltins.c
 echo 'int main(int argc, char* argv) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); return 0; } ' > atomicbuiltins.c
@@ -19683,6 +19683,7 @@ fi
 
 if test "$LIBZ_SETTING" = "external" ; then
   LIBS="-lz $LIBS"
+  EXTRA_INCLUDES="-I$with_libz -I$with_libz/include $EXTRA_INCLUDES"
 elif test "$with_libz" = "no" ; then
   LIBZ_SETTING=no
   { echo "$as_me:$LINENO: result: not using libz at all." >&5
