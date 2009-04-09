@@ -1401,7 +1401,7 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * Suitable for use when constructing literal values for SQL commands where
  * the literal will be enclosed in single quotes.
  *
- * CPLES_CSV(4): If the values contains commas, double quotes, or newlines it 
+ * CPLES_CSV(4): If the values contains commas, semicolons, tabs, double quotes, or newlines it 
  * placed in double quotes, and double quotes in the value are doubled.
  * Suitable for use when constructing field values for .csv files.  Note that
  * CPLUnescapeString() currently does not support this format, only 
@@ -1542,6 +1542,8 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     {
         if( strchr( pszInput, '\"' ) == NULL
             && strchr( pszInput, ',') == NULL
+            && strchr( pszInput, ';') == NULL
+            && strchr( pszInput, '\t') == NULL
             && strchr( pszInput, 10) == NULL 
             && strchr( pszInput, 13) == NULL )
         {
