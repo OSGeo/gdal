@@ -58,8 +58,6 @@ typedef struct ctb {
 
     int         bNonUniqueKey;
 
-    char        chDelimiter;
-
     /* Cache for whole file */
     int         nLineCount;
     char        **papszLines;
@@ -86,7 +84,6 @@ static CSVTable *CSVAccess( const char * pszFilename )
 {
     CSVTable    *psTable;
     FILE        *fp;
-    const char  *pszLine;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the table, and allocate the thread-local pointer to it    */
@@ -126,14 +123,6 @@ static CSVTable *CSVAccess( const char * pszFilename )
     if( fp == NULL )
         return NULL;
 
-    pszLine = CPLReadLine( fp );
-    if( pszLine == NULL )
-    {
-        VSIFClose( fp );
-        return( NULL );
-    }
-    VSIRewind( fp );
-
 /* -------------------------------------------------------------------- */
 /*      Create an information structure about this table, and add to    */
 /*      the front of the list.                                          */
@@ -144,14 +133,13 @@ static CSVTable *CSVAccess( const char * pszFilename )
     psTable->pszFilename = CPLStrdup( pszFilename );
     psTable->bNonUniqueKey = FALSE; /* as far as we know now */
     psTable->psNext = *ppsCSVTableList;
-    psTable->chDelimiter = CSVDetectSeperator(pszLine);
-
+    
     *ppsCSVTableList = psTable;
 
 /* -------------------------------------------------------------------- */
 /*      Read the table header record containing the field names.        */
 /* -------------------------------------------------------------------- */
-    psTable->papszFieldNames = CSVReadParseLine2( fp, psTable->chDelimiter );
+    psTable->papszFieldNames = CSVReadParseLine( fp );
 
     return( psTable );
 }
@@ -438,18 +426,51 @@ static void CSVIngest( const char *pszFilename )
 /*                        CSVDetectSeperator()                          */
 /************************************************************************/
 
+/** Detect which field separator is used.
+ *
+ * Currently, it can detect comma, semicolon or tabulation. In case of
+ * ambiguity or no separator found, comma will be considered as the separator.
+ *
+ * @return ',', ';' or '\t'
+ */
 char CSVDetectSeperator (const char* pszLine)
 {
-    if (strchr(pszLine, ';') != NULL &&
-        strchr(pszLine, '\t') == NULL &&
-        strchr(pszLine, ',') == NULL)
-        return ';';
-    else if (strchr(pszLine, '\t') != NULL &&
-             strchr(pszLine, ';') == NULL &&
-             strchr(pszLine, ',') == NULL)
-        return '\t';
-    else
-        return ',';
+    int     bInString = FALSE;
+    char    chDelimiter = '\0';
+
+    for( ; *pszLine != '\0'; pszLine++ )
+    {
+        if( !bInString && (*pszLine == ',' || *pszLine == ';' || *pszLine == '\t'))
+        {
+            if (chDelimiter == '\0')
+                chDelimiter = *pszLine;
+            else if (chDelimiter != *pszLine)
+            {
+                /* The separator is not consistant on the line. */
+                CPLDebug("CSV", "Inconsistant separator. '%c' and '%c' found. Using ',' as default",
+                         chDelimiter, *pszLine);
+                chDelimiter = ',';
+                break;
+            }
+        }
+        else if( *pszLine == '"' )
+        {
+            if( !bInString || pszLine[1] != '"' )
+            {
+                bInString = !bInString;
+                continue;
+            }
+            else  /* doubled quotes in string resolve to one quote */
+            {
+                pszLine++;
+            }
+        }
+    }
+
+    if (chDelimiter == '\0')
+        chDelimiter = ',';
+
+    return chDelimiter;
 }
 
 /************************************************************************/
@@ -653,7 +674,7 @@ CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
 /* -------------------------------------------------------------------- */
     psTable->iLastLine = iResult;
     
-    return CSVSplitLine( psTable->papszLines[iResult], psTable->chDelimiter );
+    return CSVSplitLine( psTable->papszLines[iResult], ',' );
 }
 
 /************************************************************************/
@@ -689,7 +710,7 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
 /* -------------------------------------------------------------------- */
     while( !bSelected && psTable->iLastLine+1 < psTable->nLineCount ) {
         psTable->iLastLine++;
-        papszFields = CSVSplitLine( psTable->papszLines[psTable->iLastLine], psTable->chDelimiter );
+        papszFields = CSVSplitLine( psTable->papszLines[psTable->iLastLine], ',' );
 
         if( CSLCount( papszFields ) < iKeyField+1 )
         {
@@ -754,7 +775,7 @@ char **CSVGetNextLine( const char *pszFilename )
     psTable->iLastLine++;
     CSLDestroy( psTable->papszRecFields );
     psTable->papszRecFields = 
-        CSVSplitLine( psTable->papszLines[psTable->iLastLine], psTable->chDelimiter );
+        CSVSplitLine( psTable->papszLines[psTable->iLastLine], ',' );
 
     return psTable->papszRecFields;
 }
