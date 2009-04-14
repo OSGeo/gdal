@@ -1573,7 +1573,7 @@ OGRSTClassId OGR_ST_GetType( OGRStyleToolH hST )
 /*                           OGR_ST_GetUnit()                           */
 /************************************************************************/
 /**
- * /brief Get Style Tool units
+ * \brief Get Style Tool units
  *
  * @param hST handle to the style tool.
  *
