@@ -8,7 +8,13 @@ else
 include GDALmake.opt
 endif
 
-CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) -I../frmts/zlib
+ifeq ($(LIBZ_SETTING),internal) 
+XTRA_OPT =      -I../frmts/zlib 
+else 
+XTRA_OPT = 
+endif 
+
+CPPFLAGS        := $(CPPFLAGS)  $(CURL_INC) $(XTRA_OPT) 
 
 OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o \
 	cpl_strtod.o cpl_path.o cpl_csv.o cpl_findfile.o cpl_minixml.o \
