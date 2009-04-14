@@ -3016,3 +3016,41 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                         OGR_F_GetStyleTable()                        */
+/************************************************************************/
+
+OGRStyleTableH OGR_F_GetStyleTable( OGRFeatureH hFeat )
+
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleTable", NULL );
+    
+    return ((OGRFeature *) hFeat)->GetStyleTable( );
+}
+
+/************************************************************************/
+/*                         OGR_F_SetStyleTableDirectly()                */
+/************************************************************************/
+
+void OGR_F_SetStyleTableDirectly( OGRFeatureH hFeat,
+                                  OGRStyleTableH hStyleTable )
+
+{
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleTableDirectly" );
+    
+    ((OGRFeature *) hFeat)->SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
+}
+
+/************************************************************************/
+/*                         OGR_F_SetStyleTable()                        */
+/************************************************************************/
+
+void OGR_F_SetStyleTable( OGRFeatureH hFeat,
+                          OGRStyleTableH hStyleTable )
+
+{
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleTable" );
+    VALIDATE_POINTER0( hStyleTable, "OGR_F_SetStyleTable" );
+    
+    ((OGRFeature *) hFeat)->SetStyleTable( (OGRStyleTable *) hStyleTable);
+}

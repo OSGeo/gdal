@@ -957,3 +957,41 @@ const char *OGR_L_GetGeometryColumn( OGRLayerH hLayer )
     return ((OGRLayer *) hLayer)->GetGeometryColumn();
 }
 
+/************************************************************************/
+/*                         OGR_L_GetStyleTable()                        */
+/************************************************************************/
+
+OGRStyleTableH OGR_L_GetStyleTable( OGRLayerH hLayer )
+
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_GetStyleTable", NULL );
+    
+    return ((OGRLayer *) hLayer)->GetStyleTable( );
+}
+
+/************************************************************************/
+/*                         OGR_L_SetStyleTableDirectly()                */
+/************************************************************************/
+
+void OGR_L_SetStyleTableDirectly( OGRLayerH hLayer,
+                                  OGRStyleTableH hStyleTable )
+
+{
+    VALIDATE_POINTER0( hLayer, "OGR_L_SetStyleTableDirectly" );
+    
+    ((OGRLayer *) hLayer)->SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
+}
+
+/************************************************************************/
+/*                         OGR_L_SetStyleTable()                        */
+/************************************************************************/
+
+void OGR_L_SetStyleTable( OGRLayerH hLayer,
+                          OGRStyleTableH hStyleTable )
+
+{
+    VALIDATE_POINTER0( hLayer, "OGR_L_SetStyleTable" );
+    VALIDATE_POINTER0( hStyleTable, "OGR_L_SetStyleTable" );
+    
+    ((OGRLayer *) hLayer)->SetStyleTable( (OGRStyleTable *) hStyleTable);
+}
