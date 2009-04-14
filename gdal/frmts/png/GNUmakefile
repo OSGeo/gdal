@@ -31,7 +31,9 @@ else
 OBJ	=	pngdataset.o
 endif
 
-XTRA_OPT	:=	$(XTRA_OPT) -I../zlib
+ifeq ($(LIBZ_SETTING),internal) 
+  XTRA_OPT :=   $(XTRA_OPT) -I../zlib 
+endif
 
 CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
 

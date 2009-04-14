@@ -43,8 +43,14 @@ O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
 ALL_C_FLAGS =	$(CFLAGS) $(CPPFLAGS)
 
+ifeq ($(LIBZ_SETTING),internal) 
+XTRA_OPT =      -I../../zlib 
+else 
+XTRA_OPT = 
+endif 
+
 ifneq ($(LIBZ_SETTING),no)
-ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DPIXARLOG_SUPPORT -DZIP_SUPPORT -I../../zlib
+ALL_C_FLAGS     :=      $(ALL_C_FLAGS) -DPIXARLOG_SUPPORT -DZIP_SUPPORT $(XTRA_OPT)
 endif
 
 ifneq ($(JPEG_SETTING),no)
