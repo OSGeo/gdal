@@ -1252,9 +1252,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         }
 
         osCommand.Printf(
-                 "select AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
-                 pszSchemaName, pszTableName, pszGFldName, nSRSId, pszGeometryType,
-                 nDimension );
+                 "SELECT AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
+                 pszSchemaName, pszTableName, pszGFldName,
+                 nSRSId, pszGeometryType, nDimension );
 
         CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
         hResult = PQexec(hPGConn, osCommand.c_str());
@@ -1288,7 +1288,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
         if( pszSI == NULL || CSLTestBoolean(pszSI) )
         {
-            osCommand.Printf("CREATE INDEX %s_geom_idx ON \"%s\".\"%s\" USING GIST (\"%s\")",
+            osCommand.Printf("CREATE INDEX \"%s_geom_idx\" "
+                             "ON \"%s\".\"%s\" "
+                             "USING GIST (\"%s\")",
                     pszTableName, pszSchemaName, pszTableName, pszGFldName);
 
             CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
@@ -1298,7 +1300,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                 || PQresultStatus(hResult) != PGRES_COMMAND_OK )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "'%s' failed for layer %s, layer creation has failed.",
+                        "'%s' failed for layer %s, index creation has failed.",
                         osCommand.c_str(), pszLayerName );
 
                 CPLFree( pszLayerName );
