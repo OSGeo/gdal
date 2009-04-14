@@ -139,16 +139,16 @@ OGRStyleMgr::OGRStyleMgr(OGRStyleTable *poDataSetStyleTable)
  *
  * This function is the same as the C++ method OGRStyleMgr::OGRStyleMgr().
  * 
- * @param hStyleTable (currently unused, reserved for future use), pointer 
- * to OGRStyleTable. Pass NULL for now.
+ * @param hStyleTable pointer to OGRStyleTable or NULL if not working with
+ *  a style table.
  * 
  * @return an handle to the new style manager object.
  */
 
-OGRStyleMgrH OGR_SM_Create( void *hStyleTable )
+OGRStyleMgrH OGR_SM_Create( OGRStyleTableH hStyleTable )
 
 {
-    return (OGRStyleMgrH) new OGRStyleMgr( NULL );
+    return (OGRStyleMgrH) new OGRStyleMgr( (OGRStyleTable *) hStyleTable );
 }
 
 
@@ -406,6 +406,35 @@ GBool OGRStyleMgr::AddStyle(const char *pszStyleName,
     }
     return FALSE;
 }
+
+
+/************************************************************************/
+/*                     OGR_SM_AddStyle()                         */
+/************************************************************************/
+
+/**
+ * Add a style to the current style table.
+ *
+ * This function is the same as the C++ method OGRStyleMgr::AddStyle().
+ *
+ * @param hSM handle to the style manager.
+ * @param pszStyleName the name of the style to add.
+ * @param pszStyleString the style string to use, or NULL to use the style 
+ *                       stored in the manager.
+ *
+ * @return TRUE on success, FALSE on errors. 
+ */ 
+
+int OGR_SM_AddStyle(OGRStyleMgrH hSM, const char *pszStyleName, 
+                    const char *pszStyleString)
+{
+    VALIDATE_POINTER1( hSM, "OGR_SM_AddStyle", FALSE );
+    VALIDATE_POINTER1( pszStyleName, "OGR_SM_AddStyle", FALSE );
+    
+    return ((OGRStyleMgr *) hSM)->AddStyle( pszStyleName, pszStyleString);
+}
+
+
 /****************************************************************************/
 /*            const char *OGRStyleMgr::GetStyleString(OGRFeature *)         */
 /*                                                                          */
@@ -707,36 +736,38 @@ OGRStyleTable::OGRStyleTable()
 }
 
 /************************************************************************/
-/*                            OGR_ST_Create()                           */
+/*                            OGR_STBL_Create()                           */
 /************************************************************************/
 /**
- * \brief OGRStyleTool factory.
+ * \brief OGRStyleTable factory.
  *
- * This function is a constructor for OGRStyleTool derived classes.
+ * This function is the same as the C++ method OGRStyleTable::OGRStyleTable().
  * 
- * @param eClassId subclass of style tool to create. One of OGRSTCPen (1),
- * OGRSTCBrush (2), OGRSTCSymbol (3) or OGRSTCLabel (4).
  * 
- * @return an handle to the new style tool object or NULL if the creation 
- * failed.
+ * @return an handle to the new style table object.
  */
 
-OGRStyleToolH OGR_ST_Create( OGRSTClassId eClassId )
+OGRStyleTableH OGR_STBL_Create( void )
 
 {
-    switch( eClassId )
-    {
-      case OGRSTCPen:
-        return (OGRStyleToolH) new OGRStylePen();
-      case OGRSTCBrush:
-        return (OGRStyleToolH) new OGRStyleBrush();
-      case OGRSTCSymbol:
-        return (OGRStyleToolH) new OGRStyleSymbol();
-      case OGRSTCLabel:
-        return (OGRStyleToolH) new OGRStyleLabel();
-      default:
-        return NULL;
-    }
+    return (OGRStyleTableH *) new OGRStyleTable( );
+}
+
+/****************************************************************************/
+/*                void OGRStyleTable::Clear()                               */
+/*                                                                          */
+/****************************************************************************/
+
+/** 
+ * \brief Clear a style table. 
+ * 
+ */  
+
+void OGRStyleTable::Clear()
+{
+    if (m_papszStyleTable)
+      CSLDestroy(m_papszStyleTable);
+    m_papszStyleTable = NULL;
 }
 
 /****************************************************************************/
@@ -748,36 +779,20 @@ OGRStyleTable::~OGRStyleTable()
     Clear();
 }
 
+
 /************************************************************************/
-/*                           OGR_ST_Destroy()                            */
+/*                           OGR_STBL_Destroy()                            */
 /************************************************************************/
 /**
- * \brief Destroy Style Tool
+ * \brief Destroy Style Table
  *
- * @param hST handle to the style tool to destroy.
+ * @param hSTBL handle to the style table to destroy.
  */
 
-void OGR_ST_Destroy( OGRStyleToolH hST )
+void OGR_STBL_Destroy( OGRStyleTableH hSTBL )
 
 {
-    delete (OGRStyleTool *) hST;
-}
-
-/****************************************************************************/
-/*                void OGRStyleTable::Clear()                               */
-/*                                                                          */
-/****************************************************************************/
-
-/**
- * \brief Clear a style table.
- *
- */ 
-
-void OGRStyleTable::Clear()
-{
-    if (m_papszStyleTable)
-      CSLDestroy(m_papszStyleTable);
-    m_papszStyleTable = NULL;
+    delete (OGRStyleTable *) hSTBL;
 }
 
 /****************************************************************************/
@@ -937,6 +952,30 @@ GBool OGRStyleTable::SaveStyleTable(const char *pszFilename)
       return TRUE;
 }
 
+/************************************************************************/
+/*                     OGR_STBL_SaveStyleTable()                        */
+/************************************************************************/
+
+/**
+ * /brief Save a style table to a file.
+ *
+ * This function is the same as the C++ method OGRStyleTable::SaveStyleTable().
+ *
+ * @param hStyleTable handle to the style table.
+ * @param pszFilename the name of the file to save to.
+ *
+ * @return TRUE on success, FALSE on error
+ */
+
+int OGR_STBL_SaveStyleTable( OGRStyleTableH hStyleTable,
+                             const char *pszFilename )
+{
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_SaveStyleTable", FALSE );
+    VALIDATE_POINTER1( pszFilename, "OGR_STBL_SaveStyleTable", FALSE );
+    
+    return ((OGRStyleTable *) hStyleTable)->SaveStyleTable( pszFilename );
+}
+
 /****************************************************************************/
 /*            GBool OGRStyleTable::LoadStyleTable(char *)                   */
 /*                                                                          */
@@ -965,6 +1004,30 @@ GBool OGRStyleTable::LoadStyleTable(const char *pszFilename)
       return FALSE;
     else
       return TRUE;
+}
+
+/************************************************************************/
+/*                     OGR_STBL_LoadStyleTable()                        */
+/************************************************************************/
+
+/**
+ * /brief Load a style table from a file.
+ *
+ * This function is the same as the C++ method OGRStyleTable::LoadStyleTable().
+ *
+ * @param hStyleTable handle to the style table.
+ * @param pszFilename the name of the file to load from.
+ *
+ * @return TRUE on success, FALSE on error
+ */
+
+int OGR_STBL_LoadStyleTable( OGRStyleTableH hStyleTable,
+                             const char *pszFilename )
+{
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_LoadStyleTable", FALSE );
+    VALIDATE_POINTER1( pszFilename, "OGR_STBL_LoadStyleTable", FALSE );
+    
+    return ((OGRStyleTable *) hStyleTable)->LoadStyleTable( pszFilename );
 }
 
 /****************************************************************************/
@@ -1000,6 +1063,29 @@ const char *OGRStyleTable::Find(const char *pszName)
     }
     return NULL;
 }   
+
+/************************************************************************/
+/*                     OGR_STBL_Find()                                  */
+/************************************************************************/
+
+/**
+ * /brief Get a style string by name.
+ *
+ * This function is the same as the C++ method OGRStyleTable::Find().
+ *
+ * @param hStyleTable handle to the style table.
+ * @param pszName the name of the style string to find.
+ *
+ * @return the style string matching the name or NULL if not found or error.
+ */
+
+const char *OGR_STBL_Find( OGRStyleTableH hStyleTable, const char *pszName )
+{
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_Find", FALSE );
+    VALIDATE_POINTER1( pszName, "OGR_STBL_Find", FALSE );
+    
+    return ((OGRStyleTable *) hStyleTable)->Find( pszName );
+}
 
 /****************************************************************************/
 /*              OGRStyleTable::Print(FILE *fpOut)                           */
@@ -1085,6 +1171,121 @@ OGRStyleTable *OGRStyleTable::Clone()
     return poNew;
 }
 
+/************************************************************************/
+/*                            ResetStyleStringReading()                 */
+/************************************************************************/
+
+void OGRStyleTable::ResetStyleStringReading()
+
+{
+    iNextStyle = 0;
+}
+
+/************************************************************************/
+/*                     OGR_STBL_ResetStyleStringReading()               */
+/************************************************************************/
+
+/**
+ * /brief Reset the next style pointer to 0
+ *
+ * This function is the same as the C++ method
+ * OGRStyleTable::ResetStyleStringReading().
+ *
+ * @param hStyleTable handle to the style table.
+ *
+ */
+
+void OGR_STBL_ResetStyleStringReading( OGRStyleTableH hStyleTable )
+{
+    VALIDATE_POINTER0( hStyleTable, "OGR_STBL_ResetStyleStringReading" );
+
+    ((OGRStyleTable *) hStyleTable)->ResetStyleStringReading();
+}
+
+/************************************************************************/
+/*                           GetNextStyle()                             */
+/************************************************************************/
+
+const char *OGRStyleTable::GetNextStyle()
+{
+    const char *pszDash = NULL;
+    const char *pszOutput = NULL;
+
+    while( iNextStyle < CSLCount(m_papszStyleTable) )
+    {
+
+        if ( NULL == (pszOutput = CSLGetField(m_papszStyleTable,iNextStyle++)))
+            continue;
+
+        pszDash = strstr(pszOutput,":");
+
+        int nColon;
+
+        osLastRequestedStyleName = pszOutput;
+        nColon = osLastRequestedStyleName.find( ':' );
+        if( nColon != -1 )
+            osLastRequestedStyleName = 
+                osLastRequestedStyleName.substr(0,nColon);
+
+        if (pszDash)
+            return pszDash + 1;
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                     OGR_STBL_GetNextStyle()                          */
+/************************************************************************/
+
+/**
+ * /brief Get the next style string from the table.
+ *
+ * This function is the same as the C++ method OGRStyleTable::GetNextStyle().
+ *
+ * @param hStyleTable handle to the style table.
+ *
+ * @return the next style string or NULL on error.
+ */
+
+const char *OGR_STBL_GetNextStyle( OGRStyleTableH hStyleTable)
+{
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_GetNextStyle", NULL );
+    
+    return ((OGRStyleTable *) hStyleTable)->GetNextStyle();
+}
+
+/************************************************************************/
+/*                           GetLastStyleName()                         */
+/************************************************************************/
+
+const char *OGRStyleTable::GetLastStyleName()
+{
+    return osLastRequestedStyleName;
+}
+
+/************************************************************************/
+/*                     OGR_STBL_GetLastStyleName()                      */
+/************************************************************************/
+
+/**
+ * Get the style name of the last style string fetched with
+ * OGR_STBL_GetNextStyle.
+ *
+ * This function is the same as the C++ method OGRStyleTable::GetStyleName().
+ *
+ * @param hStyleTable handle to the style table.
+ *
+ * @return the Name of the last style string or NULL on error.
+ */
+
+const char *OGR_STBL_GetLastStyleName( OGRStyleTableH hStyleTable)
+{
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_GetLastStyleName", NULL );
+    
+    return ((OGRStyleTable *) hStyleTable)->GetLastStyleName();
+}
+
+
 /****************************************************************************/
 /*                          OGRStyleTool::OGRStyleTool()                    */
 /*                                                                          */
@@ -1099,6 +1300,39 @@ OGRStyleTool::OGRStyleTool(OGRSTClassId eClassId)
     m_bParsed = FALSE;
 }
 
+/************************************************************************/
+/*                            OGR_ST_Create()                           */
+/************************************************************************/
+/**
+ * /brief OGRStyleTool factory.
+ *
+ * This function is a constructor for OGRStyleTool derived classes.
+ * 
+ * @param eClassId subclass of style tool to create. One of OGRSTCPen (1),
+ * OGRSTCBrush (2), OGRSTCSymbol (3) or OGRSTCLabel (4).
+ * 
+ * @return an handle to the new style tool object or NULL if the creation 
+ * failed.
+ */
+
+OGRStyleToolH OGR_ST_Create( OGRSTClassId eClassId )
+
+{
+    switch( eClassId )
+    {
+      case OGRSTCPen:
+        return (OGRStyleToolH) new OGRStylePen();
+      case OGRSTCBrush:
+        return (OGRStyleToolH) new OGRStyleBrush();
+      case OGRSTCSymbol:
+        return (OGRStyleToolH) new OGRStyleSymbol();
+      case OGRSTCLabel:
+        return (OGRStyleToolH) new OGRStyleLabel();
+      default:
+        return NULL;
+    }
+}
+
 /****************************************************************************/
 /*                       OGRStyleTool::~OGRStyleTool()                      */
 /*                                                                          */
@@ -1107,7 +1341,40 @@ OGRStyleTool::~OGRStyleTool()
 {
     CPLFree(m_pszStyleString);
 }
- 
+
+/************************************************************************/
+/*                           OGR_ST_Destroy()                            */
+/************************************************************************/
+/**
+ * /brief Destroy Style Tool
+ *
+ * @param hST handle to the style tool to destroy.
+ */
+
+void OGR_ST_Destroy( OGRStyleToolH hST )
+
+{
+    
+    switch( OGR_ST_GetType(hST)/*((OGRStyleTool *) hST)->GetType()*/ )
+    {
+      case OGRSTCPen:
+        delete (OGRStylePen *) hST;
+        break;
+      case OGRSTCBrush:
+        delete (OGRStyleBrush *) hST;
+        break;
+      case OGRSTCSymbol:
+        delete (OGRStyleSymbol *) hST;
+        break;
+      case OGRSTCLabel:
+        delete (OGRStyleLabel *) hST;
+        break;
+      default:
+        break;
+    }
+}
+
+
 /****************************************************************************/
 /*      void OGRStyleTool::SetStyleString(const char *pszStyleString)       */
 /*                                                                          */
@@ -1306,7 +1573,7 @@ OGRSTClassId OGR_ST_GetType( OGRStyleToolH hST )
 /*                           OGR_ST_GetUnit()                           */
 /************************************************************************/
 /**
- * \brief Get Style Tool units
+ * /brief Get Style Tool units
  *
  * @param hST handle to the style tool.
  *

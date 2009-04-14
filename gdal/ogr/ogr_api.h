@@ -186,10 +186,12 @@ int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER(void);
 typedef struct OGRFieldDefnHS   *OGRFieldDefnH;
 typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
 typedef struct OGRFeatureHS     *OGRFeatureH;
+typedef struct OGRStyleTableHS *OGRStyleTableH;
 #else
 typedef void *OGRFieldDefnH;
 typedef void *OGRFeatureDefnH;
 typedef void *OGRFeatureH;
+typedef void *OGRStyleTableH;
 #endif
 
 /* OGRFieldDefn */
@@ -277,6 +279,9 @@ OGRErr CPL_DLL OGR_F_SetFrom( OGRFeatureH, OGRFeatureH, int );
 const char CPL_DLL *OGR_F_GetStyleString( OGRFeatureH );
 void   CPL_DLL OGR_F_SetStyleString( OGRFeatureH, const char * );
 void   CPL_DLL OGR_F_SetStyleStringDirectly( OGRFeatureH, char * );
+OGRStyleTableH CPL_DLL OGR_F_GetStyleTable( OGRFeatureH );
+void   CPL_DLL OGR_F_SetStyleTableDirectly( OGRFeatureH, OGRStyleTableH );
+void   CPL_DLL OGR_F_SetStyleTable( OGRFeatureH, OGRStyleTableH );
 
 /* -------------------------------------------------------------------- */
 /*      ogrsf_frmts.h                                                   */
@@ -322,6 +327,10 @@ OGRErr CPL_DLL OGR_L_SyncToDisk( OGRLayerH );
 GIntBig CPL_DLL OGR_L_GetFeaturesRead( OGRLayerH );
 const char CPL_DLL *OGR_L_GetFIDColumn( OGRLayerH );
 const char CPL_DLL *OGR_L_GetGeometryColumn( OGRLayerH );
+OGRStyleTableH CPL_DLL OGR_L_GetStyleTable( OGRLayerH );
+void   CPL_DLL OGR_L_SetStyleTableDirectly( OGRLayerH, OGRStyleTableH );
+void   CPL_DLL OGR_L_SetStyleTable( OGRLayerH, OGRStyleTableH );
+
 /* OGRDataSource */
 
 void   CPL_DLL OGR_DS_Destroy( OGRDataSourceH );
@@ -345,6 +354,9 @@ int    CPL_DLL OGR_DS_Dereference( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetRefCount( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetSummaryRefCount( OGRDataSourceH );
 OGRErr CPL_DLL OGR_DS_SyncToDisk( OGRDataSourceH );
+OGRStyleTableH CPL_DLL OGR_DS_GetStyleTable( OGRDataSourceH );
+void   CPL_DLL OGR_DS_SetStyleTableDirectly( OGRDataSourceH, OGRStyleTableH );
+void   CPL_DLL OGR_DS_SetStyleTable( OGRDataSourceH, OGRStyleTableH );
 
 /* OGRSFDriver */
 
@@ -388,7 +400,7 @@ typedef void *OGRStyleToolH;
 
 /* OGRStyleMgr */
 
-OGRStyleMgrH CPL_DLL OGR_SM_Create(void *hStyleTable);
+OGRStyleMgrH CPL_DLL OGR_SM_Create(OGRStyleTableH hStyleTable);
 void    CPL_DLL OGR_SM_Destroy(OGRStyleMgrH hSM);
 
 const char CPL_DLL *OGR_SM_InitFromFeature(OGRStyleMgrH hSM, 
@@ -400,7 +412,8 @@ int     CPL_DLL OGR_SM_GetPartCount(OGRStyleMgrH hSM,
 OGRStyleToolH CPL_DLL OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId, 
                                      const char *pszStyleString);
 int     CPL_DLL OGR_SM_AddPart(OGRStyleMgrH hSM, OGRStyleToolH hST);
-
+int     CPL_DLL OGR_SM_AddStyle(OGRStyleMgrH hSM, const char *pszStyleName, 
+                               const char *pszStyleString);
 
 /* OGRStyleTool */
 
@@ -424,6 +437,18 @@ const char CPL_DLL *OGR_ST_GetStyleString(OGRStyleToolH hST);
 int CPL_DLL OGR_ST_GetRGBFromString(OGRStyleToolH hST, const char *pszColor, 
                                     int *pnRed, int *pnGreen, int *pnBlue, 
                                     int *pnAlpha);
+
+/* OGRStyleTable */
+
+OGRStyleTableH  CPL_DLL OGR_STBL_Create( void );
+int     CPL_DLL OGR_STBL_SaveStyleTable( OGRStyleTableH hStyleTable,
+                                         const char *pszFilename );
+int     CPL_DLL OGR_STBL_LoadStyleTable( OGRStyleTableH hStyleTable,
+                                         const char *pszFilename );
+const char CPL_DLL *OGR_STBL_Find( OGRStyleTableH hStyleTable, const char *pszName );
+void    CPL_DLL OGR_STBL_ResetStyleStringReading( OGRStyleTableH hStyleTable );
+const char CPL_DLL *OGR_STBL_GetNextStyle( OGRStyleTableH hStyleTable);
+const char CPL_DLL *OGR_STBL_GetLastStyleName( OGRStyleTableH hStyleTable);
 
 CPL_C_END
 

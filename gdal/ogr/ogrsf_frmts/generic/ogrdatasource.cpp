@@ -998,3 +998,40 @@ void OGRDataSource::SetDriver( OGRSFDriver *poDriver )
     m_poDriver = poDriver;
 }
 
+/************************************************************************/
+/*                         OGR_DS_GetStyleTable()                       */
+/************************************************************************/
+
+OGRStyleTableH OGR_DS_GetStyleTable( OGRDataSourceH hDS )
+
+{
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetStyleTable", NULL );
+    
+    return ((OGRDataSource *) hDS)->GetStyleTable( );
+}
+
+/************************************************************************/
+/*                         OGR_DS_SetStyleTableDirectly()               */
+/************************************************************************/
+
+void OGR_DS_SetStyleTableDirectly( OGRDataSourceH hDS,
+                                   OGRStyleTableH hStyleTable )
+
+{
+    VALIDATE_POINTER0( hDS, "OGR_DS_SetStyleTableDirectly" );
+    
+    ((OGRDataSource *) hDS)->SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
+}
+
+/************************************************************************/
+/*                         OGR_DS_SetStyleTable()                       */
+/************************************************************************/
+
+void OGR_DS_SetStyleTable( OGRDataSourceH hDS, OGRStyleTableH hStyleTable )
+
+{
+    VALIDATE_POINTER0( hDS, "OGR_DS_SetStyleTable" );
+    VALIDATE_POINTER0( hStyleTable, "OGR_DS_SetStyleTable" );
+    
+    ((OGRDataSource *) hDS)->SetStyleTable( (OGRStyleTable *) hStyleTable);
+}
