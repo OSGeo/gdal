@@ -84,6 +84,7 @@ class CPL_DLL OGRStyleTable
     char **m_papszStyleTable;
 
     CPLString osLastRequestedStyleName;
+    int iNextStyle;
 
   public:
     OGRStyleTable();
@@ -100,6 +101,9 @@ class CPL_DLL OGRStyleTable
     void  Print(FILE *fpOut);
     void  Clear();
     OGRStyleTable   *Clone();
+    void ResetStyleStringReading();
+    const char *GetNextStyle();
+    const char *GetLastStyleName();
 };
 
 
