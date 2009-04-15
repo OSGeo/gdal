@@ -3025,7 +3025,7 @@ OGRStyleTableH OGR_F_GetStyleTable( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleTable", NULL );
     
-    return ((OGRFeature *) hFeat)->GetStyleTable( );
+    return (OGRStyleTableH) ((OGRFeature *) hFeat)->GetStyleTable( );
 }
 
 /************************************************************************/
