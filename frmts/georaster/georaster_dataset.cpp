@@ -65,6 +65,8 @@ GeoRasterDataset::GeoRasterDataset()
 
 GeoRasterDataset::~GeoRasterDataset()
 {
+    FlushCache();
+
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -896,6 +898,8 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     int nBlockRows = 0;
     CPLErr eErr = CE_None;
 
+    poGRD->poGeoRaster->SetOrdelyAccess( true );
+
     int nPixelSize = GDALGetDataTypeSize( 
         poSrcDS->GetRasterBand(1)->GetRasterDataType() ) / 8;
 
@@ -910,16 +914,12 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
             nBlockCols = MIN( nBlockXSize, nXSize - iXOffset );
             nBlockRows = MIN( nBlockYSize, nYSize - iYOffset );
 
-            int nLastBand = poSrcDS->GetRasterCount();
-
             for( iBand = 1; 
                  iBand <= poSrcDS->GetRasterCount(); 
                  iBand++ )
             {
                 GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand );
                 GDALRasterBand *poDstBand = poGRD->GetRasterBand( iBand );
-
-                ((GeoRasterRasterBand*) poDstBand)->SetHoldWritingBlock( true );
 
                 eErr = poSrcBand->RasterIO( GF_Read,
                     iXOffset, iYOffset,
@@ -1284,7 +1284,8 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         poGRW->pszColumn == NULL )
     {
         poStmt = poConnection->CreateStatement(
-            "SELECT DISTINCT TABLE_NAME FROM USER_SDO_GEOR_SYSDATA" );
+            "SELECT DISTINCT TABLE_NAME FROM USER_SDO_GEOR_SYSDATA\n"
+            "ORDER  BY TABLE_NAME ASC" );
 
         poStmt->Define( szTable );
 
@@ -1301,7 +1302,8 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     {
         poStmt = poConnection->CreateStatement(
             "SELECT DISTINCT COLUMN_NAME FROM USER_SDO_GEOR_SYSDATA\n"
-            "WHERE  TABLE_NAME = UPPER(:1)" );
+            "WHERE  TABLE_NAME = UPPER(:1)\n"
+            "ORDER  BY COLUMN_NAME ASC" );
 
         poStmt->Bind( poGRW->pszTable );
         poStmt->Define( szColumn );
@@ -1323,17 +1325,23 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         {
             poStmt = poConnection->CreateStatement( CPLSPrintf(
                 "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s T "
-                "  WHERE %s IS NOT NULL",
+                "WHERE  %s IS NOT NULL\n"
+                "ORDER  BY T.%s.RASTERDATATABLE ASC,"
+                "          T.%s.RASTERID ASC",
                 poGRW->pszColumn, poGRW->pszColumn,
-                poGRW->pszTable, poGRW->pszColumn ) );
+                poGRW->pszTable, poGRW->pszColumn,
+                poGRW->pszColumn, poGRW->pszColumn ) );
         }
         else
         {
             poStmt = poConnection->CreateStatement( CPLSPrintf(
                 "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s T\n"
-                "WHERE  %s AND %s IS NOT NULL",
+                "WHERE  %s AND %s IS NOT NULL\n"
+                "ORDER  BY T.%s.RASTERDATATABLE ASC,"
+                "          T.%s.RASTERID ASC",
                 poGRW->pszColumn, poGRW->pszColumn, poGRW->pszTable,
-                poGRW->pszWhere, poGRW->pszColumn ) );
+                poGRW->pszWhere, poGRW->pszColumn,
+                poGRW->pszColumn, poGRW->pszColumn ) );
         }
 
         poStmt->Define( szDataTable );
