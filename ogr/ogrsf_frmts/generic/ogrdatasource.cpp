@@ -1007,7 +1007,7 @@ OGRStyleTableH OGR_DS_GetStyleTable( OGRDataSourceH hDS )
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_GetStyleTable", NULL );
     
-    return ((OGRDataSource *) hDS)->GetStyleTable( );
+    return (OGRStyleTableH) ((OGRDataSource *) hDS)->GetStyleTable( );
 }
 
 /************************************************************************/
