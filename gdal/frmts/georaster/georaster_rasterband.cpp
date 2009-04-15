@@ -58,8 +58,16 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
     if( nLevel )
     {
         double dfScale  = pow( (double) 2.0, (double) nLevel );
-        nRasterXSize    = (int) ceil( nRasterXSize / dfScale );
-        nRasterYSize    = (int) ceil( nRasterYSize / dfScale );
+
+        nRasterXSize    = (int) floor( nRasterXSize / dfScale );
+        nRasterYSize    = (int) floor( nRasterYSize / dfScale );
+
+        if( nRasterXSize <= ( nBlockXSize / 2.0 ) &&
+            nRasterYSize <= ( nBlockYSize / 2.0 ) )
+        {
+            nBlockXSize = nRasterXSize;
+            nBlockYSize = nRasterYSize;
+        }
     }
 }
 
@@ -704,9 +712,4 @@ GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
     paphOverviewLinks[ nOverviewLinks - 1 ] = phOVRLink;
 
     return (GDALRasterBand*) poOVR;
-}
-
-void GeoRasterRasterBand::SetHoldWritingBlock( bool bValue )
-{
-    poGeoRaster->bHoldWritingBlock = bValue;
 }
