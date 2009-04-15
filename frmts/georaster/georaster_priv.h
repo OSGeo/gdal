@@ -215,8 +215,6 @@ public:
     virtual int         GetOverviewCount();
     virtual GDALRasterBand*
                         GetOverview( int );
-
-    void                SetHoldWritingBlock( bool bValue );
 };
 
 //  ---------------------------------------------------------------------------
@@ -236,16 +234,18 @@ private:
     OCILobLocator**     pahLocator;
     int                 nBlockCount;
     unsigned long       nBlockBytes;
-    unsigned long       nBlockBytesGDAL;
+    unsigned long       nGDALBandBytes;
     GByte*              pabyBlockBuf;
+    GByte*              pabyBlockBuf2;
     OWStatement*        poStmtRead;
     OWStatement*        poStmtWrite;
 
     int                 nCurrentBlock;
     int                 nCurrentLevel;
+    bool                bOrderlyAccess;
 
     int                 nCellSizeBits;
-    int                 nCellSizeGDAL;
+    int                 nGDALCellBytes;
 
     bool                bIOInitialized;
     bool                bFlushMetadata;
@@ -354,5 +354,8 @@ public:
 
     int                 nPyramidMaxLevel;
 
-    boolean             bHoldWritingBlock;
+    void                SetOrdelyAccess( bool bValue )
+                        {
+                            bOrderlyAccess = bValue;
+                        };
 };
