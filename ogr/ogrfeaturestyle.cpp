@@ -750,7 +750,7 @@ OGRStyleTable::OGRStyleTable()
 OGRStyleTableH OGR_STBL_Create( void )
 
 {
-    return (OGRStyleTableH *) new OGRStyleTable( );
+    return (OGRStyleTableH) new OGRStyleTable( );
 }
 
 /****************************************************************************/
