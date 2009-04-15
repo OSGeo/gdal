@@ -52,7 +52,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     nTotalRowBlocks     = 0;
     nTotalBandBlocks    = 0;
     nCellSizeBits       = 0;
-    nCellSizeGDAL       = 0;
+    nGDALCellBytes       = 0;
     dfXCoefficient[0]   = 1.0;
     dfXCoefficient[1]   = 0.0;
     dfXCoefficient[2]   = 0.0;
@@ -60,10 +60,11 @@ GeoRasterWrapper::GeoRasterWrapper()
     dfYCoefficient[1]   = 1.0;
     dfYCoefficient[2]   = 0.0;
     pszCellDepth        = NULL;
-    pszCompressionType  = NULL;
+    pszCompressionType  = CPLStrdup( "NONE" );
     nCompressQuality    = 75;
     pahLocator          = NULL;
     pabyBlockBuf        = NULL;
+    pabyBlockBuf2       = NULL;
     bIsReferenced       = false;
     poStmtRead          = NULL;
     poStmtWrite         = NULL;
@@ -79,7 +80,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     bRDTRIDOnly         = false;
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0;
-    bHoldWritingBlock   = false;
+    bOrderlyAccess      = false;
 }
 
 //  ---------------------------------------------------------------------------
@@ -97,6 +98,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
     CPLFree( pszCellDepth );
     CPLFree( pszCompressionType );
     CPLFree( pabyBlockBuf );
+    CPLFree( pabyBlockBuf2 );
     delete poStmtRead;
     delete poStmtWrite;
     CPLDestroyXMLNode( phMetadata );
@@ -783,12 +785,12 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     nTotalBandBlocks    = 0;
     if( sscanf( pszCellDepth, "%dBIT", &nCellSizeBits ) )
     {
-        nCellSizeGDAL   = GDALGetDataTypeSize( 
+        nGDALCellBytes   = GDALGetDataTypeSize(
                           OWGetDataType( pszCellDepth ) ) / 8;
     }
     else
     {
-        nCellSizeGDAL   = 1;
+        nGDALCellBytes   = 1;
     }
     dfXCoefficient[0]   = 1.0;
     dfXCoefficient[1]   = 0.0;
@@ -796,7 +798,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     dfYCoefficient[0]   = 0.0;
     dfYCoefficient[1]   = 1.0;
     dfYCoefficient[2]   = 0.0;
-    pszCompressionType  = NULL;
+    pszCompressionType  = CPLStrdup( "NONE" );
     nCompressQuality    = 75;
     bIsReferenced       = false;
     nCurrentBlock       = -1;
@@ -810,7 +812,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     nSRID               = -1;
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0;
-    bHoldWritingBlock   = false;
+    bOrderlyAccess      = true;
 }
 
 //  ---------------------------------------------------------------------------
@@ -820,7 +822,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
 bool GeoRasterWrapper::Delete( void )
 {
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
-      "UPDATE %s SET %s = NULL WHERE %s\n", pszTable, pszColumn, pszWhere ) );
+      "UPDATE %s T SET %s = NULL WHERE %s\n", pszTable, pszColumn, pszWhere ) );
 
     bool bReturn = poStmt->Execute();
 
@@ -1002,12 +1004,12 @@ void GeoRasterWrapper::GetRasterInfo( void )
 
     if( sscanf( pszCellDepth, "%dBIT", &nCellSizeBits ) )
     {
-        nCellSizeGDAL   = GDALGetDataTypeSize( 
+        nGDALCellBytes   = GDALGetDataTypeSize(
                           OWGetDataType( pszCellDepth ) ) / 8;
     }
     else
     {
-        nCellSizeGDAL   = 1;
+        nGDALCellBytes   = 1;
     }
 
     pszCompressionType  = CPLStrdup( CPLGetXMLValue( phMetadata,
@@ -1396,29 +1398,45 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
 
     if( nLevel )
     {
+        // ----------------------------------------------------------------
+        // Recalculate block size
+        // ----------------------------------------------------------------
+
+        nRowBlockSize       = atoi( CPLGetXMLValue( phMetadata,
+                                "rasterInfo.blocking.rowBlockSize", "0" ) );
+
+        nColumnBlockSize    = atoi( CPLGetXMLValue( phMetadata,
+                                "rasterInfo.blocking.columnBlockSize", "0" ) );
+
         nTotalColumnBlocks  = atoi( CPLGetXMLValue( phMetadata,
                                 "rasterInfo.blocking.totalColumnBlocks","0") );
+
         nTotalRowBlocks     = atoi( CPLGetXMLValue( phMetadata,
                                 "rasterInfo.blocking.totalRowBlocks", "0" ) );
 
-        double dfScale      = pow( (double) 2.0, (double) nLevel );
+        double dfScale = pow( (double) 2.0, (double) nLevel );
 
-        int nPyramidRows         = (int) ceil( (double) ( nRasterRows / dfScale ) );
-        int nPyramidColumns      = (int) ceil( (double) ( nRasterColumns / dfScale ) );
-        int nHalfBlockRows       = (int) ceil( (double) ( nRowBlockSize / 2 ) );
-        int nHalfBlockColumns    = (int) ceil( (double) ( nColumnBlockSize / 2 ) );
+        int nXSize  = (int) floor( (double) nRasterColumns   / dfScale );
+        int nYSize  = (int) floor( (double) nRasterRows      / dfScale );
+        int nXBlock = (int) floor( (double) nColumnBlockSize / 2.0 );
+        int nYBlock = (int) floor( (double) nRowBlockSize    / 2.0 );
 
-        // There is problably a easier way to do that math ...
-
-        if( nPyramidRows    <= nHalfBlockRows ||
-            nPyramidColumns <= nHalfBlockColumns )
+        if( nXSize <= nXBlock && nYSize <= nYBlock )
         {
-            nColumnBlockSize    = nPyramidColumns;
-            nRowBlockSize       = nPyramidRows;
+            nColumnBlockSize  = nXSize;
+            nRowBlockSize     = nYSize;
         }
+        
+        // ----------------------------------------------------------------
+        // Recalculate blocks quantity
+        // ----------------------------------------------------------------
 
-        nTotalColumnBlocks  = (int) ceil( (double) ( nTotalColumnBlocks / dfScale ) );
-        nTotalRowBlocks     = (int) ceil( (double) ( nTotalRowBlocks / dfScale ) );
+        nTotalColumnBlocks  = (int) ceil( (double) nTotalColumnBlocks / dfScale );
+        nTotalRowBlocks     = (int) ceil( (double) nTotalRowBlocks / dfScale );
+
+        nTotalColumnBlocks  = (int) MAX( nTotalColumnBlocks, 1 );
+        nTotalRowBlocks     = (int) MAX( nTotalRowBlocks, 1 );
+
     }
 
     // --------------------------------------------------------------------
@@ -1430,18 +1448,27 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
     nBlockBytes     = nColumnBlockSize   * nRowBlockSize   * nBandBlockSize *
                       nCellSizeBits / 8;
 
-    nBlockBytesGDAL = nColumnBlockSize   * nRowBlockSize   * nCellSizeGDAL;
+    nGDALBandBytes  = nColumnBlockSize   * nRowBlockSize   * nGDALCellBytes;
 
     // --------------------------------------------------------------------
     // Allocate buffer for one raster block
     // --------------------------------------------------------------------
 
-    pabyBlockBuf    = (GByte*) VSIMalloc( nBlockBytes );
+    pabyBlockBuf = (GByte*) VSIMalloc( nBlockBytes );
 
     if ( pabyBlockBuf == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                 "InitializeIO - Block Buffer" );
+        return false;
+    }
+
+    pabyBlockBuf2 = (GByte*) VSIMalloc( nBlockBytes );
+
+    if ( pabyBlockBuf2 == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                "InitializeIO - Block Buffer 2" );
         return false;
     }
 
@@ -1543,9 +1570,21 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
                                            nBlockBytes );
         if( nBytesRead == 0 )
         {
-                return false;
+            memset( pData, 0, nGDALBandBytes );
+
+            return true;
         }
-        
+
+        if( nBytesRead < nBlockBytes && EQUAL( pszCompressionType, "NONE") )
+        {
+            CPLDebug("GEOR", "BLOB size (%d) is smaller than expected (%d) !",
+                nBytesRead,  nBlockBytes );
+            
+            memset( pData, 0, nGDALBandBytes );
+
+            return true;
+        }
+
 #ifndef CPL_MSB
         if( nCellSizeBits > 8 )
         {
@@ -1586,14 +1625,14 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
 
     if( EQUAL( szInterleaving, "BSQ" ) || nBandBlockSize == 1 )
     {
-        nStart *= nBlockBytesGDAL;
+        nStart *= nGDALBandBytes;
 
-        memcpy( pData, &pabyBlockBuf[nStart], nBlockBytesGDAL );
+        memcpy( pData, &pabyBlockBuf[nStart], nGDALBandBytes );
     }
     else
     {
-        int nIncr   = nBandBlockSize * nCellSizeGDAL;
-        int nSize   = nCellSizeGDAL;
+        int nIncr   = nBandBlockSize * nGDALCellBytes;
+        int nSize   = nGDALCellBytes;
 
         if( EQUAL( szInterleaving, "BIL" ) )
         {
@@ -1605,13 +1644,18 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         GByte* pabyData = (GByte*) pData;
 
         unsigned long ii = 0;
-        unsigned long jj = nStart * nCellSizeGDAL;
+        unsigned long jj = nStart * nGDALCellBytes;
 
-        for( ii = 0; ii < nBlockBytesGDAL; ii += nSize, jj += nIncr )
+        for( ii = 0; ii < nGDALBandBytes; ii += nSize, jj += nIncr )
         {
             memcpy( &pabyData[ii], &pabyBlockBuf[jj], nSize );
         }
     }
+
+    CPLDebug( "GEOR",
+      "nBlock, nBand, nLevel, nXOffset, nYOffset, nColumnBlockSize, nRowBlockSize = "
+      "%d, %d, %d, %d, %d, %d, %d",
+       nBlock, nBand, nLevel, nXOffset, nYOffset, nColumnBlockSize, nRowBlockSize );
 
     return true;
 }
@@ -1645,21 +1689,49 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     int nBlock = CALCULATEBLOCK( nBand, nXOffset, nYOffset, nBandBlockSize,
                                  nTotalColumnBlocks, nTotalRowBlocks );
-
+    
     //  --------------------------------------------------------------------
-    //  Load interleaved block
+    //  Read interleaved block
     //  --------------------------------------------------------------------
 
     unsigned long nBytesRead = 0;
 
-    if( nCurrentBlock != nBlock && nBandBlockSize > 1 )
+    if( bOrderlyAccess == false &&
+        nBandBlockSize > 1 &&
+        nCurrentBlock != nBlock )
     {
+        CPLDebug( "GEOR", "Reloading block %d", nBlock );
+
         nBytesRead = poStmtWrite->ReadBlob( pahLocator[nBlock],
                                             pabyBlockBuf,
                                             nBlockBytes );
         if( nBytesRead == 0 )
         {
             memset( pabyBlockBuf, 0, nBlockBytes );
+        }
+        else
+        {
+            //  ------------------------------------------------------------
+            //  Unpack NBits
+            //  ------------------------------------------------------------
+
+            if( nCellSizeBits < 8 )
+            {
+                UnpackNBits( pabyBlockBuf );
+            }
+
+            //  ------------------------------------------------------------
+            //  Uncompress
+            //  ------------------------------------------------------------
+
+            if( EQUALN( pszCompressionType, "JPEG", 4 ) )
+            {
+                UncompressJpeg( nBytesRead );
+            }
+            else if ( EQUAL( pszCompressionType, "DEFLATE" ) )
+            {
+                UncompressDeflate( nBytesRead );
+            }
         }
     }
 
@@ -1668,30 +1740,21 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     nCurrentBlock = nBlock;
 
     //  --------------------------------------------------------------------
-    //  Pack NBits
-    //  --------------------------------------------------------------------
-
-    if( nCellSizeBits < 8 )
-    {
-        PackNBits( pabyInBuf );
-    }
-
-    //  --------------------------------------------------------------------
-    //  Interleaving
+    //  Interleave
     //  --------------------------------------------------------------------
 
     int nStart = ( nBand - 1 ) % nBandBlockSize;
 
     if( EQUAL( szInterleaving, "BSQ" ) || nBandBlockSize == 1 )
     {
-        nStart *= nBlockBytesGDAL;
+        nStart *= nGDALBandBytes;
 
-        memcpy( &pabyBlockBuf[nStart], pabyInBuf, nBlockBytesGDAL );
+        memcpy( &pabyBlockBuf[nStart], pabyInBuf, nGDALBandBytes );
     }
     else
     {
-        int nIncr   = nBandBlockSize * nCellSizeGDAL;
-        int nSize   = nCellSizeGDAL;
+        int nIncr   = nBandBlockSize * nGDALCellBytes;
+        int nSize   = nGDALCellBytes;
 
         if( EQUAL( szInterleaving, "BIL" ) )
         {
@@ -1701,9 +1764,9 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
         }
 
         unsigned long ii = 0;
-        unsigned long jj = nStart * nCellSizeGDAL;
+        unsigned long jj = nStart * nGDALCellBytes;
 
-        for( ii = 0; ii < nBlockBytesGDAL; ii += nSize, jj += nIncr )
+        for( ii = 0; ii < nGDALBandBytes; ii += nSize, jj += nIncr )
         {
             memcpy( &pabyBlockBuf[jj], &pabyInBuf[ii], nSize );
         }
@@ -1713,34 +1776,44 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     //  Compress
     //  --------------------------------------------------------------------
 
-    unsigned long nActualBlockBytes = nBlockBytes;
+    GByte *pabyOutBuf = (GByte *) pabyBlockBuf;
+
+    unsigned long nBlockBytes2 = nBlockBytes;
 
     if( ! EQUAL( pszCompressionType, "None" ) )
     {
-        if( nBand == nBandBlockSize )
+        if( EQUALN( pszCompressionType, "JPEG", 4 ) )
         {
-            if( EQUALN( pszCompressionType, "JPEG", 4 ) )
-            {
-                nActualBlockBytes = CompressJpeg();
-            }
-            else if ( EQUAL( pszCompressionType, "DEFLATE" ) )
-            {
-                nActualBlockBytes = CompressDeflate();
-            }
+            nBlockBytes2 = CompressJpeg();
         }
-        else
+        else if ( EQUAL( pszCompressionType, "DEFLATE" ) )
         {
-            return true;
+            nBlockBytes2 = CompressDeflate();
         }
+        pabyOutBuf = pabyBlockBuf2;
+    }
+    
+    //  --------------------------------------------------------------------
+    //  Pack bits
+    //  --------------------------------------------------------------------
+
+    if( nCellSizeBits < 8 )
+    {
+        PackNBits( pabyOutBuf );
     }
 
     //  --------------------------------------------------------------------
     //  Write BLOB
     //  --------------------------------------------------------------------
 
+    CPLDebug( "GEOR",
+      "nBlock, nBand, nLevel, nXOffset, nYOffset, nColumnBlockSize, nRowBlockSize = "
+      "%d, %d, %d, %d, %d, %d, %d",
+       nBlock, nBand, nLevel, nXOffset, nYOffset, nColumnBlockSize, nRowBlockSize );
+
     if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
-                                  pabyBlockBuf,
-                                  nActualBlockBytes ) )
+                                  pabyOutBuf,
+                                  nBlockBytes2 ) )
     {
         return false;
     }
@@ -2365,7 +2438,7 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
     VSIFCloseL( fpImage );
 
     fpImage = VSIFOpenL( pszMemFile, "rb" );
-    unsigned long nSize = VSIFReadL( pabyBlockBuf, 1, nBlockBytes, fpImage );
+    unsigned long nSize = VSIFReadL( pabyBlockBuf2, 1, nBlockBytes, fpImage );
     VSIFCloseL( fpImage );
 
     VSIUnlink( pszMemFile );
@@ -2433,7 +2506,7 @@ unsigned long GeoRasterWrapper::CompressDeflate( void )
 
     // Call ZLib compress
 
-    int nRet = compress( pabyBlockBuf, &nLen, pabyBuf, nBlockBytes );
+    int nRet = compress( pabyBlockBuf2, &nLen, pabyBuf, nBlockBytes );
 
     CPLFree( pabyBuf );
 
