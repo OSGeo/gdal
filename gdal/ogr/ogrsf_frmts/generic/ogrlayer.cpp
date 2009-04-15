@@ -966,7 +966,7 @@ OGRStyleTableH OGR_L_GetStyleTable( OGRLayerH hLayer )
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_GetStyleTable", NULL );
     
-    return ((OGRLayer *) hLayer)->GetStyleTable( );
+    return (OGRStyleTableH) ((OGRLayer *) hLayer)->GetStyleTable( );
 }
 
 /************************************************************************/
