@@ -1105,8 +1105,7 @@ can publish a picture without proper georeference too.
 </dl>
 
 
-NOTE: gdal2tiles.py is a Python script, and will only work if GDAL was built
-with Python support.
+NOTE: gdal2tiles.py is a Python script that needs to be run against "new generation" Python GDAL binding.
 
 \if man
 \section gdal2tiles_author AUTHORS
