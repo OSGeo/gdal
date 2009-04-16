@@ -82,6 +82,8 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
 OGRGMLLayer::~OGRGMLLayer()
 
 {
+    CPLFree(pszFIDPrefix);
+
     if( poFeatureDefn )
         poFeatureDefn->Release();
 
