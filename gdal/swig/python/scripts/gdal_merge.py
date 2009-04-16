@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: gdal_merge.py 10048 2006-09-28 03:41:30Z fwarmerdam $
+# $Id$
 #
 # Project:  InSAR Peppers
 # Purpose:  Module to extract data from many rasters into one output.
@@ -404,6 +404,9 @@ if __name__ == '__main__':
     else:
         if separate != 0:
             bands = len(file_infos)
+            if t_fh.RasterCount < bands :
+                print 'Existing output file has less bands than the number of input files. You should delete it before. Terminating gdal_merge.'
+                sys.exit( 1 )
         else:
             bands = min(file_infos[0].bands,t_fh.RasterCount)
 
