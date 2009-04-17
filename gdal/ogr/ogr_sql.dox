@@ -476,6 +476,19 @@ SELECT OGR_GEOM_WKT, * FROM nation WHERE OGR_GEOM_WKT
    LIKE 'POINT%' OR OGR_GEOM_WKT LIKE 'POLYGON%'
 \endcode 
 
+\subsection ogr_sql_geom_area OGR_GEOM_AREA
+
+The <b>OGR_GEOM_AREA</b> special field returns the area of the feature's 
+geometry computed by the OGRSurface::get_Area() method. For 
+OGRGeometryCollection and OGRMultiPolygon the value is the sum of the 
+areas of its members. For non-surface geometries the returned area is 0.0.
+
+For example, to select only polygon features larger than a given area:
+
+\code
+SELECT * FROM nation WHERE OGR_GEOM_AREA > 10000000'
+\endcode 
+
 \subsection ogr_sql_style OGR_STYLE
 
 The <b>OGR_STYLE</b> special field represents the style string of the feature
