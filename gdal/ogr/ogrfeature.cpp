@@ -815,6 +815,12 @@ int OGRFeature::GetFieldAsInteger( int iField )
         {
         case SPF_FID:
             return GetFID();
+
+        case SPF_OGR_GEOM_AREA:
+            if( poGeometry == NULL )
+                return 0;
+            return (int)OGR_G_GetArea((OGRGeometryH)poGeometry);
+
         default:
             return 0;
         }
@@ -900,6 +906,12 @@ double OGRFeature::GetFieldAsDouble( int iField )
         {
         case SPF_FID:
             return GetFID();
+
+        case SPF_OGR_GEOM_AREA:
+            if( poGeometry == NULL )
+                return 0.0;
+            return OGR_G_GetArea((OGRGeometryH)poGeometry);
+
         default:
             return 0.0;
         }
@@ -1016,6 +1028,14 @@ const char *OGRFeature::GetFieldAsString( int iField )
               else
                   return "";
           }
+
+          case SPF_OGR_GEOM_AREA:
+            if( poGeometry == NULL )
+                return "";
+
+            snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%.16g", 
+                      OGR_G_GetArea((OGRGeometryH)poGeometry) );
+            return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
 
           default:
             return "";

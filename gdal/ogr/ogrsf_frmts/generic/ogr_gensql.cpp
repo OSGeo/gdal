@@ -596,6 +596,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
               case SWQ_INTEGER:
                 poDstFeat->SetField( iField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
                 break;
+              case SWQ_FLOAT:
+                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsDouble(psColDef->field_index) );
+                break;
               default:
                 poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
             }

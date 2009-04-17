@@ -96,7 +96,8 @@ CPL_C_END
 #define SPF_OGR_GEOMETRY 1
 #define SPF_OGR_STYLE 2
 #define SPF_OGR_GEOM_WKT 3
-#define SPECIAL_FIELD_COUNT 4
+#define SPF_OGR_GEOM_AREA 4
+#define SPECIAL_FIELD_COUNT 5
 
 extern const char* SpecialFieldNames[SPECIAL_FIELD_COUNT];
 extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
