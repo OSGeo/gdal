@@ -571,6 +571,39 @@ def ogr_sql_24():
     return result
 
 ###############################################################################
+# Test for OGR_GEOM_AREA special field (#2949)
+
+def ogr_sql_25():
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    mem_lyr = mem_ds.CreateLayer( "my_layer")
+    mem_lyr.CreateField( ogr.FieldDefn("test", ogr.OFTString) )
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+    feat.SetField("test", 0)
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))"))
+    mem_lyr.CreateFeature( feat )
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn() )
+    feat.SetField("test", 1)
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 0.5,0.5 0.5,0.5 0,0 0))"))
+    mem_lyr.CreateFeature( feat )
+
+    sql_lyr = mem_ds.ExecuteSQL("SELECT test, OGR_GEOM_AREA from my_layer WHERE OGR_GEOM_AREA > 0.9")
+    if sql_lyr.GetFeatureCount() != 1:
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetFieldAsDouble('OGR_GEOM_AREA') != 1.0:
+        return 'fail'
+    if feat.GetFieldAsString('test') != '0':
+        return 'fail'
+    mem_ds.ReleaseResultSet(sql_lyr)
+
+    mem_ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -605,6 +638,7 @@ gdaltest_list = [
     ogr_sql_22,
     ogr_sql_23,
     ogr_sql_24,
+    ogr_sql_25,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
