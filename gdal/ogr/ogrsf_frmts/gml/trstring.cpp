@@ -172,7 +172,7 @@ void tr_strcpy( char *pszCString, const XMLCh *panXMLString )
 /* -------------------------------------------------------------------- */
     int i;
     wchar_t *pwszSource = (wchar_t *) CPLCalloc(sizeof(wchar_t),
-                                                strlen(pszCString)+1 );
+                                                tr_strlen(panXMLStringOriginal)+1 );
     for( i = 0; panXMLString[i] != 0; i++ )
         pwszSource[i] = panXMLString[i];
     pwszSource[i] = 0;
