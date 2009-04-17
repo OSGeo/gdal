@@ -40,9 +40,9 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 const char* SpecialFieldNames[SPECIAL_FIELD_COUNT] 
-    = {"FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT"};
+= {"FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT", "OGR_GEOM_AREA"};
 const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] 
-    = {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING};
+= {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING, SWQ_FLOAT};
 
 /************************************************************************/
 /*                          OGRFeatureQuery()                           */
@@ -171,6 +171,10 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
             {
               case SWQ_INTEGER:
                 sField.Integer = poFeature->GetFieldAsInteger(op->field_index);
+                break;
+                
+              case SWQ_FLOAT:
+                sField.Real = poFeature->GetFieldAsDouble(op->field_index);
                 break;
                 
               case SWQ_STRING:
