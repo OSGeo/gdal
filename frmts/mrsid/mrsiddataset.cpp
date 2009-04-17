@@ -897,7 +897,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 	  
             for( int iLine = 0; iLine < nBufYSize; iLine++ )
 	    {
-                GDALCopyWords( pabySrcBand + iLine*nTmpPixelSize*nXSize,
+                GDALCopyWords( pabySrcBand + iLine*nTmpPixelSize*sceneWidth,
                                eDataType, nTmpPixelSize, 
                                ((GByte *)pData) + iLine*nLineSpace 
                                + iBand * nBandSpace, 
