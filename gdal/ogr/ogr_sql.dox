@@ -478,6 +478,8 @@ SELECT OGR_GEOM_WKT, * FROM nation WHERE OGR_GEOM_WKT
 
 \subsection ogr_sql_geom_area OGR_GEOM_AREA
 
+(Since GDAL 1.7.0)
+
 The <b>OGR_GEOM_AREA</b> special field returns the area of the feature's 
 geometry computed by the OGRSurface::get_Area() method. For 
 OGRGeometryCollection and OGRMultiPolygon the value is the sum of the 
