@@ -276,6 +276,24 @@ def ogr_gml_7():
     return 'success'
 
 ###############################################################################
+# Test a GML file with some non-ASCII UTF-8 content that triggered a bug (Ticket#2948)
+
+def ogr_gml_8():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    gml_ds = ogr.Open( 'data/utf8.gml' )
+    lyr = gml_ds.GetLayer()
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('name') != '\xc4\x80liamanu':
+        return 'fail'
+
+    gml_ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -290,6 +308,7 @@ gdaltest_list = [
     ogr_gml_5,
     ogr_gml_6,
     ogr_gml_7,
+    ogr_gml_8,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
