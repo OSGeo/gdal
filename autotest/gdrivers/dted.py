@@ -275,6 +275,17 @@ def dted_11():
     return 'success'
 
 ###############################################################################
+# Test a DTED file that begins with a HDR record, and not directly the UHL record (#2951)
+
+def dted_12():
+
+    ds = gdal.Open( 'data/w118n033_trunc.dt1' )
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def dted_cleanup():
@@ -304,6 +315,7 @@ gdaltest_list = [
     dted_9,
     dted_10,
     dted_11,
+    dted_12,
     dted_cleanup
     ]
   
