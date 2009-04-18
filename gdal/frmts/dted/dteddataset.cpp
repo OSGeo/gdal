@@ -298,7 +298,15 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( strstr((const char *)poOpenInfo->pabyHeader,"UHL") == NULL )
+    int bFoundUHL = FALSE;
+    for(i=0;i<poOpenInfo->nHeaderBytes-3 && !bFoundUHL ;i += DTED_UHL_SIZE)
+    {
+        if( EQUALN((const char *)poOpenInfo->pabyHeader + i,"UHL", 3) )
+        {
+            bFoundUHL = TRUE;
+        }
+    }
+    if (!bFoundUHL)
         return NULL;
 
 /* -------------------------------------------------------------------- */
