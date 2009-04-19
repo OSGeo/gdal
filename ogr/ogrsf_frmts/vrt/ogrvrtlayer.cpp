@@ -64,6 +64,7 @@ OGRVRTLayer::OGRVRTLayer()
     poFeatureDefn = NULL;
     poSrcLayer = NULL;
     poSRS = NULL;
+    poSrcDS = NULL;
 
     bUseSpatialSubquery = FALSE;
     iFIDField = -1;
