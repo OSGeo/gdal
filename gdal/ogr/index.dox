@@ -34,8 +34,11 @@ OGR is a part of the <a href="http://www.gdal.org/">GDAL</a> library.<p>
 
 <li> <a href="ogr_feature_style.html">OGR - Feature Style Specification</a>
 
+<!-- sfc_tutorial.dox lives now under spike/sfcom_oledb/client, so the html page
+is no longer generated
 <li> <a href="sfc_tutorial.html">SFC (OLE DB client side API) 
 Tutorial</a>
+-->
 
 <li> <a href="http://home.gdal.org/projects/opengis/twohalfdsf.html">Adam's 2.5 D Simple Features Proposal (OGC 99-402r2)</a>
 
