@@ -558,7 +558,7 @@ void OGRPGTableLayer::BuildWhere()
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
-        osWHERE.Printf("WHERE %s && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
+        osWHERE.Printf("WHERE \"%s\" && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
                        pszGeomColumn,
                        sEnvelope.MinX, sEnvelope.MinY,
                        sEnvelope.MaxX, sEnvelope.MaxY,
@@ -1046,7 +1046,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
     if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL )
     {
-        osCommand = osCommand + pszGeomColumn + " ";
+        osCommand = osCommand + "\"" + pszGeomColumn + "\" ";
         bNeedComma = TRUE;
     }
 
@@ -1055,7 +1055,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         if( bNeedComma )
             osCommand += ", ";
         
-        osCommand = osCommand + pszFIDColumn + " ";
+        osCommand = osCommand + "\"" + pszFIDColumn + "\" ";
         bNeedComma = TRUE;
     }
 
@@ -1717,7 +1717,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 
     osCommand.Printf(
              "DECLARE getfeaturecursor %s for "
-             "SELECT %s FROM %s WHERE %s = %ld",
+             "SELECT %s FROM %s WHERE \"%s\" = %ld",
               ( poDS->bUseBinaryCursor ) ? "BINARY CURSOR" : "CURSOR",
              pszFieldList, pszSqlTableName, pszFIDColumn,
              nFeatureId );
