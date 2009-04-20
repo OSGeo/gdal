@@ -55,7 +55,6 @@ GeoRasterDataset::GeoRasterDataset()
     pszProjection       = NULL;
     nGCPCount           = 0;
     pasGCPList          = NULL;
-    nOverviewCount      = 0;
     poDriver            = (GDALDriver *) GDALGetDriverByName( "GEORASTER" );
 }
 
@@ -200,7 +199,6 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         poGRD->nRasterXSize  = poGRW->nRasterColumns;
         poGRD->nRasterYSize  = poGRW->nRasterRows;
         poGRD->nBands        = poGRW->nRasterBands;
-        poGRD->nOverviewCount = poGRW->nPyramidMaxLevel;
         poGRD->poGeoRaster   = poGRW;
     }
     else
