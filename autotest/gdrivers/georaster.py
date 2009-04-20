@@ -311,6 +311,78 @@ def georaster_rgb_deflate_b3():
 ###############################################################################
 # 
 
+def georaster_1bit():
+
+    if gdaltest.georasterDriver is None:
+        return 'skip'
+
+    ds_src = gdal.Open('data/byte.tif')
+
+    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+        ',GDAL_TEST,RASTER', ds_src, 1, 
+        [ "DESCRIPTION=(id number, raster sdo_georaster)" , 
+        "INSERT=(1011, sdo_geor.init('GDAL_TEST_RDT',1011))" , 
+        "NBITS=1"] ) 
+
+    ds_name = ds.GetDescription()
+
+    ds = None
+
+    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 252, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+###############################################################################
+# 
+
+def georaster_2bit():
+
+    if gdaltest.georasterDriver is None:
+        return 'skip'
+
+    ds_src = gdal.Open('data/byte.tif')
+
+    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+        ',GDAL_TEST,RASTER', ds_src, 1, 
+        [ "DESCRIPTION=(id number, raster sdo_georaster)" , 
+        "INSERT=(1012, sdo_geor.init('GDAL_TEST_RDT',1012))" , 
+        "NBITS=2"] ) 
+
+    ds_name = ds.GetDescription()
+
+    ds = None
+
+    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 718, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+###############################################################################
+# 
+
+def georaster_4bit():
+
+    if gdaltest.georasterDriver is None:
+        return 'skip'
+
+    ds_src = gdal.Open('data/byte.tif')
+
+    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+        ',GDAL_TEST,RASTER', ds_src, 1, 
+        [ "DESCRIPTION=(id number, raster sdo_georaster)" , 
+        "INSERT=(1013, sdo_geor.init('GDAL_TEST_RDT',1013))" , 
+        "NBITS=4"] ) 
+
+    ds_name = ds.GetDescription()
+
+    ds = None
+
+    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 2578, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+###############################################################################
+# 
+
 def georaster_cleanup():
 
     if gdaltest.georasterDriver is None:
@@ -342,6 +414,9 @@ gdaltest_list = [
     georaster_rgb_b3_bil,
     georaster_byte_deflate,
     georaster_rgb_deflate_b3,
+    georaster_1bit,
+    georaster_2bit,
+    georaster_4bit,
     georaster_cleanup
     ]
 
