@@ -370,7 +370,7 @@ void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
                 OGREnvelope  sEnvelope;
 
                 m_poFilterGeom->getEnvelope( &sEnvelope );
-                osWHERE.Printf("WHERE %s && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
+                osWHERE.Printf("WHERE \"%s\" && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
                             pszGeomColumn,
                             sEnvelope.MinX, sEnvelope.MinY,
                             sEnvelope.MaxX, sEnvelope.MaxY,
