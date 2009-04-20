@@ -1860,6 +1860,53 @@ def ogr_pg_43():
     return 'success'
 
 ###############################################################################
+# Test for table and column names that need quoting (#2945)
+
+def ogr_pg_44():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'select', options = [ 'OVERWRITE=YES', 'GEOMETRY_NAME=where' ]  )
+    ogrtest.quick_create_layer_def( gdaltest.pg_lyr, [ ('from', ogr.OFTReal)] )
+    feat = ogr.Feature(gdaltest.pg_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0.5 0.5)'))
+    gdaltest.pg_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    gdaltest.pg_ds.ExecuteSQL('ALTER TABLE "select" RENAME COLUMN "ogc_fid" to "AND"');
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    layer = ds.GetLayerByName('select')
+    geom = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,0 1,1 1,1 0,0 0))' )
+    layer.SetSpatialFilter( geom )
+    geom.Destroy()
+    if layer.GetFeatureCount() != 1:
+        return 'fail'
+    feat = layer.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5)':
+        return 'fail'
+
+    feat = layer.GetFeature(1)
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5)':
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM "select"')
+    geom = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,0 1,1 1,1 0,0 0))' )
+    sql_lyr.SetSpatialFilter( geom )
+    geom.Destroy()
+    if sql_lyr.GetFeatureCount() != 1:
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0.5 0.5)':
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -1884,6 +1931,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DROP TABLE table37_base')
     gdaltest.pg_ds.ExecuteSQL( 'DROP VIEW testview')
     gdaltest.pg_ds.ExecuteSQL( "DELETE FROM geometry_columns WHERE f_table_name='testview'")
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:select' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -1956,6 +2004,7 @@ gdaltest_list_internal = [
     ogr_pg_41,
     ogr_pg_42,
     ogr_pg_43,
+    ogr_pg_44,
     ogr_pg_cleanup ]
 
 
