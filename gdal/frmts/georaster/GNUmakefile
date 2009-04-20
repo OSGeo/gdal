@@ -29,7 +29,7 @@ default:	$(OBJ)
 clean:
 	rm -f *.o $(O_OBJ) *.so
 
-install-obj:	$(O_OBJ:.o=.$(OBJ))
+install-obj:	$(O_OBJ)
 
 plugin: $(PLUGIN_SO)
 
