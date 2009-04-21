@@ -72,6 +72,27 @@ def colortable_2():
     return 'success' 
 
 ###############################################################################
+# Test CreateColorRamp()
+
+def colortable_3():
+
+    ct = gdal.ColorTable()
+    try:
+        ct.CreateColorRamp
+    except:
+        return 'skip'
+
+    ct.CreateColorRamp(0,(255,0,0),255,(0,0,255))
+
+    if ct.GetColorEntry(0) != (255,0,0,255):
+        return 'fail'
+
+    if ct.GetColorEntry(255) != (0,0,255,255):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def colortable_cleanup():
@@ -81,6 +102,7 @@ def colortable_cleanup():
 gdaltest_list = [
     colortable_1,
     colortable_2,
+    colortable_3,
     colortable_cleanup ]
 
 if __name__ == '__main__':
