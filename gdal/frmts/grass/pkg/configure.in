@@ -79,7 +79,7 @@ elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
 
 else
 
-  AC_MSG_ERROR([gdal required to build GDAL GRASS 5.7 driver])
+  AC_MSG_ERROR([gdal required to build GDAL GRASS driver])
 
 fi
 
@@ -107,7 +107,7 @@ AC_MSG_RESULT(using $AUTOLOAD_DIR as GDAL shared library autoload directory)
 AC_SUBST(AUTOLOAD_DIR,$AUTOLOAD_DIR)
 
 dnl ---------------------------------------------------------------------------
-dnl Find GRASS 5.7
+dnl Find GRASS 5.7 or GRASS 7
 dnl ---------------------------------------------------------------------------
 
 GRASS_SETTING=no
@@ -118,7 +118,7 @@ export GRASS_INCLUDE GRASS_SETTING GRASS_GISBASE
 AC_ARG_WITH(grass,[  --with-grass[=ARG]        Include GRASS support (ARG=GRASS install tree dir)],,)
 
 if test "$with_grass" = "no" ; then
-  AC_MSG_ERROR([grass required for this driver, please install GRASS 5.7 and rebuild])
+  AC_MSG_ERROR([grass required for this driver, please install GRASS 5.7 or later and rebuild])
 fi
 
 if test "$with_grass" != "yes" ; then
@@ -130,7 +130,16 @@ if test "$with_grass" != "yes" ; then
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else
-    AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?])
+
+    # Check for GRASS >= 7.0
+    AC_CHECK_LIB(grass_gis,G_putenv,GRASS_SETTING=grass7+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm)
+    if test "$GRASS_SETTING" = "grass7+" ; then   
+        LIBS="-L$with_grass/lib -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
+        GRASS_INCLUDE="-I$with_grass/include"
+        GRASS_GISBASE="$with_grass"
+    else
+        AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?])
+    fi
   fi
 fi
 

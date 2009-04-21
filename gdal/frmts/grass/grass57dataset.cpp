@@ -790,7 +790,7 @@ bool GRASSDataset::SplitPath( char *path, char **gisdbase, char **location,
 /*                                Open()                                */
 /************************************************************************/
 
-#if GRASS_VERSION_MAJOR  >= 6 && GRASS_VERSION_MINOR  >= 3
+#if (GRASS_VERSION_MAJOR  >= 6 && GRASS_VERSION_MINOR  >= 3) || GRASS_VERSION_MAJOR  >= 7
 typedef int (*GrassErrorHandler)(const char *, int);
 #else
 typedef int (*GrassErrorHandler)(char *, int);
