@@ -2880,8 +2880,8 @@ echo "$as_me: error: '$GDAL_CONFIG' is not an executable.  Make sure you use --w
 
 else
 
-  { { echo "$as_me:$LINENO: error: gdal required to build GDAL GRASS 5.7 driver" >&5
-echo "$as_me: error: gdal required to build GDAL GRASS 5.7 driver" >&2;}
+  { { echo "$as_me:$LINENO: error: gdal required to build GDAL GRASS driver" >&5
+echo "$as_me: error: gdal required to build GDAL GRASS driver" >&2;}
    { (exit 1); exit 1; }; }
 
 fi
@@ -2928,8 +2928,8 @@ if test "${with_grass+set}" = set; then
 fi;
 
 if test "$with_grass" = "no" ; then
-  { { echo "$as_me:$LINENO: error: grass required for this driver, please install GRASS 5.7 and rebuild" >&5
-echo "$as_me: error: grass required for this driver, please install GRASS 5.7 and rebuild" >&2;}
+  { { echo "$as_me:$LINENO: error: grass required for this driver, please install GRASS 5.7 or later and rebuild" >&5
+echo "$as_me: error: grass required for this driver, please install GRASS 5.7 or later and rebuild" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -3012,9 +3012,87 @@ fi
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else
-    { { echo "$as_me:$LINENO: error: --with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?" >&5
+
+    # Check for GRASS >= 7.0
+    echo "$as_me:$LINENO: checking for G_putenv in -lgrass_gis" >&5
+echo $ECHO_N "checking for G_putenv in -lgrass_gis... $ECHO_C" >&6
+if test "${ac_cv_lib_grass_gis_G_putenv+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgrass_gis -L$with_grass/lib -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char G_putenv ();
+int
+main ()
+{
+G_putenv ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_grass_gis_G_putenv=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_grass_gis_G_putenv=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_grass_gis_G_putenv" >&5
+echo "${ECHO_T}$ac_cv_lib_grass_gis_G_putenv" >&6
+if test $ac_cv_lib_grass_gis_G_putenv = yes; then
+  GRASS_SETTING=grass7+
+else
+  GRASS_SETTING=no
+fi
+
+    if test "$GRASS_SETTING" = "grass7+" ; then
+        LIBS="-L$with_grass/lib -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
+        GRASS_INCLUDE="-I$with_grass/include"
+        GRASS_GISBASE="$with_grass"
+    else
+        { { echo "$as_me:$LINENO: error: --with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?" >&5
 echo "$as_me: error: --with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?" >&2;}
    { (exit 1); exit 1; }; }
+    fi
   fi
 fi
 
