@@ -1354,24 +1354,7 @@ OGRStyleTool::~OGRStyleTool()
 void OGR_ST_Destroy( OGRStyleToolH hST )
 
 {
-    
-    switch( OGR_ST_GetType(hST)/*((OGRStyleTool *) hST)->GetType()*/ )
-    {
-      case OGRSTCPen:
-        delete (OGRStylePen *) hST;
-        break;
-      case OGRSTCBrush:
-        delete (OGRStyleBrush *) hST;
-        break;
-      case OGRSTCSymbol:
-        delete (OGRStyleSymbol *) hST;
-        break;
-      case OGRSTCLabel:
-        delete (OGRStyleLabel *) hST;
-        break;
-      default:
-        break;
-    }
+    delete (OGRStyleTool *) hST; 
 }
 
 
