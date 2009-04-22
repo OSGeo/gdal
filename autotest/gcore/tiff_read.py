@@ -267,6 +267,32 @@ def tiff_vsimem():
 
     return 'success'
 
+###############################################################################
+# Test reading a tiff from inside a zip in a memory buffer !
+
+def tiff_vsizip_and_mem():
+
+    try:
+        gdal.FileFromMemBuffer
+    except:
+        return 'skip'
+
+    content = open('./data/byte.tif.zip').read()
+
+    # Create in-memory file
+    gdal.FileFromMemBuffer('/vsimem/tiffinmem.zip', content)
+
+    ds = gdal.Open('/vsizip/vsimem/tiffinmem.zip/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            return 'fail'
+
+    # Release memory associated to the in-memory file
+    gdal.Unlink('/vsimem/tiffinmem.zip')
+
+    return 'success'
+
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -283,6 +309,7 @@ gdaltest_list.append( (tiff_grads) )
 gdaltest_list.append( (tiff_g4_split) )
 gdaltest_list.append( (tiff_multi_images) )
 gdaltest_list.append( (tiff_vsimem) )
+gdaltest_list.append( (tiff_vsizip_and_mem) )
 
 if __name__ == '__main__':
 
