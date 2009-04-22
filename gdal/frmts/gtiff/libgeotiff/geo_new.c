@@ -12,32 +12,6 @@
  *    20 June, 1995      Niles D. Ritter         New
  *    7 July,  1995      Greg Martin             Fix index
  *
- * $Log$
- * Revision 1.14  2008/05/09 18:37:46  fwarmerdam
- * add support for simple tags api
- *
- * Revision 1.13  2007/10/03 04:08:03  fwarmerdam
- * avoid memory leak in case of error
- *
- * Revision 1.12  2006/06/26 20:03:37  fwarmerdam
- * If the ascii parameters list is too short for the declared size
- * of an ascii parameter, but it doesn't start off the end of the
- * available string then just trim the length.  This is to make the
- * ESRI sample data file 34105h2.tif work properly.  I wish we had
- * a way of issuing warnings!
- *
- * Revision 1.11  2004/04/27 21:32:08  warmerda
- * Allow GTIFNew(NULL) to work
- *
- * Revision 1.10  2003/09/02 13:52:17  warmerda
- * various hacks to support improperly terminated asciiparms
- *
- * Revision 1.9  2003/06/19 20:04:11  warmerda
- * fix memory underwrite if ascii parameter string is zero length
- *
- * Revision 1.8  2003/06/05 14:20:45  warmerda
- * cosmetic formatting changes
- *
  **********************************************************************/
 
 #include "geotiffio.h"   /* public interface        */

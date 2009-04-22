@@ -9,40 +9,6 @@
  *  Permission granted to use this software, so long as this copyright
  *  notice accompanies any products derived therefrom.
  *
- * $Log$
- * Revision 1.12  2008/02/29 17:23:29  fwarmerdam
- * clarify docs on multiple arguments.
- *
- * Revision 1.11  2004/04/27 21:32:33  warmerda
- * reformat for clarity
- *
- * Revision 1.10  2003/07/08 17:31:30  warmerda
- * cleanup various warnings
- *
- * Revision 1.9  2003/01/15 03:37:19  warmerda
- * avoid warning
- *
- * Revision 1.8  2002/09/27 13:05:33  warmerda
- * allow dynamic set/delete of ASCII tags. ASCIIPARAMS now kept split
- *
- * Revision 1.7  2001/05/02 16:48:22  warmerda
- * fixed a couple bugs in delete code
- *
- * Revision 1.6  2001/05/02 13:54:34  warmerda
- * updated geo_set.c to support deleting tags
- *
- * Revision 1.5  1999/05/04 03:09:33  warmerda
- * avoid warnings
- *
- * Revision 1.4  1999/05/03 17:50:31  warmerda
- * avoid warnings on IRIX
- *
- * Revision 1.3  1999/04/28 19:59:38  warmerda
- * added some doxygen style documentation
- *
- * Revision 1.2  1999/03/11 17:39:38  geotiff
- * Added fix for case where a key is being overwritten.
- *
  **********************************************************************/
 
 #include "geotiff.h"   /* public interface        */
