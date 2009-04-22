@@ -1371,6 +1371,11 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 {
     const char *pszResult = NULL;
 
+    char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+    if( papszTLConfigOptions != NULL )
+        pszResult = CSLFetchNameValue( papszTLConfigOptions, pszKey );
+
+    if( pszResult == NULL )
     {
         CPLMutexHolderD( &hConfigMutex );
 
@@ -1423,6 +1428,36 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 }
 
 /************************************************************************/
+/*                   CPLSetThreadLocalConfigOption()                    */
+/************************************************************************/
+
+/**
+  * Set a configuration option for GDAL/OGR use.
+  *
+  * Those options are defined as a (key, value) couple. The value corresponding
+  * to a key can be got later with the CPLGetConfigOption() method.  
+  *
+  * This function sets the configuration option that only applies in the
+  * current thread, as opposed to CPLSetConfigOption() which sets an option
+  * that applies on all threads.
+  *
+  * @param pszKey the key of the option
+  * @param pszValue the value of the option
+  */
+
+void CPL_STDCALL 
+CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
+
+{
+    char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+
+    papszTLConfigOptions = 
+        CSLSetNameValue( papszTLConfigOptions, pszKey, pszValue );
+
+    CPLSetTLS( CTLS_CONFIGOPTIONS, papszTLConfigOptions, FALSE );
+}
+
+/************************************************************************/
 /*                           CPLFreeConfig()                            */
 /************************************************************************/
 
@@ -1433,6 +1468,13 @@ void CPL_STDCALL CPLFreeConfig()
 
     CSLDestroy( (char **) papszConfigOptions);
     papszConfigOptions = NULL;
+
+    char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+    if( papszTLConfigOptions != NULL )
+    {
+        CSLDestroy( papszTLConfigOptions );
+        CPLSetTLS( CTLS_CONFIGOPTIONS, NULL, FALSE );
+    }
 }
 
 /************************************************************************/
