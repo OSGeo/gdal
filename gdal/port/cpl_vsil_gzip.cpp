@@ -1358,7 +1358,13 @@ char* VSIZipFilesystemHandler::SplitFilename(const char *pszFilename,
                                              CPLString &osZipInFileName)
 {
     int i = 0;
-    pszFilename += strlen("/vsizip/");
+
+    /* Allow natural chaining of VSI drivers without requiring double slash */
+    if (strncmp(pszFilename, "/vsizip/vsi", strlen("/vsizip/vsi")) == 0)
+        pszFilename += strlen("/vsizip");
+    else
+        pszFilename += strlen("/vsizip/");
+
     while(pszFilename[i])
     {
         if (EQUALN(pszFilename + i, ".zip", 4))
