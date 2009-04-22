@@ -17,32 +17,6 @@
  *    28 July,  1995      NDR                  Made parser more strict.
  *    29  Sep,  1995      NDR                  Fixed matrix printing.
  *
- * $Log$
- * Revision 1.9  2004/10/19 14:24:09  fwarmerdam
- * dynamically allocate tag list so large lists work: Oliver Colin
- *
- * Revision 1.8  2004/04/27 21:31:31  warmerda
- * avoid crash if gt_tif is NULL
- *
- * Revision 1.7  2003/10/21 19:19:53  warmerda
- * fixed bug with large message texts sometimes causing a crash
- *
- * Revision 1.6  2003/09/23 18:27:30  warmerda
- * fixed bug with long datum names: bug 399
- *
- * Revision 1.5  2003/07/08 17:31:30  warmerda
- * cleanup various warnings
- *
- * Revision 1.4  2002/05/31 14:27:26  warmerda
- * added escaping in metadata for string key values
- *
- * Revision 1.3  1999/05/04 03:14:35  warmerda
- * avoid warnings
- *
- * Revision 1.2  1999/05/03 17:50:31  warmerda
- * avoid warnings on IRIX
- *
- *
  **********************************************************************/
 
 #include "geotiff.h"   /* public interface        */

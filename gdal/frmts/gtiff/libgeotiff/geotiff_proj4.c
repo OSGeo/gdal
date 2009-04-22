@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c 1538 2009-02-23 15:19:59Z warmerdam $
+ * $Id: geotiff_proj4.c 1565 2009-04-06 04:13:09Z hobu $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -27,85 +27,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- *
- * $Log$
- * Revision 1.25  2008/05/21 04:25:01  fwarmerdam
- * avoid warnings.
- *
- * Revision 1.24  2008/05/21 04:12:57  fwarmerdam
- * added preliminary GTIFSetFromProj4() support
- *
- * Revision 1.23  2007/03/13 18:04:33  fwarmerdam
- * added new zealand map grid support per bug 1519
- *
- * Revision 1.22  2005/03/04 04:32:37  fwarmerdam
- * added cylindricalequalarea support
- *
- * Revision 1.21  2003/08/21 18:42:39  warmerda
- * fixed support for ModelTypeGeographic as per email from Young Su, Cha
- *
- * Revision 1.20  2003/07/08 17:31:30  warmerda
- * cleanup various warnings
- *
- * Revision 1.19  2002/11/29 20:57:09  warmerda
- * added LCC1SP mapping
- *
- * Revision 1.18  2002/07/09 14:47:53  warmerda
- * fixed translation of polar stereographic
- *
- * Revision 1.17  2001/11/23 19:53:56  warmerda
- * free PROJ.4 definitions after use
- *
- * Revision 1.16  2000/12/05 19:21:45  warmerda
- * added cassini support
- *
- * Revision 1.15  2000/12/05 17:44:41  warmerda
- * Use +R_A for Miller and VanDerGrinten
- *
- * Revision 1.14  2000/10/13 18:06:51  warmerda
- * added econic support for PROJ.4 translation
- *
- * Revision 1.13  2000/09/15 19:30:48  warmerda
- * *** empty log message ***
- *
- * Revision 1.12  2000/09/15 18:21:07  warmerda
- * Fixed order of parameters for LCC 2SP.  When parameters
- * were read from EPSG CSV files the standard parallels and origin
- * were mixed up.  This affects alot of state plane zones!
- *
- * Revision 1.11  2000/06/06 17:39:45  warmerda
- * Modify to work with projUV version of library.
- *
- * Revision 1.10  1999/07/06 15:05:51  warmerda
- * Fixed up LCC_1SP notes.
- *
- * Revision 1.9  1999/05/04 16:24:49  warmerda
- * Fixed projection string formating with zones.
- *
- * Revision 1.8  1999/05/04 12:27:01  geotiff
- * only emit proj unsupported warning if DEBUG defined
- *
- * Revision 1.7  1999/05/04 03:14:59  warmerda
- * fixed use of foot instead of ft for units
- *
- * Revision 1.6  1999/05/03 17:50:31  warmerda
- * avoid warnings on IRIX
- *
- * Revision 1.5  1999/04/29 23:02:24  warmerda
- * added mapsys utm test.
- *
- * Revision 1.4  1999/03/18 21:35:42  geotiff
- * Added reprojection functions
- *
- * Revision 1.3  1999/03/10 18:11:17  geotiff
- * Removed comment about this not being the master ... now it is.
- *
- * Revision 1.2  1999/03/10 18:10:27  geotiff
- * Avoid use of cpl_serv.h and CPLStrdup().
- *
- * Revision 1.1  1999/03/10 15:20:43  geotiff
- * New
- *
  */
 
 #include "cpl_serv.h"
@@ -426,9 +347,7 @@ int GTIFSetFromProj4( GTIF *gtif, const char *proj4 )
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(value,"lcc") 
-             && OSR_GDV(papszNV, "lat_0", 0.0 ) 
-             == OSR_GDV(papszNV, "lat_1", 0.0 ) )
+    else if( EQUAL(value,"lcc") )
     {
 	GTIFKeySet(gtif, GTModelTypeGeoKey, TYPE_SHORT, 1,
                    ModelTypeProjected);
@@ -927,7 +846,22 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     char	szUnits[64];
     double      dfFalseEasting, dfFalseNorthing;
 
+    int     nKeyCount = 0;
+    int     anVersion[3];
+
+    if( psDefn != NULL ) 
+    {
+        GTIFDirectoryInfo( psDefn, anVersion, &nKeyCount );
+    } 
+    else 
+    { 
+        return strdup("");
+    }
+    
+
     szProjection[0] = '\0';
+    
+    if ( !nKeyCount ) return strdup( szProjection );
     
 /* ==================================================================== */
 /*      Translate the units of measure.                                 */
@@ -1368,6 +1302,9 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     }
 
     strcat( szProjection, szUnits );
+    
+    /* If we don't have anything, reset */
+    if (strstr(szProjection,"+proj=") == NULL) { return strdup(""); }
 
     return( strdup( szProjection ) );
 }

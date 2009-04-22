@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_trans.c 546 2003-07-08 17:31:30Z warmerda $
+ * $Id: geo_trans.c 1568 2009-04-22 21:10:55Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to abstract translation between pixel/line and PCS
@@ -26,42 +26,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2003/07/08 17:31:30  warmerda
- * cleanup various warnings
- *
- * Revision 1.9  2001/11/28 14:20:30  warmerda
- * fixed transform memory leak in GTIFPCSToImage
- *
- * Revision 1.8  2001/04/06 16:56:22  warmerda
- * added support for PCSToImage with matrix
- *
- * Revision 1.7  2001/03/05 03:25:23  warmerda
- * restructure cleanup, and apply to GTIFPCSToImage()
- *
- * Revision 1.6  2001/03/04 22:37:39  warmerda
- * fixed memory leak for fields fetched with gt_methods.get - Alan Gray
- *
- * Revision 1.5  2000/08/22 03:32:46  warmerda
- * removed GTIFTiepointTranslate code
- *
- * Revision 1.4  1999/09/17 01:19:51  warmerda
- * Fixed bug in use of transform matrix.
- *
- * Revision 1.3  1999/09/16 21:25:40  warmerda
- * Added tiepoint, and transformation matrix based translation.  Note
- * that we don't try to invert the transformation matrix for
- * GTIFPCSToImage().
- *
- * Revision 1.2  1999/09/07 20:00:40  warmerda
- * Fixed count/tiepoint_count bug in GTIFPCSToImage().
- *
- * Revision 1.1  1999/05/04 03:07:57  warmerda
- * New
- *
- */
+ *****************************************************************************/
  
 #include "geotiff.h"
 #include "geo_tiffp.h" /* external TIFF interface */

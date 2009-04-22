@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 1503 2008-12-29 18:32:12Z warmerdam $
+ * $Id: geo_normalize.c 1570 2009-04-22 21:37:26Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -25,193 +25,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.53  2008/07/03 18:36:31  fwarmerdam
- * Fix potential buffer overflow in GTIFAngleStringToDD.
- * http://trac.osgeo.org/gdal/ticket/2228
- *
- * Revision 1.52  2008/01/31 19:47:57  fwarmerdam
- * Ignore GCS values less than 1 as a sanity measure
- *
- * Revision 1.51  2007/12/11 17:58:34  fwarmerdam
- * Add EPSG 9822 (Albers Equal Area) support from EPSG
- *
- * Revision 1.50  2007/07/28 13:55:21  fwarmerdam
- * Fix name for GCS_WGS_72 per gdal bug #1715.
- *
- * Revision 1.49  2007/07/20 18:10:41  fwarmerdam
- * Pre-search pcs.override.csv and gcs.override.csv.
- *
- * Revision 1.48  2007/06/06 02:17:04  fwarmerdam
- * added builtin known values for foot and us survey foot
- *
- * Revision 1.47  2007/03/13 18:04:33  fwarmerdam
- * added new zealand map grid support per bug 1519
- *
- * Revision 1.46  2006/04/11 19:25:06  fwarmerdam
- * Be careful about falling back to gdal_datum.csv as it can interfere
- * with incode datum.csv support.
- *
- * Revision 1.45  2005/03/15 16:01:18  fwarmerdam
- * zero inv flattening interpreted as sphere
- *
- * Revision 1.44  2005/03/04 04:32:37  fwarmerdam
- * added cylindricalequalarea support
- *
- * Revision 1.43  2005/03/04 04:02:40  fwarmerdam
- * Fixed initialization of dfStdParallel2 for AEA and EC.
- *
- * Revision 1.42  2005/02/17 01:21:38  fwarmerdam
- * fixed handling of ProjFalseOrigin{Easting,Northing}GeoKey
- *
- * Revision 1.41  2004/12/01 22:06:42  fwarmerdam
- * bug 698: GTIFGetGCSInfo should not fail on missing pm if pm info not req.
- *
- * Revision 1.40  2004/07/09 17:27:37  warmerda
- * Added 9122 as an alias for simple degrees.
- *
- * Revision 1.39  2004/06/07 12:57:13  warmerda
- * fallback to using gdal_datum.csv if datum.csv not found
- *
- * Revision 1.38  2004/03/19 12:20:40  dron
- * Initialize projection parameters in GTIFFetchProjParms() before using.
- *
- * Revision 1.37  2003/07/08 17:31:30  warmerda
- * cleanup various warnings
- *
- * Revision 1.36  2003/01/28 18:31:58  warmerda
- * Default dfInDegrees in GTIFAngleToDD().
- *
- * Revision 1.35  2003/01/15 04:39:16  warmerda
- * Added GTIFDeaccessCSV
- *
- * Revision 1.34  2003/01/15 03:37:40  warmerda
- * added GTIFFreeMemory()
- *
- * Revision 1.33  2002/12/05 19:21:01  warmerda
- * fixed dfInDegrees to actually be in degrees, not radians!
- *
- * Revision 1.32  2002/11/30 16:01:11  warmerda
- * fixed some problems in GTIFGetUOMAngleInfo
- *
- * Revision 1.31  2002/11/30 15:44:35  warmerda
- * fixed GetCTParms EPSG code mappings
- *
- * Revision 1.30  2002/11/28 22:27:42  warmerda
- * preliminary upgrade to EPSG 6.2.2 tables
- *
- * Revision 1.29  2002/06/19 03:51:15  warmerda
- * migrated cpl_csv.h into cpl_serv.h
- *
- * Revision 1.28  2002/01/03 21:28:25  warmerda
- * call CSVDeaccess(NULL) at end of GTIFPrintDefn()
- *
- * Revision 1.27  2001/04/17 13:41:10  warmerda
- * fix memory leaks in GTIFPrintDefn()
- *
- * Revision 1.26  2001/04/17 13:23:07  warmerda
- * added support for reading custom ellipsoid definitions
- *
- * Revision 1.25  2001/03/05 04:55:26  warmerda
- * CVSDeaccess at end of GTIFGetDefn to avoid file leak
- *
- * Revision 1.24  2001/03/05 03:26:29  warmerda
- * fixed memory leaks in GTIFPrintDefn()
- *
- * Revision 1.23  2001/02/23 13:49:48  warmerda
- * Fixed GTIFPrintDefn() to use fprintf( fp ), instead of printf().
- *
- * Revision 1.22  2000/10/13 14:30:57  warmerda
- * fixed LCC parm order when parameters read directly from geotiff file
- *
- * Revision 1.21  2000/09/15 19:30:14  warmerda
- * report units of linear proj parms
- *
- * Revision 1.20  2000/09/15 18:21:07  warmerda
- * Fixed order of parameters for LCC 2SP.  When parameters
- * were read from EPSG CSV files the standard parallels and origin
- * were mixed up.  This affects alot of state plane zones!
- *
- * Revision 1.19  2000/06/09 14:05:43  warmerda
- * added default knowledge of NAD27/NAD83/WGS72/WGS84
- *
- * Revision 1.18  1999/12/10 21:28:12  warmerda
- * fixed Stereographic to look for ProjCenterLat/Long
- *
- * Revision 1.17  1999/12/10 20:06:58  warmerda
- * fixed up scale geokey used for a couple of projections
- *
- * Revision 1.16  1999/12/10 19:50:21  warmerda
- * Added EquidistantConic support, fixed return of StdParallel2GeoKey for
- * LCC2, and Albers.
- *
- * Revision 1.15  1999/12/10 19:39:26  warmerda
- * Fixed bug setting the false northing for files with
- * ProjCenterNorthingGeoKey set in GTIFGetDefn().
- *
- * Revision 1.14  1999/09/17 14:58:37  warmerda
- * Added ProjRectifiedGridAngleGeoKey(3096) and support for it's
- * use with Oblique Mercator in geo_normalize.c.
- *
- * Revision 1.13  1999/09/17 00:55:26  warmerda
- * added GTIFGetUOMAngleInfo(), and UOMAngle in GTIFDefn
- *
- * Revision 1.12  1999/09/15 18:51:31  warmerda
- * Map 9808 to TM South Oriented, not TM Modified Alaska.
- *
- * Revision 1.11  1999/09/15 16:44:06  warmerda
- * Change meter to metre to match EPSG database in GTIFGetUOMLengthInfo()
- * shortcut.
- *
- * Revision 1.10  1999/09/15 16:35:15  warmerda
- * Fixed the fractions of second handling properly in GTIFAngleStringToDD().
- *
- * Revision 1.9  1999/09/15 14:24:17  warmerda
- * Fixed serious bug in geo_normalize.c with translation of
- * DD.MMSSsss values.  Return value was seriously off if any
- * fraction of a second was included in the string.
- *
- * Revision 1.8  1999/07/13 03:12:52  warmerda
- * Make scale a parameter of CT_Stereographic.
- *
- * Revision 1.7  1999/05/04 03:13:22  warmerda
- * fixed a serious bug in parsing DMSmmss.sss values, and a bug in forming DMS strings
- *
- * Revision 1.6  1999/05/03 17:50:31  warmerda
- * avoid warnings on IRIX
- *
- * Revision 1.5  1999/04/28 20:04:51  warmerda
- * Added doxygen style documentation.
- * Use GTIFPCSToMapSys() and related functions to partially normalize
- * projections when we don't have the CSV files.
- *
- * Revision 1.4  1999/03/18 21:34:59  geotiff
- * added GTIFDecToDMS
- *
- * Revision 1.3  1999/03/17 19:53:15  geotiff
- * sys includes moved to cpl_serv.h
- *
- * Revision 1.2  1999/03/10 18:24:06  geotiff
- * corrected to use int'
- *
- * Revision 1.1  1999/03/09 15:57:04  geotiff
- * New
- *
- * Revision 1.4  1999/03/03 02:29:38  warmerda
- * Define PI if not already defined.
- *
- * Revision 1.3  1999/03/02 21:10:57  warmerda
- * added lots of projections
- *
- * Revision 1.2  1999/02/24 16:24:15  warmerda
- * Continuing to evolve
- *
- * Revision 1.1  1999/02/22 18:51:08  warmerda
- * New
- *
- */
+ *****************************************************************************/
  
 #include "cpl_serv.h"
 #include "geo_tiffp.h"
@@ -2388,13 +2202,6 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
             psDefn->ProjParm[6] = 10000000.0;
     }
 
-/* -------------------------------------------------------------------- */
-/*      For now we forceable deaccess all CSV files to reduce the       */
-/*      chance of "leakage".  Really, this should be application        */
-/*      controlled.                                                     */
-/* -------------------------------------------------------------------- */
-    CSVDeaccess( NULL );
-
     return TRUE;
 }
 
@@ -2610,8 +2417,6 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
                  psDefn->UOMLength, pszName, psDefn->UOMLengthInMeters );
         CPLFree( pszName );
     }
-
-    CSVDeaccess( NULL );
 }
 
 /************************************************************************/
