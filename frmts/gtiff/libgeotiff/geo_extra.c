@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_extra.c 475 2002-12-01 23:44:34Z warmerda $
+ * $Id: geo_extra.c 1568 2009-04-22 21:10:55Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize a few common PCS values without use of CSV
@@ -26,22 +26,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2002/12/01 23:44:34  warmerda
- * Fixed typo in last fix.
- *
- * Revision 1.3  2002/12/01 23:42:06  warmerda
- * added overrides for two deprecated stateplane zones
- *
- * Revision 1.2  1999/05/04 03:09:33  warmerda
- * avoid warnings
- *
- * Revision 1.1  1999/04/28 20:01:29  warmerda
- * new
- *
- */
+ *****************************************************************************/
 
 /*
 #include "geotiff.h"
