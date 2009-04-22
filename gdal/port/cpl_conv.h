@@ -52,6 +52,8 @@ void CPL_DLL CPLVerifyConfiguration(void);
 const char CPL_DLL * CPL_STDCALL
 CPLGetConfigOption( const char *, const char * );
 void CPL_DLL CPL_STDCALL CPLSetConfigOption( const char *, const char * );
+void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption( const char *pszKey, 
+                                                        const char *pszValue );
 void CPL_DLL CPL_STDCALL CPLFreeConfig(void);
 
 /* -------------------------------------------------------------------- */
