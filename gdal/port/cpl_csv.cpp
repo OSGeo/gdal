@@ -995,6 +995,38 @@ const char *CSVGetField( const char * pszFilename,
 const char * GDALDefaultCSVFilename( const char *pszBasename )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Do we already have this file accessed?  If so, just return      */
+/*      the existing path without any further probing.                  */
+/* -------------------------------------------------------------------- */
+    CSVTable **ppsCSVTableList;
+
+    ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+    if( ppsCSVTableList != NULL )
+    {
+        CSVTable *psTable;
+        int nBasenameLen = strlen(pszBasename);
+
+        for( psTable = *ppsCSVTableList; 
+             psTable != NULL; 
+             psTable = psTable->psNext )
+        {
+            int nFullLen = strlen(psTable->pszFilename);
+
+            if( nFullLen > nBasenameLen 
+                && strcmp(psTable->pszFilename+nFullLen-nBasenameLen,
+                          pszBasename) == 0 
+                && strchr("/\\",psTable->pszFilename[+nFullLen-nBasenameLen-1])
+                          != NULL )
+            {
+                return psTable->pszFilename;
+            }
+        }
+    }
+                
+/* -------------------------------------------------------------------- */
+/*      Otherwise we need to look harder for it.                        */
+/* -------------------------------------------------------------------- */
     static CPL_THREADLOCAL char         szPath[512];
     FILE    *fp = NULL;
     const char *pszResult;
