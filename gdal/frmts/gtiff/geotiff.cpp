@@ -115,6 +115,10 @@ class GTiffDataset : public GDALPamDataset
     CPLErr      FlushBlockBuf();
 
     char	*pszProjection;
+    int         bLookedForProjection;
+
+    void        LookForProjection();
+
     double	adfGeoTransform[6];
     int		bGeoTransformValid;
 
@@ -2156,6 +2160,7 @@ GTiffDataset::GTiffDataset()
     bNoDataSet = FALSE;
     dfNoDataValue = -9999.0;
     pszProjection = CPLStrdup("");
+    bLookedForProjection = FALSE;
     bBase = TRUE;
     bCloseTIFFHandle = FALSE;
     bTreatAsRGBA = FALSE;
@@ -4152,6 +4157,59 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                         LookForProjection()                          */
+/************************************************************************/
+
+void GTiffDataset::LookForProjection()
+
+{
+    if( bLookedForProjection )
+        return;
+
+    bLookedForProjection = TRUE;
+    SetDirectory();
+
+/* -------------------------------------------------------------------- */
+/*      Capture the GeoTIFF projection, if available.                   */
+/* -------------------------------------------------------------------- */
+    GTIF 	*hGTIF;
+    GTIFDefn	sGTIFDefn;
+
+    CPLFree( pszProjection );
+    pszProjection = NULL;
+    
+    hGTIF = GTIFNew(hTIFF);
+
+    if ( !hGTIF )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "GeoTIFF tags apparently corrupt, they are being ignored." );
+    }
+    else
+    {
+        if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
+        {
+            pszProjection = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
+        }
+
+        // Is this a pixel-is-point dataset?
+        short nRasterType;
+
+        if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType, 
+                       0, 1 ) == 1 )
+        {
+            if( nRasterType == (short) RasterPixelIsPoint )
+                SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+            else
+                SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
+        }
+
+        GTIFFree( hGTIF );
+    }
+    bGeoTIFFInfoChanged = FALSE;
+}
+
+/************************************************************************/
 /*                            ApplyPamInfo()                            */
 /*                                                                      */
 /*      PAM Information, if available, overrides the GeoTIFF            */
@@ -4176,6 +4234,7 @@ void GTiffDataset::ApplyPamInfo()
     {
         CPLFree( pszProjection );
         pszProjection = CPLStrdup( pszPamSRS );
+        bLookedForProjection= TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4719,47 +4778,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         }
 
 /* -------------------------------------------------------------------- */
-/*      Capture the GeoTIFF projection, if available.                   */
-/* -------------------------------------------------------------------- */
-        GTIF 	*hGTIF;
-        GTIFDefn	sGTIFDefn;
-
-        CPLFree( pszProjection );
-        pszProjection = NULL;
-    
-        hGTIF = GTIFNew(hTIFF);
-
-        if ( !hGTIF )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "GeoTIFF tags apparently corrupt, they are being ignored." );
-        }
-        else
-        {
-            if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
-            {
-                pszProjection = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
-            }
-
-            // Is this a pixel-is-point dataset?
-            short nRasterType;
-            
-
-            if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType, 
-                           0, 1 ) == 1 )
-            {
-                if( nRasterType == (short) RasterPixelIsPoint )
-                    SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
-                else
-                    SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
-            }
-
-            GTIFFree( hGTIF );
-        }
-        
-/* -------------------------------------------------------------------- */
-/*      If we didn't get a geotiff projection definition, but we did    */
-/*      get one from the .tab file, use that instead.                   */
+/*      Did we find a tab file?  If so we will use it's coordinate      */
+/*      system and give it precidence.                                  */
 /* -------------------------------------------------------------------- */
         if( pszTabWKT != NULL 
             && (pszProjection == NULL || pszProjection[0] == '\0') )
@@ -4767,16 +4787,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             CPLFree( pszProjection );
             pszProjection = pszTabWKT;
             pszTabWKT = NULL;
+            bLookedForProjection = TRUE;
         }
         
-        if( pszProjection == NULL )
-        {
-            pszProjection = CPLStrdup( "" );
-        }
-        
-        if( pszTabWKT != NULL )
-            CPLFree( pszTabWKT );
-
+        CPLFree( pszTabWKT );
         bGeoTIFFInfoChanged = FALSE;
     }
 
@@ -6444,6 +6458,8 @@ const char *GTiffDataset::GetProjectionRef()
 {
     if( nGCPCount == 0 )
     {
+        LookForProjection();
+
         if( EQUAL(pszProjection,"") )
             return GDALPamDataset::GetProjectionRef();
         else
@@ -6460,6 +6476,8 @@ const char *GTiffDataset::GetProjectionRef()
 CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
 
 {
+    LookForProjection();
+
     if( !EQUALN(pszNewProjection,"GEOGCS",6)
         && !EQUALN(pszNewProjection,"PROJCS",6)
         && !EQUALN(pszNewProjection,"LOCAL_CS",6)
@@ -6537,9 +6555,12 @@ const char *GTiffDataset::GetGCPProjection()
 
 {
     if( nGCPCount > 0 )
+    {
+        LookForProjection();
         return pszProjection;
+    }
     else
-        return "";
+        return GDALPamDataset::GetGCPProjection();
 }
 
 /************************************************************************/
