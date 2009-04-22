@@ -244,7 +244,7 @@ def tiff_vsimem():
     except:
         return 'skip'
 
-    content = open('data/byte.tif').read()
+    content = open('data/byte.tif', mode='rb').read()
 
     # Create in-memory file
     gdal.FileFromMemBuffer('/vsimem/tiffinmem', content)
@@ -277,7 +277,7 @@ def tiff_vsizip_and_mem():
     except:
         return 'skip'
 
-    content = open('./data/byte.tif.zip').read()
+    content = open('data/byte.tif.zip', mode='rb').read()
 
     # Create in-memory file
     gdal.FileFromMemBuffer('/vsimem/tiffinmem.zip', content)
