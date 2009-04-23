@@ -178,6 +178,19 @@ typedef enum {
 %include "gdal_typemaps.i"
 #endif
 
+
+/* Default memberin typemaps required to support SWIG 1.3.39 and above */
+%typemap(memberin) char *Info %{
+/* char* Info memberin typemap */
+$1;
+%}
+
+%typemap(memberin) char *Id %{
+/* char* Info memberin typemap */
+$1;
+%}
+
+
 //************************************************************************
 //
 // Define the exposed CPL functions.
