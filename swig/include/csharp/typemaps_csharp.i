@@ -454,13 +454,3 @@ OPTIONAL_POD(int, int);
     }
 %}
 
-/* Default memberin typemaps required to support SWIG 1.3.39 and above */
-%typemap(memberin) char *Info %{
-/* char* Info memberin typemap */
-$1;
-%}
-
-%typemap(memberin) char *Id %{
-/* char* Info memberin typemap */
-$1;
-%}
