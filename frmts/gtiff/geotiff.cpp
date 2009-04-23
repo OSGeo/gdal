@@ -6582,6 +6582,8 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 {
     if( GetAccess() == GA_Update )
     {
+        bLookedForProjection = TRUE;
+
         if( this->nGCPCount > 0 )
         {
             GDALDeinitGCPs( this->nGCPCount, this->pasGCPList );
