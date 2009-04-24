@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.69 2008/01/01 15:41:49 fwarmerdam Exp $ */
+/* $Id: tif_getimage.c,v 1.70 2009/02/13 21:28:58 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -442,7 +442,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 	TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &img->height);
 	TIFFGetFieldDefaulted(tif, TIFFTAG_ORIENTATION, &img->orientation);
 	img->isContig =
-	    !(planarconfig == PLANARCONFIG_SEPARATE && colorchannels > 1);
+	    !(planarconfig == PLANARCONFIG_SEPARATE && img->samplesperpixel > 1);
 	if (img->isContig) {
 		if (!PickContigCase(img)) {
 			sprintf(emsg, "Sorry, can not handle image");
@@ -688,6 +688,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	int alpha = img->alpha;
 	uint32 nrow;
 	int ret = 1, flip;
+        int colorchannels;
 
 	tilesize = TIFFTileSize(tif);  
 	buf = (unsigned char*) _TIFFmalloc((alpha?4:3)*tilesize);
@@ -713,6 +714,20 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		toskew = -(int32)(tw - w);
 	}
 
+        switch( img->photometric )
+        {
+          case PHOTOMETRIC_MINISWHITE:
+          case PHOTOMETRIC_MINISBLACK:
+          case PHOTOMETRIC_PALETTE:
+            colorchannels = 1;
+            p2 = p1 = p0;
+            break;
+
+          default:
+            colorchannels = 3;
+            break;
+        }
+
 	for (row = 0; row < h; row += nrow)
 	{
 		rowstoread = th - (row + img->row_offset) % th;
@@ -725,26 +740,29 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 				ret = 0;
 				break;
 			}
-			if (TIFFReadTile(tif, p1, col+img->col_offset,  
-			    row+img->row_offset,0,1)!=(tmsize_t)(-1) && img->stoponerr)
+			if (colorchannels > 1 
+                            && TIFFReadTile(tif, p1, col+img->col_offset,  
+                                            row+img->row_offset,0,1) != (tmsize_t)(-1) 
+                            && img->stoponerr)
 			{
 				ret = 0;
 				break;
 			}
-			if (TIFFReadTile(tif, p2, col+img->col_offset,  
-			    row+img->row_offset,0,2)!=(tmsize_t)(-1) && img->stoponerr)
+			if (colorchannels > 1 
+                            && TIFFReadTile(tif, p2, col+img->col_offset,  
+                                            row+img->row_offset,0,2) != (tmsize_t)(-1) 
+                            && img->stoponerr)
 			{
 				ret = 0;
 				break;
 			}
-			if (alpha)
-			{
-				if (TIFFReadTile(tif,pa,col+img->col_offset,  
-				    row+img->row_offset,0,3)!=(tmsize_t)(-1) && img->stoponerr)
-				{
-					ret = 0;
-					break;
-				}
+			if (alpha
+                            && TIFFReadTile(tif,pa,col+img->col_offset,  
+                                            row+img->row_offset,0,colorchannels) != (tmsize_t)(-1) 
+                            && img->stoponerr)
+                        {
+                            ret = 0;
+                            break;
 			}
 
 			pos = ((row+img->row_offset) % th) * TIFFTileRowSize(tif);  
@@ -893,7 +911,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	tmsize_t stripsize;
 	int32 fromskew, toskew;
 	int alpha = img->alpha;
-	int ret = 1, flip;
+	int ret = 1, flip, colorchannels;
 
 	stripsize = TIFFStripSize(tif);  
 	p0 = buf = (unsigned char *)_TIFFmalloc((alpha?4:3)*stripsize);
@@ -916,6 +934,20 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		toskew = -(int32)(w - w);
 	}
 
+        switch( img->photometric )
+        {
+          case PHOTOMETRIC_MINISWHITE:
+          case PHOTOMETRIC_MINISBLACK:
+          case PHOTOMETRIC_PALETTE:
+            colorchannels = 1;
+            p2 = p1 = p0;
+            break;
+
+          default:
+            colorchannels = 3;
+            break;
+        }
+
 	TIFFGetFieldDefaulted(tif, TIFFTAG_ROWSPERSTRIP, &rowsperstrip);
 	scanline = TIFFScanlineSize(tif);  
 	fromskew = (w < imagewidth ? imagewidth - w : 0);
@@ -931,15 +963,17 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 			ret = 0;
 			break;
 		}
-		if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 1),
-		    p1, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)!=(tmsize_t)(-1)
+		if (colorchannels > 1 
+                    && TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 1),
+                                            p1, ((row + img->row_offset)%rowsperstrip + nrow) * scanline) != (tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
 			break;
 		}
-		if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 2),
-		    p2, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)!=(tmsize_t)(-1)
+		if (colorchannels > 1 
+                    && TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 2),
+                                            p2, ((row + img->row_offset)%rowsperstrip + nrow) * scanline) != (tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
@@ -947,7 +981,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		}
 		if (alpha)
 		{
-			if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 3),
+			if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, colorchannels),
 			    pa, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)!=(tmsize_t)(-1)
 			    && img->stoponerr)
 			{
@@ -1444,7 +1478,7 @@ DECLARESepPutFunc(putRGBseparate8bittile)
  */
 DECLARESepPutFunc(putRGBAAseparate8bittile)
 {
-	(void) img; (void) x; (void) y;
+	(void) img; (void) x; (void) y; 
 	while (h-- > 0) {
 		UNROLL8(w, NOP, *cp++ = PACK4(*r++, *g++, *b++, *a++));
 		SKEW4(r, g, b, a, fromskew);
@@ -2496,6 +2530,9 @@ PickSeparateCase(TIFFRGBAImage* img)
 	img->get = TIFFIsTiled(img->tif) ? gtTileSeparate : gtStripSeparate;
 	img->put.separate = NULL;
 	switch (img->photometric) {
+		case PHOTOMETRIC_MINISWHITE:
+		case PHOTOMETRIC_MINISBLACK:
+                  /* greyscale images processed pretty much as RGB by gtTileSeparate */
 		case PHOTOMETRIC_RGB:
 			switch (img->bitspersample) {
 				case 8:

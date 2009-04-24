@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.31 2007/07/19 13:25:43 dron Exp $ */
+/* $Id: tif_luv.c,v 1.32 2009/02/12 18:06:17 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -1247,7 +1247,10 @@ LogL16InitState(TIFF* tif)
 		    "No support for converting user data format to LogL");
 		return (0);
 	}
-	sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_rowsperstrip);
+        if( isTiled(tif) )
+            sp->tbuflen = multiply_ms(td->td_tilewidth, td->td_tilelength);
+        else
+            sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_rowsperstrip);
 	if (multiply_ms(sp->tbuflen, sizeof (int16)) == 0 ||
 	    (sp->tbuf = (uint8*) _TIFFmalloc(sp->tbuflen * sizeof (int16))) == NULL) {
 		TIFFErrorExt(tif->tif_clientdata, module, "No space for SGILog translation buffer");
@@ -1344,7 +1347,10 @@ LogLuvInitState(TIFF* tif)
 		    "No support for converting user data format to LogLuv");
 		return (0);
 	}
-	sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_rowsperstrip);
+        if( isTiled(tif) )
+            sp->tbuflen = multiply_ms(td->td_tilewidth, td->td_tilelength);
+        else
+            sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_rowsperstrip);
 	if (multiply_ms(sp->tbuflen, sizeof (uint32)) == 0 ||
 	    (sp->tbuf = (uint8*) _TIFFmalloc(sp->tbuflen * sizeof (uint32))) == NULL) {
 		TIFFErrorExt(tif->tif_clientdata, module, "No space for SGILog translation buffer");

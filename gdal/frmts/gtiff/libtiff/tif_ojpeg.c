@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.42 2008/06/17 19:48:22 fwarmerdam Exp $ */
+/* $Id: tif_ojpeg.c,v 1.43 2008-12-30 01:36:26 bfriesen Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -2405,8 +2405,8 @@ OJPEGLibjpegJpegSourceMgrFillInputBuffer(jpeg_decompress_struct* cinfo)
 {
 	TIFF* tif=(TIFF*)cinfo->client_data;
 	OJPEGState* sp=(OJPEGState*)tif->tif_data;
-	void* mem;
-	uint32 len;
+	void* mem=0;
+	uint32 len=0U;
 	if (OJPEGWriteStream(tif,&mem,&len)==0)
 	{
 		TIFFErrorExt(tif->tif_clientdata,"LibJpeg","Premature end of JPEG data");
