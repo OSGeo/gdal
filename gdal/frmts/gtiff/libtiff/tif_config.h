@@ -58,8 +58,10 @@
 /* Signed size type */
 #ifdef _WIN64
 #  define TIFF_SSIZE_T GIntBig
+#  define TIFF_SSIZE_FORMAT CPL_FRMT_GIB
 #else
 #  define TIFF_SSIZE_T signed long
+#  define TIFF_SSIZE_FORMAT "%ld"
 #endif
 
 /* Unsigned 16-bit type */
@@ -73,5 +75,11 @@
 
 /* Unsigned 8-bit type */
 #define TIFF_UINT8_T unsigned char
+
+#define TIFF_UINT64_FORMAT CPL_FRMT_GUIB
+#define TIFF_INT64_FORMAT CPL_FRMT_GIB
+
+
+
 
 

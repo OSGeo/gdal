@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.32 2007/12/31 21:52:16 fwarmerdam Exp $ */
+/* $Id: tif_write.c,v 1.33 2008-12-30 00:39:22 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -731,7 +731,7 @@ TIFFFlushData1(TIFF* tif)
  * appended to the end of the file.
  */
 void
-TIFFSetWriteOffset(TIFF* tif, uint64 off)
+TIFFSetWriteOffset(TIFF* tif, toff_t off)
 {
 	tif->tif_curoff = off;
 }
