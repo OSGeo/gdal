@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL Utilities
- * Purpose:  GDAL illshade program
+ * Project:  GDAL DEM Utilities
+ * Purpose:  
  * Author:   Matthew Perry, perrygeo at gmail.com
  *
  ******************************************************************************
@@ -36,7 +36,7 @@
 #include "gdal.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id");
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -45,9 +45,9 @@ CPL_CVSID("$Id$");
 static void Usage()
 
 {
-    printf( " \n Generates a shaded relief map from any GDAL-supported elevation raster\n"
-            " Usage: \n"
-            "   hillshade input_dem output_hillshade \n"
+    printf( " Usage: \n"
+            " - To generate a shaded relief map from any GDAL-supported elevation raster : \n\n"
+            "     gdaldem hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
             "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)] [-b Band (default=1)]\n"
             "                 [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n\n"
@@ -247,9 +247,17 @@ CPLErr Hillshade( GDALRasterBandH hSrcBand,
 /*                                main()                                */
 /************************************************************************/
 
+
+enum
+{
+    HILL_SHADE,
+};
+
+
 int main( int argc, char ** argv )
 
 {
+    int eUtilityMode;
     double z = 1.0;
     double scale = 1.0;
     double az = 315.0;
@@ -284,21 +292,35 @@ int main( int argc, char ** argv )
     }
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
+    if( argc < 2 )
+    {
+        fprintf(stderr, "Not enough arguments\n");
+        Usage();
         exit( 1 );
+    }
+
+    if( EQUAL(argv[1], "--utility_version") || EQUAL(argv[1], "--utility-version") )
+    {
+        printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+        return 0;
+    }
+    else if ( EQUAL(argv[1], "shade") || EQUAL(argv[1], "hillshade") )
+    {
+        eUtilityMode = HILL_SHADE;
+    }
+    else
+    {
+        fprintf(stderr, "Missing valid sub-utility mention\n");
+        Usage();
+        exit( 1 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
-    for(int i = 1; i < argc; i++ )
+    for(int i = 2; i < argc; i++ )
     {
-        if( EQUAL(argv[i], "--utility_version") || EQUAL(argv[i], "--utility-version") )
-        {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            return 0;
-        }
-
         if( i + 1 < argc && (EQUAL(argv[i], "--z") || EQUAL(argv[i], "-z")))
         {
             z = atof(argv[++i]);
