@@ -38,7 +38,7 @@ import sys
 import os.path
 
 def Usage():
-    print 'Usage: rgb2pct.py [-n colors] [-of format] [-pct palette_file] source_file dest_file'
+    print 'Usage: rgb2pct.py [-n colors | -pct palette_file] [-of format] source_file dest_file'
     sys.exit(1)
 
 # =============================================================================

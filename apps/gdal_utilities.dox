@@ -760,7 +760,7 @@ Convert a 24bit RGB image to 8bit paletted
 \section rsynopsis SYNOPSIS
 
 \verbatim
-rgb2pct.py [-n colors] [-of format] source_file dest_file
+rgb2pct.py [-n colors | -pct palette_file] [-of format] source_file dest_file
 \endverbatim
 
 \section rdescription DESCRIPTION
@@ -774,6 +774,9 @@ maximize output image visual quality.
 <dl>
 <dt> <b>-n</b> <i>colors</i>:</dt><dd> Select the number of colors in the generated
 color table.  Defaults to 256.  Must be between 2 and 256. </dd>
+<dt> <b>-pct</b> <i>palette_file</i>:</dt><dd> Extract the color table from
+<i>palette_file</i> instead of computing it. Can be used to have a consistant
+color table for multiple files. </dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).  Same
 semantics as the <b>-of</b> flag for gdal_translate.  Only output formats
 supporting pseudocolor tables should be used. </dd>
