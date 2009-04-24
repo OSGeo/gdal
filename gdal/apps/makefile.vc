@@ -17,7 +17,7 @@ OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe \
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
 		nearblack.exe gdalmanage.exe gdalenhance.exe gdaltransform.exe\
-		$(OGR_PROGRAMS)
+		gdaldem.exe $(OGR_PROGRAMS)
 
 all:	default gdalwarpsimple.exe
 
@@ -65,7 +65,12 @@ gdalenhance.exe:	gdalenhance.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalenhance.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
-
+	
+gdaldem.exe:	gdaldem.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdaldem.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
 gdal_grid.exe:	gdal_grid.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal_grid.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
