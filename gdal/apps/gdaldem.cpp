@@ -49,24 +49,35 @@ static void Usage()
             " - To generate a shaded relief map from any GDAL-supported elevation raster : \n\n"
             "     gdaldem hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
-            "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)] [-b Band (default=1)]\n"
-            "                 [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n\n"
+            "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "\n"
+            " - To generates a slope map from any GDAL-supported elevation raster :\n\n"
+            "     gdaldem slope input_dem output_slope_map \n"
+            "                 [-p use percent slope (default=degrees)] [-s scale* (default=1)]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "\n"
             " Notes : \n"
-            "   Scale for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120 \n\n");
+            "   Scale is the ratio of vertical units to horizontal\n"
+            "    for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120 \n\n");
     exit( 1 );
 }
 
-CPLErr Hillshade( GDALRasterBandH hSrcBand,
-                  GDALRasterBandH hDstBand,
-                  int nXSize,
-                  int nYSize,
-                  double* adfGeoTransform,
-                  double z,
-                  double scale,
-                  double alt,
-                  double az,
-                  GDALProgressFunc pfnProgress,
-                  void * pProgressData)
+/************************************************************************/
+/*                         GDALHillshade()                              */
+/************************************************************************/
+
+CPLErr GDALHillshade  ( GDALRasterBandH hSrcBand,
+                        GDALRasterBandH hDstBand,
+                        int nXSize,
+                        int nYSize,
+                        double* adfGeoTransform,
+                        double z,
+                        double scale,
+                        double alt,
+                        double az,
+                        GDALProgressFunc pfnProgress,
+                        void * pProgressData)
 {
     int bContainsNull;
     const double degreesToRadians = M_PI / 180.0;
@@ -243,6 +254,181 @@ CPLErr Hillshade( GDALRasterBandH hSrcBand,
     return CE_None;
 }
 
+
+/************************************************************************/
+/*                         GDALSlope()                              */
+/************************************************************************/
+
+CPLErr GDALSlope  ( GDALRasterBandH hSrcBand,
+                    GDALRasterBandH hDstBand,
+                    int nXSize,
+                    int nYSize,
+                    double* adfGeoTransform,
+                    double scale,
+                    int slopeFormat,
+                    GDALProgressFunc pfnProgress,
+                    void * pProgressData)
+{
+    const double radiansToDegrees = 180.0 / M_PI;
+    int bContainsNull;
+    float *pafThreeLineWin; /* 3 line rotating source buffer */
+    float *pafSlopeBuf;     /* 1 line destination buffer */
+    int i;
+
+    double dx, dy, key;
+
+    int bSrcHasNoData;
+    double dfSrcNoDataValue = 0.0, dfDstNoDataValue;
+
+    double   nsres = adfGeoTransform[5];
+    double   ewres = adfGeoTransform[1];
+
+    if (pfnProgress == NULL)
+        pfnProgress = GDALDummyProgress;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize progress counter.                                    */
+/* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
+    pafSlopeBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
+    pafThreeLineWin  = (float *) CPLMalloc(3*sizeof(float)*nXSize);
+
+    dfSrcNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
+    dfDstNoDataValue = GDALGetRasterNoDataValue(hDstBand, NULL);
+
+    // Move a 3x3 pafWindow over each cell 
+    // (where the cell in question is #4)
+    // 
+    //      0 1 2
+    //      3 4 5
+    //      6 7 8
+
+    /* Preload the first 2 lines */
+    for ( i = 0; i < 2 && i < nYSize; i++)
+    {
+        GDALRasterIO(   hSrcBand,
+                        GF_Read,
+                        0, i,
+                        nXSize, 1,
+                        pafThreeLineWin + i * nXSize,
+                        nXSize, 1,
+                        GDT_Float32,
+                        0, 0);
+    }
+
+    for ( i = 0; i < nYSize; i++)
+    {
+        // Exclude the edges
+        if (i == 0 || i == nYSize-1)
+        {
+            for (int j = 0; j < nXSize; j++)
+            {
+                pafSlopeBuf[j] = dfDstNoDataValue;
+            }
+        }
+        else
+        {
+            /* Read third line of the line buffer */
+            GDALRasterIO(   hSrcBand,
+                            GF_Read,
+                            0, i+1,
+                            nXSize, 1,
+                            pafThreeLineWin + ((i+1) % 3) * nXSize,
+                            nXSize, 1,
+                            GDT_Float32,
+                            0, 0);
+
+            int nLine1Off = (i-1) % 3;
+            int nLine2Off = (i) % 3;
+            int nLine3Off = (i+1) % 3;
+
+            for (int j = 0; j < nXSize; j++)
+            {
+                bContainsNull = FALSE;
+
+                // Exclude the edges
+                if ( j == 0 || j == nXSize-1 )
+                {
+                    // We are at the edge so write nullValue and move on
+                    pafSlopeBuf[j] = dfDstNoDataValue;
+                    continue;
+                }
+
+                float afWin[9];
+                afWin[0] = pafThreeLineWin[nLine1Off*nXSize + j-1];
+                afWin[1] = pafThreeLineWin[nLine1Off*nXSize + j];
+                afWin[2] = pafThreeLineWin[nLine1Off*nXSize + j+1];
+                afWin[3] = pafThreeLineWin[nLine2Off*nXSize + j-1];
+                afWin[4] = pafThreeLineWin[nLine2Off*nXSize + j];
+                afWin[5] = pafThreeLineWin[nLine2Off*nXSize + j+1];
+                afWin[6] = pafThreeLineWin[nLine3Off*nXSize + j-1];
+                afWin[7] = pafThreeLineWin[nLine3Off*nXSize + j];
+                afWin[8] = pafThreeLineWin[nLine3Off*nXSize + j+1];
+
+                // Check if afWin has null value
+                if (bSrcHasNoData)
+                {
+                    for ( int n = 0; n <= 8; n++)
+                    {
+                        if(afWin[n] == dfSrcNoDataValue)
+                        {
+                            bContainsNull = TRUE;
+                            break;
+                        }
+                    }
+                }
+
+                if (bContainsNull) {
+                    // We have nulls so write nullValue and move on
+                    pafSlopeBuf[j] = dfDstNoDataValue;
+                    continue;
+                } else {
+                    // We have a valid 3x3 window.
+
+                    dx = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) - 
+                          (afWin[2] + afWin[5] + afWin[5] + afWin[8]))/(8*ewres*scale);
+
+                    dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) - 
+                          (afWin[0] + afWin[1] + afWin[1] + afWin[2]))/(8*nsres*scale);
+
+                    key = dx * dx + dy * dy;
+
+                    if (slopeFormat == 1) 
+                        pafSlopeBuf[j] = atan(sqrt(key)) * radiansToDegrees;
+                    else
+                        pafSlopeBuf[j] = 100*sqrt(key);
+                }
+            }
+        }
+
+        /* -----------------------------------------
+         * Write Line to Raster
+         */
+        GDALRasterIO(hDstBand,
+                           GF_Write,
+                           0, i, nXSize,
+                           1, pafSlopeBuf, nXSize, 1, GDT_Float32, 0, 0);
+
+        if( !pfnProgress( 1.0 * (i+1) / nYSize, NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            return CE_Failure;
+        }
+    }
+
+    pfnProgress( 1.0, NULL, pProgressData );
+
+    CPLFree(pafSlopeBuf);
+    CPLFree(pafThreeLineWin);
+
+    return CE_None;
+}
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -251,6 +437,7 @@ CPLErr Hillshade( GDALRasterBandH hSrcBand,
 enum
 {
     HILL_SHADE,
+    SLOPE
 };
 
 
@@ -262,6 +449,8 @@ int main( int argc, char ** argv )
     double scale = 1.0;
     double az = 315.0;
     double alt = 45.0;
+    // 0 = 'percent' or 1 = 'degrees'
+    int slopeFormat = 1; 
     
     int nBand = 1;
     double  adfGeoTransform[6];
@@ -309,6 +498,10 @@ int main( int argc, char ** argv )
     {
         eUtilityMode = HILL_SHADE;
     }
+    else if ( EQUAL(argv[1], "slope") )
+    {
+        eUtilityMode = SLOPE;
+    }
     else
     {
         fprintf(stderr, "Missing valid sub-utility mention\n");
@@ -321,11 +514,16 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     for(int i = 2; i < argc; i++ )
     {
-        if( i + 1 < argc && (EQUAL(argv[i], "--z") || EQUAL(argv[i], "-z")))
+        if( eUtilityMode == HILL_SHADE && i + 1 < argc &&
+            (EQUAL(argv[i], "--z") || EQUAL(argv[i], "-z")))
         {
             z = atof(argv[++i]);
         }
-        if( i + 1 < argc &&
+        else if ( eUtilityMode == SLOPE && EQUAL(argv[i], "-p"))
+        {
+            slopeFormat = 0;
+        }
+        else if( i + 1 < argc &&
             (EQUAL(argv[i], "--s") || 
              EQUAL(argv[i], "-s") ||
              EQUAL(argv[i], "--scale") ||
@@ -334,7 +532,7 @@ int main( int argc, char ** argv )
         {
             scale = atof(argv[++i]);
         }
-        if( i + 1 < argc &&
+        else if( eUtilityMode == HILL_SHADE && i + 1 < argc &&
             (EQUAL(argv[i], "--az") || 
              EQUAL(argv[i], "-az") ||
              EQUAL(argv[i], "--azimuth") ||
@@ -343,7 +541,7 @@ int main( int argc, char ** argv )
         {
             az = atof(argv[++i]);
         }
-        if( i + 1 < argc &&
+        else if( eUtilityMode == HILL_SHADE && i + 1 < argc &&
             (EQUAL(argv[i], "--alt") || 
              EQUAL(argv[i], "-alt") ||
              EQUAL(argv[i], "--alt") ||
@@ -352,7 +550,7 @@ int main( int argc, char ** argv )
         {
             alt = atof(argv[++i]);
         }
-        if( i + 1 < argc &&
+        else if( i + 1 < argc &&
             (EQUAL(argv[i], "--b") || 
              EQUAL(argv[i], "-b"))
           )
@@ -370,6 +568,14 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
+        }
+        else if( argv[i][0] == '-' )
+        {
+            fprintf( stderr, "Option %s incomplete, or not recognised.\n\n", 
+                    argv[i] );
+            Usage();
+            GDALDestroyDriverManager();
+            exit( 2 );
         }
         else if( pszSrcFilename == NULL )
         {
@@ -449,7 +655,8 @@ int main( int argc, char ** argv )
                                 nXSize,
                                 nYSize,
                                 1,
-                                GDT_Byte,
+                                (eUtilityMode == HILL_SHADE) ? GDT_Byte :
+                                                               GDT_Float32,
                                 papszCreateOptions);
 
     if( hDstDataset == NULL )
@@ -465,18 +672,35 @@ int main( int argc, char ** argv )
 
     GDALSetGeoTransform(hDstDataset, adfGeoTransform);
     GDALSetProjection(hDstDataset, GDALGetProjectionRef(hSrcDataset));
-    GDALSetRasterNoDataValue(hDstBand, 0);
+    
+    if (eUtilityMode == HILL_SHADE)
+    {
+        GDALSetRasterNoDataValue(hDstBand, 0);
 
-    Hillshade(  hSrcBand, 
-                hDstBand, 
-                nXSize, 
-                nYSize,
-                adfGeoTransform,
-                z,
-                scale,
-                alt,
-                az,
-                pfnProgress, NULL);
+        GDALHillshade(  hSrcBand, 
+                        hDstBand, 
+                        nXSize, 
+                        nYSize,
+                        adfGeoTransform,
+                        z,
+                        scale,
+                        alt,
+                        az,
+                        pfnProgress, NULL);
+    }
+    else if (eUtilityMode == SLOPE)
+    {
+        GDALSetRasterNoDataValue(hDstBand, -9999);
+
+        GDALSlope(  hSrcBand, 
+                    hDstBand, 
+                    nXSize, 
+                    nYSize,
+                    adfGeoTransform,
+                    scale,
+                    slopeFormat,
+                    pfnProgress, NULL);
+    }
 
     GDALClose(hSrcDataset);
     GDALClose(hDstDataset);
