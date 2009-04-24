@@ -1079,7 +1079,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( psImage != NULL 
         && psImage->nBitsPerSample != 1
         && psImage->nBitsPerSample != 12
-        && (psImage->nBitsPerSample < 8 || psImage->nBitsPerSample % 8 != 0) )
+        && (psImage->nBitsPerSample < 8 || psImage->nBitsPerSample % 8 != 0) 
+        && poDS->poJPEGDataset == NULL
+        && poDS->poJ2KDataset == NULL )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "Image with %d bits per sample will not be interpreted properly.", 
