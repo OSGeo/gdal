@@ -28,9 +28,11 @@
  ****************************************************************************/
 
 
-#include <iostream>
 #include <stdlib.h>
 #include <math.h>
+
+#include "cpl_conv.h"
+#include "cpl_string.h"
 #include "gdal.h"
 
 
@@ -58,30 +60,31 @@ void Hillshade( GDALRasterBandH hSrcBand,
                 int nXSize,
                 int nYSize,
                 double* adfGeoTransform,
+                double z,
                 double scale,
                 double alt,
                 double az)
 {
-    int containsNull;
-    const double radiansToDegrees = 180.0 / 3.14159;
-    const double degreesToRadians = 3.14159 / 180.0;
-    double *win;
-    double *shadeBuf;
-    
-    double x, y, z, aspect, slope, cang;
+    int bContainsNull;
+    const double radiansToDegrees = 180.0 / M_PI;
+    const double degreesToRadians = M_PI / 180.0;
+    float *pafWin;
+    float *pafShadeBuf;
 
-    int inputNullValue; double nullValue = 0.0;
+    double x, y, aspect, slope, cang;
+
+    int bSrcHasNoData;
+    double dfSrcNoDataValue = 0.0;
 
     double   nsres = adfGeoTransform[5];
     double   ewres = adfGeoTransform[1];
 
+    pafShadeBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
+    pafWin  = (float *) CPLMalloc(sizeof(float)*9);
 
-    shadeBuf = (double *) malloc(sizeof(double)*nXSize);
-    win  = (double *) malloc(sizeof(double)*9);
-    
-    GDALGetRasterNoDataValue(hSrcBand, &inputNullValue);
-    
-    // Move a 3x3 window over each cell 
+    dfSrcNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
+
+    // Move a 3x3 pafWindow over each cell 
     // (where the cell in question is #4)
     // 
     //      0 1 2
@@ -90,53 +93,53 @@ void Hillshade( GDALRasterBandH hSrcBand,
 
     for (int  i = 0; i < nYSize; i++) {
         for (int j = 0; j < nXSize; j++) {
-            containsNull = 0;
+            bContainsNull = FALSE;
 
             // Exclude the edges
             if (i == 0 || j == 0 || i == nYSize-1 || j == nXSize-1 )
             {
                 // We are at the edge so write nullValue and move on
-                shadeBuf[j] = nullValue;
+                pafShadeBuf[j] = 0;
                 continue;
             }
 
 
-            // Read in 3x3 window
+            // Read in 3x3 pafWindow
             GDALRasterIO(   hSrcBand,
                             GF_Read,
                             j-1, i-1,
                             3, 3,
-                            win,
+                            pafWin,
                             3, 3,
                             GDT_Float32,
                             0, 0);
 
-            // Check if window has null value
+            // Check if pafWindow has null value
             for ( int n = 0; n <= 8; n++) {
-                if(win[n] == inputNullValue) {
-                    containsNull = 1;
+                if(bSrcHasNoData && pafWin[n] == dfSrcNoDataValue) {
+                    bContainsNull = TRUE;
                     break;
                 }
             }
 
-            if (containsNull == 1) {
+            if (bContainsNull) {
                 // We have nulls so write nullValue and move on
-                shadeBuf[j] = nullValue;
+                pafShadeBuf[j] = 0;
                 continue;
             } else {
-                // We have a valid 3x3 window.
+                // We have a valid 3x3 pafWindow.
 
                 /* ---------------------------------------
                 * Compute Hillshade
                 */
 
                 // First Slope ...
-                x = ((z*win[0] + z*win[3] + z*win[3] + z*win[6]) -
-                     (z*win[2] + z*win[5] + z*win[5] + z*win[8])) /
+                x = ((z*pafWin[0] + z*pafWin[3] + z*pafWin[3] + z*pafWin[6]) -
+                     (z*pafWin[2] + z*pafWin[5] + z*pafWin[5] + z*pafWin[8])) /
                     (8.0 * ewres * scale);
 
-                y = ((z*win[6] + z*win[7] + z*win[7] + z*win[8]) -
-                     (z*win[0] + z*win[1] + z*win[1] + z*win[2])) /
+                y = ((z*pafWin[6] + z*pafWin[7] + z*pafWin[7] + z*pafWin[8]) -
+                     (z*pafWin[0] + z*pafWin[1] + z*pafWin[1] + z*pafWin[2])) /
                     (8.0 * nsres * scale);
 
                 slope = 90.0 - atan(sqrt(x*x + y*y))*radiansToDegrees;
@@ -154,7 +157,7 @@ void Hillshade( GDALRasterBandH hSrcBand,
                 else
                     cang = 1.0 + (254.0 * cang);
 
-                shadeBuf[j] = cang;
+                pafShadeBuf[j] = cang;
 
             }
         }
@@ -165,9 +168,13 @@ void Hillshade( GDALRasterBandH hSrcBand,
         GDALRasterIO(hDstBand,
                            GF_Write,
                            0, i, nXSize,
-                           1, shadeBuf, nXSize, 1, GDT_Float32, 0, 0);
+                           1, pafShadeBuf, nXSize, 1, GDT_Float32, 0, 0);
     }
+
+    CPLFree(pafShadeBuf);
+    CPLFree(pafWin);
 }
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -222,36 +229,40 @@ int main( int argc, char ** argv )
             return 0;
         }
 
-        if( EQUAL(argv[i], "--z") || EQUAL(argv[i], "-z"))
+        if( i + 1 < argc && (EQUAL(argv[i], "--z") || EQUAL(argv[i], "-z")))
         {
             z = atof(argv[++i]);
         }
-        if( EQUAL(argv[i], "--s") || 
-            EQUAL(argv[i], "-s") ||
-            EQUAL(argv[i], "--scale") ||
-            EQUAL(argv[i], "-scale") 
+        if( i + 1 < argc &&
+            (EQUAL(argv[i], "--s") || 
+             EQUAL(argv[i], "-s") ||
+             EQUAL(argv[i], "--scale") ||
+             EQUAL(argv[i], "-scale"))
           )
         {
             scale = atof(argv[++i]);
         }
-        if( EQUAL(argv[i], "--az") || 
-            EQUAL(argv[i], "-az") ||
-            EQUAL(argv[i], "--azimuth") ||
-            EQUAL(argv[i], "-azimuth") 
+        if( i + 1 < argc &&
+            (EQUAL(argv[i], "--az") || 
+             EQUAL(argv[i], "-az") ||
+             EQUAL(argv[i], "--azimuth") ||
+             EQUAL(argv[i], "-azimuth"))
           )
         {
             az = atof(argv[++i]);
         }
-        if( EQUAL(argv[i], "--alt") || 
-            EQUAL(argv[i], "-alt") ||
-            EQUAL(argv[i], "--alt") ||
-            EQUAL(argv[i], "-alt") 
+        if( i + 1 < argc &&
+            (EQUAL(argv[i], "--alt") || 
+             EQUAL(argv[i], "-alt") ||
+             EQUAL(argv[i], "--alt") ||
+             EQUAL(argv[i], "-alt"))
           )
         {
             alt = atof(argv[++i]);
         }
-        if( EQUAL(argv[i], "--b") || 
-            EQUAL(argv[i], "-b") 
+        if( i + 1 < argc &&
+            (EQUAL(argv[i], "--b") || 
+             EQUAL(argv[i], "-b"))
           )
         {
             nBand = atof(argv[++i]);
@@ -324,29 +335,26 @@ int main( int argc, char ** argv )
     
     hDstBand = GDALGetRasterBand( hDstDataset, 1 );
 
-    if( hDstBand == NULL )
-    {
-        fprintf( stderr,
-                 "Unable to fetch destination band - %d\n%s\n", 
-                 CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
-        GDALDestroyDriverManager();
-        exit( 1 );
-    }
-    
     GDALSetGeoTransform(hDstDataset, adfGeoTransform);
     GDALSetProjection(hDstDataset, GDALGetProjectionRef(hSrcDataset));
-    GDALSetRasterNoDataValue(hSrcBand, GDALGetRasterNoDataValue(hSrcBand, NULL));
+    GDALSetRasterNoDataValue(hDstBand, 0);
 
     Hillshade(  hSrcBand, 
                 hDstBand, 
                 nXSize, 
                 nYSize,
                 adfGeoTransform,
+                z,
                 scale,
                 alt,
                 az);
 
-    GDALClose(hSrcBand);
-    GDALClose(hDstBand);
+    GDALClose(hSrcDataset);
+    GDALClose(hDstDataset);
+
+    GDALDestroyDriverManager();
+    CSLDestroy( argv );
+
+    return 0;
 }
 
