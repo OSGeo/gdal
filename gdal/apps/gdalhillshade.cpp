@@ -49,29 +49,34 @@ static void Usage()
             " Usage: \n"
             "   hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
-            "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)] [-b Band (default=1)]\n\n"
+            "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)] [-b Band (default=1)]\n"
+            "                 [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n\n"
             " Notes : \n"
             "   Scale for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120 \n\n");
     exit( 1 );
 }
 
-void Hillshade( GDALRasterBandH hSrcBand,
-                GDALRasterBandH hDstBand,
-                int nXSize,
-                int nYSize,
-                double* adfGeoTransform,
-                double z,
-                double scale,
-                double alt,
-                double az)
+CPLErr Hillshade( GDALRasterBandH hSrcBand,
+                  GDALRasterBandH hDstBand,
+                  int nXSize,
+                  int nYSize,
+                  double* adfGeoTransform,
+                  double z,
+                  double scale,
+                  double alt,
+                  double az,
+                  GDALProgressFunc pfnProgress,
+                  void * pProgressData)
 {
     int bContainsNull;
-    const double radiansToDegrees = 180.0 / M_PI;
     const double degreesToRadians = M_PI / 180.0;
-    float *pafWin;
-    float *pafShadeBuf;
+    float *pafThreeLineWin; /* 3 line rotating source buffer */
+    float *pafShadeBuf;     /* 1 line destination buffer */
+    int i;
 
     double x, y, aspect, slope, cang;
+    const double altRadians = alt * degreesToRadians;
+    const double azRadians = az * degreesToRadians;
 
     int bSrcHasNoData;
     double dfSrcNoDataValue = 0.0;
@@ -79,8 +84,20 @@ void Hillshade( GDALRasterBandH hSrcBand,
     double   nsres = adfGeoTransform[5];
     double   ewres = adfGeoTransform[1];
 
+    if (pfnProgress == NULL)
+        pfnProgress = GDALDummyProgress;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize progress counter.                                    */
+/* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
     pafShadeBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
-    pafWin  = (float *) CPLMalloc(sizeof(float)*9);
+    pafThreeLineWin  = (float *) CPLMalloc(3*sizeof(float)*nXSize);
 
     dfSrcNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
 
@@ -91,74 +108,115 @@ void Hillshade( GDALRasterBandH hSrcBand,
     //      3 4 5
     //      6 7 8
 
-    for (int  i = 0; i < nYSize; i++) {
-        for (int j = 0; j < nXSize; j++) {
-            bContainsNull = FALSE;
+    /* Preload the first 2 lines */
+    for ( i = 0; i < 2 && i < nYSize; i++)
+    {
+        GDALRasterIO(   hSrcBand,
+                        GF_Read,
+                        0, i,
+                        nXSize, 1,
+                        pafThreeLineWin + i * nXSize,
+                        nXSize, 1,
+                        GDT_Float32,
+                        0, 0);
+    }
 
-            // Exclude the edges
-            if (i == 0 || j == 0 || i == nYSize-1 || j == nXSize-1 )
-            {
-                // We are at the edge so write nullValue and move on
-                pafShadeBuf[j] = 0;
-                continue;
-            }
-
-
-            // Read in 3x3 pafWindow
+    for ( i = 0; i < nYSize; i++)
+    {
+        // Exclude the edges
+        if (i == 0 || i == nYSize-1)
+        {
+            memset(pafShadeBuf, 0, sizeof(float)*nXSize);
+        }
+        else
+        {
+            /* Read third line of the line buffer */
             GDALRasterIO(   hSrcBand,
                             GF_Read,
-                            j-1, i-1,
-                            3, 3,
-                            pafWin,
-                            3, 3,
+                            0, i+1,
+                            nXSize, 1,
+                            pafThreeLineWin + ((i+1) % 3) * nXSize,
+                            nXSize, 1,
                             GDT_Float32,
                             0, 0);
 
-            // Check if pafWindow has null value
-            for ( int n = 0; n <= 8; n++) {
-                if(bSrcHasNoData && pafWin[n] == dfSrcNoDataValue) {
-                    bContainsNull = TRUE;
-                    break;
+            int nLine1Off = (i-1) % 3;
+            int nLine2Off = (i) % 3;
+            int nLine3Off = (i+1) % 3;
+
+            for (int j = 0; j < nXSize; j++)
+            {
+                bContainsNull = FALSE;
+
+                // Exclude the edges
+                if ( j == 0 || j == nXSize-1 )
+                {
+                    // We are at the edge so write nullValue and move on
+                    pafShadeBuf[j] = 0;
+                    continue;
                 }
-            }
 
-            if (bContainsNull) {
-                // We have nulls so write nullValue and move on
-                pafShadeBuf[j] = 0;
-                continue;
-            } else {
-                // We have a valid 3x3 pafWindow.
+                float afWin[9];
+                afWin[0] = pafThreeLineWin[nLine1Off*nXSize + j-1];
+                afWin[1] = pafThreeLineWin[nLine1Off*nXSize + j];
+                afWin[2] = pafThreeLineWin[nLine1Off*nXSize + j+1];
+                afWin[3] = pafThreeLineWin[nLine2Off*nXSize + j-1];
+                afWin[4] = pafThreeLineWin[nLine2Off*nXSize + j];
+                afWin[5] = pafThreeLineWin[nLine2Off*nXSize + j+1];
+                afWin[6] = pafThreeLineWin[nLine3Off*nXSize + j-1];
+                afWin[7] = pafThreeLineWin[nLine3Off*nXSize + j];
+                afWin[8] = pafThreeLineWin[nLine3Off*nXSize + j+1];
 
-                /* ---------------------------------------
-                * Compute Hillshade
-                */
+                // Check if afWin has null value
+                if (bSrcHasNoData)
+                {
+                    for ( int n = 0; n <= 8; n++)
+                    {
+                        if(afWin[n] == dfSrcNoDataValue)
+                        {
+                            bContainsNull = TRUE;
+                            break;
+                        }
+                    }
+                }
 
-                // First Slope ...
-                x = ((z*pafWin[0] + z*pafWin[3] + z*pafWin[3] + z*pafWin[6]) -
-                     (z*pafWin[2] + z*pafWin[5] + z*pafWin[5] + z*pafWin[8])) /
-                    (8.0 * ewres * scale);
+                if (bContainsNull) {
+                    // We have nulls so write nullValue and move on
+                    pafShadeBuf[j] = 0;
+                    continue;
+                } else {
+                    // We have a valid 3x3 window.
 
-                y = ((z*pafWin[6] + z*pafWin[7] + z*pafWin[7] + z*pafWin[8]) -
-                     (z*pafWin[0] + z*pafWin[1] + z*pafWin[1] + z*pafWin[2])) /
-                    (8.0 * nsres * scale);
+                    /* ---------------------------------------
+                    * Compute Hillshade
+                    */
 
-                slope = 90.0 - atan(sqrt(x*x + y*y))*radiansToDegrees;
+                    // First Slope ...
+                    x = z*((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+                        (afWin[2] + afWin[5] + afWin[5] + afWin[8])) /
+                        (8.0 * ewres * scale);
 
-                // ... then aspect...
-                aspect = atan2(x,y);
+                    y = z*((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+                        (afWin[0] + afWin[1] + afWin[1] + afWin[2])) /
+                        (8.0 * nsres * scale);
 
-                // ... then the shade value
-                cang = sin(alt*degreesToRadians) * sin(slope*degreesToRadians) +
-                       cos(alt*degreesToRadians) * cos(slope*degreesToRadians) *
-                       cos((az-90.0)*degreesToRadians - aspect);
+                    slope = M_PI / 2 - atan(sqrt(x*x + y*y));
 
-                if (cang <= 0.0) 
-                    cang = 1.0;
-                else
-                    cang = 1.0 + (254.0 * cang);
+                    // ... then aspect...
+                    aspect = atan2(x,y);
 
-                pafShadeBuf[j] = cang;
+                    // ... then the shade value
+                    cang = sin(altRadians) * sin(slope) +
+                           cos(altRadians) * cos(slope) *
+                           cos(azRadians-M_PI/2 - aspect);
 
+                    if (cang <= 0.0) 
+                        cang = 1.0;
+                    else
+                        cang = 1.0 + (254.0 * cang);
+
+                    pafShadeBuf[j] = cang;
+                }
             }
         }
 
@@ -169,10 +227,20 @@ void Hillshade( GDALRasterBandH hSrcBand,
                            GF_Write,
                            0, i, nXSize,
                            1, pafShadeBuf, nXSize, 1, GDT_Float32, 0, 0);
+
+        if( !pfnProgress( 1.0 * (i+1) / nYSize, NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            return CE_Failure;
+        }
     }
 
+    pfnProgress( 1.0, NULL, pProgressData );
+
     CPLFree(pafShadeBuf);
-    CPLFree(pafWin);
+    CPLFree(pafThreeLineWin);
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -193,13 +261,15 @@ int main( int argc, char ** argv )
     const char *pszSrcFilename = NULL;
     const char *pszDstFilename = NULL;
     const char *pszFormat = "GTiff";
-    char **papszOptions = NULL;
+    char **papszCreateOptions = NULL;
     
     GDALDatasetH hSrcDataset = NULL;
     GDALDatasetH hDstDataset = NULL;
     GDALRasterBandH hSrcBand = NULL;
     GDALRasterBandH hDstBand = NULL;
-    GDALDriverH hGTiffDriver = NULL;
+    GDALDriverH hDriver = NULL;
+
+    GDALProgressFunc pfnProgress = GDALTermProgress;
     
     int nXSize = 0;
     int nYSize = 0;
@@ -267,6 +337,18 @@ int main( int argc, char ** argv )
         {
             nBand = atof(argv[++i]);
         }
+        else if ( EQUAL(argv[i], "-quiet") )
+        {
+            pfnProgress = GDALDummyProgress;
+        }
+        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        {
+            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+        }
+        else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        {
+            pszFormat = argv[++i];
+        }
         else if( pszSrcFilename == NULL )
         {
             pszSrcFilename = argv[i];
@@ -314,15 +396,39 @@ int main( int argc, char ** argv )
     }
     
     GDALGetGeoTransform(hSrcDataset, adfGeoTransform);
-    hGTiffDriver = GDALGetDriverByName(pszFormat);
+    hDriver = GDALGetDriverByName(pszFormat);
+    if( hDriver == NULL 
+        || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL )
+    {
+        int	iDr;
 
-    hDstDataset = GDALCreate(   hGTiffDriver,
+        fprintf( stderr, "Output driver `%s' not recognised or does not support\n", 
+                 pszFormat );
+        fprintf( stderr, "direct output file creation.  The following format drivers are configured\n"
+                "and support direct output:\n" );
+
+        for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+        {
+            GDALDriverH hDriver = GDALGetDriver(iDr);
+
+            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL) != NULL )
+            {
+                printf( "  %s: %s\n",
+                        GDALGetDriverShortName( hDriver  ),
+                        GDALGetDriverLongName( hDriver ) );
+            }
+        }
+        GDALDestroyDriverManager();
+        exit( 1 );
+    }
+
+    hDstDataset = GDALCreate(   hDriver,
                                 pszDstFilename,
                                 nXSize,
                                 nYSize,
                                 1,
                                 GDT_Byte,
-                                papszOptions);
+                                papszCreateOptions);
 
     if( hDstDataset == NULL )
     {
@@ -347,13 +453,15 @@ int main( int argc, char ** argv )
                 z,
                 scale,
                 alt,
-                az);
+                az,
+                pfnProgress, NULL);
 
     GDALClose(hSrcDataset);
     GDALClose(hDstDataset);
 
     GDALDestroyDriverManager();
     CSLDestroy( argv );
+    CSLDestroy( papszCreateOptions );
 
     return 0;
 }
