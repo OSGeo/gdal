@@ -9,7 +9,7 @@ LNK_FLAGS   :=  $(LDFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
-			gdalenhance$(EXE) gdaltransform$(EXE)
+			gdalenhance$(EXE) gdaltransform$(EXE) gdalhillshade$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
@@ -76,6 +76,9 @@ dumpoverviews$(EXE):	dumpoverviews.$(OBJ_EXT) $(DEP_LIBS)
 gdalenhance$(EXE):	gdalenhance.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
+gdalhillshade$(EXE): gdalhillshade.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	
 gdal_grid$(EXE):	gdal_grid.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
