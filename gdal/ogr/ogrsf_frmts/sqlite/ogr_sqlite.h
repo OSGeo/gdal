@@ -35,6 +35,19 @@
 #include "sqlite3.h"
 
 /************************************************************************/
+/*      Format used to store geometry data in the database.             */
+/************************************************************************/
+
+enum OGRSQLiteGeomFormat
+{
+    OSGF_None = 0,
+    OSGF_WKT = 1,
+    OSGF_WKB = 2,
+    OSGF_FGF = 3,
+    OSGF_SpatiaLite = 4
+};
+
+/************************************************************************/
 /*                            OGRSQLiteLayer                            */
 /************************************************************************/
 
@@ -42,6 +55,18 @@ class OGRSQLiteDataSource;
     
 class OGRSQLiteLayer : public OGRLayer
 {
+  private:
+    static OGRErr       createFromSpatialiteInternal(const GByte *pabyData,
+                                                     OGRGeometry **ppoReturn,
+                                                     int nBytes,
+                                                     OGRwkbByteOrder eByteOrder,
+                                                     int* pnBytesConsumed);
+
+    static int          ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry);
+    static int          ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeometry,
+                                                        OGRwkbByteOrder eByteOrder,
+                                                        GByte* pabyData);
+
   protected:
     OGRFeatureDefn     *poFeatureDefn;
 
@@ -55,8 +80,9 @@ class OGRSQLiteLayer : public OGRLayer
 
     OGRSQLiteDataSource *poDS;
 
+    int                 bTriedAsSpatiaLite;
     CPLString           osGeomColumn;
-    CPLString           osGeomFormat;
+    OGRSQLiteGeomFormat eGeomFormat;
 
     char                *pszFIDColumn;
 
@@ -67,9 +93,11 @@ class OGRSQLiteLayer : public OGRLayer
 
     virtual void	ClearStatement() = 0;
 
-   OGRErr               ImportSpatialiteGeometry( const GByte *pabyData, 
-                                                  int nBytes,
-                                                  OGRGeometry **ppoGeometry );
+    static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
+                                                  OGRGeometry ** );
+    static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
+                                                  GInt32, OGRwkbByteOrder,
+                                                  GByte **, int * );
 
   public:
                         OGRSQLiteLayer();
@@ -118,7 +146,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     const char *pszGeomCol,
                                     OGRwkbGeometryType eGeomType,
                                     const char *pszGeomFormat,
-                                    OGRSpatialReference *poSRS );
+                                    OGRSpatialReference *poSRS,
+                                    int nSRSId = -1 );
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
@@ -182,9 +211,13 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
 
-    int                 bHaveGeometryColumns; 
+    int                 bHaveGeometryColumns;
+    int                 bIsSpatiaLite;
     
     virtual void        DeleteLayer( const char *pszLayer );
+
+    static OGRwkbGeometryType SpatiaLiteToOGRGeomType( const char * );
+    static const char   *OGRToSpatiaLiteGeomType( OGRwkbGeometryType );
 
   public:
                         OGRSQLiteDataSource();
@@ -195,7 +228,8 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    const char *pszGeomCol = NULL,
                                    OGRwkbGeometryType eGeomType = wkbUnknown,
                                    const char *pszGeomFormat = NULL,
-                                   OGRSpatialReference *poSRS = NULL );
+                                   OGRSpatialReference *poSRS = NULL,
+                                   int nSRID = -1 );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
