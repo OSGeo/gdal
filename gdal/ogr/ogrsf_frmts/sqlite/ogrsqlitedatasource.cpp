@@ -932,11 +932,42 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                                     &nRowCount, &nColCount, &pszErrMsg );
             if( rc != SQLITE_OK )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Search for existing SRS ID failed: %s", pszErrMsg );
+                /* Retry without COLLATE NOCASE which may not be understood by older sqlite3 */
                 sqlite3_free( pszErrMsg );
+
+                osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE "
+                                  "auth_name = '%s' AND auth_srid = '%s'",
+                                  pszAuthorityName, pszAuthorityCode );
+
+                rc = sqlite3_get_table( hDB, osCommand, &papszResult, 
+                                        &nRowCount, &nColCount, &pszErrMsg );
+
+                /* Retry in lower case for SpatiaLite */
+                if( rc != SQLITE_OK )
+                {
+                    sqlite3_free( pszErrMsg );
+                }
+                else if ( nRowCount == 0 &&
+                          strcmp(pszAuthorityName, "EPSG") == 0)
+                {
+                    /* If it's in upper case, look for lower case */
+                    sqlite3_free_table(papszResult);
+
+                    osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE "
+                                      "auth_name = 'epsg' AND auth_srid = '%s'",
+                                      pszAuthorityCode );
+
+                    rc = sqlite3_get_table( hDB, osCommand, &papszResult, 
+                                            &nRowCount, &nColCount, &pszErrMsg );
+
+                    if( rc != SQLITE_OK )
+                    {
+                        sqlite3_free( pszErrMsg );
+                    }
+                }
             }
-            else if( nRowCount == 1 )
+
+            if( rc == SQLITE_OK && nRowCount == 1 )
             {
                 nSRSId = atoi(papszResult[1]);
                 sqlite3_free_table(papszResult);
