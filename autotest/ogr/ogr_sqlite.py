@@ -621,6 +621,53 @@ def ogr_sqlite_14():
     return 'success'
 
 ###############################################################################
+# Test FORMAT=SPATIALITE creation option
+
+def ogr_sqlite_15():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ######################################################
+    # Create Layer with WKB geometry
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomspatialite', options = [ 'FORMAT=SPATIALITE' ] )
+
+    geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
+    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+    dst_feat.SetGeometry( geom )
+    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    ######################################################
+    # Reopen DB
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomspatialite')
+
+    feat_read = gdaltest.sl_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        return 'fail'
+    feat_read.Destroy()
+
+    gdaltest.sl_lyr.ResetReading()
+
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL( "select * from geomspatialite" )
+
+    feat_read = sql_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        return 'fail'
+    feat_read.Destroy()
+
+    feat_read = sql_lyr.GetFeature(0)
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        return 'fail'
+    feat_read.Destroy()
+
+    gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -631,6 +678,7 @@ def ogr_sqlite_cleanup():
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkb' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkt' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomspatialite' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer_approx' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:testtypes' )
@@ -660,6 +708,7 @@ gdaltest_list = [
     ogr_sqlite_12,
     ogr_sqlite_13,
     ogr_sqlite_14,
+    ogr_sqlite_15,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
