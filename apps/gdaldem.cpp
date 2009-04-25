@@ -261,7 +261,7 @@ CPLErr GDALHillshade  ( GDALRasterBandH hSrcBand,
 
 
 /************************************************************************/
-/*                         GDALSlope()                              */
+/*                         GDALSlope()                                  */
 /************************************************************************/
 
 CPLErr GDALSlope  ( GDALRasterBandH hSrcBand,
@@ -435,6 +435,192 @@ CPLErr GDALSlope  ( GDALRasterBandH hSrcBand,
 }
 
 /************************************************************************/
+/*                         GDALAspect()                                 */
+/************************************************************************/
+
+CPLErr GDALAspect  ( GDALRasterBandH hSrcBand,
+                    GDALRasterBandH hDstBand,
+                    int nXSize,
+                    int nYSize,
+                    GDALProgressFunc pfnProgress,
+                    void * pProgressData)
+{
+
+    const double degreesToRadians = M_PI / 180.0;
+    int bContainsNull;
+    float *pafThreeLineWin; /* 3 line rotating source buffer */
+    float *pafAspectBuf;     /* 1 line destination buffer */
+    int i;
+    
+    float aspect;
+    double dx, dy;
+
+    int bSrcHasNoData;
+    double dfSrcNoDataValue = 0.0, dfDstNoDataValue;
+
+    if (pfnProgress == NULL)
+        pfnProgress = GDALDummyProgress;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize progress counter.                                    */
+/* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
+    pafAspectBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
+    pafThreeLineWin  = (float *) CPLMalloc(3*sizeof(float)*nXSize);
+
+    dfSrcNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
+    dfDstNoDataValue = GDALGetRasterNoDataValue(hDstBand, NULL);
+
+    // Move a 3x3 pafWindow over each cell 
+    // (where the cell in question is #4)
+    // 
+    //      0 1 2
+    //      3 4 5
+    //      6 7 8
+
+    /* Preload the first 2 lines */
+    for ( i = 0; i < 2 && i < nYSize; i++)
+    {
+        GDALRasterIO(   hSrcBand,
+                        GF_Read,
+                        0, i,
+                        nXSize, 1,
+                        pafThreeLineWin + i * nXSize,
+                        nXSize, 1,
+                        GDT_Float32,
+                        0, 0);
+    }
+
+    for ( i = 0; i < nYSize; i++)
+    {
+        // Exclude the edges
+        if (i == 0 || i == nYSize-1)
+        {
+            for (int j = 0; j < nXSize; j++)
+            {
+                pafAspectBuf[j] = dfDstNoDataValue;
+            }
+        }
+        else
+        {
+            /* Read third line of the line buffer */
+            GDALRasterIO(   hSrcBand,
+                            GF_Read,
+                            0, i+1,
+                            nXSize, 1,
+                            pafThreeLineWin + ((i+1) % 3) * nXSize,
+                            nXSize, 1,
+                            GDT_Float32,
+                            0, 0);
+
+            int nLine1Off = (i-1) % 3;
+            int nLine2Off = (i) % 3;
+            int nLine3Off = (i+1) % 3;
+
+            for (int j = 0; j < nXSize; j++)
+            {
+                bContainsNull = FALSE;
+
+                // Exclude the edges
+                if ( j == 0 || j == nXSize-1 )
+                {
+                    // We are at the edge so write nullValue and move on
+                    pafAspectBuf[j] = dfDstNoDataValue;
+                    continue;
+                }
+
+                float afWin[9];
+                afWin[0] = pafThreeLineWin[nLine1Off*nXSize + j-1];
+                afWin[1] = pafThreeLineWin[nLine1Off*nXSize + j];
+                afWin[2] = pafThreeLineWin[nLine1Off*nXSize + j+1];
+                afWin[3] = pafThreeLineWin[nLine2Off*nXSize + j-1];
+                afWin[4] = pafThreeLineWin[nLine2Off*nXSize + j];
+                afWin[5] = pafThreeLineWin[nLine2Off*nXSize + j+1];
+                afWin[6] = pafThreeLineWin[nLine3Off*nXSize + j-1];
+                afWin[7] = pafThreeLineWin[nLine3Off*nXSize + j];
+                afWin[8] = pafThreeLineWin[nLine3Off*nXSize + j+1];
+
+                // Check if afWin has null value
+                if (bSrcHasNoData)
+                {
+                    for ( int n = 0; n <= 8; n++)
+                    {
+                        if(afWin[n] == dfSrcNoDataValue)
+                        {
+                            bContainsNull = TRUE;
+                            break;
+                        }
+                    }
+                }
+
+                if (bContainsNull) {
+                    // We have nulls so write nullValue and move on
+                    pafAspectBuf[j] = dfDstNoDataValue;
+                    continue;
+                } else {
+                    // We have a valid 3x3 window.
+
+                    dx = ((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
+                          (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
+
+                    dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) - 
+                          (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
+
+                    aspect = atan2(dy/8.0,-1.0*dx/8.0) / degreesToRadians;
+
+                    if (dx == 0)
+                    {
+                        if (dy > 0) 
+                            aspect = 0.0;
+                        else if (dy < 0)
+                            aspect = 180.0;
+                        else
+                            aspect = dfDstNoDataValue;
+                    } 
+                    else 
+                    {
+                        if (aspect > 90.0) 
+                            aspect = 450.0 - aspect;
+                        else
+                            aspect = 90.0 - aspect;
+                    }
+
+                    if (aspect == 360.0) 
+                        aspect = 0.0;
+       
+                    pafAspectBuf[j] = aspect;
+
+                }
+            }
+        }
+
+        /* -----------------------------------------
+         * Write Line to Raster
+         */
+        GDALRasterIO(hDstBand,
+                           GF_Write,
+                           0, i, nXSize,
+                           1, pafAspectBuf, nXSize, 1, GDT_Float32, 0, 0);
+
+        if( !pfnProgress( 1.0 * (i+1) / nYSize, NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            return CE_Failure;
+        }
+    }
+    pfnProgress( 1.0, NULL, pProgressData );
+
+    CPLFree(pafAspectBuf);
+    CPLFree(pafThreeLineWin);
+
+    return CE_None;
+}
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -442,7 +628,8 @@ CPLErr GDALSlope  ( GDALRasterBandH hSrcBand,
 enum
 {
     HILL_SHADE,
-    SLOPE
+    SLOPE,
+    ASPECT
 };
 
 
@@ -506,6 +693,10 @@ int main( int argc, char ** argv )
     else if ( EQUAL(argv[1], "slope") )
     {
         eUtilityMode = SLOPE;
+    }
+    else if ( EQUAL(argv[1], "aspect") )
+    {
+        eUtilityMode = ASPECT;
     }
     else
     {
@@ -704,6 +895,17 @@ int main( int argc, char ** argv )
                     adfGeoTransform,
                     scale,
                     slopeFormat,
+                    pfnProgress, NULL);
+    }
+
+    else if (eUtilityMode == ASPECT)
+    {
+        GDALSetRasterNoDataValue(hDstBand, -9999.0);
+
+        GDALAspect( hSrcBand, 
+                    hDstBand, 
+                    nXSize, 
+                    nYSize,
                     pfnProgress, NULL);
     }
 
