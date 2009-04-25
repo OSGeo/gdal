@@ -73,7 +73,8 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                                         const char *pszGeomCol,
                                         OGRwkbGeometryType eGeomType,
                                         const char *pszGeomFormat,
-                                        OGRSpatialReference *poSRS )
+                                        OGRSpatialReference *poSRS,
+                                        int nSRSId )
 
 {
     sqlite3 *hDB = poDS->GetDB();
@@ -84,12 +85,22 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
         osGeomColumn = pszGeomCol;
 
     if( pszGeomFormat )
-        osGeomFormat = pszGeomFormat;
+    {
+        if ( EQUAL(pszGeomFormat, "WKT") )
+            eGeomFormat = OSGF_WKT;
+        else if ( EQUAL(pszGeomFormat,"WKB") )
+            eGeomFormat = OSGF_WKB;
+        else if ( EQUAL(pszGeomFormat,"FGF") )
+            eGeomFormat = OSGF_FGF;
+        else if( EQUAL(pszGeomFormat,"SpatiaLite") )
+            eGeomFormat = OSGF_SpatiaLite;
+    }
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
 
     this->poSRS = poSRS;
+    this->nSRSId = nSRSId;
 
     if( poSRS )
         poSRS->Reference();
@@ -449,7 +460,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         strcat( pszOldFieldList, osGeomColumn );
         strcat( pszNewFieldList, osGeomColumn );
 
-        if( EQUAL(osGeomFormat,"WKB") )
+        if ( eGeomFormat == OSGF_WKB )
             strcat( pszNewFieldList, " BLOB" );
         else
             strcat( pszNewFieldList, " VARCHAR" );
@@ -775,7 +786,9 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     int rc;
     sqlite3_stmt *hInsertStmt;
 
-//    CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
+#ifdef DEBUG
+    CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
+#endif
 
     rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
     if( rc != SQLITE_OK )
@@ -798,19 +811,28 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
             /* no binding */
             rc = SQLITE_OK;
         }
-        else if( EQUAL(osGeomFormat,"WKT") )
+        else if ( eGeomFormat == OSGF_WKT )
         {
             char *pszWKT = NULL;
             poGeom->exportToWkt( &pszWKT );
             rc = sqlite3_bind_text( hInsertStmt, 1, pszWKT, -1, CPLFree );
         }
-        else if( EQUAL( osGeomFormat, "WKB" ) )
+        else if( eGeomFormat == OSGF_WKB )
         {
             int nWKBLen = poGeom->WkbSize();
             GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
 
             poGeom->exportToWkb( wkbNDR, pabyWKB );
             rc = sqlite3_bind_blob( hInsertStmt, 1, pabyWKB, nWKBLen, CPLFree );
+        }
+        else if ( eGeomFormat == OSGF_SpatiaLite )
+        {
+            int     nBLOBLen;
+            GByte   *pabySLBLOB;
+
+            ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR,
+                                      &pabySLBLOB, &nBLOBLen );
+            rc = sqlite3_bind_blob( hInsertStmt, 1, pabySLBLOB, nBLOBLen, CPLFree );
         }
 
         if( rc != SQLITE_OK )
