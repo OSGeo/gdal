@@ -60,7 +60,7 @@ created over an existing file.</p>
 geometry_columns and spatial_ref_sys tables in a new database.  By default
 these metadata tables are created when a new database is created.
 
-<li> <b>SPATIALITE=yes/no</b>: Create the SpatiaLite flavour of the metadata
+<li> <b>SPATIALITE=yes/no</b>: (Starting with GDAL 1.7.0) Create the SpatiaLite flavour of the metadata
 tables, which are a bit differ from the metadata used by this OGR driver and
 from OGC specifications. Implies <b>METADATA=yes</b>.
 
@@ -76,7 +76,7 @@ generally more space and processing efficient, but harder to inspect or use in
 simple applications than WKT (Well Known Text). SpatiaLite extension uses its
 own binary format to store geometries and you can choose it as well. It will
 be selected automatically when SpatiaLite database is opened or created with
-<b>SPATIALITE=yes</b> option.
+<b>SPATIALITE=yes</b> option. SPATIALITE value is available starting with GDAL 1.7.0 
 
 <li> <b>LAUNDER=yes/no</b>: Controls whether layer and field names will be 
 laundered for easier use in SQLite.  Laundered names will be convered to lower 
