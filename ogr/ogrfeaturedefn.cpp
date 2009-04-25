@@ -267,10 +267,13 @@ int OGR_FD_GetFieldCount( OGRFeatureDefnH hDefn )
  *
  * This method is the same as the C function OGR_FD_GetFieldDefn().
  *
+ * Starting with GDAL 1.7.0, this method will also issue an error if the index
+ * is not valid.
+ *
  * @param iField the field to fetch, between 0 and GetFieldCount()-1.
  *
- * @return a pointer to an internal field definition object.  This object
- * should not be modified or freed by the application.
+ * @return a pointer to an internal field definition object or NULL if invalid index.
+ * This object should not be modified or freed by the application.
  */
 
 OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
@@ -278,6 +281,7 @@ OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
 {
     if( iField < 0 || iField >= nFieldCount )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", iField);
         return NULL;
     }
 
@@ -294,12 +298,15 @@ OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
  * This function is the same as the C++ method 
  * OGRFeatureDefn::GetFieldDefn().
  *
+ * Starting with GDAL 1.7.0, this method will also issue an error if the index
+ * is not valid.
+ *
  * @param hDefn handle to the feature definition to get the field definition
  * from.
  * @param iField the field to fetch, between 0 and GetFieldCount()-1.
  *
- * @return an handle to an internal field definition object.  This object
- * should not be modified or freed by the application.
+ * @return an handle to an internal field definition object or NULL if invalid index.
+ * This object should not be modified or freed by the application.
  */
 
 OGRFieldDefnH OGR_FD_GetFieldDefn( OGRFeatureDefnH hDefn, int iField )
