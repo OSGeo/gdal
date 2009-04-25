@@ -62,6 +62,11 @@ static void Usage()
             "                 [-p use percent slope (default=degrees)] [-s scale* (default=1)]\n"
             "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
             "\n"
+            " - To an aspect map from any GDAL-supported elevation raster\n"
+            "   Outputs a 32-bit float tiff with pixel values from 0-360 indicating azimuth :\n\n"
+            "     gdaldem aspect input_dem output_aspect_map \n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "\n"
             " Notes : \n"
             "   Scale is the ratio of vertical units to horizontal\n"
             "    for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120 \n\n");
