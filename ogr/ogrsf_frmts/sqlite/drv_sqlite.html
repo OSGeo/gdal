@@ -55,22 +55,33 @@ created over an existing file.</p>
 <h3>Database Creation Options</h3>
 
 <ul>
+	
 <li> <b>METADATA=yes/no</b>: This can be used to avoid creating the 
 geometry_columns and spatial_ref_sys tables in a new database.  By default
 these metadata tables are created when a new database is created.
+
+<li> <b>SPATIALITE=yes/no</b>: Create the SpatiaLite flavour of the metadata
+tables, which are a bit differ from the metadata used by this OGR driver and
+from OGC specifications. Implies <b>METADATA=yes</b>.
+
 </ul>
 
 <h3>Layer Creation Options</h3>
 
 <ul>
-<li> <b>FORMAT=WKB/WKT</b>: Controls the format used for the geometry column.
-By default WKB (Well Known Binary) is used.  This is generally more space
-and processing efficient, but harder to inspect or use in simple applications
-than WKT (Well Known Text).
+
+<li> <b>FORMAT=WKB/WKT/SPATIALITE</b>: Controls the format used for the
+geometry column. By default WKB (Well Known Binary) is used.  This is
+generally more space and processing efficient, but harder to inspect or use in
+simple applications than WKT (Well Known Text). SpatiaLite extension uses its
+own binary format to store geometries and you can choose it as well. It will
+be selected automatically when SpatiaLite database is opened or created with
+<b>SPATIALITE=yes</b> option.
 
 <li> <b>LAUNDER=yes/no</b>: Controls whether layer and field names will be 
 laundered for easier use in SQLite.  Laundered names will be convered to lower 
 case and some special characters will be changed to underscores. 
+
 </ul>
 
 
@@ -79,7 +90,8 @@ case and some special characters will be changed to underscores.
 <li>Development of the OGR SQLite driver was supported by 
 <a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
 <a href="http://www.gomoos.org/">GoMOOS</a>.</li>
-<li><a href="http://www.sqlite.org/">http://www.sqlite.org</a>: Main SQLite page.</li>
+<li><a href="http://www.sqlite.org/">http://www.sqlite.org</a>: Main SQLite page.
+<li> <a href="http://www.gaia-gis.it/spatialite/">http://www.gaia-gis.it/spatialite/</a>: SpatiaLite extension to SQLite.
 <li> <A href="http://trac.osgeo.org/fdo/wiki/FDORfc16">FDO RFC 16</a>: FDO Provider for SQLite</li>
 </ul>
 
