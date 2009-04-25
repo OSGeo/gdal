@@ -24,10 +24,12 @@ Usage:
 \endhtmlonly
 
 \verbatim
-ogrinfo [-ro] [-q] [-where restricted_where]
-               [-spat xmin ymin xmax ymax] [-fid fid]
-               [-sql statement] [-al] [-so] [--formats]
-               datasource_name [layer [layer ...]]
+ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
+        [-spat xmin ymin xmax ymax] [-fid fid]
+        [-sql statement] [-al] [-so] [-fields={YES/NO}]
+        [-geom={YES/NO/SUMMARY}][--formats]
+        datasource_name [layer [layer ...]]
+
 \endverbatim
 
 \if man
@@ -58,6 +60,12 @@ id will be reported.  Operates exclusive of the spatial or attribute
 queries. Note: if you want to select several features based on their feature id, you can
 also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-where "fid in (1,3,5)"'
 would select features 1, 3 and 5.</dd>
+<dt> <b>-fields</b>={YES/NO}:</dt><dd> (starting with GDAL 1.6.0) If set to NO,
+the feature dump will not display field values. Default value is YES.</dd>
+<dt> <b>-geom</b>={YES/NO/SUMMARY}:</dt><dd> (starting with GDAL 1.6.0) If set to NO,
+the feature dump will not display the geometry. If set to SUMMARY, only a
+summary of the geometry will be displayed. If set to YES, the geometry will be reported in full OGC WKT format.
+Default value is YES.</dd>
 <dt> <b>--formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
@@ -165,13 +173,14 @@ Usage:
 \endhtmlonly
 
 \verbatim
-Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name] [-gt n]
+Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]
                [-select field_list] [-where restricted_where] 
-               [-sql <sql statement>] [--help-general]
+               [-sql <sql statement>] 
                [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
-               [[-dsco NAME=VALUE] ...] dst_datasource_name
-               src_datasource_name
+               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
+               [-segmentize max_dist]
+               dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]
 
 \endverbatim
@@ -222,6 +231,8 @@ id will be reported.  Operates exclusive of the spatial or attribute
 queries.  Note: if you want to select several features based on their feature id, you can
 also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-where "fid in (1,3,5)"'
 would select features 1, 3 and 5.</dd>
+<dt> <b>-segmentize</b><em> max_dist</em>:</dt><dd> (starting with GDAL 1.6.0) maximum distance between 2 nodes.
+Used to create intermediate pointsspatial query extents</dd>
 </dl>
 
 Srs_def can be a full WKT definition (hard to escape properly), or a well
