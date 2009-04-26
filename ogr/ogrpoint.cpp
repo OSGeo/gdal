@@ -29,7 +29,6 @@
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include <assert.h>
 
 CPL_CVSID("$Id$");
 
@@ -207,7 +206,8 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
     eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
-    assert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
+    if (!( eByteOrder == wkbXDR || eByteOrder == wkbNDR ))
+        return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.  For now we assume that          */
@@ -228,7 +228,8 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
         bIs3D = pabyData[1] & 0x80 || pabyData[3] & 0x80;
     }
 
-    assert( eGeometryType == wkbPoint );
+    if( eGeometryType != wkbPoint )
+        return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */

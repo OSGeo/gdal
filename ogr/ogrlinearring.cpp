@@ -157,9 +157,11 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
      * 16 or 24 - size of point structure
      */
     int nPointSize = (b3D ? 24 : 16);
+    if (nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize)
+        return OGRERR_CORRUPT_DATA;
     int nBufferMinSize = nPointSize * nNewNumPoints;
    
-    if( nBufferMinSize > nBytesAvailable && nBytesAvailable > 0 )
+    if( nBytesAvailable != -1 && nBufferMinSize > nBytesAvailable - 4 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -178,38 +180,15 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
 /*      Get the vertices                                                */
 /* -------------------------------------------------------------------- */
     int i = 0;
-    int nBytesToCopy = 0;
 
     if( !b3D )
     {
-        nBytesToCopy = 16 * nPointCount;
-        
-        if( nBytesToCopy > nBytesAvailable && nBytesAvailable > 0 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "WKB buffer with OGRLinearRing points is too small! \
-                      \n\tWKB stream may be corrupted or it is EWKB stream which is not supported");
-            return OGRERR_NOT_ENOUGH_DATA;
-        }
-
-        memcpy( paoPoints, pabyData + 4, nBytesToCopy );
+        memcpy( paoPoints, pabyData + 4, 16 * nPointCount );
     }
     else
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            nBytesToCopy = 24;
-
-            if( nBytesToCopy > nBytesAvailable && nBytesAvailable > 0 )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "WKB buffer with OGRLinearRing points is too small! \
-                          \n\tWKB stream may be corrupted or it is EWKB stream which is not supported");
-                return OGRERR_NOT_ENOUGH_DATA;
-            }
-            if ( nBytesAvailable > 0 )
-                nBytesAvailable -= nBytesToCopy;
-
             memcpy( &(paoPoints[i].x), pabyData + 4 + 24 * i, 8 );
             memcpy( &(paoPoints[i].y), pabyData + 4 + 24 * i + 8, 8 );
             memcpy( padfZ + i, pabyData + 4 + 24 * i + 16, 8 );
