@@ -222,8 +222,8 @@ layer[0:4] would return a list of the first four features."""
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
-        if fld_type == OFTDateTime or fld_type == OFTDate or fld_type == OFTTime:
-            return self.GetFieldAsDate(fld_index)
+#        if fld_type == OFTDateTime or fld_type == OFTDate or fld_type == OFTTime:
+#            return self.GetFieldAsDate(fld_index)
         # default to returning as a string.  Should we add more types?
         return self.GetFieldAsString(fld_index)
     
