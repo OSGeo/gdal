@@ -30,7 +30,7 @@ try:
 except ImportError:
     import gdal
 
-import sys
+import sys, os, fnmatch
 
 verbose = 0
 
@@ -102,7 +102,20 @@ def names_to_fileinfos( names ):
     """
     
     file_infos = []
+    i = 0
     for name in names:
+        i += 1
+        # test if the name is a wildcard and not a file
+        if not os.path.isfile(name):
+            if '*' in name:
+                files = os.listdir('.')
+                files.reverse()
+                for file in files:
+                    if fnmatch.fnmatch(file, name):
+                        names.insert(i, file)
+                continue
+            else:
+                raise 'FileIO', ('The file "%s" does not exist' % name)
         fi = file_info()
         if fi.init_from_name( name ) == 1:
             file_infos.append( fi )
