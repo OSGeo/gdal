@@ -4,13 +4,13 @@ OBJ	=	\
 
 GDAL_ROOT	=	..\..
 
-EXTRAFLAGS = 	-Ilibungif
+EXTRAFLAGS = 	-Igiflib
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
-	cd libungif
+	cd giflib
 	$(MAKE) /f makefile.vc
 	cd ..
 
