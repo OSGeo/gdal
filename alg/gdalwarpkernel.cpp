@@ -2039,7 +2039,7 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
             nXMin = nXMin - iRowOffset;
             iRowOffset = 0;
         }
-        else if ( iRowOffset + nXDist >= nSrcXSize*nSrcYSize )
+        if ( iRowOffset + nXDist >= nSrcXSize*nSrcYSize )
         {
             nXMax = nSrcXSize*nSrcYSize - iRowOffset + nXMin - 1;
             nXMax -= (nXMax-nXMin+1) % 2;
