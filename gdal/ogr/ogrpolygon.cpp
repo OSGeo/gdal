@@ -346,7 +346,8 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
     eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
-    CPLAssert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
+    if (!( eByteOrder == wkbXDR || eByteOrder == wkbNDR ))
+        return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.  For now we assume that          */
@@ -361,7 +362,8 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
     else
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
 
-    CPLAssert( eGeometryType == wkbPolygon );
+    if( eGeometryType != wkbPolygon )
+        return OGRERR_CORRUPT_DATA;
 #endif    
 
     if( eByteOrder == wkbNDR )
@@ -394,7 +396,27 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
     if( OGR_SWAP( eByteOrder ) )
         nRingCount = CPL_SWAP32(nRingCount);
 
-    papoRings = (OGRLinearRing **) OGRMalloc(sizeof(void*) * nRingCount);
+    if (nRingCount < 0 || nRingCount > INT_MAX / 4)
+    {
+        nRingCount = 0;
+        return OGRERR_CORRUPT_DATA;
+    }
+
+    /* Each ring has a minimum of 4 bytes (point count) */
+    if (nSize != -1 && nSize - 9 < nRingCount * 4)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Length of input WKB is too small" );
+        nRingCount = 0;
+        return OGRERR_NOT_ENOUGH_DATA;
+    }
+
+    papoRings = (OGRLinearRing **) VSIMalloc2(sizeof(void*), nRingCount);
+    if (nRingCount != 0 && papoRings == NULL)
+    {
+        nRingCount = 0;
+        return OGRERR_NOT_ENOUGH_MEMORY;
+    }
 
     nDataOffset = 9;
     if( nSize != -1 )
@@ -413,6 +435,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
                                                  nSize );
         if( eErr != OGRERR_NONE )
         {
+            delete papoRings[iRing];
             nRingCount = iRing;
             return eErr;
         }

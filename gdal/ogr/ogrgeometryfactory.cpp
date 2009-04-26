@@ -31,7 +31,6 @@
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
-#include <assert.h>
 #include "ogr_geos.h"
 
 CPL_CVSID("$Id$");
@@ -82,7 +81,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 
     *ppoReturn = NULL;
 
-    if( nBytes < 5 && nBytes != -1 )
+    if( nBytes < 9 && nBytes != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -96,7 +95,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
     {
         CPLDebug( "OGR", 
                   "OGRGeometryFactory::createFromWkb() - got corrupt data.\n"
-                  "%02X%02X%02X%02X%02X%02X%02X%02X\n", 
+                  "%02X%02X%02X%02X%02X%02X%02X%02X%02X\n", 
                   pabyData[0],
                   pabyData[1],
                   pabyData[2],
@@ -104,7 +103,8 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
                   pabyData[4],
                   pabyData[5],
                   pabyData[6],
-                  pabyData[7] );
+                  pabyData[7],
+                  pabyData[8]);
         return OGRERR_CORRUPT_DATA;
     }
 

@@ -372,7 +372,8 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
     eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
-    CPLAssert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
+    if (!( eByteOrder == wkbXDR || eByteOrder == wkbNDR ))
+        return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.  For now we assume that          */
@@ -391,10 +392,11 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
     }
 
-    CPLAssert( eGeometryType == wkbGeometryCollection
+    if (! ( eGeometryType == wkbGeometryCollection
                || eGeometryType == wkbMultiPolygon 
                || eGeometryType == wkbMultiLineString 
-               || eGeometryType == wkbMultiPoint );
+               || eGeometryType == wkbMultiPoint ))
+        return OGRERR_CORRUPT_DATA;
 #endif    
 
 /* -------------------------------------------------------------------- */
@@ -410,7 +412,27 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
     if( OGR_SWAP( eByteOrder ) )
         nGeomCount = CPL_SWAP32(nGeomCount);
 
-    papoGeoms = (OGRGeometry **) OGRMalloc(sizeof(void*) * nGeomCount);
+    if (nGeomCount < 0 || nGeomCount > INT_MAX / 9)
+    {
+        nGeomCount = 0;
+        return OGRERR_CORRUPT_DATA;
+    }
+
+    /* Each geometry has a minimum of 9 bytes */
+    if (nSize != -1 && nSize - 9 < nGeomCount * 9)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Length of input WKB is too small" );
+        nGeomCount = 0;
+        return OGRERR_NOT_ENOUGH_DATA;
+    }
+
+    papoGeoms = (OGRGeometry **) VSIMalloc2(sizeof(void*), nGeomCount);
+    if (nGeomCount != 0 && papoGeoms == NULL)
+    {
+        nGeomCount = 0;
+        return OGRERR_NOT_ENOUGH_MEMORY;
+    }
 
     nDataOffset = 9;
     if( nSize != -1 )
