@@ -529,7 +529,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nPointCount );
 
-        if( nBytes < 8 + 2 * 8 * nPointCount )
+        if( nPointCount < 0 || nPointCount > INT_MAX / (2 * 8))
+            return OGRERR_CORRUPT_DATA;
+
+        if (nBytes - 8 < 2 * 8 * nPointCount )
             return OGRERR_NOT_ENOUGH_DATA;
 
         poGeom = poLS = new OGRLineString();
@@ -571,6 +574,13 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
+            return OGRERR_CORRUPT_DATA;
+
+        /* Each ring has a minimum of 4 bytes */
+        if (nBytes - 8 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
         nNextByte = 8;
         
         poGeom = poPoly = new OGRPolygon();
@@ -583,6 +593,9 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
+
+            if (nPointCount < 0 || nPointCount > INT_MAX / (2 * 8))
+                return OGRERR_CORRUPT_DATA;
 
             nNextByte += 4;
 
@@ -640,6 +653,13 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         memcpy( &nGeomCount, pabyData + 4, 4 );
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nGeomCount );
+
+        if (nGeomCount < 0 || nGeomCount > INT_MAX / 9)
+            return OGRERR_CORRUPT_DATA;
+
+        /* Each sub geometry takes at least 9 bytes */
+        if (nBytes - 8 < nGeomCount * 9)
+            return OGRERR_NOT_ENOUGH_DATA;
 
         nBytesUsed = 8;
 
