@@ -1,19 +1,14 @@
-This code is from libungif 4.1.0
+This code is from giflib 4.1.6
 
-In theory it comes from (URL probably broken):
-http://prtr-13.ucsc.edu/~badger/software/libungif.shtml
-
-This seems to be the new location of the libungif project:
-http://sourceforge.net/projects/libungif
-
-But I don't think this works any more. I generally dig up 
-source RPMs to dig up the code.  
+This seems to be the new location of the giflib project:
+http://sourceforge.net/projects/giflib
 
 Changes:
  o Select only lib files needed.
- o Fix a few warnings about unused variables. 
- o Hack private include file to avoid VersionString warnings.
  o Hacked in O_BINARY support whereever O_BINARY is defined.
+ o Modify include section of c files
+ o Apply patch for http://trac.osgeo.org/gdal/ticket/2542
+ o Apply Debian 01-cve.dpatch to fix CVE-2005-2974 and CVE-2005-3350
 
 History:
 
@@ -26,7 +21,6 @@ v2.1 featured substantial changes and additions by Eric S. Raymond.
 
 Status:
 
-The libungif is now an integral part of GIFLIB.
 Current maintainer is Eric S. Raymond.
 GIFLIB is not under active development, but bug fixes are being accepted.
 
