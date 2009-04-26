@@ -16,7 +16,7 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj
-	cd libungif
+	cd giflib
 	$(MAKE) /f makefile.vc clean
 	cd ..
 
