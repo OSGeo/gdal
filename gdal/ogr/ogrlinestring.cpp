@@ -690,7 +690,8 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
     eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
-    assert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
+    if (!( eByteOrder == wkbXDR || eByteOrder == wkbNDR ))
+        return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.  For now we assume that          */
@@ -699,7 +700,6 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
     OGRwkbGeometryType eGeometryType;
     int bIs3D = FALSE;
-    int nBytesAvailable = nSize;
 
     if( eByteOrder == wkbNDR )
     {
@@ -712,7 +712,8 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
         bIs3D = pabyData[1] & 0x80 || pabyData[3] & 0x80;
     }
 
-    CPLAssert( eGeometryType == wkbLineString );
+    if( eGeometryType != wkbLineString )
+        return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertex count.                                           */
@@ -729,9 +730,11 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
      * 16 or 24 - size of point structure
      */
     int nPointSize = (bIs3D ? 24 : 16);
+    if (nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize)
+        return OGRERR_CORRUPT_DATA;
     int nBufferMinSize = nPointSize * nNewNumPoints;
 
-    if( nBufferMinSize > nBytesAvailable && nBytesAvailable > 0 )
+    if( nSize != -1 && nBufferMinSize > nSize-9 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -749,42 +752,18 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /*      Get the vertex.                                                 */
 /* -------------------------------------------------------------------- */
     int i = 0;
-    int nBytesToCopy = 0;
     
     if( bIs3D )
     {
         for( i = 0; i < nPointCount; i++ )
         {
-            nBytesToCopy = 24;
-
-            if( nBytesToCopy > nBytesAvailable && nBytesAvailable > 0 )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "WKB buffer with OGRLineString points is too small! \
-                          \n\tWKB stream may be corrupted or it is EWKB stream which is not supported");
-                return OGRERR_NOT_ENOUGH_DATA;
-            }
-            if ( nBytesAvailable > 0 )
-                nBytesAvailable -= nBytesToCopy;
-
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*24, 8 );
         }
     }
     else
     {
-        nBytesToCopy = 16 * nPointCount;
-
-        if( nBytesToCopy > nBytesAvailable && nBytesAvailable > 0 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "WKB buffer with OGRLineString points is too small! \
-                      \n\tWKB stream may be corrupted or it is EWKB stream which is not supported");
-            return OGRERR_NOT_ENOUGH_DATA;
-        }
-
-
-        memcpy( paoPoints, pabyData + 9, nBytesToCopy );
+        memcpy( paoPoints, pabyData + 9, 16 * nPointCount );
     }
     
 /* -------------------------------------------------------------------- */
