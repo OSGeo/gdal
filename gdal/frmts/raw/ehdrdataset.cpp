@@ -468,10 +468,10 @@ const char *EHdrDataset::GetKeyValue( const char *pszKey,
     for( i = 0; papszHDR[i] != NULL; i++ )
     {
         if( EQUALN(pszKey,papszHDR[i],strlen(pszKey))
-            && isspace(papszHDR[i][strlen(pszKey)]) )
+            && isspace((unsigned char)papszHDR[i][strlen(pszKey)]) )
         {
             const char *pszValue = papszHDR[i] + strlen(pszKey);
-            while( isspace(*pszValue) )
+            while( isspace((unsigned char)*pszValue) )
                 pszValue++;
             
             return pszValue;

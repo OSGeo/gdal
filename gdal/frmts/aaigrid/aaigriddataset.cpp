@@ -191,9 +191,9 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         /* suck up any pre-white space. */
         do {
             chNext = poODS->Getc();
-        } while( isspace( chNext ) );
+        } while( isspace( (unsigned char)chNext ) );
 
-        while( !isspace(chNext)  )
+        while( !isspace((unsigned char)chNext)  )
         {
             if( iTokenChar == sizeof(szToken)-2 )
             {
