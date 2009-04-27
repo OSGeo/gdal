@@ -20,7 +20,7 @@ endif
 
 default:	$(OBJ)
 
-$(OBJ) $(O_OBJ):	../../gcore/gdal_proxy.h
+$(OBJ) $(O_OBJ):	../../gcore/gdal_proxy.h nitflib.h
 
 clean:
 	rm -f *.o $(O_OBJ) nitfdump$(EXE)

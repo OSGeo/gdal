@@ -21,13 +21,19 @@ CGM domain.  The returned metadata will look something like:
 
 <pre>
   SEGMENT_COUNT=1
-  SEGMENT_0_SLOC_ROW=00025
-  SEGMENT_0_SLOC_COL=00025
+  SEGMENT_0_SLOC_ROW=25
+  SEGMENT_0_SLOC_COL=25
+  SEGMENT_0_SDLVL=2
+  SEGMENT_0_SALVL=1
+  SEGMENT_0_CCS_ROW=00025
+  SEGMENT_0_CCS_COL=00025
   SEGMENT_0_DATA=\0!\0...
 </pre>
 
-The ROW and COL values are the placement of the CGM object relative to the 
-(base) image.  The DATA is the raw CGM data with "backslash quotable" escaping 
+The SLOC_ROW and SLOC_COL values are the placement of the CGM object relative 
+to the base (SALVL) image.  The CCS_ROW/COL values are relative to the common
+coordinate system.  The _SDLVL is the display level.  
+The DATA is the raw CGM data with "backslash quotable" escaping 
 applied.  All occurances of ASCII zero will be translated to '\0', and all 
 backslashes and double quotes will be backslashed escaped.  The 
 CPLUnescapeString() function can be used to unescape the data into binary

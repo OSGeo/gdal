@@ -838,6 +838,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    NITFCollectAttachments( psFile );
+    NITFReconcileAttachments( psFile );
+
 /* -------------------------------------------------------------------- */
 /*      Is there an image to operate on?                                */
 /* -------------------------------------------------------------------- */
@@ -1356,8 +1359,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         papszMergedMD = CSLSetNameValue( papszMergedMD, "NITF_IMODE", szIMODE );
 
         // ILOC/Attachment info
-        if( psImage->nILOCRow != 0 )
+        if( psImage->nIDLVL != 0 )
         {
+            NITFSegmentInfo *psSegInfo 
+                = psFile->pasSegmentInfo + psImage->iSegment;
+
             papszMergedMD = 
                 CSLSetNameValue( papszMergedMD, "NITF_IDLVL", 
                                  CPLString().Printf("%d",psImage->nIDLVL) );
@@ -1370,6 +1376,12 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             papszMergedMD = 
                 CSLSetNameValue( papszMergedMD, "NITF_ILOC_COLUMN", 
                                 CPLString().Printf("%d",psImage->nILOCColumn));
+            papszMergedMD = 
+                CSLSetNameValue( papszMergedMD, "NITF_CCS_ROW", 
+                                 CPLString().Printf("%d",psSegInfo->nCCS_R) );
+            papszMergedMD = 
+                CSLSetNameValue( papszMergedMD, "NITF_CCS_COLUMN", 
+                                 CPLString().Printf("%d", psSegInfo->nCCS_C));
             papszMergedMD = 
                 CSLSetNameValue( papszMergedMD, "NITF_IMAG", 
                                  psImage->szIMAG );
@@ -2110,48 +2122,32 @@ void NITFDataset::InitializeCGMMetadata()
             && !EQUAL(psSegment->szSegmentType,"SY") )
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Load the graphic subheader.                                     */
-/* -------------------------------------------------------------------- */
-        char achSubheader[298];
-        int  nSTYPEOffset;
-
-        if( VSIFSeekL( psFile->fp, psSegment->nSegmentHeaderStart, 
-                       SEEK_SET ) != 0 
-            || VSIFReadL( achSubheader, 1, sizeof(achSubheader), 
-                          psFile->fp ) < 258 )
-        {
-            CPLError( CE_Warning, CPLE_FileIO, 
-                      "Failed to read graphic subheader at %d.", 
-                      psSegment->nSegmentHeaderStart );
-            return;
-        }
-
-        // NITF 2.0. (also works for NITF 2.1)
-        nSTYPEOffset = 200;
-        if( EQUALN(achSubheader+193,"999998",6) )
-            nSTYPEOffset += 40;
-
-        // We don't want bitmaps or anything other than cgm for now.
-        if( achSubheader[nSTYPEOffset] != 'C' )
-            continue;
-
-        char szSLOC_R[6], szSLOC_C[6];
-
-        strncpy( szSLOC_R, achSubheader + nSTYPEOffset + 20, 5 );
-        strncpy( szSLOC_C, achSubheader + nSTYPEOffset + 20 + 5, 5 );
-        
-        szSLOC_R[5] = '\0';
-        szSLOC_C[5] = '\0';
-
         papszCGMMetadata = 
             CSLSetNameValue( papszCGMMetadata, 
                              CPLString().Printf("SEGMENT_%d_SLOC_ROW", iCGM), 
-                             szSLOC_R );
+                             CPLString().Printf("%d",psSegment->nLOC_R) );
         papszCGMMetadata = 
             CSLSetNameValue( papszCGMMetadata, 
                              CPLString().Printf("SEGMENT_%d_SLOC_COL", iCGM), 
-                             szSLOC_C );
+                             CPLString().Printf("%d",psSegment->nLOC_C) );
+
+        papszCGMMetadata = 
+            CSLSetNameValue( papszCGMMetadata, 
+                             CPLString().Printf("SEGMENT_%d_CCS_ROW", iCGM), 
+                             CPLString().Printf("%d",psSegment->nCCS_R) );
+        papszCGMMetadata = 
+            CSLSetNameValue( papszCGMMetadata, 
+                             CPLString().Printf("SEGMENT_%d_CCS_COL", iCGM), 
+                             CPLString().Printf("%d",psSegment->nCCS_C) );
+
+        papszCGMMetadata = 
+            CSLSetNameValue( papszCGMMetadata, 
+                             CPLString().Printf("SEGMENT_%d_SDLVL", iCGM), 
+                             CPLString().Printf("%d",psSegment->nDLVL) );
+        papszCGMMetadata = 
+            CSLSetNameValue( papszCGMMetadata, 
+                             CPLString().Printf("SEGMENT_%d_SALVL", iCGM), 
+                             CPLString().Printf("%d",psSegment->nALVL) );
 
 /* -------------------------------------------------------------------- */
 /*      Load the raw CGM data itself.                                   */
