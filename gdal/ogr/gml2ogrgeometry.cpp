@@ -195,10 +195,10 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             dfX = atof( pszCoordString );
             while( *pszCoordString != '\0'
                    && *pszCoordString != ','
-                   && !isspace(*pszCoordString) )
+                   && !isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
 
-            if( *pszCoordString == '\0' || isspace(*pszCoordString) )
+            if( *pszCoordString == '\0' || isspace((unsigned char)*pszCoordString) )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Corrupt <coordinates> value." );
@@ -209,7 +209,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             dfY = atof( pszCoordString );
             while( *pszCoordString != '\0' 
                    && *pszCoordString != ','
-                   && !isspace(*pszCoordString) )
+                   && !isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
 
             if( *pszCoordString == ',' )
@@ -219,11 +219,11 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
                 nDimension = 3;
                 while( *pszCoordString != '\0' 
                        && *pszCoordString != ','
-                       && !isspace(*pszCoordString) )
+                       && !isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
             }
 
-            while( isspace(*pszCoordString) )
+            while( isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
 
             if( !AddPoint( poGeometry, dfX, dfY, dfZ, nDimension ) )

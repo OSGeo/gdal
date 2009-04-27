@@ -696,7 +696,7 @@ char *CPLScanString( const char *pszString, int nMaxLength,
     if ( bTrimSpaces )
     {
         size_t  i = strlen( pszBuffer );
-        while ( i-- > 0 && isspace(pszBuffer[i]) )
+        while ( i-- > 0 && isspace((unsigned char)pszBuffer[i]) )
             pszBuffer[i] = '\0';
     }
 
@@ -1547,7 +1547,7 @@ double CPLDMSToDec( const char *is )
     double v, tv;
 
     /* copy sting into work space */
-    while (isspace(sign = *is)) ++is;
+    while (isspace((unsigned char)(sign = *is))) ++is;
     for (n = sizeof(work), s = work, p = (char *)is; isgraph(*p) && --n ; )
         *s++ = *p++;
     *s = '\0';

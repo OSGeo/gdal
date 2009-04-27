@@ -152,7 +152,7 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
     switch(state) {
 
     case json_tokener_state_eatws:
-      if(isspace(c)) {
+      if(isspace((unsigned char)c)) {
 	/* okay */
       } else if(c == '/') {
 	printbuf_reset(tok->pb);

@@ -67,7 +67,7 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /*      Skip any leading spaces/blanks.                                 */
 /* -------------------------------------------------------------------- */
     const char *pszTestXML = pszFilename;
-    while( *pszTestXML != '\0' && isspace( *pszTestXML ) )
+    while( *pszTestXML != '\0' && isspace( (unsigned char)*pszTestXML ) )
         pszTestXML++;
 
     if( EQUALN(pszTestXML,"<OGRVRTDataSource>",18) )
