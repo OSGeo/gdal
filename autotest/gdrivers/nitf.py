@@ -1005,22 +1005,30 @@ def nitf_online_10():
         return 'fail'
 
     tab = [
-        ('SEGMENT_0_SLOC_ROW', '00000'),
-        ('SEGMENT_0_SLOC_COL', '00000'),
-        ('SEGMENT_1_SLOC_ROW', '00000'),
-        ('SEGMENT_1_SLOC_COL', '00684'),
-        ('SEGMENT_2_SLOC_ROW', '00000'),
-        ('SEGMENT_2_SLOC_COL', '01364'),
-        ('SEGMENT_3_SLOC_ROW', '00270'),
-        ('SEGMENT_3_SLOC_COL', '00000'),
-        ('SEGMENT_4_SLOC_ROW', '00270'),
-        ('SEGMENT_4_SLOC_COL', '00684'),
-        ('SEGMENT_5_SLOC_ROW', '00270'),
-        ('SEGMENT_5_SLOC_COL', '01364'),
-        ('SEGMENT_6_SLOC_ROW', '00540'),
-        ('SEGMENT_6_SLOC_COL', '00000'),
-        ('SEGMENT_7_SLOC_ROW', '00540'),
-        ('SEGMENT_7_SLOC_COL', '01364')
+        ('SEGMENT_0_SLOC_ROW', '0'),
+        ('SEGMENT_0_SLOC_COL', '0'),
+        ('SEGMENT_0_CCS_COL', '0'),
+        ('SEGMENT_0_CCS_COL', '0'),
+        ('SEGMENT_0_SDLVL', '1'),
+        ('SEGMENT_0_SALVL', '0'),
+        ('SEGMENT_1_SLOC_ROW', '0'),
+        ('SEGMENT_1_SLOC_COL', '684'),
+        ('SEGMENT_2_SLOC_ROW', '0'),
+        ('SEGMENT_2_SLOC_COL', '1364'),
+        ('SEGMENT_3_SLOC_ROW', '270'),
+        ('SEGMENT_3_SLOC_COL', '0'),
+        ('SEGMENT_4_SLOC_ROW', '270'),
+        ('SEGMENT_4_SLOC_COL', '684'),
+        ('SEGMENT_5_SLOC_ROW', '270'),
+        ('SEGMENT_5_SLOC_COL', '1364'),
+        ('SEGMENT_6_SLOC_ROW', '540'),
+        ('SEGMENT_6_SLOC_COL', '0'),
+        ('SEGMENT_7_SLOC_ROW', '540'),
+        ('SEGMENT_7_SLOC_COL', '1364'),
+        ('SEGMENT_7_CCS_ROW', '540'),
+        ('SEGMENT_7_CCS_COL', '1364'),
+        ('SEGMENT_7_SDLVL', '8'),
+        ('SEGMENT_7_SALVL', '0'),
         ]
 
     for item in tab:
@@ -1076,6 +1084,57 @@ def nitf_online_12():
 
     return tst.testOpen()
 
+
+###############################################################################
+# Test complex relative graphic/image attachment.
+
+def nitf_online_13():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/u_3054a.ntf', 'u_3054a.ntf'):
+        return 'skip'
+
+    # Shut up the warning about missing image segment
+    ds = gdal.Open( 'NITF_IM:2:tmp/cache/u_3054a.ntf' )
+
+    mdCGM = ds.GetMetadata( 'CGM' )
+    md = ds.GetMetadata()
+
+    ds = None
+
+    if mdCGM['SEGMENT_COUNT'] != '3':
+        gdaltest.post_reason( 'wrong SEGMENT_COUNT.' )
+        return 'fail'
+
+    tab = [
+        ('SEGMENT_2_SLOC_ROW', '0'),
+        ('SEGMENT_2_SLOC_COL', '0'),
+        ('SEGMENT_2_CCS_COL', '1100'),
+        ('SEGMENT_2_CCS_COL', '1100'),
+        ('SEGMENT_2_SDLVL', '6'),
+        ('SEGMENT_2_SALVL', '3')
+        ]
+
+    for item in tab:
+        if mdCGM[item[0]] != item[1]:
+            gdaltest.post_reason( 'wrong value for %s.' % item[0] )
+            return 'fail'
+
+    tab = [
+        ('NITF_IDLVL','3'),
+        ('NITF_IALVL','1'),
+        ('NITF_ILOC_ROW','1100'),
+        ('NITF_ILOC_COLUMN','1100'),
+        ('NITF_CCS_ROW','1100'),
+        ('NITF_CCS_COLUMN','1100'),
+        ]
+
+    for item in tab:
+        if md[item[0]] != item[1]:
+            gdaltest.post_reason( 'wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]) )
+            return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Cleanup.
@@ -1170,6 +1229,7 @@ gdaltest_list = [
     nitf_online_10,
     nitf_online_11,
     nitf_online_12,
+    nitf_online_13,
     nitf_cleanup ]
 
 if __name__ == '__main__':
