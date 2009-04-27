@@ -181,7 +181,7 @@ int myAtoI (const char *ptr, sInt4 *value)
             return 1;
          }
          break;
-      } else if (!isspace (*ptr)) {
+      } else if (!isspace ((unsigned char)*ptr)) {
          return 0;
       }
       ptr++;
@@ -192,7 +192,7 @@ int myAtoI (const char *ptr, sInt4 *value)
    }
    myAssert (extra != NULL);
    /* Allow first trailing char for ',' */
-   if (!isspace (*extra)) {
+   if (!isspace ((unsigned char)*extra)) {
       if (*extra != ',') {
          *value = 0;
          return 0;
@@ -201,7 +201,7 @@ int myAtoI (const char *ptr, sInt4 *value)
    extra++;
    /* Make sure the rest is all white space. */
    while (*extra != '\0') {
-      if (!isspace (*extra)) {
+      if (!isspace ((unsigned char)*extra)) {
          *value = 0;
          return 0;
       }
@@ -249,7 +249,7 @@ int myAtoF (const char *ptr, double *value)
             return 1;
          }
          break;
-      } else if (!isspace (*ptr)) {
+      } else if (!isspace ((unsigned char)*ptr)) {
          return 0;
       }
       ptr++;
@@ -260,7 +260,7 @@ int myAtoF (const char *ptr, double *value)
    }
    myAssert (extra != NULL);
    /* Allow first trailing char for ',' */
-   if (!isspace (*extra)) {
+   if (!isspace ((unsigned char)*extra)) {
       if (*extra != ',') {
          *value = 0;
          return 0;
@@ -269,7 +269,7 @@ int myAtoF (const char *ptr, double *value)
    extra++;
    /* Make sure the rest is all white space. */
    while (*extra != '\0') {
-      if (!isspace (*extra)) {
+      if (!isspace ((unsigned char)*extra)) {
          *value = 0;
          return 0;
       }
@@ -649,13 +649,13 @@ void strTrim (char *str)
 
    /* Remove the trailing white space before working on the leading ones. */
    len = strlen (str);
-   for (i = len - 1; ((i >= 0) && (isspace (str[i]))); i--) {
+   for (i = len - 1; ((i >= 0) && (isspace ((unsigned char)str[i]))); i--) {
    }
    len = i + 1;
    str[len] = '\0';
 
    /* Find first non-white space char. */
-   for (ptr = str; (*ptr != '\0') && (isspace (*ptr)); ptr++) {
+   for (ptr = str; (*ptr != '\0') && (isspace ((unsigned char)*ptr)); ptr++) {
    }
 
    if (ptr != str) {
@@ -698,7 +698,7 @@ void strTrimRight (char *str, char c)
    }
 
    for (i = strlen (str) - 1;
-        ((i >= 0) && ((isspace (str[i])) || (str[i] == c))); i--) {
+        ((i >= 0) && ((isspace ((unsigned char)str[i])) || (str[i] == c))); i--) {
    }
    str[i + 1] = '\0';
 }
