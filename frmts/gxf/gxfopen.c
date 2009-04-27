@@ -66,7 +66,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 /*      Extract the title.  It should be terminated by some sort of     */
 /*      white space.                                                    */
 /* -------------------------------------------------------------------- */
-    for( i = 0; !isspace(pszLine[i]) && pszLine[i] != '\0' && i < 70; i++ ) {}
+    for( i = 0; !isspace((unsigned char)pszLine[i]) && pszLine[i] != '\0' && i < 70; i++ ) {}
 
     strncpy( pszHTitle, pszLine, i );
     pszHTitle[i] = '\0';
@@ -81,7 +81,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 /* -------------------------------------------------------------------- */
 /*      Skip white space.                                               */
 /* -------------------------------------------------------------------- */
-    while( isspace(pszLine[i]) )
+    while( isspace((unsigned char)pszLine[i]) )
         i++;
 
 /* -------------------------------------------------------------------- */
@@ -406,10 +406,10 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                 int		i;
                 
                 /* skip leading white space */
-                for( ; isspace(*pszLine); pszLine++ ) {}
+                for( ; isspace((unsigned char)*pszLine); pszLine++ ) {}
 
                 /* Skip the data value (non white space) */
-                for( i = 0; pszLine[i] != '\0' && !isspace(pszLine[i]); i++) {}
+                for( i = 0; pszLine[i] != '\0' && !isspace((unsigned char)pszLine[i]); i++) {}
 
                 if( strncmp(pszLine,psGXF->szDummy,i) == 0 )
                 {
@@ -421,7 +421,7 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                 }
 
                 /* skip further whitespace */
-                for( pszLine += i; isspace(*pszLine); pszLine++ ) {}
+                for( pszLine += i; isspace((unsigned char)*pszLine); pszLine++ ) {}
             }
         }
 

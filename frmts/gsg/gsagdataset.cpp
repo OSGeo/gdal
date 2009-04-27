@@ -372,7 +372,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    /* No number found */
 
 	    /* Check if this was an expected failure */
-	    while( isspace( *szStart ) )
+	    while( isspace( (unsigned char)*szStart ) )
 		szStart++;
 
 	    /* Found sign at end of input, seek back to re-read it */
@@ -396,7 +396,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    else if( *szStart != '\0' )
 	    {
 		szEnd = szStart;
-		while( !isspace( *szEnd ) && *szEnd != '\0' )
+		while( !isspace( (unsigned char)*szEnd ) && *szEnd != '\0' )
 		    szEnd++;
 		char cOldEnd = *szEnd;
 		*szEnd = '\0';
@@ -525,7 +525,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	CPLDebug( "GSAG", "Grid row %d does not end with a newline.  "
                   "Possible skew.\n", nBlockYOff );
 
-    while( isspace( *szEnd ) )
+    while( isspace( (unsigned char)*szEnd ) )
 	szEnd++;
 
     nCharsExamined += szEnd - szLineBuf;
@@ -985,7 +985,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szStart = szEnd;
 
     /* Parse the minimum Z value of the grid */
-    while( isspace( *szStart ) )
+    while( isspace( (unsigned char)*szStart ) )
 	szStart++;
     poDS->nMinMaxZOffset = szStart - pabyHeader;
 
@@ -1013,7 +1013,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	dfMaxZ = dfTemp;
     }
 
-    while( isspace(*szEnd) )
+    while( isspace((unsigned char)*szEnd) )
 	    szEnd++;
 
 /* -------------------------------------------------------------------- */
@@ -1347,7 +1347,7 @@ CPLErr GSAGDataset::ShiftFileContents( FILE *fp, vsi_l_offset nShiftStart,
     if( nShiftSize > 0 )
     {
 	size_t nTailSize = nOverlap;
-	while( nTailSize > 0 && isspace( pabyBuffer[nTailSize-1] ) )
+	while( nTailSize > 0 && isspace( (unsigned char)pabyBuffer[nTailSize-1] ) )
 	    nTailSize--;
 
 	if( VSIFWriteL( (void *)pabyBuffer, 1, nTailSize, fp ) != nTailSize )

@@ -448,7 +448,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
              */
             eNewType = psInfo->eSuperSectionType;
         }
-        else if (strlen(pszLine) > 0 && !isspace(pszLine[0]) && 
+        else if (strlen(pszLine) > 0 && !isspace((unsigned char)pszLine[0]) && 
                  !EQUALN(pszLine, "JABBERWOCKY", 11) &&
                  !EQUALN(pszLine, "EOI", 3) &&
                  ! ( psInfo->eSuperSectionType == AVCFileRPL &&

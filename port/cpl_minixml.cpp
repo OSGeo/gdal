@@ -162,7 +162,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
     psContext->pszToken[0] = '\0';
     
     chNext = ReadChar( psContext );
-    while( isspace(chNext) )
+    while( isspace((unsigned char)chNext) )
         chNext = ReadChar( psContext );
 
 /* -------------------------------------------------------------------- */
