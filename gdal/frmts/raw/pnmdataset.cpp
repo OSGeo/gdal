@@ -172,7 +172,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
                     iIn++;
             }
 
-            if( iOut != 0 && isspace(pszSrc[iIn]) )
+            if( iOut != 0 && isspace((unsigned char)pszSrc[iIn]) )
             {
                 szToken[iOut] = '\0';
 
@@ -188,7 +188,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
             }
 
-            else if( !isspace(pszSrc[iIn]) )
+            else if( !isspace((unsigned char)pszSrc[iIn]) )
             {
                 szToken[iOut++] = pszSrc[iIn];
             }

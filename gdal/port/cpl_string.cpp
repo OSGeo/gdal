@@ -1860,7 +1860,7 @@ CPLValueType CPLGetValueType(const char* pszValue)
         pszValue ++;
 
     /* Skip leading spaces */
-    while( isspace( *pszValue ) )
+    while( isspace( (unsigned char)*pszValue ) )
         pszValue ++;
 
     for(; *pszValue != '\0'; pszValue++ )
@@ -1870,10 +1870,10 @@ CPLValueType CPLGetValueType(const char* pszValue)
             bIsLastCharExponent = FALSE;
             /* do nothing */
         }
-        else if ( isspace (*pszValue) )
+        else if ( isspace ((unsigned char)*pszValue) )
         {
             const char* pszTmp = pszValue;
-            while( isspace( *pszTmp ) )
+            while( isspace( (unsigned char)*pszTmp ) )
                 pszTmp ++;
             if (*pszTmp == 0)
                 break;
