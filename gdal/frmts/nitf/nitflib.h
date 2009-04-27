@@ -44,6 +44,14 @@ typedef struct {
     GUInt32 nSegmentSize;
 
     void *hAccess;
+
+    /* extra info related to relative display */
+    int     nDLVL;
+    int     nALVL;
+    int     nLOC_R;
+    int     nLOC_C;
+    int     nCCS_R;
+    int     nCCS_C;
 } NITFSegmentInfo;
 
 typedef struct {
@@ -79,6 +87,9 @@ const char CPL_DLL *NITFFindTRE( const char *pszTREData, int nTREBytes,
 const char CPL_DLL *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
                                 const char *pszTag, int nTreIndex,
                                 int *pnFoundTRESize );
+
+int CPL_DLL NITFCollectAttachments( NITFFile *psFile );
+int CPL_DLL NITFReconcileAttachments( NITFFile *psFile );
 
 /* -------------------------------------------------------------------- */
 /*      Image level access.                                             */
