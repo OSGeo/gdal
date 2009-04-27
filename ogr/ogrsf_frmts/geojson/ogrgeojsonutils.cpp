@@ -44,7 +44,7 @@ int GeoJSONIsObject( const char* pszText )
 /* -------------------------------------------------------------------- */
 /*      This is a primitive test, but we need to perform it fast.       */
 /* -------------------------------------------------------------------- */
-    while( *pszText != '\0' && isspace( *pszText ) )
+    while( *pszText != '\0' && isspace( (unsigned char)*pszText ) )
         pszText++;
 
     if( EQUALN( pszText, "{", 1) )

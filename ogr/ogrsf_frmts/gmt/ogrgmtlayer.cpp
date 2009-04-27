@@ -327,7 +327,7 @@ int OGRGmtLayer::ReadLine()
 
             for( iValEnd = i+2; iValEnd < osLine.length(); iValEnd++ )
             {
-                if( !bInQuotes && isspace(osLine[iValEnd]) )
+                if( !bInQuotes && isspace((unsigned char)osLine[iValEnd]) )
                     break;
 
                 if( bInQuotes && osLine[iValEnd] == '\\' 

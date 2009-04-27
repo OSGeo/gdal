@@ -1964,7 +1964,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
             sTableDef.szDataFile[80] = '\0';
 
             for(i = strlen(sTableDef.szDataFile)-1;
-                isspace(sTableDef.szDataFile[i]);
+                isspace((unsigned char)sTableDef.szDataFile[i]);
                 i--)
             {
                 sTableDef.szDataFile[i] = '\0';

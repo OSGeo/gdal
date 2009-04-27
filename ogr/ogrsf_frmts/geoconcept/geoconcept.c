@@ -103,9 +103,9 @@ static char GCIOAPI_CALL1(*) _getHeaderValue_GCIO ( const char *s )
 
   if( (b= strchr(s,'='))==NULL ) return NULL;
   b++;
-  while (isspace(*b)) b++;
+  while (isspace((unsigned char)*b)) b++;
   e= b;
-  while (*e!='\0' && !isspace(*e)) e++;
+  while (*e!='\0' && !isspace((unsigned char)*e)) e++;
   *e= '\0';
   return b;
 }/* _getHeaderValue_GCIO */
@@ -1355,7 +1355,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
   {
     /* //$VERSION char* */
     p+= strlen(kMetadataVERSION_GCIO);
-    while( isspace(*p) ) p++;
+    while( isspace((unsigned char)*p) ) p++;
     e= p;
     while( isalpha(*p) ) p++;
     *p= '\0';
@@ -1406,7 +1406,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
   {
     /* //$CHARSET char* */
     p+= strlen(kMetadataCHARSET_GCIO);
-    while( isspace(*p) ) p++;
+    while( isspace((unsigned char)*p) ) p++;
     e= p;
     while( isalpha(*p) ) p++;
     *p= '\0';
@@ -1419,7 +1419,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
     if( (p= strchr(p,':')) )
     {
       p++;
-      while( isspace(*p) ) p++;
+      while( isspace((unsigned char)*p) ) p++;
       e= p;
       while( isalpha(*p) || *p=='.' ) p++;
       *p= '\0';
@@ -1431,7 +1431,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
   {
     /* //$FORMAT 1|2 */
     p+= strlen(kMetadataFORMAT_GCIO);
-    while( isspace(*p) ) p++;
+    while( isspace((unsigned char)*p) ) p++;
     e= p;
     if( *e=='1' )
     {
@@ -1452,7 +1452,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
     if( (p= strchr(p,':')) )
     {
       p++;
-      while( isspace(*p) ) p++;
+      while( isspace((unsigned char)*p) ) p++;
       e= p;
       if( *p=='-') p++; /* allow -1 as SysCoord */
       while( isdigit(*p) ) p++;
@@ -1471,7 +1471,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
         if( (p= strchr(p,':')) )
         {
           p++;
-          while( isspace(*p) ) p++;
+          while( isspace((unsigned char)*p) ) p++;
           e= p;
           if( *p=='-') p++; /* allow -1 as TimeZone */
           while( isdigit(*p) ) p++;
@@ -1505,7 +1505,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
     GCField* theField;
     /* //$FIELDS Class=char*;Subclass=char*;Kind=1..4;Fields=(Private#)?char*\s((Private#)?char*)* */
     p+= strlen(kMetadataFIELDS_GCIO);
-    while( isspace(*p) ) p++;
+    while( isspace((unsigned char)*p) ) p++;
     kv= CSLTokenizeString2(p,";",0);
     if( !kv || CSLCount(kv)!=4 )
     {
@@ -1540,7 +1540,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
       return NULL;
     }
     p= vl[1];
-    while( isspace(*p) ) p++;
+    while( isspace((unsigned char)*p) ) p++;
     e= p;
     while( isalnum(*p) || *p=='_' ) p++;
     *p= '\0';
@@ -1586,7 +1586,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
       return NULL;
     }
     p= vl[1];
-    while( isspace(*p) ) p++;
+    while( isspace((unsigned char)*p) ) p++;
     e= p;
     while( isalnum(*p) || *p=='_' ) p++;
     *p= '\0';
@@ -1629,7 +1629,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
       return NULL;
     }
     p= vl[1];
-    while( isspace(*p) ) p++;
+    while( isspace((unsigned char)*p) ) p++;
     e= p;
     while( isdigit(*p) ) p++;
     *p= '\0';
@@ -1697,7 +1697,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
     for (i= 0; i<n; i++)
     {
       p= fl[i];
-      while( isspace(*p) ) p++;
+      while( isspace((unsigned char)*p) ) p++;
       e= p;
       if( EQUALN(p,kPrivate_GCIO,strlen(kPrivate_GCIO)) )
       {

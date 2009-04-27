@@ -622,7 +622,7 @@ static PyObject *ptrcast(PyObject *_PTRVALUE, char *type) {
   *(r++) = '_';
   c = type;
   while (*c) {
-    if (!isspace(*c)) {
+    if (!isspace((unsigned char)*c)) {
       if ((*c == '*') || (*c == '&')) {
 	*(r++) = 'p';
       }
@@ -1026,7 +1026,7 @@ static void ptrmap(char *type1, char *type2) {
   *(r++) = '_';
   c = type1;
   while (*c) {
-    if (!isspace(*c)) {
+    if (!isspace((unsigned char)*c)) {
       if ((*c == '*') || (*c == '&')) {
 	*(r++) = 'p';
       }
@@ -1046,7 +1046,7 @@ static void ptrmap(char *type1, char *type2) {
   *(r++) = '_';
   c = type2;
   while (*c) {
-    if (!isspace(*c)) {
+    if (!isspace((unsigned char)*c)) {
       if ((*c == '*') || (*c == '&')) {
 	*(r++) = 'p';
       }

@@ -247,12 +247,12 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
 
     if( !(*pszHeaderNext != '\0' 
            && *pszHeaderNext != '=' 
-           && !isspace(*pszHeaderNext)) )
+           && !isspace((unsigned char)*pszHeaderNext)) )
         return FALSE;
 
     while( *pszHeaderNext != '\0' 
            && *pszHeaderNext != '=' 
-           && !isspace(*pszHeaderNext) )
+           && !isspace((unsigned char)*pszHeaderNext) )
     {
         if( *pszHeaderNext == '"' )
         {
@@ -298,7 +298,7 @@ void NASAKeywordHandler::SkipWhite()
     for( ; TRUE; )
     {
         // Skip white space (newline, space, tab, etc )
-        if( isspace( *pszHeaderNext ) )
+        if( isspace( (unsigned char)*pszHeaderNext ) )
         {
             pszHeaderNext++; 
             continue;
