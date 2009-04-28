@@ -273,13 +273,15 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 
     bYCbCrReported = FALSE;
 
-    if( oCodeStream.get_bit_depth(nBand-1) == 16
+    if( oCodeStream.get_bit_depth(nBand-1) > 8
+        && oCodeStream.get_bit_depth(nBand-1) <= 16
         && oCodeStream.get_signed(nBand-1) )
         this->eDataType = GDT_Int16;
-    else if( oCodeStream.get_bit_depth(nBand-1) == 16
-        && !oCodeStream.get_signed(nBand-1) )
+    else if( oCodeStream.get_bit_depth(nBand-1) > 8
+             && oCodeStream.get_bit_depth(nBand-1) <= 16
+             && !oCodeStream.get_signed(nBand-1) )
         this->eDataType = GDT_UInt16;
-    else if( oCodeStream.get_bit_depth(nBand-1) == 32 )
+    else if( oCodeStream.get_bit_depth(nBand-1) > 16 )
         this->eDataType = GDT_Float32;
     else
         this->eDataType = GDT_Byte;
@@ -1848,7 +1850,7 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
             }
         }
     }
-    else
+    else if( eOutType == GDT_Byte )
     { // Source data is 16 bits.
         kdu_sample16 *sp = src.get_buf16();
         if (!src.is_absolute())
@@ -1918,6 +1920,48 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
                         val = (val<0)?0:(256-(1<<upshift));
                     *dest = (kdu_byte) val;
                 }
+            }
+        }
+    }
+    else if( eOutType == GDT_Int16 || eOutType == GDT_UInt16 )
+    { // Source data is 16 bits.
+        kdu_sample16 *sp = src.get_buf16();
+        if (!src.is_absolute())
+        { // Transferring 16-bit fixed point quantities
+            kdu_int32 val;
+
+            // Need to force zeros into one or more least significant bits.
+            kdu_int16 downshift = (kdu_int16) (KDU_FIX_POINT-precision);
+            kdu_int16 upshift = (kdu_int16) (16-precision);
+            kdu_int16 offset = 1<<(downshift-1);
+            
+            for (; width > 0; width--, sp++, dest+=gap)
+            {
+                val = sp->ival;
+                val = (val+offset)>>downshift;
+                val <<= upshift;
+                val += 32768;
+                if (val < 0 || val > 65535 )
+                    val = MAX(0,MIN(65535,val));
+                *((GUInt16 *)dest) = (GUInt16)val;
+            }
+        }
+
+        // not absolute 
+        else if( eOutType == GDT_UInt16 ) // offset and clamp.
+        { 
+            kdu_int16 offset = 1 << (precision-1);
+
+            for (; width > 0; width--, sp++, dest+=gap)
+            {
+                *((GUInt16 *)dest) = (GUInt16) MAX(0,MIN(65535,(sp->ival + offset)));
+            }
+        }
+        else if( eOutType == GDT_Int16 ) // direct transfer
+        { 
+            for (; width > 0; width--, sp++, dest+=gap)
+            {
+                *((GInt16 *)dest) = (GInt16) sp->ival;
             }
         }
     }
