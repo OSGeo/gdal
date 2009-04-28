@@ -85,6 +85,12 @@ Process :
   tar czvf gdalautotest-1.6.0.tar.gz gdalautotest-1.6.0
   zip -r gdalautotest-1.6.0.zip gdalautotest-1.6.0
 
+11.5) If changes have been made in the frmts/grass or ogr/ogrsf_frmts/grass dir,
+      generate an up-to-date gdal-grass snapshot (let's not forget do it for GDAL 1.7.0 !):
+
+  % cd frmts/grass
+  % make dist
+
 12) Publish the resulting files in download.osgeo.org/gdal.
 
 13) Announce release to the gdal-dev@lists.maptools.org, 
