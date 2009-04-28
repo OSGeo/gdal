@@ -667,6 +667,83 @@ def ogr_sqlite_15():
 
     return 'success'
 
+
+###############################################################################
+# Test reading geometries in FGF (FDO Geometry Format) binary representation.
+
+def ogr_sqlite_16():
+
+    # Hand create a table with FGF geometry
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO geometry_columns (f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format) VALUES ('fgf_table', 'GEOMETRY', 0, 2, 'FGF')" )
+    gdaltest.sl_ds.ExecuteSQL( "CREATE TABLE fgf_table (OGC_FID INTEGER PRIMARY KEY, GEOMETRY BLOB)")
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (1, X'0100000000000000000000000000F03F0000000000000040')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (2, X'020000000000000000000000')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (3, X'020000000000000002000000000000000000F03F000000000000004000000000000008400000000000001040')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (4, X'030000000000000000000000')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (5, X'03000000000000000200000002000000000000000000F03F00000000000000400000000000000840000000000000104000000000')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (6, X'0700000000000000')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (7, X'070000000200000003000000000000000200000002000000000000000000F03F0000000000000040000000000000084000000000000010400000000003000000000000000200000002000000000000000000F03F00000000000000400000000000000840000000000000104000000000')" )
+    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (8, X'0100000001000000000000000000F03F00000000000000400000000000000840')" )
+
+
+    ######################################################
+    # Reopen DB
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('fgf_table')
+
+    feat = gdaltest.sl_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (1 2)':
+        return 'fail'
+    feat.Destroy()
+
+    feat = gdaltest.sl_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'LINESTRING EMPTY':
+        return 'fail'
+    feat.Destroy()
+
+    feat = gdaltest.sl_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        return 'fail'
+    feat.Destroy()
+
+    feat = gdaltest.sl_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POLYGON EMPTY':
+        return 'fail'
+    feat.Destroy()
+
+    feat = gdaltest.sl_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POLYGON ((1 2,3 4))':
+        return 'fail'
+    feat.Destroy()
+
+    feat = gdaltest.sl_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
+        return 'fail'
+    feat.Destroy()
+
+    feat = gdaltest.sl_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POLYGON ((1 2,3 4)))':
+        return 'fail'
+    feat.Destroy()
+
+    feat = gdaltest.sl_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (1 2 3)':
+        return 'fail'
+    feat.Destroy()
+
+    gdaltest.sl_lyr.ResetReading()
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -682,6 +759,7 @@ def ogr_sqlite_cleanup():
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer_approx' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:testtypes' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:fgf_table' )
 
     gdaltest.sl_ds.Destroy()
     gdaltest.sl_ds = None
@@ -709,6 +787,7 @@ gdaltest_list = [
     ogr_sqlite_13,
     ogr_sqlite_14,
     ogr_sqlite_15,
+    ogr_sqlite_16,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
