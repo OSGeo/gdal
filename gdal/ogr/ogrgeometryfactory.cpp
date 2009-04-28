@@ -1514,8 +1514,11 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
 
         memcpy( &nPointCount, pabyData + 8, 4 );
         CPL_LSBPTR32( &nPointCount );
-        
-        if( nBytes < nTupleSize * 8 * nPointCount + 12 )
+
+        if (nPointCount < 0 || nPointCount > INT_MAX / (nTupleSize * 8))
+            return OGRERR_CORRUPT_DATA;
+
+        if( nBytes - 12 < nTupleSize * 8 * nPointCount )
             return OGRERR_NOT_ENOUGH_DATA;
 
         poGeom = poLS = new OGRLineString();
@@ -1558,6 +1561,13 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
         memcpy( &nRingCount, pabyData + 8, 4 );
         CPL_LSBPTR32( &nRingCount );
 
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
+            return OGRERR_CORRUPT_DATA;
+
+        /* Each ring takes at least 4 bytes */
+        if (nBytes - 12 < nRingCount * 4)
+            return OGRERR_NOT_ENOUGH_DATA;
+
         nNextByte = 12;
         
         poGeom = poPoly = new OGRPolygon();
@@ -1569,6 +1579,9 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             CPL_LSBPTR32( &nPointCount );
+
+            if (nPointCount < 0 || nPointCount > INT_MAX / (nTupleSize * 8))
+                return OGRERR_CORRUPT_DATA;
 
             nNextByte += 4;
 
@@ -1626,6 +1639,13 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
 
         memcpy( &nGeomCount, pabyData + 4, 4 );
         CPL_LSBPTR32( &nGeomCount );
+
+        if (nGeomCount < 0 || nGeomCount > INT_MAX / 4)
+            return OGRERR_CORRUPT_DATA;
+
+        /* Each geometry takes at least 4 bytes */
+        if (nBytes - 8 < 4 * nGeomCount)
+            return OGRERR_NOT_ENOUGH_DATA;
 
         nBytesUsed = 8;
 
