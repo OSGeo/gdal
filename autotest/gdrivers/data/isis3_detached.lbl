@@ -50,6 +50,7 @@ Object = IsisCube
 End_Object
 
 # Make sure we test hash style comments.
+# These comments are expected to have the # right at the beginning of the line.
 Object = Label
   Bytes = 65536
 End_Object
