@@ -205,7 +205,12 @@ def misc_6_internal(datatype, nBands):
                     skip = True
 
                 if skip is False:
-                    os.mkdir('tmp/tmp')
+                    try:
+                        os.mkdir('tmp/tmp')
+                    except:
+                        reason = 'Cannot create tmp/tmp before drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+                        gdaltest.post_reason(reason)
+                        return False
                     dst_ds = drv.CreateCopy('tmp/tmp/foo', ds)
                     dst_ds = None
                     try:
