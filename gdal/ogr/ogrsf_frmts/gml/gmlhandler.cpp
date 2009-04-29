@@ -34,10 +34,6 @@
 /* Must be a multiple of 4 */
 #define MAX_TOKEN_SIZE  1000
 
-/* Maximum size in bytes of the geometry. Must be big enough */
-/* as some real-world GML files have huge geometries (see #2818) */
-#define MAX_GML_GEOMETRY_SIZE (10*1000*1000)
-
 /************************************************************************/
 /*                             GMLHandler()                             */
 /************************************************************************/
@@ -283,10 +279,6 @@ void GMLHandler::characters(const XMLCh* const chars_in,
     if( m_pszCurField != NULL )
     {
         int     nCurFieldLength = strlen(m_pszCurField);
-        if (nCurFieldLength > MAX_GML_GEOMETRY_SIZE)
-        {
-            throw SAXNotSupportedException("Too much data inside one element. File probably corrupted");
-        }
 
         while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
             chars++;
@@ -333,11 +325,6 @@ void GMLHandler::characters(const XMLCh* const chars_in,
 
         tr_strcpy( m_pszGeometry+m_nGeomLen, chars );
         m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
-
-        if (m_nGeomLen > MAX_GML_GEOMETRY_SIZE)
-        {
-            throw SAXNotSupportedException("Too much data inside one element. File probably corrupted");
-        }
     }
 }
 
