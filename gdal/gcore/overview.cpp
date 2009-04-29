@@ -272,7 +272,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
             }
             else if ( eResampling == GRM_Average )
             {
-                if (poColorTable == NULL)
+                if (poColorTable == NULL
+                    || EQUALN(pszResampling,"AVERAGE_BIT2GRAYSCALE",13))
                 {
                     double val;
                     double dfTotal = 0.0;
