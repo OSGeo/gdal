@@ -297,6 +297,15 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
     this->nRasterXSize = band_dims.size.x;
     this->nRasterYSize = band_dims.size.y;
 
+    if( oCodeStream.get_bit_depth(nBand-1) % 8 != 0 )
+    {
+        
+        SetMetadataItem( "NBITS", 
+                         CPLString().Printf("%d",oCodeStream.get_bit_depth(nBand-1)), 
+                         "IMAGE_STRUCTURE" );
+    }
+    SetMetadataItem( "COMPRESSION", "JP2000", "IMAGE_STRUCTURE" );
+
 /* -------------------------------------------------------------------- */
 /*      Use a 2048x128 "virtual" block size unless the file is small.    */
 /* -------------------------------------------------------------------- */
@@ -1778,8 +1787,10 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
         assert(precision >= 8); // Else would have used 16 bit representation
         kdu_sample32 *sp = src.get_buf32();
         if (!src.is_absolute() && eOutType != GDT_Byte )
-        { // Transferring normalized floating point data.
-            float scale16 = (float)(1<<16);
+        { // Transferring normalized floating point data, but preserving 
+          // precision.
+            float scale16 = (float)(1<<precision);
+            float offset = (1<<(precision-1));
             int val;
 
             for (; width > 0; width--, sp++, dest+=gap)
@@ -1791,7 +1802,7 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
                 }
                 else if( eOutType == GDT_UInt16 )
                 {
-                    val = (int) (sp->fval*scale16) + 32768;
+                    val = (int) (sp->fval*scale16 + offset);
                     *((GUInt16 *) dest) = (GUInt16) MAX(MIN(val,65535),0);
                 }
                 else if( eOutType == GDT_Float32 )
@@ -2004,7 +2015,7 @@ static int
 JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                             kdu_roi_image *poROIImage, 
                             int nXOff, int nYOff, int nXSize, int nYSize,
-                            int bReversible, GDALDataType eType,
+                            int bReversible, int nBits, GDALDataType eType,
                             kdu_codestream &oCodeStream, int bFlushEnabled,
                             kdu_long *layer_bytes, int layer_count,
                             GDALProgressFunc pfnProgress, void * pProgressData,
@@ -2102,34 +2113,39 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                     GUInt16 *sp = (GUInt16 *) pabyBuffer;
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->ival = *sp - 32767;
+                        dest->ival = *sp;
                 }
                 else if( eType == GDT_Byte )
                 {
                     kdu_sample32 *dest = lines[c].get_buf32();
                     kdu_byte *sp = pabyBuffer;
+                    int nOffset = 1 << (nBits-1);
+                    float fScale = 1.0 / (1 << nBits);
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
                         dest->fval = (float) 
-                            ((((kdu_int16)(*sp))-128.0) * 0.00390625);
+                            ((((kdu_int16)(*sp))-nOffset) * fScale);
                 }
                 else if( eType == GDT_Int16 )
                 {
                     kdu_sample32 *dest = lines[c].get_buf32();
                     GInt16  *sp = (GInt16 *) pabyBuffer;
+                    float fScale = 1.0 / (1 << nBits);
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
                         dest->fval = (float) 
-                            (((kdu_int16)(*sp)) * 0.0000152588);
+                            (((kdu_int16)(*sp)) * fScale);
                 }
                 else if( eType == GDT_UInt16 )
                 {
                     kdu_sample32 *dest = lines[c].get_buf32();
                     GUInt16  *sp = (GUInt16 *) pabyBuffer;
+                    int nOffset = 1 << (nBits-1);
+                    float fScale = 1.0 / (1 << nBits);
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
                         dest->fval = (float) 
-                            (((int)(*sp) - 32768) * 0.0000152588);
+                            (((int)(*sp) - nOffset) * fScale);
                 }
                 else if( eType == GDT_Float32 )
                 {
@@ -2201,6 +2217,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int    nTileYSize = nYSize;
     bool   bReversible = false;
     int    bFlushEnabled = CSLFetchBoolean( papszOptions, "FLUSH", TRUE );
+    int    nBits;
 
     if( poSrcDS->GetRasterCount() == 0 )
     {
@@ -2340,6 +2357,18 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     bComseg = CSLFetchBoolean( papszOptions, "COMSEG", TRUE );
 
 /* -------------------------------------------------------------------- */
+/*      Work out the precision.                                         */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszOptions, "NBITS" ) != NULL )
+        nBits = atoi(CSLFetchNameValue(papszOptions,"NBITS"));
+    else if( poPrototypeBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) 
+             != NULL )
+        nBits = atoi(poPrototypeBand->GetMetadataItem( "NBITS", 
+                                                       "IMAGE_STRUCTURE" ));
+    else
+        nBits = GDALGetDataTypeSize(eType);
+
+/* -------------------------------------------------------------------- */
 /*      Establish the general image parameters.                         */
 /* -------------------------------------------------------------------- */
     siz_params  oSizeParams;
@@ -2347,7 +2376,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     oSizeParams.set( Scomponents, 0, 0, poSrcDS->GetRasterCount() );
     oSizeParams.set( Sdims, 0, 0, nYSize );
     oSizeParams.set( Sdims, 0, 1, nXSize );
-    oSizeParams.set( Sprecision, 0, 0, GDALGetDataTypeSize(eType) );
+    oSizeParams.set( Sprecision, 0, 0, nBits );
     if( eType == GDT_UInt16 || eType == GDT_Byte )
         oSizeParams.set( Ssigned, 0, 0, false );
     else
@@ -2691,7 +2720,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             if( !JP2KAKCreateCopy_WriteTile( poSrcDS, oTile, poROIImage, 
                                              iTileXOff, iTileYOff, 
                                              nThisTileXSize, nThisTileYSize, 
-                                             bReversible, eType,
+                                             bReversible, nBits, eType, 
                                              oCodeStream, bFlushEnabled,
                                              layer_bytes, layer_count,
                                              GDALScaledProgress, 
@@ -2785,6 +2814,7 @@ void GDALRegister_JP2KAK()
 "   <Option name='LAYERS' type='integer'/>"
 "   <Option name='ROI' type='string'/>"
 "   <Option name='COMSEG' type='boolean' />"
+"   <Option name='NBITS' type='int' description='BITS (precision) for sub-byte files (1-7), sub-uint16 (9-15)'/>"
 "   <Option name='Corder' type='string'/>"
 "   <Option name='Cprecincts' type='string'/>"
 "   <Option name='Cmodes' type='string'/>"
