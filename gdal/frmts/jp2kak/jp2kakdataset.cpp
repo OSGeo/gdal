@@ -1775,7 +1775,8 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
         kdu_sample32 *sp = src.get_buf32();
         if (!src.is_absolute() && eOutType != GDT_Byte )
         { // Transferring normalized floating point data.
-            float scale16 = (float)(1<<16);
+            float scale16 = (float)(1<<precision);
+            float offset = (1<<(precision-1));
             int val;
 
             for (; width > 0; width--, sp++, dest+=gap)
@@ -1787,7 +1788,7 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
                 }
                 else if( eOutType == GDT_UInt16 )
                 {
-                    val = (int) (sp->fval*scale16) + 32768;
+                    val = (int) (sp->fval*scale16 + offset);
                     *((GUInt16 *) dest) = (GUInt16) MAX(MIN(val,65535),0);
                 }
                 else if( eOutType == GDT_Float32 )
@@ -2098,7 +2099,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                     GUInt16 *sp = (GUInt16 *) pabyBuffer;
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->ival = *sp - 32767;
+                        dest->ival = *sp;
                 }
                 else if( eType == GDT_Byte )
                 {
