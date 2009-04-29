@@ -324,13 +324,6 @@ void NASAKeywordHandler::SkipWhite()
 {
     for( ; TRUE; )
     {
-        // Skip white space (newline, space, tab, etc )
-        if( isspace( (unsigned char)*pszHeaderNext ) )
-        {
-            pszHeaderNext++; 
-            continue;
-        }
-        
         // Skip C style comments 
         if( *pszHeaderNext == '/' && pszHeaderNext[1] == '*' )
         {
@@ -346,6 +339,30 @@ void NASAKeywordHandler::SkipWhite()
             pszHeaderNext += 2;
             continue;
         }
+
+        // Skip # style comments 
+        if( (*pszHeaderNext == 10 || *pszHeaderNext == 13 )
+            && pszHeaderNext[1] == '#' )
+        {
+            pszHeaderNext += 2;
+
+            // consume till end of line.
+            while( *pszHeaderNext != '\0' 
+                   && *pszHeaderNext != 10
+                   && *pszHeaderNext != 13 )
+            {
+                pszHeaderNext++;
+            }
+            continue;
+        }
+
+        // Skip white space (newline, space, tab, etc )
+        if( isspace( (unsigned char)*pszHeaderNext ) )
+        {
+            pszHeaderNext++; 
+            continue;
+        }
+        
         // not white space, return. 
         return;
     }
