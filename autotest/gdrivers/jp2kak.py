@@ -232,6 +232,30 @@ def jp2kak_10():
     return 'success'
     
 ###############################################################################
+# Test handle of 11bit signed file.
+#
+
+def jp2kak_11():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+    
+    tst = gdaltest.GDALTest( 'JP2KAK', 'gtsmall_11_int16.jp2', 1, 60576 )
+    return tst.testOpen()
+    
+###############################################################################
+# Test handle of 10bit unsigned file.
+#
+
+def jp2kak_12():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+    
+    tst = gdaltest.GDALTest( 'JP2KAK', 'gtsmall_10_uint16.jp2', 1, 60874 )
+    return tst.testOpen()
+    
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -251,6 +275,8 @@ gdaltest_list = [
     jp2kak_8,
     jp2kak_9,
     jp2kak_10,
+    jp2kak_11,
+    jp2kak_12,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':
