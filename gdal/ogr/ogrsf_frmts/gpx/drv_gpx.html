@@ -7,6 +7,8 @@
 
 <h1>GPX - GPS Exchange Format</h1>
 
+(Starting with GDAL 1.5.0)<p>
+
 GPX (the GPS Exchange Format) is a light-weight XML data format for the interchange of GPS data (waypoints, routes, and tracks) between applications and Web services on the Internet.<p>
 
 OGR has support for GPX reading (if GDAL is build with <i>expat</i> library support) and writing.<p>
@@ -144,6 +146,19 @@ When translating from a source dataset, it may be necessary to rename the field 
 This can be done with a <a href="drv_vrt.html">OGR VRT</a> dataset, or by using the "-sql" option of the ogr2ogr utility.
 
 </li>
+
+<h2>Issues when translating to Shapefile</h2>
+
+When translating the <i>track_points</i> layer to a Shapefile, the field names "track_seg_id" and "track_seg_point_id" are
+truncated to 10 characters in the .DBF file, thus leading to duplicate names. To avoid this, starting with GDAL 1.6.1,
+you can define the GPX_SHORT_NAMES configuration option to TRUE to make them be reported respectively as "trksegid" and "trksegptid",
+which will allow them to be unique once translated to DBF. The "route_point_id" field of <i>route_points</i> layer will also be renamed to "rteptid".
+But note that no particular processing will be done for any extension field names.<p>
+
+To translate a GPX file to a set of shapefiles :
+<pre>
+ogr2ogr --config GPX_SHORT_NAMES YES out input.gpx
+</pre>
 
 
 <h2>Example</h2>
