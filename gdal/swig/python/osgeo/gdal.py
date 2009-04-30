@@ -846,13 +846,11 @@ class Band(MajorObject):
 Band_swigregister = _gdal.Band_swigregister
 Band_swigregister(Band)
 
-class ColorTable(MajorObject):
+class ColorTable(_object):
     """Proxy of C++ ColorTable class"""
     __swig_setmethods__ = {}
-    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, ColorTable, name, value)
     __swig_getmethods__ = {}
-    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, ColorTable, name)
     __repr__ = _swig_repr
     def __init__(self, *args, **kwargs): 
@@ -896,13 +894,11 @@ class ColorTable(MajorObject):
 ColorTable_swigregister = _gdal.ColorTable_swigregister
 ColorTable_swigregister(ColorTable)
 
-class RasterAttributeTable(MajorObject):
+class RasterAttributeTable(_object):
     """Proxy of C++ RasterAttributeTable class"""
     __swig_setmethods__ = {}
-    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, RasterAttributeTable, name, value)
     __swig_getmethods__ = {}
-    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, RasterAttributeTable, name)
     __repr__ = _swig_repr
     def __init__(self, *args): 
@@ -1016,10 +1012,7 @@ class Transformer(_object):
         return _gdal.Transformer_TransformPoint(*args)
 
     def TransformPoints(*args):
-        """
-        TransformPoints(self, int bDstToSrc, int nCount, double x, double y, double z, 
-            int panSuccess) -> int
-        """
+        """TransformPoints(self, int bDstToSrc, int nCount) -> int"""
         return _gdal.Transformer_TransformPoints(*args)
 
 Transformer_swigregister = _gdal.Transformer_swigregister

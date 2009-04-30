@@ -4888,6 +4888,8 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict(PyObject *SWIGUNUSEDPARM
           PyObject *nm = PyString_FromString( keyptr );
           PyObject *val = PyString_FromString( valptr );
           PyDict_SetItem(resultobj, nm, val );
+          Py_DECREF(nm);
+          Py_DECREF(val);
           CPLFree( keyptr );
         }
         stringarray++;
@@ -4989,11 +4991,13 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       int size = PySequence_Size(obj1);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj1,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj1,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg2 = CSLAddString( arg2, pszItem );
+        Py_DECREF(pyObj);
       }
     }
     else if ( PyMapping_Check( obj1 ) ) {
@@ -5007,6 +5011,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
           char *val;
           PyArg_ParseTuple( it, "ss", &nm, &val );
           arg2 = CSLAddNameValue( arg2, nm, val );
+          Py_DECREF(it);
         }
       }
     }
@@ -5495,11 +5500,13 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
       int size = PySequence_Size(obj6);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj6,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj6,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg7 = CSLAddString( arg7, pszItem );
+        Py_DECREF(pyObj);
       }
     }
   }
@@ -5600,11 +5607,13 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
       int size = PySequence_Size(obj4);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj4,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj4,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg5 = CSLAddString( arg5, pszItem );
+        Py_DECREF(pyObj);
       }
     }
   }
@@ -5622,7 +5631,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj5)) {
+          if (!PyCallable_Check(obj5)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -7830,6 +7839,7 @@ SWIGINTERN PyObject *_wrap_GCPsToGeoTransform(PyObject *SWIGUNUSEDPARM(self), Py
       }
       memcpy( (void*) tmpGCPList1, (void*) item, sizeof( GDAL_GCP ) );
       ++tmpGCPList1;
+      Py_DECREF(o);
     }
   }
   if (obj1) {
@@ -8259,6 +8269,7 @@ SWIGINTERN PyObject *_wrap_Dataset_SetGeoTransform(PyObject *SWIGUNUSEDPARM(self
       double val;
       PyArg_Parse(o, "d", &val );
       arg2[i] =  val;
+      Py_DECREF(o);
     }
   }
   {
@@ -8344,6 +8355,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
         if ( !PyArg_Parse(o,"i",&arg4[i]) ) {
           SWIG_fail;
         }
+        Py_DECREF(o);
       }
     }
   }
@@ -8361,7 +8373,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj3)) {
+          if (!PyCallable_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -8395,6 +8407,12 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg4) {
+      free((void*) arg4);
+    }
+  }
+  {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
     
     CPLFree(psProgressInfo);
@@ -8403,6 +8421,12 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg4) {
+      free((void*) arg4);
+    }
+  }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
     
@@ -8571,6 +8595,7 @@ SWIGINTERN PyObject *_wrap_Dataset_SetGCPs(PyObject *SWIGUNUSEDPARM(self), PyObj
       }
       memcpy( (void*) tmpGCPList2, (void*) item, sizeof( GDAL_GCP ) );
       ++tmpGCPList2;
+      Py_DECREF(o);
     }
   }
   res4 = SWIG_AsCharPtrAndSize(obj2, &buf4, NULL, &alloc4);
@@ -8689,11 +8714,13 @@ SWIGINTERN PyObject *_wrap_Dataset_AddBand(PyObject *SWIGUNUSEDPARM(self), PyObj
       int size = PySequence_Size(obj2);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj2,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj2,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg3 = CSLAddString( arg3, pszItem );
+        Py_DECREF(pyObj);
       }
     }
   }
@@ -8959,6 +8986,7 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
         if ( !PyArg_Parse(o,"i",&arg12[i]) ) {
           SWIG_fail;
         }
+        Py_DECREF(o);
       }
     }
   }
@@ -8973,6 +9001,12 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg12) {
+      free((void*) arg12);
+    }
+  }
+  {
     /* %typemap(ret) CPLErr */
     if ( bUseExceptions == 0 ) {
       /* We're not using exceptions.  And no error has occurred */
@@ -8984,6 +9018,12 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg12) {
+      free((void*) arg12);
+    }
+  }
   return NULL;
 }
 
@@ -9122,6 +9162,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster(PyObject *SWIGUNUSEDPARM(self), Py
         if ( !PyArg_Parse(o,"i",&arg12[i]) ) {
           SWIG_fail;
         }
+        Py_DECREF(o);
       }
     }
   }
@@ -9147,6 +9188,12 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster(PyObject *SWIGUNUSEDPARM(self), Py
     }
   }
   {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg12) {
+      free((void*) arg12);
+    }
+  }
+  {
     /* %typemap(ret) CPLErr */
     if ( bUseExceptions == 0 ) {
       /* We're not using exceptions.  And no error has occurred */
@@ -9162,6 +9209,12 @@ fail:
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
     if( *arg6 ) {
       free( *arg7 );
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg12) {
+      free((void*) arg12);
     }
   }
   return NULL;
@@ -9565,11 +9618,13 @@ SWIGINTERN PyObject *_wrap_Band_SetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
     int size = PySequence_Size(obj1);
     for (int i = 0; i < size; i++) {
       char *pszItem = NULL;
-      if ( ! PyArg_Parse( PySequence_GetItem(obj1,i), "s", &pszItem ) ) {
+      PyObject* pyObj = PySequence_GetItem(obj1,i);
+      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
       }
       arg2 = CSLAddString( arg2, pszItem );
+      Py_DECREF(pyObj);
     }
   }
   {
@@ -11008,7 +11063,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
         if ( cbfunction == GDALTermProgress ) {
           arg8 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj6)) {
+          if (!PyCallable_Check(obj6)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -11191,7 +11246,7 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj6)) {
+          if (!PyCallable_Check(obj6)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -11305,6 +11360,7 @@ SWIGINTERN PyObject *_wrap_Band_SetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
       if ( !PyArg_Parse(o,"i",&arg5[i]) ) {
         SWIG_fail;
       }
+      Py_DECREF(o);
     }
   }
   {
@@ -11317,8 +11373,20 @@ SWIGINTERN PyObject *_wrap_Band_SetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
   return NULL;
 }
 
@@ -12628,7 +12696,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj5)) {
+          if (!PyCallable_Check(obj5)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -12755,7 +12823,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj5)) {
+          if (!PyCallable_Check(obj5)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -12909,7 +12977,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
         if ( cbfunction == GDALTermProgress ) {
           arg8 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj7)) {
+          if (!PyCallable_Check(obj7)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13013,11 +13081,13 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
       int size = PySequence_Size(obj2);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj2,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj2,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg3 = CSLAddString( arg3, pszItem );
+        Py_DECREF(pyObj);
       }
     }
   }
@@ -13035,7 +13105,7 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj3)) {
+          if (!PyCallable_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13152,6 +13222,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
       if ( !PyArg_Parse(o,"i",&arg3[i]) ) {
         SWIG_fail;
       }
+      Py_DECREF(o);
     }
   }
   res4 = SWIG_ConvertPtr(obj2, &argp4,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
@@ -13186,6 +13257,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
         if ( !PyArg_Parse(o,"d",&arg8[i]) ) {
           SWIG_fail;
         }
+        Py_DECREF(o);
       }
     }
   }
@@ -13201,11 +13273,13 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
       int size = PySequence_Size(obj6);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj6,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj6,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg9 = CSLAddString( arg9, pszItem );
+        Py_DECREF(pyObj);
       }
     }
   }
@@ -13223,7 +13297,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
         if ( cbfunction == GDALTermProgress ) {
           arg10 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj7)) {
+          if (!PyCallable_Check(obj7)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13256,6 +13330,12 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg3) {
+      free((void*) arg3);
+    }
+  }
+  {
     /* %typemap(freearg) (int nList, double* pList) */
     if (arg8) {
       free((void*) arg8);
@@ -13273,6 +13353,12 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg3) {
+      free((void*) arg3);
+    }
+  }
   {
     /* %typemap(freearg) (int nList, double* pList) */
     if (arg8) {
@@ -13361,11 +13447,13 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
       int size = PySequence_Size(obj4);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj4,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj4,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg5 = CSLAddString( arg5, pszItem );
+        Py_DECREF(pyObj);
       }
     }
   }
@@ -13383,7 +13471,7 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj5)) {
+          if (!PyCallable_Check(obj5)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13520,11 +13608,13 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
       int size = PySequence_Size(obj5);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj5,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj5,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg6 = CSLAddString( arg6, pszItem );
+        Py_DECREF(pyObj);
       }
     }
   }
@@ -13542,7 +13632,7 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj6)) {
+          if (!PyCallable_Check(obj6)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13651,17 +13741,18 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
     
     for( int i = 0; i<arg2; i++ ) {
       PyObject *o = PySequence_GetItem(obj1,i);
+#if 0x010331 <= 0x010337
       PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
+#else
+      SwigPyObject *sobj = SWIG_Python_GetSwigThis(o);
+#endif
       GDALRasterBandShadow* rawobjectpointer = NULL;
-      if (sobj) {
-        Py_DECREF(sobj);
-      } else {
+      if (!sobj) {
         SWIG_fail;
       }
       rawobjectpointer = (GDALRasterBandShadow*) sobj->ptr;
-      /* FIXME remove this when Frank confirms this typemap works */
-      int v = GDALGetRasterBandXSize(rawobjectpointer);
       arg3[i] = rawobjectpointer;
+      Py_DECREF(o);
       
     }
   }
@@ -13686,7 +13777,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj3)) {
+          if (!PyCallable_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13720,11 +13811,6 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)*/
-    if ( arg3 ) {
-      for (int i = 0; i< arg2; i++) {
-        CPLFree(arg3[i]);
-      }
-    }
     CPLFree( arg3 );
   }
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
@@ -13738,11 +13824,6 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
 fail:
   {
     /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)*/
-    if ( arg3 ) {
-      for (int i = 0; i< arg2; i++) {
-        CPLFree(arg3[i]);
-      }
-    }
     CPLFree( arg3 );
   }
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
@@ -13816,7 +13897,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverview(PyObject *SWIGUNUSEDPARM(self), Py
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj3)) {
+          if (!PyCallable_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
@@ -13984,11 +14065,13 @@ SWIGINTERN PyObject *_wrap_new_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObj
     int size = PySequence_Size(obj2);
     for (int i = 0; i < size; i++) {
       char *pszItem = NULL;
-      if ( ! PyArg_Parse( PySequence_GetItem(obj2,i), "s", &pszItem ) ) {
+      PyObject* pyObj = PySequence_GetItem(obj2,i);
+      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
       }
       arg3 = CSLAddString( arg3, pszItem );
+      Py_DECREF(pyObj);
     }
   }
   {
@@ -14088,6 +14171,7 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoint__SWIG_0(PyObject *SWIGUNUS
       double val;
       PyArg_Parse(o, "d", &val );
       arg3[i] =  val;
+      Py_DECREF(o);
     }
   }
   {
@@ -14277,25 +14361,11 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
-  void *argp5 = 0 ;
-  int res5 = 0 ;
-  void *argp6 = 0 ;
-  int res6 = 0 ;
-  void *argp7 = 0 ;
-  int res7 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
-  PyObject * obj4 = 0 ;
-  PyObject * obj5 = 0 ;
-  PyObject * obj6 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOOOOO:Transformer_TransformPoints",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Transformer_TransformPoints",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTransformerInfoShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Transformer_TransformPoints" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
@@ -14306,31 +14376,42 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Transformer_TransformPoints" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  ecode3 = SWIG_AsVal_int(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Transformer_TransformPoints" "', argument " "3"" of type '" "int""'");
-  } 
-  arg3 = static_cast< int >(val3);
-  res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Transformer_TransformPoints" "', argument " "4"" of type '" "double *""'"); 
+  {
+    /*  typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    if ( obj2 == Py_None ) {
+      PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
+      SWIG_fail;
+    }
+    
+    if ( !PySequence_Check(obj2) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg3 = PySequence_Size(obj2);
+    arg4 = (double*) CPLMalloc(arg3*sizeof(double));
+    arg5 = (double*) CPLMalloc(arg3*sizeof(double));
+    arg6 = (double*) CPLMalloc(arg3*sizeof(double));
+    arg7 = (int*) CPLMalloc(arg3*sizeof(int));
+    
+    for( int i = 0; i<arg3; i++ ) {
+      PyObject *o = PySequence_GetItem(obj2,i);
+      if ( !PyTuple_Check(o) ) {
+        PyErr_SetString(PyExc_TypeError, "not a tuple");
+        SWIG_fail;
+      }
+      
+      double x, y, z = 0;
+      if ( !PyArg_ParseTuple( o,"dd|d", &x, &y, &z) )
+      {
+        PyErr_SetString(PyExc_TypeError, "not a tuple of 2 or 3 doubles");
+        SWIG_fail;
+      }
+      
+      (arg4)[i] = x;
+      (arg5)[i] = y;
+      (arg6)[i] = z;
+    }
   }
-  arg4 = reinterpret_cast< double * >(argp4);
-  res5 = SWIG_ConvertPtr(obj4, &argp5,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res5)) {
-    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "Transformer_TransformPoints" "', argument " "5"" of type '" "double *""'"); 
-  }
-  arg5 = reinterpret_cast< double * >(argp5);
-  res6 = SWIG_ConvertPtr(obj5, &argp6,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res6)) {
-    SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "Transformer_TransformPoints" "', argument " "6"" of type '" "double *""'"); 
-  }
-  arg6 = reinterpret_cast< double * >(argp6);
-  res7 = SWIG_ConvertPtr(obj6, &argp7,SWIGTYPE_p_int, 0 |  0 );
-  if (!SWIG_IsOK(res7)) {
-    SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "Transformer_TransformPoints" "', argument " "7"" of type '" "int *""'"); 
-  }
-  arg7 = reinterpret_cast< int * >(argp7);
   {
     result = (int)GDALTransformerInfoShadow_TransformPoints(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
     if ( bUseExceptions ) {
@@ -14341,8 +14422,39 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(argout)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    Py_DECREF(resultobj);
+    PyObject *xyz = PyList_New( arg3 );
+    PyObject *success = PyList_New( arg3 );
+    for( int i=0; i< arg3; i++ ) {
+      PyObject *tuple = PyTuple_New( 4 );
+      PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( (arg4)[i] ) );
+      PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( (arg5)[i] ) );
+      PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( (arg6)[i] ) );
+      PyList_SetItem( xyz, i, tuple );
+      PyList_SetItem( success, i, Py_BuildValue( "i",  (arg7)[i]) );
+    }
+    resultobj = PyTuple_New( 2 );
+    PyTuple_SetItem( resultobj, 0, xyz );
+    PyTuple_SetItem( resultobj, 1, success );
+  }
+  {
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    free(arg4);
+    free(arg5);
+    free(arg6);
+    free(arg7);
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
+    free(arg4);
+    free(arg5);
+    free(arg6);
+    free(arg7);
+  }
   return NULL;
 }
 
@@ -15093,11 +15205,13 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
       int size = PySequence_Size(obj1);
       for (int i = 0; i < size; i++) {
         char *pszItem = NULL;
-        if ( ! PyArg_Parse( PySequence_GetItem(obj1,i), "s", &pszItem ) ) {
+        PyObject* pyObj = PySequence_GetItem(obj1,i);
+        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
         arg2 = CSLAddString( arg2, pszItem );
+        Py_DECREF(pyObj);
       }
     }
   }
@@ -15149,11 +15263,13 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
     int size = PySequence_Size(obj0);
     for (int i = 0; i < size; i++) {
       char *pszItem = NULL;
-      if ( ! PyArg_Parse( PySequence_GetItem(obj0,i), "s", &pszItem ) ) {
+      PyObject* pyObj = PySequence_GetItem(obj0,i);
+      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
       }
       arg1 = CSLAddString( arg1, pszItem );
+      Py_DECREF(pyObj);
     }
   }
   if (obj1) {
@@ -15443,12 +15559,6 @@ static void *_p_GDALDatasetShadowTo_p_GDALMajorObjectShadow(void *x) {
 static void *_p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow(void *x) {
     return (void *)((GDALMajorObjectShadow *)  ((GDALRasterBandShadow *) x));
 }
-static void *_p_GDALColorTableShadowTo_p_GDALMajorObjectShadow(void *x) {
-    return (void *)((GDALMajorObjectShadow *)  ((GDALColorTableShadow *) x));
-}
-static void *_p_GDALRasterAttributeTableShadowTo_p_GDALMajorObjectShadow(void *x) {
-    return (void *)((GDALMajorObjectShadow *)  ((GDALRasterAttributeTableShadow *) x));
-}
 static swig_type_info _swigt__p_CPLErrorHandler = {"_p_CPLErrorHandler", "CPLErrorHandler *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GByte = {"_p_GByte", "GByte *", 0, 0, (void*)0, 0};
@@ -15504,7 +15614,7 @@ static swig_cast_info _swigc__p_GDALColorEntry[] = {  {&_swigt__p_GDALColorEntry
 static swig_cast_info _swigc__p_GDALColorTableShadow[] = {  {&_swigt__p_GDALColorTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDriverShadow[] = {  {&_swigt__p_GDALDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GDALDriverShadow, _p_GDALDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALDatasetShadow, _p_GDALDatasetShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterBandShadow, _p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALColorTableShadow, _p_GDALColorTableShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterAttributeTableShadow, _p_GDALRasterAttributeTableShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GDALDriverShadow, _p_GDALDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALDatasetShadow, _p_GDALDatasetShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterBandShadow, _p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};

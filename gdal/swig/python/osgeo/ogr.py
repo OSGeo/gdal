@@ -1617,7 +1617,7 @@ class Feature(_object):
 
     def GetFieldAsIntegerList(*args):
         """
-        GetFieldAsIntegerList(self, int id, int nLen, int pList)
+        GetFieldAsIntegerList(self, int id, int nLen)
 
         const int*
         OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField, int
@@ -1647,7 +1647,7 @@ class Feature(_object):
 
     def GetFieldAsDoubleList(*args):
         """
-        GetFieldAsDoubleList(self, int id, int nLen, double pList)
+        GetFieldAsDoubleList(self, int id, int nLen)
 
         const double*
         OGR_F_GetFieldAsDoubleList(OGRFeatureH hFeat, int iField, int
@@ -1677,7 +1677,7 @@ class Feature(_object):
 
     def GetFieldAsStringList(*args):
         """
-        GetFieldAsStringList(self, int id, char pList)
+        GetFieldAsStringList(self, int id) -> char
 
         char**
         OGR_F_GetFieldAsStringList(OGRFeatureH hFeat, int iField)
@@ -2064,8 +2064,8 @@ class Feature(_object):
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
-        if fld_type == OFTDateTime or fld_type == OFTDate or fld_type == OFTTime:
-            return self.GetFieldAsDate(fld_index)
+
+
         
         return self.GetFieldAsString(fld_index)
 

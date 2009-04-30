@@ -540,6 +540,10 @@ class SpatialReference(_object):
         """ImportFromXML(self, char xmlString) -> OGRErr"""
         return _osr.SpatialReference_ImportFromXML(*args)
 
+    def ImportFromMICoordSys(*args):
+        """ImportFromMICoordSys(self, char pszCoordSys) -> OGRErr"""
+        return _osr.SpatialReference_ImportFromMICoordSys(*args)
+
     def ExportToWkt(*args):
         """ExportToWkt(self, char argout) -> OGRErr"""
         return _osr.SpatialReference_ExportToWkt(*args)
@@ -563,6 +567,10 @@ class SpatialReference(_object):
     def ExportToXML(*args):
         """ExportToXML(self, char argout, char dialect="") -> OGRErr"""
         return _osr.SpatialReference_ExportToXML(*args)
+
+    def ExportToMICoordSys(*args):
+        """ExportToMICoordSys(self, char argout) -> OGRErr"""
+        return _osr.SpatialReference_ExportToMICoordSys(*args)
 
     def CloneGeogCS(*args):
         """CloneGeogCS(self) -> SpatialReference"""
@@ -618,7 +626,7 @@ class CoordinateTransformation(_object):
         return _osr.CoordinateTransformation_TransformPoint(*args)
 
     def TransformPoints(*args):
-        """TransformPoints(self, int nCount, double x, double y, double z)"""
+        """TransformPoints(self, int nCount)"""
         return _osr.CoordinateTransformation_TransformPoints(*args)
 
 CoordinateTransformation_swigregister = _osr.CoordinateTransformation_swigregister
