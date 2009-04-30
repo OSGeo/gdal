@@ -118,21 +118,23 @@ def misc_4():
 # Test Create() with various band numbers (including 0) and datatype
 
 def misc_5_internal(drv, datatype, nBands):
+    dirname = 'tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
     #print 'drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
     try:
-        os.mkdir('tmp/tmp')
+        os.mkdir(dirname)
     except:
-        reason = 'Cannot create tmp/tmp for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+        reason = 'Cannot create %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
         gdaltest.post_reason(reason)
         return
 
-    ds = drv.Create('tmp/tmp/foo', 100, 100, nBands, datatype)
+    filename = '%s/foo' % dirname
+    ds = drv.Create(filename, 100, 100, nBands, datatype)
     ds = None
 
     try:
-        shutil.rmtree('tmp/tmp')
+        shutil.rmtree(dirname)
     except:
-        reason = 'Cannot remove tmp/tmp for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+        reason = 'Cannot remove %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
         gdaltest.post_reason(reason)
         return
 
@@ -205,24 +207,22 @@ def misc_6_internal(datatype, nBands):
                     skip = True
 
                 if skip is False:
+                    dirname = 'tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                     try:
-                        os.mkdir('tmp/tmp')
+                        os.mkdir(dirname)
                     except:
-                        reason = 'Cannot create tmp/tmp before drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+                        reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                         gdaltest.post_reason(reason)
-                        # Yes, this is horrible. It has been regularly observed that this mkdir fails, sometimes, and
-                        # not always with the same driver, on Windows platform. For the moment, just skip...
-                        # Hopefully someone will find the reason.
-                        if sys.platform in ['win32','win64']:
-                            return 'skip'
-                        else:
-                            return 'fail'
-                    dst_ds = drv.CreateCopy('tmp/tmp/foo', ds)
+                        return 'fail'
+
+                    filename = '%s/foo' % dirname
+                    dst_ds = drv.CreateCopy(filename, ds)
                     dst_ds = None
+
                     try:
-                        shutil.rmtree('tmp/tmp')
+                        shutil.rmtree(dirname)
                     except:
-                        reason = 'Cannot remove tmp/tmp after drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+                        reason = 'Cannot remove %s after drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                         gdaltest.post_reason(reason)
                         return 'fail'
         ds = None
