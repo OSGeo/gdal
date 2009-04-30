@@ -1,7 +1,7 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrgeometry.cpp
-12394 2007-10-13 04:12:13Z hobu $\") ";
+15346 2008-09-08 18:28:46Z rouault $\") ";
 
 %feature("docstring")  DumpReadable "void
 OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char
@@ -127,6 +127,23 @@ hGeom:  handle on the geometry to apply the transform to.
 hTransform:  handle on the transformation to apply.
 
 OGRERR_NONE on success or an error code. ";
+
+%feature("docstring")  Segmentize "void OGR_G_Segmentize(OGRGeometryH
+hGeom, double dfMaxLength)
+
+Modify the geometry such it has no segment longer then the given
+distance. Interpolated points will have Z and M values (if needed) set
+to 0. Distance computation is performed in 2d only
+
+This function is the same as the CPP method OGRGeometry::segmentize().
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to segmentize
+
+dfMaxLength:  the maximum distance between 2 points after
+segmentization ";
 
 %feature("docstring")  GetDimension "int
 OGR_G_GetDimension(OGRGeometryH hGeom)
@@ -409,13 +426,31 @@ Parameters:
 hGeom:  handle on the geometry to empty. ";
 
 %feature("docstring")  IsEmpty "int OGR_G_IsEmpty(OGRGeometryH hGeom)
-";
+
+Test if the geometry is empty
+
+This method is the same as the CPP method OGRGeometry::IsEmpty().
+
+TRUE if the geometry has no points, otherwise FALSE. ";
 
 %feature("docstring")  IsValid "int OGR_G_IsValid(OGRGeometryH hGeom)
 ";
 
 %feature("docstring")  IsSimple "int OGR_G_IsSimple(OGRGeometryH
-hGeom) ";
+hGeom)
+
+Returns TRUE if the geometry is simple.
+
+Returns TRUE if the geometry has no anomalous geometric points, such
+as self intersection or self tangency. The description of each
+instantiable geometric class will include the specific conditions that
+cause an instance of that class to be classified as not simple.
+
+This method relates to the SFCOM IGeometry::IsSimple() method.
+
+NOTE: This method is hardcoded to return TRUE at this time.
+
+TRUE if object is simple, otherwise FALSE. ";
 
 %feature("docstring")  IsRing "int OGR_G_IsRing(OGRGeometryH hGeom)
 ";
@@ -435,6 +470,31 @@ Parameters:
 eType:  the geometry type.
 
 internal human readable string, or NULL on failure. ";
+
+%feature("docstring")  OGRMergeGeometryTypes "OGRwkbGeometryType
+OGRMergeGeometryTypes(OGRwkbGeometryType eMain, OGRwkbGeometryType
+eExtra)
+
+Find common geometry type.
+
+Given two geometry types, find the most specific common type. Normally
+used repeatedly with the geometries in a layer to try and establish
+the most specific geometry type that can be reported for the layer.
+
+NOTE: wkbUnknown is the \"worst case\" indicating a mixture of
+geometry types with nothing in common but the base geometry type.
+wkbNone should be used to indicate that no geometries have been
+encountered yet, and means the first geometry encounted will establish
+the preliminary type.
+
+Parameters:
+-----------
+
+eMain:  the first input geometry type.
+
+eExtra:  the second input geometry type.
+
+the merged geometry type. ";
 
 %feature("docstring")  FlattenTo2D "void
 OGR_G_FlattenTo2D(OGRGeometryH hGeom)

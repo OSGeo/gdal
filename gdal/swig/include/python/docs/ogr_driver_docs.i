@@ -1,7 +1,7 @@
 %extend OGRDriverShadow {
 // File: ogrsfdriver_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrsfdriver.cpp
-11953 2007-08-24 14:14:21Z dron $\") ";
+14432 2008-05-10 18:47:46Z warmerdam $\") ";
 
 %feature("docstring")  CreateDataSource "OGRDataSourceH
 OGR_Dr_CreateDataSource(OGRSFDriverH hDriver, const char *pszName,
@@ -86,7 +86,7 @@ sources.
 ODrCDeleteDataSource: True if this driver supports deleting data
 sources.
 
-The define macro forms of the capability names should be used in
+The #define macro forms of the capability names should be used in
 preference to the strings themselves to avoid mispelling.
 
 This function is the same as the C++ method
