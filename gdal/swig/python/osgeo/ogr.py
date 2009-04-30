@@ -214,7 +214,7 @@ class Driver(_object):
         ODrCDeleteDataSource: True if this driver supports deleting data
         sources.
 
-        The define macro forms of the capability names should be used in
+        The #define macro forms of the capability names should be used in
         preference to the strings themselves to avoid mispelling.
 
         This function is the same as the C++ method
@@ -426,7 +426,7 @@ class DataSource(_object):
 
         hDS:  handle to the data source from which to get the layer.
 
-        psz:  Layer the layer name of the layer to fetch.
+        pszLayerName:  Layer the layer name of the layer to fetch.
 
         an handle to the layer, or NULL if the layer is not found or an error
         occurs. 
@@ -446,9 +446,9 @@ class DataSource(_object):
         this function, and a TRUE or FALSE value will be returned indicating
         whether or not the capability is available for this object.
 
-        ODsCreateLayer: True if this datasource can create new layers.
+        ODsCCreateLayer: True if this datasource can create new layers.
 
-        The define macro forms of the capability names should be used in
+        The #define macro forms of the capability names should be used in
         preference to the strings themselves to avoid mispelling.
 
         This function is the same as the C++ method
@@ -671,7 +671,38 @@ class Layer(_object):
 
         void
         OGR_L_SetSpatialFilterRect(OGRLayerH hLayer, double dfMinX, double
-        dfMinY, double dfMaxX, double dfMaxY) 
+        dfMinY, double dfMaxX, double dfMaxY)
+
+        Set a new rectangular spatial filter.
+
+        This method set rectangle to be used as a spatial filter when fetching
+        features via the GetNextFeature() method. Only features that
+        geometrically intersect the given rectangle will be returned.
+
+        The x/y values should be in the same coordinate system as the layer as
+        a whole (as returned by OGRLayer::GetSpatialRef()). Internally this
+        method is normally implemented as creating a 5 vertex closed
+        rectangular polygon and passing it to OGRLayer::SetSpatialFilter(). It
+        exists as a convenience.
+
+        The only way to clear a spatial filter set with this method is to call
+        OGRLayer::SetSpatialFilter(NULL).
+
+        This method is the same as the C++ method
+        OGRLayer::SetSpatialFilterRect().
+
+        Parameters:
+        -----------
+
+        hLayer:  handle to the layer on which to set the spatial filter.
+
+        dfMinX:  the minimum X coordinate for the rectangular region.
+
+        dfMinY:  the minimum Y coordinate for the rectangular region.
+
+        dfMaxX:  the maximum X coordinate for the rectangular region.
+
+        dfMaxY:  the maximum Y coordinate for the rectangular region. 
         """
         return _ogr.Layer_SetSpatialFilterRect(*args)
 
@@ -938,7 +969,9 @@ class Layer(_object):
         Parameters:
         -----------
 
-        poFeature:  the feature to write to disk.
+        hLayer:  handle to the layer
+
+        nFID:  the feature id to be deleted from the layer
 
         OGRERR_NONE on success. 
         """
@@ -982,7 +1015,30 @@ class Layer(_object):
         GetFeatureCount(self, int force=1) -> int
 
         int
-        OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce) 
+        OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
+
+        Fetch the feature count in this layer.
+
+        Returns the number of features in the layer. For dynamic databases the
+        count may not be exact. If bForce is FALSE, and it would be expensive
+        to establish the feature count a value of -1 may be returned
+        indicating that the count isn't know. If bForce is TRUE some
+        implementations will actually scan the entire layer once to count
+        objects.
+
+        The returned count takes the spatial filter into account.
+
+        This function is the same as the CPP OGRLayer::GetFeatureCount().
+
+        Parameters:
+        -----------
+
+        hLayer:  handle to the layer that owned the features.
+
+        bForce:  Flag indicating whether the count should be computed even if
+        it is expensive.
+
+        feature count, -1 if count not known. 
         """
         return _ogr.Layer_GetFeatureCount(*args, **kwargs)
 
@@ -1001,10 +1057,9 @@ class Layer(_object):
         TRUE then some implementations will actually scan the entire layer
         once to compute the MBR of all the features in the layer.
 
-        The returned extent does not take the spatial filter into account. If
-        a spatial filter was previously set then it should be ignored but some
-        implementations may be unable to do that, so it is safer to call
-        OGR_L_GetExtent() without setting a spatial filter.
+        Depending on the drivers, the returned extent may or may not take the
+        spatial filter into account. So it is safer to call OGR_L_GetExtent()
+        without setting a spatial filter.
 
         Layers without any geometry may return OGRERR_FAILURE just indicating
         that no meaningful extents could be collected.
@@ -1035,7 +1090,7 @@ class Layer(_object):
         Test if this layer supported the named capability.
 
         The capability codes that can be tested are represented as strings,
-        but defined constants exists to ensure correct spelling. Specific
+        but #defined constants exists to ensure correct spelling. Specific
         layer types may implement class specific capabilities, but this can't
         generally be discovered by the caller.
 
@@ -1121,7 +1176,10 @@ class Layer(_object):
         OGRErr
         OGR_L_StartTransaction(OGRLayerH hLayer)
 
-        What does this do?.
+        For datasources which support transactions, StartTransaction creates a
+        transaction. If starting the transaction fails, will return
+        OGRERR_FAILURE. Datasources which do not support transactions will
+        always return OGRERR_NONE.
 
         This function is the same as the C++ method
         OGRLayer::StartTransaction().
@@ -1129,7 +1187,7 @@ class Layer(_object):
         Parameters:
         -----------
 
-        hLayer:  handle to the layer ?
+        hLayer:  handle to the layer
 
         OGRERR_NONE on success. 
         """
@@ -1142,7 +1200,10 @@ class Layer(_object):
         OGRErr
         OGR_L_CommitTransaction(OGRLayerH hLayer)
 
-        What does this do?.
+        For datasources which support transactions, CommitTransaction commits
+        a transaction. If no transaction is active, or the commit fails, will
+        return OGRERR_FAILURE. Datasources which do not support transactions
+        will always return OGRERR_NONE.
 
         This function is the same as the C++ method
         OGRLayer::CommitTransaction().
@@ -1150,7 +1211,7 @@ class Layer(_object):
         Parameters:
         -----------
 
-        hLayer:  handle to the layer?
+        hLayer:  handle to the layer
 
         OGRERR_NONE on success. 
         """
@@ -1163,7 +1224,11 @@ class Layer(_object):
         OGRErr
         OGR_L_RollbackTransaction(OGRLayerH hLayer)
 
-        What does this do?.
+        For datasources which support transactions, RollbackTransaction will
+        roll back a datasource to its state before the start of the current
+        transaction. If no transaction is active, or the rollback fails, will
+        return OGRERR_FAILURE. Datasources which do not support transactions
+        will always return OGRERR_NONE.
 
         This function is the same as the C++ method
         OGRLayer::RollbackTransaction().
@@ -1171,7 +1236,7 @@ class Layer(_object):
         Parameters:
         -----------
 
-        hLayer:  handle to the layer?
+        hLayer:  handle to the layer
 
         OGRERR_NONE on success. 
         """
@@ -1685,6 +1750,9 @@ class Feature(_object):
         Fetch field value as a list of strings.
 
         Currently this method only works for OFTStringList fields.
+
+        The returned list is terminated by a NULL pointer. The number of
+        elements can also be calculated using CSLCount().
 
         This function is the same as the C++ method
         OGRFeature::GetFieldAsStringList().
@@ -2252,7 +2320,7 @@ class FeatureDefn(_object):
         GetGeomType(self) -> OGRwkbGeometryType
 
         OGRwkbGeometryType
-        OGR_FD_GetGeomType(OGRFieldDefnH hDefn)
+        OGR_FD_GetGeomType(OGRFeatureDefnH hDefn)
 
         Fetch the geometry base type of the passed feature definition.
 
@@ -2911,6 +2979,11 @@ class Geometry(_object):
 
         int OGR_G_IsEmpty(OGRGeometryH hGeom)
 
+        Test if the geometry is empty
+
+        This method is the same as the CPP method OGRGeometry::IsEmpty().
+
+        TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsEmpty(*args)
 
@@ -2928,7 +3001,20 @@ class Geometry(_object):
         IsSimple(self) -> bool
 
         int OGR_G_IsSimple(OGRGeometryH
-        hGeom) 
+        hGeom)
+
+        Returns TRUE if the geometry is simple.
+
+        Returns TRUE if the geometry has no anomalous geometric points, such
+        as self intersection or self tangency. The description of each
+        instantiable geometric class will include the specific conditions that
+        cause an instance of that class to be classified as not simple.
+
+        This method relates to the SFCOM IGeometry::IsSimple() method.
+
+        NOTE: This method is hardcoded to return TRUE at this time.
+
+        TRUE if object is simple, otherwise FALSE. 
         """
         return _ogr.Geometry_IsSimple(*args)
 
