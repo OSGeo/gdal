@@ -979,9 +979,10 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
 CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
 {
+    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+    
     if( bGeoTransform )
     {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
         return CE_None;
     }
 
@@ -997,8 +998,6 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
 
     bGeoTransform = true;
 
-    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-
     return CE_None;
 }
 
@@ -1010,12 +1009,12 @@ const char* GeoRasterDataset::GetProjectionRef( void )
 {
     if( ! poGeoRaster->bIsReferenced )
     {
-        return NULL;
+        return "";
     }
 
     if( poGeoRaster->nSRID == UNKNOWN_CRS )
     {
-        return NULL;
+        return "";
     }
 
     if( pszProjection )
@@ -1409,7 +1408,7 @@ const char* GeoRasterDataset::GetGCPProjection()
 CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
                                           int nOverviews,
                                           int* panOverviewList,
-                                          int nBands,
+                                          int nListBands,
                                           int* panBandList,
                                           GDALProgressFunc pfnProgress,
                                           void* pProgressData )
@@ -1449,7 +1448,6 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
                     "Invalid GeoRaster Pyramids levels." );
                 return CE_Failure;
             }
-
         }
     }
 
