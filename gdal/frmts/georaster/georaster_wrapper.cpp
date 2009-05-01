@@ -104,6 +104,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
     delete poStmtWrite;
     CPLDestroyXMLNode( phMetadata );
     OWStatement::Free( pahLocator, nBlockCount );
+    CPLFree( pahLocator );
 }
 
 //  ---------------------------------------------------------------------------
@@ -845,6 +846,8 @@ void GeoRasterWrapper::SetGeoReference( int nSRIDIn )
 
     nSRID = nSRIDIn;
 
+    bIsReferenced = true;
+    
     bFlushMetadata = true;
 }
 
@@ -1059,6 +1062,12 @@ void GeoRasterWrapper::GetRasterInfo( void )
 
     nSRID               = atoi( CPLGetXMLValue( phMetadata,
                             "spatialReferenceInfo.SRID", "0" ) );
+
+    if( nSRID == 0 ||
+        nSRID == UNKNOWN_CRS )
+    {
+        bIsReferenced   = false;
+    }
 }
 
 //  ---------------------------------------------------------------------------
@@ -1401,7 +1410,7 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
     {
         OWStatement::Free( pahLocator, nBlockCount );
     }
-    
+    CPLFree( pahLocator );
     CPLFree( pabyBlockBuf );
     CPLFree( pabyBlockBuf2 );
     delete poStmtRead;
@@ -1684,12 +1693,12 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
             memcpy( &pabyData[ii], &pabyBlockBuf[jj], nSize );
         }
     }
-
+/*
     CPLDebug( "GEOR",
       "nBlock, nBand, nLevel, nXOffset, nYOffset, nColumnBlockSize, nRowBlockSize = "
       "%d, %d, %d, %d, %d, %d, %d",
        nBlock, nBand, nLevel, nXOffset, nYOffset, nColumnBlockSize, nRowBlockSize );
-
+*/
     return true;
 }
 
@@ -1839,12 +1848,12 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     //  --------------------------------------------------------------------
     //  Write BLOB
     //  --------------------------------------------------------------------
-
+/*
     CPLDebug( "GEOR",
       "nBlock, nBand, nLevel, nXOffset, nYOffset, nColumnBlockSize, nRowBlockSize = "
       "%d, %d, %d, %d, %d, %d, %d",
        nBlock, nBand, nLevel, nXOffset, nYOffset, nColumnBlockSize, nRowBlockSize );
-
+*/
     if( ! poStmtWrite->WriteBlob( pahLocator[nBlock],
                                   pabyOutBuf,
                                   nWriteBytes ) )

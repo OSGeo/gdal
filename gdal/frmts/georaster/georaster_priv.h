@@ -143,7 +143,7 @@ public:
                             const char* pszResampling,
                             int nOverviews,
                             int* panOverviewList,
-                            int nBands,
+                            int nListBands,
                             int* panBandList,
                             GDALProgressFunc pfnProgress,
                             void* pProgressData );
