@@ -79,7 +79,7 @@ char CPL_DLL * OGRGetRFC822DateTime(int year, int month, int day,
                                     int hour, int minute, int second, int TZ);
 char CPL_DLL * OGRGetXMLDateTime(int year, int month, int day,
                                  int hour, int minute, int second, int TZFlag);
-
+char CPL_DLL * OGRGetXML_UTF8_EscapedString(const char* pszString);
 
 
 /* General utility option processing. */

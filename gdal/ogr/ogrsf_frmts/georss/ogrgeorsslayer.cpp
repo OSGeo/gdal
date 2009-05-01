@@ -1195,7 +1195,7 @@ static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
             if (iIndex != -1 && poFeature->IsFieldSet( iIndex ))
             {
                 char* pszValue =
-                        CPLEscapeString(poFeature->GetFieldAsString( iIndex ), -1, CPLES_XML);
+                        OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
                 VSIFPrintf(fp, " %s=\"%s\"", pszAttributeName, pszValue);
                 CPLFree(pszValue);
             }
@@ -1210,7 +1210,7 @@ static void OGRGeoRSSLayerWriteSimpleElement(FILE* fp,
         VSIFPrintf(fp, ">");
 
         char* pszValue =
-                CPLEscapeString(poFeature->GetFieldAsString( iIndex ), -1, CPLES_XML);
+                OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
         VSIFPrintf(fp, "%s", pszValue);
         CPLFree(pszValue);
 
@@ -1326,7 +1326,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                             pbUsed[j] = TRUE;
 
                             char* pszValue =
-                                    CPLEscapeString(poFeature->GetFieldAsString( j ), -1, CPLES_XML);
+                                    OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( j ));
                             VSIFPrintf(fp, "        <%s>%s</%s>\n", pszAttributeName2, pszValue, pszAttributeName2);
                             CPLFree(pszValue);
                         }
@@ -1435,7 +1435,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 {
                     bIsXHTML = strcmp(poFeature->GetFieldAsString( iIndex ), "xhtml") == 0;
                     char* pszValue =
-                            CPLEscapeString(poFeature->GetFieldAsString( iIndex ), -1, CPLES_XML);
+                            OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
                     VSIFPrintf(fp, " %s=\"%s\"", "type", pszValue);
                     CPLFree(pszValue);
                 }
@@ -1446,7 +1446,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 if (iIndex != -1 && poFeature->IsFieldSet( iIndex ))
                 {
                     char* pszValue =
-                            CPLEscapeString(poFeature->GetFieldAsString( iIndex ), -1, CPLES_XML);
+                            OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
                     VSIFPrintf(fp, " %s=\"%s\"", "xml:lang", pszValue);
                     CPLFree(pszValue);
                 }
@@ -1457,7 +1457,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 if (iIndex != -1 && poFeature->IsFieldSet( iIndex ))
                 {
                     char* pszValue =
-                            CPLEscapeString(poFeature->GetFieldAsString( iIndex ), -1, CPLES_XML);
+                            OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
                     VSIFPrintf(fp, " %s=\"%s\"", "xml:base", pszValue);
                     CPLFree(pszValue);
                 }
@@ -1469,7 +1469,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 else
                 {
                     char* pszValue =
-                            CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
+                            OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
                     VSIFPrintf(fp, "%s", pszValue);
                     CPLFree(pszValue);
                 }
@@ -1489,14 +1489,14 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 if (iIndex != -1 && poFeature->IsFieldSet( iIndex ))
                 {
                     char* pszValue =
-                            CPLEscapeString(poFeature->GetFieldAsString( iIndex ), -1, CPLES_XML);
+                            OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( iIndex ));
                     VSIFPrintf(fp, " %s=\"%s\"", "xml:lang", pszValue);
                     CPLFree(pszValue);
                 }
                 CPLFree(pszFieldName);
 
                 char* pszValue =
-                        CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
+                        OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
                 VSIFPrintf(fp, ">%s</%s>\n", pszValue, "dc:subject");
                 CPLFree(pszValue);
             }
@@ -1527,7 +1527,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
                 }
             }
             char* pszValue =
-                        CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
+                        OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
             VSIFPrintf(fp, "      <%s>%s</%s>\n", pszTagName, pszValue, pszTagName);
             CPLFree(pszValue);
             CPLFree(pszTagName);

@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -372,8 +373,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
             while( *pszRaw == ' ' )
                 pszRaw++;
 
-            char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
-
+            char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
             VSIFPrintf( fp, "      <ogr:%s>%s</ogr:%s>\n", 
                         poField->GetNameRef(), pszEscaped, 
                         poField->GetNameRef() );
