@@ -349,7 +349,7 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
 /************************************************************************/
 
 /**
- * Test is a string is encoded as UTF-8.
+ * Test if a string is encoded as UTF-8.
  *
  * @param pabyData input string to test
  * @param nLen length of the input string, or -1 if the function must compute
