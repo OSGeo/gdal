@@ -32,6 +32,7 @@
 #include "ogr_api.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_p.h"
 
 /* Function utility to dump OGRGeoemtry to KML text. */
 char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char* pszAltitudeMode );
@@ -395,7 +396,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
                 while( *pszRaw == ' ' )
                     pszRaw++;
 
-                char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
+                char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
 
                 VSIFPrintf( fp, "\t<name>%s</name>\n", pszEscaped);
                 CPLFree( pszEscaped );
@@ -416,7 +417,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
                 while( *pszRaw == ' ' )
                     pszRaw++;
 
-                char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
+                char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
 
                 VSIFPrintf( fp, "\t<description>%s</description>\n", pszEscaped);
                 CPLFree( pszEscaped );
@@ -453,7 +454,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
             while( *pszRaw == ' ' )
                 pszRaw++;
 
-            char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
+            char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
 
             VSIFPrintf( fp, "\t\t<SimpleData name=\"%s\">%s</SimpleData>\n", 
                         poField->GetNameRef(), pszEscaped);

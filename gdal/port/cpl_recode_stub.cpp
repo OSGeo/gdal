@@ -44,6 +44,7 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
                            const wchar_t* src, unsigned srclen);
 static unsigned utf8froma(char* dst, unsigned dstlen,
                           const char* src, unsigned srclen);
+static int utf8test(const char* src, unsigned srclen);
 
 #ifdef FUTURE_NEEDS
 static const char* utf8fwd(const char* p, const char* start, const char* end);
@@ -341,6 +342,61 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
 
     return pwszResult;
 }
+
+
+/************************************************************************/
+/*                                 CPLIsUTF8()                          */
+/************************************************************************/
+
+/**
+ * Test is a string is encoded as UTF-8.
+ *
+ * @param pabyData input string to test
+ * @param nLen length of the input string, or -1 if the function must compute
+ *             the string length. In which case it must be null terminated.
+ * @return TRUE if the string is encoded as UTF-8. FALSE otherwise
+ */
+int CPLIsUTF8(const char* pabyData, int nLen)
+{
+    if (nLen < 0)
+        nLen = strlen(pabyData);
+    return utf8test(pabyData, (unsigned)nLen) != 0;
+}
+
+/************************************************************************/
+/*                          CPLForceToASCII()                           */
+/************************************************************************/
+
+/**
+ * Return a new string that is made only of ASCII characters. If non-ASCII
+ * characters are found in the input string, they will be replaced by the
+ * provided replacement character.
+ *
+ * @param pabyData input string to test
+ * @param nLen length of the input string, or -1 if the function must compute
+ *             the string length. In which case it must be null terminated.
+ * @param chReplacementChar character which will be used when the input stream
+ *                          contains a non ASCII character. Must be valid ASCII !
+ *
+ * @return a new string that must be freed with CPLFree().
+ */
+char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar)
+{
+    if (nLen < 0)
+        nLen = strlen(pabyData);
+    char* pszOutputString = (char*)CPLMalloc(nLen + 1);
+    int i;
+    for(i=0;i<nLen;i++)
+    {
+        if (((unsigned char*)pabyData)[i] > 127)
+            pszOutputString[i] = chReplacementChar;
+        else
+            pszOutputString[i] = pabyData[i];
+    }
+    pszOutputString[i] = '\0';
+    return pszOutputString;
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1121,6 +1177,8 @@ unsigned utf8frommb(char* dst, unsigned dstlen,
   return srclen;
 }
 
+#endif /* def notdef - disabled locale specific stuff */
+
 /*! Examines the first \a srclen bytes in \a src and return a verdict
     on whether it is UTF-8 or not.
     - Returns 0 if there is any illegal UTF-8 sequences, using the
@@ -1141,7 +1199,8 @@ unsigned utf8frommb(char* dst, unsigned dstlen,
     this is done we will be able to cleanly transition to a locale-less
     encoding.
 */
-int utf8test(const char* src, unsigned srclen) {
+
+static int utf8test(const char* src, unsigned srclen) {
   int ret = 1;
   const char* p = src;
   const char* e = src+srclen;
@@ -1157,7 +1216,5 @@ int utf8test(const char* src, unsigned srclen) {
   }
   return ret;
 }
-
-#endif /* def notdef - disabled locale specific stuff */
 
 #endif /* defined(CPL_RECODE_STUB) */

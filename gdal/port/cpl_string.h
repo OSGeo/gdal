@@ -157,6 +157,8 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
 wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
                                    const char *pszSrcEncoding, 
                                    const char *pszDstEncoding );
+int CPL_DLL CPLIsUTF8(const char* pabyData, int nLen);
+char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar);
 
 CPL_C_END
 
