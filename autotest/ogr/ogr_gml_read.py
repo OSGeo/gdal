@@ -258,6 +258,11 @@ def ogr_gml_7():
     lyr = gml_ds.GetLayer()
     ldefn = lyr.GetLayerDefn()
 
+    # Test fix for #2969
+    if lyr.GetFeatureCount() != 5:
+        gdaltest.post_reason( 'Bad feature count' )
+        return 'fail'
+
     try:
         ldefn.GetFieldDefn(0).GetFieldTypeName
     except:
