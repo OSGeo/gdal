@@ -299,6 +299,50 @@ def ogr_gml_8():
     return 'success'
 
 ###############################################################################
+# Test writing invalid UTF-8 content in a GML file (ticket #2971)
+
+def ogr_gml_9():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    drv = ogr.GetDriverByName('GML')
+    ds = drv.CreateDataSource('tmp/broken_utf8.gml')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('test', ogr.OFTString))
+
+    dst_feat = ogr.Feature( lyr.GetLayerDefn() )
+    dst_feat.SetField('test', '\x80bad')
+
+    # Avoid the warning
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature( dst_feat )
+    gdal.PopErrorHandler()
+
+    if ret != 0:
+        gdaltest.post_reason('CreateFeature failed.')
+        return 'fail'
+
+    dst_feat.Destroy()
+    ds.Destroy()
+
+    ds = ogr.Open('tmp/broken_utf8.gml')
+    lyr = ds.GetLayerByName('test')
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('test') != '?bad':
+        gdaltest.post_reason('Unexpected content.')
+        return 'fail'
+
+    feat.Destroy();
+    ds.Destroy()
+
+    os.remove('tmp/broken_utf8.gml')
+    os.remove('tmp/broken_utf8.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -314,6 +358,7 @@ gdaltest_list = [
     ogr_gml_6,
     ogr_gml_7,
     ogr_gml_8,
+    ogr_gml_9,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
