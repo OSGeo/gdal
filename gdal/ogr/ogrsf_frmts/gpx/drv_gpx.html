@@ -149,17 +149,36 @@ This can be done with a <a href="drv_vrt.html">OGR VRT</a> dataset, or by using 
 
 <h2>Issues when translating to Shapefile</h2>
 
+<ul>
+<li>
 When translating the <i>track_points</i> layer to a Shapefile, the field names "track_seg_id" and "track_seg_point_id" are
-truncated to 10 characters in the .DBF file, thus leading to duplicate names. To avoid this, starting with GDAL 1.6.1,
+truncated to 10 characters in the .DBF file, thus leading to duplicate names.<p>
+To avoid this, starting with GDAL 1.6.1,
 you can define the GPX_SHORT_NAMES configuration option to TRUE to make them be reported respectively as "trksegid" and "trksegptid",
 which will allow them to be unique once translated to DBF. The "route_point_id" field of <i>route_points</i> layer will also be renamed to "rteptid".
 But note that no particular processing will be done for any extension field names.<p>
 
-To translate a GPX file to a set of shapefiles :
+To translate the track_points layer of a GPX file to a set of shapefiles :
 <pre>
-ogr2ogr --config GPX_SHORT_NAMES YES out input.gpx
+    ogr2ogr --config GPX_SHORT_NAMES YES out input.gpx track_points
+</pre>
+</li>
+
+<li>
+Shapefile does not support fields of type DateTime. It only supports fields of type Date. So by default, you will lose the
+hour:minute:second part of the <i>Time</i> elements of a GPX file.<p>
+Starting with GDAL 1.6.0, you can use the OGR SQL CAST operator to convert the <i>time</i> field to a string :
+<pre>
+    ogr2ogr out input.gpx -sql "SELECT ele, CAST(time AS character(32)) FROM waypoints"
 </pre>
 
+Starting with GDAL 1.7.0, there is a more convenient way to select all fields and ask for the conversion of the ones of a given type to strings:
+<pre>
+    ogr2ogr out input.gpx -fieldTypeToString DateTime
+</pre>
+</li>
+
+</ul>
 
 <h2>Example</h2>
 
