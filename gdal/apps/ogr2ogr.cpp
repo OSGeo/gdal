@@ -48,7 +48,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            char **papszSelFields,
                            int bAppend, int eGType,
                            int bOverwrite,
-                           double dfMaxSegmentLength);
+                           double dfMaxSegmentLength,
+                           char** papszFieldTypesToString);
 
 static int bSkipFailures = FALSE;
 static int nGroupTransactions = 200;
@@ -81,6 +82,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszSQLStatement = NULL;
     int         eGType = -2;
     double       dfMaxSegmentLength = 0;
+    char        **papszFieldTypesToString = NULL;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -245,6 +247,43 @@ int main( int nArgc, char ** papszArgv )
         {
             dfMaxSegmentLength = atof(papszArgv[++iArg]);
         }
+        else if( EQUAL(papszArgv[iArg],"-fieldTypeToString") && iArg < nArgc-1 )
+        {
+            papszFieldTypesToString =
+                    CSLTokenizeStringComplex(papszArgv[++iArg], " ,", 
+                                             FALSE, FALSE );
+            char** iter = papszFieldTypesToString;
+            while(*iter)
+            {
+                if (EQUAL(*iter, "Integer") ||
+                    EQUAL(*iter, "Real") ||
+                    EQUAL(*iter, "String") ||
+                    EQUAL(*iter, "Date") ||
+                    EQUAL(*iter, "Time") ||
+                    EQUAL(*iter, "DateTime") ||
+                    EQUAL(*iter, "Binary") ||
+                    EQUAL(*iter, "IntegerList") ||
+                    EQUAL(*iter, "RealList") ||
+                    EQUAL(*iter, "StringList"))
+                {
+                    /* Do nothing */
+                }
+                else if (EQUAL(*iter, "All"))
+                {
+                    CSLDestroy(papszFieldTypesToString);
+                    papszFieldTypesToString = NULL;
+                    papszFieldTypesToString = CSLAddString(papszFieldTypesToString, "All");
+                    break;
+                }
+                else
+                {
+                    fprintf(stderr, "Unhandled type for fieldtypeasstring option : %s\n",
+                            *iter);
+                    Usage();
+                }
+                iter ++;
+            }
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -407,7 +446,7 @@ int main( int nArgc, char ** papszArgv )
             if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
-                                 bOverwrite, dfMaxSegmentLength ))
+                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString ))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -446,7 +485,7 @@ int main( int nArgc, char ** papszArgv )
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                 pszNewLayerName, bTransform, poOutputSRS,
                                 poSourceSRS, papszSelFields, bAppend, eGType,
-                                bOverwrite, dfMaxSegmentLength ) 
+                                bOverwrite, dfMaxSegmentLength, papszFieldTypesToString ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -486,7 +525,7 @@ int main( int nArgc, char ** papszArgv )
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                 pszNewLayerName, bTransform, poOutputSRS,
                                 poSourceSRS, papszSelFields, bAppend, eGType,
-                                bOverwrite, dfMaxSegmentLength ) 
+                                bOverwrite, dfMaxSegmentLength, papszFieldTypesToString ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -511,6 +550,7 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy( papszLayers );
     CSLDestroy( papszDSCO );
     CSLDestroy( papszLCO );
+    CSLDestroy( papszFieldTypesToString );
 
     OGRCleanupAll();
 
@@ -536,7 +576,7 @@ static void Usage()
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
-            "               [-segmentize max_dist]\n"
+            "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n"
             "               dst_datasource_name src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n"
             "\n"
@@ -568,7 +608,11 @@ static void Usage()
             " -nlt type: Force a geometry type for new layer.  One of NONE, GEOMETRY,\n"
             "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT,\n"
             "      MULTIPOLYGON, or MULTILINESTRING.  Add \"25D\" for 3D layers.\n"
-            "      Default is type of source layer.\n" );
+            "      Default is type of source layer.\n"
+            " -fieldTypeToString type1,...: Converts fields of specified types to\n"
+            "      fields of type string in the new layer. Valid types are : \n"
+            "      Integer, Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n"
+            "      StringList. Special value All can be used to convert all fields to strings.\n");
 
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"
@@ -595,7 +639,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRSpatialReference *poSourceSRS,
                            char **papszSelFields,
                            int bAppend, int eGType, int bOverwrite,
-                           double dfMaxSegmentLength)
+                           double dfMaxSegmentLength,
+                           char** papszFieldTypesToString)
 
 {
     OGRLayer    *poDstLayer;
@@ -754,7 +799,19 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         {
             int iSrcField = poFDefn->GetFieldIndex(papszSelFields[iField]);
             if (iSrcField >= 0)
-                poDstLayer->CreateField( poFDefn->GetFieldDefn(iSrcField) );
+            {
+                if (papszFieldTypesToString != NULL &&
+                    (CSLFindString(papszFieldTypesToString, "All") != -1 ||
+                     CSLFindString(papszFieldTypesToString,
+                                   OGRFieldDefn::GetFieldTypeName(poFDefn->GetFieldDefn(iSrcField)->GetType())) != -1))
+                {
+                    OGRFieldDefn oFieldDefn( poFDefn->GetFieldDefn(iSrcField) );
+                    oFieldDefn.SetType(OFTString);
+                    poDstLayer->CreateField( &oFieldDefn );
+                }
+                else
+                    poDstLayer->CreateField( poFDefn->GetFieldDefn(iSrcField) );
+            }
             else
             {
                 fprintf( stderr, "Field '%s' not found in source layer.\n", 
@@ -767,7 +824,19 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     else if( !bAppend )
     {
         for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
-            poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
+        {
+            if (papszFieldTypesToString != NULL &&
+                (CSLFindString(papszFieldTypesToString, "All") != -1 ||
+                 CSLFindString(papszFieldTypesToString,
+                               OGRFieldDefn::GetFieldTypeName(poFDefn->GetFieldDefn(iField)->GetType())) != -1))
+            {
+                OGRFieldDefn oFieldDefn( poFDefn->GetFieldDefn(iField) );
+                oFieldDefn.SetType(OFTString);
+                poDstLayer->CreateField( &oFieldDefn );
+            }
+            else
+                poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
+        }
     }
 
 /* -------------------------------------------------------------------- */
