@@ -2735,6 +2735,10 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
             {
                 SetField( iDstField, poSrcFeature->GetRawFieldRef( iField ) );
             }
+            else if (GetFieldDefnRef(iDstField)->GetType() == OFTString)
+            {
+                SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
+            }
             else if( !bForgiving )
                 return OGRERR_FAILURE;
             break;
@@ -2744,6 +2748,10 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
                 == GetFieldDefnRef(iDstField)->GetType() )
             {
                 SetField( iDstField, poSrcFeature->GetRawFieldRef(iField) );
+            }
+            else if (GetFieldDefnRef(iDstField)->GetType() == OFTString)
+            {
+                SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             }
             else if( !bForgiving )
                 return OGRERR_FAILURE;
