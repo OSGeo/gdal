@@ -1103,7 +1103,6 @@ static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
     return pszModName;
 }
 
-
 void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
 {
     FILE* fp = poDS->GetOutputFP();
@@ -1142,7 +1141,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
             else
             {
                 char* pszValue =
-                        CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
+                        OGRGetXML_UTF8_EscapedString(poFeature->GetFieldAsString( i ));
                 VSIFPrintf(fp, "  <%s>%s</%s>\n",
                         pszName, pszValue, pszName);
                 CPLFree(pszValue);
@@ -1172,16 +1171,15 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                         pszRaw++;
                 }
 
-                char* pszValue =
-                    CPLEscapeString(pszRaw, -1, CPLES_XML);
+                char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
                 VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
                         pszExtensionsNS,
                         compatibleName,
-                        pszValue,
+                        pszEscaped,
                         pszExtensionsNS,
                         compatibleName);
                 CPLFree(compatibleName);
-                CPLFree(pszValue);
+                CPLFree(pszEscaped);
             }
         }
         VSIFPrintf(fp, "  </extensions>\n");
