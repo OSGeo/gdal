@@ -170,7 +170,7 @@ SELECT *, OGR_STYLE 'STYLE' FROM polylayer
 
 \subsubsection ogr_sql_ftype_cast Changing the type of the fields
 
-OGR SQL supports changing the type of the columns by using the SQL92 compliant CAST
+Starting with GDAL 1.6.0, OGR SQL supports changing the type of the columns by using the SQL92 compliant CAST
 operator according to the following example:
 
 \code
@@ -180,7 +180,7 @@ SELECT *, CAST(OGR_STYLE AS character(255)) FROM rivers
 Currently casting to the following target types are supported:
 
 <ol>
-<li> character(field_length)
+<li> character(field_length). By default, field_length=1.
 <li> float(field_length)
 <li> numeric(field_length, field_precision)
 <li> integer(field_length)
