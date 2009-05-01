@@ -655,6 +655,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
     char        **papszRings;
     int         iRing, nCumulativeLength = 0, nNonEmptyRings = 0;
     OGRErr      eErr;
+    int         bMustWriteComma = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If we have no valid exterior ring, return POLYGON EMPTY.        */
@@ -682,7 +683,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 
         eErr = papoRings[iRing]->exportToWkt( &(papszRings[iRing]) );
         if( eErr != OGRERR_NONE )
-            return eErr;
+            goto error;
 
         CPLAssert( EQUALN(papszRings[iRing],"LINEARRING (", 12) );
         nCumulativeLength += strlen(papszRings[iRing] + 11);
@@ -697,12 +698,16 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
     *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nNonEmptyRings + 11);
 
     if( *ppszDstText == NULL )
-        return OGRERR_NOT_ENOUGH_MEMORY;
+    {
+        eErr = OGRERR_NOT_ENOUGH_MEMORY;
+        goto error;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Build up the string, freeing temporary strings as we go.        */
 /* -------------------------------------------------------------------- */
     strcpy( *ppszDstText, "POLYGON (" );
+    nCumulativeLength = strlen(*ppszDstText);
 
     for( iRing = 0; iRing < nRingCount; iRing++ )
     {                                                           
@@ -712,18 +717,28 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
             continue;
         }
 
-        if( iRing > 0 )
-            strcat( *ppszDstText, "," );
+        if( bMustWriteComma )
+            (*ppszDstText)[nCumulativeLength++] = ',';
+        bMustWriteComma = TRUE;
         
-        strcat( *ppszDstText, papszRings[iRing] + 11 );
+        int nRingLen = strlen(papszRings[iRing] + 11);
+        memcpy( *ppszDstText + nCumulativeLength, papszRings[iRing] + 11, nRingLen );
+        nCumulativeLength += nRingLen;
         VSIFree( papszRings[iRing] );
     }
 
-    strcat( *ppszDstText, ")" );
+    (*ppszDstText)[nCumulativeLength++] = ')';
+    (*ppszDstText)[nCumulativeLength] = '\0';
 
     CPLFree( papszRings );
 
     return OGRERR_NONE;
+
+error:
+    for( iRing = 0; iRing < nRingCount; iRing++ )
+        CPLFree(papszRings[iRing]);
+    CPLFree(papszRings);
+    return eErr;
 }
 
 /************************************************************************/

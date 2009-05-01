@@ -648,7 +648,7 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText ) const
     {
         eErr = papoGeoms[iGeom]->exportToWkt( &(papszGeoms[iGeom]) );
         if( eErr != OGRERR_NONE )
-            return eErr;
+            goto error;
 
         nCumulativeLength += strlen(papszGeoms[iGeom]);
     }
@@ -659,28 +659,41 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText ) const
     *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nGeomCount + 23);
 
     if( *ppszDstText == NULL )
-        return OGRERR_NOT_ENOUGH_MEMORY;
+    {
+        eErr = OGRERR_NOT_ENOUGH_MEMORY;
+        goto error;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Build up the string, freeing temporary strings as we go.        */
 /* -------------------------------------------------------------------- */
     strcpy( *ppszDstText, getGeometryName() );
     strcat( *ppszDstText, " (" );
+    nCumulativeLength = strlen(*ppszDstText);
 
     for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {                                                           
         if( iGeom > 0 )
-            strcat( *ppszDstText, "," );
+            (*ppszDstText)[nCumulativeLength++] = ',';
         
-        strcat( *ppszDstText, papszGeoms[iGeom] );
+        int nGeomLength = strlen(papszGeoms[iGeom]);
+        memcpy( *ppszDstText + nCumulativeLength, papszGeoms[iGeom], nGeomLength );
+        nCumulativeLength += nGeomLength;
         VSIFree( papszGeoms[iGeom] );
     }
 
-    strcat( *ppszDstText, ")" );
+    (*ppszDstText)[nCumulativeLength++] = ')';
+    (*ppszDstText)[nCumulativeLength] = '\0';
 
     CPLFree( papszGeoms );
 
     return OGRERR_NONE;
+
+error:
+    for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+        CPLFree( papszGeoms[iGeom] );
+    CPLFree( papszGeoms );
+    return eErr;
 }
 
 /************************************************************************/
