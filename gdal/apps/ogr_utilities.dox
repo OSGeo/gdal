@@ -179,7 +179,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]
                [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
-               [-segmentize max_dist]
+               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]
                dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]
 
@@ -233,6 +233,10 @@ also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-wher
 would select features 1, 3 and 5.</dd>
 <dt> <b>-segmentize</b><em> max_dist</em>:</dt><dd> (starting with GDAL 1.6.0) maximum distance between 2 nodes.
 Used to create intermediate pointsspatial query extents</dd>
+<dt> <b>-fieldTypeToString</b><em> type1, ...</em>:</dt><dd> (starting with GDAL 1.7.0) converts any field of the
+specified type to a field of type string in the destination layer. Valid types are : Integer, Real, String, Date, Time,
+DateTime, Binary, IntegerList, RealList, StringList. Special value <b>All</b> can be used to convert all fields to strings.
+This is an alternate way to using the CAST operator of OGR SQL, that may avoid typing a long SQL query.</dd>
 </dl>
 
 Srs_def can be a full WKT definition (hard to escape properly), or a well
