@@ -108,6 +108,13 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
     GMLFeature  *poGMLFeature = NULL;
     OGRGeometry *poGeom = NULL;
 
+    if (bWriter)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot read features when writing a GML file");
+        return NULL;
+    }
+
     if( iNextGMLId == 0 )
         ResetReading();
 
@@ -218,7 +225,17 @@ int OGRGMLLayer::GetFeatureCount( int bForce )
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
-        return poFClass->GetFeatureCount();
+    {
+        /* If the schema is read from a .xsd file, we haven't read */
+        /* the feature count, so compute it now */
+        int nFeatureCount = poFClass->GetFeatureCount();
+        if (nFeatureCount < 0)
+        {
+            nFeatureCount = OGRLayer::GetFeatureCount(bForce);
+            poFClass->SetFeatureCount(nFeatureCount);
+        }
+        return nFeatureCount;
+    }
 }
 
 /************************************************************************/
