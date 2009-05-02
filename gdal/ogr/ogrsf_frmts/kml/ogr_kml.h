@@ -60,7 +60,6 @@ public:
     //
     OGRFeatureDefn* GetLayerDefn();
     OGRSpatialReference* GetSpatialRef();
-    OGRErr GetExtent( OGREnvelope* psExtent, int bForce = TRUE );
     OGRErr CreateFeature( OGRFeature* poFeature );
     OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE );
     void ResetReading();
@@ -86,6 +85,9 @@ private:
     int nLayerNumber_;
     int nWroteFeatureCount_;
     char* pszName_;
+
+    int nLastAsked;
+    int nLastCount;
 };
 
 /************************************************************************/
