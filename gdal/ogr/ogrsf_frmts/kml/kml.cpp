@@ -45,6 +45,7 @@ KML::KML()
 	poTrunk_ = NULL;
 	poCurrent_ = NULL;
 	nNumLayers_ = -1;
+        nCurrentLayer_ = -1;
 }
 
 KML::~KML()
@@ -438,14 +439,20 @@ int KML::getNumLayers() const
     return nNumLayers_;
 }
 
-bool KML::selectLayer(unsigned short nNum) {
-    if(this->nNumLayers_ < 1 || (short)nNum >= this->nNumLayers_)
+bool KML::selectLayer(int nNum) {
+    if (nNum == nCurrentLayer_)
+        return TRUE;
+
+    if(this->nNumLayers_ < 1 || nNum >= this->nNumLayers_)
         return FALSE;
     poCurrent_ = poTrunk_->getLayer(nNum);
     if(poCurrent_ == NULL)
         return FALSE;
     else
+    {
+        nCurrentLayer_ = nNum;
         return TRUE;
+    }
 }
 
 std::string KML::getCurrentName() const
@@ -466,7 +473,15 @@ Nodetype KML::getCurrentType() const
         return Unknown;
 }
 
-int KML::getNumFeatures() const
+int KML::is25D() const
+{
+    if(poCurrent_ != NULL)
+        return poCurrent_->is25D();
+    else
+        return Unknown;
+}
+
+int KML::getNumFeatures()
 {
     if(poCurrent_ != NULL)
         return static_cast<int>(poCurrent_->getNumFeatures());
@@ -474,26 +489,10 @@ int KML::getNumFeatures() const
         return -1;
 }
 
-Feature* KML::getFeature(std::size_t nNum) const
+Feature* KML::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
 {
     if(poCurrent_ != NULL)
-        return poCurrent_->getFeature(nNum);
+        return poCurrent_->getFeature(nNum, nLastAsked, nLastCount);
     else
         return NULL;
 }
-
-bool KML::getExtents(double& pdfXMin, double& pdfXMax, double& pdfYMin, double& pdfYMax) const
-{
-    if( poCurrent_ != NULL )
-    {
-        Extent const* poXT = poCurrent_->getExtents();
-        pdfXMin = poXT->dfX1;
-        pdfXMax = poXT->dfX2;
-        pdfYMin = poXT->dfY1;
-        pdfYMax = poXT->dfY2;
-
-        return true;
-    }
-    return false;
-}
-
