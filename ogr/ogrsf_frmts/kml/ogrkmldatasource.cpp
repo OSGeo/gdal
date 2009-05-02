@@ -190,8 +190,19 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
             poGeotype = wkbLineString;
         else if( poKMLFile_->getCurrentType() == Polygon )
             poGeotype = wkbPolygon;
+        else if( poKMLFile_->getCurrentType() == MultiPoint )
+            poGeotype = wkbMultiPoint;
+        else if( poKMLFile_->getCurrentType() == MultiLineString )
+            poGeotype = wkbMultiLineString;
+        else if( poKMLFile_->getCurrentType() == MultiPolygon )
+            poGeotype = wkbMultiPolygon;
+        else if( poKMLFile_->getCurrentType() == MultiGeometry )
+            poGeotype = wkbGeometryCollection;
         else
             poGeotype = wkbUnknown;
+        
+        if (poGeotype != wkbUnknown && poKMLFile_->is25D())
+            poGeotype = (OGRwkbGeometryType) (poGeotype | wkb25DBit);
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
