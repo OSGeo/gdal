@@ -31,10 +31,11 @@
 
 #include <string>
 #include <vector>
+#include "ogr_geometry.h"
 
 enum Nodetype
 {
-    Unknown, Empty, Mixed, Point, LineString, Polygon, Rest
+    Unknown, Empty, Mixed, Point, LineString, Polygon, Rest, MultiGeometry, MultiPoint, MultiLineString, MultiPolygon
 };
 
 struct Attribute
@@ -48,9 +49,10 @@ struct Coordinate
     double dfLongitude;
     double dfLatitude;
     double dfAltitude;
+    int    bHasZ;
 
     Coordinate()
-        : dfLongitude(0), dfLatitude(0), dfAltitude(0)
+        : dfLongitude(0), dfLatitude(0), dfAltitude(0), bHasZ(FALSE)
     {}
 };
 
@@ -59,25 +61,18 @@ struct Feature
     Nodetype eType;
     std::string sName;
     std::string sDescription;
-    std::vector<Coordinate*>* pvpsCoordinates;
-    std::vector< std::vector<Coordinate*>* >* pvpsCoordinatesExtra;
+    OGRGeometry* poGeom;
 
     Feature()
-        : eType(Unknown), pvpsCoordinates(NULL), pvpsCoordinatesExtra(NULL)
+        : eType(Unknown), poGeom(NULL)
     {}
+    
+    ~Feature()
+    {
+        delete poGeom;
+    }
 };
 
-struct Extent
-{
-    double dfX1;
-    double dfX2;
-    double dfY1;
-    double dfY2;
-
-    Extent()
-        : dfX1(0), dfX2(0), dfY1(0), dfY2(0)
-    {}
-};
 
 #endif /* OGR_KMLUTILITY_H_INCLUDED */
 

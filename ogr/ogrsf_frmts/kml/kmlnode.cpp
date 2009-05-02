@@ -50,6 +50,14 @@ std::string Nodetype2String(Nodetype const& type)
         return "LineString";
     else if(type == Polygon)
         return "Polygon";
+    else if(type == MultiGeometry)
+        return "MultiGeometry";
+    else if(type == MultiPoint)
+        return "MultiPoint";
+    else if(type == MultiLineString)
+        return "MultiLineString";
+    else if(type == MultiPolygon)
+        return "MultiPolygon";
     else
         return "Unknown";
 }
@@ -84,12 +92,14 @@ Coordinate* ParseCoordinate(std::string const& text)
     // Z coordinate
     if(tmp[pos - 1] != ',')
     {
+        psTmp->bHasZ = FALSE;
         psTmp->dfAltitude = 0;
         return psTmp;
     }
     tmp = tmp.substr(pos, tmp.length() - pos);
     pos = 0;
     while(isNumberDigit(tmp[pos++]));
+    psTmp->bHasZ = TRUE;
     psTmp->dfAltitude = atof(tmp.substr(0, (pos - 1)).c_str());
 
     return psTmp;
@@ -106,8 +116,9 @@ KMLNode::KMLNode()
     pvsContent_ = new std::vector<std::string>;
     pvoAttributes_ = new std::vector<Attribute*>;
     eType_ = Unknown;
-	nLayerNumber_ = -1;
-	psExtent_ = NULL;
+    nLayerNumber_ = -1;
+    b25D_ = FALSE;
+    nNumFeatures_ = -1;
 }
 
 KMLNode::~KMLNode()
@@ -130,7 +141,6 @@ KMLNode::~KMLNode()
     delete pvoAttributes_;
 
     delete pvsContent_;
-    delete psExtent_;
 }
 
 void KMLNode::print(unsigned int what)
@@ -143,27 +153,15 @@ void KMLNode::print(unsigned int what)
     {
         if(nLayerNumber_ > -1)
         {
-            if(psExtent_ != NULL)
-                CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) (%f|%f|%f|%f) <--- Layer #%d", 
-                         indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
-                         (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size(), 
-                         psExtent_->dfX1, psExtent_->dfX2, psExtent_->dfY1, psExtent_->dfY2, nLayerNumber_);
-            else
-                CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) <--- Layer #%d", 
-                         indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
-                         (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size(), nLayerNumber_);
+            CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) <--- Layer #%d", 
+                        indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
+                        (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size(), nLayerNumber_);
         }
         else
         {
-            if(psExtent_ != NULL)
-                CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) (%f|%f|%f|%f)", 
-                         indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
-                         (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size(),
-                         psExtent_->dfX1, psExtent_->dfX2, psExtent_->dfY1, psExtent_->dfY2);
-            else
-                CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d)", 
-                         indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
-                         (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size());
+            CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d)", 
+                        indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
+                        (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size());
         }
     }
     else
@@ -189,59 +187,74 @@ void KMLNode::print(unsigned int what)
         (*pvpoChildren_)[z]->print(what);
 }
 
+//static int nDepth = 0;
+//static char* genSpaces()
+//{
+//    static char spaces[128];
+//    int i;
+//    for(i=0;i<nDepth;i++)
+//        spaces[i] = ' ';
+//    spaces[i] = '\0';
+//    return spaces;
+//}
+
 void KMLNode::classify(KML* poKML)
 {
     Nodetype curr = Unknown;
     Nodetype all = Empty;
     
+    //CPLDebug("KML", "%s<%s>", genSpaces(), sName_.c_str());
+    //nDepth ++;
+    
+    if(sName_.compare("Point") == 0)
+        eType_ = Point;
+    else if(sName_.compare("LineString") == 0)
+        eType_ = LineString;
+    else if(sName_.compare("Polygon") == 0)
+        eType_ = Polygon;
+    else if(poKML->isRest(sName_))
+        eType_ = Empty;
+    else if(sName_.compare("coordinates") == 0)
+    {
+        unsigned int nCountP;
+        for(nCountP = 0; nCountP < pvsContent_->size(); nCountP++)
+        {
+            const char* pszCoord = (*pvsContent_)[nCountP].c_str();
+            int nComma = 0;
+            while(TRUE)
+            {
+                pszCoord = strchr(pszCoord, ',');
+                if (pszCoord)
+                {
+                    nComma ++;
+                    pszCoord ++;
+                }
+                else
+                    break;
+            }
+            if (nComma == 2)
+                b25D_ = TRUE;
+        }
+    }
+
     const kml_nodes_t::size_type size = pvpoChildren_->size();
     for(kml_nodes_t::size_type z = 0; z < size; z++)
     {
-        // Leafs are ignored
-        if(poKML->isLeaf( (*pvpoChildren_)[z]->sName_) )
-            continue;
+        //CPLDebug("KML", "%s[%d] %s", genSpaces(), z, (*pvpoChildren_)[z]->sName_.c_str());
 
         // Classify pvpoChildren_
         (*pvpoChildren_)[z]->classify(poKML);
 
-        if(poKML->isContainer(sName_))
-        {
-            curr = (*pvpoChildren_)[z]->eType_;
-        }
-        else if(poKML->isFeatureContainer(sName_))
-        {
-            if(poKML->isFeature( (*pvpoChildren_)[z]->sName_) )
-            {
-                if((*pvpoChildren_)[z]->sName_.compare("Point") == 0)
-                    curr = Point;
-                else if((*pvpoChildren_)[z]->sName_.compare("LineString") == 0)
-                    curr = LineString;
-                else if((*pvpoChildren_)[z]->sName_.compare("Polygon") == 0)
-                    curr = Polygon;
-            }
-            else if(poKML->isContainer(sName_))
-            {
-                curr = (*pvpoChildren_)[z]->eType_;
-            }
-        }
-        else if(poKML->isFeature(sName_) || poKML->isRest(sName_))
-        {
-            curr = Empty;
-        }
+        curr = (*pvpoChildren_)[z]->eType_;
+        b25D_ |= (*pvpoChildren_)[z]->b25D_;
 
         // Compare and return if it is mixed
         if(curr != all && all != Empty && curr != Empty)
         {
-            eType_ = Mixed;
-            
-            if((poKML->isFeature(Nodetype2String(curr))
-                && poKML->isFeatureContainer(Nodetype2String(all)))
-                || (poKML->isFeature(Nodetype2String(all))
-                    && poKML->isFeatureContainer(Nodetype2String(curr))))
-            {
-                CPLDebug("KML", "FeatureContainer and Feature");
-                continue;
-            }
+            if (sName_.compare("MultiGeometry") == 0)
+                eType_ = MultiGeometry;
+            else
+                eType_ = Mixed;
         }
         else if(curr != Empty)
         {
@@ -250,7 +263,24 @@ void KMLNode::classify(KML* poKML)
     }
 
     if(eType_ == Unknown)
-        eType_ = all;
+    {
+        if (sName_.compare("MultiGeometry") == 0)
+        {
+            if (all == Point)
+                eType_ = MultiPoint;
+            else if (all == LineString)
+                eType_ = MultiLineString;
+            else if (all == Polygon)
+                eType_ = MultiPolygon;
+            else
+                eType_ = MultiGeometry;
+        }
+        else
+            eType_ = all;
+    }
+
+    //nDepth --;
+    //CPLDebug("KML", "%s</%s> --> eType=%s", genSpaces(), sName_.c_str(), Nodetype2String(eType_).c_str());
 }
 
 void KMLNode::eliminateEmpty(KML* poKML)
@@ -270,7 +300,6 @@ void KMLNode::eliminateEmpty(KML* poKML)
             (*pvpoChildren_)[z]->eliminateEmpty(poKML);
         }
     }
-    calcExtent(poKML);
 }
 
 void KMLNode::setType(Nodetype oNotet)
@@ -444,33 +473,222 @@ std::string KMLNode::getDescriptionElement() const
     return "";
 }
 
-std::size_t KMLNode::getNumFeatures() const
+std::size_t KMLNode::getNumFeatures()
 {
-    std::size_t nNum = 0;
-    kml_nodes_t::size_type size = pvpoChildren_->size();
-    
-    for( kml_nodes_t::size_type i = 0; i < size; ++i )
+    if (nNumFeatures_ < 0)
     {
-        if( (*pvpoChildren_)[i]->sName_ == "Placemark" )
-            nNum++;
+        std::size_t nNum = 0;
+        kml_nodes_t::size_type size = pvpoChildren_->size();
+        
+        for( kml_nodes_t::size_type i = 0; i < size; ++i )
+        {
+            if( (*pvpoChildren_)[i]->sName_ == "Placemark" )
+                nNum++;
+        }
+        nNumFeatures_ = (int)nNum;
     }
-    return nNum;
+    return nNumFeatures_;
 }
 
-Feature* KMLNode::getFeature(std::size_t nNum)
+OGRGeometry* KMLNode::getGeometry(Nodetype eType)
 {
-    unsigned short nCount, nCount2, nCountP = 0;
+    unsigned int nCount, nCount2, nCountP;
+    OGRGeometry* poGeom = NULL;
+    KMLNode* poCoor = NULL;
+    Coordinate* psCoord = NULL;
+
+    if (sName_.compare("Point") == 0)
+    {
+        // Search coordinate Element
+        for(nCount = 0; nCount < pvpoChildren_->size(); nCount++)
+        {
+            if((*pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
+            {
+                poCoor = (*pvpoChildren_)[nCount];
+                for(nCountP = 0; nCountP < poCoor->pvsContent_->size(); nCountP++)
+                {
+                    psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
+                    if(psCoord != NULL)
+                    {
+                        if (psCoord->bHasZ)
+                            poGeom = new OGRPoint(psCoord->dfLongitude,
+                                                  psCoord->dfLatitude,
+                                                  psCoord->dfAltitude);
+                        else
+                            poGeom = new OGRPoint(psCoord->dfLongitude,
+                                                  psCoord->dfLatitude);
+                        delete psCoord;
+                        return poGeom;
+                    }
+                }
+            }
+        }
+    }
+    else if (sName_.compare("LineString") == 0)
+    {
+        // Search coordinate Element
+        for(nCount = 0; nCount < pvpoChildren_->size(); nCount++)
+        {
+            if((*pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
+            {
+                poCoor = (*pvpoChildren_)[nCount];
+                for(nCountP = 0; nCountP < poCoor->pvsContent_->size(); nCountP++)
+                {
+                    psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
+                    if(psCoord != NULL)
+                    {
+                        if (poGeom == NULL)
+                            poGeom = new OGRLineString();
+                        if (psCoord->bHasZ)
+                            ((OGRLineString*)poGeom)->addPoint(psCoord->dfLongitude,
+                                                               psCoord->dfLatitude,
+                                                               psCoord->dfAltitude);
+                        else
+                            ((OGRLineString*)poGeom)->addPoint(psCoord->dfLongitude,
+                                                               psCoord->dfLatitude);
+                        delete psCoord;
+                    }
+                }
+            }
+        }
+    }
+    else if (sName_.compare("Polygon") == 0)
+    {
+        //*********************************
+        // Search outerBoundaryIs Element
+        //*********************************
+        for(nCount = 0; nCount < pvpoChildren_->size(); nCount++)
+        {
+            if((*pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0)
+            {
+                poCoor = (*(*pvpoChildren_)[nCount]->pvpoChildren_)[0];
+            }
+        }
+        // No outer boundary found
+        if(poCoor == NULL)
+        {
+            return NULL;
+        }
+        // Search coordinate Element
+        OGRLinearRing* poLinearRing = NULL;
+        for(nCount = 0; nCount < poCoor->pvpoChildren_->size(); nCount++)
+        {
+            if((*poCoor->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
+            {
+                for(nCountP = 0; nCountP < (*poCoor->pvpoChildren_)[nCount]->pvsContent_->size(); nCountP++)
+                {
+                    psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
+                    if(psCoord != NULL)
+                    {
+                        if (poGeom == NULL)
+                        {
+                            poGeom = new OGRPolygon();
+                            poLinearRing = new OGRLinearRing();
+                        }
+                        if (psCoord->bHasZ)
+                            poLinearRing->addPoint(psCoord->dfLongitude,
+                                                   psCoord->dfLatitude,
+                                                   psCoord->dfAltitude);
+                        else
+                            poLinearRing->addPoint(psCoord->dfLongitude,
+                                                   psCoord->dfLatitude);
+                        delete psCoord;
+                    }
+                }
+            }
+        }
+        // No outer boundary coordinates found
+        if(poGeom == NULL)
+        {
+            return NULL;
+        }
+
+        ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
+        poLinearRing = NULL;
+
+        //*********************************
+        // Search innerBoundaryIs Elements
+        //*********************************
+
+        for(nCount2 = 0; nCount2 < pvpoChildren_->size(); nCount2++)
+        {
+            if((*pvpoChildren_)[nCount2]->sName_.compare("innerBoundaryIs") == 0)
+            {
+                if (poLinearRing)
+                    ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
+                poLinearRing = new OGRLinearRing();
+
+                poCoor = (*(*pvpoChildren_)[nCount2]->pvpoChildren_)[0];
+                // Search coordinate Element
+                for(nCount = 0; nCount < poCoor->pvpoChildren_->size(); nCount++)
+                {
+                    if((*poCoor->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
+                    {
+                        for(nCountP = 0; nCountP < (*poCoor->pvpoChildren_)[nCount]->pvsContent_->size(); nCountP++)
+                        {
+                            psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
+                            if(psCoord != NULL)
+                            {
+                                if (psCoord->bHasZ)
+                                    poLinearRing->addPoint(psCoord->dfLongitude,
+                                                        psCoord->dfLatitude,
+                                                        psCoord->dfAltitude);
+                                else
+                                    poLinearRing->addPoint(psCoord->dfLongitude,
+                                                        psCoord->dfLatitude);
+                                delete psCoord;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (poLinearRing)
+            ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
+    }
+    else if (sName_.compare("MultiGeometry") == 0)
+    {
+        if (eType == MultiPoint)
+            poGeom = new OGRMultiPoint();
+        else if (eType == MultiLineString)
+            poGeom = new OGRMultiLineString();
+        else if (eType == MultiPolygon)
+            poGeom = new OGRMultiPolygon();
+        else
+            poGeom = new OGRGeometryCollection();
+        for(nCount = 0; nCount < pvpoChildren_->size(); nCount++)
+        {
+            OGRGeometry* poSubGeom = (*pvpoChildren_)[nCount]->getGeometry();
+            if (poSubGeom)
+                ((OGRGeometryCollection*)poGeom)->addGeometryDirectly(poSubGeom);
+        }
+    }
+
+    return poGeom;
+}
+
+Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
+{
+    unsigned int nCount, nCountP = 0;
     KMLNode* poFeat = NULL;
     KMLNode* poTemp = NULL;
-    KMLNode* poCoor = NULL;
-    std::string sContent;
-    Coordinate* psCoord = NULL;
-    std::vector<Coordinate*>* pvpsTmp = NULL;
 
     if(nNum >= this->getNumFeatures())
         return NULL;
 
-    for(nCount = 0; nCount < pvpoChildren_->size(); nCount++)
+    if (nLastAsked + 1 != nNum)
+    {
+        nCount = 0;
+        nCountP = 0;
+    }
+    else
+    {
+        nCount = nLastCount + 1;
+        nCountP = nLastAsked + 1;
+    }
+
+    for(; nCount < pvpoChildren_->size(); nCount++)
     {
         if((*pvpoChildren_)[nCount]->sName_.compare("Placemark") == 0)
         {
@@ -482,320 +700,54 @@ Feature* KMLNode::getFeature(std::size_t nNum)
             nCountP++;
         }
     }
+
+    nLastAsked = nNum;
+    nLastCount = nCount;
+
     if(poFeat == NULL)
         return NULL;
         
     // Create a feature structure
     Feature *psReturn = new Feature;
-    psReturn->pvpsCoordinatesExtra = NULL;
     // Build up the name
     psReturn->sName = poFeat->getNameElement();
     // Build up the description
     psReturn->sDescription = poFeat->getDescriptionElement();
     // the type
     psReturn->eType = poFeat->eType_;
-    // the coordinates (for a Point)
-    if(poFeat->eType_ == Point)
+
+    std::string sElementName;
+    if(poFeat->eType_ == Point ||
+       poFeat->eType_ == LineString ||
+       poFeat->eType_ == Polygon)
+        sElementName = Nodetype2String(poFeat->eType_);
+    else if (poFeat->eType_ == MultiGeometry || 
+             poFeat->eType_ == MultiPoint || 
+             poFeat->eType_ == MultiLineString || 
+             poFeat->eType_ == MultiPolygon)
+        sElementName = "MultiGeometry";
+    else
     {
-        psReturn->pvpsCoordinates = new std::vector<Coordinate*>;
-        // Search Point Element
-        for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
-        {
-            if((*poFeat->pvpoChildren_)[nCount]->sName_.compare("Point") == 0)
-            {
-                poTemp = (*poFeat->pvpoChildren_)[nCount];
-                break;
-            }
-        }
-        // poTemp must be a Point
-        if(poTemp->sName_.compare("Point") != 0)
-        {
-            delete psReturn->pvpsCoordinates;
-            delete psReturn;
-            return NULL;
-        }
-
-        // Search coordinate Element
-        for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
-        {
-            if((*poTemp->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
-            {
-                poCoor = (*poTemp->pvpoChildren_)[nCount];
-                for(nCountP = 0; nCountP < poCoor->pvsContent_->size(); nCountP++)
-                {
-                    psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
-                    if(psCoord != NULL)
-                        psReturn->pvpsCoordinates->push_back(psCoord);
-                }
-            }
-        }
-        if(psReturn->pvpsCoordinates->size() == 1)
-            return psReturn;
-        else
-        {
-            for(unsigned short nNum = 0; nNum < psReturn->pvpsCoordinates->size(); nNum++)
-                delete (*psReturn->pvpsCoordinates)[nNum];
-            delete psReturn->pvpsCoordinates;
-            delete psReturn;
-            return NULL;
-        }
-    }
-    // the coordinates (for a LineString)
-    else if(poFeat->eType_ == LineString)
-    {
-        psReturn->pvpsCoordinates = new std::vector<Coordinate*>;
-        // Search LineString Element
-        for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
-        {
-            if((*poFeat->pvpoChildren_)[nCount]->sName_.compare("LineString") == 0)
-            {
-                poTemp = (*poFeat->pvpoChildren_)[nCount];
-                break;
-            }
-        }
-        // poTemp must be a LineString
-        if(poTemp->sName_.compare("LineString") != 0)
-        {
-            delete psReturn->pvpsCoordinates;
-            delete psReturn;
-            return NULL;
-        }
-
-        // Search coordinate Element
-        for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
-        {
-            if((*poTemp->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
-            {
-                poCoor = (*poTemp->pvpoChildren_)[nCount];
-                for(nCountP = 0; nCountP < poCoor->pvsContent_->size(); nCountP++)
-                {
-                    psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
-                    if(psCoord != NULL)
-                        psReturn->pvpsCoordinates->push_back(psCoord);
-                }
-            }
-        }
-        if(psReturn->pvpsCoordinates->size() > 0)
-            return psReturn;
-        else
-        {
-            delete psReturn->pvpsCoordinates;
-            delete psReturn;
-            return NULL;
-        }    
-    }
-    // the coordinates (for a Polygon)
-    else if(poFeat->eType_ == Polygon)
-    {
-        psReturn->pvpsCoordinates = new std::vector<Coordinate*>;
-        // Search Polygon Element
-        for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
-        {
-            if((*poFeat->pvpoChildren_)[nCount]->sName_.compare("Polygon") == 0)
-            {
-                poTemp = (*poFeat->pvpoChildren_)[nCount];
-                break;
-            }
-        }
-        // poTemp must be a Polygon
-        if(poTemp->sName_.compare("Polygon") != 0)
-        {
-            delete psReturn->pvpsCoordinates;
-            delete psReturn;
-            return NULL;
-        }
-
-        //*********************************
-        // Search outerBoundaryIs Element
-        //*********************************
-        for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
-        {
-            if((*poTemp->pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0)
-            {
-                poCoor = (*(*poTemp->pvpoChildren_)[nCount]->pvpoChildren_)[0];
-            }
-        }
-        // No outer boundary found
-        if(poCoor == NULL)
-        {
-            delete psReturn->pvpsCoordinates;
-            delete psReturn;
-            return NULL;
-        }
-        // Search coordinate Element
-        for(nCount = 0; nCount < poCoor->pvpoChildren_->size(); nCount++)
-        {
-            if((*poCoor->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
-            {
-                for(nCountP = 0; nCountP < (*poCoor->pvpoChildren_)[nCount]->pvsContent_->size(); nCountP++)
-                {
-                    psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
-                    if(psCoord != NULL)
-                        psReturn->pvpsCoordinates->push_back(psCoord);
-                }
-            }
-        }
-        // No outer boundary coordinates found
-        if(psReturn->pvpsCoordinates->size() == 0)
-        {
-            delete psReturn->pvpsCoordinates;
-            delete psReturn;
-            return NULL;
-        }
-        //*********************************
-        // Search innerBoundaryIs Elements
-        //*********************************
-        psReturn->pvpsCoordinatesExtra = new std::vector< std::vector<Coordinate*>* >;
-
-        for(nCount2 = 0; nCount2 < poTemp->pvpoChildren_->size(); nCount2++)
-        {
-            if((*poTemp->pvpoChildren_)[nCount2]->sName_.compare("innerBoundaryIs") == 0)
-            {
-                pvpsTmp = new std::vector<Coordinate*>; 
-                poCoor = (*(*poTemp->pvpoChildren_)[nCount2]->pvpoChildren_)[0];
-                // Search coordinate Element
-                for(nCount = 0; nCount < poCoor->pvpoChildren_->size(); nCount++)
-                {
-                    if((*poCoor->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
-                    {
-                        for(nCountP = 0; nCountP < (*poCoor->pvpoChildren_)[nCount]->pvsContent_->size(); nCountP++)
-                        {
-                            psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
-                            if(psCoord != NULL)
-                                pvpsTmp->push_back(psCoord);
-                        }
-                    }
-                }
-                // Outer boundary coordinates found?
-                if(psReturn->pvpsCoordinates->size() > 0)
-                    psReturn->pvpsCoordinatesExtra->push_back(pvpsTmp);
-                else
-                    delete pvpsTmp;
-            }
-        }
-        // No inner boundaries
-        if(psReturn->pvpsCoordinates->size() == 0)
-            delete psReturn->pvpsCoordinates;
-        // everything OK
-        return psReturn;
+        delete psReturn;
+        return NULL;
     }
 
-    // Nothing found
+    for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
+    {
+        if((*poFeat->pvpoChildren_)[nCount]->sName_.compare(sElementName) == 0)
+        {
+            poTemp = (*poFeat->pvpoChildren_)[nCount];
+            psReturn->poGeom = poTemp->getGeometry(poFeat->eType_);
+            if(psReturn->poGeom)
+                return psReturn;
+            else
+            {
+                delete psReturn;
+                return NULL;
+            }
+        }
+    }
+
     delete psReturn;
     return NULL;
 }
-
-void KMLNode::calcExtent(KML *poKML)
-{
-    CPLAssert( NULL != poKML );
-
-    KMLNode* poTmp = NULL;
-    Coordinate* psCoords = NULL;
-    
-    if( psExtent_ != NULL )
-        return;
-
-    // Handle Features
-    if(poKML->isFeature(sName_))
-    {
-        psExtent_ = new Extent();
-
-        // Special for Polygons
-        if(sName_.compare("Polygon") == 0)
-        {
-            for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
-            {
-                if((*pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0
-                   || (*pvpoChildren_)[nCount]->sName_.compare("innerBoundaryIs") == 0)
-                {
-                    if((*pvpoChildren_)[nCount]->pvpoChildren_->size() == 1)
-                    {
-                        poTmp = (*(*pvpoChildren_)[nCount]->pvpoChildren_)[0];
-                        for(unsigned short nCount3 = 0; nCount3 < poTmp->pvpoChildren_->size(); nCount3++)
-                        {
-                            if((*poTmp->pvpoChildren_)[nCount3]->sName_.compare("coordinates") == 0)
-                            {
-                                for(unsigned short nCount2 = 0;
-                                    nCount2 < (*poTmp->pvpoChildren_)[nCount3]->pvsContent_->size(); nCount2++)
-                                {
-                                    psCoords = ParseCoordinate((*(*poTmp->pvpoChildren_)[nCount3]->pvsContent_)[nCount2]);
-                                    if(psCoords != NULL)
-                                    {
-                                        if(psCoords->dfLongitude < psExtent_->dfX1 || psExtent_->dfX1 == 0)
-                                            psExtent_->dfX1 = psCoords->dfLongitude;
-                                        if(psCoords->dfLongitude > psExtent_->dfX2 || psExtent_->dfX2 == 0)
-                                            psExtent_->dfX2 = psCoords->dfLongitude;
-                                        if(psCoords->dfLatitude < psExtent_->dfY1 || psExtent_->dfY1 == 0)
-                                            psExtent_->dfY1 = psCoords->dfLatitude;
-                                        if(psCoords->dfLatitude > psExtent_->dfY2 || psExtent_->dfY2 == 0)
-                                            psExtent_->dfY2 = psCoords->dfLatitude;
-                                        delete psCoords;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        // General for LineStrings and Points
-        }
-        else
-        {
-            for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
-            {
-                if((*pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
-                {
-                    poTmp = (*pvpoChildren_)[nCount];
-                    for(unsigned short nCount2 = 0; nCount2 < poTmp->pvsContent_->size(); nCount2++)
-                    {
-                        psCoords = ParseCoordinate((*poTmp->pvsContent_)[nCount2]);
-                        if(psCoords != NULL)
-                        {
-                            if(psCoords->dfLongitude < psExtent_->dfX1 || psExtent_->dfX1 == 0.0)
-                                psExtent_->dfX1 = psCoords->dfLongitude;
-                            if(psCoords->dfLongitude > psExtent_->dfX2 || psExtent_->dfX2 == 0.0)
-                                psExtent_->dfX2 = psCoords->dfLongitude;
-                            if(psCoords->dfLatitude < psExtent_->dfY1 || psExtent_->dfY1 == 0.0)
-                                psExtent_->dfY1 = psCoords->dfLatitude;
-                            if(psCoords->dfLatitude > psExtent_->dfY2 || psExtent_->dfY2 == 0.0)
-                                psExtent_->dfY2 = psCoords->dfLatitude;
-                            delete psCoords;
-                        }
-                    }
-                }
-            }
-        }
-    // Summarize Containers
-    }
-    else if( poKML->isFeatureContainer(sName_)
-             || poKML->isContainer(sName_))
-    {
-        psExtent_ = new Extent;
-        psExtent_->dfX1 = psExtent_->dfX2 = psExtent_->dfY1 = psExtent_->dfY2 = 0.0;
-        for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
-        {
-            (*pvpoChildren_)[nCount]->calcExtent(poKML);
-            if((*pvpoChildren_)[nCount]->psExtent_ != NULL)
-            {
-                if((*pvpoChildren_)[nCount]->psExtent_->dfX1 < psExtent_->dfX1
-                   || psExtent_->dfX1 == 0)
-                    psExtent_->dfX1 = (*pvpoChildren_)[nCount]->psExtent_->dfX1;
-                if((*pvpoChildren_)[nCount]->psExtent_->dfX2 > psExtent_->dfX2
-                   || psExtent_->dfX2 == 0)
-                    psExtent_->dfX2 = (*pvpoChildren_)[nCount]->psExtent_->dfX2;
-                if((*pvpoChildren_)[nCount]->psExtent_->dfY1 < psExtent_->dfY1
-                   || psExtent_->dfY1 == 0)
-                    psExtent_->dfY1 = (*pvpoChildren_)[nCount]->psExtent_->dfY1;
-                if((*pvpoChildren_)[nCount]->psExtent_->dfY2 > psExtent_->dfY2
-                   || psExtent_->dfY2 == 0)
-                    psExtent_->dfY2 = (*pvpoChildren_)[nCount]->psExtent_->dfY2;
-            }
-        }
-    }
-}
-
-Extent const* KMLNode::getExtents() const
-{
-    return psExtent_;
-}
-
