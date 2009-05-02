@@ -78,12 +78,12 @@ public:
 	void classifyNodes();
 	void eliminateEmpty();
 	int getNumLayers() const;
-    bool selectLayer(unsigned short);
+    bool selectLayer(int);
     std::string getCurrentName() const;
     Nodetype getCurrentType() const;
-    int getNumFeatures() const;
-    Feature* getFeature(std::size_t nNum) const;
-    bool getExtents(double& pdfXMin, double& pdfXMax, double& pdfYMin, double& pdfYMax) const;
+    int is25D() const;
+    int getNumFeatures();
+    Feature* getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount);
 
 protected:
 	void checkValidity();
@@ -96,7 +96,7 @@ protected:
 	// trunk of KMLnodes
 	KMLNode* poTrunk_;
 	// number of layers;
-	short nNumLayers_;
+	int nNumLayers_;
 
 private:
 	// depth of the DOM
@@ -111,6 +111,7 @@ private:
 	std::string sError_;
 	// current KMLNode
 	KMLNode *poCurrent_;
+        int nCurrentLayer_;
 };
 
 #endif /* OGR_KML_KML_H_INCLUDED */
