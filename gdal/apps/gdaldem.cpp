@@ -1108,7 +1108,7 @@ int main( int argc, char ** argv )
         fprintf( stderr, "Missing color file.\n\n" );
         Usage();
     }
-    if( pszSrcFilename == NULL )
+    if( pszDstFilename == NULL )
     {
         fprintf( stderr, "Missing destination.\n\n" );
         Usage();
