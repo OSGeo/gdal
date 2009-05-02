@@ -148,7 +148,7 @@ void KML::parse()
             return;
         }
         nWithoutEventCounter ++;
-    } while (!nDone && nLen > 0 & nWithoutEventCounter < 10);
+    } while (!nDone && nLen > 0 && nWithoutEventCounter < 10);
 
     XML_ParserFree(oParser);
     VSIRewindL(pKMLFile_);
