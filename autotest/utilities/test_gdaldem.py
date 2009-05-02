@@ -153,6 +153,51 @@ def test_gdaldem_aspect():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test gdaldem color relief
+
+def test_gdaldem_color_relief():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.tif')
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.Open('tmp/n43_colorrelief.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 54390:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 36948:
+        print ds.GetRasterBand(2).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 47808:
+        print ds.GetRasterBand(3).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    src_gt = src_ds.GetGeoTransform()
+    dst_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
+            gdaltest.post_reason('Bad geotransform')
+            return 'fail'
+
+    dst_wkt = ds.GetProjectionRef()
+    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
+        gdaltest.post_reason('Bad projection')
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    return 'success'
 ###############################################################################
 # Cleanup
 
@@ -169,13 +214,17 @@ def test_gdaldem_cleanup():
         os.remove('tmp/n43_aspect.tif')
     except:
         pass
-
+    try:
+        os.remove('tmp/n43_colorrelief.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
     test_gdaldem_shade,
     test_gdaldem_slope,
     test_gdaldem_aspect,
+    test_gdaldem_color_relief,
     test_gdaldem_cleanup
     ]
 
