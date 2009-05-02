@@ -756,7 +756,7 @@ int main( int argc, char ** argv )
              EQUAL(argv[i], "-b"))
           )
         {
-            nBand = atof(argv[++i]);
+            nBand = atoi(argv[++i]);
         }
         else if ( EQUAL(argv[i], "-quiet") )
         {
