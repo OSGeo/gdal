@@ -1,12 +1,12 @@
 
-/*! \page gdal_polygonize gdal_polygonize
+/*! \page gdal_polygonize gdal_polygonize.py
 
 produces a polygon feature layer from a raster 
 
 \section synopsis SYNOPSIS
 
 \verbatim
-gdal_polygonize [-o name=value] [-nomask] [-mask filename] raster_file [-b band]
+gdal_polygonize.py [-o name=value] [-nomask] [-mask filename] raster_file [-b band]
                 [-q] [-f ogr_format] out_file [layer] [fieldname]
 \endverbatim
 

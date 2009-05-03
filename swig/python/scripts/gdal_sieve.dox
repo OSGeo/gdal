@@ -1,12 +1,12 @@
 
-/*! \page gdal_sieve gdal_sieve
+/*! \page gdal_sieve gdal_sieve.py
 
 removes small raster polygons
 
 \section synopsis SYNOPSIS
 
 \verbatim
-gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
+gdal_sieve.py [-q] [-st threshold] [-4] [-8] [-o name=value]
            srcfile [-nomask] [-mask filename] [-of format] [dstfile]
 \endverbatim
 
