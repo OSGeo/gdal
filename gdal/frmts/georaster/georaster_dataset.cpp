@@ -996,6 +996,8 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
         return CE_Failure;
     }
 
+    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+
     bGeoTransform = true;
 
     return CE_None;
