@@ -167,17 +167,17 @@ def test_gdaldem_color_relief():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum() != 54390:
+    if ds.GetRasterBand(1).Checksum() != 55009:
         print ds.GetRasterBand(1).Checksum()
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
-    if ds.GetRasterBand(2).Checksum() != 36948:
+    if ds.GetRasterBand(2).Checksum() != 37543:
         print ds.GetRasterBand(2).Checksum()
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
-    if ds.GetRasterBand(3).Checksum() != 47808:
+    if ds.GetRasterBand(3).Checksum() != 47711:
         print ds.GetRasterBand(3).Checksum()
         gdaltest.post_reason('Bad checksum')
         return 'fail'
