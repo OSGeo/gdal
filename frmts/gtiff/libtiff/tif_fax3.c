@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.66 2008-12-31 23:48:02 bfriesen Exp $ */
+/* $Id: tif_fax3.c,v 1.67 2009-03-13 02:02:51 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -1256,6 +1256,8 @@ Fax3PrintDir(TIFF* tif, FILE* fd, long flags)
 	if (TIFFFieldSet(tif,FIELD_BADFAXRUN))
 		fprintf(fd, "  Consecutive Bad Fax Lines: %lu\n",
 		    (unsigned long) sp->badfaxrun);
+	if (sp->printdir)
+		(*sp->printdir)(tif, fd, flags);
 }
 
 static int
