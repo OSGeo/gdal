@@ -915,6 +915,10 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                         psDstField->Integer = poSrcFeat->GetFieldAsInteger(psKeyDef->field_index);
                         break;
 
+                      case SWQ_FLOAT:
+                        psDstField->Real = poSrcFeat->GetFieldAsDouble(psKeyDef->field_index);
+                        break;
+
                       default:
                         psDstField->String = CPLStrdup( poSrcFeat->GetFieldAsString(psKeyDef->field_index) );
                         break;
@@ -1144,6 +1148,12 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
                 if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
                     nResult = -1;
                 else if( pasFirstTuple[iKey].Integer > pasSecondTuple[iKey].Integer )
+                    nResult = 1;
+                break;
+              case SWQ_FLOAT:
+                if( pasFirstTuple[iKey].Real < pasSecondTuple[iKey].Real )
+                    nResult = -1;
+                else if( pasFirstTuple[iKey].Real > pasSecondTuple[iKey].Real )
                     nResult = 1;
                 break;
               case SWQ_STRING:
