@@ -15,6 +15,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdaltindex - Build a MapServer raster tileindex.
 <li> \ref gdalbuildvrt - Build a VRT from a list of datasets.
 <li> \ref gdal_contour - Contours from DEM.
+<li> \ref gdaldem - Tools to analyze and visualize DEMs.
 <li> \ref rgb2pct - Convert a 24bit RGB image to 8bit paletted.
 <li> \ref pct2rgb - Convert an 8bit paletted image to 24bit RGB.
 <li> \ref gdal_merge - Build a quick mosaic from a set of images.
@@ -520,9 +521,9 @@ Frank Warmerdam <warmerdam@pobox.com>
 *******************************************************************************
 /*! \page gdalbuildvrt gdalbuildvrt
 
-Builds a VRT from a list of datasets.
+Builds a VRT from a list of datasets. (compiled by default since GDAL 1.7.0)
 
-\section isynopsis SYNOPSIS
+\section gdalbuildvrt_synopsis SYNOPSIS
 
 \verbatim
 gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average}]
@@ -530,7 +531,7 @@ gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average}]
              [-input_file_list my_liste.txt] output.vrt [gdalfile]*
 \endverbatim
 
-\section idescription DESCRIPTION
+\section gdalbuildvrt_description DESCRIPTION
 
 This program builds a VRT (Virtual Dataset) that is a mosaic of the list of
 input gdal datasets. The list of input gdal datasets can be specified at the end
@@ -585,7 +586,7 @@ To specify a text file with an input filename on each line/
 
 </dl>
 
-\section iexample EXAMPLE
+\section gdalbuildvrt_example EXAMPLE
 
 \htmlonly
 Example:
@@ -598,7 +599,7 @@ gdalbuildvrt -separate rgb.vrt red.tif green.tif blue.tif
 \endverbatim
 
 \if man
-\section wauthor AUTHOR
+\section gdalbuildvrt_author AUTHOR
 Even Rouault <even.rouault@mines-paris.org>
 \endif
 */
@@ -608,7 +609,7 @@ Even Rouault <even.rouault@mines-paris.org>
 
 builds vector contour lines from a raster elevation model
 
-\section isynopsis SYNOPSIS
+\section gdal_contour_synopsis SYNOPSIS
 
 \verbatim
 Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
@@ -618,7 +619,7 @@ Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
                     <src_filename> <dst_filename> 
 \endverbatim
 
-\section idescription DESCRIPTION
+\section gdal_contour_description DESCRIPTION
 
 This program generates a vector contour file from the input raster elevation
 model (DEM). 
@@ -652,7 +653,7 @@ create output in a particular format, default is shapefiles.</dd>
 <dd> Provide a name for the output vector layer.  Defaults to "contour".</dd>
 </dl>
 
-\section iexample EXAMPLE
+\section gdal_contour_example EXAMPLE
 
 This would create 10meter contours from the DEM data in dem.tif and produce
 a shapefile in contour.shp/shx/dbf with the contour elevations in the "elev"
@@ -663,7 +664,7 @@ gdal_contour -a elev dem.tif contour.shp -i 10.0
 \endverbatim
 
 \if man
-\section iauthor AUTHORS
+\section gdal_contour_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
@@ -1161,10 +1162,10 @@ to stdout.
 *******************************************************************************
 /*! \page gdal_retile gdal_retile.py
 
-gdal_retile  - gdal_retily.py retiles a set of tiles and/or build tiled pyramid levels
+gdal_retile.py retiles a set of tiles and/or build tiled pyramid levels
 
 \if man
-\section msynopsis SYNOPSIS
+\section retile_synopsis SYNOPSIS
 \endif
 
 \htmlonly
@@ -1185,7 +1186,7 @@ gdal_retile.py [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeig
 
 \endverbatim
 \if man
-\section mdescription DESCRIPTION
+\section retile_description DESCRIPTION
 \endif
 
 This utility will retile a set of input tile(s). All the input tile(s) must
@@ -1253,7 +1254,7 @@ NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
 with Python support.
 
 \if man
-\section mauthor AUTHORS
+\section retile_author AUTHORS
 Christian Mueller <christian.mueller@nvoe.at>
 \endif
 */
@@ -1536,3 +1537,139 @@ Andrey Kiselev <dron@ak4719.spb.edu>
 \endif
 */
 
+
+*******************************************************************************
+/*! \page gdaldem gdaldem
+
+Tools to analyze and visualize DEMs. (since GDAL 1.7.0)
+
+\section gdaldem_synopsis SYNOPSIS
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+
+- To generate a shaded relief map from any GDAL-supported elevation raster :
+    gdaldem hillshade input_dem output_hillshade
+                [-z ZFactor (default=1)] [-s scale* (default=1)]"
+                [-az Azimuth (default=315)] [-alt Altitude (default=45)]
+                [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-quiet]
+
+- To generate a slope map from any GDAL-supported elevation raster :
+    gdaldem slope input_dem output_slope_map"
+                [-p use percent slope (default=degrees)] [-s scale* (default=1)]
+                [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-quiet]
+
+- To generate an aspect map from any GDAL-supported elevation raster
+  Outputs a 32-bit float raster with pixel values from 0-360 indicating azimuth :
+    gdaldem aspect input_dem output_aspect_map"
+                [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-quiet]
+
+- To generate a color relief map from any GDAL-supported elevation raster
+    gdaldem color-relief input_dem color_text_file output_color_relief_map
+                [-alpha]
+                [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-quiet]
+    where color_text_file contains lines of the format "elevation_value red green blue"
+
+Notes :
+  Scale is the ratio of vertical units to horizontal
+   for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120)
+
+\endverbatim
+\if man
+\section gdaldem_description DESCRIPTION
+\endif
+
+This utility has 4 different modes :
+<dl>
+<dt>\ref gdaldem_hillshade</dt><dd>to generate a shaded relief map from any GDAL-supported elevation raster</dd>
+<dt>\ref gdaldem_slope</dt><dd>to generate a slope map from any GDAL-supported elevation raster</dd>
+<dt>\ref gdaldem_aspect</dt><dd>to generate an aspect map from any GDAL-supported elevation raster</dd>
+<dt>\ref gdaldem_color_relief</dt><dd>to generate a color relief map from any GDAL-supported elevation raster</dd>
+</dl>
+
+The following general options are available :
+<dl>
+<dt> <i>input_dem</i>:</dt><dd> The input DEM raster to be processed</dd>
+<dt> <i>output_xxx_map</i>:</dt><dd> The output raster produced</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
+is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input <i>band</i> to be processed. Bands are numbered from 1.</dd>
+<dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
+output format driver.  Multiple <b>-co</b> options may be listed.  See format 
+specific documentation for legal creation options for each format.</dd>
+<dt> <b>-quiet</b>:</dt><dd> Suppress progress monitor and other non-error
+output.</dd>
+</dl>
+
+\section gdaldem_modes Modes
+
+\subsection gdaldem_hillshade hillshade
+
+This command outputs an 8-bit raster with a nice shaded relief effect.
+It’s very useful for visualizing the terrain.
+You can optionally specify the azimuth and altitude of the light source,
+a vertical exaggeration factor and a scaling factor to account for differences between vertical and horizontal units.
+
+The following specific options are available :
+<dl>
+<dt> <b>-z</b> <i>zFactor</i>:</dt><dd>vertical exaggeration used to pre-multiply the elevations</dd>
+<dt> <b>-s</b> <i>scale</i>:</dt><dd>ratio of vertical units to horizontal. If the horizontal unit of the source DEM is degrees (e.g Lat/Long WGS84 projection), you can use scale=111120 if the vertical units are meters (or scale=370400 if they are in feet)</dd>
+<dt> <b>-az</b> <i>azimuth</i>:</dt><dd>azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.</dd>
+<dt> <b>-alt</b> <i>altitude</i>:</dt><dd>altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.</dd>
+</dl>
+
+\subsection gdaldem_slope slope
+
+This command will take a DEM raster and output a 32-bit float raster with slope values.
+You have the option of specifying the type of slope value you want: degrees or percent slope.
+In cases where the horizontal units differ from the vertical units, you can also supply a scaling factor.
+
+The following specific options are available :
+<dl>
+<dt> <b>-p</b> :</dt><dd>if specified, the slope will be expressed as percent slope. Otherwise, it is expressed as degrees</dd>
+<dt> <b>-s</b> <i>scale</i>:</dt><dd>ratio of vertical units to horizontal. If the horizontal unit of the source DEM is degrees (e.g Lat/Long WGS84 projection), you can use scale=111120 if the vertical units are meters (or scale=370400 if they are in feet)</dd>
+</dl>
+
+\subsection gdaldem_aspect aspect
+
+This command outputs a 32-bit float raster with values between 0 and 360 representing the azimuth of the terrain.
+
+\subsection gdaldem_color_relief color-relief
+
+This command outputs a 3-band (RGB) raster with values are computed from the elevation
+and a text-based color configuration file, containing the association between various elevation
+values and the corresponding wished color. The colors between the given elevation values
+are blended smoothly and the result is a nice colorized DEM.
+
+The following specifics options are available :
+<dl>
+<dt> <i>color_text_file</i>:</dt><dd> text-based color configuration file</dd>
+<dt> <b>-alpha</b> :</dt><dd>add an alpha channel to the output raster</dd>
+</dl>
+
+The text-based color configuration file contains 4 columns per line : the elevation value and the corresponding RGB values.
+The elevation value can be any floating point value, or one of the following special keywords : <i>min</i>, <i>max</i>, <i>nodata</i>.
+
+An extra column can be optionnaly added for the alpha component. If it is not specified, full opacity (255) is assumed.
+
+Various field separators are accepted : comma, tabulation, spaces.
+
+For example :
+\verbatim
+3500   255 255 255
+2500   235 220 175
+1500   190 185 135
+700    240 250 150
+0      50  180  50
+nodata 0   0   0   0 
+\endverbatim
+
+
+\if man
+\section gdaldem_author AUTHORS
+Matthew Perry <perrygeo@gmail.com>, Even Rouault <even.rouault@mines-paris.org>
+\endif
+*/
