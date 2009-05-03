@@ -34,6 +34,16 @@
 #include <my_global.h>
 #include <mysql.h>
 
+/* my_global.h from mysql 5.1 declares the min and max macros. */
+/* This conflicts with templates in g++-4.3.2 header files. Grrr */
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 #ifdef bool
 #undef bool
 #endif
