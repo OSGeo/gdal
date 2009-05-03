@@ -360,7 +360,7 @@ OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
         if (EQUAL(poFeatureDefn->GetFieldDefn(poFeatureDefn->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))
         {
             //Write original ILI geometry
-            VSIFPrintf( poDS->GetTransferFile(), poFeature->GetFieldAsString( poFeatureDefn->GetFieldCount()-1 ) );
+            VSIFPrintf( poDS->GetTransferFile(), "%s", poFeature->GetFieldAsString( poFeatureDefn->GetFieldCount()-1 ) );
         }
         else
         {
