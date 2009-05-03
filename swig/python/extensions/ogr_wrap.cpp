@@ -867,7 +867,7 @@ SWIG_Python_AddErrorMsg(const char* mesg)
     Py_DECREF(old_str);
     Py_DECREF(value);
   } else {
-    PyErr_Format(PyExc_RuntimeError, mesg);
+    PyErr_SetString(PyExc_RuntimeError, mesg);
   }
 }
 
@@ -3484,7 +3484,10 @@ SWIGINTERN OGRGeometryShadow *new_OGRGeometryShadow(OGRwkbGeometryType type=wkbU
       return CreateGeometryFromGML( gml );
     }
     // throw?
-    else return 0;
+    else {
+        CPLError(CE_Failure, 1, "Empty geometries cannot be constructed");
+        return NULL;}
+
   }
 SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkt(OGRGeometryShadow *self,char **argout){
     return OGR_G_ExportToWkt(self, argout);
@@ -3650,7 +3653,7 @@ SWIGINTERN void OGRGeometryShadow_GetEnvelope(OGRGeometryShadow *self,double arg
     OGR_G_GetEnvelope(self, (OGREnvelope*)argout);
   }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Centroid(OGRGeometryShadow *self){
-    OGRGeometryShadow *pt = new_OGRGeometryShadow( wkbPoint );
+    OGRGeometryShadow *pt = (OGRGeometryShadow*) OGR_G_CreateGeometry( wkbPoint );
     OGR_G_Centroid( self, pt );
     return pt;
   }

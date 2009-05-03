@@ -867,7 +867,7 @@ SWIG_Python_AddErrorMsg(const char* mesg)
     Py_DECREF(old_str);
     Py_DECREF(value);
   } else {
-    PyErr_Format(PyExc_RuntimeError, mesg);
+    PyErr_SetString(PyExc_RuntimeError, mesg);
   }
 }
 
@@ -2692,7 +2692,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 
   void Debug( const char *msg_class, const char *message ) {
-    CPLDebug( msg_class, message );
+    CPLDebug( msg_class, "%s", message );
   }
 
   CPLErr PushErrorHandler( char const * pszCallbackName = NULL ) {
@@ -2793,7 +2793,7 @@ SWIG_From_int  (int value)
 
 
   void Error( CPLErr msg_class = CE_Failure, int err_code = 0, const char* msg = "error" ) {
-    CPLError( msg_class, err_code, msg );
+    CPLError( msg_class, err_code, "%s", msg );
   }
 
 
