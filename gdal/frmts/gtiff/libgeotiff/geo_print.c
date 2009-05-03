@@ -235,7 +235,7 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
 static void DefaultPrint(char *string, void *aux)
 {
     /* Pretty boring */
-    fprintf((FILE *)aux,string);
+    fprintf((FILE *)aux,"%s",string);
 }
 
 

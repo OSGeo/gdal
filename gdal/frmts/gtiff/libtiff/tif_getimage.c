@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.70 2009/02/13 21:28:58 fwarmerdam Exp $ */
+/* $Id: tif_getimage.c,v 1.71 2009-05-03 14:29:36 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -492,7 +492,7 @@ TIFFReadRGBAImageOriented(TIFF* tif,
 			rwidth, img.height);
 		TIFFRGBAImageEnd(&img);
 	} else {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), emsg);
+		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", emsg);
 		ok = 0;
     }
     return (ok);
@@ -592,7 +592,7 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 
     buf = (unsigned char*) _TIFFmalloc(TIFFTileSize(tif));
     if (buf == 0) {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "No space for tile buffer");
+		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "No space for tile buffer");
 		return (0);
     }
     _TIFFmemset(buf, 0, TIFFTileSize(tif));
@@ -693,7 +693,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	tilesize = TIFFTileSize(tif);  
 	buf = (unsigned char*) _TIFFmalloc((alpha?4:3)*tilesize);
 	if (buf == 0) {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "No space for tile buffer");
+		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "No space for tile buffer");
 		return (0);
 	}
 	_TIFFmemset(buf, 0, (alpha?4:3)*tilesize);
@@ -2674,7 +2674,7 @@ TIFFReadRGBAStrip(TIFF* tif, uint32 row, uint32 * raster )
         
 	TIFFRGBAImageEnd(&img);
     } else {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), emsg);
+		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", emsg);
 		ok = 0;
     }
     
@@ -2726,7 +2726,7 @@ TIFFReadRGBATile(TIFF* tif, uint32 col, uint32 row, uint32 * raster)
     
     if (!TIFFRGBAImageOK(tif, emsg) 
 	|| !TIFFRGBAImageBegin(&img, tif, 0, emsg)) {
-	    TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), emsg);
+	    TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", emsg);
 	    return( 0 );
     }
 
