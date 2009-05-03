@@ -2351,7 +2351,12 @@ static int FORCE_CDECL swq_compare_int( const void *item1, const void *item2 )
     v1 = atoi(*((const char **) item1));
     v2 = atoi(*((const char **) item2));
 
-    return v1 - v2;
+    if( v1 < v2 )
+        return -1;
+    else if( v1 == v2 )
+        return 0;
+    else
+        return 1;
 }
 
 static int FORCE_CDECL swq_compare_real( const void *item1, const void *item2 )
