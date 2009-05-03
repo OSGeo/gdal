@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.43 2008-12-30 01:36:26 bfriesen Exp $ */
+/* $Id: tif_ojpeg.c,v 1.45 2009-05-03 14:29:36 fwarmerdam Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -237,6 +237,7 @@ typedef struct {
 	#endif
 	TIFFVGetMethod vgetparent;
 	TIFFVSetMethod vsetparent;
+	TIFFPrintMethod printdir;
 	uint64 file_size;
 	uint32 image_width;
 	uint32 image_length;
@@ -453,6 +454,7 @@ TIFFInitOJPEG(TIFF* tif, int scheme)
 	tif->tif_tagmethods.vgetfield=OJPEGVGetField;
 	sp->vsetparent=tif->tif_tagmethods.vsetfield;
 	tif->tif_tagmethods.vsetfield=OJPEGVSetField;
+	sp->printdir=tif->tif_tagmethods.printdir;
 	tif->tif_tagmethods.printdir=OJPEGPrintDir;
 	/* Some OJPEG files don't have strip or tile offsets or bytecounts tags.
 	   Some others do, but have totally meaningless or corrupt values
@@ -624,6 +626,8 @@ OJPEGPrintDir(TIFF* tif, FILE* fd, long flags)
 		fprintf(fd,"  JpegProc: %u\n",(unsigned int)sp->jpeg_proc);
 	if (TIFFFieldSet(tif,FIELD_OJPEG_JPEGRESTARTINTERVAL))
 		fprintf(fd,"  JpegRestartInterval: %u\n",(unsigned int)sp->restart_interval);
+	if (sp->printdir)
+		(*sp->printdir)(tif, fd, flags);
 }
 
 static int
@@ -917,6 +921,7 @@ OJPEGCleanup(TIFF* tif)
 	{
 		tif->tif_tagmethods.vgetfield=sp->vgetparent;
 		tif->tif_tagmethods.vsetfield=sp->vsetparent;
+		tif->tif_tagmethods.printdir=sp->printdir;
 		if (sp->qtable[0]!=0)
 			_TIFFfree(sp->qtable[0]);
 		if (sp->qtable[1]!=0)
@@ -2382,7 +2387,7 @@ OJPEGLibjpegJpegErrorMgrOutputMessage(jpeg_common_struct* cinfo)
 {
 	char buffer[JMSG_LENGTH_MAX];
 	(*cinfo->err->format_message)(cinfo,buffer);
-	TIFFWarningExt(((TIFF*)(cinfo->client_data))->tif_clientdata,"LibJpeg",buffer);
+	TIFFWarningExt(((TIFF*)(cinfo->client_data))->tif_clientdata,"LibJpeg","%s",buffer);
 }
 
 static void
@@ -2390,7 +2395,7 @@ OJPEGLibjpegJpegErrorMgrErrorExit(jpeg_common_struct* cinfo)
 {
 	char buffer[JMSG_LENGTH_MAX];
 	(*cinfo->err->format_message)(cinfo,buffer);
-	TIFFErrorExt(((TIFF*)(cinfo->client_data))->tif_clientdata,"LibJpeg",buffer);
+	TIFFErrorExt(((TIFF*)(cinfo->client_data))->tif_clientdata,"LibJpeg","%s",buffer);
 	jpeg_encap_unwind((TIFF*)(cinfo->client_data));
 }
 
