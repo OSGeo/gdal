@@ -201,6 +201,28 @@ def ogr_join_8():
         return 'fail'
 
 ###############################################################################
+# Verify fix for #2788 (memory corruption on wildcard expansion in SQL request
+# with join clauses)
+
+def ogr_join_9():
+
+    expect = [ 179, 171, 173, 172 ]
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( 	\
+        'SELECT poly.* FROM poly ' \
+        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
+        + 'WHERE eas_id > 170' )
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'poly.EAS_ID', expect )
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+    
+###############################################################################
 
 def ogr_join_cleanup():
     gdaltest.lyr = None
@@ -218,6 +240,7 @@ gdaltest_list = [
     ogr_join_6,
     ogr_join_7,
     ogr_join_8,
+    ogr_join_9,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':
