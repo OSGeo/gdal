@@ -44,7 +44,16 @@ ogr_wrap.cpp: ../include/python/ogr_python.i
 
 osr_wrap.cpp: ../include/python/osr_python.i
 
+# Remove the following hack (cat, mv) as soon we have upgraded to SWIG >= 1.3.36
 generate: ${WRAPPERS}
+	sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/gdal_wrap.cpp > ${SWIGOUTPUTDIR}/gdal_wrap.cpp.tmp
+	mv -f ${SWIGOUTPUTDIR}/gdal_wrap.cpp.tmp ${SWIGOUTPUTDIR}/gdal_wrap.cpp
+	sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/gdalconst_wrap.c > ${SWIGOUTPUTDIR}/gdalconst_wrap.c.tmp
+	mv -f ${SWIGOUTPUTDIR}/gdalconst_wrap.c.tmp ${SWIGOUTPUTDIR}/gdalconst_wrap.c
+	sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/ogr_wrap.cpp > ${SWIGOUTPUTDIR}/ogr_wrap.cpp.tmp
+	mv -f ${SWIGOUTPUTDIR}/ogr_wrap.cpp.tmp ${SWIGOUTPUTDIR}/ogr_wrap.cpp
+	sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/osr_wrap.cpp > ${SWIGOUTPUTDIR}/osr_wrap.cpp.tmp
+	mv -f ${SWIGOUTPUTDIR}/osr_wrap.cpp.tmp ${SWIGOUTPUTDIR}/osr_wrap.cpp
 
 build:
 	$(PYTHON) setup.py build
