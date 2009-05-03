@@ -1059,7 +1059,7 @@ error:
     delete poDS;
 
     if (szErrorMsg)
-        CPLError( CE_Failure, CPLE_AppDefined, szErrorMsg );
+        CPLError( CE_Failure, CPLE_AppDefined, "%s", szErrorMsg );
     return NULL;
 }
 
