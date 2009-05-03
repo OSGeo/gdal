@@ -41,10 +41,10 @@ typedef enum
 
 %inline %{
   void Debug( const char *msg_class, const char *message ) {
-    CPLDebug( msg_class, message );
+    CPLDebug( msg_class, "%s", message );
   }
   void Error( CPLErr msg_class = CE_Failure, int err_code = 0, const char* msg = "error" ) {
-    CPLError( msg_class, err_code, msg );
+    CPLError( msg_class, err_code, "%s", msg );
   }
 
   CPLErr PushErrorHandler( char const * pszCallbackName = "CPLQuietErrorHandler" ) {
