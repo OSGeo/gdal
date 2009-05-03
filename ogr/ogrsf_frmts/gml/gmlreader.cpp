@@ -276,7 +276,7 @@ GMLFeature *GMLReader::NextFeature()
     catch (const SAXException& toCatch)
     {
         char *pszErrorMessage = tr_strdup( toCatch.getMessage() );
-        CPLError(CE_Failure, CPLE_AppDefined, pszErrorMessage);
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMessage);
         CPLFree(pszErrorMessage);
         m_bStopParsing = TRUE;
     }
