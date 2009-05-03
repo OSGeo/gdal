@@ -38,7 +38,7 @@
 #include "gdal.h"
 
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 #ifndef M_PI
 # define M_PI  3.1415926535897932384626433832795
@@ -695,14 +695,23 @@ static void GDALColorReliefInterpolateVal(ColorAssociation* pasColorAssociation,
         {
             double dfRatio = (dfVal - pasColorAssociation[i-1].dfVal) /
                (pasColorAssociation[i].dfVal - pasColorAssociation[i-1].dfVal);
-            *pnR = pasColorAssociation[i-1].nR + dfRatio *
-                    (pasColorAssociation[i].nR - pasColorAssociation[i-1].nR);
-            *pnG = pasColorAssociation[i-1].nG + dfRatio *
-                    (pasColorAssociation[i].nG - pasColorAssociation[i-1].nG);
-            *pnB = pasColorAssociation[i-1].nB + dfRatio *
-                    (pasColorAssociation[i].nB - pasColorAssociation[i-1].nB);
-            *pnA = pasColorAssociation[i-1].nA + dfRatio *
-                    (pasColorAssociation[i].nA - pasColorAssociation[i-1].nA);
+            *pnR = (int)(0.45 + pasColorAssociation[i-1].nR + dfRatio *
+                    (pasColorAssociation[i].nR - pasColorAssociation[i-1].nR));
+            if (*pnR < 0) *pnR = 0;
+            else if (*pnR > 255) *pnR = 255;
+            *pnG = (int)(0.45 + pasColorAssociation[i-1].nG + dfRatio *
+                    (pasColorAssociation[i].nG - pasColorAssociation[i-1].nG));
+            if (*pnG < 0) *pnG = 0;
+            else if (*pnG > 255) *pnG = 255;
+            *pnB = (int)(0.45 + pasColorAssociation[i-1].nB + dfRatio *
+                    (pasColorAssociation[i].nB - pasColorAssociation[i-1].nB));
+            if (*pnB < 0) *pnB = 0;
+            else if (*pnB > 255) *pnB = 255;
+            *pnA = (int)(0.45 + pasColorAssociation[i-1].nA + dfRatio *
+                    (pasColorAssociation[i].nA - pasColorAssociation[i-1].nA));
+            if (*pnA < 0) *pnA = 0;
+            else if (*pnA > 255) *pnA = 255;
+
             return;
         }
         else if (i == nColorAssociation - 1 ||
@@ -839,7 +848,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
     GByte* pabyDestBuf2  = (GByte*) CPLMalloc(nXSize);
     GByte* pabyDestBuf3  = (GByte*) CPLMalloc(nXSize);
     GByte* pabyDestBuf4  = (GByte*) CPLMalloc(nXSize);
-    int nR, nG, nB, nA;
+    int nR = 0, nG = 0, nB = 0, nA = 0;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
