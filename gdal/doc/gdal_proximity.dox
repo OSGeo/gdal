@@ -1,5 +1,5 @@
 
-/*! \page gdal_proximity gdal_proximity
+/*! \page gdal_proximity gdal_proximity.py
 
 produces a raster proximity map
 

@@ -1,12 +1,12 @@
 
-/*! \page gdal_fillnodata gdal_fillnodata
+/*! \page gdal_fillnodata gdal_fillnodata.py
 
 fill raster regions by interpolation from edges
 
 \section synopsis SYNOPSIS
 
 \verbatim
-gdal_nodatafill [-q] [-md max_distance] [-si smooth_iterations]
+gdal_nodatafill.py [-q] [-md max_distance] [-si smooth_iterations]
                 [-o name=value] [-b band]
                 srcfile [-nomask] [-mask filename] [-of format] [dstfile]
 \endverbatim
