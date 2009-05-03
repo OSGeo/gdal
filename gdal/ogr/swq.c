@@ -1940,17 +1940,18 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
         
         for( i = 0; i < field_list->count; i++ )
         {
-            swq_col_def *def = select_info->column_defs + iout;
+            swq_col_def *def;
             int compose = itable != -1;
-
-            /* set up some default values. */
-            def->field_precision = -1; 
-            def->target_type = SWQ_OTHER;
 
             /* skip this field if it isn't in the target table.  */
             if( itable != -1 && field_list->table_ids != NULL 
                 && itable != field_list->table_ids[i] )
                 continue;
+
+            /* set up some default values. */
+            def = select_info->column_defs + iout;
+            def->field_precision = -1; 
+            def->target_type = SWQ_OTHER;
 
             /* does this field duplicate an earlier one? */
             if( field_list->table_ids != NULL 
