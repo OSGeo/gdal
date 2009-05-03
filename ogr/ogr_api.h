@@ -441,6 +441,7 @@ int CPL_DLL OGR_ST_GetRGBFromString(OGRStyleToolH hST, const char *pszColor,
 /* OGRStyleTable */
 
 OGRStyleTableH  CPL_DLL OGR_STBL_Create( void );
+void    CPL_DLL OGR_STBL_Destroy( OGRStyleTableH hSTBL ); 
 int     CPL_DLL OGR_STBL_SaveStyleTable( OGRStyleTableH hStyleTable,
                                          const char *pszFilename );
 int     CPL_DLL OGR_STBL_LoadStyleTable( OGRStyleTableH hStyleTable,
