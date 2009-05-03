@@ -649,6 +649,12 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 
     (void) pszDialect;
 
+    swq_field_list sFieldList;
+    int            nFIDIndex = 0;
+    OGRGenSQLResultsLayer *poResults = NULL;
+
+    memset( &sFieldList, 0, sizeof(sFieldList) );
+
 /* -------------------------------------------------------------------- */
 /*      Handle CREATE INDEX statements specially.                       */
 /* -------------------------------------------------------------------- */
@@ -683,6 +689,10 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */
     int  nFieldCount = 0, iTable, iField;
+    int  iEDS;
+    int  nExtraDSCount = 0;
+    OGRDataSource** papoExtraDS = NULL;
+    OGRSFDriverRegistrar *poReg=OGRSFDriverRegistrar::GetRegistrar();
 
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
@@ -703,12 +713,13 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
                               psTableDef->data_source );
 
                 swq_select_free( psSelectInfo );
-                return NULL;
+                goto end;
             }
 
-            // This drops explicit reference, but leave it open for use by
-            // code in ogr_gensql.cpp
-            poTableDS->Dereference();
+            /* Keep in an array to release at the end of this function */
+            papoExtraDS = (OGRDataSource** )CPLRealloc(papoExtraDS,
+                               sizeof(OGRDataSource*) * (nExtraDSCount + 1));
+            papoExtraDS[nExtraDSCount++] = poTableDS;
         }
 
         poSrcLayer = poTableDS->GetLayerByName( psTableDef->table_name );
@@ -719,7 +730,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
                       "SELECT from table %s failed, no such table/featureclass.",
                       psTableDef->table_name );
             swq_select_free( psSelectInfo );
-            return NULL;
+            goto end;
         }
 
         nFieldCount += poSrcLayer->GetLayerDefn()->GetFieldCount();
@@ -728,10 +739,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Build the field list for all indicated tables.                  */
 /* -------------------------------------------------------------------- */
-    swq_field_list sFieldList;
-    int            nFIDIndex = 0;
 
-    memset( &sFieldList, 0, sizeof(sFieldList) );
     sFieldList.table_count = psSelectInfo->table_count;
     sFieldList.table_defs = psSelectInfo->table_defs;
 
@@ -795,7 +803,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
         swq_select_free( psSelectInfo );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "SQL: %s", pszError );
-        return NULL;
+        goto end;
     }
 
     for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
@@ -813,28 +821,36 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
     
     pszError = swq_select_parse( psSelectInfo, &sFieldList, 0 );
 
-    CPLFree( sFieldList.names );
-    CPLFree( sFieldList.types );
-    CPLFree( sFieldList.table_ids );
-    CPLFree( sFieldList.ids );
-
     if( pszError != NULL )
     {
         swq_select_free( psSelectInfo );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "SQL: %s", pszError );
-        return NULL;
+        goto end;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Everything seems OK, try to instantiate a results layer.        */
 /* -------------------------------------------------------------------- */
-    OGRGenSQLResultsLayer *poResults;
 
     poResults = new OGRGenSQLResultsLayer( this, psSelectInfo, 
                                            poSpatialFilter );
 
     // Eventually, we should keep track of layers to cleanup.
+
+end:
+    CPLFree( sFieldList.names );
+    CPLFree( sFieldList.types );
+    CPLFree( sFieldList.table_ids );
+    CPLFree( sFieldList.ids );
+
+    /* Release the datasets we have opened with OGROpenShared() */
+    /* It is safe to do that as the 'new OGRGenSQLResultsLayer' itself */
+    /* has taken a reference on them, which it will release in its */
+    /* destructor */
+    for(iEDS = 0; iEDS < nExtraDSCount; iEDS++)
+        poReg->ReleaseDataSource( papoExtraDS[iEDS] );
+    CPLFree(papoExtraDS);
 
     return poResults;
 }
