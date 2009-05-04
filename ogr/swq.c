@@ -668,7 +668,7 @@ swq_subexpr_compile( char **tokens, swq_field_list *field_list,
         && op->operation != SWQ_NOT )
     {
         swq_expr_free( op );
-        strcpy( swq_get_errbuf(), "Used logical operation with non-logical operand.");
+        SNPRINTF_ERR1( "Used logical operation with non-logical operand.");
         return swq_get_errbuf();
     }
 
@@ -1127,7 +1127,7 @@ const char *swq_select_preparse( const char *select_statement,
 
     if (select_statement == NULL || select_statement[0] == '\0')
     {
-        strcpy( swq_get_errbuf(), "Empty SQL request string" );
+        SNPRINTF_ERR1( "Empty SQL request string" );
         return swq_get_errbuf();
     }
 
@@ -1138,7 +1138,7 @@ const char *swq_select_preparse( const char *select_statement,
     if( strcasecmp(token,"select") != 0 )
     {
         SWQ_FREE( token );
-        strcpy( swq_get_errbuf(), "Missing keyword SELECT" );
+        SNPRINTF_ERR1( "Missing keyword SELECT" );
         return swq_get_errbuf();
     }
     SWQ_FREE( token );
@@ -1340,7 +1340,7 @@ const char *swq_select_preparse( const char *select_statement,
 /* -------------------------------------------------------------------- */
     if( token == NULL || strcasecmp(token,"FROM") != 0 )
     {
-        strcpy( swq_get_errbuf(), "Missing FROM clause in SELECT statement." );
+        SNPRINTF_ERR1( "Missing FROM clause in SELECT statement." );
         swq_select_free( select_info );
         return swq_get_errbuf();
     }
@@ -1350,7 +1350,7 @@ const char *swq_select_preparse( const char *select_statement,
 
     if( token == NULL )
     {
-        strcpy( swq_get_errbuf(), "Missing table name in FROM clause." );
+        SNPRINTF_ERR1( "Missing table name in FROM clause." );
         swq_select_free( select_info );
         return swq_get_errbuf();
     }
@@ -1377,7 +1377,7 @@ const char *swq_select_preparse( const char *select_statement,
 
             if( token == NULL || strcasecmp(token,"JOIN") != 0 )
             {
-                strcpy( swq_get_errbuf(), "Missing JOIN keyword after LEFT." );
+                SNPRINTF_ERR1( "Missing JOIN keyword after LEFT." );
                 swq_select_free( select_info );
                 return swq_get_errbuf();
             }
@@ -1411,7 +1411,7 @@ const char *swq_select_preparse( const char *select_statement,
         if( token == NULL || strcasecmp(token,"ON") != 0 )
         {
             swq_select_free( select_info );
-            strcpy( swq_get_errbuf(),"Corrupt JOIN clause, expecting ON keyword." );
+            SNPRINTF_ERR1( "Corrupt JOIN clause, expecting ON keyword." );
             return swq_get_errbuf();
         }
 
@@ -1424,7 +1424,7 @@ const char *swq_select_preparse( const char *select_statement,
         if( token == NULL || strcasecmp(token,"=") != 0 )
         {
             swq_select_free( select_info );
-            strcpy( swq_get_errbuf(),"Corrupt JOIN clause, expecting '=' condition.");
+            SNPRINTF_ERR1( "Corrupt JOIN clause, expecting '=' condition.");
             return swq_get_errbuf();
         }
 
@@ -1438,7 +1438,7 @@ const char *swq_select_preparse( const char *select_statement,
         if( join_info->secondary_field_name == NULL )
         {
             swq_select_free( select_info );
-            strcpy( swq_get_errbuf(),"Corrupt JOIN clause, missing secondary field.");
+            SNPRINTF_ERR1( "Corrupt JOIN clause, missing secondary field.");
             return swq_get_errbuf();
         }
 
@@ -1498,7 +1498,7 @@ const char *swq_select_preparse( const char *select_statement,
             if( token != NULL )
                 SWQ_FREE( token );
 
-            strcpy( swq_get_errbuf(), "ORDER BY clause missing BY keyword." );
+            SNPRINTF_ERR1( "ORDER BY clause missing BY keyword." );
             swq_select_free( select_info );
             return swq_get_errbuf();
         }
@@ -1588,7 +1588,7 @@ static int swq_parse_typename( swq_col_def *col_def,
 
     if( *token == NULL )
     {
-        strcpy( swq_get_errbuf(), "Corrupt type name, insufficient tokens." );
+        SNPRINTF_ERR1( "Corrupt type name, insufficient tokens." );
         return -1;
     }
     
@@ -1637,6 +1637,8 @@ static int swq_parse_typename( swq_col_def *col_def,
     else
     {
         SNPRINTF_ERR2( "Unrecognized typename %s.", *token );
+        SWQ_FREE( *token );
+        *token = NULL;
         return -1;
     }
     
@@ -1675,9 +1677,9 @@ static int swq_parse_typename( swq_col_def *col_def,
             if (*token != NULL)
             {
                 SWQ_FREE( *token );
-                *token = swq_token( *input, input, is_literal );
+                *token = NULL;
             }
-            strcpy( swq_get_errbuf(), "Missing closing bracket in the field length specifier." );
+            SNPRINTF_ERR1( "Missing closing bracket in the field length specifier." );
             return -1;
         }
 
@@ -1713,7 +1715,7 @@ static int swq_parse_table_def( swq_select *select_info,
 
     if( *token == NULL )
     {
-        strcpy( swq_get_errbuf(), "Corrupt table definition, insufficient tokens." );
+        SNPRINTF_ERR1( "Corrupt table definition, insufficient tokens." );
         return -1;
     }
     
