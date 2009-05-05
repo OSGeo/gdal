@@ -167,21 +167,15 @@ int OGRGeoconceptDataSource::LoadFile( const char *pszMode )
 {
     OGRGeoconceptLayer *poFile;
 
-    if( !_pszExt )
+    if( _pszExt == NULL)
     {
-      _pszExt = (char *)CPLGetExtension(_pszName);
-      if( !EQUAL(_pszExt,"gxt") && !EQUAL(_pszExt,"txt") )
+      const char* pszExtension = CPLGetExtension(_pszName);
+      if( !EQUAL(pszExtension,"gxt") && !EQUAL(pszExtension,"txt") )
       {
-        _pszExt = NULL;
         return FALSE;
       }
+      _pszExt = CPLStrdup(pszExtension);
     }
-    if( EQUAL(_pszExt,"txt") )
-      _pszExt = CPLStrdup("txt");
-    else if( EQUAL(_pszExt,"gxt") )
-      _pszExt = NULL;
-    else
-      _pszExt = NULL;
     CPLStrlwr( _pszExt );
 
     if( !_pszDirectory )
@@ -252,20 +246,27 @@ int OGRGeoconceptDataSource::LoadFile( const char *pszMode )
 int OGRGeoconceptDataSource::Create( const char *pszName, char** papszOptions )
 
 {
-    char *conf;
+    const char *pszConf;
+    const char *pszExtension;
 
     if( _pszName ) CPLFree(_pszName);
     _papszOptions = CSLDuplicate( papszOptions );
 
-    if( (conf= (char *)CSLFetchNameValue(papszOptions,"CONFIG")) )
+    pszConf= CSLFetchNameValue(papszOptions,"CONFIG");
+    if( pszConf != NULL )
     {
-      _pszGCT = CPLStrdup(conf);
+      _pszGCT = CPLStrdup(pszConf);
     }
 
     _pszExt = (char *)CSLFetchNameValue(papszOptions,"EXTENSION");
-    if( _pszExt == NULL )
+    pszExtension = CSLFetchNameValue(papszOptions,"EXTENSION");
+    if( pszExtension == NULL )
     {
-        _pszExt = CPLStrdup((char *)CPLGetExtension(pszName));
+        _pszExt = CPLStrdup(CPLGetExtension(pszName));
+    }
+    else
+    {
+        _pszExt = CPLStrdup(pszExtension);
     }
 
     if( strlen(_pszExt) == 0 )
@@ -281,13 +282,14 @@ int OGRGeoconceptDataSource::Create( const char *pszName, char** papszOptions )
             return FALSE;
         }
         _pszDirectory = CPLStrdup( pszName );
+        CPLFree(_pszExt);
         _pszExt = CPLStrdup("gxt");
-        char *pszbName = CPLStrdup((char *)CPLGetBasename( pszName ));
+        char *pszbName = CPLStrdup(CPLGetBasename( pszName ));
         if (strlen(pszbName)==0) {/* pszName ends with '/' */
             CPLFree(pszbName);
             char *pszNameDup= CPLStrdup(pszName);
             pszNameDup[strlen(pszName)-2] = '\0';
-            pszbName = CPLStrdup((char *)CPLGetBasename( pszNameDup ));
+            pszbName = CPLStrdup(CPLGetBasename( pszNameDup ));
             CPLFree(pszNameDup);
         }
         _pszName = CPLStrdup((char *)CPLFormFilename( _pszDirectory, pszbName, NULL ));
@@ -333,8 +335,10 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
     GCTypeKind gcioFeaType;
     GCDim gcioDim;
     OGRGeoconceptLayer *poFile= NULL;
-    char *pszFeatureType, **ft;
+    const char *pszFeatureType; 
+    char **ft;
     int iLayer;
+    char pszln[512];
 
     if( _hGXT == NULL )
     {
@@ -355,19 +359,17 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
     /*
      * pszLayerName Class.Subclass if -nln option used, otherwise file name
      */
-    if( !(pszFeatureType = (char *)CSLFetchNameValue(papszOptions,"FEATURETYPE")) )
+    if( !(pszFeatureType = CSLFetchNameValue(papszOptions,"FEATURETYPE")) )
     {
       if( !pszLayerName || !strchr(pszLayerName,'.') )
       {
-        char pszln[512];
-
         snprintf(pszln,511,"%s.%s", pszLayerName? pszLayerName:"ANONCLASS",
                                     pszLayerName? pszLayerName:"ANONSUBCLASS");
         pszln[511]= '\0';
         pszFeatureType= pszln;
       }
       else
-        pszFeatureType= (char *)pszLayerName;
+        pszFeatureType= pszLayerName;
     }
 
     if( !(ft= CSLTokenizeString2(pszFeatureType,".",0)) ||
