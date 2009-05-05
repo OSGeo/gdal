@@ -62,9 +62,20 @@ def cutline_2():
 
 ###############################################################################
 
+def cutline_3():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'cutline_multipolygon.vrt', 1, 20827 )
+    return tst.testOpen()
+
+###############################################################################
+
 gdaltest_list = [
     cutline_1,
-    cutline_2
+    cutline_2,
+    cutline_3
     ]
 
 if __name__ == '__main__':
