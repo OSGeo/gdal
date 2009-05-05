@@ -487,14 +487,14 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 
 /* OGREnvelope C API : */
 #define InitOGREnvelope_GCIO(poEvlp) \
-  if( poEvlp ) \
+  if( poEvlp!=NULL ) \
   {\
     (poEvlp)->MinX= (poEvlp)->MinY= HUGE_VAL;\
     (poEvlp)->MaxX= (poEvlp)->MaxY= -HUGE_VAL;\
   }
 
 #define MergeOGREnvelope_GCIO(poEvlp,x,y) \
-  if( poEvlp ) \
+  if( poEvlp!=NULL ) \
   {\
     if( (x) < (poEvlp)->MinX ) (poEvlp)->MinX= (x);\
     if( (x) > (poEvlp)->MaxX ) (poEvlp)->MaxX= (x);\
