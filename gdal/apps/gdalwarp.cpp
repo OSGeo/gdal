@@ -1459,13 +1459,24 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
         }
         
         OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
-        if( eType != wkbPolygon && eType != wkbMultiPolygon )
+
+        if( eType == wkbPolygon )
+            OGR_G_AddGeometry( hMultiPolygon, hGeom );
+        else if( eType == wkbMultiPolygon )
+        {
+            int iGeom;
+
+            for( iGeom = 0; iGeom < OGR_G_GetGeometryCount( hGeom ); iGeom++ )
+            {
+                OGR_G_AddGeometry( hMultiPolygon, 
+                                   OGR_G_GetGeometryRef(hGeom,iGeom) );
+            }
+        }
+        else
         {
             fprintf( stderr, "ERROR: Cutline not of polygon type.\n" );
             exit( 1 );
         }
-
-        OGR_G_AddGeometry( hMultiPolygon, hGeom );
 
         OGR_F_Destroy( hFeat );
     }
