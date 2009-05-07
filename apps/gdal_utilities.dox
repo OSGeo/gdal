@@ -1565,6 +1565,7 @@ Usage:
 - To generate an aspect map from any GDAL-supported elevation raster
   Outputs a 32-bit float raster with pixel values from 0-360 indicating azimuth :
     gdaldem aspect input_dem output_aspect_map"
+                [-trigonometric] [-zero_for_flat]
                 [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-quiet]
 
 - To generate a color relief map from any GDAL-supported elevation raster
@@ -1635,7 +1636,19 @@ The following specific options are available :
 
 \subsection gdaldem_aspect aspect
 
-This command outputs a 32-bit float raster with values between 0 and 360 representing the azimuth of the terrain.
+This command outputs a 32-bit float raster with values between 0° and 360° representing the azimuth that slopes are facing.
+The definition of the azimuth is such that : 0° means that the slope is facing the North, 90° it's facing the East, 180° it's facing the South and
+270° it's facing the West (provided that the top of your input raster is north oriented). The aspect value -9999 is used as the nodata value
+to indicate undefined aspect in flat areas with slope=0.
+
+The following specifics options are available :
+<dl>
+<dt> <b>-trigonometric</b>:</dt><dd> return trigonometric angle instead of azimuth. Thus 0° means East, 90° North, 180° West, 270° South</dd>
+<dt> <b>-zero_for_flat</b>:</dt><dd> return 0 for flat areas with slope=0, instead of -9999</dd>
+</dl>
+
+By using those 2 options, the aspect returned by gdaldem aspect should be identical to the one of GRASS r.slope.aspect. Otherwise, it's identical
+to the one of Matthew Perry's aspect.cpp utility.
 
 \subsection gdaldem_color_relief color-relief
 
