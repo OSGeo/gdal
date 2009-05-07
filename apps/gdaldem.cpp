@@ -813,9 +813,9 @@ int GDALColorReliefFindNamedColor(const char *pszColorName, int *pnR, int *pnG, 
     {
         if (EQUAL(pszColorName, namedColors[i].name))
         {
-            *pnR = 255. * namedColors[i].r;
-            *pnG = 255. * namedColors[i].g;
-            *pnB = 255. * namedColors[i].b;
+            *pnR = (int)(255. * namedColors[i].r);
+            *pnG = (int)(255. * namedColors[i].g);
+            *pnB = (int)(255. * namedColors[i].b);
             return TRUE;
         }
     }
