@@ -1663,21 +1663,29 @@ The following specifics options are available :
 <dt> <b>-alpha</b> :</dt><dd>add an alpha channel to the output raster</dd>
 </dl>
 
-The text-based color configuration file contains 4 columns per line : the elevation value and the corresponding RGB values.
-The elevation value can be any floating point value, or one of the following special keywords : <i>min</i>, <i>max</i>, <i>nodata</i>.
+The text-based color configuration file generally contains 4 columns per line : the elevation value and the
+corresponding Red, Green, Blue component (between 0 and 255).
+The elevation value can be any floating point value, or the <i>nv</i> keyword for the nodata value..
+The elevation can also be expressed as a percentage : 0% being the minimum value found in the raster, 100% the maximum value.
 
 An extra column can be optionnaly added for the alpha component. If it is not specified, full opacity (255) is assumed.
 
-Various field separators are accepted : comma, tabulation, spaces.
+Various field separators are accepted : comma, tabulation, spaces, ':'.
+
+Common colors used by GRASS can also be specified by using their name, instead of the RGB triplet. The supported list is :
+white, black, red, green, blue, yellow, magenta, cyan, aqua, grey/gray, orange, brown, purple/violet and indigo.
+
+Note: the syntax of the color configuration file is derived from the one supported by GRASS r.colors utility. The alpha component
+and the support of tablulations and commma as separators are GDAL specific extensions.
 
 For example :
 \verbatim
-3500   255 255 255
-2500   235 220 175
-1500   190 185 135
+3500   white
+2500   235:220:175
+50%   190 185 135
 700    240 250 150
 0      50  180  50
-nodata 0   0   0   0 
+nv     0   0   0   0 
 \endverbatim
 
 
