@@ -48,15 +48,6 @@ class GeoRasterWrapper;
     ( ( (int) ceil( (double) ( ( bn - 1 ) / bb ) ) * tc * tr ) + ( yo * tc ) + xo )
 
 //  ---------------------------------------------------------------------------
-//  Link between bands+pyramid levels and modified <shrinked> georaster object
-//  ---------------------------------------------------------------------------
-
-struct OverviewLink {
-    int nLevel;
-    GeoRasterRasterBand* poOverview;
-};
-
-//  ---------------------------------------------------------------------------
 // Geographic system without EPSG parameters
 //  ---------------------------------------------------------------------------
 
@@ -108,7 +99,6 @@ private:
     double              adfGeoTransform[6];
     int                 nGCPCount;
     GDAL_GCP*           pasGCPList;
-    int                 nOverviewCount;
 
 public:
 
@@ -153,7 +143,7 @@ public:
                             const char* pszResampling,
                             int nOverviews,
                             int* panOverviewList,
-                            int nBands,
+                            int nListBands,
                             int* panBandList,
                             GDALProgressFunc pfnProgress,
                             void* pProgressData );
@@ -187,8 +177,8 @@ private:
     double              dfNoData;
     char*               pszVATName;
     int                 nOverviewLevel;
-    OverviewLink**      paphOverviewLinks;
-    int                 nOverviewLinks;
+    GeoRasterRasterBand** papoOverviews;
+    int                 nOverviews;
 
 public:
 
@@ -234,7 +224,7 @@ private:
     OCILobLocator**     pahLocator;
     int                 nBlockCount;
     unsigned long       nBlockBytes;
-    unsigned long       nGDALBandBytes;
+    unsigned long       nGDALBlockBytes;
     GByte*              pabyBlockBuf;
     GByte*              pabyBlockBuf2;
     OWStatement*        poStmtRead;
