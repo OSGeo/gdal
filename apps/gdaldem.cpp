@@ -54,6 +54,9 @@
  * by Michael Shapiro and Jim Westervelt, U.S. Army Construction Engineering
  * Research Laboratory (March/1991)
  *
+ * Color table of named colors and lookup code derived from src/libes/gis/named_colr.c
+ * of GRASS 4.1
+ *
  ****************************************************************************/
 
 #include <stdlib.h>
@@ -757,6 +760,69 @@ static void GDALColorReliefInterpolateVal(ColorAssociation* pasColorAssociation,
     }
 }
 
+/* dfPct : percentage between 0 and 1 */
+static double GDALColorReliefGetAbsoluteValFromPct(GDALRasterBandH hSrcBand,
+                                                   double dfPct)
+{
+    double dfMin, dfMax;
+    int bSuccessMin, bSuccessMax;
+    dfMin = GDALGetRasterMinimum(hSrcBand, &bSuccessMin);
+    dfMax = GDALGetRasterMaximum(hSrcBand, &bSuccessMax);
+    if (!bSuccessMin || !bSuccessMax)
+    {
+        double dfMean, dfStdDev;
+        fprintf(stderr, "Computing source raster statistics...\n");
+        GDALComputeRasterStatistics(hSrcBand, FALSE, &dfMin, &dfMax,
+                                    &dfMean, &dfStdDev, NULL, NULL);
+    }
+    return dfMin + dfPct * (dfMax - dfMin);
+}
+
+typedef struct
+{
+    const char *name;
+    float r, g, b;
+} NamedColor;
+
+static const NamedColor namedColors[] = {
+    { "white",  1.00, 1.00, 1.00 },
+    { "black",  0.00, 0.00, 0.00 },
+    { "red",    1.00, 0.00, 0.00 },
+    { "green",  0.00, 1.00, 0.00 },
+    { "blue",   0.00, 0.00, 1.00 },
+    { "yellow", 1.00, 1.00, 0.00 },
+    { "magenta",1.00, 0.00, 1.00 },
+    { "cyan",   0.00, 1.00, 1.00 },
+    { "aqua",   0.00, 0.75, 0.75 },
+    { "grey",   0.75, 0.75, 0.75 },
+    { "gray",   0.75, 0.75, 0.75 },
+    { "orange", 1.00, 0.50, 0.00 },
+    { "brown",  0.75, 0.50, 0.25 },
+    { "purple", 0.50, 0.00, 1.00 },
+    { "violet", 0.50, 0.00, 1.00 },
+    { "indigo", 0.00, 0.50, 1.00 },
+};
+
+static
+int GDALColorReliefFindNamedColor(const char *pszColorName, int *pnR, int *pnG, int *pnB)
+{
+    unsigned int i;
+
+    *pnR = *pnG = *pnB = 0;
+    for (i = 0; i < sizeof(namedColors) / sizeof(namedColors[0]); i++)
+    {
+        if (EQUAL(pszColorName, namedColors[i].name))
+        {
+            *pnR = 255. * namedColors[i].r;
+            *pnG = 255. * namedColors[i].g;
+            *pnB = 255. * namedColors[i].b;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static
 ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                                                 const char* pszColorFilename,
                                                 int* pnColors)
@@ -778,53 +844,66 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
     const char* pszLine;
     while ((pszLine = CPLReadLine(fpColorFile)) != NULL)
     {
-        char** papszFields = CSLTokenizeStringComplex(pszLine, " ,\t", 
+        char** papszFields = CSLTokenizeStringComplex(pszLine, " ,\t:", 
                                                       FALSE, FALSE );
         /* Skip comment lines */
-        if (CSLCount(papszFields) >= 4 &&
+        int nTokens = CSLCount(papszFields);
+        if (nTokens >= 2 &&
             papszFields[0][0] != '#' &&
             papszFields[0][0] != '/')
         {
             pasColorAssociation =
                     (ColorAssociation*)CPLRealloc(pasColorAssociation,
                            (nColorAssociation + 1) * sizeof(ColorAssociation));
-            if (EQUAL(papszFields[0], "nodata") && bSrcHasNoData)
+            if (EQUAL(papszFields[0], "nv") && bSrcHasNoData)
                 pasColorAssociation[nColorAssociation].dfVal = dfSrcNoDataValue;
-            else if (EQUAL(papszFields[0], "min"))
+            else if (strlen(papszFields[0]) > 1 && papszFields[0][strlen(papszFields[0])-1] == '%')
             {
-                int bSuccess;
-                double dfVal = GDALGetRasterMinimum(hSrcBand, &bSuccess);
-                if (!bSuccess)
+                double dfPct = atof(papszFields[0]) / 100.;
+                if (dfPct < 0.0 || dfPct > 1.0)
                 {
-                    double dfMin, dfMax, dfMean, dfStdDev;
-                    fprintf(stderr, "Computing source raster statistics...\n");
-                    GDALComputeRasterStatistics(hSrcBand, FALSE, &dfMin, &dfMax,
-                                                &dfMean, &dfStdDev, NULL, NULL);
-                    dfVal = dfMin;
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Wrong value for a percentage : %s", papszFields[0]);
+                    CSLDestroy(papszFields);
+                    VSIFClose(fpColorFile);
+                    CPLFree(pasColorAssociation);
+                    *pnColors = 0;
+                    return NULL;
                 }
-                pasColorAssociation[nColorAssociation].dfVal = dfVal;
-            }
-            else if (EQUAL(papszFields[0], "max"))
-            {
-                int bSuccess;
-                double dfVal = GDALGetRasterMaximum(hSrcBand, &bSuccess);
-                if (!bSuccess)
-                {
-                    double dfMin, dfMax, dfMean, dfStdDev;
-                    fprintf(stderr, "Computing source raster statistics...\n");
-                    GDALComputeRasterStatistics(hSrcBand, FALSE, &dfMin, &dfMax,
-                                                &dfMean, &dfStdDev, NULL, NULL);
-                    dfVal = dfMax;
-                }
-                pasColorAssociation[nColorAssociation].dfVal = dfVal;
+                pasColorAssociation[nColorAssociation].dfVal =
+                        GDALColorReliefGetAbsoluteValFromPct(hSrcBand, dfPct);
             }
             else
                 pasColorAssociation[nColorAssociation].dfVal = atof(papszFields[0]);
-            pasColorAssociation[nColorAssociation].nR = atoi(papszFields[1]);
-            pasColorAssociation[nColorAssociation].nG = atoi(papszFields[2]);
-            pasColorAssociation[nColorAssociation].nB = atoi(papszFields[3]);
-            pasColorAssociation[nColorAssociation].nA =
-                    (CSLCount(papszFields) >= 5 ) ? atoi(papszFields[4]) : 255;
+
+            if (nTokens >= 4)
+            {
+                pasColorAssociation[nColorAssociation].nR = atoi(papszFields[1]);
+                pasColorAssociation[nColorAssociation].nG = atoi(papszFields[2]);
+                pasColorAssociation[nColorAssociation].nB = atoi(papszFields[3]);
+                pasColorAssociation[nColorAssociation].nA =
+                        (CSLCount(papszFields) >= 5 ) ? atoi(papszFields[4]) : 255;
+            }
+            else
+            {
+                int nR, nG, nB;
+                if (!GDALColorReliefFindNamedColor(papszFields[1], &nR, &nG, &nB))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unknown color : %s", papszFields[1]);
+                    CSLDestroy(papszFields);
+                    VSIFClose(fpColorFile);
+                    CPLFree(pasColorAssociation);
+                    *pnColors = 0;
+                    return NULL;
+                }
+                pasColorAssociation[nColorAssociation].nR = nR;
+                pasColorAssociation[nColorAssociation].nG = nG;
+                pasColorAssociation[nColorAssociation].nB = nB;
+                            pasColorAssociation[nColorAssociation].nA =
+                    (CSLCount(papszFields) >= 3 ) ? atoi(papszFields[2]) : 255;
+            }
+
             nColorAssociation ++;
         }
         CSLDestroy(papszFields);
