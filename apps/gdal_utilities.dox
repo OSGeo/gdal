@@ -1668,8 +1668,21 @@ nodata 0   0   0   0
 \endverbatim
 
 
-\if man
 \section gdaldem_author AUTHORS
-Matthew Perry <perrygeo@gmail.com>, Even Rouault <even.rouault@mines-paris.org>
-\endif
+Matthew Perry <perrygeo@gmail.com>, Even Rouault <even.rouault@mines-paris.org>, Howard Butler <hobu.inc@gmail.com>
+
+Derived from code by Michael Shapiro, Olga Waupotitsch, Marjorie Larson, Jim Westervelt :
+U.S. Army CERL, 1993. GRASS 4.1 Reference Manual. U.S. Army Corps of Engineers,
+Construction Engineering Research Laboratories, Champaign, Illinois, 1-425. 
+
+\section gdaldem_seealso See also
+
+Documentation of related GRASS utilities :
+
+http://grass.osgeo.org/grass64/manuals/html64_user/r.slope.aspect.html
+
+http://grass.osgeo.org/grass64/manuals/html64_user/r.shaded.relief.html
+
+http://grass.osgeo.org/grass64/manuals/html64_user/r.colors.html
+
 */
