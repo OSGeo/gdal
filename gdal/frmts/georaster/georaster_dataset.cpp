@@ -55,7 +55,6 @@ GeoRasterDataset::GeoRasterDataset()
     pszProjection       = NULL;
     nGCPCount           = 0;
     pasGCPList          = NULL;
-    nOverviewCount      = 0;
     poDriver            = (GDALDriver *) GDALGetDriverByName( "GEORASTER" );
 }
 
@@ -200,7 +199,6 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         poGRD->nRasterXSize  = poGRW->nRasterColumns;
         poGRD->nRasterYSize  = poGRW->nRasterRows;
         poGRD->nBands        = poGRW->nRasterBands;
-        poGRD->nOverviewCount = poGRW->nPyramidMaxLevel;
         poGRD->poGeoRaster   = poGRW;
     }
     else
@@ -981,9 +979,10 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
 CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
 {
+    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+    
     if( bGeoTransform )
     {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
         return CE_None;
     }
 
@@ -997,9 +996,9 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
         return CE_Failure;
     }
 
-    bGeoTransform = true;
-
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+
+    bGeoTransform = true;
 
     return CE_None;
 }
@@ -1012,12 +1011,12 @@ const char* GeoRasterDataset::GetProjectionRef( void )
 {
     if( ! poGeoRaster->bIsReferenced )
     {
-        return NULL;
+        return "";
     }
 
     if( poGeoRaster->nSRID == UNKNOWN_CRS )
     {
-        return NULL;
+        return "";
     }
 
     if( pszProjection )
@@ -1411,7 +1410,7 @@ const char* GeoRasterDataset::GetGCPProjection()
 CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
                                           int nOverviews,
                                           int* panOverviewList,
-                                          int nBands,
+                                          int nListBands,
                                           int* panBandList,
                                           GDALProgressFunc pfnProgress,
                                           void* pProgressData )
@@ -1451,7 +1450,6 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
                     "Invalid GeoRaster Pyramids levels." );
                 return CE_Failure;
             }
-
         }
     }
 

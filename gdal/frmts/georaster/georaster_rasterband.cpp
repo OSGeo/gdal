@@ -29,6 +29,7 @@
  *****************************************************************************/
 
 #include "georaster_priv.h"
+#include "cpl_vsi.h"
 
 //  ---------------------------------------------------------------------------
 //                                                        GeoRasterRasterBand()
@@ -52,8 +53,28 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
     dfNoData            = 0.0;
     bValidStats         = false;
     nOverviewLevel      = nLevel;
-    paphOverviewLinks   = NULL;
-    nOverviewLinks      = 0;
+    papoOverviews       = NULL;
+    nOverviews          = 0;
+
+    //  -----------------------------------------------------------------------
+    //  Initialize overview list
+    //  -----------------------------------------------------------------------
+
+    if( nLevel == 0 && poGeoRaster->nPyramidMaxLevel > 0 )
+    {
+        nOverviews      = poGeoRaster->nPyramidMaxLevel;
+        papoOverviews   = (GeoRasterRasterBand**) VSIMalloc(
+                sizeof(GeoRasterRasterBand*) * nOverviews );
+        for( int i = 0; i < nOverviews; i++ )
+        {
+          papoOverviews[i] = new GeoRasterRasterBand(
+                (GeoRasterDataset*) poDS, nBand, i + 1 );
+        }
+    }
+
+    //  -----------------------------------------------------------------------
+    //  Initialize this band as an overview
+    //  -----------------------------------------------------------------------
 
     if( nLevel )
     {
@@ -79,20 +100,18 @@ GeoRasterRasterBand::~GeoRasterRasterBand()
 {
     delete poColorTable;
     delete poDefaultRAT;
+    
     CPLFree( pszVATName );
 
-    if( nOverviewLinks )
+    if( nOverviews && papoOverviews )
     {
-        int i;
-
-        for( i = 0; i < nOverviewLinks; i++ )
+        for( int i = 0; i < nOverviews; i++ )
         {
-            CPLFree( paphOverviewLinks[i] );
+            delete papoOverviews[i];
         }
 
-        CPLFree( paphOverviewLinks );
+        CPLFree( papoOverviews );
     }
-
 }
 
 //  ---------------------------------------------------------------------------
@@ -659,7 +678,7 @@ const GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 
 int GeoRasterRasterBand::GetOverviewCount()
 {
-    return poGeoRaster->nPyramidMaxLevel;
+    return nOverviews;
 }
 
 //  ---------------------------------------------------------------------------
@@ -668,48 +687,9 @@ int GeoRasterRasterBand::GetOverviewCount()
 
 GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
 {
-    GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;
-
-    //  -----------------------------------------------------------------------
-    //  Check if there is a previous stored overview link
-    //  -----------------------------------------------------------------------
-
-    int i = 0;
-
-    for( i = 0; i < nOverviewLinks; i++ )
+    if( nLevel < nOverviews && papoOverviews[ nLevel ] )
     {
-        if( nLevel == paphOverviewLinks[i]->nLevel )
-        {
-            return paphOverviewLinks[i]->poOverview;
-        }
+        return (GDALRasterBand*) papoOverviews[ nLevel ];
     }
-
-    //  -----------------------------------------------------------------------
-    //  Creat RasterBand as Overview 
-    //  -----------------------------------------------------------------------
-
-    GeoRasterRasterBand* poOVR = NULL;
-    poOVR       = new GeoRasterRasterBand( poGDS, nBand, ( nLevel + 1 ) );
-
-    //  -----------------------------------------------------------------------
-    //  Create a Overview link
-    //  -----------------------------------------------------------------------
-
-    OverviewLink* phOVRLink = NULL;
-    phOVRLink   = (OverviewLink*) CPLMalloc( sizeof(OverviewLink) );
-    phOVRLink->nLevel       = nLevel;
-    phOVRLink->poOverview   = poOVR;
-
-    //  -----------------------------------------------------------------------
-    //  Save a Overview link
-    //  -----------------------------------------------------------------------
-
-    nOverviewLinks++;
-
-    paphOverviewLinks = (OverviewLink**) CPLRealloc(
-        paphOverviewLinks, sizeof(OverviewLink*) * nOverviewLinks );
-
-    paphOverviewLinks[ nOverviewLinks - 1 ] = phOVRLink;
-
-    return (GDALRasterBand*) poOVR;
+    return (GDALRasterBand*) NULL;
 }
