@@ -93,6 +93,7 @@ static void Usage()
             " - To generate an aspect map from any GDAL-supported elevation raster\n"
             "   Outputs a 32-bit float tiff with pixel values from 0-360 indicating azimuth :\n\n"
             "     gdaldem aspect input_dem output_aspect_map \n"
+            "                 [-trigonometric] [-zero_for_flat]\n"
             "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
             "\n"
             " - To generate a color relief map from any GDAL-supported elevation raster\n"
@@ -489,6 +490,7 @@ end:
 
 CPLErr GDALAspect  (GDALRasterBandH hSrcBand,
                     GDALRasterBandH hDstBand,
+                    int bAngleAsAzimuth,
                     GDALProgressFunc pfnProgress,
                     void * pProgressData)
 {
@@ -502,7 +504,7 @@ CPLErr GDALAspect  (GDALRasterBandH hSrcBand,
     float aspect;
     double dx, dy;
 
-    int bSrcHasNoData;
+    int bSrcHasNoData, bDstHasNoData;
     double dfSrcNoDataValue = 0.0, dfDstNoDataValue;
 
     int nXSize = GDALGetRasterBandXSize(hSrcBand);
@@ -524,7 +526,9 @@ CPLErr GDALAspect  (GDALRasterBandH hSrcBand,
     pafThreeLineWin  = (float *) CPLMalloc(3*sizeof(float)*nXSize);
 
     dfSrcNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
-    dfDstNoDataValue = GDALGetRasterNoDataValue(hDstBand, NULL);
+    dfDstNoDataValue = GDALGetRasterNoDataValue(hDstBand, &bDstHasNoData);
+    if (!bDstHasNoData)
+        dfDstNoDataValue = 0.0;
 
     // Move a 3x3 pafWindow over each cell 
     // (where the cell in question is #4)
@@ -623,26 +627,27 @@ CPLErr GDALAspect  (GDALRasterBandH hSrcBand,
 
                     aspect = atan2(dy/8.0,-1.0*dx/8.0) / degreesToRadians;
 
-                    if (dx == 0)
+                    if (dx == 0 && dy == 0)
                     {
-                        if (dy > 0) 
-                            aspect = 0.0;
-                        else if (dy < 0)
-                            aspect = 180.0;
-                        else
-                            aspect = dfDstNoDataValue;
+                        /* Flat area */
+                        aspect = dfDstNoDataValue;
                     } 
-                    else 
+                    else if (bAngleAsAzimuth)
                     {
                         if (aspect > 90.0) 
                             aspect = 450.0 - aspect;
                         else
                             aspect = 90.0 - aspect;
                     }
+                    else
+                    {
+                        if (aspect < 0)
+                            aspect += 360.0;
+                    }
 
                     if (aspect == 360.0) 
                         aspect = 0.0;
-       
+
                     pafAspectBuf[j] = aspect;
 
                 }
@@ -977,6 +982,8 @@ int main( int argc, char ** argv )
     // 0 = 'percent' or 1 = 'degrees'
     int slopeFormat = 1; 
     int bAddAlpha = FALSE;
+    int bZeroForFlat = FALSE;
+    int bAngleAsAzimuth = TRUE;
     
     int nBand = 1;
     double  adfGeoTransform[6];
@@ -1057,6 +1064,14 @@ int main( int argc, char ** argv )
         else if ( eUtilityMode == SLOPE && EQUAL(argv[i], "-p"))
         {
             slopeFormat = 0;
+        }
+        else if ( eUtilityMode == ASPECT && EQUAL(argv[i], "-trigonometric"))
+        {
+            bAngleAsAzimuth = FALSE;
+        }
+        else if ( eUtilityMode == ASPECT && EQUAL(argv[i], "-zero_for_flat"))
+        {
+            bZeroForFlat = TRUE;
         }
         else if( i + 1 < argc &&
             (EQUAL(argv[i], "--s") || 
@@ -1259,10 +1274,12 @@ int main( int argc, char ** argv )
 
     else if (eUtilityMode == ASPECT)
     {
-        GDALSetRasterNoDataValue(hDstBand, -9999.0);
+        if (!bZeroForFlat)
+            GDALSetRasterNoDataValue(hDstBand, -9999.0);
 
         GDALAspect( hSrcBand, 
                     hDstBand, 
+                    bAngleAsAzimuth,
                     pfnProgress, NULL);
     }
     else if (eUtilityMode == COLOR_RELIEF)
