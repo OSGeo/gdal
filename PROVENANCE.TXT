@@ -137,6 +137,12 @@ Note: all the following are build options, not required.
 * gdal_contour.cpp: copyright held by ACT. 
 * gdaltindex.cpp: copyright held by DM Solutions.
 * gdalwarp.cpp, gdalwarpsimple.cpp: copyright held by i-cubed. 
+* gdaldem.cpp: copyright held by Matthew Perry, Even Rouault, and Howard Butler  
+               Derived from code by Michael Shapiro, Olga Waupotitsch, Marjorie Larson, Jim Westervelt :
+               U.S. Army CERL, 1993. GRASS 4.1 Reference Manual. U.S. Army Corps of Engineers,
+               Construction Engineering Research Laboratories, Champaign, Illinois, 1-425. 
+               Derived from modules of GRASS 4.1 (public domain), properly noted in the headers.
+               See http://trac.osgeo.org/gdal/ticket/2975
 
 === gdal/debian === 
 

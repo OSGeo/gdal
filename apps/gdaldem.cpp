@@ -3,12 +3,16 @@
  *
  * Project:  GDAL DEM Utilities
  * Purpose:  
- * Author:   Matthew Perry, perrygeo at gmail.com
+ * Authors:  Matthew Perry, perrygeo at gmail.com
  *           Even Rouault, even dot rouault at mines dash paris dot org
+ *           Howard Butler, hobu.inc at gmail.com
  *
  ******************************************************************************
  * Copyright (c) 2006, 2009 Matthew Perry 
  * Copyright (c) 2009 Even Rouault
+ * Portions derived from GRASS 4.1 (public domain) See 
+ * http://trac.osgeo.org/gdal/ticket/2975 for more information regarding 
+ * history of this code
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,8 +31,30 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************
+ *
+ * Slope and aspect calculations based on original method for GRASS GIS 4.1
+ * by Michael Shapiro, U.S.Army Construction Engineering Research Laboratory
+ *    Olga Waupotitsch, U.S.Army Construction Engineering Research Laboratory
+ *    Marjorie Larson, U.S.Army Construction Engineering Research Laboratory
+ * as found in GRASS's r.slope.aspect module.
+ *
+ * Horn's formula is used to find the first order derivatives in x and y directions
+ * for slope and aspect calculations: Horn, B. K. P. (1981).
+ * "Hill Shading and the Reflectance Map", Proceedings of the IEEE, 69(1):14-47. 
+ *
+ * Other reference :
+ * Burrough, P.A. and McDonell, R.A., 1998. Principles of Geographical Information
+ * Systems. p. 190.
+ *
+ * Shaded relief based on original method for GRASS GIS 4.1 by Jim Westervelt,
+ * U.S. Army Construction Engineering Research Laboratory
+ * as found in GRASS's r.shaded.relief (formerly shade.rel.sh) module.
+ * ref: "r.mapcalc: An Algebra for GIS and Image Processing",
+ * by Michael Shapiro and Jim Westervelt, U.S. Army Construction Engineering
+ * Research Laboratory (March/1991)
+ *
  ****************************************************************************/
-
 
 #include <stdlib.h>
 #include <math.h>
