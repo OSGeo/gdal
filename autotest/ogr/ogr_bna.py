@@ -100,7 +100,7 @@ def ogr_bna_3():
 
     lyr = gdaltest.bna_ds.GetLayerByName( 'test_polygons' )
 
-    expect = ['PID2', 'PID1', 'PID7']
+    expect = ['PID2', 'PID1', 'PID7', 'PID8']
 
     tr = ogrtest.check_features_against_list( lyr, 'Primary ID', expect )
     if not tr:
@@ -117,6 +117,10 @@ def ogr_bna_3():
     feat.Destroy()
     feat = lyr.GetFeature(2)
     if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001 ) != 0:
+        return 'fail'
+    feat.Destroy()
+    feat = lyr.GetFeature(3)
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2))', max_error = 0.0001 ) != 0:
         return 'fail'
     feat.Destroy()
 
