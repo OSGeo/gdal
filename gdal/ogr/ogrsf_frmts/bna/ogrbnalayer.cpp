@@ -392,7 +392,7 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
                 {
                     ring = polygon->getInteriorRing(i);
                     n = ring->getNumPoints();
-                    for(j=0;i<n;i++)
+                    for(j=0;j<n;j++)
                     {
                         VSIFPrintf( fp, formatCoordinates,
                                     ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", ring->getX(j), ring->getY(j));
