@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ilihelper.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id: ilihelper.cpp 16242 2009-02-06 17:17:56Z pka $
  *
  * Project:  Interlis 1/2 Translator
  * Purpose:  Helper functions for Interlis reader
@@ -31,7 +31,7 @@
 #include "ilihelper.h"
 
 
-CPL_CVSID("$Id: ilihelper.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id: ilihelper.cpp 16242 2009-02-06 17:17:56Z pka $");
 
 
 OGRPoint *getARCCenter(OGRPoint *ptStart, OGRPoint *ptArc, OGRPoint *ptEnd) {
@@ -61,12 +61,6 @@ OGRPoint *getARCCenter(OGRPoint *ptStart, OGRPoint *ptArc, OGRPoint *ptEnd) {
   return center;
 }
 
-/**
-This algorithm is adopted from PostGIS lwsegmentize.c
-Many thanks to the PostGIS guys!!!
--- Stefan Ziegler and Horst Duester
-*/
-
 void interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, OGRPoint *ptEnd, double arcIncr) {
   OGRPoint *center = getARCCenter(ptStart, ptOnArc, ptEnd);
 
@@ -74,6 +68,11 @@ void interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, O
   double px = ptOnArc->getX(); double py = ptOnArc->getY();
   double r = sqrt((cx-px)*(cx-px)+(cy-py)*(cy-py));
 
+  double myAlpha = 2.0*acos(1.0-0.002/r);
+      
+  if (myAlpha < arcIncr)  {
+      arcIncr = myAlpha;
+  }
 
   double a1 = atan2(ptStart->getY() - cy, ptStart->getX() - cx);
   double a2 = atan2(py - cy, px - cx);
