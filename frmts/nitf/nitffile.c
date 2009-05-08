@@ -1406,6 +1406,8 @@ int NITFCollectAttachments( NITFFile *psFile )
         if( EQUAL(psSegInfo->szSegmentType,"IM") )
         {
             NITFImage *psImage = NITFImageAccess( psFile, iSegment );
+            if (psImage == NULL)
+                return FALSE;
                 
             psSegInfo->nDLVL = psImage->nIDLVL;
             psSegInfo->nALVL = psImage->nIALVL;
