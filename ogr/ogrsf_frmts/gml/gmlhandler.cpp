@@ -122,12 +122,13 @@ void GMLHandler::startElement(const XMLCh* const    uri,
         if( m_nGeomLen + nLNLenBytes + 4 > m_nGeomAlloc )
         {
             m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
-            m_pszGeometry = (char *) 
+            char* pszNewGeometry = (char *) 
                 VSIRealloc( m_pszGeometry, m_nGeomAlloc);
-            if (m_pszGeometry == NULL)
+            if (pszNewGeometry == NULL)
             {
                 throw SAXNotSupportedException("Out of memory");
             }
+            m_pszGeometry = pszNewGeometry;
         }
 
         strcpy( m_pszGeometry+m_nGeomLen, "<" );
@@ -214,12 +215,13 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
         if( m_nGeomLen + nLNLenBytes + 4 > m_nGeomAlloc )
         {
             m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
-            m_pszGeometry = (char *) 
+            char* pszNewGeometry = (char *) 
                 VSIRealloc( m_pszGeometry, m_nGeomAlloc);
-            if (m_pszGeometry == NULL)
+            if (pszNewGeometry == NULL)
             {
                 throw SAXNotSupportedException("Out of memory");
             }
+            m_pszGeometry = pszNewGeometry;
         }
 
         strcat( m_pszGeometry+m_nGeomLen, "</" );
@@ -292,14 +294,15 @@ void GMLHandler::characters(const XMLCh* const chars_in,
         }
         else
         {
-            m_pszCurField = (char *) 
+            char *pszNewCurField = (char *) 
                 VSIRealloc( m_pszCurField, 
                             nCurFieldLength+strlen(pszTranslated)+1 );
-            if (m_pszCurField == NULL)
+            if (pszNewCurField == NULL)
             {
                 CPLFree( pszTranslated );
                 throw SAXNotSupportedException("Out of memory");
             }
+            m_pszCurField = pszNewCurField;
             strcpy( m_pszCurField + nCurFieldLength, pszTranslated );
             CPLFree( pszTranslated );
         }
@@ -315,12 +318,13 @@ void GMLHandler::characters(const XMLCh* const chars_in,
         if( m_nGeomLen + nCharsLen*4 + 4 > m_nGeomAlloc )
         {
             m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nCharsLen*4 + 1000);
-            m_pszGeometry = (char *) 
+            char* pszNewGeometry = (char *) 
                 VSIRealloc( m_pszGeometry, m_nGeomAlloc);
-            if (m_pszGeometry == NULL)
+            if (pszNewGeometry == NULL)
             {
                 throw SAXNotSupportedException("Out of memory");
             }
+            m_pszGeometry = pszNewGeometry;
         }
 
         tr_strcpy( m_pszGeometry+m_nGeomLen, chars );

@@ -502,20 +502,22 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /* -------------------------------------------------------------------- */
     if( nBands < nNewBand || papoBands == NULL ) {
         int             i;
+        GDALRasterBand** papoNewBands;
 
         if( papoBands == NULL )
-            papoBands = (GDALRasterBand **)
+            papoNewBands = (GDALRasterBand **)
                 VSICalloc(sizeof(GDALRasterBand*), MAX(nNewBand,nBands));
         else
-            papoBands = (GDALRasterBand **)
+            papoNewBands = (GDALRasterBand **)
                 VSIRealloc(papoBands, sizeof(GDALRasterBand*) *
                            MAX(nNewBand,nBands));
-        if (papoBands == NULL)
+        if (papoNewBands == NULL)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
                      "Cannot allocate band array");
             return;
         }
+        papoBands = papoNewBands;
 
         for( i = nBands; i < nNewBand; i++ )
             papoBands[i] = NULL;

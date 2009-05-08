@@ -45,13 +45,16 @@ static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *r
         size_t new_size = required_size * 2;
         if (new_size < 512) new_size = 512;
         psRequest->nDataAlloc = new_size;
-        psRequest->pabyData = reinterpret_cast<GByte *>(VSIRealloc(psRequest->pabyData, new_size));
-        if (psRequest->pabyData == NULL) {
+        GByte * pabyNewData = reinterpret_cast<GByte *>(VSIRealloc(psRequest->pabyData, new_size));
+        if (pabyNewData == NULL) {
+            VSIFree(psRequest->pabyData);
+            psRequest->pabyData = NULL;
             psRequest->pszError = CPLStrdup(CPLString().Printf("Out of memory allocating %u bytes for HTTP data buffer.", static_cast<int>(new_size)));
             psRequest->nDataAlloc = 0;
             psRequest->nDataLen = 0;
             return 0;
         }
+        psRequest->pabyData = pabyNewData;
     }
     memcpy(psRequest->pabyData + psRequest->nDataLen, buffer, size);
     psRequest->nDataLen += size;
