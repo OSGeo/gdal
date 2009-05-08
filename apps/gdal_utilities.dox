@@ -574,7 +574,7 @@ band of each dataset will be placed into a new band. Contrary to the default mod
 required that all bands have the same datatype.
 </dd>
 
-<dt> <b>-allow_projection_difference</b>:</dt><dd> 
+<dt> <b>-allow_projection_difference</b>:</dt><dd> (starting with GDAL 1.7.0)
 When this option is specified, the utility will accept to make a VRT even if the input datasets have
 not the same projection. Note: this does not mean that they will be reprojected. Their projection will
 just be ignored.
