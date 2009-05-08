@@ -535,20 +535,20 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
         }
         else if( cpl_log != NULL )
         {
-            char      path[5000];
+            char*     pszPath;
             int       i = 0;
 
-            strncpy( path, cpl_log, sizeof(path) - 10 );
-            path[sizeof(path)-1] = '\0';
+            pszPath = (char*)CPLMalloc(strlen(cpl_log) + 20);
+            strcpy(pszPath, cpl_log);
 
-            while( (fpLog = fopen( path, "rt" )) != NULL ) 
+            while( (fpLog = fopen( pszPath, "rt" )) != NULL ) 
             {
                 fclose( fpLog );
 
                 /* generate sequenced log file names, inserting # before ext.*/
                 if (strrchr(cpl_log, '.') == NULL)
                 {
-                    sprintf( path, "%s_%d%s", cpl_log, i++,
+                    sprintf( pszPath, "%s_%d%s", cpl_log, i++,
                              ".log" );
                 }
                 else
@@ -560,12 +560,14 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
                     {
                         cpl_log_base[pos] = '\0';
                     }
-                    sprintf( path, "%s_%d%s", cpl_log_base,
+                    sprintf( pszPath, "%s_%d%s", cpl_log_base,
                              i++, ".log" );
+                    free(cpl_log_base);
                 }
             }
 
-            fpLog = fopen( path, "wt" );
+            fpLog = fopen( pszPath, "wt" );
+            CPLFree(pszPath);
         }
     }
 
