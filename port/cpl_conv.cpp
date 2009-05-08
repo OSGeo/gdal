@@ -1489,10 +1489,12 @@ int CPLStat( const char *pszPath, VSIStatBuf *psStatBuf )
 {
     if( strlen(pszPath) == 2 && pszPath[1] == ':' )
     {
-        char    szAltPath[10];
+        char    szAltPath[4];
         
-        strncpy( szAltPath, pszPath, 10 );
-        strcat( szAltPath, "\\" );
+        szAltPath[0] = pszPath[0];
+        szAltPath[1] = pszPath[1];
+        szAltPath[2] = '\\';
+        szAltPath[3] = '\0';
         return VSIStat( szAltPath, psStatBuf );
     }
     else
