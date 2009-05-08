@@ -1919,3 +1919,100 @@ CPLValueType CPLGetValueType(const char* pszValue)
 
     return (bIsReal) ? CPL_VALUE_REAL : CPL_VALUE_INTEGER;
 }
+
+/************************************************************************/
+/*                              CPLStrlcpy()                            */
+/************************************************************************/
+
+/**
+ * Copy source string to a destination buffer.
+ *
+ * This function ensures that the destination buffer is always NUL terminated
+ * (provided that its length is at least 1).
+ *
+ * This function is designed to be a safer, more consistent, and less error
+ * prone replacement for strncpy. Its contract is identical to libbsd's strlcpy.
+ *
+ * Truncation can be detected by testing if the return value of CPLStrlcpy
+ * is greater or equal to nDestSize.
+
+\verbatim
+char szDest[5];
+if (CPLStrlcpy(szDest, "abcde", sizeof(szDest)) >= sizeof(szDest))
+    fprintf(stderr, "truncation occured !\n");
+\endverbatim
+
+ * @param pszDest   destination buffer
+ * @param pszSrc    source string. Must be NUL terminated
+ * @param nDestSize size of destination buffer (including space for the NUL terminator character)
+ *
+ * @return the length of the source string (=strlen(pszSrc))
+ *
+ * @since GDAL 1.7.0
+ */
+size_t CPLStrlcpy(char* pszDest, const char* pszSrc, size_t nDestSize)
+{
+    char* pszDestIter = pszDest;
+    const char* pszSrcIter = pszSrc;
+
+    if (nDestSize == 0)
+        return strlen(pszSrc);
+
+    nDestSize --;
+    while(nDestSize != 0 && *pszSrcIter != '\0')
+    {
+        *pszDestIter = *pszSrcIter;
+        pszDestIter ++;
+        pszSrcIter ++;
+        nDestSize --;
+    }
+    *pszDestIter = '\0';
+    return pszSrcIter - pszSrc + strlen(pszSrcIter);
+}
+
+/************************************************************************/
+/*                              CPLStrlcat()                            */
+/************************************************************************/
+
+/**
+ * Appends a source string to a destination buffer.
+ *
+ * This function ensures that the destination buffer is always NUL terminated
+ * (provided that its length is at least 1 and that there is at least one byte
+ * free in pszDest, that is to say strlen(pszDest_before) < nDestSize)
+ *
+ * This function is designed to be a safer, more consistent, and less error
+ * prone replacement for strncat. Its contract is identical to libbsd's strlcat.
+ *
+ * Truncation can be detected by testing if the return value of CPLStrlcat
+ * is greater or equal to nDestSize.
+
+\verbatim
+char szDest[5];
+CPLStrlcpy(szDest, "ab", sizeof(szDest));
+if (CPLStrlcpy(szDest, "cde", sizeof(szDest)) >= sizeof(szDest))
+    fprintf(stderr, "truncation occured !\n");
+\endverbatim
+
+ * @param pszDest   destination buffer. Must be NUL terminated before running CPLStrlcat
+ * @param pszSrc    source string. Must be NUL terminated
+ * @param nDestSize size of destination buffer (including space for the NUL terminator character)
+ *
+ * @return the thoretical length of the destination string after concatenation
+ *         (=strlen(pszDest_before) + strlen(pszSrc)).
+ *         If strlen(pszDest_before) >= nDestSize, then it returns nDestSize + strlen(pszSrc)
+ *
+ * @since GDAL 1.7.0
+ */
+size_t CPLStrlcat(char* pszDest, const char* pszSrc, size_t nDestSize)
+{
+    char* pszDestIter = pszDest;
+
+    while(nDestSize != 0 && *pszDestIter != '\0')
+    {
+        pszDestIter ++;
+        nDestSize --;
+    }
+
+    return pszDestIter - pszDest + CPLStrlcpy(pszDestIter, pszSrc, nDestSize);
+}
