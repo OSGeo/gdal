@@ -1297,10 +1297,10 @@ GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
 /* -------------------------------------------------------------------- */
 /*      Generate upper and lower case versions of the extension.        */
 /* -------------------------------------------------------------------- */
-    strncpy( szExtUpper, pszExtension, 32 );
-    strncpy( szExtLower, pszExtension, 32 );
+    CPLStrlcpy( szExtUpper, pszExtension, sizeof(szExtUpper) );
+    CPLStrlcpy( szExtLower, pszExtension, sizeof(szExtLower) );
 
-    for( i = 0; szExtUpper[i] != '\0' && i < 32; i++ )
+    for( i = 0; szExtUpper[i] != '\0'; i++ )
     {
         szExtUpper[i] = (char) toupper(szExtUpper[i]);
         szExtLower[i] = (char) tolower(szExtLower[i]);
