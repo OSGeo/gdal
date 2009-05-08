@@ -310,15 +310,16 @@ void OGRGeoRSSLayer::ResetReading()
 void OGRGeoRSSLayer::AddStrToSubElementValue(const char* pszStr)
 {
     int len = strlen(pszStr);
-    pszSubElementValue = (char*)
+    char* pszNewSubElementValue = (char*)
             VSIRealloc(pszSubElementValue, nSubElementValueLen + len + 1);
-    if (pszSubElementValue == NULL)
+    if (pszNewSubElementValue == NULL)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         XML_StopParser(oParser, XML_FALSE);
         bStopParsing = TRUE;
         return;
     }
+    pszSubElementValue = pszNewSubElementValue;
 
     memcpy(pszSubElementValue + nSubElementValueLen, pszStr, len);
     nSubElementValueLen += len;
@@ -968,15 +969,16 @@ void OGRGeoRSSLayer::dataHandlerCbk(const char *data, int nLen)
         bInGeoLat == TRUE || bInGeoLong == TRUE ||
         pszSubElementName != NULL)
     {
-        pszSubElementValue =(char*) VSIRealloc(pszSubElementValue,
+        char* pszNewSubElementValue = (char*) VSIRealloc(pszSubElementValue,
                                                nSubElementValueLen + nLen + 1);
-        if (pszSubElementValue == NULL)
+        if (pszNewSubElementValue == NULL)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             XML_StopParser(oSchemaParser, XML_FALSE);
             bStopParsing = TRUE;
             return;
         }
+        pszSubElementValue = pszNewSubElementValue;
         memcpy(pszSubElementValue + nSubElementValueLen, data, nLen);
         nSubElementValueLen += nLen;
     }
@@ -2242,14 +2244,15 @@ void OGRGeoRSSLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
 
     if (pszSubElementName)
     {
-        pszSubElementValue = (char*) VSIRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
-        if (pszSubElementValue == NULL)
+        char* pszNewSubElementValue = (char*) VSIRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
+        if (pszNewSubElementValue == NULL)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             XML_StopParser(oSchemaParser, XML_FALSE);
             bStopParsing = TRUE;
             return;
         }
+        pszSubElementValue = pszNewSubElementValue;
         memcpy(pszSubElementValue + nSubElementValueLen, data, nLen);
         nSubElementValueLen += nLen;
         if (nSubElementValueLen > 100000)

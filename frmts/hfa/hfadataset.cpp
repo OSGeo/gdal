@@ -709,12 +709,13 @@ void HFARasterBand::ReadAuxMetadata()
             if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
             {
                 nBufSize *= 2;
-                pszBinValues = (char *)VSIRealloc( pszBinValues, nBufSize );
-                if (pszBinValues == NULL)
+                char* pszNewBinValues = (char *)VSIRealloc( pszBinValues, nBufSize );
+                if (pszNewBinValues == NULL)
                 {
                     CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory");
                     break;
                 }
+                pszBinValues = pszNewBinValues;
             }
             strcat( pszBinValues+nBinValuesLen, szBuf );
             strcat( pszBinValues+nBinValuesLen, "|" );

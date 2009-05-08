@@ -323,6 +323,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
         if( nXHDL > 3 )
         {
+            char* pachNewTRE;
+
             nOffset += 3; /* XHDLOFL */
             nXHDL -= 3;
 
@@ -333,16 +335,17 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
                 return NULL;
             }
 
-            psFile->pachTRE = (char *) 
+            pachNewTRE = (char *) 
                 VSIRealloc( psFile->pachTRE, 
                             psFile->nTREBytes + nXHDL );
-            if (psFile->pachTRE == NULL)
+            if (pachNewTRE == NULL)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                      "Cannot allocate %d bytes", psFile->nTREBytes + nXHDL);
                 NITFClose(psFile);
                 return NULL;
             }
+            psFile->pachTRE = pachNewTRE;
             memcpy( psFile->pachTRE, pachHeader + nOffset, nXHDL );
             psFile->nTREBytes += nXHDL;
         }
