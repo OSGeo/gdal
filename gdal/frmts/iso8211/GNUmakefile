@@ -22,24 +22,24 @@ clean:
 dist-clean:	clean
 	rm -rf $(DISTDIR)
 
-$(ISOLIB):	$(OBJ)
+$(ISOLIB):	$(OBJ:.o=.$(OBJ_EXT))
 	$(AR) r $(ISOLIB) $?
 	$(RANLIB) $(ISOLIB)
 
-8211dump$(EXE):	8211dump.o
-	$(LD) $(LDFLAGS) 8211dump.o $(CONFIG_LIBS) -o 8211dump$(EXE)
+8211dump$(EXE):	8211dump.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) 8211dump.$(OBJ_EXT) $(CONFIG_LIBS) -o 8211dump$(EXE)
 
-8211view$(EXE):	8211view.o
-	$(LD) $(LDFLAGS) 8211view.o $(CONFIG_LIBS) -o 8211view$(EXE)
+8211view$(EXE):	8211view.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) 8211view.$(OBJ_EXT) $(CONFIG_LIBS) -o 8211view$(EXE)
 
-timetest$(EXE):	timetest.o
-	$(LD) $(LDFLAGS) timetest.o $(CONFIG_LIBS) -o timetest$(EXE)
+timetest$(EXE):	timetest.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) timetest.$(OBJ_EXT) $(CONFIG_LIBS) -o timetest$(EXE)
 
-upd_test$(EXE):	upd_test.o
-	$(LD) $(LDFLAGS) upd_test.o $(CONFIG_LIBS) -o upd_test$(EXE)
+upd_test$(EXE):	upd_test.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) upd_test.$(OBJ_EXT) $(CONFIG_LIBS) -o upd_test$(EXE)
 
-mkcatalog$(EXE):	mkcatalog.o
-	$(LD) $(LDFLAGS) mkcatalog.o $(CONFIG_LIBS) -o mkcatalog$(EXE)
+mkcatalog$(EXE):	mkcatalog.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) mkcatalog.$(OBJ_EXT) $(CONFIG_LIBS) -o mkcatalog$(EXE)
 
 docs:
 	rm -rf html
@@ -82,4 +82,4 @@ test:	8211dump
 	    diff t1.out teststream.out; \
 	fi
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))

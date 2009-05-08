@@ -11,15 +11,15 @@ OBJ	=	gxfdataset.o $(GXFOBJ)
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o
 
-gxftest$(EXE):	gxftest.o
-	$(LD) $(LDFLAGS) gxftest.o $(GXFOBJ) ../../port/*.o $(LIBS) -o gxftest$(EXE)
+gxftest$(EXE):	gxftest.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) gxftest.$(OBJ_EXT) $(GXFOBJ) ../../port/*.$(OBJ_EXT) $(LIBS) -o gxftest$(EXE)
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 $(SHARED_LIB):	$(OBJ)
 	$(LD_SHARED) $(OBJ) $(GDAL_SLIB_LINK) $(LIBS) -o $(SHARED_LIB) 

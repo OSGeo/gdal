@@ -25,14 +25,14 @@ ALL_C_FLAGS	:=	-I../libtiff $(ALL_C_FLAGS)
 endif
 
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f $(O_OBJ) *.o *.a
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
-../../o/%.o:	%.c
+../../o/%.$(OBJ_EXT):	%.c
 	$(CC) -c -I../../port $(ALL_C_FLAGS) $< -o $@
 
 #

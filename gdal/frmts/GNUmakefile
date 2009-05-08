@@ -9,16 +9,16 @@ FRMT_FLAGS	=	$(foreach FRMT, $(GDAL_FORMATS), -DFRMT_$(FRMT))
 %-install-obj:
 	$(MAKE) -C $* install-obj
 
-default:	$(OBJ) $(foreach d,$(GDAL_FORMATS),$(d)-install-obj)
+default:	$(OBJ:.o=.$(OBJ_EXT)) $(foreach d,$(GDAL_FORMATS),$(d)-install-obj)
 
 clean:	$(foreach d,$(GDAL_FORMATS),$(d)-clean)
 	rm -f *.o o/*.o o/*.a
 	$(RM) o/*.lo
 
-o/gdalallregister.o:	gdalallregister.cpp ../GDALmake.opt
+o/gdalallregister.$(OBJ_EXT):	gdalallregister.cpp ../GDALmake.opt
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(FRMT_FLAGS) \
 		-DGDAL_FORMATS="$(GDAL_FORMATS)" \
-		gdalallregister.cpp -o o/gdalallregister.o
+		gdalallregister.cpp -o o/gdalallregister.$(OBJ_EXT)
 
 # We might want to add dynamically generated drivers here eventually.
 install:

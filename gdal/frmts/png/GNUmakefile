@@ -37,14 +37,14 @@ endif
 
 CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o libpng/*.o $(O_OBJ)
 
-../o/%.o:	libpng/%.c
+../o/%.$(OBJ_EXT):	libpng/%.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-all:	$(OBJ)
+all:	$(OBJ:.o=.$(OBJ_EXT))
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))

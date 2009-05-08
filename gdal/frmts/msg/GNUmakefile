@@ -12,9 +12,9 @@ OBJ	=	msgdataset.o xritheaderparser.o prologue.o msgcommand.o reflectancecalcula
 
 CPPFLAGS	=	$(GDAL_INCLUDE) -I PublicDecompWT/DISE -I PublicDecompWT/COMP/WT/Inc -I PublicDecompWT/COMP/Inc -I.
 
-default:	$(OBJ) 
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o
 
-install-obj:	$(O_OBJ) 
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT)) 
