@@ -521,7 +521,7 @@ Frank Warmerdam <warmerdam@pobox.com>
 *******************************************************************************
 /*! \page gdalbuildvrt gdalbuildvrt
 
-Builds a VRT from a list of datasets. (compiled by default since GDAL 1.7.0)
+Builds a VRT from a list of datasets. (compiled by default since GDAL 1.6.1)
 
 \section gdalbuildvrt_synopsis SYNOPSIS
 
@@ -555,7 +555,7 @@ If there is some amount of spatial overlapping between files, the order may depe
 are inserted in the VRT file, but this behaviour should not be relied on.
 
 This utility is somehow equivalent to the gdal_vrtmerge.py utility and is build by default
-in GDAL 1.7.0.
+in GDAL 1.6.1.
 
 <dl>
 
@@ -568,7 +568,7 @@ In case the resolution of all input files is not the same, the -resolution flag
 enables the user to control the way the output resolution is computed. average is the default.
 </dd>
 
-<dt> <b>-separate</b>:</dt><dd> 
+<dt> <b>-separate</b>:</dt><dd> (starting with GDAL 1.7.0)
 Place each input file into a separate <i>stacked</i> band. In that case, only the first
 band of each dataset will be placed into a new band. Contrary to the default mode, it is not
 required that all bands have the same datatype.
