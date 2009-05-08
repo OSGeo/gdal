@@ -271,6 +271,13 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
     psFile->nTREBytes = 
         atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
+    if (psFile->nTREBytes < 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid TRE size : %d", psFile->nTREBytes);
+        NITFClose(psFile);
+        return NULL;
+    }
     nOffset += 5;
 
     if( psFile->nTREBytes > 3 )
@@ -304,6 +311,13 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     {
         int nXHDL = 
             atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
+        if (nXHDL < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Invalid XHDL value : %d", nXHDL);
+            NITFClose(psFile);
+            return NULL;
+        }
 
         nOffset += 5; /* XHDL */
 
