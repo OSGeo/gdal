@@ -34,106 +34,86 @@ lib-depend:
 	(cd ../gcore ; $(MAKE) )
 	(cd ../port ; $(MAKE) )
 
-gdalinfo$(EXE):	gdalinfo.o  $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdalinfo.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdalinfo$(EXE)
+gdalinfo$(EXE):	gdalinfo.$(OBJ_EXT)  $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdal_translate$(EXE):	gdal_translate.o  $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdal_translate$(EXE)
+gdal_translate$(EXE):	gdal_translate.$(OBJ_EXT)  $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdaladdo$(EXE):	gdaladdo.o  $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdaladdo.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdaladdo$(EXE)
+gdaladdo$(EXE):	gdaladdo.$(OBJ_EXT)  $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdalwarp$(EXE): gdalwarp.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdalwarp.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdalwarp$(EXE)
+gdalwarp$(EXE): gdalwarp.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdal_contour$(EXE):	gdal_contour.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdal_contour.o $(CONFIG_LIBS) -o gdal_contour$(EXE)
+gdal_contour$(EXE):	gdal_contour.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-nearblack$(EXE):	nearblack.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) nearblack.o $(CONFIG_LIBS) -o nearblack$(EXE)
+nearblack$(EXE):	nearblack.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdalmanage$(EXE):	gdalmanage.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdalmanage.o $(CONFIG_LIBS) -o gdalmanage$(EXE)
+gdalmanage$(EXE):	gdalmanage.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdal_rasterize$(EXE):	gdal_rasterize.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdal_rasterize.o $(CONFIG_LIBS) -o gdal_rasterize$(EXE)
+gdal_rasterize$(EXE):	gdal_rasterize.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdaltindex$(EXE):	gdaltindex.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		-o gdaltindex$(EXE)
+gdaltindex$(EXE):	gdaltindex.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-gdalbuildvrt$(EXE):	gdalbuildvrt.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdalbuildvrt.o $(XTRAOBJ) $(CONFIG_LIBS)  \
-		-o gdalbuildvrt$(EXE)
+gdalbuildvrt$(EXE):	gdalbuildvrt.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-multireadtest$(EXE):	multireadtest.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) multireadtest.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o multireadtest$(EXE)
+multireadtest$(EXE):	multireadtest.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-dumpoverviews$(EXE):	dumpoverviews.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) dumpoverviews.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o dumpoverviews$(EXE)
+dumpoverviews$(EXE):	dumpoverviews.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdalenhance$(EXE):	gdalenhance.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdalenhance.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o gdalenhance$(EXE)
+gdalenhance$(EXE):	gdalenhance.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdal_grid$(EXE):	gdal_grid.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdal_grid.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o gdal_grid$(EXE)
+gdal_grid$(EXE):	gdal_grid.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-gdalwarpsimple$(EXE): gdalwarpsimple.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdalwarpsimple.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdalwarpsimple$(EXE)
+gdalwarpsimple$(EXE): gdalwarpsimple.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdaltransform$(EXE): gdaltransform.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdaltransform.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdaltransform$(EXE)
+gdaltransform$(EXE): gdaltransform.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-gdalflattenmask$(EXE): gdalflattenmask.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdalflattenmask.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdalflattenmask$(EXE)
+gdalflattenmask$(EXE): gdalflattenmask.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-gdaltorture$(EXE): gdaltorture.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdaltorture.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdaltorture$(EXE)
+gdaltorture$(EXE): gdaltorture.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-gdal2ogr$(EXE):	gdal2ogr.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdal2ogr.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o gdal2ogr$(EXE)
+gdal2ogr$(EXE):	gdal2ogr.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-ogrinfo$(EXE):	ogrinfo.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) ogrinfo.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o ogrinfo$(EXE)
+ogrinfo$(EXE):	ogrinfo.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-ogr2ogr$(EXE):	ogr2ogr.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) ogr2ogr.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o ogr2ogr$(EXE)
+ogr2ogr$(EXE):	ogr2ogr.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-testepsg$(EXE):	testepsg.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) testepsg.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o testepsg$(EXE)
+testepsg$(EXE):	testepsg.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-ogrtindex$(EXE):	ogrtindex.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) ogrtindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o ogrtindex$(EXE)
+ogrtindex$(EXE):	ogrtindex.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
-test_ogrsf$(EXE):	test_ogrsf.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) test_ogrsf.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o test_ogrsf$(EXE)
+test_ogrsf$(EXE):	test_ogrsf.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 clean:
 	$(RM) *.o $(BIN_LIST) core gdal-config gdal-config-inst

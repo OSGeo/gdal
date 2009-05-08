@@ -37,7 +37,7 @@ OBJ	:= 	$(OBJ)  cpl_vsil_gzip.o cpl_minizip_ioapi.o cpl_minizip_unzip.o
 CPPFLAGS	:=	$(CPPFLAGS) -DHAVE_LIBZ
 endif
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	$(RM) *.o $(LIB)

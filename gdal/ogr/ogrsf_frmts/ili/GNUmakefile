@@ -17,7 +17,7 @@ endif
 CPPFLAGS :=	-I.. -I../.. $(GDAL_INCLUDE) $(XERCES_INCLUDE) $(CPPFLAGS)
 
 
-default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)	$(O_OBJ)
+default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean: $(foreach d,$(SUBDIRS-yes),$(d)-clean)
 	rm -f *.o $(O_OBJ)

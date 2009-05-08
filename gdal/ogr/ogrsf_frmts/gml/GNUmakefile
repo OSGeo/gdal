@@ -23,14 +23,14 @@ endif
 # enable XML schema validation in the parser.
 #CPPFLAGS +=  -DOGR_GML_VALIDATION=1
 
-default:	$(O_OBJ)
+default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o gmlview $(O_OBJ)
 
-gmlview:	gmlview.cpp $(CORE_OBJ)
+gmlview:	gmlview.cpp $(CORE_OBJ:.o=.$(OBJ_EXT))
 	$(CXX) $(CPPFLAGS) $(CFLAGS) $(LNK_FLAGS) \
-		gmlview.cpp $(CORE_OBJ) $(GDAL_LIB) $(LIBS) \
+		gmlview.cpp $(CORE_OBJ:.o=.$(OBJ_EXT)) $(GDAL_LIB) $(LIBS) \
 		-o gmlview
 
 

@@ -16,39 +16,39 @@ endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(EXTRAFLAGS)
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
-../o/%.o:	degrib18/degrib/%.c
+../o/%.$(OBJ_EXT):	degrib18/degrib/%.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) -Idegrib18/g2clib-1.0.4 $< -o $@
 
-../o/%.o:	degrib18/degrib/%.cpp
+../o/%.$(OBJ_EXT):	degrib18/degrib/%.cpp
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-../o/%.o:	degrib18/g2clib-1.0.4/%.c
+../o/%.$(OBJ_EXT):	degrib18/g2clib-1.0.4/%.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-../o/%.o:	degrib18/g2clib-1.0.4/%.cpp
+../o/%.$(OBJ_EXT):	degrib18/g2clib-1.0.4/%.cpp
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.o:	degrib18/degrib/%.c
+%.$(OBJ_EXT):	degrib18/degrib/%.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) -Idegrib18/g2clib-1.0.4 $< -o $@
 
-%.o:	degrib18/degrib/%.cpp
+%.$(OBJ_EXT):	degrib18/degrib/%.cpp
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.o:	degrib18/g2clib-1.0.4/%.c
+%.$(OBJ_EXT):	degrib18/g2clib-1.0.4/%.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-%.o:	degrib18/g2clib-1.0.4/%.cpp
+%.$(OBJ_EXT):	degrib18/g2clib-1.0.4/%.cpp
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-defaultold:	$(OBJ)
+defaultold:	$(OBJ:.o=.$(OBJ_EXT))
 	(cd degrib18/degrib; $(MAKE)); cd ../..
 	(cd degrib18/g2clib-1.0.4; $(MAKE))
 clean:
 	rm -f *.o $(O_OBJ)
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 plugin: gdal_GRIB.so
 

@@ -14,7 +14,7 @@ endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(HDF4_INCLUDE) $(HDFEOS_OPTS) $(CPPFLAGS)
 
-default:	$(OBJ) $(SUBLIBS)
+default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
 clean:
 	rm -f *.o $(O_OBJ)
@@ -23,4 +23,4 @@ clean:
 lib-hdfeos:
 	(cd hdf-eos; $(MAKE) install-obj)
 
-install-obj:	$(SUBLIBS) $(O_OBJ)
+install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))

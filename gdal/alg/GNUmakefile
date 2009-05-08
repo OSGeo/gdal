@@ -18,7 +18,7 @@ endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	$(RM) *.o
@@ -29,5 +29,5 @@ docs:
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
 
-lib:	$(OBJ)
+lib:	$(OBJ:.o=.$(OBJ_EXT))
 	(cd .. ; $(MAKE) force-lib)

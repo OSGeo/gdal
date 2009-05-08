@@ -19,7 +19,7 @@ LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(GDAL_LIB) $(LIBS)
 
 
 
-default:	$(SDTSLIB) sdtsdataset.o
+default:	$(SDTSLIB) sdtsdataset.$(OBJ_EXT)
 
 all:	$(SDTSLIB) sdts2shp
 
@@ -29,15 +29,15 @@ clean:	clean-dist
 clean-dist:
 	rm -rf $(DISTDIR) $(DISTDIR).zip $(DISTDIR).tar.gz
 
-$(SDTSLIB):	$(OBJ)
+$(SDTSLIB):	$(OBJ:.o=.$(OBJ_EXT))
 	ar r $(SDTSLIB) $?
 
 sdts2shp:	sdts2shp.cpp $(SDTSLIB)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(SHPDIR) sdts2shp.cpp \
-		$(SHPDIR)/shpopen.o $(SHPDIR)/dbfopen.o \
+		$(SHPDIR)/shpopen.$(OBJ_EXT) $(SHPDIR)/dbfopen.$(OBJ_EXT) \
 		$(LIBS) -o sdts2shp
 
-install-obj:	$(O_OBJ) ../o/sdtsdataset.o
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT)) ../o/sdtsdataset.$(OBJ_EXT)
 
 docs:
 	rm -rf html

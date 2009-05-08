@@ -6,7 +6,7 @@ OBJ	=	ogrogdidriver.o ogrogdidatasource.o ogrogdilayer.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(OGDI_INCLUDE) $(PROJ_INCLUDE) $(CPPFLAGS)
 
-default:	$(O_OBJ)
+default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ):		ogrogdi.h
 

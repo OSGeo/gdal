@@ -18,14 +18,14 @@ ifeq ($(JPEG_SETTING),internal)
 CPPFLAGS	:=	$(CPPFLAGS) -I../jpeg/libjpeg
 endif
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ) $(O_OBJ):	../../gcore/gdal_proxy.h nitflib.h
 
 clean:
 	rm -f *.o $(O_OBJ) nitfdump$(EXE)
 
-nitfdump$(EXE):	nitfdump.o
-	$(LD) $(LDFLAGS) nitfdump.o $(CONFIG_LIBS) -o nitfdump$(EXE)
+nitfdump$(EXE):	nitfdump.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) nitfdump.$(OBJ_EXT) $(CONFIG_LIBS) -o nitfdump$(EXE)
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))

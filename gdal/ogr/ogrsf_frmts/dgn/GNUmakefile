@@ -29,17 +29,17 @@ DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
 		$(CPL_DIR)/cpl_path.cpp $(CPL_DIR)/cpl_dir.cpp \
 		$(CPL_DIR)/cpl_multiproc.h $(CPL_DIR)/cpl_multiproc.cpp
 
-default:	$(O_OBJ)
+default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -rf *.o $(DEST_DIR) dgnlib-$(DIST_REV).zip html man $(O_OBJ)
 	rm -f dgndump$(EXE) dgnwritetest$(EXE)
 
-dgndump$(EXE):	dgndump.o
-	$(LD) $(LDFLAGS) dgndump.o $(CONFIG_LIBS) -o dgndump$(EXE)
+dgndump$(EXE):	dgndump.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) dgndump.$(OBJ_EXT) $(CONFIG_LIBS) -o dgndump$(EXE)
 
-dgnwritetest$(EXE):	dgnwritetest.o
-	$(LD) $(LDFLAGS) dgnwritetest.o $(CONFIG_LIBS) -o dgnwritetest$(EXE)
+dgnwritetest$(EXE):	dgnwritetest.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) dgnwritetest.$(OBJ_EXT) $(CONFIG_LIBS) -o dgnwritetest$(EXE)
 
 docs:
 	doxygen

@@ -24,12 +24,12 @@ ifeq ($(JPEG_SETTING),internal)
 CPPFLAGS	:=	$(CPPFLAGS) -I../jpeg/libjpeg
 endif
 
-default:	$(OBJ)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ) *.so
 
-install-obj:	$(O_OBJ)
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 plugin: $(PLUGIN_SO)
 
