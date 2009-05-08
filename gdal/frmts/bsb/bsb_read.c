@@ -320,9 +320,9 @@ BSBInfo *BSBOpen( const char *pszFilename )
             }
             if( iPCT > psInfo->nPCTSize-1 )
             {
-                psInfo->pabyPCT = (unsigned char *) 
+                unsigned char* pabyNewPCT = (unsigned char *) 
                     VSIRealloc(psInfo->pabyPCT,(iPCT+1) * 3);
-                if (psInfo->pabyPCT == NULL)
+                if (pabyNewPCT == NULL)
                 {
                     CSLDestroy( papszTokens );
                     CPLError( CE_Failure, CPLE_OutOfMemory, 
@@ -331,6 +331,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
                     BSBClose( psInfo );
                     return NULL;
                 }
+                psInfo->pabyPCT = pabyNewPCT;
                 memset( psInfo->pabyPCT + psInfo->nPCTSize*3, 0, 
                         (iPCT+1-psInfo->nPCTSize) * 3);
                 psInfo->nPCTSize = iPCT+1;
