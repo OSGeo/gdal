@@ -1151,6 +1151,13 @@ const char *NITFFindTRE( const char *pszTREData, int nTREBytes,
     while( nTREBytes >= 11 )
     {
         int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+        if (nThisTRESize < 0)
+        {
+            NITFGetField(szTemp, pszTREData, 0, 6 );
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid size (%d) for TRE %s",
+                     nThisTRESize, szTemp);
+            return NULL;
+        }
 
         if( EQUALN(pszTREData,pszTag,6) )
         {
@@ -1181,6 +1188,13 @@ const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
     while( nTREBytes >= 11 )
     {
         int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+        if (nThisTRESize < 0)
+        {
+            NITFGetField(szTemp, pszTREData, 0, 6 );
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid size (%d) for TRE %s",
+                     nThisTRESize, szTemp);
+            return NULL;
+        }
 
         if( EQUALN(pszTREData,pszTag,6) )
         {
