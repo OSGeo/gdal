@@ -63,6 +63,28 @@ static int utf8bytes(unsigned ucs);
 /*                             CPLRecode()                              */
 /************************************************************************/
 
+/**
+ * Convert a string from a source encoding to a destination encoding.
+ *
+ * The only guaranteed supported encodings are CPL_ENC_UTF8, CPL_ENC_ASCII
+ * and CPL_ENC_ISO8859_1. Currently, the following conversions are supported :
+ * <ul>
+ *  <li>CPL_ENC_ASCII -> CPL_ENC_UTF8 or CPL_ENC_ISO8859_1 (no conversion in fact)</li>
+ *  <li>CPL_ENC_ISO8859_1 -> CPL_ENC_UTF8</li>
+ *  <li>CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1</li>
+ * </ul>
+ *
+ * If an error occurs an error may, or may not be posted with CPLError(). 
+ *
+ * @param pszSource a NUL terminated string.
+ * @param pszSrcEncoding the source encoding.
+ * @param pszDstEncoding the destination encoding.
+ *
+ * @return a NUL terminated string which should be freed with CPLFree().
+ *
+ * @since GDAL 1.6.0
+ */
+
 char CPL_DLL *CPLRecode( const char *pszSource, 
                          const char *pszSrcEncoding, 
                          const char *pszDstEncoding )
@@ -208,6 +230,8 @@ char CPL_DLL *CPLRecode( const char *pszSource,
  *
  * @return a zero terminated multi-byte string which should be freed with 
  * CPLFree(), or NULL if an error occurs. 
+ *
+ * @since GDAL 1.6.0
  */
 
 char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource, 
@@ -297,6 +321,8 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
  *
  * @return the zero terminated wchar_t string (to be freed with CPLFree()) or
  * NULL on error.
+ *
+ * @since GDAL 1.6.0
  */
 
 wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
@@ -355,6 +381,8 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
  * @param nLen length of the input string, or -1 if the function must compute
  *             the string length. In which case it must be null terminated.
  * @return TRUE if the string is encoded as UTF-8. FALSE otherwise
+ *
+ * @since GDAL 1.7.0
  */
 int CPLIsUTF8(const char* pabyData, int nLen)
 {
@@ -379,6 +407,8 @@ int CPLIsUTF8(const char* pabyData, int nLen)
  *                          contains a non ASCII character. Must be valid ASCII !
  *
  * @return a new string that must be freed with CPLFree().
+ *
+ * @since GDAL 1.7.0
  */
 char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar)
 {
