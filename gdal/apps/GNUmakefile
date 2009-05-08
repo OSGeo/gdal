@@ -9,7 +9,7 @@ LNK_FLAGS   :=  $(LDFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
-			gdalenhance$(EXE) gdaltransform$(EXE)
+			gdalenhance$(EXE) gdalbuildvrt$(EXE) gdaltransform$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
@@ -22,7 +22,7 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		testepsg$(EXE)
 endif
 
-NON_DEFAULT_LIST = 	gdalbuildvrt$(EXE) multireadtest$(EXE) \
+NON_DEFAULT_LIST = 	multireadtest$(EXE) \
 			dumpoverviews$(EXE) gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
 			gdaltorture$(EXE) gdal2ogr$(EXE) test_ogrsf$(EXE)
 
