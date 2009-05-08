@@ -957,7 +957,7 @@ GBool OGRStyleTable::SaveStyleTable(const char *pszFilename)
 /************************************************************************/
 
 /**
- * /brief Save a style table to a file.
+ * \brief Save a style table to a file.
  *
  * This function is the same as the C++ method OGRStyleTable::SaveStyleTable().
  *
@@ -1011,7 +1011,7 @@ GBool OGRStyleTable::LoadStyleTable(const char *pszFilename)
 /************************************************************************/
 
 /**
- * /brief Load a style table from a file.
+ * \brief Load a style table from a file.
  *
  * This function is the same as the C++ method OGRStyleTable::LoadStyleTable().
  *
@@ -1069,7 +1069,7 @@ const char *OGRStyleTable::Find(const char *pszName)
 /************************************************************************/
 
 /**
- * /brief Get a style string by name.
+ * \brief Get a style string by name.
  *
  * This function is the same as the C++ method OGRStyleTable::Find().
  *
@@ -1186,7 +1186,7 @@ void OGRStyleTable::ResetStyleStringReading()
 /************************************************************************/
 
 /**
- * /brief Reset the next style pointer to 0
+ * \brief Reset the next style pointer to 0
  *
  * This function is the same as the C++ method
  * OGRStyleTable::ResetStyleStringReading().
@@ -1238,7 +1238,7 @@ const char *OGRStyleTable::GetNextStyle()
 /************************************************************************/
 
 /**
- * /brief Get the next style string from the table.
+ * \brief Get the next style string from the table.
  *
  * This function is the same as the C++ method OGRStyleTable::GetNextStyle().
  *
@@ -1304,7 +1304,7 @@ OGRStyleTool::OGRStyleTool(OGRSTClassId eClassId)
 /*                            OGR_ST_Create()                           */
 /************************************************************************/
 /**
- * /brief OGRStyleTool factory.
+ * \brief OGRStyleTool factory.
  *
  * This function is a constructor for OGRStyleTool derived classes.
  * 
@@ -1346,7 +1346,7 @@ OGRStyleTool::~OGRStyleTool()
 /*                           OGR_ST_Destroy()                            */
 /************************************************************************/
 /**
- * /brief Destroy Style Tool
+ * \brief Destroy Style Tool
  *
  * @param hST handle to the style tool to destroy.
  */
