@@ -40,7 +40,7 @@
   This method loops through all the drivers registered with the driver
   manager trying each until one succeeds with the given data source.  This
   method is static.  Applications don't normally need to use any other
-  OGRSFDriverRegistrar methods directly, not do they normally need to have
+  OGRSFDriverRegistrar methods directly, nor do they normally need to have
   a pointer to an OGRSFDriverRegistrar instance.
 
   If this method fails, CPLGetLastErrorMsg() can be used to check if there
