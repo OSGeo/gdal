@@ -2773,6 +2773,9 @@ CPLErr GTiffDataset::CleanOverviews()
 {
     CPLAssert( bBase );
 
+    FlushDirectory();
+    *ppoActiveDSRef = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup overviews objects, and get offsets to all overview      */
 /*      directories.                                                    */
@@ -2792,7 +2795,7 @@ CPLErr GTiffDataset::CleanOverviews()
 /* -------------------------------------------------------------------- */
     std::vector<uint16> anOvDirIndexes;
     int iThisOffset = 1;
-    
+
     TIFFSetDirectory( hTIFF, 0 );
     
     for( ; TRUE; ) 
@@ -3986,7 +3989,11 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
         nNewOffset = nDirOffset;
 
     if( TIFFCurrentDirOffset(hTIFF) == nNewOffset )
+    {
+        CPLAssert( *ppoActiveDSRef == this || *ppoActiveDSRef == NULL );
+        *ppoActiveDSRef = this;
         return TRUE;
+    }
 
     if( GetAccess() == GA_Update )
     {
@@ -5044,11 +5051,14 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         char **papszSubdatasets = NULL;
         int  iDirIndex = 0;
 
+        FlushDirectory();  
         while( !TIFFLastDirectory( hTIFF ) 
                && (iDirIndex == 0 || TIFFReadDirectory( hTIFF ) != 0) )
         {
             toff_t	nThisDir = TIFFCurrentDirOffset(hTIFF);
             uint32	nSubType = 0;
+
+            *ppoActiveDSRef = NULL; // our directory no longer matches this ds
             
             iDirIndex++;
 
@@ -5173,7 +5183,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                     CSLAddString( papszSubdatasets, osDesc );
             }
 
-            SetDirectory( nThisDir );
+            // Make sure we are stepping from the expected directory regardless
+            // of churn done processing the above.
+            if( TIFFCurrentDirOffset(hTIFF) != nThisDir )
+                TIFFSetSubDirectory( hTIFF, nThisDir );
+            *ppoActiveDSRef = NULL;
         }
 
         /* If we have a mask for the main image, loop over the overviews, and if they */
