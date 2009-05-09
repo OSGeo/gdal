@@ -38,10 +38,10 @@ CPL_C_START
 typedef struct { 
     char szSegmentType[3]; /* one of "IM", ... */
 
-    GUInt32 nSegmentHeaderStart;
-    GUInt32 nSegmentHeaderSize;
-    GUInt32 nSegmentStart;
-    GUInt32 nSegmentSize;
+    GUIntBig nSegmentHeaderStart;
+    GUIntBig nSegmentHeaderSize;
+    GUIntBig nSegmentStart;
+    GUIntBig nSegmentSize;
 
     void *hAccess;
 
@@ -177,12 +177,12 @@ typedef struct {
     /* Internal information not for application use. */
     
     int        nWordSize;
-    int        nPixelOffset;
-    int        nLineOffset;
-    int        nBlockOffset;
-    int        nBandOffset;
+    GUIntBig   nPixelOffset;
+    GUIntBig   nLineOffset;
+    GUIntBig   nBlockOffset;
+    GUIntBig   nBandOffset;
 
-    GUInt32    *panBlockStart;
+    GUIntBig    *panBlockStart;
 
     char       **papszMetadata;
     
@@ -216,7 +216,7 @@ char      CPL_DLL **NITFReadUSE00A( NITFImage *psImage );
 char      CPL_DLL **NITFReadSTDIDC( NITFImage *psImage );
 char      CPL_DLL **NITFReadBLOCKA( NITFImage *psImage );
 
-GUInt32   CPL_DLL NITFIHFieldOffset( NITFImage *psImage, 
+GUIntBig  CPL_DLL NITFIHFieldOffset( NITFImage *psImage, 
                                      const char *pszFieldName );
 
 #define BLKREAD_OK    0
