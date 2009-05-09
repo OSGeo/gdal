@@ -262,11 +262,20 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         "           AUTHORITY[\"EPSG\",\"9122\"]],"
         "           AUTHORITY[\"EPSG\",\"4326\"]]");
 
+    poFeature = NULL;
+
+#ifdef HAVE_EXPAT
+    oParser = NULL;
+#endif
+
     if (bWriteMode == FALSE)
     {
         fpGPX = VSIFOpenL( pszFilename, "r" );
         if( fpGPX == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszFilename);
             return;
+        }
 
         if (poDS->GetUseExtensions() ||
             CSLTestBoolean(CPLGetConfigOption("GPX_USE_EXTENSIONS", "FALSE")))
@@ -276,12 +285,6 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     }
     else
         fpGPX = NULL;
-
-    poFeature = NULL;
-
-#ifdef HAVE_EXPAT
-    oParser = NULL;
-#endif
 
     ResetReading();
 }
