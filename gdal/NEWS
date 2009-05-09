@@ -5,12 +5,13 @@
 General:
  * Add cast to (unsigned char) in all isspace() calls (#1681)
 
-OGR Core:
+OGR:
  * (core) Fix crash in OGRStyleTable::AddStyle (#2810, #2531)
  * (core) crash in OGRLinearRing::get_Area() (#2792)
  * (core) GetFieldAsString() fails (aborts) on Ubuntu 8.10 (#2896)
  * (core) Issues related to wildcard expansion in SQL result layer (#2788)
  * (core) Generic SQL doesn't support feature styles (#2808)
+ 
  * (BNA) BNA inner ring contains only duplication of first point (#2985)
  * (Geoconcept) out of bound access in geoconcept.c (#2918)
  * (GeoJSON) Handle "link" and "name" srs members for GeoJSON (#2665)
@@ -123,6 +124,7 @@ Configuration:
  * OGR_ENABLED not properly defined in win32 builds (#2784)
  * mysql compile error with GCC 4.3.2: error: macro "min" passed 3 arguments, but takes just 2 (#2972)
  * external libz header is not found when setting the --with-libz=ARG switch (#2942)
+ * ./configure --disable-static broken on MacOSX (#1878)
 
 SWIG (all bindings):
  * Need to expose ImportFromMICoordSys/ExportToMICoordSys to the SWIG interface (#2722)
