@@ -2416,6 +2416,13 @@ void NITFDataset::InitializeTREMetadata()
             char *pszEscapedData;
             int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
 
+            if (nThisTRESize < 0)
+            {
+                NITFGetField(szTemp, pszTREData, 0, 6 );
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid size (%d) for TRE %s",
+                        nThisTRESize, szTemp);
+                return;
+            }
             if (nThisTRESize > nTREBytes - 11)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Not enough bytes in TRE");
