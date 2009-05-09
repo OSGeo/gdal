@@ -48,6 +48,8 @@ Process :
 
     http://trac.osgeo.org/gdal/log/branches/1.4
 
+  - commit new version to NEWS file.
+
 6) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to 
    refer to the latest available source. 
    Update http://trac.osgeo.org/gdal/wiki (Releases section)
