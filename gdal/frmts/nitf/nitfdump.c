@@ -80,6 +80,12 @@ int main( int nArgc, char ** papszArgv )
             while( nTREBytes > 10 )
             {
                 int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+                if (nThisTRESize < 0)
+                {
+                    NITFGetField(szTemp, pszTREData, 0, 6 );
+                    printf(" Invalid size (%d) for TRE %s", nThisTRESize, szTemp);
+                    break;
+                }
 
                 printf( " %6.6s(%d)", pszTREData, nThisTRESize );
                 pszTREData += nThisTRESize + 11;
@@ -106,7 +112,7 @@ int main( int nArgc, char ** papszArgv )
             printf( "Segment %d (Type=%s):\n", 
                     iSegment + 1, psSegInfo->szSegmentType );
 
-            printf( "  HeaderStart=%d, HeaderSize=%d, DataStart=%d, DataSize=%d\n",
+            printf( "  HeaderStart=" CPL_FRMT_GUIB ", HeaderSize=" CPL_FRMT_GUIB ", DataStart=" CPL_FRMT_GUIB ", DataSize=" CPL_FRMT_GUIB "\n",
                     psSegInfo->nSegmentHeaderStart,
                     psSegInfo->nSegmentHeaderSize, 
                     psSegInfo->nSegmentStart,
@@ -178,6 +184,12 @@ int main( int nArgc, char ** papszArgv )
                 while( nTREBytes > 10 )
                 {
                     int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+                    if (nThisTRESize < 0)
+                    {
+                        NITFGetField(szTemp, pszTREData, 0, 6 );
+                        printf(" Invalid size (%d) for TRE %s", nThisTRESize, szTemp);
+                        break;
+                    }
                 
                     printf( " %6.6s(%d)", pszTREData, nThisTRESize );
                     pszTREData += nThisTRESize + 11;
@@ -264,7 +276,7 @@ int main( int nArgc, char ** papszArgv )
                               psFile->fp ) < 258 )
             {
                 CPLError( CE_Warning, CPLE_FileIO, 
-                          "Failed to read graphic subheader at %d.", 
+                          "Failed to read graphic subheader at " CPL_FRMT_GUIB ".", 
                           psSegInfo->nSegmentHeaderStart );
                 continue;
             }
