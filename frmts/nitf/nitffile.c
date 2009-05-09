@@ -47,7 +47,7 @@ static int NITFWriteTREsFromOptions(
 static int 
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                         int nHeaderLenSize, int nDataLenSize, 
-                        int *pnNextData );
+                        GUIntBig *pnNextData );
 
 /************************************************************************/
 /*                              NITFOpen()                              */
@@ -59,7 +59,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     FILE	*fp;
     char        *pachHeader;
     NITFFile    *psFile;
-    int         nHeaderLen, nOffset, nNextData, nHeaderLenOffset;
+    int         nHeaderLen, nOffset, nHeaderLenOffset;
+    GUIntBig    nNextData;
     char        szTemp[128], achFSDWNG[6];
     GIntBig     currentPos;
 
@@ -387,12 +388,12 @@ void NITFClose( NITFFile *psFile )
     CPLFree( psFile );
 }
 
-static void NITFGotoOffset(FILE* fp, int nLocation)
+static void NITFGotoOffset(FILE* fp, GUIntBig nLocation)
 {
-    int nCurrentLocation = (int)VSIFTellL(fp);
+    GUIntBig nCurrentLocation = VSIFTellL(fp);
     if (nLocation > nCurrentLocation)
     {
-        int nFileSize;
+        GUIntBig nFileSize;
         int iFill;
         char cSpace = ' ';
 
@@ -426,17 +427,19 @@ int NITFCreate( const char *pszFilename,
 
 {
     FILE	*fp;
-    int         nHeaderUsed = 0;
+    GUIntBig    nCur = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
     GIntBig     nImageSize;
     int         nNBPR, nNBPC;
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
-    const char *pszCLevel;
+    int nCLevel;
     const char *pszOpt;
     int nHL, nNUMT = 0;
     int nUDIDLOffset;
     const char *pszVersion;
+    int iIM, nIM = 1;
+    const char *pszNUMI;
 
     if (nBands <= 0 || nBands > 99999)
     {
@@ -458,6 +461,24 @@ int NITFCreate( const char *pszFilename,
     pszOpt = CSLFetchNameValue( papszOptions, "NUMT" );
     if( pszOpt != NULL )
         nNUMT = atoi(pszOpt);
+    
+    pszNUMI = CSLFetchNameValue( papszOptions, "NUMI" );
+    if (pszNUMI != NULL)
+    {
+        nIM = atoi(pszNUMI);
+        if (nIM < 1 || nIM > 999)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Invalid NUMI value : %s", pszNUMI);
+            return FALSE;
+        }
+        if (nIM != 1 && !EQUAL(pszIC, "NC"))
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Unable to create file with multiple images and compression at the same time");
+            return FALSE;
+        }
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Compute raw image size, blocking factors and so forth.          */
@@ -500,6 +521,14 @@ int NITFCreate( const char *pszFilename,
         * ((GIntBig) nNBPR * nNBPC)
         * nNPPBH * nNPPBV * nBands;
 
+    if (EQUAL(pszIC, "NC") && (double)nImageSize >= 10000000000.)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to create file %s,\n"
+                  "Too big image size : " CPL_FRMT_GUIB,
+                  pszFilename, nImageSize );
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open new file.                                                  */
@@ -531,17 +560,6 @@ int NITFCreate( const char *pszFilename,
                   pszVersion );
         pszVersion = "NITF02.10";
     }
-        
-/* -------------------------------------------------------------------- */
-/*      Compute CLEVEL ("complexity" level).                            */
-/*      See: http://164.214.2.51/ntb/baseline/docs/2500b/2500b_not2.pdf */
-/*            page 96u                                                  */
-/*            TBD: Set CLEVEL based on file size too                    */
-/* -------------------------------------------------------------------- */
-    pszCLevel = "03";
-    if (nPixels >  2048 || nLines >  2048 )  pszCLevel = "05";
-    if (nPixels >  8192 || nLines >  8192 )  pszCLevel = "06";
-    if (nPixels > 65536 || nLines > 65536 )  pszCLevel = "07";
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the file header.                                        */
@@ -569,7 +587,7 @@ int NITFCreate( const char *pszFilename,
     VSIFSeekL(fp, 0, SEEK_SET);
 
     PLACE (  0, FDHR_FVER,    pszVersion                      );
-    OVR( 2,  9, CLEVEL,       pszCLevel                       );
+    OVR( 2,  9, CLEVEL,       "03"                            );  /* Patched at the end */
     PLACE ( 11, STYPE        ,"BF01"                          );
     OVR(10, 15, OSTAID       ,"GDAL"                          );
     OVR(14, 25, FDT          ,"20021216151629"                );
@@ -600,16 +618,23 @@ int NITFCreate( const char *pszFilename,
     OVR(18,324, OPHONE       ,""                              );
     PLACE (342, FL           ,"????????????"                  );
     PLACE (354, HL           ,"??????"                        );
-    PLACE (360, NUMI         ,"001"                           );
-    PLACE (363, LISH1        ,"??????"                        );
-    PLACE (369, LI1          ,CPLSPrintf("%010u",(GUInt32) nImageSize)  );
-    PLACE (379, NUMS         ,"000"                           );
-    PLACE (382, NUMX         ,"000"                           );
-    PLACE (385, NUMT         ,CPLSPrintf("%03d",nNUMT)        );
+    PLACE (360, NUMI         ,CPLSPrintf("%03d", nIM)         );
 
-    PLACE (388, LTSHnLTn     ,""                              );
+    nHL = 363;
+    for(iIM=0;iIM<nIM;iIM++)
+    {
+        PLACE (nHL,     LISHi    ,"??????"                        );
+        PLACE (nHL + 6, LIi      ,CPLSPrintf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "d", nImageSize)  );
+        nHL += 6 + 10;
+    }
 
-    nHL = 388 + (4+5) * nNUMT;
+    PLACE (nHL,     NUMS         ,"000"                           );
+    PLACE (nHL + 3, NUMX         ,"000"                           );
+    PLACE (nHL + 6, NUMT         ,CPLSPrintf("%03d",nNUMT)        );
+
+    PLACE (nHL + 9, LTSHnLTn     ,""                              );
+
+    nHL += 9 + (4+5) * nNUMT;
 
     PLACE (nHL, NUMDES       ,"000"                           );
     nHL += 3;
@@ -623,43 +648,46 @@ int NITFCreate( const char *pszFilename,
     // update header length
     PLACE (354, HL           ,CPLSPrintf("%06d",nHL)          );
 
-    nHeaderUsed = nHL;
+    nCur = nHL;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the image header.                                       */
 /* -------------------------------------------------------------------- */
+  for(iIM=0;iIM<nIM;iIM++)
+  {
+    VSIFSeekL(fp, nCur, SEEK_SET);
 
-    PLACE (nHeaderUsed+  0, IM           , "IM"                           );
-    OVR(10,nHeaderUsed+  2, IID1         , "Missing"                      );
-    OVR(14,nHeaderUsed+ 12, IDATIM       , "20021216151629"               );
-    OVR(17,nHeaderUsed+ 26, TGTID        , ""                             );
-    OVR(80,nHeaderUsed+ 43, IID2         , ""                             );
-    OVR( 1,nHeaderUsed+123, ISCLAS       , "U"                            );
-    OVR( 2,nHeaderUsed+124, ISCLSY       , ""                             );
-    OVR(11,nHeaderUsed+126, ISCODE       , ""                             );
-    OVR( 2,nHeaderUsed+137, ISCTLH       , ""                             );
-    OVR(20,nHeaderUsed+139, ISREL        , ""                             );
-    OVR( 2,nHeaderUsed+159, ISDCTP       , ""                             );
-    OVR( 8,nHeaderUsed+161, ISDCDT       , ""                             );
-    OVR( 4,nHeaderUsed+169, ISDCXM       , ""                             );
-    OVR( 1,nHeaderUsed+173, ISDG         , ""                             );
-    OVR( 8,nHeaderUsed+174, ISDGDT       , ""                             );
-    OVR(43,nHeaderUsed+182, ISCLTX       , ""                             );
-    OVR( 1,nHeaderUsed+225, ISCATP       , ""                             );
-    OVR(40,nHeaderUsed+226, ISCAUT       , ""                             );
-    OVR( 1,nHeaderUsed+266, ISCRSN       , ""                             );
-    OVR( 8,nHeaderUsed+267, ISSRDT       , ""                             );
-    OVR(15,nHeaderUsed+275, ISCTLN       , ""                             );
-    PLACE (nHeaderUsed+290, ENCRYP       , "0"                            );
-    OVR(42,nHeaderUsed+291, ISORCE       , "Unknown"                      );
-    PLACE (nHeaderUsed+333, NROWS        , CPLSPrintf("%08d", nLines)     );
-    PLACE (nHeaderUsed+341, NCOLS        , CPLSPrintf("%08d", nPixels)    );
-    PLACE (nHeaderUsed+349, PVTYPE       , pszPVType                      );
-    PLACE (nHeaderUsed+352, IREP         , pszIREP                        );
-    OVR( 8,nHeaderUsed+360, ICAT         , "VIS"                          );
-    OVR( 2,nHeaderUsed+368, ABPP         , CPLSPrintf("%02d",nBitsPerSample) );
-    OVR( 1,nHeaderUsed+370, PJUST        , "R"                            );
-    OVR( 1,nHeaderUsed+371, ICORDS       , " "                            );
+    PLACE (nCur+  0, IM           , "IM"                           );
+    OVR(10,nCur+  2, IID1         , "Missing"                      );
+    OVR(14,nCur+ 12, IDATIM       , "20021216151629"               );
+    OVR(17,nCur+ 26, TGTID        , ""                             );
+    OVR(80,nCur+ 43, IID2         , ""                             );
+    OVR( 1,nCur+123, ISCLAS       , "U"                            );
+    OVR( 2,nCur+124, ISCLSY       , ""                             );
+    OVR(11,nCur+126, ISCODE       , ""                             );
+    OVR( 2,nCur+137, ISCTLH       , ""                             );
+    OVR(20,nCur+139, ISREL        , ""                             );
+    OVR( 2,nCur+159, ISDCTP       , ""                             );
+    OVR( 8,nCur+161, ISDCDT       , ""                             );
+    OVR( 4,nCur+169, ISDCXM       , ""                             );
+    OVR( 1,nCur+173, ISDG         , ""                             );
+    OVR( 8,nCur+174, ISDGDT       , ""                             );
+    OVR(43,nCur+182, ISCLTX       , ""                             );
+    OVR( 1,nCur+225, ISCATP       , ""                             );
+    OVR(40,nCur+226, ISCAUT       , ""                             );
+    OVR( 1,nCur+266, ISCRSN       , ""                             );
+    OVR( 8,nCur+267, ISSRDT       , ""                             );
+    OVR(15,nCur+275, ISCTLN       , ""                             );
+    PLACE (nCur+290, ENCRYP       , "0"                            );
+    OVR(42,nCur+291, ISORCE       , "Unknown"                      );
+    PLACE (nCur+333, NROWS        , CPLSPrintf("%08d", nLines)     );
+    PLACE (nCur+341, NCOLS        , CPLSPrintf("%08d", nPixels)    );
+    PLACE (nCur+349, PVTYPE       , pszPVType                      );
+    PLACE (nCur+352, IREP         , pszIREP                        );
+    OVR( 8,nCur+360, ICAT         , "VIS"                          );
+    OVR( 2,nCur+368, ABPP         , CPLSPrintf("%02d",nBitsPerSample) );
+    OVR( 1,nCur+370, PJUST        , "R"                            );
+    OVR( 1,nCur+371, ICORDS       , " "                            );
 
     nOffset = 372;
 
@@ -670,28 +698,28 @@ int NITFCreate( const char *pszFilename,
             pszParmValue = " ";
         if( *pszParmValue != ' ' )
         {
-            OVR(60,nHeaderUsed+nOffset, IGEOLO, ""                            );
+            OVR(60,nCur+nOffset, IGEOLO, ""                            );
             nOffset += 60;
         }
     }
 
-    PLACE (nHeaderUsed+nOffset, NICOM    , "0"                            );
-    OVR( 2,nHeaderUsed+nOffset+1, IC     , "NC"                           );
+    PLACE (nCur+nOffset, NICOM    , "0"                            );
+    OVR( 2,nCur+nOffset+1, IC     , "NC"                           );
 
     if( pszIC[0] != 'N' )
     {
-        OVR( 4,nHeaderUsed+nOffset+3, COMRAT , "    "                     );
+        OVR( 4,nCur+nOffset+3, COMRAT , "    "                     );
         nOffset += 4;
     }
 
     if (nBands <= 9)
     {
-        PLACE (nHeaderUsed+nOffset+3, NBANDS , CPLSPrintf("%d",nBands)        );
+        PLACE (nCur+nOffset+3, NBANDS , CPLSPrintf("%d",nBands)        );
     }
     else
     {
-        PLACE (nHeaderUsed+nOffset+3, NBANDS , "0"        );
-        PLACE (nHeaderUsed+nOffset+4, XBANDS , CPLSPrintf("%05d",nBands)        );
+        PLACE (nCur+nOffset+3, NBANDS , "0"        );
+        PLACE (nCur+nOffset+4, XBANDS , CPLSPrintf("%05d",nBands)        );
         nOffset += 5;
     }
 
@@ -725,14 +753,14 @@ int NITFCreate( const char *pszFilename,
                 pszIREPBAND = "Cr";
         }
 
-        PLACE(nHeaderUsed+nOffset+ 0, IREPBANDn, pszIREPBAND                 );
-//      PLACE(nHeaderUsed+nOffset+ 2, ISUBCATn, ""                           );
-        PLACE(nHeaderUsed+nOffset+ 8, IFCn  , "N"                            );
-//      PLACE(nHeaderUsed+nOffset+ 9, IMFLTn, ""                             );
+        PLACE(nCur+nOffset+ 0, IREPBANDn, pszIREPBAND                 );
+//      PLACE(nCur+nOffset+ 2, ISUBCATn, ""                           );
+        PLACE(nCur+nOffset+ 8, IFCn  , "N"                            );
+//      PLACE(nCur+nOffset+ 9, IMFLTn, ""                             );
 
         if( !EQUAL(pszIREP,"RGB/LUT") )
         {
-            PLACE(nHeaderUsed+nOffset+12, NLUTSn, "0"                        );
+            PLACE(nCur+nOffset+12, NLUTSn, "0"                        );
             nOffset += 13;
         }
         else
@@ -748,14 +776,14 @@ int NITFCreate( const char *pszFilename,
                          "Invalid LUT value : %d. Defaulting to 256", nCount);
                 nCount = 256;
             }
-            PLACE(nHeaderUsed+nOffset+12, NLUTSn, "3"                        );
-            PLACE(nHeaderUsed+nOffset+13, NELUTn, CPLSPrintf("%05d",nCount)  );
+            PLACE(nCur+nOffset+12, NLUTSn, "3"                        );
+            PLACE(nCur+nOffset+13, NELUTn, CPLSPrintf("%05d",nCount)  );
 
             for( iC = 0; iC < nCount; iC++ )
             {
-                WRITE_BYTE(nHeaderUsed+nOffset+18+iC+       0, (char) iC);
-                WRITE_BYTE(nHeaderUsed+nOffset+18+iC+nCount*1, (char) iC);
-                WRITE_BYTE(nHeaderUsed+nOffset+18+iC+nCount*2, (char) iC);
+                WRITE_BYTE(nCur+nOffset+18+iC+       0, (char) iC);
+                WRITE_BYTE(nCur+nOffset+18+iC+nCount*1, (char) iC);
+                WRITE_BYTE(nCur+nOffset+18+iC+nCount*2, (char) iC);
             }
             nOffset += 18 + nCount*3;
         }
@@ -764,19 +792,19 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Remainder of image header info.                                 */
 /* -------------------------------------------------------------------- */
-    PLACE(nHeaderUsed+nOffset+  0, ISYNC , "0"                            );
-    PLACE(nHeaderUsed+nOffset+  1, IMODE , "B"                            );
-    PLACE(nHeaderUsed+nOffset+  2, NBPR  , CPLSPrintf("%04d",nNBPR)       );
-    PLACE(nHeaderUsed+nOffset+  6, NBPC  , CPLSPrintf("%04d",nNBPC)       );
-    PLACE(nHeaderUsed+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nNPPBH)      );
-    PLACE(nHeaderUsed+nOffset+ 14, NPPBV , CPLSPrintf("%04d",nNPPBV)      );
-    PLACE(nHeaderUsed+nOffset+ 18, NBPP  , CPLSPrintf("%02d",nBitsPerSample) );
-    PLACE(nHeaderUsed+nOffset+ 20, IDLVL , "001"                          );
-    PLACE(nHeaderUsed+nOffset+ 23, IALVL , "000"                          );
-    PLACE(nHeaderUsed+nOffset+ 26, ILOC  , "0000000000"                   );
-    PLACE(nHeaderUsed+nOffset+ 36, IMAG  , "1.0 "                         );
-    PLACE(nHeaderUsed+nOffset+ 40, UDIDL , "00000"                        );
-    PLACE(nHeaderUsed+nOffset+ 45, IXSHDL, "00000"                        );
+    PLACE(nCur+nOffset+  0, ISYNC , "0"                            );
+    PLACE(nCur+nOffset+  1, IMODE , "B"                            );
+    PLACE(nCur+nOffset+  2, NBPR  , CPLSPrintf("%04d",nNBPR)       );
+    PLACE(nCur+nOffset+  6, NBPC  , CPLSPrintf("%04d",nNBPC)       );
+    PLACE(nCur+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nNPPBH)      );
+    PLACE(nCur+nOffset+ 14, NPPBV , CPLSPrintf("%04d",nNPPBV)      );
+    PLACE(nCur+nOffset+ 18, NBPP  , CPLSPrintf("%02d",nBitsPerSample) );
+    PLACE(nCur+nOffset+ 20, IDLVL , "001"                          );
+    PLACE(nCur+nOffset+ 23, IALVL , "000"                          );
+    PLACE(nCur+nOffset+ 26, ILOC  , "0000000000"                   );
+    PLACE(nCur+nOffset+ 36, IMAG  , "1.0 "                         );
+    PLACE(nCur+nOffset+ 40, UDIDL , "00000"                        );
+    PLACE(nCur+nOffset+ 45, IXSHDL, "00000"                        );
 
     nUDIDLOffset = nOffset + 40;
     nOffset += 50;
@@ -787,8 +815,8 @@ int NITFCreate( const char *pszFilename,
     if( CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL )
     {
         NITFWriteBLOCKA( fp,
-                         nHeaderUsed + nUDIDLOffset, 
-                         nHeaderUsed + nOffset, 
+                         nCur + nUDIDLOffset, 
+                         nCur + nOffset, 
                          &nOffset, 
                          papszOptions );
     }
@@ -797,8 +825,8 @@ int NITFCreate( const char *pszFilename,
     {
         NITFWriteTREsFromOptions(
             fp,
-            nHeaderUsed + nUDIDLOffset, 
-            nHeaderUsed + nOffset, 
+            nCur + nUDIDLOffset, 
+            nCur + nOffset, 
             &nOffset, 
             papszOptions );
     }
@@ -816,30 +844,58 @@ int NITFCreate( const char *pszFilename,
         return FALSE;
     }
 
-    PLACE( 363, LISH1, CPLSPrintf("%06d",nIHSize)      );
+    PLACE( 363 + iIM * 16, LISH1, CPLSPrintf("%06d",nIHSize)      );
 
-    nHeaderUsed += nIHSize;
+    nCur += nIHSize + nImageSize;
+  }
 
 /* -------------------------------------------------------------------- */
-/*      Update total file length, and write header info to file.        */
+/*      Compute and update CLEVEL ("complexity" level).                 */
+/*      See: http://164.214.2.51/ntb/baseline/docs/2500b/2500b_not2.pdf */
+/*            page 96u                                                  */
 /* -------------------------------------------------------------------- */
+    nCLevel = 3;
+    if (nBands > 9 || nIM > 20 || nPixels > 2048 || nLines > 2048 ||
+        nNPPBH > 2048 || nNPPBV > 2048 || nCur > 52428799 )
+    {
+        nCLevel = 5;
+    }
+    if (nPixels > 8192 || nLines > 8192 ||
+        nNPPBH > 8192 || nNPPBV > 8192 || nCur > 1073741833)
+    {
+        nCLevel = 6;
+    }
+    if (nBands > 256 || nPixels > 65536 || nLines > 65536 ||
+        nCur > 2147483647)
+    {
+        nCLevel = 7;
+    }
+    OVR( 2,  9, CLEVEL,       CPLSPrintf("%02d", nCLevel)     );
+
+/* -------------------------------------------------------------------- */
+/*      Update total file length                                        */
+/* -------------------------------------------------------------------- */
+    if (EQUAL(pszIC, "NC") && nCur > ((GIntBig)1073741833) * 10 - 1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too big file : " CPL_FRMT_GUIB, nCur);
+        VSIFCloseL( fp );
+        return FALSE;
+    }
+
     PLACE( 342, FL,
-          CPLSPrintf( "%012d", (int) (nHeaderUsed + nImageSize) ) );
+          CPLSPrintf( "%012" CPL_FRMT_GB_WITHOUT_PREFIX "d", nCur) );
 
 /* -------------------------------------------------------------------- */
 /*      Grow file to full required size by writing one byte at the end. */
 /* -------------------------------------------------------------------- */
+    if( EQUAL(pszIC,"C8") || EQUAL(pszIC,"C3") )
+        /* don't extend file */;
+    else
     {
-        const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
-    
-        if( pszIC != NULL && (EQUAL(pszIC,"C8") || EQUAL(pszIC,"C3")) )
-            /* don't extend file */;
-        else
-        {
-            char cNul = 0;
-            VSIFSeekL( fp, nIHSize+nHL+nImageSize-1, SEEK_SET );
-            VSIFWriteL( &cNul, 1, 1, fp );
-        }
+        char cNul = 0;
+        VSIFSeekL( fp, nCur-1, SEEK_SET );
+        VSIFWriteL( &cNul, 1, 1, fp );
     }
 
     VSIFCloseL( fp );
@@ -1051,7 +1107,7 @@ static int NITFWriteBLOCKA( FILE* fp, int nOffsetUDIDL, int nOffsetTRE,
 
 static int 
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
-                        int nHeaderLenSize, int nDataLenSize, int *pnNextData )
+                        int nHeaderLenSize, int nDataLenSize, GUIntBig *pnNextData )
 
 {
     char szTemp[12];
@@ -1115,10 +1171,10 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                               iSegment * (nHeaderLenSize+nDataLenSize), 
                               nHeaderLenSize));
         psInfo->nSegmentSize = 
-            atoi(NITFGetField(szTemp,pachSegDef, 
+            CPLScanUIntBig(NITFGetField(szTemp,pachSegDef, 
                               iSegment * (nHeaderLenSize+nDataLenSize) 
                               + nHeaderLenSize,
-                              nDataLenSize));
+                              nDataLenSize), nDataLenSize);
         if (psInfo->nSegmentHeaderSize <= 0 ||
             psInfo->nSegmentSize <= 0)
         {
@@ -1464,7 +1520,7 @@ int NITFCollectAttachments( NITFFile *psFile )
                               psFile->fp ) < 258 )
             {
                 CPLError( CE_Warning, CPLE_FileIO, 
-                          "Failed to read graphic subheader at %d.", 
+                          "Failed to read graphic subheader at " CPL_FRMT_GUIB ".", 
                           psSegInfo->nSegmentHeaderStart );
                 continue;
             }
