@@ -222,11 +222,11 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
     if( strncmp(pszPath,"/vsisubfile/",12) != 0 )
         return FALSE;
 
-    nSubFileOffset = atoi(pszPath+12);
+    nSubFileOffset = CPLScanUIntBig(pszPath+12, strlen(pszPath + 12));
     for( i = 12; pszPath[i] != '\0'; i++ )
     {
         if( pszPath[i] == '_' && nSubFileSize == 0 )
-            nSubFileSize = atoi(pszPath + i + 1);
+            nSubFileSize = CPLScanUIntBig(pszPath + i + 1, strlen(pszPath + i + 1));
         else if( pszPath[i] == ',' )
         {
             osFilename = pszPath + i + 1;

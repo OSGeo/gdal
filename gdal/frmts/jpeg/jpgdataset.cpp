@@ -76,7 +76,7 @@ class JPGDataset : public GDALPamDataset
     GDAL_GCP *pasGCPList;
 
     FILE   *fpImage;
-    int    nSubfileOffset;
+    GUIntBig nSubfileOffset;
 
     int    nLoadedScanline;
     GByte  *pabyScanline;
@@ -1403,21 +1403,39 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      If it is a subfile, read the JPEG header.                       */
 /* -------------------------------------------------------------------- */
     int    bIsSubfile = FALSE;
-    int    subfile_offset = 0, subfile_size;
+    GUIntBig    subfile_offset = 0, subfile_size;
     const char *real_filename = poOpenInfo->pszFilename;
     int nQLevel = -1;
 
     if( ( poOpenInfo->fp == NULL ) &&
         ( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:",13) ) )
     {
-        int bScan;
+        char** papszTokens;
+        int bScan = FALSE;
 
         if( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:Q",14) )
-            bScan = sscanf( poOpenInfo->pszFilename, "JPEG_SUBFILE:Q%d,%d,%d", 
-                            &nQLevel, &subfile_offset, &subfile_size ) == 3;
+        {
+            papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename + 14, ",", 0);
+            if (CSLCount(papszTokens) >= 3)
+            {
+                nQLevel = atoi(papszTokens[0]);
+                subfile_offset = CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
+                subfile_size = CPLScanUIntBig(papszTokens[2], strlen(papszTokens[2]));
+                bScan = TRUE;
+            }
+            CSLDestroy(papszTokens);
+        }
         else
-            bScan = sscanf( poOpenInfo->pszFilename, "JPEG_SUBFILE:%d,%d", 
-                            &subfile_offset, &subfile_size ) == 2;
+        {
+            papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename + 13, ",", 0);
+            if (CSLCount(papszTokens) >= 2)
+            {
+                subfile_offset = CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
+                subfile_size = CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
+                bScan = TRUE;
+            }
+            CSLDestroy(papszTokens);
+        }
 
         if( !bScan ) 
         {
@@ -1442,7 +1460,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         CPLDebug( "JPG",
-                  "real_filename %s, offset=%d, size=%d\n", 
+                  "real_filename %s, offset=" CPL_FRMT_GUIB ", size=" CPL_FRMT_GUIB "\n", 
                   real_filename, subfile_offset, subfile_size);
 
         bIsSubfile = TRUE;

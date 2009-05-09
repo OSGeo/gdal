@@ -1028,18 +1028,25 @@ try_again:
     if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) ||
         bIsVirtualFile )
     {
-        int            subfile_offset=-1, subfile_size=-1;
+        GIntBig            subfile_offset=-1, subfile_size=-1;
         const char *real_filename = NULL;
 
           if (EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12))
           {
-            if( sscanf( poOpenInfo->pszFilename, "J2K_SUBFILE:%d,%d", 
-                        &subfile_offset, &subfile_size ) != 2 )
+            char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename + 12, ",", 0);
+            if (CSLCount(papszTokens) >= 2)
+            {
+                subfile_offset = CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
+                subfile_size = CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
+            }
+            else
             {
                 CPLError( CE_Failure, CPLE_OpenFailed, 
                             "Failed to parse J2K_SUBFILE specification." );
+                CSLDestroy(papszTokens);
                 return NULL;
             }
+            CSLDestroy(papszTokens);
 
             real_filename = strstr(poOpenInfo->pszFilename,",");
             if( real_filename != NULL )
