@@ -117,21 +117,23 @@ OGRGeoRSSLayer::OGRGeoRSSLayer( const char* pszFilename,
     hasFoundLat = FALSE;
     hasFoundLon = FALSE;
 
-    if (bWriteMode == FALSE)
-    {
-        fpGeoRSS = VSIFOpenL( pszFilename, "r" );
-        if( fpGeoRSS == NULL )
-            return;
-    }
-    else
-        fpGeoRSS = NULL;
-
     poFeature = NULL;
 
 #ifdef HAVE_EXPAT
     oParser = NULL;
 #endif
 
+    if (bWriteMode == FALSE)
+    {
+        fpGeoRSS = VSIFOpenL( pszFilename, "r" );
+        if( fpGeoRSS == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszFilename);
+            return;
+        }
+    }
+    else
+        fpGeoRSS = NULL;
 
     ResetReading();
 }
