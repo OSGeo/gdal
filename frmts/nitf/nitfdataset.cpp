@@ -88,11 +88,11 @@ class NITFDataset : public GDALPamDataset
     void         InitializeTextMetadata();
     void         InitializeTREMetadata();
 
-    int         *panJPEGBlockOffset;
+    GIntBig     *panJPEGBlockOffset;
     GByte       *pabyJPEGBlock;
     int          nQLevel;
 
-    int          ScanJPEGQLevel( GUInt32 *pnDataStart );
+    int          ScanJPEGQLevel( GUIntBig *pnDataStart );
     CPLErr       ScanJPEGBlocks( void );
     CPLErr       ReadJPEGBlock( int, int );
     void         CheckGeoSDEInfo();
@@ -502,7 +502,7 @@ static CPLErr NITFSetColorInterpretation( NITFImage *psImage,
 {
     NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
     const char *pszREP = NULL;
-    GUInt32 nOffset;
+    GUIntBig nOffset;
 
     if( eInterp == GCI_RedBand )
         pszREP = "R";
@@ -922,7 +922,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLString osDSName;
 
-        osDSName.Printf( "/vsisubfile/%d_%d,%s", 
+        osDSName.Printf( "/vsisubfile/" CPL_FRMT_GUIB "_" CPL_FRMT_GUIB ",%s", 
                          psFile->pasSegmentInfo[iSegment].nSegmentStart,
                          psFile->pasSegmentInfo[iSegment].nSegmentSize,
                          pszFilename );
@@ -992,13 +992,13 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
              && psImage->nBlocksPerRow == 1
              && psImage->nBlocksPerColumn == 1 )
     {
-        GUInt32 nJPEGStart = psFile->pasSegmentInfo[iSegment].nSegmentStart;
+        GUIntBig nJPEGStart = psFile->pasSegmentInfo[iSegment].nSegmentStart;
 
         poDS->nQLevel = poDS->ScanJPEGQLevel( &nJPEGStart );
 
         CPLString osDSName;
 
-        osDSName.Printf( "JPEG_SUBFILE:Q%d,%d,%d,%s", 
+        osDSName.Printf( "JPEG_SUBFILE:Q%d," CPL_FRMT_GUIB "," CPL_FRMT_GUIB ",%s", 
                          poDS->nQLevel, nJPEGStart,
                          psFile->pasSegmentInfo[iSegment].nSegmentSize
                          - (nJPEGStart - psFile->pasSegmentInfo[iSegment].nSegmentStart),
@@ -2283,7 +2283,7 @@ void NITFDataset::InitializeCGMMetadata()
                           psFile->fp ) != psSegment->nSegmentSize )
         {
             CPLError( CE_Warning, CPLE_FileIO, 
-                      "Failed to read %d bytes of graphic data at %d.", 
+                      "Failed to read " CPL_FRMT_GUIB " bytes of graphic data at " CPL_FRMT_GUIB ".", 
                       psSegment->nSegmentSize,
                       psSegment->nSegmentStart );
             return;
@@ -2352,7 +2352,7 @@ void NITFDataset::InitializeTextMetadata()
                           psFile->fp ) != psSegment->nSegmentSize )
         {
             CPLError( CE_Warning, CPLE_FileIO, 
-                      "Failed to read %d bytes of text data at %d.", 
+                      "Failed to read " CPL_FRMT_GUIB " bytes of text data at " CPL_FRMT_GUIB ".", 
                       psSegment->nSegmentSize,
                       psSegment->nSegmentStart );
             return;
@@ -2542,7 +2542,7 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 /*      they are inline).                                               */
 /************************************************************************/
 
-int NITFDataset::ScanJPEGQLevel( GUInt32 *pnDataStart )
+int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart )
 
 {
     GByte abyHeader[100];
@@ -2601,7 +2601,7 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 
 {
     int iBlock;
-    GUInt32 nJPEGStart = 
+    GUIntBig nJPEGStart = 
         psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart;
 
     nQLevel = ScanJPEGQLevel( &nJPEGStart );
@@ -2609,8 +2609,8 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 /* -------------------------------------------------------------------- */
 /*      Allocate offset array                                           */
 /* -------------------------------------------------------------------- */
-    panJPEGBlockOffset = (int *) 
-        CPLCalloc(sizeof(int),
+    panJPEGBlockOffset = (GIntBig *) 
+        CPLCalloc(sizeof(GIntBig),
                   psImage->nBlocksPerRow*psImage->nBlocksPerColumn);
     panJPEGBlockOffset[0] = nJPEGStart;
 
@@ -2628,8 +2628,8 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 /*      that.                                                           */
 /* -------------------------------------------------------------------- */
     int iNextBlock = 1;
-    int iSegOffset = 2;
-    int iSegSize = psFile->pasSegmentInfo[psImage->iSegment].nSegmentSize
+    GIntBig iSegOffset = 2;
+    GIntBig iSegSize = psFile->pasSegmentInfo[psImage->iSegment].nSegmentSize
         - (nJPEGStart - psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart);
     GByte abyBlock[512];
     int ignoreBytes = 0;
@@ -2724,20 +2724,20 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
 /*      When a data mask subheader is present, we don't need to scan    */
 /*      the whole file. We just use the psImage->panBlockStart table    */
 /* -------------------------------------------------------------------- */
-            panJPEGBlockOffset = (int *) 
-                CPLCalloc(sizeof(int),
+            panJPEGBlockOffset = (GIntBig *) 
+                CPLCalloc(sizeof(GIntBig),
                         psImage->nBlocksPerRow*psImage->nBlocksPerColumn);
             int i;
             for (i=0;i< psImage->nBlocksPerRow*psImage->nBlocksPerColumn;i++)
             {
                 panJPEGBlockOffset[i] = psImage->panBlockStart[i];
-                if (panJPEGBlockOffset[i] != -1)
+                if (panJPEGBlockOffset[i] != -1 && panJPEGBlockOffset[i] != 0xffffffff)
                 {
-                    GUInt32 nOffset = panJPEGBlockOffset[i];
+                    GUIntBig nOffset = panJPEGBlockOffset[i];
                     nQLevel = ScanJPEGQLevel(&nOffset);
                     /* The beginning of the JPEG stream should be the offset */
                     /* from the panBlockStart table */
-                    if (nOffset != (GUInt32)panJPEGBlockOffset[i])
+                    if (nOffset != (GUIntBig)panJPEGBlockOffset[i])
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "JPEG block doesn't start at expected offset");
@@ -2778,13 +2778,13 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
     GDALDataset *poDS;
     int anBands[3] = { 1, 2, 3 };
 
-    if (panJPEGBlockOffset[iBlock] == -1)
+    if (panJPEGBlockOffset[iBlock] == -1 || panJPEGBlockOffset[iBlock] == 0xffffffff)
     {
         memset(pabyJPEGBlock, 0, psImage->nBlockWidth*psImage->nBlockHeight);
         return CE_None;
     }
 
-    osFilename.Printf( "JPEG_SUBFILE:Q%d,%d,%d,%s", 
+    osFilename.Printf( "JPEG_SUBFILE:Q%d," CPL_FRMT_GIB ",%d,%s", 
                        nQLevel,
                        panJPEGBlockOffset[iBlock], 0, 
                        osNITFFilename.c_str() );
@@ -3424,16 +3424,15 @@ static void NITFPatchImageLength( const char *pszFilename,
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
-    VSIFWriteL( (void *) CPLString().Printf("%012ld",(long)nFileLen).c_str(),
-                1, 12, fpVSIL );
+    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "d",nFileLen);
+    VSIFWriteL( (void *) osLen.c_str(), 1, 12, fpVSIL );
     
 /* -------------------------------------------------------------------- */
 /*      Update the image data length.                                   */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fpVSIL, 369, SEEK_SET );
-    VSIFWriteL( (void *) 
-        CPLString().Printf("%010ld",(long)(nFileLen-nImageOffset)).c_str(), 
-        1, 10, fpVSIL );
+    osLen = CPLString().Printf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "d",nFileLen-nImageOffset);
+    VSIFWriteL( (void *) osLen.c_str(), 1, 10, fpVSIL );
 
 /* -------------------------------------------------------------------- */
 /*      Update COMRAT, the compression rate variable.  It is a bit      */
@@ -3610,8 +3609,8 @@ static void NITFWriteTextSegments( const char *pszFilename,
     GIntBig nFileLen = VSIFTellL( fpVSIL );
 
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
-    VSIFWriteL( (void *) CPLString().Printf("%012ld",(long)nFileLen).c_str(),
-                1, 12, fpVSIL );
+    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "d",nFileLen);
+    VSIFWriteL( (void *) osLen.c_str(), 1, 12, fpVSIL );
     
     VSIFCloseL( fpVSIL );
     CPLFree( pachLT );
@@ -4015,6 +4014,7 @@ void GDALRegister_NITF()
 "   <Option name='QUALITY' type='int' description='JPEG quality 10-100' default='75'/>"
 "   <Option name='PROGRESSIVE' type='boolean' description='JPEG progressive mode'/>"
 #endif
+"   <Option name='NUMI' type='int' default='1' description='Number of images to create (1-999). Only works with IC=NC'/>"
 "   <Option name='TARGET' type='float' description='For JP2 only. Compression Percentage'/>"
 "   <Option name='PROFILE' type='string-select' description='For JP2 only.'>"
 "       <Value>BASELINE_0</Value>"
