@@ -30,6 +30,7 @@
 
 import os
 import sys
+import osr
 import gdal
 import shutil
 import string
@@ -1117,6 +1118,37 @@ def tiff_ovr_29():
     return 'success'
 
 ###############################################################################
+# Test fix for #2988.
+
+def tiff_ovr_30():
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr30.tif', 20, 20, 1)
+    ds.BuildOverviews( overviewlist = [2])
+    ds = None
+
+    ds = gdal.Open('tmp/ovr30.tif', gdal.GA_Update)
+    dict = {}
+    dict['TEST_KEY'] = 'TestValue'
+    ds.SetMetadata(dict)
+    ds = None
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr30.tif', 20, 20, 1)
+    ds.BuildOverviews( overviewlist = [2])
+    ds = None
+
+    ds = gdal.Open('tmp/ovr30.tif', gdal.GA_Update)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('tmp/ovr30.tif')
+    if ds.GetProjectionRef().find('4326') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1145,6 +1177,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr25.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr26.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr27.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr30.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -1180,6 +1213,7 @@ gdaltest_list_internal = [
     tiff_ovr_27,
     tiff_ovr_28,
     tiff_ovr_29,
+    tiff_ovr_30,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
