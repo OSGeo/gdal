@@ -2204,9 +2204,10 @@ static int GDALDumpOpenSharedDatasetsForeach(void* elt, void* user_data)
 
 static int GDALDumpOpenDatasetsForeach(void* elt, void* user_data)
 {
+    DatasetCtxt* psStruct = (DatasetCtxt*) elt;
     FILE *fp = (FILE*) user_data;
     const char *pszDriverName;
-    GDALDataset *poDS = (GDALDataset *) elt;
+    GDALDataset *poDS = psStruct->poDS;
 
     /* Don't list shared datasets. They have already been listed by */
     /* GDALDumpOpenSharedDatasetsForeach */
