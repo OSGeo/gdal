@@ -841,6 +841,36 @@ def nitf_37():
     return 'success'
 
 ###############################################################################
+# Create and read a NITF file with 999 images
+
+def nitf_38():
+
+    ds = gdal.Open('data/byte.tif')
+    nXSize = ds.RasterXSize
+    nYSize = ds.RasterYSize
+    data =  ds.GetRasterBand(1).ReadRaster(0, 0, nXSize, nYSize)
+    cs = ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf38.ntf', nXSize, nYSize, 1, options = [ 'NUMI=999' ])
+    ds = None
+
+    ds = gdal.Open('NITF_IM:998:tmp/nitf38.ntf', gdal.GA_Update)
+    ds.GetRasterBand(1).WriteRaster(0, 0, nXSize, nYSize, data)
+    ds = None
+
+    ds = gdal.Open( 'NITF_IM:0:tmp/nitf38.ntf' )
+    if ds.GetRasterBand(1).Checksum() != 0:
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open( 'NITF_IM:998:tmp/nitf38.ntf' )
+    if cs != ds.GetRasterBand(1).Checksum():
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -1217,6 +1247,7 @@ gdaltest_list = [
     nitf_35,
     nitf_36,
     nitf_37,
+    nitf_38,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
