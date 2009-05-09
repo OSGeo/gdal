@@ -1,3 +1,148 @@
+= GDAL/OGR 1.6.1 =
+
+5/10/2009
+
+General:
+ * Add cast to (unsigned char) in all isspace() calls (#1681)
+
+OGR Core:
+ * (core) Fix crash in OGRStyleTable::AddStyle (#2810, #2531)
+ * (core) crash in OGRLinearRing::get_Area() (#2792)
+ * (core) GetFieldAsString() fails (aborts) on Ubuntu 8.10 (#2896)
+ * (core) Issues related to wildcard expansion in SQL result layer (#2788)
+ * (core) Generic SQL doesn't support feature styles (#2808)
+ * (BNA) BNA inner ring contains only duplication of first point (#2985)
+ * (Geoconcept) out of bound access in geoconcept.c (#2918)
+ * (GeoJSON) Handle "link" and "name" srs members for GeoJSON (#2665)
+ * (GeoJSON) Memory leak in GeoJSON driver for spatial reference of geometry of feature (#2863)
+ * (GML) GML read failure on some Unicode strings for GDAL 1.6+ (#2948)
+ * (GML) OGRGMLLayer::GetFeatureCount() returns -1 if there's a .XSD file available (#2969)
+ * (GML) OGR support GML 3.1.1 level 0 (#2932)
+ * (GML) GDAL thinks string field is an integer field in GML layer (#2493)
+ * (GPX) OGR GPX driver creates duplicate field names in shapefile (#2966)
+ * (KML) KML Driver - Placemark with Multigeometry Polygons fails (#1853)
+ * (KML) KML: Encoding issue and mixed container (#2181)
+ * (KML) KML: Documents with multiple geometry types are not supported (#1803)
+ * (OCI) OCI varchar2(4000) (#2876)
+ * (PG) Postgresql field count wrong (#962)
+ * (PG) postgres driver failes to create geometry index if layer name starts with a number (#2945)
+ * (SDE) SDE connection failed message non descriptive (#1444)
+ * (Shape) .dbf files; inconsistencies with date formats (#2746)
+ * (VRT) OGR VRT driver may crash when there are missing elements in the XML definition (#2952)
+
+OGR Spatial References:
+ * PROJCS with AXIS considered invalid (#2739)
+ * Wrong name for SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM (#2763)
+ * IsSame results in false positive for LOCAL_CS (#2849)
+ * ERMapper projection lookup problem (#2819)
+
+Documentation:
+ * gdalwarp man page not generated in GDAL 1.6.0 (#2742)
+ * some bogus part in gdal_contour manual (#2790)
+
+Utilities:
+ * Make gdalbuildvrt compiled by default in 1.6.1 (#2987)
+ * Python utililities should support command-line wildcards (#2783)
+ * gdal_contour segfaults when no output specified (#2789)
+ * gdal_contour: -3d option doesn't work just after -fl option (#2793)
+ * gdal_contour segfaults if wrong band number is specified (#2794)
+ * gdal_vrtmerge.py -separate doesn't work (#2836)
+ * gdalwarp cblend option does not work (#2733)
+ * gdalwarp ignores cutline when -tr specified (#2847)
+ * gdalwarp cutline off source problems (#2853)
+ * multi-part cutlines not supported (#2984)
+
+Algorithms:
+ * NODATA missing in blank area when warping vrt file with expanded RGB into vrt (#2724)
+ * Cutline with blend gives wrong results inside cut polygon (#2735)
+ * Cutline with blend don't blend correctly for some pixel rows (#2740)
+ * typo in name GDAL_CG_Create in contour.cpp (#2795)
+ * Lanczos and CubicSpline resampler buffer error on 2x2 images (#2960)
+
+GDAL:
+ * (all) A number of drivers implementation of Create() and CreateCopy() don't handle properly nBands == 0 (#2799)
+
+ * (core) Building RRD overviews using AVERAGE_BIT2GRAYSCALE results in wrong value (#2914)
+ * (core) Closing a dataset opened with GDALOpenShared in another thread causes later corruption (#2897)
+ * (core) GDAL gcore not robust enough to invalid raster block dimensions (#2822)
+ * (core) GDALDatasetPool::~GDALDatasetPool() asserts when an underlying file cannot be opened (#2837)
+ * (core) GDALOpenShared may crashes if dataset description is not the dataset filename (#2797)
+ * (core) Overview is AUX (#2854)
+ * (core) GDALVersionInfo(NULL) segfaults (#2826)
+
+ * (AIGRID) AIGRID driver cannot read RAT on Windows (#2865)
+ * (BMP) BMP driver may crash when reading corrupted files (#2827)
+ * (BSB) bsb kap noaa (#2817)
+ * (BSB) BSBDataset::open() function may consider a non-BSB file as a BSB file (#2881)
+ * (BSB) Problem with gcps count in BSB Driver (#2777)
+ * (BSB) Failure reading BSB image (#2782)
+ * (DOQ2) Potential stack buffer overflow in DOQ2 metadata reading (#2835)
+ * (DTED) Buffer overflow in DTEDCreateCopy (#2824)
+ * (DTED) DTED driver cannot read any more files with VOL or HDR (#2951)
+ * (ECW) GDAL ECW driver requires to define _WIN32_WINNT=0x0500 with MSVC2008 (#2850)
+ * (ECW) Memory overwrite while zooming an ECW image (#2934)
+ * (ENVI) ENVI importer crashes when attempting to open an ENVI signature file. (#2778)
+ * (ERS) ERS file pointing to an ECW file is not opening when a full path name is not specified (#2908)
+ * (ERS) ERS shows 8 bit signed integer datasets as unsigned integer. (#2902)
+ * (GeoRaster) Georaster - Pyramid Levels mismatch (#2946)
+ * (GeoRaster) GeoRaster: Error compressing (DEFLATE) incomplete blocks (#2924)
+ * (GeoRaster) georaster: In Oracle 10g generateSpatialExtent() in PL/SQL accept only one parameter (#2754)
+ * (GeoRaster) GeoRaster: NBIT need swapping (#2917)
+ * (GeoRaster) GeoRaster: Non georeferenced images wrongly reported (#2967)
+ * (GeoRaster) GeoRaster: Some combinations of Interleaving and bands per blocks fail (#2923)
+ * (GFF) GFF driver doesn't support big endian host (#2832)
+ * (GIF) Opening large GIF files causes GDALOpen() to hang. (#2542)
+ * (GRIB) GRIB driver asserts (crashes) on opening this dataset (#2751)
+ * (GRIB) GRIB driver crashes with large datasets (#2887)
+ * (GTiff) gdalwarp to geotiff - TFW=YES ignored (#2760)
+ * (GTiff) gdalwarp to geotiff 1 bit mangles image (#2759)
+ * (GTiff) gdalwarp with compression corrupts output (#2820) - Note: regression that appeared after 1.6.0 release
+ * (GTiff) GTiffRasterBand::IReadBlock() is terrible slow for big number of bands and pixel interleaving (#2838)
+ * (GTiff - libtiff) JPEG compression in TIF doesn't work (#2748)
+ * (GTiff) SetColorTable() not supported for existing TIFF files (#2421)
+ * (GTiff - libgeotiff) avoid needlessly deaccessing all csv files (#2957) 
+ * (GXF) GXF driver doesn't validate raster dimensions (#2829)
+ * (HDF4) HDF4: Mixing Windows driver with subdataset ID (#2823)
+ * (HDF5) HDF5 driver easily confused about datatypes (#2941)
+ * (HDF5) Wrong initial value for nGCPCount in HDF5 sub-datasets (#2774)
+ * (HFA) Set projection to an existing HFA dataset as a PE string (#2731)
+ * (HFA) Unable to delete colormap from HFA (#2842)
+ * (INGR) Overviews cannot be built for CIT or COT (#2904)
+ * (ISIS, PDS) Projection Warning only printed for debug mode (ISIS 2/3, PDS) (#2873)
+ * (JDEM) JDEM driver leaks and may crash on corrupted dataset (#2828)
+ * (NITF) 11 bit JPEG2000 compressed NITF shows as 8 bit (#2964)
+ * (NITF) Reposition all NITF image and annotation segments relative to the base (0) segment (#2912)
+ * (NITF) ScanJPEGBlocks() finds too many "Start of Image" markers (#2927)
+ * (PDS) Keyword causing format unrecognized (PDS) (#2956)
+ * (SGI) Corrupted SGI images can cause crashes (#2803)
+ * (VRT) Crash when serializing VRTDerivedRasterBand without pixel func defined (#2877)
+ * (VRT) VRTSourcedRasterBand fails if there are no sources (#2728)
+ * (VRT) Blocks of data missing when warping cascaded vrt (#2867)
+
+Configuration:
+ * OGR_ENABLED not properly defined in win32 builds (#2784)
+ * mysql compile error with GCC 4.3.2: error: macro "min" passed 3 arguments, but takes just 2 (#2972)
+ * external libz header is not found when setting the --with-libz=ARG switch (#2942)
+
+SWIG (all bindings):
+ * Need to expose ImportFromMICoordSys/ExportToMICoordSys to the SWIG interface (#2722)
+ * Invalid inheritance in SWIG definition of  GDALColorTableShadow and GDALRasterAttributeTableShadow (#2874)
+ * swig 1.3.39 breaks nearly all swig bindings (java, python, ruby) (#2954)
+
+Python:
+ * Python callbacks only support functions, not any callable (#2743)
+ * Broken python bindings for TransformCoordinates method of osr.CoordinateTransformation (#2764)
+ * GetFieldAsDate call in python bindings should be GetFieldAsDateTime (#2765)
+ * GetFieldAsStringList c# and Python wraper (#2839)
+ * python typemaps for OBJECT_LIST_INPUT(GDALRasterBandShadow) is broken (#2872)
+ * Python bindings don't build on Mandriva 2009.1 (#2974)
+
+.NET:
+ * C# Vista 64-bit OSGeo.OGR.Datasource.CreateLayer freezing (#2173)
+ * Support MSVC2008 builds with the csharp interface (#2862)
+ * Problems to compile swigged GDAL for C# on 64 bit machine (#2928)
+ * Change the dll mapping rules to support the recent MONO versions (#2961)
+
 = GDAL/OGR 1.6.0 = 
 
 == GDAL/OGR 1.6.0 - General Changes ==
