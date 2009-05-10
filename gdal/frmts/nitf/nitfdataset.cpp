@@ -3019,11 +3019,12 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Only allow supported compression values.                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszOptions, "IC" ) != NULL )
+    const char* pszIC = CSLFetchNameValue( papszOptions, "IC" );
+    if( pszIC != NULL )
     {
-        if( EQUAL(CSLFetchNameValue( papszOptions, "IC" ),"NC") )
+        if( EQUAL(pszIC,"NC") )
             /* ok */;
-        else if( EQUAL(CSLFetchNameValue( papszOptions, "IC" ),"C8") )
+        else if( EQUAL(pszIC,"C8") )
         {
             poJ2KDriver = 
                 GetGDALDriverManager()->GetDriverByName( "JP2ECW" );
@@ -3039,7 +3040,7 @@ NITFDataset::NITFCreateCopy(
             }
             bJPEG2000 = TRUE;
         }
-        else if( EQUAL(CSLFetchNameValue( papszOptions, "IC" ),"C3") )
+        else if( EQUAL(pszIC,"C3") || EQUAL(pszIC,"M3") )
         {
             bJPEG = TRUE;
 #ifndef JPEG_SUPPORTED
@@ -3054,7 +3055,7 @@ NITFDataset::NITFCreateCopy(
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Only IC=NC (uncompressed), IC=C3 (JPEG) and IC=C8 (JPEG2000)\n"
+                      "Only IC=NC (uncompressed), IC=C3/M3 (JPEG) and IC=C8 (JPEG2000)\n"
                       "allowed with NITF CreateCopy method." );
             CSLDestroy(papszFullOptions);
             return NULL;
@@ -3318,7 +3319,7 @@ NITFDataset::NITFCreateCopy(
         NITFClose( psFile );
 
         NITFPatchImageLength( pszFilename, nImageOffset,
-                              nPixelCount, "C3" );
+                              nPixelCount, pszIC );
         NITFWriteTextSegments( pszFilename, papszTextMD );
         
         poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
@@ -3489,7 +3490,7 @@ static void NITFPatchImageLength( const char *pszFilename,
             // We really should have a special case for lossless compression.
             sprintf( szCOMRAT, "%04d", (int) (dfRate * 100));
         }
-        else if( EQUAL(pszIC, "C3") ) /* jpeg */
+        else if( EQUAL(pszIC, "C3") || EQUAL(pszIC, "M3") ) /* jpeg */
         {
             strcpy( szCOMRAT, "00.0" );
         }
@@ -3772,6 +3773,34 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
 
     VSIFSeekL( fp, nStartOffset, SEEK_SET );
 
+    const char* pszIC = CSLFetchNameValue( papszOptions, "IC" );
+    GUInt32  nIMDATOFF;
+    if (EQUAL(pszIC, "M3"))
+    {
+        GUInt32  nIMDATOFF_MSB;
+        GUInt16  nBMRLNTH, nTMRLNTH, nTPXCDLNTH;
+
+        /* Prepare the block map */
+#define BLOCKMAP_HEADER_SIZE    (4 + 2 + 2 + 2)
+        nIMDATOFF_MSB = nIMDATOFF = BLOCKMAP_HEADER_SIZE + nNBPC * nNBPR * 4;
+        nBMRLNTH = 4;
+        nTMRLNTH = 0;
+        nTPXCDLNTH = 0;
+
+        CPL_MSBPTR32( &nIMDATOFF_MSB );
+        CPL_MSBPTR16( &nBMRLNTH );
+        CPL_MSBPTR16( &nTMRLNTH );
+        CPL_MSBPTR16( &nTPXCDLNTH );
+
+        VSIFWriteL( &nIMDATOFF_MSB, 1, 4, fp );
+        VSIFWriteL( &nBMRLNTH, 1, 2, fp );
+        VSIFWriteL( &nTMRLNTH, 1, 2, fp );
+        VSIFWriteL( &nTPXCDLNTH, 1, 2, fp );
+
+        /* Reserve space for the table itself */
+        VSIFSeekL( fp, nNBPC * nNBPR * 4, SEEK_CUR );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Copy each block                                                 */
 /* -------------------------------------------------------------------- */
@@ -3782,6 +3811,36 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
         {
             /*CPLDebug("NITF", "nBlockXOff=%d/%d, nBlockYOff=%d/%d",
                      nBlockXOff, nNBPR, nBlockYOff, nNBPC);*/
+            if (EQUAL(pszIC, "M3"))
+            {
+                /* Write block offset for current block */
+
+                GUIntBig nCurPos = VSIFTellL(fp);
+                VSIFSeekL( fp, nStartOffset + BLOCKMAP_HEADER_SIZE + 4 * (nBlockYOff * nNBPR + nBlockXOff), SEEK_SET );
+                GUIntBig nBlockOffset = nCurPos - nStartOffset - nIMDATOFF;
+                GUInt32 nBlockOffset32 = (GUInt32)nBlockOffset;
+                if (nBlockOffset == (GUIntBig)nBlockOffset32)
+                {
+                    CPL_MSBPTR32( &nBlockOffset32 );
+                    VSIFWriteL( &nBlockOffset32, 1, 4, fp );
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Offset for block (%d, %d) = " CPL_FRMT_GUIB ". Cannot fit into 32 bits...",
+                            nBlockXOff, nBlockYOff, nBlockOffset);
+
+                    nBlockOffset32 = 0xffffffff;
+                    int i;
+                    for(i=nBlockYOff * nNBPR + nBlockXOff; i < nNBPC * nNBPR; i++)
+                    {
+                        VSIFWriteL( &nBlockOffset32, 1, 4, fp );
+                    }
+                    return FALSE;
+                }
+                VSIFSeekL( fp, nCurPos, SEEK_SET );
+            }
+
             if (!NITFWriteJPEGBlock(poSrcDS, fp,
                                     nBlockXOff, nBlockYOff,
                                     nNPPBH, nNPPBV,
@@ -4032,10 +4091,16 @@ void GDALRegister_NITF()
 
         osCreationOptions =
 "<CreationOptionList>"
-"   <Option name='IC' type='string-select' default='NC' description='Compression mode. NC=no compression. C3=JPEG compression. C8=JP2 compression through the JP2ECW driver'>"
+"   <Option name='IC' type='string-select' default='NC' description='Compression mode. NC=no compression. "
+#ifdef JPEG_SUPPORTED
+                "C3/M3=JPEG compression. "
+#endif
+                "C8=JP2 compression through the JP2ECW driver"
+                "'>"
 "       <Value>NC</Value>"
 #ifdef JPEG_SUPPORTED
 "       <Value>C3</Value>"
+"       <Value>M3</Value>"
 #endif
 "       <Value>C8</Value>"
 "   </Option>"
@@ -4052,7 +4117,7 @@ void GDALRegister_NITF()
 "       <Value>NPJE</Value>"
 "       <Value>EPJE</Value>"
 "   </Option>"
-"   <Option name='ICORDS' type='string-select' description='To ensure that space will be reserved for geographic corner coordinates in DMS (G), in decimal degrees (D), UTM North (N) or UTM South'>"
+"   <Option name='ICORDS' type='string-select' description='To ensure that space will be reserved for geographic corner coordinates in DMS (G), in decimal degrees (D), UTM North (N) or UTM South (S)'>"
 "       <Value>G</Value>"
 "       <Value>D</Value>"
 "       <Value>N</Value>"
