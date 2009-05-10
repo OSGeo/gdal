@@ -62,13 +62,15 @@ file header.  Use the official field names from the NITF specification
 document; do not put the "NITF_" prefix that is reported when asking the metadata
 list.<p>
 
-<li> <b>IC=NC/C3/C8</b> : Set the compression method.
+<li> <b>IC=NC/C3/M3/C8</b> : Set the compression method.
 <ul>
 <li>NC is the default value, and means no compression.
-<li>C3 means JPEG compression (one block) and is only available for the
+<li>C3 means JPEG compression and is only available for the
 CreateCopy() method. The QUALITY and PROGRESSIVE JPEG-specific
 creation options can be used. See the <a href="frmt_jpeg.html">JPEG driver
-documentation</a>
+documentation</a>. Starting with GDAL 1.7.0, multi-block images can be written.
+<li>M3 is a variation of C3. The only difference is that a block map is written,
+which allow for fast seeking to any block. (Starting with GDAL 1.7.0.)
 <li>C8 means JPEG2000 compression (one block) and is available for both
 CreateCopy() and Create() methods. JPEG2000 compression is only available
 if the JP2ECW driver is available. The TARGET and PROFILE JP2ECW-specific
