@@ -790,7 +790,7 @@ with a newline."""
     return 'success'
 
 ###############################################################################
-# Create and read a JPEG encoded NITF file with several blocks
+# Create and read a JPEG encoded NITF file (C3) with several blocks
 
 def nitf_36():
 
@@ -866,6 +866,36 @@ def nitf_38():
     ds = gdal.Open( 'NITF_IM:998:tmp/nitf38.ntf' )
     if cs != ds.GetRasterBand(1).Checksum():
         return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Create and read a JPEG encoded NITF file (M3) with several blocks
+
+def nitf_39():
+
+    src_ds = gdal.Open( 'data/rgbsmall.tif' )
+    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf39.ntf', src_ds,
+                                                  options = ['IC=M3', 'BLOCKSIZE=32', 'QUALITY=100'] )
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open( 'tmp/nitf39.ntf' )
+    
+    (exp_mean, exp_stddev) = (65.4208, 47.254550335)
+    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    
+    if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
+        print mean, stddev
+        gdaltest.post_reason( 'did not get expected mean or standard dev.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['COMPRESSION'] != 'JPEG':
+        gdaltest.post_reason( 'Did not get expected compression value.' )
+        return 'fail'
+
     ds = None
 
     return 'success'
@@ -1205,6 +1235,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf39.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -1248,6 +1283,7 @@ gdaltest_list = [
     nitf_36,
     nitf_37,
     nitf_38,
+    nitf_39,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
