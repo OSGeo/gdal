@@ -521,13 +521,24 @@ int NITFCreate( const char *pszFilename,
         * ((GIntBig) nNBPR * nNBPC)
         * nNPPBH * nNPPBV * nBands;
 
-    if (EQUAL(pszIC, "NC") && (double)nImageSize >= 10000000000.)
+    if (EQUAL(pszIC, "NC"))
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to create file %s,\n"
-                  "Too big image size : " CPL_FRMT_GUIB,
-                  pszFilename, nImageSize );
-        return FALSE;
+        if ((double)nImageSize >= 1e10)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Unable to create file %s,\n"
+                    "Too big image size : " CPL_FRMT_GUIB,
+                    pszFilename, nImageSize );
+            return FALSE;
+        }
+        if ((double)(nImageSize * nIM) >= 1e12)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Unable to create file %s,\n"
+                    "Too big file size : " CPL_FRMT_GUIB,
+                    pszFilename, nImageSize * nIM );
+            return FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -875,7 +886,10 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Update total file length                                        */
 /* -------------------------------------------------------------------- */
-    if (EQUAL(pszIC, "NC") && nCur > ((GIntBig)1073741833) * 10 - 1)
+
+    /* According to the spec, CLEVEL 7 supports up to 10,737,418,330 bytes */
+    /* but we can support technically much more */
+    if (EQUAL(pszIC, "NC") && (double)nCur >= 1e12)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big file : " CPL_FRMT_GUIB, nCur);
