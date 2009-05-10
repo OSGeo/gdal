@@ -903,9 +903,7 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Grow file to full required size by writing one byte at the end. */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszIC,"C8") || EQUAL(pszIC,"C3") )
-        /* don't extend file */;
-    else
+    if( EQUAL(pszIC,"NC") )
     {
         char cNul = 0;
         VSIFSeekL( fp, nCur-1, SEEK_SET );
