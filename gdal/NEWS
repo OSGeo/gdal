@@ -18,7 +18,6 @@ OGR:
  * (GeoJSON) Memory leak in GeoJSON driver for spatial reference of geometry of feature (#2863)
  * (GML) GML read failure on some Unicode strings for GDAL 1.6+ (#2948)
  * (GML) OGRGMLLayer::GetFeatureCount() returns -1 if there's a .XSD file available (#2969)
- * (GML) OGR support GML 3.1.1 level 0 (#2932)
  * (GML) GDAL thinks string field is an integer field in GML layer (#2493)
  * (GPX) OGR GPX driver creates duplicate field names in shapefile (#2966)
  * (KML) KML Driver - Placemark with Multigeometry Polygons fails (#1853)
