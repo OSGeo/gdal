@@ -3425,20 +3425,35 @@ static void NITFPatchImageLength( const char *pszFilename,
         return;
     
     VSIFSeekL( fpVSIL, 0, SEEK_END );
-    GIntBig nFileLen = VSIFTellL( fpVSIL );
+    GUIntBig nFileLen = VSIFTellL( fpVSIL );
 
 /* -------------------------------------------------------------------- */
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
+    if ((double)nFileLen >= 1e12)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999999",
+                 nFileLen);
+        nFileLen = (GUIntBig)(1e12 - 1);
+    }
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
-    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "d",nFileLen);
+    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
     VSIFWriteL( (void *) osLen.c_str(), 1, 12, fpVSIL );
     
 /* -------------------------------------------------------------------- */
 /*      Update the image data length.                                   */
 /* -------------------------------------------------------------------- */
+    GUIntBig nImageSize = nFileLen-nImageOffset;
+    if ((double)nImageSize >= 1e10)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too big image size : " CPL_FRMT_GUIB". Truncating to 9999999999",
+                 nImageSize);
+        nImageSize = (GUIntBig)(1e10 - 1);
+    }
     VSIFSeekL( fpVSIL, 369, SEEK_SET );
-    osLen = CPLString().Printf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "d",nFileLen-nImageOffset);
+    osLen = CPLString().Printf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",nImageSize);
     VSIFWriteL( (void *) osLen.c_str(), 1, 10, fpVSIL );
 
 /* -------------------------------------------------------------------- */
@@ -3613,10 +3628,17 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fpVSIL, 0, SEEK_END );
-    GIntBig nFileLen = VSIFTellL( fpVSIL );
+    GUIntBig nFileLen = VSIFTellL( fpVSIL );
 
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
-    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "d",nFileLen);
+    if ((double)nFileLen >= 1e12)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999999",
+                 nFileLen);
+        nFileLen = (GUIntBig)(1e12 - 1);
+    }
+    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
     VSIFWriteL( (void *) osLen.c_str(), 1, 12, fpVSIL );
     
     VSIFCloseL( fpVSIL );
