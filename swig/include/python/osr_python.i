@@ -60,6 +60,8 @@ py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
 		                     papszMethods[iMethod], 
 				     pszUserMethodName, 
 		                     py_PList));
+        
+        Py_XDECREF( py_PList );
     }
 
     CSLDestroy( papszMethods );
