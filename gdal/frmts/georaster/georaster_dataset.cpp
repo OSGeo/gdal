@@ -200,6 +200,11 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         poGRD->nRasterYSize  = poGRW->nRasterRows;
         poGRD->nBands        = poGRW->nRasterBands;
         poGRD->poGeoRaster   = poGRW;
+        
+        if( poGRW->bIsReferenced )
+        {
+            poGRD->bGeoTransform = poGRW->GetImageExtent( poGRD->adfGeoTransform );
+        }
     }
     else
     {
@@ -1124,6 +1129,8 @@ CPLErr GeoRasterDataset::SetGeoTransform( double *padfTransform )
     poGeoRaster->dfYCoefficient[0] = adfGeoTransform[4];
     poGeoRaster->dfYCoefficient[1] = adfGeoTransform[5];
     poGeoRaster->dfYCoefficient[2] = adfGeoTransform[3];
+
+    bGeoTransform = true;
 
     return CE_None;
 }
