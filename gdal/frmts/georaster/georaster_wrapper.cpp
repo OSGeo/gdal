@@ -1138,6 +1138,13 @@ bool GeoRasterWrapper::GetImageExtent( double *padfTransform )
     padfTransform[4] = -dfRotation;
     padfTransform[5] = ( dfLRy - dfULy ) / nRasterRows;
 
+    dfXCoefficient[0] = padfTransform[1];
+    dfXCoefficient[1] = padfTransform[2];
+    dfXCoefficient[2] = padfTransform[0];
+    dfYCoefficient[0] = padfTransform[4];
+    dfYCoefficient[1] = padfTransform[5];
+    dfYCoefficient[2] = padfTransform[3];
+
     return true;
 }
 //  ---------------------------------------------------------------------------
