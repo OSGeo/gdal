@@ -33,6 +33,7 @@ import sys
 import gdal
 import array
 import string
+import struct
 
 sys.path.append( '../pymod' )
 
@@ -901,6 +902,58 @@ def nitf_39():
     return 'success'
 
 ###############################################################################
+# Create a 10 GB NITF file
+
+def nitf_40():
+
+    # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
+    # file !
+    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+        return 'skip'
+
+    width = 99000
+    height = 99000
+    x = width - 1
+    y = height - 1
+
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf40.ntf', width, height)
+    data = struct.pack('B' * 1, 123)
+
+    # Write a non NULL byte at the bottom right corner of the image (around 10 GB offset)
+    ds.GetRasterBand(1).WriteRaster(x, y, 1, 1, data)
+    ds = None
+
+    # Check that we can fetch it at the right value
+    ds = gdal.Open('tmp/nitf40.ntf')
+    if ds.GetRasterBand(1).ReadRaster(x, y, 1, 1) != data:
+        return 'fail'
+    ds = None
+
+    # Check that it is indeed at a very far offset, and that the NITF driver hasn't
+    # put it somewhere else due to unvoluntary cast to 32bit integer...
+    blockWidth = 256
+    blockHeight = 256
+    nBlockx = ((width+blockWidth-1)/blockWidth)
+    iBlockx = x / blockWidth
+    iBlocky = y / blockHeight
+    ix = x % blockWidth
+    iy = y % blockHeight
+    offset = 843 + (iBlocky * nBlockx + iBlockx) * blockWidth * blockHeight + (iy * blockWidth + ix)
+
+    fd = open('tmp/nitf40.ntf', 'rb')
+    fd.seek(offset, os.SEEK_SET)
+    bytes_read = fd.read(1)
+    fd.close()
+
+    val = struct.unpack('B' * 1, bytes_read)[0]
+    if val != 123:
+        gdaltest.post_reason('Bad value at offset %d : %d' % (offset, val))
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -1236,7 +1289,17 @@ def nitf_cleanup():
         pass
 
     try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf38.ntf' )
+    except:
+        pass
+
+    try:
         gdal.GetDriverByName('NITF').Delete( 'tmp/nitf39.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf40.ntf' )
     except:
         pass
 
@@ -1284,6 +1347,7 @@ gdaltest_list = [
     nitf_37,
     nitf_38,
     nitf_39,
+    nitf_40,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
