@@ -1075,3 +1075,38 @@ def reregister_all_jpeg2000_drivers():
         pass
 
     return True
+
+###############################################################################
+# Determine if the filesystem supports sparse files.
+# Currently, this will only work on Linux (or any *NIX that has the stat
+# command line utility)
+
+def filesystem_supports_sparse_files(path):
+
+    (child_stdin, child_stdout, child_stderr) = os.popen3('stat -f -c "%T" ' + path)
+    ret = child_stdout.read()
+    err = child_stderr.read()
+    child_stdin.close()
+    child_stdout.close()
+    child_stderr.close()
+
+    if err != '':
+        post_reason('Cannot determine if filesystem supports sparse files')
+        return False
+
+    if ret.find('fat32') != -1:
+        post_reason('File system does not support sparse files')
+        return False
+
+    # Add here any missing filesystem supporting sparse files
+    # See http://en.wikipedia.org/wiki/Comparison_of_file_systems
+    if ret.find('ext3') == -1 and \
+        ret.find('ext4') == -1 and \
+        ret.find('reiser') == -1 and \
+        ret.find('xfs') == -1 and \
+        ret.find('jfs') == -1 and \
+        ret.find('ntfs') == -1 :
+        post_reason('Filesystem %s is not believed to support sparse files' % ret)
+        return False
+
+    return True
