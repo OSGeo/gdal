@@ -940,6 +940,11 @@ def nitf_40():
     iy = y % blockHeight
     offset = 843 + (iBlocky * nBlockx + iBlockx) * blockWidth * blockHeight + (iy * blockWidth + ix)
 
+    try:
+        os.SEEK_SET
+    except AttributeError:
+        os.SEEK_SET, os.SEEK_CUR, os.SEEK_END = range(3)
+
     fd = open('tmp/nitf40.ntf', 'rb')
     fd.seek(offset, os.SEEK_SET)
     bytes_read = fd.read(1)
