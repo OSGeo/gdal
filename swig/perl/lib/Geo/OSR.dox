@@ -279,6 +279,8 @@
 
 
 ## @class Geo::OSR::SpatialReference
+# @brief <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">Documentation
+# of the underlying C++ class at www.gdal.org</a>
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
