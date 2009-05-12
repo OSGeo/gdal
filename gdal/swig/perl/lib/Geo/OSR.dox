@@ -22,7 +22,7 @@
 # @return reference to an array of possible projection methods
 
 ## @fn @GetProjectionMethodParameterList($method)
-# @param method and projection method
+# @param method projection method name
 # @return (arrayref parameters, $projection_name)
 
 ## @fn @GetProjectionMethodParamInfo($method, $parameter)
