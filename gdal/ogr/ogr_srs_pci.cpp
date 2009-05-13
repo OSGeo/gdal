@@ -75,6 +75,7 @@ static const PCIDatums aoDatums[] =
     { "D093", 4262, 0, 0 },   // Massawa (Ethiopia (Eritrea))
     { "D094", 4261, 0, 0 },   // Merchich (Morocco)
     { "D098", 4604, 0, 0 },   // Montserrat Island Astro 1958 (Montserrat (Leeward Islands))
+    { "D110", 4267, 0, 0 },   // NAD27 / Alaska
     { "D139", 4282, 0, 0 },   // Pointe Noire 1948 (Congo)
     { "D140", 4615, 0, 0 },   // Porto Santo 1936 (Porto Santo, Madeira Islands)
     { "D151", 4139, 0, 0 },   // Puerto Rico (Puerto Rico, Virgin Islands)
