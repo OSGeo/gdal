@@ -416,6 +416,21 @@ def ogr_pg_9():
         gdaltest.post_reason( 'Geometry update failed' )
         return 'fail'
 
+    feat.SetGeometryDirectly( None )
+
+    if gdaltest.pg_lyr.SetFeature( feat ) != 0:
+        feat.Destroy()
+        gdaltest.post_reason( 'SetFeature() method failed.' )
+        return 'fail'
+
+    feat.Destroy()
+
+    feat = gdaltest.pg_lyr.GetFeature( fid )
+    if feat.GetGeometryRef() != None:
+        print feat.GetGeometryRef()
+        gdaltest.post_reason( 'Geometry update failed. null geometry expected' )
+        return 'fail'
+
     feat.Destroy()
 
     return 'success'
