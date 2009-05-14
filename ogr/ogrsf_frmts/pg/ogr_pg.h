@@ -183,6 +183,9 @@ class OGRPGTableLayer : public OGRPGLayer
     OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
     OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
     char                *BuildCopyFields(void);
+
+    void                AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
+                                         OGRFeature* poFeature, int i);
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
                                          const char * pszTableName,
