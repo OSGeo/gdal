@@ -207,8 +207,8 @@ public:
 #if defined(SWIGPYTHON) || defined (SWIGJAVA)
 %apply (char **out_ppsz_and_free) {char **};
 #else
-/* FIXME: wrong typemap. GetFileList() return should be CSLDestroy'ed */
-%apply (char **options) {char **};
+/*  this is a required typemap (hi, Python and Java guys!) returned list is copied and CSLDestroy'ed */
+%apply (char **CSL) {char **};
 #endif
   char **GetFileList() {
     return GDALGetFileList( self );
