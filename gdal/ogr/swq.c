@@ -1911,11 +1911,14 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
 /*      Push the old definitions that came after the one to be          */
 /*      replaced further up in the array.                               */
 /* -------------------------------------------------------------------- */
-            for( i = select_info->result_columns-1; i > isrc; i-- )
+            if (new_fields != 1)
             {
-                memcpy( select_info->column_defs + i + new_fields - 1,
-                        select_info->column_defs + i,
-                        sizeof( swq_col_def ) );
+                for( i = select_info->result_columns-1; i > isrc; i-- )
+                {
+                    memcpy( select_info->column_defs + i + new_fields - 1,
+                            select_info->column_defs + i,
+                            sizeof( swq_col_def ) );
+                }
             }
 
             select_info->result_columns += (new_fields - 1 );
@@ -1923,7 +1926,7 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
 /* -------------------------------------------------------------------- */
 /*      Zero out all the stuff in the target column definitions.        */
 /* -------------------------------------------------------------------- */
-            memset( select_info->column_defs + i, 0, 
+            memset( select_info->column_defs + isrc, 0, 
                     new_fields * sizeof(swq_col_def) );
         }
         else
