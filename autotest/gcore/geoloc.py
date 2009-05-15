@@ -41,7 +41,7 @@ import gdaltest
 
 def geoloc_1():
 
-    tst = gdaltest.GDALTest( 'VRT', 'warpsst.vrt', 1, 62558 )
+    tst = gdaltest.GDALTest( 'VRT', 'warpsst.vrt', 1, 62200 )
     return tst.testOpen()
 
 
