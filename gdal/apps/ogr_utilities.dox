@@ -195,7 +195,7 @@ selections, reducing the set of attributes, setting the output coordinate
 system or even reprojecting the features during translation.
 
 <dl>
-<dt><b> -f</b><em> format_name</em>:</dt><dd> output file format name, some possible values are:
+<dt><b> -f</b><em> format_name</em>:</dt><dd> output file format name (default is ESRI Shapefile), some possible values are:
 	 \verbatim
      -f "ESRI Shapefile"
      -f "TIGER"
