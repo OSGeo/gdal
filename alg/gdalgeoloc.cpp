@@ -105,11 +105,12 @@ static int GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
     psTransform->nGeoLocYSize = nYSize;
     
     psTransform->padfGeoLocY = (double *) 
-        VSIMalloc(sizeof(double) * nXSize * nYSize);
+        VSIMalloc3(sizeof(double), nXSize, nYSize);
     psTransform->padfGeoLocX = (double *) 
-        VSIMalloc(sizeof(double) * nXSize * nYSize);
+        VSIMalloc3(sizeof(double), nXSize, nYSize);
     
-    if( psTransform->padfGeoLocX == NULL )
+    if( psTransform->padfGeoLocX == NULL ||
+        psTransform->padfGeoLocY == NULL )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "GeoLocLoadFullData : Out of memory");
@@ -186,6 +187,13 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     nBMXSize= psTransform->nBackMapWidth =  
         (int) ((dfMaxX - dfMinX) / dfPixelSize + 1);
 
+    if (nBMXSize > INT_MAX / nBMYSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Int overflow : %d x %d",
+                 nBMXSize, nBMYSize);
+        return FALSE;
+    }
+
     dfMinX -= dfPixelSize/2.0;
     dfMaxY += dfPixelSize/2.0;
 
@@ -202,18 +210,21 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     GByte  *pabyValidFlag;
 
     pabyValidFlag = (GByte *) 
-        VSIMalloc(nBMXSize * nBMYSize * sizeof(GByte)); 
+        VSICalloc(nBMXSize, nBMYSize); 
 
     psTransform->pafBackMapX = (float *) 
-        VSIMalloc(nBMXSize * nBMYSize * sizeof(float)); 
+        VSIMalloc3(nBMXSize, nBMYSize, sizeof(float)); 
     psTransform->pafBackMapY = (float *) 
-        VSIMalloc(nBMXSize * nBMYSize * sizeof(float)); 
+        VSIMalloc3(nBMXSize, nBMYSize, sizeof(float)); 
 
-    if( psTransform->pafBackMapY == NULL )
+    if( pabyValidFlag == NULL ||
+        psTransform->pafBackMapX == NULL ||
+        psTransform->pafBackMapY == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Unable to allocate %dx%d back-map for geolocation array transformer.",
                   nBMXSize, nBMYSize );
+        CPLFree( pabyValidFlag );
         return FALSE;
     }
 
@@ -222,8 +233,6 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
         psTransform->pafBackMapX[i] = -1.0;
         psTransform->pafBackMapY[i] = -1.0;
     }
-
-    memset( pabyValidFlag, 0, nBMXSize * nBMYSize );
 
 /* -------------------------------------------------------------------- */
 /*      Run through the whole geoloc array forward projecting and       */
@@ -679,6 +688,30 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
     if (psTransform->hBand_X == NULL ||
         psTransform->hBand_Y == NULL)
     {
+        GDALDestroyGeoLocTransformer( psTransform );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*     Check that X and Y bands have the same dimensions                */
+/* -------------------------------------------------------------------- */
+    int nXSize_XBand = GDALGetRasterXSize( psTransform->hDS_X );
+    int nYSize_XBand = GDALGetRasterYSize( psTransform->hDS_X );
+    int nXSize_YBand = GDALGetRasterXSize( psTransform->hDS_Y );
+    int nYSize_YBand = GDALGetRasterYSize( psTransform->hDS_Y );
+    if (nXSize_XBand != nXSize_YBand ||
+        nYSize_XBand != nYSize_YBand )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "X_BAND and Y_BAND do not have the same dimensions");
+        GDALDestroyGeoLocTransformer( psTransform );
+        return NULL;
+    }
+
+    if (nXSize_XBand > INT_MAX / nYSize_XBand)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Int overflow : %d x %d",
+                 nXSize_XBand, nYSize_XBand);
         GDALDestroyGeoLocTransformer( psTransform );
         return NULL;
     }
