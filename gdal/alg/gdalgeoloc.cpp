@@ -144,6 +144,7 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 {
     int nXSize = GDALGetRasterXSize( psTransform->hDS_X );
     int nYSize = GDALGetRasterYSize( psTransform->hDS_X );
+    int nMaxIter = 3;
 
 /* -------------------------------------------------------------------- */
 /*      Scan forward map for lat/long extents.                          */
@@ -237,6 +238,8 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /* -------------------------------------------------------------------- */
 /*      Run through the whole geoloc array forward projecting and       */
 /*      pushing into the backmap.                                       */
+/*      Initialise to the nMaxIter+1 value so we can spot genuinely     */
+/*      valid pixels in the hole-filling loop.                          */
 /* -------------------------------------------------------------------- */
     int iBMX, iBMY;
     int iX, iY;
@@ -262,7 +265,7 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
             psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = 
                 (float)(iY * psTransform->dfLINE_STEP + psTransform->dfLINE_OFFSET);
 
-            pabyValidFlag[iBMX + iBMY * nBMXSize] = 1;
+            pabyValidFlag[iBMX + iBMY * nBMXSize] = nMaxIter+1;
 
         }
     }
@@ -272,46 +275,81 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /*      nearby values.                                                  */
 /* -------------------------------------------------------------------- */
     int iIter;
+    int nNumValid, nExpectedValid;
 
-    for( iIter = 0; iIter < 3; iIter++ )
+    for( iIter = 0; iIter < nMaxIter; iIter++ )
     {
+        nNumValid = 0;
+        nExpectedValid = (nBMYSize - 2) * (nBMXSize - 2);
         for( iBMY = 1; iBMY < nBMYSize-1; iBMY++ )
         {
             for( iBMX = 1; iBMX < nBMXSize-1; iBMX++ )
             {
                 // if this point is already set, ignore it. 
                 if( pabyValidFlag[iBMX + iBMY*nBMXSize] )
+                {
+                    nNumValid++;
                     continue;
+                }
 
                 int nCount = 0;
                 double dfXSum = 0.0, dfYSum = 0.0;
+                int nMarkedAsGood = nMaxIter - iIter;
 
                 // left?
-                if( iBMX > 0 && pabyValidFlag[iBMX-1+iBMY*nBMXSize] )
+                if( pabyValidFlag[iBMX-1+iBMY*nBMXSize] > nMarkedAsGood )
                 {
                     dfXSum += psTransform->pafBackMapX[iBMX-1+iBMY*nBMXSize];
                     dfYSum += psTransform->pafBackMapY[iBMX-1+iBMY*nBMXSize];
                     nCount++;
                 }
                 // right?
-                if( iBMX < nBMXSize-1 && pabyValidFlag[iBMX+1+iBMY*nBMXSize] )
+                if( pabyValidFlag[iBMX+1+iBMY*nBMXSize] > nMarkedAsGood )
                 {
                     dfXSum += psTransform->pafBackMapX[iBMX+1+iBMY*nBMXSize];
                     dfYSum += psTransform->pafBackMapY[iBMX+1+iBMY*nBMXSize];
                     nCount++;
                 }
                 // top?
-                if( iBMY > 0 && pabyValidFlag[iBMX+(iBMY-1)*nBMXSize] )
+                if( pabyValidFlag[iBMX+(iBMY-1)*nBMXSize] > nMarkedAsGood )
                 {
                     dfXSum += psTransform->pafBackMapX[iBMX+(iBMY-1)*nBMXSize];
                     dfYSum += psTransform->pafBackMapY[iBMX+(iBMY-1)*nBMXSize];
                     nCount++;
                 }
                 // bottom?
-                if( iBMY < nBMYSize-1 && pabyValidFlag[iBMX+(iBMY+1)*nBMXSize] )
+                if( pabyValidFlag[iBMX+(iBMY+1)*nBMXSize] > nMarkedAsGood )
                 {
                     dfXSum += psTransform->pafBackMapX[iBMX+(iBMY+1)*nBMXSize];
                     dfYSum += psTransform->pafBackMapY[iBMX+(iBMY+1)*nBMXSize];
+                    nCount++;
+                }
+                // top-left?
+                if( pabyValidFlag[iBMX-1+(iBMY-1)*nBMXSize] > nMarkedAsGood )
+                {
+                    dfXSum += psTransform->pafBackMapX[iBMX-1+(iBMY-1)*nBMXSize];
+                    dfYSum += psTransform->pafBackMapY[iBMX-1+(iBMY-1)*nBMXSize];
+                    nCount++;
+                }
+                // top-right?
+                if( pabyValidFlag[iBMX+1+(iBMY-1)*nBMXSize] > nMarkedAsGood )
+                {
+                    dfXSum += psTransform->pafBackMapX[iBMX+1+(iBMY-1)*nBMXSize];
+                    dfYSum += psTransform->pafBackMapY[iBMX+1+(iBMY-1)*nBMXSize];
+                    nCount++;
+                }
+                // bottom-left?
+                if( pabyValidFlag[iBMX-1+(iBMY+1)*nBMXSize] > nMarkedAsGood )
+                {
+                    dfXSum += psTransform->pafBackMapX[iBMX-1+(iBMY+1)*nBMXSize];
+                    dfYSum += psTransform->pafBackMapY[iBMX-1+(iBMY+1)*nBMXSize];
+                    nCount++;
+                }
+                // bottom-right?
+                if( pabyValidFlag[iBMX+1+(iBMY+1)*nBMXSize] > nMarkedAsGood )
+                {
+                    dfXSum += psTransform->pafBackMapX[iBMX+1+(iBMY+1)*nBMXSize];
+                    dfYSum += psTransform->pafBackMapY[iBMX+1+(iBMY+1)*nBMXSize];
                     nCount++;
                 }
 
@@ -319,9 +357,16 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 {
                     psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = (float)(dfXSum/nCount);
                     psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = (float)(dfYSum/nCount);
+                    // genuinely valid points will have value iMaxIter+1
+                    // On each iteration mark newly valid points with a
+                    // descending value so that it will not be used on the
+                    // current iteration only on subsequent ones.
+                    pabyValidFlag[iBMX+iBMY*nBMXSize] = iMaxIter - iIter;
                 }
             }
         }
+        if (nNumValid == nExpectedValid)
+            break;
     }
 
 #ifdef notdef
