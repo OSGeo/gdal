@@ -310,7 +310,10 @@ OGRErr OGRSQLiteTableLayer::SetAttributeFilter( const char *pszQuery )
 int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCSequentialWrite) 
+    if (EQUAL(pszCap,OLCFastFeatureCount))
+        return m_poFilterGeom == NULL || osGeomColumn.size() == 0;
+
+    else if( EQUAL(pszCap,OLCSequentialWrite) 
              || EQUAL(pszCap,OLCRandomWrite) )
         return bUpdateAccess;
 
