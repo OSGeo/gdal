@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_api.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -49,7 +50,10 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            int bAppend, int eGType,
                            int bOverwrite,
                            double dfMaxSegmentLength,
-                           char** papszFieldTypesToString);
+                           char** papszFieldTypesToString,
+                           long nCountLayerFeatures,
+                           GDALProgressFunc pfnProgress,
+                           void *pProgressArg);
 
 static int bSkipFailures = FALSE;
 static int nGroupTransactions = 200;
@@ -83,6 +87,9 @@ int main( int nArgc, char ** papszArgv )
     int         eGType = -2;
     double       dfMaxSegmentLength = 0;
     char        **papszFieldTypesToString = NULL;
+    int          bDisplayProgress = FALSE;
+    GDALProgressFunc pfnProgress = NULL;
+    void        *pProgressArg = NULL;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -284,6 +291,10 @@ int main( int nArgc, char ** papszArgv )
                 iter ++;
             }
         }
+        else if( EQUAL(papszArgv[iArg],"-progress") )
+        {
+            bDisplayProgress = TRUE;
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -443,10 +454,26 @@ int main( int nArgc, char ** papszArgv )
 
         if( poResultSet != NULL )
         {
+            long nCountLayerFeatures = 0;
+            if (bDisplayProgress)
+            {
+                if (!poResultSet->TestCapability(OLCFastFeatureCount))
+                {
+                    fprintf( stderr, "Progress turned off as fast feature count is not available.\n");
+                    bDisplayProgress = FALSE;
+                }
+                else
+                {
+                    nCountLayerFeatures = poResultSet->GetFeatureCount();
+                    pfnProgress = GDALTermProgress;
+                }
+            }
+
             if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
-                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString ))
+                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
+                                 nCountLayerFeatures, pfnProgress, pProgressArg))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -458,63 +485,70 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
+    else
+    {
+        int nLayerCount = 0;
+        OGRLayer** papoLayers = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-    else if ( CSLCount(papszLayers) == 0)
-    {
-        for( int iLayer = 0; 
-            iLayer < poDS->GetLayerCount(); 
-            iLayer++ )
+        if ( CSLCount(papszLayers) == 0)
         {
-            OGRLayer        *poLayer = poDS->GetLayer(iLayer);
+            nLayerCount = poDS->GetLayerCount();
+            papoLayers = (OGRLayer**)CPLMalloc(sizeof(OGRLayer*) * nLayerCount);
 
-            if( poLayer == NULL )
+            for( int iLayer = 0; 
+                 iLayer < nLayerCount; 
+                 iLayer++ )
             {
-                fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %d!\n",
-                        iLayer );
-                exit( 1 );
-            }
+                OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
-            if( pszWHERE != NULL )
-                poLayer->SetAttributeFilter( pszWHERE );
+                if( poLayer == NULL )
+                {
+                    fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %d!\n",
+                            iLayer );
+                    exit( 1 );
+                }
 
-            if( poSpatialFilter != NULL )
-                poLayer->SetSpatialFilter( poSpatialFilter );
-
-            if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
-                                pszNewLayerName, bTransform, poOutputSRS,
-                                poSourceSRS, papszSelFields, bAppend, eGType,
-                                bOverwrite, dfMaxSegmentLength, papszFieldTypesToString ) 
-                && !bSkipFailures )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                        "Terminating translation prematurely after failed\n"
-                        "translation of layer %s (use -skipfailures to skip errors)\n", 
-                        poLayer->GetLayerDefn()->GetName() );
-
-                exit( 1 );
+                papoLayers[iLayer] = poLayer;
             }
         }
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Process specified data source layers.                           */
 /* -------------------------------------------------------------------- */
-    else
-    {
+        else
+        {
+            nLayerCount = CSLCount(papszLayers);
+            papoLayers = (OGRLayer**)CPLMalloc(sizeof(OGRLayer*) * nLayerCount);
+
+            for( int iLayer = 0; 
+                papszLayers[iLayer] != NULL; 
+                iLayer++ )
+            {
+                OGRLayer        *poLayer = poDS->GetLayerByName(papszLayers[iLayer]);
+
+                if( poLayer == NULL )
+                {
+                    fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %s!\n",
+                             papszLayers[iLayer] );
+                    exit( 1 );
+                }
+
+                papoLayers[iLayer] = poLayer;
+            }
+        }
+
+        long* panLayerCountFeatures = (long*) CPLMalloc(sizeof(long) * nLayerCount);
+        long nCountLayersFeatures = 0;
+        long nAccCountFeatures = 0;
+
+        /* First pass to apply filters and count all features if necessary */
         for( int iLayer = 0; 
-            papszLayers[iLayer] != NULL; 
+            iLayer < nLayerCount; 
             iLayer++ )
         {
-            OGRLayer        *poLayer = poDS->GetLayerByName(papszLayers[iLayer]);
-
-            if( poLayer == NULL )
-            {
-                fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %d!\n",
-                        iLayer );
-                exit( 1 );
-            }
+            OGRLayer        *poLayer = papoLayers[iLayer];
 
             if( pszWHERE != NULL )
                 poLayer->SetAttributeFilter( pszWHERE );
@@ -522,10 +556,45 @@ int main( int nArgc, char ** papszArgv )
             if( poSpatialFilter != NULL )
                 poLayer->SetSpatialFilter( poSpatialFilter );
 
+            if (bDisplayProgress)
+            {
+                if (!poLayer->TestCapability(OLCFastFeatureCount))
+                {
+                    fprintf( stderr, "Progress turned off as fast feature count is not available.\n");
+                    bDisplayProgress = FALSE;
+                }
+                else
+                {
+                    panLayerCountFeatures[iLayer] = poLayer->GetFeatureCount();
+                    nCountLayersFeatures += panLayerCountFeatures[iLayer];
+                }
+            }
+        }
+
+        /* Second pass to do the real job */
+        for( int iLayer = 0; 
+            iLayer < nLayerCount; 
+            iLayer++ )
+        {
+            OGRLayer        *poLayer = papoLayers[iLayer];
+
+            if (bDisplayProgress)
+            {
+                pfnProgress = GDALScaledProgress;
+                pProgressArg = 
+                    GDALCreateScaledProgress(nAccCountFeatures * 1.0 / nCountLayersFeatures,
+                                            (nAccCountFeatures + panLayerCountFeatures[iLayer]) * 1.0 / nCountLayersFeatures,
+                                            GDALTermProgress,
+                                            NULL);
+            }
+
+            nAccCountFeatures += panLayerCountFeatures[iLayer];
+
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                 pszNewLayerName, bTransform, poOutputSRS,
                                 poSourceSRS, papszSelFields, bAppend, eGType,
-                                bOverwrite, dfMaxSegmentLength, papszFieldTypesToString ) 
+                                bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
+                                panLayerCountFeatures[iLayer], pfnProgress, pProgressArg) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -535,8 +604,15 @@ int main( int nArgc, char ** papszArgv )
 
                 exit( 1 );
             }
+
+            if (bDisplayProgress)
+                GDALDestroyScaledProgress(pProgressArg);
         }
+
+        CPLFree(panLayerCountFeatures);
+        CPLFree(papoLayers);
     }
+
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
@@ -572,7 +648,7 @@ static void Usage()
 
     printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]\n"
             "               [-select field_list] [-where restricted_where] \n"
-            "               [-sql <sql statement>] \n" 
+            "               [-progress] [-sql <sql statement>] \n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
@@ -593,6 +669,7 @@ static void Usage()
     printf( " -append: Append to existing layer instead of creating new if it exists\n"
             " -overwrite: delete the output layer and recreate it empty\n"
             " -update: Open existing output datasource in update mode\n"
+            " -progress: Display progress on terminal. Only works if input layers have the \"fast feature count\" capability\n"
             " -select field_list: Comma-delimited list of fields from input layer to\n"
             "                     copy to the new layer (defaults to all)\n" 
             " -where restricted_where: Attribute query (like SQL WHERE)\n" 
@@ -640,7 +717,10 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            char **papszSelFields,
                            int bAppend, int eGType, int bOverwrite,
                            double dfMaxSegmentLength,
-                           char** papszFieldTypesToString)
+                           char** papszFieldTypesToString,
+                           long nCountLayerFeatures,
+                           GDALProgressFunc pfnProgress,
+                           void *pProgressArg)
 
 {
     OGRLayer    *poDstLayer;
@@ -844,6 +924,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature;
     int         nFeaturesInTransaction = 0;
+    long        nCount = 0;
     
     poSrcLayer->ResetReading();
 
@@ -945,6 +1026,11 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         }
 
         OGRFeature::DestroyFeature( poDstFeature );
+
+        /* Report progress */
+        nCount ++;
+        if (pfnProgress)
+            pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressArg);
     }
 
     if( nGroupTransactions )
