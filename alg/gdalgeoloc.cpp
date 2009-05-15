@@ -361,7 +361,7 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                     // On each iteration mark newly valid points with a
                     // descending value so that it will not be used on the
                     // current iteration only on subsequent ones.
-                    pabyValidFlag[iBMX+iBMY*nBMXSize] = iMaxIter - iIter;
+                    pabyValidFlag[iBMX+iBMY*nBMXSize] = nMaxIter - iIter;
                 }
             }
         }
