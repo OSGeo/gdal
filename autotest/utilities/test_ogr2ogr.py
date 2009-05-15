@@ -459,6 +459,32 @@ def test_ogr2ogr_16():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
     return 'success'
 
+###############################################################################
+# Test -progress
+
+def test_ogr2ogr_17():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+
+    ret = os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -progress tmp/poly.shp ../ogr/data/poly.shp').read()
+    if ret.find('0...10...20...30...40...50...60...70...80...90...100 - done.') == -1:
+        return 'fail'
+
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        return 'fail'
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -475,7 +501,8 @@ gdaltest_list = [
     test_ogr2ogr_13,
     test_ogr2ogr_14,
     test_ogr2ogr_15,
-    test_ogr2ogr_16
+    test_ogr2ogr_16,
+    test_ogr2ogr_17
     ]
 
 
