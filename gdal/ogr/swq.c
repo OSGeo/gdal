@@ -866,25 +866,30 @@ const char *swq_expr_compile2( const char *where_clause,
                                swq_expr **expr_out )
 
 {
-#define MAX_TOKEN 1024
-    char        *token_list[MAX_TOKEN], *rest_of_expr;
+#define TOKEN_BLOCK_SIZE 1024
+    char        **token_list, *rest_of_expr;
     int         token_count = 0;
-    int         tokens_consumed, i;
+    int         tokens_consumed, i, token_list_size;
     const char *error;
     
     /*
     ** Collect token array.
     */
+    token_list = (char **)SWQ_MALLOC(sizeof(char *) * TOKEN_BLOCK_SIZE);
+    token_list_size = TOKEN_BLOCK_SIZE;
     rest_of_expr = (char *) where_clause;
-    while( token_count < MAX_TOKEN )
+    while( (token_list[token_count] = 
+             swq_token(rest_of_expr,&rest_of_expr,NULL)) != NULL )
     {
-        token_list[token_count] = swq_token(rest_of_expr,&rest_of_expr,NULL);
-        if( token_list[token_count] == NULL )
-            break;
-
         token_count++;
+        if (token_count == token_list_size)
+        {
+            token_list = (char **)swq_realloc(token_list, 
+                sizeof(char *) * token_list_size, 
+                  sizeof(char *) * (token_list_size + TOKEN_BLOCK_SIZE));
+            token_list_size += TOKEN_BLOCK_SIZE;
+        }
     }
-    token_list[token_count] = NULL;
     
     /*
     ** Parse the expression.
@@ -896,6 +901,8 @@ const char *swq_expr_compile2( const char *where_clause,
 
     for( i = 0; i < token_count; i++ )
         SWQ_FREE( token_list[i] );
+
+    SWQ_FREE(token_list);
 
     if( error != NULL )
         return error;
