@@ -1571,8 +1571,9 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 /*      In this case we can presume the error was already issued by     */
 /*      CPLHTTPFetch().                                                 */
 /* -------------------------------------------------------------------- */
-    if( psResult == NULL || psResult->nDataLen == 0 
-        || CPLGetLastErrorNo() != 0 )
+    if( psResult == NULL || psResult->nDataLen == 0 ||
+        (psResult->pszContentType != NULL && strstr(psResult->pszContentType, "html") != NULL) ||
+        CPLGetLastErrorNo() != 0 )
     {
         CPLHTTPDestroyResult( psResult );
         return TRUE;
