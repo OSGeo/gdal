@@ -15,6 +15,10 @@ ifeq ($(OGR_ENABLED),yes)
 CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
 endif
 
+ifeq ($(HAVE_EXPAT),yes)
+CPPFLAGS 	:=	-DHAVE_EXPAT $(EXPAT_INCLUDE) $(CPPFLAGS)
+endif
+
 CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS)
 
 default:	lib
