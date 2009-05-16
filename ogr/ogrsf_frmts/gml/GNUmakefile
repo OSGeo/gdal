@@ -9,14 +9,19 @@ OGR_OBJ =	ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
 
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
-CPPFLAGS :=	-I.. -I../.. $(GDAL_INCLUDE) $(XERCES_INCLUDE) $(CPPFLAGS)
+CPPFLAGS :=	-I.. -I../.. $(GDAL_INCLUDE) $(XERCES_INCLUDE) $(EXPAT_INCLUDE) $(CPPFLAGS)
 #CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
 
 ifeq ($(HAVE_XERCES),yes)
 CORE_OBJ :=	$(CORE_OBJ) gmlreadstate.o gmlhandler.o trstring.o
 CPPFLAGS +=  -DHAVE_XERCES=1
 else
+ifeq ($(HAVE_EXPAT),yes)
+CORE_OBJ :=	$(CORE_OBJ) gmlreadstate.o gmlhandler.o
+CPPFLAGS +=  -DHAVE_XERCES=0 -DHAVE_EXPAT
+else
 CPPFLAGS +=  -DHAVE_XERCES=0
+endif
 endif
 
 # By default, XML validation is disabled.  Uncomment the following line to
