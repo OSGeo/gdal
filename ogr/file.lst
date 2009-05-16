@@ -34,5 +34,6 @@ OBJ =	ogrgeometryfactory.o \
 	ogr_srs_xml.o \
 	ograssemblepolygon.o \
 	ogr2gmlgeometry.o \
-	gml2ogrgeometry.o
+	gml2ogrgeometry.o \
+	ogr_expat.o
 	
