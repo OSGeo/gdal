@@ -9,8 +9,10 @@
 
 OGR has limited support for GML reading and writing. Update of existing
 files is not currently supported. OGR is based on GML 2.0. The reading only
-works if OGR is built with Xerces linked in.  XML validation is disabled by
-default.  GML writing is always supported, even without Xerces.<p>
+works if OGR is built with Xerces linked in. Starting with GDAL 1.7.0, when
+Xerces is unavailable, read support also works if OGR is built with Expat linked in.
+XML validation is disabled by default.
+GML writing is always supported, even without Xerces or Expat.<p>
 
 The GML driver has no coordinate system support at this time.<p>
 
