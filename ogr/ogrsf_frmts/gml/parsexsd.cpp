@@ -30,7 +30,7 @@
 #include "gmlreader.h"
 #include "cpl_error.h"
 
-#if HAVE_XERCES != 0
+#if HAVE_XERCES != 0 || defined(HAVE_EXPAT)
 
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
@@ -242,5 +242,5 @@ int GMLReader::ParseXSD( const char *pszFile )
         return FALSE;
 }
 
-#endif /* HAVE_XERCES == 1 */
+#endif /* HAVE_XERCES == 1  || defined(HAVE_EXPAT) */
 

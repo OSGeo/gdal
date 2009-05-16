@@ -176,7 +176,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "File %s appears to be GML but the GML reader can't\n"
-                  "be instantiated, likely because Xerces support wasn't\n"
+                  "be instantiated, likely because Xerces or Expat support wasn't\n"
                   "configured in.", 
                   pszNewName );
         return FALSE;
