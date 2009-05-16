@@ -4,9 +4,9 @@ The following utilities are distributed as part of the OGR Simple Features
 toolkit:
 
 <ul>
-<li> \ref ogrinfo
-<li> \ref ogr2ogr
-<li> \ref ogrtindex
+<li> \ref ogrinfo - Lists information about an OGR supported data source
+<li> \ref ogr2ogr - Converts simple features data between file formats
+<li> \ref ogrtindex - Creates a tileindex
 </ul>
 
 */
@@ -281,8 +281,8 @@ ogrtindex [-lnum n]... [-lname name]... [-f output_format]
 
 The ogrtindex program can be used to create a tileindex - a file containing
 a list of the identities of a bunch of other files along with there spatial
-extents.  This is primarily intended to be used with the 
-<a href="http://mapserver.gis.umn.edu/">UMN MapServer</a> for tiled access
+extents.  This is primarily intended to be used with  
+<a href="http://mapserver.org/">MapServer</a> for tiled access
 to layers using the OGR connection type. 
 
 <dl>
