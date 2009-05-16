@@ -70,32 +70,6 @@ bool KML::open(const char * pszFilename)
     return TRUE;
 }
 
-#define OGR_EXPAT_MAX_ALLOWED_ALLOC 100000
-static void* OGRKMLExpatMalloc(size_t size)
-{
-    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
-        return malloc(size);
-    else
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Expat tried to malloc %d bytes. File probably corrupted", (int)size);
-        return NULL;
-    }
-}
-
-static void* OGRKMLExpatRealloc(void *ptr, size_t size)
-{
-    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
-        return realloc(ptr, size);
-    else
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Expat tried to realloc %d bytes. File probably corrupted", (int)size);
-        free(ptr);
-        return NULL;
-    }
-}
-
 void KML::parse()
 {
     std::size_t nDone = 0;
@@ -119,12 +93,7 @@ void KML::parse()
         poCurrent_ = NULL;
     }
 
-    XML_Memory_Handling_Suite memsuite;
-    memsuite.malloc_fcn = OGRKMLExpatMalloc;
-    memsuite.realloc_fcn = OGRKMLExpatRealloc;
-    memsuite.free_fcn = free;
-
-    XML_Parser oParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
+    XML_Parser oParser = OGRCreateExpatXMLParser();
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, startElement, endElement);
     XML_SetCharacterDataHandler(oParser, dataHandler);
