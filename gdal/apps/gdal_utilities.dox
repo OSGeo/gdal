@@ -103,9 +103,7 @@ in a similar manner to WKT files, but the filename should be prefixed with
 <b>ESRI::</b>.  For example <b>"ESRI::NAD 1927 StatePlane Wyoming West FIPS 4904.prj"</b>. <p>
 
 <li> <i>Spatial References from URLs</i>: For example
-http://spatialreference.org/ref/user/north-pacific-albers-conic-equal-area/.
-See <a href="http://hobu.biz/2007/12/13/importing-spatial-references-from-urls-in-gdal-15">this blog entry</a>
-for more reference. <p>
+http://spatialreference.org/ref/user/north-pacific-albers-conic-equal-area/.<p>
 
 <li> <i>filename</i>: The name of a file containing WKT, PROJ.4 strings, or 
 XML/GML coordinate system definitions can be provided. <p>
@@ -486,7 +484,7 @@ gdaltindex [-tileindex field_name] [-write_absolute_path] [-skip_different_proje
 
 This program builds a shapefile with a record for each input raster file, 
 an attribute containing the filename, and a polygon geometry outlining the
-raster.  This output is suitable for use with UMN MapServer as a raster 
+raster.  This output is suitable for use with <a href="http://mapserver.org/">MapServer</a> as a raster 
 tileindex. 
 
 <ul>
