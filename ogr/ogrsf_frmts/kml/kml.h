@@ -29,7 +29,7 @@
 #ifndef OGR_KML_KML_H_INCLUDED
 #define OGR_KML_KML_H_INCLUDED
 
-#include <expat.h>
+#include "ogr_expat.h"
 // std
 #include <iostream>
 #include <string>
@@ -37,21 +37,6 @@
 
 #include "cpl_port.h"
 #include "kmlutility.h"
-
-/* Compatibility stuff for expat >=1.95.0 and < 1.95.7 */
-#ifndef XMLCALL
-#define XMLCALL
-#endif
-#ifndef XML_STATUS_OK
-#define XML_STATUS_OK    1
-#define XML_STATUS_ERROR 0
-#endif
-
-/* XML_StopParser only available for expat >= 1.95.8 */
-#if !defined(XML_MAJOR_VERSION) || (XML_MAJOR_VERSION * 10000 + XML_MINOR_VERSION * 100 + XML_MICRO_VERSION) < 19508
-#define XML_StopParser(parser, resumable)
-#warning "Expat version is too old and does not have XML_StopParser. Corrupted files could hang OGR"
-#endif
 
 class KMLNode;
 
