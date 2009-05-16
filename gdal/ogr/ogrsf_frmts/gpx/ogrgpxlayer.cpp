@@ -337,32 +337,6 @@ static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen)
     ((OGRGPXLayer*)pUserData)->dataHandlerCbk(data, nLen);
 }
 
-#define OGR_EXPAT_MAX_ALLOWED_ALLOC 100000
-static void* OGRGPXLayerExpatMalloc(size_t size)
-{
-    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
-        return malloc(size);
-    else
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Expat tried to malloc %d bytes. File probably corrupted", (int)size);
-        return NULL;
-    }
-}
-
-static void* OGRGPXLayerExpatRealloc(void *ptr, size_t size)
-{
-    if (size < OGR_EXPAT_MAX_ALLOWED_ALLOC)
-        return realloc(ptr, size);
-    else
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Expat tried to realloc %d bytes. File probably corrupted", (int)size);
-        free(ptr);
-        return NULL;
-    }
-}
-
 #endif
 
 /************************************************************************/
@@ -381,11 +355,7 @@ void OGRGPXLayer::ResetReading()
         if (oParser)
             XML_ParserFree(oParser);
 
-        XML_Memory_Handling_Suite memsuite;
-        memsuite.malloc_fcn = OGRGPXLayerExpatMalloc;
-        memsuite.realloc_fcn = OGRGPXLayerExpatRealloc;
-        memsuite.free_fcn = free;
-        oParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
+        oParser = OGRCreateExpatXMLParser();
         XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
         XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
         XML_SetUserData(oParser, this);
@@ -1533,12 +1503,7 @@ static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, 
 /** This function parses the whole file to detect the extensions fields */
 void OGRGPXLayer::LoadExtensionsSchema()
 {
-    XML_Memory_Handling_Suite memsuite;
-    memsuite.malloc_fcn = OGRGPXLayerExpatMalloc;
-    memsuite.realloc_fcn = OGRGPXLayerExpatRealloc;
-    memsuite.free_fcn = free;
-
-    oSchemaParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
+    oSchemaParser = OGRCreateExpatXMLParser();
     XML_SetElementHandler(oSchemaParser, ::startElementLoadSchemaCbk, ::endElementLoadSchemaCbk);
     XML_SetCharacterDataHandler(oSchemaParser, ::dataHandlerLoadSchemaCbk);
     XML_SetUserData(oSchemaParser, this);
