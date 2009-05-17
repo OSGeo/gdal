@@ -227,7 +227,7 @@ def ogr_gml_6():
     if not gdaltest.have_gml_reader: 
         return 'skip' 
 
-    files = ['test_point1', 'test_point2', 'test_point3'] 
+    files = ['test_point1', 'test_point2', 'test_point3', 'test_point4'] 
     fids = [] 
 
     for filename in files: 
