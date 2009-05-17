@@ -69,6 +69,8 @@ class OGRCSVLayer : public OGRLayer
     int                 bCreateCSVT;
     char                chDelimiter;
 
+    int                 iWktGeomReadField;
+
   public:
     OGRCSVLayer( const char *pszName, FILE *fp, const char *pszFilename,
                  int bNew, int bInWriteMode, char chDelimiter );
