@@ -629,14 +629,30 @@ def ogr_sqlite_15():
         return 'skip'
 
     ######################################################
-    # Create Layer with WKB geometry
+    # Create Layer with SPATIALITE geometry
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomspatialite', options = [ 'FORMAT=SPATIALITE' ] )
 
-    geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
-    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
-    dst_feat.SetGeometry( geom )
-    gdaltest.sl_lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
+    geoms = [ ogr.CreateGeometryFromWkt( 'POINT(0 1)' ),
+              ogr.CreateGeometryFromWkt( 'MULTIPOINT EMPTY' ),
+              ogr.CreateGeometryFromWkt( 'MULTIPOINT (0 1,2 3)' ),
+              ogr.CreateGeometryFromWkt( 'LINESTRING EMPTY' ),
+              ogr.CreateGeometryFromWkt( 'LINESTRING (1 2,3 4)' ),
+              ogr.CreateGeometryFromWkt( 'MULTILINESTRING EMPTY' ),
+              ogr.CreateGeometryFromWkt( 'MULTILINESTRING ((1 2,3 4),(5 6,7 8))' ),
+              ogr.CreateGeometryFromWkt( 'POLYGON EMPTY' ),
+              ogr.CreateGeometryFromWkt( 'POLYGON ((1 2,3 4))' ),
+              ogr.CreateGeometryFromWkt( 'POLYGON ((1 2,3 4),(5 6,7 8))' ),
+              ogr.CreateGeometryFromWkt( 'MULTIPOLYGON EMPTY' ),
+              ogr.CreateGeometryFromWkt( 'MULTIPOLYGON (((1 2,3 4)),((5 6,7 8)))' ),
+              ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION EMPTY' ),
+              ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POLYGON ((5 6,7 8)))' ),
+              ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POINT(0 1))' ) ]
+
+    for geom in geoms:
+        dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+        dst_feat.SetGeometry( geom )
+        gdaltest.sl_lyr.CreateFeature( dst_feat )
+        dst_feat.Destroy()
 
     ######################################################
     # Reopen DB
@@ -644,22 +660,23 @@ def ogr_sqlite_15():
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomspatialite')
 
-    feat_read = gdaltest.sl_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
-        return 'fail'
-    feat_read.Destroy()
+    for geom in geoms:
+        feat_read = gdaltest.sl_lyr.GetNextFeature()
+        if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+            return 'fail'
+        feat_read.Destroy()
 
     gdaltest.sl_lyr.ResetReading()
 
     sql_lyr = gdaltest.sl_ds.ExecuteSQL( "select * from geomspatialite" )
 
-    feat_read = sql_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+    feat_read = gdaltest.sl_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001 ) != 0:
         return 'fail'
     feat_read.Destroy()
 
     feat_read = sql_lyr.GetFeature(0)
-    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+    if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001 ) != 0:
         return 'fail'
     feat_read.Destroy()
 
