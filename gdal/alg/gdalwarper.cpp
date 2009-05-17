@@ -677,6 +677,19 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
  * window for a given request, and by default it is 1 to take care of rounding
  * error.  Setting this larger will incease the amount of data that needs to
  * be read, but can avoid missing source data.  
+ *
+ * - CUTLINE: This may contain the WKT geometry for a cutline.  It will
+ * be converted into a geometry by GDALWarpOperation::Initialize() and assigned
+ * to the GDALWarpOptions hCutline field.
+ *
+ * - CUTLINE_BLEND_DIST: This may be set with a distance in pixels which
+ * will be assigned to the dfCutlineBlendDist field in the GDALWarpOptions.
+ *
+ * - CUTLINE_ALL_TOUCHED: This defaults to FALSE, but may be set to TRUE
+ * to enable ALL_TOUCHEd mode when rasterizing cutline polygons.  This is
+ * useful to ensure that that all pixels overlapping the cutline polygon
+ * will be selected, not just those whose center point falls within the 
+ * polygon.
  */
 
 /************************************************************************/
