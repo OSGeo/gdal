@@ -621,7 +621,7 @@ def ogr_sqlite_14():
     return 'success'
 
 ###############################################################################
-# Test FORMAT=SPATIALITE creation option
+# Test FORMAT=SPATIALITE layer creation option
 
 def ogr_sqlite_15():
 
@@ -762,6 +762,50 @@ def ogr_sqlite_16():
     return 'success'
 
 ###############################################################################
+# Test SPATIALITE dataset creation option
+
+def ogr_sqlite_17():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ######################################################
+    # Create dataset with SPATIALITE geometry
+
+    ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:4326')
+    lyr = ds.CreateLayer( 'geomspatialite', srs = srs )
+
+    geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
+
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometry( geom )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    ######################################################
+    # Reopen DB
+    ds.Destroy()
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    lyr =ds.GetLayerByName('geomspatialite')
+
+    feat_read = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        return 'fail'
+    feat_read.Destroy()
+
+    sql_lyr = ds.ExecuteSQL( "select proj4text from spatial_ref_sys" )
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetFieldAsString('proj4text').find('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs') == -1:
+        return 'fail'
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds.Destroy()
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -786,6 +830,11 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/spatialite_test.db' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -805,6 +854,7 @@ gdaltest_list = [
     ogr_sqlite_14,
     ogr_sqlite_15,
     ogr_sqlite_16,
+    ogr_sqlite_17,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
