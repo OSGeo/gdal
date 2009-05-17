@@ -670,7 +670,7 @@ def ogr_sqlite_15():
 
     sql_lyr = gdaltest.sl_ds.ExecuteSQL( "select * from geomspatialite" )
 
-    feat_read = gdaltest.sl_lyr.GetNextFeature()
+    feat_read = sql_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001 ) != 0:
         return 'fail'
     feat_read.Destroy()
