@@ -45,7 +45,7 @@ static void Usage()
 
 {
     printf( 
-        "Usage: gdal_rasterize [-b band] [-i]\n"
+        "Usage: gdal_rasterize [-b band] [-i] [-at]\n"
         "       [-burn value] | [-a attribute_name] | [-3d]\n"
 //      "       [-of format_driver] [-co key=value]\n"       
 //      "       [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
@@ -130,7 +130,7 @@ static void ProcessLayer(
     OGRLayerH hSrcLayer, 
     GDALDatasetH hDstDS, std::vector<int> anBandList,
     std::vector<double> &adfBurnValues, int b3D, int bInverse,
-    const char *pszBurnAttribute )
+    const char *pszBurnAttribute, char **papszRasterizeOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -254,7 +254,8 @@ static void ProcessLayer(
 /* -------------------------------------------------------------------- */
     GDALRasterizeGeometries( hDstDS, anBandList.size(), &(anBandList[0]), 
                              ahGeometries.size(), &(ahGeometries[0]), 
-                             NULL, NULL, &(adfFullBurnValues[0]), NULL,
+                             NULL, NULL, &(adfFullBurnValues[0]), 
+                             papszRasterizeOptions,
                              GDALTermProgress, NULL );
 
 /* -------------------------------------------------------------------- */
@@ -283,6 +284,7 @@ int main( int argc, char ** argv )
     const char *pszWHERE = NULL;
     std::vector<int> anBandList;
     std::vector<double> adfBurnValues;
+    char **papszRasterizeOptions = NULL;
 
     /* Check that we are running against at least GDAL 1.4 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -326,6 +328,11 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-i")  )
         {
             bInverse = TRUE;
+        }
+        else if( EQUAL(argv[i],"-at")  )
+        {
+            papszRasterizeOptions = 
+                CSLSetNameValue( papszRasterizeOptions, "ALL_TOUCHED", "TRUE" );
         }
         else if( EQUAL(argv[i],"-burn") && i < argc-1 )
         {
@@ -410,7 +417,8 @@ int main( int argc, char ** argv )
         if( hLayer != NULL )
         {
             ProcessLayer( hLayer, hDstDS, anBandList, 
-                          adfBurnValues, b3D, bInverse, pszBurnAttribute );
+                          adfBurnValues, b3D, bInverse, pszBurnAttribute,
+                          papszRasterizeOptions );
         }
     }
 
@@ -435,16 +443,19 @@ int main( int argc, char ** argv )
         }
 
         ProcessLayer( hLayer, hDstDS, anBandList, 
-                      adfBurnValues, b3D, bInverse, pszBurnAttribute );
+                      adfBurnValues, b3D, bInverse, pszBurnAttribute,
+                      papszRasterizeOptions );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
+
     OGR_DS_Destroy( hSrcDS );
     GDALClose( hDstDS );
 
     CSLDestroy( argv );
+    CSLDestroy( papszRasterizeOptions );
     CSLDestroy( papszLayers );
     
     GDALDestroyDriverManager();

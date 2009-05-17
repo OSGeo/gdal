@@ -282,13 +282,6 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
 
         for ( j = 1; j < panPartSize[i]; j++ )
         {
-/* -------------------------------------------------------------------- */
-/*      Draw the line segment.                                          */
-/*      This is a straightforward Bresenham's algorithm handling        */
-/*      all slopes and directions.                                      */
-/*      TODO: line clipping prior to drawing; some optimisations are    */
-/*      certainly possible here.                                        */
-/* -------------------------------------------------------------------- */
             int iX = (int)floor( padfX[n + j - 1] + 0.5 );
             int iY = (int)floor( padfY[n + j - 1] + 0.5 );
 
@@ -349,5 +342,174 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
             }
         }
     }
+}
+
+/************************************************************************/
+/*                     GDALdllImageLineAllTouched()                     */
+/*                                                                      */
+/*      This alternate line drawing algorithm attempts to ensure        */
+/*      that every pixel touched at all by the line will get set.       */
+/************************************************************************/
+
+void 
+GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize, 
+                           int nPartCount, int *panPartSize,
+                           double *padfX, double *padfY,
+                           llPointFunc pfnPointFunc, void *pCBData )
+
+{
+    int     i, n;
+
+    if ( !nPartCount )
+        return;
+
+    for ( i = 0, n = 0; i < nPartCount; n += panPartSize[i++] )
+    {
+        int j;
+
+        for ( j = 1; j < panPartSize[i]; j++ )
+        {
+            double dfX = padfX[n + j - 1];
+            double dfY = padfY[n + j - 1];
+
+            double dfXEnd = padfX[n + j];
+            double dfYEnd = padfY[n + j];
+
+            // Skip segments that are off the target region.
+            if( (dfY < 0 && dfYEnd < 0)
+                || (dfY > nRasterYSize && dfYEnd > nRasterYSize)
+                || (dfX < 0 && dfXEnd < 0)
+                || (dfX > nRasterXSize && dfXEnd > nRasterXSize) )
+                continue;
+
+            // Swap if needed so we can proceed from left2right (X increasing)
+            if( dfX > dfXEnd )
+            {
+                double dfTemp = dfX;
+                dfX = dfXEnd;
+                dfXEnd = dfTemp;
+
+                dfTemp = dfY;
+                dfY = dfYEnd;
+                dfYEnd = dfTemp;
+            }
+            
+            // Special case for vertical lines.
+            if( dfX == dfXEnd )
+            {
+
+                if( dfYEnd < dfY )
+                {
+                    double dfTemp = dfYEnd;
+                    dfYEnd = dfY;
+                    dfY = dfTemp;
+                }
+
+                int iX = (int) floor(dfX);
+                int iY = (int) floor(dfY);
+
+                if( iY < 0 )
+                    iY = 0;
+
+                int iYEnd = (int) floor(dfYEnd);
+                
+                if( iYEnd >= nRasterYSize )
+                    iYEnd = nRasterYSize - 1;
+
+                for( ; iY <= iYEnd; iY++ )
+                    pfnPointFunc( pCBData, iY, iX );
+
+                continue; // next segment
+            }
+
+            // special case for horizontal lines
+            if( dfY == dfYEnd )
+            {
+
+                if( dfXEnd < dfX )
+                {
+                    double dfTemp = dfXEnd;
+                    dfXEnd = dfX;
+                    dfX = dfTemp;
+                }
+
+                int iX = (int) floor(dfX);
+                int iY = (int) floor(dfY);
+
+                if( iX < 0 )
+                    iX = 0;
+
+                int iXEnd = (int) floor(dfXEnd);
+                
+                if( iXEnd >= nRasterXSize )
+                    iXEnd = nRasterXSize - 1;
+
+                for( ; iX <= iXEnd; iX++ )
+                    pfnPointFunc( pCBData, iY, iX );
+
+                continue; // next segment
+            }
+
+/* -------------------------------------------------------------------- */
+/*      General case - left to right sloped.                            */
+/* -------------------------------------------------------------------- */
+            double dfSlope = (dfYEnd - dfY) / (dfXEnd - dfX);
+
+            // clip segment in X
+            if( dfXEnd > nRasterXSize )
+                dfXEnd = nRasterXSize;
+
+            if( dfX < 0 )
+            {
+                dfY += (0 - dfX) * dfSlope;
+                dfX = 0.0;
+            }
+
+            // we need to add clipping the segment in Y.
+
+            // step from pixel to pixel.
+            while( dfX < dfXEnd )
+            {
+                int iX = (int) dfX;
+                int iY = (int) dfY;
+
+                // burn in the current point.  We should be able to 
+                // drop the Y check if we clip in Y properly.
+                if( iY >= 0 && iY < nRasterYSize )
+                    pfnPointFunc( pCBData, iY, iX );
+
+                double dfStepX = floor(dfX+1.0) - dfX;
+                double dfStepY = dfStepX * dfSlope;
+
+                // step to right pixel without changing scanline?
+                if( (int) floor(dfY + dfStepY) == iY )
+                {
+                    dfX += dfStepX;
+                    dfY += dfStepY;
+                }
+                else if( dfSlope < 0 )
+                {
+                    dfStepY = iY - dfY;
+                    if( dfStepY > -0.000000001 )
+                        dfStepY = -0.000000001;
+
+                    dfStepX = dfStepY / dfSlope;
+                    dfX += dfStepX;
+                    dfY += dfStepY;
+                }
+                else
+                {
+                    dfStepY = (iY + 1) - dfY;
+                    if( dfStepY < 0.000000001 )
+                        dfStepY = 0.000000001;
+
+                    dfStepX = dfStepY / dfSlope;
+                    dfX += dfStepX;
+                    dfY += dfStepY;
+                }
+            } // next step along sement.
+
+        } // next segment
+    } // next part
 }
 
