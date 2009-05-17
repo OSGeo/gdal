@@ -675,7 +675,7 @@ burns vector polygons into a raster
 \section zsynopsis SYNOPSIS
 
 \verbatim
-Usage: gdal_rasterize [-b band] [-i]
+Usage: gdal_rasterize [-b band] [-i] [-at]
        [-burn value] | [-a attribute_name] | [-3d]
        [-l layername]* [-where expression] [-sql select_statement]
        <src_datasource> <dst_filename>
@@ -695,6 +695,12 @@ into a list of bands.  The default is to burn into band 1.</dd>
 Invert rasterization.  Burn the fixed burn value, or the burn value associated 
 with the first feature into all parts of the image <em>not</em> inside a 
 polygon.</dd>
+
+<dt> <b>-at</b>: </dt><dd>
+Enables the ALL_TOUCHED rasterization option so that all pixels touched
+by lines or polygons will be updated not just those one the line render path,
+or whose center point is within the polygon.  Defaults to disabled for normal
+rendering rules.</dd>
 
 <dt> <b>-burn</b> <em>value</em>: </dt><dd> 
 A fixed value to burn into a band for all objects.  A list of -burn options 

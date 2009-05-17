@@ -319,7 +319,13 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     int nTargetBand = 1;
     double dfBurnValue = 255.0;
     int    anXYOff[2];
+    char   **papszRasterizeOptions = NULL;
     
+
+    if( CSLFetchBoolean( psWO->papszWarpOptions, "CUTLINE_ALL_TOUCHED", FALSE ))
+        papszRasterizeOptions = 
+            CSLSetNameValue( papszRasterizeOptions, "ALL_TOUCHED", "TRUE" );
+
     anXYOff[0] = nXOff;
     anXYOff[1] = nYOff;
 
@@ -327,7 +333,10 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
         GDALRasterizeGeometries( hMemDS, 1, &nTargetBand, 
                                  1, &hPolygon, 
                                  CutlineTransformer, anXYOff, 
-                                 &dfBurnValue, NULL, NULL, NULL );
+                                 &dfBurnValue, papszRasterizeOptions, 
+                                 NULL, NULL );
+
+    CSLDestroy( papszRasterizeOptions );
 
     // Close and ensure data flushed to underlying array.
     GDALClose( hMemDS );
