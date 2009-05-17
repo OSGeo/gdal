@@ -169,8 +169,11 @@ typedef struct {
     CPLErr              (*pfnPostWarpChunkProcessor)( void *pKern, void *pArg);
     void               *pPostWarpProcessorArg;
 
-    void               *hCutline;           /* OGRPolygonH in src pixels */
-    double              dfCutlineBlendDist; /* distance in src pixels */
+    /*! Optional OGRPolygonH for a masking cutline. */
+    void               *hCutline;
+
+    /*! Optional blending distance to apply across cutline in pixels, default is zero. */
+    double              dfCutlineBlendDist;
 
 } GDALWarpOptions;
 
