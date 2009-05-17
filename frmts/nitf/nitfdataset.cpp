@@ -3695,7 +3695,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #ifdef JPEG_LIB_MK1
-    if( eDT != GDT_Byte && eDT != GDT_UInt16 && bStrict )
+    if( eDT != GDT_Byte && eDT != GDT_UInt16 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "JPEG driver doesn't support data type %s. "
@@ -3897,6 +3897,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
     jpeg_set_defaults( &sCInfo );
     
 #ifdef JPEG_LIB_MK1
+    GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     if( eDT == GDT_UInt16 )
     {
         sCInfo.data_precision = 12;
