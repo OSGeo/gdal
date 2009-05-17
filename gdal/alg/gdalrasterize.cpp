@@ -232,12 +232,12 @@ static void GDALCollectRingsFromGeometry(
 /*                       gv_rasterize_one_shape()                       */
 /************************************************************************/
 static void 
-gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff,
-                            int nXSize, int nYSize,
-                            int nBands, GDALDataType eType,
-                            OGRGeometry *poShape, double *padfBurnValue, 
-                            GDALTransformerFunc pfnTransformer, 
-                            void *pTransformArg )
+gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
+                        int nXSize, int nYSize,
+                        int nBands, GDALDataType eType, int bAllTouched,
+                        OGRGeometry *poShape, double *padfBurnValue, 
+                        GDALTransformerFunc pfnTransformer, 
+                        void *pTransformArg )
 
 {
     GDALRasterizeInfo sInfo;
@@ -303,17 +303,33 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff,
             break;
         case wkbLineString:
         case wkbMultiLineString:
-            GDALdllImageLine( sInfo.nXSize, nYSize, 
-                              aPartSize.size(), &(aPartSize[0]), 
-                              &(aPointX[0]), &(aPointY[0]),
-                              gvBurnPoint, &sInfo );
-            break;
+        {
+            if( bAllTouched )
+                GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
+                                            aPartSize.size(), &(aPartSize[0]), 
+                                            &(aPointX[0]), &(aPointY[0]),
+                                            gvBurnPoint, &sInfo );
+            else
+                GDALdllImageLine( sInfo.nXSize, nYSize, 
+                                  aPartSize.size(), &(aPartSize[0]), 
+                                  &(aPointX[0]), &(aPointY[0]),
+                                  gvBurnPoint, &sInfo );
+        }
+        break;
+
         default:
+        {
             GDALdllImageFilledPolygon( sInfo.nXSize, nYSize, 
                                        aPartSize.size(), &(aPartSize[0]), 
                                        &(aPointX[0]), &(aPointY[0]),
                                        gvBurnScanline, &sInfo );
-            break;
+            if( bAllTouched )
+                GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
+                                            aPartSize.size(), &(aPartSize[0]), 
+                                            &(aPointX[0]), &(aPointY[0]),
+                                            gvBurnPoint, &sInfo );
+        }
+        break;
     }
 }
 
@@ -338,6 +354,9 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff,
  * may be improved in the future.  An explicit list of burn values for
  * each geometry for each band must be passed in. 
  *
+ * The papszOption list of options currently only supports one option. The
+ * "ALL_TOUCHED" option may be enabled by setting it to "TRUE".
+ *
  * @param hDS output data, must be opened in update mode.
  * @param nBandCount the number of bands to be updated.
  * @param panBandList the list of bands to be updated. 
@@ -349,8 +368,12 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff,
  * @param pTransformerArg callback data for transformer.
  * @param padfGeomBurnValue the array of values to burn into the raster.  
  * There should be nBandCount values for each geometry. 
- * @param papszOption special options controlling rasterization, currently
- * none are defined.
+ * @param papszOptions special options controlling rasterization
+ * <dl>
+ * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched 
+ * by the line or polygons, not just those whose center is within the polygon
+ * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
+ * </dl>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
  *
@@ -385,6 +408,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
     // prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
+
+    int bAllTouched = CSLFetchBoolean( papszOptions, "ALL_TOUCHED", FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      If we have no transformer, assume the geometries are in file    */
@@ -459,12 +484,12 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
         for( iShape = 0; iShape < nGeomCount; iShape++ )
         {
-            gv_rasterize_new_one_shape( pabyChunkBuf, iY,
-                                        poDS->GetRasterXSize(), nThisYChunkSize,
-                                        nBandCount, eType,
-                                        (OGRGeometry *) pahGeometries[iShape],
-                                        padfGeomBurnValue + iShape*nBandCount, 
-                                        pfnTransformer, pTransformArg );
+            gv_rasterize_one_shape( pabyChunkBuf, iY,
+                                    poDS->GetRasterXSize(), nThisYChunkSize,
+                                    nBandCount, eType, bAllTouched,
+                                    (OGRGeometry *) pahGeometries[iShape],
+                                    padfGeomBurnValue + iShape*nBandCount, 
+                                    pfnTransformer, pTransformArg );
         }
 
         eErr = 
@@ -527,16 +552,19 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * There should be nBandCount values for each layer. 
  * @param papszOption special options controlling rasterization:
  * <dl>
- * <dt>"ATTRIBUTE":<dt> <dd>Identifies an attribute field on the features to be
+ * <dt>"ATTRIBUTE":</dt> <dd>Identifies an attribute field on the features to be
  * used for a burn in value. The value will be burned into all output
  * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
  * pointer.</dd>
- * <dt>"CHUNKYSIZE":<dt> <dd>The height in lines of the chunk to operate on.
+ * <dt>"CHUNKYSIZE":</dt> <dd>The height in lines of the chunk to operate on.
  * The larger the chunk size the less times we need to make a pass through all
  * the shapes. If it is not set or set to zero the default chunk size will be
  * used. Default size will be estimated based on the GDAL cache buffer size
  * using formula: cache_size_bytes/scanline_size_bytes, so the chunk will
  * not exceed the cache.</dd>
+ * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched 
+ * by the line or polygons, not just those whose center is within the polygon
+ * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
  * </dl>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
@@ -572,6 +600,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
     // prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
+
+    int bAllTouched = CSLFetchBoolean( papszOptions, "ALL_TOUCHED", FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      Establish a chunksize to operate on.  The larger the chunk      */
@@ -747,12 +777,12 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                     padfBurnValues = &dfBurnValue;
                 }
                 
-                gv_rasterize_new_one_shape( pabyChunkBuf, iY,
-                                            poDS->GetRasterXSize(),
-                                            nThisYChunkSize,
-                                            nBandCount, eType, poGeom,
-                                            padfBurnValues,
-                                            pfnTransformer, pTransformArg );
+                gv_rasterize_one_shape( pabyChunkBuf, iY,
+                                        poDS->GetRasterXSize(),
+                                        nThisYChunkSize,
+                                        nBandCount, eType, bAllTouched, poGeom,
+                                        padfBurnValues,
+                                        pfnTransformer, pTransformArg );
 
                 delete poFeat;
             }
@@ -864,10 +894,13 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  *
  * @param papszOption special options controlling rasterization:
  * <dl>
- * <dt>"ATTRIBUTE":<dt> <dd>Identifies an attribute field on the features to be
+ * <dt>"ATTRIBUTE":</dt> <dd>Identifies an attribute field on the features to be
  * used for a burn in value. The value will be burned into all output
  * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
  * pointer.</dd>
+ * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched 
+ * by the line or polygons, not just those whose center is within the polygon
+ * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
  * </dl>
  *
  * @param pfnProgress the progress function to report completion.
@@ -911,6 +944,8 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 /* -------------------------------------------------------------------- */
     if( nLayerCount == 0 )
         return CE_None;
+
+    int bAllTouched = CSLFetchBoolean( papszOptions, "ALL_TOUCHED", FALSE );
 
 /* ==================================================================== */
 /*      Read thes pecified layers transfoming and rasterizing           */
@@ -1001,11 +1036,11 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
             if ( pszBurnAttribute )
                 dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
             
-            gv_rasterize_new_one_shape( (unsigned char *) pData, 0,
-                                        nBufXSize, nBufYSize,
-                                        1, eBufType, poGeom,
-                                        &dfBurnValue,
-                                        pfnTransformer, pTransformArg );
+            gv_rasterize_one_shape( (unsigned char *) pData, 0,
+                                    nBufXSize, nBufYSize,
+                                    1, eBufType, bAllTouched, poGeom,
+                                    &dfBurnValue,
+                                    pfnTransformer, pTransformArg );
 
             delete poFeat;
         }
