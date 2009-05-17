@@ -690,6 +690,9 @@ def ogr_sqlite_15():
 
 def ogr_sqlite_16():
 
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
     # Hand create a table with FGF geometry
     gdaltest.sl_ds.ExecuteSQL( "INSERT INTO geometry_columns (f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format) VALUES ('fgf_table', 'GEOMETRY', 0, 2, 'FGF')" )
     gdaltest.sl_ds.ExecuteSQL( "CREATE TABLE fgf_table (OGC_FID INTEGER PRIMARY KEY, GEOMETRY BLOB)")
