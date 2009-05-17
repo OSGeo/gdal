@@ -50,6 +50,11 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                        double *padfX, double *padfY,
                        llPointFunc pfnPointFunc, void *pCBData );
 
+void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize, 
+                                int nPartCount, int *panPartSize,
+                                double *padfX, double *padfY,
+                                llPointFunc pfnPointFunc, void *pCBData );
+
 void GDALdllImageFilledPolygon( int, int, int, int *, double *, double *,
                                llScanlineFunc, void * );
 
