@@ -716,6 +716,42 @@ def ogr_csv_16():
     return ogr_csv_check_layer(gdaltest.csv_lyr1, False)
 
 ###############################################################################
+# Verify that WKT field treated as geometry.
+#
+
+def ogr_csv_17():
+    if gdaltest.csv_ds is None:
+        return 'skip'
+
+    csv_ds = ogr.Open( 'data/wkt.csv' )
+    csv_lyr = csv_ds.GetLayer(0)
+
+    if csv_lyr.GetLayerDefn().GetGeomType() != ogr.wkbUnknown:
+        gdaltest.post_reason( 'did not get wktUnknown for geometry type.' )
+        return 'fail'
+    
+    feat = csv_lyr.GetNextFeature()
+    if feat.GetField( 'WKT' ) != 'POLYGON((6.25 1.25,7.25 1.25,7.25 2.25,6.25 2.25,6.25 1.25))':
+        gdaltest.post_reason( 'feature 1: expected wkt value' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'POLYGON((6.25 1.25,7.25 1.25,7.25 2.25,6.25 2.25,6.25 1.25))'):
+        return 'fail'
+
+    feat.Destroy()
+
+    feat = csv_lyr.GetNextFeature()
+    feat.Destroy()
+    
+    feat = csv_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'POLYGON((1.001 1.001,3.999 3.999,3.2 1.6,1.001 1.001))'):
+        return 'fail'
+
+    feat.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_csv_cleanup():
@@ -761,6 +797,7 @@ gdaltest_list = [
     ogr_csv_14,
     ogr_csv_15,
     ogr_csv_16,
+    ogr_csv_17,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
