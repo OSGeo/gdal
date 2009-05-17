@@ -7,7 +7,7 @@
 
 <h1>Comma Separated Value (.csv)</h1>
 
-<p>OGR supports reading and writing non-spatial tabular data stored in
+<p>OGR supports reading and writing primarily non-spatial tabular data stored in
 text CSV files.  CSV files are a common interchange format between 
 software packages supporting tabular data and are also easily produced
 manually with a text editor or with end-user written scripts or programs.</p>
@@ -22,8 +22,9 @@ One layer (table) is produced from each .csv file accessed.</p>
 <p>The OGR CSV driver supports reading and writing. Because the CSV format 
 has variable length text lines, reading is done sequentially. Reading 
 features in random order will generally be very slow. OGR CSV layer never
-have any geometry on features, nor do they have an associated coordinate
-system. The OGR CSV driver returns all attribute columns with a type of
+have any coordinate system.  When reading a field named "WKT" is assumed
+to contain WKT geometry, but also is treated as a regular field.
+The OGR CSV driver returns all attribute columns with a type of
 string if no field type information file (with .csvt extension) is
 available.</p>
 
