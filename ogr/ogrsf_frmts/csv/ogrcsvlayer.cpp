@@ -49,6 +49,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 {
     fpCSV = fp;
 
+    iWktGeomReadField = -1;
     this->bInWriteMode = bInWriteMode;
     this->bNew = bNew;
     this->pszFilename = CPLStrdup(pszFilename);
@@ -217,6 +218,14 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
         }
 
         poFeatureDefn->AddFieldDefn( &oField );
+
+        if( EQUAL(oField.GetNameRef(),"WKT")
+            && oField.GetType() == OFTString 
+            && iWktGeomReadField == -1 )
+        {
+            iWktGeomReadField = iField;
+            poFeatureDefn->SetGeomType( wkbUnknown );
+        }
     }
 
     CSLDestroy( papszTokens );
@@ -291,6 +300,16 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
     
     for( iAttr = 0; iAttr < nAttrCount; iAttr++)
     {
+        if( iAttr == iWktGeomReadField && papszTokens[iAttr][0] != '\0' )
+        {
+            char *pszWKT = papszTokens[iAttr];
+            OGRGeometry *poGeom = NULL;
+
+            if( OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeom )
+                == OGRERR_NONE )
+                poFeature->SetGeometryDirectly( poGeom );
+        }
+
         if (poFeatureDefn->GetFieldDefn(iAttr)->GetType() != OFTString)
         {
             if (papszTokens[iAttr][0] != '\0')
@@ -298,6 +317,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
         }
         else
             poFeature->SetField( iAttr, papszTokens[iAttr] );
+
     }
 
     CSLDestroy( papszTokens );
