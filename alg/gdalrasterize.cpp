@@ -712,7 +712,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
         if( pfnTransformer == NULL )
         {
-            char    *pszProjection;
+            char    *pszProjection = NULL;
             bNeedToFreeTransformer = TRUE;
 
             OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
@@ -720,12 +720,11 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             {
                 CPLError( CE_Warning, CPLE_AppDefined, 
                           "Failed to fetch spatial reference on layer %s "
-                          "to build transformer, skipping.\n",
+                          "to build transformer, assuming matching coordinate systems.\n",
                           poLayer->GetLayerDefn()->GetName() );
-                continue;
             }
-
-            poSRS->exportToWkt( &pszProjection );
+            else
+                poSRS->exportToWkt( &pszProjection );
 
             pTransformArg = 
                 GDALCreateGenImgProjTransformer( NULL, pszProjection,
@@ -1001,7 +1000,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 
         if( pfnTransformer == NULL )
         {
-            char    *pszProjection;
+            char    *pszProjection = NULL;
             bNeedToFreeTransformer = TRUE;
 
             OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
@@ -1009,12 +1008,11 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
             {
                 CPLError( CE_Warning, CPLE_AppDefined, 
                           "Failed to fetch spatial reference on layer %s "
-                          "to build transformer, skipping.\n",
+                          "to build transformer, assuming matching coordinate systems.\n",
                           poLayer->GetLayerDefn()->GetName() );
-                continue;
             }
-
-            poSRS->exportToWkt( &pszProjection );
+            else
+                poSRS->exportToWkt( &pszProjection );
 
             pTransformArg =
                 GDALCreateGenImgProjTransformer3( pszProjection, NULL,
