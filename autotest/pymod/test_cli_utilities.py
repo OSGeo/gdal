@@ -62,7 +62,7 @@ def get_cli_utility_path_internal(cli_utility_name):
         child_stderr.close()
 
         if ret.find('GDAL') != -1:
-            print ret
+            #print ret
             return cli_utility_path
     except:
         pass
