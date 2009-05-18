@@ -3471,6 +3471,12 @@ static void NITFPatchImageLength( const char *pszFilename,
         VSIFReadL( szICBuf, 2, 1, fpVSIL );
     }
     
+    /* The following line works around a "feature" of *BSD libc (at least PC-BSD 7.1) */
+    /* that makes the position of the file offset unreliable when executing a */
+    /* "seek, read and write" sequence. After the read(), the file offset seen by */
+    /* the write() is approximatively the size of a block further... */
+    VSIFSeekL( fpVSIL, VSIFTellL( fpVSIL ), SEEK_SET );
+    
     if( !EQUALN(szICBuf,pszIC,2) )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
