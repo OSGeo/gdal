@@ -114,8 +114,62 @@ def rasterize_1():
     
     return 'success'
 
+###############################################################################
+# Test rasterization with ALL_TOUCHED.
+
+def rasterize_2():
+
+    try:
+        x = gdal.RasterizeLayer
+        gdaltest.have_ng = 1
+    except:
+        gdaltest.have_ng = 0
+        return 'skip'
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference( sr_wkt )
+    
+    # Create a memory raster to rasterize into.
+
+    target_ds = gdal.GetDriverByName('MEM').Create( '', 12, 12, 3,
+                                                    gdal.GDT_Byte )
+    target_ds.SetGeoTransform( (0,1,0,12,0,-1) )
+    target_ds.SetProjection( sr_wkt )
+    
+    # Create a memory layer to rasterize from.
+
+    cutline_ds = ogr.Open( 'data/cutline.csv' )
+
+    # Run the algorithm.
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    err = gdal.RasterizeLayer( target_ds, [3,2,1], cutline_ds.GetLayer(0),
+                               burn_values = [200,220,240],
+                               options = ["ALL_TOUCHED=TRUE"] )
+    gdal.PopErrorHandler()
+
+    if err != 0:
+        print err
+        gdaltest.post_reason( 'got non-zero result code from RasterizeLayer' )
+        return 'fail'
+
+    # Check results.
+
+    expected = 121
+    checksum = target_ds.GetRasterBand(2).Checksum()
+    if checksum != expected:
+        print checksum
+        gdaltest.post_reason( 'Did not get expected image checksum' )
+
+        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif',target_ds)
+        return 'fail'
+    
+    return 'success'
+
 gdaltest_list = [
-    rasterize_1
+    rasterize_1,
+    rasterize_2
     ]
 
 if __name__ == '__main__':

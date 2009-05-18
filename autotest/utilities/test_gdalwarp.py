@@ -563,6 +563,29 @@ def test_gdalwarp_22():
 
 
 ###############################################################################
+# Test cutline with ALL_TOUCHED enabled.
+
+def test_gdalwarp_23():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -wo CUTLINE_ALL_TOUCHED=TRUE ../gcore/data/utmsmall.tif tmp/testgdalwarp23.tif -cutline data/cutline.vrt -cl cutline').read()
+
+    ds = gdal.Open('tmp/testgdalwarp23.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 20123:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -571,7 +594,7 @@ def test_gdalwarp_cleanup():
     if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) == 'ON':
         return 'success'
     
-    for i in range(22):
+    for i in range(23):
         try:
             os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
         except:
@@ -615,6 +638,7 @@ gdaltest_list = [
     test_gdalwarp_20,
     test_gdalwarp_21,
     test_gdalwarp_22,
+    test_gdalwarp_23,
     test_gdalwarp_cleanup
     ]
 
