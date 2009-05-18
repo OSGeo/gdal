@@ -346,9 +346,16 @@ def ogr_gml_9():
 #  Cleanup
 
 def ogr_gml_cleanup():
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+    
     gdaltest.clean_tmp()
-    os.remove( 'data/utf8.gfs' )
-    os.remove( 'data/ticket_2349_test_1.gfs' )
+    try:
+        os.remove( 'data/utf8.gfs' )
+        os.remove( 'data/ticket_2349_test_1.gfs' )
+    except:
+        pass
+    
     return 'success'
 
 gdaltest_list = [ 
