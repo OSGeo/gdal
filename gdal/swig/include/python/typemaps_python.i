@@ -636,7 +636,8 @@ OPTIONAL_POD(int,i);
 %typemap(freearg)(tostring argin)
 {
   /* %typemap(freearg) (tostring argin) */
-  Py_DECREF(str$argnum);
+  if ( str$argnum != NULL)
+    Py_DECREF(str$argnum);
 }
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
