@@ -192,7 +192,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
                                                    papszParam[1],
                                                    papszParam[2] );
 
-    if( ! poGRW->poConnection->Succed() )
+    if( ! poGRW->poConnection->Succeeded() )
     {
         CSLDestroy( papszParam );
         delete poGRW;

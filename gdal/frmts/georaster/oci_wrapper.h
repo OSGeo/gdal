@@ -211,7 +211,7 @@ private:
 
     int                 nVersion;
 
-    bool                bSuceeded;
+    bool                bSuceeeded;
 
     char*               pszUser; 
     char*               pszPassword; 
@@ -238,7 +238,7 @@ public:
     void                DestroyType( sdo_geometry** pphData );
     OCIType*            DescribeType( char *pszTypeName );
 
-    bool                Succed() { return bSuceeded; };
+    bool                Succeeded() { return bSuceeeded; };
 
     char*               GetUser() { return pszUser; };
     char*               GetPassword() { return pszPassword; };
