@@ -285,10 +285,11 @@ def test_gdalwarp_11():
         return 'fail'
 
     ref_ds = gdal.Open('ref_data/testgdalwarp11.tif')
-    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
     ref_ds = None
 
     if maxdiff > 1:
+        gdaltest.compare_ds(ds, ref_ds, verbose=1)
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
@@ -311,10 +312,11 @@ def test_gdalwarp_12():
         return 'fail'
 
     ref_ds = gdal.Open('ref_data/testgdalwarp12.tif')
-    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
     ref_ds = None
 
     if maxdiff > 1:
+        gdaltest.compare_ds(ds, ref_ds, verbose=1)
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 

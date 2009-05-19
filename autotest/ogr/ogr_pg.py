@@ -73,9 +73,12 @@ def ogr_pg_1():
         return 'skip'
 
     try:
+        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
         gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+        gdal.PopErrorHandler()
     except:
         gdaltest.pg_ds = None
+        gdal.PopErrorHandler()
 
     if gdaltest.pg_ds is None:
         return 'skip'
