@@ -39,7 +39,7 @@ typedef struct {
     char szSegmentType[3]; /* one of "IM", ... */
 
     GUIntBig nSegmentHeaderStart;
-    GUIntBig nSegmentHeaderSize;
+    GUInt32 nSegmentHeaderSize;
     GUIntBig nSegmentStart;
     GUIntBig nSegmentSize;
 
