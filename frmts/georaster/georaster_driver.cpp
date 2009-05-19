@@ -94,7 +94,7 @@ OWConnection* GeoRasterDriver::GetConnection( const char* pszUserIn,
     //  Save into connection list
     //  --------------------------------------------------------------------
 
-    if( poConnection->Succed() )
+    if( poConnection->Succeeded() )
     {
         nRefCount++;
         papoConnection = (OWConnection**) CPLRealloc( papoConnection, 

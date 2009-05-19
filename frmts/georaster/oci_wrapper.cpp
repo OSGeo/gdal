@@ -63,7 +63,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     hNumArrayTDO    = NULL;
     hGeometryTDO    = NULL;
     hGeoRasterTDO   = NULL;
-    bSuceeded       = false;
+    bSuceeeded      = false;
 
     // ------------------------------------------------------
     //  Create Environment
@@ -107,12 +107,12 @@ OWConnection::OWConnection( const char* pszUserIn,
         (text*) pszServer,
         (ub4) strlen(pszServer) ), hError ) )
     {
-        bSuceeded = false;
+        bSuceeeded = false;
         return;
     }
     else
     {
-        bSuceeded = true;
+        bSuceeeded = true;
     }
 
     // ------------------------------------------------------
