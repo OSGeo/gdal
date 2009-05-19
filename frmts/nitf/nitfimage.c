@@ -107,7 +107,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                      psFile->fp ) != psSegInfo->nSegmentHeaderSize )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
-                  "Failed to read " CPL_FRMT_GUIB " byte image subheader from " CPL_FRMT_GUIB ".",
+                  "Failed to read %u byte image subheader from " CPL_FRMT_GUIB ".",
                   psSegInfo->nSegmentHeaderSize,
                   psSegInfo->nSegmentHeaderStart );
         CPLFree(pachHeader);
