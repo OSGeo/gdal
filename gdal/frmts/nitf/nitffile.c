@@ -1182,13 +1182,17 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
             atoi(NITFGetField(szTemp,pachSegDef, 
                               iSegment * (nHeaderLenSize+nDataLenSize), 
                               nHeaderLenSize));
+        if (strchr(szTemp, '-') != NULL) /* Avoid negative values being mapped to huge unsigned values */
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment info");
+            break;
+        }
         psInfo->nSegmentSize = 
             CPLScanUIntBig(NITFGetField(szTemp,pachSegDef, 
                               iSegment * (nHeaderLenSize+nDataLenSize) 
                               + nHeaderLenSize,
                               nDataLenSize), nDataLenSize);
-        if (psInfo->nSegmentHeaderSize <= 0 ||
-            psInfo->nSegmentSize <= 0)
+        if (strchr(szTemp, '-') != NULL) /* Avoid negative values being mapped to huge unsigned values */
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid segment info");
             break;
