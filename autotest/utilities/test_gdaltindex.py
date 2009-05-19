@@ -111,7 +111,19 @@ def test_gdaltindex_2():
     if test_cli_utilities.get_gdaltindex_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif').read()
+    (ret_stdin,ret_stdout,ret_stderr) = os.popen3(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
+
+    got_err = ret_stderr.read()
+    expected_err = """File tmp/gdaltindex1.tif is already in tileindex. Skipping it.
+File tmp/gdaltindex2.tif is already in tileindex. Skipping it.
+File tmp/gdaltindex3.tif is already in tileindex. Skipping it.
+File tmp/gdaltindex4.tif is already in tileindex. Skipping it.
+"""
+
+    if got_err != expected_err:
+        print got_err
+        gdaltest.post_reason( 'got unexpected error messages.' )
+        return 'fail'
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
@@ -136,7 +148,16 @@ def test_gdaltindex_3():
     ds.SetGeoTransform( [ 47, 0.1, 0, 2, 0, -0.1 ] )
     ds = None
 
-    os.popen(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif').read()
+    (ret_stdin,ret_stdout,ret_stderr) = os.popen3(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif')
+
+    got_err = ret_stderr.read()
+    expected_err = """Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex. This may cause problems when using it in MapServer for example. Skipping it
+"""
+
+    if got_err != expected_err:
+        print got_err
+        gdaltest.post_reason( 'got unexpected error messages.' )
+        return 'fail'
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:

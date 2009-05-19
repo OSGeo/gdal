@@ -953,7 +953,7 @@ def gdal_data_type_to_python_struct_format(datatype):
 ###############################################################################
 # Compare the values of the pixels
 
-def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0):
+def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0, verbose=1):
     import struct
 
     if width == 0:
@@ -976,10 +976,12 @@ def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0):
             ndiffs = ndiffs + 1
             if abs(diff) > maxdiff:
                 maxdiff = abs(diff)
-                print "Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff)
+                if verbose:
+                    print "Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff)
             elif ndiffs < 10:
-                print "Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff)
-    if maxdiff != 0:
+                if verbose:
+                    print "Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff)
+    if maxdiff != 0 and verbose:
         print "Max diff : %d" % (maxdiff)
         print "Number of diffs : %d" % (ndiffs)
 
