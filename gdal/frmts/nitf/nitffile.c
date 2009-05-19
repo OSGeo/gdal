@@ -1587,7 +1587,8 @@ int NITFReconcileAttachments( NITFFile *psFile )
         {
             psSegInfo->nCCS_R = psSegInfo->nLOC_R;
             psSegInfo->nCCS_C = psSegInfo->nLOC_C;
-            bMadeProgress = TRUE;
+            if( psSegInfo->nCCS_R != -1 )
+                bMadeProgress = TRUE;
             continue;
         }
 
@@ -1595,7 +1596,7 @@ int NITFReconcileAttachments( NITFFile *psFile )
         for( iOther = 0; iOther < psFile->nSegmentCount; iOther++ )
         {
             NITFSegmentInfo *psOtherSegInfo = psFile->pasSegmentInfo + iOther;
-
+            
             if( psSegInfo->nALVL == psOtherSegInfo->nDLVL )
             {
                 if( psOtherSegInfo->nCCS_R != -1 )
