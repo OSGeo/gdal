@@ -916,8 +916,20 @@ CPLErr BMPDataset::GetGeoTransform( double * padfTransform )
 
     if( bGeoTransformValid )
         return CE_None;
-    else
-        return GDALPamDataset::GetGeoTransform( padfTransform );
+
+    if( GDALPamDataset::GetGeoTransform( padfTransform ) == CE_None)
+        return CE_None;
+
+    if (sInfoHeader.iXPelsPerMeter > 0 && sInfoHeader.iYPelsPerMeter > 0)
+    {
+        padfTransform[1] = sInfoHeader.iXPelsPerMeter;
+        padfTransform[5] = -sInfoHeader.iYPelsPerMeter;
+        padfTransform[0] = -0.5*padfTransform[1];
+        padfTransform[3] = -0.5*padfTransform[5];
+        return CE_None;
+    }
+
+    return CE_Failure;
 }
 
 /************************************************************************/
