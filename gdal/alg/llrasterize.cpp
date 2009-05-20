@@ -395,9 +395,8 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             }
             
             // Special case for vertical lines.
-            if( dfX == dfXEnd )
+            if( floor(dfX) == floor(dfXEnd) )
             {
-
                 if( dfYEnd < dfY )
                 {
                     double dfTemp = dfYEnd;
@@ -423,7 +422,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             }
 
             // special case for horizontal lines
-            if( dfY == dfYEnd )
+            if( floor(dfY) == floor(dfYEnd) )
             {
 
                 if( dfXEnd < dfX )
