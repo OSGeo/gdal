@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <algorithm>
+
 #include "vrtdataset.h"
 #include "gdal_proxy.h"
 #include "cpl_minixml.h"
@@ -964,6 +966,18 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         {
             padfLUTInputs[nIndex] = atof( papszValues[nIndex * 2] );
             padfLUTOutputs[nIndex] = atof( papszValues[nIndex * 2 + 1] );
+
+	    // Enforce the requirement that the LUT input array is monotonically non-decreasing.
+	    if ( nIndex > 0 && padfLUTInputs[nIndex] < padfLUTInputs[nIndex - 1] )
+	    {
+		CSLDestroy(papszValues);
+		VSIFree( padfLUTInputs );
+		VSIFree( padfLUTOutputs );
+		padfLUTInputs = NULL;
+		padfLUTOutputs = NULL;
+		nLUTItemCount = 0;
+		return CE_Failure;
+	    }
         }
         
         CSLDestroy(papszValues);
@@ -984,23 +998,24 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 double
 VRTComplexSource::LookupValue( double dfInput )
 {
-    int i;
-    for ( i = 0; i < nLUTItemCount; i++ )
-    {
-        if (dfInput > padfLUTInputs[i])
-            continue;
-        if (i == 0)
-            return padfLUTOutputs[0];
-        
-        if (padfLUTInputs[i-1] == padfLUTInputs[i])
-            return padfLUTOutputs[i];
+    // Find the index of the first element in the LUT input array that
+    // is not smaller than the input value.
+    int i = std::lower_bound(padfLUTInputs, padfLUTInputs + nLUTItemCount, dfInput) - padfLUTInputs;
 
-        return ((dfInput - padfLUTInputs[i-1]) * padfLUTOutputs[i] + 
-            (padfLUTInputs[i] - dfInput) * padfLUTOutputs[i-1]) 
-                                   / (padfLUTInputs[i] - padfLUTInputs[i-1]);
-    }
-    
-    return padfLUTOutputs[nLUTItemCount - 1];
+    if (i == 0)
+	return padfLUTOutputs[0];
+
+    // If the index is beyond the end of the LUT input array, the input
+    // value is larger than all the values in the array.
+    if (i == nLUTItemCount)
+	return padfLUTOutputs[nLUTItemCount - 1];
+
+    if (padfLUTInputs[i] == dfInput)
+	return padfLUTOutputs[i];
+
+    // Otherwise, interpolate.
+    return padfLUTOutputs[i - 1] + (dfInput - padfLUTInputs[i - 1]) *
+	((padfLUTOutputs[i] - padfLUTOutputs[i - 1]) / (padfLUTInputs[i] - padfLUTInputs[i - 1]));
 }
 
 /************************************************************************/
