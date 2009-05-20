@@ -1359,31 +1359,43 @@ const GDAL_GCP *ECWDataset::GetGCPs()
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
+/*                                                                      */
+/*      We let PAM coordinate system override the one stored inside     */
+/*      our file.                                                       */
 /************************************************************************/
 
 const char *ECWDataset::GetProjectionRef() 
 
 {
-    if( pszProjection == NULL )
-        return GDALPamDataset::GetProjectionRef();
-    else
+    const char* pszPamPrj = GDALPamDataset::GetProjectionRef();
+
+    if( pszProjection != NULL && strlen(pszPamPrj) == 0 )
         return pszProjection;
+    else
+        return pszPamPrj;
 }
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
+/*                                                                      */
+/*      Only return the native geotransform if we appear to be          */
+/*      returning the native coordinate system, otherwise defer to      */
+/*      the PAM geotransform.                                           */
 /************************************************************************/
 
 CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if( bGeoTransformValid )
+    if( GetProjectionRef() != pszProjection 
+        || bGeoTransformValid )
+    {
+        return GDALPamDataset::GetGeoTransform( padfTransform );
+    }
+    else
     {
         memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
         return( CE_None );
     }
-    else
-        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
