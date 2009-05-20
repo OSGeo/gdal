@@ -1386,8 +1386,9 @@ const char *ECWDataset::GetProjectionRef()
 CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if( GetProjectionRef() != pszProjection 
-        || bGeoTransformValid )
+    if( (GetProjectionRef() != pszProjection  
+         && strlen(GetProjectionRef()) > 0)
+        || !bGeoTransformValid )
     {
         return GDALPamDataset::GetGeoTransform( padfTransform );
     }
