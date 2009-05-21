@@ -636,10 +636,15 @@ CPLErr MrSIDRasterBand::GetStatistics( int bApproxOK, int bForce,
 double MrSIDRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    if( pbSuccess )
-        *pbSuccess = bNoDataSet;
+    if( bNoDataSet )
+    {
+        if( pbSuccess )
+            *pbSuccess = bNoDataSet;
 
-    return dfNoDataValue;
+        return dfNoDataValue;
+    }
+
+    return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
 
 /************************************************************************/
@@ -953,13 +958,16 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 CPLErr MrSIDDataset::GetGeoTransform( double * padfTransform )
 {
-    if( bHasGeoTransform )
+    if( strlen(GetProjectionRef()) > 0
+        || !bHasGeoTransform )
     {
-        memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
-        return CE_None;
+        return GDALPamDataset::GetGeoTransform( padfTransform );
     }
     else
-        return GDALPamDataset::GetGeoTransform( padfTransform );
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+        return( CE_None );
+    }
 }
 
 /************************************************************************/
@@ -968,10 +976,12 @@ CPLErr MrSIDDataset::GetGeoTransform( double * padfTransform )
 
 const char *MrSIDDataset::GetProjectionRef()
 {
-    if( pszProjection && strlen(pszProjection) > 0 )
+    const char* pszPamPrj = GDALPamDataset::GetProjectionRef();
+
+    if( strlen(pszProjection) > 0 && strlen(pszPamPrj) == 0 )
         return pszProjection;
     else
-        return GDALPamDataset::GetProjectionRef();
+        return pszPamPrj;
 }
 
 /************************************************************************/
