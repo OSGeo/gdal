@@ -958,7 +958,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 CPLErr MrSIDDataset::GetGeoTransform( double * padfTransform )
 {
-    if( strlen(GetProjectionRef()) > 0
+    if( strlen(GDALPamDataset::GetProjectionRef()) > 0
         || !bHasGeoTransform )
     {
         return GDALPamDataset::GetGeoTransform( padfTransform );
