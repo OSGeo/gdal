@@ -87,6 +87,7 @@ class OGRSQLiteLayer : public OGRLayer
     char                *pszFIDColumn;
 
     int                *panFieldOrdinals;
+    int                 bHasSpatialIndex;
 
     CPLErr              BuildFeatureDefn( const char *pszLayerName, 
                                           sqlite3_stmt *hStmt );
@@ -131,10 +132,12 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     int                 bUpdateAccess;
     int                 bLaunderColumnNames;
 
-    char                *pszQuery;
+    CPLString           osWHERE;
+    CPLString           osQuery;
 
     virtual void	ClearStatement();
     OGRErr              ResetStatement();
+    void                BuildWhere(void);
 
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
@@ -147,11 +150,13 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     OGRwkbGeometryType eGeomType,
                                     const char *pszGeomFormat,
                                     OGRSpatialReference *poSRS,
-                                    int nSRSId = -1 );
+                                    int nSRSId = -1,
+                                    int bHasSpatialIndex = FALSE);
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
+    virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
@@ -229,7 +234,8 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    OGRwkbGeometryType eGeomType = wkbUnknown,
                                    const char *pszGeomFormat = NULL,
                                    OGRSpatialReference *poSRS = NULL,
-                                   int nSRID = -1 );
+                                   int nSRID = -1,
+                                   int bHasSpatialIndex = FALSE);
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }

@@ -46,6 +46,34 @@ with <a href="/ogr/ogr_sql.html">OGR SQL</a> engine,
 by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL() 
 method, as name of the SQL dialect.</p>
 
+<h2>Using the SpatiaLite library (Spatial extension for SQLite)</h2>
+
+(Starting with GDAL 1.7.0)<p>
+
+The SQLite driver can read and write SpatiaLite databases without needing
+to load the SpatiaLite library. But if you configure GDAL/OGR with explicit linking
+to SpatiaLite library (version >= 2.3), you can take advantage of all the extension
+functions provided by this library, such as spatial indexes, spatial functions, etc...<p>
+
+A few examples :
+<pre>
+# Duplicate the sample database provided with SpatiaLite (does not need explicit linking with SpatiaLite)
+ogr2ogr -f SQLite testspatialite.sqlite test-2.3.sqlite  -dsco SPATIALITE=YES
+
+# Add a spatial index on the geometry column of the Towns table (needs explicit linking with SpatiaLite)
+ogrinfo testspatialite.sqlite -sql "SELECT CreateSpatialIndex('Towns', 'geometry')"
+
+# Make a request with a spatial filter (needs explicit linking with SpatiaLite)
+ogrinfo testspatialite.sqlite \
+     -sql "SELECT Name, asText(geometry) FROM Towns WHERE MBRWithin(geometry, BuildMBR(754000, 4692000, 770000, 4924000))"
+
+or
+
+# Will work faster with spatial filter and explicit linking with SpatiaLite
+ogrinfo testspatialite.sqlite Towns -spat 754000 4692000 770000 4924000
+
+</pre>
+
 <h2>Creation Issues</h2>
 
 <p>The SQLite driver supports creating new SQLite database files, or adding

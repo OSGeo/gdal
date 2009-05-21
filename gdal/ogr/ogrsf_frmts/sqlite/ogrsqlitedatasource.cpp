@@ -31,7 +31,12 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifdef HAVE_SPATIALITE
+#include "spatialite.h"
+#endif
+
 CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
@@ -155,6 +160,18 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
     pszName = CPLStrdup( pszNewName );
 
 /* -------------------------------------------------------------------- */
+/*      Try loading SpatiaLite.                                         */
+/* -------------------------------------------------------------------- */
+#ifdef HAVE_SPATIALITE
+    static int bSpatiaLiteLoaded = FALSE;
+    if (!bSpatiaLiteLoaded)
+    {
+        bSpatiaLiteLoaded = TRUE;
+        spatialite_init(CSLTestBoolean(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
+    }
+#endif
+
+/* -------------------------------------------------------------------- */
 /*      Try to open the sqlite database properly now.                   */
 /* -------------------------------------------------------------------- */
     int rc;
@@ -231,6 +248,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
             char **papszRow = papszResult + iRow * 6 + 6;
             OGRwkbGeometryType eGeomType;
             int nSRID = 0;
+            int bHasSpatialIndex = FALSE;
 
             eGeomType = SpatiaLiteToOGRGeomType(papszRow[2]);
 
@@ -240,8 +258,14 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
             if( papszRow[4] != NULL )
                 nSRID = atoi(papszRow[4]);
 
+            /* Only look for presence of a spatial index if linked against SpatiaLite */
+#ifdef HAVE_SPATIALITE
+            if( papszRow[5] != NULL )
+                bHasSpatialIndex = atoi(papszRow[5]);
+#endif
+
             OpenTable( papszRow[0], papszRow[1], eGeomType, "SpatiaLite",
-                       FetchSRS( nSRID ), nSRID );
+                       FetchSRS( nSRID ), nSRID, bHasSpatialIndex );
         }
 
         sqlite3_free_table(papszResult);
@@ -289,7 +313,8 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
                                     const char *pszGeomCol,
                                     OGRwkbGeometryType eGeomType,
                                     const char *pszGeomFormat,
-                                    OGRSpatialReference *poSRS, int nSRID )
+                                    OGRSpatialReference *poSRS, int nSRID,
+                                    int bHasSpatialIndex)
 
 {
 /* -------------------------------------------------------------------- */
@@ -301,7 +326,7 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
 
     if( poLayer->Initialize( pszNewName, pszGeomCol, 
                              eGeomType, pszGeomFormat,
-                             poSRS, nSRID ) )
+                             poSRS, nSRID, bHasSpatialIndex ) )
     {
         delete poLayer;
         return FALSE;
