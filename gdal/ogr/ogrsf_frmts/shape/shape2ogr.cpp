@@ -486,10 +486,11 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
 
             /* Ignore LINESTRING EMPTY */
             if (nNewPoints == 0)
-                continue;
-            else
+            {
                 CPLDebug( "OGR", 
-                              "Ignore LINESTRING EMPTY inside MULTILINESTRING in shapefile writer." );
+                          "Ignore LINESTRING EMPTY inside MULTILINESTRING in shapefile writer." );
+                continue;
+            }
 
             panRingStart[nParts ++] = nPointCount;
 
