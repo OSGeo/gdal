@@ -286,69 +286,70 @@ void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, con
 void XMLCALL KML::endElement(void* pUserData, const char* pszName)
 {
     KMLNode* poTmp = NULL;
-    std::string sData;
-    std::string sTmp;
-    unsigned short nPos = 0;
 
-	if(((KML *)pUserData)->poCurrent_ != NULL
-        && 
-	    ((KML *)pUserData)->poCurrent_->getName().compare(pszName) == 0)
+    KML* poKML = (KML*) pUserData;
+
+
+    if(poKML->poCurrent_ != NULL &&
+       poKML->poCurrent_->getName().compare(pszName) == 0)
     {
-    	((KML *)pUserData)->nDepth_--;
-        poTmp = ((KML *)pUserData)->poCurrent_;
+        poKML->nDepth_--;
+        poTmp = poKML->poCurrent_;
         // Split the coordinates
-        if(((KML *)pUserData)->poCurrent_->getName().compare("coordinates") == 0)
+        if(poKML->poCurrent_->getName().compare("coordinates") == 0)
         {
-            sData = ((KML *)pUserData)->poCurrent_->getContent(0);
-            while(sData.length() > 0)
+            std::string sData = poKML->poCurrent_->getContent(0);
+            std::size_t nPos = 0;
+            std::size_t nLength = sData.length();
+            while(TRUE)
             {
                 // Cut off whitespaces
-           	    while((sData[nPos] == ' ' || sData[nPos] == '\n'
+                while(nPos < nLength &&
+                      (sData[nPos] == ' ' || sData[nPos] == '\n'
                     || sData[nPos] == '\r' || 
-        	        sData[nPos] == '\t' ) && sData.length() > 0)
-                        sData = sData.substr(1, sData.length()-1);
-                
-                // Get content
-                while(sData[nPos] != ' ' && sData[nPos] != '\n' && sData[nPos] != '\r' && 
-                    sData[nPos] != '\t' && nPos < sData.length()) 
-                        nPos++;
-                sTmp = sData.substr(0, nPos);
+                        sData[nPos] == '\t' ))
+                    nPos ++;
 
-            	if(sTmp.length() > 0)
-        	        ((KML *)pUserData)->poCurrent_->addContent(sTmp);
-                // Cut the content from the rest
-        	    if(nPos < sData.length())
-                    sData = sData.substr(nPos, sData.length() - nPos);
-                else
+                if (nPos == nLength)
                     break;
-                nPos = 0;
-            }
-            if(((KML *)pUserData)->poCurrent_->numContent() > 1)
-                ((KML *)pUserData)->poCurrent_->deleteContent(0);
-        }
-        
-        if(((KML *)pUserData)->poCurrent_->getParent() != NULL)
-            ((KML *)pUserData)->poCurrent_ = ((KML *)pUserData)->poCurrent_->getParent();
-        else
-            ((KML *)pUserData)->poCurrent_ = NULL;
 
-    	if(!((KML *)pUserData)->isHandled(pszName))
+                std::size_t nPosBegin = nPos;
+
+                // Get content
+                while(nPos < nLength &&
+                      sData[nPos] != ' ' && sData[nPos] != '\n' && sData[nPos] != '\r' && 
+                      sData[nPos] != '\t')
+                    nPos++;
+
+                if(nPos - nPosBegin > 0)
+                    poKML->poCurrent_->addContent(sData.substr(nPosBegin, nPos - nPosBegin));
+            }
+            if(poKML->poCurrent_->numContent() > 1)
+                poKML->poCurrent_->deleteContent(0);
+        }
+
+        if(poKML->poCurrent_->getParent() != NULL)
+            poKML->poCurrent_ = poKML->poCurrent_->getParent();
+        else
+            poKML->poCurrent_ = NULL;
+
+        if(!poKML->isHandled(pszName))
         {
-    	    CPLDebug("KML", "Not handled: %s", pszName);
-    	    delete poTmp;
-	    }
+            CPLDebug("KML", "Not handled: %s", pszName);
+            delete poTmp;
+        }
         else
         {
-	        if(((KML *)pUserData)->poCurrent_ != NULL)
-               	((KML *)pUserData)->poCurrent_->addChildren(poTmp);
-	    }
+            if(poKML->poCurrent_ != NULL)
+                poKML->poCurrent_->addChildren(poTmp);
+        }
     }
-    else if(((KML *)pUserData)->poCurrent_ != NULL)
+    else if(poKML->poCurrent_ != NULL)
     {
         std::string sNewContent = "</";
         sNewContent += pszName;
         sNewContent += ">";
-        ((KML *)pUserData)->poCurrent_->addContent(sNewContent);
+        poKML->poCurrent_->addContent(sNewContent);
     }
 }
 
