@@ -842,7 +842,7 @@ def ogr_spatialite_2():
     ds = ogr.Open( 'tmp/spatialite_test.db'  )
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
-    lyr = ds.CreateLayer( 'test_spatialfilter', srs = srs )
+    lyr = ds.CreateLayer( 'test_spatialfilter', srs = srs)
 
     for i in range(10):
         for j in range(10):
@@ -851,6 +851,29 @@ def ogr_spatialite_2():
             dst_feat.SetGeometry( geom )
             lyr.CreateFeature( dst_feat )
             dst_feat.Destroy()
+
+    ds.Destroy()
+
+    # Test OLCFastFeatureCount with spatial index (created by default)
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    lyr = ds.GetLayerByName('test_spatialfilter')
+
+    geom = ogr.CreateGeometryFromWkt( \
+        'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
+    lyr.SetSpatialFilter( geom )
+    geom.Destroy()
+
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) != True:
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 49:
+        return 'fail'
+
+    # Remove spatial index
+    sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('test_spatialfilter', 'Geometry')")
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL("VACUUM")
+    ds.ReleaseResultSet(sql_lyr)
 
     ds.Destroy()
 
@@ -864,27 +887,6 @@ def ogr_spatialite_2():
     geom.Destroy()
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != False:
-        return 'fail'
-
-    # Add spatial index
-    sql_lyr = ds.ExecuteSQL("SELECT CreateSpatialIndex('test_spatialfilter', 'Geometry')")
-    ds.ReleaseResultSet(sql_lyr)
-
-    ds.Destroy()
-
-    # Test OLCFastFeatureCount with spatial index
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
-    lyr = ds.GetLayerByName('test_spatialfilter')
-
-    geom = ogr.CreateGeometryFromWkt( \
-        'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
-    lyr.SetSpatialFilter( geom )
-    geom.Destroy()
-
-    if lyr.TestCapability(ogr.OLCFastFeatureCount) != True:
-        return 'fail'
-
-    if lyr.GetFeatureCount() != 49:
         return 'fail'
 
     ds.Destroy()
