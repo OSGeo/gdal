@@ -46,6 +46,7 @@ import gdal
 def ogr_sqlite_1():
 
     gdaltest.sl_ds = None
+    gdaltest.has_spatialite = False
 
     try:
         sqlite_dr = ogr.GetDriverByName( 'SQLite' )
@@ -807,7 +808,87 @@ def ogr_sqlite_17():
     ds.Destroy()
 
     return 'success'
-    
+
+###############################################################################
+# Test if SpatiaLite is available
+
+def ogr_spatialite_1():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    sql_lyr = ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
+    if sql_lyr is None:
+        res = 'skip'
+    else:
+        gdaltest.has_spatialite = True
+        ds.ReleaseResultSet(sql_lyr)
+        res = 'success'
+    ds.Destroy()
+
+    return res
+
+###############################################################################
+# Test spatial filter when SpatiaLite is available
+
+def ogr_spatialite_2():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:4326')
+    lyr = ds.CreateLayer( 'test_spatialfilter', srs = srs )
+
+    for i in range(10):
+        for j in range(10):
+            geom = ogr.CreateGeometryFromWkt( 'POINT(%d %d)' % (i, j))
+            dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+            dst_feat.SetGeometry( geom )
+            lyr.CreateFeature( dst_feat )
+            dst_feat.Destroy()
+
+    ds.Destroy()
+
+    # Test OLCFastFeatureCount without spatial index
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    lyr = ds.GetLayerByName('test_spatialfilter')
+
+    geom = ogr.CreateGeometryFromWkt( \
+        'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
+    lyr.SetSpatialFilter( geom )
+    geom.Destroy()
+
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) != False:
+        return 'fail'
+
+    # Add spatial index
+    sql_lyr = ds.ExecuteSQL("SELECT CreateSpatialIndex('test_spatialfilter', 'Geometry')")
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds.Destroy()
+
+    # Test OLCFastFeatureCount with spatial index
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    lyr = ds.GetLayerByName('test_spatialfilter')
+
+    geom = ogr.CreateGeometryFromWkt( \
+        'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
+    lyr.SetSpatialFilter( geom )
+    geom.Destroy()
+
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) != True:
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 49:
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -858,6 +939,8 @@ gdaltest_list = [
     ogr_sqlite_15,
     ogr_sqlite_16,
     ogr_sqlite_17,
+    ogr_spatialite_1,
+    ogr_spatialite_2,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
