@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -246,16 +247,56 @@ def mrsid_7():
     ds_ref = gdal.Open( 'data/int16.tif' )
     
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
 
     ds = None
     ds_ref = None
     
     # Perfect match theoritically
     if maxdiff > 1:
+        print ds.GetRasterBand(1).Checksum()
+        print ds_ref.GetRasterBand(1).Checksum()
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test PAM override for nodata, coordsys, and geotranform.
+
+def mrsid_8():
+
+    if gdaltest.mrsid_drv is None:
+        return 'skip'
+
+    new_gt = (10000,50,0,20000,0,-50)
+    new_srs = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],AUTHORITY["EPSG","27700"],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
+    
+    gdal.GetDriverByName('MrSID').Delete( 'tmp/mercator.sid' )
+    shutil.copyfile( 'data/mercator.sid', 'tmp/mercator.sid' )
+
+    ds = gdal.Open( 'tmp/mercator.sid' )
+
+    ds.SetGeoTransform( new_gt )
+    ds.SetProjection( new_srs )
+    ds.GetRasterBand(1).SetNoDataValue( 255 )
+    ds = None
+
+    ds = gdal.Open( 'tmp/mercator.sid' )
+
+    if new_srs != ds.GetProjectionRef():
+        print ds.GetProjectionRef()
+        gdaltest.post_reason( 'SRS Override failed.' )
+        return 'fail'
+
+    if new_gt != ds.GetGeoTransform():
+        gdaltest.post_reason( 'Geotransform Override failed.' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 255:
+        gdaltest.post_reason( 'Nodata override failed.' )
+        return 'fail'
+
+    gdal.GetDriverByName('MrSID').Delete( 'tmp/mercator.sid' )
 
     return 'success'
 
@@ -330,15 +371,17 @@ def mrsid_online_3():
 
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
+    maxdiff = gdaltest.compare_ds(ds, ds_ref,verbose=0)
 
     ds = None
     ds_ref = None
 
     # Difference between the image before and after compression
     if maxdiff > 17:
+        print ds.GetRasterBand(1).Checksum()
+        print ds_ref.GetRasterBand(1).Checksum()
+        
+        gdaltest.compare_ds(ds, ds_ref,verbose=1)
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
@@ -364,14 +407,14 @@ def mrsid_online_4():
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, width = 256, height = 256)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
 
     ds = None
     ds_ref = None
 
     # Difference between the image before and after compression
     if maxdiff > 1:
+        print ds.GetRasterBand(1).Checksum()
+        print ds_ref.GetRasterBand(1).Checksum()
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
@@ -399,6 +442,7 @@ gdaltest_list = [
     mrsid_5,
     mrsid_6,
     mrsid_7,
+    mrsid_8,
     mrsid_online_1,
     mrsid_online_2,
     mrsid_online_3,
