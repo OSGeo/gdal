@@ -75,6 +75,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                                         int bHasSpatialIndex)
 
 {
+    int rc;
     sqlite3 *hDB = poDS->GetDB();
 
     if( pszGeomCol == NULL )
@@ -112,17 +113,25 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     const char *pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM '%s' LIMIT 1",
                                      pszTableName );
 
-    if( sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL )
-        != SQLITE_OK )
+    rc = sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL ); 
+    if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to query table %s for column definitions.",
-                  pszTableName );
+                  "Unable to query table %s for column definitions : %s.",
+                  pszTableName, sqlite3_errmsg(hDB) );
         
         return CE_Failure;
     }
-    
-    sqlite3_step( hColStmt );
+
+    rc = sqlite3_step( hColStmt );
+    if ( rc != SQLITE_DONE && rc != SQLITE_ROW )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "In Initialize(): sqlite3_step(%s):\n  %s", 
+                  pszSQL, sqlite3_errmsg(hDB) );
+        sqlite3_finalize( hColStmt );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      What should we use as FID?  If there is a primary key           */
@@ -140,10 +149,11 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 /*      Collect the rest of the fields.                                 */
 /* -------------------------------------------------------------------- */
     eErr = BuildFeatureDefn( pszTableName, hColStmt );
+    sqlite3_finalize( hColStmt );
+
     if( eErr != CE_None )
         return eErr;
 
-    sqlite3_finalize( hColStmt );
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry type if we know it.                            */
@@ -259,15 +269,21 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
     rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(), 
-		          &hStmt, NULL );
+                          &hStmt, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "In GetFeature(): sqlite3_prepare(%s):\n  %s", 
+                  osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
 
+        return NULL;
+    }
 /* -------------------------------------------------------------------- */
 /*      Get the feature if possible.                                    */
 /* -------------------------------------------------------------------- */
     OGRFeature *poFeature = NULL;
 
-    if( rc == SQLITE_OK )
-        poFeature = GetNextRawFeature();
+    poFeature = GetNextRawFeature();
 
     ResetReading();
 
