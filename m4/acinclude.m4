@@ -154,6 +154,20 @@ AC_DEFUN([AC_UNIX_STDIO_64],
     esac
   fi
 
+  dnl Test for BSD systems that supports ftello/fseeko.
+
+  if test x"$with_unix_stdio_64" = x"" ; then
+    echo '#include <stdio.h>' >> conftest.c
+    echo 'int main() { fpos_t off=0; fseeko(NULL, SEEK_SET, off); off = ftello(NULL); return 0; }' >> conftest.c
+    if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
+      with_unix_stdio_64=yes
+      VSI_FTELL64=ftello
+      VSI_FSEEK64=fseeko
+    fi
+    rm -f conftest*
+  fi
+ 
+
   if test x"$with_unix_stdio_64" = x"yes" ; then
     AC_MSG_RESULT([yes])
 
