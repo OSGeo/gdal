@@ -712,51 +712,69 @@ static void GDALColorReliefInterpolateVal(ColorAssociation* pasColorAssociation,
                                           int* pnA)
 {
     int i;
+    int lower = 0;
+    int upper = nColorAssociation - 1;
+    int mid;
 
-    if (dfVal <= pasColorAssociation[0].dfVal)
+    /* Find the index of the first element in the LUT input array that */
+    /* is not smaller than the dfVal value. */
+    while(TRUE)
+    {
+        mid = (lower + upper) / 2;
+        if (upper - lower <= 1)
+        {
+            if (dfVal < pasColorAssociation[lower].dfVal)
+                i = lower;
+            else if (dfVal < pasColorAssociation[upper].dfVal)
+                i = upper;
+            else
+                i = upper + 1;
+            break;
+        }
+        else if (pasColorAssociation[mid].dfVal >= dfVal)
+        {
+            upper = mid;
+        }
+        else
+        {
+            lower = mid;
+        }
+    }
+
+    if (i == 0)
     {
         *pnR = pasColorAssociation[0].nR;
         *pnG = pasColorAssociation[0].nG;
         *pnB = pasColorAssociation[0].nB;
         *pnA = pasColorAssociation[0].nA;
-        return;
     }
-
-    for(i=1;i<nColorAssociation;i++)
+    else if (i == nColorAssociation)
     {
-        if (dfVal > pasColorAssociation[i-1].dfVal &&
-            dfVal < pasColorAssociation[i].dfVal)
-        {
-            double dfRatio = (dfVal - pasColorAssociation[i-1].dfVal) /
-               (pasColorAssociation[i].dfVal - pasColorAssociation[i-1].dfVal);
-            *pnR = (int)(0.45 + pasColorAssociation[i-1].nR + dfRatio *
-                    (pasColorAssociation[i].nR - pasColorAssociation[i-1].nR));
-            if (*pnR < 0) *pnR = 0;
-            else if (*pnR > 255) *pnR = 255;
-            *pnG = (int)(0.45 + pasColorAssociation[i-1].nG + dfRatio *
-                    (pasColorAssociation[i].nG - pasColorAssociation[i-1].nG));
-            if (*pnG < 0) *pnG = 0;
-            else if (*pnG > 255) *pnG = 255;
-            *pnB = (int)(0.45 + pasColorAssociation[i-1].nB + dfRatio *
-                    (pasColorAssociation[i].nB - pasColorAssociation[i-1].nB));
-            if (*pnB < 0) *pnB = 0;
-            else if (*pnB > 255) *pnB = 255;
-            *pnA = (int)(0.45 + pasColorAssociation[i-1].nA + dfRatio *
-                    (pasColorAssociation[i].nA - pasColorAssociation[i-1].nA));
-            if (*pnA < 0) *pnA = 0;
-            else if (*pnA > 255) *pnA = 255;
-
-            return;
-        }
-        else if (i == nColorAssociation - 1 ||
-                 dfVal == pasColorAssociation[i].dfVal)
-        {
-            *pnR = pasColorAssociation[i].nR;
-            *pnG = pasColorAssociation[i].nG;
-            *pnB = pasColorAssociation[i].nB;
-            *pnA = pasColorAssociation[i].nA;
-            return;
-        }
+        *pnR = pasColorAssociation[i-1].nR;
+        *pnG = pasColorAssociation[i-1].nG;
+        *pnB = pasColorAssociation[i-1].nB;
+        *pnA = pasColorAssociation[i-1].nA;
+    }
+    else
+    {
+        double dfRatio = (dfVal - pasColorAssociation[i-1].dfVal) /
+            (pasColorAssociation[i].dfVal - pasColorAssociation[i-1].dfVal);
+        *pnR = (int)(0.45 + pasColorAssociation[i-1].nR + dfRatio *
+                (pasColorAssociation[i].nR - pasColorAssociation[i-1].nR));
+        if (*pnR < 0) *pnR = 0;
+        else if (*pnR > 255) *pnR = 255;
+        *pnG = (int)(0.45 + pasColorAssociation[i-1].nG + dfRatio *
+                (pasColorAssociation[i].nG - pasColorAssociation[i-1].nG));
+        if (*pnG < 0) *pnG = 0;
+        else if (*pnG > 255) *pnG = 255;
+        *pnB = (int)(0.45 + pasColorAssociation[i-1].nB + dfRatio *
+                (pasColorAssociation[i].nB - pasColorAssociation[i-1].nB));
+        if (*pnB < 0) *pnB = 0;
+        else if (*pnB > 255) *pnB = 255;
+        *pnA = (int)(0.45 + pasColorAssociation[i-1].nA + dfRatio *
+                (pasColorAssociation[i].nA - pasColorAssociation[i-1].nA));
+        if (*pnA < 0) *pnA = 0;
+        else if (*pnA > 255) *pnA = 255;
     }
 }
 
