@@ -894,6 +894,35 @@ def ogr_spatialite_2():
     return 'success'
 
 ###############################################################################
+# Test VirtualShape feature of SpatiaLite
+
+def ogr_spatialite_3():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds.ExecuteSQL( 'CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/testpoly, CP1252, -1)')
+    ds.Destroy()
+
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    lyr = ds.GetLayerByName('testpoly')
+    if lyr is None:
+        return 'fail'
+
+    lyr.SetSpatialFilterRect( -400, 22, -120, 400 )
+
+    tr = ogrtest.check_features_against_list( lyr, 'FID',
+                                              [ 0, 4, 8 ] )
+
+    ds.Destroy()
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -945,6 +974,7 @@ gdaltest_list = [
     ogr_sqlite_17,
     ogr_spatialite_1,
     ogr_spatialite_2,
+    ogr_spatialite_3,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
