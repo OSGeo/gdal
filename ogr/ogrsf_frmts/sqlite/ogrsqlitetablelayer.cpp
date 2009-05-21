@@ -43,8 +43,6 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
 {
     poDS = poDSIn;
 
-    pszQuery = NULL;
-
     bUpdateAccess = TRUE;
 
     iNextShapeId = 0;
@@ -61,7 +59,6 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
 OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 
 {
-    CPLFree( pszQuery );
     ClearStatement();
 }
 
@@ -74,7 +71,8 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                                         OGRwkbGeometryType eGeomType,
                                         const char *pszGeomFormat,
                                         OGRSpatialReference *poSRS,
-                                        int nSRSId )
+                                        int nSRSId,
+                                        int bHasSpatialIndex)
 
 {
     sqlite3 *hDB = poDS->GetDB();
@@ -101,6 +99,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 
     this->poSRS = poSRS;
     this->nSRSId = nSRSId;
+    this->bHasSpatialIndex = bHasSpatialIndex;
 
     if( poSRS )
         poSRS->Reference();
@@ -197,13 +196,9 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    if( pszQuery != NULL )
-        osSQL.Printf( "SELECT _rowid_, * FROM '%s' WHERE %s", 
-                      poFeatureDefn->GetName(), 
-                      pszQuery );
-    else
-        osSQL.Printf("SELECT _rowid_, * FROM '%s'", 
-                     poFeatureDefn->GetName() );
+    osSQL.Printf( "SELECT _rowid_, * FROM '%s' %s", 
+                    poFeatureDefn->GetName(), 
+                    osWHERE.c_str() );
 
     rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
 		          &hStmt, NULL );
@@ -286,22 +281,71 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
 OGRErr OGRSQLiteTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
-            && EQUAL(pszQuery,this->pszQuery)) )
-        return OGRERR_NONE;
-
-    CPLFree( this->pszQuery );
-    if( pszQuery == NULL || strlen(pszQuery) == 0 )
-        this->pszQuery = NULL;
+    if( pszQuery == NULL )
+        osQuery = "";
     else
-        this->pszQuery = CPLStrdup( pszQuery );
+        osQuery = pszQuery;
 
-    ClearStatement();
+    BuildWhere();
+
+    ResetReading();
 
     return OGRERR_NONE;
 }
 
+
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void OGRSQLiteTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+
+{
+    if( InstallFilter( poGeomIn ) )
+    {
+        BuildWhere();
+
+        ResetReading();
+    }
+}
+
+/************************************************************************/
+/*                             BuildWhere()                             */
+/*                                                                      */
+/*      Build the WHERE statement appropriate to the current set of     */
+/*      criteria (spatial and attribute queries).                       */
+/************************************************************************/
+
+void OGRSQLiteTableLayer::BuildWhere()
+
+{
+    osWHERE = "";
+
+    if( m_poFilterGeom != NULL && bHasSpatialIndex )
+    {
+        OGREnvelope  sEnvelope;
+
+        m_poFilterGeom->getEnvelope( &sEnvelope );
+        osWHERE.Printf("WHERE MBRWithin(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d)) ",
+                       osGeomColumn.c_str(),
+                       sEnvelope.MinX, sEnvelope.MinY,
+                       sEnvelope.MaxX, sEnvelope.MaxY,
+                       nSRSId);
+    }
+
+    if( strlen(osQuery) > 0 )
+    {
+        if( strlen(osWHERE) == 0 )
+        {
+            osWHERE.Printf( "WHERE %s ", osQuery.c_str()  );
+        }
+        else	
+        {
+            osWHERE += "AND ";
+            osWHERE += osQuery;
+        }
+    }
+}
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -311,7 +355,8 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
 
 {
     if (EQUAL(pszCap,OLCFastFeatureCount))
-        return m_poFilterGeom == NULL || osGeomColumn.size() == 0;
+        return m_poFilterGeom == NULL || osGeomColumn.size() == 0 ||
+               bHasSpatialIndex;
 
     else if( EQUAL(pszCap,OLCSequentialWrite) 
              || EQUAL(pszCap,OLCRandomWrite) )
@@ -336,7 +381,7 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
 int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom != NULL && osGeomColumn.size() != 0 )
+    if( !TestCapability(OLCFastFeatureCount) )
         return OGRSQLiteLayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */
@@ -344,12 +389,8 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
     const char *pszSQL;
 
-    if( pszQuery != NULL )
-        pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s' WHERE %s",
-                             poFeatureDefn->GetName(), pszQuery );
-    else
-        pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s'",
-                             poFeatureDefn->GetName() );
+    pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s' %s",
+                            poFeatureDefn->GetName(), osWHERE.c_str() );
 
 /* -------------------------------------------------------------------- */
 /*      Execute.                                                        */
