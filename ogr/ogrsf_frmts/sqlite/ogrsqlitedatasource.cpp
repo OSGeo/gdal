@@ -667,6 +667,74 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             sqlite3_free( pszErrMsg );
             return FALSE;
         }
+
+/* -------------------------------------------------------------------- */
+/*      Create the spatial index.                                       */
+/*                                                                      */
+/*      We're doing this before we add geometry and record to the table */
+/*      so this may not be exactly the best way to do it.               */
+/* -------------------------------------------------------------------- */
+#ifdef HAVE_SPATIALITE
+        /* Only if linked against SpatiaLite and the datasource was created as a SpatiaLite DB */
+        if ( bIsSpatiaLite )
+#else
+        if ( 0 )
+#endif
+        {
+            const char* pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+            if( pszSI == NULL || CSLTestBoolean(pszSI) )
+            {
+                osCommand.Printf("SELECT CreateSpatialIndex('%s', '%s')",
+                                 pszLayerName, pszGeomCol);
+
+            /* -------------------------------------------------------------------- */
+            /*      Prepare statement.                                              */
+            /* -------------------------------------------------------------------- */
+                int rc;
+                sqlite3_stmt *hSQLStmt = NULL;
+
+                rc = sqlite3_prepare( GetDB(), osCommand, strlen(osCommand),
+                                      &hSQLStmt, NULL );
+
+                if( rc != SQLITE_OK )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                            "In CreateLayer(): sqlite3_prepare(%s):\n  %s", 
+                            osCommand.c_str(), sqlite3_errmsg(GetDB()) );
+                }
+                else
+                {
+                    /* -------------------------------------------------------------------- */
+                    /*      Do we get a resultset?                                          */
+                    /* -------------------------------------------------------------------- */
+                    rc = sqlite3_step( hSQLStmt );
+                    if( rc != SQLITE_ROW )
+                    {
+                        if ( rc != SQLITE_DONE )
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined, 
+                                "In CreateLayer(): sqlite3_step(%s):\n  %s", 
+                                osCommand.c_str(), sqlite3_errmsg(GetDB()) );
+                        }
+                    }
+                    else
+                    {
+                        if (sqlite3_column_count(hSQLStmt) != 1 &&
+                            sqlite3_column_int(hSQLStmt, 0) != 1)
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined, 
+                                "In CreateLayer(): sqlite3_step(%s): did not get expected result", 
+                                osCommand.c_str() );
+                        }
+                    }
+                }
+
+                if( hSQLStmt != NULL )
+                {
+                    sqlite3_finalize( hSQLStmt );
+                }
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
