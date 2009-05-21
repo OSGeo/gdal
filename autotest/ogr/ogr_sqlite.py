@@ -818,7 +818,9 @@ def ogr_spatialite_1():
         return 'skip'
 
     ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
+    gdal.PopErrorHandler()
     if sql_lyr is None:
         res = 'skip'
     else:
