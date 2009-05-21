@@ -10,6 +10,6 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 $(O_OBJ):	../raw/rawdataset.h
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))

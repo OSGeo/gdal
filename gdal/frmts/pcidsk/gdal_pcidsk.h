@@ -61,6 +61,7 @@ class PCIDSKDataset : public RawDataset
     vsi_l_offset        nGcpOffset;     // Offset in bytes to the GCP segment
 
     int                 bGeoSegmentDirty;
+    int		        bGeoTransformValid;
 
     int                 nBlockMapSeg;
 
@@ -199,9 +200,18 @@ class PCIDSKRawRasterBand : public RawRasterBand
         CPLFree( papoOverviews );
     }
 
-    virtual int GetOverviewCount() { return nOverviewCount; }
-    virtual GDALRasterBand *GetOverview(int iOverview)
-        { return papoOverviews[iOverview]; }
+    virtual int GetOverviewCount() { 
+        if (nOverviewCount > 0)
+            return nOverviewCount; 
+
+        return RawRasterBand::GetOverviewCount();
+    }
+    virtual GDALRasterBand *GetOverview(int iOverview) { 
+        if (iOverview < nOverviewCount)
+            return papoOverviews[iOverview]; 
+
+        return RawRasterBand::GetOverview(iOverview);
+    }
 };
 
 
