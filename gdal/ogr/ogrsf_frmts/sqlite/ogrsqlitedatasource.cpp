@@ -270,6 +270,31 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
         sqlite3_free_table(papszResult);
 
+#ifdef HAVE_SPATIALITE
+/* -------------------------------------------------------------------- */
+/*      Detect VirtualShape layers                                      */
+/* -------------------------------------------------------------------- */
+        rc = sqlite3_get_table( hDB,
+                            "SELECT name FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE % USING %VirtualShape%'",
+                            &papszResult, &nRowCount, 
+                            &nColCount, &pszErrMsg );
+
+        if ( rc == SQLITE_OK )
+        {
+            for( iRow = 0; iRow < nRowCount; iRow++ )
+                OpenTable( papszResult[iRow+1] );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Unable to fetch list of tables: %s", 
+                    pszErrMsg );
+            sqlite3_free( pszErrMsg );
+        }
+
+        sqlite3_free_table(papszResult);
+#endif
+
         return TRUE;
     }
 
