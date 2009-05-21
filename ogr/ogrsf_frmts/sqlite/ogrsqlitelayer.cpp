@@ -254,7 +254,13 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     rc = sqlite3_step( hStmt );
     if( rc != SQLITE_ROW )
     {
-        // we really should check for errors 
+        if ( rc != SQLITE_DONE )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "In GetNextRawFeature(): sqlite3_step() : %s", 
+                    sqlite3_errmsg(poDS->GetDB()) );
+        }
+
         ClearStatement();
 
         return NULL;
