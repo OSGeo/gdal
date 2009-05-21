@@ -232,11 +232,13 @@ void XMLCALL KML::startElement(void* pUserData, const char* pszName, const char*
 void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, const char** ppszAttr)
 {
     int i = 0;
-    
-    if (((KML *)pUserData)->validity != KML_VALIDITY_UNKNOWN)
+
+    KML* poKML = (KML*) pUserData;
+
+    if (poKML->validity != KML_VALIDITY_UNKNOWN)
         return;
 
-    ((KML *)pUserData)->validity = KML_VALIDITY_INVALID;
+    poKML->validity = KML_VALIDITY_INVALID;
 
     if(strcmp(pszName, "kml") == 0)
     {
@@ -248,22 +250,35 @@ void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, con
             {
                 // Is it KML 2.2?
                 if((strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.2") == 0) || 
-				   (strcmp(ppszAttr[i + 1], "http://www.opengis.net/kml/2.2") == 0))
+                   (strcmp(ppszAttr[i + 1], "http://www.opengis.net/kml/2.2") == 0))
                 {
-                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                    ((KML *)pUserData)->sVersion_ = "2.2";
+                    poKML->validity = KML_VALIDITY_VALID;
+                    poKML->sVersion_ = "2.2";
                 }
                 else if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.1") == 0)
                 {
-                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                    ((KML *)pUserData)->sVersion_ = "2.1";
+                    poKML->validity = KML_VALIDITY_VALID;
+                    poKML->sVersion_ = "2.1";
                 }
                 else if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.0") == 0)
                 {
-                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                    ((KML *)pUserData)->sVersion_ = "2.0";
+                    poKML->validity = KML_VALIDITY_VALID;
+                    poKML->sVersion_ = "2.0";
+                }
+                else
+                {
+                    CPLDebug("KML", "Unhandled xmlns value : %s. Going on though...", ppszAttr[i]);
+                    poKML->validity = KML_VALIDITY_VALID;
+                    poKML->sVersion_ = "?";
                 }
             }
+        }
+
+        if (poKML->validity == KML_VALIDITY_INVALID)
+        {
+            CPLDebug("KML", "Did not find xmlns attribute in <kml> element. Going on though...");
+            poKML->validity = KML_VALIDITY_VALID;
+            poKML->sVersion_ = "?";
         }
     }
 }
