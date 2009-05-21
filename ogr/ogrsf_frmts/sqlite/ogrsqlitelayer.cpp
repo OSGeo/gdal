@@ -57,6 +57,7 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     panFieldOrdinals = NULL;
 
     bTriedAsSpatiaLite = FALSE;
+    bHasSpatialIndex = FALSE;
 }
 
 /************************************************************************/
@@ -129,7 +130,9 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
         // Recognise some common geometry column names.
         if( (EQUAL(oField.GetNameRef(),"wkt_geometry") 
-             || EQUAL(oField.GetNameRef(),"geometry"))
+             || EQUAL(oField.GetNameRef(),"geometry")
+             || EQUALN(oField.GetNameRef(), "asbinary(", 9)
+             || EQUALN(oField.GetNameRef(), "astext(", 7))
             && osGeomColumn.size() == 0 )
         {
             if( sqlite3_column_type( hStmt, iCol ) == SQLITE_BLOB )

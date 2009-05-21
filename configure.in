@@ -1806,19 +1806,55 @@ AC_SUBST(CURL_INC,    $CURL_INC)
 AC_SUBST(CURL_LIB,    $CURL_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for SQLite.
+dnl Check for SpatiaLite.
 dnl ---------------------------------------------------------------------------
 
-SQLITE3_REQ_VERSION="3.0.0"
-AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
+AC_ARG_WITH(spatialite,
+    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no or path)],
+    ,,)
 
-if test "$HAVE_SQLITE3" = "yes"; then
-    LIBS="$SQLITE3_LDFLAGS $LIBS"
+if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
+    AC_MSG_RESULT(disabled)
+    HAVE_SPATIALITE=no
+else
+    AC_MSG_CHECKING(for SpatiaLite)
+    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
+    if test -f "$with_spatialite/include/spatialite.h" -a \
+        -f "$with_spatialite/include/spatialite/sqlite3.h" -a \
+        "$SPATIALITE_INIT_FOUND" = "yes"; then
+
+        AC_MSG_RESULT(enabled)
+        HAVE_SPATIALITE=yes
+
+        # SpatiaLite availability implies SQLite availability
+        SQLITE3_CFLAGS="-I$with_spatialite/include -I$with_spatialite/include/spatialite"
+        LIBS="$LIBS -L$with_spatialite/lib -lspatialite"
+        HAVE_SQLITE3=yes
+    else
+        AC_MSG_RESULT(disabled)
+        HAVE_SPATIALITE=no
+    fi
+fi
+
+AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for SQLite (only if SpatiaLite is not detected)
+dnl ---------------------------------------------------------------------------
+
+if test "${HAVE_SPATIALITE}" = "no" ; then
+    SQLITE3_REQ_VERSION="3.0.0"
+    AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
+
+    if test "$HAVE_SQLITE3" = "yes"; then
+        LIBS="$SQLITE3_LDFLAGS $LIBS"
+    fi
 fi
 
 AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
 AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
 HAVE_SQLITE=$HAVE_SQLITE3
+
 
 dnl ---------------------------------------------------------------------------
 dnl Check for DWGdirect.
@@ -2357,6 +2393,7 @@ LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
 LOC_MSG([  SDE support:               ${SDE_ENABLED}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
+LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
