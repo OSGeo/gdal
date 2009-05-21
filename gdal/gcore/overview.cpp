@@ -990,18 +990,19 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                           NULL, pProgressData ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            return CE_Failure;
+            eErr = CE_Failure;
         }
 
         if( nFullResYChunk + nChunkYOff > poSrcBand->GetYSize() )
             nFullResYChunk = poSrcBand->GetYSize() - nChunkYOff;
         
         /* read chunk */
-        poSrcBand->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
+        if (eErr == CE_None)
+            eErr = poSrcBand->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
                                 pafChunk, nWidth, nFullResYChunk, eType,
                                 0, 0 );
-        if (bUseNoDataMask)
-            poSrcBand->GetMaskBand()->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
+        if (eErr == CE_None && bUseNoDataMask)
+            eErr = poSrcBand->GetMaskBand()->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
                                 pabyChunkNodataMask, nWidth, nFullResYChunk, GDT_Byte,
                                 0, 0 );
 
@@ -1053,7 +1054,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Renormalized overview mean / stddev if needed.                  */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszResampling,"AVERAGE_MP") )
+    if( eErr == CE_None && EQUAL(pszResampling,"AVERAGE_MP") )
     {
         GDALOverviewMagnitudeCorrection( (GDALRasterBandH) poSrcBand, 
                                          nOverviewCount, 
@@ -1321,7 +1322,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                               NULL, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                return CE_Failure;
+                eErr = CE_Failure;
             }
 
             int nChunkXOff;
