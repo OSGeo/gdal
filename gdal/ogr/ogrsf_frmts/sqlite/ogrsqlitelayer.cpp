@@ -202,6 +202,32 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 }
 
 /************************************************************************/
+/*                            GetFIDColumn()                            */
+/************************************************************************/
+
+const char *OGRSQLiteLayer::GetFIDColumn() 
+
+{
+    if( pszFIDColumn != NULL )
+        return pszFIDColumn;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                         GetGeometryColumn()                          */
+/************************************************************************/
+
+const char *OGRSQLiteLayer::GetGeometryColumn() 
+
+{
+    if( osGeomColumn.size() != 0 )
+        return osGeomColumn.c_str();
+    else
+        return "";
+}
+
+/************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
 
