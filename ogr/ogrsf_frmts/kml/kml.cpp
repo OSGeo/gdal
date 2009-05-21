@@ -317,9 +317,6 @@ void XMLCALL KML::dataHandlerValidate(void * pUserData, const char * pszData, in
 void XMLCALL KML::endElement(void* pUserData, const char* pszName)
 {
     KMLNode* poTmp = NULL;
-    std::string sData;
-    std::string sTmp;
-    unsigned short nPos = 0;
 
     KML* poKML = (KML*) pUserData;
 
@@ -333,29 +330,31 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
         // Split the coordinates
         if(poKML->poCurrent_->getName().compare("coordinates") == 0)
         {
-            sData = poKML->poCurrent_->getContent(0);
-            while(sData.length() > 0)
+            std::string sData = poKML->poCurrent_->getContent(0);
+            std::size_t nPos = 0;
+            std::size_t nLength = sData.length();
+            while(TRUE)
             {
                 // Cut off whitespaces
-                while((sData[nPos] == ' ' || sData[nPos] == '\n'
+                while(nPos < nLength &&
+                      (sData[nPos] == ' ' || sData[nPos] == '\n'
                     || sData[nPos] == '\r' || 
-                        sData[nPos] == '\t' ) && sData.length() > 0)
-                    sData = sData.substr(1, sData.length()-1);
+                        sData[nPos] == '\t' ))
+                    nPos ++;
+
+                if (nPos == nLength)
+                    break;
+
+                std::size_t nPosBegin = nPos;
 
                 // Get content
-                while(sData[nPos] != ' ' && sData[nPos] != '\n' && sData[nPos] != '\r' && 
-                      sData[nPos] != '\t' && nPos < sData.length()) 
+                while(nPos < nLength &&
+                      sData[nPos] != ' ' && sData[nPos] != '\n' && sData[nPos] != '\r' && 
+                      sData[nPos] != '\t')
                     nPos++;
-                sTmp = sData.substr(0, nPos);
 
-                if(sTmp.length() > 0)
-                    poKML->poCurrent_->addContent(sTmp);
-                // Cut the content from the rest
-                if(nPos < sData.length())
-                    sData = sData.substr(nPos, sData.length() - nPos);
-                else
-                    break;
-                nPos = 0;
+                if(nPos - nPosBegin > 0)
+                    poKML->poCurrent_->addContent(sData.substr(nPosBegin, nPos - nPosBegin));
             }
             if(poKML->poCurrent_->numContent() > 1)
                 poKML->poCurrent_->deleteContent(0);
