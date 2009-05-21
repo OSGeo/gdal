@@ -194,17 +194,6 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
 }
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-char **HDF5Dataset::GetMetadata( const char *pszDomain )
-{
-    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
-        return papszSubDatasets;
-    else
-        return GDALPamDataset::GetMetadata( pszDomain );
-}
- 
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
@@ -255,6 +244,24 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetMetadata( poDS->papszMetadata  );
     
+    if ( CSLCount( poDS->papszSubDatasets ) / 2 >= 1 )
+        poDS->SetMetadata( poDS->papszSubDatasets, "SUBDATASETS" );
+
+    // Make sure we don't try to do any pam stuff with this dataset.
+    poDS->nPamFlags |= GPF_NOSAVE;
+
+/* -------------------------------------------------------------------- */
+/*      If we have single subdataset only, open it immediately          */
+/* -------------------------------------------------------------------- */
+    int nSubDatasets = CSLCount( poDS->papszSubDatasets ) / 2;
+    if( nSubDatasets == 1 )
+    {
+        CPLString osDSName = CSLFetchNameValue( poDS->papszSubDatasets,
+                                                "SUBDATASET_1_NAME" );
+        delete poDS;
+        return (GDALDataset *) GDALOpen( osDSName, poOpenInfo->eAccess );
+    }
+
     return( poDS );
 }
 

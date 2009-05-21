@@ -93,8 +93,6 @@ class HDF5Dataset : public GDALPamDataset
   HDF5Dataset();
   ~HDF5Dataset();
     
-  virtual char **GetMetadata(const char * pszDomain = "");
-
   static GDALDataset *Open(GDALOpenInfo *);
 
 };
