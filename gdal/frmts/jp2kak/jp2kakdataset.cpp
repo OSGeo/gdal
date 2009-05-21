@@ -1454,6 +1454,11 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         poDS->PamOverride();
 
+        if( !poDS->bGeoTransformValid )
+            poDS->bGeoTransformValid = 
+                GDALReadWorldFile( poOpenInfo->pszFilename, 0, 
+                                   poDS->adfGeoTransform );
+
         return( poDS );
     }
 
@@ -2342,13 +2347,26 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     if( CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ) != NULL )
-        nTileXSize = MIN(nXSize,
-                         atoi(CSLFetchNameValue( papszOptions, "BLOCKXSIZE")));
+        nTileXSize = atoi(CSLFetchNameValue( papszOptions, "BLOCKXSIZE"));
 
     if( CSLFetchNameValue( papszOptions, "BLOCKYSIZE" ) != NULL )
-        nTileYSize = MIN(nYSize,
-                         atoi(CSLFetchNameValue( papszOptions, "BLOCKYSIZE")));
+        nTileYSize = atoi(CSLFetchNameValue( papszOptions, "BLOCKYSIZE"));
 
+/* -------------------------------------------------------------------- */
+/*      Avoid splitting into too many tiles - apparently limiting to    */
+/*      64K tiles.  There is a hard limit on the number of tiles        */
+/*      allowed in JPEG2000.                                            */
+/* -------------------------------------------------------------------- */
+    while( (double)nXSize*(double)nYSize
+           / (double)nTileXSize / (double)nTileYSize / 1024.0 >= 64.0 )
+    {
+        nTileXSize *= 2;
+        nTileYSize *= 2;
+    }
+
+    if( nTileXSize > nXSize ) nTileXSize = nXSize;
+    if( nTileYSize > nYSize ) nTileYSize = nYSize;
+      
 /* -------------------------------------------------------------------- */
 /*      Do we want a comment segment emitted?                           */
 /* -------------------------------------------------------------------- */
