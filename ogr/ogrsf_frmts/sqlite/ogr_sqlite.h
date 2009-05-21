@@ -114,6 +114,9 @@ class OGRSQLiteLayer : public OGRLayer
 
     virtual OGRSpatialReference *GetSpatialRef();
 
+    virtual const char *GetFIDColumn();
+    virtual const char *GetGeometryColumn();
+
     virtual int         TestCapability( const char * );
 
     virtual sqlite3_stmt        *GetStatement() { return hStmt; }
