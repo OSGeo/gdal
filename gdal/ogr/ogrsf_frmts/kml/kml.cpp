@@ -284,7 +284,20 @@ void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, con
                     poKML->validity = KML_VALIDITY_VALID;
                     poKML->sVersion_ = "2.0";
                 }
+                else
+                {
+                    CPLDebug("KML", "Unhandled xmlns value : %s. Going on though...", ppszAttr[i]);
+                    poKML->validity = KML_VALIDITY_VALID;
+                    poKML->sVersion_ = "?";
+                }
             }
+        }
+
+        if (poKML->validity == KML_VALIDITY_INVALID)
+        {
+            CPLDebug("KML", "Did not find xmlns attribute in <kml> element. Going on though...");
+            poKML->validity = KML_VALIDITY_VALID;
+            poKML->sVersion_ = "?";
         }
     }
 }
