@@ -1533,6 +1533,259 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     return poDS;
 }
 
+/************************************************************************/
+/*                  WriteGENFile_Header()                               */
+/************************************************************************/
+
+static void WriteGENFile_Header(FILE* fd)
+{
+    int nFields = 0;
+    int sizeOfFields[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, };
+    const char* nameOfFields[] = { "000", "001", "DRF", "DSI", "OVI", "GEN", "SPR", "BDF", "TIM" };
+    int pos = BeginHeader(fd, 3, 4, 3, N_ELEMENTS(sizeOfFields));
+
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, ' ', ' ', "GENERAL_INFORMATION_FILE", "", ""); /* 000 */
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '0', "RECORD_ID_FIELD", /* 001 */
+                                                "RTY!RID",
+                                                "(A(3),A(2))");
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '1', "DATA_SET_DESCRIPTION_FIELD", /* DRF */
+                                                "NSH!NSV!NOZ!NOS",
+                                                "(4I(2))");
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '0', "DATA_SET-ID_FIELD", /* DSI */
+                                                "PRT!NAM",
+                                                "(A(4),A(8))");
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '6', "OVERVIEW_INFORMATION_FIELD", /* OVI */
+                                                "STR!ARV!BRV!LSO!PSO",
+                                                "(I(1),I(8),I(8),A(11),A(10))");
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '6', "GENERAL_INFORMATION_FIELD", /* GEN */
+                                                "STR!LOD!LAD!UNIloa!SWO!SWA!NWO!NWA!NEO!NEA!SEO!SEA!SCA!ZNA!PSP!IMR!ARV!BRV!LSO!PSO!TXT",
+                                                "(I(1),2R(6),I(3),A(11),A(10),A(11),A(10),A(11),A(10),A(11),A(10),I(9),I(2),R(5),A(1),2I(8),A(11),A(10),A(64))");
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '6', "DATA_SET_PARAMETERS_FIELD", /* SPR */
+                                                "NUL!NUS!NLL!NLS!NFL!NFC!PNC!PNL!COD!ROD!POR!PCB!PVB!BAD!TIF",
+                                                "(4I(6),2I(3),2I(6),5I(1),A(12),A(1))");
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, '2', '6', "BAND_ID_FIELD", /* BDF */
+                                                "*BID!WS1!WS2",
+                                                "(A(5),I(5),I(5))");
+    sizeOfFields[nFields++] += WriteFieldDecl(fd, '2', '1', "TILE_INDEX_MAP_FIELD", /* TIM */
+                                                "*TSI",
+                                                "(I(5))");
+    
+    FinishWriteHeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
+}
+
+/************************************************************************/
+/*            WriteGENFile_DataSetDescriptionRecord()                   */
+/************************************************************************/
+
+/* Write DATA_SET_DESCRIPTION_RECORD */
+static void WriteGENFile_DataSetDescriptionRecord(FILE* fd)
+{
+    int nFields = 0;
+    int sizeOfFields[] = {0, 0};
+    const char* nameOfFields[] = { "001", "DRF" };
+    int pos = BeginLeader(fd, 3, 4, 3, N_ELEMENTS(sizeOfFields));
+
+    /* Field 001 */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "DSS", 3); /* RTY */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "01", 2); /* RID */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+
+    /* Field DRF */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NSH */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NSV */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOZ */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOS */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+
+    FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
+}
+
+/************************************************************************/
+/*                    WriteGENFile_OverviewRecord()                     */
+/************************************************************************/
+
+/* Write OVERVIEW_RECORD */
+static void WriteGENFile_OverviewRecord(FILE* fd, CPLString& osBaseFileName, int ARV, int BRV, double LSO, double PSO,
+                                        int nOvSizeX, int nOvSizeY, int NFL, int NFC, int* TILEINDEX)
+{
+    int nFields = 0;
+    int sizeOfFields[] = {0, 0, 0, 0, 0, 0};
+    const char* nameOfFields[] = { "001", "DSI", "OVI", "SPR", "BDF", "TIM" };
+    int pos = BeginLeader(fd, 9, 9, 3, N_ELEMENTS(sizeOfFields));
+    
+    /* Field 001 */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "OVV", 3); /* RTY */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "01", 2); /* RID */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+
+    /* Field DSI */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "ADRG", 4); /* PRT */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+    
+    /* Field OVI */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 3, 1); /* STR */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, ARV, 8); /* ARV */   /* FIXME */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, BRV, 8); /* BRV */   /* FIXME */
+    sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* LSO */   /* FIXME */
+    sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* PSO */    /* FIXME */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+    
+    /* Field SPR */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 6); /* NUL */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, nOvSizeX-1, 6); /* NUS */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, nOvSizeY-1, 6); /* NLL */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 6); /* NLS */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, (nOvSizeY + 127) / 128, 3); /* NFL */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, (nOvSizeX + 127) / 128, 3); /* NFC */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 128, 6); /* PNC */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 128, 6); /* PNL */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* COD */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 1); /* ROD */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* POR */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* PCB */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 8, 1); /* PVB */
+    char tmp[12+1];
+    sprintf(tmp, "%s.IMG", osBaseFileName.c_str()); /* FIXME */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 12); /* BAD */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "Y", 1); /* TIF */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+    
+    /* Field BDF */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "Red", 5); /* BID */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "Green", 5); /* BID */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "Blue", 5); /* BID */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+    
+    /* Field TIM */
+    int i;
+    for(i=0;i<NFL*NFC;i++)
+    {
+        sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5); /* TSI */
+    }
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+    
+    FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
+}
+
+/************************************************************************/
+/*              WriteGENFile_GeneralInformationRecord()                 */
+/************************************************************************/
+
+/* Write GENERAL_INFORMATION_RECORD */
+static void WriteGENFile_GeneralInformationRecord(FILE* fd, CPLString& osBaseFileName,
+                                                  int ARV, int BRV, double LSO, double PSO,
+                                                  double* adfGeoTransform, int SCA,
+                                                  int nRasterXSize, int nRasterYSize,
+                                                  int NFL, int NFC, int* TILEINDEX)
+
+{
+    int nFields = 0;
+    int sizeOfFields[] = {0, 0, 0, 0, 0, 0};
+    const char* nameOfFields[] = { "001", "DSI", "GEN", "SPR", "BDF", "TIM" };
+    int pos = BeginLeader(fd, 9, 9, 3, N_ELEMENTS(sizeOfFields));
+    
+    /* Field 001 */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "GIN", 3); /* RTY */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "01", 2); /* RID */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+
+    /* Field DSI */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "ADRG", 4); /* PRT */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+    
+    /* Field `GEN */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 3, 1); /* STR */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "0099.9", 6); /* LOD */   /* FIXME */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "0099.9", 6); /* LAD */   /* FIXME */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 16, 3); /* UNIloa */   /* FIXME */
+    sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* SWO */
+    sizeOfFields[nFields] += WriteLatitude(fd, PSO + nRasterYSize * adfGeoTransform[5]); /* SWA */
+    sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* NWO */
+    sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* NWA */
+    sizeOfFields[nFields] += WriteLongitude(fd, LSO + nRasterXSize * adfGeoTransform[1]); /* NEO */
+    sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* NEA */
+    sizeOfFields[nFields] += WriteLongitude(fd, LSO + nRasterXSize * adfGeoTransform[1]); /* SEO */
+    sizeOfFields[nFields] += WriteLatitude(fd, PSO + nRasterYSize * adfGeoTransform[5]); /* SEA */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, SCA, 9); /* SCA */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* ZNA */  /* FIXME */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "100.0", 5); /* PSP */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "N", 1); /* IMR */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, ARV, 8); /* ARV */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, BRV, 8); /* BRV */
+    sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* LSO */
+    sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* PSO */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "", 64); /* TXT */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+
+    /* Field SPR */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 6); /* NUL */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, nRasterXSize-1, 6); /* NUS */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, nRasterYSize-1, 6); /* NLL */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 6); /* NLS */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, (nRasterYSize + 127) / 128, 3); /* NFL */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, (nRasterXSize + 127) / 128, 3); /* NFC */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 128, 6); /* PNC */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 128, 6); /* PNL */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* COD */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 1); /* ROD */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* POR */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* PCB */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 8, 1); /* PVB */
+    char tmp[12+1];
+    sprintf(tmp, "%s.IMG", osBaseFileName.c_str());
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 12); /* BAD */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "Y", 1); /* TIF */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+    
+    /* Field BDF */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "Red", 5); /* BID */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "Green", 5); /* BID */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
+    sizeOfFields[nFields] += WriteSubFieldStr(fd, "Blue", 5); /* BID */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
+    sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+    
+    /* Field TIM */
+    int i;
+    for(i=0;i<NFL*NFC;i++)
+    {
+        sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5); /* TSI */
+    }
+    sizeOfFields[nFields] += WriteFieldTerminator(fd);
+    nFields++;
+
+    FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
+}
+
+/************************************************************************/
+/*                        WriteGENFile()                                */
+/************************************************************************/
+
 void ADRGDataset::WriteGENFile()
 {
     if (!bGeoTransformValid)
@@ -1557,232 +1810,24 @@ void ADRGDataset::WriteGENFile()
     int nOvSizeX = nRasterXSize; // FIXME
     int nOvSizeY = nRasterYSize; // FIXME
 
-    FILE* fd = fdGEN;
-
     /* Write header */
-    {
-        int nFields = 0;
-        int sizeOfFields[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, };
-        const char* nameOfFields[] = { "000", "001", "DRF", "DSI", "OVI", "GEN", "SPR", "BDF", "TIM" };
-        int pos = BeginHeader(fd, 3, 4, 3, N_ELEMENTS(sizeOfFields));
-
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, ' ', ' ', "GENERAL_INFORMATION_FILE", "", ""); /* 000 */
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '0', "RECORD_ID_FIELD", /* 001 */
-                                                  "RTY!RID",
-                                                  "(A(3),A(2))");
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '1', "DATA_SET_DESCRIPTION_FIELD", /* DRF */
-                                                  "NSH!NSV!NOZ!NOS",
-                                                  "(4I(2))");
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '0', "DATA_SET-ID_FIELD", /* DSI */
-                                                  "PRT!NAM",
-                                                  "(A(4),A(8))");
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '6', "OVERVIEW_INFORMATION_FIELD", /* OVI */
-                                                  "STR!ARV!BRV!LSO!PSO",
-                                                  "(I(1),I(8),I(8),A(11),A(10))");
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '6', "GENERAL_INFORMATION_FIELD", /* GEN */
-                                                  "STR!LOD!LAD!UNIloa!SWO!SWA!NWO!NWA!NEO!NEA!SEO!SEA!SCA!ZNA!PSP!IMR!ARV!BRV!LSO!PSO!TXT",
-                                                  "(I(1),2R(6),I(3),A(11),A(10),A(11),A(10),A(11),A(10),A(11),A(10),I(9),I(2),R(5),A(1),2I(8),A(11),A(10),A(64))");
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '6', "DATA_SET_PARAMETERS_FIELD", /* SPR */
-                                                  "NUL!NUS!NLL!NLS!NFL!NFC!PNC!PNL!COD!ROD!POR!PCB!PVB!BAD!TIF",
-                                                  "(4I(6),2I(3),2I(6),5I(1),A(12),A(1))");
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, '2', '6', "BAND_ID_FIELD", /* BDF */
-                                                  "*BID!WS1!WS2",
-                                                  "(A(5),I(5),I(5))");
-        sizeOfFields[nFields++] += WriteFieldDecl(fd, '2', '1', "TILE_INDEX_MAP_FIELD", /* TIM */
-                                                  "*TSI",
-                                                  "(I(5))");
-        
-        FinishWriteHeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
-    }
+    WriteGENFile_Header(fdGEN);
 
     /* Write DATA_SET_DESCRIPTION_RECORD */
-    {
-        int nFields = 0;
-        int sizeOfFields[] = {0, 0};
-        const char* nameOfFields[] = { "001", "DRF" };
-        int pos = BeginLeader(fd, 3, 4, 3, N_ELEMENTS(sizeOfFields));
+    WriteGENFile_DataSetDescriptionRecord(fdGEN);
 
-        /* Field 001 */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "DSS", 3); /* RTY */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "01", 2); /* RID */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-
-        /* Field DRF */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NSH */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NSV */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOZ */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOS */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-
-        FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
-    }
-    
     /* Write OVERVIEW_RECORD */
-    {
-        int nFields = 0;
-        int sizeOfFields[] = {0, 0, 0, 0, 0, 0};
-        const char* nameOfFields[] = { "001", "DSI", "OVI", "SPR", "BDF", "TIM" };
-        int pos = BeginLeader(fd, 9, 9, 3, N_ELEMENTS(sizeOfFields));
-        
-        /* Field 001 */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "OVV", 3); /* RTY */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "01", 2); /* RID */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+    WriteGENFile_OverviewRecord(fdGEN, osBaseFileName, ARV, BRV, LSO, PSO,
+                                nOvSizeX, nOvSizeY, NFL, NFC, TILEINDEX);
 
-        /* Field DSI */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "ADRG", 4); /* PRT */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-        
-        /* Field OVI */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 3, 1); /* STR */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, ARV, 8); /* ARV */   /* FIXME */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, BRV, 8); /* BRV */   /* FIXME */
-        sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* LSO */   /* FIXME */
-        sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* PSO */    /* FIXME */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-        
-        /* Field SPR */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 6); /* NUL */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, nOvSizeX-1, 6); /* NUS */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, nOvSizeY-1, 6); /* NLL */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 6); /* NLS */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, (nOvSizeY + 127) / 128, 3); /* NFL */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, (nOvSizeX + 127) / 128, 3); /* NFC */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 128, 6); /* PNC */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 128, 6); /* PNL */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* COD */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 1); /* ROD */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* POR */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* PCB */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 8, 1); /* PVB */
-        char tmp[12+1];
-        sprintf(tmp, "%s.IMG", osBaseFileName.c_str()); /* FIXME */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 12); /* BAD */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "Y", 1); /* TIF */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-        
-        /* Field BDF */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "Red", 5); /* BID */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "Green", 5); /* BID */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "Blue", 5); /* BID */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-        
-        /* Field TIM */
-        int i;
-        for(i=0;i<NFL*NFC;i++)
-        {
-            sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5); /* TSI */
-        }
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-        
-        FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
-    }
-    
     /* Write GENERAL_INFORMATION_RECORD */
-    {
-        int nFields = 0;
-        int sizeOfFields[] = {0, 0, 0, 0, 0, 0};
-        const char* nameOfFields[] = { "001", "DSI", "GEN", "SPR", "BDF", "TIM" };
-        int pos = BeginLeader(fd, 9, 9, 3, N_ELEMENTS(sizeOfFields));
-        
-        /* Field 001 */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "GIN", 3); /* RTY */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "01", 2); /* RID */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-
-        /* Field DSI */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "ADRG", 4); /* PRT */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-        
-        /* Field `GEN */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 3, 1); /* STR */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "0099.9", 6); /* LOD */   /* FIXME */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "0099.9", 6); /* LAD */   /* FIXME */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 16, 3); /* UNIloa */   /* FIXME */
-        sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* SWO */
-        sizeOfFields[nFields] += WriteLatitude(fd, PSO + nRasterYSize * adfGeoTransform[5]); /* SWA */
-        sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* NWO */
-        sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* NWA */
-        sizeOfFields[nFields] += WriteLongitude(fd, LSO + nRasterXSize * adfGeoTransform[1]); /* NEO */
-        sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* NEA */
-        sizeOfFields[nFields] += WriteLongitude(fd, LSO + nRasterXSize * adfGeoTransform[1]); /* SEO */
-        sizeOfFields[nFields] += WriteLatitude(fd, PSO + nRasterYSize * adfGeoTransform[5]); /* SEA */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, SCA, 9); /* SCA */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* ZNA */  /* FIXME */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "100.0", 5); /* PSP */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "N", 1); /* IMR */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, ARV, 8); /* ARV */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, BRV, 8); /* BRV */
-        sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* LSO */
-        sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* PSO */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "", 64); /* TXT */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-
-        /* Field SPR */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 6); /* NUL */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, nRasterXSize-1, 6); /* NUS */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, nRasterYSize-1, 6); /* NLL */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 6); /* NLS */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, (nRasterYSize + 127) / 128, 3); /* NFL */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, (nRasterXSize + 127) / 128, 3); /* NFC */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 128, 6); /* PNC */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 128, 6); /* PNL */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* COD */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 1); /* ROD */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* POR */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* PCB */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 8, 1); /* PVB */
-        char tmp[12+1];
-        sprintf(tmp, "%s.IMG", osBaseFileName.c_str());
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 12); /* BAD */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "Y", 1); /* TIF */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-        
-        /* Field BDF */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "Red", 5); /* BID */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "Green", 5); /* BID */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, "Blue", 5); /* BID */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-        
-        /* Field TIM */
-        int i;
-        for(i=0;i<NFL*NFC;i++)
-        {
-            sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5); /* TSI */
-        }
-        sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
-
-        FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
-    }
+    WriteGENFile_GeneralInformationRecord(fdGEN, osBaseFileName, ARV, BRV, LSO, PSO,
+                                          adfGeoTransform, SCA, nRasterXSize, nRasterYSize, NFL, NFC, TILEINDEX);
 }
+
+/************************************************************************/
+/*                        WriteTHFFile()                                */
+/************************************************************************/
 
 void ADRGDataset::WriteTHFFile()
 {
