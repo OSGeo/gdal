@@ -16149,7 +16149,7 @@ echo $ECHO_N "checking for 64bit file io... $ECHO_C" >&6; }
 
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.cpp
-    echo 'int main() { long long off=0; fseek64(NULL, SEEK_SET, off); off = ftell64(NULL); return 0; }' >> conftest.c
+    echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return 0; }' >> conftest.c
     if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftell64
@@ -16161,7 +16161,7 @@ echo $ECHO_N "checking for 64bit file io... $ECHO_C" >&6; }
 
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
-    echo 'int main() { long long off=0; fseeko64(NULL, SEEK_SET, off); off = ftello64(NULL); return 0; }' >> conftest.c
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.c
     if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
@@ -16174,7 +16174,7 @@ echo $ECHO_N "checking for 64bit file io... $ECHO_C" >&6; }
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#define _LARGEFILE64_SOURCE' > conftest.c
     echo '#include <stdio.h>' >> conftest.c
-    echo 'int main() { long long off=0; fseeko64(NULL, SEEK_SET, off); off = ftello64(NULL); return 0; }' >> conftest.c
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.c
     if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
@@ -16201,16 +16201,15 @@ _ACEOF
 
 
   if test x"$with_unix_stdio_64" = x"" ; then
-    echo '#include <stdio.h>' >> conftest.c
-    echo 'int main() { fpos_t off=0; fseeko(NULL, SEEK_SET, off); off = ftello(NULL); return 0; }' >> conftest.c
-    if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
+    echo '#include <stdio.h>' > conftest.c
+    echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return 0; }' >> conftest.c
+    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello
       VSI_FSEEK64=fseeko
     fi
     rm -f conftest*
   fi
-
 
   if test x"$with_unix_stdio_64" = x"yes" ; then
     { echo "$as_me:$LINENO: result: yes" >&5
