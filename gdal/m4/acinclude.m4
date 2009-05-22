@@ -102,7 +102,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
 
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.cpp
-    echo 'int main() { long long off=0; fseek64(NULL, SEEK_SET, off); off = ftell64(NULL); return 0; }' >> conftest.c
+    echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return 0; }' >> conftest.c
     if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftell64
@@ -117,7 +117,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
 
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
-    echo 'int main() { long long off=0; fseeko64(NULL, SEEK_SET, off); off = ftello64(NULL); return 0; }' >> conftest.c
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.c
     if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
@@ -132,7 +132,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#define _LARGEFILE64_SOURCE' > conftest.c
     echo '#include <stdio.h>' >> conftest.c
-    echo 'int main() { long long off=0; fseeko64(NULL, SEEK_SET, off); off = ftello64(NULL); return 0; }' >> conftest.c
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.c
     if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
@@ -154,19 +154,19 @@ AC_DEFUN([AC_UNIX_STDIO_64],
     esac
   fi
 
-  dnl Test for BSD systems that supports ftello/fseeko.
+  dnl Test for BSD systems that support ftello/fseeko.
+  dnl OpenBSD throws warnings about using strcpy/strcat, so we use CC instead of CXX
 
   if test x"$with_unix_stdio_64" = x"" ; then
-    echo '#include <stdio.h>' >> conftest.c
-    echo 'int main() { fpos_t off=0; fseeko(NULL, SEEK_SET, off); off = ftello(NULL); return 0; }' >> conftest.c
-    if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
+    echo '#include <stdio.h>' > conftest.c
+    echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return 0; }' >> conftest.c
+    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello
       VSI_FSEEK64=fseeko
     fi
     rm -f conftest*
   fi
- 
 
   if test x"$with_unix_stdio_64" = x"yes" ; then
     AC_MSG_RESULT([yes])
