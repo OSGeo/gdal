@@ -728,6 +728,15 @@ void *CPLCreateMutex()
         pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
         pthread_mutex_init( hMutex, &attr );
     }
+/* BSDs have PTHREAD_MUTEX_RECURSIVE as an enum, not a define. */
+/* But they have #define MUTEX_TYPE_COUNTING_FAST	PTHREAD_MUTEX_RECURSIVE */
+#elif defined(MUTEX_TYPE_COUNTING_FAST)
+    {
+        pthread_mutexattr_t  attr;
+        pthread_mutexattr_init( &attr );
+        pthread_mutexattr_settype( &attr, MUTEX_TYPE_COUNTING_FAST );
+        pthread_mutex_init( hMutex, &attr );
+    }
 #elif defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
     pthread_mutex_t tmp_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
     *hMutex = tmp_mutex;
