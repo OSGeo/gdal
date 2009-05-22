@@ -402,7 +402,9 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         {
             oField.SetType( OFTInteger );
         }
-        else if( EQUALN(pszType,"float",5) || EQUALN(pszType,"double",6) )
+        else if( EQUALN(pszType,"float",5) ||
+                 EQUALN(pszType,"double",6) ||
+                 EQUAL(pszType,"real") )
         {
             oField.SetType( OFTReal );
         }
