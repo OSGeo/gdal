@@ -95,6 +95,7 @@ def ogr_shape_2():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
+    shp_ds.Destroy()
         
     return 'success'
 
@@ -129,7 +130,6 @@ def ogr_shape_3():
         orig_feat.Destroy()
 
     gdaltest.poly_feat = None
-    gdaltest.shp_ds.Destroy()
 
     if tr:
         return 'success'
@@ -644,6 +644,8 @@ def ogr_shape_18():
         gdaltest.post_reason( 'Projections differ' )
         return 'fail'
 
+    shp_ds.Destroy()
+
     return 'success'
 
 ###############################################################################
@@ -767,6 +769,7 @@ def ogr_shape_22():
 
     #######################################################
     # Create memory Layer
+    gdaltest.shape_ds.Destroy()
     gdaltest.shape_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp', update = 1)
     gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer( 'datatypes' )
 
@@ -836,13 +839,13 @@ def ogr_shape_23_write_valid_and_invalid(layer_name, wkt, invalid_wkt, wkbType, 
     #######################################################
     # Check feature
 
-    gdaltest.shape_lyr.SyncToDisk()
-    tmp_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp')
-    read_lyr = tmp_ds.GetLayerByName( layer_name )
+    gdaltest.shape_ds.Destroy()
+    gdaltest.shape_ds = ogr.GetDriverByName('ESRI Shapefile').Open( 'tmp', update = 1 )
+
+    read_lyr = gdaltest.shape_ds.GetLayerByName( layer_name )
     if read_lyr.GetFeatureCount() != 1:
         return 'fail'
     feat_read = read_lyr.GetNextFeature()
-    tmp_ds.Destroy()
 
     if isEmpty and feat_read.GetGeometryRef() == None:
         return 'success'
@@ -874,13 +877,13 @@ def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
     #######################################################
     # Check feature
 
-    gdaltest.shape_lyr.SyncToDisk()
-    tmp_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp')
-    read_lyr = tmp_ds.GetLayerByName( layer_name )
+    gdaltest.shape_ds.Destroy()
+    gdaltest.shape_ds = ogr.GetDriverByName('ESRI Shapefile').Open( 'tmp', update = 1 )
+
+    read_lyr = gdaltest.shape_ds.GetLayerByName( layer_name )
     if read_lyr.GetFeatureCount() != 1:
         return 'fail'
     feat_read = read_lyr.GetNextFeature()
-    tmp_ds.Destroy()
 
     if expected_geom is None:
         if feat_read.GetGeometryRef() is not None:
@@ -979,11 +982,11 @@ def ogr_shape_23():
     gdaltest.shape_lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
 
-    gdaltest.shape_lyr.SyncToDisk()
-    tmp_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp')
-    read_lyr = tmp_ds.GetLayerByName( layer_name )
+    gdaltest.shape_ds.Destroy()
+    gdaltest.shape_ds = ogr.GetDriverByName('ESRI Shapefile').Open( 'tmp', update = 1 )
+
+    read_lyr = gdaltest.shape_ds.GetLayerByName( layer_name )
     feat_read = read_lyr.GetNextFeature()
-    tmp_ds.Destroy()
 
     if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))'),
                                 max_error = 0.000000001 ) != 0:
@@ -1152,6 +1155,7 @@ def ogr_shape_27():
 
     feat = None
     lyr = None
+    ds.Destroy()
     ds = None
     
     return 'success'
