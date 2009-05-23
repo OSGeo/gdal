@@ -22047,7 +22047,231 @@ if test "$with_ogdi" = "no" ; then
 
 elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
 
-  { echo "$as_me:$LINENO: checking for cln_GetLayerCapabilities in -logdi31" >&5
+
+for ac_header in ecs.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
+  { echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6; }
+if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+ac_res=`eval echo '${'$as_ac_Header'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+else
+  # Is the header compilable?
+{ echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_header_compiler=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <$ac_header>
+_ACEOF
+if { (ac_try="$ac_cpp conftest.$ac_ext"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null && {
+	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       }; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+
+rm -f conftest.err conftest.$ac_ext
+{ echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
+
+    ;;
+esac
+{ echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6; }
+if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=\$ac_header_preproc"
+fi
+ac_res=`eval echo '${'$as_ac_Header'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+
+  if test "$ac_cv_header_ecs_h" = "no" ; then
+    if test -f "/usr/include/ogdi/ecs.h"; then
+        OGDI_INCLUDE="-I/usr/include/ogdi"
+    elif test -f "/usr/local/include/ogdi/ecs.h"; then
+        OGDI_INCLUDE="-I/usr/local/include/ogdi"
+    elif test -f "/usr/include/ecs.h"; then
+        OGDI_INCLUDE="-I/usr/include"
+    elif test -f "/usr/local/include/ecs.h"; then
+        OGDI_INCLUDE="-I/usr/local/include"
+    fi
+  fi
+
+  if test "$OGDI_INCLUDE" != "" -o "$ac_cv_header_ecs_h" = "yes"; then
+    { echo "$as_me:$LINENO: checking for cln_GetLayerCapabilities in -logdi" >&5
+echo $ECHO_N "checking for cln_GetLayerCapabilities in -logdi... $ECHO_C" >&6; }
+if test "${ac_cv_lib_ogdi_cln_GetLayerCapabilities+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-logdi  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cln_GetLayerCapabilities ();
+int
+main ()
+{
+return cln_GetLayerCapabilities ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_ogdi_cln_GetLayerCapabilities=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_ogdi_cln_GetLayerCapabilities=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_ogdi_cln_GetLayerCapabilities" >&5
+echo "${ECHO_T}$ac_cv_lib_ogdi_cln_GetLayerCapabilities" >&6; }
+if test $ac_cv_lib_ogdi_cln_GetLayerCapabilities = yes; then
+  HAVE_OGDI=yes
+else
+  HAVE_OGDI=no
+fi
+
+    if test "$HAVE_OGDI" = "yes" ; then
+      LIBS="-logdi $LIBS"
+    else
+            { echo "$as_me:$LINENO: checking for cln_GetLayerCapabilities in -logdi31" >&5
 echo $ECHO_N "checking for cln_GetLayerCapabilities in -logdi31... $ECHO_C" >&6; }
 if test "${ac_cv_lib_ogdi31_cln_GetLayerCapabilities+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -22114,18 +22338,181 @@ else
   HAVE_OGDI=no
 fi
 
-
-  if test "$HAVE_OGDI" = "yes" ; then
-    LIBS="-logdi31 $LIBS"
+      if test "$HAVE_OGDI" = "yes" ; then
+        LIBS="-logdi31 $LIBS"
+      fi
+    fi
+  else
+    HAVE_OGDI=no
   fi
 
 else
 
-  HAVE_OGDI=yes
-  LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi31 $LIBS"
-  OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
+  { echo "$as_me:$LINENO: checking for cln_GetLayerCapabilities in -logdi" >&5
+echo $ECHO_N "checking for cln_GetLayerCapabilities in -logdi... $ECHO_C" >&6; }
+if test "${ac_cv_lib_ogdi_cln_GetLayerCapabilities+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-logdi -L$with_ogdi -L$with_ogdi/lib -logdi $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
-  echo "using libogdi31 from $with_ogdi."
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cln_GetLayerCapabilities ();
+int
+main ()
+{
+return cln_GetLayerCapabilities ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_ogdi_cln_GetLayerCapabilities=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_ogdi_cln_GetLayerCapabilities=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_ogdi_cln_GetLayerCapabilities" >&5
+echo "${ECHO_T}$ac_cv_lib_ogdi_cln_GetLayerCapabilities" >&6; }
+if test $ac_cv_lib_ogdi_cln_GetLayerCapabilities = yes; then
+  HAVE_OGDI=yes
+else
+  HAVE_OGDI=no
+fi
+
+  if test "$HAVE_OGDI" = "yes" ; then
+    if test -f "$with_ogdi/ecs.h" -o -f "$with_ogdi/include/ecs.h"; then
+        LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi $LIBS"
+        OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
+
+        echo "using libogdi from $with_ogdi."
+     else
+        HAVE_OGDI=no
+        { { echo "$as_me:$LINENO: error: ecs.h not found." >&5
+echo "$as_me: error: ecs.h not found." >&2;}
+   { (exit 1); exit 1; }; }
+     fi
+  else
+        { echo "$as_me:$LINENO: checking for cln_GetLayerCapabilities in -logdi31" >&5
+echo $ECHO_N "checking for cln_GetLayerCapabilities in -logdi31... $ECHO_C" >&6; }
+if test "${ac_cv_lib_ogdi31_cln_GetLayerCapabilities+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-logdi31 -L$with_ogdi -L$with_ogdi/lib -logdi31 $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cln_GetLayerCapabilities ();
+int
+main ()
+{
+return cln_GetLayerCapabilities ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_ogdi31_cln_GetLayerCapabilities=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_ogdi31_cln_GetLayerCapabilities=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_ogdi31_cln_GetLayerCapabilities" >&5
+echo "${ECHO_T}$ac_cv_lib_ogdi31_cln_GetLayerCapabilities" >&6; }
+if test $ac_cv_lib_ogdi31_cln_GetLayerCapabilities = yes; then
+  HAVE_OGDI=yes
+else
+  HAVE_OGDI=no
+fi
+
+    if test "$HAVE_OGDI" = "yes" ; then
+      if test -f "$with_ogdi/ecs.h" -o -f "$with_ogdi/include/ecs.h"; then
+        LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi31 $LIBS"
+        OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
+
+        echo "using libogdi31 from $with_ogdi."
+      else
+        HAVE_OGDI=no
+        { { echo "$as_me:$LINENO: error: ecs.h not found." >&5
+echo "$as_me: error: ecs.h not found." >&2;}
+   { (exit 1); exit 1; }; }
+      fi
+    else
+      { { echo "$as_me:$LINENO: error: libogdi not found." >&5
+echo "$as_me: error: libogdi not found." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+  fi
 
 fi
 
