@@ -931,19 +931,65 @@ if test "$with_ogdi" = "no" ; then
 
 elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
 
-  AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
+  AC_CHECK_HEADERS(ecs.h)
 
-  if test "$HAVE_OGDI" = "yes" ; then   
-    LIBS="-logdi31 $LIBS"
+  if test "$ac_cv_header_ecs_h" = "no" ; then
+    if test -f "/usr/include/ogdi/ecs.h"; then
+        OGDI_INCLUDE="-I/usr/include/ogdi"
+    elif test -f "/usr/local/include/ogdi/ecs.h"; then
+        OGDI_INCLUDE="-I/usr/local/include/ogdi"
+    elif test -f "/usr/include/ecs.h"; then
+        OGDI_INCLUDE="-I/usr/include"
+    elif test -f "/usr/local/include/ecs.h"; then
+        OGDI_INCLUDE="-I/usr/local/include"
+    fi
+  fi
+
+  if test "$OGDI_INCLUDE" != "" -o "$ac_cv_header_ecs_h" = "yes"; then
+    AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
+    if test "$HAVE_OGDI" = "yes" ; then   
+      LIBS="-logdi $LIBS"
+    else
+      dnl For backward compatibility. Retry with ogdi31 as a name
+      AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
+      if test "$HAVE_OGDI" = "yes" ; then   
+        LIBS="-logdi31 $LIBS"
+      fi
+    fi
+  else
+    HAVE_OGDI=no
   fi
 
 else
 
-  HAVE_OGDI=yes
-  LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi31 $LIBS"
-  OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
+  AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,-L$with_ogdi -L$with_ogdi/lib -logdi)
+  if test "$HAVE_OGDI" = "yes" ; then
+    if test -f "$with_ogdi/ecs.h" -o -f "$with_ogdi/include/ecs.h"; then
+        LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi $LIBS"
+        OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
 
-  echo "using libogdi31 from $with_ogdi."
+        echo "using libogdi from $with_ogdi."
+     else
+        HAVE_OGDI=no
+        AC_MSG_ERROR([ecs.h not found.])
+     fi
+  else
+    dnl For backward compatibility. Retry with ogdi31 as a name
+    AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,-L$with_ogdi -L$with_ogdi/lib -logdi31)
+    if test "$HAVE_OGDI" = "yes" ; then
+      if test -f "$with_ogdi/ecs.h" -o -f "$with_ogdi/include/ecs.h"; then
+        LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi31 $LIBS"
+        OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
+
+        echo "using libogdi31 from $with_ogdi."
+      else
+        HAVE_OGDI=no
+        AC_MSG_ERROR([ecs.h not found.])
+      fi
+    else
+      AC_MSG_ERROR([libogdi not found.])
+    fi
+  fi
 
 fi
 
