@@ -388,7 +388,8 @@ void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 /*                             GetExtent()                              */
 /*                                                                      */
 /*      For PostGIS use internal Extend(geometry) function              */
-/*      in other cases we use standard OGRLayer::GetExtent()            */ /************************************************************************/
+/*      in other cases we use standard OGRLayer::GetExtent()            */
+/************************************************************************/
 
 OGRErr OGRPGResultLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
