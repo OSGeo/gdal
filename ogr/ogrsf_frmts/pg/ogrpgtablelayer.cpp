@@ -1872,6 +1872,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
             if (nRows > 0)
             {
                 hCursorResult = hResult;
+                CreateMapFromFieldNameToIndex();
                 poFeature = RecordToFeature( 0 );
                 hCursorResult = NULL;
 
