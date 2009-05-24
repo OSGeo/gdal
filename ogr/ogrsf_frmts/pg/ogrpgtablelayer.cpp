@@ -807,8 +807,6 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
-
     hResult = PQexec(hPGConn, osCommand);
 
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
@@ -1098,8 +1096,6 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
     hResult = PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
-        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
-
         CPLError( CE_Failure, CPLE_AppDefined,
                   "UPDATE command for feature %ld failed.\n%s\nCommand: %s",
                   poFeature->GetFID(), PQerrorMessage(hPGConn), osCommand.c_str() );
@@ -1414,8 +1410,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     hResult = PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
-        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
-
         CPLError( CE_Failure, CPLE_AppDefined,
                   "INSERT command for new feature failed.\n%s\nCommand: %s",
                   PQerrorMessage(hPGConn), osCommand.c_str() );
@@ -1633,12 +1627,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     switch (copyResult)
     {
     case 0:
-        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
         CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
         result = OGRERR_FAILURE;
         break;
     case -1:
-        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
         CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
         result = OGRERR_FAILURE;
         break;
@@ -1648,7 +1640,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
     if (copyResult == EOF)
     {
-      CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
       CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
       result = OGRERR_FAILURE;
     }  
@@ -1940,9 +1931,6 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
         "SELECT count(*) FROM %s %s",
         pszSqlTableName, osWHERE.c_str() );
 
-    CPLDebug( "PG", "PQexec(%s)\n",
-              osCommand.c_str() );
-
     hResult = PQexec(hPGConn, osCommand);
     if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         nCount = atoi(PQgetvalue(hResult,0,0));
@@ -2050,7 +2038,6 @@ OGRErr OGRPGTableLayer::StartCopy()
     CPLFree( pszFields );
 
     PGconn *hPGConn = poDS->GetPGConn();
-    CPLDebug( "PG", "%s", pszCommand );
     PGresult *hResult = PQexec(hPGConn, pszCommand);
 
     if ( !hResult || (PQresultStatus(hResult) != PGRES_COPY_IN))

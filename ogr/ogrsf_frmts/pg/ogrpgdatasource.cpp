@@ -988,14 +988,11 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
                  "SELECT DropGeometryColumn('%s','%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' and f_table_schema='%s' order by f_geometry_column limit 1))",
                  osSchemaName.c_str(), osTableName.c_str(), osTableName.c_str(), osSchemaName.c_str() );
 
-        CPLDebug( "PG", "PGexec(%s)", osCommand.c_str() );
-
         hResult = PQexec( hPGConn, osCommand.c_str() );
         OGRPGClearResult( hResult );
     }
 
     osCommand.Printf("DROP TABLE \"%s\".\"%s\" CASCADE", osSchemaName.c_str(), osTableName.c_str() );
-    CPLDebug( "PG", "PGexec(%s)", osCommand.c_str() );
     hResult = PQexec( hPGConn, osCommand.c_str() );
     OGRPGClearResult( hResult );
 
@@ -1168,7 +1165,6 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                  pszSchemaName, pszTableName, pszTableName );
     }
 
-    CPLDebug( "PG", "PQexec( %s )", osCommand.c_str() );
     hResult = PQexec(hPGConn, osCommand.c_str());
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -1211,7 +1207,6 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                  "DELETE FROM geometry_columns WHERE f_table_name = '%s' AND f_table_schema = '%s'",
                  pszTableName, pszSchemaName );
 
-        CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
         hResult = PQexec(hPGConn, osCommand.c_str());
         OGRPGClearResult( hResult );
 
@@ -1256,7 +1251,6 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                  pszSchemaName, pszTableName, pszGFldName,
                  nSRSId, pszGeometryType, nDimension );
 
-        CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
         hResult = PQexec(hPGConn, osCommand.c_str());
 
         if( !hResult
@@ -1293,7 +1287,6 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                              "USING GIST (\"%s\")",
                     pszTableName, pszSchemaName, pszTableName, pszGFldName);
 
-            CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
             hResult = PQexec(hPGConn, osCommand.c_str());
 
             if( !hResult
@@ -1921,7 +1914,6 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         if (EQUALN(pszSQLCommand, "SELECT", 6) == FALSE)
         {
-            CPLDebug( "PG", "PQexec(%s)", pszSQLCommand );
             hResult = PQexec(hPGConn, pszSQLCommand );
             CPLDebug( "PG", "Command Results Tuples = %d", PQntuples(hResult) );
         }
@@ -1930,8 +1922,6 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
             CPLString osCommand;
             osCommand.Printf( "DECLARE %s CURSOR for %s",
                                 "executeSQLCursor", pszSQLCommand );
-
-            CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
 
             hResult = PQexec(hPGConn, osCommand );
             OGRPGClearResult( hResult );
