@@ -3,7 +3,7 @@
 include ../../../GDALmake.opt
 
 OBJ	=	ogrpgdriver.o ogrpgdatasource.o ogrpglayer.o ogrpgtablelayer.o\
-		ogrpgresultlayer.o
+		ogrpgresultlayer.o ogrpgdebug.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(PG_INC) $(CPPFLAGS)
 

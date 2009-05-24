@@ -69,8 +69,6 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
         osGetSRID += pszRawStatement;
         osGetSRID += ") AS ogrpggetsrid LIMIT 1";
 
-        CPLDebug("PG", "PQexec(%s)\n", osGetSRID.c_str());
-
         PGresult* hSRSIdResult = PQexec(poDS->GetPGConn(), osGetSRID );
 
         if( hSRSIdResult && PQresultStatus(hSRSIdResult) == PGRES_TUPLES_OK)
@@ -290,9 +288,6 @@ int OGRPGResultLayer::GetFeatureCount( int bForce )
     osCommand.Printf(
         "SELECT count(*) FROM (%s) AS ogrpgcount",
         pszQueryStatement );
-
-    CPLDebug( "PG", "PQexec(%s)\n",
-              osCommand.c_str() );
 
     hResult = PQexec(hPGConn, osCommand);
     if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
