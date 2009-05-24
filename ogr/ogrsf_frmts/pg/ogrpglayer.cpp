@@ -1192,8 +1192,6 @@ void OGRPGLayer::SetInitialQueryCursor()
         osCommand.Printf( "DECLARE %s CURSOR for %s",
                             pszCursorName, pszQueryStatement );
 
-    CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
-
     hCursorResult = PQexec(hPGConn, osCommand );
     OGRPGClearResult( hCursorResult );
 
@@ -1751,8 +1749,6 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
     {
         PGconn      *hPGConn = poDS->GetPGConn();
         PGresult    *hResult = NULL;
-
-        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
 
         hResult = PQexec( hPGConn, osCommand );
         if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
