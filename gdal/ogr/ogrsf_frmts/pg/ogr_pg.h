@@ -34,6 +34,10 @@
 #include "libpq-fe.h"
 #include "cpl_string.h"
 
+#ifdef DEBUG
+PGresult *OGRPG_PQexec_dbg(PGconn *conn, const char *query);
+#define PQexec OGRPG_PQexec_dbg
+#endif
 
 /* These are the OIDs for some builtin types, as returned by PQftype(). */
 /* They were copied from pg_type.h in src/include/catalog/pg_type.h */
