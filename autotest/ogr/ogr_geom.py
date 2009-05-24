@@ -33,6 +33,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 import ogr
+import osr
 
 ###############################################################################
 # Test Area calculation for a MultiPolygon (which excersises lower level
@@ -287,6 +288,55 @@ def ogr_geom_area_empty_linearring():
     return 'success'
 
 ###############################################################################
+# Test TransformTo()
+
+def ogr_geom_transform_to():
+
+    # Somewhere in Paris suburbs...
+    geom = ogr.CreateGeometryFromWkt( 'POINT(2 49)')
+
+    # Input SRS is EPSG:4326
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    geom.AssignSpatialReference(sr)
+
+    # Output SRS is EPSG:32631
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromEPSG(32631)
+    geom.TransformTo(sr2)
+
+    if abs(geom.GetX() - 426857) > 1 or abs(geom.GetY() - 5427937) > 1:
+        print geom.ExportToWkt()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test Transform()
+
+def ogr_geom_transform():
+
+    # Somewhere in Paris suburbs...
+    geom = ogr.CreateGeometryFromWkt( 'POINT(2 49)')
+
+    # Input SRS is EPSG:4326
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+
+    # Output SRS is EPSG:32631
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromEPSG(32631)
+
+    ct = osr.CoordinateTransformation(sr, sr2)
+
+    geom.Transform(ct)
+
+    if abs(geom.GetX() - 426857) > 1 or abs(geom.GetY() - 5427937) > 1:
+        print geom.ExportToWkt()
+        return 'fail'
+
+    return 'success'
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -303,6 +353,8 @@ gdaltest_list = [
     ogr_geom_boundary_polygon,
     ogr_geom_build_from_edges,
     ogr_geom_area_empty_linearring,
+    ogr_geom_transform_to,
+    ogr_geom_transform,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
