@@ -169,7 +169,7 @@ class OGRPGTableLayer : public OGRPGLayer
                                             int bAdvertizeGeomColumn);
 
     void                BuildWhere(void);
-    char               *BuildFields(void);
+    CPLString           BuildFields(void);
     void                BuildFullQueryStatement(void);
 
     char               *pszTableName;
@@ -189,7 +189,7 @@ class OGRPGTableLayer : public OGRPGLayer
 
     OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
     OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
-    char                *BuildCopyFields(void);
+    CPLString           BuildCopyFields(void);
 
     void                AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
                                          OGRFeature* poFeature, int i);
