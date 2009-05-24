@@ -114,6 +114,7 @@ OGRPGLayer::OGRPGLayer()
     bCanUseBinaryCursor = TRUE;
 
     poFeatureDefn = NULL;
+    panMapFieldNameToIndex = NULL;
 }
 
 /************************************************************************/
@@ -135,6 +136,7 @@ OGRPGLayer::~OGRPGLayer()
     CPLFree( pszGeomColumn );
     CPLFree( pszFIDColumn );
     CPLFree( pszQueryStatement );
+    CPLFree( panMapFieldNameToIndex );
 
     if( poSRS != NULL )
         poSRS->Release();
@@ -740,8 +742,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /* -------------------------------------------------------------------- */
 /*      Transfer regular data fields.                                   */
 /* -------------------------------------------------------------------- */
-        iOGRField =
-            poFeatureDefn->GetFieldIndex(PQfname(hCursorResult,iField));
+        iOGRField = panMapFieldNameToIndex[iField];
 
         if( iOGRField < 0 )
             continue;
@@ -1170,6 +1171,32 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
     return poFeature;
 }
 
+/************************************************************************/
+/*                CreateMapFromFieldNameToIndex()                       */
+/************************************************************************/
+
+/* Evaluating GetFieldIndex() on each field of each feature can be very */
+/* expensive if the layer has many fields (total complexity of O(n^2) where */
+/* n is the number of fields), so it is valuable to compute the map from */
+/* the fetched fields to the OGR field index */
+void OGRPGLayer::CreateMapFromFieldNameToIndex()
+{
+    CPLFree(panMapFieldNameToIndex);
+    panMapFieldNameToIndex = NULL;
+    if ( PQresultStatus(hCursorResult)  == PGRES_TUPLES_OK )
+    {
+        panMapFieldNameToIndex =
+                (int*)CPLMalloc(sizeof(int) * PQnfields(hCursorResult));
+        for( int iField = 0;
+            iField < PQnfields(hCursorResult);
+            iField++ )
+        {
+            panMapFieldNameToIndex[iField] =
+                    poFeatureDefn->GetFieldIndex(PQfname(hCursorResult,iField));
+        }
+    }
+}
+
 
 /************************************************************************/
 /*                     SetInitialQueryCursor()                          */
@@ -1199,6 +1226,8 @@ void OGRPGLayer::SetInitialQueryCursor()
     hCursorResult = PQexec(hPGConn, osCommand );
 
     bCursorActive = TRUE;
+
+    CreateMapFromFieldNameToIndex();
 
     nResultOffset = 0;
 }

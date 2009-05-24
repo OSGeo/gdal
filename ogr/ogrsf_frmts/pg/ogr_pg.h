@@ -121,6 +121,7 @@ class OGRPGLayer : public OGRLayer
     char                *pszFIDColumn;
 
     int                 bCanUseBinaryCursor;
+    int                *panMapFieldNameToIndex;
 
     int                 ParsePGDate( const char *, OGRField * );
 
@@ -128,6 +129,7 @@ class OGRPGLayer : public OGRLayer
 
     OGRErr              RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
                                              CPLString osCommand);
+    void                CreateMapFromFieldNameToIndex();
 
   public:
                         OGRPGLayer();
