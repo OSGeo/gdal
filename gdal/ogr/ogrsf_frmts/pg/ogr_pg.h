@@ -160,7 +160,8 @@ class OGRPGTableLayer : public OGRPGLayer
 {
     int                 bUpdateAccess;
 
-    OGRFeatureDefn     *ReadTableDefinition(const char * pszTableName,
+    OGRFeatureDefn     *ReadTableDefinition(CPLString& osCurrentSchema,
+                                            const char * pszTableName,
                                             const char * pszSchemaName,
                                             const char * pszGeomColumnIn,
                                             int bAdvertizeGeomColumn);
@@ -192,6 +193,7 @@ class OGRPGTableLayer : public OGRPGLayer
                                          OGRFeature* poFeature, int i);
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
+                                         CPLString& osCurrentSchema,
                                          const char * pszTableName,
                                          const char * pszSchemaName,
                                          const char * pszGeomColumnIn,
@@ -306,6 +308,8 @@ class OGRPGDataSource : public OGRDataSource
 
     void                OGRPGDecodeVersionString(PGver* psVersion, char* pszVer);
 
+    CPLString           GetCurrentSchema();
+
   public:
     PGver               sPostgreSQLVersion;
     PGver               sPostGISVersion;
@@ -324,8 +328,11 @@ class OGRPGDataSource : public OGRDataSource
     OGRErr              InitializeMetadataTables();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char * pszTableName, const char * pszSchemaName,
-                                   const char * pszGeomColumnIn, int bUpdate, int bTestOpen,
+    int                 OpenTable( CPLString& osCurrentSchema,
+                                   const char * pszTableName,
+                                   const char * pszSchemaName,
+                                   const char * pszGeomColumnIn,
+                                   int bUpdate, int bTestOpen,
                                    int bAdvertizeGeomColumn );
 
     const char          *GetName() { return pszName; }

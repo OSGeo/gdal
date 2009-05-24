@@ -47,6 +47,7 @@ static CPLString OGRPGEscapeString(PGconn *hPGConn,
 /************************************************************************/
 
 OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
+                                  CPLString& osCurrentSchema,
                                   const char * pszTableNameIn,
                                   const char * pszSchemaNameIn,
                                   const char * pszGeomColumnIn,
@@ -74,7 +75,11 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     pszSqlTableName = NULL; //set in ReadTableDefinition
     pszSqlGeomParentTableName = NULL;
 
-    poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaNameIn, pszGeomColumnIn, bAdvertizeGeomColumn );
+    poFeatureDefn = ReadTableDefinition( osCurrentSchema,
+                                         pszTableName,
+                                         pszSchemaNameIn,
+                                         pszGeomColumnIn,
+                                         bAdvertizeGeomColumn );
 
     if( poFeatureDefn )
     {
@@ -107,7 +112,8 @@ OGRPGTableLayer::~OGRPGTableLayer()
 /*      catalog.                                                        */
 /************************************************************************/
 
-OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
+OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( CPLString& osCurrentSchema,
+                                                      const char * pszTableIn,
                                                       const char * pszSchemaNameIn,
                                                       const char * pszGeomColumnIn,
                                                       int bAdvertizeGeomColumn)
@@ -116,7 +122,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     PGresult            *hResult;
     CPLString           osCommand;
     CPLString           osPrimaryKey;
-    CPLString           osCurrentSchema;
     PGconn              *hPGConn = poDS->GetPGConn();
 
     poDS->FlushSoftTransaction();
@@ -129,18 +134,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     /*          Check config options                */
     /* -------------------------------------------- */
     osPrimaryKey = CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" );
-
-    // 
-    /* -------------------------------------------- */
-    /*          Get the current schema              */
-    /* -------------------------------------------- */
-    hResult = PQexec(hPGConn,"SELECT current_schema()");
-    if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
-    {
-        osCurrentSchema = PQgetvalue(hResult,0,0);
-
-        OGRPGClearResult( hResult );
-    }
 
     if (pszSchemaNameIn)
       pszSchemaName = CPLStrdup( pszSchemaNameIn );
@@ -451,7 +444,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
       while(bGoOn)
       {
         osCommand.Printf(
-            "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
+            "SELECT type, coord_dimension%s FROM geometry_columns WHERE f_table_name='%s'",
+            (nSRSId == -2) ? ", srid" : "",
             (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn);
         if (pszGeomColumn)
         {
@@ -470,6 +464,9 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
             OGRwkbGeometryType nGeomType = wkbUnknown;
 
             nCoordDimension = MAX(2,MIN(3,atoi(PQgetvalue(hResult,0,1))));
+
+            if (nSRSId == -2)
+                nSRSId = atoi(PQgetvalue(hResult,0,2));
 
             // check only standard OGC geometry types
             if ( EQUAL(pszType, "POINT") )
