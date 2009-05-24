@@ -600,16 +600,14 @@ void OGRPGTableLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
 
-    char *pszFields = BuildFields();
+    CPLString osFields = BuildFields();
 
     pszQueryStatement = (char *)
-        CPLMalloc(strlen(pszFields)+strlen(osWHERE)
+        CPLMalloc(strlen(osFields)+strlen(osWHERE)
                   +strlen(pszSqlTableName) + 40);
     sprintf( pszQueryStatement,
              "SELECT %s FROM %s %s",
-             pszFields, pszSqlTableName, osWHERE.c_str() );
-
-    CPLFree( pszFields );
+             osFields.c_str(), pszSqlTableName, osWHERE.c_str() );
 }
 
 /************************************************************************/
@@ -661,58 +659,50 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
 /*      transformations (such as on geometry).                          */
 /************************************************************************/
 
-char *OGRPGTableLayer::BuildFields()
+CPLString OGRPGTableLayer::BuildFields()
 
 {
     int     i = 0;
-    int     nSize = 0;
-    char    *pszFieldList = NULL;
-
-    nSize = 25;
-    if( pszGeomColumn )
-        nSize += strlen(pszGeomColumn);
-
-    if( bHasFid )
-        nSize += strlen(pszFIDColumn);
-
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-    {
-        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
-        if (poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime)
-            nSize += 20; /* CAST(columname AS TEXT) */
-    }
-
-    pszFieldList = (char *) CPLMalloc(nSize);
-    pszFieldList[0] = '\0';
+    CPLString osFieldList;
 
     if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
-        sprintf( pszFieldList, "\"%s\"", pszFIDColumn );
+    {
+        osFieldList += "\"";
+        osFieldList += pszFIDColumn;
+        osFieldList += "\"";
+    }
 
     if( pszGeomColumn )
     {
-        if( strlen(pszFieldList) > 0 )
-            strcat( pszFieldList, ", " );
+        if( strlen(osFieldList) > 0 )
+            osFieldList += ", ";
 
         if( bHasPostGISGeometry )
         {
             if ( poDS->bUseBinaryCursor )
             {
-                nSize += 10;
-                sprintf( pszFieldList+strlen(pszFieldList),
-                         "AsEWKB(\"%s\")", pszGeomColumn );
+                osFieldList += "AsEWKB(\"";
+                osFieldList += pszGeomColumn;
+                osFieldList += "\")";
+            }
+            else if ( poDS->sPostGISVersion.nMajor >= 1 )
+            {
+                osFieldList += "AsEWKT(\"";
+                osFieldList += pszGeomColumn;
+                osFieldList += "\")";
             }
             else
-            if ( poDS->sPostGISVersion.nMajor >= 1 )
-                sprintf( pszFieldList+strlen(pszFieldList),
-                        "AsEWKT(\"%s\")", pszGeomColumn );
-            else
-                sprintf( pszFieldList+strlen(pszFieldList),
-                        "AsText(\"%s\")", pszGeomColumn );
+            {
+                osFieldList += "AsText(\"";
+                osFieldList += pszGeomColumn;
+                osFieldList += "\")";
+            }
         }
         else
         {
-            sprintf( pszFieldList+strlen(pszFieldList),
-                     "\"%s\"", pszGeomColumn );
+            osFieldList += "\"";
+            osFieldList += pszGeomColumn;
+            osFieldList += "\"";
         }
     }
 
@@ -720,29 +710,27 @@ char *OGRPGTableLayer::BuildFields()
     {
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        if( strlen(pszFieldList) > 0 )
-            strcat( pszFieldList, ", " );
+        if( strlen(osFieldList) > 0 )
+            osFieldList += ", ";
 
         /* With a binary cursor, it is not possible to get the time zone */
         /* of a timestamptz column. So we fallback to asking it in text mode */
         if ( poDS->bUseBinaryCursor &&
              poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime)
         {
-            strcat( pszFieldList, "CAST (\"");
-            strcat( pszFieldList, pszName );
-            strcat( pszFieldList, "\" AS text)");
+            osFieldList += "CAST (\"";
+            osFieldList += pszName ;
+            osFieldList += "\" AS text)";
         }
         else
         {
-            strcat( pszFieldList, "\"" );
-            strcat( pszFieldList, pszName );
-            strcat( pszFieldList, "\"" );
+            osFieldList += "\"";
+            osFieldList += pszName;
+            osFieldList += "\"" ;
         }
     }
 
-    CPLAssert( (int) strlen(pszFieldList) < nSize );
-
-    return pszFieldList;
+    return osFieldList;
 }
 
 /************************************************************************/
@@ -1844,7 +1832,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
     OGRFeature  *poFeature = NULL;
     PGresult    *hResult = NULL;
     PGconn      *hPGConn = poDS->GetPGConn();
-    char        *pszFieldList = BuildFields();
+    CPLString    osFieldList = BuildFields();
     CPLString    osCommand;
 
     poDS->FlushSoftTransaction();
@@ -1854,9 +1842,8 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
              "DECLARE getfeaturecursor %s for "
              "SELECT %s FROM %s WHERE \"%s\" = %ld",
               ( poDS->bUseBinaryCursor ) ? "BINARY CURSOR" : "CURSOR",
-             pszFieldList, pszSqlTableName, pszFIDColumn,
+             osFieldList.c_str(), pszSqlTableName, pszFIDColumn,
              nFeatureId );
-    CPLFree( pszFieldList );
 
     hResult = PQexec(hPGConn, osCommand.c_str() );
 
@@ -2024,16 +2011,14 @@ OGRErr OGRPGTableLayer::StartCopy()
     /* Tell the datasource we are now planning to copy data */
     poDS->StartCopy( this ); 
 
-    char *pszFields = BuildCopyFields();
+    CPLString osFields = BuildCopyFields();
 
-    int size = strlen(pszFields) +  strlen(pszSqlTableName) + 100;
+    int size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     sprintf( pszCommand,
              "COPY %s (%s) FROM STDIN;",
-             pszSqlTableName, pszFields );
-
-    CPLFree( pszFields );
+             pszSqlTableName, osFields.c_str() );
 
     PGconn *hPGConn = poDS->GetPGConn();
     PGresult *hResult = PQexec(hPGConn, pszCommand);
@@ -2122,50 +2107,39 @@ OGRErr OGRPGTableLayer::EndCopy()
 /*                          BuildCopyFields()                           */
 /************************************************************************/
 
-char *OGRPGTableLayer::BuildCopyFields()
+CPLString OGRPGTableLayer::BuildCopyFields()
 {
     int     i = 0;
-    int     nSize = 0;
-    char    *pszFieldList;
-        
-    nSize = 25;
-    if( pszGeomColumn )
-        nSize += strlen(pszGeomColumn);
+    CPLString osFieldList;
 
     if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
-        nSize += strlen(pszFIDColumn);
-
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
-
-    pszFieldList = (char *) CPLMalloc(nSize);
-    pszFieldList[0] = '\0';
-
-    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
-        sprintf( pszFieldList, "\"%s\"", pszFIDColumn );
+    {
+        osFieldList += "\"";
+        osFieldList += pszFIDColumn;
+        osFieldList += "\"";
+    }
 
     if( pszGeomColumn )
     {
-        if( strlen(pszFieldList) > 0 )
-            strcat( pszFieldList, ", " );
+        if( strlen(osFieldList) > 0 )
+            osFieldList += ", ";
 
-        sprintf( pszFieldList+strlen(pszFieldList),
-                 "\"%s\"", pszGeomColumn );
+        osFieldList += "\"";
+        osFieldList += pszGeomColumn;
+        osFieldList += "\"";
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        if( strlen(pszFieldList) > 0 )
-            strcat( pszFieldList, ", " );
+        if( strlen(osFieldList) > 0 )
+            osFieldList += ", ";
 
-        strcat( pszFieldList, "\"" );
-        strcat( pszFieldList, pszName );
-        strcat( pszFieldList, "\"" );
+        osFieldList += "\"";
+        osFieldList += pszName;
+        osFieldList += "\"" ;
     }
 
-    CPLAssert( (int) strlen(pszFieldList) < nSize );
-
-    return pszFieldList;
+    return osFieldList;
 }
