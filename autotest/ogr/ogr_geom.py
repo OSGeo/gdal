@@ -336,6 +336,72 @@ def ogr_geom_transform():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test CloseRings()
+
+def ogr_geom_closerings():
+
+    geom = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,0 1,1 1,1 0))' )
+    geom.CloseRings()
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        print geom.ExportToWkt()
+        return 'fail'
+
+    geom.CloseRings()
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        print geom.ExportToWkt()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test Segmentize()
+
+def ogr_geom_segmentize():
+
+    geom = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0,0 10)' )
+    try:
+        geom.Segmentize
+    except:
+        return 'skip'
+
+    geom.Segmentize(1.00001)
+
+    if geom.ExportToWkt() != 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)':
+        print geom.ExportToWkt()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test FlattenTo2D(), GetDimension() and GetCoordinateDimension()
+
+def ogr_geom_flattenTo2D():
+
+    geom = ogr.CreateGeometryFromWkt( 'POINT (1 2 3)' )
+
+    # Point is 0 dimension, LineString 1, ...
+    if geom.GetDimension() != 0:
+        print geom.GetDimension()
+        return 'fail'
+
+    if geom.GetCoordinateDimension() != 3:
+        print geom.GetCoordinateDimension()
+        return 'fail'
+
+    geom.FlattenTo2D()
+    if geom.GetCoordinateDimension() != 2:
+        print geom.GetCoordinateDimension()
+        return 'fail'
+
+    if geom.ExportToWkt() != 'POINT (1 2)':
+        print geom.ExportToWkt()
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -355,6 +421,9 @@ gdaltest_list = [
     ogr_geom_area_empty_linearring,
     ogr_geom_transform_to,
     ogr_geom_transform,
+    ogr_geom_closerings,
+    ogr_geom_segmentize,
+    ogr_geom_flattenTo2D,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
