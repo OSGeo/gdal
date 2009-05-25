@@ -59,6 +59,7 @@ class EHdrDataset : public RawDataset
     char      **papszHDR;
 
     int         bSTXDirty;
+    int         bCLRDirty;
 
     CPLErr      ReadSTX();
     CPLErr      RewriteSTX();
@@ -133,6 +134,7 @@ class EHdrRasterBand : public RawRasterBand
                                   double *pdfMean, double *pdfStdDev );
     virtual CPLErr SetStatistics( double dfMin, double dfMax, 
                                   double dfMean, double dfStdDev );
+    virtual CPLErr SetColorTable( GDALColorTable *poNewCT );
 
 };
 
@@ -415,6 +417,7 @@ EHdrDataset::EHdrDataset()
     papszHDR = NULL;
     bHDRDirty = FALSE;
     bSTXDirty = FALSE;
+    bCLRDirty = FALSE;
 }
 
 /************************************************************************/
@@ -439,7 +442,7 @@ EHdrDataset::~EHdrDataset()
                            CPLString().Printf( "%.8g", dfNoData ) );
         }
 
-        if( poBand->GetColorTable() != NULL )
+        if( bCLRDirty )
             RewriteColorTable( poBand->GetColorTable() );
 
         if( bHDRDirty )
@@ -529,33 +532,34 @@ void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
 
 {
     CPLString osCLRFilename = CPLResetExtension( GetDescription(), "clr" );
-    FILE *fp;
-
-    fp = VSIFOpenL( osCLRFilename, "wt" );
-    if( fp != NULL )
+    if( poTable )
     {
-        int iColor;
-
-        for( iColor = 0; iColor < poTable->GetColorEntryCount(); iColor++ )
+        FILE *fp = VSIFOpenL( osCLRFilename, "wt" );
+        if( fp != NULL )
         {
-            CPLString oLine;
-            GDALColorEntry sEntry;
+            for( int iColor = 0; iColor < poTable->GetColorEntryCount(); iColor++ )
+            {
+                CPLString oLine;
+                GDALColorEntry sEntry;
 
-            poTable->GetColorEntryAsRGB( iColor, &sEntry );
+                poTable->GetColorEntryAsRGB( iColor, &sEntry );
 
-            // I wish we had a way to mark transparency.
-            oLine.Printf( "%3d %3d %3d %3d\n",
-                          iColor, sEntry.c1, sEntry.c2, sEntry.c3 );
-            VSIFWriteL( (void *) oLine.c_str(), 1, strlen(oLine), fp );
+                // I wish we had a way to mark transparency.
+                oLine.Printf( "%3d %3d %3d %3d\n",
+                              iColor, sEntry.c1, sEntry.c2, sEntry.c3 );
+                VSIFWriteL( (void *) oLine.c_str(), 1, strlen(oLine), fp );
+            }
+            VSIFCloseL( fp );
         }
-        VSIFCloseL( fp );
+        else
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Unable to create color file %s.", 
+                      osCLRFilename.c_str() );
+        }
     }
     else
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create color file %s.", 
-                  osCLRFilename.c_str() );
-    }
+        VSIUnlink( osCLRFilename );
 }
 
 /************************************************************************/
@@ -796,7 +800,8 @@ CPLErr EHdrDataset::ReadSTX()
       {
           char	**papszTokens;
           papszTokens = CSLTokenizeStringComplex( pszLine, " \t", TRUE, FALSE );
-          if( CSLCount( papszTokens ) >= 5 )
+          int nTokens = CSLCount( papszTokens );
+          if( nTokens >= 5 )
           {
             int i = atoi(papszTokens[0]);
             if (i > 0 && i <= nBands)
@@ -816,6 +821,12 @@ CPLErr EHdrDataset::ReadSTX()
                 poBand->dfStdDev = atof(papszTokens[4]);
                 poBand->minmaxmeanstddev |= 0x8;
               }
+
+              if( nTokens >= 6 && !EQUAL(papszTokens[5], "#") )
+                poBand->SetMetadataItem( "STRETCHMIN", papszTokens[5], "RENDERING_HINTS" );
+
+              if( nTokens >= 7 && !EQUAL(papszTokens[6], "#") )
+                poBand->SetMetadataItem( "STRETCHMAX", papszTokens[6], "RENDERING_HINTS" );
             }
           }
 
@@ -1126,6 +1137,20 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    if( nBits == -1 && chPixelType == 'N' )
+    {
+        VSIStatBufL sStatBuf;
+        if( VSIStatL( poOpenInfo->pszFilename, &sStatBuf ) == 0 )
+        {
+            size_t nBytes = sStatBuf.st_size/nCols/nRows/nBands;
+            if( nBytes > 0 && nBytes != 3 )
+                nBits = nBytes*8;
+
+            if( nBytes == 4 )
+                chPixelType = 'F';
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
@@ -1159,6 +1184,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->eAccess = poOpenInfo->eAccess;
 
+    if( chPixelType == 'N' )
+    {
+      if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "FLT" ) )
+        chPixelType = 'F';
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Figure out the data type.                                       */
 /* -------------------------------------------------------------------- */
@@ -1178,14 +1209,26 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else
             eDataType = GDT_UInt32; // default 
     }
-    else if( nBits == 8 || nBits == -1 )
+    else if( nBits == 8 )
     {
         eDataType = GDT_Byte;
         nBits = 8;
     }
     else if( nBits < 8 && nBits >= 1 )
         eDataType = GDT_Byte;
-    
+    else if( nBits == -1 )
+    {
+      if( chPixelType == 'F' )
+      {
+        eDataType = GDT_Float32;
+        nBits = 32;
+      }
+      else
+      {
+        eDataType = GDT_Byte;
+        nBits = 8;
+      }
+    }
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -1481,14 +1524,14 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( !pszLine )
                 break;
 
-            if( *pszLine == '#' )
+            if( *pszLine == '#' || *pszLine == '!' )
                 continue;
 
             char	**papszValues = CSLTokenizeString2(pszLine, "\t ",
                                                            CSLT_HONOURSTRINGS);
             GDALColorEntry oEntry;
 
-            if ( CSLCount(papszValues) == 4 )
+            if ( CSLCount(papszValues) >= 4 )
             {
                 oEntry.c1 = atoi( papszValues[1] ); // Red
                 oEntry.c2 = atoi( papszValues[2] ); // Green
@@ -1509,6 +1552,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             poBand->SetColorTable( &oColorTable );
             poBand->SetColorInterpretation( GCI_PaletteIndex );
         }
+
+        poDS->bCLRDirty = FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1779,6 +1824,21 @@ CPLErr EHdrRasterBand::SetStatistics( double dfMin, double dfMax, double dfMean,
     minmaxmeanstddev = 0xf;
     // marks dataset stats dirty
     ((EHdrDataset*)poDS)->bSTXDirty = TRUE;
+   
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr EHdrRasterBand::SetColorTable( GDALColorTable *poNewCT )
+{
+    CPLErr err = RawRasterBand::SetColorTable( poNewCT );
+    if( err != CE_None )
+        return err;
+    
+    ((EHdrDataset*)poDS)->bCLRDirty = TRUE;
    
     return CE_None;
 }
