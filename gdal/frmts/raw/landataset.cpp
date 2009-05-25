@@ -587,26 +587,31 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr LANDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if( adfGeoTransform[1] == 0.0 || adfGeoTransform[5] == 0.0 )
-        return CE_Failure;
-    else
+    if( adfGeoTransform[1] != 0.0 && adfGeoTransform[5] != 0.0 )
     {
         memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
         return CE_None;
     }
+    else
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
+/*                                                                      */
+/*      Use PAM coordinate system if available in preference to the     */
+/*      generally poor value derived from the file itself.              */
 /************************************************************************/
 
 const char *LANDataset::GetProjectionRef()
 
 {
-    if( pszProjection == NULL )
-        return "";
-    else
+    const char* pszPamPrj = GDALPamDataset::GetProjectionRef();
+
+    if( pszProjection != NULL && strlen(pszPamPrj) == 0 )
         return pszProjection;
+    else
+        return pszPamPrj;
 }
 
 /************************************************************************/
