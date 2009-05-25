@@ -1122,7 +1122,7 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
  * \brief Read ESRI world file. 
  *
  * This function reads an ESRI style world file, and formats a geotransform
- * from its contents.
+ * from it's contents.
  *
  * The world file contains an affine transformation with the parameters
  * in a different order than in a geotransform array. 
@@ -1147,9 +1147,7 @@ int CPL_STDCALL
 GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
 
 {
-    int         nLinesCount = 0;
-    char        **papszLines = NULL;
-    bool        bValid = false;
+    char        **papszLines;
 
     VALIDATE_POINTER1( pszFilename, "GDALLoadWorldFile", FALSE );
     VALIDATE_POINTER1( padfGeoTransform, "GDALLoadWorldFile", FALSE );
@@ -1159,35 +1157,30 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
     if ( !papszLines )
         return FALSE;
 
-    /* Handling of blank lines is not supported. */
-    nLinesCount = CSLCount(papszLines);
-    if( nLinesCount >= 6 )
+   double world[6];
+    // reads the first 6 non-empty lines
+    int nLines = 0;
+    int nLinesCount = CSLCount(papszLines);
+    for( int i = 0; i < nLinesCount && nLines < 6; ++i )
     {
-        int i;
-        bValid = true;
+        CPLString line(papszLines[i]);
+        if( line.Trim().empty() )
+          continue;
 
-        /* First six lines of a world file can not be empty. */
-        for ( i = 0; i < 6; i++ )
-        {
-           CPLString line(papszLines[i]);
-           if( line.Trim().empty() )
-           {
-               bValid = false;
-               break;
-           }
-        }
+        world[nLines] = CPLAtofM(line);
+        ++nLines;
     }
-
-    if( bValid
-        && (CPLAtofM(papszLines[0]) != 0.0 || CPLAtofM(papszLines[2]) != 0.0)  
-        && (CPLAtofM(papszLines[3]) != 0.0 || CPLAtofM(papszLines[1]) != 0.0) ) 
+      
+    if( nLines == 6 
+        && (world[0] != 0.0 || world[2] != 0.0)
+        && (world[3] != 0.0 || world[1] != 0.0) )
     {
-        padfGeoTransform[0] = CPLAtofM(papszLines[4]);
-        padfGeoTransform[1] = CPLAtofM(papszLines[0]);
-        padfGeoTransform[2] = CPLAtofM(papszLines[2]);
-        padfGeoTransform[3] = CPLAtofM(papszLines[5]);
-        padfGeoTransform[4] = CPLAtofM(papszLines[1]);
-        padfGeoTransform[5] = CPLAtofM(papszLines[3]);
+        padfGeoTransform[0] = world[4];
+        padfGeoTransform[1] = world[0];
+        padfGeoTransform[2] = world[2];
+        padfGeoTransform[3] = world[5];
+        padfGeoTransform[4] = world[1];
+        padfGeoTransform[5] = world[3];
 
         // correct for center of pixel vs. top left of pixel
         padfGeoTransform[0] -= 0.5 * padfGeoTransform[1];
