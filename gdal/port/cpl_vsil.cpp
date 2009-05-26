@@ -226,6 +226,18 @@ int VSIRmdir( const char * pszDirname )
 int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
 
 {
+    char    szAltPath[4];
+    /* enable to work on "C:" as if it were "C:\" */
+    if( strlen(pszFilename) == 2 && pszFilename[1] == ':' )
+    {
+        szAltPath[0] = pszFilename[0];
+        szAltPath[1] = pszFilename[1];
+        szAltPath[2] = '\\';
+        szAltPath[3] = '\0';
+
+        pszFilename = szAltPath;
+    }
+
     VSIFilesystemHandler *poFSHandler = 
         VSIFileManager::GetHandler( pszFilename );
 

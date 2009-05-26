@@ -73,7 +73,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
                               int bTestOpen, int bSingleNewFileIn )
 
 {
-    VSIStatBuf  stat;
+    VSIStatBufL  stat;
     
     CPLAssert( nLayers == 0 );
     
@@ -96,7 +96,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszNewName, &stat ) != 0 
+    if( VSIStatL( pszNewName, &stat ) != 0 
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
