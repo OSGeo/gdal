@@ -81,10 +81,23 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 
 /************************************************************************/
 /*                           CPLHTTPFetch()                             */
-/*                                                                      */
-/*      Fetch a document from an url and return in a string.            */
 /************************************************************************/
 
+/**
+ * \brief Fetch a document from an url and return in a string.
+ *
+ * @param pszURL valid URL recognized by underlying download library (libcurl)
+ * @param papszOptions option list as a NULL-terminated array of strings. May be NULL.
+ *                     The following options are handled :
+ * <ul>
+ * <li>TIMEOUT=val, where val is in seconds</li>
+ * <li>HEADERS=val, where val is an extra header to use when getting a web page.
+ *                  For example "Accept: application/x-ogcwkt"
+ * </ul>
+ *
+ * @return a CPLHTTPResult* structure that must be freed by CPLHTTPDestroyResult(),
+ *         or NULL if libcurl support is diabled
+ */
 CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
 {
@@ -174,6 +187,13 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*                           CPLHTTPEnabled()                           */
 /************************************************************************/
 
+/**
+ * \brief Return if CPLHTTP services can be usefull
+ *
+ * Those services depend on GDAL being build with libcurl support.
+ *
+ * @return TRUE if libcurl support is enabled
+ */
 int CPLHTTPEnabled()
 
 {
@@ -188,6 +208,9 @@ int CPLHTTPEnabled()
 /*                           CPLHTTPCleanup()                           */
 /************************************************************************/
 
+/**
+ * \brief Cleanup function to call at application termination
+ */
 void CPLHTTPCleanup()
 
 {
@@ -199,6 +222,11 @@ void CPLHTTPCleanup()
 /*                        CPLHTTPDestroyResult()                        */
 /************************************************************************/
 
+/**
+ * \brief Clean the memory associated with the return value of CPLHTTPFetch()
+ *
+ * @param psResult pointer to the return value of CPLHTTPFetch()
+ */
 void CPLHTTPDestroyResult( CPLHTTPResult *psResult )
 
 {
@@ -215,6 +243,15 @@ void CPLHTTPDestroyResult( CPLHTTPResult *psResult )
 /*                     CPLHTTPParseMultipartMime()                      */
 /************************************************************************/
 
+/**
+ * \brief Parses a a MIME multipart message
+ *
+ * This function will iterate over each part and put it in a separate
+ * element of the pasMimePart array of the provided psResult structure.
+ *
+ * @param psResult pointer to the return value of CPLHTTPFetch()
+ * @return TRUE if the message contains MIME multipart message.
+ */
 int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 
 {
