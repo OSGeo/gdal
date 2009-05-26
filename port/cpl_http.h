@@ -34,26 +34,34 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
+/**
+ * \file cpl_http.h
+ *
+ * Interface for downloading HTTP, FTP documents
+ */
+
 CPL_C_START
 
+/*! Describe a part of a multipart message */
 typedef struct {
-    char **papszHeaders;
+    /*! NULL terminated array of headers */ char **papszHeaders;
     
-    GByte *pabyData;
-    int    nDataLen;
+    /*! Buffer with data of the part     */ GByte *pabyData;
+    /*! Buffer length                    */ int    nDataLen;
 } CPLMimePart;
 
+/*! Describe the result of a CPLHTTPFetch() call */
 typedef struct {
-    int     nStatus;            /* 200=success, value < 0 if request failed */
-    char    *pszContentType;    /* Content-Type of the response */
-    char    *pszErrBuf;         /* Buffer where curl can write errors */
+    /*! HTTP status code : 200=success, value < 0 if request failed */ int     nStatus;
+    /*! Content-Type of the response */                                char    *pszContentType;
+    /*! Error message from curl, or NULL */                            char    *pszErrBuf;
 
-    int     nDataLen;
-    int     nDataAlloc;
-    GByte   *pabyData;
+    /*! Length of the pabyData buffer */                               int     nDataLen;
+                                                                       int     nDataAlloc;
+    /*! Buffer with downloaded data */                                 GByte   *pabyData;
 
-    int     nMimePartCount;
-    CPLMimePart *pasMimePart;
+    /*! Number of parts in a multipart message */                      int     nMimePartCount;
+    /*! Array of parts (resolved by CPLHTTPParseMultipartMime()) */    CPLMimePart *pasMimePart;
 } CPLHTTPResult;
 
 int CPL_DLL   CPLHTTPEnabled( void );
