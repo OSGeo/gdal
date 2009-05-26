@@ -1161,6 +1161,82 @@ def ogr_shape_27():
     return 'success'
 
 ###############################################################################
+# Test reading a 3 GB .DBF (#3011)
+
+def ogr_shape_28():
+
+    # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
+    # file !
+    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+        return 'skip'
+
+    for filename in ('tmp/hugedbf.dbf', 'tmp/hugedbf.shp', 'tmp/hugedbf.shx'):
+        try:
+            os.remove(filename)
+        except:
+            pass
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/hugedbf.shp')
+    lyr = ds.CreateLayer('test')
+    field_defn = ogr.FieldDefn()
+    field_defn.SetName('test')
+    field_defn.SetWidth(99)
+    lyr.CreateField(field_defn)
+    ds = None
+
+    os.remove('tmp/hugedbf.shp')
+    os.remove('tmp/hugedbf.shx')
+
+    file = open("tmp/hugedbf.dbf", "rb+")
+
+    # Set recourd count to 24,000,000
+    file.seek(4, 0)
+    file.write("\x00")
+    file.write("\x36")
+    file.write("\x6e")
+    file.write("\x01")
+
+    # Set value for record 23,900,000 at offset 2,390,000,066 = (23,900,000 * (99 + 1) + 65) + 1
+    file.seek(2390000066, 0)
+    file.write("value_over_2GB")
+
+    # Extend to 3 GB file
+    file.seek(3000000000, 0)
+    file.write("0")
+
+    file.close()
+
+    ds = ogr.Open('tmp/hugedbf.dbf', update = 1)
+    if ds is None:
+        gdaltest.post_reason('Cannot open tmp/hugedbf.dbf')
+        return 'fail'
+
+    # Check that the hand-written value can be read back
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetFeature(23900000);
+    if feat.GetFieldAsString(0) != 'value_over_2GB':
+        print feat.GetFieldAsString(0)
+        return 'fail'
+
+    # Update with a new value
+    feat.SetField(0, 'updated_value')
+    lyr.SetFeature(feat)
+
+    ds = None
+
+    # Re-open and check the new value
+    ds = ogr.Open('tmp/hugedbf.dbf')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetFeature(23900000);
+    if feat.GetFieldAsString(0) != 'updated_value':
+        print feat.GetFieldAsString(0)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1205,6 +1281,7 @@ gdaltest_list = [
     ogr_shape_25,
     ogr_shape_26,
     ogr_shape_27,
+    ogr_shape_28,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
