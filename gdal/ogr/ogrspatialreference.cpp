@@ -1856,10 +1856,11 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
 
-    CPLString osHeaders = "HEADERS=";
-    osHeaders += "Accept: application/x-ogcwkt";
+    const char* pszHeaders = "HEADERS=Accept: application/x-ogcwkt";
+    const char* pszTimeout = "TIMEOUT=10";
     char *apszOptions[] = { 
-        (char *) osHeaders.c_str(),
+        (char *) pszHeaders,
+        (char *) pszTimeout,
         NULL 
     };
         
@@ -1874,9 +1875,11 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
     if( psResult->nDataLen == 0 
         || CPLGetLastErrorNo() != 0 || psResult->pabyData == NULL  )
     {
-
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "No data was returned from the given URL" );
+        if (CPLGetLastErrorNo() == 0)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "No data was returned from the given URL" );
+        }
         CPLHTTPDestroyResult( psResult );
         return OGRERR_FAILURE;
     }
