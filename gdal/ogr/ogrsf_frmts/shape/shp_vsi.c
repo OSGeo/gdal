@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrshapedatasource.cpp 11928 2007-08-22 20:43:30Z mloskot $
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  IO Redirection via VSI services for shp/dbf io.
@@ -31,7 +31,7 @@
 #include "cpl_vsi.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id: ogrshapelayer.cpp 12930 2007-11-21 22:42:17Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            VSI_SHP_Open()                            */
@@ -72,7 +72,7 @@ SAOffset VSI_SHP_Write( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 SAOffset VSI_SHP_Seek( SAFile file, SAOffset offset, int whence )
 
 {
-    return (SAOffset) VSIFSeekL( (FILE *) file, (long) offset, whence );
+    return (SAOffset) VSIFSeekL( (FILE *) file, (vsi_l_offset) offset, whence );
 }
 
 /************************************************************************/
