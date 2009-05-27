@@ -69,7 +69,7 @@ Default value is YES.</dd>
 <dt> <b>--formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
-directory or other virtual name.  See the <a href="ogr_formats.html">OGR Vector
+directory or other virtual name.  See the <a href="ogr/ogr_formats.html">OGR Vector
 Formats</a> list for supported datasources.</dd>
 <dt> <i>layer</i>:</dt><dd> One or more layer names may be reported.</dd>
 </dl>
