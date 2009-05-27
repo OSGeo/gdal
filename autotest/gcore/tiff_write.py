@@ -1998,7 +1998,11 @@ def tiff_write_60():
     
         ds = None
         drv.Delete( 'tmp/tiff_write_60.tif' )
-        os.remove( tuple[1] )
+        
+        try:
+            os.remove( tuple[1] )
+        except:
+            pass
     
         # CreateCopy case
         src_ds = gdal.Open('data/byte.tif')
@@ -2015,8 +2019,11 @@ def tiff_write_60():
     
         ds = None
         drv.Delete( 'tmp/tiff_write_60.tif' )
-        os.remove( tuple[1] )
 
+        try:
+            os.remove( tuple[1] )
+        except:
+            pass
 
     return 'success'
 
