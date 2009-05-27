@@ -1990,7 +1990,7 @@ size_t CPLStrlcpy(char* pszDest, const char* pszSrc, size_t nDestSize)
 \verbatim
 char szDest[5];
 CPLStrlcpy(szDest, "ab", sizeof(szDest));
-if (CPLStrlcpy(szDest, "cde", sizeof(szDest)) >= sizeof(szDest))
+if (CPLStrlcat(szDest, "cde", sizeof(szDest)) >= sizeof(szDest))
     fprintf(stderr, "truncation occured !\n");
 \endverbatim
 
