@@ -255,6 +255,11 @@ protected:
     GTiffDataset       *poGDS;
     GDALMultiDomainMetadata oGTiffMDMD;
 
+    int                bNoDataSet;
+    double             dfNoDataValue;
+
+    void NullBlock( void *pData );
+
 public:
                    GTiffRasterBand( GTiffDataset *, int );
 
@@ -451,6 +456,9 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
     nBlockXSize = poDS->nBlockXSize;
     nBlockYSize = poDS->nBlockYSize;
+
+    bNoDataSet = FALSE;
+    dfNoDataValue = -9999.0;
 }
 
 /************************************************************************/
@@ -499,9 +507,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( !poGDS->IsBlockAvailable(nBlockId) )
     {
-        memset( pImage, 0,
-                nBlockXSize * nBlockYSize
-                * (GDALGetDataTypeSize(eDataType) / 8) );
+        NullBlock( pImage );
         return CE_None;
     }
 
@@ -1112,6 +1118,14 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
+    if( bNoDataSet )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return dfNoDataValue;
+    }
+   
     if( poGDS->bNoDataSet )
     {
         if( pbSuccess )
@@ -1119,8 +1133,8 @@ double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
 
         return poGDS->dfNoDataValue;
     }
-    else
-        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
+
+    return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
 
 /************************************************************************/
@@ -1139,10 +1153,75 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
     poGDS->dfNoDataValue = dfNoData;
 
     poGDS->WriteNoDataValue( poGDS->hTIFF, dfNoData );
-
     poGDS->bNeedsRewrite = TRUE;
 
+    bNoDataSet = TRUE;
+    dfNoDataValue = dfNoData;
     return CE_None;
+}
+
+/************************************************************************/
+/*                             NullBlock()                              */
+/*                                                                      */
+/*      Set the block data to the null value if it is set, or zero      */
+/*      if there is no null data value.                                 */
+/************************************************************************/
+
+void GTiffRasterBand::NullBlock( void *pData )
+
+{
+    int nWords = nBlockXSize * nBlockYSize;
+    int nChunkSize = MAX(1,GDALGetDataTypeSize(eDataType)/8);
+
+    int bNoDataSet;
+    double dfNoData = GetNoDataValue( &bNoDataSet );
+    if( !bNoDataSet )
+    {
+        memset( pData, 0, nWords*nChunkSize );
+    }
+    else
+    {
+        if ( eDataType == GDT_Byte )
+            memset( pData, MAX(0,MIN(255,(int)dfNoData)), nWords*nChunkSize );
+        else
+        {
+            double adfND[2];
+
+            switch( eDataType )
+            {
+              case GDT_UInt16:
+                ((GUInt16 *)&adfND)[0] = (GUInt16) dfNoData;
+                break;
+
+              case GDT_Int16:
+                ((GInt16 *) &adfND)[0] = (GInt16) dfNoData;
+                break;
+
+              case GDT_UInt32:
+                ((GUInt32 *)&adfND)[0] = (GUInt32) dfNoData;
+                break;
+
+              case GDT_Int32:
+                ((GInt32 *) &adfND)[0] = (GInt32) dfNoData;
+                break;
+
+              case GDT_Float32:
+                ((float *)  &adfND)[0] = (float) dfNoData;
+                break;
+
+              case GDT_Float64:
+                ((double *) &adfND)[0] = dfNoData;
+                break;
+
+              default:
+                // complex types not yet supported.
+                adfND[0] = 0.0;
+            }
+              
+            for( int i = 0; i < nWords; i++ )
+                memcpy( ((GByte *) pData) + nChunkSize * i, &adfND, nChunkSize );
+        }
+    }
 }
 
 /************************************************************************/
@@ -1652,8 +1731,11 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                         if (nInWord & (1 << (poGDS->nBitsPerSample - 1 - iBit)))
                             poGDS->pabyBlockBuf[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
                         else
+                        {
                             /* We must explictly unset the bit as we may update an existing block */
                             poGDS->pabyBlockBuf[iBitOffset>>3] &= ~(0x80 >>(iBitOffset & 7));
+                        }
+
                         iBitOffset++;
                     }
                 } 
@@ -1691,6 +1773,17 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
         nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+
+/* -------------------------------------------------------------------- */
+/*	Handle the case of a strip in a writable file that doesn't	*/
+/*	exist yet, but that we want to read.  Just set to zeros and	*/
+/*	return.								*/
+/* -------------------------------------------------------------------- */
+    if( !poGDS->IsBlockAvailable(nBlockId) )
+    {
+        NullBlock( pImage );
+        return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Load the block buffer.                                          */
@@ -4229,7 +4322,10 @@ void GTiffDataset::ApplyPamInfo()
 {
     double adfPamGeoTransform[6];
 
-    if( GDALPamDataset::GetGeoTransform( adfPamGeoTransform ) == CE_None )
+    if( GDALPamDataset::GetGeoTransform( adfPamGeoTransform ) == CE_None 
+        && (adfPamGeoTransform[0] != 0.0 || adfPamGeoTransform[1] != 1.0
+            || adfPamGeoTransform[2] != 0.0 || adfPamGeoTransform[3] != 0.0
+            || adfPamGeoTransform[4] != 0.0 || adfPamGeoTransform[5] != 1.0 ))
     {
         memcpy( adfGeoTransform, adfPamGeoTransform, sizeof(double)*6 );
         bGeoTransformValid = TRUE;
@@ -4588,6 +4684,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
               && nBitsPerSample != 128 )
         bTreatAsOdd = TRUE;
 
+    int bMinIsWhite = nPhotometric == PHOTOMETRIC_MINISWHITE;
+
 /* -------------------------------------------------------------------- */
 /*      Capture the color table if there is one.                        */
 /* -------------------------------------------------------------------- */
@@ -4879,7 +4977,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     else if( nCompression == COMPRESSION_OJPEG )
         SetMetadataItem( "COMPRESSION", "OJPEG", "IMAGE_STRUCTURE" );
     else if( nCompression == COMPRESSION_JPEG )
-        SetMetadataItem( "COMPRESSION", "JPEG", "IMAGE_STRUCTURE" );
+    {  
+        if ( nPhotometric == PHOTOMETRIC_YCBCR )
+            SetMetadataItem( "COMPRESSION", "YCbCr JPEG", "IMAGE_STRUCTURE" );
+        else
+            SetMetadataItem( "COMPRESSION", "JPEG", "IMAGE_STRUCTURE" );
+    }
     else if( nCompression == COMPRESSION_NEXT )
         SetMetadataItem( "COMPRESSION", "NEXT", "IMAGE_STRUCTURE" );
     else if( nCompression == COMPRESSION_CCITTRLEW )
@@ -4928,6 +5031,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                                  "IMAGE_STRUCTURE" );
     }
         
+    if( bMinIsWhite )
+        SetMetadataItem( "MINISWHITE", "YES", "IMAGE_STRUCTURE" );
+
     if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
     {
         CPLXMLNode *psRoot = CPLParseXMLString( pszText );
@@ -5888,7 +5994,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
         poDS->SetMetadataItem( "SOURCE_COLOR_SPACE", "YCbCr", "IMAGE_STRUCTURE" );
         if ( !TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode ) ||
-              nColorMode != JPEGCOLORMODE_RGB )
+             nColorMode != JPEGCOLORMODE_RGB )
             TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
     }
 
@@ -5946,7 +6052,13 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
             poDS->nBitsPerSample == 128)
             poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
         else
+        {
             poDS->SetBand( iBand+1, new GTiffOddBitsBand( poDS, iBand+1 ) );
+            poDS->GetRasterBand( iBand+1 )->
+                SetMetadataItem( "NBITS", 
+                                 CPLString().Printf("%d",poDS->nBitsPerSample),
+                                 "IMAGE_STRUCTURE" );
+        }
     }
 
     return( poDS );
