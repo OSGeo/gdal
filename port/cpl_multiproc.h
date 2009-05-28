@@ -107,6 +107,7 @@ class CPL_DLL CPLMutexHolder
 #define CTLS_VERSIONINFO               12         /* gdal_misc.cpp */
 #define CTLS_VERSIONINFO_LICENCE       13         /* gdal_misc.cpp */
 #define CTLS_CONFIGOPTIONS             14         /* cpl_conv.cpp */
+#define CTLS_FINDFILE                  15         /* cpl_findfile.cpp */
 
 #define CTLS_MAX                       32         
 
