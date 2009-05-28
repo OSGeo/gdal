@@ -1181,46 +1181,9 @@ void GTiffRasterBand::NullBlock( void *pData )
     }
     else
     {
-        if ( eDataType == GDT_Byte )
-            memset( pData, MAX(0,MIN(255,(int)dfNoData)), nWords*nChunkSize );
-        else
-        {
-            double adfND[2];
-
-            switch( eDataType )
-            {
-              case GDT_UInt16:
-                ((GUInt16 *)&adfND)[0] = (GUInt16) dfNoData;
-                break;
-
-              case GDT_Int16:
-                ((GInt16 *) &adfND)[0] = (GInt16) dfNoData;
-                break;
-
-              case GDT_UInt32:
-                ((GUInt32 *)&adfND)[0] = (GUInt32) dfNoData;
-                break;
-
-              case GDT_Int32:
-                ((GInt32 *) &adfND)[0] = (GInt32) dfNoData;
-                break;
-
-              case GDT_Float32:
-                ((float *)  &adfND)[0] = (float) dfNoData;
-                break;
-
-              case GDT_Float64:
-                ((double *) &adfND)[0] = dfNoData;
-                break;
-
-              default:
-                // complex types not yet supported.
-                adfND[0] = 0.0;
-            }
-              
-            for( int i = 0; i < nWords; i++ )
-                memcpy( ((GByte *) pData) + nChunkSize * i, &adfND, nChunkSize );
-        }
+        /* Will convert nodata value to the right type and copy efficiently */
+        GDALCopyWords( &dfNoData, GDT_Float64, 0,
+                       pData, eDataType, nChunkSize, nWords);
     }
 }
 
