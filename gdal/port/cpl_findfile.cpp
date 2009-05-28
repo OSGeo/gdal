@@ -29,24 +29,46 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
-static CPL_THREADLOCAL int bFinderInitialized = FALSE;
-static CPL_THREADLOCAL int nFileFinders = 0;
-static CPL_THREADLOCAL CPLFileFinder *papfnFinders = NULL;
-static CPL_THREADLOCAL char **papszFinderLocations = NULL;
+typedef struct
+{
+    int bFinderInitialized;
+    int nFileFinders;
+    CPLFileFinder *papfnFinders;
+    char **papszFinderLocations;
+} FindFileTLS;
+
+
+/************************************************************************/
+/*                       CPLGetFindFileTLS()                            */
+/************************************************************************/
+
+static FindFileTLS* CPLGetFindFileTLS()
+{
+    FindFileTLS* pTLSData =
+            (FindFileTLS *) CPLGetTLS( CTLS_FINDFILE );
+    if (pTLSData == NULL)
+    {
+        pTLSData = (FindFileTLS*) CPLCalloc(1, sizeof(FindFileTLS));
+        CPLSetTLS( CTLS_FINDFILE, pTLSData, TRUE );
+    }
+    return pTLSData;
+}
 
 /************************************************************************/
 /*                           CPLFinderInit()                            */
 /************************************************************************/
 
-static void CPLFinderInit()
+static FindFileTLS* CPLFinderInit()
 
 {
-    if( !bFinderInitialized )
+    FindFileTLS* pTLSData = CPLGetFindFileTLS();
+    if( !pTLSData->bFinderInitialized )
     {
-        bFinderInitialized = TRUE;
+        pTLSData->bFinderInitialized = TRUE;
         CPLPushFileFinder( CPLDefaultFindFile );
 
         CPLPushFinderLocation( "." );
@@ -68,6 +90,7 @@ static void CPLFinderInit()
 #endif
         }
     }
+    return pTLSData;
 }
 
 /************************************************************************/
@@ -77,13 +100,14 @@ static void CPLFinderInit()
 void CPLFinderClean()
 
 {
-    if( bFinderInitialized )
+    FindFileTLS* pTLSData = CPLGetFindFileTLS();
+    if( pTLSData->bFinderInitialized )
     {
-        while( papszFinderLocations != NULL )
+        while( pTLSData->papszFinderLocations != NULL )
             CPLPopFinderLocation();
         while( CPLPopFileFinder() != NULL ) {}
 
-        bFinderInitialized = FALSE;
+        pTLSData->bFinderInitialized = FALSE;
     }
 }
 
@@ -95,7 +119,8 @@ const char *CPLDefaultFindFile( const char *pszClass,
                                 const char *pszBasename )
 
 {
-    int         i, nLocations = CSLCount( papszFinderLocations );
+    FindFileTLS* pTLSData = CPLGetFindFileTLS();
+    int         i, nLocations = CSLCount( pTLSData->papszFinderLocations );
 
     (void) pszClass;
 
@@ -104,7 +129,7 @@ const char *CPLDefaultFindFile( const char *pszClass,
         const char  *pszResult;
         VSIStatBuf  sStat;
 
-        pszResult = CPLFormFilename( papszFinderLocations[i], pszBasename, 
+        pszResult = CPLFormFilename( pTLSData->papszFinderLocations[i], pszBasename, 
                                      NULL );
 
         if( VSIStat( pszResult, &sStat ) == 0 )
@@ -123,13 +148,13 @@ const char *CPLFindFile( const char *pszClass, const char *pszBasename )
 {
     int         i;
 
-    CPLFinderInit();
+    FindFileTLS* pTLSData = CPLFinderInit();
 
-    for( i = nFileFinders-1; i >= 0; i-- )
+    for( i = pTLSData->nFileFinders-1; i >= 0; i-- )
     {
         const char * pszResult;
 
-        pszResult = (papfnFinders[i])( pszClass, pszBasename );
+        pszResult = (pTLSData->papfnFinders[i])( pszClass, pszBasename );
         if( pszResult != NULL )
             return pszResult;
     }
@@ -144,11 +169,11 @@ const char *CPLFindFile( const char *pszClass, const char *pszBasename )
 void CPLPushFileFinder( CPLFileFinder pfnFinder )
 
 {
-    CPLFinderInit();
+    FindFileTLS* pTLSData = CPLFinderInit();
 
-    papfnFinders = (CPLFileFinder *) 
-        CPLRealloc(papfnFinders,  sizeof(void*) * ++nFileFinders);
-    papfnFinders[nFileFinders-1] = pfnFinder;
+    pTLSData->papfnFinders = (CPLFileFinder *) 
+        CPLRealloc(pTLSData->papfnFinders,  sizeof(void*) * ++pTLSData->nFileFinders);
+    pTLSData->papfnFinders[pTLSData->nFileFinders-1] = pfnFinder;
 }
 
 /************************************************************************/
@@ -160,17 +185,17 @@ CPLFileFinder CPLPopFileFinder()
 {
     CPLFileFinder pfnReturn;
 
-//    CPLFinderInit();
+    FindFileTLS* pTLSData = CPLFinderInit();
 
-    if( nFileFinders == 0 )
+    if( pTLSData->nFileFinders == 0 )
         return NULL;
 
-    pfnReturn = papfnFinders[--nFileFinders];
+    pfnReturn = pTLSData->papfnFinders[--pTLSData->nFileFinders];
 
-    if( nFileFinders == 0)
+    if( pTLSData->nFileFinders == 0)
     {
-        CPLFree( papfnFinders );
-        papfnFinders = NULL;
+        CPLFree( pTLSData->papfnFinders );
+        pTLSData->papfnFinders = NULL;
     }
 
     return pfnReturn;
@@ -183,9 +208,9 @@ CPLFileFinder CPLPopFileFinder()
 void CPLPushFinderLocation( const char *pszLocation )
 
 {
-    CPLFinderInit();
+    FindFileTLS* pTLSData = CPLFinderInit();
 
-    papszFinderLocations  = CSLAddString( papszFinderLocations, 
+    pTLSData->papszFinderLocations  = CSLAddString( pTLSData->papszFinderLocations, 
                                           pszLocation );
 }
 
@@ -199,21 +224,21 @@ void CPLPopFinderLocation()
 {
     int      nCount;
 
-    if( papszFinderLocations == NULL )
+    FindFileTLS* pTLSData = CPLFinderInit();
+
+    if( pTLSData->papszFinderLocations == NULL )
         return;
 
-    CPLFinderInit();
-
-    nCount = CSLCount(papszFinderLocations);
+    nCount = CSLCount(pTLSData->papszFinderLocations);
     if( nCount == 0 )
         return;
 
-    CPLFree( papszFinderLocations[nCount-1] );
-    papszFinderLocations[nCount-1] = NULL;
+    CPLFree( pTLSData->papszFinderLocations[nCount-1] );
+    pTLSData->papszFinderLocations[nCount-1] = NULL;
 
     if( nCount == 1 )
     {
-        CPLFree( papszFinderLocations );
-        papszFinderLocations = NULL;
+        CPLFree( pTLSData->papszFinderLocations );
+        pTLSData->papszFinderLocations = NULL;
     }
 }

@@ -992,6 +992,13 @@ const char *CSVGetField( const char * pszFilename,
 /*                       GDALDefaultCSVFilename()                       */
 /************************************************************************/
 
+typedef struct
+{
+    char szPath[512];
+    int  bCSVFinderInitialized;
+} DefaultCSVFileNameTLS;
+
+
 const char * GDALDefaultCSVFilename( const char *pszBasename )
 
 {
@@ -1027,19 +1034,25 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 /* -------------------------------------------------------------------- */
 /*      Otherwise we need to look harder for it.                        */
 /* -------------------------------------------------------------------- */
-    static CPL_THREADLOCAL char         szPath[512];
+    DefaultCSVFileNameTLS* pTLSData =
+            (DefaultCSVFileNameTLS *) CPLGetTLS( CTLS_CSVDEFAULTFILENAME );
+    if (pTLSData == NULL)
+    {
+        pTLSData = (DefaultCSVFileNameTLS*) CPLCalloc(1, sizeof(DefaultCSVFileNameTLS));
+        CPLSetTLS( CTLS_CSVDEFAULTFILENAME, pTLSData, TRUE );
+    }
+
     FILE    *fp = NULL;
     const char *pszResult;
-    static CPL_THREADLOCAL int bCSVFinderInitialized = FALSE;
 
     pszResult = CPLFindFile( "epsg_csv", pszBasename );
 
     if( pszResult != NULL )
         return pszResult;
 
-    if( !bCSVFinderInitialized )
+    if( !pTLSData->bCSVFinderInitialized )
     {
-        bCSVFinderInitialized = TRUE;
+        pTLSData->bCSVFinderInitialized = TRUE;
 
         if( CPLGetConfigOption("GEOTIFF_CSV",NULL) != NULL )
             CPLPushFinderLocation( CPLGetConfigOption("GEOTIFF_CSV",NULL));
@@ -1055,27 +1068,27 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
             
     if( (fp = fopen( "csv/horiz_cs.csv", "rt" )) != NULL )
     {
-        sprintf( szPath, "csv/%s", pszBasename );
+        sprintf( pTLSData->szPath, "csv/%s", pszBasename );
     }
     else
     {
 #ifdef GDAL_PREFIX
   #ifdef MACOSX_FRAMEWORK
-        sprintf( szPath, GDAL_PREFIX "/Resources/epsg_csv/%s", pszBasename );
+        sprintf( pTLSData->szPath, GDAL_PREFIX "/Resources/epsg_csv/%s", pszBasename );
   #else
-        sprintf( szPath, GDAL_PREFIX "/share/epsg_csv/%s", pszBasename );
+        sprintf( pTLSData->szPath, GDAL_PREFIX "/share/epsg_csv/%s", pszBasename );
   #endif
 #else
-        sprintf( szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
+        sprintf( pTLSData->szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
 #endif
-        if( (fp = fopen( szPath, "rt" )) == NULL )
-            strcpy( szPath, pszBasename );
+        if( (fp = fopen( pTLSData->szPath, "rt" )) == NULL )
+            strcpy( pTLSData->szPath, pszBasename );
     }
 
     if( fp != NULL )
         fclose( fp );
         
-    return( szPath );
+    return( pTLSData->szPath );
 }
 
 /************************************************************************/
