@@ -962,14 +962,30 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
     if( psImage->chICORDS != ' ' )
     {
-        psIGEOLOGCPs[0].dfGCPPixel = 0.5;
-        psIGEOLOGCPs[0].dfGCPLine = 0.5;
-        psIGEOLOGCPs[1].dfGCPPixel = psImage->nCols - 0.5;
-        psIGEOLOGCPs[1].dfGCPLine = 0.5;
-        psIGEOLOGCPs[2].dfGCPPixel = psImage->nCols - 0.5;
-        psIGEOLOGCPs[2].dfGCPLine = psImage->nRows - 0.5;
-        psIGEOLOGCPs[3].dfGCPPixel = 0.5;
-        psIGEOLOGCPs[3].dfGCPLine = psImage->nRows - 0.5;
+        double minx = 0.5;
+        double miny = 0.5;
+        double maxx = psImage->nCols - 0.5;
+        double maxy = psImage->nRows - 0.5;
+        if (psIGEOLOGCPs[0].dfGCPX > psIGEOLOGCPs[1].dfGCPX)
+        {
+          minx = maxx;
+          maxx = 0.5;
+        }
+
+        if (psIGEOLOGCPs[0].dfGCPY < psIGEOLOGCPs[2].dfGCPY)
+        {
+          miny = maxy;
+          maxy = 0.5;
+        }
+
+        psIGEOLOGCPs[0].dfGCPPixel = minx;
+        psIGEOLOGCPs[0].dfGCPLine  = miny;
+        psIGEOLOGCPs[1].dfGCPPixel = maxx;
+        psIGEOLOGCPs[1].dfGCPLine  = miny;
+        psIGEOLOGCPs[2].dfGCPPixel = maxx;
+        psIGEOLOGCPs[2].dfGCPLine  = maxy;
+        psIGEOLOGCPs[3].dfGCPPixel = minx;
+        psIGEOLOGCPs[3].dfGCPLine  = maxy;
 
 /* -------------------------------------------------------------------- */
 /*      Convert the GCPs into a geotransform definition, if possible.	*/
@@ -1193,6 +1209,9 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             + psImage->nPixelOffset * (psImage->nBlockWidth - 1)
             + psImage->nWordSize;
 
+    if (nWrkBufSize == 0)
+      nWrkBufSize = (psImage->nBlockWidth*psImage->nBlockHeight*psImage->nBitsPerSample+7)/8;
+
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
 /* -------------------------------------------------------------------- */
@@ -1223,6 +1242,29 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 #endif
 
             return BLKREAD_OK;
+        }
+    }
+
+    if( psImage->szIC[0] == 'N' )
+    {
+        /* read all the data needed to get our requested band-block */
+        if( psImage->nBitsPerSample != psImage->nWordSize * 8 )
+        {
+            if( psImage->chIMODE == 'S' )
+            {
+                nWrkBufSize = ((psImage->nBlockWidth * psImage->nBlockHeight * psImage->nBitsPerSample) + 7) / 8;
+                if( VSIFSeekL( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], SEEK_SET ) != 0 
+                  || (int) VSIFReadL( pData, 1, nWrkBufSize, psImage->psFile->fp ) != nWrkBufSize )
+                {
+                    CPLError( CE_Failure, CPLE_FileIO, 
+                              "Unable to read %d byte block from %d.", 
+                              (int) nWrkBufSize, 
+                              (int) psImage->panBlockStart[iFullBlock] );
+                    return BLKREAD_FAIL;
+                }
+
+                return BLKREAD_OK;
+            }
         }
     }
 
@@ -1467,6 +1509,9 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
         + psImage->nPixelOffset * (psImage->nBlockWidth-1)
         + psImage->nWordSize;
+
+    if (nWrkBufSize == 0)
+      nWrkBufSize = (psImage->nBlockWidth*psImage->nBlockHeight*psImage->nBitsPerSample+7)/8;
 
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
