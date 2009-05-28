@@ -2245,6 +2245,52 @@ def tiff_write_68():
 
     return 'success'
 
+###############################################################################
+# Verify GTiffRasterBand::NullBlock() when reading empty block without any nodata value set
+
+def tiff_write_69():
+
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_69.tif', 32, 32, 1, gdal.GDT_Int16, options = ['SPARSE_OK=YES'] )
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_69.tif')
+    if ds.GetRasterBand(1).Checksum() != 0:
+        print ds.GetRasterBand(1).Checksum()
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_69.tif' )
+
+    return 'success'
+
+###############################################################################
+# Verify GTiffRasterBand::NullBlock() when reading empty block with nodata value set
+
+def tiff_write_70():
+
+    ref_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_70_ref.tif', 32, 32, 1, gdal.GDT_Int16 )
+    ref_ds.GetRasterBand(1).Fill(-32768)
+    ref_ds = None
+
+    ref_ds = gdal.Open('tmp/tiff_write_70_ref.tif')
+    expected_cs = ref_ds.GetRasterBand(1).Checksum()
+    ref_ds = None
+
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_70.tif', 32, 32, 1, gdal.GDT_Int16, options = ['SPARSE_OK=YES'] )
+    ds.GetRasterBand(1).SetNoDataValue(-32768)
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_70.tif')
+    if ds.GetRasterBand(1).Checksum() != expected_cs:
+        print ds.GetRasterBand(1).Checksum()
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_70.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_70_ref.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2320,6 +2366,8 @@ gdaltest_list = [
     tiff_write_66,
     tiff_write_67,
     tiff_write_68,
+    tiff_write_69,
+    tiff_write_70,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
