@@ -1068,21 +1068,25 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
             
     if( (fp = fopen( "csv/horiz_cs.csv", "rt" )) != NULL )
     {
-        sprintf( pTLSData->szPath, "csv/%s", pszBasename );
+        strcpy( pTLSData->szPath, "csv/" );
+        CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
     }
     else
     {
 #ifdef GDAL_PREFIX
   #ifdef MACOSX_FRAMEWORK
-        sprintf( pTLSData->szPath, GDAL_PREFIX "/Resources/epsg_csv/%s", pszBasename );
+        strcpy( pTLSData->szPath, GDAL_PREFIX "/Resources/epsg_csv/" );
+        CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
   #else
-        sprintf( pTLSData->szPath, GDAL_PREFIX "/share/epsg_csv/%s", pszBasename );
+        strcpy( pTLSData->szPath, GDAL_PREFIX "/share/epsg_csv/" );
+        CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
   #endif
 #else
-        sprintf( pTLSData->szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
+        strcpy( pTLSData->szPath, "/usr/local/share/epsg_csv/" );
+        CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
 #endif
         if( (fp = fopen( pTLSData->szPath, "rt" )) == NULL )
-            strcpy( pTLSData->szPath, pszBasename );
+            CPLStrlcpy( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
     }
 
     if( fp != NULL )
