@@ -1371,18 +1371,25 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
 
     int nCount = 1;
 
+    CPLString osName;
+    CPLString osValue;
+    
     while( poStmt->Fetch() )
     {
-        papszSubdatasets = CSLSetNameValue( papszSubdatasets, 
-            CPLSPrintf( "SUBDATASET_%d_NAME", nCount ),
-            CPLSPrintf( "georaster:%s,%s,%s,%s%s%s",
-            papszToken[0], papszToken[1], papszToken[2], papszToken[3], 
-            papszToken[4], papszToken[5] ) );
+        osName  = CPLSPrintf( "SUBDATASET_%d_NAME", nCount );
+        osValue = CPLSPrintf( "georaster:%s,%s,%s,%s%s%s",
+            papszToken[0], papszToken[1], papszToken[2], papszToken[3],
+            papszToken[4], papszToken[5] );
 
-        papszSubdatasets = CSLSetNameValue( papszSubdatasets, 
-            CPLSPrintf( "SUBDATASET_%d_DESC", nCount ),
-            CPLSPrintf( "%s%s %s%s", 
-            papszToken[6], papszToken[7], papszToken[8], papszToken[9] ) );
+        papszSubdatasets = CSLSetNameValue( papszSubdatasets,
+            osName.c_str(), osValue.c_str() );
+
+        osName  = CPLSPrintf( "SUBDATASET_%d_DESC", nCount );
+        osValue = CPLSPrintf( "%s%s %s%s",
+            papszToken[6], papszToken[7], papszToken[8], papszToken[9] );
+
+        papszSubdatasets = CSLSetNameValue( papszSubdatasets,
+            osName.c_str(), osValue.c_str() );
 
         nCount++;
     }
