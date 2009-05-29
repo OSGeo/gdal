@@ -11,6 +11,7 @@ Translator Ivan Lucena <ivan.lucena@pmldnet.com>
 <a href="index.html">[English] </a>
 <a href="index_ru.html">[Russian] </a>
 [Portuguese]
+<a href="http://softlibre.gloobe.org/doku.php?id=gdal_ogr:couteau_suisse:start">[Frances]</a>
 </center>
 
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
@@ -25,8 +26,8 @@ A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas
 \link gdal_utilities.html utilit&aacute;rios de linha de comando \endlink 
 para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es. 
 A p&aacute;gina 
-<a href="http://trac.osgeo.org/gdal/wiki/Release/1.6.0-News">novidades</a> descreve o 
-lan&ccedil;amento em Dezembro de 2008 da release 1.6.0 da biblioteca GDAL/OGR.
+<a href="http://trac.osgeo.org/gdal/wiki/Release/1.6.1-News">novidades</a> descreve o 
+lan&ccedil;amento em Dezembro de 2008 da release 1.6.1 da biblioteca GDAL/OGR.
 
 A bilioteca <a href="ogr">OGR</a> (cujo c&oacute;digo fonte esta inclu&iacute;do na GDAL) possue
 funcionalidades semelhantes &agrave;s da GDAL para datos vetorias (Simple Features).
@@ -65,6 +66,23 @@ Download:
 <li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
 <li> <a href="wince.html">GDAL para Windows CE</a>
 </ul>
+
+\section foss4g Confer&ecirc;ncias
+
+\htmlonly
+<table border="0" cellspacing="4" cellpadding="4">
+
+<tr><td><a href="http://www.foss4g2009.org/">
+<img src="foss4g09.png" alt="" border="0" width="183" height="101">
+</a></td>
+
+<td><a href="http://www.foss4g2009.org">FOSS4G 2009</a> &eacute; a mais importante
+confer&ecirc;ncia anual de software geospatial livre, incluindo apresenta&ccedil;&otilde;es 
+sobre GDAL/OGR, com a presen&ccedil;a de parte da communidade de desenvolvedores do GDAL/OGR.
+&Eacute; o principal evento para aqueles interessados em GDA/OGR e outras tecnologias 
+FOSS geospatial relacionadas.</td>
+</table>
+\endhtmlonly
 
 \section index_maillist Lista de discussao por correio eletronico
 
