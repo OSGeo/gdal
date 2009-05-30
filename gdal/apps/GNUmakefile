@@ -35,85 +35,85 @@ lib-depend:
 	(cd ../port ; $(MAKE) )
 
 gdalinfo$(EXE):	gdalinfo.$(OBJ_EXT)  $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdal_translate$(EXE):	gdal_translate.$(OBJ_EXT)  $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdaladdo$(EXE):	gdaladdo.$(OBJ_EXT)  $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdalwarp$(EXE): gdalwarp.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdal_contour$(EXE):	gdal_contour.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 nearblack$(EXE):	nearblack.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdalmanage$(EXE):	gdalmanage.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdal_rasterize$(EXE):	gdal_rasterize.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdaltindex$(EXE):	gdaltindex.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 gdalbuildvrt$(EXE):	gdalbuildvrt.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 multireadtest$(EXE):	multireadtest.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 dumpoverviews$(EXE):	dumpoverviews.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdalenhance$(EXE):	gdalenhance.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdal_grid$(EXE):	gdal_grid.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 gdalwarpsimple$(EXE): gdalwarpsimple.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdaltransform$(EXE): gdaltransform.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 gdalflattenmask$(EXE): gdalflattenmask.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 gdaltorture$(EXE): gdaltorture.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 gdal2ogr$(EXE):	gdal2ogr.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 ogrinfo$(EXE):	ogrinfo.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 ogr2ogr$(EXE):	ogr2ogr.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 testepsg$(EXE):	testepsg.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 ogrtindex$(EXE):	ogrtindex.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 # Not compiled by default
 test_ogrsf$(EXE):	test_ogrsf.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $^ $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 clean:
 	$(RM) *.o $(BIN_LIST) core gdal-config gdal-config-inst
