@@ -104,7 +104,7 @@ def gml_pos_point():
     return 'success'
 
 ###############################################################################
-# Test GML 3.x "posList" element for a point.
+# Test GML 3.x "posList" element for a linestring.
 
 def gml_posList_line():
 
@@ -113,6 +113,22 @@ def gml_posList_line():
     geom = ogr.CreateGeometryFromGML( gml )
 
     if geom.ExportToWkt() != 'LINESTRING (31 42,53 64,55 76)':
+        gdaltest.post_reason( '<gml:posList> not correctly parsed' )
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test GML 3.x "posList" element for a 3D linestring.
+
+def gml_posList_line3d():
+
+    gml = '<LineString><posList srsDimension="3">31 42 1 53 64 2 55 76 3</posList></LineString>'
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'LINESTRING (31 42 1,53 64 2,55 76 3)':
         gdaltest.post_reason( '<gml:posList> not correctly parsed' )
         return 'fail'
 
@@ -330,6 +346,7 @@ for filename in files:
 gdaltest_list.append( gml_space_test )
 gdaltest_list.append( gml_pos_point )
 gdaltest_list.append( gml_posList_line )
+gdaltest_list.append( gml_posList_line3d )
 gdaltest_list.append( gml_polygon )
 gdaltest_list.append( gml_out_point_srs )
 gdaltest_list.append( gml_out_point3d_srs )
