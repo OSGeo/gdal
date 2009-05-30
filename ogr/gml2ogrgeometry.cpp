@@ -289,25 +289,49 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
     
     if( psPosList != NULL )
     {
-        char **papszTokens = CSLTokenizeStringComplex( 
-            GetElementText( psPosList ), " ,", FALSE, FALSE );
+        char **papszTokens;
         int bSuccess = FALSE;
         int i=0, nCount=0;
+        CPLXMLNode* psChild;
+        int nDimension = 2;
 
-        /*assuming that it is a 2 dimension with x y values*/
-        /*we could also check to see if there is a count attribute and an srsDimension.
-          These attributes are only availabe for gml3.1.1 but not 
-          available for gml3.1 SF*/
+        /* Try to detect the presence of an srsDimension attribute */
+        /* This attribute is only availabe for gml3.1.1 but not */
+        /* available for gml3.1 SF*/
+        psChild = psPosList->psChild;
+        while (psChild != NULL)
+        {
+            if (psChild->eType == CXT_Attribute &&
+                EQUAL(psChild->pszValue, "srsDimension"))
+            {
+                nDimension = atoi(psChild->psChild->pszValue);
+                break;
+            }
+            else if (psChild->eType != CXT_Attribute)
+            {
+                break;
+            }
+            psChild = psChild->psNext;
+        }
+
+        if (nDimension != 2 && nDimension != 3)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "srsDimension = %d not supported", nDimension);
+            return FALSE;
+        }
+
+        papszTokens = CSLTokenizeStringComplex( 
+            GetElementText( psPosList ), " ,", FALSE, FALSE );
 
         nCount = CSLCount( papszTokens );
-       
-        if (nCount < 2  || fmod((double)nCount, 2.0) != 0)
+
+        if (nCount < nDimension  || (nCount % nDimension) != 0)
         {
-            
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Did not get at least two values or invalid number of \n"
+                      "Did not get at least %d values or invalid number of \n"
                       "set of coordinates <gml:posList>%s</gml:posList>",
-                      GetElementText( psPosList ) );
+                      nDimension, GetElementText( psPosList ) );
         }
         else
         {
@@ -317,8 +341,8 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
                 bSuccess = AddPoint( poGeometry, 
                                      atof(papszTokens[i]), 
                                      atof(papszTokens[i+1]),
-                                     0.0, 2 );
-                i+=2;
+                                     (nDimension == 3) ? atof(papszTokens[i+2]) : 0.0, nDimension );
+                i+=nDimension;
             }
         }
         CSLDestroy( papszTokens );
