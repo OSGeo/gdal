@@ -3812,7 +3812,7 @@ public class ProgressCallback:public int run(double dfComplete, String message)
   * <p>
   * Example :
   * <pre>
-  * driver.CreateCopy("dest.tif", src_ds, new TermProgressCallback());
+  * driver.CreateCopy("dest.tif", src_ds, 0, null, new TermProgressCallback());
   * </pre>
   *
   * @since Java bindings 1.7.0
