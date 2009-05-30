@@ -246,8 +246,7 @@ def tiff_write_5():
 
 def tiff_write_6():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
 
@@ -286,8 +285,7 @@ def tiff_write_6():
 
 def tiff_write_7():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
 
@@ -398,8 +396,7 @@ def tiff_write_11():
 
 def tiff_write_12():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'JPEG') == -1:
         return 'skip'
     
@@ -412,8 +409,7 @@ def tiff_write_12():
 
 def tiff_write_13():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'JPEG') == -1:
         return 'skip'
 
@@ -445,7 +441,7 @@ def tiff_write_15():
 
     ds_in = gdal.Open('data/byte.vrt')
     
-    ds = drv.CreateCopy( 'tmp/tw_15.tif', ds_in, options=['PROFILE=BASELINE'] )
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tw_15.tif', ds_in, options=['PROFILE=BASELINE'] )
 
     ds_in = None
     ds = None
@@ -491,7 +487,7 @@ def tiff_write_15():
 
     ds = None
 
-    drv.Delete( 'tmp/tw_15.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_15.tif' )
 
     return 'success'
 
@@ -501,11 +497,9 @@ def tiff_write_15():
 
 def tiff_write_16():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     ds_in = gdal.Open('data/byte.vrt')
     
-    ds = drv.Create( 'tmp/tw_16.tif', 20, 20, gdal.GDT_Byte,
+    ds = gdaltest.tiff_drv.Create( 'tmp/tw_16.tif', 20, 20, gdal.GDT_Byte,
                      options=['PROFILE=BASELINE'] )
     
     ds.SetMetadata( {'test':'testvalue'} )
@@ -560,7 +554,7 @@ def tiff_write_16():
 
     ds = None
 
-    drv.Delete( 'tmp/tw_16.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_16.tif' )
 
     return 'success'
 
@@ -571,12 +565,10 @@ def tiff_write_17():
 
     # Translate RPC controlled data to GeoTIFF.
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     ds_in = gdal.Open('data/rpc.vrt')
     rpc_md = ds_in.GetMetadata('RPC')
     
-    ds = drv.CreateCopy( 'tmp/tw_17.tif', ds_in )
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tw_17.tif', ds_in )
     
     ds_in = None
     ds = None
@@ -602,7 +594,7 @@ def tiff_write_17():
 
     ds = None
 
-    drv.Delete( 'tmp/tw_17.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_17.tif' )
 
     return 'success'
 
@@ -613,12 +605,10 @@ def tiff_write_18():
 
     # Translate RPC controlled data to GeoTIFF.
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     ds_in = gdal.Open('data/rpc.vrt')
     rpc_md = ds_in.GetMetadata('RPC')
     
-    ds = drv.CreateCopy( 'tmp/tw_18.tif', ds_in,
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tw_18.tif', ds_in,
                          options = [ 'PROFILE=BASELINE' ] )
     
     ds_in = None
@@ -654,7 +644,7 @@ def tiff_write_18():
 
     ds = None
 
-    drv.Delete( 'tmp/tw_18.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_18.tif' )
 
     # Confirm IMD and RPC files are cleaned up.  If not likely the
     # file list functionality is not working properly.
@@ -1017,8 +1007,7 @@ def tiff_write_29():
 
 def tiff_write_30():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
 
@@ -1049,8 +1038,7 @@ def tiff_write_30():
 
 def tiff_write_31():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
 
@@ -1082,12 +1070,10 @@ def tiff_write_31():
 
 def tiff_write_32():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     ds_in = gdal.Open('data/byte.vrt')
 
     # Test creation
-    ds = drv.Create( 'tmp/byte_rotated.tif', 20, 20, gdal.GDT_Byte )
+    ds = gdaltest.tiff_drv.Create( 'tmp/byte_rotated.tif', 20, 20, gdal.GDT_Byte )
 
     gt = (10,3.53553390593,3.53553390593,30,3.53553390593,-3.53553390593)
     ds.SetGeoTransform( gt )
@@ -1098,7 +1084,7 @@ def tiff_write_32():
     ds_in = None
 
     # Test copy
-    new_ds = drv.CreateCopy( 'tmp/byte_rotated_copy.tif', ds )
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/byte_rotated_copy.tif', ds )
     new_ds = None
 
     # Check copy
@@ -1115,8 +1101,8 @@ def tiff_write_32():
     ds = None
     new_ds = None
 
-    drv.Delete( 'tmp/byte_rotated.tif' )
-    drv.Delete( 'tmp/byte_rotated_copy.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/byte_rotated.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/byte_rotated_copy.tif' )
 
     return 'success'
 
@@ -1126,11 +1112,9 @@ def tiff_write_32():
 
 def tiff_write_33():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     ds_in = gdal.Open('data/byte.vrt')
 
-    ds = drv.CreateCopy( 'tmp/tw_33.tif', ds_in, options=['PROFILE=GeoTIFF'] )
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tw_33.tif', ds_in, options=['PROFILE=GeoTIFF'] )
 
     ds_in = None
 
@@ -1174,7 +1158,7 @@ def tiff_write_33():
 
     ds = None
 
-    drv.Delete( 'tmp/tw_33.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_33.tif' )
 
     return 'success'
 
@@ -1184,9 +1168,7 @@ def tiff_write_33():
 
 def tiff_write_34():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
-    ds = drv.Create( 'tmp/tw_34.tif', 1, 1, gdal.GDT_Byte,
+    ds = gdaltest.tiff_drv.Create( 'tmp/tw_34.tif', 1, 1, gdal.GDT_Byte,
                      options=['PROFILE=GeoTIFF'] )
     ds.SetMetadata( {'test':'testvalue'} )
     ds.GetRasterBand(1).SetMetadata( {'testBand':'testvalueBand'} )
@@ -1231,7 +1213,7 @@ def tiff_write_34():
 
     ds = None
 
-    drv.Delete( 'tmp/tw_34.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_34.tif' )
 
     return 'success'
 
@@ -1260,9 +1242,7 @@ def tiff_write_35():
     big_string = big_string + big_string
     big_string = big_string + big_string
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
-    ds = drv.Create( 'tmp/tw_35.tif', 1, 1, gdal.GDT_Byte )
+    ds = gdaltest.tiff_drv.Create( 'tmp/tw_35.tif', 1, 1, gdal.GDT_Byte )
 
     md = {}
     md['test'] = big_string
@@ -1292,7 +1272,7 @@ def tiff_write_35():
 
     ds = None
 
-    drv.Delete( 'tmp/tw_35.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_35.tif' )
 
     return 'success'
 
@@ -1300,11 +1280,9 @@ def tiff_write_35():
 # Generic functions for the 8 following tests
 
 def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     ds_in = gdal.Open(vrtfilename)
 
-    ds = drv.CreateCopy( tmpfilename, ds_in, options = [ 'NBITS=' + str(nbits), 'INTERLEAVE='+ interleaving ] )
+    ds = gdaltest.tiff_drv.CreateCopy( tmpfilename, ds_in, options = [ 'NBITS=' + str(nbits), 'INTERLEAVE='+ interleaving ] )
 
     ds_in = None
 
@@ -1336,7 +1314,7 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
 
     ds = None
 
-    drv.Delete( tmpfilename )
+    gdaltest.tiff_drv.Delete( tmpfilename )
 
     return 'success'
 
@@ -1395,8 +1373,8 @@ def tiff_write_43():
 # Test create with NBITS=9 and preservation through CreateCopy of NBITS
 
 def tiff_write_44():
-    drv = gdal.GetDriverByName( 'GTiff' )
-    ds = drv.Create( 'tmp/tw_44.tif', 1, 1, 1, gdal.GDT_UInt16, options = [ 'NBITS=9' ] )
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/tw_44.tif', 1, 1, 1, gdal.GDT_UInt16, options = [ 'NBITS=9' ] )
     ds = None
     ds = gdal.Open( 'tmp/tw_44.tif' )
     bnd = ds.GetRasterBand(1)
@@ -1405,7 +1383,7 @@ def tiff_write_44():
         gdaltest.post_reason( 'Didnt get expected NBITS value')
         return 'fail'
 
-    ds2 = drv.CreateCopy( 'tmp/tw_44_copy.tif', ds )
+    ds2 = gdaltest.tiff_drv.CreateCopy( 'tmp/tw_44_copy.tif', ds )
     ds2 = None
 
     ds2 = gdal.Open('tmp/tw_44_copy.tif')
@@ -1418,8 +1396,8 @@ def tiff_write_44():
     ds = None
     ds2 = None
 
-    drv.Delete( 'tmp/tw_44.tif' )
-    drv.Delete( 'tmp/tw_44_copy.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_44.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_44_copy.tif' )
 
     return 'success'
 
@@ -1427,8 +1405,8 @@ def tiff_write_44():
 # Test create with NBITS=17 and preservation through CreateCopy of NBITS
 
 def tiff_write_45():
-    drv = gdal.GetDriverByName( 'GTiff' )
-    ds = drv.Create( 'tmp/tw_45.tif', 1, 1, 1, gdal.GDT_UInt32, options = [ 'NBITS=17' ] )
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/tw_45.tif', 1, 1, 1, gdal.GDT_UInt32, options = [ 'NBITS=17' ] )
     ds = None
     ds = gdal.Open( 'tmp/tw_45.tif' )
     bnd = ds.GetRasterBand(1)
@@ -1437,7 +1415,7 @@ def tiff_write_45():
         gdaltest.post_reason( 'Didnt get expected NBITS value')
         return 'fail'
 
-    ds2 = drv.CreateCopy( 'tmp/tw_45_copy.tif', ds )
+    ds2 = gdaltest.tiff_drv.CreateCopy( 'tmp/tw_45_copy.tif', ds )
     ds2 = None
 
     ds2 = gdal.Open('tmp/tw_45_copy.tif')
@@ -1450,8 +1428,8 @@ def tiff_write_45():
     ds = None
     ds2 = None
 
-    drv.Delete( 'tmp/tw_45.tif' )
-    drv.Delete( 'tmp/tw_45_copy.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_45.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tw_45_copy.tif' )
 
     return 'success'
 
@@ -1462,15 +1440,13 @@ def tiff_write_45():
 def tiff_write_46():
     import struct
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     oldSize = gdal.GetCacheMax()
     gdal.SetCacheMax(0)
 
-    ds = drv.Create("tmp/tiff_write_46_1.tif", 10, 10, 1, options = [ 'NBITS=1' ])
+    ds = gdaltest.tiff_drv.Create("tmp/tiff_write_46_1.tif", 10, 10, 1, options = [ 'NBITS=1' ])
     ds.GetRasterBand(1).Fill(0)
 
-    ds2 = drv.Create("tmp/tiff_write_46_2.tif", 10, 10, 1, options = [ 'NBITS=1' ])
+    ds2 = gdaltest.tiff_drv.Create("tmp/tiff_write_46_2.tif", 10, 10, 1, options = [ 'NBITS=1' ])
     ds2.GetRasterBand(1).Fill(1)
     ones = ds2.ReadRaster(0, 0, 10, 1)
 
@@ -1481,7 +1457,7 @@ def tiff_write_46():
     ds.WriteRaster(0, 0, 10, 1, ones)
 
     # This will discard the cached block for ds
-    ds3 = drv.Create("tmp/tiff_write_46_3.tif", 10, 10, 1)
+    ds3 = gdaltest.tiff_drv.Create("tmp/tiff_write_46_3.tif", 10, 10, 1)
     ds3.GetRasterBand(1).Fill(1)
 
     # Load the working block again
@@ -1500,9 +1476,9 @@ def tiff_write_46():
     ds = None
     ds2 = None
     ds3 = None
-    drv.Delete( 'tmp/tiff_write_46_1.tif' )
-    drv.Delete( 'tmp/tiff_write_46_2.tif' )
-    drv.Delete( 'tmp/tiff_write_46_3.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_46_1.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_46_2.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_46_3.tif' )
 
     return 'success'
 
@@ -1525,8 +1501,6 @@ def tiff_write_47():
 
 def tiff_write_48():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     oldSize = gdal.GetCacheMax()
     gdal.SetCacheMax(0)
 
@@ -1548,7 +1522,7 @@ def tiff_write_48():
 
     new_ds = None
 
-    drv.Delete( 'tmp/tiff_write_48.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_48.tif' )
 
     return 'success'
 
@@ -1557,8 +1531,6 @@ def tiff_write_48():
 # Test copying a CMYK TIFF into another CMYK TIFF
 
 def tiff_write_49():
-
-    drv = gdal.GetDriverByName( 'GTiff' )
 
     # We open the source as RAW to get the CMYK bands
     src_ds = gdal.Open( 'GTIFF_RAW:data/rgbsmall_cmyk.tif' )
@@ -1583,7 +1555,7 @@ def tiff_write_49():
     src_ds = None
     new_ds = None
 
-    drv.Delete( 'tmp/tiff_write_49.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_49.tif' )
 
     return 'success'
 
@@ -1592,8 +1564,6 @@ def tiff_write_49():
 # Test creating a CMYK TIFF from another CMYK TIFF
 
 def tiff_write_50():
-
-    drv = gdal.GetDriverByName( 'GTiff' )
 
     # We open the source as RAW to get the CMYK bands
     src_ds = gdal.Open( 'GTIFF_RAW:data/rgbsmall_cmyk.tif' )
@@ -1620,7 +1590,7 @@ def tiff_write_50():
     src_ds = None
     new_ds = None
 
-    drv.Delete( 'tmp/tiff_write_50.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_50.tif' )
 
     return 'success'
 
@@ -1644,7 +1614,7 @@ def tiff_write_51():
     ds = None
 
     # Create a new GeoTIFF file with same projection
-    ds = gdal.GetDriverByName('GTiff').Create( 'tmp/tiff_write_51_ref.tif', 1, 1, 1 )
+    ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_51_ref.tif', 1, 1, 1 )
     ds.SetProjection(srs.ExportToWkt())
     ds = None
 
@@ -1665,8 +1635,8 @@ def tiff_write_51():
 
     ds = None
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_51.tif' )
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_51_ref.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_51.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_51_ref.tif' )
     
     return 'success'
 
@@ -1697,7 +1667,7 @@ def tiff_write_52():
     ct = None
     ds = None
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_52.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_52.tif' )
     
     return 'success'
 
@@ -1711,7 +1681,7 @@ def tiff_write_53():
     for i in range(len(test_ct_data)):
         test_ct.SetColorEntry( i, test_ct_data[i] )
         
-    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_53.tif',
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_53.tif',
                                               30, 50, 1,
                                               options=['PHOTOMETRIC=PALETTE'] )
     ds.GetRasterBand(1).Fill(10)
@@ -1732,7 +1702,7 @@ def tiff_write_53():
     ct = None
     ds = None
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_53.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_53.tif' )
     
     return 'success'
 
@@ -1780,14 +1750,14 @@ def tiff_write_53_bis():
 
 def tiff_write_54():
 
-    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_54.tif',
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_54.tif',
                                               256, 256, 3,
                                               options=['TILED=YES', 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'] )
     ds.GetRasterBand(1).Fill(0)
     ds.FlushCache()
     ds = None
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_54.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_54.tif' )
 
     return 'success'
 
@@ -1797,7 +1767,7 @@ def tiff_write_54():
 
 def tiff_write_55():
 
-    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_55.tif',
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_55.tif',
                                               256, 256, 1 )
     srs_expected = 'PROJCS["Equirectangular Mars",GEOGCS["GCS_Mars",DATUM["unknown",SPHEROID["unnamed",3394813.857975945,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",-2],PARAMETER["central_meridian",184.4129943847656],PARAMETER["standard_parallel_1",-15],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]]]'
     
@@ -1815,7 +1785,7 @@ def tiff_write_55():
         gdaltest.post_reason( 'failed to preserve Equirectangular projection as expected, old libgeotiff?' )
         return 'fail'
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_55.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_55.tif' )
 
     return 'success'
 
@@ -1824,8 +1794,7 @@ def tiff_write_55():
 
 def tiff_write_56():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
@@ -1836,7 +1805,7 @@ def tiff_write_56():
     for i in range(len(test_ct_data)):
         test_ct.SetColorEntry( i, test_ct_data[i] )
         
-    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_56.tif',
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_56.tif',
                                               30, 50, 1,
                                               options=['PHOTOMETRIC=PALETTE'] )
     ds.GetRasterBand(1).Fill(10)
@@ -1858,7 +1827,7 @@ def tiff_write_56():
     ct = None
     ds = None
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/tiff_write_56.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_56.tif' )
     
     return 'success'
 
@@ -1867,8 +1836,7 @@ def tiff_write_56():
 
 def tiff_write_57():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
@@ -1891,7 +1859,7 @@ def tiff_write_57():
         gdaltest.post_reason( 'did not get expected geotransform, perhaps unset is not working?' )
         return 'fail'
     
-    gdal.GetDriverByName('GTiff').Delete('tmp/tiff57.tif')
+    gdaltest.tiff_drv.Delete('tmp/tiff57.tif')
 
     return 'success'
 
@@ -1900,13 +1868,12 @@ def tiff_write_57():
 
 def tiff_write_58():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
 
     for compression in ('NONE', 'JPEG', 'LZW', 'DEFLATE', 'PACKBITS'):
 
         if string.find(md['DMD_CREATIONOPTIONLIST'],compression) != -1:
-            ds = drv.Create('tmp/tiff_write_58.tif', 4, 4000, 1, options = ['COMPRESS=' + compression] )
+            ds = gdaltest.tiff_drv.Create('tmp/tiff_write_58.tif', 4, 4000, 1, options = ['COMPRESS=' + compression] )
             ds.GetRasterBand(1).Fill(255)
             ds = None
 
@@ -1916,7 +1883,7 @@ def tiff_write_58():
                 return 'fail'
             ds = None
 
-            drv.Delete('tmp/tiff_write_58.tif')
+            gdaltest.tiff_drv.Delete('tmp/tiff_write_58.tif')
         else:
             print 'Skipping compression method %s' % compression
 
@@ -1931,7 +1898,6 @@ def tiff_write_59():
 
     ret = 'success'
 
-    drv = gdal.GetDriverByName( 'GTiff' )
     for nbands in (1,2):
         for nbits in (1,8,9,12,16,17,24,32):
     
@@ -1945,7 +1911,7 @@ def tiff_write_59():
                 gdal_type = gdal.GDT_UInt32
                 ctype = 'i'
     
-            ds = drv.Create("tmp/tiff_write_59.tif", 10, 10, nbands, gdal_type, options = [ 'NBITS=%d' % nbits ])
+            ds = gdaltest.tiff_drv.Create("tmp/tiff_write_59.tif", 10, 10, nbands, gdal_type, options = [ 'NBITS=%d' % nbits ])
             ds.GetRasterBand(1).Fill(1)
     
             ds = None
@@ -1969,7 +1935,7 @@ def tiff_write_59():
                     break
     
             ds = None
-            drv.Delete( 'tmp/tiff_write_59.tif' )
+            gdaltest.tiff_drv.Delete( 'tmp/tiff_write_59.tif' )
 
     return ret
 
@@ -1978,14 +1944,12 @@ def tiff_write_59():
 
 def tiff_write_60():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     tuples = [ ('TFW=YES', 'tmp/tiff_write_60.tfw'),
                ('WORLDFILE=YES', 'tmp/tiff_write_60.wld') ]
 
     for tuple in tuples:
         # Create case
-        ds = drv.Create('tmp/tiff_write_60.tif', 10, 10, options = [ tuple[0], 'PROFILE=BASELINE' ])
+        ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options = [ tuple[0], 'PROFILE=BASELINE' ])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0 )
         ds.SetGeoTransform(gt)
         ds = None
@@ -1997,7 +1961,7 @@ def tiff_write_60():
             return 'fail'
     
         ds = None
-        drv.Delete( 'tmp/tiff_write_60.tif' )
+        gdaltest.tiff_drv.Delete( 'tmp/tiff_write_60.tif' )
         
         try:
             os.remove( tuple[1] )
@@ -2006,7 +1970,7 @@ def tiff_write_60():
     
         # CreateCopy case
         src_ds = gdal.Open('data/byte.tif')
-        ds = drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options = [ tuple[0], 'PROFILE=BASELINE' ])
+        ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options = [ tuple[0], 'PROFILE=BASELINE' ])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0 )
         ds.SetGeoTransform(gt)
         ds = None
@@ -2018,7 +1982,7 @@ def tiff_write_60():
             return 'fail'
     
         ds = None
-        drv.Delete( 'tmp/tiff_write_60.tif' )
+        gdaltest.tiff_drv.Delete( 'tmp/tiff_write_60.tif' )
 
         try:
             os.remove( tuple[1] )
@@ -2032,8 +1996,7 @@ def tiff_write_60():
 
 def tiff_write_61():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
 
@@ -2065,8 +2028,7 @@ def tiff_write_61():
 
 def tiff_write_62():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
 
@@ -2098,8 +2060,7 @@ def tiff_write_62():
 
 def tiff_write_63():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    md = drv.GetMetadata()
+    md = gdaltest.tiff_drv.GetMetadata()
     if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
         return 'skip'
     try:
@@ -2151,8 +2112,7 @@ def tiff_write_64():
 
 def tiff_write_65():
 
-    driver = gdal.GetDriverByName( 'GTiff' )
-    ds = driver.Create( 'tmp/tiff_write_65.tif', 10, 10 )
+    ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_65.tif', 10, 10 )
 
     doc = '<doc><test xml:attr="abc"/></doc>'
     ds.SetMetadata( [ doc ], 'xml:test' )
@@ -2291,6 +2251,60 @@ def tiff_write_70():
 
     return 'success'
 
+
+###############################################################################
+# Test reading in a real BigTIFF file (on filesystems supporting sparse files)
+
+def tiff_write_71():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
+    # file !
+    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+        return 'skip'
+
+    header = open('data/bigtiff_header_extract.tif', 'rb').read()
+
+    f = open('tmp/tiff_write_71.tif', 'wb')
+    f.write(header)
+
+    # Write StripByteCounts tag
+    # 100,000 in little endian
+    strip_length = '\xa0\x86\x01\x00\x00\x00\x00\x00'
+    for i in range(100000):
+        f.write(strip_length)
+
+    # Write StripOffsets tag
+    offset = 1600252
+    array_offset = [0 for i in range(8)]
+    for i in range(100000):
+        off = offset
+        for j in range(8):
+            array_offset[j] = off % 256
+            off = off / 256
+        f.write(''.join(map(chr,array_offset)))
+        offset = offset + 100000
+
+    # Write 0x78 as value of pixel (99999, 99999)
+    f.seek(10001600252-1, 0)
+    c = '\x78'
+    f.write(c)
+    f.close()
+
+    ds = gdal.Open('tmp/tiff_write_71.tif')
+    data = ds.GetRasterBand(1).ReadRaster(99999, 99999, 1, 1)
+    import struct
+    if struct.unpack('b', data)[0] != 0x78:
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_71.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2368,6 +2382,7 @@ gdaltest_list = [
     tiff_write_68,
     tiff_write_69,
     tiff_write_70,
+    tiff_write_71,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
