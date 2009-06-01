@@ -2883,13 +2883,17 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
         CPLErr eErr;
         GDALRasterBand *poBand;
 
-        // TODO: We ought to used scaled progress monitors so we would get 
-        // 0 to 100 progress out of the whole process ... later.
+        void* pScaledProgressData = GDALCreateScaledProgress(
+                i * 1.0 / nListBands, (i + 1) * 1.0 / nListBands,
+                pfnProgress, pProgressData);
 
         poBand = GetRasterBand( panBandList[i] );
         eErr = 
             poBand->BuildOverviews( pszResampling, nOverviews, panOverviewList,
-                                    pfnProgress, pProgressData );
+                                    GDALScaledProgress, pScaledProgressData );
+
+        GDALDestroyScaledProgress(pScaledProgressData);
+
         if( eErr != CE_None )
             return eErr;
     }
