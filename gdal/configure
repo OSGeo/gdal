@@ -19185,7 +19185,7 @@ else
     { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
 fi
-rm -f atomicbuiltins.*
+rm -f atomicbuiltins.* atomicbuildins
 
 HAVE_GCC_ATOMIC_BUILTINS=$HAVE_GCC_ATOMIC_BUILTINS
 
