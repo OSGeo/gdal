@@ -31,9 +31,12 @@
  ****************************************************************************/
 
 import java.util.Vector;
+import java.util.Enumeration;
 import java.util.StringTokenizer;
 
 import org.gdal.gdal.gdal;
+import org.gdal.gdal.ProgressCallback;
+import org.gdal.gdal.TermProgressCallback;
 import org.gdal.ogr.ogr;
 import org.gdal.ogr.ogrConstants;
 import org.gdal.ogr.Driver;
@@ -48,6 +51,27 @@ import org.gdal.osr.CoordinateTransformation;
 
 /* Note : this is the most direct port of ogr2ogr.cpp possible */
 /* It could be made much more java'ish ! */
+
+class GDALScaledProgress extends ProgressCallback
+{
+    private double pctMin;
+    private double pctMax;
+    private ProgressCallback mainCbk;
+
+    public GDALScaledProgress(double pctMin, double pctMax,
+                              ProgressCallback mainCbk)
+    {
+        this.pctMin = pctMin;
+        this.pctMax = pctMax;
+        this.mainCbk = mainCbk;
+    }
+
+    public int run(double dfComplete, String message)
+    {
+        return mainCbk.run(pctMin + dfComplete * (pctMax - pctMin), message);
+    }
+};
+
 
 public class ogr2ogr
 {
@@ -82,6 +106,10 @@ public class ogr2ogr
         String pszSQLStatement = null;
         int    eGType = -2;
         double dfMaxSegmentLength = 0;
+        Vector papszFieldTypesToString = new Vector();
+        boolean bDisplayProgress = false;
+        ProgressCallback pfnProgress = null;
+
     /* -------------------------------------------------------------------- */
     /*      Register format(s).                                             */
     /* -------------------------------------------------------------------- */
@@ -237,6 +265,42 @@ public class ogr2ogr
             {
                 dfMaxSegmentLength = new Double(args[++iArg]).doubleValue();
             }
+            else if( args[iArg].equalsIgnoreCase("-fieldTypeToString") && iArg < args.length-1 )
+            {
+                StringTokenizer tokenizer = new StringTokenizer(args[++iArg], " ,");
+                while(tokenizer.hasMoreElements())
+                {
+                    String token = (String)tokenizer.nextToken();
+                    if (token.equalsIgnoreCase("Integer") ||
+                        token.equalsIgnoreCase("Real") ||
+                        token.equalsIgnoreCase("String") ||
+                        token.equalsIgnoreCase("Date") ||
+                        token.equalsIgnoreCase("Time") ||
+                        token.equalsIgnoreCase("DateTime") ||
+                        token.equalsIgnoreCase("Binary") ||
+                        token.equalsIgnoreCase("IntegerList") ||
+                        token.equalsIgnoreCase("RealList") ||
+                        token.equalsIgnoreCase("StringList"))
+                    {
+                        papszFieldTypesToString.addElement(token);
+                    }
+                    else if (token.equalsIgnoreCase("All"))
+                    {
+                        papszFieldTypesToString = null;
+                        papszFieldTypesToString.addElement("All");
+                        break;
+                    }
+                    else
+                    {
+                        System.err.println("Unhandled type for fieldtypeasstring option : " + token);
+                        Usage();
+                    }
+                }
+            }
+            else if( args[iArg].equalsIgnoreCase("-progress") )
+            {
+                bDisplayProgress = true;
+            }
             else if( args[iArg].charAt(0) == '-' )
             {
                 Usage();
@@ -387,10 +451,25 @@ public class ogr2ogr
     
             if( poResultSet != null )
             {
+                long nCountLayerFeatures = 0;
+                if (bDisplayProgress)
+                {
+                    if (!poResultSet.TestCapability(ogr.OLCFastFeatureCount))
+                    {
+                        System.err.println( "Progress turned off as fast feature count is not available.");
+                        bDisplayProgress = false;
+                    }
+                    else
+                    {
+                        nCountLayerFeatures = poResultSet.GetFeatureCount();
+                        pfnProgress = new TermProgressCallback();
+                    }
+                }
                 if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO, 
                                     pszNewLayerName, bTransform, poOutputSRS,
                                     poSourceSRS, papszSelFields, bAppend, eGType,
-                                    bOverwrite, dfMaxSegmentLength ))
+                                    bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
+                                    nCountLayerFeatures, pfnProgress ))
                 {
                     System.err.println(
                             "Terminating translation prematurely after failed\n" +
@@ -401,46 +480,123 @@ public class ogr2ogr
                 poDS.ReleaseResultSet( poResultSet );
             }
         }
-    
+        else
+        {
+            int nLayerCount = 0;
+            Layer[] papoLayers = null;
+
     /* -------------------------------------------------------------------- */
     /*      Process each data source layer.                                 */
     /* -------------------------------------------------------------------- */
-        for( int iLayer = 0; 
-            pszSQLStatement == null && iLayer < poDS.GetLayerCount(); 
-            iLayer++ )
-        {
-            Layer        poLayer = poDS.GetLayer(iLayer);
-    
-            if( poLayer == null )
+            if ( papszLayers.size() == 0)
             {
-                System.err.println("FAILURE: Couldn't fetch advertised layer " + iLayer + "!");
-                System.exit( 1 );
+                nLayerCount = poDS.GetLayerCount();
+                papoLayers = new Layer[nLayerCount];
+
+                for( int iLayer = 0; 
+                    iLayer < nLayerCount; 
+                    iLayer++ )
+                {
+                    Layer        poLayer = poDS.GetLayer(iLayer);
+
+                    if( poLayer == null )
+                    {
+                        System.err.println("FAILURE: Couldn't fetch advertised layer " + iLayer + "!");
+                        System.exit( 1 );
+                    }
+
+                    papoLayers[iLayer] = poLayer;
+                }
             }
-    
-            if( papszLayers.size() == 0
-                || papszLayers.contains(poLayer.GetLayerDefn().GetName() ) )
+    /* -------------------------------------------------------------------- */
+    /*      Process specified data source layers.                           */
+    /* -------------------------------------------------------------------- */
+            else
             {
+                nLayerCount = papszLayers.size();
+                papoLayers = new Layer[nLayerCount];
+
+                for( int iLayer = 0; 
+                    iLayer < papszLayers.size(); 
+                    iLayer++ )
+                {
+                    Layer        poLayer = poDS.GetLayerByName((String)papszLayers.get(iLayer));
+
+                    if( poLayer == null )
+                    {
+                        System.err.println("FAILURE: Couldn't fetch advertised layer " + (String)papszLayers.get(iLayer) + "!");
+                        System.exit( 1 );
+                    }
+
+                    papoLayers[iLayer] = poLayer;
+                }
+            }
+
+            long[] panLayerCountFeatures = new long[nLayerCount];
+            long nCountLayersFeatures = 0;
+            long nAccCountFeatures = 0;
+
+            /* First pass to apply filters and count all features if necessary */
+            for( int iLayer = 0; 
+                iLayer < nLayerCount; 
+                iLayer++ )
+            {
+                Layer        poLayer = papoLayers[iLayer];
+
                 if( pszWHERE != null )
                     poLayer.SetAttributeFilter( pszWHERE );
-                
+
                 if( poSpatialFilter != null )
                     poLayer.SetSpatialFilter( poSpatialFilter );
-                
+
+                if (bDisplayProgress)
+                {
+                    if (!poLayer.TestCapability(ogr.OLCFastFeatureCount))
+                    {
+                        System.err.println("Progress turned off as fast feature count is not available.");
+                        bDisplayProgress = false;
+                    }
+                    else
+                    {
+                        panLayerCountFeatures[iLayer] = poLayer.GetFeatureCount();
+                        nCountLayersFeatures += panLayerCountFeatures[iLayer];
+                    }
+                }
+            }
+
+            /* Second pass to do the real job */
+            for( int iLayer = 0; 
+                iLayer < nLayerCount; 
+                iLayer++ )
+            {
+                Layer        poLayer = papoLayers[iLayer];
+
+                if (bDisplayProgress)
+                {
+                    pfnProgress = new GDALScaledProgress(
+                            nAccCountFeatures * 1.0 / nCountLayersFeatures,
+                            (nAccCountFeatures + panLayerCountFeatures[iLayer]) * 1.0 / nCountLayersFeatures,
+                            new TermProgressCallback());
+                }
+
+                nAccCountFeatures += panLayerCountFeatures[iLayer];
+
                 if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                     pszNewLayerName, bTransform, poOutputSRS,
                                     poSourceSRS, papszSelFields, bAppend, eGType,
-                                    bOverwrite, dfMaxSegmentLength ) 
+                                    bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
+                                    panLayerCountFeatures[iLayer], pfnProgress) 
                     && !bSkipFailures )
                 {
                     System.err.println(
                             "Terminating translation prematurely after failed\n" +
                             "translation of layer " + poLayer.GetLayerDefn().GetName() + " (use -skipfailures to skip errors)");
-    
+
                     System.exit( 1 );
                 }
             }
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Close down.                                                     */
     /* -------------------------------------------------------------------- */
@@ -459,11 +615,11 @@ public class ogr2ogr
     {
         System.out.print( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]\n" +
                 "               [-select field_list] [-where restricted_where] \n" +
-                "               [-sql <sql statement>] \n" + 
+                "               [-progress] [-sql <sql statement>] \n" + 
                 "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n" +
                 "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n" +
                 "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n" +
-                "               [-segmentize max_dist]\n" +
+                "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" +
                 "               dst_datasource_name src_datasource_name\n" +
                 "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n" +
                 "\n" +
@@ -480,6 +636,7 @@ public class ogr2ogr
         System.out.print( " -append: Append to existing layer instead of creating new if it exists\n" +
                 " -overwrite: delete the output layer and recreate it empty\n" +
                 " -update: Open existing output datasource in update mode\n" +
+                " -progress: Display progress on terminal. Only works if input layers have the \"fast feature count\" capability\n" +
                 " -select field_list: Comma-delimited list of fields from input layer to\n" +
                 "                     copy to the new layer (defaults to all)\n" + 
                 " -where restricted_where: Attribute query (like SQL WHERE)\n" + 
@@ -495,7 +652,11 @@ public class ogr2ogr
                 " -nlt type: Force a geometry type for new layer.  One of NONE, GEOMETRY,\n" +
                 "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT,\n" +
                 "      MULTIPOLYGON, or MULTILINESTRING.  Add \"25D\" for 3D layers.\n" +
-                "      Default is type of source layer.\n" );
+                "      Default is type of source layer.\n" +
+                " -fieldTypeToString type1,...: Converts fields of specified types to\n" +
+                "      fields of type string in the new layer. Valid types are : \n" +
+                "      Integer, Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n" +
+                "      StringList. Special value All can be used to convert all fields to strings.\n");
     
         System.out.print(" -a_srs srs_def: Assign an output SRS\n" +
             " -t_srs srs_def: Reproject/transform to this SRS on output\n" +
@@ -507,7 +668,21 @@ public class ogr2ogr
     
         System.exit( 1 );
     }
-    
+
+    static int CSLFindString(Vector v, String str)
+    {
+        int i = 0;
+        Enumeration e = v.elements();
+        while(e.hasMoreElements())
+        {
+            String strIter = (String)e.nextElement();
+            if (strIter.equalsIgnoreCase(str))
+                return i;
+            i ++;
+        }
+        return -1;
+    }
+
     /************************************************************************/
     /*                           TranslateLayer()                           */
     /************************************************************************/
@@ -522,7 +697,10 @@ public class ogr2ogr
                             SpatialReference poSourceSRS,
                             Vector papszSelFields,
                             boolean bAppend, int eGType, boolean bOverwrite,
-                            double dfMaxSegmentLength)
+                            double dfMaxSegmentLength,
+                            Vector papszFieldTypesToString,
+                            long nCountLayerFeatures,
+                            ProgressCallback pfnProgress)
     
     {
         Layer    poDstLayer;
@@ -678,19 +856,43 @@ public class ogr2ogr
             {
                 int iSrcField = poFDefn.GetFieldIndex((String)papszSelFields.get(iField));
                 if (iSrcField >= 0)
-                    poDstLayer.CreateField( poFDefn.GetFieldDefn(iSrcField) );
+                {
+                    if (papszFieldTypesToString != null &&
+                        (CSLFindString(papszFieldTypesToString, "All") != -1 ||
+                        CSLFindString(papszFieldTypesToString,
+                                    ogr.GetFieldTypeName(poFDefn.GetFieldDefn(iSrcField).GetFieldType())) != -1))
+                    {
+                        FieldDefn oFieldDefn = new FieldDefn( poFDefn.GetFieldDefn(iSrcField).GetName() );
+                        oFieldDefn.SetType(ogr.OFTString);
+                        poDstLayer.CreateField( oFieldDefn );
+                    }
+                    else
+                        poDstLayer.CreateField( poFDefn.GetFieldDefn(iSrcField) );
+                }
                 else
                 {
                     System.err.println("Field '" + (String)papszSelFields.get(iField) + "' not found in source layer.");
-                    if( !bSkipFailures )
-                        return false;
+                        if( !bSkipFailures )
+                            return false;
                 }
             }
         }
         else if( !bAppend )
         {
             for( iField = 0; iField < poFDefn.GetFieldCount(); iField++ )
-                poDstLayer.CreateField( poFDefn.GetFieldDefn(iField) );
+            {
+                if (papszFieldTypesToString != null &&
+                    (CSLFindString(papszFieldTypesToString, "All") != -1 ||
+                    CSLFindString(papszFieldTypesToString,
+                                ogr.GetFieldTypeName(poFDefn.GetFieldDefn(iField).GetFieldType())) != -1))
+                {
+                    FieldDefn oFieldDefn = new FieldDefn( poFDefn.GetFieldDefn(iField).GetName() );
+                    oFieldDefn.SetType(ogr.OFTString);
+                    poDstLayer.CreateField( oFieldDefn );
+                }
+                else
+                    poDstLayer.CreateField( poFDefn.GetFieldDefn(iField) );
+            }
         }
     
     /* -------------------------------------------------------------------- */
@@ -698,6 +900,7 @@ public class ogr2ogr
     /* -------------------------------------------------------------------- */
         Feature  poFeature;
         int         nFeaturesInTransaction = 0;
+        long        nCount = 0;
         
         poSrcLayer.ResetReading();
     
@@ -805,6 +1008,12 @@ public class ogr2ogr
     
             poDstFeature.delete();
             poDstFeature = null;
+
+            /* Report progress */
+            nCount ++;
+            if (pfnProgress != null)
+                pfnProgress.run(nCount * 1.0 / nCountLayerFeatures, "");
+
         }
     
         if( nGroupTransactions > 0 )
