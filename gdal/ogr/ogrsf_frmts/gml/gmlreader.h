@@ -150,6 +150,9 @@ class CPL_DLL GMLFeature
 
     char            *m_pszGeometry;
 
+    // string list of named non-schema properties - used by NAS driver.
+    char           **m_papszOBProperties; 
+    
 public:
                     GMLFeature( GMLFeatureClass * );
                    ~GMLFeature();
@@ -171,6 +174,11 @@ public:
     void             SetFID( const char *pszFID );
 
     void             Dump( FILE *fp );
+
+    // Out of Band property handling - special stuff like relations for NAS.
+    void             AddOBProperty( const char *pszName, const char *pszValue );
+    const char      *GetOBProperty( const char *pszName );
+    char           **GetOBProperties();
 };
 
 /************************************************************************/
