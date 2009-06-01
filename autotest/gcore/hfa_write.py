@@ -214,6 +214,45 @@ def hfa_bug_2525():
     return 'success'
 
 ###############################################################################
+# Test building external overviews with HFA_USE_RRD=YES
+
+def hfa_use_rrd():
+
+    shutil.copyfile( 'data/small_ov.img', 'tmp/small.img' )
+
+    old_value = gdal.GetConfigOption('HFA_USE_RRD', 'NO')
+    gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+    ds = gdal.Open( 'tmp/small.img', gdal.GA_Update )
+    result = ds.BuildOverviews( overviewlist = [2] )
+    gdal.SetConfigOption('HFA_USE_RRD', old_value)
+
+    if result != 0:
+        print result
+        gdaltest.post_reason( 'BuildOverviews() failed.' )
+        return 'fail'
+    ds = None
+
+    try:
+        fd = open('tmp/small.rrd')
+    except:
+        fd = None
+
+    if fd is None:
+        gdaltest.post_reason( 'small.rrd not present.' )
+        return 'fail'
+    fd.close()
+
+    ds = gdal.Open('tmp/small.img' )
+    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 26148:
+        print ds.GetRasterBand(1).GetOverview(0).Checksum()
+        gdaltest.post_reason( 'Unexpected checksum.' )
+        return 'fail'
+
+    gdal.GetDriverByName('HFA').Delete( 'tmp/small.img' )
+
+    return 'success'
+
+###############################################################################
 # Get the driver, and verify a few things about it. 
 
 init_list = [ \
@@ -234,7 +273,8 @@ gdaltest_list = [ hfa_write_desc,
                   hfa_write_nd_invalid,
                   hfa_update_overviews,
                   hfa_clean_external_overviews,
-                  hfa_bug_2525 ]
+                  hfa_bug_2525,
+                  hfa_use_rrd ]
 
 # full set of tests for normal mode.
 
