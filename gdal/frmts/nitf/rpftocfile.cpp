@@ -96,6 +96,13 @@ RPFToc* RPFTOCRead(const char* pszFilename, NITFFile* psFile)
         return NULL;
     }
 
+    if (TRESize < 48)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Not enough bytes in RPFHDR." );
+        return NULL;
+    }
+
     return  RPFTOCReadFromBuffer(pszFilename, psFile->fp, pachTRE);
 }
 
