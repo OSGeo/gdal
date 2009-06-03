@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 1570 2009-04-22 21:37:26Z warmerdam $
+ * $Id: geo_normalize.c 1584 2009-06-03 20:07:15Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1018,6 +1018,9 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
       case 9816: /* tunesia mining grid has no counterpart */
         return( KvUserDefined );
 
+      case 9820:
+        return( CT_LambertAzimEqualArea );
+
       case 9822:
         return( CT_AlbersEqualArea );
     }
@@ -1157,6 +1160,18 @@ static int SetGTParmIds( int nCTProjection,
         panProjParmId[6] = ProjFalseNorthingGeoKey;
 
         /* EPSG codes? */
+        return TRUE;
+
+      case CT_LambertAzimEqualArea:
+        panProjParmId[0] = ProjCenterLatGeoKey;
+        panProjParmId[1] = ProjCenterLongGeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGNatOriginLat;
+        panEPSGCodes[1] = EPSGNatOriginLong;
+        panEPSGCodes[5] = EPSGFalseEasting;
+        panEPSGCodes[6] = EPSGFalseNorthing;
         return TRUE;
 
       default:
