@@ -230,6 +230,17 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     OGRSpatialReference	oSRS;
 
 /* -------------------------------------------------------------------- */
+/*  Handle non-standard coordinate systems where GTModelTypeGeoKey      */
+/*  is not defined, but ProjectedCSTypeGeoKey is defined (ticket #3019) */
+/* -------------------------------------------------------------------- */
+    if( psDefn->Model == KvUserDefined && psDefn->PCS != KvUserDefined)
+    {
+        CPLDebug("GTiff", "Not-standard GeoTIFF : assuming GTModelTypeGeoKey=ModelTypeProjected, "
+                          "since ProjectedCSTypeGeoKey is defined");
+        psDefn->Model = ModelTypeProjected;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Handle non-standard coordinate systems as LOCAL_CS.             */
 /* -------------------------------------------------------------------- */
     if( psDefn->Model != ModelTypeProjected 
