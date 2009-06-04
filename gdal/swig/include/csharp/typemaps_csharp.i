@@ -231,7 +231,7 @@ OPTIONAL_POD(int, int);
   /* %typemap(in) (char **argout) */
 	$1 = ($1_ltype)$input;
 }
-%typemap(argout) (char **argout), (char **username), (char **usrname), (char **type)
+%typemap(argout) (char **argout) 
 {
   /* %typemap(argout) (char **argout) */
   char* temp_string;
@@ -239,6 +239,11 @@ OPTIONAL_POD(int, int);
   if (*$1)
 		free(*$1);
   *$1 = temp_string;
+}
+%typemap(argout) (char **staticstring), (char **username), (char **usrname), (char **type)
+{
+  /* %typemap(argout) (char **staticstring) */
+  *$1 = SWIG_csharp_string_callback(*$1);
 }
 
 /*
