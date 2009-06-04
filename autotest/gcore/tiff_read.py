@@ -292,6 +292,18 @@ def tiff_vsizip_and_mem():
 
     return 'success'
 
+###############################################################################
+# Test reading a GeoTIFF with only ProjectedCSTypeGeoKey defined (ticket #3019)
+
+def tiff_ProjectedCSTypeGeoKey_only():
+
+    ds = gdal.Open('data/ticket3019.tif')
+    if ds.GetProjectionRef().find('WGS 84 / UTM zone 31N') == -1:
+        print ds.GetProjectionRef()
+        return 'fail'
+    ds = None
+
+    return 'success'
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -310,6 +322,7 @@ gdaltest_list.append( (tiff_g4_split) )
 gdaltest_list.append( (tiff_multi_images) )
 gdaltest_list.append( (tiff_vsimem) )
 gdaltest_list.append( (tiff_vsizip_and_mem) )
+gdaltest_list.append( (tiff_ProjectedCSTypeGeoKey_only) )
 
 if __name__ == '__main__':
 
