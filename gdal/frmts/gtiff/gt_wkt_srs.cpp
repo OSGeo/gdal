@@ -123,6 +123,8 @@ static void WKTMassageDatum( char ** ppszDatum )
     pszDatum = CPLStrdup(*ppszDatum);
     GTIFFreeMemory( *ppszDatum );
     *ppszDatum = pszDatum;
+    if (pszDatum[0] == '\0')
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Translate non-alphanumeric values to underscores.               */
