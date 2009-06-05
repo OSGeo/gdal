@@ -389,8 +389,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
       aUnitGot = TRUE;
     }
 
-    if( pszDatumName != NULL )
-        WKTMassageDatum( &pszDatumName );
+    if( pszDatumName != NULL )            /* was a GTIFFreeMemory'able string */
+        WKTMassageDatum( &pszDatumName ); /* now a CPLFree'able string */
 
     dfSemiMajor = psDefn->SemiMajor;
     if( dfSemiMajor == 0.0 )
@@ -411,8 +411,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     }
     if(!pszGeogName || strlen(pszGeogName) == 0)
     {
-      CPLFree(pszGeogName);
-      pszGeogName = CPLStrdup( pszDatumName );
+      GTIFFreeMemory(pszGeogName);             /* was a GTIFFreeMemory'able string */
+      pszGeogName = CPLStrdup( pszDatumName ); /* now a CPLFree'able string */
     }
     if(aUnitGot)
       oSRS.SetGeogCS( pszGeogName, pszDatumName, 
