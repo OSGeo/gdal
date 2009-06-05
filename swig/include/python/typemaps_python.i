@@ -167,7 +167,11 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   for (unsigned int i=0; i<$dim0; i++) {
     PyObject *o = PySequence_GetItem($input,i);
     double val;
-    PyArg_Parse(o, "d", &val );
+    if ( !PyArg_Parse(o, "d", &val ) ) {
+      PyErr_SetString(PyExc_TypeError, "not a number");
+      Py_DECREF(o);
+      SWIG_fail;
+    }
     $1[i] =  val;
     Py_DECREF(o);
   }
@@ -189,6 +193,8 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
     if ( !PyArg_Parse(o,"i",&$2[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+      Py_DECREF(o);
       SWIG_fail;
     }
     Py_DECREF(o);
@@ -219,6 +225,8 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
     if ( !PyArg_Parse(o,"d",&$2[i]) ) {
+      PyErr_SetString(PyExc_TypeError, "not a number");
+      Py_DECREF(o);
       SWIG_fail;
     }
     Py_DECREF(o);
@@ -372,6 +380,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     GDAL_GCP *item = 0;
     SWIG_ConvertPtr( o, (void**)&item, SWIGTYPE_p_GDAL_GCP, SWIG_POINTER_EXCEPTION | 0 );
     if ( ! item ) {
+      Py_DECREF(o);
       SWIG_fail;
     }
     memcpy( (void*) tmpGCPList, (void*) item, sizeof( GDAL_GCP ) );
@@ -393,13 +402,20 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(out) GDALColorEntry*
 {
   /* %typemap(out) GDALColorEntry* */
-   $result = Py_BuildValue( "(hhhh)", (*$1).c1,(*$1).c2,(*$1).c3,(*$1).c4);
+   if ( $1 != NULL )
+     $result = Py_BuildValue( "(hhhh)", (*$1).c1,(*$1).c2,(*$1).c3,(*$1).c4);
+   else
+     $result = NULL;
 }
 
 %typemap(in) GDALColorEntry* (GDALColorEntry ce)
 {
   /* %typemap(in) GDALColorEntry* */
    ce.c4 = 255;
+  if (! PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
    int size = PySequence_Size($input);
    if ( size > 4 ) {
      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
@@ -409,7 +425,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
      SWIG_fail;
    }
-   PyArg_ParseTuple( $input,"hhh|h", &ce.c1, &ce.c2, &ce.c3, &ce.c4 );
+   if ( !PyArg_ParseTuple( $input,"hhh|h", &ce.c1, &ce.c2, &ce.c3, &ce.c4 ) ) {
+     PyErr_SetString(PyExc_TypeError, "Invalid values in ColorEntry sequence ");
+     SWIG_fail;
+   }
    $1 = &ce;
 }
 
@@ -459,6 +478,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
       char *pszItem = NULL;
       PyObject* pyObj = PySequence_GetItem($input,i);
       if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+          Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
       }
@@ -475,7 +495,11 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         PyObject *it = PySequence_GetItem( item_list, i );
         char *nm;
         char *val;
-        PyArg_ParseTuple( it, "ss", &nm, &val );
+        if ( ! PyArg_ParseTuple( it, "ss", &nm, &val ) ) {
+          Py_DECREF(it);
+          PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
+          SWIG_fail;
+        }
         $1 = CSLAddNameValue( $1, nm, val );
         Py_DECREF(it);
       }
@@ -509,6 +533,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     char *pszItem = NULL;
     PyObject* pyObj = PySequence_GetItem($input,i);
     if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        Py_DECREF(pyObj);
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
         SWIG_fail;
     }
@@ -947,11 +972,6 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 %typemap(in, numinputs=1) (int object_list_count, type **poObjects)
 {
   /*  OBJECT_LIST_INPUT %typemap(in) (int itemcount, type *optional_##type)*/
-  if ( $input == Py_None ) {
-    PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
-    SWIG_fail;
-  }
-
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
@@ -969,6 +989,7 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 %#endif
       type* rawobjectpointer = NULL;
       if (!sobj) {
+          Py_DECREF(o);
           SWIG_fail;
       }
       rawobjectpointer = (type*) sobj->ptr;
@@ -1157,6 +1178,8 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
 
         return FALSE;
     }
+
+    Py_DECREF(o);
   }
 
   return TRUE;
