@@ -401,33 +401,37 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Handle subdatasets.                                             */
 /* -------------------------------------------------------------------- */
-    if( CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 )
+    if( !bCopySubDatasets 
+        && CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 
+        && GDALGetRasterCount(hDataset) == 0 )
     {
-        if( !bCopySubDatasets )
-        {
-            fprintf( stderr,
-                     "Input file contains subdatasets. Please, select one of them for reading.\n" );
-        }
-        else
-        {
-            char **papszSubdatasets = GDALGetMetadata(hDataset,"SUBDATASETS");
-            char *pszSubDest = (char *) CPLMalloc(strlen(pszDest)+32);
-            int i;
-            int bOldSubCall = bSubCall;
+        fprintf( stderr,
+                 "Input file contains subdatasets. Please, select one of them for reading.\n" );
+        GDALClose( hDataset );
+        GDALDestroyDriverManager();
+        exit( 1 );
+    }
 
-            argv[iDstFileArg] = pszSubDest;
-            bSubCall = TRUE;
-            for( i = 0; papszSubdatasets[i] != NULL; i += 2 )
-            {
-                argv[iSrcFileArg] = strstr(papszSubdatasets[i],"=")+1;
-                sprintf( pszSubDest, "%s%d", pszDest, i/2 + 1 );
-                if( ProxyMain( argc, argv ) != 0 )
-                    break;
-            }
-
-            bSubCall = bOldSubCall;
-            CPLFree( pszSubDest );
+    if( CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 
+        && bCopySubDatasets )
+    {
+        char **papszSubdatasets = GDALGetMetadata(hDataset,"SUBDATASETS");
+        char *pszSubDest = (char *) CPLMalloc(strlen(pszDest)+32);
+        int i;
+        int bOldSubCall = bSubCall;
+        
+        argv[iDstFileArg] = pszSubDest;
+        bSubCall = TRUE;
+        for( i = 0; papszSubdatasets[i] != NULL; i += 2 )
+        {
+            argv[iSrcFileArg] = strstr(papszSubdatasets[i],"=")+1;
+            sprintf( pszSubDest, "%s%d", pszDest, i/2 + 1 );
+            if( ProxyMain( argc, argv ) != 0 )
+                break;
         }
+        
+        bSubCall = bOldSubCall;
+        CPLFree( pszSubDest );
 
         GDALClose( hDataset );
 
