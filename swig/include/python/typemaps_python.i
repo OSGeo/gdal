@@ -1089,41 +1089,100 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
 /***************************************************
  * Typemaps for CoordinateTransformation.TransformPoints()
  ***************************************************/
-%typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z)
+%fragment("DecomposeSequenceOfCoordinates","header") %{
+static int
+DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y, double *z )
 {
-  /*  typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z) */
-  if ( $input == Py_None ) {
-    PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
-    SWIG_fail;
+  for( int i = 0; i<nCount; ++i )
+  {
+
+    PyObject *o = PySequence_GetItem(seq, i);
+    if ( !PySequence_Check(o) )
+    {
+        Py_DECREF(o);
+        PyErr_SetString(PyExc_TypeError, "not a sequence");
+
+        return FALSE;
+    }
+
+    Py_ssize_t len = PySequence_Size(o);
+
+    if (len == 2 || len == 3)
+    {
+        PyObject *o1 = PySequence_GetItem(o, 0);
+        if (!PyNumber_Check(o1))
+        {
+            Py_DECREF(o); Py_DECREF(o1);
+            PyErr_SetString(PyExc_TypeError, "not a number");
+
+            return FALSE;
+        }
+        x[i] = PyFloat_AsDouble(o1);
+        Py_DECREF(o1);
+
+        o1 = PySequence_GetItem(o, 1);
+        if (!PyNumber_Check(o1))
+        {
+            Py_DECREF(o); Py_DECREF(o1);
+            PyErr_SetString(PyExc_TypeError, "not a number");
+
+            return FALSE;
+        }
+        y[i] = PyFloat_AsDouble(o1);
+        Py_DECREF(o1);
+
+        /* The 3rd coordinate is optional, default 0.0 */
+        if (len == 3)
+        {
+            o1 = PySequence_GetItem(o, 2);
+            if (!PyNumber_Check(o1))
+            {
+                Py_DECREF(o); Py_DECREF(o1);
+                PyErr_SetString(PyExc_TypeError, "not a number");
+
+                return FALSE;
+            }
+            z[i] = PyFloat_AsDouble(o1);
+            Py_DECREF(o1);
+        }
+        else
+        {
+            z[i] = 0.0;
+        }
+    }
+    else
+    {
+        Py_DECREF(o);
+        PyErr_SetString(PyExc_TypeError, "invalid coordinate");
+
+        return FALSE;
+    }
   }
 
+  return TRUE;
+}
+%}
+
+%typemap(in,numinputs=1,fragment="DecomposeSequenceOfCoordinates") (int nCount, double *x, double *y, double *z)
+{
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
+
   $1 = PySequence_Size($input);
-  $2 = (double*) CPLMalloc($1*sizeof(double));
-  $3 = (double*) CPLMalloc($1*sizeof(double));
-  $4 = (double*) CPLMalloc($1*sizeof(double));
+  $2 = (double*) VSIMalloc($1*sizeof(double));
+  $3 = (double*) VSIMalloc($1*sizeof(double));
+  $4 = (double*) VSIMalloc($1*sizeof(double));
 
-  for( int i = 0; i<$1; i++ ) {
+  if ($2 == NULL || $3 == NULL || $4 == NULL)
+  {
+      PyErr_SetString( PyExc_RuntimeError, "Out of memory" );
+      SWIG_fail;
+  }
 
-      PyObject *o = PySequence_GetItem($input,i);
-      if ( !PyTuple_Check(o) ) {
-            PyErr_SetString(PyExc_TypeError, "not a tuple");
-            SWIG_fail;
-      }
-
-      double x, y, z = 0;
-      if ( !PyArg_ParseTuple( o,"dd|d", &x, &y, &z) )
-      {
-          PyErr_SetString(PyExc_TypeError, "not a tuple of 2 or 3 doubles");
-          SWIG_fail;
-      }
-
-      ($2)[i] = x;
-      ($3)[i] = y;
-      ($4)[i] = z;
+  if (!DecomposeSequenceOfCoordinates($input,$1,$2,$3,$4)) {
+    SWIG_fail;
   }
 }
 
@@ -1145,51 +1204,37 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
 %typemap(freearg)  (int nCount, double *x, double *y, double *z)
 {
     /* %typemap(freearg)  (int nCount, double *x, double *y, double *z) */
-    free($2);
-    free($3);
-    free($4);
+    VSIFree($2);
+    VSIFree($3);
+    VSIFree($4);
 }
 
 /***************************************************
  * Typemaps for Transform.TransformPoints()
  ***************************************************/
 
-%typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z, int* panSuccess)
+%typemap(in,numinputs=1,fragment="DecomposeSequenceOfCoordinates") (int nCount, double *x, double *y, double *z, int* panSuccess)
 {
   /*  typemap(in,numinputs=1) (int nCount, double *x, double *y, double *z, int* panSuccess) */
-  if ( $input == Py_None ) {
-    PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
-    SWIG_fail;
-  }
-
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
+
   $1 = PySequence_Size($input);
-  $2 = (double*) CPLMalloc($1*sizeof(double));
-  $3 = (double*) CPLMalloc($1*sizeof(double));
-  $4 = (double*) CPLMalloc($1*sizeof(double));
-  $5 = (int*) CPLMalloc($1*sizeof(int));
+  $2 = (double*) VSIMalloc($1*sizeof(double));
+  $3 = (double*) VSIMalloc($1*sizeof(double));
+  $4 = (double*) VSIMalloc($1*sizeof(double));
+  $5 = (int*) VSIMalloc($1*sizeof(int));
 
-  for( int i = 0; i<$1; i++ ) {
+  if ($2 == NULL || $3 == NULL || $4 == NULL || $5 == NULL)
+  {
+      PyErr_SetString( PyExc_RuntimeError, "Out of memory" );
+      SWIG_fail;
+  }
 
-      PyObject *o = PySequence_GetItem($input,i);
-      if ( !PyTuple_Check(o) ) {
-            PyErr_SetString(PyExc_TypeError, "not a tuple");
-            SWIG_fail;
-      }
-
-      double x, y, z = 0;
-      if ( !PyArg_ParseTuple( o,"dd|d", &x, &y, &z) )
-      {
-          PyErr_SetString(PyExc_TypeError, "not a tuple of 2 or 3 doubles");
-          SWIG_fail;
-      }
-
-      ($2)[i] = x;
-      ($3)[i] = y;
-      ($4)[i] = z;
+  if (!DecomposeSequenceOfCoordinates($input,$1,$2,$3,$4)) {
+     SWIG_fail;
   }
 }
 
@@ -1200,7 +1245,7 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
   PyObject *xyz = PyList_New( $1 );
   PyObject *success = PyList_New( $1 );
   for( int i=0; i< $1; i++ ) {
-    PyObject *tuple = PyTuple_New( 4 );
+    PyObject *tuple = PyTuple_New( 3 );
     PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( ($2)[i] ) );
     PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( ($3)[i] ) );
     PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( ($4)[i] ) );
@@ -1215,8 +1260,8 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
 %typemap(freearg)  (int nCount, double *x, double *y, double *z, int* panSuccess)
 {
     /* %typemap(freearg)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
-    free($2);
-    free($3);
-    free($4);
-    free($5);
+    VSIFree($2);
+    VSIFree($3);
+    VSIFree($4);
+    VSIFree($5);
 }
