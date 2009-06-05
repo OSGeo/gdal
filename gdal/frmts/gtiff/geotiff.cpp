@@ -4269,6 +4269,12 @@ void GTiffDataset::LookForProjection()
 
         GTIFFree( hGTIF );
     }
+
+    if( pszProjection == NULL )
+    {
+        pszProjection = CPLStrdup( "" );
+    }
+
     bGeoTIFFInfoChanged = FALSE;
 }
 
