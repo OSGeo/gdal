@@ -408,7 +408,10 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
               dfInvFlattening = SRS_WGS84_INVFLATTENING;
     }
     if(!pszGeogName || strlen(pszGeogName) == 0)
+    {
+      CPLFree(pszGeogName);
       pszGeogName = CPLStrdup( pszDatumName );
+    }
     if(aUnitGot)
       oSRS.SetGeogCS( pszGeogName, pszDatumName, 
                       pszSpheroidName, dfSemiMajor, dfInvFlattening,
