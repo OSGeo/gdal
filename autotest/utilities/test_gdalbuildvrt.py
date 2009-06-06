@@ -232,14 +232,75 @@ def test_gdalbuildvrt_6():
     return 'success'
 
 ###############################################################################
+# Test source rasters with nodata
+
+def test_gdalbuildvrt_7():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtnull1.tif', 20, 10, 3, gdal.GDT_UInt16)
+    out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:4326')
+    out_ds.SetProjection(srs.ExportToWkt())
+    out_ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
+    out_ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+    out_ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
+    out_ds.GetRasterBand(1).SetNoDataValue(256)
+
+    out_ds.GetRasterBand(1).WriteRaster( 0, 0, 10, 10, '\xff', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds.GetRasterBand(2).WriteRaster( 0, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds.GetRasterBand(3).WriteRaster( 0, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds = None
+
+    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtnull2.tif', 20, 10, 3, gdal.GDT_UInt16)
+    out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:4326')
+    out_ds.SetProjection(srs.ExportToWkt())
+    out_ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
+    out_ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+    out_ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
+    out_ds.GetRasterBand(1).SetNoDataValue(256)
+
+    out_ds.GetRasterBand(1).WriteRaster( 10, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds.GetRasterBand(2).WriteRaster( 10, 0, 10, 10, '\xff', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds.GetRasterBand(3).WriteRaster( 10, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds = None
+
+    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/gdalbuildvrt7.vrt tmp/vrtnull1.tif tmp/vrtnull2.tif').read()
+
+    ds = gdal.Open('tmp/gdalbuildvrt7.vrt')
+
+    if ds.GetRasterBand(1).Checksum() != 1217:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 1218:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 0:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
 
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/tileindex.shp')
 
-    gdal.GetDriverByName('GTiff').Delete('tmp/mosaic.vrt')
-    gdal.GetDriverByName('GTiff').Delete('tmp/stacked.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/mosaic.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/stacked.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt7.vrt')
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -248,6 +309,8 @@ def test_gdalbuildvrt_cleanup():
     drv.Delete('tmp/gdalbuildvrt3.tif')
     drv.Delete('tmp/gdalbuildvrt4.tif')
     drv.Delete('tmp/gdalbuildvrt5.tif')
+    drv.Delete('tmp/vrtnull1.tif')
+    drv.Delete('tmp/vrtnull2.tif')
     try:
         os.remove('tmp/filelist.txt')
     except:
@@ -263,6 +326,7 @@ gdaltest_list = [
     test_gdalbuildvrt_4,
     test_gdalbuildvrt_5,
     test_gdalbuildvrt_6,
+    test_gdalbuildvrt_7,
     test_gdalbuildvrt_cleanup
     ]
 
