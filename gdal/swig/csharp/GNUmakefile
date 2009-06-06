@@ -1,12 +1,12 @@
 
-
 include ../../GDALmake.opt
 include csharp.opt
-include ../SWIGmake.base
 
 all: build
 
 BINDING = csharp
+include ../SWIGmake.base
+
 SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
 LINK = $(LD_SHARED)
