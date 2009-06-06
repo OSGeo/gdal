@@ -6,7 +6,6 @@ include csharp.opt
 all: build
 
 BINDING = csharp
-SWIG = swig
 SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
 LINK = $(LD_SHARED)
