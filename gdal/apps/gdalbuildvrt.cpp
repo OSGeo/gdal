@@ -57,8 +57,8 @@ typedef struct
     int    nBlockXSize;
     int    nBlockYSize;
     GDALDataType firstBandType;
-    int          bFirstBandHasNoData;
-    double       dfFirstBandNoDataValue;
+    int*         panHasNoData;
+    double*      padfNoDataValues;
 } DatasetProperty;
 
 typedef struct
@@ -128,7 +128,7 @@ void build_vrt(const char* pszOutputFilename,
     int nInputFiles = *pnInputFiles;
 
     DatasetProperty* psDatasetProperties =
-            (DatasetProperty*) CPLMalloc(nInputFiles*sizeof(DatasetProperty));
+            (DatasetProperty*) CPLCalloc(nInputFiles, sizeof(DatasetProperty));
 
     for(i=0;i<nInputFiles;i++)
     {
@@ -215,9 +215,15 @@ void build_vrt(const char* pszOutputFilename,
 
             /* For the -separate case */
             psDatasetProperties[i].firstBandType = GDALGetRasterDataType(GDALGetRasterBand(hDS, 1));
-            psDatasetProperties[i].dfFirstBandNoDataValue  =
-                 GDALGetRasterNoDataValue(GDALGetRasterBand(hDS, 1),
-                                          &psDatasetProperties[i].bFirstBandHasNoData);
+
+            psDatasetProperties[i].padfNoDataValues = (double*)CPLMalloc(sizeof(double) * _nBands);
+            psDatasetProperties[i].panHasNoData = (int*)CPLMalloc(sizeof(int) * _nBands);
+            for(j=0;j<_nBands;j++)
+            {
+                psDatasetProperties[i].padfNoDataValues[j]  =
+                    GDALGetRasterNoDataValue(GDALGetRasterBand(hDS, j+1),
+                                            &psDatasetProperties[i].panHasNoData[j]);
+            }
 
             if (bFirst)
             {
@@ -412,17 +418,26 @@ void build_vrt(const char* pszOutputFilename,
 
             VRTSourcedRasterBandH hVRTBand =
                     (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, iBand);
-            if (psDatasetProperties[i].bFirstBandHasNoData)
-                GDALSetRasterNoDataValue(hVRTBand, psDatasetProperties[i].dfFirstBandNoDataValue);
-
-            /* Place the raster band at the right position in the VRT */
-            VRTAddSimpleSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
-                            0, 0,
-                            psDatasetProperties[i].nRasterXSize,
-                            psDatasetProperties[i].nRasterYSize,
-                            xoffset, yoffset,
-                            dest_width, dest_height, "near",
-                            VRT_NODATA_UNSET);
+            if (psDatasetProperties[i].panHasNoData[0])
+            {
+                GDALSetRasterNoDataValue(hVRTBand, psDatasetProperties[i].padfNoDataValues[0]);
+                VRTAddComplexSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                0, 0,
+                                psDatasetProperties[i].nRasterXSize,
+                                psDatasetProperties[i].nRasterYSize,
+                                xoffset, yoffset,
+                                dest_width, dest_height,
+                                0, 1, psDatasetProperties[i].padfNoDataValues[0]);
+            }
+            else
+                /* Place the raster band at the right position in the VRT */
+                VRTAddSimpleSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                0, 0,
+                                psDatasetProperties[i].nRasterXSize,
+                                psDatasetProperties[i].nRasterYSize,
+                                xoffset, yoffset,
+                                dest_width, dest_height, "near",
+                                VRT_NODATA_UNSET);
 
             GDALDereferenceDataset(hProxyDS);
 
@@ -483,13 +498,22 @@ void build_vrt(const char* pszOutputFilename,
                         (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, j + 1);
     
                 /* Place the raster band at the right position in the VRT */
-                VRTAddSimpleSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, j + 1),
-                                0, 0,
-                                psDatasetProperties[i].nRasterXSize,
-                                psDatasetProperties[i].nRasterYSize,
-                                xoffset, yoffset,
-                                dest_width, dest_height, "near",
-                                VRT_NODATA_UNSET);
+                if (psDatasetProperties[i].panHasNoData[j])
+                    VRTAddComplexSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, j + 1),
+                                    0, 0,
+                                    psDatasetProperties[i].nRasterXSize,
+                                    psDatasetProperties[i].nRasterYSize,
+                                    xoffset, yoffset,
+                                    dest_width, dest_height,
+                                    0, 1, psDatasetProperties[i].padfNoDataValues[j]);
+                else
+                    VRTAddSimpleSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, j + 1),
+                                    0, 0,
+                                    psDatasetProperties[i].nRasterXSize,
+                                    psDatasetProperties[i].nRasterYSize,
+                                    xoffset, yoffset,
+                                    dest_width, dest_height, "near",
+                                    VRT_NODATA_UNSET);
             }
             GDALDereferenceDataset(hProxyDS);
         }
@@ -497,6 +521,11 @@ void build_vrt(const char* pszOutputFilename,
     GDALClose(hVRTDS);
 
 end:
+    for(i=0;i<nInputFiles;i++)
+    {
+        CPLFree(psDatasetProperties[i].padfNoDataValues);
+        CPLFree(psDatasetProperties[i].panHasNoData);
+    }
     CPLFree(psDatasetProperties);
     if (!bSeparate)
     {
