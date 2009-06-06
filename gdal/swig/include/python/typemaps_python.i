@@ -283,14 +283,13 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   Py_ssize_t   safeLen;
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+  if (!PyString_Check($input))
+  {
+      PyErr_SetString(PyExc_TypeError, "not a string");
+      SWIG_fail;
+  }
   PyString_AsStringAndSize($input, (char**) &$2, &safeLen );
   $1 = (int) safeLen;
-}
-%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER)
-        (int nLen, char *pBuf)
-{
-  /* %typecheck(SWIG_TYPECHECK_POINTER) (int nLen, char *pBuf) */
-  $1 = (PyString_Check($input)) ? 1 : 0;
 }
 
 /*
