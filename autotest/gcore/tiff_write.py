@@ -2305,6 +2305,88 @@ def tiff_write_71():
 
     return 'success'
 
+###############################################################################
+# With CreateCopy(), check that TIFF directory is in the first bytes of the file
+# and has not been rewritten later (#3021)
+
+def tiff_write_72():
+
+    shutil.copyfile( 'data/byte.tif', 'tmp/byte.tif' )
+    ds = gdal.Open('tmp/byte.tif', gdal.GA_Update)
+    dict = {}
+    dict['TEST_KEY'] = 'TestValue'
+    ds.SetMetadata( dict )
+    ds = None
+
+    for profile in ('GDALGeotiff', 'GEOTIFF', 'BASELINE'):
+        src_ds = gdal.Open('tmp/byte.tif')
+        out_ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_72.tif', src_ds, options = ['ENDIANNESS=LITTLE', 'PROFILE=' + profile])
+        src_ds = None
+        out_ds = None
+
+        fileobj = open( 'tmp/tiff_write_72.tif', mode='rb')
+        binvalues = array.array('b')
+        fileobj.seek(4)
+        binvalues.read(fileobj, 4)
+        fileobj.close()
+
+        # Directory should be at offset 8 of the file
+        if not (binvalues[0] == 0x08 and binvalues[1] == 0x00 and binvalues[2] == 0x00 and binvalues[3] == 0x00):
+            gdaltest.post_reason('Failed with profile %s' % profile)
+            return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/byte.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_72.tif' )
+
+    return 'success'
+
+###############################################################################
+# With Create(), check that TIFF directory is in the first bytes of the file
+# and has not been rewritten later (#3021)
+
+def tiff_write_73():
+
+    out_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_73.tif', 10, 10, options = ['ENDIANNESS=LITTLE'])
+    out_ds.SetGeoTransform([1,0.01,0,1,0,-0.01])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:32601')
+    out_ds.SetProjection(srs.ExportToWkt())
+    dict = {}
+    dict['TEST_KEY'] = 'TestValue'
+    out_ds.SetMetadata( dict )
+    out_ds.BuildOverviews('NONE', [2])
+    out_ds.GetRasterBand(1).Fill(255)
+    out_ds = None
+
+    fileobj = open( 'tmp/tiff_write_73.tif', mode='rb')
+    binvalues = array.array('b')
+    fileobj.seek(4)
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    # Directory should be at offset 8 of the file
+    if not (binvalues[0] == 0x08 and binvalues[1] == 0x00 and binvalues[2] == 0x00 and binvalues[3] == 0x00):
+        return 'fail'
+
+    # Re-open the file and modify the pixel content
+    out_ds = gdal.Open('tmp/tiff_write_73.tif', gdal.GA_Update)
+    out_ds.GetRasterBand(1).Fill(0)
+    out_ds = None
+
+    fileobj = open( 'tmp/tiff_write_73.tif', mode='rb')
+    binvalues = array.array('b')
+    fileobj.seek(4)
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    # Directory should be at offset 8 of the file
+    if not (binvalues[0] == 0x08 and binvalues[1] == 0x00 and binvalues[2] == 0x00 and binvalues[3] == 0x00):
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_73.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2383,6 +2465,8 @@ gdaltest_list = [
     tiff_write_69,
     tiff_write_70,
     tiff_write_71,
+    tiff_write_72,
+    tiff_write_73,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
