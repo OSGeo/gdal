@@ -4261,10 +4261,12 @@ void GTiffDataset::LookForProjection()
         if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType, 
                        0, 1 ) == 1 )
         {
+            int bMetadataChangedSaved = bMetadataChanged;
             if( nRasterType == (short) RasterPixelIsPoint )
                 SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
             else
                 SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
+            bMetadataChanged = bMetadataChangedSaved;
         }
 
         GTIFFree( hGTIF );
@@ -5921,6 +5923,10 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nSamplesPerPixel = (uint16) nBands;
     poDS->osFilename = pszFilename;
 
+    /* Avoid premature crystalization that will cause directory re-writting */
+    /* if GetProjectionRef() or GetGeoTransform() are called on the newly created GeoTIFF */
+    poDS->bLookedForProjection = TRUE;
+
     TIFFGetField( hTIFF, TIFFTAG_SAMPLEFORMAT, &(poDS->nSampleFormat) );
     TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(poDS->nPlanarConfig) );
     TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(poDS->nPhotometric) );
@@ -6500,6 +6506,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (!bHasWrittenMDInGeotiffTAG)
         GTiffDataset::WriteMetadata( poDS, hTIFF, TRUE, pszProfile,
                                      pszFilename, papszOptions, TRUE /* don't write RPC and IMG file again */);
+
+    /* To avoid unnecessary directory rewriting */
+    poDS->bMetadataChanged = FALSE;
+    poDS->bGeoTIFFInfoChanged = FALSE;
 
     /* We must re-set the compression level at this point, since it has */
     /* been lost a few lines above when closing the newly create TIFF file */
