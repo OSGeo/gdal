@@ -2,6 +2,7 @@
 
 include ../../GDALmake.opt
 include csharp.opt
+include ../SWIGmake.base
 
 all: build
 
