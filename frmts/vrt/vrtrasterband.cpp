@@ -93,6 +93,8 @@ VRTRasterBand::~VRTRasterBand()
         delete poColorTable;
 
     CSLDestroy( papszCategoryNames );
+    if( psSavedHistograms != NULL )
+        CPLDestroyXMLNode( psSavedHistograms );
 }
 
 /************************************************************************/
