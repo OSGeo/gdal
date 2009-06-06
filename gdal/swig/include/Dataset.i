@@ -251,6 +251,15 @@ public:
         pBandList[i] = i;
       }
     }
+
+    if ( buf_len < nxsize * nysize * band_list * GDALGetDataTypeSize( ntype) /8 ) {
+      CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
+      if ( myBandList ) {
+       CPLFree( pBandList );
+      }
+      return CE_Failure;
+    }
+
     return GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
                                 (void*) buf_string, nxsize, nysize, ntype,
                                 band_list, pband_list, 0, 0, 0 );
