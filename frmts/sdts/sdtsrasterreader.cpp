@@ -78,6 +78,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 
 {
     strncpy( szModule, pszModule, sizeof(szModule) );
+    szModule[sizeof(szModule) - 1] = '\0';
     
 /* ==================================================================== */
 /*      Search the LDEF module for the requested cell module.           */
