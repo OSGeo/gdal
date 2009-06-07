@@ -355,7 +355,10 @@ OGRFeature *OGRCSVLayer::GetNextFeature()
         if( poFeature == NULL )
             break;
 
-        if( m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature ) )
+        if( (m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
             break;
 
         delete poFeature;
