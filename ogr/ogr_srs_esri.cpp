@@ -572,18 +572,18 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
         return pszDefaultValue;
     else
     {
-        char     szResult[80];
+        CPLString osResult;
         char    **papszTokens;
         
         papszTokens = CSLTokenizeString(papszNV[iLine]);
 
         if( CSLCount(papszTokens) > 1 )
-            strncpy( szResult, papszTokens[1], sizeof(szResult));
+            osResult = papszTokens[1];
         else
-            strncpy( szResult, pszDefaultValue, sizeof(szResult));
+            osResult = pszDefaultValue;
         
         CSLDestroy( papszTokens );
-        return szResult;
+        return osResult;
     }
 }
 
