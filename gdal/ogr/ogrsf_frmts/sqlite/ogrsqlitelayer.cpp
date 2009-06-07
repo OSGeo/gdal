@@ -351,10 +351,10 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             return NULL;
         }
 
+        OGRGeometry *poGeometry = NULL;
         if ( eGeomFormat == OSGF_WKT )
         {
             char *pszWKTCopy, *pszWKT = NULL;
-            OGRGeometry *poGeometry = NULL;
 
             pszWKT = (char *) sqlite3_column_text( hStmt, iGeomCol );
             pszWKTCopy = pszWKT;
@@ -365,7 +365,6 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
         else if ( eGeomFormat == OSGF_WKB )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iGeomCol );
-            OGRGeometry *poGeometry = NULL;
 
             if( OGRGeometryFactory::createFromWkb( 
                     (GByte*)sqlite3_column_blob( hStmt, iGeomCol ),
@@ -388,7 +387,6 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
         else if ( eGeomFormat == OSGF_FGF )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iGeomCol );
-            OGRGeometry *poGeometry = NULL;
 
             if( OGRGeometryFactory::createFromFgf( 
                     (GByte*)sqlite3_column_blob( hStmt, iGeomCol ),
@@ -398,13 +396,15 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
         else if ( eGeomFormat == OSGF_SpatiaLite )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iGeomCol );
-            OGRGeometry *poGeometry = NULL;
 
             if( ImportSpatiaLiteGeometry( 
                     (GByte*)sqlite3_column_blob( hStmt, iGeomCol ), nBytes,
                     &poGeometry ) == OGRERR_NONE )
                 poFeature->SetGeometryDirectly( poGeometry );
         }
+
+        if (poGeometry != NULL && poSRS != NULL)
+            poGeometry->assignSpatialReference(poSRS);
     }
 
 /* -------------------------------------------------------------------- */
@@ -449,25 +449,6 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             break;
         }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Try to extract a geometry.                                      */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    if( pszGeomColumn != NULL )
-    {
-        int iField = poStmt->GetColId( pszGeomColumn );
-        const char *pszGeomText = poStmt->GetColData( iField );
-        OGRGeometry *poGeom = NULL;
-
-        if( pszGeomText != NULL )
-            OGRGeometryFactory::createFromWkt( (char **) &pszGeomText,
-                                               NULL, &poGeom );
-        
-        if( poGeom != NULL )
-            poFeature->SetGeometryDirectly( poGeom );
-    }
-#endif
 
     return poFeature;
 }
