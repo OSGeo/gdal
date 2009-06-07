@@ -122,6 +122,9 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( poFeatureDefn->GetFieldIndex( oField.GetNameRef() ) != -1 )
             continue;
 
+        if( pszFIDColumn != NULL && EQUAL(pszFIDColumn, oField.GetNameRef()))
+            continue;
+
         //oField.SetWidth( MAX(0,poStmt->GetColSize( iCol )) );
 
         if( osGeomColumn.size()
