@@ -719,6 +719,8 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
         return TRUE;
 
     OGRLinearRing *poRing = poPoly->getExteriorRing();
+    if (poRing == NULL)
+        return TRUE;
 
     if( poRing->getNumPoints() > 5 || poRing->getNumPoints() < 4 )
         return TRUE;
