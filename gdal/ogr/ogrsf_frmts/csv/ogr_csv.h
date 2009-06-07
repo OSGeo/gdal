@@ -81,8 +81,6 @@ class OGRCSVLayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    void                SetSpatialFilter( OGRGeometry * ) {}
-
     int                 TestCapability( const char * );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
