@@ -237,7 +237,7 @@ CPLString TigerFileBase::GetField( const char * pachRawDataRecord,
                                      int nStartChar, int nEndChar )
 
 {
-    static char         aszField[128];
+    char         aszField[128];
     int                 nLength = nEndChar - nStartChar + 1;
     
     CPLAssert( nEndChar - nStartChar + 2 < (int) sizeof(aszField) );
