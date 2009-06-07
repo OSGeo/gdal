@@ -447,15 +447,11 @@ static void TestSpatialFilter( OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
 /*      Construct inclusive filter.                                     */
 /* -------------------------------------------------------------------- */
-    double      dfMaxX, dfMaxY;
-
-    dfMaxX = 0.5 * (sEnvelope.MinX+sEnvelope.MaxX) + 0.1;
-    dfMaxY = 0.5 * (sEnvelope.MinY+sEnvelope.MaxY) + 0.1;
     
     oRing.setPoint( 0, sEnvelope.MinX - 10.0, sEnvelope.MinY - 10.0 );
-    oRing.setPoint( 1, sEnvelope.MinX - 10.0, dfMaxY );
-    oRing.setPoint( 2, dfMaxX, dfMaxY );
-    oRing.setPoint( 3, dfMaxX, sEnvelope.MinY - 10.0 );
+    oRing.setPoint( 1, sEnvelope.MinX - 10.0, sEnvelope.MaxY + 10.0 );
+    oRing.setPoint( 2, sEnvelope.MaxX + 10.0, sEnvelope.MaxY + 10.0 );
+    oRing.setPoint( 3, sEnvelope.MaxX + 10.0, sEnvelope.MinY - 10.0 );
     oRing.setPoint( 4, sEnvelope.MinX - 10.0, sEnvelope.MinY - 10.0 );
     
     oInclusiveFilter.addRing( &oRing );
