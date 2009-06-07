@@ -40,7 +40,7 @@ CPL_C_START
 void	GDALRegister_AIGrid(void);
 CPL_C_END
 
-static const char*OSR_GDS( char **papszNV, const char * pszField, 
+static CPLString OSR_GDS( char **papszNV, const char * pszField, 
                            const char *pszDefaultValue );
 
 
@@ -761,7 +761,7 @@ void AIGDataset::TranslateColorTable( const char *pszClrFilename )
 /*                              OSR_GDS()                               */
 /************************************************************************/
 
-static const char*OSR_GDS( char **papszNV, const char * pszField, 
+static CPLString OSR_GDS( char **papszNV, const char * pszField, 
                            const char *pszDefaultValue )
 
 {
@@ -779,18 +779,18 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
         return pszDefaultValue;
     else
     {
-        static char     szResult[80];
+        CPLString osResult;
         char    **papszTokens;
         
         papszTokens = CSLTokenizeString(papszNV[iLine]);
 
         if( CSLCount(papszTokens) > 1 )
-            strncpy( szResult, papszTokens[1], sizeof(szResult));
+            osResult = papszTokens[1];
         else
-            strncpy( szResult, pszDefaultValue, sizeof(szResult));
+            osResult = pszDefaultValue;
         
         CSLDestroy( papszTokens );
-        return szResult;
+        return osResult;
     }
 }
 
