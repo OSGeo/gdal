@@ -193,7 +193,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             chNext = poODS->Getc();
         } while( isspace( (unsigned char)chNext ) );
 
-        while( !isspace((unsigned char)chNext)  )
+        while( chNext != '\0' && !isspace((unsigned char)chNext)  )
         {
             if( iTokenChar == sizeof(szToken)-2 )
             {
@@ -207,7 +207,9 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             chNext = poODS->Getc();
         }
 
-        if( chNext == '\0' )
+        if( chNext == '\0' &&
+            (iPixel != poODS->nRasterXSize - 1 ||
+            nBlockYOff != poODS->nRasterYSize - 1) )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "File short, can't read line %d.",
@@ -346,8 +348,10 @@ char AAIGDataset::Getc()
         return achReadBuf[nOffsetInBuffer++];
 
     nBufferOffset = VSIFTellL( fp );
-    if( VSIFReadL( achReadBuf, 1, sizeof(achReadBuf), fp ) < 1 )
-        return EOF;
+    int nRead = VSIFReadL( achReadBuf, 1, sizeof(achReadBuf), fp );
+    unsigned int i;
+    for(i=nRead;i<sizeof(achReadBuf);i++)
+        achReadBuf[i] = '\0';
 
     nOffsetInBuffer = 0;
 
