@@ -374,6 +374,9 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
         return m_poFilterGeom == NULL || osGeomColumn.size() == 0 ||
                bHasSpatialIndex;
 
+    else if( EQUAL(pszCap,OLCRandomRead) )
+        return pszFIDColumn != NULL;
+
     else if( EQUAL(pszCap,OLCSequentialWrite) 
              || EQUAL(pszCap,OLCRandomWrite) )
         return bUpdateAccess;
@@ -686,7 +689,12 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
 
 {
-    CPLAssert( pszFIDColumn != NULL );
+    if( pszFIDColumn == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SetFeature() without any FID column." );
+        return OGRERR_FAILURE;
+    }
     
     if( poFeature->GetFID() == OGRNullFID )
     {
