@@ -867,6 +867,7 @@ def ogr_spatialite_2():
         return 'fail'
 
     if lyr.GetFeatureCount() != 49:
+        print lyr.GetFeatureCount()
         return 'fail'
 
     # Remove spatial index
@@ -887,6 +888,10 @@ def ogr_spatialite_2():
     geom.Destroy()
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != False:
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 49:
+        print lyr.GetFeatureCount()
         return 'fail'
 
     ds.Destroy()
