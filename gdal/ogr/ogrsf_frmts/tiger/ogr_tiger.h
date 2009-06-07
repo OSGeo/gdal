@@ -169,7 +169,7 @@ public:
 
   OGRFeatureDefn     *GetFeatureDefn() { return poFeatureDefn; }
 
-  static const char * GetField( const char *, int, int );
+  static CPLString    GetField( const char *, int, int );
   static void         SetField( OGRFeature *, const char *, const char *,
                                 int, int );
 
