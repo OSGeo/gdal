@@ -127,13 +127,13 @@ int SDTSModId::Set( DDFField *poField )
         int             nBytesRemaining;
         const char  *pachData;
 
-        szModule[4] = '\0';
         poSF = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
         pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
         strncpy( szModule,
                  poSF->ExtractStringData( pachData, nBytesRemaining, NULL),
                  sizeof(szModule) );
-            
+        szModule[sizeof(szModule)-1] = '\0';
+
         poSF = poField->GetFieldDefn()->FindSubfieldDefn( "RCID" );
         pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
         nRecord = poSF->ExtractIntData( pachData, nBytesRemaining, NULL);
