@@ -233,7 +233,7 @@ void TigerFileBase::EstablishFeatureCount()
 /*                              GetField()                              */
 /************************************************************************/
 
-const char *TigerFileBase::GetField( const char * pachRawDataRecord,
+CPLString TigerFileBase::GetField( const char * pachRawDataRecord,
                                      int nStartChar, int nEndChar )
 
 {
