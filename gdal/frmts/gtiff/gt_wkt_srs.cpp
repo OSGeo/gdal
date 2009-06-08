@@ -1766,6 +1766,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "TIFF/GeoTIFF structure is corrupt." );
+        VSIUnlink( szFilename );
         return CE_Failure;
     }
     
