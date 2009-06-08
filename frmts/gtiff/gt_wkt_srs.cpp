@@ -237,8 +237,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     if( psDefn->Model == KvUserDefined && psDefn->PCS != KvUserDefined)
     {
-        CPLDebug("GTiff", "Not-standard GeoTIFF : assuming GTModelTypeGeoKey=ModelTypeProjected, "
-                          "since ProjectedCSTypeGeoKey is defined");
         psDefn->Model = ModelTypeProjected;
     }
 
