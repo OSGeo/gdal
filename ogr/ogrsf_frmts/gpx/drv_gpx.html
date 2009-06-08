@@ -230,9 +230,9 @@ which will give an output like the following one :
 </pre>
 </li>
 
-<li>Use of -sql option to remap field names to the ones allowed by the GPX schema !
+<li>Use of -sql option to remap field names to the ones allowed by the GPX schema (starting with GDAL 1.6.0):
 <pre>
-ogr2ogr -f GPX output.gpx input.shp -sql "SELECT field1 AS name, field2 AS desc FROM source_layer"
+ogr2ogr -f GPX output.gpx input.shp -sql "SELECT field1 AS name, field2 AS desc FROM input"
 </pre>
 </li>
 
