@@ -976,42 +976,50 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         if( bPreserveFID )
             poDstFeature->SetFID( poFeature->GetFID() );
 
-        if (poDstFeature->GetGeometryRef() != NULL && dfMaxSegmentLength > 0)
-            poDstFeature->GetGeometryRef()->segmentize(dfMaxSegmentLength);
-
-        if( poCT && poDstFeature->GetGeometryRef() != NULL )
+        OGRGeometry* poDstGeometry = poDstFeature->GetGeometryRef();
+        if (poDstGeometry != NULL)
         {
-            eErr = poDstFeature->GetGeometryRef()->transform( poCT );
-            if( eErr != OGRERR_NONE )
-            {
-                if( nGroupTransactions )
-                    poDstLayer->CommitTransaction();
+            if (dfMaxSegmentLength > 0)
+                poDstGeometry->segmentize(dfMaxSegmentLength);
 
-                fprintf( stderr, "Failed to reproject feature %d (geometry probably out of source or destination SRS).\n", 
-                        (int) poFeature->GetFID() );
-                if( !bSkipFailures )
+            if( poCT )
+            {
+                eErr = poDstGeometry->transform( poCT );
+                if( eErr != OGRERR_NONE )
                 {
-                    OGRFeature::DestroyFeature( poFeature );
-                    OGRFeature::DestroyFeature( poDstFeature );
-                    return FALSE;
+                    if( nGroupTransactions )
+                        poDstLayer->CommitTransaction();
+
+                    fprintf( stderr, "Failed to reproject feature %d (geometry probably out of source or destination SRS).\n", 
+                            (int) poFeature->GetFID() );
+                    if( !bSkipFailures )
+                    {
+                        OGRFeature::DestroyFeature( poFeature );
+                        OGRFeature::DestroyFeature( poDstFeature );
+                        return FALSE;
+                    }
                 }
+            }
+            else if (poOutputSRS != NULL)
+            {
+                poDstGeometry->assignSpatialReference(poOutputSRS);
+            }
+
+            if( bForceToPolygon )
+            {
+                poDstFeature->SetGeometryDirectly( 
+                    OGRGeometryFactory::forceToPolygon(
+                        poDstFeature->StealGeometry() ) );
+            }
+
+            if( bForceToMultiPolygon )
+            {
+                poDstFeature->SetGeometryDirectly( 
+                    OGRGeometryFactory::forceToMultiPolygon(
+                        poDstFeature->StealGeometry() ) );
             }
         }
 
-        if( poDstFeature->GetGeometryRef() != NULL && bForceToPolygon )
-        {
-            poDstFeature->SetGeometryDirectly( 
-                OGRGeometryFactory::forceToPolygon(
-                    poDstFeature->StealGeometry() ) );
-        }
-                    
-        if( poDstFeature->GetGeometryRef() != NULL && bForceToMultiPolygon )
-        {
-            poDstFeature->SetGeometryDirectly( 
-                OGRGeometryFactory::forceToMultiPolygon(
-                    poDstFeature->StealGeometry() ) );
-        }
-                    
         OGRFeature::DestroyFeature( poFeature );
 
         CPLErrorReset();
