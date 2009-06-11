@@ -374,6 +374,9 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
         return m_poFilterGeom == NULL || osGeomColumn.size() == 0 ||
                bHasSpatialIndex;
 
+    else if (EQUAL(pszCap,OLCFastSpatialFilter))
+        return bHasSpatialIndex;
+
     else if( EQUAL(pszCap,OLCRandomRead) )
         return pszFIDColumn != NULL;
 
