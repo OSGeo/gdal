@@ -699,6 +699,9 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
     else
         /* add other options here. */;
 
+    if (poDstFeat->GetGeometryRef() != NULL && poSRS != NULL)
+        poDstFeat->GetGeometryRef()->assignSpatialReference(poSRS);
+
 /* -------------------------------------------------------------------- */
 /*      Copy fields.                                                    */
 /* -------------------------------------------------------------------- */
@@ -805,6 +808,21 @@ OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 int OGRVRTLayer::TestCapability( const char * pszCap )
 
 {
+    if ( poSrcLayer == NULL )
+        return FALSE;
+
+    if (EQUAL(pszCap,OLCFastFeatureCount) &&
+        m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+        return poSrcLayer->TestCapability(pszCap);
+
+    else if (EQUAL(pszCap,OLCFastGetExtent) &&
+             m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
+             eGeometryType == VGS_Direct )
+        return poSrcLayer->TestCapability(pszCap);
+
+    else if( EQUAL(pszCap,OLCRandomRead) && iFIDField == -1 )
+        return poSrcLayer->TestCapability(pszCap);
+
     return FALSE;
 }
 
@@ -816,6 +834,20 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 
 {
     return poSRS;
+}
+
+/************************************************************************/
+/*                              GetExtent()                             */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
+{
+    if ( poSrcLayer != NULL &&
+         (m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
+          eGeometryType == VGS_Direct) )
+        return poSrcLayer->GetExtent(psExtent, bForce);
+
+    return OGRLayer::GetExtent(psExtent, bForce);
 }
 
 /************************************************************************/
