@@ -108,6 +108,8 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual int         TestCapability( const char * );
+
+    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 };
 
 /************************************************************************/
