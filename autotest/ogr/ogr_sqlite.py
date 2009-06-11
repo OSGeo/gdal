@@ -865,6 +865,8 @@ def ogr_spatialite_2():
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != True:
         return 'fail'
+    if lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        return 'fail'
 
     if lyr.GetFeatureCount() != 49:
         print lyr.GetFeatureCount()
@@ -888,6 +890,8 @@ def ogr_spatialite_2():
     geom.Destroy()
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != False:
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCFastSpatialFilter) != False:
         return 'fail'
 
     if lyr.GetFeatureCount() != 49:

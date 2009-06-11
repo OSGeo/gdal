@@ -342,6 +342,34 @@ def ogr_vrt_9():
     return 'success'
     
 ###############################################################################
+# Test capabilities
+#
+
+def ogr_vrt_10():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test"><SrcDataSource relativeToVRT="0">data/testpoly.shp</SrcDataSource><SrcLayer>testpoly</SrcLayer></OGRVRTLayer></OGRVRTDataSource>'
+    vrt_ds = ogr.Open( vrt_xml )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+    src_ds = ogr.Open('data/testpoly.shp')
+    src_lyr = src_ds.GetLayer(0)
+    
+    if vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) != src_lyr.TestCapability(ogr.OLCFastFeatureCount):
+        return 'fail'
+    if vrt_lyr.TestCapability(ogr.OLCFastGetExtent) != src_lyr.TestCapability(ogr.OLCFastGetExtent):
+        return 'fail'
+    if vrt_lyr.TestCapability(ogr.OLCRandomRead) != src_lyr.TestCapability(ogr.OLCRandomRead):
+        return 'fail'
+
+    vrt_ds.Destroy()
+    vrt_ds = None
+    src_ds.Destroy()
+    src_ds = None
+    
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -364,6 +392,7 @@ gdaltest_list = [
     ogr_vrt_7,
     ogr_vrt_8,
     ogr_vrt_9,
+    ogr_vrt_10,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
