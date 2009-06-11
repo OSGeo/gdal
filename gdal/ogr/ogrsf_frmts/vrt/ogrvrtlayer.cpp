@@ -40,7 +40,7 @@ typedef struct
     const char          *pszName;
 } OGRGeomTypeName;
 
-static OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit */
+static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit */
     { wkbUnknown, "wkbUnknown" },
     { wkbPoint, "wkbPoint" },
     { wkbLineString, "wkbLineString" },
