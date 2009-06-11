@@ -199,18 +199,6 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
 }
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-char **HDF5Dataset::GetMetadata( const char *pszDomain )
-{
-    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
-        return papszSubDatasets;
-    else
-        return GDALDataset::GetMetadata( pszDomain );
-}
-
- 
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
@@ -263,7 +251,9 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
     Err = poDS->ReadGlobalAttributes( true );
 
     poDS->SetMetadata( poDS->papszMetadata  );
-    
+    if( CSLCount(poDS->papszSubDatasets ) >= 2 )
+        poDS->SetMetadata( poDS->papszSubDatasets, "SUBDATASETS" ); 
+
     return( poDS );
 }
 
