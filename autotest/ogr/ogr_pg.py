@@ -119,6 +119,35 @@ def ogr_pg_2():
                                                   options = [ 'DIM=3' ] )
 
     ######################################################
+    # Check capabilities
+
+    if gdaltest.pg_has_postgis:
+        if not gdaltest.pg_lyr.TestCapability(ogr.OLCFastSpatialFilter):
+            return 'fail'
+        if not gdaltest.pg_lyr.TestCapability(ogr.OLCFastGetExtent):
+            return 'fail'
+    else:
+        if gdaltest.pg_lyr.TestCapability(ogr.OLCFastSpatialFilter):
+            return 'fail'
+        if gdaltest.pg_lyr.TestCapability(ogr.OLCFastGetExtent):
+            return 'fail'
+
+    if not gdaltest.pg_lyr.TestCapability(ogr.OLCRandomRead):
+        return 'fail'
+    if not gdaltest.pg_lyr.TestCapability(ogr.OLCFastFeatureCount):
+        return 'fail'
+    if not gdaltest.pg_lyr.TestCapability(ogr.OLCStringsAsUTF8):
+        return 'fail'
+    if not gdaltest.pg_lyr.TestCapability(ogr.OLCSequentialWrite):
+        return 'fail'
+    if not gdaltest.pg_lyr.TestCapability(ogr.OLCCreateField):
+        return 'fail'
+    if not gdaltest.pg_lyr.TestCapability(ogr.OLCRandomWrite):
+        return 'fail'
+    if not gdaltest.pg_lyr.TestCapability(ogr.OLCTransactions):
+        return 'fail'
+
+    ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def( gdaltest.pg_lyr,
                                     [ ('AREA', ogr.OFTReal),
