@@ -80,10 +80,12 @@ def osr_proj4_3():
     srs = osr.SpatialReference()
 
     try:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
         proj4 = srs.ExportToProj4()
+        gdal.PopErrorHandler()
         
     except RuntimeError:
-        pass
+        gdal.PopErrorHandler()
 
     if string.find(gdal.GetLastErrorMsg(),'No translation') != -1:
         return 'success'
@@ -103,10 +105,12 @@ def osr_proj4_4():
     srs.SetAttrValue( 'PROJCS|PROJECTION', 'FakeTransverseMercator' )
     
     try:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
         proj4 = srs.ExportToProj4()
+        gdal.PopErrorHandler()
         
     except RuntimeError:
-        pass
+        gdal.PopErrorHandler()
 
     if string.find(gdal.GetLastErrorMsg(),'No translation') != -1:
         return 'success'
@@ -143,12 +147,79 @@ def osr_proj4_5():
     
     return 'success'
 
+###############################################################################
+# Confirm handling of non-zero latitude of origin mercator (#3026)
+#
+
+def osr_proj4_6():
+
+    expect_proj4 = '+proj=merc +lon_0=0 +lat_ts=46.1333331 +x_0=1000 +y_0=2000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs '
+    
+    wkt = """PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["latitude_of_origin",46.1333331],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",1000],
+    PARAMETER["false_northing",2000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]]]"""
+    
+    srs = osr.SpatialReference(wkt)
+    proj4 = srs.ExportToProj4()
+
+    if proj4 != expect_proj4:
+        print 'Got:', proj4
+        print 'Expected:', expect_proj4
+        gdaltest.post_reason( 'Failed to translate non-zero lat-of-origin mercator.' )
+        return 'fail'
+
+    # Translate back - should be mercator 1sp
+
+    expect_wkt = """PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9108"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["standard_parallel_1",46.1333331],
+    PARAMETER["central_meridian",0],
+    PARAMETER["false_easting",1000],
+    PARAMETER["false_northing",2000],
+    UNIT["Meter",1]]"""
+
+    srs.SetFromUserInput( proj4 )
+    wkt = srs.ExportToPrettyWkt()
+    if wkt != expect_wkt:
+        print 'Got:   ',wkt
+        print 'Expect:',expect_wkt
+        gdaltest.post_reason( 'did not get expected mercator_2sp result.' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
     osr_proj4_3,
     osr_proj4_4,
     osr_proj4_5,
+    osr_proj4_6,
     None ]
 
 if __name__ == '__main__':
