@@ -1872,7 +1872,7 @@ void NITFDataset::CheckGeoSDEInfo()
         oSRS.SetSinusoidal( adfParm[0], dfFE, dfFN );
 
     else if( EQUALN(pszPRJPSB+80,"TC",2) )
-        oSRS.SetTM( adfParm[1], adfParm[0], adfParm[1], dfFE, dfFN );
+        oSRS.SetTM( adfParm[2], adfParm[0], adfParm[1], dfFE, dfFN );
 
     else if( EQUALN(pszPRJPSB+80,"VA",2) )
         oSRS.SetVDG( adfParm[0], dfFE, dfFN );
