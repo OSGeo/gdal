@@ -1824,6 +1824,7 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
                 }
                 else
                 {
+                    val += 32768;
                     assert( eOutType == GDT_UInt16 );
                     *((GUInt16 *) dest) = (GUInt16) MAX(MIN(val,65535),0);
                 }
