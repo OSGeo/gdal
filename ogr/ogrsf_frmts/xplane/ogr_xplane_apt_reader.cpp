@@ -756,6 +756,24 @@ void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
     }
 }
 
+
+#define QUADRATIC_INTERPOL(A, B, C)  ((A)*(b*b) + 2*(B)*b*a + (C)*(a*a))
+
+void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
+                                        double dfLatA, double dfLonA,
+                                        double dfCtrPtLat, double dfCtrPtLon,
+                                        double dfLatB, double dfLonB)
+{
+    int step;
+    for(step = 0; step <= 10; step++)
+    {
+        double a = step / 10.;
+        double b = 1. - a;
+        lineString.addPoint(QUADRATIC_INTERPOL(dfLonA, dfCtrPtLon, dfLonB),
+                            QUADRATIC_INTERPOL(dfLatA, dfCtrPtLat, dfLatB));
+    }
+}
+
 static OGRGeometry* OGRXPlaneAptReaderSplitPolygon(OGRPolygon& polygon)
 {
     OGRPolygon** papoPolygons = new OGRPolygon* [1 + polygon.getNumInteriorRings()];
@@ -910,7 +928,16 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
             RET_FALSE_IF_FAIL(assertMinCol(3));
             RET_FALSE_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
 
-            linearRing.addPoint(dfLon, dfLat);
+            if (bLastIsBezier && !bIsFirst &&
+                !(dfLastLat == dfLat && dfLastLon == dfLon))
+            {
+                AddBezierCurve(linearRing,
+                               dfLastLat, dfLastLon,
+                               dfLastLatBezier, dfLastLonBezier,
+                               dfLat, dfLon);
+            }
+            else
+                linearRing.addPoint(dfLon, dfLat);
 
             bLastPartIsClosed = FALSE;
             bLastIsBezier = FALSE;
@@ -927,6 +954,15 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
                                dfLastLat, dfLastLon,
                                dfLastLatBezier, dfLastLonBezier,
                                dfLatBezier, dfLonBezier,
+                               dfLat, dfLon);
+            }
+            else if (!bIsFirst && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            {
+                double dfCtrLatBezier = dfLat - (dfLatBezier - dfLat);
+                double dfCtrLonBezier = dfLon - (dfLonBezier - dfLon);
+                AddBezierCurve(linearRing,
+                               dfLastLat, dfLastLon,
+                               dfCtrLatBezier, dfCtrLonBezier,
                                dfLat, dfLon);
             }
 
@@ -946,7 +982,17 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
                 return TRUE;
             }
 
-            linearRing.addPoint(dfLon, dfLat);
+            if (bLastIsBezier && !bIsFirst &&
+                !(dfLastLat == dfLat && dfLastLon == dfLon))
+            {
+                AddBezierCurve(linearRing,
+                               dfLastLat, dfLastLon,
+                               dfLastLatBezier, dfLastLonBezier,
+                               dfLat, dfLon);
+            }
+            else
+                linearRing.addPoint(dfLon, dfLat);
+
             linearRing.closeRings();
 
             polygon.addRing(&linearRing);
@@ -973,6 +1019,15 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
                                dfLastLat, dfLastLon,
                                dfLastLatBezier, dfLastLonBezier,
                                dfLatBezier, dfLonBezier,
+                               dfLat, dfLon);
+            }
+            else if (!bIsFirst && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            {
+                double dfCtrLatBezier = dfLat - (dfLatBezier - dfLat);
+                double dfCtrLonBezier = dfLon - (dfLonBezier - dfLon);
+                AddBezierCurve(linearRing,
+                               dfLastLat, dfLastLon,
+                               dfCtrLatBezier, dfCtrLonBezier,
                                dfLat, dfLon);
             }
             else
@@ -1194,7 +1249,16 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
             RET_FALSE_IF_FAIL(assertMinCol(3));
             RET_FALSE_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
 
-            lineString.addPoint(dfLon, dfLat);
+            if (bLastIsBezier && !bIsFirst &&
+                !(dfLastLat == dfLat && dfLastLon == dfLon))
+            {
+                AddBezierCurve(lineString,
+                               dfLastLat, dfLastLon,
+                               dfLastLatBezier, dfLastLonBezier,
+                               dfLat, dfLon);
+            }
+            else
+                lineString.addPoint(dfLon, dfLat);
 
             bLastPartIsClosedOrEnded = FALSE;
             bLastIsBezier = FALSE;
@@ -1211,6 +1275,15 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
                                dfLastLat, dfLastLon,
                                dfLastLatBezier, dfLastLonBezier,
                                dfLatBezier, dfLonBezier,
+                               dfLat, dfLon);
+            }
+            else if (!bIsFirst && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            {
+                double dfCtrLatBezier = dfLat - (dfLatBezier - dfLat);
+                double dfCtrLonBezier = dfLon - (dfLonBezier - dfLon);
+                AddBezierCurve(lineString,
+                               dfLastLat, dfLastLon,
+                               dfCtrLatBezier, dfCtrLonBezier,
                                dfLat, dfLon);
             }
 
@@ -1230,7 +1303,16 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
                 return TRUE;
             }
 
-            lineString.addPoint(dfLon, dfLat);
+            if (bLastIsBezier && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            {
+                AddBezierCurve(lineString,
+                               dfLastLat, dfLastLon,
+                               dfLastLatBezier, dfLastLonBezier,
+                               dfLat, dfLon);
+            }
+            else
+                lineString.addPoint(dfLon, dfLat);
+
             if (nType == APT_NODE_CLOSE )
                 lineString.closeRings();
 
@@ -1266,6 +1348,15 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
                                dfLastLat, dfLastLon,
                                dfLastLatBezier, dfLastLonBezier,
                                dfLatBezier, dfLonBezier,
+                               dfLat, dfLon);
+            }
+            else if (!bIsFirst && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            {
+                double dfCtrLatBezier = dfLat - (dfLatBezier - dfLat);
+                double dfCtrLonBezier = dfLon - (dfLonBezier - dfLon);
+                AddBezierCurve(lineString,
+                               dfLastLat, dfLastLon,
+                               dfCtrLatBezier, dfCtrLonBezier,
                                dfLat, dfLon);
             }
             else
