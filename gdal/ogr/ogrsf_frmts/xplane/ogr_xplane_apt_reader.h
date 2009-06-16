@@ -616,11 +616,16 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         int     ParsePolygonalGeometry(OGRGeometry** ppoGeom);
         int     ParseLinearGeometry(OGRMultiLineString& multilinestring, int* pbIsValid);
 
-        void    AddBezierCurve (OGRLineString& lineString,
+        static void    AddBezierCurve (OGRLineString& lineString,
                                 double dfLatA, double dfLonA,
                                 double dfCtrPtLatA, double dfCtrPtLonA,
                                 double dfSymCtrlPtLatB, double dfSymCtrlPtLonB,
                                 double dfLatB, double dfLonB);
+        static void    AddBezierCurve (OGRLineString& lineString,
+                                double dfLatA, double dfLonA,
+                                double dfCtrPtLat, double dfCtrPtLon,
+                                double dfLatB, double dfLonB);
+
     protected:
         virtual void             Read();
 
