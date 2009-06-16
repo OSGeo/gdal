@@ -52,14 +52,21 @@ class subfile_source : public kdu_compressed_source {
 
           if( EQUALN( fname, "J2K_SUBFILE:",12) )
           {
-              if( sscanf( fname, "J2K_SUBFILE:%d,%d", 
-                          &subfile_offset, &subfile_size ) != 2 )
+              char** papszTokens = CSLTokenizeString2(fname + 12, ",", 0);
+              if (CSLCount(papszTokens) >= 2)
+              {
+                  subfile_offset = CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
+                  subfile_size = CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
+              }
+              else
               {
                   kdu_error e;
                   
                   e << "Corrupt subfile definition:" << fname;
                   return;
               }
+              CSLDestroy(papszTokens);
+
               real_filename = strstr(fname,",");
               if( real_filename != NULL )
                   real_filename = strstr(real_filename+1,",");
