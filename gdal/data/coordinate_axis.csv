@@ -21,6 +21,8 @@ coord_sys_code,coord_axis_name_code,coord_axis_orientation,coord_axis_abbreviati
 4409,9907,north,N,9040,2
 4410,9906,east,E,9301,1
 4410,9907,north,N,9301,2
+4460,9906,South along 90°E.,E,9001,1
+4460,9907,South along 180°E,N,9001,2
 4461,9929,up,W,9001,3
 4461,9930,east,U,9001,1
 4461,9931,north,V,9001,2
