@@ -1457,7 +1457,7 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
     double              dfDesiredResolution, dfBestResolution = 1.0;
 
 /* -------------------------------------------------------------------- */
-/*      Find the Compute the desired resolution.  The resolution is     */
+/*      Compute the desired resolution.  The resolution is              */
 /*      based on the least reduced axis, and represents the number      */
 /*      of source pixels to one destination pixel.                      */
 /* -------------------------------------------------------------------- */
