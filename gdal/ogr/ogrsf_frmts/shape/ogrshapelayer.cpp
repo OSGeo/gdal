@@ -430,6 +430,13 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 
 {
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The SetFeature() operation is not permitted on a read-only shapefile." );
+        return OGRERR_FAILURE;
+    }
+
     bHeaderDirty = TRUE;
 
     return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
@@ -442,6 +449,13 @@ OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGRShapeLayer::DeleteFeature( long nFID )
 
 {
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The DeleteFeature() operation is not permitted on a read-only shapefile." );
+        return OGRERR_FAILURE;
+    }
+
     if( nFID < 0 
         || (hSHP != NULL && nFID >= hSHP->nRecords)
         || (hDBF != NULL && nFID >= hDBF->nRecords) )
@@ -485,6 +499,13 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 
 {
     OGRErr eErr;
+
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The CreateFeature() operation is not permitted on a read-only shapefile." );
+        return OGRERR_FAILURE;
+    }
 
     bHeaderDirty = TRUE;
 
@@ -627,13 +648,13 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL;
+        return m_poFilterGeom == NULL || CheckForQIX();
 
     else if( EQUAL(pszCap,OLCDeleteFeature) )
-        return TRUE;
+        return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return FALSE;
+        return CheckForQIX();
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
@@ -642,7 +663,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCCreateField) )
-        return TRUE;
+        return bUpdateAccess;
 
     else 
         return FALSE;
@@ -996,7 +1017,7 @@ OGRErr OGRShapeLayer::Repack()
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-            "The REPACK operation not permitted on a read-only shapefile." );
+            "The REPACK operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
     
