@@ -1149,6 +1149,26 @@ def tiff_ovr_30():
     return 'success'
 
 ###############################################################################
+# Test fix for #3033
+
+def tiff_ovr_31():
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr31.tif', 100, 100, 4)
+    ds.GetRasterBand(1).Fill(255)
+    ds.GetRasterBand(2).Fill(255)
+    ds.GetRasterBand(3).Fill(255)
+    ds.GetRasterBand(4).Fill(255)
+    ds.BuildOverviews( 'average', overviewlist = [2, 4])
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    expected_cs = 7646
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d' % (cs, expected_cs))
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1178,6 +1198,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr26.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr27.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr30.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr31.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -1214,6 +1235,7 @@ gdaltest_list_internal = [
     tiff_ovr_28,
     tiff_ovr_29,
     tiff_ovr_30,
+    tiff_ovr_31,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
