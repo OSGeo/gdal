@@ -213,6 +213,50 @@ def osr_proj4_6():
 
     return 'success'
 
+###############################################################################
+# Confirm handling of somerc (#3032).
+#
+
+def osr_proj4_7():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 23700 )
+
+    proj4 = srs.ExportToProj4()
+    expected = '+proj=somerc +lat_0=47.14439372222222 +lon_0=19.04857177777778 +k_0=0.99993 +x_0=650000 +y_0=200000 +ellps=GRS67 +units=m +no_defs '
+    if proj4 != expected:
+        gdaltest.post_reason( 'did not get expected proj.4 translation of somerc' )
+        print
+        print 'Got:     "%s"' % proj4
+        print 'Expected:"%s"' % expected
+        return 'fail'
+
+    srs.ImportFromProj4( proj4 )
+    
+    expected = """PROJCS["unnamed",
+    GEOGCS["GRS 67(IUGG 1967)",
+        DATUM["unknown",
+            SPHEROID["GRS67",6378160,298.247167427]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Hotine_Oblique_Mercator"],
+    PARAMETER["latitude_of_center",47.14439372222222],
+    PARAMETER["longitude_of_center",19.04857177777778],
+    PARAMETER["azimuth",90],
+    PARAMETER["rectified_grid_angle",90],
+    PARAMETER["scale_factor",0.99993],
+    PARAMETER["false_easting",650000],
+    PARAMETER["false_northing",200000],
+    UNIT["Meter",1]]"""
+    
+    srs_expected = osr.SpatialReference( wkt = expected )
+    if not srs.IsSame(srs_expected):
+        gdaltest.post_reason( 'did not get expected wkt.' )
+        print 'Got: ', srs.ExportToPrettyWkt()
+        return 'fail'
+    
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -220,6 +264,7 @@ gdaltest_list = [
     osr_proj4_4,
     osr_proj4_5,
     osr_proj4_6,
+    osr_proj4_7,
     None ]
 
 if __name__ == '__main__':
