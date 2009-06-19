@@ -1494,9 +1494,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         {
             sprintf( szProj4+strlen(szProj4),
                      "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
-                     " +x_0=%.16g +y_0=%.16g ",
+                     " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                     GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                      GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
         }
