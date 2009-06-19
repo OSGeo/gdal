@@ -305,17 +305,34 @@ CPLErr GDALDefaultOverviews::CleanOverviews()
     // Anything to do?
     if( poODS == NULL )
         return CE_None;
-        
+
+    // Delete the overview file(s). 
     GDALDriver *poOvrDriver;
 
     poOvrDriver = poODS->GetDriver();
     GDALClose( poODS );
     poODS = NULL;
 
+    CPLErr eErr;
     if( poOvrDriver != NULL )
-        return poOvrDriver->Delete( osOvrFilename );
+        eErr = poOvrDriver->Delete( osOvrFilename );
     else
-        return CE_None;
+        eErr = CE_None;
+
+    // Reset the saved overview filename. 
+    if( !EQUAL(poDS->GetDescription(),":::VIRTUAL:::") )
+    {
+        int bUseRRD = CSLTestBoolean(CPLGetConfigOption("USE_RRD","NO"));
+
+        if( bUseRRD )
+            osOvrFilename = CPLResetExtension( poDS->GetDescription(), "aux" );
+        else
+            osOvrFilename.Printf( "%s.ovr", poDS->GetDescription() );
+    }
+    else
+        osOvrFilename = "";
+
+    return eErr;
 }
     
 /************************************************************************/
