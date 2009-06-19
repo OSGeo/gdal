@@ -2099,6 +2099,7 @@ void NITFDataset::CheckGeoSDEInfo()
 /*      Get the geotransform                                            */
 /* -------------------------------------------------------------------- */
     double adfGT[6];
+    double dfMeterPerUnit = 1.0;
 
     int nRemainingBytesMAPLOB = psImage->nTREBytes - (pszMAPLOB - psImage->pachTRE);
     if (nRemainingBytesMAPLOB < 28 + 15)
@@ -2106,12 +2107,32 @@ void NITFDataset::CheckGeoSDEInfo()
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read MAPLOB TRE. Not enough bytes");
     }
+    
+    if( EQUALN(pszMAPLOB+0,"DM ",3) )
+        dfMeterPerUnit = 0.1;
+    else if( EQUALN(pszMAPLOB+0,"CM ",3) )
+        dfMeterPerUnit = 0.01;
+    else if( EQUALN(pszMAPLOB+0,"MM ",3) )
+        dfMeterPerUnit = 0.001;
+    else if( EQUALN(pszMAPLOB+0,"UM ",3) )
+        dfMeterPerUnit = 0.000001;
+    else if( EQUALN(pszMAPLOB+0,"KM ",3) )
+        dfMeterPerUnit = 1000.0;
+    else if( EQUALN(pszMAPLOB+0,"M  ",3) )
+        dfMeterPerUnit = 1.0;
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "MAPLOB Unit=%3.3s not regonised, geolocation may be wrong.",
+                  pszMAPLOB+0 );
+    }
+    
     adfGT[0] = atof(NITFGetField(szParm,pszMAPLOB,13,15));
-    adfGT[1] = atof(NITFGetField(szParm,pszMAPLOB,3,5));
+    adfGT[1] = atof(NITFGetField(szParm,pszMAPLOB,3,5)) * dfMeterPerUnit;
     adfGT[2] = 0.0;
     adfGT[3] = atof(NITFGetField(szParm,pszMAPLOB,28,15));
     adfGT[4] = 0.0;
-    adfGT[5] = -atof(NITFGetField(szParm,pszMAPLOB,8,5));
+    adfGT[5] = -atof(NITFGetField(szParm,pszMAPLOB,8,5)) * dfMeterPerUnit;
 
 /* -------------------------------------------------------------------- */
 /*      Apply back to dataset.                                          */
