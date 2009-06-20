@@ -179,6 +179,32 @@ char* GMLXercesHandler::GetFID(void* attr)
     return NULL;
 }
 
+/************************************************************************/
+/*                        GetAttributes()                               */
+/************************************************************************/
+
+char* GMLXercesHandler::GetAttributes(void* attr)
+{
+    const Attributes* attrs = (const Attributes*) attr;
+    char pszAttr[256];
+    char *pszString;
+
+    pszAttr[0] = '\0';
+    for(unsigned int i=0; i < attrs->getLength(); i++)
+    {
+        strcat( pszAttr, " " );
+        pszString = tr_strdup(attrs->getQName(i));
+        strcat( pszAttr, pszString );
+        CPLFree( pszString );
+        strcat( pszAttr, "=\"" );
+        pszString = tr_strdup(attrs->getValue(i));
+        strcat( pszAttr, pszString );
+        CPLFree( pszString );
+        strcat( pszAttr, "\"" );
+    }
+    return pszAttr;
+}
+
 #else
 
 
@@ -290,6 +316,26 @@ char* GMLExpatHandler::GetFID(void* attr)
     return NULL;
 }
 
+/************************************************************************/
+/*                        GetAttributes()                               */
+/************************************************************************/
+
+char* GMLExpatHandler::GetAttributes(void* attr)
+{
+    const char** papszIter = (const char** )attr;
+    char pszAttr[256];
+    pszAttr[0] = '\0';
+    while(*papszIter)
+    {
+        strcat( pszAttr, " " );
+        strcat( pszAttr, *papszIter );
+        strcat( pszAttr, "=\"" );
+        strcat( pszAttr, papszIter[1] );
+        strcat( pszAttr, "\"" );
+    }
+    return pszAttr;
+}
+
 #endif
 
 
@@ -367,10 +413,17 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
             m_pszGeometry = pszNewGeometry;
         }
 
-        strcpy( m_pszGeometry+m_nGeomLen, "<" );
-        strcpy( m_pszGeometry+m_nGeomLen+1, pszName );
-        strcat( m_pszGeometry+m_nGeomLen+nLNLenBytes+1, ">" );
-        m_nGeomLen += nLNLenBytes + 2;
+        strcpy( m_pszGeometry+m_nGeomLen++, "<" );
+        strcpy( m_pszGeometry+m_nGeomLen, pszName );
+        m_nGeomLen += nLNLenBytes;
+        /* saving attributes */
+        char* pszAttributes = GetAttributes(attr);
+        if( pszAttributes != NULL )
+        {
+            strcat( m_pszGeometry + m_nGeomLen, pszAttributes );
+            m_nGeomLen += strlen( pszAttributes );
+        }
+        strcat( m_pszGeometry + (m_nGeomLen++), ">" );
     }
     
 /* -------------------------------------------------------------------- */
@@ -577,7 +630,11 @@ int GMLHandler::IsGeometryElement( const char *pszElement )
         || strcmp(pszElement,"MultiPolygon") == 0 
         || strcmp(pszElement,"MultiPoint") == 0 
         || strcmp(pszElement,"MultiLineString") == 0 
+        || strcmp(pszElement,"MultiSurface") == 0 
         || strcmp(pszElement,"GeometryCollection") == 0
         || strcmp(pszElement,"Point") == 0 
+        || strcmp(pszElement,"Curve") == 0 
+        || strcmp(pszElement,"Surface") == 0 
+        || strcmp(pszElement,"PolygonPatch") == 0 
         || strcmp(pszElement,"LineString") == 0;
 }

@@ -570,7 +570,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
 /* -------------------------------------------------------------------- */
 /*      MultiPolygon                                                    */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"MultiPolygon") )
+    if( EQUAL(pszBaseGeometry,"MultiPolygon") ||
+        EQUAL(pszBaseGeometry,"MultiSurface") )
     {
         CPLXMLNode *psChild;
         OGRMultiPolygon *poMPoly = new OGRMultiPolygon();
@@ -581,7 +582,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
              psChild = psChild->psNext ) 
         {
             if( psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"polygonMember") )
+                && (EQUAL(BareGMLElement(psChild->pszValue),"polygonMember") ||
+                    EQUAL(BareGMLElement(psChild->pszValue),"surfaceMember")) )
             {
                 OGRPolygon *poPolygon;
 
