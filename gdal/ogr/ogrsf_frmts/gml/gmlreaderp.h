@@ -62,6 +62,7 @@ public:
     virtual OGRErr      endElement(const char *pszName);
     virtual OGRErr      dataHandler(const char *data, int nLen);
     virtual char*       GetFID(void* attr) = 0;
+    virtual char*       GetAttributes(void* attr) = 0;
 
     int         IsGeometryElement( const char *pszElement );
 };
@@ -125,6 +126,7 @@ public:
     void startEntity (const XMLCh *const name);
 
     virtual char*       GetFID(void* attr);
+    virtual char*       GetAttributes(void* attr);
 };
 
 #elif defined(HAVE_EXPAT)
@@ -153,6 +155,7 @@ public:
     int         GetDataHandlerCounter() { return m_nDataHandlerCounter; }
 
     virtual char*       GetFID(void* attr);
+    virtual char*       GetAttributes(void* attr);
 };
 
 #endif
