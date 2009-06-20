@@ -450,7 +450,7 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
 
 {
     struct _finddata_t c_file;
-    long    hFile;
+    intptr_t hFile;
     char    *pszFileSpec, **papszDir = NULL;
 
     if (strlen(pszPath) == 0)
