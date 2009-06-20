@@ -551,6 +551,52 @@ def osr_esri_17():
     return 'success'
 
 ###############################################################################
+# Test EC morphing.
+
+def osr_esri_18():
+
+    original = """PROJCS["World_Equidistant_Cylindrical",
+    GEOGCS["GCS_WGS_1984",
+      DATUM["D_WGS_1984",
+        SPHEROID["WGS_1984",6378137,298.257223563]],
+      PRIMEM["Greenwich",0],
+      UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Equidistant_Cylindrical"],
+    PARAMETER["False_Easting",0],
+    PARAMETER["False_Northing",0],
+    PARAMETER["Central_Meridian",0],
+    PARAMETER["Standard_Parallel_1",60],
+    UNIT["Meter",1]]"""
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( original )
+
+    expected = 'PROJCS["World_Equidistant_Cylindrical",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Equirectangular"],PARAMETER["False_Easting",0],PARAMETER["False_Northing",0],PARAMETER["Central_Meridian",0],PARAMETER["standard_parallel_1",60],UNIT["Meter",1]]'
+    
+    srs.MorphFromESRI()
+
+    srs_expected = osr.SpatialReference( wkt = expected )
+    
+    if not srs.IsSame(srs_expected):
+        print
+        print 'Got:      ', srs.ExportToPrettyWkt()
+        print 'Expected: ', srs_expected.ExportToPrettyWkt()
+        gdaltest.post_reason( 'Did not get expected EC SRS after morphFromESRI' )
+        return 'fail'
+
+    srs.MorphToESRI()
+    srs_expected = osr.SpatialReference( wkt = original )
+    
+    if not srs.IsSame(srs_expected):
+        print
+        print 'Got:      ', srs.ExportToPrettyWkt()
+        print 'Expected: ', srs_expected.ExportToPrettyWkt()
+        gdaltest.post_reason( 'Did not get expected EC SRS after morphToESRI' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_esri_1,
@@ -570,6 +616,7 @@ gdaltest_list = [
     osr_esri_15,
     osr_esri_16,
     osr_esri_17,
+    osr_esri_18,
     None ]
 
 if __name__ == '__main__':
