@@ -1513,13 +1513,13 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /*      Remap Equidistant_Cylindrical parameter. It is same as          */
 /*      Stereographic                                                   */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     if( pszProjection != NULL && EQUAL(pszProjection,"Equidistant_Cylindrical") )
         GetRoot()->applyRemapper( 
             "PARAMETER", 
             (char **)apszPolarStereographicMapping + 0, 
             (char **)apszPolarStereographicMapping + 1, 2 );
-
-
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
