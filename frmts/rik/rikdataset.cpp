@@ -691,6 +691,12 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    if( !rik3header )
+    {
+        if( nameLength == 0 || nameLength != strlen(name) )
+            return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
