@@ -202,7 +202,7 @@ char* GMLXercesHandler::GetAttributes(void* attr)
         CPLFree( pszString );
         strcat( pszAttr, "\"" );
     }
-    return pszAttr;
+    return CPLStrdup(pszAttr);
 }
 
 #else
@@ -333,7 +333,7 @@ char* GMLExpatHandler::GetAttributes(void* attr)
         strcat( pszAttr, papszIter[1] );
         strcat( pszAttr, "\"" );
     }
-    return pszAttr;
+    return CPLStrdup( pszAttr );
 }
 
 #endif
@@ -418,11 +418,9 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         m_nGeomLen += nLNLenBytes;
         /* saving attributes */
         char* pszAttributes = GetAttributes(attr);
-        if( pszAttributes != NULL )
-        {
-            strcat( m_pszGeometry + m_nGeomLen, pszAttributes );
-            m_nGeomLen += strlen( pszAttributes );
-        }
+        strcat( m_pszGeometry + m_nGeomLen, pszAttributes );
+        m_nGeomLen += strlen( pszAttributes );
+        CPLFree(pszAttributes);
         strcat( m_pszGeometry + (m_nGeomLen++), ">" );
     }
     
