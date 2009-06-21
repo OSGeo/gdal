@@ -142,7 +142,7 @@ Please, locate Oracle directories using --with-oci or \
         fi
 
         dnl Depending on later Oracle version detection,
-        dnl -lnnz10 flag might be removed for older Oracle < 10.x
+        dnl -lnnzXY flag might be removed for older Oracle < 10.x
         saved_LDFLAGS="$LDFLAGS"
         oci_ldflags="-L$oracle_lib_dir -lclntsh"
         LDFLAGS="$LDFLAGS $oci_ldflags"
@@ -260,10 +260,10 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
                 oracle_version_checked="yes"
                 AC_MSG_RESULT([yes])
 
-                dnl Add -lnnz10 flag to Oracle >= 10.x
-                AC_MSG_CHECKING([for Oracle version >= 10.x to use -lnnz10 flag])
-                oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
-                if test "$oracle_nnz10_check" = "1"; then
+                dnl Add libnnz flag to Oracle >= 10.x
+                AC_MSG_CHECKING([for Oracle version >= 10.x to use -lnnz$oracle_version_major flag])
+                oracle_nnz_check=`expr $oracle_version_number \>\= 10 \* 1000000`
+                if test "$oracle_nnz_check" = "1"; then
                     ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
                     AC_MSG_RESULT([yes])
                 else
