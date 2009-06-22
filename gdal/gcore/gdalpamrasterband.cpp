@@ -693,8 +693,11 @@ CPLErr GDALPamRasterBand::SetOffset( double dfNewOffset )
 
     if( psPam != NULL )
     {
-        psPam->dfOffset = dfNewOffset;
-        psPam->poParentDS->MarkPamDirty();
+        if( psPam->dfOffset != dfNewOffset )
+        {
+            psPam->dfOffset = dfNewOffset;
+            psPam->poParentDS->MarkPamDirty();
+        }
 
         return CE_None;
     }
@@ -731,8 +734,11 @@ CPLErr GDALPamRasterBand::SetScale( double dfNewScale )
 
     if( psPam != NULL )
     {
-        psPam->dfScale = dfNewScale;
-        psPam->poParentDS->MarkPamDirty();
+        if( dfNewScale != psPam->dfScale )
+        {
+            psPam->dfScale = dfNewScale;
+            psPam->poParentDS->MarkPamDirty();
+        }
         return CE_None;
     }
     else

@@ -462,7 +462,8 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy metadata.                                                  */
 /* -------------------------------------------------------------------- */
-    poDstDS->SetMetadata( poSrcDS->GetMetadata() );
+    if( poSrcDS->GetMetadata() != NULL )
+        poDstDS->SetMetadata( poSrcDS->GetMetadata() );
 
 /* -------------------------------------------------------------------- */
 /*      Copy transportable special domain metadata (RPCs).  It would    */
@@ -504,7 +505,8 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         if( strlen(poSrcBand->GetDescription()) > 0 )
             poDstBand->SetDescription( poSrcBand->GetDescription() );
 
-        poDstBand->SetMetadata( poSrcBand->GetMetadata() );
+        if( CSLCount(poSrcBand->GetMetadata()) > 0 )
+            poDstBand->SetMetadata( poSrcBand->GetMetadata() );
 
         dfValue = poSrcBand->GetOffset( &bSuccess );
         if( bSuccess && dfValue != 0.0 )
