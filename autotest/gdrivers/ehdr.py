@@ -110,8 +110,9 @@ def ehdr_5():
         gdaltest.post_reason( 'color table not persisted properly.' )
         return 'fail'
 
+    gdal.GetDriverByName('EHdr').Delete( 'tmp/test_4.bil' )
+    
     return 'success'
-
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -132,12 +133,32 @@ def ehdr_7():
     return tst.testCreateCopy()
 
 ###############################################################################
-# cleanup
+# Test signed 8bit integer support. (#2717)
 
-def ehdr_clean():
-    gdaltest.clean_tmp()
-    return 'success'
+def ehdr_8():
+
+    drv = gdal.GetDriverByName('EHDR')
+    src_ds = gdal.Open('data/8s.vrt')
+    ds = drv.CreateCopy( 'tmp/ehdr_8.bil', src_ds )
+    src_ds = None
+
+    md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
+    if not md.has_key('PIXELTYPE') or md['PIXELTYPE'] != 'SIGNEDBYTE':
+        gdaltest.post_reason( 'Failed to detect SIGNEDBYTE' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    expected = 4672
+    if cs != expected:
+        gdaltest.post_reason( 'Did not get expected image checksum.' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/ehdr_8.bil' )
     
+    return 'success'
+
 gdaltest_list = [
     ehdr_1,
     ehdr_2,
@@ -146,7 +167,7 @@ gdaltest_list = [
     ehdr_5,
     ehdr_6,
     ehdr_7,
-    ehdr_clean
+    ehdr_8,
     ]
 
 if __name__ == '__main__':
