@@ -157,6 +157,9 @@ CPLErr GDALMultiDomainMetadata::SetMetadataItem( const char *pszName,
 
     int iDomain = CSLFindString( papszDomainList, pszDomain );
 
+/* -------------------------------------------------------------------- */
+/*      Create the domain if it does not already exist.                 */
+/* -------------------------------------------------------------------- */
     if( iDomain == -1 )
     {
         int nDomainCount;
@@ -167,14 +170,30 @@ CPLErr GDALMultiDomainMetadata::SetMetadataItem( const char *pszName,
         papapszMetadataLists = (char ***) 
             CPLRealloc( papapszMetadataLists, sizeof(char*)*(nDomainCount+1) );
         papapszMetadataLists[nDomainCount] = NULL;
-        papapszMetadataLists[nDomainCount-1] = 
-            CSLSetNameValue( NULL, pszName, pszValue );
+        iDomain = nDomainCount-1;
+        papapszMetadataLists[iDomain] = NULL;
     }
-    else
+
+/* -------------------------------------------------------------------- */
+/*      Set the value in the domain list.                               */
+/* -------------------------------------------------------------------- */
+    if( pszValue != NULL )
     {
         papapszMetadataLists[iDomain] = 
             CSLSetNameValue( papapszMetadataLists[iDomain], 
                              pszName, pszValue );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remove the target key from the domain list.                     */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        int iKey = CSLFindName( papapszMetadataLists[iDomain], pszName );
+
+        if( iKey != -1 )
+            papapszMetadataLists[iDomain] = 
+                CSLRemoveStrings(papapszMetadataLists[iDomain],iKey,1,NULL);
     }
 
     return CE_None;
