@@ -305,6 +305,43 @@ def tiff_ProjectedCSTypeGeoKey_only():
 
     return 'success'
 
+###############################################################################
+# Test reading a 12bit jpeg compressed geotiff.
+
+def tiff_12bitjpeg():
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    try:
+        ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')
+    except:
+        ds = None
+
+    gdal.PopErrorHandler()
+
+    if ds is None:
+        if string.find(gdal.GetLastErrorMsg(),
+                   'Unsupported JPEG data precision 12') != -1:
+            sys.stdout.write('(12bit jpeg not available) ... ')
+            return 'skip'
+        else:
+            gdaltest.post_reason( 'failed to open 12bit jpeg file with unexpected error' )
+            return 'fail'
+
+    gdal.ErrorReset()
+    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    if string.find(gdal.GetLastErrorMsg(),
+                   'Unsupported JPEG data precision 12') != -1:
+        return 'skip'
+    
+    if stats[2] < 2150 or stats[2] > 2180:
+        gdaltest.post_reason( 'did not get expected mean for band1.')
+        print stats
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -323,6 +360,7 @@ gdaltest_list.append( (tiff_multi_images) )
 gdaltest_list.append( (tiff_vsimem) )
 gdaltest_list.append( (tiff_vsizip_and_mem) )
 gdaltest_list.append( (tiff_ProjectedCSTypeGeoKey_only) )
+gdaltest_list.append( (tiff_12bitjpeg) )
 
 if __name__ == '__main__':
 

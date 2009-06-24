@@ -2387,6 +2387,51 @@ def tiff_write_73():
 
     return 'success'
 
+###############################################################################
+# Verify we can write 12bit jpeg encoded tiff. 
+
+def tiff_write_74():
+
+    try:
+        ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')
+        if ds is None:
+            return 'skip'
+    except:
+        return 'skip'
+
+    drv = gdal.GetDriverByName('GTiff')
+    dst_ds = drv.CreateCopy( 'tmp/test_74.tif', ds,
+                             options = ['COMPRESS=JPEG', 'NBITS=12',
+                                        'PHOTOMETRIC=YCBCR'] )
+
+    ds = None
+    dst_ds = None
+
+    dst_ds = gdal.Open( 'tmp/test_74.tif' )
+    stats = dst_ds.GetRasterBand(1).GetStatistics( 0, 1 )
+
+    if stats[2] < 2150 or stats[2] > 2180:
+        gdaltest.post_reason( 'did not get expected mean for band1.')
+        print stats
+        return 'fail'
+
+    compression = dst_ds.GetMetadataItem('COMPRESSION','IMAGE_STRUCTURE')
+    if compression != 'YCbCr JPEG':
+        gdaltest.post_reason( 'did not get expected COMPRESSION value' )
+        print 'COMPRESSION="%s"' % compression
+        return 'fail'
+    
+    if dst_ds.GetRasterBand(3).GetMetadataItem('NBITS','IMAGE_STRUCTURE') != '12':
+        gdaltest.post_reason( 'did not get expected NBITS value' )
+        return 'fail'
+    
+    dst_ds = None
+
+    drv.Delete( 'tmp/test_74.tif' )
+    
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2467,6 +2512,7 @@ gdaltest_list = [
     tiff_write_71,
     tiff_write_72,
     tiff_write_73,
+    tiff_write_74,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
