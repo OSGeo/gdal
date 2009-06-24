@@ -401,9 +401,13 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         if( m_pszGeometry == NULL )
             m_nGeometryDepth = poState->m_nPathLength;
         
-        if( m_nGeomLen + nLNLenBytes + 4 > m_nGeomAlloc )
+        char* pszAttributes = GetAttributes(attr);
+
+        if( m_nGeomLen + nLNLenBytes + 4 + strlen( pszAttributes ) >
+			m_nGeomAlloc )
         {
-            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000);
+            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000 +
+			          strlen( pszAttributes ));
             char* pszNewGeometry = (char *) 
                 VSIRealloc( m_pszGeometry, m_nGeomAlloc);
             if (pszNewGeometry == NULL)
@@ -417,7 +421,6 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         strcpy( m_pszGeometry+m_nGeomLen, pszName );
         m_nGeomLen += nLNLenBytes;
         /* saving attributes */
-        char* pszAttributes = GetAttributes(attr);
         strcat( m_pszGeometry + m_nGeomLen, pszAttributes );
         m_nGeomLen += strlen( pszAttributes );
         CPLFree(pszAttributes);
