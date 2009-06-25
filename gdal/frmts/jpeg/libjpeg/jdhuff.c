@@ -309,9 +309,11 @@ jpeg_fill_bit_buffer (bitread_working_state * state,
 
       /* Attempt to read a byte */
       if (bytes_in_buffer == 0) {
+
         cinfo->src->next_input_byte = next_input_byte;
-	cinfo->src->bytes_in_buffer = bytes_in_buffer;
-	if (! (*cinfo->src->fill_input_buffer) (cinfo))
+        cinfo->src->bytes_in_buffer = bytes_in_buffer;
+        
+        if (! (*cinfo->src->fill_input_buffer) (cinfo))
 	  return FALSE;
 	next_input_byte = cinfo->src->next_input_byte;
 	bytes_in_buffer = cinfo->src->bytes_in_buffer;

@@ -92,6 +92,18 @@ typedef FAST_FLOAT FLOAT_MULT_TYPE; /* preferred floating type */
 #define jpeg_idct_1x1		jRD1x1
 #endif /* NEED_SHORT_EXTERNAL_NAMES */
 
+#ifdef NEED_12_BIT_NAMES
+#define jpeg_fdct_islow		jpeg_fdct_islow_12
+#define jpeg_fdct_ifast	        jpeg_fdct_ifast_12
+#define jpeg_fdct_float		jpeg_fdct_float_12
+#define jpeg_idct_islow		jpeg_idct_islow_12
+#define jpeg_idct_ifast		jpeg_idct_ifast_12
+#define jpeg_idct_float	        jpeg_idct_float_12
+#define jpeg_idct_4x4		jpeg_idct_4x4_12
+#define jpeg_idct_2x2		jpeg_idct_2x2_12
+#define jpeg_idct_1x1		jpeg_idct_1x1_12
+#endif /* NEED_SHORT_EXTERNAL_NAMES */
+
 /* Extern declarations for the forward and inverse DCT routines. */
 
 EXTERN(void) jpeg_fdct_islow JPP((DCTELEM * data));
