@@ -879,6 +879,60 @@ typedef JMETHOD(boolean, jpeg_marker_parser_method, (j_decompress_ptr cinfo));
 #define jpeg_resync_to_restart	jResyncRestart
 #endif /* NEED_SHORT_EXTERNAL_NAMES */
 
+/* Sometimes it is desirable to build with special external names for 12bit, so that 8bit and 12bit
+   jpeg DLLs can be used in the same applications. */
+
+#ifdef NEED_12_BIT_NAMES
+#define jpeg_std_error		jpeg_std_error_12
+#define jpeg_CreateCompress	jpeg_CreateCompress_12
+#define jpeg_CreateDecompress	jpeg_CreateDecompress_12
+#define jpeg_destroy_compress	jpeg_destroy_compress_12
+#define jpeg_destroy_decompress	jpeg_destroy_decompress_12
+#define jpeg_stdio_dest		jpeg_stdio_dest_12
+#define jpeg_stdio_src		jpeg_stdio_src_12
+#define jpeg_set_defaults	jpeg_set_defaults_12
+#define jpeg_set_colorspace	jpeg_set_colorspace_12
+#define jpeg_default_colorspace	jpeg_default_colorspace_12
+#define jpeg_set_quality	jpeg_set_quality_12
+#define jpeg_set_linear_quality	jpeg_set_linear_quality_12
+#define jpeg_add_quant_table	jpeg_add_quant_table_12
+#define jpeg_quality_scaling	jpeg_quality_scaling_12
+#define jpeg_simple_progression	jpeg_simple_progression_12
+#define jpeg_suppress_tables	jpeg_supress_tables_12
+#define jpeg_alloc_quant_table	jpeg_alloc_quant_table_12
+#define jpeg_alloc_huff_table	jpeg_alloc_huff_table_12
+#define jpeg_start_compress	jpeg_start_compress_12
+#define jpeg_write_scanlines	jpeg_write_scanlines_12
+#define jpeg_finish_compress	jpeg_finish_compress_12
+#define jpeg_write_raw_data	jpeg_write_raw_data_12
+#define jpeg_write_marker	jpeg_write_marker_12
+#define jpeg_write_m_header	jpeg_write_m_header_12
+#define jpeg_write_m_byte	jpeg_write_m_byte_12
+#define jpeg_write_tables	jpeg_write_tables_12
+#define jpeg_read_header	jpeg_read_header_12
+#define jpeg_start_decompress	jpeg_start_decompress_12
+#define jpeg_read_scanlines	jpeg_read_scanlines_12
+#define jpeg_finish_decompress	jpeg_finish_decompress_12
+#define jpeg_read_raw_data	jpeg_read_raw_data_12
+#define jpeg_has_multiple_scans	jpeg_has_multiple_scans_12
+#define jpeg_start_output	jpeg_start_output_12
+#define jpeg_finish_output	jpeg_finish_output_12
+#define jpeg_input_complete	jpeg_input_complete_12
+#define jpeg_new_colormap	jpeg_new_colormap_12
+#define jpeg_consume_input	jpeg_consume_input_12
+#define jpeg_calc_output_dimensions	jpeg_calc_output_dimensions_12
+#define jpeg_save_markers	jpeg_save_markers_12
+#define jpeg_set_marker_processor	jpeg_set_marker_processor_12
+#define jpeg_read_coefficients	jpeg_read_coefficients_12
+#define jpeg_write_coefficients	jpeg_write_coefficients_12
+#define jpeg_copy_critical_parameters	jpeg_copy_critical_parameters_12
+#define jpeg_abort_compress	jpeg_abort_compress_12
+#define jpeg_abort_decompress	jpeg_abort_decompress_12
+#define jpeg_abort		jpeg_abort_12
+#define jpeg_destroy		jpeg_destroy_12
+#define jpeg_resync_to_restart	jpeg_resync_to_restart_12
+#endif /* NEED_SHORT_EXTERNAL_NAMES */
+
 
 /* Default error-management setup */
 EXTERN(struct jpeg_error_mgr *) jpeg_std_error

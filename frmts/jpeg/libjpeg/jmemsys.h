@@ -32,6 +32,17 @@
 #define jpeg_mem_term		jMemTerm
 #endif /* NEED_SHORT_EXTERNAL_NAMES */
 
+#ifdef NEED_12_BIT_NAMES
+#define jpeg_get_small		jpeg_get_small_12
+#define jpeg_free_small		jpeg_free_small_12
+#define jpeg_get_large		jpeg_get_large_12
+#define jpeg_free_large		jpeg_free_large_12
+#define jpeg_mem_available	jpeg_mem_available_12
+#define jpeg_open_backing_store	jpeg_open_backing_store_12
+#define jpeg_mem_init		jpeg_mem_init_12
+#define jpeg_mem_term		jpeg_mem_term_12
+#endif /* NEED_SHORT_EXTERNAL_NAMES */
+
 
 /*
  * These two functions are used to allocate and release small chunks of

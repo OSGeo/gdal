@@ -37,6 +37,11 @@ typedef struct {
 #define jpeg_gen_optimal_table	jGenOptTbl
 #endif /* NEED_SHORT_EXTERNAL_NAMES */
 
+#ifdef NEED_12_BIT_NAMES
+#define jpeg_make_c_derived_tbl	jpeg_make_c_derived_tbl_12
+#define jpeg_gen_optimal_table	jpeg_gen_optimal_table_12
+#endif
+
 /* Expand a Huffman table definition into the derived format */
 EXTERN(void) jpeg_make_c_derived_tbl
 	JPP((j_compress_ptr cinfo, boolean isDC, int tblno,

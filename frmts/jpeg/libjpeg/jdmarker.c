@@ -137,7 +137,6 @@ typedef my_marker_reader * my_marker_ptr;
  */
 #define MAKE_BYTE_AVAIL(cinfo,action)  \
 	if (bytes_in_buffer == 0) {  \
-          INPUT_SYNC(cinfo); \
 	  if (! (*datasrc->fill_input_buffer) (cinfo))  \
 	    { action; }  \
 	  INPUT_RELOAD(cinfo);  \
