@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.39 2008-09-03 07:16:09 dron Exp $ */
+/* $Id: tif_lzw.c,v 1.40 2009-06-22 04:47:12 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -690,6 +690,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 		}
 		oldcodep = codep;
 		if (code >= 256) {
+			char *op_orig = op;
 			/*
 			 * Code maps to a string, copy string
 			 * value to output (written in reverse).
@@ -725,7 +726,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			tp = op;
 			do {
 				*--tp = codep->value;
-			} while( (codep = codep->next) != NULL);
+			} while( (codep = codep->next) != NULL && tp > op_orig);
 		} else
 			*op++ = code, occ--;
 	}

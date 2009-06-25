@@ -861,6 +861,7 @@ TIFF_OPTS
 GEOTIFF_SETTING
 GEOTIFF_INCLUDE
 JPEG_SETTING
+JPEG12_ENABLED
 GIF_SETTING
 HAVE_OGDI
 OGDI_INCLUDE
@@ -1576,6 +1577,7 @@ Optional Packages:
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
   --with-jpeg=ARG       Include JPEG support (ARG=internal, no or path)
+  --without-jpeg12        Disable JPEG 8/12bit TIFF support
   --with-gif=ARG        Include GIF support (ARG=internal, no or path)
   --with-ogdi=ARG       Include OGDI support (ARG=path)
   --with-fme=ARG        Include FMEObjects support (ARG=FME_HOME path)
@@ -5783,13 +5785,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5786: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5788: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5789: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5791: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5792: output\"" >&5)
+  (eval echo "\"\$as_me:5794: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6886,7 +6888,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6889 "configure"' > conftest.$ac_ext
+  echo '#line 6891 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8577,11 +8579,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8580: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8582: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8584: \$? = $ac_status" >&5
+   echo "$as_me:8586: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8899,11 +8901,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8902: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8904: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8906: \$? = $ac_status" >&5
+   echo "$as_me:8908: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9004,11 +9006,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9007: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9009: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9011: \$? = $ac_status" >&5
+   echo "$as_me:9013: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9059,11 +9061,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9062: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9064: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9066: \$? = $ac_status" >&5
+   echo "$as_me:9068: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11819,7 +11821,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11822 "configure"
+#line 11824 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11919,7 +11921,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11922 "configure"
+#line 11924 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13947,11 +13949,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13950: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13952: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13954: \$? = $ac_status" >&5
+   echo "$as_me:13956: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14046,11 +14048,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14049: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14051: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14053: \$? = $ac_status" >&5
+   echo "$as_me:14055: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14098,11 +14100,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14101: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14103: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14105: \$? = $ac_status" >&5
+   echo "$as_me:14107: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -21916,6 +21918,39 @@ fi
 
 
 
+# Check whether --with-jpeg12 was given.
+if test "${with_jpeg12+set}" = set; then
+  withval=$with_jpeg12;
+fi
+
+
+{ echo "$as_me:$LINENO: checking for jpeg12" >&5
+echo $ECHO_N "checking for jpeg12... $ECHO_C" >&6; }
+if test "$with_jpeg12" = yes ; then
+    { echo "$as_me:$LINENO: result: enabled" >&5
+echo "${ECHO_T}enabled" >&6; }
+    JPEG12_ENABLED=yes
+elif test x"$with_jpeg12" = x ; then
+    if test "$JPEG_SETTING" = "internal" -a "$TIFF_SETTING" = "internal" ; then
+      { echo "$as_me:$LINENO: result: enabled" >&5
+echo "${ECHO_T}enabled" >&6; }
+      JPEG12_ENABLED=yes
+    else
+      JPEG12_ENABLED=no
+      { echo "$as_me:$LINENO: result: disabled, libjpeg or libtiff not internal" >&5
+echo "${ECHO_T}disabled, libjpeg or libtiff not internal" >&6; }
+    fi
+else
+    JPEG12_ENABLED=no
+    { echo "$as_me:$LINENO: result: disabled by user" >&5
+echo "${ECHO_T}disabled by user" >&6; }
+fi
+
+JPEG12_ENABLED=$JPEG12_ENABLED
+
+
+
+
 # Check whether --with-gif was given.
 if test "${with_gif+set}" = set; then
   withval=$with_gif;
@@ -24234,10 +24269,10 @@ echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req... $ECHO_
                 { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
 
-                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz10 flag" >&5
-echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz10 flag... $ECHO_C" >&6; }
-                oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
-                if test "$oracle_nnz10_check" = "1"; then
+                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz$oracle_version_major flag" >&5
+echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz$oracle_version_major flag... $ECHO_C" >&6; }
+                oracle_nnz_check=`expr $oracle_version_number \>\= 10 \* 1000000`
+                if test "$oracle_nnz_check" = "1"; then
                     ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
                     { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
@@ -25662,10 +25697,10 @@ echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req... $ECHO_
                 { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
 
-                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz10 flag" >&5
-echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz10 flag... $ECHO_C" >&6; }
-                oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
-                if test "$oracle_nnz10_check" = "1"; then
+                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz$oracle_version_major flag" >&5
+echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz$oracle_version_major flag... $ECHO_C" >&6; }
+                oracle_nnz_check=`expr $oracle_version_number \>\= 10 \* 1000000`
+                if test "$oracle_nnz_check" = "1"; then
                     ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
                     { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
@@ -29258,6 +29293,7 @@ for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
 GEOTIFF_INCLUDE!$GEOTIFF_INCLUDE$ac_delim
 JPEG_SETTING!$JPEG_SETTING$ac_delim
+JPEG12_ENABLED!$JPEG12_ENABLED$ac_delim
 GIF_SETTING!$GIF_SETTING$ac_delim
 HAVE_OGDI!$HAVE_OGDI$ac_delim
 OGDI_INCLUDE!$OGDI_INCLUDE$ac_delim
@@ -29352,7 +29388,6 @@ PY_LD_SHARED!$PY_LD_SHARED$ac_delim
 PY_SO_EXT!$PY_SO_EXT$ac_delim
 PYTHON_DEV!$PYTHON_DEV$ac_delim
 HAVE_NUMPY!$HAVE_NUMPY$ac_delim
-NUMPY_FLAG!$NUMPY_FLAG$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -29394,12 +29429,13 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+NUMPY_FLAG!$NUMPY_FLAG$ac_delim
 HAVE_OGPYTHON!$HAVE_OGPYTHON$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 3; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 4; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -30604,6 +30640,9 @@ echo "  LIBGEOTIFF support:        ${GEOTIFF_SETTING}"
 
 
 echo "  LIBJPEG support:           ${JPEG_SETTING}"
+
+
+echo "  8/12 bit JPEG TIFF:        ${JPEG12_ENABLED}"
 
 
 echo "  LIBGIF support:            ${GIF_SETTING}"
