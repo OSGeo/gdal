@@ -14,6 +14,7 @@ OBJ	=	\
 
 GDAL_ROOT	=	..\..\..
 
+EXTRAFLAGS      = -DDEFAULT_MAX_MEM=500000000L
 
 default:	$(OBJ)
         lib /out:libjpeg.lib $(OBJ)

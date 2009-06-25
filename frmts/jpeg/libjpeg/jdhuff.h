@@ -18,6 +18,12 @@
 #define jpeg_huff_decode	jHufDecode
 #endif /* NEED_SHORT_EXTERNAL_NAMES */
 
+#ifdef NEED_12_BIT_NAMES
+#define jpeg_make_d_derived_tbl	jpeg_make_d_derived_tbl_12	
+#define jpeg_fill_bit_buffer	jpeg_fill_bit_buffer_12	
+#define jpeg_huff_decode	jpeg_huff_decode_12	
+#endif /* NEED_SHORT_EXTERNAL_NAMES */
+
 
 /* Derived data constructed for each Huffman table */
 

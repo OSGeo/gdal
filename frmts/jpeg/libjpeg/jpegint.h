@@ -329,6 +329,42 @@ struct jpeg_color_quantizer {
 #define jpeg_natural_order	jZAGTable
 #endif /* NEED_SHORT_EXTERNAL_NAMES */
 
+#ifdef NEED_12_BIT_NAMES
+#define jinit_compress_master	jinit_compress_master_12	
+#define jinit_c_master_control	jinit_c_master_control_12	
+#define jinit_c_main_controller	jinit_c_main_controller_12	
+#define jinit_c_prep_controller	jinit_c_prep_controller_12	
+#define jinit_c_coef_controller	jinit_c_coef_controller_12	
+#define jinit_color_converter	jinit_color_converter_12	
+#define jinit_downsampler	jinit_downsampler_12	
+#define jinit_forward_dct	jinit_forward_dct_12	
+#define jinit_huff_encoder	jinit_huff_encoder_12	
+#define jinit_phuff_encoder	jinit_phuff_encoder_12	
+#define jinit_marker_writer	jinit_marker_writer_12	
+#define jinit_master_decompress	jinit_master_decompress_12	
+#define jinit_d_main_controller	jinit_d_main_controller_12	
+#define jinit_d_coef_controller	jinit_d_coef_controller_12	
+#define jinit_d_post_controller	jinit_d_post_controller_12	
+#define jinit_input_controller	jinit_input_controller_12	
+#define jinit_marker_reader	jinit_marker_reader_12	
+#define jinit_huff_decoder	jinit_huff_decoder_12	
+#define jinit_phuff_decoder	jinit_phuff_decoder_12	
+#define jinit_inverse_dct	jinit_inverse_dct_12	
+#define jinit_upsampler		jinit_upsampler_12		
+#define jinit_color_deconverter	jinit_color_deconverter_12	
+#define jinit_1pass_quantizer	jinit_1pass_quantizer_12	
+#define jinit_2pass_quantizer	jinit_2pass_quantizer_12	
+#define jinit_merged_upsampler	jinit_merged_upsampler_12	
+#define jinit_memory_mgr	jinit_memory_mgr_12	
+#define jdiv_round_up		jdiv_round_up_12		
+#define jround_up		jround_up_12		
+#define jcopy_sample_rows	jcopy_sample_rows_12	
+#define jcopy_block_row		jcopy_block_row_12		
+#define jzero_far		jzero_far_12		
+#define jpeg_zigzag_order	jpeg_zigzag_order_12	
+#define jpeg_natural_order	jpeg_natural_order_12	
+#endif
+
 
 /* Compression module initialization routines */
 EXTERN(void) jinit_compress_master JPP((j_compress_ptr cinfo));

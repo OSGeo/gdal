@@ -13,7 +13,7 @@ OBJ	=	\
         jquant2.o jutils.o jmemmgr.o jmemansi.o \
 	\
 	jpgdataset.o vsidataio.o
-XTRA_OPT	=	-Ilibjpeg
+XTRA_OPT	=	-Ilibjpeg -DDEFAULT_MAX_MEM=500000000L
 else
 OBJ	=	jpgdataset.o vsidataio.o
 XTRA_OPT	=	
@@ -36,3 +36,11 @@ clean:
 all:	$(OBJ:.o=.$(OBJ_EXT))
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
+
+import:
+	mv libjpeg/jmorecfg.h libjpeg/jmorecfg.h.safe
+	mv libjpeg/jconfig.h libjpeg/jconfig.h.safe
+	(cd libjpeg; copymatch.sh ~/libjpeg *.c *.h)
+	mv libjpeg/jmorecfg.h.safe libjpeg/jmorecfg.h
+	mv libjpeg/jconfig.h.safe libjpeg/jconfig.h
+
