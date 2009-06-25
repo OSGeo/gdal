@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.81 2009-05-03 14:29:36 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.84 2009-06-23 18:56:46 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -46,6 +46,7 @@
 
 int TIFFFillStrip(TIFF* tif, uint32 strip);
 int TIFFFillTile(TIFF* tif, uint32 tile);
+int TIFFReInitJPEG_12( TIFF *tif, int scheme, int is_encode );
 
 /* We undefine FAR to avoid conflict with JPEG definition */
 
@@ -86,6 +87,17 @@ int TIFFFillTile(TIFF* tif, uint32 tile);
 
 #include "jpeglib.h"
 #include "jerror.h"
+
+/* 
+ * Do we want to do special processing suitable for when JSAMPLE is a
+ * 16bit value?  
+ */
+
+#if defined(JPEG_LIB_MK1)
+#  define JPEG_LIB_MK1_OR_12BIT 1
+#elif BITS_IN_JSAMPLE == 12
+#  define JPEG_LIB_MK1_OR_12BIT 1
+#endif
 
 /*
  * We are using width_in_blocks which is supposed to be private to
@@ -648,6 +660,7 @@ alloc_downsampled_buffers(TIFF* tif, jpeg_component_info* comp_info,
 #define JPEG_MARKER_SOF3 0xC3
 #define JPEG_MARKER_DHT 0xC4
 #define JPEG_MARKER_SOI 0xD8
+#define JPEG_MARKER_SOS 0xDA
 #define JPEG_MARKER_DQT 0xDB
 #define JPEG_MARKER_DRI 0xDD
 #define JPEG_MARKER_APP0 0xE0
@@ -784,6 +797,7 @@ JPEGFixupTagsSubsamplingSec(struct JPEGFixupTagsSubsamplingData* data)
 			case JPEG_MARKER_APP0+14:
 			case JPEG_MARKER_APP0+15:
 			case JPEG_MARKER_DQT:
+			case JPEG_MARKER_SOS:
 			case JPEG_MARKER_DHT:
 			case JPEG_MARKER_DRI:
 				/* this type of marker has data, but it has no use to us and should be skipped */
@@ -799,6 +813,7 @@ JPEGFixupTagsSubsamplingSec(struct JPEGFixupTagsSubsamplingData* data)
 				}
 				break;
 			case JPEG_MARKER_SOF0:
+			case JPEG_MARKER_SOF1:
 				/* this marker contains the subsampling factors we're scanning for */
 				{
 					uint16 n;
@@ -930,6 +945,11 @@ JPEGSetupDecode(TIFF* tif)
 {
 	JPEGState* sp = JState(tif);
 	TIFFDirectory *td = &tif->tif_dir;
+
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(TIFFInitJPEG)
+        if( tif->tif_dir.td_bitspersample == 12 )
+            return TIFFReInitJPEG_12( tif, COMPRESSION_JPEG, 0 );
+#endif
 
 	JPEGInitializeLibJPEG( tif, TRUE );
 
@@ -1290,7 +1310,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 		JDIMENSION clumps_per_line = sp->cinfo.d.comp_info[1].downsampled_width;            
 		int samples_per_clump = sp->samplesperclump;
 
-#ifdef JPEG_LIB_MK1
+#if defined(JPEG_LIB_MK1_OR_12BIT)
 		unsigned short* tmpbuf = _TIFFmalloc(sizeof(unsigned short) *
 		    sp->cinfo.d.output_width *
 		    sp->cinfo.d.num_components);
@@ -1321,7 +1341,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 
 				for (ypos = 0; ypos < vsamp; ypos++) {
 					JSAMPLE *inptr = sp->ds_buffer[ci][sp->scancount*vsamp + ypos];
-#ifdef JPEG_LIB_MK1
+#if defined(JPEG_LIB_MK1_OR_12BIT)
 					JSAMPLE *outptr = (JSAMPLE*)tmpbuf + clumpoffset;
 #else
 					JSAMPLE *outptr = (JSAMPLE*)buf + clumpoffset;
@@ -1348,7 +1368,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 				}
 			}
 
-#ifdef JPEG_LIB_MK1
+#if defined(JPEG_LIB_MK1_OR_12BIT)
 			{
 				if (sp->cinfo.d.data_precision == 8)
 				{
@@ -1367,7 +1387,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 					for( iPair = 0; iPair < value_pairs; iPair++ )
 					{
 						unsigned char *out_ptr = ((unsigned char *) buf) + iPair * 3;
-						JSAMPLE *in_ptr = tmpbuf + iPair * 2;
+						JSAMPLE *in_ptr = (JSAMPLE *) (tmpbuf + iPair * 2);
 						out_ptr[0] = (in_ptr[0] & 0xff0) >> 4;
 						out_ptr[1] = ((in_ptr[0] & 0xf) << 4)
 						    | ((in_ptr[1] & 0xf00) >> 8);
@@ -1379,12 +1399,17 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 
 			sp->scancount ++;
 			tif->tif_row += sp->v_sampling;
+/*
 			buf += clumps_per_line*samples_per_clump;
 			cc -= clumps_per_line*samples_per_clump;
+*/
+			buf += sp->bytesperline * sp->v_sampling;
+			cc -= sp->bytesperline * sp->v_sampling;
+
 			nrows -= sp->v_sampling;
 		} while (nrows > 0);
 
-#ifdef JPEG_LIB_MK1
+#if defined(JPEG_LIB_MK1_OR_12BIT)
 		_TIFFfree(tmpbuf);
 #endif
 
@@ -1458,6 +1483,11 @@ JPEGSetupEncode(TIFF* tif)
 	JPEGState* sp = JState(tif);
 	TIFFDirectory *td = &tif->tif_dir;
 	static const char module[] = "JPEGSetupEncode";
+
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(TIFFInitJPEG)
+        if( tif->tif_dir.td_bitspersample == 12 )
+            return TIFFReInitJPEG_12( tif, COMPRESSION_JPEG, 1 );
+#endif
 
         JPEGInitializeLibJPEG( tif, FALSE );
 
@@ -1715,6 +1745,8 @@ JPEGEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 	JPEGState *sp = JState(tif);
 	tmsize_t nrows;
 	JSAMPROW bufptr[1];
+        short *line16 = NULL;
+        int    line16_count = 0;
 
 	(void) s;
 	assert(sp != NULL);
@@ -1728,14 +1760,48 @@ JPEGEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
         if( !isTiled(tif) && tif->tif_row+nrows > tif->tif_dir.td_imagelength )
             nrows = tif->tif_dir.td_imagelength - tif->tif_row;
 
+        if( sp->cinfo.c.data_precision == 12 )
+        {
+            line16_count = (sp->bytesperline * 2) / 3;
+            line16 = (short *) _TIFFmalloc(sizeof(short) * line16_count);
+        }
+            
 	while (nrows-- > 0) {
+
+            if( sp->cinfo.c.data_precision == 12 )
+            {
+
+                int value_pairs = line16_count / 2;
+                int iPair;
+
+		bufptr[0] = (JSAMPROW) line16;
+
+                for( iPair = 0; iPair < value_pairs; iPair++ )
+                {
+                    unsigned char *in_ptr =
+                        ((unsigned char *) buf) + iPair * 3;
+                    JSAMPLE *out_ptr = (JSAMPLE *) (line16 + iPair * 2);
+
+                    out_ptr[0] = (in_ptr[0] << 4) | ((in_ptr[1] & 0xf0) >> 4);
+                    out_ptr[1] = ((in_ptr[1] & 0x0f) << 8) | in_ptr[2];
+                }
+            }
+            else
+            {
 		bufptr[0] = (JSAMPROW) buf;
-		if (TIFFjpeg_write_scanlines(sp, bufptr, 1) != 1)
-			return (0);
-		if (nrows > 0)
-			tif->tif_row++;
-		buf += sp->bytesperline;
+            }
+            if (TIFFjpeg_write_scanlines(sp, bufptr, 1) != 1)
+                return (0);
+            if (nrows > 0)
+                tif->tif_row++;
+            buf += sp->bytesperline;
 	}
+
+        if( sp->cinfo.c.data_precision == 12 )
+        {
+            _TIFFfree( line16 );
+        }
+            
 	return (1);
 }
 
