@@ -74,7 +74,7 @@ jpeg_free_large (j_common_ptr cinfo, void FAR * object, size_t sizeofobject)
  */
 
 #ifndef DEFAULT_MAX_MEM		/* so can override from makefile */
-#define DEFAULT_MAX_MEM		500000000L /* default: one megabyte */
+#define DEFAULT_MAX_MEM		1000000L /* default: one megabyte */
 #endif
 
 GLOBAL(long)
