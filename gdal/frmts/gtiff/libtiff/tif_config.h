@@ -79,6 +79,9 @@
 #define TIFF_UINT64_FORMAT CPL_FRMT_GUIB
 #define TIFF_INT64_FORMAT CPL_FRMT_GIB
 
+#ifdef JPEG_DUAL_MODE_8_12
+#  define LIBJPEG_12_PATH "../../jpeg/libjpeg12/jpeglib.h"
+#endif
 
 
 

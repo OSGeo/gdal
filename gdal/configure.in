@@ -870,6 +870,33 @@ if test "$JPEG_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check for BSB in the local tree.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([jpeg12],
+	    AS_HELP_STRING([--without-jpeg12],
+	       [Disable JPEG 8/12bit TIFF support]),,)
+
+AC_MSG_CHECKING([for jpeg12])
+if test "$with_jpeg12" = yes ; then
+    AC_MSG_RESULT([enabled])
+    JPEG12_ENABLED=yes
+elif test x"$with_jpeg12" = x ; then
+    if test "$JPEG_SETTING" = "internal" -a "$TIFF_SETTING" = "internal" ; then
+      AC_MSG_RESULT([enabled])
+      JPEG12_ENABLED=yes
+    else
+      JPEG12_ENABLED=no
+      AC_MSG_RESULT([disabled, libjpeg or libtiff not internal])
+    fi
+else
+    JPEG12_ENABLED=no
+    AC_MSG_RESULT([disabled by user])
+fi
+
+AC_SUBST(JPEG12_ENABLED,$JPEG12_ENABLED)
+
+dnl ---------------------------------------------------------------------------
 dnl Select a GIF Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -2411,6 +2438,7 @@ LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
 LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
 LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
 LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
+LOC_MSG([  8/12 bit JPEG TIFF:        ${JPEG12_ENABLED}])
 LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
