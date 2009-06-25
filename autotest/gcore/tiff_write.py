@@ -2392,11 +2392,23 @@ def tiff_write_73():
 
 def tiff_write_74():
 
+    old_accum = gdal.GetConfigOption( 'CPL_ACCUM_ERROR_MSG' )
+    gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'ON' )
+    gdal.ErrorReset()
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        
     try:
         ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')
-        if ds is None:
-            return 'skip'
+        ds.GetRasterBand(1).ReadRaster(0,0,1,1)
     except:
+        ds = None
+
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', old_accum )
+    
+    if string.find(gdal.GetLastErrorMsg(),
+                   'Unsupported JPEG data precision 12') != -1:
+        sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
 
     drv = gdal.GetDriverByName('GTiff')
@@ -2427,7 +2439,7 @@ def tiff_write_74():
     
     dst_ds = None
 
-    drv.Delete( 'tmp/test_74.tif' )
+    #drv.Delete( 'tmp/test_74.tif' )
     
     return 'success'
 
