@@ -19,10 +19,18 @@ default:	$(OBJ)
 	$(MAKE) /f makefile.vc
 	cd ..
 !ENDIF
+!IFDEF JPEG12_SUPPORTED
+	cd libjpeg12
+	$(MAKE) /f makefile.vc
+	cd ..
+!ENDIF
 
 clean:
 	-del *.obj
         cd libjpeg
+	$(MAKE) /f makefile.vc clean
+	cd ..
+        cd libjpeg12
 	$(MAKE) /f makefile.vc clean
 	cd ..
 
