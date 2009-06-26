@@ -16,6 +16,7 @@ OBJ	= \
 	tif_fax3sm.obj \
 	tif_getimage.obj \
 	tif_jpeg.obj \
+	tif_jpeg_12.obj \
 	tif_flush.obj \
 	tif_luv.obj \
 	tif_lzw.obj \
@@ -39,7 +40,8 @@ OBJ	= \
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT -DPIXARLOG_SUPPORT $(JPEG_FLAGS)
+EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT -DPIXARLOG_SUPPORT \
+		$(JPEG_FLAGS) $(JPEG12_FLAGS)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -51,11 +53,22 @@ JPEG_FLAGS =	-I..\..\jpeg\libjpeg -DJPEG_SUPPORT -DOJPEG_SUPPORT
 !ENDIF
 !ENDIF
 
+!IFDEF JPEG12_SUPPORTED
+JPEG12_FLAGS =	-DJPEG_DUAL_MODE_8_12
+EXTRA_DEP    =  libjpeg12src
+!ENDIF
 
 
-default:	$(OBJ)
+
+
+default:	$(EXTRA_DEP) $(OBJ)
 	xcopy /D  /Y *.obj ..\..\o
 
 clean:
 	del *.obj
 
+libjpeg12src:
+	cd ../../jpeg/libjpeg12
+	$(MAKE) /f makefile.vc jcapimin12.c
+	cd ../../gtiff/libtiff
+	
