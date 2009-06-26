@@ -157,12 +157,11 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      If CPL_ACCUM_ERROR_MSG=ON and the active error handler          */
-/*      is CPLQuietErrorHandler, accumulate the error messages          */
+/*      If CPL_ACCUM_ERROR_MSG=ON accumulate the error messages,        */
+/*      rather than just replacing the last error message.              */
 /* -------------------------------------------------------------------- */
         int nPreviousSize = 0;
         if ( psCtx->psHandlerStack != NULL &&
-             psCtx->psHandlerStack->pfnHandler == CPLQuietErrorHandler &&
              EQUAL(CPLGetConfigOption( "CPL_ACCUM_ERROR_MSG", "" ), "ON"))
         {
             nPreviousSize = strlen(psCtx->szLastErrMsg);
