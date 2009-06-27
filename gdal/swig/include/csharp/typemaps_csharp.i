@@ -377,11 +377,11 @@ OPTIONAL_POD(int, int);
  * Typemap for out double.
  */
 
-%typemap(imtype) (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out double"
-%typemap(cstype) (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out double"
-%typemap(csin) (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out $csinput"
+%typemap(imtype) (double *OUTPUT), (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out double"
+%typemap(cstype) (double *OUTPUT), (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out double"
+%typemap(csin) (double *OUTPUT), (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out $csinput"
 
-%typemap(in) (double *val), (double *min), (double *max), (double *mean), (double *stddev)
+%typemap(in) (double *OUTPUT), (double *val), (double *min), (double *max), (double *mean), (double *stddev)
 {
   /* %typemap(in) (double *val) */
   $1 = ($1_ltype)$input;
