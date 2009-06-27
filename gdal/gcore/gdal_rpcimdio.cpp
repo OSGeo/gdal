@@ -78,11 +78,13 @@ char **CPL_STDCALL GDALLoadRPBFile( const char *pszFilename,
     }
     else
     {
-        int iSibling = CSLFindString( papszSiblingFiles, osTarget );
+        int iSibling = CSLFindString( papszSiblingFiles, 
+                                      CPLGetFilename(osTarget) );
         if( iSibling < 0 )
             return NULL;
 
-        osTarget = papszSiblingFiles[iSibling];
+        osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
+        osTarget += papszSiblingFiles[iSibling];
     }
 
 /* -------------------------------------------------------------------- */
@@ -394,11 +396,13 @@ char ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename,
     }
     else
     {
-        int iSibling = CSLFindString( papszSiblingFiles, osTarget );
+        int iSibling = CSLFindString( papszSiblingFiles, 
+                                      CPLGetFilename(osTarget) );
         if( iSibling < 0 )
             return NULL;
 
-        osTarget = papszSiblingFiles[iSibling];
+        osTarget.resize(osTarget.size() - strlen(papszSiblingFiles[iSibling]));
+        osTarget += papszSiblingFiles[iSibling];
     }
 
 /* -------------------------------------------------------------------- */
