@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 #if HAVE_XERCES == 1
 
@@ -186,23 +187,22 @@ char* GMLXercesHandler::GetFID(void* attr)
 char* GMLXercesHandler::GetAttributes(void* attr)
 {
     const Attributes* attrs = (const Attributes*) attr;
-    char pszAttr[256];
+    CPLString osRes;
     char *pszString;
 
-    pszAttr[0] = '\0';
     for(unsigned int i=0; i < attrs->getLength(); i++)
     {
-        strcat( pszAttr, " " );
+        osRes += " ";
         pszString = tr_strdup(attrs->getQName(i));
-        strcat( pszAttr, pszString );
+        osRes += pszString;
         CPLFree( pszString );
-        strcat( pszAttr, "=\"" );
+        osRes += "=\"";
         pszString = tr_strdup(attrs->getValue(i));
-        strcat( pszAttr, pszString );
+        osRes += pszString;
         CPLFree( pszString );
-        strcat( pszAttr, "\"" );
+        osRes += "\"";
     }
-    return CPLStrdup(pszAttr);
+    return CPLStrdup(osRes);
 }
 
 #else
@@ -323,17 +323,18 @@ char* GMLExpatHandler::GetFID(void* attr)
 char* GMLExpatHandler::GetAttributes(void* attr)
 {
     const char** papszIter = (const char** )attr;
-    char pszAttr[256];
-    pszAttr[0] = '\0';
+    CPLString osRes;
     while(*papszIter)
     {
-        strcat( pszAttr, " " );
-        strcat( pszAttr, *papszIter );
-        strcat( pszAttr, "=\"" );
-        strcat( pszAttr, papszIter[1] );
-        strcat( pszAttr, "\"" );
+        osRes += " ";
+        osRes += *papszIter;
+        osRes += "=\"";
+        osRes += papszIter[1];
+        osRes += "\"";
+
+        papszIter += 2;
     }
-    return CPLStrdup( pszAttr );
+    return CPLStrdup( osRes );
 }
 
 #endif
@@ -404,14 +405,15 @@ OGRErr GMLHandler::startElement(const char *pszName, void* attr )
         char* pszAttributes = GetAttributes(attr);
 
         if( m_nGeomLen + nLNLenBytes + 4 + strlen( pszAttributes ) >
-			m_nGeomAlloc )
+            m_nGeomAlloc )
         {
             m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLenBytes + 1000 +
-			          strlen( pszAttributes ));
+                                  strlen( pszAttributes ));
             char* pszNewGeometry = (char *) 
                 VSIRealloc( m_pszGeometry, m_nGeomAlloc);
             if (pszNewGeometry == NULL)
             {
+                CPLFree(pszAttributes);
                 return CE_Failure;
             }
             m_pszGeometry = pszNewGeometry;
