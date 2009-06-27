@@ -496,7 +496,11 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //************************************************************************
 %include "Operations.i"
 
+#if defined(SWIGCSHARP) || defined(SWIGJAVA)
 %apply (double argin[ANY]) {(double *padfGeoTransform)};
+#else
+%apply (double argin[6]) {(double *padfGeoTransform)};
+#endif
 %apply (double *OUTPUT) {(double *pdfGeoX)};
 %apply (double *OUTPUT) {(double *pdfGeoY)};
 void GDALApplyGeoTransform( double *padfGeoTransform, 
@@ -506,8 +510,13 @@ void GDALApplyGeoTransform( double *padfGeoTransform,
 %clear (double *pdfGeoX);
 %clear (double *pdfGeoY);
 
+#if defined(SWIGCSHARP) || defined(SWIGJAVA)
 %apply (double argin[ANY]) {double *gt_in};
-%apply (double argout[ANY]) {double *gt_out};                            
+%apply (double argout[ANY]) {double *gt_out};
+#else
+%apply (double argin[6]) {double *gt_in};
+%apply (double argout[6]) {double *gt_out};
+#endif                            
 int GDALInvGeoTransform( double *gt_in, double *gt_out );
 %clear (double *gt_in);
 %clear (double *gt_out);
