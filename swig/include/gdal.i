@@ -249,6 +249,8 @@ $1;
 #else
 %rename (GCP) GDAL_GCP;
 %rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
+%rename (ApplyGeoTransform) GDALApplyGeoTransform;
+%rename (InvGeoTransform) GDALInvGeoTransform;
 %rename (VersionInfo) GDALVersionInfo;
 %rename (AllRegister) GDALAllRegister;
 %rename (GetCacheMax) GDALGetCacheMax;
@@ -256,7 +258,6 @@ $1;
 %rename (GetCacheUsed) GDALGetCacheUsed;
 %rename (GetDataTypeSize) GDALGetDataTypeSize;
 %rename (DataTypeIsComplex) GDALDataTypeIsComplex;
-%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 %rename (GetDataTypeName) GDALGetDataTypeName;
 %rename (GetDataTypeByName) GDALGetDataTypeByName;
 %rename (GetColorInterpretationName) GDALGetColorInterpretationName;
@@ -488,13 +489,28 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //************************************************************************
 %include "RasterAttributeTable.i"
 
-
 //************************************************************************
 //
 // Raster Operations
 //
 //************************************************************************
 %include "Operations.i"
+
+%apply (double argin[ANY]) {(double *padfGeoTransform)};
+%apply (double *OUTPUT) {(double *pdfGeoX)};
+%apply (double *OUTPUT) {(double *pdfGeoY)};
+void GDALApplyGeoTransform( double *padfGeoTransform, 
+                            double dfPixel, double dfLine, 
+                            double *pdfGeoX, double *pdfGeoY );
+%clear (double *padfGeoTransform);
+%clear (double *pdfGeoX);
+%clear (double *pdfGeoY);
+
+%apply (double argin[ANY]) {double *gt_in};
+%apply (double argout[ANY]) {double *gt_out};                            
+int GDALInvGeoTransform( double *gt_in, double *gt_out );
+%clear (double *gt_in);
+%clear (double *gt_out);
 
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *request};
