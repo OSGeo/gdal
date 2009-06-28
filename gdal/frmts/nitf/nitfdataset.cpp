@@ -2299,7 +2299,7 @@ CPLErr NITFDataset::SetProjection(const char* _pszProjection)
         if (psImage->chICORDS != 'G')
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "NITF file should have been created with creation option 'ICOORDS=G'.\n");
+                     "NITF file should have been created with creation option 'ICORDS=G'.\n");
             return CE_Failure;
         }
     }
@@ -2308,13 +2308,13 @@ CPLErr NITFDataset::SetProjection(const char* _pszProjection)
         if (bNorth && psImage->chICORDS != 'N')
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "NITF file should have been created with creation option 'ICOORDS=N'.\n");
+                     "NITF file should have been created with creation option 'ICORDS=N'.\n");
             return CE_Failure;
         }
         else if (!bNorth && psImage->chICORDS != 'S')
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "NITF file should have been created with creation option 'ICOORDS=S'.\n");
+                     "NITF file should have been created with creation option 'ICORDS=S'.\n");
             return CE_Failure;
         }
 
