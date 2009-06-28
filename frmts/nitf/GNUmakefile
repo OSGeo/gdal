@@ -2,11 +2,9 @@
 
 include ../../GDALmake.opt
 
-GDAL_OBJ	=	nitfdataset.o rpftocdataset.o
+GDAL_OBJ	=	nitfdataset.o rpftocdataset.o nitfwritejpeg.o nitfwritejpeg_12.o
 NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o nitfaridpcm.o \
 			nitfbilevel.o rpftocfile.o
-
-OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
 CPPFLAGS	:=	-I../gtiff/libtiff -I../vrt $(GDAL_INCLUDE) $(CPPFLAGS)
 
@@ -17,6 +15,12 @@ endif
 ifeq ($(JPEG_SETTING),internal)
 CPPFLAGS	:=	$(CPPFLAGS) -I../jpeg/libjpeg
 endif
+
+ifeq ($(JPEG12_ENABLED),yes)
+CPPFLAGS	:=	$(CPPFLAGS) -DJPEG_DUAL_MODE_8_12
+endif
+
+OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
