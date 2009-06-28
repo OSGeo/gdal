@@ -2,15 +2,18 @@ GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 
-OBJ	=    jpgdataset.obj vsidataio.obj
+OBJ	=    jpgdataset.obj jpgdataset_12.obj vsidataio.obj
 
 
 !IFDEF JPEG_EXTERNAL_LIB
 EXTRAFLAGS      = -I..\zlib -I$(JPEGDIR)
 !ELSE
-EXTRAFLAGS = 	-I..\zlib -Ilibjpeg
+EXTRAFLAGS = 	-I..\zlib -Ilibjpeg $(JPEG12_FLAGS) 
 !ENDIF
 
+!IFDEF JPEG12_SUPPORTED
+JPEG12_FLAGS =  -DJPEG_DUAL_MODE_8_12 
+!ENDIF
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
