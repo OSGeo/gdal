@@ -1421,6 +1421,54 @@ public class gdal:public static XMLNode ParseXMLString(String xmlString)
  */
 public class gdal:public static String SerializeXMLTree(XMLNode xmlnode)
 
+/**
+ * Apply GeoTransform to x/y coordinate.
+ *
+ * Applies the following computation, converting a (pixel,line) coordinate
+ * into a georeferenced (geo_x,geo_y) location.
+ * <pre>
+ * pdfGeoX[0] = padfGeoTransform[0] + dfPixel * padfGeoTransform[1] + dfLine * padfGeoTransform[2];
+ * pdfGeoY[0] = padfGeoTransform[3] + dfPixel * padfGeoTransform[4] + dfLine * padfGeoTransform[5];
+ * </pre>
+ *
+ * @param padfGeoTransform 	Six coefficient GeoTransform to apply.
+ * @param dfPixel 	Input pixel position
+ * @param dfLine 	Input line position.
+ * @param pdfGeoX 	allocated array of 1 double where geo_x (easting/longitude) location is placed.
+ * @param pdfGeoY 	allocated array of 1 double where geo_y (northing/latitude) location is placed. 
+ *
+ * @since Java bindings 1.7.0
+ */
+public class gdal:public static void ApplyGeoTransform(double[] padfGeoTransform, double dfPixel, double dfLine, double[] pdfGeoX, double[] pdfGeoY)
+
+/**
+ * Invert Geotransform.
+ *
+ * This function will invert a standard 3x2 set of GeoTransform coefficients.
+ * This converts the equation from being pixel to geo to being geo to pixel.
+ *
+ * @param gt_in Input geotransform (allocated array of six doubles - unaltered).
+ * @param gt_out Output geotransform (allocated array of six doubles - updated).
+ *
+ * @return 1 on success or 0 if the equation is uninvertable.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class gdal:public static int InvGeoTransform(double[] gt_in, double[] gt_out)
+
+/**
+ * Invert Geotransform.
+ *
+ * This function will invert a standard 3x2 set of GeoTransform coefficients.
+ * This converts the equation from being pixel to geo to being geo to pixel.
+ *
+ * @param gt_in Input geotransform (allocated array of six doubles - unaltered).
+ *
+ * @return an array of six doubles with the inverted geotransform on success or null if the equation is uninvertable.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class gdal:public static double[] InvGeoTransform(double[] gt_in)
 
 /* Class Dataset */
 
@@ -1677,6 +1725,9 @@ public class Dataset:public int SetProjection(String projection)
  *
  * @param geoTransformArray an existing six double array into which the
  * transformation will be placed.
+ *
+ * @see gdal#ApplyGeoTransform(double[] padfGeoTransform, double dfPixel, double dfLine, double[] pdfGeoX, double[] pdfGeoY)
+ * @see gdal#InvGeoTransform(double[] gt_in)
  */
 public class Dataset:public void GetGeoTransform(double[] geoTransformArray)
 
@@ -1689,6 +1740,9 @@ public class Dataset:public void GetGeoTransform(double[] geoTransformArray)
  * @see #GetGeoTransform(double[] geoTransformArray)
  *
  * @since Java bindings 1.7.0
+ *
+ * @see gdal#ApplyGeoTransform(double[] padfGeoTransform, double dfPixel, double dfLine, double[] pdfGeoX, double[] pdfGeoY)
+ * @see gdal#InvGeoTransform(double[] gt_in)
  */
 public class Dataset:public double[] GetGeoTransform()
 
