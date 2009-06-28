@@ -332,7 +332,8 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( EQUAL(psImage->szIC,"C3") || EQUAL(psImage->szIC,"M3") )
     {
         CPLErr eErr = poGDS->ReadJPEGBlock( nBlockXOff, nBlockYOff );
-        int nBlockBandSize = psImage->nBlockWidth*psImage->nBlockHeight;
+        int nBlockBandSize = psImage->nBlockWidth*psImage->nBlockHeight*
+                             (GDALGetDataTypeSize(eDataType)/8);
 
         if( eErr != CE_None )
             return eErr;
@@ -2889,10 +2890,10 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
 /* -------------------------------------------------------------------- */
     if( pabyJPEGBlock == NULL )
     {
-        // this is really 8bit only for now. 
+        /* Allocate enough memory to hold 12bit JPEG data */
         pabyJPEGBlock = (GByte *) 
             CPLCalloc(psImage->nBands,
-                      psImage->nBlockWidth * psImage->nBlockHeight);
+                      psImage->nBlockWidth * psImage->nBlockHeight * 2);
     }
 
 
@@ -2906,7 +2907,7 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
 
     if (panJPEGBlockOffset[iBlock] == -1 || panJPEGBlockOffset[iBlock] == 0xffffffff)
     {
-        memset(pabyJPEGBlock, 0, psImage->nBlockWidth*psImage->nBlockHeight);
+        memset(pabyJPEGBlock, 0, psImage->nBands*psImage->nBlockWidth*psImage->nBlockHeight*2);
         return CE_None;
     }
 
@@ -2928,13 +2929,32 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
         delete poDS;
         return CE_Failure;
     }
-                       
+
+    if( poDS->GetRasterCount() < psImage->nBands )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "JPEG block %d has not enough bands.", 
+                  iBlock );
+        delete poDS;
+        return CE_Failure;
+    }
+
+    if( poDS->GetRasterBand(1)->GetRasterDataType() != GetRasterBand(1)->GetRasterDataType())
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "JPEG block %d data type (%s) not consistant with band data type (%s).", 
+                  iBlock, GDALGetDataTypeName(poDS->GetRasterBand(1)->GetRasterDataType()),
+                  GDALGetDataTypeName(GetRasterBand(1)->GetRasterDataType()) );
+        delete poDS;
+        return CE_Failure;
+    }
+
     eErr = poDS->RasterIO( GF_Read, 
                            0, 0, 
                            psImage->nBlockWidth, psImage->nBlockHeight,
                            pabyJPEGBlock, 
                            psImage->nBlockWidth, psImage->nBlockHeight,
-                           GDT_Byte, psImage->nBands, anBands, 0, 0, 0 );
+                           GetRasterBand(1)->GetRasterDataType(), psImage->nBands, anBands, 0, 0, 0 );
 
     delete poDS;
 
