@@ -1313,6 +1313,11 @@ def nitf_online_14():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4020h.ntf', 'U_4020h.ntf'):
         return 'skip'
 
+    try:
+        os.remove('tmp/cache/U_4020h.ntf.aux.xml')
+    except:
+        pass
+
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')
     md = jpg_drv.GetMetadata()
@@ -1324,10 +1329,15 @@ def nitf_online_14():
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
-    if stats[2] < 2026 or stats[2] > 2027:
+    if stats[2] < 2607 or stats[2] > 2608:
         print stats
         return 'fail'
     ds = None
+
+    try:
+        os.remove('tmp/cache/U_4020h.ntf.aux.xml')
+    except:
+        pass
 
     return 'success'
 
