@@ -317,6 +317,58 @@ def jpeg_9():
 
     return 'success'
 
+###############################################################################
+# Check reading a 12-bit JPEG
+
+def jpeg_10():
+
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    drv = gdal.GetDriverByName('JPEG')
+    md = drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
+        sys.stdout.write('(12bit jpeg not available) ... ')
+        return 'skip'
+
+    ds = gdal.Open('data/12bit_rose_extract.jpg')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        return 'fail'
+    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    if stats[2] < 3613 or stats[2] > 3614:
+        print stats
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Check creating a 12-bit JPEG
+
+def jpeg_11():
+
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    drv = gdal.GetDriverByName('JPEG')
+    md = drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
+        sys.stdout.write('(12bit jpeg not available) ... ')
+        return 'skip'
+
+    ds = gdal.Open('data/12bit_rose_extract.jpg')
+    out_ds = gdal.GetDriverByName('JPEG').CreateCopy('tmp/jpeg11.jpg', ds)
+    out_ds = None
+
+    ds = gdal.Open('tmp/jpeg11.jpg')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        return 'fail'
+    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    if stats[2] < 3613 or stats[2] > 3614:
+        print stats
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('JPEG').Delete('tmp/jpeg11.jpg');
+
+    return 'success'
+
 gdaltest_list = [
     jpeg_1,
     jpeg_2,
@@ -326,7 +378,9 @@ gdaltest_list = [
     jpeg_6,
     jpeg_7,
     jpeg_8,
-    jpeg_9 ]
+    jpeg_9,
+    jpeg_10,
+    jpeg_11 ]
 
 if __name__ == '__main__':
 
