@@ -68,6 +68,15 @@
     {
         return GeneralCmdLineProcessor(args, 0);
     }
+
+    public static double[] InvGeoTransform(double[] gt_in)
+    {
+      double gt_out[] = new double[6];
+      if (InvGeoTransform(gt_in, gt_out) == 1)
+        return gt_out;
+      else
+        return null;
+    }
 %}
 
 %typemap(javacode) GDAL_GCP %{
