@@ -1304,6 +1304,33 @@ def nitf_online_13():
 
     return 'success'
 
+
+###############################################################################
+# Check reading a 12-bit JPEG compressed NITF (multi-block)
+
+def nitf_online_14():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4020h.ntf', 'U_4020h.ntf'):
+        return 'skip'
+
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    jpg_drv = gdal.GetDriverByName('JPEG')
+    md = jpg_drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
+        sys.stdout.write('(12bit jpeg not available) ... ')
+        return 'skip'
+
+    ds = gdal.Open('tmp/cache/U_4020h.ntf')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        return 'fail'
+    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    if stats[2] < 2026 or stats[2] > 2027:
+        print stats
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Cleanup.
 
@@ -1424,6 +1451,7 @@ gdaltest_list = [
     nitf_online_11,
     nitf_online_12,
     nitf_online_13,
+    nitf_online_14,
     nitf_cleanup ]
 
 if __name__ == '__main__':
