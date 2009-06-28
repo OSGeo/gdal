@@ -3777,14 +3777,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
 #ifdef JPEG_SUPPORTED
 
-CPL_C_START
-#include "jpeglib.h"
-CPL_C_END
-
-void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
-void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
-
-static int 
+int 
 NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                     int nBlockXOff, int nBlockYOff,
                     int nBlockXSize, int nBlockYSize,
@@ -3819,7 +3812,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
 
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
-#ifdef JPEG_LIB_MK1
+#if defined(JPEG_LIB_MK1) || defined(JPEG_DUAL_MODE_8_12)
     if( eDT != GDT_Byte && eDT != GDT_UInt16 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -3979,153 +3972,6 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset,
     return TRUE;
 }
 
-/************************************************************************/
-/*                         NITFWriteJPEGBlock()                         */
-/************************************************************************/
-
-static int 
-NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
-                    int nBlockXOff, int nBlockYOff,
-                    int nBlockXSize, int nBlockYSize,
-                    int bProgressive, int nQuality,
-                    GDALProgressFunc pfnProgress, void * pProgressData )
-{
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-    int  anBandList[3] = {1,2,3};
-
-/* -------------------------------------------------------------------- */
-/*      Initialize JPG access to the file.                              */
-/* -------------------------------------------------------------------- */
-    struct jpeg_compress_struct sCInfo;
-    struct jpeg_error_mgr sJErr;
-    
-    sCInfo.err = jpeg_std_error( &sJErr );
-    jpeg_create_compress( &sCInfo );
-
-    jpeg_vsiio_dest( &sCInfo, fp );
-    
-    sCInfo.image_width = nBlockXSize;
-    sCInfo.image_height = nBlockYSize;
-    sCInfo.input_components = nBands;
-
-    if( nBands == 1 )
-    {
-        sCInfo.in_color_space = JCS_GRAYSCALE;
-    }
-    else
-    {
-        sCInfo.in_color_space = JCS_RGB;
-    }
-
-    jpeg_set_defaults( &sCInfo );
-    
-#ifdef JPEG_LIB_MK1
-    GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    if( eDT == GDT_UInt16 )
-    {
-        sCInfo.data_precision = 12;
-        sCInfo.bits_in_jsample = 12;
-    }
-    else
-    {
-        sCInfo.data_precision = 8;
-        sCInfo.bits_in_jsample = 8;
-    }
-#endif
-
-    sCInfo.write_JFIF_header = FALSE;
-    jpeg_set_quality( &sCInfo, nQuality, TRUE );
-
-    if( bProgressive )
-        jpeg_simple_progression( &sCInfo );
-
-    jpeg_start_compress( &sCInfo, TRUE );
-
-/* -------------------------------------------------------------------- */
-/*      Loop over image, copying image data.                            */
-/* -------------------------------------------------------------------- */
-    GByte 	*pabyScanline;
-    CPLErr      eErr = CE_None;
-
-    pabyScanline = (GByte *) CPLMalloc( nBands * nBlockXSize * 2 );
-
-    double nTotalPixels = (double)nXSize * nYSize;
-
-    int nBlockXSizeToRead = nBlockXSize;
-    if (nBlockXSize * nBlockXOff + nBlockXSize > nXSize)
-    {
-        nBlockXSizeToRead = nXSize - nBlockXSize * nBlockXOff;
-    }
-    int nBlockYSizeToRead = nBlockYSize;
-    if (nBlockYSize * nBlockYOff + nBlockYSize > nYSize)
-    {
-        nBlockYSizeToRead = nYSize - nBlockYSize * nBlockYOff;
-    }
-
-    for( int iLine = 0; iLine < nBlockYSize && eErr == CE_None; iLine++ )
-    {
-        JSAMPLE      *ppSamples;
-
-        if (iLine < nBlockYSizeToRead)
-        {
-#ifdef JPEG_LIB_MK1
-            eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1, 
-                                    pabyScanline, nBlockXSizeToRead, 1, GDT_UInt16,
-                                    nBands, anBandList, 
-                                    nBands*2, nBands * nBlockXSize * 2, 2 );
-#else
-            eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1, 
-                                    pabyScanline, nBlockXSizeToRead, 1, GDT_Byte,
-                                    nBands, anBandList, 
-                                    nBands, nBands * nBlockXSize, 1 );
-
-            /* Repeat the last pixel till the end of the line */
-            /* to minimize discontinuity */
-            if (nBlockXSizeToRead < nBlockXSize)
-            {
-                for (int iBand = 0; iBand < nBands; iBand++)
-                {
-                    GByte bVal = pabyScanline[nBands * (nBlockXSizeToRead - 1) + iBand];
-                    for(int iX = nBlockXSizeToRead; iX < nBlockXSize; iX ++)
-                    {
-                        pabyScanline[nBands * iX + iBand ] = bVal;
-                    }
-                }
-            }
-#endif
-        }
-
-        // Should we clip values over 4095 (12bit)? 
-
-        ppSamples = (JSAMPLE *) pabyScanline;
-
-        if( eErr == CE_None )
-            jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
-
-        double nCurPixels = (double)nBlockYOff * nBlockYSize * nXSize +
-                            (double)nBlockXOff * nBlockYSize * nBlockXSize + (iLine + 1) * nBlockXSizeToRead;
-        if( eErr == CE_None 
-            && !pfnProgress( nCurPixels / nTotalPixels, NULL, pProgressData ) )
-        {
-            eErr = CE_Failure;
-            CPLError( CE_Failure, CPLE_UserInterrupt, 
-                      "User terminated CreateCopy()" );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and close.                                              */
-/* -------------------------------------------------------------------- */
-    CPLFree( pabyScanline );
-
-    if( eErr == CE_None )
-        jpeg_finish_compress( &sCInfo );
-    jpeg_destroy_compress( &sCInfo );
-
-    return eErr == CE_None;
-}
 #endif /* def JPEG_SUPPORTED */
 
 /************************************************************************/
