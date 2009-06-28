@@ -21,7 +21,8 @@ endif
 
 ifeq ($(JPEG12_ENABLED),yes)
 XTRA_OPT_12 	=	-Ilibjpeg12 -DDEFAULT_MAX_MEM=500000000L
-OBJ := $(OBJ) \
+XTRA_OPT := -DJPEG_DUAL_MODE_8_12 $(XTRA_OPT)
+OBJ := $(OBJ) jpgdataset_12.o \
 	jcapimin12.o jcapistd12.o jccoefct12.o jccolor12.o jcdctmgr12.o jchuff12.o \
         jcinit12.o jcmainct12.o jcmarker12.o jcmaster12.o jcomapi12.o jcparam12.o \
         jcphuff12.o jcprepct12.o jcsample12.o jctrans12.o jdapimin12.o jdapistd12.o \

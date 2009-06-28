@@ -41,8 +41,20 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-#include "jpeglib.h"
+#ifdef LIBJPEG_12_PATH 
+#  include LIBJPEG_12_PATH
+#else
+#  include "jpeglib.h"
+#endif
 CPL_C_END
+
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
+GDALDataset* JPEGDataset12Open(GDALOpenInfo* poOpenInfo);
+GDALDataset*
+        JPEGCreateCopy12( const char * pszFilename, GDALDataset *poSrcDS, 
+                          int bStrict, char ** papszOptions, 
+                          GDALProgressFunc pfnProgress, void * pProgressData );
+#endif
 
 CPL_C_START
 void	GDALRegister_JPEG(void);
@@ -50,6 +62,16 @@ CPL_C_END
 
 void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
 void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
+
+/*  
+* Do we want to do special processing suitable for when JSAMPLE is a 
+* 16bit value?   
+*/ 
+#if defined(JPEG_LIB_MK1)
+#  define JPEG_LIB_MK1_OR_12BIT 1
+#elif BITS_IN_JSAMPLE == 12
+#  define JPEG_LIB_MK1_OR_12BIT 1
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -726,7 +748,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( poGDS->GetRasterCount() == 1 )
     {
-#ifdef JPEG_LIB_MK1
+#ifdef JPEG_LIB_MK1_OR_12BIT
         GDALCopyWords( poGDS->pabyScanline, GDT_UInt16, 2, 
                        pImage, eDataType, nWordSize, 
                        nXSize );
@@ -736,7 +758,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
     {
-#ifdef JPEG_LIB_MK1
+#ifdef JPEG_LIB_MK1_OR_12BIT
         GDALCopyWords( poGDS->pabyScanline + (nBand-1) * 2, 
                        GDT_UInt16, 6, 
                        pImage, eDataType, nWordSize, 
@@ -1544,12 +1566,18 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->LoadDefaultTables( 3 );
 
 /* -------------------------------------------------------------------- */
-/*      If a fatal error occurs after this, we will return NULL but     */
-/*      not try to cleanup.  Cleaning up after a longjmp() can be       */
-/*      pretty risky.                                                   */
+/*      If a fatal error occurs after this, we will return NULL         */
 /* -------------------------------------------------------------------- */
     if (setjmp(poDS->setjmp_buffer)) 
     {
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
+        if (poDS->sDInfo.data_precision == 12)
+        {
+            delete poDS;
+            return JPEGDataset12Open(poOpenInfo);
+        }
+#endif
+        delete poDS;
         return NULL;
     }
 
@@ -1816,6 +1844,12 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
     /* Create the message */
     (*cinfo->err->format_message) (cinfo, buffer);
 
+/* Avoid error for a 12bit JPEG if reading from the 8bit JPEG driver and */
+/* we have JPEG_DUAL_MODE_8_12 support, as we'll try again with 12bit JPEG */
+/* driver */
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
+    if (strstr(buffer, "Unsupported JPEG data precision 12") == NULL)
+#endif
     CPLError( CE_Failure, CPLE_AppDefined,
               "libjpeg: %s", buffer );
 
@@ -1946,7 +1980,7 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
 /*                           JPEGCreateCopy()                           */
 /************************************************************************/
 
-static GDALDataset *
+GDALDataset *
 JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                 int bStrict, char ** papszOptions, 
                 GDALProgressFunc pfnProgress, void * pProgressData )
@@ -1988,33 +2022,43 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
-#ifdef JPEG_LIB_MK1
-    if( eDT != GDT_Byte && eDT != GDT_UInt16 && bStrict )
+#if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
+    if( eDT != GDT_Byte && eDT != GDT_UInt16 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
                   "JPEG driver doesn't support data type %s. "
                   "Only eight and twelve bit bands supported (Mk1 libjpeg).\n",
                   GDALGetDataTypeName( 
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
-        return NULL;
+        if (bStrict)
+            return NULL;
     }
 
     if( eDT == GDT_UInt16 || eDT == GDT_Int16 )
+    {
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
+        return JPEGCreateCopy12(pszFilename, poSrcDS,
+                                bStrict, papszOptions, 
+                                pfnProgress, pProgressData );
+#else
         eDT = GDT_UInt16;
+#endif
+    }
     else
         eDT = GDT_Byte;
 
 #else
-    if( eDT != GDT_Byte && bStrict )
+    if( eDT != GDT_Byte )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
                   "JPEG driver doesn't support data type %s. "
                   "Only eight bit byte bands supported.\n", 
                   GDALGetDataTypeName( 
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
-        return NULL;
+        if (bStrict)
+            return NULL;
     }
     
     eDT = GDT_Byte; // force to 8bit. 
@@ -2077,17 +2121,21 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     jpeg_set_defaults( &sCInfo );
     
-#ifdef JPEG_LIB_MK1
     if( eDT == GDT_UInt16 )
     {
         sCInfo.data_precision = 12;
-        sCInfo.bits_in_jsample = 12;
     }
     else
     {
         sCInfo.data_precision = 8;
-        sCInfo.bits_in_jsample = 8;
     }
+
+    GDALDataType eWorkDT;
+#ifdef JPEG_LIB_MK1
+    sCInfo.bits_in_jsample = sCInfo.data_precision;
+    eWorkDT = GDT_UInt16; /* Always force to 16 bit for JPEG_LIB_MK1 */
+#else
+    eWorkDT = eDT;
 #endif
 
     jpeg_set_quality( &sCInfo, nQuality, TRUE );
@@ -2102,24 +2150,18 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     GByte 	*pabyScanline;
     CPLErr      eErr = CE_None;
+    int         nWorkDTSize = GDALGetDataTypeSize(eWorkDT) / 8;
 
-    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * 2 );
+    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * nWorkDTSize );
 
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
         JSAMPLE      *ppSamples;
 
-#ifdef JPEG_LIB_MK1
         eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                  pabyScanline, nXSize, 1, GDT_UInt16,
-                                  nBands, anBandList, 
-                                  nBands*2, nBands * nXSize * 2, 2 );
-#else
-        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                  pabyScanline, nXSize, 1, GDT_Byte,
-                                  nBands, anBandList, 
-                                  nBands, nBands * nXSize, 1 );
-#endif
+                                pabyScanline, nXSize, 1, eWorkDT,
+                                nBands, anBandList, 
+                                nBands*nWorkDTSize, nBands * nXSize * nWorkDTSize, nWorkDTSize );
 
         // Should we clip values over 4095 (12bit)? 
 
@@ -2193,6 +2235,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*                         GDALRegister_JPEG()                          */
 /************************************************************************/
 
+#if !defined(JPGDataset)
 void GDALRegister_JPEG()
 
 {
@@ -2210,7 +2253,7 @@ void GDALRegister_JPEG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jpg" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpeg" );
 
-#ifdef JPEG_LIB_MK1
+#if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte UInt16" );
 #else
@@ -2233,4 +2276,4 @@ void GDALRegister_JPEG()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
+#endif
