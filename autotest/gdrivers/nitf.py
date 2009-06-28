@@ -959,6 +959,56 @@ def nitf_40():
 
 
 ###############################################################################
+# Check reading a 12-bit JPEG compressed NITF
+
+def nitf_41():
+
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    jpg_drv = gdal.GetDriverByName('JPEG')
+    md = jpg_drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
+        sys.stdout.write('(12bit jpeg not available) ... ')
+        return 'skip'
+
+    ds = gdal.Open('data/U_4017A.NTF')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        return 'fail'
+    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    if stats[2] < 2385 or stats[2] > 2386:
+        print stats
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Check creating a 12-bit JPEG compressed NITF
+
+def nitf_42():
+
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    jpg_drv = gdal.GetDriverByName('JPEG')
+    md = jpg_drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
+        sys.stdout.write('(12bit jpeg not available) ... ')
+        return 'skip'
+
+    ds = gdal.Open('data/U_4017A.NTF')
+    out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf42.ntf', ds, options = ['IC=C3', 'FHDR=NITF02.10'])
+    out_ds = None
+
+    ds = gdal.Open('tmp/nitf42.ntf')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        return 'fail'
+    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    if stats[2] < 2385 or stats[2] > 2386:
+        print stats
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -1308,6 +1358,12 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        os.stat( 'tmp/nitf42.ntf' )
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf42.ntf' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -1353,6 +1409,8 @@ gdaltest_list = [
     nitf_38,
     nitf_39,
     nitf_40,
+    nitf_41,
+    nitf_42,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
