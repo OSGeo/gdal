@@ -50,8 +50,7 @@ CPL_CVSID("$Id$");
                      as subdatasets
    - RPFTOCSubDataset : one of these subdatasets, implemented as a VRT, of
                         the relevant NITF tiles
-   - RPFTOCGDALDatasetCache : a cache of a number of simultaneously opened datasets
-   - RPFTOCProxyRasterDataSet : a "fake" dataset that maps to a real datasets
+   - RPFTOCProxyRasterDataSet : a "proxy" dataset that maps to a NITF tile
    - RPFTOCProxyRasterBandPalette / RPFTOCProxyRasterBandRGBA : bands of RPFTOCProxyRasterDataSet
 */
 
