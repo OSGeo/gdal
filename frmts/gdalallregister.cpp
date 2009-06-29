@@ -234,6 +234,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PDS();
 #endif
 
+#ifdef FRMT_til
+    GDALRegister_TIL();
+#endif
+
 #ifdef FRMT_ers
     GDALRegister_ERS();
 #endif
