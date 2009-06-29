@@ -317,7 +317,7 @@ int main( int argc, char ** argv )
 /*      Report geolocation.                                             */
 /* -------------------------------------------------------------------- */
     papszMetadata = GDALGetMetadata( hDataset, "GEOLOCATION" );
-    if( CSLCount(papszMetadata) > 0 )
+    if( bShowMetadata && CSLCount(papszMetadata) > 0 )
     {
         printf( "Geolocation:\n" );
         for( i = 0; papszMetadata[i] != NULL; i++ )
@@ -330,7 +330,7 @@ int main( int argc, char ** argv )
 /*      Report RPCs                                                     */
 /* -------------------------------------------------------------------- */
     papszMetadata = GDALGetMetadata( hDataset, "RPC" );
-    if( CSLCount(papszMetadata) > 0 )
+    if( bShowMetadata && CSLCount(papszMetadata) > 0 )
     {
         printf( "RPC Metadata:\n" );
         for( i = 0; papszMetadata[i] != NULL; i++ )
