@@ -103,6 +103,9 @@ const char CPL_DLL *
       CPLParseNameValue(const char *pszNameValue, char **ppszKey );
 const char CPL_DLL *
       CSLFetchNameValue(char **papszStrList, const char *pszName);
+const char CPL_DLL *
+      CSLFetchNameValueDef(char **papszStrList, const char *pszName,
+                           const char *pszDefault );
 char CPL_DLL **
       CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
 char CPL_DLL **
