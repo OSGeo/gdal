@@ -430,10 +430,10 @@
 /**
  \fn OGRErr OGRSFDriver::DeleteDataSource( const char *pszDataSource );
 
- \brief Destroy a datasource.
+ \brief Delete a datasource.
 
- Destroy the named datasource.  Normally it would be safest if the
- datasource was not open at the time. 
+ Delete (from the disk, in the database, ...) the named datasource.
+ Normally it would be safest if the datasource was not open at the time. 
 
  Whether this is a supported operation on this driver case be tested
  using TestCapability() on ODrCDeleteDataSource.
@@ -447,6 +447,30 @@
 */
 
 /**
+ \fn OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver, 
+                                const char *pszDataSource )
+
+ \brief Delete a datasource.
+
+ Delete (from the disk, in the database, ...) the named datasource.
+ Normally it would be safest if the datasource was not open at the time. 
+
+ Whether this is a supported operation on this driver case be tested
+ using TestCapability() on ODrCDeleteDataSource.
+
+ This method is the same as the C++ method OGRSFDriver::DeleteDataSource().
+
+ @param hDriver handle to the driver on which data source deletion is
+based.
+
+ @param pszDataSource the name of the datasource to delete. 
+
+ @return OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this
+ is not supported by this driver. 
+
+*/
+
+/**
  \fn OGRDataSource *OGRSFDriver::CreateDataSource( const char *pszName, 
                                         char ** papszOptions );
 
@@ -455,6 +479,9 @@
  The papszOptions argument can be used to control driver specific
  creation options.  These options are normally documented in the format
  specific documentation. 
+
+ It is important to call OGRDataSource::DestroyDataSource() when the datasource is no longer
+ used to ensure that all data has been properly flushed to disk.
 
  This method is the same as the C function OGR_Dr_CreateDataSource().
 
@@ -485,6 +512,9 @@ success.
  creation options.  These options are normally documented in the format
  specific documentation. 
 
+ It is important to call OGR_DS_Destroy() when the datasource is no longer
+ used to ensure that all data has been properly flushed to disk.
+
  This function is the same as the C++ method OGRSFDriver::CreateDataSource().
 
  @param hDriver handle to the driver on which data source creation is
@@ -507,6 +537,9 @@ success.
 
    \brief This method creates a new datasource by copying all the layers from the source datasource.
 
+   It is important to call OGRDataSource::DestroyDataSource() when the datasource is no longer
+   used to ensure that all data has been properly flushed to disk.
+
    This method is the same as the C function OGR_Dr_CopyDataSource().
 
  @param poSrcDS source datasource
@@ -527,6 +560,9 @@ success.
                                       char **papszOptions )
 
    \brief This function creates a new datasource by copying all the layers from the source datasource.
+
+   It is important to call OGR_DS_Destroy() when the datasource is no longer
+   used to ensure that all data has been properly flushed to disk.
 
    This function is the same as the C++ method OGRSFDriver::CopyDataSource().
 
@@ -550,6 +586,8 @@ success.
   \fn void OGR_DS_Destroy( OGRDataSourceH hDataSource )
 
   \brief Closes opened datasource and releases allocated resources.
+
+   This method is the same as the C++ method OGRDataSource::DestroyDataSource().
 
   @param hDataSource handle to allocated datasource object.
 */
@@ -743,6 +781,24 @@ success.
 
  This method is the same as the C function OGR_DS_DeleteLayer().
 
+ @param iLayer the index of the layer to delete. 
+
+ @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+ layers is not supported for this datasource.
+
+*/
+
+/**
+ \fn OGRErr OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer);
+
+ \brief Delete the indicated layer from the datasource.
+
+ If this method is supported
+ the ODsCDeleteLayer capability will test TRUE on the OGRDataSource.
+
+ This method is the same as the C++ method OGRDataSource::DeleteLayer().
+
+ @param hDS handle to the datasource
  @param iLayer the index of the layer to delete. 
 
  @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
@@ -1092,7 +1148,7 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 \brief Drop a reference to this datasource, and if the reference count drops to zero close (destroy) the datasource.
 
 Internally this actually calls
-the OGRSFDriverRegistrary::ReleaseDataSource() method.  This method is
+the OGRSFDriverRegistrar::ReleaseDataSource() method.  This method is
 essentially a convenient alias. 
 
 This method is the same as the C function OGRReleaseDataSource().
@@ -1101,9 +1157,25 @@ This method is the same as the C function OGRReleaseDataSource().
 */
 
 /**
- \fn void OGRDataSource::DestroyDataSource(OGRDataSource*);
+  \fn OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 
- \brief Destroy a datasource.
+\brief Drop a reference to this datasource, and if the reference count drops to zero close (destroy) the datasource.
+
+Internally this actually calls
+the OGRSFDriverRegistrar::ReleaseDataSource() method.  This method is
+essentially a convenient alias. 
+
+This method is the same as the C++ method OGRDataSource::Release()
+
+@param hDS handle to the data source to release
+
+@return OGRERR_NONE on success or an error code. 
+*/
+
+/**
+ \fn void OGRDataSource::DestroyDataSource(OGRDataSource* poDS);
+
+ \brief Closes opened datasource and releases allocated resources.
 
  This static method will close and destroy a datasource.  It is
  equivelent to calling delete on the object, but it ensures that the
@@ -1112,6 +1184,7 @@ This method is the same as the C function OGRReleaseDataSource().
 
  This method is the same as the C function OGR_DS_Destroy().
 
+  @param poDS pointer to allocated datasource object.
 */
 
 /**
@@ -1132,7 +1205,39 @@ on each of the layers.  Conceptionally, calling SyncToDisk() on a datasource
 should include any work that might be accomplished by calling SyncToDisk()
 on layers in that data source.
 
+In any event, you should always close any opened datasource with
+OGRDataSource::DestroyDataSource() that will ensure all data is correctly flushed.
+
 This method is the same as the C function OGR_DS_SyncToDisk().
+
+@return OGRERR_NONE if no error occurs (even if nothing is done) or an
+error code.
+*/
+
+/**
+ \fn OGRErr OGR_DS_SyncToDisk(OGRDataSourceH hDS);
+
+\brief Flush pending changes to disk.
+
+This call is intended to force the datasource to flush any pending writes to
+disk, and leave the disk file in a consistent state.  It would not normally
+have any effect on read-only datasources. 
+
+Some data sources do not implement this method, and will still return 
+OGRERR_NONE.  An error is only returned if an error occurs while attempting
+to flush to disk.  
+
+The default implementation of this method just calls the SyncToDisk() method
+on each of the layers.  Conceptionally, calling SyncToDisk() on a datasource
+should include any work that might be accomplished by calling SyncToDisk()
+on layers in that data source.
+
+In any event, you should always close any opened datasource with
+OGR_DS_Destroy() that will ensure all data is correctly flushed.
+
+This method is the same as the C++ method OGRDataSource::SyncToDisk()
+
+@param hDS handle to the data source
 
 @return OGRERR_NONE if no error occurs (even if nothing is done) or an
 error code.
@@ -1145,6 +1250,18 @@ error code.
 
 This method is the same as the C function OGR_DS_GetDriver().
 
+@return NULL if driver info is not available, or pointer to a driver owned
+by the OGRSFDriverManager.
+*/
+
+/**
+ \fn OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH hDS );
+
+\brief Returns the driver that the dataset was opened with. 
+
+This method is the same as the C++ method OGRDataSource::GetDriver() 
+
+@param hDS handle to the datasource
 @return NULL if driver info is not available, or pointer to a driver owned
 by the OGRSFDriverManager.
 */
@@ -1440,7 +1557,7 @@ by the OGRSFDriverManager.
  \brief Set a new rectangular spatial filter. 
 
  This method set rectangle to be used as a spatial filter when 
- fetching features via the GetNextFeature() method.  Only features that
+ fetching features via the OGR_L_GetNextFeature() method.  Only features that
  geometrically intersect the given rectangle will be returned.  
 
  The x/y values should be in the same coordinate system as the layer as
@@ -1626,7 +1743,7 @@ by the OGRSFDriverManager.
  value cannot be OGRNullFID.  Success or failure of this operation is
  unaffected by the spatial or attribute filters.
 
- If this method returns a non-NULL feature, it is guaranteed that it's 
+ If this method returns a non-NULL feature, it is guaranteed that its  
  feature id (OGRFeature::GetFID()) will be the same as nFID.
 
  Use OGRLayer::TestCapability(OLCRandomRead) to establish if this layer
@@ -1657,7 +1774,7 @@ by the OGRSFDriverManager.
  value cannot be OGRNullFID.  Success or failure of this operation is
  unaffected by the spatial or attribute filters.
 
- If this function returns a non-NULL feature, it is guaranteed that it's 
+ If this function returns a non-NULL feature, it is guaranteed that its  
  feature id (OGR_F_GetFID()) will be the same as nFID.
 
  Use OGR_L_TestCapability(OLCRandomRead) to establish if this layer
@@ -1839,16 +1956,19 @@ for other layer instances that are effectively read-only.<p>
 implements spatial filtering efficiently.  Layers that effectively read all
 features, and test them with the OGRFeature intersection methods should
 return FALSE.  This can be used as a clue by the application whether it 
-should build and maintain it's own spatial index for features in this layer.<p>
+should build and maintain its own spatial index for features in this layer.<p>
 
  <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount": 
 TRUE if this layer can return a feature
-count (via OGRLayer::GetFeatureCount()) efficiently ... ie. without counting
+count (via GetFeatureCount()) efficiently ... ie. without counting
 the features.  In some cases this will return TRUE until a spatial filter is
 installed after which it will return FALSE.<p>
 
  <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
-TRUE if this layer can return its data extent (via OGRLayer::GetExtent()) efficiently ... ie. without scanning all the features.  In some cases this will return TRUE until a spatial filter is installed after which it will return FALSE.<p>
+TRUE if this layer can return its data extent (via GetExtent())
+efficiently ... ie. without scanning all the features.  In some cases this
+will return TRUE until a spatial filter is installed after which it will
+return FALSE.<p>
 
  <li> <b>OLCFastSetNextByIndex</b> / "FastSetNextByIndex": 
 TRUE if this layer can perform the SetNextByIndex() call efficiently, otherwise
@@ -1864,7 +1984,9 @@ method is supported on this layer, otherwise FALSE.<p>
 fields are assured to be in UTF-8 format.  If FALSE the encoding of fields 
 is uncertain, though it might still be UTF-8.<p>
 
-<li> <b>OLCTransactions</b> / "Transactions": TRUE if the StartTransaction(), CommitTransaction() and RollbackTransaction() methods work in a meaningful way, otherwise FALSE.<p>
+<li> <b>OLCTransactions</b> / "Transactions": TRUE if the StartTransaction(),
+CommitTransaction() and RollbackTransaction() methods work in a meaningful way,
+otherwise FALSE.<p>
 
 <p>
 
@@ -1891,18 +2013,20 @@ OGRLayers will return FALSE for any unrecognised capabilities.<p>
  types may implement class specific capabilities, but this can't generally
  be discovered by the caller. <p>
 
- <ul>
+<ul>
 
- <li> <b>OLCRandomRead</b> / "RandomRead": TRUE if the OGR_L_GetFeature() 
-function works for this layer.<p>
+ <li> <b>OLCRandomRead</b> / "RandomRead": TRUE if the GetFeature() method 
+is implemented in an optimized way for this layer, as opposed to the default
+implementation using ResetReading() and GetNextFeature() to find the requested
+feature id.<p>
 
  <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the 
-OGR_L_CreateFeature() function works for this layer.  Note this means that 
-this particular layer is writable.  The same OGRLayer class  may returned 
-FALSE for other layer instances that are effectively read-only.<p>
+CreateFeature() method works for this layer.  Note this means that this 
+particular layer is writable.  The same OGRLayer class  may returned FALSE 
+for other layer instances that are effectively read-only.<p>
 
- <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the OGR_L_SetFeature()
-function is operational on this layer.   Note this means that this 
+ <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
+is operational on this layer.   Note this means that this 
 particular layer is writable.  The same OGRLayer class  may returned FALSE 
 for other layer instances that are effectively read-only.<p>
 
@@ -1910,7 +2034,7 @@ for other layer instances that are effectively read-only.<p>
 implements spatial filtering efficiently.  Layers that effectively read all
 features, and test them with the OGRFeature intersection methods should
 return FALSE.  This can be used as a clue by the application whether it 
-should build and maintain it's own spatial index for features in this 
+should build and maintain its own spatial index for features in this 
 layer.<p>
 
  <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount": 
@@ -1920,10 +2044,30 @@ the features.  In some cases this will return TRUE until a spatial filter is
 installed after which it will return FALSE.<p>
 
  <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
-TRUE if this layer can return its data extent (via OGR_L_GetExtent()) 
-efficiently ... ie. without scanning all the features.  In some cases this 
-will return TRUE until a spatial filter is installed after which it will 
+TRUE if this layer can return its data extent (via OGR_L_GetExtent())
+efficiently ... ie. without scanning all the features.  In some cases this
+will return TRUE until a spatial filter is installed after which it will
 return FALSE.<p>
+
+ <li> <b>OLCFastSetNextByIndex</b> / "FastSetNextByIndex": 
+TRUE if this layer can perform the SetNextByIndex() call efficiently, otherwise
+FALSE.<p>
+
+ <li> <b>OLCCreateField</b> / "CreateField": TRUE if this layer can create 
+new fields on the current layer using CreateField(), otherwise FALSE.<p>
+
+ <li> <b>OLCDeleteFeature</b> / "DeleteFeature": TRUE if the DeleteFeature()
+method is supported on this layer, otherwise FALSE.<p>
+
+ <li> <b>OLCStringsAsUTF8</b> / "StringsAsUTF8": TRUE if values of OFTString
+fields are assured to be in UTF-8 format.  If FALSE the encoding of fields 
+is uncertain, though it might still be UTF-8.<p>
+
+<li> <b>OLCTransactions</b> / "Transactions": TRUE if the StartTransaction(),
+CommitTransaction() and RollbackTransaction() methods work in a meaningful way,
+otherwise FALSE.<p>
+
+<p>
 
 </ul>
  
@@ -1971,7 +2115,34 @@ Some layers do not implement this method, and will still return
 OGRERR_NONE.  The default implementation just returns OGRERR_NONE.  An error
 is only returned if an error occurs while attempting to flush to disk.  
 
+In any event, you should always close any opened datasource with
+OGRDataSource::DestroyDataSource() that will ensure all data is correctly flushed.
+
 This method is the same as the C function OGR_L_SyncToDisk().
+
+@return OGRERR_NONE if no error occurs (even if nothing is done) or an
+error code.
+*/
+
+/**
+ \fn OGRErr OGR_L_SyncToDisk(OGRLayerH hLayer);
+
+\brief Flush pending changes to disk.
+
+This call is intended to force the layer to flush any pending writes to
+disk, and leave the disk file in a consistent state.  It would not normally
+have any effect on read-only datasources. 
+
+Some layers do not implement this method, and will still return 
+OGRERR_NONE.  The default implementation just returns OGRERR_NONE.  An error
+is only returned if an error occurs while attempting to flush to disk.  
+
+In any event, you should always close any opened datasource with
+OGR_DS_Destroy() that will ensure all data is correctly flushed.
+
+This method is the same as the C++ method OGRLayer::SyncToDisk()
+
+@param hLayer handle to the layer
 
 @return OGRERR_NONE if no error occurs (even if nothing is done) or an
 error code.
@@ -1997,6 +2168,35 @@ error code.
 
  This method is the same as the C function OGR_L_SetNextByIndex().
 
+ @param nIndex the index indicating how many steps into the result set
+ to seek. 
+
+ @return OGRERR_NONE on success or an error code.
+
+*/
+
+
+/**
+ \fn OGRErr OGR_L_SetNextByIndex( OGRLayerH hLayer, long nIndex );
+
+ \brief Move read cursor to the nIndex'th feature in the current resultset. 
+
+ This method allows positioning of a layer such that the GetNextFeature()
+ call will read the requested feature, where nIndex is an absolute index
+ into the current result set.   So, setting it to 3 would mean the next
+ feature read with GetNextFeature() would have been the 4th feature to have
+ been read if sequential reading took place from the beginning of the layer,
+ including accounting for spatial and attribute filters. 
+
+ Only in rare circumstances is SetNextByIndex() efficiently implemented.  
+ In all other cases the default implementation which calls ResetReading()
+ and then calls GetNextFeature() nIndex times is used.  To determine if 
+ fast seeking is available on the current layer use the TestCapability()
+ method with a value of OLCFastSetNextByIndex.  
+
+ This method is the same as the C++ method OGRLayer::SetNextByIndex()
+
+ @param hLayer handle to the layer
  @param nIndex the index indicating how many steps into the result set
  to seek. 
 
@@ -2181,14 +2381,37 @@ form depending on the limitations of the format driver.
  */
 
 /**
- \fn const char *OGRLayer::GetGeometryColumn();
+ \fn const char* OGR_L_GetFIDColumn(OGRLayerH hLayer);
 
- \brief This method returns the name of the underlying database column being used as the geometry column, or "" if not supported.
+ \brief This method returns the name of the underlying database column being used as the FID column, or "" if not supported.
 
- This method is the same as the C function OGR_L_GetFIDColumn().
+ This method is the same as the C++ method OGRLayer::GetFIDColumn()
 
+ @param hLayer handle to the layer
  @return fid column name.
  
  */
 
+/**
+ \fn const char *OGRLayer::GetGeometryColumn();
+
+ \brief This method returns the name of the underlying database column being used as the geometry column, or "" if not supported.
+
+ This method is the same as the C function OGR_L_GetGeometryColumn().
+
+ @return geometry column name.
+ 
+ */
+
+/**
+ \fn const char* OGR_L_GetGeometryColumn(OGRLayerH hLayer);
+
+ \brief This method returns the name of the underlying database column being used as the geometry column, or "" if not supported.
+
+ This method is the same as the C++ method OGRLayer::GetGeometryColumn()
+
+ @param hLayer handle to the layer
+ @return geometry column name.
+ 
+ */
 
