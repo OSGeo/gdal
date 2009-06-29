@@ -45,7 +45,7 @@ bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1
 
 class ProjTest:
     def __init__( self, src_srs, src_xyz, src_error,
-                  dst_srs, dst_xyz, dst_error, options ):
+                  dst_srs, dst_xyz, dst_error, options, min_proj_version ):
         self.src_srs = src_srs
         self.src_xyz = src_xyz
         self.src_error = src_error
@@ -53,6 +53,7 @@ class ProjTest:
         self.dst_xyz = dst_xyz
         self.dst_error = dst_error
         self.options = options
+        self.min_proj_version = min_proj_version
 
     def testProj(self):
         src = osr.SpatialReference()
@@ -65,6 +66,11 @@ class ProjTest:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.dst_srs)
             return 'fail'
 
+        if self.min_proj_version is not None:
+            additionnal_error_str = ' Check that proj version is >= %s ' % self.min_proj_version
+        else:
+            additionnal_error_str = ''
+
         try:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             ct = osr.CoordinateTransformation( src, dst )
@@ -74,10 +80,10 @@ class ProjTest:
                 gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
                 return 'skip'
             else:
-                gdaltest.post_reason( 'failed to create coordinate transformation')
+                gdaltest.post_reason( 'failed to create coordinate transformation.%s')
                 return 'fail'
         except:
-            gdaltest.post_reason( 'failed to create coordinate transformation')
+            gdaltest.post_reason( 'failed to create coordinate transformation.%s')
             return 'fail'
 
         ######################################################################
@@ -90,7 +96,7 @@ class ProjTest:
                 + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
-            gdaltest.post_reason( 'Dest error is %g.' % error )
+            gdaltest.post_reason( 'Dest error is %g.%s' % (error, additionnal_error_str) )
             return 'fail'
 
         ######################################################################
@@ -105,7 +111,7 @@ class ProjTest:
                 + abs(result[2] - self.src_xyz[2])
 
         if error > self.src_error:
-            gdaltest.post_reason( 'Back to source error is %g.' % error )
+            gdaltest.post_reason( 'Back to source error is %g.%s' % (error, additionnal_error_str) )
             return 'fail'
 
         return 'success'
@@ -125,43 +131,44 @@ class ProjTest:
 # - unit_name: the display name for this unit test.
 # - options: eventually we will allow a list of special options here (like one
 #   way transformation).  For now just put None. 
+# - min_proj_version: string with minimum proj version required or null if unknown
 
 transform_list = [ \
 
     # Simple straight forward reprojection.
     ('+proj=utm +zone=11 +datum=WGS84', (398285.45, 2654587.59, 0.0), 0.02, 
      'WGS84', (-118.0, 24.0, 0.0), 0.00001,
-     'UTM_WGS84', None ),
+     'UTM_WGS84', None, None ),
 
     # Ensure that prime meridian changes are applied.
     ('EPSG:27391', (20000, 40000, 0.0), 0.02, 
      'EPSG:4273', (6.397933,58.358709,0.000000), 0.00001,
-     'NGO_Oslo_zone1_NGO', None ),
+     'NGO_Oslo_zone1_NGO', None, None ),
 
     # Verify that 26592 "pcs.override" is working well. 
     ('EPSG:26591', (1550000, 10000, 0.0), 0.02, 
      'EPSG:4265', (9.449316,0.090469,0.00), 0.00001,
-     'MMRome1_MMGreenwich', None ),
+     'MMRome1_MMGreenwich', None, None ),
 
     # Test Bonne projection.
     ('WGS84', (1.0, 65.0, 0.0), 0.00001,
      bonne, (47173.75, 557621.30, 0.0), 0.02,
-     'Bonne_WGS84', None),
+     'Bonne_WGS84', None, None),
 
     # Test Two Point Equidistant
     ('+proj=tpeqd +a=3396000  +b=3396000  +lat_1=36.3201218 +lon_1=-179.1566925 +lat_2=45.8120651 +lon_2=179.3727570 +no_defs', (4983568.76, 2092902.61, 0.0), 0.1,
      '+proj=latlong +a=3396000 +b=3396000', (-140.0, 40.0, 0.0), 0.000001,
-     'TPED_Mars', None),
+     'TPED_Mars', None, None),
 
     # test scale factor precision (per #1970)
     ('data/wkt_rt90.def', (1572570.342,6728429.67,0.0), 0.001,
      ' +proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',(616531.1155,6727527.5682,0.0), 0.001,
-     'ScalePrecision(#1970)', None),
+     'ScalePrecision(#1970)', None, None),
 
     # Test Equirectangular with all parameters
     ('+proj=eqc +ellps=sphere  +lat_0=-2 +lat_ts=1 +lon_0=-10', (-14453132.04, 4670184.72,0.0), 0.1,
      '+proj=latlong +ellps=sphere', (-140.0, 40.0, 0.0), 0.000001,
-     'Equirectangular(#2706)', None)
+     'Equirectangular(#2706)', None, "4.6.1")
 
     ]
     
@@ -173,7 +180,7 @@ gdaltest_list = []
 for item in transform_list:
     ut = ProjTest( item[0], item[1], item[2], 
                    item[3], item[4], item[5], 
-                   item[7] )
+                   item[7], item[8] )
     gdaltest_list.append( (ut.testProj, item[6]) )
 
 if __name__ == '__main__':
