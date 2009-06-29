@@ -137,6 +137,7 @@ void CPL_DLL GDALRegister_PGCHIP(void);
 void CPL_DLL GDALRegister_TMS(void);
 void CPL_DLL GDALRegister_EIR(void);
 void CPL_DLL GDALRegister_GEOR(void);
+void CPL_DLL GDALRegister_TIL(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

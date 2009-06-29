@@ -1037,6 +1037,22 @@ int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
         return CSLTestBoolean( pszValue );
 }
 
+/************************************************************************/
+/*                     CSLFetchNameValueDefaulted()                     */
+/************************************************************************/
+
+const char *CSLFetchNameValueDef( char **papszStrList, 
+                                  const char *pszName,
+                                  const char *pszDefault )
+
+{
+    const char *pszResult = CSLFetchNameValue( papszStrList, pszName );
+    if( pszResult )
+        return pszResult;
+    else
+        return pszDefault;
+}
+
 /**********************************************************************
  *                       CSLFetchNameValue()
  *
