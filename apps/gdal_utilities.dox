@@ -272,7 +272,7 @@ gdal_translate [--help-general]
        [-scale [src_min src_max [dst_min dst_max]]]
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
-       [-gcp pixel line easting northing]*
+       [-gcp pixel line easting northing [elevation]]*
        [-mo "META-TAG=VALUE"]* [-quiet] [-sds]
        [-co "NAME=VALUE"]*
        src_dataset dst_dataset
@@ -326,7 +326,7 @@ value to set on the output dataset if possible.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed.  See format 
 specific documentation for legal creation options for each format.</dd>
-<dt> <b>-gcp</b> <i>pixel line easting northing</i>:</dt><dd>
+<dt> <b>-gcp</b> <i>pixel line easting northing elevation</i>:</dt><dd>
 Add the indicated ground control point to the output dataset.  This option 
 may be provided multiple times to provide a set of GCPs. 
 </dd>
