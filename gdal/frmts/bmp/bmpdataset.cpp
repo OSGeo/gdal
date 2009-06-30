@@ -912,10 +912,11 @@ BMPDataset::~BMPDataset()
 
 CPLErr BMPDataset::GetGeoTransform( double * padfTransform )
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
-
     if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0])*6 );
         return CE_None;
+    }
 
     if( GDALPamDataset::GetGeoTransform( padfTransform ) == CE_None)
         return CE_None;
@@ -940,10 +941,10 @@ CPLErr BMPDataset::SetGeoTransform( double * padfTransform )
 {
     CPLErr              eErr = CE_None;
 
-    memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
-
     if ( pszFilename && bGeoTransformValid )
     {
+        memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
+
         if ( GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform )
              == FALSE )
         {
@@ -951,8 +952,8 @@ CPLErr BMPDataset::SetGeoTransform( double * padfTransform )
             eErr = CE_Failure;
         }
     }
-
-    return eErr;
+    else
+        return GDALPamDataset::SetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
