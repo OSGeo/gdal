@@ -1169,6 +1169,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      Remap parameters used for Albers and Mercator.                  */
 /* -------------------------------------------------------------------- */
     pszProjection = GetAttrValue("PROJECTION");
+    poProjCS = GetAttrNode( "PROJCS" );
     
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
         GetRoot()->applyRemapper( 
@@ -1200,10 +1201,11 @@ OGRErr OGRSpatialReference::morphToESRI()
             (char **)apszPolarStereographicMapping + 0, 2 );
 
     if( pszProjection != NULL && EQUAL(pszProjection,"Plate_Carree") )
-        GetRoot()->applyRemapper( 
-            "PARAMETER", 
-            (char **)apszPolarStereographicMapping + 1, 
-            (char **)apszPolarStereographicMapping + 0, 2 );
+        if(FindProjParm( SRS_PP_STANDARD_PARALLEL_1, poProjCS ) < 0)
+            GetRoot()->applyRemapper( 
+                "PARAMETER", 
+                (char **)apszPolarStereographicMapping + 1, 
+                (char **)apszPolarStereographicMapping + 0, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      ESRI's Equidistant_Cylindrical does not support the             */
