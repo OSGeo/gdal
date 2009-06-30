@@ -126,9 +126,18 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
           case FIELD_TYPE_FLOAT:
           case FIELD_TYPE_DOUBLE:
+         /* MYSQL_FIELD is always reporting ->length = 22 and ->decimals = 31
+            for double type regardless of the data it returned. In an example,
+            the data it returned had only 5 or 6 decimal places which were
+            exactly as entered into the database but reported the decimals
+            as 31. */
+         /* Giving a precision of 31 to the OFTReal type may be overkill, but
+            it can always be rounded off later. */
             width = (int)psMSField->length;
-            oField.SetWidth(width);
+            precision = (int)psMSField->decimals;
             oField.SetType( OFTReal );
+            oField.SetWidth(width);
+            oField.SetPrecision(precision);
             poDefn->AddFieldDefn( &oField );
             break;
 
