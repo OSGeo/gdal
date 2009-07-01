@@ -57,6 +57,10 @@ def test_gdaltindex_1():
         os.remove('tmp/tileindex.shx')
     except:
         pass
+    try:
+        os.remove('tmp/tileindex.prj')
+    except:
+        pass
 
     drv = gdal.GetDriverByName('GTiff')
     wkt = 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]'
@@ -86,6 +90,9 @@ def test_gdaltindex_1():
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
+        return 'fail'
+    tileindex_wkt = ds.GetLayer(0).GetSpatialRef().ExportToWkt()
+    if tileindex_wkt.find('GCS_WGS_1984') == -1:
         return 'fail'
 
     expected_wkts =['POLYGON ((49 2,50 2,50 1,49 1,49 2))',
