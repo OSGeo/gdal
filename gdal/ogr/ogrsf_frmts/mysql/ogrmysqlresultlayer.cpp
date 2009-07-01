@@ -131,13 +131,15 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             the data it returned had only 5 or 6 decimal places which were
             exactly as entered into the database but reported the decimals
             as 31. */
-         /* Giving a precision of 31 to the OFTReal type may be overkill, but
-            it can always be rounded off later. */
+         /* Assuming that a length of 22 means no particular width and 31
+            decimals means no particular precision. */
             width = (int)psMSField->length;
             precision = (int)psMSField->decimals;
             oField.SetType( OFTReal );
-            oField.SetWidth(width);
-            oField.SetPrecision(precision);
+            if( width != 22 )
+                oField.SetWidth(width);
+            if( precision != 31 )
+                oField.SetPrecision(precision);
             poDefn->AddFieldDefn( &oField );
             break;
 
