@@ -58,6 +58,17 @@ in a shapefile and its value ranges from 1 to 12.</p>
 <pre>DROP SPATIAL INDEX ON tablename</pre>
 </p>
 
+
+<p>
+  Otherwise, the <a href="http://mapserver.org">MapServer</a> shptree utility can be used:
+<pre>shptree <shpfile> [<depth>] [<index_format>]</pre>
+</p>
+
+<p>
+More information is available about this utility at the
+<a href="http://mapserver.org/utilities/shptree.html">MapServer shptree page</a>
+</p>
+
 <p>Currently the OGR Shapefile driver only supports attribute indexes for 
 looking up specific values in a unique key column.  To create an attribute
 index for a column issue an SQL command of the form "CREATE INDEX ON tablename
