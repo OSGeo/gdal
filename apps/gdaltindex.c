@@ -27,7 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts/shape/shapefil.h"
+#include "ogr_api.h"
+#include "ogr_srs_api.h"
 #include "gdal.h"
 #include "cpl_port.h"
 #include "cpl_conv.h"
@@ -70,8 +71,9 @@ int main(int argc, char *argv[])
     const char *index_filename = NULL;
     const char *tile_index = "location";
     int		i_arg, ti_field;
-    SHPHandle   hSHP;
-    DBFHandle	hDBF;
+    OGRDataSourceH hTileIndexDS;
+    OGRLayerH hLayer;
+    OGRFeatureDefnH hFDefn;
     int write_absolute_path = FALSE;
     char* current_path = NULL;
     int i;
@@ -94,6 +96,7 @@ int main(int argc, char *argv[])
     }
 
     GDALAllRegister();
+    OGRRegisterAll();
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
@@ -132,7 +135,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if( index_filename == NULL )
+    if( index_filename == NULL || i_arg == argc )
         Usage();
 
 /* -------------------------------------------------------------------- */
@@ -150,47 +153,74 @@ int main(int argc, char *argv[])
     CPLFree(index_filename_mod);
 
     if (bExists)
-        hSHP = SHPOpen( index_filename, "r+" );
-    else
-        hSHP = NULL;
-
-    if( hSHP == NULL )
     {
+        hTileIndexDS = OGROpen( index_filename, TRUE, NULL );
+        if (hTileIndexDS != NULL)
+        {
+            hLayer = OGR_DS_GetLayer(hTileIndexDS, 0);
+        }
+    }
+    else
+    {
+        GDALDriverH hDriver;
+        const char* pszDriverName = "ESRI Shapefile";
+
         printf( "Creating new index file...\n" );
-        hSHP = SHPCreate( index_filename, SHPT_POLYGON );
+        hDriver = OGRGetDriverByName( pszDriverName );
+        if( hDriver == NULL )
+        {
+            printf( "%s driver not available.\n", pszDriverName );
+            exit( 1 );
+        }
+
+        hTileIndexDS = OGR_Dr_CreateDataSource( hDriver, index_filename, NULL );
+        if (hTileIndexDS)
+        {
+            char* pszLayerName = CPLStrdup(CPLGetBasename(index_filename));
+            OGRSpatialReferenceH hSpatialRef = NULL;
+            GDALDatasetH hDS = GDALOpen( argv[i_arg], GA_ReadOnly );
+            if (hDS)
+            {
+                const char* pszWKT = GDALGetProjectionRef(hDS);
+                if (pszWKT != NULL && pszWKT[0] != '\0')
+                {
+                    hSpatialRef = OSRNewSpatialReference(pszWKT);
+                }
+                GDALClose(hDS);
+            }
+
+            hLayer = OGR_DS_CreateLayer( hTileIndexDS, pszLayerName, hSpatialRef, wkbPolygon, NULL );
+            CPLFree(pszLayerName);
+            if (hSpatialRef)
+                OSRRelease(hSpatialRef);
+
+            if (hLayer)
+            {
+                OGRFieldDefnH hFieldDefn = OGR_Fld_Create( tile_index, OFTString );
+                OGR_Fld_SetWidth( hFieldDefn, 255);
+                OGR_L_CreateField( hLayer, hFieldDefn, TRUE );
+                OGR_Fld_Destroy(hFieldDefn);
+            }
+        }
     }
 
-    if( hSHP == NULL )
+    if( hTileIndexDS == NULL || hLayer == NULL )
     {
         fprintf( stderr, "Unable to open/create shapefile `%s'.\n", 
                  index_filename );
         exit(2);
     }
 
-    hDBF = DBFOpen( index_filename, "r+" );
-    if( hDBF == NULL )
-    {
-        hDBF = DBFCreate( index_filename );
-        if( hDBF == NULL )
-        {
-            fprintf( stderr, "Unable to open/create DBF file `%s'.\n", 
-                     index_filename );
-            exit(2);
-        }
-            
-        DBFAddField( hDBF, tile_index, FTString, 255, 0 );
-    }
+    hFDefn = OGR_L_GetLayerDefn(hLayer);
 
-    for( ti_field = 0; ti_field < DBFGetFieldCount(hDBF); ti_field++ )
+    for( ti_field = 0; ti_field < OGR_FD_GetFieldCount(hFDefn); ti_field++ )
     {
-        char	field_name[16];
-
-        DBFGetFieldInfo( hDBF, ti_field, field_name, NULL, NULL );
-        if( strcmp(field_name, tile_index) == 0 )
+        OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn, ti_field );
+        if( strcmp(OGR_Fld_GetNameRef(hFieldDefn), tile_index) == 0 )
             break;
     }
 
-    if( ti_field == DBFGetFieldCount(hDBF) )
+    if( ti_field == OGR_FD_GetFieldCount(hFDefn) )
     {
         fprintf( stderr, "Unable to find field `%s' in DBF file `%s'.\n", 
                  tile_index, index_filename );
@@ -198,13 +228,15 @@ int main(int argc, char *argv[])
     }
 
     /* Load in memory existing file names in SHP */
-    nExistingFiles = DBFGetRecordCount(hDBF);
+    nExistingFiles = OGR_L_GetFeatureCount(hLayer, FALSE);
     if (nExistingFiles)
     {
+        OGRFeatureH hFeature;
         existingFilesTab = (char**)CPLMalloc(nExistingFiles * sizeof(char*));
         for(i=0;i<nExistingFiles;i++)
         {
-            existingFilesTab[i] = CPLStrdup(DBFReadStringAttribute( hDBF, i, ti_field ));
+            hFeature = OGR_L_GetNextFeature(hLayer);
+            existingFilesTab[i] = CPLStrdup(OGR_F_GetFieldAsString( hFeature, ti_field ));
             if (i == 0)
             {
                 GDALDatasetH hDS = GDALOpen(existingFilesTab[i], GA_ReadOnly );
@@ -215,6 +247,7 @@ int main(int argc, char *argv[])
                     GDALClose(hDS);
                 }
             }
+            OGR_F_Destroy( hFeature );
         }
     }
 
@@ -237,11 +270,13 @@ int main(int argc, char *argv[])
         GDALDatasetH	hDS;
         double	        adfGeoTransform[6];
         double		adfX[5], adfY[5];
-        int		nXSize, nYSize, iShape;
-        SHPObject	*psOutline;
+        int		nXSize, nYSize;
         char* fileNameToWrite;
         const char* projectionRef;
         VSIStatBuf sStatBuf;
+        int k;
+        OGRFeatureH hFeature;
+        OGRGeometryH hPoly, hRing;
 
         /* Make sure it is a file before building absolute path name */
         if (write_absolute_path && CPLIsFilenameRelative( argv[i_arg] ) &&
@@ -361,11 +396,24 @@ int main(int argc, char *argv[])
             + 0 * adfGeoTransform[4] 
             + 0 * adfGeoTransform[5];
 
-        psOutline = SHPCreateSimpleObject( SHPT_POLYGON, 5, adfX, adfY, NULL );
-        iShape = SHPWriteObject(hSHP, -1, psOutline );
-        SHPDestroyObject( psOutline );
+        hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
+        OGR_F_SetFieldString( hFeature, ti_field, fileNameToWrite );
 
-        DBFWriteStringAttribute( hDBF, iShape, ti_field, fileNameToWrite );
+        hPoly = OGR_G_CreateGeometry(wkbPolygon);
+        hRing = OGR_G_CreateGeometry(wkbLinearRing);
+        for(k=0;k<5;k++)
+            OGR_G_SetPoint_2D(hRing, k, adfX[k], adfY[k]);
+        OGR_G_AddGeometryDirectly( hPoly, hRing );
+        OGR_F_SetGeometryDirectly( hFeature, hPoly );
+
+        if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
+        {
+           printf( "Failed to create feature in shapefile.\n" );
+           break;
+        }
+
+        OGR_F_Destroy( hFeature );
+
         
         CPLFree(fileNameToWrite);
 
@@ -384,8 +432,7 @@ int main(int argc, char *argv[])
     }
     CPLFree(alreadyExistingProjectionRef);
 
-    DBFClose( hDBF );
-    SHPClose( hSHP );
+    OGR_DS_Destroy( hTileIndexDS );
     
     GDALDestroyDriverManager();
     
