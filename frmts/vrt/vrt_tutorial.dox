@@ -444,7 +444,7 @@ instead of using the simple source.
   // construct XML for simple 3x3 average filter kernel source.
   const char *pszFilterSourceXML  =
 "<KernelFilteredSource>"
-"  <SourceFilename>utm.tif</SourceFilename>1<SourceBand>1</SourceBand>"
+"  <SourceFilename>utm.tif</SourceFilename><SourceBand>1</SourceBand>"
 "  <Kernel>"
 "    <Size>3</Size>"
 "    <Coefs>0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111</Coefs>"
@@ -482,7 +482,7 @@ changing is the data source for each band.
 
       sprintf( szFilterSourceXML, 
 	"<KernelFilteredSource>"
-	"  <SourceFilename>%s</SourceFilename>1<SourceBand>%d</SourceBand>"
+	"  <SourceFilename>%s</SourceFilename><SourceBand>%d</SourceBand>"
 	"  <Kernel>"
 	"    <Size>3</Size>"
 	"    <Coefs>0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111</Coefs>"
