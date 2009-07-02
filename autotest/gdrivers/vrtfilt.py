@@ -59,6 +59,93 @@ def vrtfilt_2():
     return tst.testOpen()
 
 ###############################################################################
+# Try SetMetadataItem('source_0', xml, 'vrt_sources') (fix for #3052). Same result expected as for vrtfilt_1
+
+def vrtfilt_3():
+
+    ds = gdal.Open('data/rgbsmall.tif')
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
+    ds = None
+
+    filterSourceXML = """    <KernelFilteredSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <Kernel>
+        <Size>3</Size>
+        <Coefs>0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>"""
+
+    try:
+        vrt_ds.GetRasterBand(1).SetMetadataItem
+    except:
+        return 'skip'
+
+    vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'vrt_sources')
+    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Variant for SetMetadataItem('source_0', xml, 'vrt_sources')
+
+def vrtfilt_4():
+
+    vrt_ds = gdal.GetDriverByName('VRT').Create('', 50, 50, 1);
+
+    filterSourceXML = """    <KernelFilteredSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <Kernel>
+        <Size>3</Size>
+        <Coefs>0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>"""
+
+    try:
+        vrt_ds.GetRasterBand(1).SetMetadataItem
+    except:
+        return 'skip'
+
+    vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'new_vrt_sources')
+    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Variant for SetMetadata(md, 'vrt_sources')
+
+def vrtfilt_5():
+
+    vrt_ds = gdal.GetDriverByName('VRT').Create('', 50, 50, 1);
+
+    filterSourceXML = """    <KernelFilteredSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <Kernel>
+        <Size>3</Size>
+        <Coefs>0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>"""
+
+    md = {}
+    md['source_0'] = filterSourceXML
+
+    vrt_ds.GetRasterBand(1).SetMetadata(md, 'vrt_sources')
+    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtfilt_cleanup():
@@ -67,6 +154,9 @@ def vrtfilt_cleanup():
 gdaltest_list = [
     vrtfilt_1,
     vrtfilt_2,
+    vrtfilt_3,
+    vrtfilt_4,
+    vrtfilt_5,
     vrtfilt_cleanup ]
 
 if __name__ == '__main__':
