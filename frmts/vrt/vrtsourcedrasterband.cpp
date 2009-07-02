@@ -662,6 +662,41 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
         else
             return CE_Failure;
     }
+    else if( pszDomain != NULL
+        && EQUAL(pszDomain,"vrt_sources") )
+    {
+        int iSource;
+        if (sscanf(pszName, "source_%d", &iSource) != 1 || iSource < 0 ||
+            iSource >= nSources)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s metadata item name is not recognized. "
+                     "Should be between source_0 and source_%d",
+                     pszName, nSources - 1);
+            return CE_Failure;
+        }
+
+        VRTDriver *poDriver = (VRTDriver *) GDALGetDriverByName( "VRT" );
+
+        CPLXMLNode *psTree = CPLParseXMLString( pszValue );
+        VRTSource *poSource;
+        
+        if( psTree == NULL )
+            return CE_Failure;
+        
+        poSource = poDriver->ParseSource( psTree, NULL );
+        CPLDestroyXMLNode( psTree );
+        
+        if( poSource != NULL )
+        {
+            delete papoSources[iSource];
+            papoSources[iSource] = poSource;
+            ((VRTDataset *)poDS)->SetNeedsFlush();
+            return CE_None;
+        }
+        else
+            return CE_Failure;
+    }
     else
         return VRTRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
 }
