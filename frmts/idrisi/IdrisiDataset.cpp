@@ -2444,7 +2444,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     {
         oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUALN( pszProjName, "Plate Carr�e", 10 ) )
+    else if( EQUALN( pszProjName, "Plate Carrée", 10 ) )
     {
         oSRS.SetEquirectangular( dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
