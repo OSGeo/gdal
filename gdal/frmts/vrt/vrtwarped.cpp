@@ -363,6 +363,8 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
 /************************************************************************/
 
 typedef struct {
+    GDALTransformerInfo sTI;
+
     GDALTransformerFunc pfnBaseTransformer;
     void              *pBaseTransformerArg;
 
@@ -370,6 +372,7 @@ typedef struct {
     double            dfYOverviewFactor;
 } VWOTInfo;
 
+static
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc, 
                                 int nPointCount, 
                                 double *padfX, double *padfY, double *padfZ,
@@ -403,6 +406,13 @@ int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
     }
 
     return bSuccess;
+}
+
+static void VRTWarpedOverviewCleanup(void* pTransformArg)
+{
+    VWOTInfo *psInfo = (VWOTInfo *) pTransformArg;
+
+    CPLFree( psInfo );
 }
 
 /************************************************************************/
@@ -507,6 +517,12 @@ VRTWarpedDataset::IBuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
         GDALWarpOptions *psWO = (GDALWarpOptions *) poWarper->GetOptions();
         psInfo = (VWOTInfo *) CPLCalloc(sizeof(VWOTInfo),1);
+
+        strcpy( psInfo->sTI.szSignature, "GTI" );
+        psInfo->sTI.pszClassName = "VRTWarpedOverviewTransform";
+        psInfo->sTI.pfnTransform = VRTWarpedOverviewTransform;
+        psInfo->sTI.pfnCleanup = VRTWarpedOverviewCleanup;
+        psInfo->sTI.pfnSerialize = NULL;
 
         psInfo->pfnBaseTransformer = psWO->pfnTransformer;
         psInfo->pBaseTransformerArg = psWO->pTransformerArg;
@@ -677,7 +693,11 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     {
         int nOvFactor = atoi(papszTokens[iOverview]);
 
-        BuildOverviews( "NEAREST", 1, &nOvFactor, 0, NULL, NULL, NULL );
+        if (nOvFactor > 0)
+            BuildOverviews( "NEAREST", 1, &nOvFactor, 0, NULL, NULL, NULL );
+        else
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Bad value for overview factor : %s", papszTokens[iOverview]);
     }
 
     CSLDestroy( papszTokens );
