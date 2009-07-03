@@ -1526,7 +1526,9 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                                int nPixelSpace,int nLineSpace,int nBandSpace)
     
 {
-    CPLAssert( eBufType == GDT_Byte );
+    CPLAssert( eBufType == GDT_Byte 
+               || eBufType == GDT_Int16
+               || eBufType == GDT_UInt16 );
 
 /* -------------------------------------------------------------------- */
 /*      Select optimal resolution level.                                */
@@ -1547,7 +1549,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     CPLErr eErr=CE_None;
     int *component_indices;
-    int *stripe_heights, *sample_offsets, *sample_gaps, *row_gaps;
+    int *stripe_heights, *sample_offsets, *sample_gaps, *row_gaps, *precisions;
+    bool *is_signed;
     int i;
     
     component_indices = (int *) CPLMalloc(sizeof(int) * nBandCount);
@@ -1555,6 +1558,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
     sample_offsets = (int *) CPLMalloc(sizeof(int) * nBandCount);
     sample_gaps = (int *) CPLMalloc(sizeof(int) * nBandCount);
     row_gaps = (int *) CPLMalloc(sizeof(int) * nBandCount);
+    precisions = (int *) CPLMalloc(sizeof(int) * nBandCount);
+    is_signed = (bool *) CPLMalloc(sizeof(bool) * nBandCount);
 
     for( i = 0; i < nBandCount; i++ )
         component_indices[i] = panBandMap[i] - 1;
@@ -1596,13 +1601,40 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
             for( i = 0; i < nBandCount; i++ )
             {
                 stripe_heights[i] = dims.size.y;
-                sample_offsets[i] = i * nBandSpace;
-                sample_gaps[i] = nPixelSpace;
-                row_gaps[i] = nLineSpace;
+                if( eBufType == GDT_Byte )
+                {
+                    precisions[i] = 8;
+                    is_signed[i] = false;
+                    sample_offsets[i] = i * nBandSpace;
+                    sample_gaps[i] = nPixelSpace;
+                    row_gaps[i] = nLineSpace;
+                }
+                else if( eBufType == GDT_Int16 )
+                {
+                    precisions[i] = oCodeStream.get_bit_depth(i);
+                    is_signed[i] = true;
+                    sample_offsets[i] = i * nBandSpace / 2;
+                    sample_gaps[i] = nPixelSpace / 2;
+                    row_gaps[i] = nLineSpace / 2;
+                }
+                else if( eBufType == GDT_UInt16 )
+                {
+                    precisions[i] = oCodeStream.get_bit_depth(i);
+                    is_signed[i] = false;
+                    sample_offsets[i] = i * nBandSpace / 2;
+                    sample_gaps[i] = nPixelSpace / 2;
+                    row_gaps[i] = nLineSpace / 2;
+                }
+                
             }
-            
-            decompressor.pull_stripe( (kdu_byte *) pData, stripe_heights,
-                                      sample_offsets, sample_gaps, row_gaps );
+
+            if( precisions[0] == 8 )
+                decompressor.pull_stripe( (kdu_byte *) pData, stripe_heights,
+                                          sample_offsets, sample_gaps, row_gaps );
+            else
+                decompressor.pull_stripe( (kdu_int16 *) pData, stripe_heights,
+                                          sample_offsets, sample_gaps,row_gaps,
+                                          precisions, is_signed );
             decompressor.finish();
         }
 
@@ -1612,7 +1644,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
         else
         {
             GByte *pabyIntermediate = (GByte *) 
-                VSIMalloc3(dims.size.x, dims.size.y, nBandCount );
+                VSIMalloc3(dims.size.x, dims.size.y, 2*nBandCount );
             if( pabyIntermediate == NULL )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory, 
@@ -1632,10 +1664,29 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
             decompressor.start(oCodeStream);
         
             for( i = 0; i < nBandCount; i++ )
+            {
                 stripe_heights[i] = dims.size.y;
+
+                if( eBufType == GDT_Int16 || eBufType == GDT_UInt16 )
+                {
+                    precisions[i] = oCodeStream.get_bit_depth(i);
+                    
+                    if( eBufType == GDT_Int16 )
+                        is_signed[i] = true;
+                    else
+                        is_signed[i] = false;
+                }
+            }
             
-            decompressor.pull_stripe( (kdu_byte *) pabyIntermediate, 
-                                      stripe_heights );
+            if( eBufType == GDT_Byte )
+                decompressor.pull_stripe( (kdu_byte *) pabyIntermediate, 
+                                          stripe_heights );
+            else
+                decompressor.pull_stripe( (kdu_int16 *) pabyIntermediate, 
+                                          stripe_heights,
+                                          NULL, NULL, NULL,
+                                          precisions, is_signed );
+                
             decompressor.finish();
 
 /* -------------------------------------------------------------------- */
@@ -1660,12 +1711,22 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 
                     for( i = 0; i < nBandCount; i++ )
                     {
-                        ((GByte *) pData)[iX*nPixelSpace
-                                          + iY*nLineSpace
-                                          + i*nBandSpace] = 
-                            pabyIntermediate[iSrcX*nBandCount
-                                             + iSrcY*dims.size.x*nBandCount
-                                             + i];
+                        if( eBufType == GDT_Byte )
+                            ((GByte *) pData)[iX*nPixelSpace
+                                              + iY*nLineSpace
+                                              + i*nBandSpace] = 
+                                pabyIntermediate[iSrcX*nBandCount
+                                                 + iSrcY*dims.size.x*nBandCount
+                                                 + i];
+                        else if( eBufType == GDT_Int16
+                                 || eBufType == GDT_UInt16 )
+                            ((GUInt16 *) pData)[iX*nPixelSpace/2
+                                              + iY*nLineSpace/2
+                                              + i*nBandSpace/2] = 
+                                ((GUInt16 *)pabyIntermediate)[
+                                    iSrcX*nBandCount
+                                    + iSrcY*dims.size.x*nBandCount
+                                    + i];
                     }
                 }
             }
@@ -1689,6 +1750,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
     CPLFree( sample_offsets );
     CPLFree( sample_gaps );
     CPLFree( row_gaps );
+    CPLFree( precisions );
+    CPLFree( is_signed);
 
     return eErr;
 }
@@ -1711,8 +1774,10 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Due to limitations in DirectRasterIO() we can only handle       */
 /*      8bit and with no duplicates in the band list.                   */
 /* -------------------------------------------------------------------- */
-    if( eDataType != GDT_Byte 
-        || GetRasterBand(1)->GetRasterDataType() != GDT_Byte )
+    if( eDataType != GetRasterBand(1)->GetRasterDataType()
+        || ( eDataType != GDT_Byte
+             && eDataType != GDT_Int16
+             && eDataType != GDT_UInt16 ) )
         return TRUE;
 
     int i, j; 
@@ -1736,9 +1801,9 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
     if( nBufYSize == 1 || nBufXSize * ((double) nBufYSize) < 100.0 )
         bUseBlockedIO = TRUE;
 
-    if( bUseBlockedIO
-        && CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
-        bUseBlockedIO = FALSE;
+    if( strlen(CPLGetConfigOption( "GDAL_ONE_BIG_READ", "")) > 0 )
+        bUseBlockedIO = 
+            !CSLTestBoolean(CPLGetConfigOption( "GDAL_ONE_BIG_READ", ""));
 
     return bUseBlockedIO;
 }
