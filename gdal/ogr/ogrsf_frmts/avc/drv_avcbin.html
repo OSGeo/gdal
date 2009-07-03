@@ -28,6 +28,10 @@ the same level as the coverage directory.  If this is inaccessable or
 corrupt no info attributes will be appended to coverage layers, but the
 geometry should still be accessable.<p>
 
+If the directory contains files with names like w001001.adf then the coverage is
+a <a href="http://www.gdal.org/frmt_various.html#AIG">grid coverage</a>
+suitable to read with GDAL, not a vector coverage supported by OGR.<p>  
+
 The layers are named as follows:
 
 <ol>
