@@ -67,7 +67,8 @@ Supported by GDAL for read access.
 This format is the internal binary format for Arc/Info Grid, 
 and takes the form of a coverage level directory in an Arc/Info database. 
 To open the coverage select the coverage directory, or an .adf file (such as
-hdr.adf) from within it.<p>
+hdr.adf) from within it.  If the directory does not contain file(s) with names
+like w001001.adf then it is not a grid coverage.<p>
 
 Support includes reading of an affine 
 georeferencing transform, some projections, and a color
