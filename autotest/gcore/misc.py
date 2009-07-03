@@ -266,12 +266,55 @@ def misc_6():
 
     return 'success'
 
+###############################################################################
+# Test gdal.InvGeoTransform()
+
+def misc_7():
+
+    try:
+        gdal.InvGeoTransform
+    except:
+        return 'skip'
+
+    gt = (10, 0.1, 0, 20, 0, -1.0)
+    res = gdal.InvGeoTransform(gt)
+    if res[0] != 1:
+        print res
+        return 'fail'
+
+    expected_inv_gt = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0)
+    for i in range(6):
+        if abs(res[1][i] - expected_inv_gt[i]) > 1e-6:
+            print res
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test gdal.ApplyGeoTransform()
+
+def misc_8():
+
+    try:
+        gdal.ApplyGeoTransform
+    except:
+        return 'skip'
+
+    gt = (10, 0.1, 0, 20, 0, -1.0)
+    res = gdal.ApplyGeoTransform(gt, 10, 1)
+    if res != [11.0, 19.0]:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ misc_1,
                   misc_2,
                   misc_3,
                   misc_4,
                   misc_5,
-                  misc_6 ]
+                  misc_6,
+                  misc_7,
+                  misc_8 ]
 
 if __name__ == '__main__':
 
