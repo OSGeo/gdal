@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: rpftocdataset.cpp
+ * $Id$
  *
  * Project:  EarthWatch .TIL Driver
  * Purpose:  Implementation of the TILDataset class.
@@ -86,6 +86,7 @@ TILRasterBand::TILRasterBand( TILDataset *poTILDS, int nBand,
     this->poDS = poTILDS;
     this->poVRTBand = poVRTBand;
     this->nBand = nBand;
+    this->eDataType = poVRTBand->GetRasterDataType();
 
     poVRTBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
 }
@@ -160,6 +161,8 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !Identify( poOpenInfo ) )
         return NULL;
 
+    CPLString osDirname = CPLGetDirname(poOpenInfo->pszFilename);
+
 /* -------------------------------------------------------------------- */
 /*      Try to find the corresponding .IMD file.                        */
 /* -------------------------------------------------------------------- */
@@ -179,6 +182,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Missing a required field in the .IMD file." );
+        CSLDestroy( papszIMD );
         return NULL;
     }
 
@@ -188,13 +192,17 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     FILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     
     if( fp == NULL )
+    {
+        CSLDestroy( papszIMD );
         return NULL;
+    }
 
     CPLKeywordParser oParser;
 
     if( !oParser.Ingest( fp ) )
     {
         VSIFCloseL( fp );
+        CSLDestroy( papszIMD );
         return NULL;
     }
 
@@ -211,6 +219,12 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nRasterXSize = atoi(CSLFetchNameValueDef(papszIMD,"numColumns","0"));
     poDS->nRasterYSize = atoi(CSLFetchNameValueDef(papszIMD,"numRows","0"));
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    {
+        delete poDS;
+        CSLDestroy( papszIMD );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      We need to open one of the images in order to establish         */
@@ -222,6 +236,8 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing TILE_1.filename in .TIL file." );
+        delete poDS;
+        CSLDestroy( papszIMD );
         return NULL;
     }
 
@@ -231,10 +247,14 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszFilename[strlen(pszFilename)-1] == '"' )
         ((char *) pszFilename)[strlen(pszFilename)-1] = '\0';
 
-    poTemplateDS = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
-    if( poTemplateDS == NULL )
+    CPLString osFilename = CPLFormFilename(osDirname, pszFilename, NULL);
+    poTemplateDS = (GDALDataset *) GDALOpen( osFilename, GA_ReadOnly );
+    if( poTemplateDS == NULL || poTemplateDS->GetRasterCount() == 0)
     {
         delete poDS;
+        CSLDestroy( papszIMD );
+        if (poTemplateDS != NULL)
+            GDALClose( poTemplateDS );
         return NULL;
     }
 
@@ -282,7 +302,9 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
         if( pszFilename == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Missing TILE_1.filename in .TIL file." );
+                      "Missing TILE_%d.filename in .TIL file.", iTile );
+            delete poDS;
+            CSLDestroy( papszIMD );
             return NULL;
         }
         
@@ -291,6 +313,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
             pszFilename++;
         if( pszFilename[strlen(pszFilename)-1] == '"' )
             ((char *) pszFilename)[strlen(pszFilename)-1] = '\0';
+        osFilename = CPLFormFilename(osDirname, pszFilename, NULL);
 
         osKey.Printf( "TILE_%d.ULColOffset", iTile );
         int nULX = atoi(CSLFetchNameValueDef(papszTIL, osKey, "0"));
@@ -306,10 +329,10 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 
 #ifdef notdef
         GDALDataset *poTileDS = (GDALDataset *) 
-            GDALOpen(pszFilename,GA_ReadOnly);
+            GDALOpen(osFilename,GA_ReadOnly);
 #else
         GDALDataset *poTileDS = 
-            new GDALProxyPoolDataset( pszFilename, 
+            new GDALProxyPoolDataset( osFilename, 
                                       nLRX - nULX + 1, nLRY - nULY + 1 );
 #endif
         if( poTileDS == NULL )
