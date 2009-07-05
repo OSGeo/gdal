@@ -32,6 +32,7 @@
 
 import os
 import sys
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -546,6 +547,29 @@ def warp_20():
     return tst.testOpen()
 
 ###############################################################################
+# Test overviews on warped VRT files
+
+def warp_21():
+
+    shutil.copy( 'data/utmsmall_near.vrt', 'tmp/warp_21.vrt' )
+
+    ds = gdal.Open( 'tmp/warp_21.vrt', gdal.GA_Update )
+    ds.BuildOverviews('NEAR', overviewlist = [ 2 ] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/warp_21.vrt' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        return 'skip'
+
+    ds.GetRasterBand(1).GetOverview(0).Checksum()
+
+    ds = None
+
+    os.remove( 'tmp/warp_21.vrt' )
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -572,7 +596,8 @@ gdaltest_list = [
     warp_17,
     warp_18,
     warp_19,
-    warp_20
+    warp_20,
+    warp_21
     ]
 
 if __name__ == '__main__':
