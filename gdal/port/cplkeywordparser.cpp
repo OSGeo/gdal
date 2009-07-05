@@ -170,16 +170,37 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
     osValue = "";
 
     // Handle value lists like:     Name   = (Red, Red)
+    // or list of lists like : TLCList = ( (0,  0.000000), (8299,  4.811014) );
     if( *pszHeaderNext == '(' )
     {
         CPLString osWord;
+        int nDepth = 0;
 
         while( ReadWord( osWord ) )
         {
             SkipWhite();
 
             osValue += osWord;
-            if( osWord[strlen(osWord)-1] == ')' )
+            const char* pszIter = osWord.c_str();
+            int bInQuote = FALSE;
+            while(*pszIter != '\0')
+            {
+                if (*pszIter == '"')
+                    bInQuote = !bInQuote;
+                else if (!bInQuote)
+                {
+                    if (*pszIter == '(')
+                        nDepth ++;
+                    else if (*pszIter == ')')
+                    {
+                        nDepth --;
+                        if (nDepth == 0)
+                            break;
+                    }
+                }
+                pszIter ++;
+            }
+            if (*pszIter == ')' && nDepth == 0)
                 break;
         }
     }
