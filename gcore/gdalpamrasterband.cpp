@@ -918,6 +918,8 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     *pdfMin = atof(CPLGetXMLValue( psHistItem, "HistMin", "0"));
     *pdfMax = atof(CPLGetXMLValue( psHistItem, "HistMax", "1"));
     *pnBuckets = atoi(CPLGetXMLValue( psHistItem, "BucketCount","2"));
+    if (*pnBuckets <= 0)
+        return FALSE;
 
     if( ppanHistogram == NULL )
         return TRUE;
@@ -927,7 +929,13 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     const char *pszHistCounts = CPLGetXMLValue( psHistItem, 
                                                 "HistCounts", "" );
 
-    *ppanHistogram = (int *) CPLCalloc(sizeof(int),*pnBuckets);
+    *ppanHistogram = (int *) VSICalloc(sizeof(int),*pnBuckets);
+    if (*ppanHistogram == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Cannot allocate memory for %d buckets", *pnBuckets);
+        return FALSE;
+    }
 
     for( iBucket = 0; iBucket < *pnBuckets; iBucket++ )
     {
