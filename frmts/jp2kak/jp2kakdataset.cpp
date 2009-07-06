@@ -132,6 +132,9 @@ class JP2KAKDataset : public GDALPamDataset
                 JP2KAKDataset();
 		~JP2KAKDataset();
     
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
+    
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
     virtual int    GetGCPCount();
@@ -399,7 +402,7 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
     nOverviewCount = 0;
     papoOverviewBand = 0;
 
-    if( nDiscardLevels == 0 )
+    if( nDiscardLevels == 0 && GDALPamRasterBand::GetOverviewCount() == 0 )
     {
         int  nXSize = nRasterXSize, nYSize = nRasterYSize;
 
@@ -458,7 +461,10 @@ JP2KAKRasterBand::~JP2KAKRasterBand()
 int JP2KAKRasterBand::GetOverviewCount()
 
 {
-    return nOverviewCount;
+    if( GDALPamRasterBand::GetOverviewCount() > 0 )
+        return GDALPamRasterBand::GetOverviewCount();
+    else
+        return nOverviewCount;
 }
 
 /************************************************************************/
@@ -468,7 +474,10 @@ int JP2KAKRasterBand::GetOverviewCount()
 GDALRasterBand *JP2KAKRasterBand::GetOverview( int iOverviewIndex )
 
 {
-    if( iOverviewIndex < 0 || iOverviewIndex >= nOverviewCount )
+    if( GDALPamRasterBand::GetOverviewCount() > 0 )
+        return GDALPamRasterBand::GetOverview( iOverviewIndex );
+
+    else if( iOverviewIndex < 0 || iOverviewIndex >= nOverviewCount )
         return NULL;
     else
         return papoOverviewBand[iOverviewIndex];
@@ -1032,6 +1041,41 @@ const GDAL_GCP *JP2KAKDataset::GetGCPs()
 }
 
 /************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling, 
+                                       int nOverviews, int *panOverviewList,
+                                       int nListBands, int *panBandList, 
+                                       GDALProgressFunc pfnProgress, 
+                                       void *pProgressData )
+
+{
+/* -------------------------------------------------------------------- */
+/*      In order for building external overviews to work properly we    */
+/*      discard any concept of internal overviews when the user         */
+/*      first requests to build external overviews.                     */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
+    {
+        JP2KAKRasterBand *poBand = 
+            (JP2KAKRasterBand *) GetRasterBand( iBand+1 );
+
+        for( int i = 0; i < poBand->nOverviewCount; i++ )
+            delete poBand->papoOverviewBand[i];
+
+        CPLFree( poBand->papoOverviewBand );
+        poBand->papoOverviewBand = NULL;
+        poBand->nOverviewCount = 0;
+    }
+
+    return GDALPamDataset::IBuildOverviews( pszResampling, 
+                                            nOverviews, panOverviewList, 
+                                            nListBands, panBandList, 
+                                            pfnProgress, pProgressData );
+}
+
+/************************************************************************/
 /*                          KakaduInitialize()                          */
 /************************************************************************/
 
@@ -1458,6 +1502,11 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->bGeoTransformValid = 
                 GDALReadWorldFile( poOpenInfo->pszFilename, 0, 
                                    poDS->adfGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Check for external overviews.                                   */
+/* -------------------------------------------------------------------- */
+        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
         return( poDS );
     }
