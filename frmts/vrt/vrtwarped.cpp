@@ -204,10 +204,13 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
  *
  * @param hSrcDS The source dataset. 
  *
- * @param nOverviewLevels The number of "power of 2" overview levels to be 
- * built.  If zero, no overview levels will be managed.  
+ * @param nPixels Width of the virtual warped dataset to create
  *
- * @param psOptions Additional warp options, normally NULL.
+ * @param nLines Height of the virtual warped dataset to create
+ *
+ * @param padfGeoTransform Geotransform matrix of the virtual warped dataset to create
+ *
+ * @param psOptions Warp options. Must be different from NULL.
  *
  * @return NULL on failure, or a new virtual dataset handle on success.
  */

@@ -1122,7 +1122,7 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
  * \brief Read ESRI world file. 
  *
  * This function reads an ESRI style world file, and formats a geotransform
- * from it's contents.
+ * from its contents.
  *
  * The world file contains an affine transformation with the parameters
  * in a different order than in a geotransform array. 
@@ -1210,7 +1210,7 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
  * \brief Read ESRI world file. 
  *
  * This function reads an ESRI style world file, and formats a geotransform
- * from it's contents.  It does the same as GDALLoadWorldFile() function, but
+ * from its contents.  It does the same as GDALLoadWorldFile() function, but
  * it will form the filename for the worldfile from the filename of the raster
  * file referred and the suggested extension.  If no extension is provided,
  * the code will internally try the unix style and windows style world file
@@ -2335,7 +2335,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
                 || poODS->GetRasterYSize() != poDependentDS->GetRasterYSize()) )
         {
             CPLDebug( "AUX",
-                      "Ignoring aux file %s as it's raster configuration\n"
+                      "Ignoring aux file %s as its raster configuration\n"
                       "(%dP x %dL x %dB) does not match master file (%dP x %dL x %dB)", 
                       osAuxFilename.c_str(),
                       poODS->GetRasterXSize(), 
@@ -2424,7 +2424,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             || poODS->GetRasterYSize() != poDependentDS->GetRasterYSize()) )
     {
         CPLDebug( "AUX",
-                  "Ignoring aux file %s as it's raster configuration\n"
+                  "Ignoring aux file %s as its raster configuration\n"
                   "(%dP x %dL x %dB) does not match master file (%dP x %dL x %dB)", 
                   osAuxFilename.c_str(),
                   poODS->GetRasterXSize(), 
@@ -2487,6 +2487,8 @@ CPL_C_START
   *
   * @param nXSize raster width
   * @param nYSize raster height
+  *
+  * @since GDAL 1.7.0
   */
 int GDALCheckDatasetDimensions( int nXSize, int nYSize )
 {
@@ -2507,6 +2509,8 @@ int GDALCheckDatasetDimensions( int nXSize, int nYSize )
   *
   * @param nBands the band count
   * @param bIsZeroAllowed TRUE if band count == 0 is allowed
+  *
+  * @since GDAL 1.7.0
   */
 
 int GDALCheckBandCount( int nBands, int bIsZeroAllowed )
