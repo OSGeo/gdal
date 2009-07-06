@@ -256,6 +256,88 @@ def jp2kak_12():
     return tst.testOpen()
     
 ###############################################################################
+# Test internal overviews.
+#
+
+def jp2kak_13():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open( 'data/utm.pix' )
+    jp2_ds = gdaltest.jp2kak_drv.CreateCopy( 'tmp/jp2kak_13.jp2', src_ds )
+    src_ds = None
+
+    jp2_band = jp2_ds.GetRasterBand(1)
+    if jp2_band.GetOverviewCount() != 1:
+        gdaltest.post_reason( 'did not get expected number of overviews on jp2')
+        return 'fail'
+
+    ov_band = jp2_band.GetOverview(0)
+    if ov_band.XSize != 250 or ov_band.YSize != 4:
+        gdaltest.post_reason( 'did not get expected overview size.' )
+        return 'fail'
+
+    checksum = ov_band.Checksum()
+    expected = 12083
+
+    if checksum != expected:
+        print checksum
+        gdaltest.post_reason( 'did not get expected overview checksum' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+# Test external overviews.
+#
+
+def jp2kak_14():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    jp2_ds = gdal.Open( 'tmp/jp2kak_13.jp2' )
+
+    jp2_ds.BuildOverviews( 'NEAREST', overviewlist=[2,4] )
+    
+    jp2_band = jp2_ds.GetRasterBand(1)
+    if jp2_band.GetOverviewCount() != 2:
+        gdaltest.post_reason( 'did not get expected number of overviews on jp2')
+        return 'fail'
+
+    ov_band = jp2_band.GetOverview(0)
+    if ov_band.XSize != 250 or ov_band.YSize != 4:
+        gdaltest.post_reason( 'did not get expected overview size.' )
+        return 'fail'
+
+    checksum = ov_band.Checksum()
+    expected = 12288
+
+    if checksum != expected:
+        print checksum
+        gdaltest.post_reason( 'did not get expected overview checksum' )
+        return 'fail'
+
+    ov_band = jp2_band.GetOverview(1)
+    if ov_band.XSize != 125 or ov_band.YSize != 2:
+        gdaltest.post_reason( 'did not get expected overview size. (2)' )
+        return 'fail'
+
+    checksum = ov_band.Checksum()
+    expected = 2957
+
+    if checksum != expected:
+        print checksum
+        gdaltest.post_reason( 'did not get expected overview checksum (2)' )
+        return 'fail'
+
+    jp2_ds = None
+    gdaltest.jp2kak_drv.Delete( 'tmp/jp2kak_13.jp2' )
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -277,6 +359,8 @@ gdaltest_list = [
     jp2kak_10,
     jp2kak_11,
     jp2kak_12,
+    jp2kak_13,
+    jp2kak_14,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':
