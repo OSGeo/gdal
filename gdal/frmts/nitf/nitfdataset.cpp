@@ -845,14 +845,17 @@ NITFDataset::~NITFDataset()
 void NITFDataset::FlushCache()
 
 {
-    if( poJ2KDataset != NULL && bJP2Writing)
-        poJ2KDataset->FlushCache();
-
-    // If the JPEG dataset has dirty pam info, then we should consider 
+    // If the JPEG/JP2K dataset has dirty pam info, then we should consider 
     // ourselves to as well.
     if( poJPEGDataset != NULL 
         && (poJPEGDataset->GetPamFlags() & GPF_DIRTY) )
         MarkPamDirty();
+    if( poJ2KDataset != NULL 
+        && (poJ2KDataset->GetPamFlags() & GPF_DIRTY) )
+        MarkPamDirty();
+
+    if( poJ2KDataset != NULL && bJP2Writing)
+        poJ2KDataset->FlushCache();
 
     GDALPamDataset::FlushCache();
 }
@@ -1032,6 +1035,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->poJ2KDataset = (GDALPamDataset *) 
                 GDALOpen( osDSName, GA_ReadOnly );
+            poDS->poJ2KDataset->SetPamFlags( 
+                poDS->poJ2KDataset->GetPamFlags() | GPF_NOSAVE );
         }
 
         if( poDS->poJ2KDataset == NULL )
@@ -1111,6 +1116,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             delete poDS;
             return NULL;
         }
+
+        poDS->poJPEGDataset->SetPamFlags( 
+            poDS->poJPEGDataset->GetPamFlags() | GPF_NOSAVE );
 
         if( poDS->poJPEGDataset->GetRasterCount() < nUsableBands )
         {
