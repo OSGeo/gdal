@@ -278,6 +278,12 @@ GTIFFBuildOverviews( const char * pszFilename,
             return CE_Failure;
         }
 
+        if( hBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) )
+        {
+            nBandBits = 
+                atoi(hBand->GetMetadataItem("NBITS","IMAGE_STRUCTURE"));
+        }
+
         if( iBand == 0 )
         {
             nBitsPerPixel = nBandBits;
