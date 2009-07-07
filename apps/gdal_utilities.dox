@@ -670,7 +670,7 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 *******************************************************************************
 /*! \page gdal_rasterize gdal_rasterize
 
-burns vector polygons into a raster
+burns vector geometries into a raster
 
 \section zsynopsis SYNOPSIS
 
@@ -683,8 +683,9 @@ Usage: gdal_rasterize [-b band] [-i] [-at]
 
 \section zdescription DESCRIPTION
 
-This program burns vector polygons into the raster band(s) of a raster
-image.  Vectors are read from OGR supported vector formats. 
+This program burns vector geometries (points, lines and polygons) into the 
+raster band(s) of a raster image.  Vectors are read from OGR supported vector 
+formats. 
 
 <dl>
 <dt> <b>-b</b> <em>band</em>: </dt><dd> 
@@ -693,8 +694,8 @@ into a list of bands.  The default is to burn into band 1.</dd>
 
 <dt> <b>-i</b>: </dt><dd>
 Invert rasterization.  Burn the fixed burn value, or the burn value associated 
-with the first feature into all parts of the image <em>not</em> inside a 
-polygon.</dd>
+with the first feature into all parts of the image <em>not</em> inside the
+provided a polygon.</dd>
 
 <dt> <b>-at</b>: </dt><dd>
 Enables the ALL_TOUCHED rasterization option so that all pixels touched
