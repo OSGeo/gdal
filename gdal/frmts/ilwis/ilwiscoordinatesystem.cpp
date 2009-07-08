@@ -49,7 +49,7 @@ bool WriteElement(string sSection, string sEntry, string fn, string sValue);
 bool WriteElement(string sSection, string sEntry, string fn, int nValue);
 bool WriteElement(string sSection, string sEntry, string fn, double dValue);
 
-static IlwisDatums iwDatums[] =
+static const IlwisDatums iwDatums[] =
 {
     { "Adindan", "Adindan", 4201 },								
     { "Afgooye", "Afgooye", 4205 },								
@@ -188,7 +188,7 @@ static IlwisDatums iwDatums[] =
     { NULL, NULL, 0 }
 };
 
-static IlwisEllips iwEllips[] =
+static const IlwisEllips iwEllips[] =
 {
     { "Sphere", 7035, 6371007, 0.0  },	//rad 6370997 m (normal sphere)   
     { "Airy 1830", 7031, 6377563.396, 299.3249646 },   
@@ -360,7 +360,7 @@ static int scaleFromLATTS( string sEllips, double phits, double &scale )
     }
     else
     {
-        IlwisEllips *piwEllips =  iwEllips;
+        const IlwisEllips *piwEllips =  iwEllips;
         double e2 = 0.0;
         while ( piwEllips->pszIlwisEllips )
         {
@@ -663,7 +663,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 
     if ( !oSRS.IsLocal() )
     {
-        IlwisDatums   *piwDatum = iwDatums;
+        const IlwisDatums   *piwDatum = iwDatums;
 
         // Search for matching datum
         while ( piwDatum->pszIlwisDatum )
@@ -683,7 +683,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 /*      If no matching for datum definition, fetch info about an        */
 /*			ellipsoid.  semi major axis is always	returned in meters        */ 
 /* -------------------------------------------------------------------- */
-        IlwisEllips *piwEllips =  iwEllips;
+        const IlwisEllips *piwEllips =  iwEllips;
         if (pszEllips.length() == 0)
             pszEllips="Sphere";
         if ( !piwDatum->pszIlwisDatum )  
@@ -693,9 +693,10 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
             {
                 if( EQUALN( pszEllips.c_str(), piwEllips->pszIlwisEllips, strlen(piwEllips->pszIlwisEllips) ) )
                 {
+                    double dfSemiMajor = piwEllips->semiMajor;
                     if( EQUALN( pszEllips.c_str(), "Sphere", 6 ) && padfPrjParams[0] != 0 )
                     {	
-                        piwEllips->semiMajor = padfPrjParams[0];
+                        dfSemiMajor = padfPrjParams[0];
                     }
                     oSRS.SetGeogCS( CPLSPrintf(
                                         "Unknown datum based upon the %s ellipsoid",
@@ -704,7 +705,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                                         "Not specified (based on %s spheroid)",
                                         piwEllips->pszIlwisEllips ),
                                     piwEllips->pszIlwisEllips, 
-                                    piwEllips->semiMajor,
+                                    dfSemiMajor,
                                     piwEllips->invFlattening,
                                     NULL, 0.0, NULL, 0.0 );
                     oSRS.SetAuthority( "SPHEROID", "EPSG", piwEllips->nEPSGCode );
@@ -1030,7 +1031,7 @@ CPLErr ILWISDataset::WriteProjection()
     else
         bHaveSRS = FALSE;
 		
-    IlwisDatums   *piwDatum = iwDatums;
+    const IlwisDatums   *piwDatum = iwDatums;
     string pszEllips;
     string pszDatum;
     string pszProj;
