@@ -333,6 +333,16 @@ ogr2ogr -overwrite -f PostgreSQL "PG:dbname=warmerda active_schema=apt200810" ap
 
 </ul>
 
+<h3>FAQs</h3>
+
+<ul>
+<li> <b>Why can't I see my tables? PostGIS is installed and I have data</b><br>
+You must have permissions on all tables you want to read <i>and</i> geometry_columns and spatial_ref_sys.<br> 
+Misleading behavior may follow without an error message if you do not have permissions to these tables. Permission
+issues on geometry_columns and/or spatial_ref_sys tables can be generally confirmed if you can see the tables
+by setting the configuration option PG_LIST_ALL_TABLES to YES. (e.g. ogrinfo --config PG_LIST_ALL_TABLES YES PG:xxxxx)
+</ul>
+
 <h3>See Also</h3>
 
 <ul>
