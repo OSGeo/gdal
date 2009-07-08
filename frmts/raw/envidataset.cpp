@@ -38,7 +38,7 @@ CPL_C_START
 void GDALRegister_ENVI(void);
 CPL_C_END
 
-static int anUsgsEsriZones[] =
+static const int anUsgsEsriZones[] =
 {
   101, 3101,
   102, 3126,
