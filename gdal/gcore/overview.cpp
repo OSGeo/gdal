@@ -1035,26 +1035,6 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     }
 
     fNoDataValue = (float) poSrcBand->GetNoDataValue(&bHasNoData);
-    if (!bHasNoData)
-    {
-        if (!EQUALN(pszResampling,"NEAR",4) && poSrcBand->GetDataset() != NULL)
-        {
-            const char* pszNoDataValues = poSrcBand->GetDataset()->GetMetadataItem("NODATA_VALUES");
-            if (pszNoDataValues)
-            {
-                char** papszNoDataValues = CSLTokenizeStringComplex(pszNoDataValues, " ", FALSE, FALSE);
-
-                /* Make sure we have as many values as bands */
-                if (CSLCount(papszNoDataValues) == poSrcBand->GetDataset()->GetRasterCount() &&
-                    poSrcBand->GetDataset()->GetRasterCount() != 0)
-                {
-                    fNoDataValue = (float)atof(papszNoDataValues[poSrcBand->GetBand() - 1]);
-                    bHasNoData = TRUE;
-                }
-                CSLDestroy(papszNoDataValues);
-            }
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image operating on chunks.                            */
@@ -1303,26 +1283,6 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
     {
         pabHasNoData[iBand] = FALSE;
         pafNoDataValue[iBand] = (float) papoSrcBands[iBand]->GetNoDataValue(&pabHasNoData[iBand]);
-        if (!pabHasNoData[iBand])
-        {
-            if (!EQUALN(pszResampling,"NEAR",4) && papoSrcBands[iBand]->GetDataset() != NULL)
-            {
-                const char* pszNoDataValues = papoSrcBands[iBand]->GetDataset()->GetMetadataItem("NODATA_VALUES");
-                if (pszNoDataValues)
-                {
-                    char** papszNoDataValues = CSLTokenizeStringComplex(pszNoDataValues, " ", FALSE, FALSE);
-
-                    /* Make sure we have as many values as bands */
-                    if (CSLCount(papszNoDataValues) == papoSrcBands[iBand]->GetDataset()->GetRasterCount() &&
-                        papoSrcBands[iBand]->GetDataset()->GetRasterCount() != 0)
-                    {
-                        pafNoDataValue[iBand] = (float)atof(papszNoDataValues[papoSrcBands[iBand]->GetBand() - 1]);
-                        pabHasNoData[iBand] = TRUE;
-                    }
-                    CSLDestroy(papszNoDataValues);
-                }
-            }
-        }
     }
 
     /* Second pass to do the real job ! */
