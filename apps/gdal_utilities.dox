@@ -359,7 +359,7 @@ builds or rebuilds overview images
 \section asynopsis SYNOPSIS
 
 \verbatim
-gdaladdo [-r {nearest,average,gauss,average_mp,average_magphase,mode}]
+gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]
          [-ro] [-clean] [--help-general] filename levels
 \endverbatim
 
@@ -370,7 +370,7 @@ most supported file formats with one over several downsampling algorithms.
 
 <dl>
 <dt> <b>-r</b>
-<i>{nearest,average,gauss,average_mp,average_magphase,mode}</i>:</dt><dd>
+<i>{nearest,average,gauss,cubic,average_mp,average_magphase,mode}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
 <dt> <b>-ro</b></dt>:<dd> (available from GDAL 1.6.0) open the dataset in read-only mode, in order to generate
 external overview (for GeoTIFF especially). </dd>
@@ -385,6 +385,7 @@ external overview (for GeoTIFF especially). </dd>
 <i>Nearest</i> and <i>average</i> are applicable to normal image data.  
 <i>Nearest</i> applies a nearest neighbour (simple sampling) resampler, while
 <i>average</i> computes the average of all non-NODATA contributing pixels.
+<i>Cubic</i> resampling (available from GDAL 1.7.0) applies a 4x4 approximate cubic convolution kernel.
 <i>Gauss</i> resampling (available from GDAL 1.6.0) applies a Gaussian kernel before computing the overview, 
 which can lead to better results than simple averaging in e.g case of sharp edges
 with high contrast or noisy patterns. The advised level values should be 2, 4, 8, ...
