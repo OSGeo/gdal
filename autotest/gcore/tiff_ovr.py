@@ -1169,6 +1169,34 @@ def tiff_ovr_31():
     return 'success'
 
 ###############################################################################
+# Test Cubic sampling.
+
+def tiff_ovr_32():
+
+    shutil.copyfile( 'data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif' )
+
+    ds = gdal.Open( 'tmp/ovr32.tif', gdal.GA_Update )
+    ds.BuildOverviews( 'cubic', overviewlist = [2,5] )
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs = 19589
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
+        return 'fail'
+
+    cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
+    expected_cs = 1415
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr32.tif' )
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1236,6 +1264,7 @@ gdaltest_list_internal = [
     tiff_ovr_29,
     tiff_ovr_30,
     tiff_ovr_31,
+    tiff_ovr_32,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
