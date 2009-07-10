@@ -58,7 +58,6 @@ class EHdrDataset : public RawDataset
     int         bHDRDirty;
     char      **papszHDR;
 
-    int         bSTXDirty;
     int         bCLRDirty;
 
     CPLErr      ReadSTX();
@@ -422,7 +421,6 @@ EHdrDataset::EHdrDataset()
     adfGeoTransform[5] = 1.0;
     papszHDR = NULL;
     bHDRDirty = FALSE;
-    bSTXDirty = FALSE;
     bCLRDirty = FALSE;
 }
 
@@ -453,11 +451,8 @@ EHdrDataset::~EHdrDataset()
 
         if( bHDRDirty )
             RewriteHDR();
-
-        if( bSTXDirty )
-            RewriteSTX();
     }
-
+    
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
 
@@ -757,8 +752,7 @@ CPLErr EHdrDataset::RewriteSTX()
     fp = VSIFOpenL( osSTXFilename, "wt" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to rewrite .stx file %s.", 
+        CPLDebug( "EHDR", "Failed to rewrite .stx file %s.", 
                   osSTXFilename.c_str() );
         return CE_Failure;
     }
@@ -779,8 +773,6 @@ CPLErr EHdrDataset::RewriteSTX()
     }
 
     VSIFCloseL( fp );
-
-    bSTXDirty = FALSE;
 
     return CE_None;
 }
@@ -1808,35 +1800,26 @@ CPLErr EHdrRasterBand::GetStatistics( int bApproxOK, int bForce, double *pdfMin,
     }
 
     CPLErr eErr = RawRasterBand::GetStatistics( bApproxOK, bForce, 
-                                                pdfMin, pdfMax, 
-                                                pdfMean, pdfStdDev );
+                                                &dfMin, &dfMax, 
+                                                &dfMean, &dfStdDev );
 
     if( eErr == CE_None )
     {
         EHdrDataset* poEDS = (EHdrDataset *) poDS;
 
-        if( pdfMin && pdfMax )
-        {
-            dfMin = *pdfMin;
-            dfMax = *pdfMax;
-            
-            minmaxmeanstddev |= 0x3;
-            poEDS->bSTXDirty = TRUE;
-        }
+        minmaxmeanstddev = 0xf;
 
-        if( *pdfMean )
-        {
-            dfMean = *pdfMean;
-            minmaxmeanstddev |= 0x4;
-            poEDS->bSTXDirty = TRUE;
-        }
+        if( poEDS->RewriteSTX() != CE_None )
+            RawRasterBand::SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
 
-        if( *pdfStdDev )
-        {
-            dfStdDev = *pdfStdDev;
-            minmaxmeanstddev |= 0x8;
-            poEDS->bSTXDirty = TRUE;
-        }
+        if( pdfMin )
+            *pdfMin = dfMin;
+        if( pdfMax )
+            *pdfMax = dfMax;
+        if( pdfMean )
+            *pdfMean = dfMean;
+        if( pdfStdDev )
+            *pdfStdDev = dfStdDev;
     }
 
     return eErr;
@@ -1848,16 +1831,27 @@ CPLErr EHdrRasterBand::GetStatistics( int bApproxOK, int bForce, double *pdfMin,
 
 CPLErr EHdrRasterBand::SetStatistics( double dfMin, double dfMax, double dfMean, double dfStdDev )
 {
+    // avoid churn if nothing is changing.
+    if( dfMin == this->dfMin
+        && dfMax == this->dfMax
+        && dfMean == this->dfMean
+        && dfStdDev == this->dfStdDev )
+        return CE_None;
+
     this->dfMin = dfMin;
     this->dfMax = dfMax;
     this->dfMean = dfMean;
     this->dfStdDev = dfStdDev;
+
     // marks stats valid
     minmaxmeanstddev = 0xf;
-    // marks dataset stats dirty
-    ((EHdrDataset*)poDS)->bSTXDirty = TRUE;
-   
-    return CE_None;
+
+    EHdrDataset* poEDS = (EHdrDataset *) poDS;
+
+    if( poEDS->RewriteSTX() != CE_None )
+        return RawRasterBand::SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+    else
+        return CE_None;
 }
 
 /************************************************************************/
