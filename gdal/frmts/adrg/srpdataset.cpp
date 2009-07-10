@@ -44,6 +44,8 @@ class SRPDataset : public GDALPamDataset
     int          offsetInIMG;
     CPLString    osProduct;
     CPLString    osSRS;
+    CPLString    osGENFilename;
+    CPLString    osQALFilename;
     int          NFC;
     int          NFL;
     int          ZNA;
@@ -69,6 +71,8 @@ class SRPDataset : public GDALPamDataset
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * padfGeoTransform );
     virtual CPLErr SetGeoTransform( double * padfGeoTransform );
+
+    virtual char **GetFileList();
 
     virtual char      **GetMetadata( const char * pszDomain = "" );
 
@@ -656,7 +660,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 /*      Try to collect a color map from the .QAL file.                  */
 /* -------------------------------------------------------------------- */
     CPLString osBasename = CPLGetBasename(pszFileName);
-    CPLString osQALFilename = CPLFormCIFilename(osDirname, osBasename, "QAL");
+    osQALFilename = CPLFormCIFilename(osDirname, osBasename, "QAL");
 
     DDFModule oQALModule;
 
@@ -696,8 +700,11 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         }
     }
     else
+    {
+        osQALFilename = "";
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to find .QAL file, no color table applied." );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Derive the coordinate system.                                   */
@@ -740,6 +747,23 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **SRPDataset::GetFileList()
+
+{
+     char **papszFileList = GDALPamDataset::GetFileList();
+
+     papszFileList = CSLAddString( papszFileList, osGENFilename );
+
+     if( strlen(osQALFilename) > 0 )
+         papszFileList = CSLAddString( papszFileList, osQALFilename );
+
+     return papszFileList;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -750,11 +774,47 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osFileName(poOpenInfo->pszFilename);
     CPLString osNAM;
 
+/* -------------------------------------------------------------------- */
+/*      Verify that this appears to be a valid ISO8211 .IMG file.       */
+/* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 500 )
         return NULL;
 
-    if (!EQUAL(CPLGetExtension(osFileName), "gen"))
+    if (!EQUAL(CPLGetExtension(osFileName), "img"))
         return NULL;
+
+    static const size_t nLeaderSize = 24;
+    int         i;
+
+    for( i = 0; i < (int)nLeaderSize; i++ )
+    {
+        if( poOpenInfo->pabyHeader[i] < 32 
+            || poOpenInfo->pabyHeader[i] > 126 )
+            return NULL;
+    }
+
+    if( poOpenInfo->pabyHeader[5] != '1' 
+        && poOpenInfo->pabyHeader[5] != '2' 
+        && poOpenInfo->pabyHeader[5] != '3' )
+        return NULL;
+
+    if( poOpenInfo->pabyHeader[6] != 'L' )
+        return NULL;
+    if( poOpenInfo->pabyHeader[8] != '1' && poOpenInfo->pabyHeader[8] != ' ' )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Find and open the .GEN file.                                    */
+/* -------------------------------------------------------------------- */
+    VSIStatBufL sStatBuf;
+
+    osFileName = CPLResetExtension( osFileName, "GEN" );
+    if( VSIStatL( osFileName, &sStatBuf ) != 0 )
+    {
+        osFileName = CPLResetExtension( osFileName, "gen" );
+        if( VSIStatL( osFileName, &sStatBuf ) != 0 )
+            return NULL;
+    }
 
     if (!module.Open(osFileName, TRUE))
         return NULL;
@@ -799,6 +859,7 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
         SRPDataset *poDS = new SRPDataset();
         
         poDS->osProduct = osPRT;
+        poDS->osGENFilename = osFileName;
         poDS->SetMetadataItem( "SRP_NAM", osNAM );
         poDS->SetMetadataItem( "SRP_PRODUCT", osPRT );
 
@@ -843,10 +904,7 @@ void GDALRegister_SRP()
                                    "Standard Raster Product (ASRP/USRP)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#SRP" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte" );
-
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "img" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = SRPDataset::Open;
