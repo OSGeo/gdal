@@ -331,18 +331,61 @@ const char *PamAllocateProxy( const char *pszOriginal )
 
     poProxyDB->CheckLoadDB();
 
+/* -------------------------------------------------------------------- */
+/*      Form the proxy filename based on the original path if           */
+/*      possible, but dummy out any questionable characters, path       */
+/*      delimiters and such.  This is intended to make the proxy        */
+/*      name be identifiable by folks digging around in the proxy       */
+/*      database directory.                                             */
+/*                                                                      */
+/*      We also need to be careful about length.                        */
+/* -------------------------------------------------------------------- */
+    CPLString osRevProxyFile;
+    int   i;
+
+    i = strlen(pszOriginal) - 1;
+    while( i >= 0 && osRevProxyFile.size() < 220 )
+    {
+        if( i > 6 && EQUALN(pszOriginal+i-5,":::OVR",6) )
+            i -= 6;
+
+        // make some effort to break long names at path delimiters.
+        if( (pszOriginal[i] == '/' || pszOriginal[i] == '\\') 
+            && osRevProxyFile.size() > 200 )
+            break;
+
+        if( (pszOriginal[i] >= 'A' && pszOriginal[i] <= 'Z') 
+            || (pszOriginal[i] >= 'a' && pszOriginal[i] <= 'z') 
+            || (pszOriginal[i] >= '0' && pszOriginal[i] <= '9') 
+            || pszOriginal[i] == '.' )
+            osRevProxyFile += pszOriginal[i];
+        else
+            osRevProxyFile += '_';
+
+        i--;
+    }
+    
     CPLString osOriginal = pszOriginal;
     CPLString osProxy;
+    CPLString osCounter;
+
+    osProxy = poProxyDB->osProxyDBDir + "/";
+
+    osCounter.Printf( "%06d_", poProxyDB->nUpdateCounter++ );
+    osProxy += osCounter;
+
+    for( i = osRevProxyFile.size()-1; i >= 0; i-- )
+        osProxy += osRevProxyFile[i];
 
     if( osOriginal.find(":::OVR") != CPLString::npos )
-        osProxy.Printf( "%s/proxy_%d.ovr", 
-                        poProxyDB->osProxyDBDir.c_str(),
-                        poProxyDB->nUpdateCounter++ );
+        osProxy += ".ovr";
     else
-        osProxy.Printf( "%s/proxy_%d.aux.xml", 
-                        poProxyDB->osProxyDBDir.c_str(),
-                        poProxyDB->nUpdateCounter++ );
+        osProxy += ".aux.xml";
 
+/* -------------------------------------------------------------------- */
+/*      Add the proxy and the original to the proxy list and resave     */
+/*      the database.                                                   */
+/* -------------------------------------------------------------------- */
     poProxyDB->aosOriginalFiles.push_back( osOriginal );
     poProxyDB->aosProxyFiles.push_back( osProxy );
 
