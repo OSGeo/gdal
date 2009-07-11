@@ -2280,6 +2280,16 @@ GTiffDataset::~GTiffDataset()
 /* -------------------------------------------------------------------- */
     FlushCache();
 
+/* -------------------------------------------------------------------- */
+/*      If there is still changed metadata, then presumably we want     */
+/*      to push it into PAM.                                            */
+/* -------------------------------------------------------------------- */
+    if( bMetadataChanged )
+    {
+        PushMetadataToPam();
+        bMetadataChanged = FALSE;
+        GDALPamDataset::FlushCache();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup overviews.                                              */
@@ -6742,7 +6752,10 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 char **GTiffDataset::GetMetadata( const char * pszDomain )
 
 {
-    return oGTiffMDMD.GetMetadata( pszDomain );
+    if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
+        return GDALPamDataset::GetMetadata( pszDomain );
+    else
+        return oGTiffMDMD.GetMetadata( pszDomain );
 }
 
 /************************************************************************/
@@ -6765,7 +6778,10 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
                                            const char * pszDomain )
 
 {
-    return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
+    if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
+        return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
+    else
+        return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
 }
 
 /************************************************************************/
