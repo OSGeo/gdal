@@ -769,7 +769,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                     return FALSE;
                 }
 
-                if( cbDataLen > (int) (sizeof(szWrkData) - 1)
+                if( cbDataLen >= (int) (sizeof(szWrkData) - 1)
                     || cbDataLen == SQL_NO_TOTAL )
                 {
                     nChunkLen = sizeof(szWrkData)-1;
