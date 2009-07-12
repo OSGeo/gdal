@@ -898,7 +898,7 @@ typedef JMETHOD(boolean, jpeg_marker_parser_method, (j_decompress_ptr cinfo));
 #define jpeg_add_quant_table	jpeg_add_quant_table_12
 #define jpeg_quality_scaling	jpeg_quality_scaling_12
 #define jpeg_simple_progression	jpeg_simple_progression_12
-#define jpeg_suppress_tables	jpeg_supress_tables_12
+#define jpeg_suppress_tables	jpeg_suppress_tables_12
 #define jpeg_alloc_quant_table	jpeg_alloc_quant_table_12
 #define jpeg_alloc_huff_table	jpeg_alloc_huff_table_12
 #define jpeg_start_compress	jpeg_start_compress_12
