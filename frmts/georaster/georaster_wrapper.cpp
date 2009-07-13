@@ -82,6 +82,8 @@ GeoRasterWrapper::GeoRasterWrapper()
     nBlockCount         = 0;
     bOrderlyAccess      = false;
     nGDALBlockBytes     = 0;
+    sDInfo.global_state = 0;
+    sCInfo.global_state = 0;
 }
 
 //  ---------------------------------------------------------------------------
@@ -105,6 +107,16 @@ GeoRasterWrapper::~GeoRasterWrapper()
     CPLDestroyXMLNode( phMetadata );
     OWStatement::Free( pahLocator, nBlockCount );
     CPLFree( pahLocator );
+
+    if( sDInfo.global_state )
+    {
+        jpeg_destroy_decompress( &sDInfo );
+    }
+
+    if( sCInfo.global_state )
+    {
+        jpeg_destroy_compress( &sCInfo );
+    }
 }
 
 //  ---------------------------------------------------------------------------
@@ -146,7 +158,7 @@ char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
     // Assume a default database
     // --------------------------------------------------------------------
 
-    if( CSLCount( papszParam ) == 2 ) 
+    if( CSLCount( papszParam ) == 2 )
     {
         papszParam = CSLAddString( papszParam, "" );
     }
@@ -203,7 +215,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
     //  Assign parameters from Identification string
     //  -------------------------------------------------------------------
 
-    switch( nArgc ) 
+    switch( nArgc )
     {
     case 6 :
         poGRW->pszTable       = CPLStrdup( papszParam[3] );
@@ -249,7 +261,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
             "FROM   USER_SDO_GEOR_SYSDATA\n"
             "WHERE  RDT_TABLE_NAME = UPPER(:1) AND RASTER_ID = :2 " );
 
-        poStmt->Bind( poGRW->pszDataTable ); 
+        poStmt->Bind( poGRW->pszDataTable );
         poStmt->Bind( &poGRW->nRasterId );
 
         poStmt->Define( szTable );
@@ -276,11 +288,11 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
         //  Make a where clause based on RTD and RID
         //  ---------------------------------------------------------------
 
-        poGRW->pszWhere= CPLStrdup( CPLSPrintf( 
+        poGRW->pszWhere= CPLStrdup( CPLSPrintf(
             "T.%s.RasterDataTable = UPPER('%s') AND T.%s.RasterId = %d",
-            poGRW->pszColumn, 
-            poGRW->pszDataTable, 
-            poGRW->pszColumn, 
+            poGRW->pszColumn,
+            poGRW->pszDataTable,
+            poGRW->pszColumn,
             poGRW->nRasterId ) );
     }
 
@@ -294,13 +306,13 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
     char szDataTable[OWNAME];
     int  nRasterId;
 
-    poStmt = poGRW->poConnection->CreateStatement( CPLSPrintf( 
+    poStmt = poGRW->poConnection->CreateStatement( CPLSPrintf(
         "SELECT T.%s.RASTERDATATABLE,\n"
         "       T.%s.RASTERID,\n"
         "       T.%s.METADATA.getClobVal()\n"
         "FROM   %s T\n"
-        "WHERE  %s", 
-        poGRW->pszColumn, poGRW->pszColumn, poGRW->pszColumn, 
+        "WHERE  %s",
+        poGRW->pszColumn, poGRW->pszColumn, poGRW->pszColumn,
         poGRW->pszTable, poGRW->pszWhere ) );
 
     poStmt->Define( szDataTable );
@@ -343,7 +355,6 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
         //  -----------------------------------------------------------
 
         poGRW->phMetadata = CPLParseXMLString( pszXML );
-
         poGRW->GetRasterInfo();
     }
     else
@@ -420,7 +431,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         }
         else
         {
-            strcpy( szValues, CPLStrdup( 
+            strcpy( szValues, CPLStrdup(
                 "VALUES (SDO_GEOR.INIT(NULL,NULL))" ) );
         }
     }
@@ -522,7 +533,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                 "interleaving=%s "
                 "compression=%s "
                 "'",
-                nRasterRows, nRasterColumns, 
+                nRasterRows, nRasterColumns,
                 nColumnBlockSize, nRowBlockSize,
                 pszCellDepth,
                 szInterleaving,
@@ -538,7 +549,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                 "interleaving=%s "
                 "compression=%s "
                 "'",
-                nRasterRows, nRasterColumns, nRasterBands, 
+                nRasterRows, nRasterColumns, nRasterBands,
                 nColumnBlockSize, nRowBlockSize, nBandBlockSize,
                 pszCellDepth,
                 szInterleaving,
@@ -599,7 +610,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
     if( bUpdate )
     {
-        strcpy( szCommand, CPLSPrintf( 
+        strcpy( szCommand, CPLSPrintf(
             "UPDATE %s T SET %s = GR1 WHERE %s RETURNING %s INTO GR1;",
             pszTable, pszColumn, pszWhere, pszColumn ) );
     }
@@ -665,11 +676,13 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         if( ! poStmt->Execute() )
         {
             delete poStmt;
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                 "Failure to initialize GeoRaster" );
             return false;
         }
+
         CPLFree( pszDataTable );
+
         pszDataTable = CPLStrdup( szBindRDT );
         nRasterId    = nBindRID;
 
@@ -726,7 +739,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
         "      LOB(RASTERBLOCK) STORE AS (NOCACHE NOLOGGING)';\n"
         "  ELSE\n"
-        "    EXECUTE IMMEDIATE 'DELETE FROM '||:rdt||' WHERE RASTERID ='||:rid||' ';\n" 
+        "    EXECUTE IMMEDIATE 'DELETE FROM '||:rdt||' WHERE RASTERID ='||:rid||' ';\n"
         "  END IF;\n"
         "\n"
         "  STM := 'INSERT INTO '||:rdt||' VALUES (:1,0,:2-1,:3-1,:4-1,\n"
@@ -761,7 +774,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     if( ! poStmt->Execute() )
     {
         delete poStmt;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "Failure to initialize GeoRaster" );
         return false;
     }
@@ -815,6 +828,8 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0;
     bOrderlyAccess      = true;
+    sDInfo.global_state = 0;
+    sCInfo.global_state = 0;
 }
 
 //  ---------------------------------------------------------------------------
@@ -847,7 +862,7 @@ void GeoRasterWrapper::SetGeoReference( int nSRIDIn )
     nSRID = nSRIDIn;
 
     bIsReferenced = true;
-    
+
     bFlushMetadata = true;
 }
 
@@ -857,11 +872,6 @@ void GeoRasterWrapper::SetGeoReference( int nSRIDIn )
 
 void GeoRasterWrapper::SetCompression( const char* pszType, int nQuality )
 {
-    if( poConnection->GetVersion() > 10 )
-    {
-        return; /* sdo_geor.CreateTemplate alredy did that */
-    }
-
     pszCompressionType = CPLStrdup( pszType );
     nCompressQuality = nQuality;
 
@@ -880,7 +890,7 @@ void GeoRasterWrapper::SetCompression( const char* pszType, int nQuality )
 
     if( EQUALN( pszCompressionType, "JPEG", 4 ) )
     {
-        CPLCreateXMLElementAndValue( psNode, "quality", 
+        CPLCreateXMLElementAndValue( psNode, "quality",
             CPLSPrintf( "%d", nCompressQuality ) );
     }
 
@@ -965,11 +975,11 @@ void GeoRasterWrapper::GetRasterInfo( void )
         nRasterBands = 1;
     }
 
-    //  ------------------------------------------------------------------- 
+    //  -------------------------------------------------------------------
     //  Get Interleaving mode
-    //  ------------------------------------------------------------------- 
+    //  -------------------------------------------------------------------
 
-    strncpy( szInterleaving, CPLGetXMLValue( phMetadata, 
+    strncpy( szInterleaving, CPLGetXMLValue( phMetadata,
                             "rasterInfo.interleaving", "BSQ" ), 4 );
 
     //  -------------------------------------------------------------------
@@ -1023,6 +1033,8 @@ void GeoRasterWrapper::GetRasterInfo( void )
     {
         nCompressQuality = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.compression.quality", "75" ) );
+
+        strcpy( szInterleaving, "BIP" );
     }
 
     //  -------------------------------------------------------------------
@@ -1044,7 +1056,7 @@ void GeoRasterWrapper::GetRasterInfo( void )
 
     char szPyramidType[OWCODE];
 
-    strcpy( szPyramidType, CPLGetXMLValue( phMetadata, 
+    strcpy( szPyramidType, CPLGetXMLValue( phMetadata,
                             "rasterInfo.pyramid.type", "None" ) );
 
     if( EQUAL( szPyramidType, "DECREASE" ) )
@@ -1053,9 +1065,9 @@ void GeoRasterWrapper::GetRasterInfo( void )
                             "rasterInfo.pyramid.maxLevel", "0" ) );
     }
 
-    //  ------------------------------------------------------------------- 
+    //  -------------------------------------------------------------------
     //  Prepare to get Extents
-    //  ------------------------------------------------------------------- 
+    //  -------------------------------------------------------------------
 
     bIsReferenced       = EQUAL( "TRUE", CPLGetXMLValue( phMetadata,
                             "spatialReferenceInfo.isReferenced", "FALSE" ) );
@@ -1092,7 +1104,7 @@ bool GeoRasterWrapper::GetImageExtent( double *padfTransform )
         "WHERE %s",
         pszColumn, 0,            0,
         pszColumn, 0,            nRasterColumns,
-        pszColumn, nRasterRows,  0, 
+        pszColumn, nRasterRows,  0,
         pszColumn, nRasterRows,  nRasterColumns,
         pszTable,
         pszWhere ) );
@@ -1269,7 +1281,7 @@ void GeoRasterWrapper::InitializeLayersNode()
         {
             psSLayer = CPLCreateXMLNode( pslInfo, CXT_Element, "subLayer" );
 
-            CPLCreateXMLElementAndValue( psSLayer, "layerNumber", 
+            CPLCreateXMLElementAndValue( psSLayer, "layerNumber",
                 CPLSPrintf( "%d", n + 1 ) );
 
             CPLCreateXMLElementAndValue( psSLayer, "layerDimensionOrdinate",
@@ -1422,7 +1434,7 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
     CPLFree( pabyBlockBuf2 );
     delete poStmtRead;
     delete poStmtWrite;
-    
+
     // --------------------------------------------------------------------
     // Restore the level 0 dimensions from metadata info
     // --------------------------------------------------------------------
@@ -1462,7 +1474,7 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
             nColumnBlockSize  = nXSize;
             nRowBlockSize     = nYSize;
         }
-        
+
         // ----------------------------------------------------------------
         // Recalculate blocks quantity
         // ----------------------------------------------------------------
@@ -1496,7 +1508,7 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
 
     if ( pabyBlockBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
+        CPLError( CE_Failure, CPLE_OutOfMemory,
                 "InitializeIO - Block Buffer" );
         return false;
     }
@@ -1618,7 +1630,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         {
             CPLDebug("GEOR", "BLOB size (%ld) is smaller than expected (%ld) !",
                 nBytesRead,  nBlockBytes );
-            
+
             memset( pData, 0, nGDALBlockBytes );
 
             return true;
@@ -1642,7 +1654,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
             GDALSwapWords( pabyBlockBuf, nWordSize, nWordCount, nWordSize );
         }
 #endif
-    
+
         //  ----------------------------------------------------------------
         //  Uncompress
         //  ----------------------------------------------------------------
@@ -1738,7 +1750,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     int nBlock = CALCULATEBLOCK( nBand, nXOffset, nYOffset, nBandBlockSize,
                                  nTotalColumnBlocks, nTotalRowBlocks );
-    
+
     //  --------------------------------------------------------------------
     //  Read interleaved block
     //  --------------------------------------------------------------------
@@ -1839,10 +1851,10 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
         {
             nWriteBytes = CompressDeflate();
         }
-        
+
         pabyOutBuf = pabyBlockBuf2;
     }
-    
+
     //  --------------------------------------------------------------------
     //  Pack bits ( inside pabyOutBuf )
     //  --------------------------------------------------------------------
@@ -2101,7 +2113,7 @@ bool GeoRasterWrapper::FlushMetadata()
         "  UPDATE %s T SET %s = GR1 WHERE %s;\n"
         "\n"
         "  COMMIT;\n"
-        "END;", 
+        "END;",
         pszColumn, pszTable, pszWhere,
         UNKNOWN_CRS,
         UNKNOWN_CRS,
@@ -2272,62 +2284,125 @@ void GeoRasterWrapper::PackNBits( GByte* pabyData )
 //                                                             UncompressJpeg()
 //  ---------------------------------------------------------------------------
 
-const static int Q5table[64] = {
-    4, 4, 4, 4, 
-    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6,
-    5, 5, 6, 5, 5, 6, 7, 6, 6, 6, 6, 6, 6, 7, 8, 7, 8, 8, 
-    8, 7, 8, 9, 9, 10, 10, 9, 9, 11, 12, 13, 12, 11, 14, 16, 16, 14, 
-    20, 21, 20, 27, 27, 36
+const static int K2Chrominance[64] =
+{
+    17, 18, 24, 47, 99, 99, 99, 99,
+    18, 21, 26, 66, 99, 99, 99, 99,
+    24, 26, 56, 99, 99, 99, 99, 99,
+    47, 66, 99, 99, 99, 99, 99, 99,
+    99, 99, 99, 99, 99, 99, 99, 99,
+    99, 99, 99, 99, 99, 99, 99, 99,
+    99, 99, 99, 99, 99, 99, 99, 99,
+    99, 99, 99, 99, 99, 99, 99, 99
 };
 
-static const int AC_BITS[16] = { 
-    0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125 
+static const int AC_BITS[16] =
+{
+    0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119
 };
 
-static const int AC_HUFFVAL[256] = {
-    0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,          
-    0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
-    0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08,
-    0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0,
-    0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16,
-    0x17, 0x18, 0x19, 0x1A, 0x25, 0x26, 0x27, 0x28,
-    0x29, 0x2A, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
-    0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
-    0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
-    0x5A, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
-    0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
-    0x7A, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
-    0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,
-    0x99, 0x9A, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
-    0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6,
-    0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5,
-    0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4,
-    0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
-    0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA,
-    0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
-    0xF9, 0xFA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
+static const int AC_HUFFVAL[256] =
+{
+      0,   1,   2,   3,  17,   4,   5,  33,  49,   6,  18,
+     65,  81,   7,  97, 113,  19,  34,  50, 129,   8,  20,
+     66, 145, 161, 177, 193,   9,  35,  51,  82, 240,  21,
+     98, 114, 209,  10,  22,  36,  52, 225,  37, 241,  23,
+     24,  25,  26,  38,  39,  40,  41,  42,  53,  54,  55,
+     56,  57,  58,  67,  68,  69,  70,  71,  72,  73,  74,
+     83,  84,  85,  86,  87,  88,  89,  90,  99, 100, 101,
+    102, 103, 104, 105, 106, 115, 116, 117, 118, 119, 120,
+    121, 122, 130, 131, 132, 133, 134, 135, 136, 137, 138,
+    146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163,
+    164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181,
+    182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 199,
+    200, 201, 202, 210, 211, 212, 213, 214, 215, 216, 217,
+    218, 226, 227, 228, 229, 230, 231, 232, 233, 234, 242,
+    243, 244, 245, 246, 247, 248, 249, 250
 };
 
-static const int DC_BITS[16] = { 
-    0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 
+static const int DC_BITS[16] =
+{
+    0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
 };
 
-static const int DC_HUFFVAL[256] = {
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
-    0x08, 0x09, 0x0A, 0x0B 
+static const int DC_HUFFVAL[256] =
+{
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 };
+
+/***
+ *
+ * Load the tables based on the Java's JAI default values.
+ *
+ * JPEGQTable.K2Chrominance.getScaledInstance()
+ * JPEGHuffmanTable.StdACChrominance
+ * JPEGHuffmanTable.StdDCChrominance
+ *
+ ***/
+
+void JPEG_LoadTables( JQUANT_TBL* hquant_tbl_ptr,
+                      JHUFF_TBL* huff_ac_ptr,
+                      JHUFF_TBL* huff_dc_ptr,
+                      unsigned int nQuality )
+{
+    int i = 0;
+    float fscale_factor;
+
+    //  --------------------------------------------------------------------
+    //  Scale Quantization table based on quality
+    //  --------------------------------------------------------------------
+
+    fscale_factor = (float) jpeg_quality_scaling( nQuality ) / 100.0;
+
+    for ( i = 0; i < 64; i++ )
+    {
+        UINT16 temp = (UINT16) round( K2Chrominance[i] * fscale_factor );
+        if ( temp <= 0 )
+            temp = 1;
+        if ( temp > 255 )
+            temp = 255;
+        hquant_tbl_ptr->quantval[i] = (UINT16) temp;
+    }
+
+    //  --------------------------------------------------------------------
+    //  Load AC huffman table
+    //  --------------------------------------------------------------------
+
+    for ( i = 1; i <= 16; i++ )
+    {
+        /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
+        huff_ac_ptr->bits[i] = (UINT8) AC_BITS[i-1];
+    }
+
+    for ( i = 0; i < 256; i++ )
+    {
+        /* symbols[] is the list of Huffman symbols, in code-length order */
+        huff_ac_ptr->huffval[i] = (UINT8) AC_HUFFVAL[i];
+    }
+
+    //  --------------------------------------------------------------------
+    //  Load DC huffman table
+    //  --------------------------------------------------------------------
+
+    for ( i = 1; i <= 16; i++ )
+    {
+        /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
+        huff_dc_ptr->bits[i] = (UINT8) DC_BITS[i-1];
+    }
+
+    for ( i = 0; i < 256; i++ )
+    {
+        /* symbols[] is the list of Huffman symbols, in code-length order */
+        huff_dc_ptr->huffval[i] = (UINT8) DC_HUFFVAL[i];
+    }
+}
 
 void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
 {
+    //  --------------------------------------------------------------------
+    //  Load JPEG in a virtual file
+    //  --------------------------------------------------------------------
+
     const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.jpg", pabyBlockBuf );
 
     FILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
@@ -2336,90 +2411,47 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
 
     fpImage = VSIFOpenL( pszMemFile, "rb" );
 
-    struct jpeg_decompress_struct sDInfo;
-    struct jpeg_error_mgr sJErr;
+    //  --------------------------------------------------------------------
+    //  Initialize decompressor
+    //  --------------------------------------------------------------------
 
-    sDInfo.err = jpeg_std_error( &sJErr );
-    jpeg_create_decompress( &sDInfo );
-
-    /* -------------------------------------------------------------------- */
-    /*      Load table for abbreviated JPEG-B                               */
-    /* -------------------------------------------------------------------- */
-
-    int nComponentsToLoad = -1; /* doesn't load any table */
-
-    if( EQUAL( pszCompressionType, "JPEG-B") )
+    if( ! sDInfo.global_state )
     {
-        nComponentsToLoad = 3;
-    }
+        sDInfo.err = jpeg_std_error( &sJErr );
+        jpeg_create_decompress( &sDInfo );
 
-    for( int n = 0; n < nComponentsToLoad; n++ )
-    {
-        JQUANT_TBL* quant_ptr;
-        int i = 0;
+        // -----------------------------------------------------------------
+        // Load table for abbreviated JPEG-B
+        // -----------------------------------------------------------------
 
-        /* ---------------------------------------------------------------- */
-        /*      Load Quantization table.                                    */
-        /* ---------------------------------------------------------------- */
+        int nComponentsToLoad = -1; /* doesn't load any table */
 
-        if (sDInfo.quant_tbl_ptrs[n] == NULL)
-            sDInfo.quant_tbl_ptrs[n] = 
-                jpeg_alloc_quant_table((j_common_ptr) &(sDInfo));
-        
-        quant_ptr = sDInfo.quant_tbl_ptrs[n];	/* quant_ptr is JQUANT_TBL* */
-
-        for (i = 0; i < 64; i++) {
-            /* Qtable[] is desired quantization table, in natural array order */
-            quant_ptr->quantval[i] = (UINT16) Q5table[i];
+        if( EQUAL( pszCompressionType, "JPEG-B") )
+        {
+            nComponentsToLoad = nBandBlockSize;
         }
 
-        /* ---------------------------------------------------------------- */
-        /*      Load AC huffman table.                                      */
-        /* ---------------------------------------------------------------- */
-
-        JHUFF_TBL  *huff_ptr;
-
-        if (sDInfo.ac_huff_tbl_ptrs[n] == NULL)
+        for( int n = 0; n < nComponentsToLoad; n++ )
+        {
+            sDInfo.quant_tbl_ptrs[n] =
+                jpeg_alloc_quant_table( (j_common_ptr) &sDInfo );
             sDInfo.ac_huff_tbl_ptrs[n] =
-                jpeg_alloc_huff_table((j_common_ptr)&sDInfo);
-
-        huff_ptr = sDInfo.ac_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
-
-        for (i = 1; i <= 16; i++) {
-            /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
-            huff_ptr->bits[i] = (UINT8) AC_BITS[i-1];
-        }
-
-        for (i = 0; i < 256; i++) {
-            /* symbols[] is the list of Huffman symbols, in code-length order */
-            huff_ptr->huffval[i] = (UINT8) AC_HUFFVAL[i];
-        }
-
-        /* ---------------------------------------------------------------- */
-        /*      Load DC huffman table.                                      */
-        /* ---------------------------------------------------------------- */
-
-        if (sDInfo.dc_huff_tbl_ptrs[n] == NULL)
+                jpeg_alloc_huff_table( (j_common_ptr) &sDInfo );
             sDInfo.dc_huff_tbl_ptrs[n] =
-                jpeg_alloc_huff_table((j_common_ptr)&sDInfo);
-
-        huff_ptr = sDInfo.dc_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
-
-        for (i = 1; i <= 16; i++) {
-            /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
-            huff_ptr->bits[i] = (UINT8) DC_BITS[i-1];
+                jpeg_alloc_huff_table( (j_common_ptr) &sDInfo );
+            
+            JPEG_LoadTables( sDInfo.quant_tbl_ptrs[n],
+                             sDInfo.ac_huff_tbl_ptrs[n],
+                             sDInfo.dc_huff_tbl_ptrs[n],
+                             nCompressQuality );
         }
 
-        for (i = 0; i < 256; i++) {
-            /* symbols[] is the list of Huffman symbols, in code-length order */
-            huff_ptr->huffval[i] = (UINT8) DC_HUFFVAL[i];
-        }
     }
 
     jpeg_vsiio_src( &sDInfo, fpImage );
     jpeg_read_header( &sDInfo, TRUE );
 
-    sDInfo.out_color_space = sDInfo.jpeg_color_space;
+    sDInfo.out_color_space = ( nBandBlockSize == 1 ? JCS_GRAYSCALE : JCS_RGB );
 
     jpeg_start_decompress( &sDInfo );
 
@@ -2433,7 +2465,6 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
     }
 
     jpeg_finish_decompress( &sDInfo );
-    jpeg_destroy_decompress( &sDInfo );
 
     VSIFCloseL( fpImage );
 
@@ -2446,33 +2477,75 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
 
 unsigned long GeoRasterWrapper::CompressJpeg( void )
 {
+    //  --------------------------------------------------------------------
+    //  Load JPEG in a virtual file
+    //  --------------------------------------------------------------------
+
     const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.dat", pabyBlockBuf );
 
     FILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
 
-    struct jpeg_compress_struct sCInfo;
-    struct jpeg_error_mgr sJErr;
-
     boolean write_all_tables = TRUE;
- 
+
     if( EQUAL( pszCompressionType, "JPEG-B") )
     {
         write_all_tables = FALSE;
     }
 
-    sCInfo.err = jpeg_std_error( &sJErr );
-    jpeg_create_compress( &sCInfo );
-    jpeg_vsiio_dest( &sCInfo, fpImage );
-    sCInfo.image_width = nColumnBlockSize;
-    sCInfo.image_height = nRowBlockSize;
-    sCInfo.input_components = nBandBlockSize;
-    sCInfo.in_color_space = ( nBandBlockSize == 1 ? JCS_GRAYSCALE : JCS_RGB );
-    jpeg_set_defaults( &sCInfo );
-    sCInfo.JFIF_major_version = 1;
-    sCInfo.JFIF_minor_version = 2;
-    jpeg_set_quality( &sCInfo, nCompressQuality, TRUE );
+    //  --------------------------------------------------------------------
+    //  Initialize decompressor
+    //  --------------------------------------------------------------------
+
+    if( ! sCInfo.global_state )
+    {
+        sCInfo.err = jpeg_std_error( &sJErr );
+        jpeg_create_compress( &sCInfo );
+
+        jpeg_vsiio_dest( &sCInfo, fpImage );
+        
+        sCInfo.image_width = nColumnBlockSize;
+        sCInfo.image_height = nRowBlockSize;
+        sCInfo.input_components = nBandBlockSize;
+        sCInfo.in_color_space = (nBandBlockSize == 1 ? JCS_GRAYSCALE : JCS_RGB);
+        jpeg_set_defaults( &sCInfo );
+        sCInfo.JFIF_major_version = 1;
+        sCInfo.JFIF_minor_version = 2;
+        jpeg_set_quality( &sCInfo, nCompressQuality, TRUE );
+
+        // -----------------------------------------------------------------
+        // Load table for abbreviated JPEG-B
+        // -----------------------------------------------------------------
+
+        int nComponentsToLoad = -1; /* doesn't load any table */
+
+        if( EQUAL( pszCompressionType, "JPEG-B") )
+        {
+            nComponentsToLoad = nBandBlockSize;
+        }
+
+        for( int n = 0; n < nComponentsToLoad; n++ )
+        {
+            sCInfo.quant_tbl_ptrs[n] =
+                jpeg_alloc_quant_table( (j_common_ptr) &sCInfo );
+            sCInfo.ac_huff_tbl_ptrs[n] =
+                jpeg_alloc_huff_table( (j_common_ptr) &sCInfo );
+            sCInfo.dc_huff_tbl_ptrs[n] =
+                jpeg_alloc_huff_table( (j_common_ptr) &sCInfo );
+
+            JPEG_LoadTables( sCInfo.quant_tbl_ptrs[n],
+                             sCInfo.ac_huff_tbl_ptrs[n],
+                             sCInfo.dc_huff_tbl_ptrs[n],
+                             nCompressQuality );
+        }
+    }
+    else
+    {
+        jpeg_vsiio_dest( &sCInfo, fpImage );
+    }
+    
     jpeg_suppress_tables( &sCInfo, ! write_all_tables );
     jpeg_start_compress( &sCInfo, write_all_tables );
+    
     GByte* pabyScanline = pabyBlockBuf;
 
     for( int iLine = 0; iLine < nRowBlockSize; iLine++ )
@@ -2483,7 +2556,6 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
     }
 
     jpeg_finish_compress( &sCInfo );
-    jpeg_destroy_compress( &sCInfo );
 
     VSIFCloseL( fpImage );
 
@@ -2528,7 +2600,7 @@ bool GeoRasterWrapper::UncompressDeflate( unsigned long nBufferSize )
 
     if( nDestLen != nBlockBytes )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "ZLib decompressed buffer size (%ld) expected (%ld)", nDestLen, nBlockBytes );
         return false;
     }
