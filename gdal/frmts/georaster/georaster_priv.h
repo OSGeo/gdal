@@ -251,6 +251,10 @@ private:
     void                UncompressJpeg( unsigned long nBufferSize );
     bool                UncompressDeflate( unsigned long nBufferSize );
 
+    struct jpeg_decompress_struct sDInfo;
+    struct jpeg_compress_struct sCInfo;
+    struct jpeg_error_mgr sJErr;
+
 public:
 
     static char**       ParseIdentificator( const char* pszStringID );
