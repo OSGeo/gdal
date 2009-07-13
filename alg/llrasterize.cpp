@@ -469,8 +469,8 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             // step from pixel to pixel.
             while( dfX < dfXEnd )
             {
-                int iX = (int) dfX;
-                int iY = (int) dfY;
+                int iX = (int) floor(dfX);
+                int iY = (int) floor(dfY);
 
                 // burn in the current point.  We should be able to 
                 // drop the Y check if we clip in Y properly.
