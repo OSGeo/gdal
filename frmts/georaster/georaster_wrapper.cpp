@@ -2356,7 +2356,7 @@ void JPEG_LoadTables( JQUANT_TBL* hquant_tbl_ptr,
 
     for ( i = 0; i < 64; i++ )
     {
-        UINT16 temp = (UINT16) round( K2Chrominance[i] * fscale_factor );
+        UINT16 temp = (UINT16) floor( K2Chrominance[i] * fscale_factor + 0.5 );
         if ( temp <= 0 )
             temp = 1;
         if ( temp > 255 )
@@ -2481,7 +2481,7 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
     //  Load JPEG in a virtual file
     //  --------------------------------------------------------------------
 
-    const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.dat", pabyBlockBuf );
+    const char* pszMemFile = CPLSPrintf( "/vsimem/geor_%p.jpg", pabyBlockBuf );
 
     FILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
 
