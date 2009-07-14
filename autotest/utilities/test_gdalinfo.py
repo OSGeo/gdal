@@ -103,14 +103,26 @@ def test_gdalinfo_5():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
+    try:
+        os.remove('../gcore/data/byte.tif.aux.xml')
+    except:
+        pass
+    
     ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif').read()
     if ret.find('STATISTICS_MINIMUM=74') != -1:
+        gdaltest.post_reason( 'got wrong minimum.' )
+        print ret
         return 'fail'
 
     ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -stats ../gcore/data/byte.tif').read()
     if ret.find('STATISTICS_MINIMUM=74') == -1:
+        gdaltest.post_reason( 'got wrong minimum (2).' )
+        print ret
         return 'fail'
 
+    # We will blow an exception if the file does not exist now!
+    os.remove('../gcore/data/byte.tif.aux.xml')
+    
     return 'success'
 
 ###############################################################################
