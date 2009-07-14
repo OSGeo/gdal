@@ -2414,7 +2414,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     //      Transverse Mercator
     //      Gauss-Kruger
     //      Lambert Conformal Conic
-    //      Plate Carrée
+    //      Plate Carree
     //      Hammer Aitoff
     //      Lambert North Polar Azimuthal Equal Area
     //      Lambert South Polar Azimuthal Equal Area
@@ -2444,7 +2444,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     {
         oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUALN( pszProjName, "Plate Carrée", 10 ) )
+    else if( EQUALN( pszProjName, "Plate Carr" "\xE9" "e", 10 ) ) /* 'eacute' in ISO-8859-1 */
     {
         oSRS.SetEquirectangular( dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
@@ -2709,7 +2709,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         }
         else if EQUAL( pszProjName, SRS_PT_EQUIRECTANGULAR )
         {
-            pszProjectionOut = CPLStrdup( "Plate Carrée" );
+            pszProjectionOut = CPLStrdup( "Plate Carr" "\xE9" "e" ); /* 'eacute' in ISO-8859-1 */
         }
         else if EQUAL( pszProjName, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA )
         {   
