@@ -161,7 +161,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     OGRSpatialReferenceH hSRS = NULL;
 
-    const char *pszWKT = GDALGetProjectionRef( hBand );
+    const char *pszWKT = GDALGetProjectionRef( hSrcDS );
 
     if( pszWKT != NULL && strlen(pszWKT) != 0 )
         hSRS = OSRNewSpatialReference( pszWKT );
