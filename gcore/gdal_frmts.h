@@ -138,6 +138,7 @@ void CPL_DLL GDALRegister_TMS(void);
 void CPL_DLL GDALRegister_EIR(void);
 void CPL_DLL GDALRegister_GEOR(void);
 void CPL_DLL GDALRegister_TIL(void);
+void CPL_DLL GDALRegister_R(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
