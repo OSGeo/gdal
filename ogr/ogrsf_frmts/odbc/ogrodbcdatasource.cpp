@@ -98,8 +98,20 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     if ( (pszDelimiter = strrchr( pszWrkName, ':' )) != NULL )
     {
         char *pszOBracket = strchr( pszDelimiter + 1, '(' );
-        if( pszOBracket == NULL )
+
+        if( strchr(pszDelimiter,'\\') != NULL
+            || strchr(pszDelimiter,'/') != NULL )
+        {
+            /*
+            ** if there are special tokens then this isn't really
+            ** the srs table name, so avoid further processing.
+            */
+        }
+        else if( pszOBracket == NULL )
+        {
             pszSRSTableName = CPLStrdup( pszDelimiter + 1 );
+            *pszDelimiter = '\0';
+        }
         else
         {
             char *pszCBracket = strchr( pszOBracket, ')' );
@@ -116,8 +128,9 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
             *pszOBracket = '\0';
             pszSRSTableName = CPLStrdup( pszDelimiter + 1 );
             pszSRTextCol = CPLStrdup( pszOBracket + 1 );
+
+            *pszDelimiter = '\0';
         }
-        *pszDelimiter = '\0';
     }
 
 /* -------------------------------------------------------------------- */
