@@ -4221,6 +4221,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->TryLoadXML();
     poDS->ApplyPamInfo();
 
+    poDS->bMetadataChanged = FALSE;
+    poDS->bGeoTIFFInfoChanged = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
