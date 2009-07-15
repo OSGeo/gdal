@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        GDALDriverH hDriver;
+        OGRSFDriverH hDriver;
         const char* pszDriverName = "ESRI Shapefile";
 
         printf( "Creating new index file...\n" );
