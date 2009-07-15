@@ -99,6 +99,10 @@ def test_gdal_contour_1():
 
     lyr = ds.ExecuteSQL("select * from contour order by elev asc")
 
+    if lyr.GetSpatialRef().ExportToWkt().find('GCS_WGS_1984') == -1:
+        print 'Did not get expected spatial ref'
+        return 'fail'
+
     if lyr.GetFeatureCount() != len(expected_envelopes):
         print 'Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_envelopes))
         return 'fail'
