@@ -1284,66 +1284,66 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
     }
 	
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[0]));
-    SetMetadataItem("RPC_LINE_OFF",sVal);
+    SetMetadataItem("LINE_OFF",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[5]));
-    SetMetadataItem("RPC_LINE_SCALE",sVal);
+    SetMetadataItem("LINE_SCALE",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[1]));
-    SetMetadataItem("RPC_SAMP_OFF",sVal);
+    SetMetadataItem("SAMP_OFF",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[6]));
-    SetMetadataItem("RPC_SAMP_SCALE",sVal);
+    SetMetadataItem("SAMP_SCALE",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[2]));
-    SetMetadataItem("RPC_LAT_OFF",sVal);
+    SetMetadataItem("LAT_OFF",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[7]));
-    SetMetadataItem("RPC_LAT_SCALE",sVal);
+    SetMetadataItem("LAT_SCALE",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[3]));
-    SetMetadataItem("RPC_LONG_OFF",sVal);
+    SetMetadataItem("LONG_OFF",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[8]));
-    SetMetadataItem("RPC_LONG_SCALE",sVal);
+    SetMetadataItem("LONG_SCALE",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[4]));
-    SetMetadataItem("RPC_HEIGHT_OFF",sVal);
+    SetMetadataItem("HEIGHT_OFF",sVal,"RPC");
     snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[9]));
-    SetMetadataItem("RPC_HEIGHT_SCALE",sVal);
+    SetMetadataItem("HEIGHT_SCALE",sVal,"RPC");
 
     sVal[0] = '\0'; 
     int i;
     for(i = 0; i < 20; i++ )
        snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ", 
            atof(papszFields[10+i]));
-    SetMetadataItem("RPC_LINE_NUM_COEFF",sVal);
+    SetMetadataItem("LINE_NUM_COEFF",sVal,"RPC");
 
     sVal[0] = '\0'; 
     for(i = 0; i < 20; i++ )
        snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
            atof(papszFields[30+i]));
-    SetMetadataItem("RPC_LINE_DEN_COEFF",sVal);
+    SetMetadataItem("LINE_DEN_COEFF",sVal,"RPC");
       
     sVal[0] = '\0'; 
     for(i = 0; i < 20; i++ )
        snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
            atof(papszFields[50+i]));
-    SetMetadataItem("RPC_SAMP_NUM_COEFF",sVal);
+    SetMetadataItem("SAMP_NUM_COEFF",sVal,"RPC");
       
     sVal[0] = '\0'; 
     for(i = 0; i < 20; i++ )
        snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
            atof(papszFields[70+i]));
-    SetMetadataItem("RPC_SAMP_DEN_COEFF",sVal);
+    SetMetadataItem("SAMP_DEN_COEFF",sVal,"RPC");
 	
     snprintf(sVal, sizeof(sVal), "%.16g", 
         atof(papszFields[3]) - atof(papszFields[8]));
-    SetMetadataItem("RPC_MIN_LONG",sVal);
+    SetMetadataItem("MIN_LONG",sVal,"RPC");
 
     snprintf(sVal, sizeof(sVal), "%.16g", 
         atof(papszFields[3]) + atof(papszFields[8]) );
-    SetMetadataItem("RPC_MAX_LONG",sVal);
+    SetMetadataItem("MAX_LONG",sVal,"RPC");
 
     snprintf(sVal, sizeof(sVal), "%.16g",
         atof(papszFields[2]) - atof(papszFields[7]));
-    SetMetadataItem("RPC_MIN_LAT",sVal);
+    SetMetadataItem("MIN_LAT",sVal,"RPC");
 
     snprintf(sVal, sizeof(sVal), "%.16g",
         atof(papszFields[2]) + atof(papszFields[7]));
-    SetMetadataItem("RPC_MAX_LAT",sVal);
+    SetMetadataItem("MAX_LAT",sVal,"RPC");
 
     /*   Handle the chipping case where the image is a subset. */
     double rowOffset, colOffset;
