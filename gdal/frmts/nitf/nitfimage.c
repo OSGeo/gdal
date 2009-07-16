@@ -212,7 +212,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     if( !EQUALN(psFile->szVersion,"NITF01.",7) )
     {
-        if (psSegInfo->nSegmentHeaderSize < nOffset + 35+2)
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 35+2)
             goto header_too_small;
 
         psImage->nRows = atoi(NITFGetField(szTemp,pachHeader,nOffset,8));
@@ -235,7 +235,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      means UTM (north).  So for 2.0 products we change 'N' to ' '    */
 /*      to conform to 2.1 conventions.                                  */
 /* -------------------------------------------------------------------- */
-    if (psSegInfo->nSegmentHeaderSize < nOffset + 1)
+    if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1)
         goto header_too_small;
     psImage->chICORDS = pachHeader[nOffset++];
     psImage->bHaveIGEOLO = FALSE;
@@ -256,7 +256,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         int iCoord;
 
         psImage->bHaveIGEOLO = TRUE;
-        if (psSegInfo->nSegmentHeaderSize < nOffset + 4 * 15)
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 4 * 15)
             goto header_too_small;
 
         for( iCoord = 0; iCoord < 4; iCoord++ )
@@ -338,11 +338,11 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      Read the image comments.                                        */
 /* -------------------------------------------------------------------- */
     {
-        if (psSegInfo->nSegmentHeaderSize < nOffset + 1 )
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1 )
             goto header_too_small;
 
         nNICOM = atoi(NITFGetField( szTemp, pachHeader, nOffset++, 1));
-        if (psSegInfo->nSegmentHeaderSize < nOffset + 1 + 80 * nNICOM )
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1 + 80 * nNICOM )
             goto header_too_small;
 
         psImage->pszComments = (char *) CPLMalloc(nNICOM*80+1);
@@ -354,7 +354,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Read more stuff.                                                */
 /* -------------------------------------------------------------------- */
-    if (psSegInfo->nSegmentHeaderSize < nOffset + 2 )
+    if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 2 )
         goto header_too_small;
 
     NITFGetField( psImage->szIC, pachHeader, nOffset, 2 );
@@ -362,7 +362,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
     if( psImage->szIC[0] != 'N' )
     {
-        if (psSegInfo->nSegmentHeaderSize < nOffset + 4 )
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 4 )
             goto header_too_small;
 
         NITFGetField( psImage->szCOMRAT, pachHeader, nOffset, 4 );
@@ -370,7 +370,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     }
 
     /* NBANDS */
-    if (psSegInfo->nSegmentHeaderSize < nOffset + 1 )
+    if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1 )
         goto header_too_small;
     psImage->nBands = atoi(NITFGetField(szTemp,pachHeader,nOffset,1));
     nOffset++;
@@ -378,7 +378,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     /* XBANDS */
     if( psImage->nBands == 0 )
     {
-        if (psSegInfo->nSegmentHeaderSize < nOffset + 5 )
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 5 )
             goto header_too_small;
         psImage->nBands = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
         nOffset += 5;
@@ -412,7 +412,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
         int nLUTS;
 
-        if (psSegInfo->nSegmentHeaderSize < nOffset + 2 + 6 + 4 + 1 + 5)
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 2 + 6 + 4 + 1 + 5)
             goto header_too_small;
 
         NITFTrimWhite(
@@ -444,10 +444,12 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             psBandInfo->nSignificantLUTEntries = 256;
         }
 
-        psBandInfo->nLUTLocation = nOffset + psSegInfo->nSegmentHeaderStart;
+        psBandInfo->nLUTLocation = nOffset +
+                                   (int)psSegInfo->nSegmentHeaderStart;
 
         psBandInfo->pabyLUT = (unsigned char *) CPLCalloc(768,1);
-        if (psSegInfo->nSegmentHeaderSize < nOffset + psBandInfo->nSignificantLUTEntries )
+        if ( (int)psSegInfo->nSegmentHeaderSize <
+             nOffset + psBandInfo->nSignificantLUTEntries )
             goto header_too_small;
 
         memcpy( psBandInfo->pabyLUT, pachHeader + nOffset, 
@@ -456,14 +458,16 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         if( nLUTS == 3 )
         {
-            if (psSegInfo->nSegmentHeaderSize < nOffset + psBandInfo->nSignificantLUTEntries )
+            if ( (int)psSegInfo->nSegmentHeaderSize <
+                 nOffset + psBandInfo->nSignificantLUTEntries )
                 goto header_too_small;
 
             memcpy( psBandInfo->pabyLUT+256, pachHeader + nOffset, 
                     psBandInfo->nSignificantLUTEntries );
             nOffset += psBandInfo->nSignificantLUTEntries;
 
-            if (psSegInfo->nSegmentHeaderSize < nOffset + psBandInfo->nSignificantLUTEntries )
+            if ( (int)psSegInfo->nSegmentHeaderSize <
+                 nOffset + psBandInfo->nSignificantLUTEntries )
                 goto header_too_small;
 
             memcpy( psBandInfo->pabyLUT+512, pachHeader + nOffset, 
@@ -484,7 +488,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      files.  In this case guess reasonable values for these          */
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */
-    if( nOffset + 40 > psSegInfo->nSegmentHeaderSize )
+    if( nOffset + 40 > (int)psSegInfo->nSegmentHeaderSize )
     {
         psImage->chIMODE = 'B';
         psImage->nBlocksPerRow = 1;
@@ -572,7 +576,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Read TREs if we have them.                                      */
 /* -------------------------------------------------------------------- */
-    else if( nOffset+10 <= psSegInfo->nSegmentHeaderSize )
+    else if( nOffset+10 <= (int)psSegInfo->nSegmentHeaderSize )
     {
         int nUserTREBytes, nExtendedTREBytes;
         
@@ -584,7 +588,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         if( nUserTREBytes > 3 )
         {
-            if (psSegInfo->nSegmentHeaderSize < nOffset + nUserTREBytes )
+            if( (int)psSegInfo->nSegmentHeaderSize < nOffset + nUserTREBytes )
                 goto header_too_small;
 
             psImage->nTREBytes = nUserTREBytes - 3;
@@ -603,14 +607,15 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Are there managed TRE bytes to recognise?                       */
 /* -------------------------------------------------------------------- */
-        if (psSegInfo->nSegmentHeaderSize < nOffset + 5 )
+        if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 5 )
             goto header_too_small;
         nExtendedTREBytes = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
         nOffset += 5;
 
         if( nExtendedTREBytes > 3 )
         {
-            if (psSegInfo->nSegmentHeaderSize < nOffset + nExtendedTREBytes )
+            if( (int)psSegInfo->nSegmentHeaderSize < 
+                            nOffset + nExtendedTREBytes )
                 goto header_too_small;
 
             psImage->pachTRE = (char *) 
@@ -1202,11 +1207,11 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /*      Figure out how big the working buffer will need to be.          */
 /* -------------------------------------------------------------------- */
     if( psImage->nBitsPerSample != psImage->nWordSize * 8 )
-        nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
+        nWrkBufSize = (int)psImage->nLineOffset * (psImage->nBlockHeight-1)
             + (psImage->nBitsPerSample * (psImage->nBlockWidth) + 7) / 8;
     else
-        nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
-            + psImage->nPixelOffset * (psImage->nBlockWidth - 1)
+        nWrkBufSize = (int)psImage->nLineOffset * (psImage->nBlockHeight-1)
+            + (int)psImage->nPixelOffset * (psImage->nBlockWidth - 1)
             + psImage->nWordSize;
 
     if (nWrkBufSize == 0)
@@ -1363,7 +1368,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(psImage->szIC,"C2") || EQUAL(psImage->szIC,"M2") )
     {
-        int nRawBytes;
+        size_t nRawBytes;
         NITFSegmentInfo *psSegInfo;
         int success;
         GByte *pabyRawData;
@@ -1377,13 +1382,14 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         }
 
         if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
-            nRawBytes = psImage->panBlockStart[iFullBlock+1] 
-                - psImage->panBlockStart[iFullBlock];
+            nRawBytes = (size_t)( psImage->panBlockStart[iFullBlock+1] 
+                - psImage->panBlockStart[iFullBlock] );
         else
         {
             psSegInfo = psImage->psFile->pasSegmentInfo + psImage->iSegment;
-            nRawBytes =  psSegInfo->nSegmentStart + psSegInfo->nSegmentSize
-                - psImage->panBlockStart[iFullBlock];
+            nRawBytes = (size_t)(psSegInfo->nSegmentStart 
+                                + psSegInfo->nSegmentSize 
+                                - psImage->panBlockStart[iFullBlock]);
         }
 
         pabyRawData = (GByte *) VSIMalloc( nRawBytes );
@@ -1422,7 +1428,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(psImage->szIC,"C1") || EQUAL(psImage->szIC,"M1") )
     {
-        int nRawBytes;
+        size_t nRawBytes;
         NITFSegmentInfo *psSegInfo;
         int success;
         GByte *pabyRawData;
@@ -1436,13 +1442,14 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         }
 
         if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
-            nRawBytes = psImage->panBlockStart[iFullBlock+1] 
-                - psImage->panBlockStart[iFullBlock];
+            nRawBytes = (size_t)( psImage->panBlockStart[iFullBlock+1]
+                                  - psImage->panBlockStart[iFullBlock] );
         else
         {
             psSegInfo = psImage->psFile->pasSegmentInfo + psImage->iSegment;
-            nRawBytes =  psSegInfo->nSegmentStart + psSegInfo->nSegmentSize
-                - psImage->panBlockStart[iFullBlock];
+            nRawBytes = (size_t)( psSegInfo->nSegmentStart 
+                            + psSegInfo->nSegmentSize
+                            - psImage->panBlockStart[iFullBlock] );
         }
 
         pabyRawData = (GByte *) VSIMalloc( nRawBytes );
@@ -1465,7 +1472,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
         
-        success = NITFUncompressBILEVEL( psImage, pabyRawData, nRawBytes, 
+        success = NITFUncompressBILEVEL( psImage, pabyRawData, (int)nRawBytes, 
                                          pData );
         
         CPLFree( pabyRawData );
@@ -1498,7 +1505,7 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                          int nBand, void *pData )
 
 {
-    int   nWrkBufSize;
+    GUIntBig   nWrkBufSize;
     int   iBaseBlock = nBlockX + nBlockY * psImage->nBlocksPerRow;
     int   iFullBlock = iBaseBlock 
         + (nBand-1) * psImage->nBlocksPerRow * psImage->nBlocksPerColumn;
@@ -1528,7 +1535,7 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 
         if( VSIFSeekL( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
                       SEEK_SET ) != 0 
-            || (int) VSIFWriteL( pData, 1, nWrkBufSize,
+            || (GUIntBig) VSIFWriteL( pData, 1, (size_t)nWrkBufSize,
                                 psImage->psFile->fp ) != nWrkBufSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
@@ -1567,7 +1574,7 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 
 {
     GUIntBig   nLineOffsetInFile;
-    int        nLineSize;
+    size_t        nLineSize;
     unsigned char *pabyLineBuf;
 
     if( nBand == 0 )
@@ -1594,7 +1601,7 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         + psImage->nLineOffset * nLine
         + psImage->nBandOffset * (nBand-1);
 
-    nLineSize = psImage->nPixelOffset * (psImage->nCols - 1) 
+    nLineSize = (size_t)psImage->nPixelOffset * (psImage->nCols - 1) 
         + psImage->nWordSize;
 
     VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
@@ -1665,7 +1672,7 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 
 {
     GUIntBig   nLineOffsetInFile;
-    int        nLineSize;
+    size_t        nLineSize;
     unsigned char *pabyLineBuf;
 
     if( nBand == 0 )
@@ -1692,7 +1699,7 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         + psImage->nLineOffset * nLine
         + psImage->nBandOffset * (nBand-1);
 
-    nLineSize = psImage->nPixelOffset * (psImage->nCols - 1) 
+    nLineSize = (size_t)psImage->nPixelOffset * (psImage->nCols - 1) 
         + psImage->nWordSize;
 
     VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
@@ -2607,7 +2614,7 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
     int colorGrayscaleSectionSize = 0;
     int colormapSubSectionSize = 0;
     NITFFile *psFile = psImage->psFile;
-    int i, j;
+    unsigned int i, j;
     unsigned char nOffsetRecs;
     NITFColormapRecord* colormapRecords;
     unsigned int colormapOffsetTableOffset;
@@ -2615,7 +2622,7 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
     
     NITFBandInfo *psBandInfo = psImage->pasBandInfo;
   
-    for( i = 0; i < psImage->nLocCount; i++ )
+    for( i = 0; (int)i < psImage->nLocCount; i++ )
     {
         if( psImage->pasLocations[i].nLocId == LID_ColorGrayscaleSectionSubheader )
         {
@@ -3229,7 +3236,7 @@ GUIntBig NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
 /*      Comments.                                                       */
 /* -------------------------------------------------------------------- */
     nNICOM = atoi(NITFGetField(szTemp,psImage->pachHeader,
-                               nWrkOffset - nIMOffset,1));
+                               (int)(nWrkOffset - nIMOffset),1));
         
     if( EQUAL(pszFieldName,"NICOM") )
         return nWrkOffset;

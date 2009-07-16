@@ -748,7 +748,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         iPartialCell = 0;
     else
     {
-      iPartialCell = int(floor(100.0 - 
+      iPartialCell = (GByte)int(floor(100.0 - 
            (dfNodataCount*100.0/(psDTED->nXSize * psDTED->nYSize))));
         if (iPartialCell < 1)
            iPartialCell=1;
