@@ -117,6 +117,10 @@ class VSIUnixStdioHandle : public VSIVirtualHandle
 {
   public:
     FILE          *fp;
+    vsi_l_offset  nOffset;
+    int           bLastOpWrite;
+    int           bLastOpRead;
+    int           bAtEOF;
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -146,6 +150,14 @@ int VSIUnixStdioHandle::Close()
 int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
+    // seeks that do nothing are still surprisingly expensive with MSVCRT.
+    // try and short circuit if possible.
+    if( nWhence == SEEK_SET && nOffset == this->nOffset )
+        return 0;
+
+    if( nWhence == SEEK_END && nOffset == 0 && bAtEOF )
+        return 0;
+
     int     nResult = VSI_FSEEK64( fp, nOffset, nWhence );
     int     nError = errno;
 
@@ -174,6 +186,28 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 #endif 
 
+    if( nResult != -1 )
+    {
+        if( nWhence == SEEK_SET )
+        {
+            this->nOffset = nOffset;
+            bAtEOF = FALSE;
+        }
+        else if( nWhence == SEEK_END )
+        {
+            this->nOffset = VSI_FTELL64( fp );
+            bAtEOF = TRUE;
+        }
+        else if( nWhence == SEEK_CUR )
+        {
+            this->nOffset += nOffset;
+            bAtEOF = FALSE;
+        }
+    }
+        
+    bLastOpWrite = FALSE;
+    bLastOpRead = FALSE;
+
     errno = nError;
     return nResult;
 }
@@ -185,12 +219,15 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 vsi_l_offset VSIUnixStdioHandle::Tell()
 
 {
+#ifdef notdef
     vsi_l_offset    nOffset = VSI_FTELL64( fp );
     int             nError = errno;
 
     VSIDebug2( "VSIUnixStdioHandle::Tell(%p) = %ld", fp, (long)nOffset );
 
     errno = nError;
+    return nOffset;
+#endif
     return nOffset;
 }
 
@@ -213,6 +250,19 @@ int VSIUnixStdioHandle::Flush()
 size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
+/* -------------------------------------------------------------------- */
+/*      If a fwrite() is followed by an fread(), the POSIX rules are    */
+/*      that some of the write may still be buffered and lost.  We      */
+/*      are required to do a seek between to force flushing.   So we    */
+/*      keep careful track of what happened last to know if we          */
+/*      skipped a flushing seek that we may need to do now.             */
+/* -------------------------------------------------------------------- */
+    if( bLastOpWrite )
+        VSI_FSEEK64( fp, nOffset, SEEK_SET );
+
+/* -------------------------------------------------------------------- */
+/*      Perform the read.                                               */
+/* -------------------------------------------------------------------- */
     size_t  nResult = fread( pBuffer, nSize, nCount, fp );
     int     nError = errno;
 
@@ -220,6 +270,14 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
                fp, (long)nSize, (long)nCount, (long)nResult );
 
     errno = nError;
+
+/* -------------------------------------------------------------------- */
+/*      Update current offset.                                          */
+/* -------------------------------------------------------------------- */
+    nOffset += nSize * nResult;
+    bLastOpWrite = FALSE;
+    bLastOpRead = TRUE;
+    
     return nResult;
 }
 
@@ -231,6 +289,19 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
                                   size_t nCount )
 
 {
+/* -------------------------------------------------------------------- */
+/*      If a fwrite() is followed by an fread(), the POSIX rules are    */
+/*      that some of the write may still be buffered and lost.  We      */
+/*      are required to do a seek between to force flushing.   So we    */
+/*      keep careful track of what happened last to know if we          */
+/*      skipped a flushing seek that we may need to do now.             */
+/* -------------------------------------------------------------------- */
+    if( bLastOpRead )
+        VSI_FSEEK64( fp, nOffset, SEEK_SET );
+
+/* -------------------------------------------------------------------- */
+/*      Perform the write.                                              */
+/* -------------------------------------------------------------------- */
     size_t  nResult = fwrite( pBuffer, nSize, nCount, fp );
     int     nError = errno;
 
@@ -238,6 +309,14 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
                fp, (long)nSize, (long)nCount, (long)nResult );
 
     errno = nError;
+
+/* -------------------------------------------------------------------- */
+/*      Update current offset.                                          */
+/* -------------------------------------------------------------------- */
+    nOffset += nSize * nResult;
+    bLastOpWrite = TRUE;
+    bLastOpRead = FALSE;
+    
     return nResult;
 }
 
@@ -248,7 +327,13 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
 int VSIUnixStdioHandle::Eof()
 
 {
-    return feof( fp );
+    if( !bAtEOF )
+        bAtEOF = feof(fp);
+
+    if( bAtEOF )
+        return 1;
+    else
+        return 0;
 }
 
 /************************************************************************/
@@ -281,6 +366,10 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
     VSIUnixStdioHandle *poHandle = new VSIUnixStdioHandle;
     
     poHandle->fp = fp;
+    poHandle->nOffset = 0;
+    poHandle->bLastOpWrite = FALSE;
+    poHandle->bLastOpRead = FALSE;
+    poHandle->bAtEOF = FALSE;
 
     errno = nError;
     return poHandle;
