@@ -1998,6 +1998,13 @@ void pk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nx,
                sInt4 * minpk, sInt4 * iclean, sInt4 * l3264b, sInt4 * jer,
                sInt4 * ndjer, sInt4 * kjer)
 {
+#ifndef _FORTRAN
+   
+   printf ("Can not pack things unless using FORTRAN!\n");
+   return;
+
+#else
+
    sInt4 gdsTmpl;
    sInt4 pdsTmpl;
    sInt4 drsTmpl;
@@ -2012,13 +2019,6 @@ void pk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nx,
 /*   float *a;*/
    char f_useMDL = 1;
    int i;
-
-#ifndef _FORTRAN
-   
-   printf ("Can not pack things unless using FORTRAN!\n");
-   return;
-
-#else
 
    myAssert (*ndjer >= 8);
    /* Init the error handling array. */
