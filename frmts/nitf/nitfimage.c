@@ -1539,7 +1539,7 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                                 psImage->psFile->fp ) != nWrkBufSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Unable to write %d byte block from " CPL_FRMT_GUIB ".", 
+                      "Unable to write " CPL_FRMT_GUIB " byte block from " CPL_FRMT_GUIB ".", 
                       nWrkBufSize, psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
         }
