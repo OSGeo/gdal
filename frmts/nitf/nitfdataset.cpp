@@ -39,7 +39,7 @@
 CPL_CVSID("$Id$");
 
 static void NITFPatchImageLength( const char *pszFilename,
-                                  long nImageOffset, 
+                                  GUIntBig nImageOffset, 
                                   GIntBig nPixelCount, const char *pszIC );
 static void NITFWriteTextSegments( const char *pszFilename, char **papszList );
 
@@ -48,7 +48,7 @@ static CPLErr NITFSetColorInterpretation( NITFImage *psImage,
                                           int nBand,
                                           GDALColorInterp eInterp );
 #ifdef JPEG_SUPPORTED
-static int NITFWriteJPEGImage( GDALDataset *, FILE *, int, char **,
+static int NITFWriteJPEGImage( GDALDataset *, FILE *, vsi_l_offset, char **,
                                GDALProgressFunc pfnProgress, 
                                void * pProgressData );
 #endif
@@ -604,7 +604,7 @@ void NITFRasterBand::Unpack( GByte* pData )
       static const int s_Shift2[] = {6, 4, 2, 0};
       // unpack 2-bit in-place in reverse
       for (i = n; --i >= 0; )
-        pData[i] = (pData[i>>2] >> s_Shift2[i&3]) & 0x03;
+        pData[i] = (pData[i>>2] >> (GByte)s_Shift2[i&3]) & 0x03;
        
       break;
     }
@@ -613,7 +613,7 @@ void NITFRasterBand::Unpack( GByte* pData )
       static const int s_Shift4[] = {4, 0};
       // unpack 4-bit in-place in reverse
       for (i = n; --i >= 0; )
-        pData[i] = (pData[i>>1] >> s_Shift4[i&1]) & 0x07;
+        pData[i] = (pData[i>>1] >> (GByte)s_Shift4[i&1]) & 0x07;
        
       break;
     }
@@ -771,7 +771,7 @@ NITFDataset::~NITFDataset()
 /* -------------------------------------------------------------------- */
 /*      Close the underlying NITF file.                                 */
 /* -------------------------------------------------------------------- */
-    int nImageStart = -1;
+    GUIntBig nImageStart = 0;
     if( psFile != NULL )
     {
         if (psFile->nSegmentCount > 0)
@@ -2404,10 +2404,10 @@ void NITFDataset::InitializeCGMMetadata()
 /* -------------------------------------------------------------------- */
         char *pabyCGMData, *pszEscapedCGMData;
 
-        pabyCGMData = (char *) CPLCalloc(1,psSegment->nSegmentSize);
+        pabyCGMData = (char *) CPLCalloc(1,(size_t)psSegment->nSegmentSize);
         if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
                        SEEK_SET ) != 0 
-            || VSIFReadL( pabyCGMData, 1, psSegment->nSegmentSize, 
+            || VSIFReadL( pabyCGMData, 1, (size_t)psSegment->nSegmentSize, 
                           psFile->fp ) != psSegment->nSegmentSize )
         {
             CPLError( CE_Warning, CPLE_FileIO, 
@@ -2418,7 +2418,7 @@ void NITFDataset::InitializeCGMMetadata()
         }
 
         pszEscapedCGMData = CPLEscapeString( pabyCGMData, 
-                                             psSegment->nSegmentSize, 
+                                             (int)psSegment->nSegmentSize, 
                                              CPLES_BackslashQuotable );
 
         papszCGMMetadata = 
@@ -2473,10 +2473,10 @@ void NITFDataset::InitializeTextMetadata()
         char *pabyTextData;
 
         /* Allocate one extra byte for the NULL terminating character */
-        pabyTextData = (char *) CPLCalloc(1,psSegment->nSegmentSize+1);
+        pabyTextData = (char *) CPLCalloc(1,(size_t)psSegment->nSegmentSize+1);
         if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
                        SEEK_SET ) != 0 
-            || VSIFReadL( pabyTextData, 1, psSegment->nSegmentSize, 
+            || VSIFReadL( pabyTextData, 1, (size_t)psSegment->nSegmentSize, 
                           psFile->fp ) != psSegment->nSegmentSize )
         {
             CPLError( CE_Warning, CPLE_FileIO, 
@@ -2771,8 +2771,8 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 
     while( iSegOffset < iSegSize-1 )
     {
-        int nReadSize = MIN((int)sizeof(abyBlock),iSegSize - iSegOffset);
-        int i;
+        size_t nReadSize = MIN((size_t)sizeof(abyBlock),(size_t)(iSegSize - iSegOffset));
+        size_t i;
 
         if( VSIFSeekL( psFile->fp, panJPEGBlockOffset[0] + iSegOffset, 
                        SEEK_SET ) != 0 )
@@ -3106,7 +3106,7 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
     if( poJ2KDriver )
     {
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
-        int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
+        GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
 
         CPLString osDSName;
 
@@ -3406,7 +3406,7 @@ NITFDataset::NITFCreateCopy(
     {
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
         GDALDataset *poJ2KDataset = NULL;
-        int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
+        GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
         CPLString osDSName;
 
         osDSName.Printf( "J2K_SUBFILE:%d,%d,%s", nImageOffset, -1,
@@ -3444,7 +3444,7 @@ NITFDataset::NITFCreateCopy(
     {
 #ifdef JPEG_SUPPORTED
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
-        int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
+        GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
         int bSuccess;
         
         bSuccess = 
@@ -3563,7 +3563,7 @@ NITFDataset::NITFCreateCopy(
 /************************************************************************/
 
 static void NITFPatchImageLength( const char *pszFilename,
-                                  long nImageOffset,
+                                  GUIntBig nImageOffset,
                                   GIntBig nPixelCount,
                                   const char *pszIC )
 
@@ -3578,7 +3578,7 @@ static void NITFPatchImageLength( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
-    if ((double)nFileLen >= 1e12)
+    if (nFileLen >= (GUIntBig)1e12)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999999",
@@ -3813,7 +3813,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                     GDALProgressFunc pfnProgress, void * pProgressData );
 
 static int 
-NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset, 
+NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset, 
                     char **papszOptions,
                     GDALProgressFunc pfnProgress, void * pProgressData )
 {
