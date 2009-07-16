@@ -35,12 +35,13 @@
 
 CPL_CVSID("$Id$");
 
-static int NITFWriteBLOCKA( FILE* fp, int nOffsetUDIDL, int nOffsetTRE, 
+static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL, 
+                            vsi_l_offset nOffsetTRE, 
                             int *pnOffset,
                             char **papszOptions );
 static int NITFWriteTREsFromOptions(
     FILE* fp,
-    int nOffsetUDIDL, int nOffsetTRE,
+    vsi_l_offset nOffsetUDIDL, vsi_l_offset nOffsetTRE,
     int *pnOffset,
     char **papszOptions );
 
@@ -826,8 +827,8 @@ int NITFCreate( const char *pszFilename,
     if( CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL )
     {
         NITFWriteBLOCKA( fp,
-                         nCur + nUDIDLOffset, 
-                         nCur + nOffset, 
+                         nCur + (GUIntBig)nUDIDLOffset, 
+                         nCur + (GUIntBig)nOffset, 
                          &nOffset, 
                          papszOptions );
     }
@@ -836,8 +837,8 @@ int NITFCreate( const char *pszFilename,
     {
         NITFWriteTREsFromOptions(
             fp,
-            nCur + nUDIDLOffset, 
-            nCur + nOffset, 
+            nCur + (GUIntBig)nUDIDLOffset, 
+            nCur + (GUIntBig)nOffset, 
             &nOffset, 
             papszOptions );
     }
@@ -920,8 +921,8 @@ int NITFCreate( const char *pszFilename,
 /************************************************************************/
 
 static int NITFWriteTRE( FILE* fp,
-                         int nOffsetUDIDL, 
-                         int nOffsetTREInHeader, 
+                         vsi_l_offset nOffsetUDIDL, 
+                         vsi_l_offset nOffsetTREInHeader, 
                          int  *pnOffset,
                          const char *pszTREName, char *pabyTREData, int nTREDataSize )
 
@@ -976,7 +977,7 @@ static int NITFWriteTRE( FILE* fp,
 
 static int NITFWriteTREsFromOptions(
     FILE* fp,
-    int nOffsetUDIDL, int nOffsetTRE,
+    vsi_l_offset nOffsetUDIDL, vsi_l_offset nOffsetTRE,
     int *pnOffset,
     char **papszOptions )    
 
@@ -1038,7 +1039,8 @@ static int NITFWriteTREsFromOptions(
 /*                          NITFWriteBLOCKA()                           */
 /************************************************************************/
 
-static int NITFWriteBLOCKA( FILE* fp, int nOffsetUDIDL, int nOffsetTRE, 
+static int NITFWriteBLOCKA( FILE* fp, vsi_l_offset nOffsetUDIDL, 
+                            vsi_l_offset nOffsetTRE, 
                             int *pnOffset,
                             char **papszOptions )
 
@@ -1084,7 +1086,8 @@ static int NITFWriteBLOCKA( FILE* fp, int nOffsetUDIDL, int nOffsetTRE,
             if( pszValue == NULL )
                 pszValue = "";
 
-            if (iStart + MAX(0,iSize-strlen(pszValue)) + MIN(iSize,strlen(pszValue)) >
+            if (iStart + MAX( 0 , (size_t)iSize - strlen(pszValue) )
+                       + MIN( (size_t)iSize , strlen(pszValue) ) >
                 sizeof(szBLOCKA))
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too much data for BLOCKA");
@@ -1092,8 +1095,8 @@ static int NITFWriteBLOCKA( FILE* fp, int nOffsetUDIDL, int nOffsetTRE,
             }
 
             memset( szBLOCKA + iStart, ' ', iSize );
-            memcpy( szBLOCKA + iStart + MAX(0,iSize-strlen(pszValue)), 
-                    pszValue, MIN(iSize,strlen(pszValue)) );
+            memcpy( szBLOCKA + iStart + MAX((size_t)0,iSize-strlen(pszValue)),
+                    pszValue, MIN((size_t)iSize,strlen(pszValue)) );
         }
 
         // required field - semantics unknown. 
@@ -1154,7 +1157,7 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
     nSegDefSize = nCount * (nHeaderLenSize + nDataLenSize);
     pachSegDef = (char *) CPLMalloc(nCount * (nHeaderLenSize + nDataLenSize));
     
-    if (VSIFReadL( pachSegDef, 1, nSegDefSize, psFile->fp ) != nSegDefSize )
+    if((int)VSIFReadL( pachSegDef, 1, nSegDefSize, psFile->fp) != nSegDefSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot read segment info");
         CPLFree( pachSegDef );
@@ -1466,7 +1469,7 @@ const NITFSeries* NITFGetSeriesInfo(const char* pszFilename)
     {
         if (pszFilename[i] == '.')
         {
-            if (i < strlen(pszFilename) - 3)
+            if (i < (int)strlen(pszFilename) - 3)
             {
                 seriesCode[0] = pszFilename[i+1];
                 seriesCode[1] = pszFilename[i+2];

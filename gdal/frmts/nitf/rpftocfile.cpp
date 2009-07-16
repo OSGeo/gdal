@@ -424,7 +424,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
         else
         {
             /* Trick so that frames are numbered north to south */
-            frameRow = (entry->nVertFrames-1) - frameRow;
+            frameRow = (unsigned short)((entry->nVertFrames-1) - frameRow);
         }
    
         if (frameRow >= entry->nVertFrames)

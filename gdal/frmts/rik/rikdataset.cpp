@@ -375,9 +375,10 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         GByte character[8192]; // only need LZW_CODES for size.
 
         int i;
+        GByte j;
 
-        for( i = 0; i < LZW_CLEAR; i++ )
-            character[i] = i;
+        for( j = 0; j < LZW_CLEAR; j++ )
+            character[j] = j;
         for( i = 0; i < LZW_CODES; i++ )
             prefix[i] = LZW_NO_SUCH_CODE;
 
@@ -394,9 +395,9 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         code = GetNextLZWCode( codeBits, blockData, filePos,
                                fileAlign, bitsTaken );
 
-        OutputPixel( code, pImage, poRDS->nBlockXSize,
+        OutputPixel( (GByte)code, pImage, poRDS->nBlockXSize,
                      lineBreak, imageLine, imagePos );
-        lastOutput = code;
+        lastOutput = (GByte)code;
 
         while( imageLine >= 0 &&
                (imageLine || imagePos < poRDS->nBlockXSize - 1) &&
@@ -443,9 +444,9 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     throw "Clear Error";
                 }
 
-                OutputPixel( code, pImage, poRDS->nBlockXSize,
+                OutputPixel( (GByte)code, pImage, poRDS->nBlockXSize,
                              lineBreak, imageLine, imagePos );
-                lastOutput = code;
+                lastOutput = (GByte)code;
             }
             else
             {
@@ -478,7 +479,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     stack[stackPtr++] = character[decodeCode];
                     decodeCode = prefix[decodeCode];
                 }
-                stack[stackPtr++] = decodeCode;
+                stack[stackPtr++] = (GByte)decodeCode;
 
                 if( i == LZW_CODES || decodeCode >= LZW_NO_SUCH_CODE )
                 {
@@ -520,12 +521,12 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
 #if RIK_ALLOW_BLOCK_ERRORS
                 CPLDebug( "RIK",
-                          "LZW Decompress Failed\n"
+                          "LZW Decompress Failed: %s\n"
                           " blocks: %d\n"
                           " blockindex: %d\n"
                           " blockoffset: %X\n"
                           " blocksize: %d\n",
-                          blocks, nBlockIndex,
+                          errStr, blocks, nBlockIndex,
                           nBlockOffset, nBlockSize );
                 break;
 #else
