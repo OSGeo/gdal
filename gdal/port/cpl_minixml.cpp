@@ -1811,7 +1811,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Write file.                                                     */
 /* -------------------------------------------------------------------- */
-    if( VSIFWriteL( pszDoc, 1, nLength, fp ) != nLength )
+    if( VSIFWriteL( pszDoc, 1, (size_t)nLength, fp ) != nLength )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Failed to write whole XML document (%.500s).",

@@ -334,7 +334,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /*      Record the current file offset, the beginning of the first      */
 /*      data record.                                                    */
 /* -------------------------------------------------------------------- */
-    nFirstRecordOffset = VSIFTellL( fpDDF );
+    nFirstRecordOffset = (long)VSIFTellL( fpDDF );
     
     return TRUE;
 }
