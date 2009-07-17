@@ -910,7 +910,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
         return CE_Failure;
     }
     VSIFSeekL( fp, 100, SEEK_SET );
-    if (VSIFReadL( panIndex, 8, psTInfo->nBlocks, fp ) != psTInfo->nBlocks)
+    if ((int)VSIFReadL( panIndex, 8, psTInfo->nBlocks, fp ) != psTInfo->nBlocks)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "AIGReadBlockIndex: Cannot read block info");
@@ -1065,8 +1065,4 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
 
     return( CE_None );
 }
-
-
-
-
 

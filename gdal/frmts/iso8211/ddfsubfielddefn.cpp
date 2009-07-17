@@ -903,7 +903,7 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
                 else
                     iOut = i;
 
-                pachData[iOut] = (nNewValue & nMask) >> (i*8);
+                pachData[iOut] = (char)((nNewValue & nMask) >> (i*8));
                 nMask *= 256;
             }
             break;
