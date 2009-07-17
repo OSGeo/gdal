@@ -902,7 +902,10 @@ unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
         (ub4) 1,
         (dvoid*) pBuffer,
         (ub4) nSize,
-        0, 0, 0, 0 ),
+        0,
+        0,
+        0,
+        0 ),
         hError ) )
     {
         return 0;
@@ -969,7 +972,10 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
         (ub4) 1,
         (dvoid*) pszBuffer,
         (ub4) nSize,
-        0, 0, 0, 0),
+        (dvoid*) NULL,
+        NULL,
+        (ub2) 0,
+        (ub1) SQLCS_IMPLICIT ),
         hError ) )
     {
         CPLFree( pszBuffer );
@@ -1190,7 +1196,7 @@ const char *OWParseValue( const char* pszText,
 }
 
 /*****************************************************************************/
-/*                            Parse Release Version                          */
+/*                            Parse SDO_GEOR.INIT entries                    */
 /*****************************************************************************/
 
 /* Input Examples:
