@@ -63,6 +63,10 @@ class GeoRasterWrapper;
 
 // JPEG compression support
 
+#ifdef WIN32
+#define HAVE_BOOLEAN
+#endif
+
 CPL_C_START
 #include <jpeglib.h>
 CPL_C_END
