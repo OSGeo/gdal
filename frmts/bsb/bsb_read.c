@@ -463,7 +463,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
     }
 
     /* This is the offset to the data of first line, if there is no index table */
-    nOffsetFirstLine = VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
+    nOffsetFirstLine = (int)(VSIFTellL( fp ) - psInfo->nBufferSize) + psInfo->nBufferOffset;
 
 /* -------------------------------------------------------------------- */
 /*       Read the line offset list                                      */
@@ -481,7 +481,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         /* Seek fp to point the last 4 byte integer which points
         * the offset of the first line */
         VSIFSeekL( fp, 0, SEEK_END );
-        nFileLen = VSIFTellL( fp );
+        nFileLen = (int)VSIFTellL( fp );
         VSIFSeekL( fp, nFileLen - 4, SEEK_SET );
 
         VSIFReadL(&nVal, 1, 4, fp);//last 4 bytes
@@ -829,7 +829,8 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
                  nScanline != psInfo->nYSize-1 &&
                  psInfo->panLineOffset[nScanline+1] == -1)
         {
-            int nCurOffset = VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
+            int nCurOffset = (int)(VSIFTellL( fp ) - psInfo->nBufferSize) + 
+                                psInfo->nBufferOffset;
             psInfo->panLineOffset[nScanline+1] = nCurOffset;
             if (BSBSeekAndCheckScanlineNumber(psInfo, nScanline + 1, FALSE))
             {
@@ -869,8 +870,8 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     if( nScanline < psInfo->nYSize-1 &&
         psInfo->panLineOffset[nScanline+1] == -1 )
     {
-        psInfo->panLineOffset[nScanline+1] = 
-            VSIFTellL( fp ) - psInfo->nBufferSize + psInfo->nBufferOffset;
+        psInfo->panLineOffset[nScanline+1] = (int)
+            (VSIFTellL( fp ) - psInfo->nBufferSize) + psInfo->nBufferOffset;
     }
 
     return TRUE;

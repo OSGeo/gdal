@@ -276,7 +276,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 
     poHandle->fp = fp;
     poHandle->nSubregionOffset = nOff;
-    poHandle->nSubregionSize = nSize;
+    poHandle->nSubregionSize = (int)nSize;
 
     VSIFSeekL( fp, nOff, SEEK_SET );
 
@@ -305,9 +305,9 @@ int VSISubFileFilesystemHandler::Stat( const char * pszFilename,
     if( nResult == 0 )
     {
         if( nSize != 0 )
-            psStatBuf->st_size = nSize;
+            psStatBuf->st_size = (long)nSize;
         else
-            psStatBuf->st_size -= nOff;
+            psStatBuf->st_size -= (long)nOff;
     }
 
     return nResult;
