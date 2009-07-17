@@ -298,7 +298,7 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     if( nBytesToRead + nOffset > poFile->nLength )
     {
-        nBytesToRead = poFile->nLength - nOffset;
+        nBytesToRead = (size_t)(poFile->nLength - nOffset);
         nCount = nBytesToRead / nSize;
     }
 
@@ -480,7 +480,7 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
     }
     else
     {
-        pStatBuf->st_size = poFile->nLength;
+        pStatBuf->st_size = (long)poFile->nLength;
         pStatBuf->st_mode = S_IFREG;
     }
 

@@ -195,7 +195,7 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             double *m = padfMatrix + 10 * iPixel;
 
-            pafLine[iPixel*2+0] = m[M11] + m[M22] + 2 * m[M12];
+            pafLine[iPixel*2+0] = (float)(m[M11] + m[M22] + 2 * m[M12]);
             pafLine[iPixel*2+1] = 0.0;
         }
     }
@@ -206,10 +206,10 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             double *m = padfMatrix + 10 * iPixel;
             
             // real
-            pafLine[iPixel*2 + 0] = SQRT_2 * (m[M13] + m[M23]);
+            pafLine[iPixel*2 + 0] = (float)(SQRT_2 * (m[M13] + m[M23]));
 
             // imaginary
-            pafLine[iPixel*2 + 1] = - SQRT_2 * (m[M24] + m[M14]);
+            pafLine[iPixel*2 + 1] = (float)(- SQRT_2 * (m[M24] + m[M14]));
         }
     }
     else if( nBand == 3 ) /* C13 */
@@ -219,10 +219,10 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             double *m = padfMatrix + 10 * iPixel;
             
             // real
-            pafLine[iPixel*2 + 0] = 2*m[M33] + m[M22] - m[M11];
+            pafLine[iPixel*2 + 0] = (float)(2*m[M33] + m[M22] - m[M11]);
 
             // imaginary
-            pafLine[iPixel*2 + 1] = -2 * m[M34];
+            pafLine[iPixel*2 + 1] = (float)(-2 * m[M34]);
         }
     }
     else if( nBand == 4 ) /* C22 */
@@ -231,7 +231,7 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             double *m = padfMatrix + 10 * iPixel;
             
-            pafLine[iPixel*2+0] = 2 * (m[M11] - m[M22]);
+            pafLine[iPixel*2+0] = (float)(2 * (m[M11] - m[M22]));
             pafLine[iPixel*2+1] = 0.0;
         }
     }
@@ -242,10 +242,10 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             double *m = padfMatrix + 10 * iPixel;
             
             // real
-            pafLine[iPixel*2 + 0] = SQRT_2 * (m[M13] - m[M23]);
+            pafLine[iPixel*2 + 0] = (float)(SQRT_2 * (m[M13] - m[M23]));
 
             // imaginary
-            pafLine[iPixel*2 + 1] = SQRT_2 * (m[M23] - m[M14]);
+            pafLine[iPixel*2 + 1] = (float)(SQRT_2 * (m[M23] - m[M14]));
         }
     }
     else if( nBand == 6 ) /* C33 */
@@ -254,7 +254,7 @@ CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             double *m = padfMatrix + 10 * iPixel;
             
-            pafLine[iPixel*2+0] = m[M11] + m[M22] - 2 * m[M12];
+            pafLine[iPixel*2+0] = (float)(m[M11] + m[M22] - 2 * m[M12]);
             pafLine[iPixel*2+1] = 0.0;
         }
     }

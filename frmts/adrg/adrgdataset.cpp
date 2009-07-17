@@ -366,15 +366,15 @@ static unsigned int WriteLatitude(FILE* fd, double val)
 static int BeginLeader(FILE* fd, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                        int nFields)
 {
-    int pos = VSIFTellL(fd);
-    VSIFSeekL(fd, 24 + (sizeFieldLength + sizeFieldPos + sizeFieldTag) * nFields + 1, SEEK_CUR);
+    int pos = (int)VSIFTellL(fd);
+    VSIFSeekL(fd, 24 + (sizeFieldLength + sizeFieldPos + sizeFieldTag) * (vsi_l_offset)nFields + 1, SEEK_CUR);
     return pos;
 }
 
 static void FinishWriteLeader(FILE* fd, int beginPos, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                              int nFields, int* sizeOfFields, const char** nameOfFields)
 {
-    int endPos = VSIFTellL(fd);
+    int endPos = (int)VSIFTellL(fd);
     VSIFSeekL(fd, beginPos, SEEK_SET);
     
     int nLeaderSize = 24;
@@ -420,7 +420,7 @@ static void FinishWriteLeader(FILE* fd, int beginPos, int sizeFieldLength, int s
 static int BeginHeader(FILE* fd, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                        int nFields)
 {
-    int pos = VSIFTellL(fd);
+    int pos = (int)VSIFTellL(fd);
     VSIFSeekL(fd, 24 + (sizeFieldLength + sizeFieldPos + sizeFieldTag) * nFields + 1, SEEK_CUR);
     return pos;
 }
@@ -428,7 +428,7 @@ static int BeginHeader(FILE* fd, int sizeFieldLength, int sizeFieldPos, int size
 static void FinishWriteHeader(FILE* fd, int beginPos, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                              int nFields, int* sizeOfFields, const char** nameOfFields)
 {
-    int endPos = VSIFTellL(fd);
+    int endPos = (int)VSIFTellL(fd);
     VSIFSeekL(fd, beginPos, SEEK_SET);
     
     int nLeaderSize = 24;
@@ -571,7 +571,7 @@ ADRGDataset::~ADRGDataset()
                 nFields++;
         
                 /* Field PAD */
-                int endPos = VSIFTellL(fd);
+                int endPos = (int)VSIFTellL(fd);
                 char* pad = (char*)CPLMalloc(2047 - endPos);
                 memset(pad, ' ', 2047 - endPos);
                 VSIFWriteL(pad, 1, 2047 - endPos, fd);

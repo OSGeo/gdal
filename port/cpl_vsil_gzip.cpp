@@ -1060,7 +1060,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
             if (nCompressedSize == (GUIntBig) pStatBuf->st_size)
             {
                 /* Patch with the uncompressed size */
-                pStatBuf->st_size = nUncompressedSize;
+                pStatBuf->st_size = (long)nUncompressedSize;
                 return ret;
             }
         }
@@ -1077,7 +1077,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
             poHandle->Seek(0, SEEK_SET);
 
             /* Patch with the uncompressed size */
-            pStatBuf->st_size = uncompressed_size;
+            pStatBuf->st_size = (long)uncompressed_size;
             CacheLastStatedFile(pszFilename, poHandle, pStatBuf);
 
             /* Write a .properties file to avoid seeking next time */
@@ -1603,7 +1603,7 @@ int VSIZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBu
         else
         {
             /* Patching st_size with uncompressed file size */
-            pStatBuf->st_size = zipEntry->uncompressed_size;
+            pStatBuf->st_size = (long)zipEntry->uncompressed_size;
             if (zipEntry->bIsDir)
                 pStatBuf->st_mode = S_IFDIR;
             else
@@ -1622,7 +1622,7 @@ int VSIZipFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBu
             cpl_unzGetCurrentFileInfo (unzF, &file_info, NULL, 0, NULL, 0, NULL, 0);
 
             /* Patching st_size with uncompressed file size */
-            pStatBuf->st_size = file_info.uncompressed_size;
+            pStatBuf->st_size = (long)file_info.uncompressed_size;
             pStatBuf->st_mode = S_IFREG;
 
             cpl_unzCloseCurrentFile(unzF);

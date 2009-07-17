@@ -144,13 +144,13 @@ STATIC int compress_chunk(unsigned char *inbuf, int inlen, unsigned char *outbuf
 
 	while(m>=8) {
 	    if(outlen>=outbuflen) return -1;
-	    *outbuf++ = (reg>>(m-8)) & 0xff;
+	    *outbuf++ = (unsigned char)((reg>>(m-8)) & 0xff);
 	    outlen++;
 	    m-=8;
 	}
     }
     if(outlen>=outbuflen) return -1;
-    *outbuf++ = (reg << (8-m)) & 0xff;
+    *outbuf++ = (unsigned char)((reg << (8-m)) & 0xff);
 
     return outlen+1;
 }
@@ -173,7 +173,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
 	
 	if(table1[j] == 0xff) {
 	    i=1;
-	    while(newdata >= table2[table3[i]][2]) i++;
+	    while((int)newdata >= table2[table3[i]][2]) i++;
 
 	    j=table3[i-1];
 
@@ -183,13 +183,13 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
 		break;
 	    else {
 		if(outlen>=outbuflen) return -1;
-		*outbuf++ = table2[k][0];
+		*outbuf++ = (unsigned char)table2[k][0];
 		outlen++;
 	    }
 	} else {
 	    j=table1[j];
 	    if(outlen>=outbuflen) return -1;
-	    *outbuf++ = table2[j][0];
+	    *outbuf++ = (unsigned char)table2[j][0];
 	    outlen++;
 	}
 
@@ -217,7 +217,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
   from data from the previous detail level and plus new differential data. 
 */
 STATIC blxdata *reconstruct_horiz(blxdata *base, blxdata *diff, unsigned rows, unsigned cols, blxdata *out) {
-    int i,j;
+    unsigned int i,j;
     blxdata tmp;
 
     /* Last column */
@@ -251,7 +251,7 @@ STATIC blxdata *reconstruct_horiz(blxdata *base, blxdata *diff, unsigned rows, u
   from data from the previous detail level and plus new differential data. 
 */
 STATIC blxdata *reconstruct_vert(blxdata *base, blxdata *diff, unsigned rows, unsigned cols, blxdata *out) {
-    int i,j;
+    unsigned int i,j;
     blxdata tmp;
     
     /* Last row */
@@ -280,7 +280,7 @@ STATIC blxdata *reconstruct_vert(blxdata *base, blxdata *diff, unsigned rows, un
   Inverse of reconstruct_horiz
  */
 STATIC void decimate_horiz(blxdata *in, unsigned int rows, unsigned int cols, blxdata *base, blxdata *diff) {
-    int i,j;
+    unsigned int i,j;
     blxdata tmp;
 
     for(i=0; i<rows; i++) {
@@ -311,7 +311,7 @@ STATIC void decimate_horiz(blxdata *in, unsigned int rows, unsigned int cols, bl
   Inverse of reconstruct_vert
  */
 STATIC void decimate_vert(blxdata *in, unsigned int rows, unsigned int cols, blxdata *base, blxdata *diff) {
-    int i,j;
+    unsigned int i,j;
     blxdata tmp;
 
     for(i=0; i<rows; i+=2)
@@ -354,13 +354,13 @@ static int get_short_be(unsigned char **data) {
 }
 
 static void put_short_le(short data, unsigned char **bufptr) {
-    *(*bufptr)++ = data & 0xff;
-    *(*bufptr)++ = (data>>8) & 0xff;
+    *(*bufptr)++ = (unsigned char)(data & 0xff);
+    *(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
 }
 
 static void put_short_be(short data, unsigned char **bufptr) {
-    *(*bufptr)++ = (data>>8) & 0xff;
-    *(*bufptr)++ = data & 0xff;
+    *(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
+    *(*bufptr)++ = (unsigned char)(data & 0xff);
 }
 
 
@@ -381,33 +381,29 @@ static int get_unsigned_short_be(unsigned char **data) {
 }
 
 static void put_unsigned_short_le(unsigned short data, unsigned char **bufptr) {
-    *(*bufptr)++ = data & 0xff;
-    *(*bufptr)++ = (data>>8) & 0xff;
+    *(*bufptr)++ = (unsigned char)(data & 0xff);
+    *(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
 }
 
 static void put_unsigned_short_be(unsigned short data, unsigned char **bufptr) {
-    *(*bufptr)++ = (data>>8) & 0xff;
-    *(*bufptr)++ = data & 0xff;
+    *(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
+    *(*bufptr)++ = (unsigned char)(data & 0xff);
 }
 
 static int get_short(blxcontext_t *ctx, unsigned char **data) {
-    int result;
 
     if(ctx->endian == LITTLEENDIAN)
 	return get_short_le(data);
     else 
 	return get_short_be(data);
-    return result;
 }
 
 static int get_unsigned_short(blxcontext_t *ctx, unsigned char **data) {
-    int result;
 
     if(ctx->endian == LITTLEENDIAN)
 	return get_unsigned_short_le(data);
     else 
 	return get_unsigned_short_be(data);
-    return result;
 }
 
 static void put_short(blxcontext_t *ctx, short data, unsigned char **bufptr) {
@@ -437,15 +433,15 @@ static int get_int32(blxcontext_t *ctx, unsigned char **data) {
 
 static void put_int32(blxcontext_t *ctx, int data, unsigned char **bufptr) {
     if(ctx->endian == LITTLEENDIAN) {
-	*(*bufptr)++ = data & 0xff;
-	*(*bufptr)++ = (data>>8) & 0xff;
-	*(*bufptr)++ = (data>>16) & 0xff;
-	*(*bufptr)++ = (data>>24) & 0xff;
+	*(*bufptr)++ = (unsigned char)(data & 0xff);
+	*(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
+	*(*bufptr)++ = (unsigned char)((data>>16) & 0xff);
+	*(*bufptr)++ = (unsigned char)((data>>24) & 0xff);
     } else {
-	*(*bufptr)++ = (data>>24) & 0xff;
-	*(*bufptr)++ = (data>>16) & 0xff;
-	*(*bufptr)++ = (data>>8) & 0xff;
-	*(*bufptr)++ = data & 0xff;
+	*(*bufptr)++ = (unsigned char)((data>>24) & 0xff);
+	*(*bufptr)++ = (unsigned char)((data>>16) & 0xff);
+	*(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
+	*(*bufptr)++ = (unsigned char)(data & 0xff);
     }
 }
 
@@ -509,8 +505,8 @@ static void put_double(blxcontext_t *ctx, double data, unsigned char **bufptr) {
 
 static void put_cellindex_entry(blxcontext_t *ctx, struct cellindex_s *ci, unsigned char **buffer) {
     put_int32(ctx, (int)ci->offset, buffer);
-    put_unsigned_short(ctx, ci->datasize, buffer);
-    put_unsigned_short(ctx, ci->compdatasize, buffer);
+    put_unsigned_short(ctx, (unsigned short)ci->datasize, buffer);
+    put_unsigned_short(ctx, (unsigned short)ci->compdatasize, buffer);
 }
      
 /* Transpose matrix in-place */
@@ -547,7 +543,7 @@ int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned c
 
     int i,j;
         
-    *p++ = side/32-4; /* Resolution */
+    *p++ = (unsigned char)(side/32-4); /* Resolution */
     
     /* Allocated memory for buffers */
     indata_scaled = BLXmalloc(sizeof(blxdata)*side*side);
@@ -561,8 +557,8 @@ int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned c
     /* Scale indata and process undefined values*/
     for(i=0; i<side*side; i++) {
 	if((indata[i] == BLX_UNDEF) && ctx->fillundef)
-	    indata[i] = ctx->fillundefval;
-	indata_scaled[i] = indata[i] / ctx->zscale;
+        indata[i] = (blxdata)ctx->fillundefval;
+	    indata_scaled[i] = (blxdata)(indata[i] / ctx->zscale);
     }
 
     indata = indata_scaled;
@@ -618,26 +614,26 @@ int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned c
 		    if(clut[i] == 0) 
 			zeros++;
 		    if(((zeros>0) && (clut[i]!=0)) || (zeros >= 0x100-lutsize)) {
-			*cout++ = 0x100-zeros;	
+			*cout++ = (unsigned char)(0x100-zeros);	
 			zeros=0;
 		    }
 		    if(clut[i] != 0) {
 			for(j=0; (j<lutsize) && (lut[j].value != clut[i]); j++);
-			*cout++ = j;
+			*cout++ = (unsigned char)j;
 		    }
 		}
 		if(zeros>0) 
-		    *cout++ = 0x100-zeros;
+		    *cout++ = (unsigned char)(0x100-zeros);
 	    }
 	    /* Use the lookuptable only when it pays off to do do.
 	       For some reason there cannot be lookup tables in level 4.
                Otherwise Mapsend crashes. */
 	    coutsize = cout-coutstart;
 	    if((lutsize < 255) && (coutsize+2*lutsize+1 < 2*side*side/4) && (level < 4)) {
-		*p++ = lutsize+1;
+		*p++ = (unsigned char)(lutsize+1);
 		for(j=0; j<lutsize; j++) 
 		    put_short_le(lut[j].value, &p);
-		put_short_le(coutsize, &p);
+		put_short_le((short)coutsize, &p);
 
 		if(ctx->debug) {
 		    BLXdebug2("n=%d dlen=%d\n", lutsize+1, coutsize);
@@ -699,7 +695,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 	*side = tmp >> overviewlevel;
 
     cellsize = tmp*tmp;
-    if (outbufsize < cellsize * sizeof(blxdata))
+    if (outbufsize < cellsize * (int)sizeof(blxdata))
     {
         BLXerror0("Cell will not fit in output buffer\n");
         return NULL;
@@ -739,14 +735,14 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 	    linfo[level][c].n = n;
 	    if(n>0) {
 		linfo[level][c].lut = BLXmalloc(sizeof(blxdata)*(n-1));	
-                if (len < sizeof(short) * n)
+                if (len < (int)sizeof(short) * n)
                 {
                     BLXerror0("Cell corrupt");
                     outbuf = NULL;
                     goto error;
                 }
 		for(i=0; i<n-1; i++) 
-		    linfo[level][c].lut[i] = get_short_le(&inptr);
+		    linfo[level][c].lut[i] = (blxdata)get_short_le(&inptr);
 		linfo[level][c].dlen = get_short_le(&inptr);
                 len -= sizeof(short) * n;
 	    } else {
@@ -786,14 +782,14 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
             }
 
 	    if(linfo[level][c].n == 0) {
-                if (len < sizeof(short) * baseside[level]*baseside[level])
+                if (len < (int)sizeof(short) * baseside[level]*baseside[level])
                 {
                     BLXerror0("Cell corrupt");
                     outbuf = NULL;
                     goto error;
                 }	
 		for(i=0; i<baseside[level]*baseside[level]; i++)
-		    linfo[level][c].data[i] = get_short(ctx, &inptr);
+		    linfo[level][c].data[i] = (blxdata)get_short(ctx, &inptr);
                 len -= sizeof(short) * baseside[level]*baseside[level];
 	    } else {
 		dpos = 0;
@@ -841,14 +837,14 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 
     }
     
-    if (len < sizeof(short) * baseside[4]*baseside[4])
+    if (len < (int)sizeof(short) * baseside[4]*baseside[4])
     {
         BLXerror0("Cell corrupt");
         outbuf = NULL;
         goto error;
     }
     for(i=0; i<baseside[4]*baseside[4]; i++)
-	linfo[4][0].data[i] = get_short(ctx, &inptr);
+	linfo[4][0].data[i] = (blxdata)get_short(ctx, &inptr);
     len -=sizeof(short) * baseside[4]*baseside[4];
     
     for(level=4; level >= overviewlevel; level--) {
@@ -914,7 +910,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 		goto error;
 	    }
 
-	    outbuf[index] += value;
+	    outbuf[index] = outbuf[index] + (blxdata)value;
 	}
 
         if (len != 0)
@@ -928,7 +924,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 
     /* Scale data */
     for(i=0; i<cellsize; i++)
-	outbuf[i]*=ctx->zscale;
+	outbuf[i] = outbuf[i] * (blxdata)ctx->zscale;
 
 
  error:
@@ -1009,11 +1005,11 @@ void blx_generate_header(blxcontext_t *ctx, unsigned char *header) {
     put_int32(ctx, ctx->cell_xsize*ctx->cell_cols, &hptr); // 4
     put_int32(ctx, ctx->cell_ysize*ctx->cell_rows, &hptr); // 8
 
-    put_short(ctx, ctx->cell_xsize, &hptr); // 12
-    put_short(ctx, ctx->cell_ysize, &hptr); // 14
+    put_short(ctx, (short)ctx->cell_xsize, &hptr); // 12
+    put_short(ctx, (short)ctx->cell_ysize, &hptr); // 14
 
-    put_short(ctx, ctx->cell_cols, &hptr); // 16
-    put_short(ctx, ctx->cell_rows, &hptr); // 18
+    put_short(ctx, (short)ctx->cell_cols, &hptr); // 16
+    put_short(ctx, (short)ctx->cell_rows, &hptr); // 18
 
     put_double(ctx, ctx->lon, &hptr); // 20
     put_double(ctx, -ctx->lat, &hptr); // 28
@@ -1021,9 +1017,9 @@ void blx_generate_header(blxcontext_t *ctx, unsigned char *header) {
     put_double(ctx, ctx->pixelsize_lon, &hptr);	// 36 
     put_double(ctx, -ctx->pixelsize_lat, &hptr); // 44
 
-    put_short(ctx, ctx->minval, &hptr); // 52
-    put_short(ctx, ctx->maxval, &hptr); // 54
-    put_short(ctx, ctx->zscale, &hptr); // 56
+    put_short(ctx, (short)ctx->minval, &hptr); // 52
+    put_short(ctx, (short)ctx->maxval, &hptr); // 54
+    put_short(ctx, (short)ctx->zscale, &hptr); // 56
     put_int32(ctx, ctx->maxchunksize, &hptr); // 58
     // 62
 }
@@ -1081,7 +1077,7 @@ int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol) {
     ctx->cellindex[cellrow*ctx->cell_cols + cellcol].datasize = uncompsize;
     ctx->cellindex[cellrow*ctx->cell_cols + cellcol].compdatasize = compsize;
     
-    if(BLXfwrite(outbuf, 1, compsize, ctx->fh) != compsize) {
+    if((int)BLXfwrite(outbuf, 1, compsize, ctx->fh) != compsize) {
 	status=-1;
 	goto error;
     }
@@ -1130,7 +1126,7 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 	    for(j=0;j<ctx->cell_cols;j++) {
 		hptr = header;
 		put_cellindex_entry(ctx, ctx->cellindex+i*ctx->cell_cols+j, &hptr);
-		if(BLXfwrite(header, 1, hptr-header, ctx->fh) != hptr-header)
+		if((int)BLXfwrite(header, 1, hptr-header, ctx->fh) != (int)(hptr-header))
 		    goto error;
 	    }
 
@@ -1236,7 +1232,7 @@ int blxclose(blxcontext_t *ctx) {
 	    for(j=0;j<ctx->cell_cols;j++) {
 		hptr = header;
 		put_cellindex_entry(ctx, ctx->cellindex+i*ctx->cell_cols+j, &hptr);
-		if(BLXfwrite(header, 1, hptr-header, ctx->fh) != hptr-header) {
+		if((int)BLXfwrite(header, 1, hptr-header, ctx->fh) != (int)(hptr-header)) {
 		    status=-1;	
 		    break;
 		}
@@ -1265,7 +1261,7 @@ short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufs
     ci = &ctx->cellindex[row*ctx->cell_cols + col];
 
     npoints = (ctx->cell_xsize*ctx->cell_ysize)>>(2*overviewlevel) ;
-    if (bufsize < npoints * sizeof(short))
+    if (bufsize < npoints * (int)sizeof(short))
         return NULL;
 
     if(ci->datasize == 0) {
@@ -1283,7 +1279,7 @@ short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufs
 	if(BLXfread(cchunk, 1, ci->compdatasize, ctx->fh) != ci->compdatasize)
 	    goto error;
     
-	if(uncompress_chunk(cchunk, ci->compdatasize, chunk, ci->datasize) != ci->datasize)
+        if((unsigned int)uncompress_chunk(cchunk, ci->compdatasize, chunk, ci->datasize) != ci->datasize)
 	    goto error;
 
 	tmpbufsize = sizeof(blxdata)*ctx->cell_xsize*ctx->cell_ysize;
