@@ -53,6 +53,23 @@ class GeoRasterWrapper;
 
 #define UNKNOWN_CRS 999999
 
+// Bitmap Mask for the whole dataset start with -99999
+
+#define DEFAULT_BMP_MASK -99999
+
+// DEFLATE compression support
+
+#include <zlib.h>
+
+// JPEG compression support
+
+CPL_C_START
+#include <jpeglib.h>
+CPL_C_END
+
+void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
+void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
+
 //  ---------------------------------------------------------------------------
 //  GeoRasterDriver, extends GDALDriver to support GeoRaster Server Connections
 //  ---------------------------------------------------------------------------
@@ -99,7 +116,8 @@ private:
     double              adfGeoTransform[6];
     int                 nGCPCount;
     GDAL_GCP*           pasGCPList;
-
+    GeoRasterRasterBand*
+                        poMaskBand;
 public:
 
     void                SetSubdatasets( GeoRasterWrapper* poGRW );
@@ -147,6 +165,7 @@ public:
                             int* panBandList,
                             GDALProgressFunc pfnProgress,
                             void* pProgressData );
+    virtual CPLErr      CreateMaskBand( int nFlags );
 };
 
 //  ---------------------------------------------------------------------------
@@ -205,6 +224,10 @@ public:
     virtual int         GetOverviewCount();
     virtual GDALRasterBand*
                         GetOverview( int );
+    virtual CPLErr      CreateMaskBand( int nFlags );
+    virtual GDALRasterBand*
+                        GetMaskBand();
+    virtual int         GetMaskFlags();
 };
 
 //  ---------------------------------------------------------------------------
@@ -305,6 +328,12 @@ public:
                             const char* pszResampling,
                             bool bNodata = false );
     void                PrepareToOverwrite( void );
+    bool                InitializePyramidLevel( int nLevel,
+                                                int nBlockColumns,
+                                                int nBlockRows,
+                                                int nColumnBlocks,
+                                                int nRowBlocks,
+                                                int nBandBlocks );
 
 public:
 
