@@ -2094,7 +2094,7 @@ bool GeoRasterWrapper::FlushMetadata()
         "\n"
         "  SELECT %s INTO GR1 FROM %s T WHERE %s FOR UPDATE;\n"
         "\n"
-        "  GR1.metadata := XMLTYPE(:1);\n"
+        "  GR1.metadata := XMLTYPE('%s');\n"
         "\n"
         "  SRID := :2;\n"
         "  IF SRID = 0 THEN\n"
@@ -2115,11 +2115,12 @@ bool GeoRasterWrapper::FlushMetadata()
         "  COMMIT;\n"
         "END;",
         pszColumn, pszTable, pszWhere,
+        pszXML,
         UNKNOWN_CRS,
         UNKNOWN_CRS,
         pszTable, pszColumn, pszWhere ) );
 
-    poStmt->Bind( pszXML, strlen( pszXML ) + 1);
+//  poStmt->Bind( pszXML, strlen( pszXML ) + 1 );
     poStmt->Bind( &nSRID );
     poStmt->Bind( &nModelCoordinateLocation );
     poStmt->Bind( &dfXCoefficient[0] );
@@ -2176,6 +2177,75 @@ bool GeoRasterWrapper::GeneratePyramid( int nLevels,
     delete poStmt;
 
     return bReturn;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                           CreateBitmapMask()
+//  ---------------------------------------------------------------------------
+
+bool GeoRasterWrapper::InitializePyramidLevel( int nLevel,
+                                               int nBlockColumns,
+                                               int nBlockRows,
+                                               int nColumnBlocks,
+                                               int nRowBlocks,
+                                               int nBandBlocks )
+{
+    //  -----------------------------------------------------------
+    //  Create rows for the bitmap mask
+    //  -----------------------------------------------------------
+
+    OWStatement* poStmt = NULL;
+
+    poStmt = poConnection->CreateStatement(
+        "DECLARE\n"
+        "  W    NUMBER          := :1;\n"
+        "  H    NUMBER          := :2;\n"
+        "  BB   NUMBER          := :3;\n"
+        "  RB   NUMBER          := :4;\n"
+        "  CB   NUMBER          := :5;\n"
+        "  X    NUMBER          := 0;\n"
+        "  Y    NUMBER          := 0;\n"
+        "  STM  VARCHAR2(1024)  := '';\n"
+        "BEGIN\n"
+        "\n"
+        "  EXECUTE IMMEDIATE 'DELETE FROM '||:rdt||' \n"
+        "    WHERE RASTERID = '||:rid||' AND PYRAMIDLEVEL = '||:lev||' ';\n"
+        "\n"
+        "  STM := 'INSERT INTO '||:rdt||' VALUES (:1, :lev, :2-1, :3-1, :4-1 ,\n"
+        "    SDO_GEOMETRY(2003, NULL, NULL, SDO_ELEM_INFO_ARRAY(1, 1003, 3),\n"
+        "    SDO_ORDINATE_ARRAY(:5, :6, :7-1, :8-1)), EMPTY_BLOB() )';\n"
+        "\n"
+        "  FOR b IN 1..BB LOOP\n"
+        "    Y := 0;\n"
+        "    FOR r IN 1..RB LOOP\n"
+        "      X := 0;\n"
+        "      FOR c IN 1..CB LOOP\n"
+        "        EXECUTE IMMEDIATE STM USING :rid, b, r, c, Y, X, (Y+H), (X+W);\n"
+        "        X := X + W;\n"
+        "      END LOOP;\n"
+        "      Y := Y + H;\n"
+        "    END LOOP;\n"
+        "  END LOOP;\n"
+        "END;" );
+
+    poStmt->Bind( &nBlockColumns );
+    poStmt->Bind( &nBlockRows );
+    poStmt->Bind( &nBandBlocks );
+    poStmt->Bind( &nRowBlocks );
+    poStmt->Bind( &nColumnBlocks );
+    poStmt->BindName( (char*) ":rdt", pszDataTable );
+    poStmt->BindName( (char*) ":rid", &nRasterId );
+    poStmt->BindName( (char*) ":lev", &nLevel );
+
+    if( ! poStmt->Execute() )
+    {
+        delete poStmt;
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Failure to initialize Level %d", nLevel );
+        return false;
+    }
+
+    return true;
 }
 
 //  ---------------------------------------------------------------------------
