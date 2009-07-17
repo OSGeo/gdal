@@ -55,6 +55,7 @@ GeoRasterDataset::GeoRasterDataset()
     pszProjection       = NULL;
     nGCPCount           = 0;
     pasGCPList          = NULL;
+    poMaskBand          = NULL;
     poDriver            = (GDALDriver *) GDALGetDriverByName( "GEORASTER" );
 }
 
@@ -74,6 +75,11 @@ GeoRasterDataset::~GeoRasterDataset()
 
     delete poGeoRaster;
 
+    if( poMaskBand )
+    {
+        delete poMaskBand;
+    }
+    
     CPLFree( pszProjection );
     CSLDestroy( papszSubdatasets );
 }
@@ -1379,6 +1385,28 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
 
     return CE_None;
 }
+
+//  ---------------------------------------------------------------------------
+//                                                             CreateMaskBand()
+//  ---------------------------------------------------------------------------
+
+CPLErr GeoRasterDataset::CreateMaskBand( int nFlags )
+{
+    if( poGeoRaster->InitializePyramidLevel( DEFAULT_BMP_MASK,
+            poGeoRaster->nRowBlockSize,
+            poGeoRaster->nColumnBlockSize,
+            poGeoRaster->nTotalRowBlocks,
+            poGeoRaster->nTotalColumnBlocks,
+            poGeoRaster->nTotalBandBlocks ) )
+    {
+        return CE_None;
+    }
+    else
+    {
+        return CE_Failure;
+    }
+}
+
 /*****************************************************************************/
 /*                          GDALRegister_GEOR                                */
 /*****************************************************************************/

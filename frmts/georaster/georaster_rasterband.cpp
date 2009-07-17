@@ -693,3 +693,47 @@ GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
     }
     return (GDALRasterBand*) NULL;
 }
+
+//  ---------------------------------------------------------------------------
+//                                                             CreateMaskBand()
+//  ---------------------------------------------------------------------------
+
+CPLErr GeoRasterRasterBand::CreateMaskBand( int nFlags )
+{
+    GeoRasterDataset* poGDS = (GeoRasterDataset*) this->poDS;
+
+    return poGDS->CreateMaskBand( nFlags );
+}
+
+//  ---------------------------------------------------------------------------
+//                                                                GetMaskBand()
+//  ---------------------------------------------------------------------------
+
+GDALRasterBand* GeoRasterRasterBand::GetMaskBand()
+{
+    GeoRasterDataset* poGDS = (GeoRasterDataset*) this->poDS;
+
+    if( poGDS->poMaskBand != NULL )
+    {
+        return (GDALRasterBand*) poGDS->poMaskBand;
+    }
+
+    return (GDALRasterBand*) NULL;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                               GetMaskFlags()
+//  ---------------------------------------------------------------------------
+
+int GeoRasterRasterBand::GetMaskFlags()
+{
+    GeoRasterDataset* poGDS = (GeoRasterDataset*) this->poDS;
+    
+    if( poGDS->poMaskBand != NULL )
+    {
+        return GMF_PER_DATASET;
+    }
+
+    return GMF_ALL_VALID;
+}
+
