@@ -2439,8 +2439,21 @@ def tiff_write_74():
     
     dst_ds = None
 
-    #drv.Delete( 'tmp/test_74.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/test_74.tif' )
     
+    return 'success'
+
+###############################################################################
+# Verify that FlushCache() alone doesn't cause crash (# )
+
+def tiff_write_75():
+
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_75.tif', 1, 1, 1)
+    ds.FlushCache()
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_75.tif' )
+
     return 'success'
 
 ###############################################################################
@@ -2525,6 +2538,7 @@ gdaltest_list = [
     tiff_write_72,
     tiff_write_73,
     tiff_write_74,
+    tiff_write_75,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
