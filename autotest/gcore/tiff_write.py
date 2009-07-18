@@ -2444,7 +2444,7 @@ def tiff_write_74():
     return 'success'
 
 ###############################################################################
-# Verify that FlushCache() alone doesn't cause crash (# )
+# Verify that FlushCache() alone doesn't cause crash (#3067 )
 
 def tiff_write_75():
 
