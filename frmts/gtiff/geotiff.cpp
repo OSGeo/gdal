@@ -5750,6 +5750,14 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                 return NULL;
             }
 
+            if ( nPlanar == PLANARCONFIG_SEPARATE )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "PHOTOMETRIC=YCBCR requires INTERLEAVE=PIXEL");
+                XTIFFClose(hTIFF);
+                return NULL;
+            }
+
             /* YCBCR strictly requires 3 bands. Not less, not more */
             /* Issue an explicit error message as libtiff one is a bit cryptic : */
             /* TIFFVStripSize64:Invalid td_samplesperpixel value */
