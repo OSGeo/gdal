@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	rdataset.o
+OBJ	=	rdataset.o rcreatecopy.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
