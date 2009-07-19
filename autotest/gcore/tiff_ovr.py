@@ -343,8 +343,8 @@ def tiff_ovr_8():
     return 'success'
 
 ###############################################################################
-# Test --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR
-# --config INTERLEAVE_OVERVIEW PIXEL -ro
+# Test --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR -ro
+# Will also check that pixel interleaving is automatically selected (#3064)
 
 def tiff_ovr_9():
 
@@ -352,7 +352,6 @@ def tiff_ovr_9():
 
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
     gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', 'YCBCR')
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
 
     ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
 
@@ -364,7 +363,19 @@ def tiff_ovr_9():
 
     gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
     gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', '')
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', '')
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 5700
+
+    ds = None
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    # Re-check after dataset reopening
+    ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 5700
