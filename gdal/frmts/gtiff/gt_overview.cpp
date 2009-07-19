@@ -614,6 +614,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      bands.                                                          */
 /* -------------------------------------------------------------------- */
     GDALDataset *hODS;
+    CPLErr eErr = CE_None;
 
     hODS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
     if( hODS == NULL )
@@ -632,24 +633,26 @@ GTIFFBuildOverviews( const char * pszFilename,
         /* In the case of pixel interleaved compressed overviews, we want to generate */
         /* the overviews for all the bands block by block, and not band after band, */
         /* in order to write the block once and not loose space in the TIFF file */
-
         GDALRasterBand ***papapoOverviewBands;
 
         papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
-        for( iBand = 0; iBand < nBands; iBand++ )
+        for( iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
             GDALRasterBand    *hDstBand = hODS->GetRasterBand( iBand+1 );
             papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
             papapoOverviewBands[iBand][0] = hDstBand;
-            for( int i = 0; i < nOverviews-1; i++ )
+            for( int i = 0; i < nOverviews-1 && eErr == CE_None; i++ )
             {
                 papapoOverviewBands[iBand][i+1] = hDstBand->GetOverview(i);
+                if (papapoOverviewBands[iBand][i+1] == NULL)
+                    eErr = CE_Failure;
             }
         }
 
-        GDALRegenerateOverviewsMultiBand(nBands, papoBandList,
-                                         nOverviews, papapoOverviewBands,
-                                         pszResampling, pfnProgress, pProgressData );
+        if (eErr == CE_None)
+            eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBandList,
+                                            nOverviews, papapoOverviewBands,
+                                            pszResampling, pfnProgress, pProgressData );
 
         for( iBand = 0; iBand < nBands; iBand++ )
         {
@@ -663,12 +666,11 @@ GTIFFBuildOverviews( const char * pszFilename,
 
         papoOverviews = (GDALRasterBand **) CPLCalloc(sizeof(void*),128);
 
-        for( iBand = 0; iBand < nBands; iBand++ )
+        for( iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
             GDALRasterBand    *hSrcBand = papoBandList[iBand];
             GDALRasterBand    *hDstBand;
             int               nDstOverviews;
-            CPLErr            eErr;
 
             hDstBand = hODS->GetRasterBand( iBand+1 );
 
@@ -677,9 +679,11 @@ GTIFFBuildOverviews( const char * pszFilename,
             CPLAssert( nDstOverviews < 128 );
             nDstOverviews = MIN(128,nDstOverviews);
 
-            for( int i = 0; i < nDstOverviews-1; i++ )
+            for( int i = 0; i < nDstOverviews-1 && eErr == CE_None; i++ )
             {
                 papoOverviews[i+1] = hDstBand->GetOverview(i);
+                if (papoOverviews[i+1] == NULL)
+                    eErr = CE_Failure;
             }
 
             void         *pScaledProgressData;
@@ -689,8 +693,9 @@ GTIFFBuildOverviews( const char * pszFilename,
                                         (iBand+1) / (double) nBands,
                                         pfnProgress, pProgressData );
 
-            eErr = 
-                GDALRegenerateOverviews( (GDALRasterBandH) hSrcBand, 
+            if (eErr == CE_None)
+                eErr = 
+                    GDALRegenerateOverviews( (GDALRasterBandH) hSrcBand, 
                                         nDstOverviews, 
                                         (GDALRasterBandH *) papoOverviews, 
                                         pszResampling,
@@ -698,12 +703,6 @@ GTIFFBuildOverviews( const char * pszFilename,
                                         pScaledProgressData);
 
             GDALDestroyScaledProgress( pScaledProgressData );
-
-            if( eErr != CE_None )
-            {
-                delete hODS;
-                return eErr;
-            }
         }
 
         CPLFree( papoOverviews );
@@ -712,11 +711,12 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    hODS->FlushCache();
+    if (eErr == CE_None)
+        hODS->FlushCache();
     delete hODS;
 
     pfnProgress( 1.0, NULL, pProgressData );
 
-    return CE_None;
+    return eErr;
 }
     
