@@ -5486,6 +5486,37 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         }
         else if( EQUAL( pszValue, "YCBCR" ))
         {
+            /* Because of subsampling, setting YCBCR without JPEG compression leads */
+            /* to a crash currently. Would need to make GTiffRasterBand::IWriteBlock() */
+            /* aware of subsampling so that it doesn't overrun buffer size returned */
+            /* by libtiff */
+            if ( nCompression != COMPRESSION_JPEG )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Currently, PHOTOMETRIC=YCBCR requires COMPRESS=JPEG");
+                XTIFFClose(hTIFF);
+                return NULL;
+            }
+
+            if ( nPlanar == PLANARCONFIG_SEPARATE )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "PHOTOMETRIC=YCBCR requires INTERLEAVE=PIXEL");
+                XTIFFClose(hTIFF);
+                return NULL;
+            }
+
+            /* YCBCR strictly requires 3 bands. Not less, not more */
+            /* Issue an explicit error message as libtiff one is a bit cryptic : */
+            /* TIFFVStripSize64:Invalid td_samplesperpixel value */
+            if ( nBands != 3 )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "PHOTOMETRIC=YCBCR requires a source raster with only 3 bands (RGB)");
+                XTIFFClose(hTIFF);
+                return NULL;
+            }
+
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR );
             nSamplesAccountedFor = 3;
         }

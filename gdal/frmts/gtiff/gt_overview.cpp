@@ -385,6 +385,38 @@ GTIFFBuildOverviews( const char * pszFilename,
         else if( EQUAL( pszPhotometric, "YCBCR" ))
         {
             nPhotometric = PHOTOMETRIC_YCBCR;
+
+            /* Because of subsampling, setting YCBCR without JPEG compression leads */
+            /* to a crash currently. Would need to make GTiffRasterBand::IWriteBlock() */
+            /* aware of subsampling so that it doesn't overrun buffer size returned */
+            /* by libtiff */
+            if ( nCompression != COMPRESSION_JPEG )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Currently, PHOTOMETRIC_OVERVIEW=YCBCR requires COMPRESS_OVERVIEW=JPEG");
+                return CE_Failure;
+            }
+
+            if (pszInterleave != NULL && pszInterleave[0] != '\0' && nPlanarConfig == PLANARCONFIG_SEPARATE)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "PHOTOMETRIC_OVERVIEW=YCBCR requires INTERLEAVE_OVERVIEW=PIXEL");
+                return CE_Failure;
+            }
+            else
+            {
+                nPlanarConfig = PLANARCONFIG_CONTIG;
+            }
+
+            /* YCBCR strictly requires 3 bands. Not less, not more */
+            /* Issue an explicit error message as libtiff one is a bit cryptic : */
+            /* JPEGLib:Bogus input colorspace */
+            if ( nBands != 3 )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "PHOTOMETRIC_OVERVIEW=YCBCR requires a source raster with only 3 bands (RGB)");
+                return CE_Failure;
+            }
         }
         else if( EQUAL( pszPhotometric, "CIELAB" ))
         {
