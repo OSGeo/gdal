@@ -1196,6 +1196,27 @@ def tiff_ovr_32():
 
     return 'success'
 
+
+###############################################################################
+# Test creation of overviews on a 1x1 dataset (fix for #3069)
+
+def tiff_ovr_33():
+
+    try:
+        os.remove('tmp/ovr33.tif.ovr')
+    except:
+        pass
+
+    ds = gdaltest.tiff_drv.Create('tmp/ovr33.tif', 1, 1, 1)
+    ds = None
+    ds = gdal.Open('tmp/ovr33.tif')
+    ds.BuildOverviews('NEAREST', overviewlist = [2, 4])
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr33.tif' )
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -1265,6 +1286,7 @@ gdaltest_list_internal = [
     tiff_ovr_30,
     tiff_ovr_31,
     tiff_ovr_32,
+    tiff_ovr_33,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
