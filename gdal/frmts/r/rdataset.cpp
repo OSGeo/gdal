@@ -29,12 +29,25 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "../raw/rawdataset.h"
 
 CPL_CVSID("$Id: bmpdataset.cpp 17322 2009-06-30 01:11:20Z warmerdam $");
 
 CPL_C_START
 void    GDALRegister_R(void);
 CPL_C_END
+
+GDALDataset *
+RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+             int bStrict, char ** papszOptions, 
+             GDALProgressFunc pfnProgress, void * pProgressData );
+
+#define R_NILSXP        0
+#define R_LISTSXP       2
+#define R_CHARSXP       9
+#define R_INTSXP        13
+#define R_REALSXP       14
+#define R_STRSXP        16
 
 /************************************************************************/
 /* ==================================================================== */
@@ -45,13 +58,26 @@ CPL_C_END
 class RDataset : public GDALPamDataset
 {
     friend class RRasterBand;
+    FILE       *fp;
+    int         bASCII;
+    CPLString   osLastStringRead;
 
+    vsi_l_offset nStartOfData;
+
+    std::vector<double> adfMatrixValues;
+
+    const char *ASCIIFGets();
+    int         ReadInteger();
+    double      ReadFloat();
+    const char *ReadString();
+    int         ReadPair( CPLString &osItemName, int &nItemType );
 
   public:
                 RDataset();
                 ~RDataset();
 
     static GDALDataset  *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
 };
 
 /************************************************************************/
@@ -64,27 +90,35 @@ class RRasterBand : public GDALPamRasterBand
 {
     friend class RDataset;
 
+    const double *padfMatrixValues;
+
   public:
 
-                RRasterBand( RDataset *, int );
+                RRasterBand( RDataset *, int, const double * );
                 ~RRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
 };
 
 /************************************************************************/
-/*                           RRasterBand()                            */
+/*                            RRasterBand()                             */
 /************************************************************************/
 
-RRasterBand::RRasterBand( RDataset *poDS, int nBand )
+RRasterBand::RRasterBand( RDataset *poDS, int nBand, 
+                          const double *padfMatrixValues )
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    eDataType = GDT_Byte;
+    this->padfMatrixValues = padfMatrixValues;
+
+    eDataType = GDT_Float64;
+
+    nBlockXSize = poDS->nRasterXSize;
+    nBlockYSize = 1;
 }
 
 /************************************************************************/
-/*                           ~RRasterBand()                           */
+/*                            ~RRasterBand()                            */
 /************************************************************************/
 
 RRasterBand::~RRasterBand()
@@ -96,26 +130,204 @@ RRasterBand::~RRasterBand()
 /************************************************************************/
 
 CPLErr RRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                void * pImage )
 {
-    return CE_Failure;
+    memcpy( pImage, padfMatrixValues + nBlockYOff * nBlockXSize,
+            nBlockXSize * 8 );
+    return CE_None;
 }
 
 /************************************************************************/
-/*                           RDataset()                               */
+/* ==================================================================== */
+/*                              RDataset()                              */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                              RDataset()                              */
 /************************************************************************/
 
 RDataset::RDataset()
 {
+    fp = NULL;
 }
 
 /************************************************************************/
-/*                            ~RDataset()                             */
+/*                             ~RDataset()                              */
 /************************************************************************/
 
 RDataset::~RDataset()
 {
     FlushCache();
+    
+    if( fp )
+        VSIFCloseL( fp );
+}
+
+/************************************************************************/
+/*                             ASCIIFGets()                             */
+/*                                                                      */
+/*      Fetch one line from an ASCII source into osLastStringRead.      */
+/************************************************************************/
+
+const char *RDataset::ASCIIFGets()
+
+{
+    char chNextChar;
+
+    osLastStringRead.resize(0);
+
+    do 
+    {
+        chNextChar = '\n';
+        VSIFReadL( &chNextChar, 1, 1, fp );
+        if( chNextChar != '\n' )
+            osLastStringRead += chNextChar;
+    } while( chNextChar != '\n' && chNextChar != '\0' );
+
+    return osLastStringRead;
+}
+
+/************************************************************************/
+/*                            ReadInteger()                             */
+/************************************************************************/
+
+int RDataset::ReadInteger()
+
+{
+    if( bASCII )
+    {
+        return atoi(ASCIIFGets());
+    }
+    else
+    {
+        GInt32  nValue;
+
+        if( VSIFReadL( &nValue, 4, 1, fp ) != 1 )
+            return -1;
+        CPL_MSBPTR32( &nValue );
+
+        return nValue;
+    }
+}
+
+/************************************************************************/
+/*                             ReadFloat()                              */
+/************************************************************************/
+
+double RDataset::ReadFloat()
+
+{
+    if( bASCII )
+    {
+        return atof(ASCIIFGets());
+    }
+    else
+    {
+        double  dfValue;
+
+        if( VSIFReadL( &dfValue, 8, 1, fp ) != 1 )
+            return -1;
+        CPL_MSBPTR64( &dfValue );
+
+        return dfValue;
+    }
+}
+
+/************************************************************************/
+/*                             ReadString()                             */
+/************************************************************************/
+
+const char *RDataset::ReadString()
+
+{
+    if( ReadInteger() % 256 != R_CHARSXP )
+    {
+        osLastStringRead = "";
+        return "";
+    }
+
+    size_t nLen = ReadInteger();
+        
+    char *pachWrkBuf = (char *) CPLMalloc(nLen);
+    if( VSIFReadL( pachWrkBuf, 1, nLen, fp ) != nLen )
+    {
+        osLastStringRead = "";
+        return "";
+    }
+    
+    if( bASCII )
+    {
+        /* suck up newline and any extra junk */
+        ASCIIFGets();
+    }
+    
+    osLastStringRead.assign( pachWrkBuf, nLen );
+    CPLFree( pachWrkBuf );
+
+    return osLastStringRead;
+}
+
+/************************************************************************/
+/*                              ReadPair()                              */
+/************************************************************************/
+
+int RDataset::ReadPair( CPLString &osObjName, int &nObjCode )
+
+{
+    nObjCode = ReadInteger();
+    if( nObjCode == 254 )
+        return TRUE;
+
+    if( (nObjCode % 256) != R_LISTSXP )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Did not find expected object pair object." );
+        return FALSE;
+    }
+
+    int nPairCount = ReadInteger();
+    if( nPairCount != 1 )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Did not find expected pair count of 1." );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the object name.                                           */
+/* -------------------------------------------------------------------- */
+    const char *pszName = ReadString();
+    if( pszName == NULL )
+        return FALSE;
+
+    osObjName = pszName;
+
+/* -------------------------------------------------------------------- */
+/*      Confirm that we have a numeric matrix object.                   */
+/* -------------------------------------------------------------------- */
+    nObjCode = ReadInteger();
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int RDataset::Identify( GDALOpenInfo *poOpenInfo )
+{
+    if( poOpenInfo->nHeaderBytes < 50 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Is this an ASCII or XDR binary R file?                          */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"RDA2\nA\n",7) 
+        && !EQUALN((const char *)poOpenInfo->pabyHeader,"RDX2\nX\n",7) )
+        return FALSE;
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -124,13 +336,173 @@ RDataset::~RDataset()
 
 GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    return NULL;
+    if( !Identify( poOpenInfo ) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Establish this as a dataset and open the file using VSI*L.      */
+/* -------------------------------------------------------------------- */
+    RDataset *poDS = new RDataset();
+
+    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    if( poDS->fp == NULL )
+    {
+        delete poDS;
+        return NULL;
+    }
+
+    poDS->bASCII = EQUALN((const char *)poOpenInfo->pabyHeader,"RDA2\nA\n",7);
+
+/* -------------------------------------------------------------------- */
+/*      Confirm this is a version 2 file.                               */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( poDS->fp, 7, SEEK_SET );
+    if( poDS->ReadInteger() != R_LISTSXP )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "It appears %s is not a version 2 R object file after all!",
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Skip the version values.                                        */
+/* -------------------------------------------------------------------- */
+    poDS->ReadInteger();
+    poDS->ReadInteger();
+
+/* -------------------------------------------------------------------- */
+/*      Confirm we have a numeric vector object in a pairlist.          */
+/* -------------------------------------------------------------------- */
+    CPLString osObjName;
+    int nObjCode;
+
+    if( !poDS->ReadPair( osObjName, nObjCode ) )
+    {
+        delete poDS;
+        return NULL;
+    }
+
+    if( nObjCode % 256 != R_REALSXP )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to find expected numeric vector object." );
+        return NULL;
+    }
+
+    poDS->SetMetadataItem( "R_OBJECT_NAME", osObjName );
+
+/* -------------------------------------------------------------------- */
+/*      Read the count.                                                 */
+/* -------------------------------------------------------------------- */
+    int nValueCount = poDS->ReadInteger();
+
+    poDS->nStartOfData = VSIFTellL( poDS->fp );
+
+/* -------------------------------------------------------------------- */
+/*      Read/Skip ahead to attributes.                                  */
+/* -------------------------------------------------------------------- */
+    if( poDS->bASCII )
+    {
+        poDS->adfMatrixValues.resize( nValueCount );
+        for( int iValue = 0; iValue < nValueCount; iValue++ )
+            poDS->adfMatrixValues[iValue] = poDS->ReadFloat();
+    }
+    else
+    {
+        VSIFSeekL( poDS->fp, 8 * nValueCount, SEEK_CUR );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read pairs till we run out, trying to find a few items that     */
+/*      have special meaning to us.                                     */
+/* -------------------------------------------------------------------- */
+    poDS->nRasterXSize = poDS->nRasterYSize = 0;
+    int nBandCount = 0;
+
+    while( poDS->ReadPair( osObjName, nObjCode ) && nObjCode != 254 )
+    {
+        if( osObjName == "dim" && nObjCode % 256 == R_INTSXP )
+        {
+            int nCount = poDS->ReadInteger();
+            if( nCount == 2 )
+            {
+                poDS->nRasterXSize = poDS->ReadInteger();
+                poDS->nRasterYSize = poDS->ReadInteger();
+                nBandCount = 1;
+            }
+            else if( nCount == 3 )
+            {
+                poDS->nRasterXSize = poDS->ReadInteger();
+                poDS->nRasterYSize = poDS->ReadInteger();
+                nBandCount = poDS->ReadInteger();
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "R 'dim' dimension wrong." );
+                delete poDS;
+                return NULL;
+            }
+        }
+        else if( nObjCode % 256 == R_REALSXP )
+        {
+            int nCount = poDS->ReadInteger();
+            while( nCount-- > 0 )
+                poDS->ReadFloat();
+        }
+        else if( nObjCode % 256 == R_INTSXP )
+        {
+            int nCount = poDS->ReadInteger();
+            while( nCount-- > 0 )
+                poDS->ReadInteger();
+        }
+        else if( nObjCode % 256 == R_STRSXP )			
+        {
+            int nCount = poDS->ReadInteger();
+            while( nCount-- > 0 )
+                poDS->ReadString();
+        }
+        else if( nObjCode % 256 == R_CHARSXP )			
+        {
+            poDS->ReadString();
+        }
+    }
+
+    if( poDS->nRasterXSize == 0 )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to find dim dimension information for R dataset." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the raster band object(s).                               */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < nBandCount; iBand++ )
+    {
+        GDALRasterBand *poBand;
+
+        if( poDS->bASCII )
+            poBand = new RRasterBand( poDS, iBand+1, 
+                                      &(poDS->adfMatrixValues[0]) + iBand * poDS->nRasterXSize * poDS->nRasterYSize );
+        else
+            poBand = new RawRasterBand( poDS, iBand+1, poDS->fp,
+                                        poDS->nStartOfData 
+                                        + poDS->nRasterXSize*poDS->nRasterYSize*8*iBand, 
+                                        8, poDS->nRasterXSize * 8,
+                                        GDT_Float64, !CPL_IS_LSB,
+                                        TRUE, FALSE );
+                                      
+        poDS->SetBand( iBand+1, poBand );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    RDataset *poDS = new RDataset();
-
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
@@ -140,215 +512,6 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
-}
-
-/************************************************************************/
-/* ==================================================================== */
-/*                        Writer Implementation                         */
-/* ==================================================================== */
-/************************************************************************/
-
-/************************************************************************/
-/*                           RWriteInteger()                            */
-/************************************************************************/
-
-static void RWriteInteger( FILE *fp, int bASCII, int nValue )
-
-{
-    if( bASCII )
-    {
-        char szOutput[50];
-        sprintf( szOutput, "%d\n", nValue );
-        VSIFWriteL( szOutput, 1, strlen(szOutput), fp );
-    }
-    else
-    {
-        CPL_MSBPTR32( &nValue );
-        VSIFWriteL( &nValue, 4, 1, fp );
-    }
-}
-
-/************************************************************************/
-/*                            RWriteString()                            */
-/************************************************************************/
-
-static void RWriteString( FILE *fp, int bASCII, const char *pszValue )
-
-{
-    RWriteInteger( fp, bASCII, 4105 );
-    RWriteInteger( fp, bASCII, (int) strlen(pszValue) );
-    
-    if( bASCII )
-    {
-        VSIFWriteL( pszValue, 1, strlen(pszValue), fp );
-        VSIFWriteL( "\n", 1, 1, fp );
-    }
-    else
-    {
-        VSIFWriteL( pszValue, 1, (int) strlen(pszValue), fp );
-    }
-}
-
-/************************************************************************/
-/*                            RCreateCopy()                             */
-/************************************************************************/
-
-static GDALDataset *
-RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-             int bStrict, char ** papszOptions, 
-             GDALProgressFunc pfnProgress, void * pProgressData )
-
-{
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-    int  bASCII = CSLFetchBoolean( papszOptions, "ASCII", FALSE );
-
-/* -------------------------------------------------------------------- */
-/*      Some some rudimentary checks                                    */
-/* -------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------- */
-/*      Create the file.                                                */
-/* -------------------------------------------------------------------- */
-    FILE	*fp;
-
-    fp = VSIFOpenL( pszFilename, "wb" );
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create file %s.\n", 
-                  pszFilename );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Write header with version, etc.                                 */
-/* -------------------------------------------------------------------- */
-    if( bASCII )
-    {
-        const char *pszHeader = "RDA2\nA\n";
-        VSIFWriteL( pszHeader, 1, strlen(pszHeader), fp );
-    }
-    else
-    {
-        const char *pszHeader = "RDX2\nX\n";
-        VSIFWriteL( pszHeader, 1, strlen(pszHeader), fp );
-    }
-
-    RWriteInteger( fp, bASCII, 2 );
-    RWriteInteger( fp, bASCII, 133377 );
-    RWriteInteger( fp, bASCII, 131840 );
-
-/* -------------------------------------------------------------------- */
-/*      Establish the primary pairlist with one component object.       */
-/* -------------------------------------------------------------------- */
-    RWriteInteger( fp, bASCII, 1026 );
-    RWriteInteger( fp, bASCII, 1 );  
-
-/* -------------------------------------------------------------------- */
-/*      Write the object name.  Eventually we should derive this        */
-/*      from the filename, possible with override by a creation         */
-/*      option.                                                         */
-/* -------------------------------------------------------------------- */
-    RWriteString( fp, bASCII, "gg" );
-
-/* -------------------------------------------------------------------- */
-/*      For now we write the raster as a numeric array with             */
-/*      attributes (526).                                               */
-/* -------------------------------------------------------------------- */
-    RWriteInteger( fp, bASCII, 526 );
-    RWriteInteger( fp, bASCII, nXSize * nYSize * nBands );
-
-/* -------------------------------------------------------------------- */
-/*      Write the raster data.                                          */
-/* -------------------------------------------------------------------- */
-    double 	*padfScanline;
-    CPLErr      eErr = CE_None;
-    int         iLine;
-
-    padfScanline = (double *) CPLMalloc( nXSize * sizeof(double) );
-
-    for( int iBand = 0; iBand < nBands; iBand++ )
-    {
-        GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
-
-        for( iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
-        {
-            int iValue;
-
-            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                     padfScanline, nXSize, 1, GDT_Float64,
-                                     sizeof(double), 0 );
-
-            if( bASCII )
-            {
-                for( iValue = 0; iValue < nXSize; iValue++ )
-                {
-                    char szValue[128];
-                    sprintf(szValue,"%.16g\n", padfScanline[iValue] );
-                    VSIFWriteL( szValue, 1, strlen(szValue), fp );
-                }
-            }
-            else
-            {
-                for( iValue = 0; iValue < nXSize; iValue++ )
-                    CPL_MSBPTR64( padfScanline + iValue );
-
-                VSIFWriteL( padfScanline, 8, nXSize, fp );
-            }
-            
-            if( eErr == CE_None
-                && !pfnProgress( (iLine+1) / (double) nYSize,
-                                 NULL, pProgressData ) )
-            {
-                eErr = CE_Failure;
-                CPLError( CE_Failure, CPLE_UserInterrupt,
-                          "User terminated CreateCopy()" );
-            }
-        }
-    }
-
-    CPLFree( padfScanline );
-
-/* -------------------------------------------------------------------- */
-/*      Write out the dims attribute.                                   */
-/* -------------------------------------------------------------------- */
-    RWriteInteger( fp, bASCII, 1026 );
-    RWriteInteger( fp, bASCII, 1 );  
-    
-    RWriteString( fp, bASCII, "dim" );
-
-    RWriteInteger( fp, bASCII, 13 );
-    RWriteInteger( fp, bASCII, 3 );
-    RWriteInteger( fp, bASCII, nXSize );
-    RWriteInteger( fp, bASCII, nYSize );
-    RWriteInteger( fp, bASCII, nBands );
-
-    RWriteInteger( fp, bASCII, 254 );
-
-/* -------------------------------------------------------------------- */
-/*      Terminate overall pairlist.                                     */
-/* -------------------------------------------------------------------- */
-    RWriteInteger( fp, bASCII, 254 );
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup.                                                        */
-/* -------------------------------------------------------------------- */
-    VSIFCloseL( fp );
-
-    if( eErr != CE_None )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
-/* -------------------------------------------------------------------- */
-    RDataset *poDS = (RDataset *) GDALOpen( pszFilename, GA_ReadOnly );
-
-    if( poDS )
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
-
-    return poDS;
 }
 
 /************************************************************************/
@@ -378,6 +541,7 @@ void GDALRegister_R()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = RDataset::Open;
+        poDriver->pfnIdentify = RDataset::Identify;
         poDriver->pfnCreateCopy = RCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
