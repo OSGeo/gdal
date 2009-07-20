@@ -365,19 +365,10 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     poDefaultRAT = poRAT->Clone();
 
     // ----------------------------------------------------------
-    // Create VAT named based on RDT and RID (potential multi-reference)
-    // ----------------------------------------------------------
-
-    if( ! pszVATName )
-    {
-        pszVATName = CPLStrdup( CPLSPrintf(
-            "RAT_%s_%d", poGeoRaster->pszDataTable, poGeoRaster->nRasterId ) );
-    }
-
-    // ----------------------------------------------------------
     // Format Table description
     // ----------------------------------------------------------
 
+    char szName[OWTEXT];
     char szDescription[OWTEXT];
     int  iCol = 0;
 
@@ -385,8 +376,15 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
     {
+        strcpy( szName, poRAT->GetNameOfCol( iCol ) );
+
+		if( EQUAL( szName, "histogram" ) )
+		{
+			return CE_None;
+		}
+
         strcpy( szDescription, CPLSPrintf( "%s, %s",
-            szDescription, poRAT->GetNameOfCol( iCol ) ) );
+            szDescription, szName ) );
 
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer )
         {
@@ -405,6 +403,19 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         }
     }
     strcpy( szDescription, CPLSPrintf( "%s )", szDescription ) );
+
+    // ----------------------------------------------------------
+    // Create VAT named based on RDT and RID and Layer (nBand)
+    // ----------------------------------------------------------
+
+    if( ! pszVATName )
+    {
+        pszVATName = CPLStrdup( CPLSPrintf(
+            "RAT_%s_%d_%d", 
+			poGeoRaster->pszDataTable, 
+			poGeoRaster->nRasterId,
+			nBand ) );
+    }
 
     // ----------------------------------------------------------
     // Create VAT table
@@ -437,17 +448,19 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     delete poStmt;
 
     // ----------------------------------------------------------
-    // Create virtual file with INSERT instatements
+    // Insert Data to VAT
     // ----------------------------------------------------------
 
-    char* pszInserts = NULL;
-    int nSize        = 0;
     int iEntry       = 0;
     int nEntryCount  = poRAT->GetRowCount();
     int nColunsCount = poRAT->GetColumnCount();
-    int nBytesCount  = 0;
 
     char szInsert[OWTEXT];
+
+    CPLString osInserts = 
+        "DECLARE\n"
+        "  GR1  SDO_GEORASTER   := NULL;\n"
+        "BEGIN\n";
 
     for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
@@ -462,62 +475,43 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
             {
                 strcat( szInsert, CPLSPrintf ( ", '%s'", 
                     poRAT->GetValueAsString( iEntry, iCol ) ) );
-
             }
             if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer ||
                 poRAT->GetTypeOfCol( iCol ) == GFT_Real )
             {
                 strcat( szInsert, CPLSPrintf ( ", %s", 
                     poRAT->GetValueAsString( iEntry, iCol ) ) );
-
             }
         }
-        strcat( szInsert, ");\n" );
 
-        nBytesCount += strlen( szInsert );
-        pszInserts = (char*) CPLRealloc( pszInserts, sizeof(char) * ( nBytesCount + 1 ));
-        strcpy( &pszInserts[nSize], szInsert );
-        nSize = nBytesCount;
+		strcat( szInsert, ");\n" );
+		osInserts += szInsert;
     }
 
-    // ----------------------------------------------------------
-    // Insert Data to VAT
-    // ----------------------------------------------------------
-
-    poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf(
-        "DECLARE\n"
-        "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
-        "  GR1  SDO_GEORASTER   := NULL;\n"
-        "BEGIN\n"
-        "%s"
-        "\n"
-        "  SELECT %s INTO GR1 FROM %s T WHERE"
-        "    T.%s.RasterDataTable = :rdt AND"
-        "    T.%s.RasterId = :rid FOR UPDATE;\n"
+	osInserts += CPLSPrintf(
+        "  SELECT %s INTO GR1 FROM %s T WHERE\n"
+        "    T.%s.RasterDataTable = '%s' AND\n"
+        "    T.%s.RasterId = %d FOR UPDATE;\n"
         "  SDO_GEOR.setVAT(GR1, %d, '%s');\n"
-        "  UPDATE %s T SET %s = GR1 WHERE"
-        "    T.%s.RasterDataTable = :rdt AND"
-        "    T.%s.RasterId = :rid;\n"
+        "  UPDATE %s T SET %s = GR1 WHERE\n"
+        "    T.%s.RasterDataTable = '%s' AND\n"
+        "    T.%s.RasterId = %d;\n"
         "END;",
-        pszInserts,
         poGeoRaster->pszColumn, poGeoRaster->pszTable,
-        poGeoRaster->pszColumn, poGeoRaster->pszColumn,
+        poGeoRaster->pszColumn, poGeoRaster->pszDataTable,
+		poGeoRaster->pszColumn, poGeoRaster->nRasterId,
         nBand, pszVATName,
         poGeoRaster->pszTable,  poGeoRaster->pszColumn,
-        poGeoRaster->pszColumn, poGeoRaster->pszColumn  ) );
+        poGeoRaster->pszColumn, poGeoRaster->pszDataTable,
+		poGeoRaster->pszColumn, poGeoRaster->nRasterId  );
 
-    poStmt->Bind( pszVATName );
-    poStmt->BindName( (char*) ":rdt", poGDS->poGeoRaster->pszDataTable );
-    poStmt->BindName( (char*) ":rid", &poGDS->poGeoRaster->nRasterId );
+    poStmt = poGeoRaster->poConnection->CreateStatement( osInserts.c_str() );
 
-    if( ! poStmt->Execute() )
+	if( ! poStmt->Execute() )
     {
-        CPLFree( pszInserts );
         CPLError( CE_Failure, CPLE_AppDefined, "Insert/registering VAT Error!" );
         return CE_Failure;
     }
-
-    CPLFree( pszInserts );
 
     delete poStmt;
 

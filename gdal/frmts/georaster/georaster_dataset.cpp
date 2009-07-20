@@ -1311,6 +1311,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
                                           void* pProgressData )
 {
     (void) panBandList;
+	(void) nListBands;
 
     char szMethod[OWNAME];
 
