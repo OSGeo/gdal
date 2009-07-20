@@ -2422,7 +2422,7 @@ void JPEG_LoadTables( JQUANT_TBL* hquant_tbl_ptr,
     //  Scale Quantization table based on quality
     //  --------------------------------------------------------------------
 
-    fscale_factor = (float) jpeg_quality_scaling( nQuality ) / 100.0;
+    fscale_factor = (float) jpeg_quality_scaling( nQuality ) / (float) 100.0;
 
     for ( i = 0; i < 64; i++ )
     {
@@ -2490,7 +2490,7 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
         sDInfo.err = jpeg_std_error( &sJErr );
         jpeg_create_decompress( &sDInfo );
 
-        // -----------------------------------------------------------------
+		// -----------------------------------------------------------------
         // Load table for abbreviated JPEG-B
         // -----------------------------------------------------------------
 
@@ -2555,7 +2555,7 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
 
     FILE *fpImage = VSIFOpenL( pszMemFile, "wb" );
 
-    boolean write_all_tables = TRUE;
+    bool write_all_tables = TRUE;
 
     if( EQUAL( pszCompressionType, "JPEG-B") )
     {
@@ -2563,7 +2563,7 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
     }
 
     //  --------------------------------------------------------------------
-    //  Initialize decompressor
+    //  Initialize compressor
     //  --------------------------------------------------------------------
 
     if( ! sCInfo.global_state )
