@@ -28,17 +28,31 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifndef _GEORASTER_PRIV_H_INCLUDED
+#define _GEORASTER_PRIV_H_INCLUDED
+
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_rat.h"
-#include "oci_wrapper.h"
 #include "ogr_spatialref.h"
 #include "cpl_minixml.h"
 
-class GeoRasterDriver;
-class GeoRasterDataset;
-class GeoRasterRasterBand;
-class GeoRasterWrapper;
+//  ---------------------------------------------------------------------------
+//  Compression libraries
+//  ---------------------------------------------------------------------------
+
+// DEFLATE compression support
+
+#include <zlib.h>
+
+// JPEG compression support
+
+CPL_C_START
+#include <jpeglib.h>
+CPL_C_END
+
+void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
+void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
 
 //  ---------------------------------------------------------------------------
 //  Calculate the row index where a block is stored
@@ -48,8 +62,10 @@ class GeoRasterWrapper;
     ( ( (int) ceil( (double) ( ( bn - 1 ) / bb ) ) * tc * tr ) + ( yo * tc ) + xo )
 
 //  ---------------------------------------------------------------------------
-// Geographic system without EPSG parameters
+//  System constants
 //  ---------------------------------------------------------------------------
+
+//  Geographic system without EPSG parameters
 
 #define UNKNOWN_CRS 999999
 
@@ -57,22 +73,16 @@ class GeoRasterWrapper;
 
 #define DEFAULT_BMP_MASK -99999
 
-// DEFLATE compression support
+//  ---------------------------------------------------------------------------
+//  GeoRaster wrapper classe definitions
+//  ---------------------------------------------------------------------------
 
-#include <zlib.h>
+#include "oci_wrapper.h"
 
-// JPEG compression support
-
-#ifdef WIN32
-#define HAVE_BOOLEAN
-#endif
-
-CPL_C_START
-#include <jpeglib.h>
-CPL_C_END
-
-void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
-void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
+class GeoRasterDriver;
+class GeoRasterDataset;
+class GeoRasterRasterBand;
+class GeoRasterWrapper;
 
 //  ---------------------------------------------------------------------------
 //  GeoRasterDriver, extends GDALDriver to support GeoRaster Server Connections
@@ -386,3 +396,5 @@ public:
                             bOrderlyAccess = bValue;
                         };
 };
+
+#endif /* ifndef _GEORASTER_PRIV_H_INCLUDED */
