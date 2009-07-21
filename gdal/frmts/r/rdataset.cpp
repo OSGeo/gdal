@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: bmpdataset.cpp 17322 2009-06-30 01:11:20Z warmerdam $
+ * $Id$
  *
  * Project:  R Format Driver
  * Purpose:  Read/write R stats package object format.
@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "../raw/rawdataset.h"
 
-CPL_CVSID("$Id: bmpdataset.cpp 17322 2009-06-30 01:11:20Z warmerdam $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void    GDALRegister_R(void);
@@ -64,7 +64,7 @@ class RDataset : public GDALPamDataset
 
     vsi_l_offset nStartOfData;
 
-    std::vector<double> adfMatrixValues;
+    double     *padfMatrixValues;
 
     const char *ASCIIFGets();
     int         ReadInteger();
@@ -150,6 +150,7 @@ CPLErr RRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 RDataset::RDataset()
 {
     fp = NULL;
+    padfMatrixValues = NULL;
 }
 
 /************************************************************************/
@@ -159,6 +160,7 @@ RDataset::RDataset()
 RDataset::~RDataset()
 {
     FlushCache();
+    CPLFree(padfMatrixValues);
     
     if( fp )
         VSIFCloseL( fp );
@@ -249,10 +251,16 @@ const char *RDataset::ReadString()
 
     size_t nLen = ReadInteger();
         
-    char *pachWrkBuf = (char *) CPLMalloc(nLen);
+    char *pachWrkBuf = (char *) VSIMalloc(nLen);
+    if (pachWrkBuf == NULL)
+    {
+        osLastStringRead = "";
+        return "";
+    }
     if( VSIFReadL( pachWrkBuf, 1, nLen, fp ) != nLen )
     {
         osLastStringRead = "";
+        CPLFree( pachWrkBuf );
         return "";
     }
     
@@ -298,7 +306,7 @@ int RDataset::ReadPair( CPLString &osObjName, int &nObjCode )
 /*      Read the object name.                                           */
 /* -------------------------------------------------------------------- */
     const char *pszName = ReadString();
-    if( pszName == NULL )
+    if( pszName == NULL || pszName[0] == '\0' )
         return FALSE;
 
     osObjName = pszName;
@@ -425,9 +433,16 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poDS->bASCII )
     {
-        poDS->adfMatrixValues.resize( nValueCount );
+        poDS->padfMatrixValues = (double*) VSIMalloc2( nValueCount, sizeof(double) );
+        if (poDS->padfMatrixValues == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot allocate %d doubles", nValueCount);
+            delete poDS;
+            return NULL;
+        }
         for( int iValue = 0; iValue < nValueCount; iValue++ )
-            poDS->adfMatrixValues[iValue] = poDS->ReadFloat();
+            poDS->padfMatrixValues[iValue] = poDS->ReadFloat();
     }
     else
     {
@@ -469,19 +484,19 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( nObjCode % 256 == R_REALSXP )
         {
             int nCount = poDS->ReadInteger();
-            while( nCount-- > 0 )
+            while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
                 poDS->ReadFloat();
         }
         else if( nObjCode % 256 == R_INTSXP )
         {
             int nCount = poDS->ReadInteger();
-            while( nCount-- > 0 )
+            while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
                 poDS->ReadInteger();
         }
         else if( nObjCode % 256 == R_STRSXP )			
         {
             int nCount = poDS->ReadInteger();
-            while( nCount-- > 0 )
+            while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
                 poDS->ReadString();
         }
         else if( nObjCode % 256 == R_CHARSXP )			
@@ -498,6 +513,23 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(nBandCount, TRUE))
+    {
+        delete poDS;
+        return NULL;
+    }
+
+    if (nValueCount > INT_MAX / poDS->nRasterXSize ||
+        nValueCount * poDS->nRasterXSize > INT_MAX / poDS->nRasterYSize ||
+        nValueCount < nBandCount * poDS->nRasterXSize * poDS->nRasterYSize )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Not enough pixel data." );
+        delete poDS;
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the raster band object(s).                               */
 /* -------------------------------------------------------------------- */
@@ -507,7 +539,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( poDS->bASCII )
             poBand = new RRasterBand( poDS, iBand+1, 
-                                      &(poDS->adfMatrixValues[0]) + iBand * poDS->nRasterXSize * poDS->nRasterYSize );
+                                      poDS->padfMatrixValues + iBand * poDS->nRasterXSize * poDS->nRasterYSize );
         else
             poBand = new RawRasterBand( poDS, iBand+1, poDS->fp,
                                         poDS->nStartOfData 
