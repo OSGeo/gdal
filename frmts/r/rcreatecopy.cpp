@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: bmpdataset.cpp 17322 2009-06-30 01:11:20Z warmerdam $
+ * $Id$
  *
  * Project:  R Format Driver
  * Purpose:  CreateCopy() implementation for R stats package object format.
@@ -30,7 +30,7 @@
 #include "gdal_pam.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: bmpdataset.cpp 17322 2009-06-30 01:11:20Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
