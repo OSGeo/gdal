@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: gmt.py 14972 2008-07-19 13:04:42Z rouault $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test R driver support.
