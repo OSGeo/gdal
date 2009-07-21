@@ -93,17 +93,29 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
     int  bASCII = CSLFetchBoolean( papszOptions, "ASCII", FALSE );
+    int  bCompressed = CSLFetchBoolean( papszOptions, "COMPRESS", !bASCII );
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------- */
+/*      Setup the filename to actually use.  We prefix with             */
+/*      /vsigzip/ if we want compressed output.                         */
+/* -------------------------------------------------------------------- */
+    CPLString osAdjustedFilename;
+
+    if( bCompressed )
+        osAdjustedFilename = "/vsigzip/";
+
+    osAdjustedFilename += pszFilename;
+
+/* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
     FILE	*fp;
 
-    fp = VSIFOpenL( pszFilename, "wb" );
+    fp = VSIFOpenL( osAdjustedFilename, "wb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
