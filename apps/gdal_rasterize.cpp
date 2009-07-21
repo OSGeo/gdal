@@ -157,21 +157,21 @@ static void ProcessLayer(
         if( OSRIsSame(hSrcSRS, hDstSRS) == FALSE )
         {
             fprintf(stderr,
-                    "Warning : the output raster dataset and the input vector layer do not have the same SRS. "
-                    "Results will be probably incorrect.\n");
+                    "Warning : the output raster dataset and the input vector layer do not have the same SRS.\n"
+                    "Results might be incorrect (no on-the-fly reprojection of input data).\n");
         }
     }
     else if( hDstSRS != NULL && hSrcSRS == NULL )
     {
         fprintf(stderr,
-                "Warning : the output raster dataset has a SRS, but the input vector layer not. "
-                "Results will be probably incorrect.\n");
+                "Warning : the output raster dataset has a SRS, but the input vector layer SRS is unknown.\n"
+                "Ensure input vector has the same SRS, otherwise results might be incorrect.\n");
     }
     else if( hDstSRS == NULL && hSrcLayer != NULL )
     {
         fprintf(stderr,
-                "Warning : the input vector layer has a SRS, but the output raster dataset not. "
-                "Results will be probably incorrect.\n");
+                "Warning : the input vector layer has a SRS, but the output raster dataset SRS is unknown.\n"
+                "Ensure output raster dataset has the same SRS, otherwise results might be incorrect.\n");
     }
 
     if( hDstSRS != NULL )
