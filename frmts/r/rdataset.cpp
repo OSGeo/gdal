@@ -321,6 +321,14 @@ int RDataset::Identify( GDALOpenInfo *poOpenInfo )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      If the extension is .rda and the file type is gzip              */
+/*      compressed we assume it is a gziped R binary file.              */
+/* -------------------------------------------------------------------- */
+    if( memcmp(poOpenInfo->pabyHeader,"\037\213\b",3) == 0 
+        && EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"rda") )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
 /*      Is this an ASCII or XDR binary R file?                          */
 /* -------------------------------------------------------------------- */
     if( !EQUALN((const char *)poOpenInfo->pabyHeader,"RDA2\nA\n",7) 
@@ -340,11 +348,22 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Do we need to route the file through the decompression          */
+/*      machinery?                                                      */
+/* -------------------------------------------------------------------- */
+    CPLString osAdjustedFilename;
+
+    if( memcmp(poOpenInfo->pabyHeader,"\037\213\b",3) == 0 )
+        osAdjustedFilename = "/vsigzip/";
+
+    osAdjustedFilename += poOpenInfo->pszFilename;
+
+/* -------------------------------------------------------------------- */
 /*      Establish this as a dataset and open the file using VSI*L.      */
 /* -------------------------------------------------------------------- */
     RDataset *poDS = new RDataset();
 
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    poDS->fp = VSIFOpenL( osAdjustedFilename, "r" );
     if( poDS->fp == NULL )
     {
         delete poDS;
@@ -533,9 +552,11 @@ void GDALRegister_R()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_r.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rda" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int32 Float32" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Float32" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
+"   <Option name='ASCII' type='boolean' description='For ASCII output, default NO'/>"
+"   <Option name='COMPRESS' type='boolean' description='Produced Compressed output, default YES'/>"
 "</CreationOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
