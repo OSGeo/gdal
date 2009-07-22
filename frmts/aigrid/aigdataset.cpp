@@ -481,6 +481,11 @@ void AIGDataset::ReadRAT()
 /* -------------------------------------------------------------------- */
 
     AVCBinReadClose( psFile );
+
+    /* Workaround against #2447 and #3031, to avoid binding languages */
+    /* not being able to open the dataset */
+    CPLErrorReset();
+
 #endif /* OGR_ENABLED */
 }
 
