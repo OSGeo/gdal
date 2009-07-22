@@ -62,6 +62,7 @@ class CPL_DLL AIGDataset : public GDALPamDataset
     char	*pszProjection;
 
     GDALColorTable *poCT;
+    int         bHasReadRat;
 
     void        TranslateColorTable( const char * );
 
@@ -205,6 +206,16 @@ const GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
 
 {
     AIGDataset	*poODS = (AIGDataset *) poDS;
+
+/* -------------------------------------------------------------------- */
+/*      Read info raster attribute table, if present.                   */
+/* -------------------------------------------------------------------- */
+    if (!poODS->bHasReadRat)
+    {
+        poODS->ReadRAT();
+        poODS->bHasReadRat = TRUE;
+    }
+
     return poODS->poRAT;
 }
 
@@ -304,6 +315,7 @@ AIGDataset::AIGDataset()
     pszProjection = CPLStrdup("");
     poCT = NULL;
     poRAT = NULL;
+    bHasReadRat = FALSE;
 }
 
 /************************************************************************/
@@ -633,11 +645,6 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->SetBand( 1, new AIGRasterBand( poDS, 1 ) );
-
-/* -------------------------------------------------------------------- */
-/*      Read info raster attribute table, if present.                   */
-/* -------------------------------------------------------------------- */
-    poDS->ReadRAT();
 
 /* -------------------------------------------------------------------- */
 /*	Try to read projection file.					*/
