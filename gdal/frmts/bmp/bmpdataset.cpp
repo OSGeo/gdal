@@ -951,6 +951,7 @@ CPLErr BMPDataset::SetGeoTransform( double * padfTransform )
             CPLError( CE_Failure, CPLE_FileIO, "Can't write world file." );
             eErr = CE_Failure;
         }
+        return eErr;
     }
     else
         return GDALPamDataset::SetGeoTransform( padfTransform );
