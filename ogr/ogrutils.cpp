@@ -711,7 +711,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
     
     if( strstr(pszInput,"-") != NULL || strstr(pszInput,"/") != NULL )
     {
-        psField->Date.Year = atoi(pszInput);
+        psField->Date.Year = (GInt16)atoi(pszInput);
         if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
             psField->Date.Year += 1900;
         else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
@@ -724,7 +724,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
         else 
             pszInput++;
 
-        psField->Date.Month = atoi(pszInput);
+        psField->Date.Month = (GByte)atoi(pszInput);
         if( psField->Date.Month > 12 )
             return FALSE;
 
@@ -735,7 +735,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
         else 
             pszInput++;
 
-        psField->Date.Day = atoi(pszInput);
+        psField->Date.Day = (GByte)atoi(pszInput);
         if( psField->Date.Day > 31 )
             return FALSE;
 
@@ -753,7 +753,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
     
     if( strstr(pszInput,":") != NULL )
     {
-        psField->Date.Hour = atoi(pszInput);
+        psField->Date.Hour = (GByte)atoi(pszInput);
         if( psField->Date.Hour > 23 )
             return FALSE;
 
@@ -764,7 +764,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
         else 
             pszInput++;
 
-        psField->Date.Minute = atoi(pszInput);
+        psField->Date.Minute = (GByte)atoi(pszInput);
         if( psField->Date.Minute > 59 )
             return FALSE;
 
@@ -775,7 +775,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
         else 
             pszInput++;
 
-        psField->Date.Second = atoi(pszInput);
+        psField->Date.Second = (GByte)atoi(pszInput);
         if( psField->Date.Second > 59 )
             return FALSE;
 
@@ -800,14 +800,14 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
     {
         // +HH integral offset
         if( strlen(pszInput) <= 3 )
-            psField->Date.TZFlag = 100 + atoi(pszInput) * 4;
+            psField->Date.TZFlag = (GByte)(100 + atoi(pszInput) * 4);
 
         else if( pszInput[3] == ':'  // +HH:MM offset
                  && atoi(pszInput+4) % 15 == 0 )
         {
-            psField->Date.TZFlag = 100 
+            psField->Date.TZFlag = (GByte)(100 
                 + atoi(pszInput+1) * 4
-                + (atoi(pszInput+4) / 15);
+                + (atoi(pszInput+4) / 15));
 
             if( pszInput[0] == '-' )
                 psField->Date.TZFlag = -1 * (psField->Date.TZFlag - 100) + 100;
@@ -815,9 +815,9 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
         else if( isdigit(pszInput[3]) && isdigit(pszInput[4])  // +HHMM offset
                  && atoi(pszInput+3) % 15 == 0 )
         {
-            psField->Date.TZFlag = 100 
+            psField->Date.TZFlag = (GByte)(100 
                 + static_cast<GByte>(CPLScanLong(pszInput+1,2)) * 4
-                + (atoi(pszInput+3) / 15);
+                + (atoi(pszInput+3) / 15));
 
             if( pszInput[0] == '-' )
                 psField->Date.TZFlag = -1 * (psField->Date.TZFlag - 100) + 100;
@@ -825,9 +825,9 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
         else if( isdigit(pszInput[3]) && pszInput[4] == '\0'  // +HMM offset
                  && atoi(pszInput+2) % 15 == 0 )
         {
-            psField->Date.TZFlag = 100 
+            psField->Date.TZFlag = (GByte)(100 
                 + static_cast<GByte>(CPLScanLong(pszInput+1,1)) * 4
-                + (atoi(pszInput+2) / 15);
+                + (atoi(pszInput+2) / 15));
 
             if( pszInput[0] == '-' )
                 psField->Date.TZFlag = -1 * (psField->Date.TZFlag - 100) + 100;
