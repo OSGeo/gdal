@@ -2202,13 +2202,13 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
         || poFDefn->GetType() == OFTTime 
         || poFDefn->GetType() == OFTDateTime )
     {
-        pauFields[iField].Date.Year = nYear;
-        pauFields[iField].Date.Month = nMonth;
-        pauFields[iField].Date.Day = nDay;
-        pauFields[iField].Date.Hour = nHour;
-        pauFields[iField].Date.Minute = nMinute;
-        pauFields[iField].Date.Second = nSecond;
-        pauFields[iField].Date.TZFlag = nTZFlag;
+        pauFields[iField].Date.Year = (GInt16)nYear;
+        pauFields[iField].Date.Month = (GByte)nMonth;
+        pauFields[iField].Date.Day = (GByte)nDay;
+        pauFields[iField].Date.Hour = (GByte)nHour;
+        pauFields[iField].Date.Minute = (GByte)nMinute;
+        pauFields[iField].Date.Second = (GByte)nSecond;
+        pauFields[iField].Date.TZFlag = (GByte)nTZFlag;
     }
 }
 

@@ -394,8 +394,6 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
       default:
           return NULL;
     }
-
-    return NULL;
 }
 
 /************************************************************************/
