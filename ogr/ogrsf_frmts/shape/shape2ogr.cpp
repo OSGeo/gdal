@@ -890,9 +890,9 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               if( pszDateValue[2] == '/' && pszDateValue[5] == '/' 
                   && strlen(pszDateValue) >= 10 )
               {
-                  sFld.Date.Month = atoi(pszDateValue+0);
-                  sFld.Date.Day   = atoi(pszDateValue+3);
-                  sFld.Date.Year  = atoi(pszDateValue+6);
+                  sFld.Date.Month = (GByte)atoi(pszDateValue+0);
+                  sFld.Date.Day   = (GByte)atoi(pszDateValue+3);
+                  sFld.Date.Year  = (GInt16)atoi(pszDateValue+6);
               }
               else
               {
