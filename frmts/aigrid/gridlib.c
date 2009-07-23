@@ -629,19 +629,33 @@ CPLErr AIGReadBlock( FILE * fp, GUInt32 nBlockOffset, int nBlockSize,
 /*      Collect minimum value.                                          */
 /* -------------------------------------------------------------------- */
 
-    /* The 4 is to be safe... In theory for a very small block (2x2 or less),
-       and nMinSize < 4, nDataSize could be smaller... */
-    if (nDataSize < 2 + 4)
+    /* The first 2 bytes that give the block size are not included in nDataSize */
+    /* and have already been safely read */
+    pabyCur = pabyRaw + 2;
+
+    /* Need at least 2 byte to read the nMinSize and the nMagic */
+    if (nDataSize < 2)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Corrupt block");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Corrupt block. Need 2 bytes to read nMagic and nMinSize, only %d available",
+                  nDataSize);
         CPLFree( pabyRaw );
         return CE_Failure;
     }
-
-    pabyCur = pabyRaw + 2;
-
+    nMagic = pabyCur[0];
     nMinSize = pabyCur[1];
     pabyCur += 2;
+    nDataSize -= 2;
+
+    /* Need at least nMinSize bytes to read the nMin value */
+    if (nDataSize < nMinSize)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Corrupt block. Need %d bytes to read nMin. Only %d available",
+                  nMinSize, nDataSize);
+        CPLFree( pabyRaw );
+        return CE_Failure;
+    }
 
     if( nMinSize > 4 )
     {
@@ -668,7 +682,9 @@ CPLErr AIGReadBlock( FILE * fp, GUInt32 nBlockOffset, int nBlockSize,
             pabyCur++;
         }
 
-        if( pabyRaw[4] > 127 )
+        /* If nMinSize = 0, then we might have only 4 bytes in pabyRaw */
+        /* don't try to read the 5th one then */
+        if( nMinSize != 0 && pabyRaw[4] > 127 )
         {
             if( nMinSize == 2 )
                 nMin = nMin - 65536;
@@ -679,12 +695,11 @@ CPLErr AIGReadBlock( FILE * fp, GUInt32 nBlockOffset, int nBlockSize,
         }
     }
     
-    nDataSize -= 2+nMinSize;
+    nDataSize -= nMinSize;
     
 /* -------------------------------------------------------------------- */
 /*	Call an apppropriate handler depending on magic code.		*/
 /* -------------------------------------------------------------------- */
-    nMagic = pabyRaw[2];
 
     if( nMagic == 0x08 )
     {
