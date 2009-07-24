@@ -1048,6 +1048,10 @@ CPLErr GDALWarpOperation::CollectChunkList(
  * @param nDstYOff Y offset to window of destination data to be produced.
  * @param nDstXSize Width of output window on destination file to be produced.
  * @param nDstYSize Height of output window on destination file to be produced.
+ * @param nSrcXOff source window X offset (computed if window all zero)
+ * @param nSrcYOff source window Y offset (computed if window all zero)
+ * @param nSrcXSize source window X size (computed if window all zero)
+ * @param nSrcYSize source window Y size (computed if window all zero)
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
@@ -1083,11 +1087,20 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
     int  nWordSize = GDALGetDataTypeSize(psOptions->eWorkingDataType)/8;
     int  nBandSize = nWordSize * nDstXSize * nDstYSize;
 
+    if (nDstXSize > INT_MAX / nDstYSize ||
+        nDstXSize * nDstYSize > INT_MAX / (nWordSize * psOptions->nBandCount))
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Integer overflow : nDstXSize=%d, nDstYSize=%d",
+                  nDstXSize, nDstYSize);
+        return CE_Failure;
+    }
+
     pDstBuffer = VSIMalloc( nBandSize * psOptions->nBandCount );
     if( pDstBuffer == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Out of memory allocatint %d byte destination buffer.",
+                  "Out of memory allocating %d byte destination buffer.",
                   nBandSize * psOptions->nBandCount );
         return CE_Failure;
     }
@@ -1330,6 +1343,15 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.nSrcYOff = nSrcYOff;
     oWK.nSrcXSize = nSrcXSize;
     oWK.nSrcYSize = nSrcYSize;
+
+    if (nSrcXSize > INT_MAX / nSrcYSize ||
+        nSrcXSize * nSrcYSize > INT_MAX / (nWordSize * psOptions->nBandCount))
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Integer overflow : nSrcXSize=%d, nSrcYSize=%d",
+                  nSrcXSize, nSrcYSize);
+        return CE_Failure;
+    }
 
     oWK.papabySrcImage = (GByte **) 
         CPLCalloc(sizeof(GByte*),psOptions->nBandCount);
@@ -1801,12 +1823,34 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
   TryAgainWithGrid:
     nSamplePoints = 0;
     if( bUseGrid )
+    {
+        if (nStepCount > INT_MAX / nStepCount)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Too many steps : %d", nStepCount);
+            return CE_Failure;
+        }
         nSampleMax = nStepCount * nStepCount;
+    }
     else
+    {
+        if (nStepCount > INT_MAX / 4)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Too many steps : %d", nStepCount);
+            return CE_Failure;
+        }
         nSampleMax = nStepCount * 4;
+    }
 
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nSampleMax);
-    padfX = (double *) CPLMalloc(sizeof(double) * 3 * nSampleMax);
+    pabSuccess = (int *) VSIMalloc2(sizeof(int), nSampleMax);
+    padfX = (double *) VSIMalloc2(sizeof(double) * 3, nSampleMax);
+    if (pabSuccess == NULL || padfX == NULL)
+    {
+        CPLFree( padfX );
+        CPLFree( pabSuccess );
+        return CE_Failure;
+    }
     padfY = padfX + nSampleMax;
     padfZ = padfX + nSampleMax * 2;
 
