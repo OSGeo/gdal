@@ -139,10 +139,12 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-append") )
         {
             bAppend = TRUE;
+            bUpdate = TRUE;
         }
         else if( EQUAL(papszArgv[iArg],"-overwrite") )
         {
             bOverwrite = TRUE;
+            bUpdate = TRUE;
         }
         else if( EQUAL(papszArgv[iArg],"-update") )
         {
