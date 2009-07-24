@@ -1344,8 +1344,9 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.nSrcXSize = nSrcXSize;
     oWK.nSrcYSize = nSrcYSize;
 
-    if (nSrcXSize > INT_MAX / nSrcYSize ||
-        nSrcXSize * nSrcYSize > INT_MAX / (nWordSize * psOptions->nBandCount))
+    if (nSrcXSize != 0 && nSrcYSize != 0 &&
+        (nSrcXSize > INT_MAX / nSrcYSize ||
+         nSrcXSize * nSrcYSize > INT_MAX / (nWordSize * psOptions->nBandCount)))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Integer overflow : nSrcXSize=%d, nSrcYSize=%d",
@@ -1358,7 +1359,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.papabySrcImage[0] = (GByte *)
         VSIMalloc( nWordSize * nSrcXSize * nSrcYSize * psOptions->nBandCount );
 
-    if( oWK.papabySrcImage[0] == NULL )
+    if( nSrcXSize != 0 && nSrcYSize != 0 && oWK.papabySrcImage[0] == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Failed to allocate %d byte source buffer.",
@@ -1876,7 +1877,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
         }
     }
  /* -------------------------------------------------------------------- */
- /*      Setup sample points all around the edge of the input raster.    */
+ /*      Setup sample points all around the edge of the output raster.   */
  /* -------------------------------------------------------------------- */
     else
     {
@@ -1907,7 +1908,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     CPLAssert( nSamplePoints == nSampleMax );
 
 /* -------------------------------------------------------------------- */
-/*      Transform them to the output coordinate system.                 */
+/*      Transform them to the input pixel coordinate space              */
 /* -------------------------------------------------------------------- */
     if( !psOptions->pfnTransformer( psOptions->pTransformerArg, 
                                     TRUE, nSamplePoints, 
