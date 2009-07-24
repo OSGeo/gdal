@@ -314,6 +314,12 @@ def tiff_12bitjpeg():
     gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'ON' )
     gdal.ErrorReset()
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+
+    try:
+        os.unlink('data/mandrilmini_12bitjpeg.tif.aux.xml')
+    except:
+        pass
+
     try:
         ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')
         ds.GetRasterBand(1).ReadRaster(0,0,1,1)
@@ -342,6 +348,52 @@ def tiff_12bitjpeg():
         return 'fail'
     ds = None
 
+    os.unlink('data/mandrilmini_12bitjpeg.tif.aux.xml')
+
+    return 'success'
+
+###############################################################################
+# Test that statistics for TIFF files are stored and correctly read from .aux.xml
+
+def tiff_read_stats_from_pam():
+
+    try:
+        os.remove('data/byte.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('data/byte.tif')
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md.has_key('STATISTICS_MINIMUM'):
+        gdaltest.post_reason('Unexpected presence of STATISTICS_MINIMUM')
+        return 'fail'
+
+    # Force statistics computation
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    if stats[0] != 74.0 or stats[1] != 255.0:
+        print stats
+        return 'fail'
+
+    ds = None
+    try:
+        os.stat('data/byte.tif.aux.xml')
+    except:
+        gdaltest.post_reason('Expected generation of data/byte.tif.aux.xml')
+        return 'fail'
+
+    ds = gdal.Open('data/byte.tif')
+    # Just read statistics (from PAM) without forcing their computation
+    stats = ds.GetRasterBand(1).GetStatistics(0, 0)
+    if stats[0] != 74.0 or stats[1] != 255.0:
+        print stats
+        return 'fail'
+    ds = None
+
+    try:
+        os.remove('data/byte.tif.aux.xml')
+    except:
+        pass
+
     return 'success'
 
 for item in init_list:
@@ -363,6 +415,7 @@ gdaltest_list.append( (tiff_vsimem) )
 gdaltest_list.append( (tiff_vsizip_and_mem) )
 gdaltest_list.append( (tiff_ProjectedCSTypeGeoKey_only) )
 gdaltest_list.append( (tiff_12bitjpeg) )
+gdaltest_list.append( (tiff_read_stats_from_pam) )
 
 if __name__ == '__main__':
 
