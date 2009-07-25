@@ -207,7 +207,8 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
 			    GUInt32 count, unsigned char* data)
 {
   const char* sep = "";
-  char  pszTemp[MAXSTRINGLENGTH];
+  char  pszTemp[128];
+  char* pszDataEnd = pszData;
 
   pszData[0]='\0';
 
@@ -215,16 +216,22 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
 
   case TIFF_UNDEFINED:
   case TIFF_BYTE:
-    while (count-- > 0){
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s%#02x", sep, *data++), sep = " ";
-      strcat(pszData,pszTemp);
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
 
   case TIFF_SBYTE:
-    while (count-- > 0){
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s%d", sep, *(char *)data++), sep = " ";
-      strcat(pszData,pszTemp);
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
 	  
@@ -235,15 +242,18 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
 
   case TIFF_SHORT: {
     register GUInt16 *wp = (GUInt16*)data;
-    while (count-- > 0) {
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s%u", sep, *wp++), sep = " ";
-      strcat(pszData,pszTemp);
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
   }
   case TIFF_SSHORT: {
     register GInt16 *wp = (GInt16*)data;
-    while (count-- > 0) {
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s%d", sep, *wp++), sep = " ";
       strcat(pszData,pszTemp);
     }
@@ -251,18 +261,24 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
   }
   case TIFF_LONG: {
     register GUInt32 *lp = (GUInt32*)data;
-    while (count-- > 0) {
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s%lu", sep, (unsigned long) *lp++);
       sep = " ";
-      strcat(pszData,pszTemp);
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
   }
   case TIFF_SLONG: {
     register GInt32 *lp = (GInt32*)data;
-    while (count-- > 0){
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s%ld", sep, (long) *lp++), sep = " ";
-      strcat(pszData,pszTemp);
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
   }
@@ -270,7 +286,7 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
       register GUInt32 *lp = (GUInt32*)data;
       //      if(bSwabflag)
       //	  TIFFSwabArrayOfLong((GUInt32*) data, 2*count);
-      while (count-- > 0) {
+      for(;count>0;count--) {
 	  if( (lp[0]==0) && (lp[1] == 0) ) {
 	      sprintf(pszTemp,"%s(0)",sep);
 	  }
@@ -286,31 +302,48 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
   }
   case TIFF_SRATIONAL: {
     register GInt32 *lp = (GInt32*)data;
-    while (count-- > 0) {
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s(%g)", sep,
 	      (float) lp[0]/ (float) lp[1]);
       sep = " ";
       lp += 2;
-      strcat(pszData,pszTemp);
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
   }
   case TIFF_FLOAT: {
     register float *fp = (float *)data;
-    while (count-- > 0){
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s%g", sep, *fp++), sep = " ";
-      strcat(pszData,pszTemp);
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
   }
   case TIFF_DOUBLE: {
     register double *dp = (double *)data;
-    while (count-- > 0) {
+    for(;count>0;count--) {
       sprintf(pszTemp, "%s%g", sep, *dp++), sep = " ";
-      strcat(pszData,pszTemp);
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
   }
+
+  default:
+    return;
+  }
+
+  if (type != TIFF_ASCII && count != 0)
+  {
+      CPLError(CE_Warning, CPLE_AppDefined, "EXIF metadata truncated");
   }
 }
 
@@ -403,13 +436,13 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
     int space;
     unsigned int           n,i;
     char          pszTemp[MAXSTRINGLENGTH];
-    char          pszName[MAXSTRINGLENGTH];
+    char          pszName[128];
 
     TIFFDirEntry *poTIFFDirEntry;
     TIFFDirEntry *poTIFFDir;
-    struct tagname *poExifTags ;
-    struct intr_tag *poInterTags = intr_tags;
-    struct gpsname *poGPSTags;
+    const struct tagname *poExifTags ;
+    const struct intr_tag *poInterTags = intr_tags;
+    const struct gpsname *poGPSTags;
 
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
@@ -440,13 +473,6 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
     }
 
     poTIFFDir = (TIFFDirEntry *)CPLMalloc(nEntryCount * sizeof(TIFFDirEntry));
-
-    if (poTIFFDir == NULL) 
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "No space for TIFF directory");
-        return CE_Failure;
-    }
   
 /* -------------------------------------------------------------------- */
 /*      Read all directory entries                                      */
@@ -553,13 +579,19 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
 /*      Print tags                                                      */
 /* -------------------------------------------------------------------- */
-        space = poTIFFDirEntry->tdir_count * 
-            datawidth[poTIFFDirEntry->tdir_type];
+        int nDataWidth = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
+        space = poTIFFDirEntry->tdir_count * nDataWidth;
 
+        if (nDataWidth == 0 || poTIFFDirEntry->tdir_type >= TIFF_IFD )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Invalid or unhandled EXIF data type: %d, ignoring tag.", 
+                      poTIFFDirEntry->tdir_type );
+        }
 /* -------------------------------------------------------------------- */
 /*      This is at most 4 byte data so we can read it from tdir_offset  */
 /* -------------------------------------------------------------------- */
-        if (space >= 0 && space <= 4) {
+        else if (space >= 0 && space <= 4) {
 
             unsigned char data[4];
             memcpy(data, &poTIFFDirEntry->tdir_offset, 4);
@@ -595,13 +627,11 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
         else if (space > 0 && space < MAXSTRINGLENGTH) 
         {
-            unsigned char *data = (unsigned char *)CPLMalloc(space);
+            unsigned char *data = (unsigned char *)VSIMalloc(space);
 
             if (data) {
-                int width = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
-                tsize_t cc = poTIFFDirEntry->tdir_count * width;
                 VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+nTIFFHEADER,SEEK_SET);
-                VSIFReadL(data, 1, cc, fp);
+                VSIFReadL(data, 1, space, fp);
 
                 if (bSwabflag) {
                     switch (poTIFFDirEntry->tdir_type) {
@@ -632,7 +662,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 
                 EXIFPrintData(pszTemp, poTIFFDirEntry->tdir_type,
                               poTIFFDirEntry->tdir_count, data);
-                if (data) CPLFree(data);
+                CPLFree(data);
             }
         }
         else
