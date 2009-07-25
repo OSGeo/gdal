@@ -51,14 +51,14 @@ class GDALWrite {
 	public static void usage() 
 
 	{ 
-		Console.WriteLine("usage: gdalwrite {dataset name}");
+		Console.WriteLine("usage: gdalwrite {dataset name} {width} {height}");
 		System.Environment.Exit(-1);
 	}
  
     public static void Main(string[] args) 
     {
 
-        if (args.Length != 1) usage();
+        if (args.Length < 1) usage();
 
         // Using early initialization of System.Console
         Console.WriteLine("Writing sample: " + args[0]);
@@ -68,6 +68,12 @@ class GDALWrite {
 
         w = 100;
         h = 100;
+
+        if (args.Length > 1)
+            w = int.Parse(args[1]);
+
+        if (args.Length > 2)
+            h = int.Parse(args[2]);
 
         bXSize = w;
         bYSize = 1;
@@ -119,8 +125,13 @@ class GDALWrite {
 
             byte [] buffer = new byte [w * h];
 
-            for (int i = 0; i < buffer.Length; i++)
-                buffer[i] = (byte)(i*256/buffer.Length);
+            for (int i = 0; i < w; i++)
+            {
+                for (int j = 0; j < h; j++)
+                {
+                    buffer[i * w + j] = (byte)(i * 256 / w);
+                }
+            }
 
             ba.WriteRaster(0, 0, w, h, buffer, w, h, 0, 0);
 
