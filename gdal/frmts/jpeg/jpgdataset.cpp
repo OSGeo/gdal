@@ -132,6 +132,7 @@ class JPGDataset : public GDALPamDataset
 
     void   ReadEXIFMetadata();
 
+    int    bHasCheckedForMask;
     JPGMaskBand *poMaskBand;
     GByte  *pabyBitMask;
 
@@ -1002,6 +1003,11 @@ GDALColorInterp JPGRasterBand::GetColorInterpretation()
 GDALRasterBand *JPGRasterBand::GetMaskBand()
 
 {
+    if( !poGDS->bHasCheckedForMask)
+    {
+        poGDS->CheckForMask();
+        poGDS->bHasCheckedForMask = TRUE;
+    }
     if( poGDS->pabyCMask )
     {
         if( poGDS->poMaskBand == NULL )
@@ -1064,6 +1070,7 @@ JPGDataset::JPGDataset()
 
     bHasDoneJpegStartDecompress = FALSE;
 
+    bHasCheckedForMask = FALSE;
     poMaskBand = NULL;
     pabyBitMask = NULL;
     pabyCMask = NULL;
@@ -1623,11 +1630,6 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check for a bitmask appended to the file.                       */
-/* -------------------------------------------------------------------- */
-    poDS->CheckForMask();
-
-/* -------------------------------------------------------------------- */
 /*      Move to the start of jpeg data.                                 */
 /* -------------------------------------------------------------------- */
     poDS->nSubfileOffset = subfile_offset;
@@ -1822,6 +1824,9 @@ void JPGDataset::CheckForMask()
     GIntBig nFileSize;
     GUInt32 nImageSize;
 
+    /* Save current position to avoid disturbing JPEG stream decoding */
+    vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+
 /* -------------------------------------------------------------------- */
 /*      Go to the end of the file, pull off four bytes, and see if      */
 /*      it is plausibly the size of the real image data.                */
@@ -1834,7 +1839,7 @@ void JPGDataset::CheckForMask()
     CPL_LSBPTR32( &nImageSize );
 
     if( nImageSize < nFileSize / 2 || nImageSize > nFileSize - 4 )
-        return;
+        goto end;
 
 /* -------------------------------------------------------------------- */
 /*      If that seems ok, seek back, and verify that just preceeding    */
@@ -1845,7 +1850,7 @@ void JPGDataset::CheckForMask()
     VSIFSeekL( fpImage, nImageSize - 2, SEEK_SET );
     VSIFReadL( abyEOD, 2, 1, fpImage );
     if( abyEOD[0] != 0xff || abyEOD[1] != 0xd9 )
-        return;
+        goto end;
 
 /* -------------------------------------------------------------------- */
 /*      We seem to have a mask.  Read it in.                            */
@@ -1857,12 +1862,15 @@ void JPGDataset::CheckForMask()
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "Cannot allocate memory (%d bytes) for mask compressed buffer",
                  nCMaskSize);
-        return;
+        goto end;
     }
     VSIFReadL( pabyCMask, nCMaskSize, 1, fpImage );
 
     CPLDebug( "JPEG", "Got %d byte compressed bitmask.",
               nCMaskSize );
+
+end:
+    VSIFSeekL( fpImage, nCurOffset, SEEK_SET );
 }
 
 /************************************************************************/
