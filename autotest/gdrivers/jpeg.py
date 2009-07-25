@@ -182,13 +182,20 @@ def jpeg_6():
 
     ds = gdal.Open('data/vophead.jpg')
 
+    # Bacause of the optimization done in r17446, we should'nt yet get this error
+    if gdal.GetLastErrorType() == 2 \
+       and string.find(gdal.GetLastErrorMsg(),'Ignoring EXIF') != -1:
+        gdaltest.post_reason( 'got error too soon.')
+        return 'fail'
+
+    md = ds.GetMetadata()
+
     # Did we get an exif related warning?
     if gdal.GetLastErrorType() != 2 \
        or string.find(gdal.GetLastErrorMsg(),'Ignoring EXIF') == -1:
         gdaltest.post_reason( 'we did not get expected error.')
         return 'fail'
 
-    md = ds.GetMetadata()
     if len(md) != 1 or md['EXIF_Software'] != 'IrfanView':
         gdaltest.post_reason( 'did not get expected metadata.' )
         print md
