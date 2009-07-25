@@ -103,6 +103,7 @@ class JPGDataset : public GDALPamDataset
     int    nLoadedScanline;
     GByte  *pabyScanline;
 
+    int    bHasReadEXIFMetadata;
     char   **papszMetadata;
     char   **papszSubDatasets;
     int	   bigendian;
@@ -129,6 +130,8 @@ class JPGDataset : public GDALPamDataset
     void   CheckForMask();
     void   DecompressMask();
 
+    void   ReadEXIFMetadata();
+
     JPGMaskBand *poMaskBand;
     GByte  *pabyBitMask;
 
@@ -151,6 +154,11 @@ class JPGDataset : public GDALPamDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+
+    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -199,6 +207,72 @@ class JPGMaskBand : public GDALRasterBand
   public:
 		JPGMaskBand( JPGDataset *poDS );
 };
+
+/************************************************************************/
+/*                       ReadEXIFMetadata()                             */
+/************************************************************************/
+void JPGDataset::ReadEXIFMetadata()
+{
+    if (bHasReadEXIFMetadata)
+        return;
+
+    CPLAssert(papszMetadata == NULL);
+
+    /* Save current position to avoid disturbing JPEG stream decoding */
+    vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+
+    if( EXIFInit(fpImage) )
+    {
+        EXIFExtractMetadata(fpImage,nTiffDirStart);
+
+        if(nExifOffset  > 0){ 
+            EXIFExtractMetadata(fpImage,nExifOffset);
+        }
+        if(nInterOffset > 0) {
+            EXIFExtractMetadata(fpImage,nInterOffset);
+        }
+        if(nGPSOffset > 0) {
+            EXIFExtractMetadata(fpImage,nGPSOffset);
+        }
+
+        /* Avoid setting the PAM dirty bit just for that */
+        int nOldPamFlags = nPamFlags;
+
+        /* Append metadata from PAM after EXIF metadata */
+        papszMetadata = CSLMerge(papszMetadata, GDALPamDataset::GetMetadata());
+        SetMetadata( papszMetadata );
+
+        nPamFlags = nOldPamFlags;
+    }
+
+    VSIFSeekL( fpImage, nCurOffset, SEEK_SET );
+
+    bHasReadEXIFMetadata = TRUE;
+}
+
+/************************************************************************/
+/*                           GetMetadata()                              */
+/************************************************************************/
+char  **JPGDataset::GetMetadata( const char * pszDomain )
+{
+    if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")))
+        ReadEXIFMetadata();
+    return GDALPamDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                       GetMetadataItem()                              */
+/************************************************************************/
+const char *JPGDataset::GetMetadataItem( const char * pszName,
+                                         const char * pszDomain )
+{
+    if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        pszName != NULL && EQUALN(pszName, "EXIF_", 5))
+        ReadEXIFMetadata();
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+}
 
 /************************************************************************/
 /*                         EXIFPrintData()                              */
@@ -963,7 +1037,8 @@ JPGDataset::JPGDataset()
     pabyScanline = NULL;
     nLoadedScanline = -1;
 
-    papszMetadata   = NULL;						
+    bHasReadEXIFMetadata = FALSE;
+    papszMetadata   = NULL;
     papszSubDatasets= NULL;
     nExifOffset     = -1;
     nInterOffset    = -1;
@@ -1550,25 +1625,6 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->nSubfileOffset = subfile_offset;
     VSIFSeekL( poDS->fpImage, poDS->nSubfileOffset, SEEK_SET );
-
-/* -------------------------------------------------------------------- */
-/*      Take care of EXIF Metadata                                      */
-/* -------------------------------------------------------------------- */
-    if( poDS->EXIFInit(poDS->fpImage) )
-    {
-        poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nTiffDirStart);
-
-        if(poDS->nExifOffset  > 0){ 
-            poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nExifOffset);
-        }
-        if(poDS->nInterOffset > 0) {
-            poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nInterOffset);
-        }
-        if(poDS->nGPSOffset > 0) {
-            poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nGPSOffset);
-        }
-        poDS->SetMetadata( poDS->papszMetadata );
-    }
 
     poDS->eAccess = GA_ReadOnly;
 
