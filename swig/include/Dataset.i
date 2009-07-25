@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#if !defined(SWIGJAVA)
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %{
 
 static
@@ -62,6 +62,95 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
   return result;
 }
 %}
+
+#else
+
+%{
+/* Returned size is in bytes or 0 if an error occured */
+static
+int ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
+                                int nBands, int* bandMap, int nBandMapArrayLength,
+                                int nPixelSpace, int nLineSpace, int nBandSpace,
+                                int bSpacingShouldBeMultipleOfPixelSize )
+{
+    const int MAX_INT = 0x7fffffff;
+    if (buf_xsize <= 0 || buf_ysize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
+        return 0;
+    }
+
+    if (nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for space arguments");
+        return 0;
+    }
+
+    if (nPixelSize == 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal value for data type");
+        return 0;
+    }
+
+    if( nPixelSpace == 0 )
+        nPixelSpace = nPixelSize;
+    else if ( bSpacingShouldBeMultipleOfPixelSize && (nPixelSpace % nPixelSize) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "nPixelSpace should be a multiple of nPixelSize");
+        return 0;
+    }
+
+    if( nLineSpace == 0 )
+    {
+        if (nPixelSpace > MAX_INT / buf_xsize)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+            return 0;
+        }
+        nLineSpace = nPixelSpace * buf_xsize;
+    }
+    else if ( bSpacingShouldBeMultipleOfPixelSize && (nLineSpace % nPixelSize) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "nLineSpace should be a multiple of nPixelSize");
+        return 0;
+    }
+
+    if( nBandSpace == 0 )
+    {
+        if (nLineSpace > MAX_INT / buf_ysize)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+            return 0;
+        }
+        nBandSpace = nLineSpace * buf_ysize;
+    }
+    else if ( bSpacingShouldBeMultipleOfPixelSize && (nBandSpace % nPixelSize) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "nLineSpace should be a multiple of nPixelSize");
+        return 0;
+    }
+
+    if (nBands <= 0 || (bandMap != NULL && nBands > nBandMapArrayLength))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid band count");
+        return 0;
+    }
+
+    if ((buf_ysize - 1) > MAX_INT / nLineSpace ||
+        (buf_xsize - 1) > MAX_INT / nPixelSpace ||
+        (nBands - 1) > MAX_INT / nBandSpace ||
+        (buf_ysize - 1) * nLineSpace > MAX_INT - (buf_xsize - 1) * nPixelSpace ||
+        (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace > MAX_INT - (nBands - 1) * nBandSpace ||
+        (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + (nBands - 1) * nBandSpace > MAX_INT - nPixelSize)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+        return 0;
+    }
+
+    return (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + (nBands - 1) * nBandSpace + nPixelSize;
+}
+%}
+
 #endif
 
 //************************************************************************

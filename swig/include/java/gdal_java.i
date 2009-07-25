@@ -170,142 +170,6 @@ import org.gdal.gdalconst.gdalconstConstants;
 %}
 
 %{
-    static
-    CPLErr DatasetRasterIO_Validate(GDALDatasetH hDS, int xoff, int yoff, int xsize, int ysize,
-                                int buf_xsize, int buf_ysize,
-                                GDALDataType buf_type,
-                                void *nioBuffer, long nioBufferSize,
-                                int band_list, int *pband_list,
-                                int &nPixelSpace, int &nLineSpace, int &nBandSpace)
-    {
-        int nBands;
-        if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for buffer type");
-            return CE_Failure;
-        }
-        if (buf_xsize <= 0 || buf_ysize <= 0)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
-            return CE_Failure;
-        }
-        
-        if (nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for space arguments");
-            return CE_Failure;
-        }
-        
-        int nPixelSize = GDALGetDataTypeSize( buf_type ) / 8;
-        
-        if( nPixelSpace == 0 )
-            nPixelSpace = nPixelSize;
-        
-        if( nLineSpace == 0 )
-        {
-            if (nPixelSpace > INT_MAX / buf_xsize)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
-                return CE_Failure;
-            }
-            nLineSpace = nPixelSpace * buf_xsize;
-        }
-        
-        if( nBandSpace == 0 )
-        {
-            if (nLineSpace > INT_MAX / buf_ysize)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
-                return CE_Failure;
-            }
-            nBandSpace = nLineSpace * buf_ysize;
-        }
-        
-        nBands = band_list;
-        if (nBands == 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid band count");
-            return CE_Failure;
-        }
-        
-        if ((buf_ysize - 1) > INT_MAX / nLineSpace ||
-            (buf_xsize - 1) > INT_MAX / nPixelSpace ||
-            (nBands - 1) > INT_MAX / nBandSpace ||
-            (buf_ysize - 1) * nLineSpace > INT_MAX - (buf_xsize - 1) * nPixelSpace ||
-            (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace > INT_MAX - (nBands - 1) * nBandSpace ||
-            (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + (nBands - 1) * nBandSpace > INT_MAX - nPixelSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
-            return CE_Failure;
-        }
-        
-        int nMinBufferSize = (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + (nBands - 1) * nBandSpace + nPixelSize;
-        if (nioBufferSize < nMinBufferSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Buffer not big enough");
-            return CE_Failure;
-        }
-        
-        return CE_None;
-    }
-
-    static
-    CPLErr BandRasterIO_Validate(int buf_xsize, int buf_ysize,
-                                 GDALDataType buf_type,
-                                 void *nioBuffer, long nioBufferSize,
-                                 int &nPixelSpace, int &nLineSpace)
-    {
-        if (buf_type < GDT_Byte || buf_type >= GDT_TypeCount)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for buffer type");
-            return CE_Failure;
-        }
-
-        if (buf_xsize <= 0 || buf_ysize <= 0)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
-            return CE_Failure;
-        }
-
-        if (nPixelSpace < 0 || nLineSpace < 0)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for space arguments");
-            return CE_Failure;
-        }
-
-        int nPixelSize = GDALGetDataTypeSize( buf_type ) / 8;
-        if( nPixelSpace == 0 )
-            nPixelSpace = nPixelSize;
-
-        if( nLineSpace == 0 )
-        {
-            if (nPixelSpace > INT_MAX / buf_xsize)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
-                return CE_Failure;
-            }
-            nLineSpace = nPixelSpace * buf_xsize;
-        }
-
-        if ((buf_ysize - 1) > INT_MAX / nLineSpace ||
-            (buf_xsize - 1) > INT_MAX / nPixelSpace ||
-            (buf_ysize - 1) * nLineSpace > INT_MAX - (buf_xsize - 1) * nPixelSpace ||
-            (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace > INT_MAX - nPixelSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
-            return CE_Failure;
-        }
-
-        int nMinBufferSize = (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + nPixelSize;
-        if (nioBufferSize < nMinBufferSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Buffer not big enough");
-            return CE_Failure;
-        }
-
-        return CE_None;
-    }
-    
     static CPLErr BandBlockReadWrite_Validate(GDALRasterBandH self, void *nioBuffer, long nioBufferSize)
     {
         int nBlockXSize, nBlockYSize;
@@ -345,18 +209,22 @@ import org.gdal.gdalconst.gdalconstConstants;
       band_list = GDALGetRasterCount(self);
   }
 
-  CPLErr eErr;
-
-  eErr = DatasetRasterIO_Validate( (GDALDatasetH)self, xoff, yoff, xsize, ysize, buf_xsize,
-                            buf_ysize, buf_type, nioBuffer, nioBufferSize,
-                            band_list, pband_list,
-                            nPixelSpace, nLineSpace, nBandSpace);
-  if (eErr == CE_None)
-    eErr = GDALDatasetRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
+  int nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+                         buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                         band_list, pband_list, band_list,
+                         nPixelSpace, nLineSpace, nBandSpace, FALSE );
+  if (nMinBufferSizeInBytes == 0)
+      return CE_Failure;
+  if (nioBufferSize < nMinBufferSizeInBytes)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined,
+              "Buffer is too small");
+      return CE_Failure;
+  }
+  return  GDALDatasetRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
                                 nioBuffer, buf_xsize, buf_ysize,
                                 buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
 
-  return eErr;
 }
 
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
@@ -374,18 +242,21 @@ import org.gdal.gdalconst.gdalconstConstants;
       band_list = GDALGetRasterCount(self);
   }
 
-  CPLErr eErr;
-
-  eErr = DatasetRasterIO_Validate( (GDALDatasetH)self, xoff, yoff, xsize, ysize, buf_xsize,
-                            buf_ysize, buf_type, nioBuffer, nioBufferSize,
-                            band_list, pband_list,
-                            nPixelSpace, nLineSpace, nBandSpace);
-  if (eErr == CE_None)
-    eErr = GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
+  int nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+                         buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                         band_list, pband_list, band_list,
+                         nPixelSpace, nLineSpace, nBandSpace, FALSE );
+  if (nMinBufferSizeInBytes == 0)
+      return CE_Failure;
+  if (nioBufferSize < nMinBufferSizeInBytes)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined,
+              "Buffer is too small");
+      return CE_Failure;
+  }
+  return  GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
                                 nioBuffer, buf_xsize, buf_ysize,
                                 buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
-
-  return eErr;
 }
 //%clear (void *nioBuffer, long nioBufferSize);
 %clear (int band_list, int *pband_list);
@@ -400,9 +271,17 @@ import org.gdal.gdalconst.gdalconstConstants;
                             void *nioBuffer, long nioBufferSize,
                             int nPixelSpace = 0, int nLineSpace = 0)
   {
-    if (BandRasterIO_Validate(buf_xsize, buf_ysize, buf_type, nioBuffer, nioBufferSize,
-                              nPixelSpace, nLineSpace) != CE_None)
-      return CE_Failure;
+    int nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+                            buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                            nPixelSpace, nLineSpace, FALSE );
+    if (nMinBufferSizeInBytes == 0)
+        return CE_Failure;
+    if (nioBufferSize < nMinBufferSizeInBytes)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Buffer is too small");
+        return CE_Failure;
+    }
 
     return GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
                                    nioBuffer, buf_xsize, buf_ysize,
@@ -416,9 +295,17 @@ import org.gdal.gdalconst.gdalconstConstants;
                             void *nioBuffer, long nioBufferSize,
                             int nPixelSpace = 0, int nLineSpace = 0)
   {
-    if (BandRasterIO_Validate(buf_xsize, buf_ysize, buf_type, nioBuffer, nioBufferSize,
-                              nPixelSpace, nLineSpace) != CE_None)
-      return CE_Failure;
+    int nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+                            buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                            nPixelSpace, nLineSpace, FALSE );
+    if (nMinBufferSizeInBytes == 0)
+        return CE_Failure;
+    if (nioBufferSize < nMinBufferSizeInBytes)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Buffer is too small");
+        return CE_Failure;
+    }
 
     return GDALRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
                                     nioBuffer, buf_xsize, buf_ysize,
