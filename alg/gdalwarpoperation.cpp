@@ -1117,7 +1117,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
     const char *pszInitDest = CSLFetchNameValue( psOptions->papszWarpOptions,
                                                  "INIT_DEST" );
 
-    if( pszInitDest != NULL )
+    if( pszInitDest != NULL && !EQUAL(pszInitDest, "") )
     {
         char **papszInitValues = 
             CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
