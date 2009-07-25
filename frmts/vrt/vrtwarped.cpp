@@ -867,7 +867,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
     const char *pszInitDest = CSLFetchNameValue( psWO->papszWarpOptions,
                                                  "INIT_DEST" );
 
-    if( pszInitDest != NULL )
+    if( pszInitDest != NULL && !EQUAL(pszInitDest, "") )
     {
         char **papszInitValues = 
             CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
