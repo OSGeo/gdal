@@ -266,14 +266,14 @@ std_huff_tables (j_compress_ptr cinfo)
  */
 {
   static const UINT8 bits_dc_luminance[17] =
-      { /* 0-base */ 0, 0, 2, 3, 1, 0, 3, 1, 1, 1, 1, 0, 0, 0, 0, 0 };
+      { 0, 0, 2, 3, 1, 0, 3, 1, 0, 3, 1, 1, 1, 0, 0, 0 };
   static const UINT8 val_dc_luminance[] =
-      { 8, 9, 6, 7, 10, 5, 3, 4, 11, 2, 0, 1, 12 };
+       { 11, 12, 9, 10, 13, 8, 6, 7, 14, 5, 0, 3, 4, 1, 15, 2 };
 
   static const UINT8 bits_dc_chrominance[17] =
-      { 0, 0, 2, 2, 2, 3, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 };
+      { 0, 0, 2, 2, 2, 3, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 };
   static const UINT8 val_dc_chrominance[] =
-      { 6, 7, 5, 8, 4, 9, 2, 3, 10, 1, 11, 0, 12 };
+      { 9, 10, 8, 11, 7, 12, 5, 6, 13, 14, 4, 3, 2, 1, 0, 15 };
 
   static const UINT8 bits_ac_luminance[17] =
       { 0, 0, 1, 4, 2, 2, 2, 1, 4, 1, 2, 0, 1, 0, 1, 0, 235 };
