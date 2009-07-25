@@ -264,7 +264,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Report metadata.                                                */
 /* -------------------------------------------------------------------- */
-    papszMetadata = GDALGetMetadata( hDataset, NULL );
+    papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, NULL ) : NULL;
     if( bShowMetadata && CSLCount(papszMetadata) > 0 )
     {
         printf( "Metadata:\n" );
@@ -274,10 +274,10 @@ int main( int argc, char ** argv )
         }
     }
 
-    for( iMDD = 0; iMDD < CSLCount(papszExtraMDDomains); iMDD++ )
+    for( iMDD = 0; bShowMetadata && iMDD < CSLCount(papszExtraMDDomains); iMDD++ )
     {
         papszMetadata = GDALGetMetadata( hDataset, papszExtraMDDomains[iMDD] );
-        if( bShowMetadata && CSLCount(papszMetadata) > 0 )
+        if( CSLCount(papszMetadata) > 0 )
         {
             printf( "Metadata (%s):\n", papszExtraMDDomains[iMDD]);
             for( i = 0; papszMetadata[i] != NULL; i++ )
@@ -290,7 +290,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Report "IMAGE_STRUCTURE" metadata.                              */
 /* -------------------------------------------------------------------- */
-    papszMetadata = GDALGetMetadata( hDataset, "IMAGE_STRUCTURE" );
+    papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, "IMAGE_STRUCTURE" ) : NULL;
     if( bShowMetadata && CSLCount(papszMetadata) > 0 )
     {
         printf( "Image Structure Metadata:\n" );
@@ -316,7 +316,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Report geolocation.                                             */
 /* -------------------------------------------------------------------- */
-    papszMetadata = GDALGetMetadata( hDataset, "GEOLOCATION" );
+    papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, "GEOLOCATION" ) : NULL;
     if( bShowMetadata && CSLCount(papszMetadata) > 0 )
     {
         printf( "Geolocation:\n" );
@@ -329,7 +329,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Report RPCs                                                     */
 /* -------------------------------------------------------------------- */
-    papszMetadata = GDALGetMetadata( hDataset, "RPC" );
+    papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, "RPC" ) : NULL;
     if( bShowMetadata && CSLCount(papszMetadata) > 0 )
     {
         printf( "RPC Metadata:\n" );
@@ -603,7 +603,7 @@ int main( int argc, char ** argv )
                     GDALGetRasterOffset( hBand, &bSuccess ),
                     GDALGetRasterScale( hBand, &bSuccess ) );
 
-        papszMetadata = GDALGetMetadata( hBand, NULL );
+        papszMetadata = (bShowMetadata) ? GDALGetMetadata( hBand, NULL ) : NULL;
         if( bShowMetadata && CSLCount(papszMetadata) > 0 )
         {
             printf( "  Metadata:\n" );
@@ -613,7 +613,7 @@ int main( int argc, char ** argv )
             }
         }
 
-        papszMetadata = GDALGetMetadata( hBand, "IMAGE_STRUCTURE" );
+        papszMetadata = (bShowMetadata) ? GDALGetMetadata( hBand, "IMAGE_STRUCTURE" ) : NULL;
         if( bShowMetadata && CSLCount(papszMetadata) > 0 )
         {
             printf( "  Image Structure Metadata:\n" );
