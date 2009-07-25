@@ -656,7 +656,14 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
         int nDataWidth = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
         space = poTIFFDirEntry->tdir_count * nDataWidth;
 
-        if (nDataWidth == 0 || poTIFFDirEntry->tdir_type >= TIFF_IFD )
+        /* Previous multiplication could overflow, hence this additional check */
+        if (poTIFFDirEntry->tdir_count > MAXSTRINGLENGTH)
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Too many bytes in tag: %u, ignoring tag.", 
+                      poTIFFDirEntry->tdir_count );
+        }
+        else if (nDataWidth == 0 || poTIFFDirEntry->tdir_type >= TIFF_IFD )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Invalid or unhandled EXIF data type: %d, ignoring tag.", 
