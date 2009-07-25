@@ -34,7 +34,7 @@
 #define MAXSTRINGLENGTH 65535
 
 
-static struct gpsname {
+static const struct gpsname {
     GUInt16     tag;
     const char* name;
 } gpstags [] = {
@@ -72,7 +72,7 @@ static struct gpsname {
     { 0xffff,       ""}
 }; 
 
-static struct tagname {
+static const struct tagname {
   GUInt16       tag;
   const char*   name;
 } tagnames [] = {
@@ -179,7 +179,7 @@ static struct tagname {
 };
 
 
-static struct intr_tag {
+static const struct intr_tag {
   GInt16        tag;
   const char*   name;
 } intr_tags [] = {
@@ -190,23 +190,6 @@ static struct intr_tag {
     { 0x1001,	"EXIF_Related_Image_Width"},
     { 0x1002,	"EXIF_Related_Image_Length"},
     { 0x0000,       ""}
-};
-
-
-static const int datawidth[] = {
-    0,	/* nothing */
-    1,	/* TIFF_BYTE */
-    1,	/* TIFF_ASCII */
-    2,	/* TIFF_SHORT */
-    4,	/* TIFF_LONG */
-    8,	/* TIFF_RATIONAL */
-    1,	/* TIFF_SBYTE */
-    1,	/* TIFF_UNDEFINED */
-    2,	/* TIFF_SSHORT */
-    4,	/* TIFF_SLONG */
-    8,	/* TIFF_SRATIONAL */
-    4,	/* TIFF_FLOAT */
-    8,	/* TIFF_DOUBLE */
 };
 
 #define TIFF_VERSION            42
@@ -264,8 +247,6 @@ typedef struct {
 } TIFFDirEntry;
 
 typedef GUInt32 tsize_t;          /* i/o size in bytes */
-
-#define	NWIDTHS	(sizeof (datawidth) / sizeof (datawidth[0]))
 
 
 CPL_C_START
