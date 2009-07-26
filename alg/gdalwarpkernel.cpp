@@ -534,17 +534,20 @@ CPLErr GDALWarpKernel::PerformWarp()
     if( (eErr = Validate()) != CE_None )
         return eErr;
 
+    // See #2445 and #3079
+    if (nSrcXSize <= 0 || nSrcYSize <= 0)
+    {
+        pfnProgress( dfProgressBase + dfProgressScale,
+                      "", pProgress );
+        return CE_None;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Pre-calculate resampling scales and window sizes for filtering. */
 /* -------------------------------------------------------------------- */
 
-    if( nSrcXSize > 0 && nSrcYSize > 0 )  // #2445
-    {
-        dfXScale = (double)nDstXSize / nSrcXSize;
-        dfYScale = (double)nDstYSize / nSrcYSize;
-    }
-    else 
-        dfXScale = dfYScale = 1.0;
+    dfXScale = (double)nDstXSize / nSrcXSize;
+    dfYScale = (double)nDstYSize / nSrcYSize;
 
     dfXFilter = anGWKFilterRadius[eResample];
     dfYFilter = anGWKFilterRadius[eResample];
@@ -2397,8 +2400,10 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize
-                || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -2630,7 +2635,10 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -2762,7 +2770,10 @@ static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -2896,7 +2907,10 @@ static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -3033,7 +3047,10 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -3171,7 +3188,10 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -3371,7 +3391,10 @@ static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -3502,7 +3525,10 @@ static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -3638,7 +3664,10 @@ static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -3778,7 +3807,10 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -3918,7 +3950,10 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -4115,7 +4150,10 @@ static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
@@ -4248,7 +4286,10 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
             iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
             iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
 
-            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+            // If operating outside natural projection area, padfX/Y can be
+            // a very huge positive number, that becomes -2147483648 in the
+            // int trucation. So it is necessary to test now for non negativeness.
+            if( iSrcX < 0 || iSrcX >= nSrcXSize || iSrcY < 0 || iSrcY >= nSrcYSize )
                 continue;
 
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
