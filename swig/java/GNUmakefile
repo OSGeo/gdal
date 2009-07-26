@@ -57,11 +57,13 @@ install: generate
 $(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(LINK_EXTRAFLAGS)
 
+# Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
+# See http://trac.osgeo.org/gdal/changeset/16006
 %.$(OBJ_EXT): %.cpp
-	$(CXX) $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fno-strict-aliasing $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
 
 %.$(OBJ_EXT): %.cxx
-	$(CXX) $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fno-strict-aliasing $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
 
 %.$(OBJ_EXT): %.c
-	$(CC) $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CC) -fno-strict-aliasing $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
