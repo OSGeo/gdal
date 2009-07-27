@@ -1515,19 +1515,21 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
         if( EQUAL(pszType,"real") )
         {
             double *padfColData = (double*)VSIMalloc2(nRowCount, sizeof(double));
-            if (padfColData == NULL)
+            if (nRowCount != 0 && padfColData == NULL)
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
                  "HFARasterBand::ReadNamedRAT : Out of memory");
+                delete poRAT;
                 return NULL;
             }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            if (VSIFReadL( padfColData, nRowCount, sizeof(double), hHFA->fp ) != sizeof(double))
+            if ((int)VSIFReadL( padfColData, sizeof(double), nRowCount, hHFA->fp ) != nRowCount)
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                             "HFARasterBand::ReadNamedRAT : Cannot read values");
                 CPLFree(padfColData);
+                delete poRAT;
                 return NULL;
             }
 #ifdef CPL_MSB
@@ -1547,15 +1549,17 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
                  "HFARasterBand::ReadNamedRAT : Out of memory");
+                delete poRAT;
                 return NULL;
             }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            if ((int)VSIFReadL( pachColData, nRowCount, nMaxNumChars, hHFA->fp ) != nMaxNumChars)
+            if ((int)VSIFReadL( pachColData, nMaxNumChars, nRowCount, hHFA->fp ) != nRowCount)
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                             "HFARasterBand::ReadNamedRAT : Cannot read values");
                 CPLFree(pachColData);
+                delete poRAT;
                 return NULL;
             }
 
@@ -1574,19 +1578,21 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
         else if( EQUALN(pszType,"int",3) )
         {
             GInt32 *panColData = (GInt32*)VSIMalloc2(nRowCount, sizeof(GInt32));
-            if (panColData == NULL)
+            if (nRowCount != 0 && panColData == NULL)
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
                  "HFARasterBand::ReadNamedRAT : Out of memory");
+                delete poRAT;
                 return NULL;
             }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
-            if (VSIFReadL( panColData, nRowCount, sizeof(GInt32), hHFA->fp ) != sizeof(GInt32))
+            if ((int)VSIFReadL( panColData, sizeof(GInt32), nRowCount, hHFA->fp ) != nRowCount)
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                             "HFARasterBand::ReadNamedRAT : Cannot read values");
                 CPLFree(panColData);
+                delete poRAT;
                 return NULL;
             }
 #ifdef CPL_MSB
