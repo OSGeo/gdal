@@ -2414,6 +2414,7 @@ def tiff_write_74():
     drv = gdal.GetDriverByName('GTiff')
     dst_ds = drv.CreateCopy( 'tmp/test_74.tif', ds,
                              options = ['COMPRESS=JPEG', 'NBITS=12',
+                                        'JPEG_QUALITY=95',
                                         'PHOTOMETRIC=YCBCR'] )
 
     ds = None
