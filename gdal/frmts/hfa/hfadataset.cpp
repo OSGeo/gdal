@@ -353,6 +353,7 @@ class HFARasterBand : public GDALPamRasterBand
     GDALRasterAttributeTable *poDefaultRAT; 
 
     void        ReadAuxMetadata();
+    void        ReadHistogramMetadata();
 
     GDALRasterAttributeTable* ReadNamedRAT( const char *pszName );
 
@@ -659,71 +660,148 @@ void HFARasterBand::ReadAuxMetadata()
             CPLAssert( FALSE );
         }
     }
+}
 
-/* -------------------------------------------------------------------- */
-/*      Now try to read the histogram.                                  */
-/* -------------------------------------------------------------------- */
+/************************************************************************/
+/*                       ReadHistogramMetadata()                        */
+/************************************************************************/
+
+void HFARasterBand::ReadHistogramMetadata()
+
+{
+    int i;
+    HFABand *poBand = hHFA->papoBand[nBand-1];
+
+    // only load metadata for full resolution layer.
+    if( nThisOverview != -1 )
+        return;
+
     HFAEntry *poEntry = 
         poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
-    if ( poEntry != NULL )
-    {
-        int nNumBins = poEntry->GetIntField( "numRows" );
-        int nOffset =  poEntry->GetIntField( "columnDataPtr" );
-        const char * pszType =  poEntry->GetStringField( "dataType" );
-        int nBinSize = 4;
+    if ( poEntry == NULL )
+        return;
+
+    int nNumBins = poEntry->GetIntField( "numRows" );
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the histogram values.                                     */
+/* -------------------------------------------------------------------- */
+
+    int nOffset =  poEntry->GetIntField( "columnDataPtr" );
+    const char * pszType =  poEntry->GetStringField( "dataType" );
+    int nBinSize = 4;
         
-        if( pszType != NULL && EQUALN( "real", pszType, 4 ) )
-        {
-            nBinSize = 8;
-        }
-        unsigned int nBufSize = 1024;
-        char * pszBinValues = (char *)CPLMalloc( nBufSize );
-        int    nBinValuesLen = 0;
-        pszBinValues[0] = 0;
-        for ( int nBin = 0; nBin < nNumBins; ++nBin )
-        {
-            VSIFSeekL( hHFA->fp, nOffset + nBin*nBinSize, SEEK_SET );
-            char szBuf[32];
-            if ( nBinSize == 8 )
-            {
-                double dfValue;
-                if (VSIFReadL( &dfValue, nBinSize, 1, hHFA->fp ) != 1)
-                {
-                    CPLError(CE_Failure, CPLE_FileIO, "Cannot read value");
-                    break;
-                }
-                HFAStandard( nBinSize, &dfValue );
-                snprintf( szBuf, 31, "%.14g", dfValue );
-            }
-            else
-            {
-                int nValue;
-                if (VSIFReadL( &nValue, nBinSize, 1, hHFA->fp ) != 1)
-                {
-                    CPLError(CE_Failure, CPLE_FileIO, "Cannot read value");
-                    break;
-                }
-                HFAStandard( nBinSize, &nValue );
-                snprintf( szBuf, 31, "%d", nValue );
-            }
-            if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
-            {
-                nBufSize *= 2;
-                char* pszNewBinValues = (char *)VSIRealloc( pszBinValues, nBufSize );
-                if (pszNewBinValues == NULL)
-                {
-                    CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory");
-                    break;
-                }
-                pszBinValues = pszNewBinValues;
-            }
-            strcat( pszBinValues+nBinValuesLen, szBuf );
-            strcat( pszBinValues+nBinValuesLen, "|" );
-            nBinValuesLen += strlen(pszBinValues+nBinValuesLen);
-        }
-        SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
-        CPLFree( pszBinValues );
+    if( pszType != NULL && EQUALN( "real", pszType, 4 ) )
+        nBinSize = 8;
+
+    int *panHistValues = (int *) CPLMalloc(sizeof(int) * nNumBins);
+    GByte  *pabyWorkBuf = (GByte *) CPLMalloc(nBinSize * nNumBins);
+
+    VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+
+    if( (int)VSIFReadL( pabyWorkBuf, nBinSize, nNumBins, hHFA->fp ) != nNumBins)
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Cannot read histogram values." );
+        return;
     }
+
+    // Swap into local order.
+    for( i = 0; i < nNumBins; i++ )
+        HFAStandard( nBinSize, pabyWorkBuf + i*nBinSize );
+
+    if( nBinSize == 8 ) // source is doubles
+    {
+        for( i = 0; i < nNumBins; i++ )
+            panHistValues[i] = (int) ((double *) pabyWorkBuf)[i];
+    }
+    else // source is 32bit integers
+    {
+        memcpy( panHistValues, pabyWorkBuf, 4 * nNumBins );
+    }
+
+    CPLFree( pabyWorkBuf );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have unique values for the bins?                          */
+/* -------------------------------------------------------------------- */
+    double *padfBinValues = NULL;
+    HFAEntry *poBinEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.#Bin_Function840#" );
+
+    if( poBinEntry != NULL
+        && EQUAL(poBinEntry->GetType(),"Edsc_BinFunction840") 
+        && EQUAL(poBinEntry->GetStringField( "binFunction.type.string" ),
+                 "BFUnique") )
+        padfBinValues = HFAReadBFUniqueBins( poBinEntry, nNumBins );
+
+    if( padfBinValues )
+    {
+        int nMaxValue = 0;
+        int nMinValue = 1000000;
+        int bAllInteger = TRUE;
+        
+        for( i = 0; i < nNumBins; i++ )
+        {
+            if( padfBinValues[i] != floor(padfBinValues[i]) )
+                bAllInteger = FALSE;
+            
+            nMaxValue = MAX(nMaxValue,(int)padfBinValues[i]);
+            nMinValue = MIN(nMinValue,(int)padfBinValues[i]);
+        }
+        
+        if( nMinValue < 0 || nMaxValue > 1000 || !bAllInteger )
+        {
+            CPLFree( padfBinValues );
+            CPLFree( panHistValues );
+            CPLDebug( "HFA", "Unable to offer histogram because unique values list is not convenient to reform as HISTOBINVALUES." );
+            return;
+        }
+
+        int nNewBins = nMaxValue + 1;
+        int *panNewHistValues = (int *) CPLCalloc(sizeof(int),nNewBins);
+
+        for( i = 0; i < nNumBins; i++ )
+            panNewHistValues[(int) padfBinValues[i]] = panHistValues[i];
+
+        CPLFree( panHistValues );
+        panHistValues = panNewHistValues;
+        nNumBins = nNewBins;
+
+        SetMetadataItem( "STATISTICS_HISTOMIN", "0" );
+        SetMetadataItem( "STATISTICS_HISTOMAX", 
+                         CPLString().Printf("%d", nMaxValue ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Format into HISTOBINVALUES text format.                         */
+/* -------------------------------------------------------------------- */
+    unsigned int nBufSize = 1024;
+    char * pszBinValues = (char *)CPLMalloc( nBufSize );
+    int    nBinValuesLen = 0;
+    pszBinValues[0] = 0;
+
+    for ( int nBin = 0; nBin < nNumBins; ++nBin )
+    {
+        char szBuf[32];
+        snprintf( szBuf, 31, "%d", panHistValues[nBin] );
+        if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
+        {
+            nBufSize *= 2;
+            char* pszNewBinValues = (char *)VSIRealloc( pszBinValues, nBufSize );
+            if (pszNewBinValues == NULL)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory");
+                break;
+            }
+            pszBinValues = pszNewBinValues;
+        }
+        strcat( pszBinValues+nBinValuesLen, szBuf );
+        strcat( pszBinValues+nBinValuesLen, "|" );
+        nBinValuesLen += strlen(pszBinValues+nBinValuesLen);
+    }
+
+    SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
+    CPLFree( pszBinValues );
 }
 
 /************************************************************************/
@@ -1380,6 +1458,8 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
          poDTChild != NULL; 
          poDTChild = poDTChild->GetNext() )
     {
+        int i;
+
         if( EQUAL(poDTChild->GetType(),"Edsc_BinFunction") )
         {
             double dfMax = poDTChild->GetDoubleField( "maxLimit" );
@@ -1392,13 +1472,29 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
                                          (dfMax-dfMin) / (nBinCount-1) );
         }
 
+        if( EQUAL(poDTChild->GetType(),"Edsc_BinFunction840") 
+            && EQUAL(poDTChild->GetStringField( "binFunction.type.string" ),
+                     "BFUnique") )
+        {
+            double *padfBinValues = HFAReadBFUniqueBins( poDTChild, nRowCount );
+            
+            if( padfBinValues != NULL )
+            {
+                poRAT->CreateColumn( "BinValues", GFT_Real, GFU_MinMax );
+                for( i = 0; i < nRowCount; i++ )
+                    poRAT->SetValue( i, poRAT->GetColumnCount()-1, 
+                                     padfBinValues[i] );
+
+                CPLFree( padfBinValues );
+            }
+        }
+
         if( !EQUAL(poDTChild->GetType(),"Edsc_Column") )
             continue;
 
         int nOffset = poDTChild->GetIntField( "columnDataPtr" );
         const char * pszType = poDTChild->GetStringField( "dataType" );
         GDALRATFieldUsage eType = GFU_Generic;
-        int i;
 
         if( pszType == NULL || nOffset == 0 )
             continue;
@@ -3043,6 +3139,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
         }
         
         poBand->ReadAuxMetadata();
+        poBand->ReadHistogramMetadata();
     }
 
 /* -------------------------------------------------------------------- */
