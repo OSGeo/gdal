@@ -488,7 +488,8 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
                                 int nWordSkip )
 
 {
-    VALIDATE_POINTER0( pData, "GDALSwapWords" );
+    if (nWordCount > 0)
+        VALIDATE_POINTER0( pData , "GDALSwapWords" );
 
     int         i;
     GByte       *pabyData = (GByte *) pData;
