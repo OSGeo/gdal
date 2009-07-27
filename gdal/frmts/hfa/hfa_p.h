@@ -108,6 +108,8 @@ int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers,
 
 const char ** GetHFAAuxMetaDataList();
 
+double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors );
+
 #define HFA_PRIVATE
 
 #include "hfa.h"

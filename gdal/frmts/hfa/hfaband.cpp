@@ -1506,13 +1506,13 @@ CPLErr HFABand::SetNoDataValue( double dfValue )
 }
 
 /************************************************************************/
-/*                           HFAReadPCTBins()                           */
+/*                        HFAReadBFUniqueBins()                         */
 /*                                                                      */
-/*      Attempt to read the bins used for a PCT from a BinFunction      */
-/*      node.  On failure just return NULL.                             */
+/*      Attempt to read the bins used for a PCT or RAT from a           */
+/*      BinFunction node.  On failure just return NULL.                 */
 /************************************************************************/
 
-static double *HFAReadPCTBins( HFAEntry *poBinFunc, int nPCTColors )
+double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1529,8 +1529,12 @@ static double *HFAReadPCTBins( HFAEntry *poBinFunc, int nPCTColors )
 /* -------------------------------------------------------------------- */
 /*      Process dictionary.                                             */
 /* -------------------------------------------------------------------- */
-    HFADictionary oMiniDict( 
-        poBinFunc->GetStringField( "binFunction.MIFDictionary" ) );
+    const char *pszDict = 
+        poBinFunc->GetStringField( "binFunction.MIFDictionary.string" );
+    if( pszDict == NULL )
+        poBinFunc->GetStringField( "binFunction.MIFDictionary" );
+
+    HFADictionary oMiniDict( pszDict );
 
     HFAType *poBFUnique = oMiniDict.FindType( "BFUnique" );
     if( poBFUnique == NULL )
@@ -1544,6 +1548,15 @@ static double *HFAReadPCTBins( HFAEntry *poBinFunc, int nPCTColors )
     
     if( pabyMIFObject == NULL )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Confirm that this is a 64bit floating point basearray.          */
+/* -------------------------------------------------------------------- */
+    if( pabyMIFObject[20] != 0x0a || pabyMIFObject[21] != 0x00 )
+    {
+        CPLDebug( "HFA", "HFAReadPCTBins(): The basedata does not appear to be EGDA_TYPE_F64." );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Decode bins.                                                    */
@@ -1654,7 +1667,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
         
         if( poBinFunc != NULL )
         {
-            padfPCTBins = HFAReadPCTBins( poBinFunc, nPCTColors );
+            padfPCTBins = HFAReadBFUniqueBins( poBinFunc, nPCTColors );
         }
     }
 
