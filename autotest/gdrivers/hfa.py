@@ -764,6 +764,51 @@ def hfa_unique_values_color_table():
     return 'success'
 
 ###############################################################################
+# Verify "unique values" based histogram.
+
+def hfa_unique_values_hist():
+
+    ds = gdal.Open( 'data/i8u_c_i.img' )
+
+    md = ds.GetRasterBand(1).GetMetadata()
+
+    expected = '12603|1|0|0|45|1|0|0|0|0|656|177|0|0|5026|1062|0|0|2|0|0|0|0|0|0|0|0|0|0|0|0|0|75|1|0|0|207|158|0|0|8|34|0|0|0|0|538|57|0|10|214|20|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|1|31|0|0|9|625|67|0|0|118|738|117|3004|1499|491|187|1272|513|1|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|16|3|0|0|283|123|5|1931|835|357|332|944|451|80|40|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|12|5|0|0|535|1029|118|0|33|246|342|0|0|10|8|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|169|439|0|0|6|990|329|0|0|120|295|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|164|42|0|0|570|966|0|0|18|152|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|45|106|0|0|16|16517|'
+    if md['STATISTICS_HISTOBINVALUES'] != expected:
+        print md['STATISTICS_HISTOBINVALUES']
+        gdaltest.post_reason( 'Unexpected HISTOBINVALUES.' )
+        return 'fail'
+
+    if md['STATISTICS_HISTOMIN'] != '0' \
+       or md['STATISTICS_HISTOMAX'] != '255':
+        print md
+        gdaltest.post_reason( "unexpected histomin/histomax value." )
+        return 'fail'
+
+    # lets also check the RAT to ensure it has the BinValues column added.
+
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+
+    if rat.GetColumnCount() != 6 \
+       or rat.GetTypeOfCol(0) != gdal.GFT_Real \
+       or rat.GetUsageOfCol(0) != gdal.GFU_MinMax:
+        print rat.GetColumnCount()
+        print rat.GetTypeOfCol(0)
+        print rat.GetUsageOfCol(0)
+        gdaltest.post_reason( 'BinValues column wrong.')
+        return 'fail'
+
+    if rat.GetValueAsInt( 2, 0 ) != 4:
+        print rat.GetValueAsInt( 2, 0 )
+        gdaltest.post_reason( 'BinValues value wrong.' )
+        return 'fail'
+
+    rat = None
+    
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Verify reading of 3rd order XFORM polynomials.
 
 def hfa_xforms_3rd():
@@ -921,6 +966,7 @@ gdaltest_list = [
     hfa_proName,
     hfa_read_empty_compressed,
     hfa_unique_values_color_table,
+    hfa_unique_values_hist,
     hfa_xforms_3rd,
     hfa_delete_colortable,
     hfa_delete_colortable2
