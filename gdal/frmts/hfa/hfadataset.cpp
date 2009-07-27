@@ -703,6 +703,8 @@ void HFARasterBand::ReadHistogramMetadata()
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Cannot read histogram values." );
+        CPLFree( panHistValues );
+        CPLFree( pabyWorkBuf );
         return;
     }
 
@@ -721,6 +723,7 @@ void HFARasterBand::ReadHistogramMetadata()
     }
 
     CPLFree( pabyWorkBuf );
+    pabyWorkBuf = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have unique values for the bins?                          */
@@ -770,6 +773,9 @@ void HFARasterBand::ReadHistogramMetadata()
         SetMetadataItem( "STATISTICS_HISTOMIN", "0" );
         SetMetadataItem( "STATISTICS_HISTOMAX", 
                          CPLString().Printf("%d", nMaxValue ) );
+
+        CPLFree(padfBinValues);
+        padfBinValues = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -801,6 +807,7 @@ void HFARasterBand::ReadHistogramMetadata()
     }
 
     SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
+    CPLFree( panHistValues );
     CPLFree( pszBinValues );
 }
 
