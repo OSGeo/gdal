@@ -3,7 +3,7 @@ SysBMap:
 512 byte header block:
    - "VERSION  1"
    - 8 bytes: # of images.
-   - 8 bytes: # of absolute blocks.
+   - 5 bytes: # of absolute blocks.
    - 8 bytes: # of blocks actually used.
 
 block map entries:
@@ -17,6 +17,9 @@ block map entries:
 each block in block map is 8K on disk (16 512byte blocks).
 
 
+After the block map is the layer information.  For each layer:
+
+  - 4 bytes: Layer type # : IDBSYSLT_DEAD(1) or IDBSYSLT_IMAGE(2) currently
 
 
 Virtual tiled images:
@@ -39,8 +42,3 @@ Tile Size map:
 
 Tile Data:
  - Absolute data. 
-
-
-
-
-

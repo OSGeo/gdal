@@ -1487,7 +1487,7 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             
             if( padfBinValues != NULL )
             {
-                poRAT->CreateColumn( "BinValues", GFT_Real, GFU_MinMax );
+                poRAT->CreateColumn( "Value", GFT_Integer, GFU_MinMax );
                 for( i = 0; i < nRowCount; i++ )
                     poRAT->SetValue( i, poRAT->GetColumnCount()-1, 
                                      padfBinValues[i] );
