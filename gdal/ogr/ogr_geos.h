@@ -34,7 +34,6 @@
 
 #ifdef HAVE_GEOS 
 #  include <geos_c.h>
-#  define GEOS_CAPI_MVERSION GEOS_CAPI_VERSION_MAJOR*10000 + GEOS_CAPI_VERSION_MINOR*100 + GEOS_CAPI_VERSION_PATCH
 #else
 
 namespace geos { 
