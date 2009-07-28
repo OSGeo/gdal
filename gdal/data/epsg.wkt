@@ -1,2 +1,3 @@
 include esri_extra.wkt
 include cubewerx_extra.wkt
+include new_esri_extra.wkt

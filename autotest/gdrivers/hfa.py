@@ -789,7 +789,7 @@ def hfa_unique_values_hist():
     rat = ds.GetRasterBand(1).GetDefaultRAT()
 
     if rat.GetColumnCount() != 6 \
-       or rat.GetTypeOfCol(0) != gdal.GFT_Real \
+       or rat.GetTypeOfCol(0) != gdal.GFT_Integer \
        or rat.GetUsageOfCol(0) != gdal.GFU_MinMax:
         print rat.GetColumnCount()
         print rat.GetTypeOfCol(0)
