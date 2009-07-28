@@ -773,6 +773,8 @@ void HFARasterBand::ReadHistogramMetadata()
         SetMetadataItem( "STATISTICS_HISTOMIN", "0" );
         SetMetadataItem( "STATISTICS_HISTOMAX", 
                          CPLString().Printf("%d", nMaxValue ) );
+        SetMetadataItem( "STATISTICS_HISTONUMBINS", 
+                         CPLString().Printf("%d", nMaxValue+1 ) );
 
         CPLFree(padfBinValues);
         padfBinValues = NULL;
