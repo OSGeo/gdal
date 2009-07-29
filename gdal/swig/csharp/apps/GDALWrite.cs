@@ -54,11 +54,11 @@ class GDALWrite {
 		Console.WriteLine("usage: gdalwrite {dataset name}");
 		System.Environment.Exit(-1);
 	}
- 
-    public static void Main(string[] args) 
+
+    public static void Main(string[] args)
     {
 
-        if (args.Length != 1) usage();
+        if (args.Length < 1) usage();
 
         // Using early initialization of System.Console
         Console.WriteLine("Writing sample: " + args[0]);
@@ -69,6 +69,12 @@ class GDALWrite {
         w = 100;
         h = 100;
 
+        if (args.Length > 1)
+            w = int.Parse(args[1]);
+
+        if (args.Length > 2)
+            h = int.Parse(args[2]);
+
         bXSize = w;
         bYSize = 1;
 
@@ -78,27 +84,27 @@ class GDALWrite {
             /*      Register driver(s).                                             */
             /* -------------------------------------------------------------------- */
             Gdal.AllRegister();
-            
+
             /* -------------------------------------------------------------------- */
             /*      Get driver                                                      */
-            /* -------------------------------------------------------------------- */	
+            /* -------------------------------------------------------------------- */
             Driver drv = Gdal.GetDriverByName("GTiff");
 
-            if (drv == null) 
+            if (drv == null)
             {
                 Console.WriteLine("Can't get driver.");
                 System.Environment.Exit(-1);
             }
-            
+
             Console.WriteLine("Using driver " + drv.LongName);
 
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            string[] options = new string [] {"BLOCKXSIZE=" + bXSize, "BLOCKYSIZE=" + bYSize};
+            string[] options = new string[] { "BLOCKXSIZE=" + bXSize, "BLOCKYSIZE=" + bYSize };
             Dataset ds = drv.Create(args[0], w, h, 1, DataType.GDT_Byte, options);
-		
-            if (ds == null) 
+
+            if (ds == null)
             {
                 Console.WriteLine("Can't open " + args[0]);
                 System.Environment.Exit(-1);
@@ -117,10 +123,15 @@ class GDALWrite {
 
             Band ba = ds.GetRasterBand(1);
 
-            byte [] buffer = new byte [w * h];
+            byte[] buffer = new byte[w * h];
 
-            for (int i = 0; i < buffer.Length; i++)
-                buffer[i] = (byte)(i*256/buffer.Length);
+            for (int i = 0; i < w; i++)
+            {
+                for (int j = 0; j < h; j++)
+                {
+                    buffer[i * w + j] = (byte)(i * 256 / w);
+                }
+            }
 
             ba.WriteRaster(0, 0, w, h, buffer, w, h, 0, 0);
 
