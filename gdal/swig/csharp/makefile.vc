@@ -116,6 +116,7 @@ samples:
     $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALAdjustContrast.exe apps\GDALAdjustContrast.cs
     $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALDatasetRasterIO.exe apps\GDALDatasetRasterIO.cs
     $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALWrite.exe apps\GDALWrite.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALDatasetWrite.exe apps\GDALDatasetWrite.cs
     $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALColorTable.exe apps\GDALColorTable.cs
     $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /out:WKT2WKB.exe apps\WKT2WKB.cs
     $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /out:OGRGEOS.exe apps\OGRGEOS.cs
@@ -131,6 +132,7 @@ test:
     mono ogrinfo.exe Data/pointlayer.shp
     mono OSRTransform.exe
     mono GDALWrite.exe Data/sample.tif
+    mono GDALDatasetWrite.exe Data/sample1.tif
 	mono GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
 	mono GDALOverviews.exe Data/sample.tif NEAREST 2 4
 	mono GDALInfo.exe Data/sample.tif
@@ -139,6 +141,7 @@ test:
     ogrinfo.exe Data/pointlayer.shp
 	OSRTransform.exe
 	GDALWrite.exe Data/sample.tif
+	GDALDatasetWrite.exe Data/sample1.tif
 	GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
 	GDALOverviews.exe Data/sample.tif NEAREST 2 4
 	GDALInfo.exe Data/sample.tif
