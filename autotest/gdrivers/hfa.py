@@ -76,6 +76,9 @@ def hfa_histwrite():
     ds_src = gdal.Open('../gcore/data/utmsmall.img')
     drv.CreateCopy( 'tmp/work.img', ds_src )
     ds_src = None
+    
+    # Remove .aux.xml file as histogram can be written in it
+    os.remove('tmp/work.img.aux.xml')
 
     ds = gdal.Open('tmp/work.img')
     md = ds.GetRasterBand(1).GetMetadata()
