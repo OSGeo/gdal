@@ -95,7 +95,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     // ------------------------------------------------------
     //  Logon to Oracle Server
     // ------------------------------------------------------
-
+    
     if( CheckError( OCILogon(
         hEnv,
         hError,
@@ -957,6 +957,16 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
         return NULL;
     }
 
+    sb4 nCharSize = 1;
+
+    CheckError( OCINlsNumericInfoGet(
+            poConnect->hEnv,
+            hError,
+            &nCharSize,
+            OCI_NLS_CHARSET_MAXBYTESZ ), hError );
+
+    nSize *= nCharSize;
+
     pszBuffer = (char*) VSIMalloc( sizeof(char*) * nSize );
 
     if( pszBuffer == NULL)
@@ -982,13 +992,17 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
         return NULL;
     }
 
+    nAmont *= nCharSize;
+
     if( nAmont == nSize )
     {
         pszBuffer[nAmont] = '\0';
     }
     else
     {
-        CPLFree( pszBuffer);
+        CPLFree( pszBuffer );
+
+        return NULL;
     }
 
     return pszBuffer;

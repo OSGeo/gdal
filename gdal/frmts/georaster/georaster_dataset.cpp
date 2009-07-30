@@ -227,6 +227,19 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     //  -------------------------------------------------------------------
+    //  Load mask band
+    //  -------------------------------------------------------------------
+
+    poGRW->bHasBitmapMask = EQUAL( "TRUE", CPLGetXMLValue( poGRW->phMetadata,
+                          "layerInfo.objectLayer.bitmapMask", "FALSE" ) );
+
+    if( poGRW->bHasBitmapMask )
+    {
+        poGRD->poMaskBand = 
+                new GeoRasterRasterBand( poGRD, 0, DEFAULT_BMP_MASK );
+    }
+    
+    //  -------------------------------------------------------------------
     //  Create bands
     //  -------------------------------------------------------------------
 
@@ -1393,19 +1406,19 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
 
 CPLErr GeoRasterDataset::CreateMaskBand( int nFlags )
 {
-    if( poGeoRaster->InitializePyramidLevel( DEFAULT_BMP_MASK,
+    if( ! poGeoRaster->InitializePyramidLevel( DEFAULT_BMP_MASK,
             poGeoRaster->nRowBlockSize,
             poGeoRaster->nColumnBlockSize,
             poGeoRaster->nTotalRowBlocks,
             poGeoRaster->nTotalColumnBlocks,
             poGeoRaster->nTotalBandBlocks ) )
     {
-        return CE_None;
-    }
-    else
-    {
         return CE_Failure;
     }
+    
+    poGeoRaster->bHasBitmapMask = true;
+
+    return CE_None;
 }
 
 /*****************************************************************************/
