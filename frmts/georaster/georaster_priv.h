@@ -391,6 +391,8 @@ public:
 
     int                 nPyramidMaxLevel;
 
+    bool                bHasBitmapMask;
+
     void                SetOrdelyAccess( bool bValue )
                         {
                             bOrderlyAccess = bValue;

@@ -31,7 +31,7 @@
 #ifndef _OCI_WRAPPER_H_INCLUDED
 #define _OCI_WRAPPER_H_INCLUDED
 
-// GDAL supporting types 
+// GDAL supporting types
 
 #include "gdal.h"
 #include "gdal_priv.h"
@@ -73,7 +73,7 @@ int                 OWParseEPSG( const char* pszText );
 bool                OWIsNumeric( const char *pszText );
 const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
 const char*         OWReplaceString( const char* pszBaseString,
-                        const char* pszToken, 
+                        const char* pszToken,
                         const char* pszStopToken,
                         const char* pszOWReplaceToken );
 
@@ -177,13 +177,13 @@ class OWStatement;
 //  OWConnection
 //  ---------------------------------------------------------------------------
 
-class OWConnection 
+class OWConnection
 {
     friend class OWStatement;
 
 public:
 
-                        OWConnection( 
+                        OWConnection(
                             const char* pszUserIn,
                             const char* pszPasswordIn,
                             const char* pszServerIn );
@@ -200,8 +200,8 @@ private:
 
     bool                bSuceeeded;
 
-    char*               pszUser; 
-    char*               pszPassword; 
+    char*               pszUser;
+    char*               pszPassword;
     char*               pszServer;
 
     OCIType*            hNumArrayTDO;
@@ -237,7 +237,7 @@ public:
 /*                           OWStatement                                   */
 /***************************************************************************/
 
-class OWStatement 
+class OWStatement
 {
 
 public:
@@ -275,17 +275,17 @@ public:
     void                Define( double* pnData );
     void                Define( char* pszData, int nSize = OWNAME );
     void                Bind( char* pszData, int nSize = OWNAME );
-    void                Define( OCILobLocator** pphLocator, 
+    void                Define( OCILobLocator** pphLocator,
                             bool bBLOB = false);
     void                Define( OCIArray** pphData );
     void                Define( sdo_georaster** pphData );
     void                Define( sdo_geometry** pphData );
-    void                Define( OCILobLocator** pphLocator, 
+    void                Define( OCILobLocator** pphLocator,
                             int nIterations );
     void                BindName( char* pszName, int* pnData );
-    void                BindName( char* pszName, char* pszData, 
+    void                BindName( char* pszName, char* pszData,
                             int nSize = OWNAME );
-    void                BindName( char* pszName, 
+    void                BindName( char* pszName,
                             OCILobLocator** pphLocator );
     static void         Free( OCILobLocator** ppphLocator,
                             int nCount );
@@ -294,9 +294,9 @@ public:
     char*               ReadClob( OCILobLocator* phLocator );
     bool                WriteBlob( OCILobLocator* phLocator,
                             void* pBuffer, int nSize );
-    int                 GetElement( OCIArray** ppoData, 
+    int                 GetElement( OCIArray** ppoData,
                             int nIndex, int* pnResult );
-    double              GetElement( OCIArray** ppoData, 
+    double              GetElement( OCIArray** ppoData,
                             int nIndex, double* pdfResult );
 };
 
