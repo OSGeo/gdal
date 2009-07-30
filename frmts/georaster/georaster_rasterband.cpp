@@ -694,9 +694,12 @@ GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
 
 CPLErr GeoRasterRasterBand::CreateMaskBand( int nFlags )
 {
-    GeoRasterDataset* poGDS = (GeoRasterDataset*) this->poDS;
+    if( ! poGeoRaster->bHasBitmapMask )
+    {
+        return CE_Failure;
+    }
 
-    return poGDS->CreateMaskBand( nFlags );
+    return CE_None;
 }
 
 //  ---------------------------------------------------------------------------
@@ -722,7 +725,7 @@ GDALRasterBand* GeoRasterRasterBand::GetMaskBand()
 int GeoRasterRasterBand::GetMaskFlags()
 {
     GeoRasterDataset* poGDS = (GeoRasterDataset*) this->poDS;
-    
+
     if( poGDS->poMaskBand != NULL )
     {
         return GMF_PER_DATASET;

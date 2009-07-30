@@ -84,6 +84,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     nGDALBlockBytes     = 0;
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
+    bHasBitmapMask      = false;
 }
 
 //  ---------------------------------------------------------------------------
@@ -830,6 +831,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     bOrderlyAccess      = true;
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
+    bHasBitmapMask      = false;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1672,7 +1674,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         //  Unpack NBits
         //  ----------------------------------------------------------------
 
-        if( nCellSizeBits < 8 )
+        if( nCellSizeBits < 8 || nLevel == DEFAULT_BMP_MASK )
         {
             UnpackNBits( pabyBlockBuf );
         }
@@ -1776,7 +1778,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
             //  Unpack NBits
             //  ------------------------------------------------------------
 
-            if( nCellSizeBits < 8 )
+            if( nCellSizeBits < 8 || nLevel == DEFAULT_BMP_MASK )
             {
                 UnpackNBits( pabyBlockBuf );
             }
@@ -1859,7 +1861,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
     //  Pack bits ( inside pabyOutBuf )
     //  --------------------------------------------------------------------
 
-    if( nCellSizeBits < 8 )
+    if( nCellSizeBits < 8 || nLevel == DEFAULT_BMP_MASK )
     {
         PackNBits( pabyOutBuf );
     }
@@ -2075,6 +2077,20 @@ bool GeoRasterWrapper::FlushMetadata()
     CPLCreateXMLElementAndValue( psOInfo, "defaultBlue",   pszBlue );
 
     //  --------------------------------------------------------------------
+    //  Update BitmapMask info
+    //  --------------------------------------------------------------------
+
+    if( bHasBitmapMask )
+    {
+        CPLXMLNode* psLayers = CPLGetXMLNode( phMetadata, "layerInfo" );
+
+        if( psLayers )
+        {
+            CPLCreateXMLElementAndValue( psLayers, "bitmapMask", "true" );
+        }
+    }
+
+    //  --------------------------------------------------------------------
     //  Update the Metadata directly from the XML text
     //  --------------------------------------------------------------------
 
@@ -2265,8 +2281,7 @@ void GeoRasterWrapper::UnpackNBits( GByte* pabyData )
             pabyData[ii]   = (pabyData[k] >> 4) & 0xf;
         }
     }
-
-    if( EQUAL( pszCellDepth, "2BIT" ) )
+    else if( EQUAL( pszCellDepth, "2BIT" ) )
     {
         for( int ii = nPixCount - 4; ii >= 0; ii -= 4 )
         {
@@ -2277,8 +2292,7 @@ void GeoRasterWrapper::UnpackNBits( GByte* pabyData )
             pabyData[ii]   = (pabyData[k] >> 6) & 0x3;
         }
     }
-
-    if( EQUAL( pszCellDepth, "1BIT" ) )
+    else
     {
         for( int ii = nPixCount - 1; ii >= 0; ii-- )
         {
@@ -2306,20 +2320,14 @@ void GeoRasterWrapper::PackNBits( GByte* pabyData )
         return;
     }
 
-    if( nCellSizeBits == 1 )
+    if( nCellSizeBits == 4 )
     {
-        for( int ii = 0; ii < nPixCount - 7; ii += 8 )
+        for( int ii = 0; ii < nPixCount - 1; ii += 2 )
         {
-            int k = ii >> 3;
+            int k = ii >> 1;
             pabyBuffer[k] =
-                  ((((GByte *) pabyData)[ii+7] & 0x1)     )
-                | ((((GByte *) pabyData)[ii+6] & 0x1) << 1)
-                | ((((GByte *) pabyData)[ii+5] & 0x1) << 2)
-                | ((((GByte *) pabyData)[ii+4] & 0x1) << 3)
-                | ((((GByte *) pabyData)[ii+3] & 0x1) << 4)
-                | ((((GByte *) pabyData)[ii+2] & 0x1) << 5)
-                | ((((GByte *) pabyData)[ii+1] & 0x1) << 6)
-                | ((((GByte *) pabyData)[ii]   & 0x1) << 7);
+                  ((((GByte *) pabyData)[ii+1] & 0xf)     )
+                | ((((GByte *) pabyData)[ii]   & 0xf) << 4);
         }
     }
     else if( nCellSizeBits == 2 )
@@ -2334,14 +2342,20 @@ void GeoRasterWrapper::PackNBits( GByte* pabyData )
                 | ((((GByte *) pabyData)[ii]   & 0x3) << 6);
         }
     }
-    else if( nCellSizeBits == 4 )
+    else
     {
-        for( int ii = 0; ii < nPixCount - 1; ii += 2 )
+        for( int ii = 0; ii < nPixCount - 7; ii += 8 )
         {
-            int k = ii >> 1;
+            int k = ii >> 3;
             pabyBuffer[k] =
-                  ((((GByte *) pabyData)[ii+1] & 0xf)     )
-                | ((((GByte *) pabyData)[ii]   & 0xf) << 4);
+                  ((((GByte *) pabyData)[ii+7] & 0x1)     )
+                | ((((GByte *) pabyData)[ii+6] & 0x1) << 1)
+                | ((((GByte *) pabyData)[ii+5] & 0x1) << 2)
+                | ((((GByte *) pabyData)[ii+4] & 0x1) << 3)
+                | ((((GByte *) pabyData)[ii+3] & 0x1) << 4)
+                | ((((GByte *) pabyData)[ii+2] & 0x1) << 5)
+                | ((((GByte *) pabyData)[ii+1] & 0x1) << 6)
+                | ((((GByte *) pabyData)[ii]   & 0x1) << 7);
         }
     }
 
