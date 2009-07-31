@@ -1,3 +1,56 @@
+= GDAL/OGR 1.6.2-RC1 =
+
+7/31/2009
+
+
+General:
+ * OGR expression parser causes access violations with large expressions (#2996)
+ * OGR cannot open/handle .DBF files > 2 GB (#3011)
+ * crash in cpl_vsil_win32.cpp when compiling as x64 under Windows (#3035)
+ * create index sql execute problem (#3044)
+ * GTiffDataset::FlushCache() cause crashes when used just after dataset creation (#3067)
+ * GDALDefaultOverviews::BuildOverviews() causes out-of-bounds writes for a 1x1 dataset (#3069)
+ * gdaladdo crashes on a 16-bit dataset when external overviews are requested to have JPEG compression (#3070)
+ * Corrupt EXIF info can cause stack buffer overflow in JPEG driver (#3078)
+
+GDAL:
+ * GenBin driver problems (#2730)
+ * Additional dependency to libgdal.so added during linking in gdal/apps (#2970)
+ * This NITF Can not be opened (endless loop) with recent GDAL (#3001)
+ * This NITF Can not be opened (endless loop) with recent GDAL (#3002)
+ * PPM Driver 16bit Support Byte Order Decision Questionable (#3012)
+ * GDAL changes projection parameter values (#3017)
+ * bad reading of AAIGRID dataset whose last line doesn't have a linebreak character (#3022)
+ * HDF5 Subdataset Issue (#3024)
+ * jp2kak driver can't display this unsigned 16 bit J2K image (#3027)
+ * NITF PRJPSB TRE handling wrong for Transverse Mercator (#3029)
+ * gdaladdo not producing correct overviews for greyscale+alpha image (#3033)
+ * GDALLoadRPB/IMDFile fails with path (#3047)
+ * Setting stats and histogram to JP2 compressed NITF corrupts the aux.xml (#3051)
+ * poBand->SetMetadataItem( "source_0", szFilterSourceXML, "vrt_sources" ) not supported as expected (#3052)
+ * gdaladdo fails with JPEG YCBCR when interleaving is not specified to be pixel (#3064)
+ * georaster - NLS problem with XML metadata (#3066)
+ * gdalwarp can crash when reprojecting into an irrelevant SRS (#3079)
+
+OGR:
+ * Relax KML driver about xmlns (#3004)
+ * KML driver painfully slow when reading huge geometries (#3005)
+ * PG driver does not recognize 'real' data type (#3006)
+ * X-Plane reader: Bezier curves in Pavement and APTLinefeature not curved (#3030)
+
+OGR Spatial References:
+ * Mercator with scale=1 at non-equatoral latitude handled improperly. (#3026)
+ * Hotine Oblique Mercator translation to PROJ.4 format looses scale factor. (#3032)
+ * Equidistant Conic ESRI Morphing Broken (#3086)
+
+Python:
+ * OGRFeature.SetField segfault (#3000)
+
+.NET:
+ * C# Osr.GetProjectionMethodParameterList / OPTGetParameterList Access Violation (#3018)
+ * [PATCH - C#] Dataset.ReadRaster()/WriteRaster() doesn't work on multi-band datasets (#3073)
+
+
 = GDAL/OGR 1.6.1 =
 
 5/10/2009
