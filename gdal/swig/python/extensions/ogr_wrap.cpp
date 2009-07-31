@@ -7473,12 +7473,14 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_0(PyObject *SWIGUNUSEDPARM(sel
   resultobj = SWIG_Py_Void();
   {
     /* %typemap(freearg) (tostring argin) */
+    if ( str3 != NULL)
     Py_DECREF(str3);
   }
   return resultobj;
 fail:
   {
     /* %typemap(freearg) (tostring argin) */
+    if ( str3 != NULL)
     Py_DECREF(str3);
   }
   return NULL;
@@ -7534,6 +7536,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_1(PyObject *SWIGUNUSEDPARM(sel
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (tostring argin) */
+    if ( str3 != NULL)
     Py_DECREF(str3);
   }
   return resultobj;
@@ -7541,6 +7544,7 @@ fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (tostring argin) */
+    if ( str3 != NULL)
     Py_DECREF(str3);
   }
   return NULL;
