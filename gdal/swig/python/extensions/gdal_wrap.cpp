@@ -12295,12 +12295,14 @@ SWIGINTERN PyObject *_wrap_RasterAttributeTable_SetValueAsString(PyObject *SWIGU
   resultobj = SWIG_Py_Void();
   {
     /* %typemap(freearg) (tostring argin) */
+    if ( str4 != NULL)
     Py_DECREF(str4);
   }
   return resultobj;
 fail:
   {
     /* %typemap(freearg) (tostring argin) */
+    if ( str4 != NULL)
     Py_DECREF(str4);
   }
   return NULL;
