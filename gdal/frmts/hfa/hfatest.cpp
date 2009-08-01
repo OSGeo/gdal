@@ -42,6 +42,20 @@ static void Usage()
 }
 
 /************************************************************************/
+/* Stub for HFAPCSStructToWKT, defined in hfadataset.cpp but used by    */
+/* hfaopen.cpp                                                          */
+/************************************************************************/
+
+char *
+HFAPCSStructToWKT( const Eprj_Datum *psDatum,
+                   const Eprj_ProParameters *psPro,
+                   const Eprj_MapInfo *psMapInfo,
+                   HFAEntry *poMapInformation )
+{
+    return NULL;
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -123,7 +137,7 @@ int main( int argc, char ** argv )
         for( i = 1; i <= nBands; i++ )
         {
             int	nDataType, nColors, nOverviews, iOverview;
-            double	*padfRed, *padfGreen, *padfBlue, *padfAlpha;
+            double	*padfRed, *padfGreen, *padfBlue, *padfAlpha, *padfBins;
             int nBlockXSize, nBlockYSize, nCompressionType;
         
             HFAGetBandInfo( hHFA, i, &nDataType, &nBlockXSize, &nBlockYSize, 
@@ -141,7 +155,7 @@ int main( int argc, char ** argv )
             }
 
             if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen, 
-			   &padfBlue, &padfAlpha, NULL )
+			   &padfBlue, &padfAlpha, &padfBins )
                 == CE_None )
             {
                 int	j;
@@ -149,7 +163,8 @@ int main( int argc, char ** argv )
                 for( j = 0; j < nColors; j++ )
                 {
                     printf( "PCT[%d] = %f,%f,%f %f\n",
-                            j, padfRed[j], padfGreen[j], 
+                            (padfBins != NULL) ? (int) padfBins[j] : j,
+                            padfRed[j], padfGreen[j], 
 			    padfBlue[j], padfAlpha[j]);
                 }
             }
