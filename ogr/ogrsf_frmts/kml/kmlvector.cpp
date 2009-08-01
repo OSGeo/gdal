@@ -137,6 +137,8 @@ void KMLVector::findLayers(KMLNode* poNode)
             nodeType == MultiLineString || nodeType == MultiPolygon)
         {
             poNode->setLayerNumber(nNumLayers_++);
+            papoLayers_ = (KMLNode**)CPLRealloc(papoLayers_, nNumLayers_ * sizeof(KMLNode*));
+            papoLayers_[nNumLayers_ - 1] = poNode;
         }
         else
         {

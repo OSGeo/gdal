@@ -45,13 +45,14 @@ KML::KML()
 	poTrunk_ = NULL;
 	poCurrent_ = NULL;
 	nNumLayers_ = -1;
-        nCurrentLayer_ = -1;
+        papoLayers_ = NULL;
 }
 
 KML::~KML()
 {
     if( NULL != pKMLFile_ )
         VSIFCloseL(pKMLFile_);
+    CPLFree(papoLayers_);
 
     delete poTrunk_;
 }
@@ -328,18 +329,19 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
         poKML->nDepth_--;
         poTmp = poKML->poCurrent_;
         // Split the coordinates
-        if(poKML->poCurrent_->getName().compare("coordinates") == 0)
+        if(poKML->poCurrent_->getName().compare("coordinates") == 0 &&
+           poKML->poCurrent_->numContent() == 1)
         {
-            std::string sData = poKML->poCurrent_->getContent(0);
+            std::string& sData = poKML->poCurrent_->getContent(0);
             std::size_t nPos = 0;
             std::size_t nLength = sData.length();
+            const char* pszData = sData.c_str();
             while(TRUE)
             {
                 // Cut off whitespaces
                 while(nPos < nLength &&
-                      (sData[nPos] == ' ' || sData[nPos] == '\n'
-                    || sData[nPos] == '\r' || 
-                        sData[nPos] == '\t' ))
+                      (pszData[nPos] == ' ' || pszData[nPos] == '\n'
+                       || pszData[nPos] == '\r' || pszData[nPos] == '\t' ))
                     nPos ++;
 
                 if (nPos == nLength)
@@ -349,15 +351,68 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
 
                 // Get content
                 while(nPos < nLength &&
-                      sData[nPos] != ' ' && sData[nPos] != '\n' && sData[nPos] != '\r' && 
-                      sData[nPos] != '\t')
+                      pszData[nPos] != ' ' && pszData[nPos] != '\n' && pszData[nPos] != '\r' && 
+                      pszData[nPos] != '\t')
                     nPos++;
 
                 if(nPos - nPosBegin > 0)
-                    poKML->poCurrent_->addContent(sData.substr(nPosBegin, nPos - nPosBegin));
+                {
+                    std::string sTmp(pszData + nPosBegin, nPos - nPosBegin);
+                    poKML->poCurrent_->addContent(sTmp);
+                }
             }
             if(poKML->poCurrent_->numContent() > 1)
                 poKML->poCurrent_->deleteContent(0);
+        }
+        else if (poKML->poCurrent_->numContent() == 1)
+        {
+            std::string& sData = poKML->poCurrent_->getContent(0);
+            std::string sDataWithoutNL;
+            std::size_t nPos = 0;
+            std::size_t nLength = sData.length();
+            const char* pszData = sData.c_str();
+            std::size_t nLineStartPos = 0;
+            int bLineStart = TRUE;
+
+            /* Re-assemble multi-line content by removing leading spaces for each line */
+            /* I'm not sure why we do that. Shouldn't we preserve content as such ? */
+            while(nPos < nLength)
+            {
+                char ch = pszData[nPos];
+                if (bLineStart && (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'))
+                    nLineStartPos ++;
+                else if (ch == '\n' || ch == '\r')
+                {
+                    if (!bLineStart)
+                    {
+                        std::string sTmp(pszData + nLineStartPos, nPos - nLineStartPos);
+                        if (sDataWithoutNL.size() > 0)
+                            sDataWithoutNL += " ";
+                        sDataWithoutNL += sTmp;
+                        bLineStart = TRUE;
+                    }
+                    nLineStartPos = nPos + 1;
+                }
+                else
+                {
+                    bLineStart = FALSE;
+                }
+                nPos ++;
+            }
+
+            if (nLineStartPos > 0)
+            {
+                if (nLineStartPos < nPos)
+                {
+                    std::string sTmp(pszData + nLineStartPos, nPos - nLineStartPos);
+                    if (sDataWithoutNL.size() > 0)
+                        sDataWithoutNL += " ";
+                    sDataWithoutNL += sTmp;
+                }
+
+                poKML->poCurrent_->deleteContent(0);
+                poKML->poCurrent_->addContent(sDataWithoutNL);
+            }
         }
 
         if(poKML->poCurrent_->getParent() != NULL)
@@ -402,24 +457,11 @@ void XMLCALL KML::dataHandler(void* pUserData, const char* pszData, int nLen)
     }
 
     std::string sData(pszData, nLen);
-    std::string sTmp;
 
-    if(poKML->poCurrent_->getName().compare("coordinates") == 0)
-    {
-        if(poKML->poCurrent_->numContent() == 0)
-            poKML->poCurrent_->addContent(sData);
-        else
-            poKML->poCurrent_->appendContent(sData);
-    }
+    if(poKML->poCurrent_->numContent() == 0)
+        poKML->poCurrent_->addContent(sData);
     else
-    {
-        while(sData[0] == ' ' || sData[0] == '\n' || sData[0] == '\r' || sData[0] == '\t')
-        {
-            sData = sData.substr(1, sData.length()-1);
-        }
-        if(sData.length() > 0)
-            poKML->poCurrent_->addContent(sData);
-    }
+        poKML->poCurrent_->appendContent(sData);
 }
 
 bool KML::isValid()
@@ -500,19 +542,10 @@ int KML::getNumLayers() const
 }
 
 bool KML::selectLayer(int nNum) {
-    if (nNum == nCurrentLayer_)
-        return TRUE;
-
     if(this->nNumLayers_ < 1 || nNum >= this->nNumLayers_)
         return FALSE;
-    poCurrent_ = poTrunk_->getLayer(nNum);
-    if(poCurrent_ == NULL)
-        return FALSE;
-    else
-    {
-        nCurrentLayer_ = nNum;
-        return TRUE;
-    }
+    poCurrent_ = papoLayers_[nNum];
+    return TRUE;
 }
 
 std::string KML::getCurrentName() const
