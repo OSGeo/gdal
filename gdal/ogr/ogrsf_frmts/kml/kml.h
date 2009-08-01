@@ -89,6 +89,7 @@ protected:
 	KMLNode* poTrunk_;
 	// number of layers;
 	int nNumLayers_;
+        KMLNode** papoLayers_;
 
 private:
 	// depth of the DOM
@@ -103,7 +104,6 @@ private:
 	std::string sError_;
 	// current KMLNode
 	KMLNode *poCurrent_;
-        int nCurrentLayer_;
         
         XML_Parser oCurrentParser;
         int nDataHandlerCounter;

@@ -317,7 +317,7 @@ void KMLNode::setName(std::string const& sIn)
     sName_ = sIn;
 }
 
-std::string KMLNode::getName() const
+const std::string& KMLNode::getName() const
 {
     return sName_;
 }
@@ -373,14 +373,9 @@ void KMLNode::appendContent(std::string const& text)
     tmp += text;
 }
 
-std::string KMLNode::getContent(std::size_t index) const
+std::string& KMLNode::getContent(std::size_t index) const
 {
-    std::string tmp;
-    if( index < pvsContent_->size() )
-    {
-        tmp = (*pvsContent_)[index];
-    }
-    return tmp;
+    return (*pvsContent_)[index];
 }
 
 void KMLNode::deleteContent(std::size_t index)
@@ -406,25 +401,8 @@ int KMLNode::getLayerNumber() const
     return nLayerNumber_;
 }
 
-KMLNode* KMLNode::getLayer(int nNum)
-{
-    KMLNode* poTmp = NULL;
-    if(nLayerNumber_ == nNum)
-        return this;
-
-    kml_nodes_t::size_type size = pvpoChildren_->size();
-    for( kml_nodes_t::size_type i = 0; i < size; ++i )
-    {
-        if((poTmp = (*pvpoChildren_)[i]->getLayer(nNum)) != NULL)
-            return poTmp;
-    }
-
-    return NULL;
-}
-
 std::string KMLNode::getNameElement() const
 {
-    std::string sElem;
     kml_nodes_t::size_type subsize = 0;
     kml_nodes_t::size_type size = pvpoChildren_->size();
 
@@ -435,12 +413,7 @@ std::string KMLNode::getNameElement() const
             subsize = (*pvpoChildren_)[i]->pvsContent_->size();
             if( subsize > 0 )
             {
-                sElem = (*(*pvpoChildren_)[i]->pvsContent_)[0];
-                for( kml_nodes_t::size_type j = 1; j < subsize; ++j )
-                {
-                    sElem += " " + (*(*pvpoChildren_)[i]->pvsContent_)[j];
-                }
-                return sElem;
+                return (*(*pvpoChildren_)[i]->pvsContent_)[0];
             }
             break;
         }
@@ -450,7 +423,6 @@ std::string KMLNode::getNameElement() const
 
 std::string KMLNode::getDescriptionElement() const
 {
-    std::string sElem;
     kml_nodes_t::size_type subsize = 0;
     kml_nodes_t::size_type size = pvpoChildren_->size();
     for( kml_nodes_t::size_type i = 0; i < size; ++i )
@@ -460,12 +432,7 @@ std::string KMLNode::getDescriptionElement() const
             subsize = (*pvpoChildren_)[i]->pvsContent_->size();
             if ( subsize > 0 )
             {
-                sElem = (*(*pvpoChildren_)[i]->pvsContent_)[0];
-                for( kml_nodes_t::size_type j = 1; j < subsize; ++j )
-                {
-                    sElem += " " + (*(*pvpoChildren_)[i]->pvsContent_)[j];
-                }
-                return sElem;
+                return (*(*pvpoChildren_)[i]->pvsContent_)[0];
             }
             break;
         }

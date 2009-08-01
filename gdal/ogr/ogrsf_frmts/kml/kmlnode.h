@@ -54,7 +54,7 @@ public:
     Nodetype getType() const;
     
     void setName(std::string const& name);
-    std::string getName() const;
+    const std::string& getName() const;
     
     void setLevel(std::size_t level);
     std::size_t getLevel() const;
@@ -71,14 +71,12 @@ public:
 
     void addContent(std::string const& text);
     void appendContent(std::string const& text);
-    std::string getContent(std::size_t index) const;
+    std::string& getContent(std::size_t index) const;
     void deleteContent(std::size_t index);
     std::size_t numContent();
 
     void setLayerNumber(int nNum);
     int getLayerNumber() const;
-
-    KMLNode* getLayer(int);
 
     std::string getNameElement() const;
     std::string getDescriptionElement() const;
