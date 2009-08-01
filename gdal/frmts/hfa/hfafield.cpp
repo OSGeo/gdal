@@ -1352,15 +1352,23 @@ void HFAField::DumpInstValue( FILE *fpOut,
     if( chItemType == 'b' )
     {
         int nDataType, nRows, nColumns;
-        ExtractInstValue( NULL, -3, pabyData, nDataOffset, 
+        int bSuccess = ExtractInstValue( NULL, -3, pabyData, nDataOffset, 
                           nDataSize, 'i', &nDataType );
-        ExtractInstValue( NULL, -2, pabyData, nDataOffset, 
-                          nDataSize, 'i', &nColumns );
-        ExtractInstValue( NULL, -1, pabyData, nDataOffset, 
-                          nDataSize, 'i', &nRows );
-        VSIFPrintf( fpOut, "%sBASEDATA(%s): %dx%d of %s\n", 
-                    pszPrefix, pszFieldName,
-                    nColumns, nRows, HFAGetDataTypeName( nDataType ) );
+        if (bSuccess)
+        {
+            ExtractInstValue( NULL, -2, pabyData, nDataOffset, 
+                            nDataSize, 'i', &nColumns );
+            ExtractInstValue( NULL, -1, pabyData, nDataOffset, 
+                            nDataSize, 'i', &nRows );
+            VSIFPrintf( fpOut, "%sBASEDATA(%s): %dx%d of %s\n", 
+                        pszPrefix, pszFieldName,
+                        nColumns, nRows, HFAGetDataTypeName( nDataType ) );
+        }
+        else
+        {
+            VSIFPrintf( fpOut, "%sBASEDATA(%s): empty\n", 
+                        pszPrefix, pszFieldName );
+        }
     }
         
 /* -------------------------------------------------------------------- */
