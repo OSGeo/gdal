@@ -101,6 +101,7 @@ def ogr_kml_attributes_1():
 
     if feat.GetField('description')[:25] != 'Floats a defined distance':
         gdaltest.post_reason( 'Wrong description field value' )
+        print 'got: ', feat.GetField('description')[:25]
         return 'fail'
     
     feat = lyr.GetNextFeature()
@@ -112,8 +113,9 @@ def ogr_kml_attributes_1():
         gdaltest.post_reason( 'Wrong name field value' )
         return 'fail'
 
-    if feat.GetField('description') != 'Tethered to the ground by a customizable \" tail \"':
+    if feat.GetField('description') != 'Tethered to the ground by a customizable \"tail\"':
         gdaltest.post_reason( 'Wrong description field value' )
+        print 'got: ', feat.GetField('description')
         return 'fail'
 
     return 'success'
