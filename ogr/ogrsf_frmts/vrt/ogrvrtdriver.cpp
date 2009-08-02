@@ -83,20 +83,20 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
         FILE *fp;
         char achHeader[18];
 
-        fp = VSIFOpen( pszFilename, "rb" );
+        fp = VSIFOpenL( pszFilename, "rb" );
 
         if( fp == NULL )
             return NULL;
 
-        if( VSIFRead( achHeader, sizeof(achHeader), 1, fp ) != 1 )
+        if( VSIFReadL( achHeader, sizeof(achHeader), 1, fp ) != 1 )
         {
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             return NULL;
         }
 
         if( !EQUALN(achHeader,"<OGRVRTDataSource>",18) )
         {
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             return NULL;
         }
 
@@ -105,32 +105,25 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /* -------------------------------------------------------------------- */
         int nLen;
 
-        VSIFSeek( fp, 0, SEEK_END );
-        nLen = VSIFTell( fp );
-        VSIFSeek( fp, 0, SEEK_SET );
-        
-        pszXML = (char *) CPLMalloc(nLen+1);
+        VSIFSeekL( fp, 0, SEEK_END );
+        nLen = VSIFTellL( fp );
+        VSIFSeekL( fp, 0, SEEK_SET );
+
+        pszXML = (char *) VSIMalloc(nLen+1);
+        if (pszXML == NULL)
+        {
+            VSIFCloseL( fp );
+            return NULL;
+        }
         pszXML[nLen] = '\0';
-        if( ((int) VSIFRead( pszXML, 1, nLen, fp )) != nLen )
+        if( ((int) VSIFReadL( pszXML, 1, nLen, fp )) != nLen )
         {
             CPLFree( pszXML );
-            VSIFClose( fp );
+            VSIFCloseL( fp );
 
             return NULL;
         }
-        VSIFClose( fp );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      We don't allow update access at this time through VRT           */
-/*      datasources.                                                    */
-/* -------------------------------------------------------------------- */
-    if( bUpdate )
-    {
-        CPLFree( pszXML );
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Update access not supported for VRT datasources." );
-        return NULL;
+        VSIFCloseL( fp );
     }
 
 /* -------------------------------------------------------------------- */
@@ -146,7 +139,7 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /*      Create a virtual datasource configured based on this XML input. */
 /* -------------------------------------------------------------------- */
     poDS = new OGRVRTDataSource();
-    if( !poDS->Initialize( psTree, pszFilename ) )
+    if( !poDS->Initialize( psTree, pszFilename, bUpdate ) )
     {
         CPLDestroyXMLNode( psTree );
         delete poDS;
