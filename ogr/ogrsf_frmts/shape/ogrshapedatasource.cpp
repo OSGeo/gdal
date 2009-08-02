@@ -610,9 +610,9 @@ int OGRShapeDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
+        return bDSUpdate;
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return TRUE;
+        return bDSUpdate;
     else
         return FALSE;
 }
@@ -747,6 +747,19 @@ OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
 
 {
     char *pszFilename;
+
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bDSUpdate )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "Layer %d cannot be deleted.\n",
+                  pszName, iLayer );
+
+        return NULL;
+    }
 
     if( iLayer < 0 || iLayer >= nLayers )
     {
