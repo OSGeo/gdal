@@ -240,6 +240,19 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
 
 {
 /* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if (!bUpdate)
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "New layer %s cannot be created.\n",
+                  pszName, pszLayerName );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Verify that the datasource is a directory.                      */
 /* -------------------------------------------------------------------- */
     VSIStatBuf sStatBuf;
@@ -403,6 +416,19 @@ OGRErr OGRCSVDataSource::DeleteLayer( int iLayer )
 {
     char *pszFilename;
     char *pszFilenameCSVT;
+
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "Layer %d cannot be deleted.\n",
+                  pszName, iLayer );
+
+        return NULL;
+    }
 
     if( iLayer < 0 || iLayer >= nLayers )
     {
