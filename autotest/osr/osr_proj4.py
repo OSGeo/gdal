@@ -173,7 +173,8 @@ def osr_proj4_6():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
     
-    srs = osr.SpatialReference(wkt)
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(wkt)
     proj4 = srs.ExportToProj4()
 
     if proj4 != expect_proj4:

@@ -2392,7 +2392,7 @@ def tiff_write_73():
 
 def tiff_write_74():
 
-    old_accum = gdal.GetConfigOption( 'CPL_ACCUM_ERROR_MSG' )
+    old_accum = gdal.GetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'OFF' )
     gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'ON' )
     gdal.ErrorReset()
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
@@ -2428,13 +2428,24 @@ def tiff_write_74():
         print stats
         return 'fail'
 
-    compression = dst_ds.GetMetadataItem('COMPRESSION','IMAGE_STRUCTURE')
+    try:
+        compression = dst_ds.GetMetadataItem('COMPRESSION','IMAGE_STRUCTURE')
+    except:
+        md = dst_ds.GetMetadata('IMAGE_STRUCTURE')
+        compression = md['COMPRESSION']
+
     if compression != 'YCbCr JPEG':
         gdaltest.post_reason( 'did not get expected COMPRESSION value' )
         print 'COMPRESSION="%s"' % compression
         return 'fail'
-    
-    if dst_ds.GetRasterBand(3).GetMetadataItem('NBITS','IMAGE_STRUCTURE') != '12':
+
+    try:
+        nbits = dst_ds.GetRasterBand(3).GetMetadataItem('NBITS','IMAGE_STRUCTURE')
+    except:
+        md = dst_ds.GetRasterBand(3).GetMetadata('IMAGE_STRUCTURE')
+        nbits = md['NBITS']
+
+    if nbits != '12':
         gdaltest.post_reason( 'did not get expected NBITS value' )
         return 'fail'
     

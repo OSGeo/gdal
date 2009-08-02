@@ -771,6 +771,11 @@ def hfa_unique_values_color_table():
 
 def hfa_unique_values_hist():
 
+    try:
+        gdal.RasterAttributeTable()
+    except:
+        return 'skip'
+
     ds = gdal.Open( 'data/i8u_c_i.img' )
 
     md = ds.GetRasterBand(1).GetMetadata()
