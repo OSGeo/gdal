@@ -19,9 +19,16 @@ The virtual files are currently normally prepared by hand.<p>
 
 <h2>Creation Issues</h2>
 
-Currently the OGR VRT driver is read-only, so new features, tables and
-datasources cannot normally be created by OGR applications.  This limitation
-may be removed in the future. <p>
+Before GDAL 1.7.0, the OGR VRT driver was read-only.<p>
+Since GDAL 1.7.0, the CreateFeature(), SetFeature() and DeleteFeature() operations
+are supported on a layer of a VRT dataset, if the following conditions are met :
+<ul>
+<li>the VRT dataset is opened in update mode</li>
+<li>the underlying source layer supports those operations</li>
+<li>the <i>SrcLayer</i> element is used (as opposed to the <i>SrcSQL</i> element)</li>
+<li>the FID of the VRT features is the same as the FID of the source features, that
+is to say, the <i>FID</i> element is not specified</li>
+</ul><p>
 
 <h1>Virtual File Format</h1>
 
@@ -35,7 +42,8 @@ that this layer will be derived from.  The element may optionally have
 a <b>relativeToVRT</b> attribute which defaults to "0", but if "1" indicates
 that the source datasource should be interpreted as relative to the virtual
 file.  This can be any OGR supported dataset, including ODBC, CSV, etc.
-The element may also have a <b>shared</b> attribute to control whether the datasource should be opened in shared mode. Defaults to OFF for SrcLayer use and ON for SrcSQL use.<p>
+The element may also have a <b>shared</b> attribute to control whether the
+datasource should be opened in shared mode. Defaults to OFF for SrcLayer use and ON for SrcSQL use.<p>
 
 <li> <b>SrcLayer</b> (optional): The value is the name of the layer on the
 source data source from which this virtual layer should be derived.  If this
@@ -65,15 +73,19 @@ source layer.  The value may be WKT or any other input that is accepted
 by the OGRSpatialReference::SetUserInput() method. <p>
 
 <li> <b>GeometryField</b> (optional): This element is used to define
-how the geometry for features should be derived.  If not provided the
-geometry of the source feature is copied directly.  The type of geometry
-encoding is indicated with the <b>encoding</b> attribute which may have the
-value "WKT", "WKB" or "PointFromColumns".  If the encoding is "WKT" or "WKB" 
-then the <b>field</b> attribute will have
-the name of the field containing the WKT or WKB geometry.  If the encoding is 
-"PointFromColumns" then the <b>x</b>, <b>y</b> and <b>z</b> attributes
+how the geometry for features should be derived.<br>
+If not provided the geometry of the source feature is copied directly.<br>
+The type of geometry encoding is indicated with the <b>encoding</b> attribute which may have the
+value "WKT", "WKB" or "PointFromColumns".<br>
+If the encoding is "WKT" or "WKB" then the <b>field</b> attribute will have
+the name of the field containing the WKT or WKB geometry.<br>
+If the encoding is "PointFromColumns" then the <b>x</b>, <b>y</b> and <b>z</b> attributes
 will have the names of the columns to be used for the X, Y and Z coordinates.
-The <b>z</b> attribute is optional.<p>
+The <b>z</b> attribute is optional.<br>
+Starting with GDAL 1.7.0, the optional <b>reportSrcColumn</b> attribute can be used to specify
+whether the source geometry fields (the fields set in the <b>field</b>, <b>x</b>, <b>x</b>
+or <b>z</b> attributes) should be reported as fields of the VRT layer. It defaults to TRUE.
+If set to FALSE, the source geometry fields will only be used to build the geometry of the features of the VRT layer.<p>
 </ul>
 
 <h2>Example: ODBC Point Layer</h2>
@@ -115,18 +127,20 @@ to a format whose schema is fixed, such as GPX (&lt;name&gt;, &lt;desc&gt, etc.)
 
 <ul>
 
-<li> When the GeometryField is "WKT" spatial filtering is applied
+<li> When the <i>GeometryField</i> is "WKT" spatial filtering is applied
 after extracting all rows from the source datasource.  Essentially that means
 there is no fast spatial filtering on WKT derived geometries. <p>
 
-<li> When the GeometryField is "PointFromColumns", and a SrcLayer (as opposed
-to SrcSQL) is used, and a spatial filter is in effect on the virtual layer
+<li> When the <i>GeometryField</i> is "PointFromColumns", and a <i>SrcLayer</i> (as opposed
+to <i>SrcSQL</i>) is used, and a spatial filter is in effect on the virtual layer
 then the spatial filter will be internally translated into an attribute filter
-on the X and Y columns in the SrcLayer.  In cases where fast spatial filtering
+on the X and Y columns in the <i>SrcLayer</i>.  In cases where fast spatial filtering
 is important it can be helpful to index the X and Y columns in the source
-datastore, if that is possible.  For instance if the source is an RDBMS. <p>
+datastore, if that is possible.  For instance if the source is an RDBMS.
+You can turn off that feature by setting the <i>useSpatialSubquery</i> attribute
+of the GeometryField element to FALSE.<p>
 
-<li> Normally the SrcDataSource is a non-spatial tabular format (such as
+<li> Normally the <i>SrcDataSource</i> is a non-spatial tabular format (such as
 MySQL, SQLite, CSV, OCI, or ODBC) but it can also be a spatial database in which
 case the geometry can be directly copied over. <p>
 
