@@ -62,7 +62,7 @@ class OGRCSVLayer : public OGRLayer
     int                 bNew;
     int                 bInWriteMode;
     int                 bUseCRLF;
-    int                 bNeedRewind;
+    int                 bNeedRewindBeforeRead;
     OGRCSVGeometryFormat eGeometryFormat;
 
     char*               pszFilename;
@@ -70,6 +70,7 @@ class OGRCSVLayer : public OGRLayer
     char                chDelimiter;
 
     int                 iWktGeomReadField;
+    int                 bFirstFeatureAppendedDuringSession;
 
   public:
     OGRCSVLayer( const char *pszName, FILE *fp, const char *pszFilename,
