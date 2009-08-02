@@ -523,7 +523,7 @@ def ogr_csv_13():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    gdaltest.csv_tmpds = ogr.Open( 'tmp/csvwrk' )
+    gdaltest.csv_tmpds = ogr.Open( 'tmp/csvwrk', update=1 )
 
     # AS_WKT
     options = ['GEOMETRY=AS_WKT',]
