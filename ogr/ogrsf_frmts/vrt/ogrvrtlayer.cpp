@@ -721,15 +721,15 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
     }
     else if( eGeometryType == VGS_PointFromColumns )
     {
-        double dfZ = 0.0;
-
         if( iGeomZField != -1 )
-            dfZ = poSrcFeat->GetFieldAsDouble( iGeomZField );
-        
-        poDstFeat->SetGeometryDirectly( 
-            new OGRPoint( poSrcFeat->GetFieldAsDouble( iGeomXField ),
-                          poSrcFeat->GetFieldAsDouble( iGeomYField ),
-                          dfZ ) );
+            poDstFeat->SetGeometryDirectly( 
+                new OGRPoint( poSrcFeat->GetFieldAsDouble( iGeomXField ),
+                              poSrcFeat->GetFieldAsDouble( iGeomYField ),
+                              poSrcFeat->GetFieldAsDouble( iGeomZField ) ) );
+        else
+            poDstFeat->SetGeometryDirectly( 
+                new OGRPoint( poSrcFeat->GetFieldAsDouble( iGeomXField ),
+                              poSrcFeat->GetFieldAsDouble( iGeomYField ) ) );
     }
     else
         /* add other options here. */;
