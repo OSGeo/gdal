@@ -81,6 +81,7 @@ OGRVRTLayer::OGRVRTLayer()
 
     bSrcClip = FALSE;
     poSrcRegion = NULL;
+    bUpdate = FALSE;
 }
 
 /************************************************************************/
@@ -126,7 +127,8 @@ OGRVRTLayer::~OGRVRTLayer()
 /*                             Initialize()                             */
 /************************************************************************/
 
-int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
+int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory,
+                             int bUpdate)
 
 {
     
@@ -192,17 +194,31 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
 
     bSrcDSShared = CSLTestBoolean( pszSharedSetting );
 
+    // update mode doesn't make sense for a shared datasource or if we
+    // have a SrcSQL element
+    if (bSrcDSShared || CPLGetXMLValue( psLTree, "SrcSQL", NULL ) != NULL)
+        bUpdate = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Try to access the datasource.                                   */
 /* -------------------------------------------------------------------- */
+try_again:
     CPLErrorReset();
     if( bSrcDSShared )
-        poSrcDS = poReg->OpenShared( pszSrcDSName, FALSE, NULL );
+        poSrcDS = poReg->OpenShared( pszSrcDSName, bUpdate, NULL );
     else
-        poSrcDS = poReg->Open( pszSrcDSName, FALSE, NULL );
+        poSrcDS = poReg->Open( pszSrcDSName, bUpdate, NULL );
 
     if( poSrcDS == NULL ) 
     {
+        if (bUpdate)
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Cannot open datasource `%s' in update mode. Trying again in read-only mode",
+                       pszSrcDSName );
+            bUpdate = FALSE;
+            goto try_again;
+        }
         if( strlen(CPLGetLastErrorMsg()) == 0 )
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to open datasource `%s'.", 
@@ -210,6 +226,8 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
         CPLFree( pszSrcDSName );
         return FALSE;
     }
+
+    this->bUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
 /*      Is this layer derived from an SQL query result?                 */
@@ -385,7 +403,7 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
              return FALSE;
          }
      }
-                                               
+
 /* -------------------------------------------------------------------- */
 /*      Figure out what should be used as an FID.                       */
 /* -------------------------------------------------------------------- */
@@ -575,9 +593,6 @@ int OGRVRTLayer::ResetSourceReading()
 OGRFeature *OGRVRTLayer::GetNextFeature()
 
 {
-    if( poSrcLayer == NULL )
-        return NULL;
-
     if( bNeedReset )
     {
         if( !ResetSourceReading() )
@@ -622,8 +637,7 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
     m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
-/*      Handle FID.  We should offer an option to derive it from a      */
-/*      field.  (TODO)                                                  */
+/*      Handle FID.                                                     */
 /* -------------------------------------------------------------------- */
     if( iFIDField == -1 )
         poDstFeat->SetFID( poSrcFeat->GetFID() );
@@ -778,9 +792,6 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
 OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
 
 {
-    if( poSrcLayer == NULL )
-        return NULL;
-
     bNeedReset = TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -821,6 +832,218 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
 }
 
 /************************************************************************/
+/*               TranslateVRTFeatureToSrcFeature()                      */
+/*                                                                      */
+/*      Translate a VRT feature into a feature for the source layer     */
+/************************************************************************/
+
+OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeature)
+{
+    OGRFeature *poSrcFeat = new OGRFeature( poSrcLayer->GetLayerDefn() );
+
+    poSrcFeat->SetFID( poVRTFeature->GetFID() );
+
+/* -------------------------------------------------------------------- */
+/*      Handle style string.                                            */
+/* -------------------------------------------------------------------- */
+    if( poVRTFeature->GetStyleString() != NULL )
+        poSrcFeat->SetStyleString(poVRTFeature->GetStyleString());
+    
+/* -------------------------------------------------------------------- */
+/*      Handle the geometry.  Eventually there will be several more     */
+/*      supported options.                                              */
+/* -------------------------------------------------------------------- */
+    if( eGeometryType == VGS_None )
+    {
+        /* do nothing */
+    }
+    else if( eGeometryType == VGS_WKT )
+    {
+        OGRGeometry* poGeom = poVRTFeature->GetGeometryRef();
+        if (poGeom != NULL)
+        {
+            char* pszWKT = NULL;
+            if (poGeom->exportToWkt(&pszWKT) == OGRERR_NONE)
+            {
+                poSrcFeat->SetField(iGeomField, pszWKT);
+            }
+            CPLFree(pszWKT);
+        }
+    }
+    else if( eGeometryType == VGS_WKB )
+    {
+        OGRGeometry* poGeom = poVRTFeature->GetGeometryRef();
+        if (poGeom != NULL)
+        {
+            int nSize = poGeom->WkbSize();
+            GByte* pabyData = (GByte*)CPLMalloc(nSize);
+            if (poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE)
+            {
+                if ( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() == OFTBinary )
+                {
+                    poSrcFeat->SetField(iGeomField, nSize, pabyData);
+                }
+                else
+                {
+                    char* pszHexWKB = CPLBinaryToHex(nSize, pabyData);
+                    poSrcFeat->SetField(iGeomField, pszHexWKB);
+                    CPLFree(pszHexWKB);
+                }
+            }
+            CPLFree(pabyData);
+        }
+    }
+    else if( eGeometryType == VGS_Shape )
+    {
+        CPLDebug("OGR_VRT", "Update of VGS_Shape geometries not supported");
+    }
+    else if( eGeometryType == VGS_Direct )
+    {
+        poSrcFeat->SetGeometry( poVRTFeature->GetGeometryRef() );
+    }
+    else if( eGeometryType == VGS_PointFromColumns )
+    {
+        OGRGeometry* poGeom = poVRTFeature->GetGeometryRef();
+        if (poGeom != NULL)
+        {
+            if (wkbFlatten(poGeom->getGeometryType()) != wkbPoint)
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Cannot set a non ponctual geometry for PointFromColumns geometry");
+            }
+            else
+            {
+                poSrcFeat->SetField( iGeomXField, ((OGRPoint*)poGeom)->getX() );
+                poSrcFeat->SetField( iGeomYField, ((OGRPoint*)poGeom)->getY() );
+                if( iGeomZField != -1 )
+                {
+                    poSrcFeat->SetField( iGeomZField, ((OGRPoint*)poGeom)->getZ() );
+                }
+            }
+        }
+    }
+    else
+        /* add other options here. */;
+
+    if (poSrcFeat->GetGeometryRef() != NULL && poSRS != NULL)
+        poSrcFeat->GetGeometryRef()->assignSpatialReference(poSRS);
+
+/* -------------------------------------------------------------------- */
+/*      Copy fields.                                                    */
+/* -------------------------------------------------------------------- */
+
+    int iVRTField;
+
+    for( iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount(); iVRTField++ )
+    {
+        /* Do not set source geometry columns. Have been set just above */
+        if (panSrcField[iVRTField] == iGeomField || panSrcField[iVRTField] == iGeomXField ||
+            panSrcField[iVRTField] == iGeomYField || panSrcField[iVRTField] == iGeomZField)
+            continue;
+
+        OGRFieldDefn *poVRTDefn = poFeatureDefn->GetFieldDefn( iVRTField );
+        OGRFieldDefn *poSrcDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( panSrcField[iVRTField] );
+
+        if( pabDirectCopy[iVRTField] 
+            && poVRTDefn->GetType() == poSrcDefn->GetType() )
+        {
+            poSrcFeat->SetField( panSrcField[iVRTField],
+                                 poVRTFeature->GetRawFieldRef( iVRTField ) );
+        }
+        else
+        {
+            /* Eventually we need to offer some more sophisticated translation
+               options here for more esoteric types. */
+            poSrcFeat->SetField( panSrcField[iVRTField], 
+                                 poVRTFeature->GetFieldAsString(iVRTField));
+        }
+    }
+
+    return poSrcFeat;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::CreateFeature( OGRFeature* poVRTFeature )
+{
+    if(!bUpdate)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The CreateFeature() operation is not permitted on a read-only VRT." );
+        return OGRERR_FAILURE;
+    }
+
+    if( iFIDField != -1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The CreateFeature() operation is not supported if the FID option is specified." );
+        return OGRERR_FAILURE;
+    }
+
+    OGRFeature* poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
+    poSrcFeature->SetFID(OGRNullFID);
+    OGRErr eErr = poSrcLayer->CreateFeature(poSrcFeature);
+    if (eErr == OGRERR_NONE)
+    {
+        poVRTFeature->SetFID(poSrcFeature->GetFID());
+    }
+    delete poSrcFeature;
+    return eErr;
+}
+
+/************************************************************************/
+/*                             SetFeature()                             */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::SetFeature( OGRFeature* poVRTFeature )
+{
+    if(!bUpdate)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The SetFeature() operation is not permitted on a read-only VRT." );
+        return OGRERR_FAILURE;
+    }
+
+    if( iFIDField != -1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The SetFeature() operation is not supported if the FID option is specified." );
+        return OGRERR_FAILURE;
+    }
+
+    OGRFeature* poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
+    OGRErr eErr = poSrcLayer->SetFeature(poSrcFeature);
+    delete poSrcFeature;
+    return eErr;
+}
+
+/************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::DeleteFeature( long nFID )
+
+{
+    if(!bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The DeleteFeature() operation is not permitted on a read-only VRT." );
+        return OGRERR_FAILURE;
+    }
+
+    if( iFIDField != -1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The DeleteFeature() operation is not supported if the FID option is specified." );
+        return OGRERR_FAILURE;
+    }
+
+    return poSrcLayer->DeleteFeature(nFID);
+}
+
+/************************************************************************/
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
@@ -844,9 +1067,6 @@ OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 int OGRVRTLayer::TestCapability( const char * pszCap )
 
 {
-    if ( poSrcLayer == NULL )
-        return FALSE;
-
     if (EQUAL(pszCap,OLCFastFeatureCount) &&
         (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
         m_poAttrQuery == NULL )
@@ -863,6 +1083,11 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCRandomRead) && iFIDField == -1 )
         return poSrcLayer->TestCapability(pszCap);
+
+    else if( EQUAL(pszCap,OLCSequentialWrite) 
+             || EQUAL(pszCap,OLCRandomWrite)
+             || EQUAL(pszCap,OLCDeleteFeature))
+        return bUpdate && iFIDField == -1 && poSrcLayer->TestCapability(pszCap);
 
     return FALSE;
 }
@@ -883,8 +1108,7 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 
 OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-    if ( poSrcLayer != NULL &&
-         (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+    if ( (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
          m_poAttrQuery == NULL )
     {
         if( bNeedReset )
@@ -902,8 +1126,7 @@ OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 int OGRVRTLayer::GetFeatureCount( int bForce )
 
 {
-    if ( poSrcLayer != NULL &&
-         (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+    if ((eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
          m_poAttrQuery == NULL )
     {
         if( bNeedReset )
@@ -921,7 +1144,7 @@ int OGRVRTLayer::GetFeatureCount( int bForce )
 
 void OGRVRTLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 {
-    if (poSrcLayer != NULL && eGeometryType == VGS_Direct)
+    if (eGeometryType == VGS_Direct)
         bNeedReset = TRUE;
     OGRLayer::SetSpatialFilter(poGeomIn);
 }
