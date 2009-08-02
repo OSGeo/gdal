@@ -288,22 +288,7 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
      {
          poFeatureDefn->SetGeomType(poSrcLayer->GetLayerDefn()->GetGeomType());
      }
-     
-/* -------------------------------------------------------------------- */
-/*      For now we copy the schema directly from the source layer.      */
-/* -------------------------------------------------------------------- */
-     int iField;
-     OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
-     panSrcField = (int *) CPLMalloc(sizeof(int) * poSrcDefn->GetFieldCount());
-     pabDirectCopy = (int *) CPLMalloc(sizeof(int)*poSrcDefn->GetFieldCount());
 
-     for( iField = 0; iField < poSrcDefn->GetFieldCount(); iField++ )
-     {
-         poFeatureDefn->AddFieldDefn( poSrcDefn->GetFieldDefn( iField ) );
-         panSrcField[iField] = iField;
-         pabDirectCopy[iField] = TRUE;
-     }
-     
 /* -------------------------------------------------------------------- */
 /*      Apply a spatial reference system if provided, otherwise copy    */
 /*      from source.                                                    */
@@ -418,7 +403,42 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
              return FALSE;
          }
      }
-     
+
+/* -------------------------------------------------------------------- */
+/*      Create the schema.                                              */
+/* -------------------------------------------------------------------- */
+     int bReportSrcColumn =
+             CSLTestBoolean(CPLGetXMLValue( psLTree, "GeometryField.reportSrcColumn", "YES" ));
+
+     int iSrcField;
+     int iDstField;
+     OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
+     int nSrcFieldCount = poSrcDefn->GetFieldCount();
+     int nDstFieldCount = nSrcFieldCount;
+     if (bReportSrcColumn == FALSE)
+     {
+        if (iGeomXField != -1) nDstFieldCount --;
+        if (iGeomYField != -1) nDstFieldCount --;
+        if (iGeomZField != -1) nDstFieldCount --;
+        if (iGeomField != -1) nDstFieldCount --;
+     }
+
+     panSrcField = (int *) CPLMalloc(sizeof(int) * nDstFieldCount);
+     pabDirectCopy = (int *) CPLMalloc(sizeof(int)* nDstFieldCount);
+
+     for( iSrcField = 0, iDstField = 0; iSrcField < nSrcFieldCount; iSrcField++ )
+     {
+         if (bReportSrcColumn == FALSE &&
+             (iSrcField == iGeomXField || iSrcField == iGeomYField ||
+              iSrcField == iGeomZField || iSrcField == iGeomField))
+             continue;
+
+         poFeatureDefn->AddFieldDefn( poSrcDefn->GetFieldDefn( iSrcField ) );
+         panSrcField[iDstField] = iSrcField;
+         pabDirectCopy[iDstField] = TRUE;
+         iDstField ++;
+     }
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a SrcRegion?                                         */
 /* -------------------------------------------------------------------- */
@@ -720,29 +740,26 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
 /* -------------------------------------------------------------------- */
 /*      Copy fields.                                                    */
 /* -------------------------------------------------------------------- */
-    int iField;
+    int iVRTField;
 
-    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for( iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount(); iVRTField++ )
     {
-        if( panSrcField[iField] < 0 )
-            continue;
+        OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn( iVRTField );
+        OGRFieldDefn *poSrcDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( panSrcField[iVRTField] );
 
-        OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn( iField );
-        OGRFieldDefn *poSrcDefn = poFeatureDefn->GetFieldDefn( panSrcField[iField] );
-
-        if( pabDirectCopy[iField] 
+        if( pabDirectCopy[iVRTField] 
             && poDstDefn->GetType() == poSrcDefn->GetType() )
         {
-            poDstFeat->SetField( iField,
-                                 poSrcFeat->GetRawFieldRef( panSrcField[iField] ) );
+            poDstFeat->SetField( iVRTField,
+                                 poSrcFeat->GetRawFieldRef( panSrcField[iVRTField] ) );
         }
         else
         {
             /* Eventually we need to offer some more sophisticated translation
                options here for more esoteric types. */
             
-            poDstFeat->SetField( iField, 
-                                 poSrcFeat->GetFieldAsString(panSrcField[iField]));
+            poDstFeat->SetField( iVRTField, 
+                                 poSrcFeat->GetFieldAsString(panSrcField[iVRTField]));
         }
     }
 
