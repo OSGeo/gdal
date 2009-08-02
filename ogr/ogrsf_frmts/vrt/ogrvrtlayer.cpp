@@ -483,16 +483,31 @@ int OGRVRTLayer::ResetSourceReading()
 
         pszXField = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomXField)->GetNameRef();
         pszYField = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomYField)->GetNameRef();
-        pszFilter = (char *) 
-            CPLMalloc(2*strlen(pszXField)+2*strlen(pszYField) + 100);
+        if (bUseSpatialSubquery)
+        {
+            OGRFieldType xType = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomXField)->GetType();
+            OGRFieldType yType = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomYField)->GetType();
+            if (!((xType == OFTReal || xType == OFTInteger) && (yType == OFTReal || yType == OFTInteger)))
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "The '%s' and/or '%s' fields of the source layer are not declared as numeric fields,\n"
+                        "so the spatial filter cannot be turned into an attribute filter on them",
+                         pszXField, pszYField);
+                bUseSpatialSubquery = FALSE;
+            }
+        }
+        if (bUseSpatialSubquery)
+        {
+            pszFilter = (char *) 
+                CPLMalloc(2*strlen(pszXField)+2*strlen(pszYField) + 100);
 
-        sprintf( pszFilter, 
-                 "%s > %.15g AND %s < %.15g AND %s > %.15g AND %s < %.15g", 
-                 pszXField, m_sFilterEnvelope.MinX,
-                 pszXField, m_sFilterEnvelope.MaxX,
-                 pszYField, m_sFilterEnvelope.MinY,
-                 pszYField, m_sFilterEnvelope.MaxY );
-
+            sprintf( pszFilter, 
+                    "%s > %.15g AND %s < %.15g AND %s > %.15g AND %s < %.15g", 
+                    pszXField, m_sFilterEnvelope.MinX,
+                    pszXField, m_sFilterEnvelope.MaxX,
+                    pszYField, m_sFilterEnvelope.MinY,
+                    pszYField, m_sFilterEnvelope.MaxY );
+        }
     }
 
 /* -------------------------------------------------------------------- */
