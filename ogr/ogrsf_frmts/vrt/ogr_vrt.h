@@ -110,6 +110,8 @@ class OGRVRTLayer : public OGRLayer
     virtual int         TestCapability( const char * );
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+
+    virtual void        SetSpatialFilter( OGRGeometry * poGeomIn );
 };
 
 /************************************************************************/
