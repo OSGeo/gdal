@@ -70,7 +70,8 @@ Defaults to "wkbUnknown" indicating that any geometry type is allowed.<p>
 <li> <b>LayerSRS</b> (optional): The value of this element is the spatial
 reference to use for the layer.  If not provided, it is inherited from the
 source layer.  The value may be WKT or any other input that is accepted
-by the OGRSpatialReference::SetUserInput() method. <p>
+by the OGRSpatialReference::SetUserInput() method. If the value is NULL, then
+no SRS will be used for the layer.<p>
 
 <li> <b>GeometryField</b> (optional): This element is used to define
 how the geometry for features should be derived.<br>
