@@ -460,6 +460,13 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 {
     int iField;
 
+    if( !bInWriteMode )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The CreateFeature() operation is not permitted on a read-only CSV." );
+        return OGRERR_FAILURE;
+    }
+
     /* If we need rewind, it means that we have just written a feature before */
     /* so there's no point seeking to the end of the file, as we're already */
     /* at the end */
