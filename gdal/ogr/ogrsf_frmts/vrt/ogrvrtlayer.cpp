@@ -460,35 +460,21 @@ try_again:
 /* -------------------------------------------------------------------- */
 /*      Do we have a SrcRegion?                                         */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-     CPLXMLNode *psSRNode = CPLGetXMLNode( psLTree, "SrcRegion" );
-
-     if( pszLayerSRS != NULL )
+     const char *pszSrcRegion = CPLGetXMLValue( psLTree, "SrcRegion", NULL );
+     if( pszSrcRegion != NULL )
      {
-         if( EQUAL(pszLayerSRS,"NULL") )
-             poSRS = NULL;
-         else
-         {
-             OGRSpatialReference oSRS;
+        OGRGeometryFactory::createFromWkt( (char**) &pszSrcRegion, NULL, &poSrcRegion );
+        if( poSrcRegion == NULL || wkbFlatten(poSrcRegion->getGeometryType()) != wkbPolygon)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                        "Ignoring SrcRegion. It must be a valid WKT polygon");
+            delete poSrcRegion;
+            poSrcRegion = NULL;
+        }
 
-             if( oSRS.SetFromUserInput( pszLayerSRS ) != OGRERR_NONE )
-             {
-                 CPLError( CE_Failure, CPLE_AppDefined, 
-                           "Failed to import LayerSRS `%s'.", pszLayerSRS );
-                 return FALSE;
-             }
-             poSRS = oSRS.Clone();
-         }
+        bSrcClip = CSLTestBoolean(CPLGetXMLValue( psLTree, "SrcRegion.clip", "FALSE" ));
      }
 
-     else
-     {
-         if( poSrcLayer->GetSpatialRef() != NULL )
-             poSRS = poSrcLayer->GetSpatialRef()->Clone();
-         else
-             poSRS = NULL;
-     }
-#endif
      return TRUE;
 }
 
@@ -515,7 +501,8 @@ int OGRVRTLayer::ResetSourceReading()
 /*      Do we want to let source layer do spatial restriction?          */
 /* -------------------------------------------------------------------- */
     char *pszFilter = NULL;
-    if( m_poFilterGeom && bUseSpatialSubquery && eGeometryType == VGS_PointFromColumns )
+    if( (m_poFilterGeom || poSrcRegion) && bUseSpatialSubquery &&
+         eGeometryType == VGS_PointFromColumns )
     {
         const char *pszXField, *pszYField;
 
@@ -536,15 +523,41 @@ int OGRVRTLayer::ResetSourceReading()
         }
         if (bUseSpatialSubquery)
         {
+            OGREnvelope sEnvelope;
+
             pszFilter = (char *) 
                 CPLMalloc(2*strlen(pszXField)+2*strlen(pszYField) + 100);
 
+            if (poSrcRegion != NULL)
+            {
+                if (m_poFilterGeom == NULL)
+                    poSrcRegion->getEnvelope( &sEnvelope );
+                else
+                {
+                    OGRGeometry* poIntersection = poSrcRegion->Intersection(m_poFilterGeom);
+                    if (poIntersection)
+                    {
+                        poIntersection->getEnvelope( &sEnvelope );
+                        delete poIntersection;
+                    }
+                    else
+                    {
+                        sEnvelope.MinX = 0;
+                        sEnvelope.MaxX = 0;
+                        sEnvelope.MinY = 0;
+                        sEnvelope.MaxY = 0;
+                    }
+                }
+            }
+            else
+                m_poFilterGeom->getEnvelope( &sEnvelope );
+
             sprintf( pszFilter, 
                     "%s > %.15g AND %s < %.15g AND %s > %.15g AND %s < %.15g", 
-                    pszXField, m_sFilterEnvelope.MinX,
-                    pszXField, m_sFilterEnvelope.MaxX,
-                    pszYField, m_sFilterEnvelope.MinY,
-                    pszYField, m_sFilterEnvelope.MaxY );
+                    pszXField, sEnvelope.MinX,
+                    pszXField, sEnvelope.MaxX,
+                    pszYField, sEnvelope.MinY,
+                    pszYField, sEnvelope.MaxY );
         }
     }
 
@@ -577,7 +590,27 @@ int OGRVRTLayer::ResetSourceReading()
 /*      and reset reading.            */
 /* -------------------------------------------------------------------- */
     if (eGeometryType == VGS_Direct)
-        poSrcLayer->SetSpatialFilter( m_poFilterGeom );
+    {
+        if (poSrcRegion == NULL)
+            poSrcLayer->SetSpatialFilter( m_poFilterGeom );
+        else if (m_poFilterGeom == NULL)
+            poSrcLayer->SetSpatialFilter( poSrcRegion );
+        else
+        {
+            if( wkbFlatten(m_poFilterGeom->getGeometryType()) != wkbPolygon )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Spatial filter should be polygon when a SrcRegion is defined. Ignoring it");
+                poSrcLayer->SetSpatialFilter( poSrcRegion );
+            }
+            else
+            {
+                OGRGeometry* poIntersection = m_poFilterGeom->Intersection(poSrcRegion);
+                poSrcLayer->SetSpatialFilter( poIntersection );
+                delete poIntersection;
+            }
+        }
+    }
     else
         poSrcLayer->SetSpatialFilter( NULL );
     poSrcLayer->ResetReading();
@@ -607,7 +640,7 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
         if( poSrcFeature == NULL )
             return NULL;
 
-        poFeature = TranslateFeature( poSrcFeature );
+        poFeature = TranslateFeature( poSrcFeature, TRUE );
         delete poSrcFeature;
 
         if( poFeature == NULL )
@@ -629,9 +662,10 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
 /*      Translate a source feature into a feature for this layer.       */
 /************************************************************************/
 
-OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
+OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature*& poSrcFeat, int bUseSrcRegion )
 
 {
+retry:
     OGRFeature *poDstFeat = new OGRFeature( poFeatureDefn );
 
     m_nFeaturesRead++;
@@ -752,6 +786,32 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
     else
         /* add other options here. */;
 
+    /* In the non direct case, we need to check that the geometry intersects the source */
+    /* region before an optionnal clipping */
+    if( bUseSrcRegion && eGeometryType != VGS_Direct && poSrcRegion != NULL )
+    {
+        OGRGeometry* poGeom = poDstFeat->GetGeometryRef();
+        if (poGeom != NULL && !poGeom->Intersects(poSrcRegion))
+        {
+            delete poSrcFeat;
+            delete poDstFeat;
+
+            /* Fetch next source feature and retry translating it */
+            poSrcFeat = poSrcLayer->GetNextFeature();
+            if (poSrcFeat == NULL)
+                return NULL;
+
+            goto retry;
+        }
+    }
+
+    /* Clip the geometry to the SrcRegion if asked */
+    if (poSrcRegion != NULL && bSrcClip && poDstFeat->GetGeometryRef() != NULL)
+    {
+        OGRGeometry* poClippedGeom = poDstFeat->GetGeometryRef()->Intersection(poSrcRegion);
+        poDstFeat->SetGeometryDirectly(poClippedGeom);
+    }
+
     if (poDstFeat->GetGeometryRef() != NULL && poSRS != NULL)
         poDstFeat->GetGeometryRef()->assignSpatialReference(poSRS);
 
@@ -825,7 +885,7 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Translate feature and return it.                                */
 /* -------------------------------------------------------------------- */
-    poFeature = TranslateFeature( poSrcFeature );
+    poFeature = TranslateFeature( poSrcFeature, FALSE );
     delete poSrcFeature;
 
     return poFeature;
@@ -1068,7 +1128,8 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
 
 {
     if (EQUAL(pszCap,OLCFastFeatureCount) &&
-        (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+        (eGeometryType == VGS_Direct ||
+         (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
         m_poAttrQuery == NULL )
         return poSrcLayer->TestCapability(pszCap);
 
@@ -1077,7 +1138,8 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
         return poSrcLayer->TestCapability(pszCap);
 
     else if (EQUAL(pszCap,OLCFastGetExtent) &&
-             (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+             (eGeometryType == VGS_Direct ||
+              (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
              m_poAttrQuery == NULL )
         return poSrcLayer->TestCapability(pszCap);
 
@@ -1108,7 +1170,8 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 
 OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-    if ( (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+    if ( (eGeometryType == VGS_Direct ||
+          (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
          m_poAttrQuery == NULL )
     {
         if( bNeedReset )
@@ -1126,7 +1189,8 @@ OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 int OGRVRTLayer::GetFeatureCount( int bForce )
 
 {
-    if ((eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+    if ((eGeometryType == VGS_Direct ||
+         (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
          m_poAttrQuery == NULL )
     {
         if( bNeedReset )
