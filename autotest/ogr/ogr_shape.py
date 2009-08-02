@@ -1182,6 +1182,8 @@ def ogr_shape_28():
     field_defn.SetName('test')
     field_defn.SetWidth(99)
     lyr.CreateField(field_defn)
+    field_defn.Destroy()
+    ds.Destroy()
     ds = None
 
     os.remove('tmp/hugedbf.shp')
@@ -1221,7 +1223,9 @@ def ogr_shape_28():
     # Update with a new value
     feat.SetField(0, 'updated_value')
     lyr.SetFeature(feat)
+    feat.Destroy()
 
+    ds.Destroy()
     ds = None
 
     # Re-open and check the new value
@@ -1231,7 +1235,9 @@ def ogr_shape_28():
     if feat.GetFieldAsString(0) != 'updated_value':
         print feat.GetFieldAsString(0)
         return 'fail'
+    feat.Destroy()
 
+    ds.Destroy()
     ds = None
 
     return 'success'
