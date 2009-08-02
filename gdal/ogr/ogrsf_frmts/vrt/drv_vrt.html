@@ -86,6 +86,15 @@ Starting with GDAL 1.7.0, the optional <b>reportSrcColumn</b> attribute can be u
 whether the source geometry fields (the fields set in the <b>field</b>, <b>x</b>, <b>x</b>
 or <b>z</b> attributes) should be reported as fields of the VRT layer. It defaults to TRUE.
 If set to FALSE, the source geometry fields will only be used to build the geometry of the features of the VRT layer.<p>
+
+<li> <b>SrcRegion</b> (optionnal, from GDAL 1.7.0) : This element is used
+to define an initial spatial filter for the source features. This spatial
+filter will be combined with any spatial filter explicitely set on the VRT
+layer with the SetSpatialFilter() method. The value of the element must be
+a valid WKT string defining a polygon. An optional <b>clip</b> attribute
+can be set to "TRUE" to clip the geometries to the source region, otherwise
+the source geometries are not modified.<p>
+
 </ul>
 
 <h2>Example: ODBC Point Layer</h2>
@@ -118,6 +127,20 @@ to a format whose schema is fixed, such as GPX (&lt;name&gt;, &lt;desc&gt, etc.)
     &lt;OGRVRTLayer name="remapped_layer"&gt;
         &lt;SrcDataSource&gt;your_source.shp&lt;/SrcDataSource&gt;
         &lt;SrcSQL&gt;SELECT src_field_1 AS name, src_field_2 AS desc FROM your_source_layer_name&lt;/SrcSQL&gt;
+    &lt;/OGRVRTLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+</pre>
+
+<h2>Example: Transparent spatial filtering (GDAL >= 1.7.0)</h2>
+
+The following example will only return features from the source layer that
+intersect the (0,40)-(10,50) region. Furthermore, returned geometries will be clipped
+to fit into that region.<p>
+
+<pre>&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTLayer name="source"&gt;
+        &lt;SrcDataSource&gt;source.shp&lt;/SrcDataSource&gt;
+        &lt;SrcRegion clip="true"&gt;POLYGON((0 40,10 40,10 50,0 50,0 40))&lt;/SrcRegion&gt;
     &lt;/OGRVRTLayer&gt;
 &lt;/OGRVRTDataSource&gt;
 </pre>
