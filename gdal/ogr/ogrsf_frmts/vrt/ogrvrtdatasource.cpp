@@ -65,7 +65,8 @@ OGRVRTDataSource::~OGRVRTDataSource()
 /*                             Initialize()                             */
 /************************************************************************/
 
-int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName )
+int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
+                                  int bUpdate )
 
 {
     CPLAssert( nLayers == 0 );
@@ -96,7 +97,7 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName )
         
         poLayer = new OGRVRTLayer();
         
-        if( !poLayer->Initialize( psLTree, pszVRTDirectory ) )
+        if( !poLayer->Initialize( psLTree, pszVRTDirectory, bUpdate ) )
         {
             CPLFree( pszVRTDirectory );
             delete poLayer;

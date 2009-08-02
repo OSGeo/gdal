@@ -82,8 +82,12 @@ class OGRVRTLayer : public OGRLayer
     int                *panSrcField;
     int                *pabDirectCopy;
 
+    int                 bUpdate;
+
     OGRFeature         *TranslateFeature( OGRFeature * );
     OGRErr              createFromShapeBin( GByte *, OGRGeometry **, int );
+    
+    OGRFeature         *TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeature);
 
     int                 ResetSourceReading();
 
@@ -92,7 +96,8 @@ class OGRVRTLayer : public OGRLayer
     virtual             ~OGRVRTLayer();
 
     virtual int         Initialize( CPLXMLNode *psLTree, 
-                                    const char *pszVRTDirectory );
+                                    const char *pszVRTDirectory,
+                                    int bUpdate);
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
@@ -112,6 +117,12 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 
     virtual void        SetSpatialFilter( OGRGeometry * poGeomIn );
+
+    virtual OGRErr      CreateFeature( OGRFeature* poFeature );
+
+    virtual OGRErr      SetFeature( OGRFeature* poFeature );
+
+    virtual OGRErr      DeleteFeature( long nFID );
 };
 
 /************************************************************************/
@@ -129,7 +140,8 @@ class OGRVRTDataSource : public OGRDataSource
                         OGRVRTDataSource();
                         ~OGRVRTDataSource();
 
-    int                 Initialize( CPLXMLNode *psXML, const char *pszName );
+    int                 Initialize( CPLXMLNode *psXML, const char *pszName,
+                                    int bUpdate );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
