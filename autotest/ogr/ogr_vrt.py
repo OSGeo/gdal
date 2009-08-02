@@ -370,6 +370,184 @@ def ogr_vrt_10():
     return 'success'
 
 ###############################################################################
+# Test VRT write capabilities with PointFromColumns geometries
+# Test also the reportGeomSrcColumn attribute
+
+def ogr_vrt_11():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    f = open('tmp/test.csv', 'wb')
+    f.write('x,val1,y,val2\n')
+    f.write('2,"val11",49,"val12"\n')
+    f.close()
+
+    try:
+        os.remove('tmp/test.csvt')
+    except:
+        pass
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="PointFromColumns" x="x" y="y" reportSrcColumn="false"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open( vrt_xml, update = 1 )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+
+    # Only val1 and val2 attributes should be reported
+    if vrt_lyr.GetLayerDefn().GetFieldCount() != 2:
+        return 'fail'
+    if vrt_lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() != 'val1':
+        return 'fail'
+    if vrt_lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef() != 'val2':
+        return 'fail'
+
+    feat = ogr.Feature(vrt_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (3 50)')
+    feat.SetGeometryDirectly(geom)
+    feat.SetField('val1', 'val21')
+    vrt_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    vrt_lyr.ResetReading()
+    feat = vrt_lyr.GetFeature(2)
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (3 50)':
+        return 'fail'
+    if feat.GetFieldAsString('val1') != 'val21':
+        return 'fail'
+    feat.Destroy()
+
+    # The x and y fields are considered as string by default, so spatial
+    # filter cannot be turned into attribute filter
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    vrt_lyr.SetSpatialFilterRect(0, 40, 10, 49.5)
+    ret = vrt_lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('not declared as numeric fields') == -1:
+        return 'fail'
+    if ret != 1:
+        return 'fail'
+
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    # Add a .csvt file to specify the x and y columns as reals
+    f = open('tmp/test.csvt', 'wb')
+    f.write('Real,String,Real,String\n')
+    f.close()
+
+    vrt_ds = ogr.Open( vrt_xml, update = 1 )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+    vrt_lyr.SetSpatialFilterRect(0, 40, 10, 49.5)
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+    if gdal.GetLastErrorMsg() != '':
+        return 'fail'
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    os.remove('tmp/test.csv')
+    os.remove('tmp/test.csvt')
+
+    return 'success'
+
+###############################################################################
+# Test VRT write capabilities with WKT geometries
+
+def ogr_vrt_12():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    f = open('tmp/test.csv', 'wb')
+    f.write('wkt_geom,val1,val2\n')
+    f.write('POINT (2 49),"val11","val12"\n')
+    f.close()
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="WKT" field="wkt_geom"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open( vrt_xml, update = 1 )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+
+    feat = ogr.Feature(vrt_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (3 50)')
+    feat.SetGeometryDirectly(geom)
+    feat.SetField('val1', 'val21')
+    vrt_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    vrt_lyr.ResetReading()
+    feat = vrt_lyr.GetFeature(2)
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (3 50)':
+        return 'fail'
+    if feat.GetFieldAsString('val1') != 'val21':
+        return 'fail'
+    feat.Destroy()
+
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    os.remove('tmp/test.csv')
+
+    return 'success'
+
+###############################################################################
+# Test VRT write capabilities with WKB geometries
+
+def ogr_vrt_13():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    f = open('tmp/test.csv', 'wb')
+    f.write('wkb_geom,val1,val2\n')
+    f.close()
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="WKB" field="wkb_geom"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open( vrt_xml, update = 1 )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+
+    feat = ogr.Feature(vrt_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (3 50)')
+    feat.SetGeometryDirectly(geom)
+    feat.SetField('val1', 'val21')
+    vrt_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    vrt_lyr.ResetReading()
+    feat = vrt_lyr.GetFeature(1)
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (3 50)':
+        return 'fail'
+    if feat.GetFieldAsString('val1') != 'val21':
+        return 'fail'
+    feat.Destroy()
+
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    os.remove('tmp/test.csv')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -393,6 +571,9 @@ gdaltest_list = [
     ogr_vrt_8,
     ogr_vrt_9,
     ogr_vrt_10,
+    ogr_vrt_11,
+    ogr_vrt_12,
+    ogr_vrt_13,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
