@@ -796,14 +796,14 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
     }
     else 
     {
-        char szFIDQuery[200];
+        const char* pszFID = poSrcLayer->GetLayerDefn()->GetFieldDefn(iFIDField)->GetNameRef();
+        char* pszFIDQuery = (char*)CPLMalloc(strlen(pszFID) + 64);
 
         poSrcLayer->ResetReading();
-        sprintf( szFIDQuery, "%s = %ld", 
-            poSrcLayer->GetLayerDefn()->GetFieldDefn(iFIDField)->GetNameRef(),
-                 nFeatureId );
+        sprintf( pszFIDQuery, "%s = %ld", pszFID, nFeatureId );
         poSrcLayer->SetSpatialFilter( NULL );
-        poSrcLayer->SetAttributeFilter( szFIDQuery );
+        poSrcLayer->SetAttributeFilter( pszFIDQuery );
+        CPLFree(pszFIDQuery);
         
         poSrcFeature = poSrcLayer->GetNextFeature();
     }
