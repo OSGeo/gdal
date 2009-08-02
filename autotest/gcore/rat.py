@@ -44,7 +44,10 @@ def rat_1():
 
     gdaltest.saved_rat = None
     
-    rat = gdal.RasterAttributeTable()
+    try:
+        rat = gdal.RasterAttributeTable()
+    except:
+        return 'skip'
 
     rat.CreateColumn( 'Value', gdal.GFT_Integer, gdal.GFU_MinMax )
     rat.CreateColumn( 'Count', gdal.GFT_Integer, gdal.GFU_PixelCount )

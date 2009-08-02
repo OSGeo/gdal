@@ -136,8 +136,12 @@ def ogr_pg_2():
         return 'fail'
     if not gdaltest.pg_lyr.TestCapability(ogr.OLCFastFeatureCount):
         return 'fail'
-    if not gdaltest.pg_lyr.TestCapability(ogr.OLCStringsAsUTF8):
-        return 'fail'
+    try:
+        ogr.OLCStringsAsUTF8
+        if not gdaltest.pg_lyr.TestCapability(ogr.OLCStringsAsUTF8):
+            return 'fail'
+    except:
+        pass
     if not gdaltest.pg_lyr.TestCapability(ogr.OLCSequentialWrite):
         return 'fail'
     if not gdaltest.pg_lyr.TestCapability(ogr.OLCCreateField):
@@ -447,6 +451,12 @@ def ogr_pg_9():
         print feat.GetGeometryRef()
         gdaltest.post_reason( 'Geometry update failed' )
         return 'fail'
+
+    try:
+        ogr.OLCStringsAsUTF8
+    except:
+        # With OG-python bindings SetGeometryDirectly(None) doesn't work
+        return 'success'
 
     feat.SetGeometryDirectly( None )
 

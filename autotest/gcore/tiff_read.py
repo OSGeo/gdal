@@ -310,7 +310,7 @@ def tiff_ProjectedCSTypeGeoKey_only():
 
 def tiff_12bitjpeg():
 
-    old_accum = gdal.GetConfigOption( 'CPL_ACCUM_ERROR_MSG' )
+    old_accum = gdal.GetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'OFF' )
     gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', 'ON' )
     gdal.ErrorReset()
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
