@@ -55,8 +55,9 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     this->pszFilename = CPLStrdup(pszFilename);
     this->chDelimiter = chDelimiter;
 
+    bFirstFeatureAppendedDuringSession = TRUE;
     bUseCRLF = FALSE;
-    bNeedRewind = FALSE;
+    bNeedRewindBeforeRead = FALSE;
     eGeometryFormat = OGR_CSV_GEOM_NONE;
 
     nNextFID = 1;
@@ -264,7 +265,7 @@ void OGRCSVLayer::ResetReading()
     if( bHasFieldNames )
         CSLDestroy( CSVReadParseLine2( fpCSV, chDelimiter ) );
 
-    bNeedRewind = FALSE;
+    bNeedRewindBeforeRead = FALSE;
 
     nNextFID = 1;
 }
@@ -342,7 +343,7 @@ OGRFeature *OGRCSVLayer::GetNextFeature()
 {
     OGRFeature  *poFeature = NULL;
 
-    if( bNeedRewind )
+    if( bNeedRewindBeforeRead )
         ResetReading();
     
 /* -------------------------------------------------------------------- */
@@ -459,7 +460,12 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 {
     int iField;
 
-    bNeedRewind = TRUE;
+    /* If we need rewind, it means that we have just written a feature before */
+    /* so there's no point seeking to the end of the file, as we're already */
+    /* at the end */
+    int bNeedSeekEnd = !bNeedRewindBeforeRead;
+
+    bNeedRewindBeforeRead = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Write field names if we haven't written them yet.               */
@@ -568,12 +574,34 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
         if (fpCSVT) VSIFClose(fpCSVT);
 
         bHasFieldNames = TRUE;
+        bNeedSeekEnd = FALSE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Make sure we are at the end of the file.                        */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fpCSV, 0, SEEK_END );
+    if (bNeedSeekEnd)
+    {
+        if (bFirstFeatureAppendedDuringSession)
+        {
+            /* Add a newline character to the end of the file if necessary */
+            bFirstFeatureAppendedDuringSession = FALSE;
+            VSIFSeek( fpCSV, 0, SEEK_END );
+            VSIFSeek( fpCSV, VSIFTell(fpCSV) - 1, SEEK_SET);
+            char chLast = VSIFGetc( fpCSV );
+            VSIFSeek( fpCSV, 0, SEEK_END );
+            if (chLast != '\n')
+            {
+                if( bUseCRLF )
+                    VSIFPutc( 13, fpCSV );
+                VSIFPutc( '\n', fpCSV );
+            }
+        }
+        else
+        {
+            VSIFSeek( fpCSV, 0, SEEK_END );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write out the geometry                                          */
