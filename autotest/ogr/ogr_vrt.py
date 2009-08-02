@@ -548,6 +548,218 @@ def ogr_vrt_13():
     return 'success'
 
 ###############################################################################
+# Test SrcRegion element for VGS_Direct
+
+def ogr_vrt_14():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    shp_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test.shp')
+    shp_lyr = shp_ds.CreateLayer('test')
+
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (-10 49)')
+    feat.SetGeometryDirectly(geom)
+    shp_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (-10 49)')
+    feat.SetGeometryDirectly(geom)
+    shp_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
+    feat.SetGeometryDirectly(geom)
+    shp_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT (-10 49)')
+    feat.SetGeometryDirectly(geom)
+    shp_lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    shp_ds.ExecuteSQL('CREATE SPATIAL INDEX on test');
+
+    shp_ds.Destroy()
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">tmp/test.shp</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <SrcRegion>POLYGON((0 40,0 50,10 50,10 40,0 40))</SrcRegion>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open( vrt_xml )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+
+    if vrt_lyr.TestCapability(ogr.OLCFastSpatialFilter) != 1:
+        return 'fail'
+
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    feat = vrt_lyr.GetNextFeature()
+    if feat.GetFID() != 2:
+        return 'fail'
+
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (2 49)':
+        return 'fail'
+    feat.Destroy()
+
+    vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilterRect(1, 41, 3, 48.5)
+    if vrt_lyr.GetFeatureCount() != 0:
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilter(None)
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp')
+
+    return 'success'
+
+
+###############################################################################
+# Test SrcRegion element for VGS_WKT
+
+def ogr_vrt_15():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    f = open('tmp/test.csv', 'wb')
+    f.write('wkt_geom,val1,val2\n')
+    f.write('POINT (-10 49),,\n')
+    f.write('POINT (-10 49),,\n')
+    f.write('POINT (2 49),,\n')
+    f.write('POINT (-10 49),,\n')
+    f.close()
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="WKT" field="wkt_geom"/>
+        <SrcRegion>POLYGON((0 40,0 50,10 50,10 40,0 40))</SrcRegion>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open( vrt_xml )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+
+    if vrt_lyr.TestCapability(ogr.OLCFastSpatialFilter) != 0:
+        return 'fail'
+
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    feat = vrt_lyr.GetNextFeature()
+    if feat.GetFID() != 3:
+        return 'fail'
+
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (2 49)':
+        return 'fail'
+    feat.Destroy()
+
+    vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilterRect(1, 41, 3, 48.5)
+    if vrt_lyr.GetFeatureCount() != 0:
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilter(None)
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    os.remove('tmp/test.csv')
+
+    return 'success'
+
+
+###############################################################################
+# Test SrcRegion element for VGS_PointFromColumns
+
+def ogr_vrt_16():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    f = open('tmp/test.csvt', 'wb')
+    f.write('Real,Real,String,String\n')
+    f.close()
+
+    f = open('tmp/test.csv', 'wb')
+    f.write('x,y,val1,val2\n')
+    f.write('-10,49,,\n')
+    f.write('-10,49,,\n')
+    f.write('2,49,,\n')
+    f.write('-10,49,,\n')
+    f.close()
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="PointFromColumns" x="x" y="y"/>
+        <SrcRegion>POLYGON((0 40,0 50,10 50,10 40,0 40))</SrcRegion>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open( vrt_xml )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+
+    if vrt_lyr.TestCapability(ogr.OLCFastSpatialFilter) != 0:
+        return 'fail'
+
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    feat = vrt_lyr.GetNextFeature()
+    if feat.GetFID() != 3:
+        return 'fail'
+
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (2 49)':
+        return 'fail'
+    feat.Destroy()
+
+    vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilterRect(1, 41, 3, 48.5)
+    if vrt_lyr.GetFeatureCount() != 0:
+        return 'fail'
+
+    vrt_lyr.SetSpatialFilter(None)
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    os.remove('tmp/test.csv')
+    os.remove('tmp/test.csvt')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -574,6 +786,9 @@ gdaltest_list = [
     ogr_vrt_11,
     ogr_vrt_12,
     ogr_vrt_13,
+    ogr_vrt_14,
+    ogr_vrt_15,
+    ogr_vrt_16,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
