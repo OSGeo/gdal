@@ -555,9 +555,13 @@ int OGRVRTLayer::ResetSourceReading()
     CPLFree( pszFilter );
 
 /* -------------------------------------------------------------------- */
-/*      Clear spatial filter (to be safe) and reset reading.            */
+/*      Clear spatial filter (to be safe) for non direct geometries     */
+/*      and reset reading.            */
 /* -------------------------------------------------------------------- */
-    poSrcLayer->SetSpatialFilter( NULL );
+    if (eGeometryType == VGS_Direct)
+        poSrcLayer->SetSpatialFilter( m_poFilterGeom );
+    else
+        poSrcLayer->SetSpatialFilter( NULL );
     poSrcLayer->ResetReading();
     bNeedReset = FALSE;
 
@@ -594,7 +598,7 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        if( (m_poFilterGeom == NULL
+        if( (eGeometryType == VGS_Direct || m_poFilterGeom == NULL
             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
@@ -844,12 +848,17 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     if (EQUAL(pszCap,OLCFastFeatureCount) &&
-        m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+        (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+        m_poAttrQuery == NULL )
+        return poSrcLayer->TestCapability(pszCap);
+
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) &&
+             eGeometryType == VGS_Direct && m_poAttrQuery == NULL )
         return poSrcLayer->TestCapability(pszCap);
 
     else if (EQUAL(pszCap,OLCFastGetExtent) &&
-             m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
-             eGeometryType == VGS_Direct )
+             (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+             m_poAttrQuery == NULL )
         return poSrcLayer->TestCapability(pszCap);
 
     else if( EQUAL(pszCap,OLCRandomRead) && iFIDField == -1 )
@@ -875,9 +884,13 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
     if ( poSrcLayer != NULL &&
-         (m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
-          eGeometryType == VGS_Direct) )
+         (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+         m_poAttrQuery == NULL )
+    {
+        if( bNeedReset )
+            ResetSourceReading();
         return poSrcLayer->GetExtent(psExtent, bForce);
+    }
 
     return OGRLayer::GetExtent(psExtent, bForce);
 }
@@ -889,10 +902,28 @@ OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 int OGRVRTLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+    if ( poSrcLayer != NULL &&
+         (eGeometryType == VGS_Direct || m_poFilterGeom == NULL) &&
+         m_poAttrQuery == NULL )
+    {
+        if( bNeedReset )
+            ResetSourceReading();
         return poSrcLayer->GetFeatureCount( bForce );
+    }
     else
         return OGRLayer::GetFeatureCount( bForce );
+}
+
+
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void OGRVRTLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+{
+    if (poSrcLayer != NULL && eGeometryType == VGS_Direct)
+        bNeedReset = TRUE;
+    OGRLayer::SetSpatialFilter(poGeomIn);
 }
 
 /************************************************************************/
