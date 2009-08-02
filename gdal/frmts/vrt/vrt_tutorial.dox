@@ -494,9 +494,9 @@ changing is the data source for each band.
   }
 \endcode
 
-The VRTDataset class is one of the few dataset implementation that supports the AddBand()
+The VRTDataset class is one of the few dataset implementations that supports the AddBand()
 method. The options passed to the AddBand() method can be used to control the type of the
-band create (VRTRasterBand, VRTRawRasterBand, VRTDerivedRasterBand), and in the case of
+band created (VRTRasterBand, VRTRawRasterBand, VRTDerivedRasterBand), and in the case of
 the VRTRawRasterBand to set its various parameters. For standard VRTRasterBand, sources
 should be specified with the above SetMetadata() / SetMetadataItem() examples.
 
