@@ -332,7 +332,7 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
         if(poKML->poCurrent_->getName().compare("coordinates") == 0 &&
            poKML->poCurrent_->numContent() == 1)
         {
-            std::string& sData = poKML->poCurrent_->getContent(0);
+            std::string sData = poKML->poCurrent_->getContent(0);
             std::size_t nPos = 0;
             std::size_t nLength = sData.length();
             const char* pszData = sData.c_str();
@@ -366,7 +366,7 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
         }
         else if (poKML->poCurrent_->numContent() == 1)
         {
-            std::string& sData = poKML->poCurrent_->getContent(0);
+            std::string sData = poKML->poCurrent_->getContent(0);
             std::string sDataWithoutNL;
             std::size_t nPos = 0;
             std::size_t nLength = sData.length();
