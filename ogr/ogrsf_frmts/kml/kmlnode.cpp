@@ -373,7 +373,7 @@ void KMLNode::appendContent(std::string const& text)
     tmp += text;
 }
 
-std::string& KMLNode::getContent(std::size_t index) const
+std::string KMLNode::getContent(std::size_t index) const
 {
     return (*pvsContent_)[index];
 }
