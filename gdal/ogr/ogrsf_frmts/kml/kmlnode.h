@@ -71,7 +71,7 @@ public:
 
     void addContent(std::string const& text);
     void appendContent(std::string const& text);
-    std::string& getContent(std::size_t index) const;
+    std::string getContent(std::size_t index) const;
     void deleteContent(std::size_t index);
     std::size_t numContent();
 
