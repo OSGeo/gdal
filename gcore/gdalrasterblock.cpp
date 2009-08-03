@@ -143,6 +143,36 @@ int CPL_STDCALL GDALFlushCacheBlock()
 }
 
 /************************************************************************/
+/* ==================================================================== */
+/*                           GDALRasterBlock                            */
+/* ==================================================================== */
+/************************************************************************/
+
+/**
+ * \class GDALRasterBlock "gdal_priv.h"
+ *
+ * GDALRasterBlock objects hold one block of raster data for one band
+ * that is currently stored in the GDAL raster cache.  The cache holds
+ * some blocks of raster data for zero or more GDALRasterBand objects
+ * across zero or more GDALDataset objects in a global raster cache with
+ * a least recently used (LRU) list and an upper cache limit (see
+ * GDALSetCacheMax()) under which the cache size is normally kept. 
+ *
+ * Some blocks in the cache may be modified relative to the state on disk
+ * (they are marked "Dirty") and must be flushed to disk before they can
+ * be discarded.  Other (Clean) blocks may just be discarded if their memory
+ * needs to be recovered. 
+ *
+ * In normal situations applications do not interact directly with the
+ * GDALRasterBlock - instead it it utilized by the RasterIO() interfaces
+ * to implement caching. 
+ *
+ * Some driver classes are implemented in a fashion that completely avoids
+ * use of the GDAL raster cache (and GDALRasterBlock) though this is not very
+ * common.
+ */
+
+/************************************************************************/
 /*                          FlushCacheBlock()                           */
 /*                                                                      */
 /*      Note, if we have alot of blocks locked for a long time, this    */
@@ -151,6 +181,18 @@ int CPL_STDCALL GDALFlushCacheBlock()
 /*      candidate.   It might help to re-touch locked blocks to push    */
 /*      them to the top of the list.                                    */
 /************************************************************************/
+
+/**
+ * \brief Attempt to flush at least one block from the cache.
+ *
+ * This static method is normally used to recover memory when a request
+ * for a new cache block would put cache memory use over the established
+ * limit.   
+ *
+ * C++ analog to the C function GDALFlushCacheBlock().
+ * 
+ * @return TRUE if successful or FALSE if no flushable block is found.
+ */
 
 int GDALRasterBlock::FlushCacheBlock()
 
@@ -184,6 +226,12 @@ int GDALRasterBlock::FlushCacheBlock()
 /*                          GDALRasterBlock()                           */
 /************************************************************************/
 
+/**
+ * \brief GDALRasterBlock Constructor 
+ *
+ * Normally only called from GDALRasterBand::GetLockedBlockRef().
+ */
+
 GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn, 
                                   int nXOffIn, int nYOffIn )
 
@@ -205,6 +253,12 @@ GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
 /************************************************************************/
 /*                          ~GDALRasterBlock()                          */
 /************************************************************************/
+
+/**
+ * Block destructor. 
+ *
+ * Normally called from GDALRasterBand::FlushBlock().
+ */
 
 GDALRasterBlock::~GDALRasterBlock()
 
@@ -234,9 +288,16 @@ GDALRasterBlock::~GDALRasterBlock()
 
 /************************************************************************/
 /*                               Detach()                               */
-/*                                                                      */
-/*      Remove from block lists.                                        */
 /************************************************************************/
+
+/**
+ * Remove block from cache.
+ *
+ * This method removes the current block from the linked list used to keep
+ * track of all cached blocks in order of age.  It does not affect whether
+ * the block is referenced by a GDALRasterBand nor does it destroy or flush
+ * the block.
+ */
 
 void GDALRasterBlock::Detach()
 
@@ -264,6 +325,11 @@ void GDALRasterBlock::Detach()
 /************************************************************************/
 /*                               Verify()                               */
 /************************************************************************/
+
+/**
+ * Confirms (via assertions) that the block cache linked list is in a
+ * consistent state. 
+ */
 
 void GDALRasterBlock::Verify()
 
@@ -299,6 +365,16 @@ void GDALRasterBlock::Verify()
 /*                               Write()                                */
 /************************************************************************/
 
+/**
+ * Force writing of the current block, if dirty.
+ *
+ * The block is written using GDALRasterBand::IWriteBlock() on it's 
+ * corresponding band object.  Even if the write fails the block will 
+ * be marked clean. 
+ *
+ * @return CE_None otherwise the error returned by IWriteBlock().
+ */
+
 CPLErr GDALRasterBlock::Write()
 
 {
@@ -316,6 +392,13 @@ CPLErr GDALRasterBlock::Write()
 /************************************************************************/
 /*                               Touch()                                */
 /************************************************************************/
+
+/**
+ * Push block to top of LRU (least-recently used) list.
+ *
+ * This method is normally called when a block is used to keep track 
+ * that it has been recently used. 
+ */
 
 void GDALRasterBlock::Touch()
 
@@ -357,6 +440,17 @@ void GDALRasterBlock::Touch()
 /************************************************************************/
 /*                            Internalize()                             */
 /************************************************************************/
+
+/**
+ * Allocate memory for block.
+ *
+ * This method allocates memory for the block, and attempts to flush other
+ * blocks, if necessary, to bring the total cache size back within the limits.
+ * The newly allocated block is touched and will be considered most recently
+ * used in the LRU list. 
+ * 
+ * @return CE_None on success or CE_Failure if memory allocation fails. 
+ */
 
 CPLErr GDALRasterBlock::Internalize()
 
@@ -412,6 +506,13 @@ CPLErr GDALRasterBlock::Internalize()
 /*                             MarkDirty()                              */
 /************************************************************************/
 
+/**
+ * Mark the block as modified.
+ *
+ * A dirty block is one that has been modified and will need to be written
+ * to disk before it can be flushed.
+ */
+
 void GDALRasterBlock::MarkDirty()
 
 {
@@ -422,6 +523,13 @@ void GDALRasterBlock::MarkDirty()
 /************************************************************************/
 /*                             MarkClean()                              */
 /************************************************************************/
+
+/**
+ * Mark the block as unmodified.
+ *
+ * A dirty block is one that has been modified and will need to be written
+ * to disk before it can be flushed.
+ */
 
 void GDALRasterBlock::MarkClean()
 
