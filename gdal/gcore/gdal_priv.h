@@ -302,6 +302,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 /*                           GDALRasterBlock                            */
 /* ******************************************************************** */
 
+//! A single raster block in the block cache.
+
 class CPL_DLL GDALRasterBlock
 {
     GDALDataType        eType;
@@ -326,9 +328,9 @@ class CPL_DLL GDALRasterBlock
                 GDALRasterBlock( GDALRasterBand *, int, int );
     virtual     ~GDALRasterBlock();
 
-    CPLErr      Internalize( void );    /* make copy of data */
-    void        Touch( void );          /* update age */
-    void        MarkDirty( void );      /* data has been modified since read */
+    CPLErr      Internalize( void );
+    void        Touch( void );      
+    void        MarkDirty( void );  
     void        MarkClean( void );
     void        AddLock( void ) { nLockCount++; }
     void        DropLock( void ) { nLockCount--; }
