@@ -140,6 +140,8 @@ class PCIDSKTiledRasterBand : public GDALPamRasterBand
 
     int         nOverviewCount;
     GDALRasterBand **papoOverviews;
+
+    char        szCompression[9];
     
     void        AttachOverview( GDALRasterBand *poOvBand ) {
 
