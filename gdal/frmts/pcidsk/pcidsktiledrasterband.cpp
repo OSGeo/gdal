@@ -68,6 +68,9 @@ PCIDSKTiledRasterBand::PCIDSKTiledRasterBand( PCIDSKDataset *poDS,
     nBlockYSize = (int) CPLScanLong(achBData + 24, 8);
     
     eDataType = poPDS->PCIDSKTypeToGDAL( achBData + 32 );
+
+    szCompression[8] = '\0';
+    memcpy( szCompression, achBData+54, 8 );
 }
 
 /************************************************************************/
@@ -240,6 +243,14 @@ CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY,
 {
     int iTile;
 
+    if( !EQUALN(szCompression,"NONE",4) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Compression '%s' not supported by GDAL.", 
+                  szCompression );
+        return CE_Failure;
+    }
+
     if( !BuildTileMap() )
         return CE_Failure;
     
@@ -249,7 +260,6 @@ CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY,
 
     if( !SysRead( panTileOffset[iTile], panTileSize[iTile], pData ) )
         return CE_Failure;
-
 
 /* -------------------------------------------------------------------- */
 /*      PCIDSK multibyte data is always big endian.  Swap if needed.    */
