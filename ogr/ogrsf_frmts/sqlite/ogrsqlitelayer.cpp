@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_sqlite.h"
+#include <cassert>
 
 CPL_CVSID("$Id$");
 
@@ -653,9 +654,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
              || nGType == 6      // MultiPolygon
              || nGType == 7 )    // MultiGeometry
     {
-        OGRGeometryCollection *poGC;
-        GInt32 nGeomCount;
-        int iGeom, nBytesUsed;
+        OGRGeometryCollection *poGC = NULL;
+        GInt32 nGeomCount = 0;
+        int iGeom = 0;
+        int nBytesUsed = 0;
 
         if( nGType == 4 )
             poGC = new OGRMultiPoint();
@@ -665,6 +667,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             poGC = new OGRMultiPolygon();
         else if( nGType == 7 )
             poGC = new OGRGeometryCollection();
+
+        assert(NULL != poGC);
 
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
