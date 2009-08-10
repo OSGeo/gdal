@@ -402,8 +402,8 @@ C++ the following could be used:
 
   poSrcDS = (GDALDataset *) GDALOpenShared( "utm.tif", GA_ReadOnly );
 
-  poVRTDS = 
-    poDriver->CreateCopy( "wrk.vrt", poSrcDS, FALSE, NULL, NULL, NULL );
+  poVRTDS = poDriver->CreateCopy( "wrk.vrt", poSrcDS, FALSE, NULL, NULL, NULL );
+
   delete poVRTDS;
   delete poSrcDS;
 \endcode
@@ -426,8 +426,8 @@ format.
   GDALDriver *poTIFFDriver = (GDALDriver *) GDALGetDriverByName( "GTiff" );
   GDALDataset *poTiffDS;
 
-  poTiffDS = 
-    poTIFFDriver->CreateCopy( "wrk.tif", poVRTDS, FALSE, NULL, NULL, NULL );
+  poTiffDS = poTIFFDriver->CreateCopy( "wrk.tif", poVRTDS, FALSE, NULL, NULL, NULL );
+
   delete poTiffDS;
 \endcode
 
@@ -659,34 +659,34 @@ CPLErr TestFunction(void **papoSources, int nSources, void *pData,
 		    GDALDataType eSrcType, GDALDataType eBufType,
 		    int nPixelSpace, int nLineSpace)
 {
-
     int ii, iLine, iCol;
     double pix_val;
     double x0, x3, x4, x8;
 
-    /* ---- Init ---- */
+    // ---- Init ----
     if (nSources != 4) return CE_Failure;
 
-    /* ---- Set pixels ---- */
-    for( iLine = 0; iLine < nYSize; iLine++ ) {
-	for( iCol = 0; iCol < nXSize; iCol++ ) {
-	    ii = iLine * nXSize + iCol;
-
+    // ---- Set pixels ----
+    for( iLine = 0; iLine < nYSize; iLine++ )
+    {
+        for( iCol = 0; iCol < nXSize; iCol++ )
+        {
+            ii = iLine * nXSize + iCol;
             /* Source raster pixels may be obtained with SRCVAL macro */
             x0 = SRCVAL(papoSources[0], eSrcType, ii);
             x3 = SRCVAL(papoSources[1], eSrcType, ii);
             x4 = SRCVAL(papoSources[2], eSrcType, ii);
             x8 = SRCVAL(papoSources[3], eSrcType, ii);
 
-	    pix_val = sqrt((x3*x3+x4*x4)/(x0*x8));
-
-	    GDALCopyWords(&pix_val, GDT_Float64, 0,
-			  ((GByte *)pData) + nLineSpace * iLine +
-			  iCol * nPixelSpace, eBufType, nPixelSpace, 1);
-	}
+            pix_val = sqrt((x3*x3+x4*x4)/(x0*x8));
+            
+            GDALCopyWords(&pix_val, GDT_Float64, 0,
+                          ((GByte *)pData) + nLineSpace * iLine + iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
+        }
     }
 
-    /* ---- Return success ---- */
+    // ---- Return success ----
     return CE_None;
 }
 \endcode
