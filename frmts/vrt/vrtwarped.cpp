@@ -31,6 +31,7 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "gdalwarper.h"
+#include <cassert>
 
 CPL_CVSID("$Id$");
 
@@ -815,6 +816,9 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPath )
 void VRTWarpedDataset::GetBlockSize( int *pnBlockXSize, int *pnBlockYSize )
 
 {
+    assert( NULL != pnBlockXSize );
+    assert( NULL != pnBlockYSize );
+
     *pnBlockXSize = nBlockXSize;
     *pnBlockYSize = nBlockYSize;
 }
@@ -971,6 +975,8 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 CPLErr VRTWarpedDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 {
+    UNREFERENCED_PARAM( papszOptions );
+
     SetBand( GetRasterCount() + 1,
              new VRTWarpedRasterBand( this, GetRasterCount() + 1, eType ) );
 
