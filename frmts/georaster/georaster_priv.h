@@ -354,6 +354,7 @@ public:
     OWConnection*       poConnection;
 
     char*               pszTable;
+    char*               pszSchema;
     char*               pszColumn;
     char*               pszDataTable;
     int                 nRasterId;

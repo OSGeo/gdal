@@ -37,6 +37,7 @@
 GeoRasterWrapper::GeoRasterWrapper()
 {
     pszTable            = NULL;
+    pszSchema           = NULL;
     pszColumn           = NULL;
     pszDataTable        = NULL;
     nRasterId           = -1;
@@ -96,6 +97,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
     FlushMetadata();
 
     CPLFree( pszTable );
+    CPLFree( pszSchema );
     CPLFree( pszColumn );
     CPLFree( pszDataTable );
     CPLFree( pszWhere );
@@ -213,6 +215,36 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
     }
 
     //  -------------------------------------------------------------------
+    //  Extract schema name
+    //  -------------------------------------------------------------------
+
+    if( nArgc > 3 )
+    {
+        char** papszSchema = CSLTokenizeString2( papszParam[3], ".",
+                                CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
+
+        if( CSLCount( papszSchema ) == 2 )
+        {
+            poGRW->pszSchema = CPLStrdup( CPLSPrintf( "%s.", papszSchema[0] ) );
+
+            papszParam = CSLRemoveStrings( papszParam, 3, 1, NULL );
+
+            if( ! EQUAL( papszSchema[1], "" ) )
+            {
+                papszParam = CSLInsertString( papszParam, 3, papszSchema[1] );
+            }
+
+            nArgc = CSLCount( papszParam );
+        }
+        else
+        {
+            poGRW->pszSchema = CPLStrdup( "" );
+        }
+
+        CSLDestroy( papszSchema );
+    }
+
+    //  -------------------------------------------------------------------
     //  Assign parameters from Identification string
     //  -------------------------------------------------------------------
 
@@ -259,7 +291,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
 
         poStmt = poGRW->poConnection->CreateStatement(
             "SELECT TABLE_NAME, COLUMN_NAME\n"
-            "FROM   USER_SDO_GEOR_SYSDATA\n"
+            "FROM   ALL_SDO_GEOR_SYSDATA\n"
             "WHERE  RDT_TABLE_NAME = UPPER(:1) AND RASTER_ID = :2 " );
 
         poStmt->Bind( poGRW->pszDataTable );
@@ -311,10 +343,11 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
         "SELECT T.%s.RASTERDATATABLE,\n"
         "       T.%s.RASTERID,\n"
         "       T.%s.METADATA.getClobVal()\n"
-        "FROM   %s T\n"
+        "FROM   %s%s T\n"
         "WHERE  %s",
         poGRW->pszColumn, poGRW->pszColumn, poGRW->pszColumn,
-        poGRW->pszTable, poGRW->pszWhere ) );
+        poGRW->pszSchema, poGRW->pszTable,
+        poGRW->pszWhere ) );
 
     poStmt->Define( szDataTable );
     poStmt->Define( &nRasterId );
@@ -347,7 +380,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
 
     char* pszXML = NULL;
 
-    pszXML = poStmt->ReadClob( phLocator );
+    pszXML = poStmt->ReadCLob( phLocator );
 
     if( pszXML )
     {
@@ -1102,13 +1135,13 @@ bool GeoRasterWrapper::GetImageExtent( double *padfTransform )
         "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
         "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
         "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d))\n"
-        "FROM  %s T\n"
+        "FROM  %s%s T\n"
         "WHERE %s",
         pszColumn, 0,            0,
         pszColumn, 0,            nRasterColumns,
         pszColumn, nRasterRows,  0,
         pszColumn, nRasterRows,  nRasterColumns,
-        pszTable,
+        pszSchema, pszTable,
         pszWhere ) );
 
     poStmt->Define( &poUpperLeft );
@@ -2136,7 +2169,6 @@ bool GeoRasterWrapper::FlushMetadata()
         UNKNOWN_CRS,
         pszTable, pszColumn, pszWhere ) );
 
-//  poStmt->Bind( pszXML, strlen( pszXML ) + 1 );
     poStmt->Bind( &nSRID );
     poStmt->Bind( &nModelCoordinateLocation );
     poStmt->Bind( &dfXCoefficient[0] );
