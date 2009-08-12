@@ -197,6 +197,7 @@ private:
     OCIDescribe*        hDescribe;
 
     int                 nVersion;
+    sb4                 nCharSize;
 
     bool                bSuceeeded;
 
@@ -231,6 +232,8 @@ public:
     char*               GetPassword() { return pszPassword; };
     char*               GetServer() { return pszServer; };
     int                 GetVersion () { return nVersion; };
+    sb4                 GetCharSize () { return nCharSize; };
+
 };
 
 /***************************************************************************/
@@ -291,7 +294,7 @@ public:
                             int nCount );
     unsigned long       ReadBlob( OCILobLocator* phLocator,
                             void* pBuffer, int nSize );
-    char*               ReadClob( OCILobLocator* phLocator );
+    char*               ReadCLob( OCILobLocator* phLocator );
     bool                WriteBlob( OCILobLocator* phLocator,
                             void* pBuffer, int nSize );
     int                 GetElement( OCIArray** ppoData,

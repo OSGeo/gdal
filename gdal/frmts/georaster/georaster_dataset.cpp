@@ -300,11 +300,12 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
 
     char* pszDoc = CPLSerializeXMLTree( poGRW->phMetadata );
 
-    poGRD->SetMetadataItem( "TABLE_NAME",     poGRW->pszTable,     "ORACLE" );
+    poGRD->SetMetadataItem( "TABLE_NAME", CPLSPrintf( "%s%s",
+                            poGRW->pszSchema, poGRW->pszTable),    "ORACLE" );
     poGRD->SetMetadataItem( "COLUMN_NAME",    poGRW->pszColumn,    "ORACLE" );
     poGRD->SetMetadataItem( "RDT_TABLE_NAME", poGRW->pszDataTable, "ORACLE" );
-    poGRD->SetMetadataItem( "RASTER_ID", CPLSPrintf( "%d", poGRW->nRasterId ),
-                                                                   "ORACLE" );
+    poGRD->SetMetadataItem( "RASTER_ID", CPLSPrintf( "%d", 
+                            poGRW->nRasterId ),                    "ORACLE" );
     poGRD->SetMetadataItem( "METADATA",       pszDoc,              "ORACLE" );
 
     CPLFree( pszDoc );
@@ -859,12 +860,13 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     if( pfnProgress )
     {
-        printf( "Ouput dataset: (georaster:%s,%s,%s,%s,%d) on %s,%s\n",
+        printf( "Ouput dataset: (georaster:%s,%s,%s,%s,%d) on %s%s,%s\n",
             poGRD->poGeoRaster->poConnection->GetUser(),
             poGRD->poGeoRaster->poConnection->GetPassword(),
             poGRD->poGeoRaster->poConnection->GetServer(),
             poGRD->poGeoRaster->pszDataTable,
             poGRD->poGeoRaster->nRasterId,
+            poGRD->poGeoRaster->pszSchema,
             poGRD->poGeoRaster->pszTable,
             poGRD->poGeoRaster->pszColumn );
     }
@@ -1163,34 +1165,56 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     OWConnection* poConnection  = poGRW->poConnection;
     OWStatement*  poStmt        = NULL;
 
-    const char* papszToken[10];
+    const char* papszToken[12];
     papszToken[0] = poConnection->GetUser();
     papszToken[1] = poConnection->GetPassword();
     papszToken[2] = poConnection->GetServer();
     papszToken[3] = papszToken[4] = papszToken[5] = 
                     papszToken[6] = papszToken[7] = 
-                    papszToken[8] = papszToken[9] = "";
-
-    //  -----------------------------------------------------------
-    //  List all the GeoRaster Tables of that User/Database
-    //  -----------------------------------------------------------
+                    papszToken[8] = papszToken[9] = 
+                    papszToken[10] = papszToken[11] = "";
 
     char szTable[OWNAME]      = "";
     char szColumn[OWNAME]     = "";
     char szDataTable[OWNAME]  = "";
     char szRasterId[OWNAME]   = "";
+    char szOwner[OWNAME]      = "";
+    char szSchema[OWNAME]     = "";
 
-    if( poGRW->pszTable  == NULL && 
+    //  -----------------------------------------------------------
+    //  Resolve who is the schema owner
+    //  -----------------------------------------------------------
+
+    if( poGRW->pszSchema != NULL && strlen( poGRW->pszSchema ) > 0 )
+    {
+        strcpy( szSchema, poGRW->pszSchema );
+        strncpy( szOwner, poGRW->pszSchema, strlen( poGRW->pszSchema ) - 1 );
+    }
+    else
+    {
+        strcpy( szOwner, poGRW->poConnection->GetUser() );
+    }
+
+    //  -----------------------------------------------------------
+    //  List all the GeoRaster Tables of that User/Database
+    //  -----------------------------------------------------------
+
+    if( ( poGRW->pszTable  == NULL || strlen( poGRW->pszTable ) == 0 ) &&
         poGRW->pszColumn == NULL )
     {
         poStmt = poConnection->CreateStatement(
-            "SELECT DISTINCT TABLE_NAME FROM USER_SDO_GEOR_SYSDATA\n"
-            "ORDER  BY TABLE_NAME ASC" );
+            "SELECT DISTINCT TABLE_NAME FROM ALL_SDO_GEOR_SYSDATA\n"
+            "  WHERE OWNER = UPPER(:1)\n"
+            "  ORDER  BY TABLE_NAME ASC" );
 
+        poStmt->Bind( szOwner );
         poStmt->Define( szTable );
 
-        papszToken[3] = papszToken[7] = szTable;
-        papszToken[6] = "Table:";
+        papszToken[3] = szSchema;
+        papszToken[4] = szTable;
+        papszToken[7] = "Table:";
+        papszToken[8] = szSchema;
+        papszToken[9] = szTable;
     }
 
     //  -----------------------------------------------------------
@@ -1201,17 +1225,20 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         poGRW->pszColumn == NULL )
     {
         poStmt = poConnection->CreateStatement(
-            "SELECT DISTINCT COLUMN_NAME FROM USER_SDO_GEOR_SYSDATA\n"
-            "WHERE  TABLE_NAME = UPPER(:1)\n"
-            "ORDER  BY COLUMN_NAME ASC" );
+            "SELECT DISTINCT COLUMN_NAME FROM ALL_SDO_GEOR_SYSDATA\n"
+            "  WHERE OWNER = UPPER(:1) AND TABLE_NAME = UPPER(:2)\n"
+            "  ORDER  BY COLUMN_NAME ASC" );
 
+        poStmt->Bind( szOwner );
         poStmt->Bind( poGRW->pszTable );
         poStmt->Define( szColumn );
 
-        papszToken[3] = poGRW->pszTable;
-        papszToken[4] = ",";
-        papszToken[5] = papszToken[7] = szColumn;
-        papszToken[6] = "Column:";
+        papszToken[3] = szSchema;
+        papszToken[4] = poGRW->pszTable;
+        papszToken[5] = ",";
+        papszToken[6] = szColumn;
+        papszToken[7] = "Column:";
+        papszToken[8] = szColumn;
     }
 
     //  -----------------------------------------------------------
@@ -1247,11 +1274,15 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         poStmt->Define( szDataTable );
         poStmt->Define( szRasterId );
 
-        papszToken[3] = papszToken[7] = szDataTable;
-        papszToken[4] = ",";
-        papszToken[5] = papszToken[9] = szRasterId;
-        papszToken[6] = "DataTable:";
-        papszToken[8] = "RasterId:";
+        papszToken[3] = szSchema;
+        papszToken[4] = szDataTable;
+        papszToken[5] = ",";
+        papszToken[6] = szRasterId;
+        papszToken[7] = "DataTable:";
+        papszToken[8] = szSchema;
+        papszToken[9] = szDataTable;
+        papszToken[10] = "RasterId:";
+        papszToken[11] = szRasterId;
     }
 
     if( poStmt->Execute() == false )
@@ -1271,16 +1302,17 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     while( poStmt->Fetch() )
     {
         osName  = CPLSPrintf( "SUBDATASET_%d_NAME", nCount );
-        osValue = CPLSPrintf( "georaster:%s,%s,%s,%s%s%s",
+        osValue = CPLSPrintf( "georaster:%s,%s,%s,%s%s%s%s",
             papszToken[0], papszToken[1], papszToken[2], papszToken[3],
-            papszToken[4], papszToken[5] );
+            papszToken[4], papszToken[5], papszToken[6] );
 
         papszSubdatasets = CSLSetNameValue( papszSubdatasets,
             osName.c_str(), osValue.c_str() );
 
         osName  = CPLSPrintf( "SUBDATASET_%d_DESC", nCount );
-        osValue = CPLSPrintf( "%s%s %s%s",
-            papszToken[6], papszToken[7], papszToken[8], papszToken[9] );
+        osValue = CPLSPrintf( "%s%s%s %s%s",
+            papszToken[7], papszToken[8], papszToken[9], papszToken[10],
+            papszToken[11] );
 
         papszSubdatasets = CSLSetNameValue( papszSubdatasets,
             osName.c_str(), osValue.c_str() );

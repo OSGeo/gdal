@@ -64,6 +64,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     hGeometryTDO    = NULL;
     hGeoRasterTDO   = NULL;
     bSuceeeded      = false;
+    nCharSize       = 1;
 
     // ------------------------------------------------------
     //  Create Environment
@@ -114,6 +115,16 @@ OWConnection::OWConnection( const char* pszUserIn,
     {
         bSuceeeded = true;
     }
+
+    // ------------------------------------------------------
+    //  Get Character Size based on current Locale
+    // ------------------------------------------------------
+
+    OCINlsNumericInfoGet(
+            hEnv,
+            hError,
+            &nCharSize,
+            OCI_NLS_CHARSET_MAXBYTESZ );
 
     // ------------------------------------------------------
     //  Get Server Version
@@ -940,7 +951,7 @@ bool OWStatement::WriteBlob( OCILobLocator* phLocator, void* pBuffer,
     return ( nAmont == (ub4) nSize );
 }
 
-char* OWStatement::ReadClob( OCILobLocator* phLocator )
+char* OWStatement::ReadCLob( OCILobLocator* phLocator )
 {
     ub4 nSize  = 0;
     ub4 nAmont = 0;
@@ -957,15 +968,7 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
         return NULL;
     }
 
-    sb4 nCharSize = 1;
-
-    CheckError( OCINlsNumericInfoGet(
-            poConnect->hEnv,
-            hError,
-            &nCharSize,
-            OCI_NLS_CHARSET_MAXBYTESZ ), hError );
-
-    nSize *= nCharSize;
+    nSize *= this->poConnect->nCharSize;
 
     pszBuffer = (char*) VSIMalloc( sizeof(char*) * nSize );
 
@@ -992,7 +995,7 @@ char* OWStatement::ReadClob( OCILobLocator* phLocator )
         return NULL;
     }
 
-    nAmont *= nCharSize;
+    nAmont *= this->poConnect->nCharSize;
 
     if( nAmont == nSize )
     {
