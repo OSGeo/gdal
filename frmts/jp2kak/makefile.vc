@@ -3,15 +3,34 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+KAKINC = -I$(KAKSRC)/managed/all_includes \
+       -I$(KAKSRC)/apps/jp2
+OBJ_EXT =	obj
+OBJ_PREFIX =	$(KAKDIR)\v6_generated_x86
+OBJ_CONFIG =	release
+
+KAK_APPS_OBJ =	\
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\args.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\image_in.obj \
+	     $(OBJ_PREFIX)\expand\$(OBJ_CONFIG)\image_out.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\jp2.obj \
+	     $(OBJ_PREFIX)\merge\$(OBJ_CONFIG)\mj2.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\roi_sources.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\palette.obj \
+	     $(OBJ_PREFIX)\buffered_expand\$(OBJ_CONFIG)\kdu_stripe_decompressor.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\kdu_tiff.obj \
+	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\jpx.obj
+
 OBJ	=	jp2kakdataset.obj
-EXTRAFLAGS = 	-I$(KAKDIR) /DKDU_PENTIUM_MSVC /GX
+EXTRAFLAGS = 	$(KAKINC) /DKDU_PENTIUM_MSVC /EHsc
 
 default:	$(OBJ) kakinstall
 	xcopy /D  /Y *.obj ..\o
 
 kakinstall:
-	copy $(KAKDIR)\*.obj ..\o
-
+	for %d in ( $(KAK_APPS_OBJ) ) do \
+	  xcopy /D /Y %d ..\o
+	
 clean:
 	-del *.obj
 

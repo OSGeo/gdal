@@ -203,8 +203,10 @@ JPEG12_SUPPORTED = 1
 # of JasPer from ftp://ftp.remotesensing.org/gdal/
 #JASPER_INCLUDE = $(JASPER_INCLUDE) -DHAVE_JASPER_UUID
 
-# Uncommment if you have Kakadu 4.0 or newer
-#KAKDIR =	D:\warmerda\jp2\kakadu
+# Uncommment and adjust paths if you have Kakadu 6.0 or newer
+#KAKDIR = 	\warmerda\pkg\kakadu-6.2.1
+#KAKLIB =	$(KAKDIR)\lib_x86\kdu_v62R.lib
+#KAKSRC =	$(KAKDIR)\vt_2_1-00256N
 
 # Uncomment the following and update to enable NCSA HDF Release 4 support.
 #HDF4_PLUGIN = NO
@@ -431,7 +433,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) $(ODB
 		$(FITS_LIB_LINK) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(DWG_LIB) \
-		$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(ADD_LIBS)
+		$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(ADD_LIBS) 
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
