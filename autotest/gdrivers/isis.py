@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test PDS/ISIS formats.
+# Purpose:  Test ISIS3 formats.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
 # 
 ###############################################################################

@@ -52,7 +52,10 @@ End_Object
 # Make sure we test hash style comments.
 # These comments are expected to have the # right at the beginning of the line.
 Object = Label
+  # Some comments even have spaces before them (#2956)
   Bytes = 65536
+  # Some valid values have #'s in them too.
+  AMadeUpValue = 16#FF7FFFFB#
 End_Object
 
 Object = History
