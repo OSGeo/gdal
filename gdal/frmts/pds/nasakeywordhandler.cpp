@@ -341,8 +341,9 @@ void NASAKeywordHandler::SkipWhite()
         }
 
         // Skip # style comments 
-        if( (*pszHeaderNext == 10 || *pszHeaderNext == 13 )
-            && pszHeaderNext[1] == '#' )
+         if( (*pszHeaderNext == 10 || *pszHeaderNext == 13 ||
+ 	     *pszHeaderNext == ' ' || *pszHeaderNext == '\t' )
+              && pszHeaderNext[1] == '#' )
         {
             pszHeaderNext += 2;
 
