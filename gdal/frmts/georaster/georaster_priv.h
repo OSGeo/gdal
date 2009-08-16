@@ -355,6 +355,7 @@ public:
 
     char*               pszTable;
     char*               pszSchema;
+    char*               pszOwner;
     char*               pszColumn;
     char*               pszDataTable;
     int                 nRasterId;
