@@ -1178,7 +1178,6 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     char szColumn[OWNAME]     = "";
     char szDataTable[OWNAME]  = "";
     char szRasterId[OWNAME]   = "";
-    char szOwner[OWNAME]      = "";
     char szSchema[OWNAME]     = "";
 
     //  -----------------------------------------------------------
@@ -1188,18 +1187,13 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     if( poGRW->pszSchema != NULL && strlen( poGRW->pszSchema ) > 0 )
     {
         strcpy( szSchema, poGRW->pszSchema );
-        strncpy( szOwner, poGRW->pszSchema, strlen( poGRW->pszSchema ) - 1 );
-    }
-    else
-    {
-        strcpy( szOwner, poGRW->poConnection->GetUser() );
     }
 
     //  -----------------------------------------------------------
     //  List all the GeoRaster Tables of that User/Database
     //  -----------------------------------------------------------
 
-    if( ( poGRW->pszTable  == NULL || strlen( poGRW->pszTable ) == 0 ) &&
+    if( poGRW->pszTable  == NULL &&
         poGRW->pszColumn == NULL )
     {
         poStmt = poConnection->CreateStatement(
@@ -1207,7 +1201,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
             "  WHERE OWNER = UPPER(:1)\n"
             "  ORDER  BY TABLE_NAME ASC" );
 
-        poStmt->Bind( szOwner );
+        poStmt->Bind( poGRW->pszOwner );
         poStmt->Define( szTable );
 
         papszToken[3] = szSchema;
@@ -1229,7 +1223,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
             "  WHERE OWNER = UPPER(:1) AND TABLE_NAME = UPPER(:2)\n"
             "  ORDER  BY COLUMN_NAME ASC" );
 
-        poStmt->Bind( szOwner );
+        poStmt->Bind( poGRW->pszOwner );
         poStmt->Bind( poGRW->pszTable );
         poStmt->Define( szColumn );
 
@@ -1251,22 +1245,24 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         if( poGRW->pszWhere == NULL )
         {
             poStmt = poConnection->CreateStatement( CPLSPrintf(
-                "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s T "
+                "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s%s T\n"
                 "WHERE  %s IS NOT NULL\n"
-                "ORDER  BY T.%s.RASTERDATATABLE ASC,"
+                "ORDER  BY T.%s.RASTERDATATABLE ASC,\n"
                 "          T.%s.RASTERID ASC",
                 poGRW->pszColumn, poGRW->pszColumn,
-                poGRW->pszTable, poGRW->pszColumn,
-                poGRW->pszColumn, poGRW->pszColumn ) );
+                poGRW->pszSchema, poGRW->pszTable,
+                poGRW->pszColumn, poGRW->pszColumn,
+                poGRW->pszColumn ) );
         }
         else
         {
             poStmt = poConnection->CreateStatement( CPLSPrintf(
-                "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s T\n"
+                "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s%s T\n"
                 "WHERE  %s AND %s IS NOT NULL\n"
-                "ORDER  BY T.%s.RASTERDATATABLE ASC,"
+                "ORDER  BY T.%s.RASTERDATATABLE ASC,\n"
                 "          T.%s.RASTERID ASC",
-                poGRW->pszColumn, poGRW->pszColumn, poGRW->pszTable,
+                poGRW->pszColumn, poGRW->pszColumn, 
+                poGRW->pszSchema, poGRW->pszTable,
                 poGRW->pszWhere, poGRW->pszColumn,
                 poGRW->pszColumn, poGRW->pszColumn ) );
         }
@@ -1302,7 +1298,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     while( poStmt->Fetch() )
     {
         osName  = CPLSPrintf( "SUBDATASET_%d_NAME", nCount );
-        osValue = CPLSPrintf( "georaster:%s,%s,%s,%s%s%s%s",
+        osValue = CPLSPrintf( "geor:%s/%s@%s,%s%s%s%s",
             papszToken[0], papszToken[1], papszToken[2], papszToken[3],
             papszToken[4], papszToken[5], papszToken[6] );
 
