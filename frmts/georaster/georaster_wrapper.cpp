@@ -38,6 +38,7 @@ GeoRasterWrapper::GeoRasterWrapper()
 {
     pszTable            = NULL;
     pszSchema           = NULL;
+    pszOwner            = NULL;
     pszColumn           = NULL;
     pszDataTable        = NULL;
     nRasterId           = -1;
@@ -98,6 +99,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
 
     CPLFree( pszTable );
     CPLFree( pszSchema );
+    CPLFree( pszOwner );
     CPLFree( pszColumn );
     CPLFree( pszDataTable );
     CPLFree( pszWhere );
@@ -225,7 +227,8 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
 
         if( CSLCount( papszSchema ) == 2 )
         {
-            poGRW->pszSchema = CPLStrdup( CPLSPrintf( "%s.", papszSchema[0] ) );
+            poGRW->pszOwner  = CPLStrdup( papszSchema[0] );
+            poGRW->pszSchema = CPLStrdup( CPLSPrintf( "%s.", poGRW->pszOwner ) );
 
             papszParam = CSLRemoveStrings( papszParam, 3, 1, NULL );
 
@@ -239,9 +242,15 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
         else
         {
             poGRW->pszSchema = CPLStrdup( "" );
+            poGRW->pszOwner  = CPLStrdup( poGRW->poConnection->GetUser() );
         }
-
+        
         CSLDestroy( papszSchema );
+    }
+    else
+    {
+        poGRW->pszSchema = CPLStrdup( "" );
+        poGRW->pszOwner  = CPLStrdup( poGRW->poConnection->GetUser() );
     }
 
     //  -------------------------------------------------------------------
@@ -286,17 +295,19 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
     {
         OWStatement* poStmt = NULL;
 
+        char  szOwner[OWNAME];
         char  szTable[OWNAME];
         char  szColumn[OWNAME];
 
         poStmt = poGRW->poConnection->CreateStatement(
-            "SELECT TABLE_NAME, COLUMN_NAME\n"
+            "SELECT OWNER, TABLE_NAME, COLUMN_NAME\n"
             "FROM   ALL_SDO_GEOR_SYSDATA\n"
             "WHERE  RDT_TABLE_NAME = UPPER(:1) AND RASTER_ID = :2 " );
 
         poStmt->Bind( poGRW->pszDataTable );
         poStmt->Bind( &poGRW->nRasterId );
 
+        poStmt->Define( szOwner );
         poStmt->Define( szTable );
         poStmt->Define( szColumn );
 
@@ -314,6 +325,13 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId )
         //  Borrow the first Table/Column found as a reference
         //  ---------------------------------------------------------------
 
+        CPLFree( poGRW->pszSchema );
+        CPLFree( poGRW->pszOwner );
+        CPLFree( poGRW->pszTable );
+        CPLFree( poGRW->pszColumn );
+
+        poGRW->pszSchema  = CPLStrdup( CPLSPrintf( "%s.", szOwner ) );
+        poGRW->pszOwner   = CPLStrdup( szOwner );
         poGRW->pszTable   = CPLStrdup( szTable );
         poGRW->pszColumn  = CPLStrdup( szColumn );
 
@@ -612,19 +630,24 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "DECLARE\n"
             "  TAB VARCHAR2(68)  := UPPER(:1);\n"
             "  COL VARCHAR2(68)  := UPPER(:2);\n"
+            "  OWN VARCHAR2(68)  := UPPER(:3);\n"
             "  CNT NUMBER        := 0;\n"
             "BEGIN\n"
-            "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM USER_TABLES\n"
-            "    WHERE TABLE_NAME = :1 ' INTO CNT USING TAB;\n"
+            "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
+            "    WHERE TABLE_NAME = :1 AND OWNER = UPPER(:2)'\n"
+            "      INTO CNT USING TAB, OWN;\n"
             "\n"
             "  IF CNT = 0 THEN\n"
-            "    EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
+            "    EXECUTE IMMEDIATE 'CREATE TABLE %s%s %s';\n"
             "    SDO_GEOR_UTL.createDMLTrigger( TAB,  COL );\n"
             "  END IF;\n"
-            "END;", szDescription ) );
+            "END;", 
+            pszSchema, pszTable,
+            szDescription ) );
 
         poStmt->Bind( pszTable );
         poStmt->Bind( pszColumn );
+        poStmt->Bind( pszOwner );
 
         if( ! poStmt->Execute() )
         {
@@ -645,14 +668,14 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     if( bUpdate )
     {
         strcpy( szCommand, CPLSPrintf(
-            "UPDATE %s T SET %s = GR1 WHERE %s RETURNING %s INTO GR1;",
-            pszTable, pszColumn, pszWhere, pszColumn ) );
+            "UPDATE %s%s T SET %s = GR1 WHERE %s RETURNING %s INTO GR1;",
+            pszSchema, pszTable, pszColumn, pszWhere, pszColumn ) );
     }
     else
     {
         strcpy( szCommand, CPLSPrintf(
-            "INSERT INTO %s %s RETURNING %s INTO GR1;",
-            pszTable, szInsert, pszColumn ) );
+            "INSERT INTO %s%s %s RETURNING %s INTO GR1;",
+            pszSchema, pszTable, szInsert, pszColumn ) );
     }
 
     //  -----------------------------------------------------------
@@ -668,6 +691,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "DECLARE\n"
             "  TAB  VARCHAR2(68)    := UPPER(:1);\n"
             "  COL  VARCHAR2(68)    := UPPER(:2);\n"
+            "  OWN  VARCHAR2(68)    := UPPER(:3);\n"
             "  CNT  NUMBER          := 0;\n"
             "  GR1  SDO_GEORASTER   := NULL;\n"
             "BEGIN\n"
@@ -681,8 +705,9 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
             "  SELECT GR1.RASTERID        INTO :rid FROM DUAL;\n"
             "\n"
-            "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM USER_OBJECT_TABLES\n"
-            "    WHERE TABLE_NAME = :1' INTO CNT USING :rdt;\n"
+            "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_OBJECT_TABLES\n"
+            "    WHERE TABLE_NAME = :1 AND OWNER = UPPER(:2)'\n"
+            "      INTO CNT USING :rdt, OWN;\n"
             "\n"
             "  IF CNT = 0 THEN\n"
             "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
@@ -693,17 +718,18 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "\n"
             "  SDO_GEOR.createTemplate(GR1, %s, null, 'TRUE');\n"
             "\n"
-            "  UPDATE %s T SET %s = GR1 WHERE"
+            "  UPDATE %s%s T SET %s = GR1 WHERE"
             " T.%s.RasterDataTable = :rdt AND"
             " T.%s.RasterId = :rid;\n"
             "END;\n",
             szCreateBlank,
             szCommand,
             szFormat,
-            pszTable, pszColumn, pszColumn, pszColumn  ) );
+            pszSchema, pszTable, pszColumn, pszColumn, pszColumn  ) );
 
         poStmt->Bind( pszTable );
         poStmt->Bind( pszColumn );
+        poStmt->Bind( pszOwner );
         poStmt->BindName( (char*) ":rdt", szBindRDT );
         poStmt->BindName( (char*) ":rid", &nBindRID );
 
@@ -736,6 +762,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "  BB   NUMBER          := :3;\n"
         "  RB   NUMBER          := :4;\n"
         "  CB   NUMBER          := :5;\n"
+        "  OWN  VARCHAR2(68)    := UPPER(:6);\n"
         "  X    NUMBER          := 0;\n"
         "  Y    NUMBER          := 0;\n"
         "  CNT  NUMBER          := 0;\n"
@@ -753,19 +780,20 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "  SELECT GR1.RASTERDATATABLE INTO :rdt FROM DUAL;\n"
         "  SELECT GR1.RASTERID        INTO :rid FROM DUAL;\n"
         "\n"
-        "  SELECT %s INTO GR2 FROM %s T WHERE"
+        "  SELECT %s INTO GR2 FROM %s%s T WHERE"
         " T.%s.RasterDataTable = :rdt AND"
         " T.%s.RasterId = :rid FOR UPDATE;\n"
-        "  SELECT %s INTO GR1 FROM %s T WHERE"
+        "  SELECT %s INTO GR1 FROM %s%s T WHERE"
         " T.%s.RasterDataTable = :rdt AND"
         " T.%s.RasterId = :rid;\n"
         "  SDO_GEOR.changeFormatCopy(GR1, '%s', GR2);\n"
-        "  UPDATE %s T SET %s = GR2     WHERE"
+        "  UPDATE %s%s T SET %s = GR2     WHERE"
         " T.%s.RasterDataTable = :rdt AND"
         " T.%s.RasterId = :rid;\n"
         "\n"
-        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM USER_OBJECT_TABLES\n"
-        "    WHERE TABLE_NAME = :1' INTO CNT USING :rdt;\n"
+        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_OBJECT_TABLES\n"
+        "    WHERE TABLE_NAME = :1 AND OWNER = UPPER(:2)'\n"
+        "      INTO CNT USING :rdt, OWN;\n"
         "\n"
         "  IF CNT = 0 THEN\n"
         "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
@@ -793,15 +821,16 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "END;",
         szCreateBlank,
         szCommand,
-        pszColumn, pszTable, pszColumn, pszColumn,
-        pszColumn, pszTable, pszColumn, pszColumn, szFormat,
-        pszTable, pszColumn, pszColumn, pszColumn  ) );
+        pszColumn, pszSchema, pszTable, pszColumn, pszColumn,
+        pszColumn, pszSchema, pszTable, pszColumn, pszColumn, szFormat,
+        pszSchema, pszTable, pszColumn, pszColumn, pszColumn ) );
 
     poStmt->Bind( &nColumnBlockSize );
     poStmt->Bind( &nRowBlockSize );
     poStmt->Bind( &nTotalBandBlocks );
     poStmt->Bind( &nTotalRowBlocks );
     poStmt->Bind( &nTotalColumnBlocks );
+    poStmt->Bind( pszOwner );
     poStmt->BindName( (char*) ":rdt", szBindRDT );
     poStmt->BindName( (char*) ":rid", &nBindRID );
 
@@ -1586,13 +1615,14 @@ bool GeoRasterWrapper::InitializeIO( int nLevel, bool bUpdate )
 
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "SELECT RASTERBLOCK\n"
-        "FROM   %s\n"
+        "FROM   %s%s\n"
         "WHERE  RASTERID = :1 AND\n"
         "       PYRAMIDLEVEL = :3\n"
         "ORDER BY\n"
         "       BANDBLOCKNUMBER ASC,\n"
         "       ROWBLOCKNUMBER ASC,\n"
         "       COLUMNBLOCKNUMBER ASC%s",
+        pszSchema,
         pszDataTable,
         pszUpdate ) );
 
@@ -2141,7 +2171,7 @@ bool GeoRasterWrapper::FlushMetadata()
         "  SRID number;\n"
         "BEGIN\n"
         "\n"
-        "  SELECT %s INTO GR1 FROM %s T WHERE %s FOR UPDATE;\n"
+        "  SELECT %s INTO GR1 FROM %s%s T WHERE %s FOR UPDATE;\n"
         "\n"
         "  GR1.metadata := XMLTYPE('%s');\n"
         "\n"
@@ -2159,15 +2189,15 @@ bool GeoRasterWrapper::FlushMetadata()
         "    GR1.spatialExtent := SDO_GEOR.generateSpatialExtent( GR1 );\n"
         "  END IF;\n"
         "\n"
-        "  UPDATE %s T SET %s = GR1 WHERE %s;\n"
+        "  UPDATE %s%s T SET %s = GR1 WHERE %s;\n"
         "\n"
         "  COMMIT;\n"
         "END;",
-        pszColumn, pszTable, pszWhere,
+        pszColumn, pszSchema, pszTable, pszWhere,
         pszXML,
         UNKNOWN_CRS,
         UNKNOWN_CRS,
-        pszTable, pszColumn, pszWhere ) );
+        pszSchema, pszTable, pszColumn, pszWhere ) );
 
     poStmt->Bind( &nSRID );
     poStmt->Bind( &nModelCoordinateLocation );
