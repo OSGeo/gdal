@@ -72,7 +72,7 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                              GDALDataType buf_type,
                              int buf_size, char *buffer )
 {
-    if ( buf_size < buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type) /8 ) {
+    if ( buf_size < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type) /8) ) {
       CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
       return CE_Failure;
     }
