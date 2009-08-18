@@ -25,7 +25,7 @@ RUBY_EXTENSIONS_DIR := $(shell ruby -rrbconfig -e "puts Config::CONFIG['sitearch
 INSTALL_DIR := $(RUBY_EXTENSIONS_DIR)/gdal
 
 RUBY_INCLUDE = -I$(RUBY_INCLUDE_DIR)
-LDFLAGS += -shared -L$(RUBY_LIB_DIR)
+LDFLAGS += -Xcompiler -shared -L$(RUBY_LIB_DIR)
 RUBY_LIB := -l$(RUBY_SO_NAME)
 
 build: $(RUBY_MODULES)
