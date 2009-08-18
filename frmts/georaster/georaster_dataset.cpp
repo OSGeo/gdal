@@ -1180,6 +1180,13 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     char szRasterId[OWNAME]   = "";
     char szSchema[OWNAME]     = "";
 
+    char szRows[OWNAME]       = "";
+    char szColumns[OWNAME]    = "";
+    char szBands[OWNAME]      = "";
+    char szCellDepth[OWNAME]  = "";
+
+    bool bDimAndDataType      = false;
+
     //  -----------------------------------------------------------
     //  Resolve who is the schema owner
     //  -----------------------------------------------------------
@@ -1242,33 +1249,44 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     if( poGRW->pszTable  != NULL && 
         poGRW->pszColumn != NULL )
     {
-        if( poGRW->pszWhere == NULL )
+        bDimAndDataType = true;
+
+        CPLString osAndWhere = "";
+
+        if( poGRW->pszWhere )
         {
-            poStmt = poConnection->CreateStatement( CPLSPrintf(
-                "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s%s T\n"
-                "WHERE  %s IS NOT NULL\n"
-                "ORDER  BY T.%s.RASTERDATATABLE ASC,\n"
-                "          T.%s.RASTERID ASC",
-                poGRW->pszColumn, poGRW->pszColumn,
-                poGRW->pszSchema, poGRW->pszTable,
-                poGRW->pszColumn, poGRW->pszColumn,
-                poGRW->pszColumn ) );
+            osAndWhere = CPLSPrintf( "AND %s", poGRW->pszWhere );
         }
-        else
-        {
-            poStmt = poConnection->CreateStatement( CPLSPrintf(
-                "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID FROM %s%s T\n"
-                "WHERE  %s AND %s IS NOT NULL\n"
-                "ORDER  BY T.%s.RASTERDATATABLE ASC,\n"
-                "          T.%s.RASTERID ASC",
-                poGRW->pszColumn, poGRW->pszColumn, 
-                poGRW->pszSchema, poGRW->pszTable,
-                poGRW->pszWhere, poGRW->pszColumn,
-                poGRW->pszColumn, poGRW->pszColumn ) );
-        }
+
+        poStmt = poConnection->CreateStatement( CPLSPrintf(
+            "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID, \n"
+            "  extractValue(t.%s.metadata, "
+"'/georasterMetadata/rasterInfo/dimensionSize[@type=\"ROW\"]/size','%s'),\n"
+            "  extractValue(t.%s.metadata, "
+"'/georasterMetadata/rasterInfo/dimensionSize[@type=\"COLUMN\"]/size','%s'),\n"
+            "  extractValue(t.%s.metadata, "
+"'/georasterMetadata/rasterInfo/dimensionSize[@type=\"BAND\"]/size','%s'),\n"
+            "  extractValue(t.%s.metadata, "
+"'/georasterMetadata/rasterInfo/cellDepth','%s')\n"
+            "  FROM   %s%s T\n"
+            "  WHERE  %s IS NOT NULL %s\n"
+            "  ORDER  BY T.%s.RASTERDATATABLE ASC,\n"
+            "            T.%s.RASTERID ASC",
+            poGRW->pszColumn, poGRW->pszColumn,
+            poGRW->pszColumn, OW_XMLNS,
+            poGRW->pszColumn, OW_XMLNS,
+            poGRW->pszColumn, OW_XMLNS,
+            poGRW->pszColumn, OW_XMLNS,
+            poGRW->pszSchema, poGRW->pszTable,
+            poGRW->pszColumn, osAndWhere.c_str(),
+            poGRW->pszColumn, poGRW->pszColumn ) );
 
         poStmt->Define( szDataTable );
         poStmt->Define( szRasterId );
+        poStmt->Define( szRows );
+        poStmt->Define( szColumns );
+        poStmt->Define( szBands );
+        poStmt->Define( szCellDepth );
 
         papszToken[3] = szSchema;
         papszToken[4] = szDataTable;
@@ -1294,6 +1312,8 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
 
     CPLString osName;
     CPLString osValue;
+    CPLString osDimen = "";
+    CPLString osDType = "";
     
     while( poStmt->Fetch() )
     {
@@ -1305,10 +1325,26 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         papszSubdatasets = CSLSetNameValue( papszSubdatasets,
             osName.c_str(), osValue.c_str() );
 
+        if( bDimAndDataType )
+        {
+            if( EQUAL( szBands, "" ) )
+            {
+                osDimen = CPLSPrintf( "[%sx%s] ", szRows, szColumns );
+            }
+            else
+            {
+                osDimen = CPLSPrintf( "[%sx%sx%s] ", szRows, szColumns, szBands );
+            }
+            osDType = CPLSPrintf( " (%s = %s)", szCellDepth,
+                    GDALGetDataTypeName( OWGetDataType( szCellDepth ) ) );
+        }
+
         osName  = CPLSPrintf( "SUBDATASET_%d_DESC", nCount );
-        osValue = CPLSPrintf( "%s%s%s %s%s",
+        osValue = CPLSPrintf( "%s%s%s%s %s%s%s",
+            osDimen.c_str(),
             papszToken[7], papszToken[8], papszToken[9], papszToken[10],
-            papszToken[11] );
+            papszToken[11],
+            osDType.c_str());
 
         papszSubdatasets = CSLSetNameValue( papszSubdatasets,
             osName.c_str(), osValue.c_str() );
