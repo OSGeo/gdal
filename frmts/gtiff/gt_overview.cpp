@@ -335,7 +335,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                       "COMPRESS_OVERVIEW=%s value not recognised, ignoring.",
                       pszCompress );
     }
-
+    
 /* -------------------------------------------------------------------- */
 /*      Figure out the planar configuration to use.                     */
 /* -------------------------------------------------------------------- */
@@ -652,6 +652,18 @@ GTIFFBuildOverviews( const char * pszFilename,
     if( hODS == NULL )
         return CE_Failure;
     
+/* -------------------------------------------------------------------- */
+/*      Do we need to set the jpeg quality?                             */
+/* -------------------------------------------------------------------- */
+    TIFF *hTIFF = (TIFF*) hODS->GetInternalHandle(NULL);
+
+    if( nCompression == COMPRESSION_JPEG 
+        && CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, 
+                      atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75")) );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Loop writing overview data.                                     */
 /* -------------------------------------------------------------------- */
