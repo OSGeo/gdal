@@ -1485,6 +1485,17 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
 /* -------------------------------------------------------------------- */
+/*      Establish our corresponding physical file.                      */
+/* -------------------------------------------------------------------- */
+        CPLString osPhysicalFilename = poOpenInfo->pszFilename;
+
+        if( bIsSubfile || EQUALN(poOpenInfo->pszFilename,"/vsisubfile/",12) )
+        {
+            if( strstr(poOpenInfo->pszFilename,",") != NULL )
+                osPhysicalFilename = strstr(poOpenInfo->pszFilename,",") + 1;
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
         poDS->SetDescription( poOpenInfo->pszFilename );
@@ -1506,7 +1517,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+        poDS->oOvManager.Initialize( poDS, osPhysicalFilename );
 
         return( poDS );
     }
