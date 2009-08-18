@@ -93,6 +93,7 @@ const char*         OWReplaceString( const char* pszBaseString,
 #define SDO_GEOMETRY                TYPE_OWNER".SDO_GEOMETRY"
 #define SDO_GEORASTER               TYPE_OWNER".SDO_GEORASTER"
 #define SDO_NUMBER_ARRAY            TYPE_OWNER".SDO_NUMBER_ARRAY"
+#define OW_XMLNS        "xmlns=\"http://xmlns.oracle.com/spatial/georaster\""
 
 /***************************************************************************/
 /*                   USER DEFINED (actualy Oracle's) types                 */
