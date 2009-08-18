@@ -4081,8 +4081,13 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
         return TRUE;
     }
 
+    int jquality = -1, zquality = -1; 
+
     if( GetAccess() == GA_Update )
     {
+        TIFFGetField(hTIFF, TIFFTAG_JPEGQUALITY, &jquality); 
+        TIFFGetField(hTIFF, TIFFTAG_ZIPQUALITY, &zquality); 
+
         if( *ppoActiveDSRef != NULL )
             (*ppoActiveDSRef)->FlushDirectory();
     }
@@ -4117,6 +4122,22 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
         TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
         if( nColorMode != JPEGCOLORMODE_RGB )
             TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Propogate any quality settings.                                 */
+/* -------------------------------------------------------------------- */
+    if( GetAccess() == GA_Update )
+    {
+        // Now, reset zip and jpeg quality. 
+        if(jquality > 0) 
+        {
+            CPLDebug( "GTiff", "Propgate JPEG_QUALITY(%d) in SetDirectory()",
+                      jquality );
+            TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, jquality); 
+        }
+        if(zquality > 0) 
+            TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, zquality);
     }
 
     return nSetDirResult;
