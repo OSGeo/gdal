@@ -710,7 +710,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "      INTO CNT USING :rdt, OWN;\n"
             "\n"
             "  IF CNT = 0 THEN\n"
-            "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
+            "    EXECUTE IMMEDIATE 'CREATE TABLE %s'||:rdt||' OF MDSYS.SDO_RASTER\n"
             "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
             "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
             "      LOB(RASTERBLOCK) STORE AS (NOCACHE NOLOGGING)';\n"
@@ -724,6 +724,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "END;\n",
             szCreateBlank,
             szCommand,
+            pszSchema,
             szFormat,
             pszSchema, pszTable, pszColumn, pszColumn, pszColumn  ) );
 
@@ -796,15 +797,15 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         "      INTO CNT USING :rdt, OWN;\n"
         "\n"
         "  IF CNT = 0 THEN\n"
-        "    EXECUTE IMMEDIATE 'CREATE TABLE '||:rdt||' OF MDSYS.SDO_RASTER\n"
+        "    EXECUTE IMMEDIATE 'CREATE TABLE %s'||:rdt||' OF MDSYS.SDO_RASTER\n"
         "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
         "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
         "      LOB(RASTERBLOCK) STORE AS (NOCACHE NOLOGGING)';\n"
         "  ELSE\n"
-        "    EXECUTE IMMEDIATE 'DELETE FROM '||:rdt||' WHERE RASTERID ='||:rid||' ';\n"
+        "    EXECUTE IMMEDIATE 'DELETE FROM %s'||:rdt||' WHERE RASTERID ='||:rid||' ';\n"
         "  END IF;\n"
         "\n"
-        "  STM := 'INSERT INTO '||:rdt||' VALUES (:1,0,:2-1,:3-1,:4-1,\n"
+        "  STM := 'INSERT INTO %s'||:rdt||' VALUES (:1,0,:2-1,:3-1,:4-1,\n"
         "    SDO_GEOMETRY(2003, NULL, NULL, SDO_ELEM_INFO_ARRAY(1, 1003, 3),\n"
         "    SDO_ORDINATE_ARRAY(:5,:6,:7-1,:8-1)), EMPTY_BLOB() )';\n\n"
         "  FOR b IN 1..BB LOOP\n"
@@ -823,7 +824,8 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         szCommand,
         pszColumn, pszSchema, pszTable, pszColumn, pszColumn,
         pszColumn, pszSchema, pszTable, pszColumn, pszColumn, szFormat,
-        pszSchema, pszTable, pszColumn, pszColumn, pszColumn ) );
+        pszSchema, pszTable, pszColumn, pszColumn, pszColumn,
+        pszSchema, pszSchema, pszSchema ) );
 
     poStmt->Bind( &nColumnBlockSize );
     poStmt->Bind( &nRowBlockSize );
