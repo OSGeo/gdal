@@ -127,6 +127,8 @@ class NITFDataset : public GDALPamDataset
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
     virtual void   FlushCache();
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -2667,6 +2669,29 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 
 {
     return pasGCPList;
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr NITFDataset::IBuildOverviews( const char *pszResampling, 
+                                     int nOverviews, int *panOverviewList, 
+                                     int nListBands, int *panBandList,
+                                     GDALProgressFunc pfnProgress, 
+                                     void * pProgressData )
+    
+{
+    if( poJ2KDataset != NULL )
+        return poJ2KDataset->BuildOverviews( pszResampling, 
+                                             nOverviews, panOverviewList,
+                                             nListBands, panBandList,
+                                             pfnProgress, pProgressData );
+    else
+        return GDALPamDataset::BuildOverviews( pszResampling, 
+                                               nOverviews, panOverviewList,
+                                               nListBands, panBandList,
+                                               pfnProgress, pProgressData );
 }
 
 /************************************************************************/
