@@ -77,8 +77,8 @@ typedef int             GBool;
 
 /*! Pixel data types */
 typedef enum {
-    GDT_Unknown = 0,
-    /*! Eight bit unsigned integer */ 		GDT_Byte = 1,
+    /*! Unknown or unspecified type */ 		    GDT_Unknown = 0,
+    /*! Eight bit unsigned integer */ 		    GDT_Byte = 1,
     /*! Sixteen bit unsigned integer */         GDT_UInt16 = 2,
     /*! Sixteen bit signed integer */           GDT_Int16 = 3,
     /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
