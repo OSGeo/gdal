@@ -1025,7 +1025,10 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
     if ( !poDS->fp )
+    {
+        delete poDS;
         return NULL;
+    }
 
     VSIStatL(poOpenInfo->pszFilename, &sStat);
 
@@ -1327,6 +1330,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to create file %s.\n",
                   pszFilename );
+        delete poDS;
         return NULL;
     }
 
@@ -1363,7 +1367,6 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_FileIO,
                   "Wrong image parameters; "
                   "can't allocate space for scanline buffer" );
-        VSIFCloseL( poDS->fp );
         delete poDS;
 
         return NULL;
@@ -1421,7 +1424,6 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
                   "Write of first 2 bytes to BMP file %s failed.\n"
                   "Is file system full?",
                   pszFilename );
-        VSIFCloseL( poDS->fp );
         delete poDS;
 
         return NULL;
@@ -1471,7 +1473,6 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Error writing color table.  Is disk full?" );
-            VSIFCloseL( poDS->fp );
             delete poDS;
 
             return NULL;
