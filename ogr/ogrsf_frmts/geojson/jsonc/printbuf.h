@@ -12,6 +12,8 @@
 #ifndef _printbuf_h_
 #define _printbuf_h_
 
+#include "cpl_port.h"
+
 #undef PRINTBUF_DEBUG
 
 struct printbuf {
@@ -27,7 +29,7 @@ extern int
 printbuf_memappend(struct printbuf *p, char *buf, int size);
 
 extern int
-sprintbuf(struct printbuf *p, const char *msg, ...);
+sprintbuf(struct printbuf *p, const char *msg, ...) CPL_PRINT_FUNC_FORMAT(2,3);
 
 extern void
 printbuf_reset(struct printbuf *p);
