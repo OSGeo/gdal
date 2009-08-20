@@ -80,6 +80,7 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
     }
 
+    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_USERAGENT, "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)");
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->pszURL);
 
     const char *timeout = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "TIMEOUT");
