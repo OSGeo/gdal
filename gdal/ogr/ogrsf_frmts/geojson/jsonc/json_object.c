@@ -356,7 +356,7 @@ int json_object_get_int(struct json_object *this)
 static int json_object_double_to_json_string(struct json_object* this,
 					     struct printbuf *pb)
 {
-  return sprintbuf(pb, "%lf", this->o.c_double);
+  return sprintbuf(pb, "%f", this->o.c_double);
 }
 
 struct json_object* json_object_new_double(double d)
