@@ -738,4 +738,3 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 
     return TRUE;
 }
-
