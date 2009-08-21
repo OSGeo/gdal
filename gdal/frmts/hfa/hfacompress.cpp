@@ -103,11 +103,11 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
   }
   else if( m_nDataTypeNumBits == 2 )
   {
-      if( iPixel % 2 == 0 )
+      if( iPixel % 4 == 0 )
           val = ((GByte*)m_pData)[iPixel/4] & 0x03;  
-      else if( iPixel % 2 == 1 )
+      else if( iPixel % 4 == 1 )
           val = (((GByte*)m_pData)[iPixel/4] & 0x0c) >> 2;  
-      else if( iPixel % 2 == 2 )
+      else if( iPixel % 4 == 2 )
           val = (((GByte*)m_pData)[iPixel/4] & 0x30) >> 4;  
       else 
           val = (((GByte*)m_pData)[iPixel/4] & 0xc0) >> 6;  
