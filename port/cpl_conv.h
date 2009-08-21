@@ -219,12 +219,16 @@ CPL_C_END
 
 class CPLLocaleC
 {
-  private:
-    char *pszOldLocale;
-
-  public:
+public:
     CPLLocaleC();
     ~CPLLocaleC();
+
+private:
+    char *pszOldLocale;
+
+    // Make it non-copyable
+    CPLLocaleC(CPLLocaleC&);
+    CPLLocaleC& operator=(CPLLocaleC&);
 };
 
 #endif /* def __cplusplus */

@@ -2175,12 +2175,14 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 /*                             CPLLocaleC()                             */
 /************************************************************************/
 
-CPLLocaleC::CPLLocaleC()
+CPLLocaleC::CPLLocaleC() : pszOldLocale(strdup(setlocale(LC_NUMERIC,NULL)))
 
 {
-    pszOldLocale = strdup(setlocale(LC_NUMERIC,NULL));
     if( setlocale(LC_NUMERIC,"C") == NULL )
+    {
+        CPLFree( pszOldLocale );
         pszOldLocale = NULL;
+    }
 }
 
 /************************************************************************/
