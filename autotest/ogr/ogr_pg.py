@@ -1417,12 +1417,12 @@ def ogr_pg_34():
 
     # We only test that on Linux since setting os.environ['XXX']
     # is not guaranteed to have effects on system not supporting putenv
-    if sys.platform != 'linux2':
-        return 'skip'
-
-    os.environ['PGCLIENTENCODING'] = 'LATIN1' 
-    ogr_pg_1()
-    del os.environ['PGCLIENTENCODING']
+    if sys.platform == 'linux2':
+        os.environ['PGCLIENTENCODING'] = 'LATIN1' 
+        ogr_pg_1()
+        del os.environ['PGCLIENTENCODING']
+    else:
+        gdaltest.pg_ds.ExecuteSQL('SET client_encoding = LATIN1')
 
     gdaltest.pg_lyr = gdaltest.pg_ds.GetLayerByName( 'tpoly' )
     if gdaltest.pg_lyr is None:
