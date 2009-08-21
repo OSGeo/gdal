@@ -788,6 +788,7 @@ static int NITFWriteTREsFromOptions(
         char *pszUnescapedContents;
         char *pszTREName;
         int  nContentLength;
+        const char* pszSpace; 
 
         if( !EQUALN(papszOptions[iOption],"TRE=",4) )
             continue;
@@ -796,14 +797,19 @@ static int NITFWriteTREsFromOptions(
             && bIgnoreBLOCKA )
             continue;
 
-        pszEscapedContents = CPLParseNameValue( papszOptions[iOption]+4, 
-                                                &pszTREName );
-        if (pszEscapedContents == NULL)
+        /* We do no longer use CPLParseNameValue() as it removes leading spaces */ 
+        /* from the value (see #3088) */ 
+        pszSpace = strchr(papszOptions[iOption]+4, '='); 
+        if (pszSpace == NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not parse creation options %s", papszOptions[iOption]+4);
             return FALSE;
         }
+        
+        pszTREName = CPLStrdup(papszOptions[iOption]+4); 
+        pszTREName[pszSpace - (papszOptions[iOption]+4)] = '\0';
+        pszEscapedContents = pszSpace + 1; 
 
         pszUnescapedContents = 
             CPLUnescapeString( pszEscapedContents, &nContentLength,
