@@ -4063,7 +4063,16 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     adfMinMax[0] = dfMin;
     adfMinMax[1] = dfMax;
 
-    return CE_None;
+    if (bFirstValue)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Failed to compute min/max, no valid pixels found in sampling." );
+        return CE_Failure;
+    }
+    else
+    {
+        return CE_None;
+    }
 }
 
 /************************************************************************/

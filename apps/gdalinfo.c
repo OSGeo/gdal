@@ -436,9 +436,13 @@ int main( int argc, char ** argv )
         
             if( bComputeMinMax )
             {
+                CPLErrorReset();
                 GDALComputeRasterMinMax( hBand, FALSE, adfCMinMax );
-                printf( "  Computed Min/Max=%.3f,%.3f", 
-                        adfCMinMax[0], adfCMinMax[1] );
+                if (CPLGetLastErrorType() == CE_None)
+                {
+                  printf( "  Computed Min/Max=%.3f,%.3f", 
+                          adfCMinMax[0], adfCMinMax[1] );
+                }
             }
 
             printf( "\n" );
