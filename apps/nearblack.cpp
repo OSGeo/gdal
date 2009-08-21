@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalinfo.c 10660 2007-01-19 20:25:49Z warmerdam $
+ * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Convert nearly black or nearly white border to exact black/white.
@@ -29,6 +29,8 @@
 
 #include "gdal.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
                          int nNearDist, int nMaxNonBlack, int bNearWhite,
