@@ -158,12 +158,12 @@ static void TextFillR( char *pszTarget, unsigned int nMaxChars,
 /************************************************************************/
 /*                         USGSDEMPrintDouble()                         */
 /*                                                                      */
-/*      On MS Visual C++ system the C runtime library uses 3 digits     */
+/*      The MSVC C runtime library uses 3 digits                        */
 /*      for the exponent.  This causes various problems, so we try      */
 /*      to correct it here.                                             */
 /************************************************************************/
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__MSVCRT__)
 #  define MSVC_HACK
 #endif
 
@@ -212,7 +212,7 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
 /************************************************************************/
 /*                         USGSDEMPrintSingle()                         */
 /*                                                                      */
-/*      On MS Visual C++ system the C runtime library uses 3 digits     */
+/*      The MSVC C runtime library uses 3 digits                        */
 /*      for the exponent.  This causes various problems, so we try      */
 /*      to correct it here.                                             */
 /************************************************************************/
