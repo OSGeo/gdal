@@ -563,11 +563,11 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
             }
             else if( nDataType == EPT_u2 )
             {
-                if( (nPixelsOutput & 0x1) == 0 )
+                if( (nPixelsOutput & 0x3) == 0 )
                     pabyDest[nPixelsOutput>>2] = (GByte) nDataValue;
-                else if( (nPixelsOutput & 0x1) == 1 )
+                else if( (nPixelsOutput & 0x3) == 1 )
                     pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<2);
-                else if( (nPixelsOutput & 0x1) == 2 )
+                else if( (nPixelsOutput & 0x3) == 2 )
                     pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<4);
                 else
                     pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<6);
