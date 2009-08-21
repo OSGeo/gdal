@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalmanage.c 11245 2007-04-12 20:35:33Z warmerdam $
+ * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Commandline utility for GDAL identify, delete, rename and copy 
@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: gdalinfo.c 11245 2007-04-12 20:35:33Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                               Usage()                                */
