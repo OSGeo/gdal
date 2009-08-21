@@ -176,6 +176,8 @@ class OGRGPXDataSource : public OGRDataSource
 
     /*  Export related */
     FILE                *fpOutput; /* Standard file API */
+    int                 nOffsetBounds;
+    double              dfMinLat, dfMinLon, dfMaxLat, dfMaxLon;
     
     GPXGeometryType     lastGPXGeomTypeWritten;
     
@@ -226,6 +228,8 @@ class OGRGPXDataSource : public OGRDataSource
 #endif
 
     const char*         GetVersion() { return pszVersion; }
+    
+    void                AddCoord(double dfLon, double dfLat);
 };
 
 /************************************************************************/

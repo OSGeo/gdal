@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+#define SPACE_FOR_METADATA 160
+
 /************************************************************************/
 /*                          OGRGPXDataSource()                          */
 /************************************************************************/
@@ -49,6 +51,11 @@ OGRGPXDataSource::OGRGPXDataSource()
     nLayers = 0;
     
     fpOutput = NULL;
+    nOffsetBounds = -1;
+    dfMinLat = 90;
+    dfMinLon = 180;
+    dfMaxLat = -90;
+    dfMaxLon = -180;
 
     pszName = NULL;
     pszVersion = NULL;
@@ -65,7 +72,18 @@ OGRGPXDataSource::~OGRGPXDataSource()
     {
         VSIFPrintf(fpOutput, "</gpx>\n");
         if ( fpOutput != stdout )
+        {
+            /* Write the <bound> element in the reserved space */
+            if (dfMinLon <= dfMaxLon)
+            {
+                char szMetadata[SPACE_FOR_METADATA+1];
+                sprintf(szMetadata, "<metadata><bounds minlat=\"%.15f\" minlon=\"%.15f\" maxlat=\"%.15f\" maxlon=\"%.15f\"/></metadata>",
+                        dfMinLat, dfMinLon, dfMaxLat, dfMaxLon);
+                VSIFSeek(fpOutput, nOffsetBounds, SEEK_SET);
+                VSIFWrite(szMetadata, 1, strlen(szMetadata), fpOutput);
+            }
             VSIFClose( fpOutput);
+        }
     }
 
     for( int i = 0; i < nLayers; i++ )
@@ -411,7 +429,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
     if( EQUAL(pszFilename,"stdout") )
         fpOutput = stdout;
     else
-        fpOutput = VSIFOpen( pszFilename, "w" );
+        fpOutput = VSIFOpen( pszFilename, "w+" );
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -453,6 +471,27 @@ int OGRGPXDataSource::Create( const char *pszFilename,
         VSIFPrintf(fpOutput, "xmlns:%s=\"%s\" ", pszExtensionsNS, pszExtensionsNSURL);
     VSIFPrintf(fpOutput, "xmlns=\"http://www.topografix.com/GPX/1/1\" ");
     VSIFPrintf(fpOutput, "xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">\n");
+    if (fpOutput != stdout)
+    {
+      /* Reserve space for <metadata><bounds/></metadata> */
+      char szMetadata[SPACE_FOR_METADATA+1];
+      memset(szMetadata, ' ', SPACE_FOR_METADATA);
+      szMetadata[SPACE_FOR_METADATA] = '\0';
+      nOffsetBounds = VSIFTell(fpOutput);
+      VSIFPrintf(fpOutput, "%s\n", szMetadata);
+    }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                             AddCoord()                               */
+/************************************************************************/
+
+void OGRGPXDataSource::AddCoord(double dfLon, double dfLat)
+{
+    if (dfLon < dfMinLon) dfMinLon = dfLon;
+    if (dfLat < dfMinLat) dfMinLat = dfLat;
+    if (dfLon > dfMaxLon) dfMaxLon = dfLon;
+    if (dfLat > dfMaxLat) dfMaxLat = dfLat;
 }
