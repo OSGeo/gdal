@@ -85,6 +85,41 @@ static const char *ogr_pj_ellps[] = {
 0, 0, 0, 0,
 };
 
+typedef struct
+{
+    const char* pszPJ;
+    const char* pszOGR;
+    int         nEPSG;
+    int         nGCS;
+} OGRProj4Datum;
+
+/* Derived from proj/src/pj_datum.c */
+/* WGS84, NAD27 and NAD83 are directly hard-coded in the code */
+static const OGRProj4Datum ogr_pj_datums[] = {
+    { "GGRS87", "Greek_Geodetic_Reference_System_1987", 4121, 6121},
+    { "potsdam", "Deutsches_Hauptdreiecksnetz", 4314, 6314},
+    { "carthage", "Carthage", 4223, 6223},
+    { "hermannskogel", "Militar_Geographische_Institut", 4312, 6312},
+    { "ire65", "TM65", 4299, 6299},
+    { "nzgd49", "New_Zealand_Geodetic_Datum_1949", 4272, 6272},
+    { "OSGB36", "OSGB_1936", 4277, 6277}
+};
+
+static const char* OGRGetProj4Datum(const char* pszDatum,
+                                    int nEPSGDatum)
+{
+    unsigned int i;
+    for(i=0;i<sizeof(ogr_pj_datums)/sizeof(ogr_pj_datums[0]);i++)
+    {
+        if (nEPSGDatum == ogr_pj_datums[i].nGCS ||
+            EQUAL(pszDatum, ogr_pj_datums[i].pszOGR))
+        {
+            return ogr_pj_datums[i].pszPJ;
+        }
+    }
+    return NULL;
+}
+
 /************************************************************************/
 /*                          OSRProj4Tokenize()                          */
 /*                                                                      */
@@ -821,30 +856,22 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         SetWellKnownGeogCS( pszValue );
         bFullyDefined = TRUE;
     }
-    else if( EQUAL(pszValue,"potsdam") )
-    {
-        OGRSpatialReference oGCS;
-        oGCS.importFromEPSG( 4314 );
-        CopyGeogCSFrom( &oGCS );
-        bFullyDefined = TRUE;
-    }
-    else if( EQUAL(pszValue,"nzgd49") )
-    {
-        OGRSpatialReference oGCS;
-        oGCS.importFromEPSG( 4272 );
-        CopyGeogCSFrom( &oGCS );
-        bFullyDefined = TRUE;
-    }
-    else if( EQUAL(pszValue,"OSGB36") )
-    {
-        OGRSpatialReference oGCS;
-        oGCS.importFromEPSG( 4277 );
-        CopyGeogCSFrom( &oGCS );
-        bFullyDefined = TRUE;
-    }
     else
     {
-        /* we don't recognise the datum, and ignore it */
+        unsigned int i;
+        for(i=0;i<sizeof(ogr_pj_datums)/sizeof(ogr_pj_datums[0]);i++)
+        {
+            if ( EQUAL(pszValue, ogr_pj_datums[i].pszPJ) )
+            {
+                OGRSpatialReference oGCS;
+                oGCS.importFromEPSG( ogr_pj_datums[i].nEPSG );
+                CopyGeogCSFrom( &oGCS );
+                bFullyDefined = TRUE;
+                break;
+            }
+        }
+
+        /* If we don't recognise the datum, we ignore it */
     }
 
 /* -------------------------------------------------------------------- */
@@ -1720,15 +1747,15 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         pszPROJ4Ellipse = "clrk66";     /* Clarke 1866 */
     }
-    else if( ABS(dfSemiMajor-6378206.4) < 0.01
-             && ABS(dfInvFlattening-294.9786982) < 0.0001 )
+    else if( ABS(dfSemiMajor-6377340.189) < 0.01
+             && ABS(dfInvFlattening-299.3249646) < 0.0001 )
     {
         pszPROJ4Ellipse = "mod_airy";   /* Modified Airy */
     }
     else if( ABS(dfSemiMajor-6377563.396) < 0.01
              && ABS(dfInvFlattening-299.3249646) < 0.0001 )
     {
-        pszPROJ4Ellipse = "airy";       /* Modified Airy */
+        pszPROJ4Ellipse = "airy";       /* Airy */
     }
     else if( ABS(dfSemiMajor-6378200) < 0.01
              && ABS(dfInvFlattening-298.3) < 0.0001 )
@@ -1816,14 +1843,11 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszDatum,SRS_DN_WGS84) || nEPSGDatum == 6326 )
         pszPROJ4Datum = "+datum=WGS84";
 
-    else if( nEPSGDatum == 6314 )
-        pszPROJ4Datum = "+datum=potsdam";
-
-    else if( nEPSGDatum == 6272 )
-        pszPROJ4Datum = "+datum=nzgd49";
-
-    else if( nEPSGDatum == 6277 )
-        pszPROJ4Datum = "+datum=OSGB36";
+    else if( (pszPROJ4Datum = OGRGetProj4Datum(pszDatum, nEPSGDatum)) != NULL )
+    {
+        strcat( szProj4, "+datum=" );
+        /* The datum name contained in pszPROJ4Datum will be appended below */
+    }
 
     else if( poTOWGS84 != NULL )
     {
