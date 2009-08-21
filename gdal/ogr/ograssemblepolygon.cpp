@@ -136,6 +136,46 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                                        OGRErr * peErr )
 
 {
+    if( hLines == NULL )
+    {
+        if (peErr != NULL)
+            *peErr = OGRERR_NONE;
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Check for the case of a geometrycollection that can be          */
+/*      promoted to MultiLineString.                                    */
+/* -------------------------------------------------------------------- */
+    OGRGeometry* poGeom = (OGRGeometry*) hLines;
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+    {
+        int iGeom;
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+
+        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        {
+            if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
+                != wkbLineString )
+            {
+                if (peErr != NULL)
+                    *peErr = OGRERR_FAILURE;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "The geometry collection contains non line string geometries");
+                return NULL;
+            }
+        }
+    }
+    else if (wkbFlatten(poGeom->getGeometryType()) != wkbMultiLineString )
+    {
+        if (peErr != NULL)
+            *peErr = OGRERR_FAILURE;
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The passed geometry is not an OGRGeometryCollection (or OGRMultiLineString) "
+                 "containing line string geometries");
+        return NULL;
+    }
+
     int         bSuccess = TRUE;
     OGRGeometryCollection *poLines = (OGRGeometryCollection *) hLines;
     OGRPolygon  *poPolygon = new OGRPolygon();
