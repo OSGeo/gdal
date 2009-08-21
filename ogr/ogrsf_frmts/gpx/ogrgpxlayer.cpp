@@ -1249,6 +1249,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                 double lat = point->getY();
                 double lon = point->getX();
                 CheckAndFixCoordinatesValidity(&lat, &lon);
+                poDS->AddCoord(lon, lat);
                 VSIFPrintf(fp, "<wpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
                 WriteFeatureAttributes(poFeature);
                 VSIFPrintf(fp, "</wpt>\n");
@@ -1333,6 +1334,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
             double lat = line->getY(i);
             double lon = line->getX(i);
             CheckAndFixCoordinatesValidity(&lat, &lon);
+            poDS->AddCoord(lon, lat);
             VSIFPrintf(fp, "  <rtept lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
             if (poGeom->getGeometryType() == wkbLineString25D ||
                 poGeom->getGeometryType() == wkbMultiLineString25D)
@@ -1371,6 +1373,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                     double lat = line->getY(i);
                     double lon = line->getX(i);
                     CheckAndFixCoordinatesValidity(&lat, &lon);
+                    poDS->AddCoord(lon, lat);
                     VSIFPrintf(fp, "    <trkpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
                     if (line->getGeometryType() == wkbLineString25D)
                     {
@@ -1401,6 +1404,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                         double lat = line->getY(i);
                         double lon = line->getX(i);
                         CheckAndFixCoordinatesValidity(&lat, &lon);
+                        poDS->AddCoord(lon, lat);
                         VSIFPrintf(fp, "    <trkpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
                         if (line->getGeometryType() == wkbLineString25D)
                         {
