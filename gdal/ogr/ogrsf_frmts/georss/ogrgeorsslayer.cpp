@@ -1093,8 +1093,6 @@ int OGRGeoRSSLayer::IsStandardField(const char* pszName)
         return OGRGeoRSSLayerIsStandardFieldInternal(pszName,
                 apszAllowedATOMFieldNames);
     }
-
-    return FALSE;
 }
 
 /************************************************************************/
@@ -1481,18 +1479,18 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
             char* pszTagName = CPLStrdup(pszName);
             if (IsStandardField(pszName) == FALSE)
             {
-                int i;
+                int j;
                 int nCountUnderscore = 0;
-                for(i=0;pszTagName[i] != 0;i++)
+                for(j=0;pszTagName[j] != 0;j++)
                 {
-                    if (pszTagName[i] == '_')
+                    if (pszTagName[j] == '_')
                     {
                         if (nCountUnderscore == 0)
-                            pszTagName[i] = ':';
+                            pszTagName[j] = ':';
                         nCountUnderscore ++;
                     }
-                    else if (pszTagName[i] == ' ')
-                        pszTagName[i] = '_';
+                    else if (pszTagName[j] == ' ')
+                        pszTagName[j] = '_';
                 }
                 if (nCountUnderscore == 0)
                 {
