@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalinfo.c 11466 2007-05-11 01:38:55Z warmerdam $
+ * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Commandline application to do image enhancement. 
@@ -33,7 +33,7 @@
 #include "cpl_multiproc.h"
 #include "vrt/vrtdataset.h"
 
-CPL_CVSID("$Id: gdal_translate.cpp 11658 2007-06-14 17:08:54Z warmerdam $");
+CPL_CVSID("$Id$");
 
 static int
 ComputeEqualizationLUTs( GDALDatasetH hDataset,  int nLUTBins,
