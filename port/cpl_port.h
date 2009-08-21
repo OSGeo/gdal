@@ -474,8 +474,12 @@ char * strdup (char *instr);
  */
 
 #ifndef DISABLE_CVSID
+#if defined(__GNUC__) && __GNUC__ >= 4
+#  define CPL_CVSID(string)     static char cpl_cvsid[] __attribute__((used)) = string;
+#else
 #  define CPL_CVSID(string)     static char cpl_cvsid[] = string; \
 static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
+#endif
 #else
 #  define CPL_CVSID(string)
 #endif
