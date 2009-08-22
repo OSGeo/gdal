@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: cpl_vsi_mem.cpp 15219 2008-08-25 20:38:56Z mloskot $
+ * $Id$
  *
  * Project:  VSI Virtual File System
  * Purpose:  Implementation of Memory Buffer virtual IO functions.
@@ -36,7 +36,7 @@
 #  include <wce_errno.h>
 #endif
 
-CPL_CVSID("$Id: cpl_vsi_mem.cpp 15219 2008-08-25 20:38:56Z mloskot $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
