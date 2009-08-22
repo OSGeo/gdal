@@ -2108,7 +2108,7 @@ class GTiffSplitBitmapBand : public GTiffBitmapBand
 
 
 /************************************************************************/
-/*                           GTiffBitmapBand()                          */
+/*                       GTiffSplitBitmapBand()                         */
 /************************************************************************/
 
 GTiffSplitBitmapBand::GTiffSplitBitmapBand( GTiffDataset *poDS, int nBand )
@@ -2122,7 +2122,7 @@ GTiffSplitBitmapBand::GTiffSplitBitmapBand( GTiffDataset *poDS, int nBand )
 }
 
 /************************************************************************/
-/*                           GTiffBitmapBand()                          */
+/*                      ~GTiffSplitBitmapBand()                         */
 /************************************************************************/
 
 GTiffSplitBitmapBand::~GTiffSplitBitmapBand()
