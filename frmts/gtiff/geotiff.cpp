@@ -7160,6 +7160,7 @@ void GDALRegister_GTiff()
         GDALDriver	*poDriver;
         char szCreateOptions[3072];
         char szOptionalCompressItems[500];
+        int bHasJPEG = FALSE, bHasLZW = FALSE, bHasDEFLATE = FALSE;
 
         poDriver = new GDALDriver();
         
@@ -7177,6 +7178,7 @@ void GDALRegister_GTiff()
                 "       <Value>JPEG</Value>"
                 "       <Value>LZW</Value>"
                 "       <Value>DEFLATE</Value>" );
+        bHasLZW = bHasDEFLATE = TRUE;
 #else
         TIFFCodec	*c, *codecs = TIFFGetConfiguredCODECs();
 
@@ -7186,14 +7188,23 @@ void GDALRegister_GTiff()
                 strcat( szOptionalCompressItems,
                         "       <Value>PACKBITS</Value>" );
             else if( c->scheme == COMPRESSION_JPEG )
+            {
+                bHasJPEG = TRUE;
                 strcat( szOptionalCompressItems,
                         "       <Value>JPEG</Value>" );
+            }
             else if( c->scheme == COMPRESSION_LZW )
+            {
+                bHasLZW = TRUE;
                 strcat( szOptionalCompressItems,
                         "       <Value>LZW</Value>" );
+            }
             else if( c->scheme == COMPRESSION_ADOBE_DEFLATE )
+            {
+                bHasDEFLATE = TRUE;
                 strcat( szOptionalCompressItems,
                         "       <Value>DEFLATE</Value>" );
+            }
             else if( c->scheme == COMPRESSION_CCITTRLE )
                 strcat( szOptionalCompressItems,
                         "       <Value>CCITTRLE</Value>" );
@@ -7214,10 +7225,17 @@ void GDALRegister_GTiff()
 "<CreationOptionList>"
 "   <Option name='COMPRESS' type='string-select'>",
                  szOptionalCompressItems,
-"   </Option>"
-"   <Option name='PREDICTOR' type='int' description='Predictor Type'/>"
-"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>"
-"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>"
+"   </Option>");
+        if (bHasLZW || bHasDEFLATE)
+            strcat( szCreateOptions, ""        
+"   <Option name='PREDICTOR' type='int' description='Predictor Type'/>");
+        if (bHasJPEG)
+            strcat( szCreateOptions, ""
+"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>");
+        if (bHasDEFLATE)
+            strcat( szCreateOptions, ""
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>");
+        strcat( szCreateOptions, ""
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
 "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
 "       <Value>BAND</Value>"
