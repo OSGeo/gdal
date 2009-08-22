@@ -2469,6 +2469,82 @@ def tiff_write_75():
     return 'success'
 
 ###############################################################################
+# Test generating a G4 band to use the TIFFWriteScanline()
+
+def tiff_write_76():
+
+    src_ds = gdal.Open('data/slim_g4.tif')
+    compression = src_ds.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION']
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_76.tif', src_ds, options = ['BLOCKYSIZE=%d' % src_ds.RasterYSize, 'COMPRESS=' + compression ] )
+    new_ds = None
+    new_ds = gdal.Open( 'tmp/tiff_write_76.tif' )
+    
+    cs = new_ds.GetRasterBand(1).Checksum()
+    if cs != 3322:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum' )
+        return 'fail'
+        
+    src_ds = None
+    new_ds = None
+    
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_76.tif' )
+    
+    return 'success'
+    
+###############################################################################
+# Test generating & reading a 8bit all-in-one-strip multiband TIFF (#3904)
+
+def tiff_write_77():
+
+    src_ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_77_src.tif', 1, 5000, 3 )
+    src_ds.GetRasterBand(2).Fill(255)
+
+    for interleaving in ('PIXEL', 'BAND'):
+        new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_77.tif', src_ds,
+                                                options = ['BLOCKYSIZE=%d' % src_ds.RasterYSize,
+                                                           'COMPRESS=LZW',
+                                                           'INTERLEAVE=' + interleaving] )
+
+        for attempt in range(2):
+        
+            # Test reading a few samples to check that random reading works
+            band_lines = [ (1,0), (1,5), (1,3), (2,10), (1,100), (2,1000), (2,500),
+                            (1,500), (2,500), (2,4999), (2,4999), (3,4999), (1,4999) ]
+            for band_line in band_lines:
+                cs = new_ds.GetRasterBand(band_line[0]).Checksum(0,band_line[1],1,1)
+                if band_line[0] == 2:
+                    expected_cs = 255 % 7;
+                else:
+                    expected_cs = 0 % 7;
+                if cs != expected_cs:
+                    print cs
+                    gdaltest.post_reason( 'Got wrong checksum' )
+                    return 'fail'
+
+            # Test whole bands
+            for i in range(3):
+                cs = new_ds.GetRasterBand(i+1).Checksum()
+                expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+                if cs != expected_cs:
+                    print cs
+                    gdaltest.post_reason( 'Got wrong checksum' )
+                    return 'fail'
+
+            if attempt == 0:
+                new_ds = None
+                new_ds = gdal.Open( 'tmp/tiff_write_77.tif' )
+                
+        new_ds = None
+
+        gdaltest.tiff_drv.Delete( 'tmp/tiff_write_77.tif' )
+    
+    src_ds = None
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_77_src.tif' )
+    
+    return 'success'
+    
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2551,6 +2627,8 @@ gdaltest_list = [
     tiff_write_73,
     tiff_write_74,
     tiff_write_75,
+    tiff_write_76,
+    tiff_write_77,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
