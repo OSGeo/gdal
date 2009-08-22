@@ -81,6 +81,7 @@ class GTiffBitmapBand;
 class GTiffDataset : public GDALPamDataset
 {
     friend class GTiffRasterBand;
+    friend class GTiffSplitBand;
     friend class GTiffRGBABand;
     friend class GTiffBitmapBand;
     friend class GTiffSplitBitmapBand;
@@ -176,6 +177,12 @@ class GTiffDataset : public GDALPamDataset
 
     void         FlushDirectory();
     CPLErr       CleanOverviews();
+
+    /* Used for the all-in-on-strip case */
+    int           nLastLineRead;
+    int           nLastBandRead;
+    int           bTreatAsSplit;
+    int           bTreatAsSplitBitmap;
 
   public:
                  GTiffDataset();
@@ -1276,6 +1283,138 @@ GDALRasterBand *GTiffRasterBand::GetMaskBand()
 
 /************************************************************************/
 /* ==================================================================== */
+/*                             GTiffSplitBand                            */
+/* ==================================================================== */
+/************************************************************************/
+
+class GTiffSplitBand : public GTiffRasterBand
+{
+    friend class GTiffDataset;
+
+  public:
+
+                   GTiffSplitBand( GTiffDataset *, int );
+    virtual       ~GTiffSplitBand();
+
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
+};
+
+/************************************************************************/
+/*                           GTiffSplitBand()                           */
+/************************************************************************/
+
+GTiffSplitBand::GTiffSplitBand( GTiffDataset *poDS, int nBand )
+        : GTiffRasterBand( poDS, nBand )
+
+{
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                          ~GTiffSplitBand()                          */
+/************************************************************************/
+
+GTiffSplitBand::~GTiffSplitBand()
+{
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffSplitBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                   void * pImage )
+
+{
+    (void) nBlockXOff;
+    
+    /* Optimization when reading the same line in a contig multi-band TIFF */
+    if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG && poGDS->nBands > 1 &&
+        poGDS->nLastLineRead == nBlockYOff )
+    {
+        goto extract_band_data;
+    }
+
+    if (!poGDS->SetDirectory())
+        return CE_Failure;
+        
+    if (poGDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
+        poGDS->nBands > 1)
+    {
+        if (poGDS->pabyBlockBuf == NULL)
+            poGDS->pabyBlockBuf = (GByte *) CPLMalloc(TIFFScanlineSize(poGDS->hTIFF));
+    }
+    else
+    {
+        CPLAssert(TIFFScanlineSize(poGDS->hTIFF) == nBlockXSize);
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Read through to target scanline.                                */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nLastLineRead >= nBlockYOff )
+        poGDS->nLastLineRead = -1;
+
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE && poGDS->nBands > 1 )
+    {
+        /* If we change of band, we must start reading the */
+        /* new strip from its beginning */
+        if ( poGDS->nLastBandRead != nBand )
+            poGDS->nLastLineRead = -1;
+        poGDS->nLastBandRead = nBand;
+    }
+    
+    while( poGDS->nLastLineRead < nBlockYOff )
+    {
+        if( TIFFReadScanline( poGDS->hTIFF,
+                              poGDS->pabyBlockBuf ? poGDS->pabyBlockBuf : pImage,
+                              ++poGDS->nLastLineRead,
+                              (poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) ? nBand-1 : 0 ) == -1 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "TIFFReadScanline() failed." );
+            return CE_Failure;
+        }
+    }
+    
+extract_band_data:
+/* -------------------------------------------------------------------- */
+/*      Extract band data from contig buffer.                           */
+/* -------------------------------------------------------------------- */
+    if ( poGDS->pabyBlockBuf != NULL )
+    {
+        int	  iPixel, iSrcOffset= nBand - 1, iDstOffset=0;
+
+        for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset+=poGDS->nBands, iDstOffset++ )
+        {
+            ((GByte *) pImage)[iDstOffset] = poGDS->pabyBlockBuf[iSrcOffset];
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffSplitBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                    void * pImage )
+
+{
+    (void) nBlockXOff;
+    (void) nBlockYOff;
+    (void) pImage;
+
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "Split bands are read-only." );
+    return CE_Failure;
+}
+
+/************************************************************************/
+/* ==================================================================== */
 /*                             GTiffRGBABand                            */
 /* ==================================================================== */
 /************************************************************************/
@@ -2095,8 +2234,6 @@ class GTiffSplitBitmapBand : public GTiffBitmapBand
 {
     friend class GTiffDataset;
 
-    int            nLastLineRead;
-
   public:
 
                    GTiffSplitBitmapBand( GTiffDataset *, int );
@@ -2117,8 +2254,6 @@ GTiffSplitBitmapBand::GTiffSplitBitmapBand( GTiffDataset *poDS, int nBand )
 {
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-
-    nLastLineRead = -1;
 }
 
 /************************************************************************/
@@ -2139,26 +2274,24 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                          void * pImage )
 
 {
-    GByte              *pabyLineBuf;
-
     (void) nBlockXOff;
 
     if (!poGDS->SetDirectory())
         return CE_Failure;
-
-    pabyLineBuf = (GByte *) CPLMalloc(TIFFScanlineSize(poGDS->hTIFF));
+        
+    if (poGDS->pabyBlockBuf == NULL)
+        poGDS->pabyBlockBuf = (GByte *) CPLMalloc(TIFFScanlineSize(poGDS->hTIFF));
 
 /* -------------------------------------------------------------------- */
 /*      Read through to target scanline.                                */
 /* -------------------------------------------------------------------- */
-    if( nLastLineRead >= nBlockYOff )
-        nLastLineRead = -1;
+    if( poGDS->nLastLineRead >= nBlockYOff )
+        poGDS->nLastLineRead = -1;
 
-    while( nLastLineRead < nBlockYOff )
+    while( poGDS->nLastLineRead < nBlockYOff )
     {
-        if( TIFFReadScanline( poGDS->hTIFF, pabyLineBuf, ++nLastLineRead, 0 ) == -1 )
+        if( TIFFReadScanline( poGDS->hTIFF, poGDS->pabyBlockBuf, ++poGDS->nLastLineRead, 0 ) == -1 )
         {
-            CPLFree( pabyLineBuf );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TIFFReadScanline() failed." );
             return CE_Failure;
@@ -2172,13 +2305,11 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset++ )
     {
-        if( pabyLineBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
+        if( poGDS->pabyBlockBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
             ((GByte *) pImage)[iDstOffset++] = 1;
         else
             ((GByte *) pImage)[iDstOffset++] = 0;
     }
-    
-    CPLFree( pabyLineBuf );
 
     return CE_None;
 }
@@ -2259,6 +2390,10 @@ GTiffDataset::GTiffDataset()
 
     bFillEmptyTiles = FALSE;
     bLoadingOtherBands = FALSE;
+    nLastLineRead = -1;
+    nLastBandRead = -1;
+    bTreatAsSplit = FALSE;
+    bTreatAsSplitBitmap = FALSE;
 }
 
 /************************************************************************/
@@ -4538,7 +4673,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     uint32	nXSize, nYSize;
     int		bTreatAsBitmap = FALSE;
     int         bTreatAsOdd = FALSE;
-    int         bTreatAsSplit = FALSE;
 
     this->eAccess = eAccess;
 
@@ -4648,7 +4782,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             && nBlockYSize == nYSize 
             && nYSize > 2000 
             && bAllowRGBAInterface )
-            bTreatAsSplit = TRUE;
+            bTreatAsSplitBitmap = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4696,7 +4830,19 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             CPLDebug( "GTiff", "TIFFRGBAImageOK says:\n%s", szMessage );
         }
     }
-        
+    
+/* -------------------------------------------------------------------- */
+/*      Should we treat this via the split interface?                   */
+/* -------------------------------------------------------------------- */
+    if( !TIFFIsTiled(hTIFF) 
+        && nBitsPerSample == 8
+        && nBlockYSize == nYSize 
+        && nYSize > 2000
+        && !bTreatAsRGBA )
+    {
+        bTreatAsSplit = TRUE;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the odd bits interface?                */
 /* -------------------------------------------------------------------- */
@@ -4797,8 +4943,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     {
         if( bTreatAsRGBA )
             SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
-        else if( bTreatAsSplit )
+        else if( bTreatAsSplitBitmap )
             SetBand( iBand+1, new GTiffSplitBitmapBand( this, iBand+1 ) );
+        else if( bTreatAsSplit )
+            SetBand( iBand+1, new GTiffSplitBand( this, iBand+1 ) );
         else if( bTreatAsBitmap )
             SetBand( iBand+1, new GTiffBitmapBand( this, iBand+1 ) );
         else if( bTreatAsOdd )
@@ -6625,12 +6773,85 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Copy actual imagery.                                            */
 /* -------------------------------------------------------------------- */
 
-    char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
-    if (nCompression != COMPRESSION_NONE)
-        papszCopyWholeRasterOptions[0] = (char*) "COMPRESSED=YES";
-    eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
-                                        (GDALDatasetH) poDS,
-                                        papszCopyWholeRasterOptions, pfnProgress, pProgressData );
+    if (poDS->bTreatAsSplit || poDS->bTreatAsSplitBitmap)
+    {
+        /* For split bands, we use TIFFWriteScanline() interface */
+        CPLAssert(poDS->nBitsPerSample == 8 || poDS->nBitsPerSample == 1);
+        
+        if (poDS->nPlanarConfig == PLANARCONFIG_CONTIG && poDS->nBands > 1)
+        {
+            int j;
+            GByte* pabyScanline = (GByte *) CPLMalloc(TIFFScanlineSize(hTIFF));
+            eErr = CE_None;
+            for(j=0;j<nYSize && eErr == CE_None;j++)
+            {
+                eErr = poSrcDS->RasterIO(GF_Read, 0, j, nXSize, 1,
+                                         pabyScanline, nXSize, 1,
+                                         GDT_Byte, nBands, NULL, poDS->nBands, 0, 1);
+                if (eErr == CE_None &&
+                    TIFFWriteScanline( hTIFF, pabyScanline, j, 0) == -1)
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "TIFFWriteScanline() failed." );
+                    eErr = CE_Failure;
+                }
+                if( !pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData ) )
+                    eErr = CE_Failure;
+            }
+            CPLFree(pabyScanline);
+        }
+        else
+        {
+            int iBand, j;
+            GByte* pabyScanline = (GByte *) CPLMalloc(TIFFScanlineSize(hTIFF));
+            eErr = CE_None;
+            for(iBand=1;iBand<=nBands && eErr == CE_None;iBand++)
+            {
+                for(j=0;j<nYSize && eErr == CE_None;j++)
+                {
+                    eErr = poSrcDS->GetRasterBand(iBand)->RasterIO(
+                                                    GF_Read, 0, j, nXSize, 1,
+                                                    pabyScanline, nXSize, 1,
+                                                    GDT_Byte, 0, 0);
+                    if (poDS->bTreatAsSplitBitmap)
+                    {
+                        for(int i=0;i<nXSize;i++)
+                        {
+                            GByte byVal = pabyScanline[i];
+                            if ((i & 0x7) == 0)
+                                pabyScanline[i >> 3] = 0;
+                            if (byVal)
+                                pabyScanline[i >> 3] |= (0x80 >> (i & 0x7));
+                        }
+                    }
+                    if (eErr == CE_None &&
+                        TIFFWriteScanline( hTIFF, pabyScanline, j, iBand - 1) == -1)
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "TIFFWriteScanline() failed." );
+                        eErr = CE_Failure;
+                    }
+                    if( !pfnProgress( (j+1 + (iBand - 1) * nYSize) * 1.0 /
+                                      (nBands * nYSize), NULL, pProgressData ) )
+                        eErr = CE_Failure;
+                }
+            }
+            CPLFree(pabyScanline);
+        }
+        
+        /* Necessary to be able to read the file without re-opening */
+        TIFFFlush( hTIFF );
+    }
+    else
+    {
+        char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
+        if (nCompression != COMPRESSION_NONE)
+            papszCopyWholeRasterOptions[0] = (char*) "COMPRESSED=YES";
+        eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+                                            (GDALDatasetH) poDS,
+                                            papszCopyWholeRasterOptions,
+                                            pfnProgress, pProgressData );
+    }
 
     if( eErr == CE_Failure )
     {
