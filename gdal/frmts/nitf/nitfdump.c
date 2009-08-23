@@ -112,7 +112,7 @@ int main( int nArgc, char ** papszArgv )
             printf( "Segment %d (Type=%s):\n", 
                     iSegment + 1, psSegInfo->szSegmentType );
 
-            printf( "  HeaderStart=" CPL_FRMT_GUIB ", HeaderSize=" CPL_FRMT_GUIB ", DataStart=" CPL_FRMT_GUIB ", DataSize=" CPL_FRMT_GUIB "\n",
+            printf( "  HeaderStart=" CPL_FRMT_GUIB ", HeaderSize=%u, DataStart=" CPL_FRMT_GUIB ", DataSize=" CPL_FRMT_GUIB "\n",
                     psSegInfo->nSegmentHeaderStart,
                     psSegInfo->nSegmentHeaderSize, 
                     psSegInfo->nSegmentStart,
