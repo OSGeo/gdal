@@ -3202,6 +3202,12 @@ NITFDataset::NITFCreateCopy(
                 GetGDALDriverManager()->GetDriverByName( "JP2ECW" );
             if( poJ2KDriver == NULL )
             {
+                /* Try with Jasper as an alternate driver */
+                poJ2KDriver = 
+                    GetGDALDriverManager()->GetDriverByName( "JPEG2000" );
+            }
+            if( poJ2KDriver == NULL )
+            {
                 CPLError( 
                     CE_Failure, CPLE_AppDefined, 
                     "Unable to write JPEG2000 compressed NITF file.\n"
@@ -3434,15 +3440,36 @@ NITFDataset::NITFCreateCopy(
         GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
         CPLString osDSName;
 
-        osDSName.Printf( "J2K_SUBFILE:" CPL_FRMT_GUIB ",%d,%s", nImageOffset, -1,
-                         pszFilename );
-
+        if (EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
+        {
+            osDSName.Printf( "J2K_SUBFILE:" CPL_FRMT_GUIB ",%d,%s", nImageOffset, -1,
+                             pszFilename );
+        }
+        else
+        {
+            /* Jasper case */
+            osDSName.Printf( "/vsisubfile/" CPL_FRMT_GUIB "_%d,%s", nImageOffset, -1,
+                             pszFilename );
+        }
+                             
         NITFClose( psFile );
 
-        poJ2KDataset = 
-            poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
-                                     (char **)NITFJP2Options(papszOptions),
-                                     pfnProgress, pProgressData );
+        if (EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
+        {
+            poJ2KDataset = 
+                poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
+                                         (char **)NITFJP2Options(papszOptions),
+                                         pfnProgress, pProgressData );
+        }
+        else
+        {
+            /* Jasper case */
+            const char* apszOptions[] = { "FORMAT=JPC", NULL };
+            poJ2KDataset = 
+                poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
+                                         (char **)apszOptions,
+                                         pfnProgress, pProgressData );
+        }
         if( poJ2KDataset == NULL )
             return NULL;
 

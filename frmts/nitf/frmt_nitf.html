@@ -75,7 +75,8 @@ which allow for fast seeking to any block. (Starting with GDAL 1.7.0.)
 CreateCopy() and Create() methods. JPEG2000 compression is only available
 if the JP2ECW driver is available. The TARGET and PROFILE JP2ECW-specific
 creation options can be used. See the <a href="frmt_jp2ecw.html">JP2ECW driver
-documentation</a>
+documentation</a>. Starting with GDAL 1.7.0, if JP2ECW driver is not available,
+Jasper JPEG2000 driver can be used in the CreateCopy() case.
 </ul>
 </li>
 <p>
