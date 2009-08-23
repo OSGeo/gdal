@@ -1019,6 +1019,45 @@ def nitf_42():
     return 'success'
 
 ###############################################################################
+# Test CreateCopy() in IC=C8 with various JPEG2000 drivers
+
+def nitf_43(driver_to_test, options):
+
+    try:
+        jp2_drv = gdal.GetDriverByName( driver_to_test )
+    except:
+        jp2_drv = None
+
+    if jp2_drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
+
+    ds = gdal.Open('data/byte.tif')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf_43.ntf', ds, options = options, strict=0)
+    gdal.PopErrorHandler()
+    out_ds = None
+    out_ds = gdal.Open('tmp/nitf_43.ntf')
+    if out_ds.GetRasterBand(1).Checksum() == 4672:
+        ret = 'success'
+    else:
+        ret = 'fail'
+    out_ds = None
+    gdal.GetDriverByName('NITF').Delete('tmp/nitf_43.ntf')
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    return ret
+    
+def nitf_43_jasper():
+    return nitf_43('JPEG2000', ['IC=C8'])
+
+def nitf_43_jp2ecw():
+    return nitf_43('JP2ECW', ['IC=C8', 'TARGET=0'])
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -1350,6 +1389,46 @@ def nitf_online_14():
         pass
 
     return 'success'
+    
+###############################################################################
+# Test opening a IC=C8 NITF file with the various JPEG2000 drivers
+
+def nitf_online_15(driver_to_test):
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/p0_01/p0_01a.ntf', 'p0_01a.ntf'):
+        return 'skip'
+
+    try:
+        jp2_drv = gdal.GetDriverByName( driver_to_test )
+    except:
+        jp2_drv = None
+
+    if jp2_drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
+
+    ds = gdal.Open('tmp/cache/p0_01a.ntf')
+    if ds.GetRasterBand(1).Checksum() == 1054:
+        ret = 'success'
+    else:
+        ret = 'fail'
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    return ret
+
+def nitf_online_15_jp2ecw():
+    return nitf_online_15('JP2ECW')
+
+def nitf_online_15_jp2mrsid():
+    return nitf_online_15('JP2MrSID')
+
+def nitf_online_15_jp2kak():
+    return nitf_online_15('JP2KAK')
+
+def nitf_online_15_jasper():
+    return nitf_online_15('JPEG2000')
 
 ###############################################################################
 # Cleanup.
@@ -1458,6 +1537,8 @@ gdaltest_list = [
     nitf_40,
     nitf_41,
     nitf_42,
+    nitf_43_jasper,
+    nitf_43_jp2ecw,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
@@ -1472,6 +1553,10 @@ gdaltest_list = [
     nitf_online_12,
     nitf_online_13,
     nitf_online_14,
+    nitf_online_15_jp2ecw,
+    nitf_online_15_jp2mrsid,
+    nitf_online_15_jp2kak,
+    nitf_online_15_jasper,
     nitf_cleanup ]
 
 if __name__ == '__main__':
