@@ -277,6 +277,53 @@ def jpeg2000_online_4():
 
     return 'success'
 
+###############################################################################
+# Try reading JPEG2000 with color table
+
+def jpeg2000_online_5():
+
+    if gdaltest.jpeg2000_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9.jp2', 'file9.jp2'):
+        return 'skip'
+
+    ds = gdal.Open('tmp/cache/file9.jp2')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
+    if cs1 != 48954 or cs2 != 4939 or cs3 != 17734:
+        print cs1, cs2, cs3
+        gdaltest.post_reason('Did not get expected checksums')
+        return 'fail'
+        
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Try reading YCbCr JPEG2000 as RGB
+
+def jpeg2000_online_6():
+
+    if gdaltest.jpeg2000_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_03/file3.jp2', 'file3.jp2'):
+        return 'skip'
+
+    ds = gdal.Open('tmp/cache/file3.jp2')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
+    if cs1 != 25337 or cs2 != 28262 or cs3 != 59580:
+        print cs1, cs2, cs3
+        gdaltest.post_reason('Did not get expected checksums')
+        return 'fail'
+        
+    ds = None
+
+    return 'success'
 
 ###############################################################################
 def jpeg2000_cleanup():
@@ -296,6 +343,8 @@ gdaltest_list = [
     jpeg2000_online_2,
     jpeg2000_online_3,
     jpeg2000_online_4,
+    jpeg2000_online_5,
+    jpeg2000_online_6,
     jpeg2000_cleanup ]
 
 if __name__ == '__main__':
