@@ -32,6 +32,7 @@
 #include "gdaljp2metadata.h"
 
 #include <jasper/jasper.h>
+#include "jpeg2000_vsil_io.h"
 
 CPL_CVSID("$Id$");
 
@@ -170,7 +171,6 @@ class JPEG2000Dataset : public GDALPamDataset
 {
     friend class JPEG2000RasterBand;
 
-    FILE        *fp;
     jas_stream_t *psStream;
     jas_image_t *psImage;
     int         iFormat;
@@ -180,6 +180,8 @@ class JPEG2000Dataset : public GDALPamDataset
     double      adfGeoTransform[6];
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
+    
+    int         DecodeImage();
 
   public:
                 JPEG2000Dataset();
@@ -203,6 +205,9 @@ class JPEG2000Dataset : public GDALPamDataset
 class JPEG2000RasterBand : public GDALPamRasterBand
 {
     friend class JPEG2000Dataset;
+    
+    // NOTE: poDS may be altered for NITF/JPEG2000 files!
+    JPEG2000Dataset     *poGDS;
 
     jas_matrix_t        *psMatrix;
 
@@ -225,6 +230,7 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
 
 {
     this->poDS = poDS;
+    poGDS = poDS;
     this->nBand = nBand;
 
     // XXX: JasPer can't handle data with depth > 32 bits
@@ -276,18 +282,11 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 {
     int             i, j;
-    JPEG2000Dataset *poGDS = (JPEG2000Dataset *) poDS;
 
     // Decode image from the stream, if not yet
-    if ( !poGDS->psImage )
+    if ( !poGDS->DecodeImage() )
     {
-        poGDS->psImage = jas_image_decode(poGDS->psStream, poGDS->iFormat, 0);
-        if ( !poGDS->psImage )
-        {
-            CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
-                      jas_image_fmttostr( poGDS->iFormat ), poGDS->iFormat );
-            return CE_Failure;
-        }
+        return CE_Failure;
     }
 
     // Now we can calculate the pixel offset of the top left by multiplying
@@ -359,18 +358,10 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
 {
-    JPEG2000Dataset *poGDS = (JPEG2000Dataset *) poDS;
-
     // Decode image from the stream, if not yet
-    if ( !poGDS->psImage )
+    if ( !poGDS->DecodeImage() )
     {
-        if ( !( poGDS->psImage =
-                jas_image_decode(poGDS->psStream, poGDS->iFormat, 0) ) )
-        {
-            CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
-                      jas_image_fmttostr( poGDS->iFormat ), poGDS->iFormat );
-            return GCI_Undefined;
-        }
+        return GCI_Undefined;
     }
     
     if ( jas_clrspc_fam( jas_image_clrspc( poGDS->psImage ) ) ==
@@ -409,7 +400,6 @@ GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
 
 JPEG2000Dataset::JPEG2000Dataset()
 {
-    fp = NULL;
     psStream = NULL;
     psImage = NULL;
     nBands = 0;
@@ -438,7 +428,7 @@ JPEG2000Dataset::~JPEG2000Dataset()
         jas_stream_close( psStream );
     if ( psImage )
         jas_image_destroy( psImage );
-    jas_image_clearfmts();
+
     if ( pszProjection )
         CPLFree( pszProjection );
     if( nGCPCount > 0 )
@@ -446,9 +436,46 @@ JPEG2000Dataset::~JPEG2000Dataset()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
-    if( fp != NULL )
-        VSIFClose( fp );
 }
+
+/************************************************************************/
+/*                             DecodeImage()                            */
+/************************************************************************/
+int JPEG2000Dataset::DecodeImage()
+{
+    if (psImage)
+        return TRUE;
+    if ( !( psImage = jas_image_decode(psStream, iFormat, 0) ) )
+    {
+        CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
+                  jas_image_fmttostr( iFormat ), iFormat );
+        return FALSE;
+    }
+    
+    /* Ask for YCbCr -> RGB translation */
+    if ( jas_clrspc_fam( jas_image_clrspc( psImage ) ) == 
+              JAS_CLRSPC_FAM_YCBCR )
+    {
+        jas_image_t *psRGBImage;
+        jas_cmprof_t *psRGBProf;
+        CPLDebug( "JPEG2000", "forcing conversion to sRGB");
+        if (!(psRGBProf = jas_cmprof_createfromclrspc(JAS_CLRSPC_SRGB))) {
+            CPLDebug( "JPEG2000", "cannot create sRGB profile");
+            return TRUE;
+        }
+        if (!(psRGBImage = jas_image_chclrspc(psImage, psRGBProf, JAS_CMXFORM_INTENT_PER))) {
+            CPLDebug( "JPEG2000", "cannot convert to sRGB");
+            jas_cmprof_destroy(psRGBProf);
+            return TRUE;
+        }
+        jas_image_destroy(psImage);
+        jas_cmprof_destroy(psRGBProf);
+        psImage = psRGBImage;
+    }
+    
+    return TRUE;
+}
+
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
@@ -508,6 +535,16 @@ const GDAL_GCP *JPEG2000Dataset::GetGCPs()
     return pasGCPList;
 }
 
+static void JPEG2000Init()
+{
+    static int bHasInit = FALSE;
+    if (!bHasInit)
+    {
+        bHasInit = TRUE;
+        jas_init();
+    }
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -519,13 +556,9 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     char        *pszFormatName = NULL;
     jas_stream_t *sS;
 
-    if( poOpenInfo->fp == NULL )
-        return NULL;
-
-    jas_init();
-    if( !(sS = jas_stream_fopen( poOpenInfo->pszFilename, "rb" )) )
+    JPEG2000Init();
+    if( !(sS = JPEG2000_VSIL_fopen( poOpenInfo->pszFilename, "rb" )) )
     {
-        jas_image_clearfmts();
         return NULL;
     }
 
@@ -533,7 +566,6 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ( !(pszFormatName = jas_image_fmttostr( iFormat )) )
     {
         jas_stream_close( sS );
-        jas_image_clearfmts();
         return NULL;
     }
     if ( strlen( pszFormatName ) < 3 ||
@@ -544,7 +576,6 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "JPEG2000", "JasPer reports file is format type `%s'.", 
                   pszFormatName );
         jas_stream_close( sS );
-        jas_image_clearfmts();
         return NULL;
     }
 
@@ -557,8 +588,6 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new JPEG2000Dataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
     poDS->psStream = sS;
     poDS->iFormat = iFormat;
 
@@ -657,13 +686,9 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        poDS->psImage = jas_image_decode(poDS->psStream, poDS->iFormat, 0);
-        if ( !poDS->psImage )
+        if ( !poDS->DecodeImage() )
         {
             delete poDS;
-            CPLDebug( "JPEG2000", "Unable to decode image %s. Format: %s, %d",
-                      poOpenInfo->pszFilename,
-                      jas_image_fmttostr( poDS->iFormat ), poDS->iFormat );
             return NULL;
         }
 
@@ -763,8 +788,9 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jas_stream_t        *psStream;
     jas_image_t         *psImage;
 
-    jas_init();
-    if( !(psStream = jas_stream_fopen( pszFilename, "w+b" )) )
+    JPEG2000Init();
+    const char* pszAccess = EQUALN(pszFilename, "/vsisubfile/", 12) ? "r+b" : "w+b";
+    if( !(psStream = JPEG2000_VSIL_fopen( pszFilename, pszAccess) ) )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to create file %s.\n", 
                   pszFilename );
@@ -1020,7 +1046,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLFree( paiScanline );
                 CPLFree( sComps );
                 jas_image_destroy( psImage );
-                jas_image_clearfmts();
                 return NULL;
             }
             jp2_box_destroy( box );
@@ -1036,7 +1061,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLFree( paiScanline );
                 CPLFree( sComps );
                 jas_image_destroy( psImage );
-                jas_image_clearfmts();
                 return NULL;
             }
 #ifdef HAVE_JASPER_UUID
@@ -1053,7 +1077,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLFree( paiScanline );
             CPLFree( sComps );
             jas_image_destroy( psImage );
-            jas_image_clearfmts();
             return NULL;
         }
     }
@@ -1064,7 +1087,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     CPLFree( paiScanline );
     CPLFree( sComps );
     jas_image_destroy( psImage );
-    jas_image_clearfmts();
     if ( jas_stream_close( psStream ) )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to close file %s.\n",
@@ -1120,6 +1142,8 @@ void GDALRegister_JPEG2000()
                                    "Byte Int16 UInt16 Int32 UInt32" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+        
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = JPEG2000Dataset::Open;
         poDriver->pfnCreateCopy = JPEG2000CreateCopy;
