@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	jpeg2000dataset.o
+OBJ	=	jpeg2000dataset.o jpeg2000_vsil_io.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(JASPER_FLAGS) $(CPPFLAGS)
 
