@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  VSI Virtual File System
- * Purpose:  Implementation of Memory Buffer virtual IO functions.
+ * Purpose:  Implementation of subfile virtual IO functions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -49,7 +49,7 @@ class VSISubFileHandle : public VSIVirtualHandle
   public:
     FILE          *fp;
     vsi_l_offset  nSubregionOffset;
-    int           nSubregionSize;
+    vsi_l_offset  nSubregionSize;
     int           bUpdate;
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
@@ -276,7 +276,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 
     poHandle->fp = fp;
     poHandle->nSubregionOffset = nOff;
-    poHandle->nSubregionSize = (int)nSize;
+    poHandle->nSubregionSize = nSize;
 
     VSIFSeekL( fp, nOff, SEEK_SET );
 
