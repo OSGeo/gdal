@@ -1543,8 +1543,9 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      If it is a subfile, read the JPEG header.                       */
 /* -------------------------------------------------------------------- */
-    int    bIsSubfile = FALSE;
-    GUIntBig    subfile_offset = 0, subfile_size;
+    int bIsSubfile = FALSE;
+    GUIntBig subfile_offset = 0;
+    GUIntBig subfile_size = 0;
     const char *real_filename = poOpenInfo->pszFilename;
     int nQLevel = -1;
 
