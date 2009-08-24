@@ -1412,6 +1412,8 @@ def nitf_online_15(driver_to_test):
     if ds.GetRasterBand(1).Checksum() == 1054:
         ret = 'success'
     else:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason( 'Did not get expected checksums' );
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -1421,15 +1423,128 @@ def nitf_online_15(driver_to_test):
 def nitf_online_15_jp2ecw():
     return nitf_online_15('JP2ECW')
 
+# untested yet
 def nitf_online_15_jp2mrsid():
     return nitf_online_15('JP2MrSID')
 
+# untested yet
 def nitf_online_15_jp2kak():
     return nitf_online_15('JP2KAK')
 
 def nitf_online_15_jasper():
     return nitf_online_15('JPEG2000')
 
+###############################################################################
+# Test opening a IC=C8 NITF file which has 256-entry palette/LUT in both JP2 Header and image Subheader
+# We expect RGB expansion from some JPEG2000 driver
+
+def nitf_online_16(driver_to_test):
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_jp2_2places.ntf', 'file9_jp2_2places.ntf'):
+        return 'skip'
+
+    try:
+        jp2_drv = gdal.GetDriverByName( driver_to_test )
+    except:
+        jp2_drv = None
+
+    if jp2_drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
+
+    ds = gdal.Open('tmp/cache/file9_jp2_2places.ntf')
+    # JPEG2000 driver
+    if ds.RasterCount == 3 and \
+       ds.GetRasterBand(1).Checksum() == 48954 and \
+       ds.GetRasterBand(2).Checksum() == 4939 and \
+       ds.GetRasterBand(3).Checksum() == 17734 :
+        ret = 'success'
+        
+    elif ds.RasterCount == 1 and \
+       ds.GetRasterBand(1).Checksum() == 47664 and \
+       ds.GetRasterBand(1).GetRasterColorTable() != None:
+        print 'strange, this driver does not do table color expansion... thats ok though'
+        ret = 'success'
+    else:
+        print ds.RasterCount
+        for i in range(ds.RasterCount):
+            print ds.GetRasterBand(i+1).Checksum()
+        print ds.GetRasterBand(1).GetRasterColorTable()
+        gdaltest.post_reason( 'Did not get expected checksums' );
+        ret = 'fail'
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    return ret
+
+# untested yet
+def nitf_online_16_jp2ecw():
+    return nitf_online_16('JP2ECW')
+
+# untested yet
+def nitf_online_16_jp2mrsid():
+    return nitf_online_16('JP2MrSID')
+
+# untested yet
+def nitf_online_16_jp2kak():
+    return nitf_online_16('JP2KAK')
+
+def nitf_online_16_jasper():
+    return nitf_online_16('JPEG2000')
+
+
+###############################################################################
+# Test opening a IC=C8 NITF file which has 256-entry/LUT in Image Subheader, JP2 header completely removed
+# We don't expect RGB expansion from the JPEG2000 driver
+
+def nitf_online_17(driver_to_test):
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_j2c.ntf', 'file9_j2c.ntf'):
+        return 'skip'
+
+    try:
+        jp2_drv = gdal.GetDriverByName( driver_to_test )
+    except:
+        jp2_drv = None
+
+    if jp2_drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
+
+    ds = gdal.Open('tmp/cache/file9_j2c.ntf')
+    if ds.RasterCount == 1 and \
+       ds.GetRasterBand(1).Checksum() == 47664 and \
+       ds.GetRasterBand(1).GetRasterColorTable() != None:
+        ret = 'success'
+    else:
+        print ds.RasterCount
+        for i in range(ds.RasterCount):
+            print ds.GetRasterBand(i+1).Checksum()
+        print ds.GetRasterBand(1).GetRasterColorTable()
+        gdaltest.post_reason( 'Did not get expected checksums' );
+        ret = 'fail'
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    return ret
+
+# untested yet
+def nitf_online_17_jp2ecw():
+    return nitf_online_17('JP2ECW')
+
+# untested yet
+def nitf_online_17_jp2mrsid():
+    return nitf_online_17('JP2MrSID')
+
+# untested yet
+def nitf_online_17_jp2kak():
+    return nitf_online_17('JP2KAK')
+
+def nitf_online_17_jasper():
+    return nitf_online_17('JPEG2000')
+    
 ###############################################################################
 # Cleanup.
 
@@ -1557,6 +1672,14 @@ gdaltest_list = [
     nitf_online_15_jp2mrsid,
     nitf_online_15_jp2kak,
     nitf_online_15_jasper,
+    nitf_online_16_jp2ecw,
+    nitf_online_16_jp2mrsid,
+    nitf_online_16_jp2kak,
+    nitf_online_16_jasper,
+    nitf_online_17_jp2ecw,
+    nitf_online_17_jp2mrsid,
+    nitf_online_17_jp2kak,
+    nitf_online_17_jasper,
     nitf_cleanup ]
 
 if __name__ == '__main__':
