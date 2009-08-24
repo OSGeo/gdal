@@ -1037,15 +1037,25 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->poJ2KDataset = (GDALPamDataset *) 
                 GDALOpen( osDSName, GA_ReadOnly );
+                
+            if( poDS->poJ2KDataset == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Unable to open JPEG2000 image within NITF file.\n"
+                          "Is the JP2KAK driver available?" );
+                delete poDS;
+                return NULL;
+            }
+            
             poDS->poJ2KDataset->SetPamFlags( 
                 poDS->poJ2KDataset->GetPamFlags() | GPF_NOSAVE );
         }
 
-        if( poDS->poJ2KDataset == NULL )
+        if( poDS->GetRasterXSize() != poDS->poJ2KDataset->GetRasterXSize()
+            || poDS->GetRasterYSize() != poDS->poJ2KDataset->GetRasterYSize())
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unable to open JPEG2000 image within NITF file.\n"
-                      "Is the JP2KAK driver available?" );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "JPEG2000 data stream has not the same dimensions as the NITF file.");
             delete poDS;
             return NULL;
         }
@@ -1118,7 +1128,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             delete poDS;
             return NULL;
         }
-
+        
+        if( poDS->GetRasterXSize() != poDS->poJPEGDataset->GetRasterXSize()
+            || poDS->GetRasterYSize() != poDS->poJPEGDataset->GetRasterYSize())
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "JPEG data stream has not the same dimensions as the NITF file.");
+            delete poDS;
+            return NULL;
+        }
+        
         poDS->poJPEGDataset->SetPamFlags( 
             poDS->poJPEGDataset->GetPamFlags() | GPF_NOSAVE );
 
