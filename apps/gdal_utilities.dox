@@ -1579,6 +1579,18 @@ Usage:
                 [-alpha]
                 [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-quiet]
     where color_text_file contains lines of the format "elevation_value red green blue"
+    
+- To generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation raster:
+    gdaldem TRI input_dem output_TRI_map
+                [-b Band (default=1)] [-of format] [-quiet]
+            
+- To generate a Topographic Position Index (TPI) map from any GDAL-supported elevation raster:
+    gdaldem TPI input_dem output_TPI_map
+                [-b Band (default=1)] [-of format] [-quiet]
+            
+- To generate a roughness map from any GDAL-supported elevation raster:
+    gdaldem roughness input_dem output_roughness_map
+                [-b Band (default=1)] [-of format] [-quiet]
 
 Notes :
   Scale is the ratio of vertical units to horizontal
@@ -1589,12 +1601,15 @@ Notes :
 \section gdaldem_description DESCRIPTION
 \endif
 
-This utility has 4 different modes :
+This utility has 7 different modes :
 <dl>
 <dt>\ref gdaldem_hillshade</dt><dd>to generate a shaded relief map from any GDAL-supported elevation raster</dd>
 <dt>\ref gdaldem_slope</dt><dd>to generate a slope map from any GDAL-supported elevation raster</dd>
 <dt>\ref gdaldem_aspect</dt><dd>to generate an aspect map from any GDAL-supported elevation raster</dd>
 <dt>\ref gdaldem_color_relief</dt><dd>to generate a color relief map from any GDAL-supported elevation raster</dd>
+<dt>\ref gdaldem_TRI</dt><dd>to generate a map of Terrain Ruggedness Index from any GDAL-supported elevation raster</dd>
+<dt>\ref gdaldem_TPI</dt><dd>to generate a map of Topographic Position Index from any GDAL-supported elevation raster</dd>
+<dt>\ref gdaldem_roughness</dt><dd>to generate a map of roughness from any GDAL-supported elevation raster</dd>
 </dl>
 
 The following general options are available :
@@ -1694,9 +1709,30 @@ For example :
 nv     0   0   0   0 
 \endverbatim
 
+\subsection gdaldem_TRI TRI
+
+This command outputs a single-band raster with values computed from the elevation.
+TRI stands for Terrain Ruggedness Index, which is defined as the mean difference between a central pixel and its surrounding cells (see Wilson et al 2007, Marine Geodesy 30:3-35).
+
+There are no specific options.
+
+\subsection gdaldem_TPI TPI
+
+This command outputs a single-band raster with values computed from the elevation.
+TPI stands for Topographic Position Index, which is defined as the difference between a central pixel and the mean of its surrounding cells (see Wilson et al 2007, Marine Geodesy 30:3-35).
+
+There are no specific options.
+
+\subsection gdaldem_roughness roughness
+
+This command outputs a single-band raster with values computed from the elevation.
+Roughness is the the largest inter-cell difference of a central pixel and its surrounding cell, as defined in Wilson et al (2007, Marine Geodesy 30:3-35).
+
+There are no specific options.
+
 
 \section gdaldem_author AUTHORS
-Matthew Perry <perrygeo@gmail.com>, Even Rouault <even.rouault@mines-paris.org>, Howard Butler <hobu.inc@gmail.com>
+Matthew Perry <perrygeo@gmail.com>, Even Rouault <even.rouault@mines-paris.org>, Howard Butler <hobu.inc@gmail.com>, Chris Yesson <chris.yesson@ioz.ac.uk>
 
 Derived from code by Michael Shapiro, Olga Waupotitsch, Marjorie Larson, Jim Westervelt :
 U.S. Army CERL, 1993. GRASS 4.1 Reference Manual. U.S. Army Corps of Engineers,
