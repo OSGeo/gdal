@@ -35,6 +35,7 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
+#include "gdal_proxy.h"
 
 CPL_CVSID("$Id$");
 
@@ -60,10 +61,12 @@ static int NITFWriteJPEGImage( GDALDataset *, FILE *, vsi_l_offset, char **,
 /************************************************************************/
 
 class NITFRasterBand;
+class NITFWrapperRasterBand;
 
 class NITFDataset : public GDALPamDataset
 {
     friend class NITFRasterBand;
+    friend class NITFWrapperRasterBand;
 
     NITFFile    *psFile;
     NITFImage   *psImage;
@@ -138,6 +141,65 @@ class NITFDataset : public GDALPamDataset
                     GDALProgressFunc pfnProgress, void * pProgressData );
 
 };
+
+/************************************************************************/
+/*                       NITFMakeColorTable()                           */
+/************************************************************************/
+
+static GDALColorTable* NITFMakeColorTable(NITFImage* psImage, NITFBandInfo *psBandInfo)
+{
+    GDALColorTable* poColorTable = NULL;
+
+    if( psBandInfo->nSignificantLUTEntries > 0 )
+    {
+        int  iColor;
+
+        poColorTable = new GDALColorTable();
+
+        for( iColor = 0; iColor < psBandInfo->nSignificantLUTEntries; iColor++)
+        {
+            GDALColorEntry sEntry;
+
+            sEntry.c1 = psBandInfo->pabyLUT[  0 + iColor];
+            sEntry.c2 = psBandInfo->pabyLUT[256 + iColor];
+            sEntry.c3 = psBandInfo->pabyLUT[512 + iColor];
+            sEntry.c4 = 255;
+
+            poColorTable->SetColorEntry( iColor, &sEntry );
+        }
+
+        if (psImage->bNoDataSet)
+        {
+            GDALColorEntry sEntry;
+            sEntry.c1 = sEntry.c2 = sEntry.c3 = sEntry.c4 = 0;
+            poColorTable->SetColorEntry( psImage->nNoDataValue, &sEntry );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We create a color table for 1 bit data too...                   */
+/* -------------------------------------------------------------------- */
+    if( poColorTable == NULL && psImage->nBitsPerSample == 1 )
+    {
+        GDALColorEntry sEntry;
+
+        poColorTable = new GDALColorTable();
+
+        sEntry.c1 = 0;
+        sEntry.c2 = 0;
+        sEntry.c3 = 0;
+        sEntry.c4 = 255;
+        poColorTable->SetColorEntry( 0, &sEntry );
+
+        sEntry.c1 = 255;
+        sEntry.c2 = 255;
+        sEntry.c3 = 255;
+        sEntry.c4 = 255;
+        poColorTable->SetColorEntry( 1, &sEntry );
+    }
+    
+    return poColorTable;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -238,55 +300,8 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Do we have a color table?                                       */
 /* -------------------------------------------------------------------- */
-    poColorTable = NULL;
-
-    if( psBandInfo->nSignificantLUTEntries > 0 )
-    {
-        int  iColor;
-
-        poColorTable = new GDALColorTable();
-
-        for( iColor = 0; iColor < psBandInfo->nSignificantLUTEntries; iColor++)
-        {
-            GDALColorEntry sEntry;
-
-            sEntry.c1 = psBandInfo->pabyLUT[  0 + iColor];
-            sEntry.c2 = psBandInfo->pabyLUT[256 + iColor];
-            sEntry.c3 = psBandInfo->pabyLUT[512 + iColor];
-            sEntry.c4 = 255;
-
-            poColorTable->SetColorEntry( iColor, &sEntry );
-        }
-
-        if (psImage->bNoDataSet)
-        {
-            GDALColorEntry sEntry;
-            sEntry.c1 = sEntry.c2 = sEntry.c3 = sEntry.c4 = 0;
-            poColorTable->SetColorEntry( psImage->nNoDataValue, &sEntry );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      We create a color table for 1 bit data too...                   */
-/* -------------------------------------------------------------------- */
-    if( poColorTable == NULL && psImage->nBitsPerSample == 1 )
-    {
-        GDALColorEntry sEntry;
-
-        poColorTable = new GDALColorTable();
-
-        sEntry.c1 = 0;
-        sEntry.c2 = 0;
-        sEntry.c3 = 0;
-        sEntry.c4 = 255;
-        poColorTable->SetColorEntry( 0, &sEntry );
-
-        sEntry.c1 = 255;
-        sEntry.c2 = 255;
-        sEntry.c3 = 255;
-        sEntry.c4 = 255;
-        poColorTable->SetColorEntry( 1, &sEntry );
-    }
+    poColorTable = NITFMakeColorTable(psImage,
+                                      psBandInfo);
 
     if( psImage->nBitsPerSample == 1 
     ||  psImage->nBitsPerSample == 3
@@ -709,6 +724,122 @@ void NITFRasterBand::Unpack( GByte* pData )
 
 /************************************************************************/
 /* ==================================================================== */
+/*                       NITFWrapperRasterBand                          */
+/* ==================================================================== */
+/************************************************************************/
+
+/* This class is used to wrap bands from JPEG or JPEG2000 datasets in */
+/* bands of the NITF dataset. Previously a trick was applied in the */
+/* relevant drivers to define a SetColorInterpretation() method and */
+/* to make sure they keep the proper pointer to their "natural" dataset */
+/* This trick is no longer necessary with the NITFWrapperRasterBand */
+/* We just override the few specific methods where we want that */
+/* the NITFWrapperRasterBand behaviour differs from the JPEG/JPEG2000 one */
+
+class NITFWrapperRasterBand : public GDALProxyRasterBand
+{
+  GDALRasterBand* poBaseBand;
+  GDALColorTable* poColorTable;
+  GDALColorInterp eInterp;
+
+  protected:
+    /* Pure virtual method of the GDALProxyRasterBand */
+    virtual GDALRasterBand* RefUnderlyingRasterBand();
+
+  public:
+                   NITFWrapperRasterBand( NITFDataset * poDS,
+                                          GDALRasterBand* poBaseBand,
+                                          int nBand);
+                  ~NITFWrapperRasterBand();
+    
+    /* Methods from GDALRasterBand we want to override */
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr          SetColorInterpretation( GDALColorInterp );
+    
+    virtual GDALColorTable *GetColorTable();
+
+    /* Specific method */
+    void                    SetColorTableFromNITFBandInfo(); 
+};
+
+/************************************************************************/
+/*                      NITFWrapperRasterBand()                         */
+/************************************************************************/
+
+NITFWrapperRasterBand::NITFWrapperRasterBand( NITFDataset * poDS,
+                                              GDALRasterBand* poBaseBand,
+                                              int nBand)
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    this->poBaseBand = poBaseBand;
+    eDataType = poBaseBand->GetRasterDataType();
+    poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    poColorTable = NULL;
+    eInterp = poBaseBand->GetColorInterpretation();
+}
+
+/************************************************************************/
+/*                      ~NITFWrapperRasterBand()                        */
+/************************************************************************/
+
+NITFWrapperRasterBand::~NITFWrapperRasterBand()
+{
+    if( poColorTable != NULL )
+        delete poColorTable;
+}
+
+/************************************************************************/
+/*                     RefUnderlyingRasterBand()                        */
+/************************************************************************/
+
+/* We don't need ref-counting. Just return the base band */
+GDALRasterBand* NITFWrapperRasterBand::RefUnderlyingRasterBand()
+{
+	return poBaseBand;
+}
+
+/************************************************************************/
+/*                            GetColorTable()                           */
+/************************************************************************/
+
+GDALColorTable *NITFWrapperRasterBand::GetColorTable()
+{
+    return poColorTable;
+}
+
+/************************************************************************/
+/*                 SetColorTableFromNITFBandInfo()                      */
+/************************************************************************/
+
+void NITFWrapperRasterBand::SetColorTableFromNITFBandInfo()
+{
+    NITFDataset* poGDS = (NITFDataset* )poDS;
+    poColorTable = NITFMakeColorTable(poGDS->psImage,
+                                      poGDS->psImage->pasBandInfo + nBand - 1);
+}
+
+/************************************************************************/
+/*                        GetColorInterpretation()                      */
+/************************************************************************/
+
+GDALColorInterp NITFWrapperRasterBand::GetColorInterpretation()
+{
+    return eInterp;
+}
+
+/************************************************************************/
+/*                        SetColorInterpretation()                      */
+/************************************************************************/
+
+CPLErr NITFWrapperRasterBand::SetColorInterpretation( GDALColorInterp eInterp)
+{
+    this->eInterp = eInterp;
+    return CE_None;
+}
+
+/************************************************************************/
+/* ==================================================================== */
 /*                             NITFDataset                              */
 /* ==================================================================== */
 /************************************************************************/
@@ -797,14 +928,7 @@ NITFDataset::~NITFDataset()
 /* -------------------------------------------------------------------- */
     if( poJ2KDataset != NULL )
     {
-        int i;
-
         GDALClose( (GDALDatasetH) poJ2KDataset );
-        
-        // the bands are really jpeg2000 bands ... remove them 
-        // from the NITF list so they won't get destroyed twice.
-        for( i = 0; i < nBands && papoBands != NULL; i++ )
-            papoBands[i] = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -826,14 +950,7 @@ NITFDataset::~NITFDataset()
 /* -------------------------------------------------------------------- */
     if( poJPEGDataset != NULL )
     {
-        int i;
-
         GDALClose( (GDALDatasetH) poJPEGDataset );
-        
-        // the bands are really jpeg bands ... remove them 
-        // from the NITF list so they won't get destroyed twice.
-        for( i = 0; i < nBands && papoBands != NULL; i++ )
-            papoBands[i] = NULL;
     }
 
     CPLFree( panJPEGBlockOffset );
@@ -1013,7 +1130,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      open the image data as a JPEG2000 dataset.                      */
 /* -------------------------------------------------------------------- */
     int nUsableBands = 0;
-    int		iBand;
+    int iBand;
+    int bSetColorInterpretation = TRUE;
+    int bSetColorTable = FALSE;
 
     if( psImage )
         nUsableBands = psImage->nBands;
@@ -1059,6 +1178,32 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             delete poDS;
             return NULL;
         }
+        
+        if ( nUsableBands == 1)
+        {
+            const char* pszIREP = CSLFetchNameValue(psImage->papszMetadata, "NITF_IREP");
+            if (pszIREP != NULL && EQUAL(pszIREP, "RGB/LUT"))
+            {
+                if (poDS->poJ2KDataset->GetRasterCount() == 3)
+                {
+/* Test case : http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_jp2_2places.ntf */
+/* 256-entry palette/LUT in both JP2 Header and image Subheader */
+/* In this case, the JPEG2000 driver will probably do the RGB expension */
+                    nUsableBands = 3;
+                    bSetColorInterpretation = FALSE;
+                }
+                else if (poDS->poJ2KDataset->GetRasterCount() == 1 &&
+                         psImage->pasBandInfo[0].nSignificantLUTEntries > 0 &&
+                         poDS->poJ2KDataset->GetRasterBand(1)->GetColorTable() == NULL)
+                {
+/* Test case : http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_j2c.ntf */
+/* 256-entry/LUT in Image Subheader, JP2 header completely removed */
+/* The JPEG2000 driver will decode it as a grey band */
+/* So we must set the color table on the wrapper band */
+                    bSetColorTable = TRUE;
+                }
+            }
+        }
 
         if( poDS->poJ2KDataset->GetRasterCount() < nUsableBands )
         {
@@ -1067,31 +1212,6 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                       "because some channels have differing resolutions." );
             
             nUsableBands = poDS->poJ2KDataset->GetRasterCount();
-        }
-
-        // Force NITF derived color space info 
-        for( iBand = 0; iBand < nUsableBands; iBand++ )
-        {
-            NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
-            GDALRasterBand *poBand=poDS->poJ2KDataset->GetRasterBand(iBand+1);
-            
-            CPLPushErrorHandler( CPLQuietErrorHandler );
-            if( EQUAL(psBandInfo->szIREPBAND,"R") )
-                poBand->SetColorInterpretation( GCI_RedBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"G") )
-                poBand->SetColorInterpretation( GCI_GreenBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"B") )
-                poBand->SetColorInterpretation( GCI_BlueBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"M") )
-                poBand->SetColorInterpretation( GCI_GrayIndex );
-            if( EQUAL(psBandInfo->szIREPBAND,"Y") )
-                poBand->SetColorInterpretation( GCI_YCbCr_YBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"Cb") )
-                poBand->SetColorInterpretation( GCI_YCbCr_CbBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
-                poBand->SetColorInterpretation( GCI_YCbCr_CrBand );
-            CPLPopErrorHandler();
-            CPLErrorReset();
         }
     }
 
@@ -1149,44 +1269,56 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             
             nUsableBands = poDS->poJPEGDataset->GetRasterCount();
         }
-
-        // Force NITF derived color space info 
-        for( iBand = 0; iBand < nUsableBands; iBand++ )
-        {
-            NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
-            GDALRasterBand *poBand=poDS->poJPEGDataset->GetRasterBand(iBand+1);
-
-            CPLPushErrorHandler( CPLQuietErrorHandler );
-            if( EQUAL(psBandInfo->szIREPBAND,"R") )
-                poBand->SetColorInterpretation( GCI_RedBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"G") )
-                poBand->SetColorInterpretation( GCI_GreenBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"B") )
-                poBand->SetColorInterpretation( GCI_BlueBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"M") )
-                poBand->SetColorInterpretation( GCI_GrayIndex );
-            if( EQUAL(psBandInfo->szIREPBAND,"Y") )
-                poBand->SetColorInterpretation( GCI_YCbCr_YBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"Cb") )
-                poBand->SetColorInterpretation( GCI_YCbCr_CbBand );
-            if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
-                poBand->SetColorInterpretation( GCI_YCbCr_CrBand );
-            CPLPopErrorHandler();
-            CPLErrorReset();
-        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+
+    GDALDataset*    poBaseDS = NULL;
+    if (poDS->poJ2KDataset != NULL)
+        poBaseDS = poDS->poJ2KDataset;
+    else if (poDS->poJPEGDataset != NULL)
+        poBaseDS = poDS->poJPEGDataset;
+
     for( iBand = 0; iBand < nUsableBands; iBand++ )
     {
-        if( poDS->poJ2KDataset != NULL )
-            poDS->SetBand( iBand+1, 
-                           poDS->poJ2KDataset->GetRasterBand(iBand+1) );
-        else if( poDS->poJPEGDataset != NULL )
-            poDS->SetBand( iBand+1, 
-                           poDS->poJPEGDataset->GetRasterBand(iBand+1) );
+        if( poBaseDS != NULL)
+        {
+            GDALRasterBand* poBaseBand =
+                poBaseDS->GetRasterBand(iBand+1);
+            NITFWrapperRasterBand* poBand =
+                new NITFWrapperRasterBand(poDS, poBaseBand, iBand+1 );
+                
+            NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
+            if (bSetColorInterpretation)
+            {
+                /* FIXME? Does it make sense if the JPEG/JPEG2000 driver decodes */
+                /* YCbCr data as RGB. We probably don't want to set */
+                /* the color interpretation as Y, Cb, Cr */
+                if( EQUAL(psBandInfo->szIREPBAND,"R") )
+                    poBand->SetColorInterpretation( GCI_RedBand );
+                if( EQUAL(psBandInfo->szIREPBAND,"G") )
+                    poBand->SetColorInterpretation( GCI_GreenBand );
+                if( EQUAL(psBandInfo->szIREPBAND,"B") )
+                    poBand->SetColorInterpretation( GCI_BlueBand );
+                if( EQUAL(psBandInfo->szIREPBAND,"M") )
+                    poBand->SetColorInterpretation( GCI_GrayIndex );
+                if( EQUAL(psBandInfo->szIREPBAND,"Y") )
+                    poBand->SetColorInterpretation( GCI_YCbCr_YBand );
+                if( EQUAL(psBandInfo->szIREPBAND,"Cb") )
+                    poBand->SetColorInterpretation( GCI_YCbCr_CbBand );
+                if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
+                    poBand->SetColorInterpretation( GCI_YCbCr_CrBand );
+            }
+            if (bSetColorTable)
+            {
+                poBand->SetColorTableFromNITFBandInfo();
+                poBand->SetColorInterpretation( GCI_PaletteIndex );
+            }
+            
+            poDS->SetBand( iBand+1, poBand );
+        }
         else
         {
             GDALRasterBand* poBand = new NITFRasterBand( poDS, iBand+1 );
