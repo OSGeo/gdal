@@ -287,7 +287,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     const char *pszDataType = CPLGetXMLValue( psTree, "dataType", NULL);
     if( pszDataType != NULL )
     {
-		eDataType = GDALGetDataTypeByName(pszDataType);
+        eDataType = GDALGetDataTypeByName(pszDataType);
     }
 
 /* -------------------------------------------------------------------- */
@@ -311,7 +311,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     if( CPLGetXMLValue( psTree, "ColorInterp", NULL ) != NULL )
     {
         const char *pszInterp = CPLGetXMLValue( psTree, "ColorInterp", NULL );
-		SetColorInterpretation(GDALGetColorInterpretationByName(pszInterp));
+        SetColorInterpretation(GDALGetColorInterpretationByName(pszInterp));
     }
 
 /* -------------------------------------------------------------------- */
