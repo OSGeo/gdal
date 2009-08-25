@@ -107,6 +107,7 @@ typedef enum
 } GDALColorInterp;
 
 const char CPL_DLL *GDALGetColorInterpretationName( GDALColorInterp );
+GDALColorInterp CPL_DLL GDALGetColorInterpretationByName( const char *pszName );
 
 /*! Types of color interpretations for a GDALColorTable. */
 typedef enum 

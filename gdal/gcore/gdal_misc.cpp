@@ -485,6 +485,41 @@ const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
 }
 
 /************************************************************************/
+/*                GDALGetColorInterpretationByName()                    */
+/************************************************************************/
+
+/**
+ * \brief Get color interpreation by symbolic name.
+ *
+ * Returns a color interpreation corresponding to the given symbolic name. This
+ * function is opposite to the GDALGetColorInterpretationName().
+ *
+ * @param pszName string containing the symbolic name of the color interpretation.
+ * 
+ * @return GDAL color interpretation.
+ *
+ * @since GDAL 1.7.0
+ */
+
+GDALColorInterp GDALGetColorInterpretationByName( const char *pszName )
+
+{
+    VALIDATE_POINTER1( pszName, "GDALGetColorInterpretationByName", GCI_Undefined );
+
+    int	iType;
+    
+    for( iType = 0; iType <= GCI_Max; iType++ )
+    {
+        if( EQUAL(GDALGetColorInterpretationName((GDALColorInterp)iType), pszName) )
+        {
+            return (GDALColorInterp)iType;
+        }
+    }
+
+    return GCI_Undefined;
+}
+
+/************************************************************************/
 /*                         GDALDummyProgress()                          */
 /************************************************************************/
 
@@ -2242,7 +2277,9 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 
 {
     const char *pszAuxSuffixLC = "aux";
+#ifndef WIN32
     const char *pszAuxSuffixUC = "AUX";
+#endif
 
     if( EQUAL(CPLGetExtension(pszBasename), pszAuxSuffixLC) )
         return NULL;
