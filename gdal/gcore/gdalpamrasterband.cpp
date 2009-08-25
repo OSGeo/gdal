@@ -341,9 +341,9 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 
     if( CPLGetXMLValue( psTree, "ColorInterp", NULL ) != NULL )
     {
-		const char *pszInterp = CPLGetXMLValue( psTree, "ColorInterp", NULL );
-		GDALPamRasterBand::SetColorInterpretation(
-								 GDALGetColorInterpretationByName(pszInterp));
+        const char *pszInterp = CPLGetXMLValue( psTree, "ColorInterp", NULL );
+        GDALPamRasterBand::SetColorInterpretation(
+                                GDALGetColorInterpretationByName(pszInterp));
     }
 
 /* -------------------------------------------------------------------- */
