@@ -341,20 +341,9 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 
     if( CPLGetXMLValue( psTree, "ColorInterp", NULL ) != NULL )
     {
-        const char *pszInterp = CPLGetXMLValue( psTree, "ColorInterp", NULL );
-        int        iInterp;
-        
-        for( iInterp = 0; iInterp < 13; iInterp++ )
-        {
-            const char *pszCandidate 
-                = GDALGetColorInterpretationName( (GDALColorInterp) iInterp );
-
-            if( pszCandidate != NULL && EQUAL(pszCandidate,pszInterp) )
-            {
-                GDALPamRasterBand::SetColorInterpretation( (GDALColorInterp) iInterp );
-                break;
-            }
-        }
+		const char *pszInterp = CPLGetXMLValue( psTree, "ColorInterp", NULL );
+		GDALPamRasterBand::SetColorInterpretation(
+								 GDALGetColorInterpretationByName(pszInterp));
     }
 
 /* -------------------------------------------------------------------- */
