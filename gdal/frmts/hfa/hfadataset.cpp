@@ -2949,10 +2949,10 @@ CPLErr HFADataset::ReadProjection()
 
     if( !psDatum || !psPro ||
         (psMapInfo == NULL && poMapInformation == NULL) ||
-        (strlen(psDatum->datumname) == 0 || EQUAL(psDatum->datumname, "Unknown")) && 
+        ((strlen(psDatum->datumname) == 0 || EQUAL(psDatum->datumname, "Unknown")) && 
         (strlen(psPro->proName) == 0 || EQUAL(psPro->proName, "Unknown")) &&
         (psMapInfo && (strlen(psMapInfo->proName) == 0 || EQUAL(psMapInfo->proName, "Unknown"))) && 
-        psPro->proZone == 0 )
+        psPro->proZone == 0) )
     {
         pszProjection = CPLStrdup("");
         return CE_None;
