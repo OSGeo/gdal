@@ -258,8 +258,16 @@ CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY,
 
     iTile = nBlockX + nBlockY * nBPR;
 
-    if( !SysRead( panTileOffset[iTile], panTileSize[iTile], pData ) )
-        return CE_Failure;
+    if( panTileOffset[iTile] == (vsi_l_offset) -1 )
+    {
+        int   nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
+        memset( pData, 0, nBlockXSize*nBlockYSize*nWordSize );
+    }
+    else
+    {
+        if( !SysRead( panTileOffset[iTile], panTileSize[iTile], pData ) )
+            return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      PCIDSK multibyte data is always big endian.  Swap if needed.    */
