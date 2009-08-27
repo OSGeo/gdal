@@ -124,6 +124,12 @@ CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         ((GUInt32 *)pImage)[i] = 0;
     }
 
+    /* properly account for validity mask */ 
+    if (nRSFV > 1)
+    {
+        VSIFSeek(pCDS->fp,(this->nRTNB*(nBlockYOff+4)+(nRSFV+1)*4), SEEK_SET);
+    }
+
     /* Read the valid samples: */
     VSIFRead(((char *)pImage)+((nRSFV - 1)*4),1,((nRSLV-1)*4)-((nRSFV-1)*4),pCDS->fp);
 
