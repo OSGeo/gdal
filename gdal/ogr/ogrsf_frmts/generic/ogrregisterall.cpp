@@ -152,5 +152,9 @@ void OGRRegisterAll()
 #ifdef GEORSS_ENABLED
     RegisterOGRGeoRSS();
 #endif
+#ifdef GTM_ENABLED
+    RegisterOGRGTM();
+#endif
+
 } /* OGRRegisterAll */
 
