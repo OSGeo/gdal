@@ -227,7 +227,7 @@ OGRGTMDataSource::~OGRGTMDataSource()
 
 int OGRGTMDataSource::Open(const char* pszFilename, int bUpdate)
 {
-    CPLAssert( pszNewName != NULL );
+    CPLAssert( pszFilename != NULL );
     
     /* Should not happen as the driver already returned if bUpdate == NULL */
     if (bUpdate)
