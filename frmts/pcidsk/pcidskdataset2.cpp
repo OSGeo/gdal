@@ -61,6 +61,10 @@ class PCIDSK2Dataset : public GDALPamDataset
 
     static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );
+    static GDALDataset  *Create( const char * pszFilename,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType,
+                                 char **papszParmList );
 
     CPLErr              GetGeoTransform( double * padfTransform );
     const char          *GetProjectionRef();
@@ -83,6 +87,7 @@ class PCIDSK2Band : public GDALPamRasterBand
                 ~PCIDSK2Band();
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
 };
 
 /************************************************************************/
@@ -133,6 +138,29 @@ CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData )
     }
     catch( PCIDSKException ex )
     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                             IWriteBlock()                            */
+/************************************************************************/
+
+CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData )
+
+{
+    try 
+    {
+        poChannel->WriteBlock( iBlockX + iBlockY * nBlocksPerRow,
+                               pData );
+        return CE_None;
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
         return CE_Failure;
     }
 }
@@ -159,6 +187,25 @@ PCIDSK2Dataset::PCIDSK2Dataset()
 PCIDSK2Dataset::~PCIDSK2Dataset()
 {
     FlushCache();
+
+    try {
+        delete poFile;
+        poFile = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Trap exceptions.                                                */
+/* -------------------------------------------------------------------- */
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+    }
+    catch( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "PCIDSK SDK Failure in Close(), unexpected exception." );
+    }
 }
 
 /************************************************************************/
@@ -342,12 +389,98 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     catch( PCIDSKException ex )
     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
     }
     catch( ... )
     {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "PCIDSK SDK Failure in Open(), unexpected exception." );
     }
 
     return NULL;
+}
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
+                                     int nXSize, int nYSize, int nBands,
+                                     GDALDataType eType,
+                                     char **papszParmList )
+
+{
+    PCIDSKFile *poFile;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare channel type list.                                      */
+/* -------------------------------------------------------------------- */
+    std::vector<eChanType> aeChanTypes;
+
+    if( eType == GDT_Float32 )
+        aeChanTypes.resize( nBands, CHN_32R ); 
+    else if( eType == GDT_Int16 )
+        aeChanTypes.resize( nBands, CHN_16S ); 
+    else if( eType == GDT_UInt16 )
+        aeChanTypes.resize( nBands, CHN_16U ); 
+    else 
+        aeChanTypes.resize( nBands, CHN_8U ); 
+
+/* -------------------------------------------------------------------- */
+/*      Reformat options.  Currently no support for jpeg compression    */
+/*      quality.                                                        */
+/* -------------------------------------------------------------------- */
+    CPLString osOptions;
+    const char *pszValue;
+
+    pszValue = CSLFetchNameValue( papszParmList, "INTERLEAVING" );
+    if( pszValue == NULL )
+        pszValue = "BAND";
+
+    osOptions = pszValue;
+
+    if( osOptions == "TILED" )
+    {
+        pszValue = CSLFetchNameValue( papszParmList, "TILESIZE" );
+        if( pszValue != NULL )
+            osOptions += pszValue;
+
+        pszValue = CSLFetchNameValue( papszParmList, "COMPRESSION" );
+        if( pszValue != NULL )
+        {
+            osOptions += " ";
+            osOptions += pszValue;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try creation.                                                   */
+/* -------------------------------------------------------------------- */
+    try {
+        poFile = PCIDSK::Create( pszFilename, nXSize, nYSize, nBands, 
+                                 &(aeChanTypes[0]), osOptions, NULL );
+        delete poFile;
+
+        // TODO: should we ensure this driver gets used?
+
+        return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    }
+/* -------------------------------------------------------------------- */
+/*      Trap exceptions.                                                */
+/* -------------------------------------------------------------------- */
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return NULL;
+    }
+    catch( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "PCIDSK::Create() failed, unexpected exception." );
+        return NULL;
+    }
 }
 
 /************************************************************************/
@@ -372,15 +505,23 @@ void GDALRegister_PCIDSK2()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16 Int16 Float32" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
-"   <Option name='FILEDESC1' type='string' description='The first line of descriptive text'/>"
-"   <Option name='FILEDESC2' type='string' description='The second line of descriptive text'/>"
-"   <Option name='BANDDESCn' type='string' description='Text describing contents of the specified band'/>"
+"   <Option name='INTERLEAVING' type='string-select' default='BAND' description='raster data organization'>"
+"       <Value>PIXEL</Value>"
+"       <Value>BAND</Value>"
+"       <Value>FILE</Value>"
+"       <Value>TILED</Value>"
+"   </Option>"
+"   <Option name='COMPRESSION' type='string-select' default='NONE' description='compression - (INTERLEAVING=TILED only)'>"
+"       <Value>NONE</Value>"
+"       <Value>RLE</Value>"
+"       <Value>JPEG</Value>"
+"   </Option>"
+"   <Option name='TILESIZE' type='int' default='127' description='Tile Size (INTERLEAVING=TILED only)'/>"
 "</CreationOptionList>" ); 
 
         poDriver->pfnIdentify = PCIDSK2Dataset::Identify;
         poDriver->pfnOpen = PCIDSK2Dataset::Open;
-//        poDriver->pfnCreate = PCIDSK2Dataset::Create;
-//        poDriver->pfnCreateCopy = PCIDSK2Dataset::CreateCopy;
+        poDriver->pfnCreate = PCIDSK2Dataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
