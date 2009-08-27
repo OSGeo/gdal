@@ -344,6 +344,7 @@ void CPL_DLL RegisterOGRIngres();
 void CPL_DLL RegisterOGRXPlane();
 void CPL_DLL RegisterOGRNAS();
 void CPL_DLL RegisterOGRGeoRSS();
+void CPL_DLL RegisterOGRGTM();
 
 CPL_C_END
 
