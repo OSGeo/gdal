@@ -64,7 +64,7 @@ OGRFeatureDefn::OGRFeatureDefn( const char * pszName )
 /*                           OGR_FD_Create()                            */
 /************************************************************************/
 /**
- * \brief Create a new feature definition object to held the field definitions.
+ * \brief Create a new feature definition object to hold the field definitions.
  *
  * The OGRFeatureDefn maintains a reference count, but this starts at
  * zero, and should normally be incremented by the owner.
