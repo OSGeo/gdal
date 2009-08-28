@@ -307,7 +307,8 @@ int OGRPGResultLayer::GetFeatureCount( int bForce )
 int OGRPGResultLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCFastFeatureCount) )
+    if( EQUAL(pszCap,OLCFastFeatureCount) ||
+        EQUAL(pszCap,OLCFastSetNextByIndex) )
         return (m_poFilterGeom == NULL || 
                 (bHasPostGISGeometry && nSRSId != -2)) && m_poAttrQuery == NULL;
 

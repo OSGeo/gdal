@@ -1653,7 +1653,8 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return bHasFid;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if( EQUAL(pszCap,OLCFastFeatureCount) ||
+             EQUAL(pszCap,OLCFastSetNextByIndex) )
         return m_poFilterGeom == NULL || bHasPostGISGeometry;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )

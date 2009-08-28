@@ -1317,6 +1317,78 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
+/*                           SetNextByIndex()                           */
+/************************************************************************/
+
+OGRErr OGRPGLayer::SetNextByIndex( long nIndex )
+
+{
+    if( !TestCapability(OLCFastSetNextByIndex) )
+        return OGRLayer::SetNextByIndex(nIndex);
+
+    if( nIndex == iNextShapeId)
+    {
+        return OGRERR_NONE;
+    }
+    
+    if( nIndex < 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid index");
+        return OGRERR_FAILURE;
+    }
+    
+    if( nIndex == 0 )
+    {
+        ResetReading();
+        return OGRERR_NONE;
+    }
+    
+    PGconn      *hPGConn = poDS->GetPGConn();
+    CPLString   osCommand;
+    
+    if (hCursorResult == NULL )
+    {
+        SetInitialQueryCursor();
+    }
+    
+    OGRPGClearResult( hCursorResult );
+    
+    osCommand.Printf( "FETCH ABSOLUTE %ld in %s", nIndex+1, pszCursorName );
+    hCursorResult = PQexec(hPGConn, osCommand );
+    
+    if (PQresultStatus(hCursorResult) != PGRES_TUPLES_OK ||
+        PQntuples(hCursorResult) != 1)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to read feature at invalid index (%ld).", nIndex );
+                  
+        OGRPGClearResult( hCursorResult );
+
+        if( bCursorActive )
+        {
+            osCommand.Printf( "CLOSE %s", pszCursorName );
+
+            hCursorResult = PQexec(hPGConn, osCommand);
+            OGRPGClearResult( hCursorResult );
+        }
+
+        poDS->FlushSoftTransaction();
+
+        hCursorResult = NULL;
+        bCursorActive = FALSE;
+
+        iNextShapeId = 0;
+
+        return OGRERR_FAILURE;
+    }
+
+    nResultOffset = 0;
+    iNextShapeId = nIndex;
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           HEXToGeometry()                            */
 /************************************************************************/
 
