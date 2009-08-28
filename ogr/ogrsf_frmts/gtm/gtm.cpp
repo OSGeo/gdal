@@ -252,7 +252,7 @@ double* Track::getPoint(int pointNum)
 GTM::GTM()
 {
     pGTMFile = NULL;
-
+    pszFilename = NULL;
 
     nwptstyles = 0;
     nwpts = 0;
@@ -276,6 +276,7 @@ GTM::GTM()
 
 GTM::~GTM()
 {
+    CPLFree(pszFilename);
     if (pGTMFile != NULL)
     {
         VSIFCloseL(pGTMFile);
@@ -288,6 +289,9 @@ bool GTM::Open(const char* pszFilename)
 
     if (pGTMFile != NULL)
         VSIFCloseL(pGTMFile);
+        
+    CPLFree(this->pszFilename);
+    this->pszFilename = CPLStrdup(pszFilename);
 
     pGTMFile = VSIFOpenL( pszFilename, "r" );
     if (pGTMFile == NULL)
@@ -319,6 +323,37 @@ bool GTM::isValid()
         return FALSE;
     }
     buffer[12] = '\0';
+    
+/* -------------------------------------------------------------------- */
+/*      If it looks like a GZip header, this may be a .gtz file, so     */
+/*      try opening with the /vsigzip/ prefix                           */
+/* -------------------------------------------------------------------- */
+    if (buffer[0] == 0x1f && ((unsigned char*)buffer)[1] == 0x8b &&
+        strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0)
+    {
+        char* pszGZIPFileName = (char*)CPLMalloc(
+                           strlen("/vsigzip/") + strlen(pszFilename) + 1);
+        sprintf(pszGZIPFileName, "/vsigzip/%s", pszFilename);
+        FILE* fp = VSIFOpenL(pszGZIPFileName, "rb");
+        if (fp)
+        {
+            FILE* pGTMFileOri = pGTMFile;
+            pGTMFile = fp;
+            if (isValid())
+            {
+                VSIFCloseL(pGTMFileOri);
+                return TRUE;
+            }
+            else
+            {
+                if (pGTMFile)
+                    VSIFCloseL(pGTMFile);
+                pGTMFile = pGTMFileOri;
+            }
+        }
+        CPLFree(pszGZIPFileName);
+    }
+    
     version = CPL_LSBINT16PTR(buffer);
     /*Skip string length */
     szHeader = buffer + 2;
