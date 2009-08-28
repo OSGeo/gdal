@@ -136,6 +136,8 @@ def ogr_pg_2():
         return 'fail'
     if not gdaltest.pg_lyr.TestCapability(ogr.OLCFastFeatureCount):
         return 'fail'
+    if not gdaltest.pg_lyr.TestCapability(ogr.OLCFastSetNextByIndex):
+        return 'fail'
     try:
         ogr.OLCStringsAsUTF8
         if not gdaltest.pg_lyr.TestCapability(ogr.OLCStringsAsUTF8):
@@ -1966,6 +1968,38 @@ def ogr_pg_44():
     return 'success'
 
 ###############################################################################
+# Test SetNextByIndex (#3117)
+
+def ogr_pg_45():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+        
+    lyr = gdaltest.pg_ds.GetLayerByName('poly')
+    
+    if not lyr.TestCapability(ogr.OLCFastSetNextByIndex):
+        gdaltest.post_reason('OLCFastSetNextByIndex returned false')
+        return 'fail'
+
+    nb_feat = lyr.GetFeatureCount()
+    tab_feat = [ None for i in range(nb_feat) ]
+    for i in range(nb_feat):
+        tab_feat[i] = lyr.GetNextFeature();
+    
+    lyr.SetNextByIndex(2)
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != tab_feat[2].GetFID():
+        gdaltest.post_reason('SetNextByIndex(2) did not return expected feature')
+        return 'fail'
+        
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != tab_feat[3].GetFID():
+        gdaltest.post_reason('did not get expected feature')
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2064,6 +2098,7 @@ gdaltest_list_internal = [
     ogr_pg_42,
     ogr_pg_43,
     ogr_pg_44,
+    ogr_pg_45,
     ogr_pg_cleanup ]
 
 
