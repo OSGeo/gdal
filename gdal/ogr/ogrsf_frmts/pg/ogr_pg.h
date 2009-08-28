@@ -148,6 +148,8 @@ class OGRPGLayer : public OGRLayer
     virtual const char *GetFIDColumn();
     virtual const char *GetGeometryColumn();
 
+    virtual OGRErr      SetNextByIndex( long nIndex );
+
     /* custom methods */
     virtual OGRFeature *RecordToFeature( int iRecord );
     virtual OGRFeature *GetNextRawFeature();
