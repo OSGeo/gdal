@@ -308,8 +308,8 @@ bool GTM::isValid()
     short version;
 
 /* -------------------------------------------------------------------- */
-/*      If we aren't sure it is GML, load a header chunk and check      */
-/*      for signs it is GML                                             */
+/*      If we aren't sure it is GTM, load a header chunk and check      */
+/*      for signs it is GTM                                             */
 /* -------------------------------------------------------------------- */
     size_t nRead = VSIFReadL( buffer, 1, sizeof(buffer)-1, pGTMFile );
     if (nRead <= 0)
@@ -405,6 +405,21 @@ bool GTM::readHeaderNumbers()
         return FALSE;
     stringSize = readUShort(pGTMFile);
     headerSize += stringSize + 2; // String + size field
+
+
+
+/* -------------------------------------------------------------------- */
+/*                 Checks if it is using WGS84 datum                    */
+/* -------------------------------------------------------------------- */
+    /* Read newdatum string size */
+    if ( VSIFSeekL(pGTMFile, headerSize + 34, SEEK_SET) != 0)
+        return FALSE;
+    if (readInt(pGTMFile) != 217)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "You are attempting to open a file that is not using WGS84 datum.\n"
+                  "Coordinates will be returned as if they were WGS84, but no reprojection will be done.");
+    }
 
     /* Look for the offsets */
     /* Waypoints */
@@ -676,20 +691,24 @@ vsi_l_offset GTM::findFirstTrackpointOffset()
     }
   
     /* Skip waypoint styles */
-    for (int i = 0; i < nwptstyles; ++i)
+    /* If we don't have waypoints, we don't have waypoint styles, even
+       though the nwptstyles is telling the contrary. */
+    if (nwpts != 0)
     {
-        /* Seek file to the string size facename field */
-        if (VSIFSeekL(pGTMFile, 4, SEEK_CUR) != 0)
-            return 0;
+        for (int i = 0; i < nwptstyles; ++i)
+        {
+            /* Seek file to the string size facename field */
+            if (VSIFSeekL(pGTMFile, 4, SEEK_CUR) != 0)
+                return 0;
 
-        /* Read string facename size */
-        stringSize = readUShort(pGTMFile, &bSuccess);
+            /* Read string facename size */
+            stringSize = readUShort(pGTMFile, &bSuccess);
 
-        /* Skip to the next Waypoint Style*/
-        if (bSuccess == FALSE || VSIFSeekL(pGTMFile, stringSize + 24, SEEK_CUR) != 0)
-            return 0;
+            /* Skip to the next Waypoint Style*/
+            if (bSuccess == FALSE || VSIFSeekL(pGTMFile, stringSize + 24, SEEK_CUR) != 0)
+                return 0;
+        }
     }
-
     /* We've found the first track. Return the offset*/
     return VSIFTellL(pGTMFile);
 }
