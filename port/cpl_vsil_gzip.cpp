@@ -538,12 +538,13 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 
         /* We don't know the uncompressed size. This is unfortunate. Let's do the slow version... */
         static int firstWarning = 1;
-        if (firstWarning)
+        if (compressed_size > 10 * 1024 * 1024 && firstWarning)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                         "VSIFSeekL(xxx, SEEK_END) may be really slow on GZip streams.");
             firstWarning = 0;
         }
+        
         whence = SEEK_CUR;
         offset = 1024 * 1024 * 1024;
         offset *= 1024 * 1024;
