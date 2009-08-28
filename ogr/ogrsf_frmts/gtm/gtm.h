@@ -151,6 +151,7 @@ public:
 private:
     // File descriptor
     FILE* pGTMFile;
+    char* pszFilename;
 
     // GTM Header Parameters
     int nwptstyles;
