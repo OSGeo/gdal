@@ -310,6 +310,121 @@ static void TestOGRLayerRandomRead( OGRLayer *poLayer )
         printf( "INFO: Random read test passed.\n" );
 }
 
+
+/************************************************************************/
+/*                       TestOGRLayerSetNextByIndex()                   */
+/*                                                                      */
+/************************************************************************/
+
+static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
+
+{
+    OGRFeature  *papoFeatures[5], *poFeature;
+    int         iFeature;
+
+    poLayer->SetSpatialFilter( NULL );
+    
+    if( poLayer->GetFeatureCount() < 5 )
+    {
+        if( bVerbose )
+            printf( "INFO: Only %d features on layer,"
+                    "skipping SetNextByIndex test.\n",
+                    poLayer->GetFeatureCount() );
+        
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch five features.                                            */
+/* -------------------------------------------------------------------- */
+    poLayer->ResetReading();
+    
+    for( iFeature = 0; iFeature < 5; iFeature++ )
+    {
+        papoFeatures[iFeature] = poLayer->GetNextFeature();
+        CPLAssert( papoFeatures[iFeature] != NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Test feature at index 1.                                        */
+/* -------------------------------------------------------------------- */
+    if (poLayer->SetNextByIndex(1) != OGRERR_NONE)
+    {
+        printf( "ERROR: SetNextByIndex(%d) failed.\n", 1 );
+        return;
+    }
+    
+    poFeature = poLayer->GetNextFeature();
+    if( !poFeature->Equal( papoFeatures[1] ) )
+    {
+        printf( "ERROR: Attempt to read feature at index %d appears to\n"
+                "       have returned a different feature than sequential\n"
+                "       reading indicates should have happened.\n",
+                1 );
+
+        return;
+    }
+
+    delete poFeature;
+    
+    poFeature = poLayer->GetNextFeature();
+    if( !poFeature->Equal( papoFeatures[2] ) )
+    {
+        printf( "ERROR: Attempt to read feature after feature at index %d appears to\n"
+                "       have returned a different feature than sequential\n"
+                "       reading indicates should have happened.\n",
+                1 );
+
+        return;
+    }
+
+    delete poFeature;
+    
+/* -------------------------------------------------------------------- */
+/*      Test feature at index 3.                                        */
+/* -------------------------------------------------------------------- */
+    if (poLayer->SetNextByIndex(3) != OGRERR_NONE)
+    {
+        printf( "ERROR: SetNextByIndex(%d) failed.\n", 3 );
+        return;
+    }
+    
+    poFeature = poLayer->GetNextFeature();
+    if( !poFeature->Equal( papoFeatures[3] ) )
+    {
+        printf( "ERROR: Attempt to read feature at index %d appears to\n"
+                "       have returned a different feature than sequential\n"
+                "       reading indicates should have happened.\n",
+                3 );
+
+        return;
+    }
+
+    delete poFeature;
+    
+    poFeature = poLayer->GetNextFeature();
+    if( !poFeature->Equal( papoFeatures[4] ) )
+    {
+        printf( "ERROR: Attempt to read feature after feature at index %d appears to\n"
+                "       have returned a different feature than sequential\n"
+                "       reading indicates should have happened.\n",
+                3 );
+
+        return;
+    }
+
+    delete poFeature;
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    for( iFeature = 0; iFeature < 5; iFeature++ )
+        delete papoFeatures[iFeature];
+
+    if( bVerbose )
+        printf( "INFO: SetNextByIndex() read test passed.\n" );
+}
+
 /************************************************************************/
 /*                      TestOGRLayerRandomWrite()                       */
 /*                                                                      */
@@ -567,7 +682,15 @@ static void TestOGRLayer( OGRLayer * poLayer )
     {
         TestOGRLayerRandomRead( poLayer );
     }
-
+    
+/* -------------------------------------------------------------------- */
+/*      Test SetNextByIndex.                                            */
+/* -------------------------------------------------------------------- */
+    if( poLayer->TestCapability( OLCFastSetNextByIndex ) )
+    {
+        TestOGRLayerSetNextByIndex( poLayer );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Test random writing.                                            */
 /* -------------------------------------------------------------------- */
