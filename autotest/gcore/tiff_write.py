@@ -703,7 +703,7 @@ def tiff_write_20():
     values = [ ('TIFFTAG_DOCUMENTNAME'    , 'document_name'),
                ('TIFFTAG_IMAGEDESCRIPTION', 'image_description'),
                ('TIFFTAG_SOFTWARE'        , 'software'),
-               ('TIFFTAG_DATETIME'        , 'datetime'),
+               ('TIFFTAG_DATETIME'        , '2009/01/01 13:01:08'),
                ('TIFFTAG_ARTIST'          , 'artitst'),
                ('TIFFTAG_HOSTCOMPUTER'    , 'host_computer'),
                ('TIFFTAG_COPYRIGHT'       , 'copyright'),
