@@ -110,6 +110,8 @@ def ehdr_5():
         gdaltest.post_reason( 'color table not persisted properly.' )
         return 'fail'
 
+    ds = None
+
     gdal.GetDriverByName('EHdr').Delete( 'tmp/test_4.bil' )
     
     return 'success'

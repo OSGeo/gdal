@@ -247,6 +247,8 @@ def hfa_use_rrd():
         print ds.GetRasterBand(1).GetOverview(0).Checksum()
         gdaltest.post_reason( 'Unexpected checksum.' )
         return 'fail'
+        
+    ds = None
 
     gdal.GetDriverByName('HFA').Delete( 'tmp/small.img' )
 

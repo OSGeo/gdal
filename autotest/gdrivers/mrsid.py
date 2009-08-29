@@ -298,6 +298,8 @@ def mrsid_8():
     if ds.GetRasterBand(1).GetNoDataValue() != 255:
         gdaltest.post_reason( 'Nodata override failed.' )
         return 'fail'
+        
+    ds = None
 
     gdal.GetDriverByName('MrSID').Delete( 'tmp/mercator.sid' )
 
