@@ -892,6 +892,18 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
 }
 
 /************************************************************************/
+/*                          SetNextByIndex()                            */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::SetNextByIndex( long nIndex )
+{
+    if (TestCapability(OLCFastSetNextByIndex))
+        return poSrcLayer->SetNextByIndex(nIndex);
+
+    return OGRLayer::SetNextByIndex(nIndex);
+}
+
+/************************************************************************/
 /*               TranslateVRTFeatureToSrcFeature()                      */
 /*                                                                      */
 /*      Translate a VRT feature into a feature for the source layer     */
@@ -1127,7 +1139,8 @@ OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 int OGRVRTLayer::TestCapability( const char * pszCap )
 
 {
-    if (EQUAL(pszCap,OLCFastFeatureCount) &&
+    if ((EQUAL(pszCap,OLCFastFeatureCount) ||
+         EQUAL(pszCap,OLCFastSetNextByIndex)) &&
         (eGeometryType == VGS_Direct ||
          (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
         m_poAttrQuery == NULL )
@@ -1150,6 +1163,9 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
              || EQUAL(pszCap,OLCRandomWrite)
              || EQUAL(pszCap,OLCDeleteFeature))
         return bUpdate && iFIDField == -1 && poSrcLayer->TestCapability(pszCap);
+
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return poSrcLayer->TestCapability(pszCap);
 
     return FALSE;
 }

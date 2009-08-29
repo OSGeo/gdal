@@ -103,7 +103,9 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( long nFeatureId );
-    
+
+    virtual OGRErr      SetNextByIndex( long nIndex );
+
     virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRSpatialReference *GetSpatialRef();
