@@ -465,7 +465,8 @@ OGRLayer * OGRGTMDataSource::CreateLayer( const char * pszLayerName,
         return papoLayers[nLayers-1];
 
     }
-    else if (eType == wkbLineString || eType == wkbLineString25D)
+    else if (eType == wkbLineString || eType == wkbLineString25D || 
+             eType == wkbMultiLineString || eType == wkbMultiLineString25D)
     {
         // Tracks
         nLayers++;
