@@ -87,7 +87,34 @@ class CPL_DLL OGREnvelope
             MinY = MaxY = dfY;
         }
     }
-
+    
+    void Intersect( OGREnvelope const& sOther ) {
+        if(Intersects(sOther))
+        {
+            if( IsInit() )
+            {
+                MinX = MAX(MinX,sOther.MinX);
+                MaxX = MIN(MaxX,sOther.MaxX);
+                MinY = MAX(MinY,sOther.MinY);
+                MaxY = MIN(MaxY,sOther.MaxY);
+            }
+            else
+            {
+                MinX = sOther.MinX;
+                MaxX = sOther.MaxX;
+                MinY = sOther.MinY;
+                MaxY = sOther.MaxY;
+            }
+        }
+        else
+        {
+            MinX = 0;
+            MaxX = 0;
+            MinY = 0;
+            MaxY = 0;
+        }
+    }
+ 
     int Intersects(OGREnvelope const& other) const
     {
         return MinX <= other.MaxX && MaxX >= other.MinX && 
