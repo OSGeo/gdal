@@ -66,6 +66,8 @@ class CPL_DLL MEMDataset : public GDALDataset
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
+    virtual void *GetInternalHandle( const char * );
+
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
@@ -138,6 +140,9 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
     CPLErr SetOffset( double );
     virtual double GetScale( int *pbSuccess = NULL );
     CPLErr SetScale( double );
+
+    // allow access to MEM driver's private internal memory buffer
+    GByte *GetData(void) const {return(pabyData);}
 };
 
 #endif /* ndef MEMDATASET_H_INCLUDED */

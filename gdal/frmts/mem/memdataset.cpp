@@ -454,6 +454,35 @@ CPLErr MEMDataset::SetGeoTransform( double *padfGeoTransform )
 }
 
 /************************************************************************/
+/*                          GetInternalHandle()                         */
+/************************************************************************/
+
+void *MEMDataset::GetInternalHandle( const char * pszRequest)
+
+{
+    // check for MEMORYnnn string in pszRequest (nnnn can be up to 10 
+    // digits, or even omitted)
+    if( EQUALN(pszRequest,"MEMORY",6))
+    {
+        if(int BandNumber = CPLScanLong(&pszRequest[6], 10))
+        {
+            MEMRasterBand *RequestedRasterBand = 
+                (MEMRasterBand *)GetRasterBand(BandNumber);
+
+            // we're within a MEMDataset so the only thing a RasterBand 
+            // could be is a MEMRasterBand
+
+            if( RequestedRasterBand != NULL )
+            {
+                // return the internal band data pointer
+                return(RequestedRasterBand->GetData());
+            }
+        }
+    }
+
+    return NULL;
+}
+/************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
 
