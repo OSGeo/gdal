@@ -296,10 +296,11 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPL_LSBPTR32( &nVersion );
 
-    if(nVersion != 1)
+    if(nVersion != 1 && nVersion != 2)
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_FileIO, "Incorrect file version.\n" );
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Incorrect file version (%d).", nVersion );
         return NULL;
     }
 
