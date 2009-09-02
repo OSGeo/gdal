@@ -234,9 +234,7 @@ OGRErr GTMTrackLayer::CreateFeature (OGRFeature *poFeature)
                   "Features without geometry not supported by GTM writer in track layer." );
         return OGRERR_FAILURE;
     }
-
-    WriteFeatureAttributes(poFeature);
-    
+   
     if (NULL != poCT)
     {
         poGeom = poGeom->clone();
@@ -248,6 +246,7 @@ OGRErr GTMTrackLayer::CreateFeature (OGRFeature *poFeature)
     case wkbLineString:
     case wkbLineString25D:
     {
+        WriteFeatureAttributes(poFeature);
         OGRLineString* line = (OGRLineString*)poGeom;
         for(int i = 0; i < line->getNumPoints(); ++i)
         {
@@ -267,9 +266,9 @@ OGRErr GTMTrackLayer::CreateFeature (OGRFeature *poFeature)
     case wkbMultiLineString25D:
     {
         int nGeometries = ((OGRGeometryCollection*)poGeom)->getNumGeometries ();
-        WriteFeatureAttributes(poFeature);
         for(int j = 0; j < nGeometries; ++j)
         {
+            WriteFeatureAttributes(poFeature);
             OGRLineString* line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(j) );
             int n = (line) ? line->getNumPoints() : 0;
             for(int i = 0; i < n; ++i)
@@ -291,6 +290,8 @@ OGRErr GTMTrackLayer::CreateFeature (OGRFeature *poFeature)
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Geometry type of `%s' not supported for 'track' element.\n",
                   OGRGeometryTypeToName(poGeom->getGeometryType()) );
+        if (NULL != poCT)
+            delete poGeom;
         return OGRERR_FAILURE;
     }
     }
