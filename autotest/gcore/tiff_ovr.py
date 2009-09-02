@@ -1228,6 +1228,57 @@ def tiff_ovr_33():
 
     return 'success'
 
+
+###############################################################################
+# Confirm that overviews are used on a Band.RasterIO().
+
+def tiff_ovr_34():
+
+    ds_in = gdal.Open('data/byte.tif')
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr34.tif', ds_in)
+    ds.BuildOverviews('NEAREST', overviewlist = [2] )
+    ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
+    ds = None
+    ds_in = None
+    
+    ds = gdal.Open('tmp/ovr34.tif')
+    data = ds.GetRasterBand(1).ReadRaster( 0,0,20,20,buf_xsize=5,buf_ysize=5)
+    ds = None
+
+    if data != '                         ':
+        gdaltest.post_reason( 'did not get expected cleared overview.' )
+        print '[%s]' % data
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr34.tif' )
+
+    return 'success'
+
+###############################################################################
+# Confirm that overviews are used on a Band.RasterIO().
+
+def tiff_ovr_35():
+
+    ds_in = gdal.Open('data/byte.tif')
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr35.tif', ds_in)
+    ds.BuildOverviews('NEAREST', overviewlist = [2] )
+    ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
+    ds = None
+    ds_in = None
+    
+    ds = gdal.Open('tmp/ovr35.tif')
+    data = ds.ReadRaster( 0,0,20,20,buf_xsize=5,buf_ysize=5,band_list=[1])
+    ds = None
+
+    if data != '                         ':
+        gdaltest.post_reason( 'did not get expected cleared overview.' )
+        print '[%s]' % data
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr35.tif' )
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -1298,6 +1349,8 @@ gdaltest_list_internal = [
     tiff_ovr_31,
     tiff_ovr_32,
     tiff_ovr_33,
+    tiff_ovr_34,
+    tiff_ovr_35,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
