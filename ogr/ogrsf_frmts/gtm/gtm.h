@@ -33,6 +33,8 @@
 #include <vector>
 #include <string>
 
+#include <time.h>
+
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -58,6 +60,10 @@
 #define BOUNDS_OFFSET 47
 
 #define DATUM_SIZE 58
+
+/* GTM_EPOCH is defined as the unix time for the 31 dec 1989 00:00:00 */
+#define GTM_EPOCH 631065600
+    
 #endif
 
 
@@ -81,22 +87,37 @@ class Waypoint
 public:
     Waypoint(double latitude,
              double longitude,
+             double altitude,
              const char* name,
              const char* comment,
-             int icon);
+             int icon,
+             GIntBig wptdate
+             );
     ~Waypoint();
     double getLatitude();
     double getLongitude();
+    double getAltitude();
     const char* getName();
     const char* getComment();
     int getIcon();
+    GIntBig getDate(); /* 0 if invalid */
 private:
     double latitude;
     double longitude;
+    double altitude;
     char* name;
     char* comment;
     int icon;
+    GIntBig wptdate;
 };
+
+typedef struct
+{
+    double x;
+    double y;
+    GIntBig datetime;
+    double altitude;
+} TrackPoint;
 
 class Track
 {
@@ -110,17 +131,16 @@ public:
     unsigned char getType();
     int getColor();
 
-    void addPoint(double x, double y);  
+    void addPoint(double x, double y, GIntBig datetime, double altitude);  
     int getNumPoints();
-    double* getPoint(int pointNum);
+    const TrackPoint* getPoint(int pointNum);
 
-    enum ECoordinate{LATITUDE, LONGITUDE};  
 private: 
     char* pszName;
     unsigned char type;
     int color;
-    vector<double*> *poCoordinates;
-
+    int nPoints;
+    TrackPoint* pasTrackPoints;
 
 };
 
@@ -180,7 +200,8 @@ private:
     vsi_l_offset findFirstTrackpointOffset();
     vsi_l_offset findFirstTrackOffset();
 
-    bool readTrackPoints(double& latitude, double& longitude, unsigned char& start);
+    bool readTrackPoints(double& latitude, double& longitude, GIntBig& datetime,
+                         unsigned char& start, float& altitude);
     bool readFile(void* pBuffer, size_t nSize, size_t nCount);
 
 };
