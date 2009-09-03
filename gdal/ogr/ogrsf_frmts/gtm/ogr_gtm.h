@@ -63,6 +63,10 @@ typedef enum
 #define BOUNDS_OFFSET 47
 
 #define DATUM_SIZE 58
+
+/* GTM_EPOCH is defined as the unix time for the 31 dec 1989 00:00:00 */
+#define GTM_EPOCH 631065600
+
 #endif
 
 #ifndef MAX
@@ -129,7 +133,7 @@ public:
     OGRFeature* GetNextFeature();
     int GetFeatureCount(int bForce = TRUE);
 
-    enum WaypointFields{NAME, COMMENT, ICON};
+    enum WaypointFields{NAME, COMMENT, ICON, DATE};
 private:
     void WriteFeatureAttributes( OGRFeature *poFeature, float altitude );
 };
