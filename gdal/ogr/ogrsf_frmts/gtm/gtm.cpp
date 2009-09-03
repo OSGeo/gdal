@@ -80,9 +80,9 @@ static double readDouble(FILE* fp)
     return val;
 }
 
-static double readFloat(FILE* fp)
+static float readFloat(FILE* fp)
 {
-    double val;
+    float val;
     VSIFReadL( &val, 1, 4, fp );
     CPL_LSBPTR32(&val)
     return val;
@@ -140,15 +140,19 @@ void writeUShort(FILE* fp, unsigned short val)
 /************************************************************************/
 Waypoint::Waypoint(double latitude,
                    double longitude,
+                   double altitude,
                    const char* name,
                    const char* comment,
-                   int icon)
+                   int icon,
+                   GIntBig wptdate)
 {
     this->latitude = latitude;
     this->longitude = longitude;
+    this->altitude = altitude;
     this->name = CPLStrdup(name);
     this->comment = CPLStrdup(comment);
     this->icon = icon;
+    this->wptdate = wptdate;
 }
 
 Waypoint::~Waypoint()
@@ -167,6 +171,11 @@ double Waypoint::getLongitude()
     return longitude;
 }
 
+double Waypoint::getAltitude()
+{
+    return altitude;
+}
+
 const char* Waypoint::getName()
 {
     return name;
@@ -182,6 +191,11 @@ int Waypoint::getIcon()
     return icon;
 }
 
+GIntBig Waypoint::getDate()
+{
+    return wptdate;
+}
+
 /************************************************************************/
 /*               Implementation of Track Function Members               */
 /************************************************************************/
@@ -192,21 +206,15 @@ Track::Track(const char* pszName,
     this->pszName = CPLStrdup(pszName);
     this->type = type;
     this->color = color;
-
-    poCoordinates = new vector<double*>();
+    nPoints = 0;
+    pasTrackPoints = NULL;
 }
 
 Track::~Track()
 {
     CPLFree(pszName);
     pszName = NULL;
-
-    vector<double*>::iterator it;
-    for (it = poCoordinates->begin(); it < poCoordinates->end(); it++)
-    {
-        CPLFree(*it);
-    }
-    delete poCoordinates;
+    CPLFree(pasTrackPoints);
 }
 
 const char* Track::getName() {
@@ -224,23 +232,26 @@ int Track::getColor()
     return color;
 }
 
-void Track::addPoint(double x, double y)
+void Track::addPoint(double x, double y, GIntBig datetime, double altitude)
 {
-    double* pCoords = (double*) CPLMalloc(sizeof(double) * 2);
-    pCoords[LONGITUDE] = x;
-    pCoords[LATITUDE] = y;
-    poCoordinates->push_back(pCoords);
+    pasTrackPoints = (TrackPoint*)
+        CPLRealloc(pasTrackPoints, (nPoints + 1) * sizeof(TrackPoint));
+    pasTrackPoints[nPoints].x = x;
+    pasTrackPoints[nPoints].y = y;
+    pasTrackPoints[nPoints].datetime = datetime;
+    pasTrackPoints[nPoints].altitude = altitude;
+    nPoints ++;
 }
 
 int Track::getNumPoints()
 {
-    return poCoordinates->size();
+    return nPoints;
 }
 
-double* Track::getPoint(int pointNum)
+const TrackPoint* Track::getPoint(int pointNum)
 {
-    if (pointNum >=0 && pointNum <= (int) poCoordinates->size()-1)
-        return poCoordinates->at(pointNum);
+    if (pointNum >=0 && pointNum < nPoints)
+        return &pasTrackPoints[pointNum];
     else
         return NULL;
 }
@@ -505,6 +516,8 @@ Waypoint* GTM::fetchNextWaypoint()
     char* comment;
     unsigned short icon;
     int i;
+    float altitude;
+    GIntBig wptdate;
 
     /* Point to the actual waypoint offset */
     if ( VSIFSeekL(pGTMFile, actualWaypointOffset, SEEK_SET) != 0)
@@ -540,16 +553,31 @@ Waypoint* GTM::fetchNextWaypoint()
 
     /* Read Icon */
     icon = readUShort(pGTMFile);
+    
+    /* Display number */
+    readUChar(pGTMFile);
+    
+    /* Waypoint date */
+    
+    wptdate = readInt(pGTMFile);
+    if (wptdate != 0)
+        wptdate += GTM_EPOCH;
+    
+    /* Rotation text angle */
+    readUShort(pGTMFile);
+    
+    /* Altitude */
+    altitude = readFloat(pGTMFile);
   
-    Waypoint* poWaypoint = new Waypoint(latitude, longitude,
-                                        name, comment, (int) icon);
+    Waypoint* poWaypoint = new Waypoint(latitude, longitude, altitude,
+                                        name, comment, (int) icon, wptdate);
 
 
     /* Set actual waypoint offset to the next it there is one */
     ++waypointFetched;
     if (waypointFetched < nwpts)
     {
-        actualWaypointOffset = VSIFTellL(pGTMFile) + 13;
+        actualWaypointOffset += 8 + 8 + 10 + 2 + stringSize + 2 + 1 + 4 + 2 + 4 + 2;
     }
 
     CPLFree(comment);
@@ -618,9 +646,11 @@ Track* GTM::fetchNextTrack()
 
     /* Now, We read all trackpoints for this track */
     double latitude, longitude;
+    GIntBig datetime;
     unsigned char start;
+    float altitude;
     /* NOTE: Parameters are passed by reference */
-    if ( !readTrackPoints(latitude, longitude, start) )
+    if ( !readTrackPoints(latitude, longitude, datetime, start, altitude) )
     {
         delete poTrack;
         return NULL;
@@ -632,18 +662,18 @@ Track* GTM::fetchNextTrack()
         delete poTrack;
         return NULL;
     }
-    poTrack->addPoint(longitude, latitude);
+    poTrack->addPoint(longitude, latitude, datetime, altitude);
   
     do
     {
         /* NOTE: Parameters are passed by reference */
-        if ( !readTrackPoints(latitude, longitude, start) )
+        if ( !readTrackPoints(latitude, longitude, datetime, start, altitude) )
         {
             delete poTrack;
             return NULL;
         }
         if (start == 0)
-            poTrack->addPoint(longitude, latitude);
+            poTrack->addPoint(longitude, latitude, datetime, altitude);
     } while(start == 0 && trackpointFetched < ntcks);
 
     /* We have read one more than necessary, so we adjust the offset */
@@ -761,7 +791,8 @@ vsi_l_offset GTM::findFirstTrackOffset()
     return (vsi_l_offset) (firstTrackpointOffset + ntcks * 25);
 }
 
-bool GTM::readTrackPoints(double& latitude, double& longitude, unsigned char& start) {
+bool GTM::readTrackPoints(double& latitude, double& longitude, GIntBig& datetime,
+                          unsigned char& start, float& altitude) {
     /* Point to the actual trackpoint offset */
     if ( VSIFSeekL(pGTMFile, actualTrackpointOffset, SEEK_SET) != 0)
         return FALSE;
@@ -769,21 +800,25 @@ bool GTM::readTrackPoints(double& latitude, double& longitude, unsigned char& st
     /* Read latitude */
     latitude = readDouble(pGTMFile);
   
-
     /* Read longitude */
     longitude = readDouble(pGTMFile);
 
-    /* Skip to the track type */
-    if ( VSIFSeekL(pGTMFile, 4, SEEK_CUR) != 0)
-        return FALSE;
+    /* Read trackpoint date */
+    datetime = readInt(pGTMFile);
+    if (datetime != 0)
+        datetime += GTM_EPOCH;
+    
     /* Read start flag */
     if ( !readFile( &start, 1, 1 ) )
         return FALSE;
+        
+    /* Read altitude */
+    altitude = readFloat(pGTMFile);
 
     ++trackpointFetched;
     if (trackpointFetched < ntcks)
     {
-        actualTrackpointOffset = VSIFTellL(pGTMFile) + 4;
+        actualTrackpointOffset += 8 + 8 + 4 + 1 + 4;
     }
     return TRUE;
 }

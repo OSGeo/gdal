@@ -323,9 +323,9 @@ OGRFeature* GTMTrackLayer::GetNextFeature()
     
         for (int i = 0; i < poTrack->getNumPoints(); ++i)
         {
-            double* coords = poTrack->getPoint(i);
-            lineString->addPoint(coords[Track::LONGITUDE], 
-                                 coords[Track::LATITUDE]);
+            const TrackPoint* psTrackPoint = poTrack->getPoint(i);
+            lineString->addPoint(psTrackPoint->x, 
+                                 psTrackPoint->y);
         }
         if (poSRS)
             lineString->assignSpatialReference(poSRS);
