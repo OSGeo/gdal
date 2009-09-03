@@ -10,7 +10,13 @@ EXTRAFLAGS = -I.. -I..\.. -I$(PG_INC_DIR)
 
 default:	$(OBJ)
 
+ogr_PG.dll:	$(OBJ)
+	link /dll /out:ogr_PG.dll $(OBJ) $(GDALLIB) $(PG_LIB)
+	if exist ogr_PG.dll.manifest mt -manifest ogr_PG.dll.manifest -outputresource:ogr_PG.dll;2
+
 clean:
 	-del *.lib
-	-del *.obj *.pdb
+	-del *.obj *.pdb *.exp
 	-del *.exe
+	-del *.dll
+	-del *.manifest
