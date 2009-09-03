@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include "ogr_gtm.h"
-
+#include "cpl_time.h"
 
 GTMWaypointLayer::GTMWaypointLayer( const char* pszName,
                                     OGRSpatialReference* poSRSIn,
@@ -93,6 +93,9 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszName,
     OGRFieldDefn oFieldIcon( "icon", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oFieldIcon );
   
+    OGRFieldDefn oFieldTime( "time", OFTDateTime );
+    poFeatureDefn->AddFieldDefn( &oFieldTime );
+    
     this->pszName = CPLStrdup(pszName);
 }
 
@@ -112,6 +115,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     char psNameField[] = "          ";
     char* pszcomment = NULL;
     int icon = 48;
+    int date = 0;
     for (int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
@@ -136,6 +140,34 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
                 // Check if it is a valid icon
                 if (icon < 1 || icon > 220)
                     icon = 48;
+            }
+            /* Waypoint date */
+            else if (EQUAL(pszName, "time"))
+            {
+                struct tm brokendowndate;
+                int year, month, day, hour, min, sec, TZFlag;
+                if (poFeature->GetFieldAsDateTime( i, &year, &month, &day, &hour, &min, &sec, &TZFlag))
+                {
+                    brokendowndate.tm_year = year - 1900;
+                    brokendowndate.tm_mon = month - 1;
+                    brokendowndate.tm_mday = day;
+                    brokendowndate.tm_hour = hour;
+                    brokendowndate.tm_min = min;
+                    brokendowndate.tm_sec = sec;
+                    GIntBig unixTime = CPLYMDHMSToUnixTime(&brokendowndate);
+                    if (TZFlag != 0)
+                        unixTime -= (TZFlag - 100) * 15;
+                    if (unixTime <= GTM_EPOCH || (unixTime - GTM_EPOCH) != (int)(unixTime - GTM_EPOCH))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                  "%04d/%02d/%02d %02d:%02d:%02d is not a valid datetime for GTM",
+                                  year, month, day, hour, min, sec);
+                    }
+                    else
+                    {
+                        date = (int)(unixTime - GTM_EPOCH);
+                    }
+                }
             }
         }
     }
@@ -170,7 +202,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
 
     /* Date */
     pBufferAux = (char*)pBufferAux + 1;
-    appendInt(pBufferAux, 0);
+    appendInt(pBufferAux, date);
 
     /* wrot */
     pBufferAux = (char*)pBufferAux + 4;
@@ -269,14 +301,37 @@ OGRFeature* GTMWaypointLayer::GetNextFeature()
         }
 
         OGRFeature* poFeature = new OGRFeature( poFeatureDefn );
-        poFeature->SetGeometryDirectly(new OGRPoint 
-                                       (poWaypoint->getLongitude(),
-                                        poWaypoint->getLatitude()));
+        double altitude = poWaypoint->getAltitude();
+        if (altitude == 0.0)
+            poFeature->SetGeometryDirectly(new OGRPoint 
+                                           (poWaypoint->getLongitude(),
+                                            poWaypoint->getLatitude()));
+        else
+            poFeature->SetGeometryDirectly(new OGRPoint 
+                                           (poWaypoint->getLongitude(),
+                                            poWaypoint->getLatitude(),
+                                            altitude));
+                                            
         if (poSRS)
             poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
         poFeature->SetField( NAME, poWaypoint->getName());
         poFeature->SetField( COMMENT, poWaypoint->getComment());
         poFeature->SetField( ICON, poWaypoint->getIcon());
+        
+        GIntBig wptdate = poWaypoint->getDate();
+        if (wptdate != 0)
+        {
+            struct tm brokendownTime;
+            CPLUnixTimeToYMDHMS(wptdate, &brokendownTime);
+            poFeature->SetField( DATE,
+                                 brokendownTime.tm_year + 1900,
+                                 brokendownTime.tm_mon + 1,
+                                 brokendownTime.tm_mday,
+                                 brokendownTime.tm_hour,
+                                 brokendownTime.tm_min,
+                                 brokendownTime.tm_sec);
+        }
+        
         poFeature->SetFID( nNextFID++ );
         delete poWaypoint;
         if( (m_poFilterGeom == NULL
