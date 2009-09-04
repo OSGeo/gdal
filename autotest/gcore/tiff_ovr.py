@@ -1367,7 +1367,7 @@ for item in gdaltest_list_internal:
     gdaltest_list.append(item)
 gdaltest_list.append(tiff_ovr_invert_endianness)
 for item in gdaltest_list_internal:
-    gdaltest_list.append( (item, item.__name__ + '_interverted') )
+    gdaltest_list.append( (item, item.__name__ + '_inverted') )
 gdaltest_list.append(tiff_ovr_restore_endianness)
 
 if __name__ == '__main__':
