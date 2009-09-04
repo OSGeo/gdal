@@ -1675,8 +1675,7 @@ else
   INGRES_LIB="-L$II_SYSTEM/ingres/lib \
 	$II_SYSTEM/ingres/lib/iiclsadt.o \
 	$II_SYSTEM/ingres/lib/iiuseradt.o \
-	-liiapi.1 -ladf.1 -lgcf.1 -lulf.1 -lscf.1 -lpsf.1 -lopf.1 -lrdf.1 \
-	-lcuf.1 -lqsf.1 -lgwf.1 -ldmf.1 -lsxf.1 -lqef.1 -lrqf.1 -ltpf.1"
+	-liiapi.1 -lcompat.1 -lq.1 -lframe.1" 
   INGRES_INC=-I$II_SYSTEM/ingres/files
 fi
 
