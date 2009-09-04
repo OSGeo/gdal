@@ -282,6 +282,10 @@ GTIFFBuildOverviews( const char * pszFilename,
         {
             nBandBits = 
                 atoi(hBand->GetMetadataItem("NBITS","IMAGE_STRUCTURE"));
+
+            if( nBandBits == 1 
+                && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+                nBandBits = 8;
         }
 
         if( iBand == 0 )
