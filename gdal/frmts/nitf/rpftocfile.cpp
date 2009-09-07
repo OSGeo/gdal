@@ -135,7 +135,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
     tocHeader += 2; /* skip country  */
     tocHeader += 2; /* skip release  */
     
-    locationSectionPhysicalLocation = *(unsigned int*)tocHeader;
+    memcpy(&locationSectionPhysicalLocation, tocHeader, sizeof(unsigned int));
     CPL_MSBPTR32(&locationSectionPhysicalLocation);
     
     if( VSIFSeekL( fp, locationSectionPhysicalLocation, SEEK_SET ) != 0)
