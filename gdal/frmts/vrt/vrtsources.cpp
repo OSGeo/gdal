@@ -411,8 +411,8 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     if( bDstWinSet )
     {
-        if( nXOff > nDstXOff + nDstXSize
-            || nYOff > nDstYOff + nDstYSize
+        if( nXOff >= nDstXOff + nDstXSize
+            || nYOff >= nDstYOff + nDstYSize
             || nXOff + nXSize < nDstXOff
             || nYOff + nYSize < nDstYOff )
             return FALSE;
@@ -796,7 +796,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 + nLineSpace * iBufLine;
 
             if( eBufType == GDT_Byte )
-                *pDstLocation = (GByte) MIN(255,MAX(0,dfOutputValue));
+                *pDstLocation = (GByte) MIN(255,MAX(0,dfOutputValue + 0.5));
             else
                 GDALCopyWords( &dfOutputValue, GDT_Float32, 4, 
                                pDstLocation, eBufType, 8, 1 );
@@ -1120,7 +1120,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 + nLineSpace * (iY + nOutYOff);
 
             if( eBufType == GDT_Byte )
-                *pDstLocation = (GByte) MIN(255,MAX(0,fResult));
+                *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
             else
                 GDALCopyWords( &fResult, GDT_Float32, 4, 
                                pDstLocation, eBufType, 8, 1 );
