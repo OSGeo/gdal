@@ -112,7 +112,7 @@ class CPL_DLL VRTDataset : public GDALDataset
  
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *OpenXML( const char *, const char * = NULL );
+    static GDALDataset *OpenXML( const char *, const char * = NULL, GDALAccess eAccess = GA_ReadOnly );
     static GDALDataset *Create( const char * pszName,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszOptions );
