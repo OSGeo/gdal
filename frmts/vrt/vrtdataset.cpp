@@ -675,7 +675,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Turn the XML representation into a VRTDataset.                  */
 /* -------------------------------------------------------------------- */
-    VRTDataset *poDS = (VRTDataset *) OpenXML( pszXML, pszVRTPath );
+    VRTDataset *poDS = (VRTDataset *) OpenXML( pszXML, pszVRTPath, poOpenInfo->eAccess );
 
     if( poDS != NULL )
         poDS->bNeedsFlush = FALSE;
@@ -699,7 +699,8 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      of the dataset.                                                 */
 /************************************************************************/
 
-GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath )
+GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
+                                  GDALAccess eAccess)
 
 {
  /* -------------------------------------------------------------------- */
@@ -733,7 +734,10 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath )
     if( strstr(pszXML,"VRTWarpedDataset") != NULL )
         poDS = new VRTWarpedDataset( nXSize, nYSize );
     else
+    {
         poDS = new VRTDataset( nXSize, nYSize );
+        poDS->eAccess = eAccess;
+    }
 
     if( poDS->XMLInit( psTree, pszVRTPath ) != CE_None )
     {
@@ -913,7 +917,7 @@ VRTDataset::Create( const char * pszName,
 
     if( EQUALN(pszName,"<VRTDataset",11) )
     {
-        GDALDataset *poDS = OpenXML( pszName, NULL );
+        GDALDataset *poDS = OpenXML( pszName, NULL, GA_Update );
         poDS->SetDescription( "<FromXML>" );
         return poDS;
     }
@@ -935,6 +939,7 @@ VRTDataset::Create( const char * pszName,
                       pszSubclass );
             return NULL;
         }
+        poDS->eAccess = GA_Update;
 
         poDS->SetDescription( pszName );
         
