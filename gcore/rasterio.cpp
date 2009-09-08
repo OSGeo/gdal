@@ -1437,26 +1437,20 @@ void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
 }
 
 /************************************************************************/
-/*                          OverviewRasterIO()                          */
+/*                    GDALGetBestOverviewLevel()                        */
 /*                                                                      */
-/*      Special work function to utilize available overviews to         */
-/*      more efficiently satisfy downsampled requests.  It will         */
-/*      return CE_Failure if there are no appropriate overviews         */
-/*      available but it doesn't emit any error messages.               */
+/* Returns the best overview level to satisfy the query or -1 if none   */
+/* Also updates nXOff, nYOff, nXSize, nYSize when returning a valid     */
+/* overview level                                                       */
 /************************************************************************/
 
-CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
-                                int nXOff, int nYOff, int nXSize, int nYSize,
-                                void * pData, int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType,
-                                int nPixelSpace, int nLineSpace )
-
-
+static
+int GDALBandGetBestOverviewLevel(GDALRasterBand* poBand,
+                                 int &nXOff, int &nYOff,
+                                 int &nXSize, int &nYSize,
+                                 int nBufXSize, int nBufYSize)
 {
-    GDALRasterBand      *poBestOverview = NULL;
-    int                 nOverviewCount = GetOverviewCount();
-    double              dfDesiredResolution, dfBestResolution = 1.0;
-
+    double dfDesiredResolution;
 /* -------------------------------------------------------------------- */
 /*      Compute the desired resolution.  The resolution is              */
 /*      based on the least reduced axis, and represents the number      */
@@ -1473,19 +1467,24 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 /*      downsampled) that is still less than (or only a little more)    */
 /*      downsampled than the request.                                   */
 /* -------------------------------------------------------------------- */
+    int nOverviewCount = poBand->GetOverviewCount();
+    GDALRasterBand* poBestOverview = NULL;
+    double dfBestResolution = 0;
+    int nBestOverviewLevel = -1;
+    
     for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
     {
-        GDALRasterBand  *poOverview = GetOverview( iOverview );
+        GDALRasterBand  *poOverview = poBand->GetOverview( iOverview );
         double          dfResolution;
 
         // What resolution is this?
-        if( (GetXSize() / (double) poOverview->GetXSize())
-            < (GetYSize() / (double) poOverview->GetYSize()) )
+        if( (poBand->GetXSize() / (double) poOverview->GetXSize())
+            < (poBand->GetYSize() / (double) poOverview->GetYSize()) )
             dfResolution = 
-                GetXSize() / (double) poOverview->GetXSize();
+                poBand->GetXSize() / (double) poOverview->GetXSize();
         else
             dfResolution = 
-                GetYSize() / (double) poOverview->GetYSize();
+                poBand->GetYSize() / (double) poOverview->GetYSize();
 
         // Is it nearly the requested resolution and better (lower) than
         // the current best resolution?
@@ -1502,6 +1501,7 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 
         // OK, this is our new best overview.
         poBestOverview = poOverview;
+        nBestOverviewLevel = iOverview;
         dfBestResolution = dfResolution;
     }
 
@@ -1509,8 +1509,8 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 /*      If we didn't find an overview that helps us, just return        */
 /*      indicating failure and the full resolution image will be used.  */
 /* -------------------------------------------------------------------- */
-    if( poBestOverview == NULL )
-        return CE_Failure;
+    if( nBestOverviewLevel < 0 )
+        return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Recompute the source window in terms of the selected            */
@@ -1519,8 +1519,8 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
     int         nOXOff, nOYOff, nOXSize, nOYSize;
     double      dfXRes, dfYRes;
     
-    dfXRes = GetXSize() / (double) poBestOverview->GetXSize();
-    dfYRes = GetYSize() / (double) poBestOverview->GetYSize();
+    dfXRes = poBand->GetXSize() / (double) poBestOverview->GetXSize();
+    dfYRes = poBand->GetYSize() / (double) poBestOverview->GetYSize();
 
     nOXOff = MIN(poBestOverview->GetXSize()-1,(int) (nXOff/dfXRes+0.5));
     nOYOff = MIN(poBestOverview->GetYSize()-1,(int) (nYOff/dfYRes+0.5));
@@ -1530,13 +1530,126 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
         nOXSize = poBestOverview->GetXSize() - nOXOff;
     if( nOYOff + nOYSize > poBestOverview->GetYSize() )
         nOYSize = poBestOverview->GetYSize() - nOYOff;
+        
+    nXOff = nOXOff;
+    nYOff = nOYOff;
+    nXSize = nOXSize;
+    nYSize = nOYSize;
+    
+    return nBestOverviewLevel;
+}
 
+
+/************************************************************************/
+/*                          OverviewRasterIO()                          */
+/*                                                                      */
+/*      Special work function to utilize available overviews to         */
+/*      more efficiently satisfy downsampled requests.  It will         */
+/*      return CE_Failure if there are no appropriate overviews         */
+/*      available but it doesn't emit any error messages.               */
+/************************************************************************/
+
+CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
+                                int nXOff, int nYOff, int nXSize, int nYSize,
+                                void * pData, int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType,
+                                int nPixelSpace, int nLineSpace )
+
+
+{
+    int         nOverview;
+
+    nOverview =
+        GDALBandGetBestOverviewLevel(this, nXOff, nYOff, nXSize, nYSize,
+                                     nBufXSize, nBufYSize);
+    if (nOverview < 0)
+        return CE_Failure;
+        
 /* -------------------------------------------------------------------- */
 /*      Recast the call in terms of the new raster layer.               */
 /* -------------------------------------------------------------------- */
-    return poBestOverview->RasterIO( eRWFlag, nOXOff, nOYOff, nOXSize, nOYSize,
+    GDALRasterBand* poOverviewBand = GetOverview(nOverview);
+    return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace );
+}
+
+/************************************************************************/
+/*                        GetBestOverviewLevel()                        */
+/*                                                                      */
+/* Returns the best overview level to satisfy the query or -1 if none   */
+/* Also updates nXOff, nYOff, nXSize, nYSize when returning a valid     */
+/* overview level                                                       */
+/************************************************************************/
+
+static
+int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
+                                    int &nXOff, int &nYOff,
+                                    int &nXSize, int &nYSize,
+                                    int nBufXSize, int nBufYSize,
+                                    int nBandCount, int *panBandMap)
+{
+    int iBand, iOverview;
+    int nOverviewCount = 0;
+    GDALRasterBand *poFirstBand = NULL;
+    
+    if (nBandCount == 0)
+        return -1;
+    
+/* -------------------------------------------------------------------- */
+/* Check that all bands have the same number of overviews and           */
+/* that they have all the same size and block dimensions                */
+/* -------------------------------------------------------------------- */
+    for( iBand = 0; iBand < nBandCount; iBand++ )
+    {
+        GDALRasterBand *poBand = poDS->GetRasterBand( panBandMap[iBand] );
+        if (iBand == 0)
+        {
+            poFirstBand = poBand;
+            nOverviewCount = poBand->GetOverviewCount();
+        }
+        else if (nOverviewCount != poBand->GetOverviewCount())
+        {
+            CPLDebug( "GDAL", 
+                      "GDALDataset::GetBestOverviewLevel() ... "
+                      "mismatched overview count, use std method." );
+            return -1;
+        }
+        else
+        {
+            for(iOverview = 0; iOverview < nOverviewCount; iOverview++)
+            {
+                GDALRasterBand* poOvrBand =
+                    poBand->GetOverview(iOverview);
+                GDALRasterBand* poOvrFirstBand =
+                    poFirstBand->GetOverview(iOverview);
+                if ( poOvrFirstBand->GetXSize() != poOvrBand->GetXSize() ||
+                     poOvrFirstBand->GetYSize() != poOvrBand->GetYSize() )
+                {
+                    CPLDebug( "GDAL", 
+                              "GDALDataset::GetBestOverviewLevel() ... "
+                              "mismatched overview sizes, use std method." );
+                    return -1;
+                }
+                int nBlockXSizeFirst=0, nBlockYSizeFirst=0;
+                int nBlockXSizeCurrent=0, nBlockYSizeCurrent=0;
+                poOvrFirstBand->GetBlockSize(&nBlockXSizeFirst, &nBlockYSizeFirst);
+                poOvrBand->GetBlockSize(&nBlockXSizeCurrent, &nBlockYSizeCurrent);
+                if (nBlockXSizeFirst != nBlockXSizeCurrent ||
+                    nBlockYSizeFirst != nBlockYSizeCurrent)
+                {
+                    CPLDebug( "GDAL", 
+                          "GDALDataset::GetBestOverviewLevel() ... "
+                          "mismatched block sizes, use std method." );
+                    return -1;
+                }
+            }
+        }
+    }
+ 
+    return GDALBandGetBestOverviewLevel(poFirstBand,
+                                        nXOff, nYOff, nXSize, nYSize,
+                                        nBufXSize, nBufYSize);
 }
 
 /************************************************************************/
@@ -1561,10 +1674,9 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 /*      currently take advantage of some special cases addressed in     */
 /*      GDALRasterBand::IRasterIO(), so it is likely best to only       */
 /*      call it when you know it will help.  That is in cases where     */
-/*      data is at 1:1 to the buffer, you don't want to take            */
-/*      advantage of overviews, and you know the driver is              */
+/*      data is at 1:1 to the buffer, and you know the driver is        */
 /*      implementing interleaved IO efficiently on a block by block     */
-/*      basis.                                                          */
+/*      basis. Overviews will be used when possible.                    */
 /************************************************************************/
 
 CPLErr 
@@ -1688,6 +1800,19 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
         return CE_None;
     }
+    
+    /* Below code is not compatible with that case. It would need a complete */
+    /* separate code like done in GDALRasterBand::IRasterIO. */
+    if (eRWFlag == GF_Write && (nBufXSize < nXSize || nBufYSize < nYSize))
+    {
+        return GDALDataset::IRasterIO( eRWFlag, 
+                                       nXOff, nYOff, nXSize, nYSize, 
+                                       pData, nBufXSize, nBufYSize, 
+                                       eBufType, 
+                                       nBandCount, panBandMap,
+                                       nPixelSpace, nLineSpace, 
+                                       nBandSpace );
+    }
 
 /* ==================================================================== */
 /*      Loop reading required source blocks to satisfy output           */
@@ -1698,6 +1823,19 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
     papabySrcBlock = (GByte **) CPLCalloc(sizeof(GByte*),nBandCount);
     papoBlocks = (GDALRasterBlock **) CPLCalloc(sizeof(void*),nBandCount);
+    
+/* -------------------------------------------------------------------- */
+/*      Select an overview level if appropriate.                        */
+/* -------------------------------------------------------------------- */
+    int nOverviewLevel = GDALDatasetGetBestOverviewLevel (this,
+                                               nXOff, nYOff, nXSize, nYSize,
+                                               nBufXSize, nBufYSize,
+                                               nBandCount, panBandMap);
+    if (nOverviewLevel >= 0)
+    {
+        GetRasterBand(panBandMap[0])->GetOverview(nOverviewLevel)->
+                                GetBlockSize( &nBlockXSize, &nBlockYSize );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute stepping increment.                                     */
@@ -1748,6 +1886,8 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                 for( iBand = 0; iBand < nBandCount; iBand++ )
                 {
                     GDALRasterBand *poBand = GetRasterBand( panBandMap[iBand]);
+                    if (nOverviewLevel >= 0)
+                        poBand = poBand->GetOverview(nOverviewLevel);
                     poBlock = poBand->GetLockedBlockRef( nLBlockX, nLBlockY, 
                                                          bJustInitialize );
                     if( poBlock == NULL )
