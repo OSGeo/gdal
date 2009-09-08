@@ -1280,6 +1280,20 @@ def tiff_ovr_35():
     return 'success'
 
 ###############################################################################
+# Confirm that overviews are used on a Band.RasterIO() when using BlockBasedRasterIO() (#3124)
+
+def tiff_ovr_36():
+
+    oldval = gdal.GetConfigOption('GDAL_FORCE_CACHING', 'NO')
+    gdal.SetConfigOption('GDAL_FORCE_CACHING', 'YES')
+    
+    ret = tiff_ovr_35()
+    
+    gdal.SetConfigOption('GDAL_FORCE_CACHING', oldval)
+    
+    return ret
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1351,6 +1365,7 @@ gdaltest_list_internal = [
     tiff_ovr_33,
     tiff_ovr_34,
     tiff_ovr_35,
+    tiff_ovr_36,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
