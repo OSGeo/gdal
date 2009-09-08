@@ -53,7 +53,7 @@ init_list = [ \
     ('cint32.vrt', 1, 5028, None),
     ('cfloat32.vrt', 1, 5028, None),
     ('cfloat64.vrt', 1, 5028, None),
-    ('msubwinbyte.vrt', 2, 2869, None),
+    ('msubwinbyte.vrt', 2, 2699, None),
     ('utmsmall.vrt', 1, 50054, None),
     ('byte_nearest_50pct.vrt', 1, 1192, None),
     ('byte_averaged_50pct.vrt', 1, 1152, None),
