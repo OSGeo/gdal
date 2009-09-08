@@ -199,6 +199,16 @@ RawRasterBand::~RawRasterBand()
     CPLFree( pLineBuffer );
 }
 
+
+/************************************************************************/
+/*                             SetAccess()                              */
+/************************************************************************/
+
+void  RawRasterBand::SetAccess( GDALAccess eAccess )
+{
+    this->eAccess = eAccess;
+}
+
 /************************************************************************/
 /*                             FlushCache()                             */
 /*                                                                      */
