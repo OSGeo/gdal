@@ -89,6 +89,15 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
+    if( eRWFlag == GF_Write && eAccess == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Attempt to write to read only dataset in"
+                  "VRTRawRasterBand::IRasterIO().\n" );
+
+        return( CE_Failure );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Do we have overviews that would be appropriate to satisfy       */
 /*      this request?                                                   */
@@ -101,6 +110,8 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               eBufType, nPixelSpace, nLineSpace ) == CE_None )
             return CE_None;
     }
+    
+    poRawRaster->SetAccess(eAccess);
 
     return poRawRaster->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                   pData, nBufXSize, nBufYSize, 
@@ -139,7 +150,9 @@ CPLErr VRTRawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                   "No raw raster band configured on VRTRawRasterBand." );
         return CE_Failure;
     }
-
+    
+    poRawRaster->SetAccess(eAccess);
+    
     return poRawRaster->WriteBlock( nBlockXOff, nBlockYOff, pImage );
 }
 
@@ -237,7 +250,6 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                            ClearRawLink()                            */

@@ -129,6 +129,8 @@ protected:
 
     CPLErr          AccessLine( int iLine );
 
+    void            SetAccess( GDALAccess eAccess );
+    
     // this is deprecated.
     void	 StoreNoDataValue( double );
 
