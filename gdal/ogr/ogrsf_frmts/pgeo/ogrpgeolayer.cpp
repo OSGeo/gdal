@@ -445,25 +445,23 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
     if( nSHPType == 50 )
         nSHPType = SHPT_ARC;
-/* -------------------------------------------------------------------- */
-/*      type 9 appears to just be an alias for POINTZ (#2692)           */
-/* -------------------------------------------------------------------- */
-    else if ( nSHPType == 9 )
-        nSHPType = SHPT_POINTZ;
 
 /* ==================================================================== */
 /*  Extract vertices for a Polygon or Arc.				*/
 /* ==================================================================== */
-    if( nSHPType == SHPT_POLYGON 
-        || nSHPType == SHPT_ARC
-        || nSHPType == SHPT_POLYGONZ
-        || nSHPType == SHPT_POLYGONM
+    if(    nSHPType == SHPT_ARC
         || nSHPType == SHPT_ARCZ
         || nSHPType == SHPT_ARCM
-        || nSHPType == SHPT_MULTIPATCH )
+        || nSHPType == SHPT_ARCZM
+        || nSHPType == SHPT_POLYGON 
+        || nSHPType == SHPT_POLYGONZ
+        || nSHPType == SHPT_POLYGONM
+        || nSHPType == SHPT_POLYGONZM
+        || nSHPType == SHPT_MULTIPATCH 
+        || nSHPType == SHPT_MULTIPATCHM)
     {
-	GInt32		nPoints, nParts;
-	int    		i, nOffset;
+        GInt32         nPoints, nParts;
+        int            i, nOffset;
         GInt32         *panPartStart;
 
         if (nBytes < 44)
@@ -491,17 +489,24 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
             return OGRERR_FAILURE;
         }
 
+        int bHasZ = (  nSHPType == SHPT_POLYGONZ
+                    || nSHPType == SHPT_POLYGONZM
+                    || nSHPType == SHPT_ARCZ
+                    || nSHPType == SHPT_ARCZM
+                    || nSHPType == SHPT_MULTIPATCH 
+                    || nSHPType == SHPT_MULTIPATCHM );
+
+        int bIsMultiPatch = ( nSHPType == SHPT_MULTIPATCH || nSHPType == SHPT_MULTIPATCHM );
+
         /* With the previous checks on nPoints and nParts, */
         /* we should not overflow here and after */
         /* since 50 M * (16 + 8 + 8) = 1 600 MB */
         int nRequiredSize = 44 + 4 * nParts + 16 * nPoints;
-        if ( nSHPType == SHPT_POLYGONZ
-            || nSHPType == SHPT_ARCZ
-            || nSHPType == SHPT_MULTIPATCH )
+        if ( bHasZ )
         {
             nRequiredSize += 16 + 8 * nPoints;
         }
-        if( nSHPType == SHPT_MULTIPATCH )
+        if( bIsMultiPatch )
         {
             nRequiredSize += 4 * nParts;
         }
@@ -555,7 +560,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /*      If this is a multipatch, we will also have parts types.  For    */
 /*      now we ignore and skip past them.                               */
 /* -------------------------------------------------------------------- */
-        if( nSHPType == SHPT_MULTIPATCH )
+        if( bIsMultiPatch )
             nOffset += 4*nParts;
         
 /* -------------------------------------------------------------------- */
@@ -588,9 +593,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
 /*      If we have a Z coordinate, collect that now.                    */
 /* -------------------------------------------------------------------- */
-        if( nSHPType == SHPT_POLYGONZ
-            || nSHPType == SHPT_ARCZ
-            || nSHPType == SHPT_MULTIPATCH )
+        if( bHasZ )
         {
             for( i = 0; i < nPoints; i++ )
             {
@@ -604,9 +607,10 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
 /*      Build corresponding OGR objects.                                */
 /* -------------------------------------------------------------------- */
-        if( nSHPType == SHPT_ARC 
+        if(    nSHPType == SHPT_ARC 
             || nSHPType == SHPT_ARCZ
-            || nSHPType == SHPT_ARCM )
+            || nSHPType == SHPT_ARCM
+            || nSHPType == SHPT_ARCZM )
         {
 /* -------------------------------------------------------------------- */
 /*      Arc - As LineString                                             */
@@ -651,9 +655,10 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
 /*      Polygon                                                         */
 /* -------------------------------------------------------------------- */
-        else if( nSHPType == SHPT_POLYGON
+        else if(    nSHPType == SHPT_POLYGON
                  || nSHPType == SHPT_POLYGONZ
-                 || nSHPType == SHPT_POLYGONM )
+                 || nSHPType == SHPT_POLYGONM
+                 || nSHPType == SHPT_POLYGONZM )
         {
             OGRPolygon *poMulti = new OGRPolygon;
             *ppoGeom = poMulti;
@@ -681,7 +686,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
 /*      Multipatch                                                      */
 /* -------------------------------------------------------------------- */
-        else if( nSHPType == SHPT_MULTIPATCH )
+        else if( bIsMultiPatch )
         {
             /* return to this later */
         } 
@@ -691,8 +696,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
         CPLFree( padfY );
         CPLFree( padfZ );
 
-        if( nSHPType == SHPT_ARC
-            || nSHPType == SHPT_POLYGON )
+        if( !bHasZ )
             (*ppoGeom)->setCoordinateDimension( 2 );
 
         return OGRERR_NONE;
@@ -701,9 +705,10 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* ==================================================================== */
 /*  Extract vertices for a MultiPoint.					*/
 /* ==================================================================== */
-    else if( nSHPType == SHPT_MULTIPOINT
+    else if(    nSHPType == SHPT_MULTIPOINT
              || nSHPType == SHPT_MULTIPOINTM
-             || nSHPType == SHPT_MULTIPOINTZ )
+             || nSHPType == SHPT_MULTIPOINTZ
+             || nSHPType == SHPT_MULTIPOINTZM )
     {
 #ifdef notdef
 	int32		nPoints;
@@ -745,7 +750,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
 /*      If we have a Z coordinate, collect that now.                    */
 /* -------------------------------------------------------------------- */
-        if( psShape->nSHPType == SHPT_MULTIPOINTZ )
+        if( psShape->nSHPType == SHPT_MULTIPOINTZ || psShape->nSHPType == SHPT_MULTIPOINTZM )
         {
             memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
@@ -790,12 +795,15 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* ==================================================================== */
 /*      Extract vertices for a point.                                   */
 /* ==================================================================== */
-    else if( nSHPType == SHPT_POINT
+    else if(    nSHPType == SHPT_POINT
              || nSHPType == SHPT_POINTM
-             || nSHPType == SHPT_POINTZ )
+             || nSHPType == SHPT_POINTZ
+             || nSHPType == SHPT_POINTZM )
     {
         int	nOffset;
         double  dfX, dfY, dfZ = 0;
+
+        int bHasZ = (nSHPType == SHPT_POINTZ || nSHPType == SHPT_POINTZM);
 
         if (nBytes < 4 + 8 + 8 + ((nSHPType == SHPT_POINTZ) ? 8 : 0))
         {
@@ -811,7 +819,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
         CPL_LSBPTR64( &dfY );
         nOffset = 20 + 8;
         
-        if( nSHPType == SHPT_POINTZ )
+        if( bHasZ )
         {
             memcpy( &dfZ, pabyShape + 4 + 16, 8 );
             CPL_LSBPTR64( &dfZ );
@@ -819,7 +827,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 
         *ppoGeom = new OGRPoint( dfX, dfY, dfZ );
 
-        if( nSHPType != SHPT_POINTZ )
+        if( !bHasZ )
             (*ppoGeom)->setCoordinateDimension( 2 );
 
         return OGRERR_NONE;

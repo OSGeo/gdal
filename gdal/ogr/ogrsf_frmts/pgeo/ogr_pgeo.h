@@ -34,20 +34,30 @@
 #include "cpl_odbc.h"
 #include "cpl_error.h"
 
-#define SHPT_NULL	0
-#define SHPT_POINT	1
-#define SHPT_ARC	3
-#define SHPT_POLYGON	5
-#define SHPT_MULTIPOINT	8
-#define SHPT_POINTZ	11
-#define SHPT_ARCZ	13
-#define SHPT_POLYGONZ	15
-#define SHPT_MULTIPOINTZ 18
-#define SHPT_POINTM	21
-#define SHPT_ARCM	23
-#define SHPT_POLYGONM	25
-#define SHPT_MULTIPOINTM 28
-#define SHPT_MULTIPATCH 31
+#define SHPT_NULL          0
+
+#define SHPT_POINT         1
+#define SHPT_POINTM       21
+#define SHPT_POINTZM      11
+#define SHPT_POINTZ        9
+
+#define SHPT_MULTIPOINT    8
+#define SHPT_MULTIPOINTM  28
+#define SHPT_MULTIPOINTZM 18
+#define SHPT_MULTIPOINTZ  20
+
+#define SHPT_ARC           3
+#define SHPT_ARCM         23
+#define SHPT_ARCZM        13
+#define SHPT_ARCZ         10
+
+#define SHPT_POLYGON       5
+#define SHPT_POLYGONM     25
+#define SHPT_POLYGONZM    15
+#define SHPT_POLYGONZ     19
+
+#define SHPT_MULTIPATCHM  31
+#define SHPT_MULTIPATCH   32
 
 /************************************************************************/
 /*                            OGRPGeoLayer                              */
