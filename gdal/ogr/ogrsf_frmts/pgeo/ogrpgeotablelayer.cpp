@@ -103,18 +103,21 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
         case SHPT_POINT:
         case SHPT_POINTM:
         case SHPT_POINTZ:
+        case SHPT_POINTZM:
             eOGRType = wkbPoint;
             break;
 
         case SHPT_ARC:
         case SHPT_ARCZ:
         case SHPT_ARCM:
+        case SHPT_ARCZM:
             eOGRType = wkbLineString;
             break;
             
         case SHPT_MULTIPOINT:
         case SHPT_MULTIPOINTZ:
         case SHPT_MULTIPOINTM:
+        case SHPT_MULTIPOINTZM:
             eOGRType = wkbMultiPoint;
             break;
 
