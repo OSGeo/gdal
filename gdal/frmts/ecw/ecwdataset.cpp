@@ -1471,6 +1471,9 @@ void ECWInitialize()
 void GDALDeregister_ECW( GDALDriver * )
 
 {
+    /* For unknown reason, this cleanup can take up to 3 seconds (see #3134). */
+    /* Not worth it */
+#ifdef notdef
     if( bNCSInitialized )
     {
         bNCSInitialized = FALSE;
@@ -1482,6 +1485,7 @@ void GDALDeregister_ECW( GDALDriver * )
         CPLDestroyMutex( hECWDatasetMutex );
         hECWDatasetMutex = NULL;
     }
+#endif
 }
 
 /************************************************************************/
