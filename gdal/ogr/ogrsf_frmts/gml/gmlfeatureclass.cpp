@@ -332,9 +332,16 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
             }
             else if( EQUAL(pszType,"Integer") )
+            {
                 poPDefn->SetType( GMLPT_Integer );
+                poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
+            }
             else if( EQUAL(pszType,"Real") )
+            {
                 poPDefn->SetType( GMLPT_Real );
+                poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
+                poPDefn->SetPrecision( atoi( CPLGetXMLValue( psThis, "Precision", "0" ) ) );
+            }
             else if( EQUAL(pszType,"StringList") ) 
                 poPDefn->SetType( GMLPT_StringList );
             else if( EQUAL(pszType,"IntegerList") )
@@ -473,13 +480,28 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             pszTypeName = "StringList";
             break;
         }
-
         CPLCreateXMLElementAndValue( psPDefnNode, "Type", pszTypeName );
+
         if( EQUAL(pszTypeName,"String") )
         {
             char szMaxLength[48];
             sprintf(szMaxLength, "%d", poPDefn->GetWidth());
             CPLCreateXMLElementAndValue ( psPDefnNode, "Width", szMaxLength );
+        }
+        if( poPDefn->GetWidth() > 0 && EQUAL(pszTypeName,"Integer") )
+        {
+            char szLength[48];
+            sprintf(szLength, "%d", poPDefn->GetWidth());
+            CPLCreateXMLElementAndValue ( psPDefnNode, "Width", szLength );
+        }
+        if( poPDefn->GetWidth() > 0 && EQUAL(pszTypeName,"Real") )
+        {
+            char szLength[48];
+            sprintf(szLength, "%d", poPDefn->GetWidth());
+            CPLCreateXMLElementAndValue ( psPDefnNode, "Width", szLength );
+            char szPrecision[48];
+            sprintf(szPrecision, "%d", poPDefn->GetPrecision());
+            CPLCreateXMLElementAndValue ( psPDefnNode, "Precision", szPrecision );
         }
     }
 
