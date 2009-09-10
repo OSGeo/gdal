@@ -319,6 +319,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
           oField.SetName(poProperty->GetName()+4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth( poProperty->GetWidth() );
+        if( poProperty->GetPrecision() > 0 )
+            oField.SetPrecision( poProperty->GetPrecision() );
 
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
@@ -698,6 +700,18 @@ void OGRGMLDataSource::InsertHeader()
                             "      </xs:simpleType>\n"
                             "    </xs:element>\n",
                             poFieldDefn->GetNameRef(), szMaxLength );
+            }
+            else if( poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime )
+            {
+                VSIFPrintf( fpSchema, 
+                            "    <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">\n"
+                            "      <xs:simpleType>\n"
+                            "        <xs:restriction base=\"xs:string\">\n"
+                            "          <xs:maxLength value=\"unbounded\"/>\n"
+                            "        </xs:restriction>\n"
+                            "      </xs:simpleType>\n"
+                            "    </xs:element>\n",
+                            poFieldDefn->GetNameRef() );
             }
             else
             {
