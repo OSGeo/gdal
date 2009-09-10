@@ -707,25 +707,11 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
 #ifdef DEBUG
-#if defined(WIN32) && defined(_MSC_VER)
             CPLDebug( "PCIDSK",
-                      "Band %d: nImageOffset=%I64d, nPixelOffset=%I64d, "
-                      "nLineOffset=%I64d, nLineSize=%I64d",
-                      iBand + 1, nImageOffset, nPixelOffset,
-                      nLineOffset, nLineSize );
-#elif HAVE_LONG_LONG
-            CPLDebug( "PCIDSK",
-                      "Band %d: nImageOffset=%Ld, nPixelOffset=%Ld, "
-                      "nLineOffset=%Ld, nLineSize=%Ld",
-                      iBand + 1, nImageOffset, nPixelOffset,
-                      nLineOffset, nLineSize );
-#else
-            CPLDebug( "PCIDSK",
-                      "Band %d: nImageOffset=%ld, nPixelOffset=%ld, "
-                      "nLineOffset=%ld, nLineSize=%ld",
-                      iBand + 1, nImageOffset, nPixelOffset,
-                      nLineOffset, nLineSize );
-#endif
+                      "Band %d: nImageOffset=" CPL_FRMT_GIB ", nPixelOffset=" CPL_FRMT_GIB ", "
+                      "nLineOffset=" CPL_FRMT_GIB ", nLineSize=" CPL_FRMT_GIB,
+                      iBand + 1, (GIntBig)nImageOffset, (GIntBig)nPixelOffset,
+                      (GIntBig)nLineOffset, (GIntBig)nLineSize );
 #endif
             
             poBand = new PCIDSKRawRasterBand( poDS, iBand + 1, fp,
