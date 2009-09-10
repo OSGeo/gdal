@@ -52,6 +52,7 @@ class CPL_DLL GMLPropertyDefn
     char             *m_pszName;
     GMLPropertyType   m_eType;
     int               m_nWidth;
+    int               m_nPrecision;
     char             *m_pszSrcElement;
 
 public:
@@ -65,6 +66,8 @@ public:
     void        SetType( GMLPropertyType eType ) { m_eType = eType; }
     void        SetWidth( int nWidth) { m_nWidth = nWidth; }
     int         GetWidth() { return m_nWidth; }
+    void        SetPrecision( int nPrecision) { m_nPrecision = nPrecision; }
+    int         GetPrecision() { return m_nPrecision; }
     void        SetSrcElement( const char *pszSrcElement );
     const char *GetSrcElement() { return m_pszSrcElement; }
 

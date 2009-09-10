@@ -343,6 +343,101 @@ def ogr_gml_9():
     return 'success'
 
 ###############################################################################
+# Test writing different data types in a GML file (ticket #2857)
+# TODO: Add test for other data types as they are added to the driver.
+
+def ogr_gml_10():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    drv = ogr.GetDriverByName('GML')
+    ds = drv.CreateDataSource('tmp/fields.gml')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('string', ogr.OFTString))
+    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('string')).SetWidth(100)
+    lyr.CreateField(ogr.FieldDefn('date', ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn('real', ogr.OFTReal))
+    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('real')).SetWidth(4)
+    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('real')).SetPrecision(2)
+    lyr.CreateField(ogr.FieldDefn('float', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('integer', ogr.OFTInteger))
+    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('integer')).SetWidth(5)
+
+    dst_feat = ogr.Feature( lyr.GetLayerDefn() )
+    dst_feat.SetField('string', 'test string of length 24')
+    dst_feat.SetField('date', '2003/04/22')
+    dst_feat.SetField('real', '12.34')
+    dst_feat.SetField('float', '1234.5678')
+    dst_feat.SetField('integer', '1234')
+
+    ret = lyr.CreateFeature( dst_feat )
+
+    if ret != 0:
+        gdaltest.post_reason('CreateFeature failed.')
+        return 'fail'
+
+    dst_feat.Destroy()
+    ds.Destroy()
+
+    ds = ogr.Open('tmp/fields.gml')
+    lyr = ds.GetLayerByName('test')
+    feat = lyr.GetNextFeature()
+
+    if feat.GetFieldDefnRef(feat.GetFieldIndex('string')).GetType() != ogr.OFTString:
+        gdaltest.post_reason('String type is reported wrong. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('string')).GetType()))
+        return 'fail'
+    if feat.GetFieldDefnRef(feat.GetFieldIndex('date')).GetType() != ogr.OFTString:
+        gdaltest.post_reason('Date type is not reported as OFTString. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('date')).GetType()))
+        return 'fail'
+    if feat.GetFieldDefnRef(feat.GetFieldIndex('real')).GetType() != ogr.OFTReal:
+        gdaltest.post_reason('Real type is reported wrong. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('real')).GetType()))
+        return 'fail'
+    if feat.GetFieldDefnRef(feat.GetFieldIndex('float')).GetType() != ogr.OFTReal:
+        gdaltest.post_reason('Float type is not reported as OFTReal. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('float')).GetType()))
+        return 'fail'
+    if feat.GetFieldDefnRef(feat.GetFieldIndex('integer')).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('Integer type is reported wrong. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('integer')).GetType()))
+        return 'fail'
+
+    if feat.GetField('string') != 'test string of length 24':
+        gdaltest.post_reason('Unexpected string content.' + feat.GetField('string') )
+        return 'fail'
+    if feat.GetField('date') != '2003/04/22':
+        gdaltest.post_reason('Unexpected string content.' + feat.GetField('date') )
+        return 'fail'
+    if feat.GetField('real') != 12.34:
+        gdaltest.post_reason('Unexpected real content.')
+        return 'fail'
+    if feat.GetField('float') != 1234.5678:
+        gdaltest.post_reason('Unexpected float content.')
+        return 'fail'
+    if feat.GetField('integer') != 1234:
+        gdaltest.post_reason('Unexpected integer content.')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('string')).GetWidth() != 100:
+        gdaltest.post_reason('Unexpected width of string field.')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('real')).GetWidth() != 4:
+        gdaltest.post_reason('Unexpected width of real field.')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('real')).GetPrecision() != 2:
+        gdaltest.post_reason('Unexpected precision of real field.')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('integer')).GetWidth() != 5:
+        gdaltest.post_reason('Unexpected width of integer field.')
+        return 'fail'
+
+    feat.Destroy();
+    ds.Destroy()
+
+    os.remove('tmp/fields.gml')
+    os.remove('tmp/fields.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -368,6 +463,7 @@ gdaltest_list = [
     ogr_gml_7,
     ogr_gml_8,
     ogr_gml_9,
+    ogr_gml_10,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
