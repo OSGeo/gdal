@@ -618,3 +618,10 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 #ifdef SWIGCSHARP
 %include "gdal_csharp_extend.i"
 #endif
+
+#ifdef SWIGPYTHON
+/* Add a __version__ attribute to match the convention */
+%pythoncode %{
+__version__ = _gdal.VersionInfo("RELEASE_NAME") 
+%}
+#endif
