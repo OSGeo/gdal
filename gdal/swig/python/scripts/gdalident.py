@@ -36,12 +36,13 @@ except ImportError:
 import sys
 import stat
 import os
+import glob
 
 # =============================================================================
 # 	Usage()
 # =============================================================================
 def Usage():
-    print 'Usage: gdalidentify.py [-r] path *'
+    print 'Usage: gdalident.py [-r] file(s)'
     sys.exit(1)
 
 # =============================================================================
@@ -97,7 +98,11 @@ while i < len(argv):
         report_failure = 1
 
     else:
-        files.append( arg )
+        # Expand any possible wildcards from command line arguments
+        f = glob.glob( arg )
+        if len(f) == 0:
+            print 'File not found: "%s"' % ( str( arg ) )
+        files += f # append 1 or more files
 
     i = i + 1
 
