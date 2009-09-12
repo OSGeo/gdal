@@ -254,9 +254,9 @@ OGRErr GTMTrackLayer::CreateFeature (OGRFeature *poFeature)
             double lon = line->getX(i);
             float altitude = 0;
             CheckAndFixCoordinatesValidity(lat, lon);
-            poDS->checkBounds(lat, lon);
+            poDS->checkBounds((float)lat, (float)lon);
             if (line->getGeometryType() == wkbLineString25D)
-                altitude = line->getZ(i);
+	      altitude = (float)line->getZ(i);
             WriteTrackpoint( lat, lon, altitude, i==0 );
         }
         break;
@@ -278,7 +278,7 @@ OGRErr GTMTrackLayer::CreateFeature (OGRFeature *poFeature)
                 float altitude = 0;
                 CheckAndFixCoordinatesValidity(lat, lon);
                 if (line->getGeometryType() == wkbLineString25D)
-                    altitude = line->getZ(i);
+		  altitude = (float) line->getZ(i);
                 WriteTrackpoint( lat, lon, altitude, i==0 );
             }
         }
