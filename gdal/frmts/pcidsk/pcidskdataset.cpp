@@ -1060,7 +1060,7 @@ int PCIDSKDataset::SegRead( int nSegment, vsi_l_offset nOffset,
 void PCIDSKDataset::CollectPCIDSKMetadata( int nSegment )
 
 {
-    int nSegSize = panSegSize[nSegment-1];
+    int nSegSize = (int) panSegSize[nSegment-1];
 
 /* -------------------------------------------------------------------- */
 /*      Read all metadata in one gulp.                                  */

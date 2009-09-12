@@ -418,7 +418,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                       VSIStrerror( errno ) );
             return CE_Failure;
         }
-        poGDS->paiTiles[2 * nTile] = VSIFTellL( poGDS->fp );
+        poGDS->paiTiles[2 * nTile] = (GUInt32) VSIFTellL( poGDS->fp );
 
         poGDS->bHeaderDirty = TRUE;
     }

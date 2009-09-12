@@ -73,7 +73,7 @@ static GDALDataset** ppDatasets = NULL;
 static unsigned long GDALSharedDatasetHashFunc(const void* elt)
 {
     SharedDatasetCtxt* psStruct = (SharedDatasetCtxt*) elt;
-    return CPLHashSetHashStr(psStruct->pszDescription) ^ psStruct->eAccess ^ psStruct->nPID;
+    return (unsigned long) (CPLHashSetHashStr(psStruct->pszDescription) ^ psStruct->eAccess ^ psStruct->nPID);
 }
 
 static int GDALSharedDatasetEqualFunc(const void* elt1, const void* elt2)

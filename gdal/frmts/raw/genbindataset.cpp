@@ -274,9 +274,8 @@ CPLErr GenBinBitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Establish desired position.                                     */
 /* -------------------------------------------------------------------- */
     nLineStart = (((vsi_l_offset)nBlockXSize) * nBlockYOff * nBits) / 8;
-    iBitOffset = (((vsi_l_offset)nBlockXSize) * nBlockYOff * nBits) % 8;
-    nLineBytes = (((vsi_l_offset)nBlockXSize) * (nBlockYOff+1) * nBits + 7) / 8
-        - nLineStart;
+    iBitOffset = (int)((((vsi_l_offset)nBlockXSize) * nBlockYOff * nBits) % 8);
+    nLineBytes = (int) ((((vsi_l_offset)nBlockXSize) * (nBlockYOff+1) * nBits + 7) / 8 - nLineStart);
 
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */

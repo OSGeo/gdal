@@ -617,22 +617,20 @@ GTIFFBuildOverviews( const char * pszFilename,
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
         int    nOXSize, nOYSize;
-        uint32 nDirOffset;
 
         nOXSize = (nXSize + panOverviewList[iOverview] - 1) 
             / panOverviewList[iOverview];
         nOYSize = (nYSize + panOverviewList[iOverview] - 1) 
             / panOverviewList[iOverview];
 
-        nDirOffset = 
-            GTIFFWriteDirectory(hOTIFF, FILETYPE_REDUCEDIMAGE,
-                                nOXSize, nOYSize, nBitsPerPixel, 
-                                nPlanarConfig, nBands,
-                                128, 128, TRUE, nCompression,
-                                nPhotometric, nSampleFormat, 
-                                panRed, panGreen, panBlue,
-                                0, NULL, /* FIXME ? how can we fetch extrasamples from here */
-                                osMetadata );
+        GTIFFWriteDirectory(hOTIFF, FILETYPE_REDUCEDIMAGE,
+                            nOXSize, nOYSize, nBitsPerPixel, 
+                            nPlanarConfig, nBands,
+                            128, 128, TRUE, nCompression,
+                            nPhotometric, nSampleFormat, 
+                            panRed, panGreen, panBlue,
+                            0, NULL, /* FIXME? how can we fetch extrasamples */
+                            osMetadata );
     }
 
     if (panRed)

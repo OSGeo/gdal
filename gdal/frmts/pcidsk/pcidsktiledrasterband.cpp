@@ -115,7 +115,7 @@ int PCIDSKTiledRasterBand::BuildBlockMap()
     if( poPDS->nBlockMapSeg < 1 )
         return FALSE;
 
-    nBMapSize = poPDS->panSegSize[poPDS->nBlockMapSeg-1];
+    nBMapSize = (int) poPDS->panSegSize[poPDS->nBlockMapSeg-1];
     pachBMap = (char *) CPLCalloc(nBMapSize+1,1);
     
     if( !poPDS->SegRead( poPDS->nBlockMapSeg, 0, nBMapSize, pachBMap ) )
@@ -299,7 +299,7 @@ int PCIDSKTiledRasterBand::SysRead( vsi_l_offset nOffset,
         int          nOffsetInBlock, nThisReadBytes;
         
         iBlock = (int) (nNextOffset >> 13);
-        nOffsetInBlock = (nNextOffset & 0x1fff);
+        nOffsetInBlock = (int) (nNextOffset & 0x1fff);
 
         nRealOffset = panBlockOffset[iBlock] + nOffsetInBlock;
         

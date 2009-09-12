@@ -97,7 +97,7 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
             LEAPS_THRU_END_OF(y - 1);
         y = newy;
     }
-    pRet->tm_year = y - TM_YEAR_BASE;
+    pRet->tm_year = (int) (y - TM_YEAR_BASE);
     pRet->tm_yday = (int) days;
     const int* ip = mon_lengths[yleap];
     for (pRet->tm_mon = 0; days >= (GIntBig) ip[pRet->tm_mon]; ++(pRet->tm_mon))

@@ -317,7 +317,7 @@ void RS2CalibRasterBand::ReadLUT() {
 
     psLUT = CPLParseXMLFile(m_pszLUTFile);
     
-    this->m_nfOffset = CPLAtof(CPLGetXMLValue(psLUT, "=lut.offset",
+    this->m_nfOffset = (float) CPLAtof(CPLGetXMLValue(psLUT, "=lut.offset",
         "0.0"));
 
     papszLUTList = CSLTokenizeString2( CPLGetXMLValue(psLUT,
@@ -328,7 +328,7 @@ void RS2CalibRasterBand::ReadLUT() {
     this->m_nfTable = (float *)CPLMalloc(sizeof(float) * this->m_nTableSize);
 
     for (int i = 0; i < this->m_nTableSize; i++) {
-        m_nfTable[i] = CPLAtof(papszLUTList[i]);
+        m_nfTable[i] = (float) CPLAtof(papszLUTList[i]);
     }
 
     CPLDestroyXMLNode(psLUT);

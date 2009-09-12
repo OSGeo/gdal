@@ -455,7 +455,7 @@ FilterData( int nXSize, int nYSize, GDALDataType eType,
         int iX, iY;
 
         int bHasNoData;
-        float fNoData = poRasterBand->GetNoDataValue(&bHasNoData);
+        float fNoData = (float) poRasterBand->GetNoDataValue(&bHasNoData);
 
         for( iY = 0; iY < nYSize; iY++ )
         {
