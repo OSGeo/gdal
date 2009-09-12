@@ -205,9 +205,9 @@ int GDALJP2Box::IsSuperBox()
 GByte *GDALJP2Box::ReadBoxData()
 
 {
-    char *pszData = (char *) CPLMalloc(GetDataLength() + 1);
+    char *pszData = (char *) CPLMalloc((int)GetDataLength() + 1);
 
-    if( (GIntBig) VSIFReadL( pszData, 1, GetDataLength(), fpVSIL ) 
+    if( (GIntBig) VSIFReadL( pszData, 1, (int)GetDataLength(), fpVSIL ) 
         != GetDataLength() )
     {
         CPLFree( pszData );
@@ -336,7 +336,7 @@ GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
 /*      Compute size of data area of asoc box.                          */
 /* -------------------------------------------------------------------- */
     for( iBox = 0; iBox < nCount; iBox++ )
-        nDataSize += 8 + papoBoxes[iBox]->GetDataLength();
+        nDataSize += 8 + (int) papoBoxes[iBox]->GetDataLength();
 
     pabyNext = pabyCompositeData = (GByte *) CPLMalloc(nDataSize);
 
@@ -357,7 +357,7 @@ GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
         pabyNext += 4;
 
         memcpy( pabyNext, papoBoxes[iBox]->pabyData, 
-                papoBoxes[iBox]->GetDataLength() );
+                (int) papoBoxes[iBox]->GetDataLength() );
         pabyNext += papoBoxes[iBox]->GetDataLength();
     }
     

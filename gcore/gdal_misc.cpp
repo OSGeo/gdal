@@ -1486,7 +1486,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
         if( fp != NULL )
         {
             VSIFSeekL( fp, 0, SEEK_END );
-            nLength = VSIFTellL( fp ) + 1;
+            nLength = (int) VSIFTellL( fp ) + 1;
             VSIFSeekL( fp, SEEK_SET, 0 );
 
             pszResultLicence = (char *) VSICalloc(1,nLength);

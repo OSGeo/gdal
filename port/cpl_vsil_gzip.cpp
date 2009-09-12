@@ -987,7 +987,7 @@ int VSIGZipWriteHandle::Close()
         GUInt32 anTrailer[2];
 
         anTrailer[0] = CPL_LSBWORD32( nCRC );
-        anTrailer[1] = CPL_LSBWORD32( nCurOffset );
+        anTrailer[1] = CPL_LSBWORD32( (GUInt32) nCurOffset );
 
         poBaseHandle->Write( anTrailer, 1, 8 );
         poBaseHandle->Close();

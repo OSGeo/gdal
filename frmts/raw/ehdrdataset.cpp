@@ -208,8 +208,8 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
     nLineStart = (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) / 8;
-    iBitOffset = 
-        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8;
+    iBitOffset = (int)
+      ((nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8);
 
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
@@ -273,8 +273,8 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
     nLineStart = (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) / 8;
-    iBitOffset = 
-        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8;
+    iBitOffset = (int) 
+      ((nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8);
 
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
@@ -1240,25 +1240,25 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     int             nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int             nPixelOffset;
-    vsi_l_offset    nLineOffset, nBandOffset;
+    int             nPixelOffset, nLineOffset;
+    vsi_l_offset    nBandOffset;
 
     if( EQUAL(szLayout,"BIP") )
     {
         nPixelOffset = nItemSize * nBands;
-        nLineOffset = (vsi_l_offset)nPixelOffset * nCols;
+        nLineOffset = nPixelOffset * nCols;
         nBandOffset = (vsi_l_offset)nItemSize;
     }
     else if( EQUAL(szLayout,"BSQ") )
     {
         nPixelOffset = nItemSize;
-        nLineOffset = (vsi_l_offset)nPixelOffset * nCols;
+        nLineOffset = nPixelOffset * nCols;
         nBandOffset = (vsi_l_offset)nLineOffset * nRows;
     }
     else /* assume BIL */
     {
         nPixelOffset = nItemSize;
-        nLineOffset = (vsi_l_offset)nItemSize * nBands * nCols;
+        nLineOffset = nItemSize * nBands * nCols;
         nBandOffset = (vsi_l_offset)nItemSize * nCols;
     }
     

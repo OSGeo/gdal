@@ -220,7 +220,7 @@ int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
         if( EQUAL(oBox.GetType(),"uuid") 
             && memcmp( oBox.GetUUID(), msi_uuid2, 16 ) == 0 )
         {
-            nGeoTIFFSize = oBox.GetDataLength();
+	    nGeoTIFFSize = (int) oBox.GetDataLength();
             pabyGeoTIFFData = oBox.ReadBoxData();
         }
 
@@ -230,7 +230,7 @@ int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
         if( EQUAL(oBox.GetType(),"uuid") 
             && memcmp( oBox.GetUUID(), msig_uuid, 16 ) == 0 )
         {
-            nMSIGSize = oBox.GetDataLength();
+	    nMSIGSize = (int) oBox.GetDataLength();
             pabyMSIGData = oBox.ReadBoxData();
 
             if( nMSIGSize < 70 

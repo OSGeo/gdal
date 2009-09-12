@@ -336,7 +336,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     double dfDeltaY2 = dfDeltaY * dfDeltaY;
                     double dfDeltaY3 = dfDeltaY2 * dfDeltaY;
 
-                    pafDstScanline[iDstPixel - nDstXOff] = 
+                    pafDstScanline[iDstPixel - nDstXOff] = (float) 
                         CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
                                          adfRowResults[0],
                                          adfRowResults[1],
