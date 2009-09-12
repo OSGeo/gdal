@@ -1292,7 +1292,7 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         for( i = 0; i < 256; i++ )
         {
-            afPowTable[i] = pow( 2.0, i-128 );
+            afPowTable[i] = (float) pow( 2.0, i-128 );
         }
     }
 
@@ -1316,32 +1316,32 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             dfReSHH = Byte[3] * dfScale / 127.0;
             dfImSHH = Byte[4] * dfScale / 127.0;
 
-            ((float *) pImage)[iX*2  ] = dfReSHH;
-            ((float *) pImage)[iX*2+1] = dfImSHH;
+            ((float *) pImage)[iX*2  ] = (float) dfReSHH;
+            ((float *) pImage)[iX*2+1] = (float) dfImSHH;
         }        
         else if( nBand == 2 )
         {
             dfReSHV = Byte[5] * dfScale / 127.0;
             dfImSHV = Byte[6] * dfScale / 127.0;
 
-            ((float *) pImage)[iX*2  ] = dfReSHV;
-            ((float *) pImage)[iX*2+1] = dfImSHV;
+            ((float *) pImage)[iX*2  ] = (float) dfReSHV;
+            ((float *) pImage)[iX*2+1] = (float) dfImSHV;
         }
         else if( nBand == 3 )
         {
             dfReSVH = Byte[7] * dfScale / 127.0;
             dfImSVH = Byte[8] * dfScale / 127.0;
 
-            ((float *) pImage)[iX*2  ] = dfReSVH;
-            ((float *) pImage)[iX*2+1] = dfImSVH;
+            ((float *) pImage)[iX*2  ] = (float) dfReSVH;
+            ((float *) pImage)[iX*2+1] = (float) dfImSVH;
         }
         else if( nBand == 4 )
         {
             dfReSVV = Byte[9] * dfScale / 127.0;
             dfImSVV = Byte[10]* dfScale / 127.0;
 
-            ((float *) pImage)[iX*2  ] = dfReSVV;
-            ((float *) pImage)[iX*2+1] = dfImSVV;
+            ((float *) pImage)[iX*2  ] = (float) dfReSVV;
+            ((float *) pImage)[iX*2+1] = (float) dfImSVV;
         }
     }
 

@@ -406,7 +406,7 @@ CPLErr TerragenRasterBand::IWriteBlock
 		float* pfImage = (float*)pImage;
 		for(size_t x = 0; x < (size_t)nBlockXSize; x++)
 		{
-			float f = pfImage[x];
+			double f = pfImage[x];
 			f *= ds.m_dMetersPerElevUnit;
 			f /= ds.m_dSCAL;
 			GInt16 hv = 
@@ -896,7 +896,7 @@ CPLErr TerragenDataset::SetProjection( const char * pszNewProjection )
 /* -------------------------------------------------------------------- */
 /*      Linear units.                                                   */
 /* -------------------------------------------------------------------- */
-    m_bIsGeo = oSRS.IsGeographic();
+    m_bIsGeo = (oSRS.IsGeographic() != FALSE);
     if(m_bIsGeo)
     {
         // The caller is using degrees. We need to convert 
