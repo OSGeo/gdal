@@ -106,7 +106,7 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
         int nLen;
 
         VSIFSeekL( fp, 0, SEEK_END );
-        nLen = VSIFTellL( fp );
+        nLen = (int) VSIFTellL( fp );
         VSIFSeekL( fp, 0, SEEK_SET );
 
         pszXML = (char *) VSIMalloc(nLen+1);

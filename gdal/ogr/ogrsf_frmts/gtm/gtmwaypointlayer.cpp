@@ -257,12 +257,12 @@ OGRErr GTMWaypointLayer::CreateFeature (OGRFeature *poFeature)
         double lat = point->getY();
         double lon = point->getX();
         CheckAndFixCoordinatesValidity(lat, lon);
-        poDS->checkBounds(lat, lon);
+        poDS->checkBounds((float)lat, (float)lon);
         writeDouble(fp, lat);
         writeDouble(fp, lon);
         float altitude = 0.0;
         if (poGeom->getGeometryType() == wkbPoint25D)
-            altitude = point->getZ();
+	    altitude = (float) point->getZ();
 
         WriteFeatureAttributes(poFeature, altitude);
         break;
