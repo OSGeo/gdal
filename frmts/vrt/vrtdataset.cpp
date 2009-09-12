@@ -634,7 +634,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         unsigned int nLength;
      
         VSIFSeekL( fp, 0, SEEK_END );
-        nLength = VSIFTellL( fp );
+        nLength = (int) VSIFTellL( fp );
         VSIFSeekL( fp, 0, SEEK_SET );
         
         nLength = MAX(0,nLength);

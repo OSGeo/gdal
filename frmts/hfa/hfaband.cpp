@@ -921,7 +921,7 @@ void HFABand::NullBlock( void *pData )
             break;
 
           case EPT_c64:
-            ((float *) &adfND)[0] = dfNoData;
+            ((float *) &adfND)[0] = (float) dfNoData;
             ((float *) &adfND)[1] = 0;
             break;
 
@@ -1145,7 +1145,7 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
 	 	
         char	szVarName[64];
         sprintf( szVarName, "blockinfo[%d].offset", iBlock );
-        poDMS->SetIntField( szVarName, panBlockStart[iBlock] );
+        poDMS->SetIntField( szVarName, (int) panBlockStart[iBlock] );
 		
         sprintf( szVarName, "blockinfo[%d].size", iBlock );
         poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
