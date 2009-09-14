@@ -3001,6 +3001,7 @@ GDALGetRasterHistogram( GDALRasterBandH hBand,
     
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterHistogram", CE_Failure );
+    VALIDATE_POINTER1( panHistogram, "GDALGetRasterHistogram", CE_Failure );
 
     return ((GDALRasterBand *) hBand)->
         GetHistogram( dfMin, dfMax, nBuckets, panHistogram, 
@@ -3094,6 +3095,10 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
 
 {
     VALIDATE_POINTER1( hBand, "GDALGetDefaultHistogram", CE_Failure );
+    VALIDATE_POINTER1( pdfMin, "GDALGetDefaultHistogram", CE_Failure );
+    VALIDATE_POINTER1( pdfMax, "GDALGetDefaultHistogram", CE_Failure );
+    VALIDATE_POINTER1( pnBuckets, "GDALGetDefaultHistogram", CE_Failure );
+    VALIDATE_POINTER1( ppanHistogram, "GDALGetDefaultHistogram", CE_Failure );
 
     return ((GDALRasterBand *) hBand)->GetDefaultHistogram( 
         pdfMin, pdfMax, pnBuckets, ppanHistogram, bForce, 
