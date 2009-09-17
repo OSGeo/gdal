@@ -589,7 +589,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Setup block map.                                                */
 /* -------------------------------------------------------------------- */
-    psImage->panBlockStart = (GIntBig *) 
+    psImage->panBlockStart = (GUIntBig *) 
         CPLCalloc( psImage->nBlocksPerRow * psImage->nBlocksPerColumn 
                    * psImage->nBands, sizeof(GIntBig) );
 
