@@ -224,6 +224,25 @@ def ogr_join_9():
     
 ###############################################################################
 
+def ogr_join_10():
+
+    expect = [None,None,None,None,None,None,None,None,None,None]
+    
+    sql_lyr = gdaltest.ds.ExecuteSQL( 	\
+        'SELECT * FROM poly ' \
+        + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.name ' )
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'F3', expect )
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+    
+###############################################################################
+
 def ogr_join_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -241,6 +260,7 @@ gdaltest_list = [
     ogr_join_7,
     ogr_join_8,
     ogr_join_9,
+    ogr_join_10,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':
