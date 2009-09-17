@@ -534,6 +534,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
+        if( psColDef->table_index != 0 )
+            continue;
+
         if ( psColDef->field_index >= iFIDFieldIndex &&
             psColDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
         {
@@ -546,7 +549,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
                 poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
             }
         }
-        else if( psColDef->table_index == 0 )
+        else
             poDstFeat->SetField( iField,
                          poSrcFeat->GetRawFieldRef( psColDef->field_index ) );
     }
