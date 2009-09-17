@@ -53,7 +53,7 @@ class PCIDSK2Dataset : public GDALPamDataset
 
     PCIDSKFile  *poFile;
 
-    GDALDataType PCIDSKTypeToGDAL( eChanType eType );
+    static GDALDataType PCIDSKTypeToGDAL( eChanType eType );
 
   public:
                 PCIDSK2Dataset();
@@ -68,6 +68,9 @@ class PCIDSK2Dataset : public GDALPamDataset
 
     CPLErr              GetGeoTransform( double * padfTransform );
     const char          *GetProjectionRef();
+
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
 };
 
 /************************************************************************/
@@ -78,16 +81,21 @@ class PCIDSK2Band : public GDALPamRasterBand
 {
     friend class PCIDSK2Dataset;
 
-    PCIDSK2Dataset     *poPDS;
-    PCIDSKFile *poFile;
     PCIDSKChannel *poChannel;
+
+    void        RefreshOverviewList();
+    std::vector<PCIDSK2Band*> apoOverviews;
     
   public:
                 PCIDSK2Band( PCIDSK2Dataset *, PCIDSKFile *, int );
+                PCIDSK2Band( PCIDSKChannel * );
                 ~PCIDSK2Band();
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
+
+    virtual int        GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int);
 };
 
 /************************************************************************/
@@ -96,12 +104,15 @@ class PCIDSK2Band : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
+/************************************************************************/
+/*                            PCIDSK2Band()                             */
+/************************************************************************/
+
 PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS, 
                           PCIDSKFile *poFile,
                           int nBand )                        
 
 {
-    poPDS = poDS;
     this->poDS = poDS;
 
     this->nBand = nBand;
@@ -111,7 +122,32 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
     nBlockXSize = (int) poChannel->GetBlockWidth();
     nBlockYSize = (int) poChannel->GetBlockHeight();
     
-    eDataType = poPDS->PCIDSKTypeToGDAL( poChannel->GetType() );
+    eDataType = PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have overviews?                                           */
+/* -------------------------------------------------------------------- */
+    RefreshOverviewList();
+}
+
+/************************************************************************/
+/*                            PCIDSK2Band()                             */
+/************************************************************************/
+
+PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )                        
+
+{
+    this->poChannel = poChannel;
+    poDS = NULL;
+    nBand = 1;
+
+    nBlockXSize = (int) poChannel->GetBlockWidth();
+    nBlockYSize = (int) poChannel->GetBlockHeight();
+    
+    nRasterXSize = (int) poChannel->GetWidth();
+    nRasterYSize = (int) poChannel->GetHeight();
+
+    eDataType = PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() );
 }
 
 /************************************************************************/
@@ -121,6 +157,37 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
 PCIDSK2Band::~PCIDSK2Band()
 
 {
+    while( apoOverviews.size() > 0 )
+    {
+        delete apoOverviews[apoOverviews.size()-1];
+        apoOverviews.pop_back();
+    }
+}
+
+/************************************************************************/
+/*                        RefreshOverviewList()                         */
+/************************************************************************/
+
+void PCIDSK2Band::RefreshOverviewList()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Clear existing overviews.                                       */
+/* -------------------------------------------------------------------- */
+    while( apoOverviews.size() > 0 )
+    {
+        delete apoOverviews[apoOverviews.size()-1];
+        apoOverviews.pop_back();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch overviews.                                                */
+/* -------------------------------------------------------------------- */
+    for( int iOver = 0; iOver < poChannel->GetOverviewCount(); iOver++ )
+    {								       
+        apoOverviews.push_back( 
+            new PCIDSK2Band( poChannel->GetOverview(iOver) ) );
+    }
 }
 
 /************************************************************************/
@@ -163,6 +230,32 @@ CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData )
                   "%s", ex.what() );
         return CE_Failure;
     }
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int PCIDSK2Band::GetOverviewCount()
+
+{
+    if( apoOverviews.size() > 0 )
+        return (int) apoOverviews.size();
+    else
+        return GDALPamRasterBand::GetOverviewCount();
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *PCIDSK2Band::GetOverview(int iOverview)
+
+{
+    if( iOverview < 0 || iOverview >= (int) apoOverviews.size() )
+        return GDALPamRasterBand::GetOverview( iOverview );
+    else
+        return apoOverviews[iOverview];
 }
 
 /************************************************************************/
@@ -281,6 +374,140 @@ const char *PCIDSK2Dataset::GetProjectionRef()
     }
 
     return osSRS.c_str();
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling, 
+                                        int nOverviews, int *panOverviewList,
+                                        int nListBands, int *panBandList, 
+                                        GDALProgressFunc pfnProgress, 
+                                        void *pProgressData )
+
+{
+    if( nListBands == 0 )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Currently no support for clearing overviews.                    */
+/* -------------------------------------------------------------------- */
+    if( nOverviews == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "PCIDSK2 driver does not currently support clearing existing overviews. " );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish which of the overview levels we already have, and     */
+/*      which are new.  We assume that band 1 of the file is            */
+/*      representative.                                                 */
+/* -------------------------------------------------------------------- */
+    int   i, nNewOverviews, *panNewOverviewList = NULL;
+    GDALRasterBand *poBand = GetRasterBand( panBandList[0] );
+
+    nNewOverviews = 0;
+    panNewOverviewList = (int *) CPLCalloc(sizeof(int),nOverviews);
+    for( i = 0; i < nOverviews && poBand != NULL; i++ )
+    {
+        int   j;
+
+        for( j = 0; j < poBand->GetOverviewCount(); j++ )
+        {
+            int    nOvFactor;
+            GDALRasterBand * poOverview = poBand->GetOverview( j );
+ 
+            nOvFactor = (int) 
+                (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+
+            if( nOvFactor == panOverviewList[i] 
+                || nOvFactor == GDALOvLevelAdjust( panOverviewList[i], 
+                                                   poBand->GetXSize() ) )
+                panOverviewList[i] *= -1;
+        }
+
+        if( panOverviewList[i] > 0 )
+            panNewOverviewList[nNewOverviews++] = panOverviewList[i];
+        else
+            panOverviewList[i] *= -1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the overviews that are missing.                          */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nNewOverviews; i++ )
+    {
+        try 
+        {
+            // conveniently our resampling values mostly match PCIDSK.
+            poFile->CreateOverviews( nListBands, panBandList, 
+                                     panNewOverviewList[i], pszResampling );
+        }
+        catch( PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+            return CE_Failure;
+        }
+    }
+
+
+    for( int iBand = 0; iBand < nListBands; iBand++ )
+    {
+        poBand = GetRasterBand( panBandList[iBand] );
+        ((PCIDSK2Band *) poBand)->RefreshOverviewList();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Actually generate the overview imagery.                         */
+/* -------------------------------------------------------------------- */
+    GDALRasterBand **papoOverviewBands;
+    CPLErr eErr = CE_None;
+
+    papoOverviewBands = (GDALRasterBand **) 
+        CPLCalloc(sizeof(void*),nOverviews);
+
+    for( int iBand = 0; iBand < nListBands && eErr == CE_None; iBand++ )
+    {
+        nNewOverviews = 0;
+
+        poBand = GetRasterBand( panBandList[iBand] );
+
+        for( i = 0; i < nOverviews && poBand != NULL; i++ )
+        {
+            int   j;
+            
+            for( j = 0; j < poBand->GetOverviewCount(); j++ )
+            {
+                int    nOvFactor;
+                GDALRasterBand * poOverview = poBand->GetOverview( j );
+
+                nOvFactor = (int) 
+                    (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+
+                if( nOvFactor == panOverviewList[i] 
+                    || nOvFactor == GDALOvLevelAdjust( panOverviewList[i], 
+                                                       poBand->GetXSize() ) )
+                {
+                    papoOverviewBands[nNewOverviews++] = poOverview;
+                    break;
+                }
+            }
+        }
+
+        if( nNewOverviews > 0 )
+        {
+            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand, 
+                                            nNewOverviews, 
+                                            (GDALRasterBandH*)papoOverviewBands,
+                                            pszResampling, 
+                                            pfnProgress, pProgressData );
+        }
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
