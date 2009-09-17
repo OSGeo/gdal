@@ -590,10 +590,21 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             break;
 
           case OFTString:
-            // the string really ought to be escaped. 
-            sprintf( szFilter+strlen(szFilter), "\"%s\"", 
-                     psSrcField->String );
-            break;
+          {
+              char *pszEscaped = CPLEscapeString( psSrcField->String, 
+                                                  strlen(psSrcField->String),
+                                                  CPLES_SQL );
+              if( strlen(pszEscaped) + strlen(szFilter) < sizeof(szFilter)-3 )
+                  sprintf( szFilter+strlen(szFilter), "\'%s\'", 
+                           pszEscaped );
+              else
+              {
+                  strcat( szFilter, "' '" );
+                  CPLDebug( "GenSQL", "Skip long join field value." );
+              }
+              CPLFree( pszEscaped );
+          }
+          break;
 
           default:
             CPLAssert( FALSE );
