@@ -922,8 +922,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString osDSName;
 
         osDSName.Printf( "J2K_SUBFILE:%d,%d,%s", 
-                         psFile->pasSegmentInfo[iSegment].nSegmentStart,
-                         psFile->pasSegmentInfo[iSegment].nSegmentSize,
+                         (int) psFile->pasSegmentInfo[iSegment].nSegmentStart,
+                         (int) psFile->pasSegmentInfo[iSegment].nSegmentSize,
                          pszFilename );
     
         if( poWritableJ2KDataset != NULL )
@@ -2831,7 +2831,8 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 
         CPLString osDSName;
 
-        osDSName.Printf("J2K_SUBFILE:%d,%d,%s", nImageOffset, -1, pszFilename);
+        osDSName.Printf("J2K_SUBFILE:%d,%d,%s", 
+                        (int) nImageOffset, -1, pszFilename);
 
         NITFClose( psFile );
 
@@ -3108,7 +3109,7 @@ NITFDataset::NITFCreateCopy(
         GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
         CPLString osDSName;
 
-        osDSName.Printf( "J2K_SUBFILE:%d,%d,%s", nImageOffset, -1,
+        osDSName.Printf( "J2K_SUBFILE:%d,%d,%s", (int) nImageOffset, -1,
                          pszFilename );
 
         NITFClose( psFile );

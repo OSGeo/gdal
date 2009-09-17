@@ -349,7 +349,6 @@ int NITFCreate( const char *pszFilename,
     FILE	*fp;
     char        *pachIMHDR;
     char        achHeader[5000];
-    GUIntBig    nCur = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
     GIntBig     nImageSize;
     int         nNBPR, nNBPC;
