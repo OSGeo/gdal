@@ -93,7 +93,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                      psFile->fp ) != psSegInfo->nSegmentHeaderSize )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
-                  "Failed to read %d byte image subheader from %d.",
+                  "Failed to read " CPL_FRMT_GUIB " byte image subheader from " CPL_FRMT_GUIB ".",
                   psSegInfo->nSegmentHeaderSize,
                   psSegInfo->nSegmentHeaderStart );
         return NULL;
@@ -385,7 +385,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             psBandInfo->nSignificantLUTEntries = 256;
         }
 
-        psBandInfo->nLUTLocation = nOffset + psSegInfo->nSegmentHeaderStart;
+        psBandInfo->nLUTLocation = nOffset+(int)psSegInfo->nSegmentHeaderStart;
 
         psBandInfo->pabyLUT = (unsigned char *) CPLCalloc(768,1);
         memcpy( psBandInfo->pabyLUT, pachHeader + nOffset, 
@@ -589,9 +589,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Setup block map.                                                */
 /* -------------------------------------------------------------------- */
-    psImage->panBlockStart = (GUInt32 *) 
+    psImage->panBlockStart = (GIntBig *) 
         CPLCalloc( psImage->nBlocksPerRow * psImage->nBlocksPerColumn 
-                   * psImage->nBands, sizeof(GUInt32) );
+                   * psImage->nBands, sizeof(GIntBig) );
 
 /* -------------------------------------------------------------------- */
 /*      Offsets to VQ compressed tiles are based on a fixed block       */
@@ -601,7 +601,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     if( EQUAL(psImage->szIC,"C4") )
     {
-        GUInt32  nLocBase = psSegInfo->nSegmentStart;
+        GUIntBig  nLocBase = psSegInfo->nSegmentStart;
 
         for( i = 0; i < psImage->nLocCount; i++ )
         {
@@ -694,11 +694,12 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 * psImage->nBlocksPerColumn; 
             int iBand;
 
-            VSIFReadL( psImage->panBlockStart, 4, nStoredBlocks, psFile->fp );
-
             for( i = 0; i < nStoredBlocks; i++ )
             {
-                CPL_MSBPTR32( psImage->panBlockStart + i );
+                GUInt32 nOffset;
+                VSIFReadL( &nOffset, 4, 1, psFile->fp );
+                CPL_MSBPTR32( &nOffset );
+                psImage->panBlockStart[i] = nOffset;
                 if( psImage->panBlockStart[i] != 0xffffffff )
                 {
                     psImage->panBlockStart[i] 
@@ -722,10 +723,12 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         else if( nBMRLNTH == 4 )
         {
             int isM4 = EQUAL(psImage->szIC,"M4");
-            VSIFReadL( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
             for( i=0; i < nBlockCount; i++ )
             {
-                CPL_MSBPTR32( psImage->panBlockStart + i );
+                GUInt32 nOffset;
+                VSIFReadL( &nOffset, 4, 1, psFile->fp );
+                CPL_MSBPTR32( &nOffset );
+                psImage->panBlockStart[i] = nOffset;
                 if( psImage->panBlockStart[i] != 0xffffffff )
                 {
                     if (isM4 && (psImage->panBlockStart[i] % 6144) != 0)
@@ -755,10 +758,13 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                                        (nTPXCDLNTH+7)/8 +
                                        1, /* MAGIC here ! One byte shift... */
                             SEEK_SET );
-                VSIFReadL( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
+
                 for( i=0; i < nBlockCount; i++ )
                 {
-                    CPL_MSBPTR32( psImage->panBlockStart + i );
+                    GUInt32 nOffset;
+                    VSIFReadL( &nOffset, 4, 1, psFile->fp );
+                    CPL_MSBPTR32( &nOffset );
+                    psImage->panBlockStart[i] = nOffset;
                     if( psImage->panBlockStart[i] != 0xffffffff )
                     {
                         if ((psImage->panBlockStart[i] % 6144) != 0)
@@ -1083,7 +1089,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                                psImage->psFile->fp ) != nWrkBufSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Unable to read %d byte block from %d.", 
+                      "Unable to read %d byte block from " CPL_FRMT_GUIB ".", 
                       nWrkBufSize, psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
         }
@@ -1116,7 +1122,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                                psImage->psFile->fp ) != nWrkBufSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Unable to read %d byte block from %d.", 
+                      "Unable to read %d byte block from " CPL_FRMT_GUIB ".", 
                       nWrkBufSize, psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
         }
@@ -1171,7 +1177,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                          psImage->psFile->fp ) != sizeof(abyVQCoded) )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Unable to read %d byte block from %d.", 
+                      "Unable to read %d byte block from " CPL_FRMT_GUIB ".", 
                       (int) sizeof(abyVQCoded), 
                       psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
@@ -1211,7 +1217,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             nRawBytes )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Unable to read %d byte block from %d.", 
+                      "Unable to read %d byte block from " CPL_FRMT_GUIB ".", 
                       nRawBytes, psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
         }
@@ -1255,7 +1261,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             nRawBytes )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Unable to read %d byte block from %d.", 
+                      "Unable to read %d byte block from " CPL_FRMT_GUIB ".", 
                       nRawBytes, psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
         }
@@ -1301,9 +1307,10 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     if( nBand == 0 )
         return BLKREAD_FAIL;
 
-    nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
-        + psImage->nPixelOffset * (psImage->nBlockWidth-1)
-        + psImage->nWordSize;
+    nWrkBufSize = (int)
+        (psImage->nLineOffset * (psImage->nBlockHeight-1)
+         + psImage->nPixelOffset * (psImage->nBlockWidth-1)
+         + psImage->nWordSize);
 
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
@@ -1324,7 +1331,7 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                                 psImage->psFile->fp ) != nWrkBufSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Unable to write %d byte block from %d.", 
+                      "Unable to write %d byte block from " CPL_FRMT_GUIB ".", 
                       nWrkBufSize, psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
         }
@@ -1358,7 +1365,8 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 
 {
-    int   nLineOffsetInFile, nLineSize;
+    GUIntBig   nLineOffsetInFile;
+    int        nLineSize;
     unsigned char *pabyLineBuf;
 
     if( nBand == 0 )
@@ -1385,8 +1393,8 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         + psImage->nLineOffset * nLine
         + psImage->nBandOffset * (nBand-1);
 
-    nLineSize = psImage->nPixelOffset * (psImage->nCols - 1) 
-        + psImage->nWordSize;
+    nLineSize = (int) (psImage->nPixelOffset * (psImage->nCols - 1) 
+                       + psImage->nWordSize);
 
     VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
 
@@ -1448,7 +1456,8 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 
 {
-    int   nLineOffsetInFile, nLineSize;
+    GUIntBig   nLineOffsetInFile;
+    int        nLineSize;
     unsigned char *pabyLineBuf;
 
     if( nBand == 0 )
@@ -1475,8 +1484,8 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         + psImage->nLineOffset * nLine
         + psImage->nBandOffset * (nBand-1);
 
-    nLineSize = psImage->nPixelOffset * (psImage->nCols - 1) 
-        + psImage->nWordSize;
+    nLineSize = (int) (psImage->nPixelOffset * (psImage->nCols - 1) 
+                       + psImage->nWordSize);
 
     VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
 
@@ -2470,7 +2479,7 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
     int i;
     NITFFile *psFile = psImage->psFile;
     NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + psImage->iSegment;
-    GUInt32  nLocBaseSpatialDataSubsection = psSegInfo->nSegmentStart;
+    GUIntBig  nLocBaseSpatialDataSubsection = psSegInfo->nSegmentStart;
     GUInt32  nLocBaseMaskSubsection = 0;
     GUInt16 subframeSequenceRecordLength, transparencySequenceRecordLength, transparencyOutputPixelCodeLength;
 
@@ -2869,17 +2878,22 @@ int NITFRPCGeoToImage( NITFRPC00BInfo *psRPC,
 /*      in this image header.  Only implemented for selected fields.    */
 /************************************************************************/
 
-GUInt32 NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
+GUIntBig NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
 
 {
     char szTemp[128];
     int nNICOM;
-    GUInt32 nWrkOffset;
-    GUInt32 nIMOffset =
+    GUIntBig nWrkOffset;
+    GUIntBig nIMOffset =
         psImage->psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderStart;
 
     // We only support files we created.
-    CPLAssert( EQUALN(psImage->psFile->szVersion,"NITF02.1",8) );
+    if( !EQUALN(psImage->psFile->szVersion,"NITF02.1",8) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "NITFIHFieldOffset() only works with NITF 2.1 images");
+        return 0;
+    }
 
     if( EQUAL(pszFieldName,"IM") )
         return nIMOffset;
@@ -2911,7 +2925,7 @@ GUInt32 NITFIHFieldOffset( NITFImage *psImage, const char *pszFieldName )
 /*      Comments.                                                       */
 /* -------------------------------------------------------------------- */
     nNICOM = atoi(NITFGetField(szTemp,psImage->pachHeader,
-                               nWrkOffset - nIMOffset,1));
+                               (int) (nWrkOffset - nIMOffset),1));
         
     if( EQUAL(pszFieldName,"NICOM") )
         return nWrkOffset;
