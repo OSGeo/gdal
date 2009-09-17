@@ -46,7 +46,7 @@ static int NITFWriteTREsFromOptions(
 static int 
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                         int nHeaderLenSize, int nDataLenSize, 
-                        int *pnNextData );
+                        GUIntBig *pnNextData );
 
 /************************************************************************/
 /*                              NITFOpen()                              */
@@ -58,7 +58,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     FILE	*fp;
     char        *pachHeader;
     NITFFile    *psFile;
-    int         nHeaderLen, nOffset, nNextData, nHeaderLenOffset;
+    int         nHeaderLen, nOffset, nHeaderLenOffset;
+    GUIntBig    nNextData;
     char        szTemp[128], achFSDWNG[6];
     GIntBig     currentPos;
 
@@ -348,7 +349,7 @@ int NITFCreate( const char *pszFilename,
     FILE	*fp;
     char        *pachIMHDR;
     char        achHeader[5000];
-    int         nHeaderUsed = 0;
+    GUIntBig    nCur = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
     GIntBig     nImageSize;
     int         nNBPR, nNBPC;
@@ -359,6 +360,7 @@ int NITFCreate( const char *pszFilename,
     int nHL, nNUMT = 0;
     int nUDIDLOffset;
     const char *pszVersion;
+    int nHeaderUsed;
 
     if( pszIC == NULL )
         pszIC = "NC";
@@ -673,6 +675,18 @@ int NITFCreate( const char *pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*  Validate image maximum image size.                                  */
+/* -------------------------------------------------------------------- */
+    if (EQUAL(pszIC, "NC") && (double)nImageSize >= 10000000000.)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to create file %s,\n"
+                  "Too big image size : " CPL_FRMT_GUIB,
+                  pszFilename, nImageSize );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Update the image header length in the file header.              */
 /* -------------------------------------------------------------------- */
     nIHSize = nOffset;
@@ -908,7 +922,7 @@ static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE,
 
 static int 
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
-                        int nHeaderLenSize, int nDataLenSize, int *pnNextData )
+                        int nHeaderLenSize, int nDataLenSize, GUIntBig *pnNextData )
 
 {
     char szTemp[12];
@@ -967,10 +981,10 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                               iSegment * (nHeaderLenSize+nDataLenSize), 
                               nHeaderLenSize));
         psInfo->nSegmentSize = 
-            atoi(NITFGetField(szTemp,pachSegDef, 
+            CPLScanUIntBig(NITFGetField(szTemp,pachSegDef, 
                               iSegment * (nHeaderLenSize+nDataLenSize) 
                               + nHeaderLenSize,
-                              nDataLenSize));
+			      nDataLenSize),nDataLenSize);
 
         psInfo->nSegmentHeaderStart = *pnNextData;
         psInfo->nSegmentStart = *pnNextData + psInfo->nSegmentHeaderSize;
@@ -1124,7 +1138,6 @@ double NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat )
 
     return dfLat;
 }
-
 
 /************************************************************************/
 /*                        NITFGetSeriesInfo()                           */
@@ -1296,7 +1309,7 @@ int NITFCollectAttachments( NITFFile *psFile )
                               psFile->fp ) < 258 )
             {
                 CPLError( CE_Warning, CPLE_FileIO, 
-                          "Failed to read graphic subheader at %d.", 
+                          "Failed to read graphic subheader at " CPL_FRMT_GUIB ".", 
                           psSegInfo->nSegmentHeaderStart );
                 continue;
             }
