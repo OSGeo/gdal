@@ -993,9 +993,6 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 
     unsigned short *pauiSrc = (unsigned short *) pabySrcData;
     unsigned int nSrcShorts = nSrcBytes / 2;
-    unsigned short nSize;
-    unsigned short nLine;
-    unsigned short nRun;
 
     iInput = 0;
     iOutput = 0;
@@ -1010,15 +1007,7 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 
         if( nColor == 0x5900 )
         {
-            if ( iInput + 2 < nSrcShorts)
-            {
-                nSize = CPL_LSBWORD16(pauiSrc[ iInput ]);
-                iInput++;
-                nLine = CPL_LSBWORD16(pauiSrc[ iInput ]);
-                iInput++;
-                nRun  = CPL_LSBWORD16(pauiSrc[ iInput ]);
-                iInput++;
-            }
+            iInput++;
             continue;
         }
 
