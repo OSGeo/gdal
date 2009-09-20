@@ -997,27 +997,27 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
     iInput = 0;
     iOutput = 0;
 
-    if (nSrcShorts == 0)
+    if ( nSrcShorts == 0 )
         return 0;
 
     do
     {
-        nColor = CPL_LSBWORD16(pauiSrc[ iInput ]);
+        nCount = 0;
+        nColor = CPL_LSBWORD16( pauiSrc[ iInput ] );
         iInput++;
 
-        if( nColor == 0x5900 )
+        if( nColor == 0x5900 || 
+			nColor == 0x5901 )
         {
             iInput++;
             continue;
         }
 
-        if ( iInput < nSrcShorts )
+		if ( iInput < nSrcShorts )
         {
-            nCount = CPL_LSBWORD16(pauiSrc[iInput]);
+            nCount = CPL_LSBWORD16( pauiSrc[ iInput ] );
             iInput++;
         }
-        else
-            nCount = 0;
 
         for( i = 0; i < nCount && iOutput < nBlockSize; i++ )
         {
