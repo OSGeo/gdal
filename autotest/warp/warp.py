@@ -529,7 +529,7 @@ def warp_19():
         for j in range(len(methods)):
             for i in range(len(datatypes)):
                 if warp_19_internal(sizes[k], datatypes[i], methods[j]) != 'success':
-                    print 'fail with size = %d, data type = %d and method %s' % (sizes[k], i, methods[j])
+                    print 'fail with size = %d, data type = %d and method %s' % (sizes[k], datatypes[i], methods[j])
                     return 'fail'
 
     return 'success'
