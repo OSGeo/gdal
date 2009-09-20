@@ -553,7 +553,11 @@ def ogr_vrt_13():
 def ogr_vrt_14():
     if gdaltest.vrt_ds is None:
         return 'skip'
-
+    try:
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp')
+    except:
+        pass
+    
     shp_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test.shp')
     shp_lyr = shp_ds.CreateLayer('test')
 
@@ -597,30 +601,41 @@ def ogr_vrt_14():
     vrt_lyr = vrt_ds.GetLayerByName( 'test' )
 
     if vrt_lyr.TestCapability(ogr.OLCFastSpatialFilter) != 1:
+        gdaltest.post_reason( 'Fast filter not set.' )
         return 'fail'
 
     if vrt_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'Feature count not one as expected.' )
         return 'fail'
 
     feat = vrt_lyr.GetNextFeature()
     if feat.GetFID() != 2:
+        gdaltest.post_reason( 'did not get fid 2.' )
         return 'fail'
 
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason( 'did not get expected point geometry.' )
         return 'fail'
     feat.Destroy()
 
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
     if vrt_lyr.GetFeatureCount() != 1:
+        if string.find(gdal.GetLastErrorMsg(),'GEOS support not enabled') != -1:
+            return 'skip'
+        
+        print vrt_lyr.GetFeatureCount()
+        gdaltest.post_reason( 'did not get one feature on rect spatial filter.' )
         return 'fail'
 
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 48.5)
     if vrt_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'Did not get expected zero feature count.')
         return 'fail'
 
     vrt_lyr.SetSpatialFilter(None)
     if vrt_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'Did not get expected one feature count with no filter.')
         return 'fail'
 
     vrt_ds.Destroy()
@@ -741,6 +756,8 @@ def ogr_vrt_16():
 
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
     if vrt_lyr.GetFeatureCount() != 1:
+        if string.find(gdal.GetLastErrorMsg(),'GEOS support not enabled') != -1:
+            return 'skip'
         return 'fail'
 
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 48.5)
