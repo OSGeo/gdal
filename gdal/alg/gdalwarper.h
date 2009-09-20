@@ -287,6 +287,8 @@ public:
 
     double              dfProgressBase;
     double              dfProgressScale;
+    
+    double              *padfDstNoDataReal;
 
                        GDALWarpKernel();
     virtual           ~GDALWarpKernel();
