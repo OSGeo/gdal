@@ -824,52 +824,45 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 
 /* -------------------------------------------------------------------- */
 /*      Actually apply the destination value.                           */
+/*                                                                      */
+/*      Avoid using the destination nodata value for integer datatypes  */
+/*      if by chance it is equal to the computed pixel value.           */
 /* -------------------------------------------------------------------- */
+
+#define CLAMP(type,minval,maxval) \
+    do { \
+    if (dfReal < minval) ((type *) pabyDst)[iDstOffset] = (type)minval; \
+    else if (dfReal > maxval) ((type *) pabyDst)[iDstOffset] = (type)maxval; \
+    else ((type *) pabyDst)[iDstOffset] = (minval < 0) ? (type)floor(dfReal + 0.5) : (type)(dfReal + 0.5);  \
+    if (poWK->padfDstNoDataReal != NULL && \
+        poWK->padfDstNoDataReal[iBand] == (double)((type *) pabyDst)[iDstOffset]) \
+    { \
+        if (((type *) pabyDst)[iDstOffset] == minval)  \
+            ((type *) pabyDst)[iDstOffset] = minval + 1; \
+        else \
+            ((type *) pabyDst)[iDstOffset] --; \
+    } } while(0)
+
     switch( poWK->eWorkingDataType )
     {
       case GDT_Byte:
-        if( dfReal < 0.0 )
-            pabyDst[iDstOffset] = 0;
-        else if( dfReal > 255.0 )
-            pabyDst[iDstOffset] = 255;
-        else
-            pabyDst[iDstOffset] = (GByte) (dfReal+0.5);
+        CLAMP(GByte, 0.0, 255.0);
         break;
 
       case GDT_Int16:
-        if( dfReal < -32768 )
-            ((GInt16 *) pabyDst)[iDstOffset] = -32768;
-        else if( dfReal > 32767 )
-            ((GInt16 *) pabyDst)[iDstOffset] = 32767;
-        else
-            ((GInt16 *) pabyDst)[iDstOffset] = (GInt16) floor(dfReal+0.5);
+        CLAMP(GInt16, -32768.0, 32767.0);
         break;
 
       case GDT_UInt16:
-        if( dfReal < 0 )
-            ((GUInt16 *) pabyDst)[iDstOffset] = 0;
-        else if( dfReal > 65535 )
-            ((GUInt16 *) pabyDst)[iDstOffset] = 65535;
-        else
-            ((GUInt16 *) pabyDst)[iDstOffset] = (GUInt16) (dfReal+0.5);
+        CLAMP(GUInt16, 0.0, 65535.0);
         break;
 
       case GDT_UInt32:
-        if( dfReal < 0 )
-            ((GUInt32 *) pabyDst)[iDstOffset] = 0;
-        else if( dfReal > 4294967295.0 )
-            ((GUInt32 *) pabyDst)[iDstOffset] = (GUInt32) 4294967295.0;
-        else
-            ((GUInt32 *) pabyDst)[iDstOffset] = (GUInt32) (dfReal+0.5);
+        CLAMP(GUInt32, 0.0, 4294967295.0);
         break;
 
       case GDT_Int32:
-        if( dfReal < -2147483648.0 )
-            ((GInt32 *) pabyDst)[iDstOffset] = 0;
-        else if( dfReal > 2147483647.0 )
-            ((GInt32 *) pabyDst)[iDstOffset] = 2147483647;
-        else
-            ((GInt32 *) pabyDst)[iDstOffset] = (GInt32) floor(dfReal+0.5);
+        CLAMP(GInt32, -2147483648.0, 2147483647.0);
         break;
 
       case GDT_Float32:
