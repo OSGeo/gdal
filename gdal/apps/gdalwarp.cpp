@@ -856,6 +856,55 @@ int main( int argc, char ** argv )
                     psWO->padfDstNoDataReal[i] = psWO->padfDstNoDataReal[i-1];
                     psWO->padfDstNoDataImag[i] = psWO->padfDstNoDataImag[i-1];
                 }
+                
+                GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i+1 );
+                int bClamped = FALSE, bRounded = FALSE;
+
+#define CLAMP(val,type,minval,maxval) \
+    do { if (val < minval) { bClamped = TRUE; val = minval; } \
+    else if (val > maxval) { bClamped = TRUE; val = maxval; } \
+    else if (val != (type)val) { bRounded = TRUE; val = (type)(val + 0.5); } } \
+    while(0)
+
+                switch(GDALGetRasterDataType(hBand))
+                {
+                    case GDT_Byte:
+                        CLAMP(psWO->padfDstNoDataReal[i], GByte,
+                              0.0, 255.0);
+                        break;
+                    case GDT_Int16:
+                        CLAMP(psWO->padfDstNoDataReal[i], GInt16,
+                              -32768.0, 32767.0);
+                        break;
+                    case GDT_UInt16:
+                        CLAMP(psWO->padfDstNoDataReal[i], GUInt16,
+                              0.0, 65535.0);
+                        break;
+                    case GDT_Int32:
+                        CLAMP(psWO->padfDstNoDataReal[i], GInt32,
+                              -2147483648.0, 2147483647.0);
+                        break;
+                    case GDT_UInt32:
+                        CLAMP(psWO->padfDstNoDataReal[i], GUInt32,
+                              0.0, 4294967295.0);
+                        break;
+                    default:
+                        break;
+                }
+                    
+                if (bClamped)
+                {
+                    printf( "for band %d, destination nodata value has been clamped "
+                           "to %.0f, the original value being out of range.\n",
+                           i + 1, psWO->padfDstNoDataReal[i]);
+                }
+                else if(bRounded)
+                {
+                    printf("for band %d, destination nodata value has been rounded "
+                           "to %.0f, %s being an integer datatype.\n",
+                           i + 1, psWO->padfDstNoDataReal[i],
+                           GDALGetDataTypeName(GDALGetRasterDataType(hBand)));
+                }
 
                 if( bCreateOutput )
                 {
