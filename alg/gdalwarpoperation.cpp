@@ -1332,6 +1332,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.dfProgressScale = dfProgressScale;
 
     oWK.papszWarpOptions = psOptions->papszWarpOptions;
+    
+    oWK.padfDstNoDataReal = psOptions->padfDstNoDataReal;
 
 /* -------------------------------------------------------------------- */
 /*      Setup the source buffer.                                        */
