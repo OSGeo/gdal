@@ -384,6 +384,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
     // prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
+    if (poBand == NULL)
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      If we have no transformer, assume the geometries are in file    */
@@ -571,6 +573,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
     // prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
+    if (poBand == NULL)
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Establish a chunksize to operate on.  The larger the chunk      */
