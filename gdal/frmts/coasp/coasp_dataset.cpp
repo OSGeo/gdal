@@ -369,7 +369,17 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 {
 	if (!COASPDataset::Identify(poOpenInfo))
 		return NULL;
-
+        
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The COASP driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 	/* Create a fresh dataset for us to work with */
 	COASPDataset *poDS;
 	poDS = new COASPDataset();

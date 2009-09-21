@@ -1081,12 +1081,27 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if ( CSLCount( poDS->papszSubDatasets ) / 2 == 1 )
     {
-	char *pszSDSName;
-	pszSDSName = CPLStrdup( CSLFetchNameValue( poDS->papszSubDatasets,
-				        "SUBDATASET_1_NAME" ));
-	delete poDS;
-	poDS = (HDF4Dataset *) GDALOpen( pszSDSName, GA_ReadOnly );
-	CPLFree( pszSDSName );
+        char *pszSDSName;
+        pszSDSName = CPLStrdup( CSLFetchNameValue( poDS->papszSubDatasets,
+                            "SUBDATASET_1_NAME" ));
+        delete poDS;
+        poDS = (HDF4Dataset *) GDALOpen( pszSDSName, poOpenInfo->eAccess );
+        CPLFree( pszSDSName );
+    }
+    else
+    {
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+        if( poOpenInfo->eAccess == GA_Update )
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                      "The HDF4 driver does not support update access to existing"
+                      " datasets.\n" );
+            return NULL;
+        }
+    
     }
 
     return( poDS );

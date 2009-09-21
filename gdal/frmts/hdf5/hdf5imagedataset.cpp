@@ -316,7 +316,18 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) )
 	return NULL;
-  
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The HDF5ImageDataset driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     poDS = new HDF5ImageDataset();
 
     /* -------------------------------------------------------------------- */

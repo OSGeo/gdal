@@ -161,6 +161,17 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !Identify( poOpenInfo ) )
         return NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The TIL driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     CPLString osDirname = CPLGetDirname(poOpenInfo->pszFilename);
 
 /* -------------------------------------------------------------------- */

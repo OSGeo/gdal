@@ -1580,7 +1580,17 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     // value appears to be little endian.
     if( poOpenInfo->pabyHeader[0] != 0 )
         return NULL;
-
+        
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The SAR_CEOS driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */

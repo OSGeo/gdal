@@ -176,6 +176,17 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     
 /* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The DOQ1 driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     DOQ1Dataset 	*poDS;

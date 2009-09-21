@@ -1085,7 +1085,19 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     
     // opens overviews.
     poDS->oOvManager.Initialize(poDS, poDS->pszFilename);
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The FAST driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     return( poDS );
 }
 

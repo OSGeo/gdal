@@ -558,7 +558,18 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( !EQUALN(poOpenInfo->pszFilename,"gltp:",5) )
         return( NULL );
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The OGDI driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Has the user hardcoded a layer and family in the URL?           */
 /*      Honour quoted strings for the layer name, since some layers     */

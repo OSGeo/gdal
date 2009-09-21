@@ -245,7 +245,17 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify( poOpenInfo ) )
         return NULL;
-
+        
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The DIMAP driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 /* -------------------------------------------------------------------- */
 /*      Get the metadata filename.                                      */
 /* -------------------------------------------------------------------- */
