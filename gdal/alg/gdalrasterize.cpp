@@ -408,6 +408,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
     // prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
+    if (poBand == NULL)
+        return CE_Failure;
 
     int bAllTouched = CSLFetchBoolean( papszOptions, "ALL_TOUCHED", FALSE );
 
@@ -600,6 +602,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
     // prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
+    if (poBand == NULL)
+        return CE_Failure;
 
     int bAllTouched = CSLFetchBoolean( papszOptions, "ALL_TOUCHED", FALSE );
 
