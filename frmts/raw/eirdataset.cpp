@@ -428,7 +428,18 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszHDR );
         return NULL;
     }
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CSLDestroy( papszHDR );
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The EIR driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */

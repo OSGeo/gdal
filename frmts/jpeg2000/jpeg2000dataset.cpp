@@ -578,7 +578,18 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         jas_stream_close( sS );
         return NULL;
     }
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        jas_stream_close(sS);
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The JPEG2000 driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
@@ -671,12 +682,12 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
             jp2_box_destroy( box );
             box = 0;
         }
-	if( !paiDepth || !pabSignedness )
-	{
-	    delete poDS;
-	    CPLDebug( "JPEG2000", "Unable to read JP2 header boxes.\n" );
-	    return NULL;
-	}
+        if( !paiDepth || !pabSignedness )
+        {
+            delete poDS;
+            CPLDebug( "JPEG2000", "Unable to read JP2 header boxes.\n" );
+            return NULL;
+        }
         if ( jas_stream_rewind( poDS->psStream ) < 0 )
         {
             delete poDS;

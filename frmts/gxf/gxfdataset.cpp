@@ -287,7 +287,19 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( hGXF == NULL )
         return( NULL );
-
+        
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        GXFClose(hGXF);
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The GXF driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */

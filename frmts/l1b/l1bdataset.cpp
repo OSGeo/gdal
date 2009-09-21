@@ -1603,7 +1603,18 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     int     eL1BFormat = DetectFormat( poOpenInfo );
     if ( eL1BFormat == L1B_NONE )
         return NULL;
-
+        
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The L1B driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
 #if 0
     Geolocation
     if ( EQUAL( poOpenInfo->pszFilename, "L1BGCPS:" ) )

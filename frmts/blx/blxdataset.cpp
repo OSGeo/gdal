@@ -132,6 +132,18 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->nBands = 1;
 	poDS->papoOverviewDS[i]->SetBand(1, new BLXRasterBand( poDS->papoOverviewDS[i], 1, i+1));
     }
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The BLX driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 
     return( poDS );
 }

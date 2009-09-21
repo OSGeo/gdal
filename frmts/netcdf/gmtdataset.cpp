@@ -240,7 +240,19 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
         nc_close( cdfid );
         return NULL;
     }
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        nc_close( cdfid );
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The GMT driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */

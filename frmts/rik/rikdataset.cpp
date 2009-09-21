@@ -1130,7 +1130,19 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The RIK driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     return( poDS );
 }
 

@@ -1518,7 +1518,19 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
         poDS->oOvManager.Initialize( poDS, osPhysicalFilename );
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+        if( poOpenInfo->eAccess == GA_Update )
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                      "The JP2KAK driver does not support update access to existing"
+                      " datasets.\n" );
+            return NULL;
+        }
+    
         return( poDS );
     }
 

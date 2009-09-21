@@ -195,7 +195,17 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
     if (!GFFDataset::Identify(poOpenInfo)) 
         return NULL;
 
-
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The GFF driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     GFFDataset *poDS;
     poDS = new GFFDataset();
     /* Steal the file pointer */

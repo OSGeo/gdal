@@ -356,6 +356,17 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The R driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Do we need to route the file through the decompression          */
 /*      machinery?                                                      */
 /* -------------------------------------------------------------------- */
