@@ -689,7 +689,19 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     psProduct = CPLParseXMLFile( osMDFilename );
     if( psProduct == NULL )
         return NULL;
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLDestroyXMLNode( psProduct );
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The RS2 driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     psImageAttributes = CPLGetXMLNode(psProduct, "=product.imageAttributes" );
     if( psImageAttributes == NULL )
     {

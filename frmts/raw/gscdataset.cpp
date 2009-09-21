@@ -122,7 +122,18 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nRecordLen != nPixels * 4 )
         return NULL;
-
+        
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The GSC driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     nRecordLen += 8; /* for record length markers */
 
 /* -------------------------------------------------------------------- */

@@ -329,6 +329,17 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     
 /* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CSLDestroy( papszMetadata );
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The DOQ2 driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     DOQ2Dataset 	*poDS;

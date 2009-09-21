@@ -1052,7 +1052,19 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     CSLDestroy(papszVarConstraintList);
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poDS != NULL && poOpenInfo->eAccess == GA_Update )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The DODS driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     return poDS;
 }
 

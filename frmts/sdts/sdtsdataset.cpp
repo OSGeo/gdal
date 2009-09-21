@@ -142,7 +142,19 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poTransfer;
         return NULL;
     }
-        
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        delete poTransfer;
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The SDTS driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Find the first raster layer.  If there are none, abort          */
 /*      returning an error.                                             */

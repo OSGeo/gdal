@@ -386,6 +386,16 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
     free(buff);
     
 /* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The GRIB driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     GRIBDataset 	*poDS;

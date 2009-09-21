@@ -1189,6 +1189,14 @@ try_again:
         }
     }
 
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The DIMAP driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
@@ -1314,7 +1322,19 @@ try_again:
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The ECW driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     return( poDS );
 }
 

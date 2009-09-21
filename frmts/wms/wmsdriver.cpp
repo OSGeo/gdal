@@ -39,6 +39,18 @@ GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo) {
         config = CPLParseXMLFile(poOpenInfo->pszFilename);
     } else return NULL;
     if (config == NULL) return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLDestroyXMLNode(config);
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The WMS driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 
     GDALWMSDataset *ds = new GDALWMSDataset();
     ret = ds->Initialize(config);

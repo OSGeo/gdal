@@ -1854,7 +1854,19 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( psService == NULL )
         return NULL;
-
+        
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLDestroyXMLNode( psService );
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The WCS driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Check for required minimum fields.                              */
 /* -------------------------------------------------------------------- */
