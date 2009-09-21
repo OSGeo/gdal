@@ -156,7 +156,17 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     if (!EQUALN((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR",4)) 
         return NULL;
 
-
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( pOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The COSAR driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+    
     /* this is a cosar dataset */
     COSARDataset *pDS;
     pDS = new COSARDataset();

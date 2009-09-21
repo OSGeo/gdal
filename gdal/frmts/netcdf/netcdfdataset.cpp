@@ -1493,7 +1493,20 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-
+    
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The NETCDF driver does not support update access to existing"
+                  " datasets.\n" );
+        nc_close( cdfid );
+        delete poDS;
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Does the request variable exist?                                */
 /* -------------------------------------------------------------------- */

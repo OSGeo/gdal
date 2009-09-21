@@ -165,6 +165,17 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         return( NULL );
 
 /* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CEOSClose(psCEOS);
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The CEOS driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     CEOSDataset 	*poDS;
