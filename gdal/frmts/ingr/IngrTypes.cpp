@@ -1006,14 +1006,14 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
         nColor = CPL_LSBWORD16( pauiSrc[ iInput ] );
         iInput++;
 
-        if( nColor == 0x5900 || 
-			nColor == 0x5901 )
+        if( nColor == 0x5900 ||
+            nColor == 0x5901 )
         {
             iInput++;
             continue;
         }
 
-		if ( iInput < nSrcShorts )
+        if ( iInput < nSrcShorts )
         {
             nCount = CPL_LSBWORD16( pauiSrc[ iInput ] );
             iInput++;
