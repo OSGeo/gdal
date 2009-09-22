@@ -391,14 +391,14 @@ CPLErr BIGGIFDataset::ReOpen()
         {
             /* Create as a sparse file to avoid filling up the whole file */
             /* while closing and then destroying this temporary dataset */
-            char *apszOptions[] = { "COMPRESS=LZW", "SPARSE_OK=YES", NULL };
+            const char* apszOptions[] = { "COMPRESS=LZW", "SPARSE_OK=YES", NULL };
             CPLString osTempFilename = CPLGenerateTempFilename("biggif");
 
             osTempFilename += ".tif";
 
             poWorkDS = poGTiffDriver->Create( osTempFilename, 
                                               nRasterXSize, nRasterYSize, 1, 
-                                              GDT_Byte, apszOptions );
+                                              GDT_Byte, const_cast<char**>(apszOptions));
         }
     }
 
