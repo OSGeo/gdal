@@ -312,6 +312,8 @@ char* GMLExpatHandler::GetFID(void* attr)
         {
             return CPLStrdup(papszIter[1]);
         }
+        
+        papszIter += 2;
     }
     return NULL;
 }
