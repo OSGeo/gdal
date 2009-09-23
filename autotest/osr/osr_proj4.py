@@ -258,6 +258,33 @@ def osr_proj4_7():
     
     return 'success'
 
+###############################################################################
+# Check EPSG:3857, confirm google mercator hackery.
+#
+
+def osr_proj4_8():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 3857 )
+
+    proj4 = srs.ExportToProj4()
+    expected = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs'
+    if proj4 != expected:
+        gdaltest.post_reason( 'did not get expected EPSG:3857 (google mercator) result.' )
+        print proj4
+        return 'fail'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 3785 )
+
+    proj4 = srs.ExportToProj4()
+    if proj4 != expected:
+        gdaltest.post_reason( 'did not get expected EPSG:3785 (google mercator) result.' )
+        print proj4
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -266,6 +293,7 @@ gdaltest_list = [
     osr_proj4_5,
     osr_proj4_6,
     osr_proj4_7,
+    osr_proj4_8,
     None ]
 
 if __name__ == '__main__':
