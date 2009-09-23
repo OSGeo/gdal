@@ -23,7 +23,7 @@ CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CP
 
 default:	lib
 
-all:	sublibs apps test_ogrsf$(EXE) 
+all:	lib
 
 clean:
 	rm -f html/*
