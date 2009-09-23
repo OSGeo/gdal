@@ -1388,9 +1388,16 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
       case 9804:
       case 9805: /* NOTE: treats 1SP and 2SP cases the same */
       case 9841: /* Mercator 1SP (Spherical) */
+      case 1024: /* Google Mercator */
         poSRS->SetMercator( OGR_FP( NatOriginLat ), OGR_FP( NatOriginLong ),
                             OGR_FP( NatOriginScaleFactor ), 
                             OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
+
+        if( nProjMethod == 1024 || nProjMethod == 9841 ) // override hack for google mercator.
+        {
+            poSRS->SetExtension( "PROJCS", "PROJ4", 
+                                 "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs" );
+        }
         break;
 
       case 9806:
