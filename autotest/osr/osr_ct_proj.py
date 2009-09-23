@@ -165,6 +165,11 @@ transform_list = [ \
      ' +proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',(616531.1155,6727527.5682,0.0), 0.001,
      'ScalePrecision(#1970)', None, None),
 
+    # Test Google Mercator (EPSG:3785)
+    ('EPSG:3785', (1572570.342,6728429.67,0.0), 0.001,
+     'WGS84',(14.126639735716626, 51.601722482149995, 0.0), 0.0000001,
+     'GoogleMercator(#3136)', None, None),
+
     # Test Equirectangular with all parameters
     ('+proj=eqc +ellps=sphere  +lat_0=-2 +lat_ts=1 +lon_0=-10', (-14453132.04, 4670184.72,0.0), 0.1,
      '+proj=latlong +ellps=sphere', (-140.0, 40.0, 0.0), 0.000001,
