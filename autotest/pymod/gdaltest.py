@@ -251,7 +251,7 @@ class GDALTest:
 
     def testOpen(self, check_prj = None, check_gt = None, gt_epsilon = None, \
                  check_stat = None, check_approx_stat = None, \
-                 stat_epsilon = None):
+                 stat_epsilon = None, skip_checksum = None):
         """check_prj - projection reference, check_gt - geotransformation
         matrix (tuple), gt_epsilon - geotransformation tolerance,
         check_stat - band statistics (tuple), stat_epsilon - statistics
@@ -357,7 +357,9 @@ class GDALTest:
                     post_reason( 'Statistics differs.' )
                     return 'fail'
 
-        if self.chksum is None or chksum == self.chksum:
+        if skip_checksum is not None:
+            return 'success'
+        elif self.chksum is None or chksum == self.chksum:
             return 'success'
         else:
             post_reason('Checksum for band %d in "%s" is %d, but expected %d.' \
