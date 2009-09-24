@@ -27,6 +27,7 @@
 
 import os
 import sys
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -62,11 +63,31 @@ def stats_nan_2():
 
 
 ###############################################################################
+# Test stats on signed byte (#3151)
+
+def stats_signedbyte():
+
+    if gdaltest.gtiff_drv is None:
+        return 'skip'
+
+    stats = (-128.0, 127.0, -0.2, 80.64)
+    
+    shutil.copyfile('data/stats_signed_byte.img', 'tmp/stats_signed_byte.img')
+
+    t = gdaltest.GDALTest( 'HFA', 'tmp/stats_signed_byte.img', 1, 11, filename_absolute = 1 )
+    ret = t.testOpen( check_approx_stat = stats, check_stat = stats )
+    
+    gdal.GetDriverByName('HFA').Delete('tmp/stats_signed_byte.img')
+    
+    return ret
+
+###############################################################################
 # Run tests
 
 gdaltest_list = [
     stats_nan_1,
-    stats_nan_2
+    stats_nan_2,
+    stats_signedbyte
     ]
 
 if __name__ == '__main__':
