@@ -4,10 +4,10 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference translation to/from "Panorama" GIS
  *           georeferencing information (also know as GIS "Integration").
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2005, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2005, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -98,7 +98,14 @@ static const long aoDatums[] =
 {
     0,
     4284,   // Pulkovo, 1942
-    4326    // WGS, 1984
+    4326,   // WGS, 1984,
+    4277,   // OSGB 1936 (British National Grid)
+    0,
+    0,
+    0,
+    0,
+    0,
+    4200    // Pulkovo, 1995
 };
 
 #define NUMBER_OF_DATUMS        (long)(sizeof(aoDatums)/sizeof(aoDatums[0]))
@@ -331,6 +338,8 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  * <pre>
  *       1: Pulkovo, 1942
  *       2: WGS, 1984
+ *       3: OSGB 1936 (British National Grid)
+ *       9: Pulkovo, 1995
  * </pre>
  *
  * @param iEllips Input spheroid.
