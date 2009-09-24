@@ -1622,7 +1622,13 @@ double GDALRasterBand::GetMaximum( int *pbSuccess )
     switch( eDataType )
     {
       case GDT_Byte:
-        return 255;
+      {
+        const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        if (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"))
+            return 127;
+        else
+            return 255;
+      }
 
       case GDT_UInt16:
         return 65535;
@@ -1705,7 +1711,13 @@ double GDALRasterBand::GetMinimum( int *pbSuccess )
     switch( eDataType )
     {
       case GDT_Byte:
-        return 0;
+      {
+        const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        if (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"))
+            return -128;
+        else
+            return 0;
+      }
 
       case GDT_UInt16:
         return 0;
@@ -2597,6 +2609,9 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     dfScale = nBuckets / (dfMax - dfMin);
     memset( panHistogram, 0, sizeof(int) * nBuckets );
 
+    const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+    int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
+
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -2643,8 +2658,13 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                 switch( eDataType )
                 {
                   case GDT_Byte:
-                    dfValue = ((GByte *)pData)[iOffset];
+                  {
+                    if (bSignedByte)
+                        dfValue = ((signed char *)pData)[iOffset];
+                    else
+                        dfValue = ((GByte *)pData)[iOffset];
                     break;
+                  }
                   case GDT_UInt16:
                     dfValue = ((GUInt16 *)pData)[iOffset];
                     break;
@@ -2787,7 +2807,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                 nYCheck = nBlockYSize;
 
             /* this is a special case for a common situation */
-            if( poBlock->GetDataType() == GDT_Byte
+            if( poBlock->GetDataType() == GDT_Byte && !bSignedByte
                 && dfScale == 1.0 && (dfMin >= -0.5 && dfMin <= 0.5)
                 && nYCheck == nBlockYSize && nXCheck == nBlockXSize
                 && nBuckets == 256 )
@@ -2814,8 +2834,13 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     switch( poBlock->GetDataType() )
                     {
                       case GDT_Byte:
-                        dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                      {
+                        if (bSignedByte)
+                            dfValue = ((signed char *) poBlock->GetDataRef())[iOffset];
+                        else
+                            dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
                         break;
+                      }
                       case GDT_UInt16:
                         dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
                         break;
@@ -2989,8 +3014,11 @@ CPLErr
         return CE_Warning;
 
     *pnBuckets = 256;
+    
+    const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+    int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
 
-    if( GetRasterDataType() == GDT_Byte )
+    if( GetRasterDataType() == GDT_Byte && !bSignedByte)
     {
         *pdfMin = -0.5;
         *pdfMax = 255.5;
@@ -3304,6 +3332,9 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
 
+    const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+    int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
+    
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -3349,8 +3380,13 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 switch( eDataType )
                 {
                   case GDT_Byte:
-                    dfValue = ((GByte *)pData)[iOffset];
+                  {
+                    if (bSignedByte)
+                        dfValue = ((signed char *)pData)[iOffset];
+                    else
+                        dfValue = ((GByte *)pData)[iOffset];
                     break;
+                  }
                   case GDT_UInt16:
                     dfValue = ((GUInt16 *)pData)[iOffset];
                     break;
@@ -3476,8 +3512,13 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     switch( poBlock->GetDataType() )
                     {
                       case GDT_Byte:
-                        dfValue = ((GByte *)poBlock->GetDataRef())[iOffset];
+                      {
+                        if (bSignedByte)
+                            dfValue = ((signed char *)poBlock->GetDataRef())[iOffset];
+                        else
+                            dfValue = ((GByte *)poBlock->GetDataRef())[iOffset];
                         break;
+                      }
                       case GDT_UInt16:
                         dfValue = ((GUInt16 *)poBlock->GetDataRef())[iOffset];
                         break;
@@ -3744,6 +3785,9 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
 
+    const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+    int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
+    
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -3789,8 +3833,13 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                 switch( eDataType )
                 {
                   case GDT_Byte:
-                    dfValue = ((GByte *)pData)[iOffset];
+                  {
+                    if (bSignedByte)
+                        dfValue = ((signed char *)pData)[iOffset];
+                    else
+                        dfValue = ((GByte *)pData)[iOffset];
                     break;
+                  }
                   case GDT_UInt16:
                     dfValue = ((GUInt16 *)pData)[iOffset];
                     break;
@@ -3911,8 +3960,13 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     switch( poBlock->GetDataType() )
                     {
                       case GDT_Byte:
-                        dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                      {
+                        if (bSignedByte)
+                            dfValue = ((signed char *) poBlock->GetDataRef())[iOffset];
+                        else
+                            dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
                         break;
+                      }
                       case GDT_UInt16:
                         dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
                         break;
