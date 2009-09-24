@@ -75,7 +75,7 @@ def stats_signedbyte():
     shutil.copyfile('data/stats_signed_byte.img', 'tmp/stats_signed_byte.img')
 
     t = gdaltest.GDALTest( 'HFA', 'tmp/stats_signed_byte.img', 1, 11, filename_absolute = 1 )
-    ret = t.testOpen( check_approx_stat = stats, check_stat = stats )
+    ret = t.testOpen( check_approx_stat = stats, check_stat = stats, skip_checksum = 1 )
     
     gdal.GetDriverByName('HFA').Delete('tmp/stats_signed_byte.img')
     
