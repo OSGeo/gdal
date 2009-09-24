@@ -32,8 +32,8 @@
 /*
  * TIFF Library UNIX-specific Routines.
  */
-#include "tiffio.h"
 #include "cpl_vsi.h"
+#include "tiffio.h"
 
 // We avoid including xtiffio.h since it drags in the libgeotiff version
 // of the VSI functions.
