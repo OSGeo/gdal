@@ -102,4 +102,10 @@ CPL_C_END
 extern const char* SpecialFieldNames[SPECIAL_FIELD_COUNT];
 extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
+/************************************************************************/
+/*     Some SRS related stuff, search in SRS data files.                */
+/************************************************************************/
+
+OGRErr CPL_DLL OSRGetEllipsoidInfo( int, char **, double *, double *);
+
 #endif /* ndef _OGR_P_H_INCLUDED */
