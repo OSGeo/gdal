@@ -61,18 +61,26 @@ class GIFDataset : public GDALPamDataset
 {
     friend class GIFRasterBand;
 
-    FILE *fp;
+    FILE        *fp;
 
     GifFileType *hGifFile;
 
-    int	   bGeoTransformValid;
-    double adfGeoTransform[6];
+    char        *pszProjection;
+    int	        bGeoTransformValid;
+    double      adfGeoTransform[6];
+
+    int         nGCPCount;
+    GDAL_GCP	*pasGCPList;
 
   public:
                  GIFDataset();
                  ~GIFDataset();
 
+    virtual const char *GetProjection();
     virtual CPLErr GetGeoTransform( double * );
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 };
@@ -287,6 +295,8 @@ GIFDataset::GIFDataset()
 {
     hGifFile = NULL;
     fp = NULL;
+
+    pszProjection = NULL;
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -294,6 +304,9 @@ GIFDataset::GIFDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
 }
 
 /************************************************************************/
@@ -304,10 +317,34 @@ GIFDataset::~GIFDataset()
 
 {
     FlushCache();
+
+    if ( pszProjection )
+        CPLFree( pszProjection );
+
+    if ( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
     if( hGifFile )
         DGifCloseFile( hGifFile );
+
     if( fp != NULL )
         VSIFCloseL( fp );
+}
+
+/************************************************************************/
+/*                           GetProjection()                            */
+/************************************************************************/
+
+const char *GIFDataset::GetProjection()
+
+{
+    if ( pszProjection && bGeoTransformValid )
+        return pszProjection;
+    else
+        return "";
 }
 
 /************************************************************************/
@@ -324,6 +361,39 @@ CPLErr GIFDataset::GetGeoTransform( double * padfTransform )
     }
     else
         return GDALPamDataset::GetGeoTransform( padfTransform );
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int GIFDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *GIFDataset::GetGCPProjection()
+
+{
+    if ( pszProjection && nGCPCount > 0 )
+        return pszProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *GIFDataset::GetGCPs()
+
+{
+    return pasGCPList;
 }
 
 /************************************************************************/
@@ -490,9 +560,25 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid = 
         GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
-                           poDS->adfGeoTransform )
-        || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                              poDS->adfGeoTransform );
+                           poDS->adfGeoTransform );
+    if ( !poDS->bGeoTransformValid )
+    {
+        poDS->bGeoTransformValid =
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                               poDS->adfGeoTransform );
+
+        if ( !poDS->bGeoTransformValid )
+        {
+            int bOziFileOK = 
+                GDALReadOziMapFile( poOpenInfo->pszFilename,
+                                    poDS->adfGeoTransform, 
+                                    &poDS->pszProjection,
+                                    &poDS->nGCPCount, &poDS->pasGCPList );
+
+            if ( bOziFileOK && poDS->nGCPCount == 0 )
+                 poDS->bGeoTransformValid = TRUE;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
