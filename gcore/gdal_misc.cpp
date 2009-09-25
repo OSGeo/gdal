@@ -959,6 +959,205 @@ GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 }
                              
 /************************************************************************/
+/*                         GDALLoadOziMapFile()                         */
+/************************************************************************/
+
+#define MAX_GCP 30
+ 
+int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
+                                    double *padfGeoTransform, char **ppszWKT, 
+                                    int *pnGCPCount, GDAL_GCP **ppasGCPs )
+
+
+{
+    char	**papszLines;
+    char        **papszTok=NULL;
+    int		iLine, nLines=0;
+    int	        nCoordinateCount = 0;
+    GDAL_GCP    asGCPs[MAX_GCP];
+    
+    VALIDATE_POINTER1( pszFilename, "GDALLoadOziMapFile", FALSE );
+    VALIDATE_POINTER1( padfGeoTransform, "GDALLoadOziMapFile", FALSE );
+    VALIDATE_POINTER1( pnGCPCount, "GDALLoadOziMapFile", FALSE );
+    VALIDATE_POINTER1( ppasGCPs, "GDALLoadOziMapFile", FALSE );
+
+    papszLines = CSLLoad( pszFilename );
+
+    if ( !papszLines )
+        return FALSE;
+
+    nLines = CSLCount( papszLines );
+
+    // Check the OziExplorer Map file signature
+    if ( nLines < 5
+         || !EQUALN(papszLines[0], "OziExplorer Map Data File Version ", 34) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+        "GDALLoadOziMapFile(): file \"%s\" is not in OziExplorer Map format.",
+                  pszFilename );
+        return FALSE;
+    }
+
+    OGRSpatialReference oSRS, *poLatLong = NULL;
+    OGRCoordinateTransformation *poTransform = NULL;
+    const char *pszProj = NULL, *pszProjParms = NULL;
+
+    for ( iLine = 5; iLine < nLines; iLine++ )
+    {
+        if ( EQUALN(papszLines[iLine], "Map Projection", 14) )
+        {
+            pszProj = papszLines[iLine];
+            continue;
+        }
+
+        if ( EQUALN(papszLines[iLine], "Projection Setup", 16) )
+        {
+            pszProjParms = papszLines[iLine];
+            continue;
+        }
+    }
+
+    if ( pszProj && pszProjParms )
+    {
+        oSRS.importFromOzi( papszLines[4], pszProj, pszProjParms );
+        if ( ppszWKT != NULL )
+            oSRS.exportToWkt( ppszWKT );
+
+        poLatLong = oSRS.CloneGeogCS();
+        poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
+    }
+
+    // Iterate all lines in the TAB-file
+    for ( iLine = 5; iLine < nLines; iLine++ )
+    {
+        CSLDestroy( papszTok );
+        papszTok = CSLTokenizeString2( papszLines[iLine], ",",
+                                       CSLT_ALLOWEMPTYTOKENS
+                                       | CSLT_STRIPLEADSPACES
+                                       | CSLT_STRIPENDSPACES );
+
+        if ( CSLCount(papszTok) < 12 )
+            continue;
+
+        if ( CSLCount(papszTok) >= 12
+             && EQUALN(papszTok[0], "Point", 5)
+             && !EQUAL(papszTok[3], "")
+             && !EQUAL(papszTok[6], "")
+             && !EQUAL(papszTok[7], "")
+             && !EQUAL(papszTok[9], "")
+             && !EQUAL(papszTok[10], "")
+             && nCoordinateCount < MAX_GCP )
+        {
+            double dfLon, dfLat;
+
+            GDALInitGCPs( 1, asGCPs + nCoordinateCount );
+
+            // Set pixel/line part
+            asGCPs[nCoordinateCount].dfGCPPixel = CPLAtofM(papszTok[2]);
+            asGCPs[nCoordinateCount].dfGCPLine = CPLAtofM(papszTok[3]);
+
+            // Set geographical coordinates of the pixels
+            dfLon = CPLAtofM(papszTok[9]) + CPLAtofM(papszTok[10]) / 60.0;
+            dfLat = CPLAtofM(papszTok[6]) + CPLAtofM(papszTok[7]) / 60.0;
+            if (EQUAL(papszTok[11], "W") )
+                dfLon = -dfLon;
+            if ( EQUAL(papszTok[8], "S") )
+                dfLat = -dfLat;
+
+            if ( poTransform )
+                poTransform->Transform( 1, &dfLon, &dfLat );
+
+            asGCPs[nCoordinateCount].dfGCPX = dfLon;
+            asGCPs[nCoordinateCount].dfGCPY = dfLat;
+
+            nCoordinateCount++;
+        }
+    }
+
+    if ( poTransform )
+        delete poTransform;
+
+    CSLDestroy( papszTok );
+    CSLDestroy( papszLines );
+
+    if ( nCoordinateCount == 0 )
+    {
+        CPLDebug( "GDAL", "GDALLoadOziMapFile(\"%s\") did not get any GCPs.", 
+                  pszFilename );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to convert the GCPs into a geotransform definition, if      */
+/*      possible.  Otherwise we will need to use them as GCPs.          */
+/* -------------------------------------------------------------------- */
+    if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
+                                 FALSE ) )
+    {
+        if ( pnGCPCount && ppasGCPs )
+        {
+            CPLDebug( "GDAL", 
+                "GDALLoadOziMapFile(%s) found file, wasn't able to derive a\n"
+                "first order geotransform.  Using points as GCPs.",
+                pszFilename );
+
+            *ppasGCPs = (GDAL_GCP *) 
+                CPLCalloc( sizeof(GDAL_GCP),nCoordinateCount );
+            memcpy( *ppasGCPs, asGCPs, sizeof(GDAL_GCP) * nCoordinateCount );
+            *pnGCPCount = nCoordinateCount;
+        }
+    }
+    else
+    {
+        GDALDeinitGCPs( nCoordinateCount, asGCPs );
+    }
+     
+    return TRUE;
+}
+
+#undef MAX_GCP
+
+/************************************************************************/
+/*                       GDALReadOziMapFile()                           */
+/************************************************************************/
+
+int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
+                                    double *padfGeoTransform, char **ppszWKT,
+                                    int *pnGCPCount, GDAL_GCP **ppasGCPs )
+
+
+{
+    const char	*pszOzi;
+    FILE	*fpOzi;
+
+/* -------------------------------------------------------------------- */
+/*      Try lower case, then upper case.                                */
+/* -------------------------------------------------------------------- */
+    pszOzi = CPLResetExtension( pszBaseFilename, "map" );
+
+    fpOzi = VSIFOpen( pszOzi, "rt" );
+
+#ifndef WIN32
+    if ( fpOzi == NULL )
+    {
+        pszOzi = CPLResetExtension( pszBaseFilename, "MAP" );
+        fpOzi = VSIFOpen( pszOzi, "rt" );
+    }
+#endif
+    
+    if ( fpOzi == NULL )
+        return FALSE;
+
+    VSIFClose( fpOzi );
+
+/* -------------------------------------------------------------------- */
+/*      We found the file, now load and parse it.                       */
+/* -------------------------------------------------------------------- */
+    return GDALLoadOziMapFile( pszOzi, padfGeoTransform, ppszWKT,
+                               pnGCPCount, ppasGCPs );
+}
+
+/************************************************************************/
 /*                         GDALLoadTabFile()                            */
 /*                                                                      */
 /*      Helper function for translator implementators wanting           */
@@ -1105,6 +1304,8 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
      
     return TRUE;
 }
+
+#undef MAX_GCP
 
 /************************************************************************/
 /*                         GDALReadTabFile()                            */
