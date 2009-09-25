@@ -46,6 +46,7 @@ PCIDSKDataset::PCIDSKDataset()
 {
     pszFilename = NULL;
     fp = NULL;
+    nFileSize = 0;
     nBands = 0;
     pszCreatTime = NULL;
     nGeoOffset = 0;
@@ -95,14 +96,7 @@ PCIDSKDataset::~PCIDSKDataset()
         CPLFree( pszCreatTime );
     if( nGCPCount > 0 )
     {
-        for( i = 0; i < nGCPCount; i++ )
-        {
-            if ( pasGCPList[i].pszId )
-                CPLFree( pasGCPList[i].pszId );
-            if ( pasGCPList[i].pszInfo )
-                CPLFree( pasGCPList[i].pszInfo );
-        }
-
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
 
@@ -416,6 +410,9 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     char            szTemp[1024];
     char            *pszString;
 
+    VSIFSeekL( poDS->fp, 0, SEEK_END );
+    poDS->nFileSize = VSIFTellL( poDS->fp );
+
 /* -------------------------------------------------------------------- */
 /*      Read File Identification.                                       */
 /* -------------------------------------------------------------------- */
@@ -471,15 +468,37 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         nSegBlocks = CPLScanLong( szTemp, 8 );
         poDS->nSegCount = ( nSegBlocks * 512 ) / 32;
 
+        if ( poDS->nSegCount < 0 ||
+             nSegPointersOffset + poDS->nSegCount * 32 >= poDS->nFileSize )
+        {
+            CPLDebug("PCIDSK", "nSegCount=%d", poDS->nSegCount);
+            delete poDS;
+            return NULL;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Allocate segment info structures.                               */
 /* -------------------------------------------------------------------- */
-        poDS->panSegType = (int *) CPLCalloc(sizeof(int),poDS->nSegCount );
-        poDS->papszSegName = (char **) CPLCalloc(sizeof(char*),poDS->nSegCount );
+        poDS->panSegType =
+            (int *) VSICalloc( sizeof(int), poDS->nSegCount );
+        poDS->papszSegName =
+            (char **) VSICalloc( sizeof(char*), poDS->nSegCount );
         poDS->panSegOffset = (vsi_l_offset *) 
-            CPLCalloc(sizeof(vsi_l_offset),poDS->nSegCount );
+            VSICalloc( sizeof(vsi_l_offset), poDS->nSegCount );
         poDS->panSegSize = (vsi_l_offset *) 
-            CPLCalloc(sizeof(vsi_l_offset),poDS->nSegCount );
+            VSICalloc( sizeof(vsi_l_offset), poDS->nSegCount );
+        
+        if (poDS->panSegType == NULL ||
+            poDS->papszSegName == NULL ||
+            poDS->panSegOffset == NULL ||
+            poDS->panSegSize == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                       "Not enough memory to hold segment description of %s",
+                      poOpenInfo->pszFilename );
+            delete poDS;
+            return NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Parse each segment pointer.                                     */
@@ -492,7 +511,11 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
             char szSegName[9];
             
             VSIFSeekL( poDS->fp, nSegPointersOffset + iSeg * 32, SEEK_SET );
-            VSIFReadL( szTemp, 1, 32, poDS->fp );
+            if (VSIFReadL( szTemp, 1, 32, poDS->fp ) != 32)
+            {
+                delete poDS;
+                return NULL;
+            }
             szTemp[32] = '\0';
             
             strncpy( szSegName, szTemp+4, 8 );
@@ -550,6 +573,15 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = CPLScanLong( szTemp + 384, 8 );
     poDS->nRasterYSize = CPLScanLong( szTemp + 392, 8 );
 
+    if  ( poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid dimensions : %d x %d", 
+                  poDS->nRasterXSize, poDS->nRasterYSize );
+        delete poDS;
+        return NULL;
+    }
+
     nByteBands = CPLScanLong( szTemp + 464, 4 );
     nInt16Bands = CPLScanLong( szTemp + 468, 4 );
     nUInt16Bands = CPLScanLong( szTemp + 472, 4 );
@@ -597,7 +629,11 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         FILE            *fp = poDS->fp;
 
         VSIFSeekL( poDS->fp, nImgHdrOffset, SEEK_SET );
-        VSIFReadL( szTemp, 1, 1024, poDS->fp );
+        if ( VSIFReadL( szTemp, 1, 1024, poDS->fp ) != 1024 )
+        {
+            delete poDS;
+            return NULL;
+        }
 
         pszString = CPLScanString( szTemp + 160, 8, TRUE, FALSE );
         eType = poDS->PCIDSKTypeToGDAL( pszString );
@@ -650,6 +686,13 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
               {
                   int nImage = atoi(pszFilename+5);
                   poBand = new PCIDSKTiledRasterBand( poDS, iBand+1, nImage );
+                  if ( poBand->GetXSize() == 0 )
+                  {
+                      CPLFree( pszFilename );
+                      delete poBand;
+                      delete poDS;
+                      return NULL;
+                  }
               }
 
               // Non-empty filename means we have data stored in
@@ -920,7 +963,8 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     VSIFSeekL( poDS->fp, nGcpDataOffset, SEEK_SET );
                     VSIFReadL( szTemp, 1, 80, poDS->fp );
                     poDS->nGCPCount = CPLScanLong( szTemp, 16 );
-                    if ( poDS->nGCPCount > 0 )
+                    if ( poDS->nGCPCount > 0 &&
+                         nGcpDataOffset + poDS->nGCPCount * 128 + 512 < poDS->nFileSize )
                     {
                         double      dfUnitConv = 1.0;
                         char        szProj[17];
@@ -992,6 +1036,12 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                 PCIDSKTiledRasterBand *poOvBand;
 
                 poOvBand = new PCIDSKTiledRasterBand( poDS, 0, nImage );
+                if ( poOvBand->GetXSize() == 0 )
+                {
+                    delete poOvBand;
+                    delete poDS;
+                    return NULL;
+                }
 
                 poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
                
@@ -1065,7 +1115,9 @@ void PCIDSKDataset::CollectPCIDSKMetadata( int nSegment )
 /* -------------------------------------------------------------------- */
 /*      Read all metadata in one gulp.                                  */
 /* -------------------------------------------------------------------- */
-    char *pszMetadataBuf = (char *) CPLCalloc(1,nSegSize + 1);
+    char *pszMetadataBuf = (char *) VSICalloc( 1, nSegSize + 1 );
+    if ( pszMetadataBuf == NULL )
+        return;
 
     if( !SegRead( nSegment, 0, nSegSize, pszMetadataBuf ) )
     {
