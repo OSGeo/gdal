@@ -454,16 +454,22 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /*      Uncompress ESRI Grid compression format block.                  */
 /************************************************************************/
 
-static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
+#define CHECK_ENOUGH_BYTES(n) \
+    if (nSrcBytes < (n)) goto not_enough_bytes;
+
+static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                                GByte *pabyDest, int nMaxPixels, 
                                int nDataType )
 
 {
-    GUInt32  nDataMin, nDataOffset;
+    GUInt32  nDataMin;
     int      nNumBits, nPixelsOutput=0;			
-    GInt32   nNumRuns;
+    GInt32   nNumRuns, nDataOffset;
     GByte *pabyCounter, *pabyValues;
     int   nValueBitOffset;
+    int nCounterOffset;
+    
+    CHECK_ENOUGH_BYTES(13);
 
     memcpy( &nDataMin, pabyCData, 4 );
     nDataMin = CPL_LSBWORD32( nDataMin );
@@ -484,6 +490,15 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
     {
         pabyValues = pabyCData + 13;
         nValueBitOffset = 0;
+        
+        if (nNumBits > INT_MAX / nMaxPixels ||
+            nNumBits * nMaxPixels > INT_MAX - 7 ||
+            (nNumBits * nMaxPixels + 7)/8 > INT_MAX - 13)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow : nNumBits * nMaxPixels + 7");
+            return CE_Failure;
+        }
+        CHECK_ENOUGH_BYTES(13 + (nNumBits * nMaxPixels + 7)/8);
 
 /* -------------------------------------------------------------------- */
 /*      Loop over block pixels.                                         */
@@ -619,7 +634,25 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 /* ==================================================================== */
 /*      Establish data pointers for runs.                               */
 /* ==================================================================== */
+    if (nNumRuns < 0 || nDataOffset < 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "nNumRuns=%d, nDataOffset=%d",
+                 nNumRuns, nDataOffset);
+        return CE_Failure;
+    }
+    
+    if (nNumBits > INT_MAX / nNumRuns ||
+        nNumBits * nNumRuns > INT_MAX - 7 ||
+        (nNumBits * nNumRuns + 7)/8 > INT_MAX - nDataOffset)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Integer overflow : nDataOffset + (nNumBits * nNumRuns + 7)/8");
+        return CE_Failure;
+    }
+    CHECK_ENOUGH_BYTES(nDataOffset + (nNumBits * nNumRuns + 7)/8);
+    
     pabyCounter = pabyCData + 13;
+    nCounterOffset = 13;
     pabyValues = pabyCData + nDataOffset;
     nValueBitOffset = 0;
     
@@ -638,27 +671,35 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 /*      or four bytes depending on the low order two bits of the        */
 /*      first byte.                                                     */
 /* -------------------------------------------------------------------- */
+        CHECK_ENOUGH_BYTES(nCounterOffset+1);
         if( ((*pabyCounter) & 0xc0) == 0x00 )
         {
             nRepeatCount = (*(pabyCounter++)) & 0x3f;
+            nCounterOffset ++;
         }
         else if( ((*pabyCounter) & 0xc0) == 0x40 )
         {
+            CHECK_ENOUGH_BYTES(nCounterOffset + 2);
             nRepeatCount = (*(pabyCounter++)) & 0x3f;
             nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+            nCounterOffset += 2;
         }
         else if( ((*pabyCounter) & 0xc0) == 0x80 )
         {
+            CHECK_ENOUGH_BYTES(nCounterOffset + 3);
             nRepeatCount = (*(pabyCounter++)) & 0x3f;
             nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
             nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+            nCounterOffset += 3;
         }
         else if( ((*pabyCounter) & 0xc0) == 0xc0 )
         {
+            CHECK_ENOUGH_BYTES(nCounterOffset + 4);
             nRepeatCount = (*(pabyCounter++)) & 0x3f;
             nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
             nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
             nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+            nCounterOffset += 4;
         }
 
 /* -------------------------------------------------------------------- */
@@ -840,6 +881,11 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
     }
 
     return CE_None;
+    
+not_enough_bytes:
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Not enough bytes in compressed block");
+    return CE_Failure;
 }
 
 /************************************************************************/
