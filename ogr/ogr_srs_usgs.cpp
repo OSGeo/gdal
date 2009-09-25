@@ -4,10 +4,10 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference translation to/from USGS georeferencing
  *           information (used in GCTP package).
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2004, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "ogr_spatialref.h"
+#include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_csv.h"
 
@@ -142,160 +143,6 @@ static const long aoEllips[] =
 };
 
 #define NUMBER_OF_ELLIPSOIDS    (int)(sizeof(aoEllips)/sizeof(aoEllips[0]))
-
-/************************************************************************/
-/*                        USGSGetUOMLengthInfo()                        */
-/*                                                                      */
-/*      Note: This function should eventually also know how to          */
-/*      lookup length aliases in the UOM_LE_ALIAS table.                */
-/************************************************************************/
-
-static int 
-USGSGetUOMLengthInfo( int nUOMLengthCode, char **ppszUOMName,
-                      double * pdfInMeters )
-
-{
-    char        **papszUnitsRecord;
-    char        szSearchKey[24];
-    int         iNameField;
-
-#define UOM_FILENAME CSVFilename( "unit_of_measure.csv" )
-
-/* -------------------------------------------------------------------- */
-/*      We short cut meter to save work in the most common case.        */
-/* -------------------------------------------------------------------- */
-    if( nUOMLengthCode == 9001 )
-    {
-        if( ppszUOMName != NULL )
-            *ppszUOMName = CPLStrdup( "metre" );
-        if( pdfInMeters != NULL )
-            *pdfInMeters = 1.0;
-
-        return TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Search the units database for this unit.  If we don't find      */
-/*      it return failure.                                              */
-/* -------------------------------------------------------------------- */
-    sprintf( szSearchKey, "%d", nUOMLengthCode );
-    papszUnitsRecord =
-        CSVScanFileByName( UOM_FILENAME, "UOM_CODE", szSearchKey, CC_Integer );
-
-    if( papszUnitsRecord == NULL )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Get the name, if requested.                                     */
-/* -------------------------------------------------------------------- */
-    if( ppszUOMName != NULL )
-    {
-        iNameField = CSVGetFileFieldId( UOM_FILENAME, "UNIT_OF_MEAS_NAME" );
-        *ppszUOMName = CPLStrdup( CSLGetField(papszUnitsRecord, iNameField) );
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Get the A and B factor fields, and create the multiplicative    */
-/*      factor.                                                         */
-/* -------------------------------------------------------------------- */
-    if( pdfInMeters != NULL )
-    {
-        int     iBFactorField, iCFactorField;
-        
-        iBFactorField = CSVGetFileFieldId( UOM_FILENAME, "FACTOR_B" );
-        iCFactorField = CSVGetFileFieldId( UOM_FILENAME, "FACTOR_C" );
-
-        if( atof(CSLGetField(papszUnitsRecord, iCFactorField)) > 0.0 )
-            *pdfInMeters = atof(CSLGetField(papszUnitsRecord, iBFactorField))
-                / atof(CSLGetField(papszUnitsRecord, iCFactorField));
-        else
-            *pdfInMeters = 0.0;
-    }
-    
-    return( TRUE );
-}
-
-/************************************************************************/
-/*                        USGSGetEllipsoidInfo()                        */
-/*                                                                      */
-/*      Fetch info about an ellipsoid.  Axes are always returned in     */
-/*      meters.  SemiMajor computed based on inverse flattening         */
-/*      where that is provided.                                         */
-/************************************************************************/
-
-static int 
-USGSGetEllipsoidInfo( int nCode, char ** ppszName,
-                      double * pdfSemiMajor, double * pdfInvFlattening )
-
-{
-    char        szSearchKey[24];
-    double      dfSemiMajor, dfToMeters = 1.0;
-    int         nUOMLength;
-    
-/* -------------------------------------------------------------------- */
-/*      Get the semi major axis.                                        */
-/* -------------------------------------------------------------------- */
-    sprintf( szSearchKey, "%d", nCode );
-
-    dfSemiMajor =
-        atof(CSVGetField( CSVFilename("ellipsoid.csv" ),
-                          "ELLIPSOID_CODE", szSearchKey, CC_Integer,
-                          "SEMI_MAJOR_AXIS" ) );
-    if( dfSemiMajor == 0.0 )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Get the translation factor into meters.                         */
-/* -------------------------------------------------------------------- */
-    nUOMLength = atoi(CSVGetField( CSVFilename("ellipsoid.csv" ),
-                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,
-                                   "UOM_CODE" ));
-    USGSGetUOMLengthInfo( nUOMLength, NULL, &dfToMeters );
-
-    dfSemiMajor *= dfToMeters;
-    
-    if( pdfSemiMajor != NULL )
-        *pdfSemiMajor = dfSemiMajor;
-    
-/* -------------------------------------------------------------------- */
-/*      Get the semi-minor if requested.  If the Semi-minor axis        */
-/*      isn't available, compute it based on the inverse flattening.    */
-/* -------------------------------------------------------------------- */
-    if( pdfInvFlattening != NULL )
-    {
-        *pdfInvFlattening = 
-            atof(CSVGetField( CSVFilename("ellipsoid.csv" ),
-                              "ELLIPSOID_CODE", szSearchKey, CC_Integer,
-                              "INV_FLATTENING" ));
-
-        if( *pdfInvFlattening == 0.0 )
-        {
-            double dfSemiMinor;
-
-            dfSemiMinor =
-                atof(CSVGetField( CSVFilename("ellipsoid.csv" ),
-                                  "ELLIPSOID_CODE", szSearchKey, CC_Integer,
-                                  "SEMI_MINOR_AXIS" )) * dfToMeters;
-
-            if( dfSemiMajor != 0.0 && dfSemiMajor != dfSemiMinor )
-                *pdfInvFlattening = 
-                    -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
-            else
-                *pdfInvFlattening = 0.0;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Get the name, if requested.                                     */
-/* -------------------------------------------------------------------- */
-    if( ppszName != NULL )
-        *ppszName =
-            CPLStrdup(CSVGetField( CSVFilename("ellipsoid.csv" ),
-                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,
-                                   "ELLIPSOID_NAME" ));
-    
-    return( TRUE );
-}
 
 /************************************************************************/
 /*                         OSRImportFromUSGS()                          */
@@ -841,42 +688,47 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             }
             else if ( padfPrjParams[1] > 0.0 )  // Clarke 1866
             {
-                USGSGetEllipsoidInfo( 7008, &pszName, &dfSemiMajor,
-                                      &dfInvFlattening );
-                SetGeogCS( CPLString().Printf(
-                               "Unknown datum based upon the %s ellipsoid",
-                               pszName ),
-                           CPLString().Printf( 
-                               "Not specified (based on %s spheroid)",
-                               pszName ),
-                           pszName, dfSemiMajor, dfInvFlattening,
-                           NULL, 0.0, NULL, 0.0 );
-                SetAuthority( "SPHEROID", "EPSG", 7008 );
+                if ( OSRGetEllipsoidInfo( 7008, &pszName, &dfSemiMajor,
+                                          &dfInvFlattening ) == OGRERR_NONE )
+                {
+                    SetGeogCS( CPLString().Printf(
+                                    "Unknown datum based upon the %s ellipsoid",
+                                    pszName ),
+                               CPLString().Printf( 
+                                    "Not specified (based on %s spheroid)",
+                                    pszName ),
+                               pszName, dfSemiMajor, dfInvFlattening,
+                               NULL, 0.0, NULL, 0.0 );
+                    SetAuthority( "SPHEROID", "EPSG", 7008 );
+                }
             }
             else                              // Sphere, rad 6370997 m
             {
-                USGSGetEllipsoidInfo( 7047, &pszName, &dfSemiMajor,
-                                      &dfInvFlattening );
-                SetGeogCS( CPLString().Printf(
-                               "Unknown datum based upon the %s ellipsoid",
-                               pszName ),
-                           CPLString().Printf( "Not specified (based on %s spheroid)",
-                                       pszName ),
-                           pszName, dfSemiMajor, dfInvFlattening,
-                           NULL, 0.0, NULL, 0.0 );
-                SetAuthority( "SPHEROID", "EPSG", 7047 );
+                if ( OSRGetEllipsoidInfo( 7047, &pszName, &dfSemiMajor,
+                                     &dfInvFlattening ) == OGRERR_NONE )
+                {
+                    SetGeogCS( CPLString().Printf(
+                                    "Unknown datum based upon the %s ellipsoid",
+                                    pszName ),
+                               CPLString().Printf(
+                                    "Not specified (based on %s spheroid)",
+                                    pszName ),
+                               pszName, dfSemiMajor, dfInvFlattening,
+                               NULL, 0.0, NULL, 0.0 );
+                    SetAuthority( "SPHEROID", "EPSG", 7047 );
+                }
             }
 
         }
         else if ( iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
         {
-            if( USGSGetEllipsoidInfo( aoEllips[iDatum], &pszName,
-                                       &dfSemiMajor, &dfInvFlattening ) )
+            if( OSRGetEllipsoidInfo( aoEllips[iDatum], &pszName,
+                                     &dfSemiMajor, &dfInvFlattening ) == OGRERR_NONE )
             {
                 SetGeogCS( CPLString().Printf("Unknown datum based upon the %s ellipsoid",
-                                      pszName ),
+                                              pszName ),
                            CPLString().Printf( "Not specified (based on %s spheroid)",
-                                       pszName ),
+                                               pszName ),
                            pszName, dfSemiMajor, dfInvFlattening,
                            NULL, 0.0, NULL, 0.0 );
                 SetAuthority( "SPHEROID", "EPSG", aoEllips[iDatum] );
@@ -1305,9 +1157,10 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                 double  dfSM;
                 double  dfIF;
 
-                USGSGetEllipsoidInfo( aoEllips[i], NULL, &dfSM, &dfIF );
-                if( ABS( dfSemiMajor - dfSM ) < 0.01
-                    && ABS( dfInvFlattening - dfIF ) < 0.0001 )
+                if ( OSRGetEllipsoidInfo( aoEllips[i], NULL,
+                                          &dfSM, &dfIF ) == OGRERR_NONE
+                    && CPLIsEqual( dfSemiMajor, dfSM )
+                    && CPLIsEqual( dfInvFlattening, dfIF ) )
                 {
                     *piDatum = i;
                     break;
