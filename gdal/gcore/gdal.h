@@ -525,6 +525,10 @@ int CPL_DLL CPL_STDCALL GDALLoadTabFile( const char *, double *, char **,
                                          int *, GDAL_GCP ** );
 int CPL_DLL CPL_STDCALL GDALReadTabFile( const char *, double *, char **,
                                          int *, GDAL_GCP ** );
+int CPL_DLL CPL_STDCALL GDALLoadOziMapFile( const char *, double *, char **,
+                                            int *, GDAL_GCP ** );
+int CPL_DLL CPL_STDCALL GDALReadOziMapFile( const char * ,  double *,
+                                            char **, int *, GDAL_GCP ** );
 char CPL_DLL ** CPL_STDCALL GDALLoadRPBFile( const char *pszFilename, 
                                              char **papszSiblingFiles );
 CPLErr CPL_DLL CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, 
