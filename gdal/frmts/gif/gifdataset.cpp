@@ -76,7 +76,7 @@ class GIFDataset : public GDALPamDataset
                  GIFDataset();
                  ~GIFDataset();
 
-    virtual const char *GetProjection();
+    virtual const char *GetProjectionRef();
     virtual CPLErr GetGeoTransform( double * );
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -335,16 +335,16 @@ GIFDataset::~GIFDataset()
 }
 
 /************************************************************************/
-/*                           GetProjection()                            */
+/*                        GetProjectionRef()                            */
 /************************************************************************/
 
-const char *GIFDataset::GetProjection()
+const char *GIFDataset::GetProjectionRef()
 
 {
     if ( pszProjection && bGeoTransformValid )
         return pszProjection;
     else
-        return "";
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -370,7 +370,10 @@ CPLErr GIFDataset::GetGeoTransform( double * padfTransform )
 int GIFDataset::GetGCPCount()
 
 {
-    return nGCPCount;
+    if (nGCPCount > 0)
+        return nGCPCount;
+    else
+        return GDALPamDataset::GetGCPCount();
 }
 
 /************************************************************************/
@@ -383,7 +386,7 @@ const char *GIFDataset::GetGCPProjection()
     if ( pszProjection && nGCPCount > 0 )
         return pszProjection;
     else
-        return "";
+        return GDALPamDataset::GetGCPProjection();
 }
 
 /************************************************************************/
@@ -393,7 +396,10 @@ const char *GIFDataset::GetGCPProjection()
 const GDAL_GCP *GIFDataset::GetGCPs()
 
 {
-    return pasGCPList;
+    if (nGCPCount > 0)
+        return pasGCPList;
+    else
+        return GDALPamDataset::GetGCPs();
 }
 
 /************************************************************************/
