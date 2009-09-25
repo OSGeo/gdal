@@ -51,6 +51,8 @@ class PCIDSKDataset : public RawDataset
     const char          *pszFilename;
     FILE                *fp;
 
+    vsi_l_offset        nFileSize;
+
     char                *pszCreatTime;  // Date/time of the database creation
 
     vsi_l_offset        nGeoPtrOffset;  // Offset in bytes to the pointer
