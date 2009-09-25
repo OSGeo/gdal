@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_P_H_INCLUDED
-#define _OGR_P_H_INCLUDED
+#ifndef OGR_P_H_INCLUDED
+#define OGR_P_H_INCLUDED
 
 /* -------------------------------------------------------------------- */
 /*      Include the common portability library ... lets us do lots      */
@@ -37,6 +37,8 @@
 
 #include "cpl_string.h"
 #include "cpl_conv.h"
+
+#include "ogr_core.h"
 
 #ifdef CPL_MSB 
 #  define OGR_SWAP(x)   (x == wkbNDR)
@@ -108,4 +110,4 @@ extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
 OGRErr CPL_DLL OSRGetEllipsoidInfo( int, char **, double *, double *);
 
-#endif /* ndef _OGR_P_H_INCLUDED */
+#endif /* ndef OGR_P_H_INCLUDED */
