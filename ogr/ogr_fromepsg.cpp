@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "ogr_spatialref.h"
+#include "ogr_p.h"
 #include "cpl_csv.h"
 
 CPL_CVSID("$Id$");
@@ -641,16 +642,33 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 }
 
 /************************************************************************/
-/*                        EPSGGetEllipsoidInfo()                        */
-/*                                                                      */
-/*      Fetch info about an ellipsoid.  Axes are always returned in     */
-/*      meters.  SemiMajor computed based on inverse flattening         */
-/*      where that is provided.                                         */
+/*                         OSRGetEllipsoidInfo()                        */
 /************************************************************************/
 
-static int 
-EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
-                      double * pdfSemiMajor, double * pdfInvFlattening )
+/**
+ * Fetch info about an ellipsoid.
+ *
+ * This helper function will return ellipsoid parameters corresponding to EPSG
+ * code provided. Axes are always returned in meters.  Semi major computed
+ * based on inverse flattening where that is provided.
+ *
+ * @param nCode EPSG code of the requested ellipsoid
+ *
+ * @param ppszName pointer to string where ellipsoid name will be returned. It
+ * is caller responsibility to free this string after using with CPLFree().
+ *
+ * @param pdfSemiMajor pointer to variable where semi major axis will be
+ * returned.
+ *
+ * @param pdfInvFlattening pointer to variable where inverse flattening will
+ * be returned.
+ *
+ * @return OGRERR_NONE on success or an error code in case of failure.
+ **/
+
+OGRErr 
+OSRGetEllipsoidInfo( int nCode, char ** ppszName,
+                     double * pdfSemiMajor, double * pdfInvFlattening )
 
 {
     char        szSearchKey[24];
@@ -660,14 +678,15 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the semi major axis.                                        */
 /* -------------------------------------------------------------------- */
-    sprintf( szSearchKey, "%d", nCode );
+    snprintf( szSearchKey, sizeof(szSearchKey), "%d", nCode );
+    szSearchKey[sizeof(szSearchKey) - 1] = '\n';
 
     dfSemiMajor =
         CPLAtof(CSVGetField( CSVFilename("ellipsoid.csv" ),
                              "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                              "SEMI_MAJOR_AXIS" ) );
     if( dfSemiMajor == 0.0 )
-        return FALSE;
+        return OGRERR_UNSUPPORTED_SRS;
 
 /* -------------------------------------------------------------------- */
 /*      Get the translation factor into meters.                         */
@@ -718,8 +737,8 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
             CPLStrdup(CSVGetField( CSVFilename("ellipsoid.csv" ),
                                    "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                    "ELLIPSOID_NAME" ));
-    
-    return( TRUE );
+
+    return OGRERR_NONE;
 }
 
 #define NatOriginLat         8801
@@ -1174,8 +1193,8 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 
     OGREPSGDatumNameMassage( &pszDatumName );
 
-    if( !EPSGGetEllipsoidInfo( nEllipsoidCode, &pszEllipsoidName, 
-                               &dfSemiMajor, &dfInvFlattening ) )
+    if( OSRGetEllipsoidInfo( nEllipsoidCode, &pszEllipsoidName, 
+                             &dfSemiMajor, &dfInvFlattening ) != OGRERR_NONE )
         return OGRERR_UNSUPPORTED_SRS;
 
     if( !EPSGGetUOMAngleInfo( nUOMAngle, &pszAngleName, &dfAngleInDegrees ) )
