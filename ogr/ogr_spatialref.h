@@ -177,6 +177,7 @@ class CPL_DLL OGRSpatialReference
                                 double *padfPrjParams,
                                 long iDatum, int bAnglesInPackedDMSFormat = TRUE );
     OGRErr      importFromPanorama( long, long, long, double* );
+    OGRErr      importFromOzi( const char *, const char *, const char * );
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
     OGRErr      importFromDict( const char *pszDict, const char *pszCode );
