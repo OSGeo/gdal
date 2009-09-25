@@ -579,6 +579,10 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
                 else
                     pabyDest[nPixelsOutput>>1] |= (GByte) (nDataValue<<4);
             }
+            else if( nDataType == EPT_s8 ) 
+            { 
+                ((GByte *) pabyDest)[nPixelsOutput] = (GByte) nDataValue; 
+            } 
             else if( nDataType == EPT_u16 )
             {
                 ((GUInt16 *) pabyDest)[nPixelsOutput] = (GUInt16) nDataValue;
@@ -738,6 +742,16 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
             for( i = 0; i < nRepeatCount; i++ )
             {
                 ((GUInt16 *) pabyDest)[nPixelsOutput++] = (GUInt16)nDataValue;
+            }
+        }
+        else if( nDataType == EPT_s8 )
+        {
+            int		i;
+            
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                CPLAssert( nDataValue < 256 );
+                ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
             }
         }
         else if( nDataType == EPT_s16 )
