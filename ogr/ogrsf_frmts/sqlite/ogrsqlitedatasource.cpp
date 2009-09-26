@@ -30,6 +30,7 @@
 #include "ogr_sqlite.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_hash_set.h"
 
 #ifdef HAVE_SPATIALITE
 #include "spatialite.h"
@@ -171,6 +172,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
     }
 #endif
 
+    int bListAllTables = CSLTestBoolean(CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "NO"));
+
 /* -------------------------------------------------------------------- */
 /*      Try to open the sqlite database properly now.                   */
 /* -------------------------------------------------------------------- */
@@ -183,8 +186,11 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "sqlite3_open(%s) failed: %s", 
                   pszNewName, sqlite3_errmsg( hDB ) );
+                  
         return FALSE;
     }
+    
+    CPLHashSet* hSet = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
 
 /* -------------------------------------------------------------------- */
 /*      If we have a GEOMETRY_COLUMNS tables, initialize on the basis   */
@@ -220,10 +226,18 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
             OpenTable( papszRow[0], papszRow[1], eGeomType, papszRow[4],
                        FetchSRS( nSRID ) );
+                       
+            if (bListAllTables)
+                CPLHashSetInsert(hSet, CPLStrdup(papszRow[0]));
         }
 
         sqlite3_free_table(papszResult);
 
+        if (bListAllTables)
+            goto all_tables;
+            
+        CPLHashSetDestroy(hSet);
+        
         return TRUE;
     }
 
@@ -266,6 +280,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
             OpenTable( papszRow[0], papszRow[1], eGeomType, "SpatiaLite",
                        FetchSRS( nSRID ), nSRID, bHasSpatialIndex );
+                       
+            if (bListAllTables)
+                CPLHashSetInsert(hSet, CPLStrdup(papszRow[0]));
         }
 
         sqlite3_free_table(papszResult);
@@ -282,7 +299,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
         if ( rc == SQLITE_OK )
         {
             for( iRow = 0; iRow < nRowCount; iRow++ )
+            {
                 OpenTable( papszResult[iRow+1] );
+                
+                if (bListAllTables)
+                    CPLHashSetInsert(hSet, CPLStrdup(papszResult[iRow+1]));
+            }
         }
         else
         {
@@ -295,6 +317,11 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
         sqlite3_free_table(papszResult);
 #endif
 
+        if (bListAllTables)
+            goto all_tables;
+
+        CPLHashSetDestroy(hSet);
+        
         return TRUE;
     }
 
@@ -303,6 +330,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 /*      as non-spatial tables.                                          */
 /* -------------------------------------------------------------------- */
     sqlite3_free( pszErrMsg );
+    
+all_tables:
     rc = sqlite3_get_table( hDB,
                             "SELECT name FROM sqlite_master "
                             "WHERE type IN ('table','view') "
@@ -319,13 +348,18 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
                   "Unable to fetch list of tables: %s", 
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
+        CPLHashSetDestroy(hSet);
         return FALSE;
     }
     
     for( iRow = 0; iRow < nRowCount; iRow++ )
-        OpenTable( papszResult[iRow+1] );
+    {
+        if (CPLHashSetLookup(hSet, papszResult[iRow+1]) == NULL)
+            OpenTable( papszResult[iRow+1] );
+    }
     
     sqlite3_free_table(papszResult);
+    CPLHashSetDestroy(hSet);
 
     return TRUE;
 }
