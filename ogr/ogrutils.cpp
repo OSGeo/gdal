@@ -1113,3 +1113,102 @@ char* OGRGetXML_UTF8_EscapedString(const char* pszString)
         pszEscaped = CPLEscapeString( pszString, -1, CPLES_XML );
     return pszEscaped;
 }
+
+/************************************************************************/
+/*                        OGRFastAtof()                                 */
+/************************************************************************/
+
+/* On Windows, atof() is very slow if the number */
+/* is followed by other long content. */
+/* So we just extract the number into a short string */
+/* before calling atof() on it */
+static
+double OGRCallAtofOnShortString(const char* pszStr)
+{
+    char szTemp[128];
+    int nCounter = 0;
+    const char* p = pszStr;
+    while(*p == ' ' || *p == '\t')
+        p++;
+    while(*p == '+'  ||
+          *p == '-'  ||
+          (*p >= '0' && *p <= '9') ||
+          (*p == 'e' || *p == 'E' || *p == 'd' || *p == 'D'))
+    {
+        szTemp[nCounter++] = *(p++);
+        if (nCounter == 127)
+            return atof(pszStr);
+    }
+    szTemp[nCounter] = '\0';
+    return atof(szTemp);
+}
+
+/** Same contract as CPLAtof, except than it doesn't always call the
+ *  system atof() that may be slow on some platforms. For simple but
+ *  common strings, it'll use a faster implementation (up to 20x faster
+ *  than atof() on MS runtime libraries) that has no garanty to return
+ *  exactly the same floating point number.
+ */
+ 
+double OGRFastAtof(const char* pszStr)
+{
+    double dfVal = 0;
+    double dfSign = 1.0;
+    const char* p = pszStr;
+    
+    static const double adfTenPower[] =
+    {
+        1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10,
+        1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20,
+        1e21, 1e22, 1e23, 1e24, 1e25, 1e26, 1e27, 1e28, 1e29, 1e30, 1e31
+    };
+        
+    while(*p == ' ' || *p == '\t')
+        p++;
+
+    if (*p == '+')
+        p++;
+    else if (*p == '-')
+    {
+        dfSign = -1.0;
+        p++;
+    }
+    
+    while(TRUE)
+    {
+        if (*p >= '0' && *p <= '9')
+        {
+            dfVal = dfVal * 10.0 + (*p - '0');
+            p++;
+        }
+        else if (*p == '.')
+        {
+            p++;
+            break;
+        }
+        else if (*p == 'e' || *p == 'E' || *p == 'd' || *p == 'D')
+            return OGRCallAtofOnShortString(pszStr);
+        else
+            return dfSign * dfVal;
+    }
+    
+    unsigned int countFractionnal = 0;
+    while(TRUE)
+    {
+        if (*p >= '0' && *p <= '9')
+        {
+            dfVal = dfVal * 10.0 + (*p - '0');
+            countFractionnal ++;
+            p++;
+        }
+        else if (*p == 'e' || *p == 'E' || *p == 'd' || *p == 'D')
+            return OGRCallAtofOnShortString(pszStr);
+        else
+        {
+            if (countFractionnal < sizeof(adfTenPower) / sizeof(adfTenPower[0]))
+                return dfSign * (dfVal / adfTenPower[countFractionnal]);
+            else
+                return OGRCallAtofOnShortString(pszStr);
+        }
+    }
+}
