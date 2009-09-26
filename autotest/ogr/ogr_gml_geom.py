@@ -32,6 +32,7 @@ import string
 sys.path.append( '../pymod' )
 
 import gdaltest
+import ogrtest
 import ogr
 import osr
 
@@ -48,7 +49,6 @@ class gml_geom_unit:
         # Convert WKT to GML.
 
         geom_wkt = ogr.CreateGeometryFromWkt( raw_wkt )
-        clean_wkt = geom_wkt.ExportToWkt();
 
         gml = geom_wkt.ExportToGML()
 
@@ -56,18 +56,18 @@ class gml_geom_unit:
             gdaltest.post_reason( 'Conversion to GML failed.')
             return 'fail'
 
-        geom_wkt.Destroy()
-            
         ######################################################################
-        # Convert back to WKT. 
+        # Create geometry from GML. 
         
         geom_gml = ogr.CreateGeometryFromGML( gml )
-        gml_wkt = geom_gml.ExportToWkt()
 
-        if gml_wkt != clean_wkt:
+        if ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001) == 1:
+            clean_wkt = geom_wkt.ExportToWkt();
+            gml_wkt = geom_gml.ExportToWkt()
             gdaltest.post_reason( 'WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml) )
             return 'fail'
 
+        geom_wkt.Destroy()
         geom_gml.Destroy()
 
         return 'success'
