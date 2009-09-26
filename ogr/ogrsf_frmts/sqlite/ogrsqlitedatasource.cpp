@@ -1477,4 +1477,3 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 
     return poSRS;
 }
-
