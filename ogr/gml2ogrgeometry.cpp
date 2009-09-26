@@ -44,6 +44,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include <ctype.h>
+#include "ogr_p.h"
 
 /************************************************************************/
 /*                           BareGMLElement()                           */
@@ -192,7 +193,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             int nDimension = 2;
 
             // parse out 2 or 3 tuple. 
-            dfX = atof( pszCoordString );
+            dfX = OGRFastAtof( pszCoordString );
             while( *pszCoordString != '\0'
                    && *pszCoordString != ','
                    && !isspace((unsigned char)*pszCoordString) )
@@ -206,7 +207,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             }
 
             pszCoordString++;
-            dfY = atof( pszCoordString );
+            dfY = OGRFastAtof( pszCoordString );
             while( *pszCoordString != '\0' 
                    && *pszCoordString != ','
                    && !isspace((unsigned char)*pszCoordString) )
@@ -215,7 +216,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             if( *pszCoordString == ',' )
             {
                 pszCoordString++;
-                dfZ = atof( pszCoordString );
+                dfZ = OGRFastAtof( pszCoordString );
                 nDimension = 3;
                 while( *pszCoordString != '\0' 
                        && *pszCoordString != ','
@@ -258,15 +259,15 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
         if( CSLCount( papszTokens ) > 2 )
         {
             bSuccess = AddPoint( poGeometry, 
-                                 atof(papszTokens[0]), 
-                                 atof(papszTokens[1]),
-                                 atof(papszTokens[2]), 3 );
+                                 OGRFastAtof(papszTokens[0]), 
+                                 OGRFastAtof(papszTokens[1]),
+                                 OGRFastAtof(papszTokens[2]), 3 );
         }
         else if( CSLCount( papszTokens ) > 1 )
         {
             bSuccess = AddPoint( poGeometry, 
-                                 atof(papszTokens[0]), 
-                                 atof(papszTokens[1]),
+                                 OGRFastAtof(papszTokens[0]), 
+                                 OGRFastAtof(papszTokens[1]),
                                  0.0, 2 );
         }
         else
@@ -339,9 +340,9 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             while (i<nCount)
             {
                 bSuccess = AddPoint( poGeometry, 
-                                     atof(papszTokens[i]), 
-                                     atof(papszTokens[i+1]),
-                                     (nDimension == 3) ? atof(papszTokens[i+2]) : 0.0, nDimension );
+                                     OGRFastAtof(papszTokens[i]), 
+                                     OGRFastAtof(papszTokens[i+1]),
+                                     (nDimension == 3) ? OGRFastAtof(papszTokens[i+2]) : 0.0, nDimension );
                 i+=nDimension;
             }
         }
@@ -383,12 +384,12 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             return FALSE;
         }
 
-        dfX = atof( GetElementText(psXNode) );
-        dfY = atof( GetElementText(psYNode) );
+        dfX = OGRFastAtof( GetElementText(psXNode) );
+        dfY = OGRFastAtof( GetElementText(psYNode) );
 
         if( psZNode != NULL && GetElementText(psZNode) != NULL )
         {
-            dfZ = atof( GetElementText(psZNode) );
+            dfZ = OGRFastAtof( GetElementText(psZNode) );
             nDimension = 3;
         }
 

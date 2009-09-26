@@ -110,4 +110,7 @@ extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
 OGRErr CPL_DLL OSRGetEllipsoidInfo( int, char **, double *, double *);
 
+/* Fast atof function */
+double OGRFastAtof(const char* pszStr);
+
 #endif /* ndef OGR_P_H_INCLUDED */
