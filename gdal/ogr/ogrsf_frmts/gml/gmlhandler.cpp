@@ -575,9 +575,12 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
         int     nCurFieldLength = strlen(m_pszCurField);
 
         // Ignore white space
-        while (nIter < nLen &&
-               ( data[nIter] == ' ' || data[nIter] == 10 || data[nIter]== 13 || data[nIter] == '\t') )
-            nIter ++;
+        if (nCurFieldLength == 0)
+        {
+            while (nIter < nLen &&
+                   ( data[nIter] == ' ' || data[nIter] == 10 || data[nIter]== 13 || data[nIter] == '\t') )
+                nIter ++;
+        }
 
         int nCharsLen = nLen - nIter;
 
@@ -597,9 +600,12 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
     else if( m_pszGeometry != NULL )
     {
         // Ignore white space
-        while (nIter < nLen &&
-               ( data[nIter] == ' ' || data[nIter] == 10 || data[nIter]== 13 || data[nIter] == '\t') )
-            nIter ++;
+        if (m_nGeomLen == 0)
+        {
+            while (nIter < nLen &&
+                   ( data[nIter] == ' ' || data[nIter] == 10 || data[nIter]== 13 || data[nIter] == '\t') )
+                nIter ++;
+        }
 
         int nCharsLen = nLen - nIter;
 
