@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for Rasterlite driver.
@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import ogr
 
 sys.path.append( '../pymod' )
 
@@ -57,6 +58,24 @@ def rasterlite_2():
     if gdaltest.rasterlite_drv is None:
         return 'skip'
     
+    # Test if SQLite3 supports rtrees
+    try:
+        os.remove('tmp/testrtree.sqlite')
+    except:
+        pass
+    ds2 = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/testrtree.sqlite')
+    gdal.ErrorReset()
+    ds2.ExecuteSQL('CREATE VIRTUAL TABLE testrtree USING rtree(id,minX,maxX,minY,maxY)')
+    ds2.Destroy()
+    try:
+        os.remove('tmp/testrtree.sqlite')
+    except:
+        pass
+    if gdal.GetLastErrorMsg().find('rtree') != -1:
+        gdaltest.rasterlite_drv = None
+        gdaltest.post_reason('Please upgrade your sqlite3 library to be able to read Rasterlite DBs (needs rtree support)!')
+        return 'skip'
+        
     gdal.ErrorReset()
     ds = gdal.Open('data/rasterlite.sqlite')
     if ds is None:
@@ -66,6 +85,7 @@ def rasterlite_2():
             return 'skip'
         else:
             return 'fail'
+    
             
     if ds.RasterCount != 3:
         gdaltest.post_reason('expected 3 bands')
