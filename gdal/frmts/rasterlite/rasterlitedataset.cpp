@@ -371,11 +371,11 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                     {
                         const GDALColorEntry* psEntry = poTileCT->GetColorEntry(i);
                         if (nBand == 1)
-                            abyCT[i] = psEntry->c1;
+                            abyCT[i] = (GByte)psEntry->c1;
                         else if (nBand == 2)
-                            abyCT[i] = psEntry->c2;
+                            abyCT[i] = (GByte)psEntry->c2;
                         else
-                            abyCT[i] = psEntry->c3;
+                            abyCT[i] = (GByte)psEntry->c3;
                     }
                     for(;i<256;i++)
                         abyCT[i] = 0;
@@ -446,11 +446,11 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                             {
                                 const GDALColorEntry* psEntry = poTileCT->GetColorEntry(i);
                                 if (iOtherBand == 1)
-                                    abyCT[i] = psEntry->c1;
+                                    abyCT[i] = (GByte)psEntry->c1;
                                 else if (iOtherBand == 2)
-                                    abyCT[i] = psEntry->c2;
+                                    abyCT[i] = (GByte)psEntry->c2;
                                 else
-                                    abyCT[i] = psEntry->c3;
+                                    abyCT[i] = (GByte)psEntry->c3;
                             }
                             for(;i<256;i++)
                                 abyCT[i] = 0;
