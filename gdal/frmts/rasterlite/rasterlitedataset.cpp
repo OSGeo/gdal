@@ -188,7 +188,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
     osMemFileName.Printf("/vsimem/%p", this);
     
     int bHasFoundTile = FALSE;
-    int bHasMemsetTile = TRUE;
+    int bHasMemsetTile = FALSE;
 
 #ifdef RASTERLITE_DEBUG
     if (nBand == 1)
@@ -339,7 +339,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                              nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
                              ((char*) pImage) + (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
                              nReqXSize, nReqYSize,
-                             eDataType, 1, nBlockXSize);
+                             eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize);
 
                 if (eDataType == GDT_Byte && pabyTranslationTable)
                 {
@@ -430,7 +430,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                                      ((char*) pabySrcBlock) +
                                      (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
                                      nReqXSize, nReqYSize,
-                                     eDataType, 1, nBlockXSize);
+                                     eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize);
                         
                         if (eDataType == GDT_Byte && nTileBands == 1 &&
                             poGDS->nBands == 3 && poTileCT != NULL)
@@ -613,10 +613,10 @@ RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDS, int nLevel)
     osTableName = poMainDS->osTableName;
     osFileName = poMainDS->osFileName;
     
-    nRasterXSize = poMainDS->nRasterXSize *
-        (int)((poMainDS->padfXResolutions[0] / padfXResolutions[0]) + 0.5);
-    nRasterYSize = poMainDS->nRasterYSize *
-        (int)((poMainDS->padfYResolutions[0] / padfYResolutions[0]) + 0.5);
+    nRasterXSize = (int)(poMainDS->nRasterXSize *
+        (poMainDS->padfXResolutions[0] / padfXResolutions[0]) + 0.5);
+    nRasterYSize = (int)(poMainDS->nRasterYSize *
+        (poMainDS->padfYResolutions[0] / padfYResolutions[0]) + 0.5);
 
     bValidGeoTransform = TRUE;
     memcpy(adfGeoTransform, poMainDS->adfGeoTransform, 6 * sizeof(double));
