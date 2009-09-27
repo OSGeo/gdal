@@ -210,9 +210,9 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
         int nTileYSize = OGR_F_GetFieldAsInteger(hFeat, 3);
         
         int nDstXOff =
-            (oEnvelope.MinX - minx) / poGDS->adfGeoTransform[1] + 0.5;
+            (int)((oEnvelope.MinX - minx) / poGDS->adfGeoTransform[1] + 0.5);
         int nDstYOff =
-            (maxy - oEnvelope.MaxY) / (-poGDS->adfGeoTransform[5]) + 0.5;
+            (int)((maxy - oEnvelope.MaxY) / (-poGDS->adfGeoTransform[5]) + 0.5);
         
         int nReqXSize = nTileXSize;
         int nReqYSize = nTileYSize;
@@ -614,9 +614,9 @@ RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDS, int nLevel)
     osFileName = poMainDS->osFileName;
     
     nRasterXSize = poMainDS->nRasterXSize *
-        (poMainDS->padfXResolutions[0] / padfXResolutions[0]) + 0.5;
+        (int)((poMainDS->padfXResolutions[0] / padfXResolutions[0]) + 0.5);
     nRasterYSize = poMainDS->nRasterYSize *
-        (poMainDS->padfYResolutions[0] / padfYResolutions[0]) + 0.5;
+        (int)((poMainDS->padfYResolutions[0] / padfYResolutions[0]) + 0.5);
 
     bValidGeoTransform = TRUE;
     memcpy(adfGeoTransform, poMainDS->adfGeoTransform, 6 * sizeof(double));
@@ -1184,9 +1184,9 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Compute raster size, geotransform and projection                */
 /* -------------------------------------------------------------------- */
         poDS->nRasterXSize =
-            (oEnvelope.MaxX - oEnvelope.MinX) / poDS->padfXResolutions[0] + 0.5;
+            (int)((oEnvelope.MaxX - oEnvelope.MinX) / poDS->padfXResolutions[0] + 0.5);
         poDS->nRasterYSize =
-            (oEnvelope.MaxY - oEnvelope.MinY) / poDS->padfYResolutions[0] + 0.5;
+            (int)((oEnvelope.MaxY - oEnvelope.MinY) / poDS->padfYResolutions[0] + 0.5);
 
         poDS->bValidGeoTransform = TRUE;
         poDS->adfGeoTransform[0] = oEnvelope.MinX;
