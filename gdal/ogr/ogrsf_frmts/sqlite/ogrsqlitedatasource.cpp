@@ -36,6 +36,8 @@
 #include "spatialite.h"
 #endif
 
+static int bSpatialiteLoaded = FALSE;
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -164,10 +166,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 /*      Try loading SpatiaLite.                                         */
 /* -------------------------------------------------------------------- */
 #ifdef HAVE_SPATIALITE
-    static int bSpatiaLiteLoaded = FALSE;
-    if (!bSpatiaLiteLoaded)
+    if (!bSpatialiteLoaded && CSLTestBoolean(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")))
     {
-        bSpatiaLiteLoaded = TRUE;
+        bSpatialiteLoaded = TRUE;
         spatialite_init(CSLTestBoolean(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
     }
 #endif
@@ -208,6 +209,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
     if( rc == SQLITE_OK )
     {
+        CPLDebug("SQLITE", "OGR style SQLite DB found !");
+    
         bHaveGeometryColumns = TRUE;
 
         for( iRow = 0; iRow < nRowCount; iRow++ )
@@ -254,6 +257,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
     if ( rc == SQLITE_OK )
     {
+        CPLDebug("SQLITE", "SpatiaLite-style SQLite DB found !");
+        
         bIsSpatiaLite = TRUE;
         bHaveGeometryColumns = TRUE;
 
@@ -273,10 +278,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
                 nSRID = atoi(papszRow[4]);
 
             /* Only look for presence of a spatial index if linked against SpatiaLite */
-#ifdef HAVE_SPATIALITE
-            if( papszRow[5] != NULL )
+            if( bSpatialiteLoaded && papszRow[5] != NULL )
                 bHasSpatialIndex = atoi(papszRow[5]);
-#endif
 
             OpenTable( papszRow[0], papszRow[1], eGeomType, "SpatiaLite",
                        FetchSRS( nSRID ), nSRID, bHasSpatialIndex );
@@ -287,34 +290,37 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
         sqlite3_free_table(papszResult);
 
-#ifdef HAVE_SPATIALITE
 /* -------------------------------------------------------------------- */
 /*      Detect VirtualShape layers                                      */
 /* -------------------------------------------------------------------- */
-        rc = sqlite3_get_table( hDB,
-                            "SELECT name FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE % USING %VirtualShape%'",
-                            &papszResult, &nRowCount, 
-                            &nColCount, &pszErrMsg );
-
-        if ( rc == SQLITE_OK )
+#ifdef HAVE_SPATIALITE
+        if (bSpatialiteLoaded)
         {
-            for( iRow = 0; iRow < nRowCount; iRow++ )
+            rc = sqlite3_get_table( hDB,
+                                "SELECT name FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE % USING %VirtualShape%'",
+                                &papszResult, &nRowCount, 
+                                &nColCount, &pszErrMsg );
+
+            if ( rc == SQLITE_OK )
             {
-                OpenTable( papszResult[iRow+1] );
-                
-                if (bListAllTables)
-                    CPLHashSetInsert(hSet, CPLStrdup(papszResult[iRow+1]));
+                for( iRow = 0; iRow < nRowCount; iRow++ )
+                {
+                    OpenTable( papszResult[iRow+1] );
+                    
+                    if (bListAllTables)
+                        CPLHashSetInsert(hSet, CPLStrdup(papszResult[iRow+1]));
+                }
             }
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                    "Unable to fetch list of tables: %s", 
-                    pszErrMsg );
-            sqlite3_free( pszErrMsg );
-        }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                        "Unable to fetch list of tables: %s", 
+                        pszErrMsg );
+                sqlite3_free( pszErrMsg );
+            }
 
-        sqlite3_free_table(papszResult);
+            sqlite3_free_table(papszResult);
+        }
 #endif
 
         if (bListAllTables)
@@ -735,7 +741,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
 #ifdef HAVE_SPATIALITE
         /* Only if linked against SpatiaLite and the datasource was created as a SpatiaLite DB */
-        if ( bIsSpatiaLite )
+        if ( bIsSpatiaLite && bSpatialiteLoaded )
 #else
         if ( 0 )
 #endif
@@ -1402,9 +1408,9 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
             return NULL;
         }
 
-        CPLString osWKT = papszResult[1];
-        sqlite3_free_table(papszResult);
-
+        char** papszRow = papszResult + nColCount;
+        CPLString osWKT = papszRow[0];
+        
 /* -------------------------------------------------------------------- */
 /*      Translate into a spatial reference.                             */
 /* -------------------------------------------------------------------- */
@@ -1416,6 +1422,8 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
             delete poSRS;
             poSRS = NULL;
         }
+
+        sqlite3_free_table(papszResult);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1428,7 +1436,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
         pszErrMsg = NULL;
 
         osCommand.Printf(
-            "SELECT proj4text FROM spatial_ref_sys WHERE srid = %d", nId );
+            "SELECT proj4text, auth_name, auth_srid FROM spatial_ref_sys WHERE srid = %d", nId );
         rc = sqlite3_get_table( hDB, osCommand, 
                                 &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
@@ -1444,7 +1452,21 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 /*      Translate into a spatial reference.                             */
 /* -------------------------------------------------------------------- */
             poSRS = new OGRSpatialReference();
-            if( poSRS->importFromProj4( papszResult[1] ) != OGRERR_NONE )
+            
+            char** papszRow = papszResult + nColCount;
+            
+            const char* pszProj4Text = papszRow[0];
+            const char* pszAuthName = papszRow[1];
+            int nAuthSRID = atoi(papszRow[2]);
+            
+            /* Try first from EPSG code */
+            if (EQUAL(pszAuthName, "EPSG") &&
+                poSRS->importFromEPSG( nAuthSRID ) == OGRERR_NONE)
+            {
+                /* Do nothing */
+            }
+            /* Then from Proj4 string */
+            else if( poSRS->importFromProj4( pszProj4Text ) != OGRERR_NONE )
             {
                 delete poSRS;
                 poSRS = NULL;
