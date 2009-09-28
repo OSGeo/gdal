@@ -141,6 +141,7 @@ void CPL_DLL GDALRegister_TIL(void);
 void CPL_DLL GDALRegister_R(void);
 void CPL_DLL GDALRegister_WKTRaster(void);
 void CPL_DLL GDALRegister_Rasterlite(void);
+void CPL_DLL GDALRegister_EPSILON(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
