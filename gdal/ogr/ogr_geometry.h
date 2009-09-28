@@ -630,6 +630,9 @@ class CPL_DLL OGRGeometryFactory
 
     static int haveGEOS();
 
+    static OGRGeometry* transformWithOptions( const OGRGeometry* poSrcGeom,
+                                              OGRCoordinateTransformation *poCT,
+                                              char** papszOptions );
 };
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
