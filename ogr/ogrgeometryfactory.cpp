@@ -1335,7 +1335,11 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 
     if( pabyBuf != NULL )
     {
+#if GEOS_CAPI_VERSION_MAJOR >= 2 || (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 6)
+        GEOSFree( pabyBuf );
+#else
         free( pabyBuf );
+#endif
     }
 
     return poGeometry;
