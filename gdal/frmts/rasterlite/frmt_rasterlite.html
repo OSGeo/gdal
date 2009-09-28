@@ -16,7 +16,7 @@
   such as rasterlite_load, rasterlite_pyramids, ....<br>
   The driver supports reading grayscale, paletted and RGB images stored as GIF, PNG, TIFF or JPEG tiles.
   The driver also supports reading overviews/pyramids, spatial reference system and spatial extent.<p>
-  Wavelet compressed tiles are not supported by GDAL.
+  Wavelet compressed tiles are not supported by GDAL, unless the <a href="frmt_epsilon.html">EPSILON</a> driver is compiled.
 </p>
 
 <p>GDAL/OGR must be compiled with OGR SQLite driver support. Linking against spatialite library is not required, but
