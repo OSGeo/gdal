@@ -773,11 +773,14 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
     if (nDataSize > 32 &&
         EQUALN((const char*)pabyData, "StartWaveletsImage$$", strlen("StartWaveletsImage$$")))
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Rasterlite driver doesn't support WAVELET compressed images");
-        OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-        return FALSE;
+        if (GDALGetDriverByName("EPSILON") == NULL)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Rasterlite driver doesn't support WAVELET compressed images if EPSILON driver is not compiled");
+            OGR_F_Destroy(hFeat);
+            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            return FALSE;
+        }
     }
     
     CPLString osMemFileName;

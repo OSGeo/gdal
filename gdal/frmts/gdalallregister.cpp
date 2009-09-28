@@ -422,6 +422,9 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_Rasterlite();
 #endif
 
+#ifdef FRMT_epsilon
+    GDALRegister_EPSILON();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
