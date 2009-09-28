@@ -52,6 +52,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            double dfMaxSegmentLength,
                            char** papszFieldTypesToString,
                            long nCountLayerFeatures,
+                           int bWrapDateline,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg);
 
@@ -90,6 +91,7 @@ int main( int nArgc, char ** papszArgv )
     int          bDisplayProgress = FALSE;
     GDALProgressFunc pfnProgress = NULL;
     void        *pProgressArg = NULL;
+    int          bWrapDateline = FALSE;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -297,6 +299,10 @@ int main( int nArgc, char ** papszArgv )
         {
             bDisplayProgress = TRUE;
         }
+        else if( EQUAL(papszArgv[iArg],"-wrapdateline") )
+        {
+            bWrapDateline = TRUE;
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -475,7 +481,7 @@ int main( int nArgc, char ** papszArgv )
                                  pszNewLayerName, bTransform, poOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
                                  bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
-                                 nCountLayerFeatures, pfnProgress, pProgressArg))
+                                 nCountLayerFeatures, bWrapDateline, pfnProgress, pProgressArg))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -532,9 +538,10 @@ int main( int nArgc, char ** papszArgv )
 
                 if( poLayer == NULL )
                 {
-                    fprintf( stderr, "FAILURE: Couldn't fetch advertised layer %s!\n",
+                    fprintf( stderr, "FAILURE: Couldn't fetch requested layer '%s'!\n",
                              papszLayers[iLayer] );
-                    exit( 1 );
+                    if (!bSkipFailures)
+                        exit( 1 );
                 }
 
                 papoLayers[iLayer] = poLayer;
@@ -551,6 +558,8 @@ int main( int nArgc, char ** papszArgv )
             iLayer++ )
         {
             OGRLayer        *poLayer = papoLayers[iLayer];
+            if (poLayer == NULL)
+                continue;
 
             if( pszWHERE != NULL )
                 poLayer->SetAttributeFilter( pszWHERE );
@@ -579,6 +588,8 @@ int main( int nArgc, char ** papszArgv )
             iLayer++ )
         {
             OGRLayer        *poLayer = papoLayers[iLayer];
+            if (poLayer == NULL)
+                continue;
 
             if (bDisplayProgress)
             {
@@ -596,7 +607,7 @@ int main( int nArgc, char ** papszArgv )
                                 pszNewLayerName, bTransform, poOutputSRS,
                                 poSourceSRS, papszSelFields, bAppend, eGType,
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
-                                panLayerCountFeatures[iLayer], pfnProgress, pProgressArg) 
+                                panLayerCountFeatures[iLayer], bWrapDateline, pfnProgress, pProgressArg) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -650,7 +661,7 @@ static void Usage()
 
     printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]\n"
             "               [-select field_list] [-where restricted_where] \n"
-            "               [-progress] [-sql <sql statement>] \n" 
+            "               [-progress] [-sql <sql statement>] [-wrapdateline]\n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
@@ -675,6 +686,7 @@ static void Usage()
             " -select field_list: Comma-delimited list of fields from input layer to\n"
             "                     copy to the new layer (defaults to all)\n" 
             " -where restricted_where: Attribute query (like SQL WHERE)\n" 
+            " -wrapdateline: split geometries crossing the dateline meridian (long. = +/- 180deg)\n" 
             " -sql statement: Execute given SQL statement and save result.\n"
             " -skipfailures: skip features or layers that fail to convert\n"
             " -gt n: group n features per transaction (default 200)\n"
@@ -721,15 +733,17 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            double dfMaxSegmentLength,
                            char** papszFieldTypesToString,
                            long nCountLayerFeatures,
+                           int bWrapDateline,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg)
 
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poFDefn;
-    OGRErr      eErr;
     int         bForceToPolygon = FALSE;
     int         bForceToMultiPolygon = FALSE;
+    
+    char**      papszTransformOptions = NULL;
 
     if( pszNewLayerName == NULL )
         pszNewLayerName = poSrcLayer->GetLayerDefn()->GetName();
@@ -775,6 +789,19 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
             fprintf( stderr,  "Target:\n%s\n", pszWKT );
             exit( 1 );
+        }
+    }
+    
+    if (bWrapDateline)
+    {
+        if (poCT != NULL && poOutputSRS->IsGeographic())
+        {
+            papszTransformOptions =
+                CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
+        }
+        else
+        {
+            fprintf(stderr, "-wrapdateline option only works when reprojecting to a geographic SRS\n");
         }
     }
     
@@ -986,8 +1013,9 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
             if( poCT )
             {
-                eErr = poDstGeometry->transform( poCT );
-                if( eErr != OGRERR_NONE )
+                OGRGeometry* poReprojectedGeom =
+                    OGRGeometryFactory::transformWithOptions(poDstGeometry, poCT, papszTransformOptions);
+                if( poReprojectedGeom == NULL )
                 {
                     if( nGroupTransactions )
                         poDstLayer->CommitTransaction();
@@ -1001,6 +1029,9 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                         return FALSE;
                     }
                 }
+                
+                poDstFeature->SetGeometryDirectly(poReprojectedGeom);
+                poDstGeometry = poReprojectedGeom;
             }
             else if (poOutputSRS != NULL)
             {
