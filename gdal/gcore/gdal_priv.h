@@ -153,6 +153,13 @@ class CPL_DLL GDALDefaultOverviews
     // find our way back to get overview masks.
     GDALDataset *poBaseDS;
 
+    // Stuff for deferred initialize/overviewscans...
+    bool        bCheckedForOverviews;
+    void        OverviewScan();
+    char       *pszInitName;
+    int         bInitNameIsOVR;
+    char      **papszInitSiblingFiles;
+
   public:
                GDALDefaultOverviews();
                ~GDALDefaultOverviews();
@@ -161,7 +168,7 @@ class CPL_DLL GDALDefaultOverviews
                            char **papszSiblingFiles = NULL,
                            int bNameIsOVR = FALSE );
 
-    int        IsInitialized() { return poDS != NULL; }
+    int        IsInitialized();
 
     // Overview Related
 
