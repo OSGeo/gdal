@@ -354,6 +354,7 @@ class HFARasterBand : public GDALPamRasterBand
 
     void        ReadAuxMetadata();
     void        ReadHistogramMetadata();
+    void        EstablishOverviews();
 
     GDALRasterAttributeTable* ReadNamedRAT( const char *pszName );
 
@@ -414,9 +415,10 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     this->papoOverviewBands = NULL;
     this->bMetadataDirty = FALSE;
     this->poDefaultRAT = NULL;
+    this->nOverviews = -1; 
 
     HFAGetBandInfo( hHFA, nBand, &nHFADataType,
-                    &nBlockXSize, &nBlockYSize, &nOverviews, &nCompression );
+                    &nBlockXSize, &nBlockYSize, &nCompression );
     
     if( nCompression != 0 )
         GDALMajorObject::SetMetadataItem( "COMPRESSION", "RLE", 
@@ -511,8 +513,6 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         }
     }
 
-
-
 /* -------------------------------------------------------------------- */
 /*      Collect color table if present.                                 */
 /* -------------------------------------------------------------------- */
@@ -543,21 +543,6 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
                 poCT->SetColorEntry( (int) padfBins[iColor], &sEntry );
             else
                 poCT->SetColorEntry( iColor, &sEntry );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Setup overviews if present                                      */
-/* -------------------------------------------------------------------- */
-    if( nThisOverview == -1 && nOverviews > 0 )
-    {
-        papoOverviewBands = (HFARasterBand **)
-            CPLMalloc(sizeof(void*)*nOverviews);
-
-        for( int iOvIndex = 0; iOvIndex < nOverviews; iOvIndex++ )
-        {
-            papoOverviewBands[iOvIndex] =
-                new HFARasterBand( poDS, nBand, iOvIndex );
         }
     }
 
@@ -884,12 +869,40 @@ double HFARasterBand::GetMaximum( int *pbSuccess )
 }
 
 /************************************************************************/
+/*                         EstablishOverviews()                         */
+/*                                                                      */
+/*      Delayed population of overview information.                     */
+/************************************************************************/
+
+void HFARasterBand::EstablishOverviews()
+
+{
+    if( nOverviews != -1 )
+        return;
+
+    nOverviews = HFAGetOverviewCount( hHFA, nBand );
+    if( nOverviews > 0 )
+    {
+        papoOverviewBands = (HFARasterBand **)
+            CPLMalloc(sizeof(void*)*nOverviews);
+
+        for( int iOvIndex = 0; iOvIndex < nOverviews; iOvIndex++ )
+        {
+            papoOverviewBands[iOvIndex] =
+                new HFARasterBand( (HFADataset *) poDS, nBand, iOvIndex );
+        }
+    }
+}
+
+/************************************************************************/
 /*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int HFARasterBand::GetOverviewCount()
 
 {
+    EstablishOverviews();
+
     if( nOverviews == 0 )
         return GDALRasterBand::GetOverviewCount();
     else
@@ -903,6 +916,8 @@ int HFARasterBand::GetOverviewCount()
 GDALRasterBand *HFARasterBand::GetOverview( int i )
 
 {
+    EstablishOverviews();
+
     if( nOverviews == 0 )
         return GDALRasterBand::GetOverview( i );
     else if( i < 0 || i >= nOverviews )
@@ -1275,6 +1290,8 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     int iOverview;
     GDALRasterBand **papoOvBands;
     int bNoRegen = FALSE;
+
+    EstablishOverviews();
     
     if( nThisOverview != -1 )
     {
