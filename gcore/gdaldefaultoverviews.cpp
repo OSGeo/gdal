@@ -49,6 +49,9 @@ GDALDefaultOverviews::GDALDefaultOverviews()
 
     bOwnMaskDS = FALSE;
     poBaseDS = NULL;
+
+    papszInitSiblingFiles = NULL;
+    pszInitName = NULL;
 }
 
 /************************************************************************/
@@ -58,6 +61,9 @@ GDALDefaultOverviews::GDALDefaultOverviews()
 GDALDefaultOverviews::~GDALDefaultOverviews()
 
 {
+    CPLFree( pszInitName );
+    CSLDestroy( papszInitSiblingFiles );
+
     if( poODS != NULL )
     {
         poODS->FlushCache();
@@ -77,6 +83,19 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
 }
 
 /************************************************************************/
+/*                           IsInitialized()                            */
+/*                                                                      */
+/*      Returns TRUE if we are initialized.                             */
+/************************************************************************/
+
+int GDALDefaultOverviews::IsInitialized()
+
+{
+    OverviewScan();
+    return poDS != NULL;
+}
+
+/************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
@@ -86,6 +105,8 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
                                        int bNameIsOVR )
 
 {
+    poDS = poDSIn;
+    
 /* -------------------------------------------------------------------- */
 /*      If we were already initialized, destroy the old overview        */
 /*      file handle.                                                    */
@@ -99,33 +120,68 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Store the initialization information for later use in           */
+/*      OverviewScan()                                                  */
+/* -------------------------------------------------------------------- */
+    bCheckedForOverviews = FALSE;
+
+    CPLFree( pszInitName );
+    pszInitName = NULL;
+    if( pszBasename != NULL )
+        pszInitName = CPLStrdup(pszBasename);
+    bInitNameIsOVR = bNameIsOVR;
+
+    CSLDestroy( papszInitSiblingFiles );
+    papszInitSiblingFiles = NULL;
+    if( papszSiblingFiles != NULL )
+        papszInitSiblingFiles = CSLDuplicate(papszSiblingFiles);
+}
+
+/************************************************************************/
+/*                            OverviewScan()                            */
+/*                                                                      */
+/*      This is called to scan for overview files when a first          */
+/*      request is made with regard to overviews.  It uses the          */
+/*      pszInitName, bInitNameIsOVR and papszInitSiblingFiles           */
+/*      information that was stored at Initialization() time.           */
+/************************************************************************/
+
+void GDALDefaultOverviews::OverviewScan()
+
+{
+    if( bCheckedForOverviews || poDS == NULL )
+        return;
+
+    bCheckedForOverviews = true;
+
+    CPLDebug( "GDAL", "GDALDefaultOverviews::OverviewScan()" );
+
+/* -------------------------------------------------------------------- */
 /*      Open overview dataset if it exists.                             */
 /* -------------------------------------------------------------------- */
     int bExists;
 
-    poDS = poDSIn;
-    
-    if( pszBasename == NULL )
-        pszBasename = poDS->GetDescription();
+    if( pszInitName == NULL )
+        pszInitName = CPLStrdup(poDS->GetDescription());
 
-    if( !EQUAL(pszBasename,":::VIRTUAL:::") )
+    if( !EQUAL(pszInitName,":::VIRTUAL:::") )
     {
-        if( bNameIsOVR )
-            osOvrFilename = pszBasename;
+        if( bInitNameIsOVR )
+            osOvrFilename = pszInitName;
         else
-            osOvrFilename.Printf( "%s.ovr", pszBasename );
+            osOvrFilename.Printf( "%s.ovr", pszInitName );
 
         bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
-                               papszSiblingFiles );
+                                   papszInitSiblingFiles );
 
 #if !defined(WIN32)
-        if( !bNameIsOVR && !bExists && !papszSiblingFiles )
+        if( !bInitNameIsOVR && !bExists && !papszInitSiblingFiles )
         {
-            osOvrFilename.Printf( "%s.OVR", pszBasename );
+            osOvrFilename.Printf( "%s.OVR", pszInitName );
             bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
-                                       papszSiblingFiles );
+                                       papszInitSiblingFiles );
             if( !bExists )
-                osOvrFilename.Printf( "%s.ovr", pszBasename );
+                osOvrFilename.Printf( "%s.ovr", pszInitName );
         }
 #endif
 
@@ -143,9 +199,9 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
 /*      We only use the .aux file for overviews if they already have    */
 /*      overviews existing, or if USE_RRD is set true.                  */
 /* -------------------------------------------------------------------- */
-    if( !poODS && !EQUAL(pszBasename,":::VIRTUAL:::") )
+    if( !poODS && !EQUAL(pszInitName,":::VIRTUAL:::") )
     {
-        poODS = GDALFindAssociatedAuxFile( pszBasename, poDS->GetAccess(),
+        poODS = GDALFindAssociatedAuxFile( pszInitName, poDS->GetAccess(),
                                            poDS );
 
         if( poODS )
@@ -201,18 +257,11 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
             
             if( poOverDS != NULL )
             {
-                poOverDS->oOvManager.poBaseDS = poDSIn;
+                poOverDS->oOvManager.poBaseDS = poDS;
                 poOverDS->oOvManager.poDS = poOverDS;
             }
         }
     }
-
-/* -------------------------------------------------------------------- */
-/*      If we have sibling files, we should try to find the mask        */
-/*      file now, while we still have the list.                         */
-/* -------------------------------------------------------------------- */
-    if( papszSiblingFiles )
-        HaveMaskFile( papszSiblingFiles, pszBasename );
 }
 
 /************************************************************************/
@@ -820,6 +869,9 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
 /* -------------------------------------------------------------------- */
     if( bCheckedForMask )
         return poMaskDS != NULL;
+
+    if( papszSiblingFiles == NULL )
+        papszSiblingFiles = papszInitSiblingFiles;
 
 /* -------------------------------------------------------------------- */
 /*      Are we an overview?  If so we need to find the corresponding    */
