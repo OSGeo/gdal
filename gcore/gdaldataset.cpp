@@ -1954,7 +1954,7 @@ char **GDALDataset::GetFileList()
 /* -------------------------------------------------------------------- */
 /*      Do we have a known overview file?                               */
 /* -------------------------------------------------------------------- */
-    if( oOvManager.poODS != NULL )
+    if( oOvManager.IsInitialized() && oOvManager.poODS != NULL )
     {
         char **papszOvrList = oOvManager.poODS->GetFileList();
         papszList = CSLInsertStrings( papszList, -1, papszOvrList );
