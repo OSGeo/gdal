@@ -547,7 +547,9 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nTotalBlocks = nXBlocks * nYBlocks;
 
     char** papszTileDriverOptions = RasterliteGetTileDriverOptions(papszOptions);
-
+    
+    OGR_DS_ExecuteSQL(hDS, "BEGIN", NULL, NULL);
+    
     CPLErr eErr = CE_None;
     int nBlockXOff, nBlockYOff;
     for(nBlockYOff=0;eErr == CE_None && nBlockYOff<nYBlocks;nBlockYOff++)
@@ -679,6 +681,8 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 eErr = CE_Failure;
         }
     }
+    
+    OGR_DS_ExecuteSQL(hDS, "COMMIT", NULL, NULL);
     
     CSLDestroy(papszTileDriverOptions);
     
