@@ -33,7 +33,10 @@
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
+#include "rasterlitedataset.h"
+
 CPL_CVSID("$Id$");
+
 
 class RasterliteBand;
 
@@ -247,7 +250,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             
         if (nDstYOff + nReqYSize > nBlockYSize)
             nReqYSize = nBlockYSize - nDstYOff;
-        
+
 #ifdef RASTERLITE_DEBUG
         if (nBand == 1)
         {
@@ -1328,9 +1331,24 @@ void GDALRegister_Rasterlite()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_rasterlite.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sqlite" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                                   "Float64 CInt16 CInt32 CFloat32 CFloat64" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='WIPE' type='boolean' default='NO' description='Erase all prexisting data in the specified table'/>"
+"   <Option name='TILED' type='boolean' default='YES' description='Use tiling'/>"
+"   <Option name='BLOCKXSIZE' type='int' default='256' description='Tile Width'/>"
+"   <Option name='BLOCKYSIZE' type='int' default='256' description='Tile Height'/>"
+"   <Option name='DRIVER' type='string' default='GTiff' description='GDAL driver to use for storing tiles'/>"
+"   <Option name='COMPRESS' type='string' default='Compression method of the GTiff driver'/>"
+"   <Option name='QUALITY' type='int' description='JPEG quality 1-100 (GTiff / JPEG drivers)' default='75'/>"
+"</CreationOptionList>" );
 
         poDriver->pfnOpen = RasterliteDataset::Open;
         poDriver->pfnIdentify = RasterliteDataset::Identify;
+        poDriver->pfnCreateCopy = RasterliteCreateCopy;
+        poDriver->pfnDelete = RasterliteDelete;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

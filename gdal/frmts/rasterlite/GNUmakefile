@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	rasterlitedataset.o
+OBJ	=	rasterlitedataset.o rasterlitecreatecopy.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../../ogr
 
