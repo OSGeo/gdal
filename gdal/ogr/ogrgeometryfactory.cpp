@@ -1900,9 +1900,6 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
             delete poRectangle2;
             
             Sub360ToLon(poGeom2);
-
-            delete poDstGeom;
-            poDstGeom = NULL;
             
             OGRwkbGeometryType eNewType;
             if (eType == wkbPolygon || eType == wkbMultiPolygon)
@@ -1924,14 +1921,22 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
                 AddSimpleGeomToMulti(poUnion, poGeom2);
                 delete poGeom2;
             }
-                
+            
+            if (poUnion->getNumGeometries() == 0)
+            {
+                delete poUnion;
+            }            
             if (poUnion->getNumGeometries() == 1)
             {
+                delete poDstGeom;
                 poDstGeom = poUnion->getGeometryRef(0)->clone();
                 delete poUnion;
             }
             else
+            {
+                delete poDstGeom;
                 poDstGeom = poUnion;
+            }
         }
 #endif
     }
