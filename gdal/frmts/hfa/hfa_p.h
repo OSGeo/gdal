@@ -169,6 +169,7 @@ class HFABand
     int         bNoDataSet;
     double      dfNoData;
 
+    int         bOverviewsPending;
     int		nOverviews;
     HFABand     **papoOverviews;
     
@@ -186,6 +187,8 @@ class HFABand
 
     int         CreateOverview( int nOverviewLevel );
     CPLErr      CleanOverviews();
+
+    CPLErr      LoadOverviews();
 };
 
 

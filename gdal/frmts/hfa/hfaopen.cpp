@@ -527,7 +527,7 @@ CPLErr HFAGetRasterInfo( HFAHandle hHFA, int * pnXSize, int * pnYSize,
 
 CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
                        int * pnBlockXSize, int * pnBlockYSize,
-                       int * pnOverviews, int *pnCompressionType )
+                       int *pnCompressionType )
 
 {
     if( nBand < 0 || nBand > hHFA->nBands )
@@ -546,10 +546,6 @@ CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
 
     if( pnBlockYSize != NULL )
         *pnBlockYSize = poBand->nBlockYSize;
-
-    if( pnOverviews != NULL )
-        *pnOverviews = poBand->nOverviews;
-
 
 /* -------------------------------------------------------------------- */
 /*      Get compression code from RasterDMS.                            */
@@ -611,6 +607,27 @@ CPLErr HFASetBandNoData( HFAHandle hHFA, int nBand, double dfValue )
 }
 
 /************************************************************************/
+/*                        HFAGetOverviewCount()                         */
+/************************************************************************/
+
+int HFAGetOverviewCount( HFAHandle hHFA, int nBand )
+
+{
+    HFABand	*poBand;
+
+    if( nBand < 0 || nBand > hHFA->nBands )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    poBand = hHFA->papoBand[nBand-1];
+    poBand->LoadOverviews();
+
+    return poBand->nOverviews;
+}
+
+/************************************************************************/
 /*                         HFAGetOverviewInfo()                         */
 /************************************************************************/
 
@@ -629,6 +646,7 @@ CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
     }
 
     poBand = hHFA->papoBand[nBand-1];
+    poBand->LoadOverviews();
 
     if( iOverview < 0 || iOverview >= poBand->nOverviews )
     {

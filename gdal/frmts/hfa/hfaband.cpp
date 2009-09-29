@@ -44,6 +44,8 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
     psInfo = psInfoIn;
     poNode = poNodeIn;
 
+    bOverviewsPending = TRUE;
+
     nBlockXSize = poNodeIn->GetIntField( "blockWidth" );
     nBlockYSize = poNodeIn->GetIntField( "blockHeight" );
     nDataType = poNodeIn->GetIntField( "pixelType" );
@@ -99,6 +101,50 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
         dfNoData = poNDNode->GetDoubleField( "valueBD" );
     }
 
+}
+
+/************************************************************************/
+/*                              ~HFABand()                              */
+/************************************************************************/
+
+HFABand::~HFABand()
+
+{
+    for( int iOverview = 0; iOverview < nOverviews; iOverview++ )
+        delete papoOverviews[iOverview];
+
+    if( nOverviews > 0 )
+        CPLFree( papoOverviews );
+
+    if ( panBlockStart )
+        CPLFree( panBlockStart );
+    if ( panBlockSize )
+        CPLFree( panBlockSize );
+    if ( panBlockFlag )
+        CPLFree( panBlockFlag );
+
+    CPLFree( apadfPCT[0] );
+    CPLFree( apadfPCT[1] );
+    CPLFree( apadfPCT[2] );
+    CPLFree( apadfPCT[3] );
+    CPLFree( padfPCTBins );
+
+    if( fpExternal != NULL )
+        VSIFCloseL( fpExternal );
+}
+
+/************************************************************************/
+/*                           LoadOverviews()                            */
+/************************************************************************/
+
+CPLErr HFABand::LoadOverviews()
+
+{
+    if( !bOverviewsPending )
+        return CE_None;
+
+    bOverviewsPending = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Does this band have overviews?  Try to find them.               */
 /* -------------------------------------------------------------------- */
@@ -144,7 +190,7 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
             if( psHFA == NULL )
             {
                 char *pszBasename = 
-                    CPLStrdup(CPLGetBasename(psInfoIn->pszFilename));
+                    CPLStrdup(CPLGetBasename(psInfo->pszFilename));
                 
                 pszJustFilename = 
                     CPLStrdup(CPLFormFilename(NULL, pszBasename, "rrd"));
@@ -189,7 +235,7 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
                 nWidth = nHeight = 0;
                 delete papoOverviews[nOverviews-1];
                 papoOverviews[nOverviews-1] = NULL;
-                return;
+                return CE_None;
             }
         }
     }
@@ -217,41 +263,13 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
                     nWidth = nHeight = 0;
                     delete papoOverviews[nOverviews-1];
                     papoOverviews[nOverviews-1] = NULL;
-                    return;
+                    return CE_None;
                 }
             }
         }
     }
-}
 
-/************************************************************************/
-/*                              ~HFABand()                              */
-/************************************************************************/
-
-HFABand::~HFABand()
-
-{
-    for( int iOverview = 0; iOverview < nOverviews; iOverview++ )
-        delete papoOverviews[iOverview];
-
-    if( nOverviews > 0 )
-        CPLFree( papoOverviews );
-
-    if ( panBlockStart )
-        CPLFree( panBlockStart );
-    if ( panBlockSize )
-        CPLFree( panBlockSize );
-    if ( panBlockFlag )
-        CPLFree( panBlockFlag );
-
-    CPLFree( apadfPCT[0] );
-    CPLFree( apadfPCT[1] );
-    CPLFree( apadfPCT[2] );
-    CPLFree( apadfPCT[3] );
-    CPLFree( padfPCTBins );
-
-    if( fpExternal != NULL )
-        VSIFCloseL( fpExternal );
+    return CE_None;
 }
 
 /************************************************************************/
