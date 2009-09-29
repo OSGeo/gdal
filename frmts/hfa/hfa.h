@@ -157,9 +157,10 @@ CPLErr CPL_DLL HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
                                  int *pnBands );
 CPLErr CPL_DLL HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
                                int * pnBlockXSize, int * pnBlockYSize, 
-                               int * pnOverviews, int *pnCompressionType );
+                               int *pnCompressionType );
 int    CPL_DLL HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfValue );
 CPLErr CPL_DLL HFASetBandNoData( HFAHandle hHFA, int nBand, double dfValue );
+int    CPL_DLL HFAGetOverviewCount( HFAHandle hHFA, int nBand );
 CPLErr CPL_DLL HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview, 
                                    int * pnXSize, int * pnYSize,
                                    int * pnBlockXSize, int * pnBlockYSize,
