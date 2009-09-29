@@ -1926,7 +1926,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
             {
                 delete poUnion;
             }            
-            if (poUnion->getNumGeometries() == 1)
+            else if (poUnion->getNumGeometries() == 1)
             {
                 delete poDstGeom;
                 poDstGeom = poUnion->getGeometryRef(0)->clone();
