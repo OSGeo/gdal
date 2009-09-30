@@ -28,7 +28,6 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
-#include "gdal_pam.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
@@ -81,6 +80,22 @@ static char** RasterliteGetTileDriverOptions(char** papszOptions)
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Unexpected option '%s' for driver '%s'",
                      "QUALITY", pszDriverName);
+        }
+    }
+    
+    const char* pszPhotometric = CSLFetchNameValue(papszOptions, "PHOTOMETRIC");
+    if (pszPhotometric)
+    {
+        if (EQUAL(pszDriverName, "GTiff"))
+        {
+            papszTileDriverOptions =
+                CSLSetNameValue(papszTileDriverOptions, "PHOTOMETRIC", pszPhotometric);
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unexpected option '%s' for driver '%s'",
+                     "PHOTOMETRIC", pszDriverName);
         }
     }
     
@@ -538,6 +553,11 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
     GByte* pabyMEMDSBuffer =
         (GByte*)VSIMalloc3(nBlockXSize, nBlockYSize, nBands * nDataTypeSize);
+    if (pabyMEMDSBuffer == NULL)
+    {
+        OGRReleaseDataSource(hDS);
+        return NULL;
+    }
     
     CPLString osTempFileName;
     osTempFileName.Printf("/vsimem/%p", hDS);
@@ -560,20 +580,10 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Create in-memory tile                                           */
 /* -------------------------------------------------------------------- */
             int nReqXSize = nBlockXSize, nReqYSize = nBlockYSize;
-            int bMustMemset = FALSE;
             if ((nBlockXOff+1) * nBlockXSize > nXSize)
-            {
-                bMustMemset = TRUE;
                 nReqXSize = nXSize - nBlockXOff * nBlockXSize;
-            }
             if ((nBlockYOff+1) * nBlockYSize > nYSize)
-            {
-                bMustMemset = TRUE;
                 nReqYSize = nYSize - nBlockYOff * nBlockYSize;
-            }
-            if (bMustMemset)
-                memset(pabyMEMDSBuffer, 0, nBlockXSize * nBlockYSize *
-                                           nBands * nDataTypeSize);
             
             char szMemFilename[128];
             sprintf(szMemFilename, "MEM:::DATAPOINTER=" CPL_FRMT_GUIB ","
@@ -582,7 +592,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     (GUIntBig)pabyMEMDSBuffer,
                     nReqXSize, nReqYSize, nBands, GDALGetDataTypeName(eDataType),
                     nDataTypeSize * nBands,
-                    nDataTypeSize * nBlockXSize * nBands,
+                    nDataTypeSize * nReqXSize * nBands,
                     nDataTypeSize);
 
             eErr = poSrcDS->RasterIO(GF_Read,
@@ -592,7 +602,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                      pabyMEMDSBuffer, nReqXSize, nReqYSize,
                                      eDataType, nBands, NULL,
                                      nDataTypeSize * nBands,
-                                     nDataTypeSize * nBlockXSize * nBands,
+                                     nDataTypeSize * nReqXSize * nBands,
                                      nDataTypeSize);
             if (eErr != CE_None)
             {
@@ -682,7 +692,10 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
     
-    OGR_DS_ExecuteSQL(hDS, "COMMIT", NULL, NULL);
+    if (eErr == CE_None)
+        OGR_DS_ExecuteSQL(hDS, "COMMIT", NULL, NULL);
+    else
+        OGR_DS_ExecuteSQL(hDS, "ROLLBACK", NULL, NULL);
     
     CSLDestroy(papszTileDriverOptions);
     
@@ -690,7 +703,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     
     OGRReleaseDataSource(hDS);
         
-    return (GDALDataset*) GDALOpen(pszFilename, GA_ReadOnly);
+    return (GDALDataset*) GDALOpen(pszFilename, GA_Update);
 }
 
 /************************************************************************/
