@@ -1,5 +1,5 @@
 
-OBJ	=	rasterlitedataset.obj rasterlitecreatecopy.obj
+OBJ	=	rasterlitedataset.obj rasterlitecreatecopy.obj rasterliteoverviews.obj
 
 EXTRAFLAGS = -I../../ogr
 
