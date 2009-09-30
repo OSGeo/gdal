@@ -531,9 +531,8 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if (nValueCount > INT_MAX / poDS->nRasterXSize ||
-        nValueCount * poDS->nRasterXSize > INT_MAX / poDS->nRasterYSize ||
-        nValueCount < nBandCount * poDS->nRasterXSize * poDS->nRasterYSize )
+    if( nValueCount 
+        < ((GIntBig) nBandCount) * poDS->nRasterXSize * poDS->nRasterYSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Not enough pixel data." );
