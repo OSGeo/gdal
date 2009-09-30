@@ -300,6 +300,10 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
     int nBlockYSize = 256;
     int nOvrXSize = nRasterXSize / nOvrFactor;
     int nOvrYSize = nRasterYSize / nOvrFactor;
+    
+    if (nOvrXSize == 0 || nOvrYSize == 0)
+        return CE_Failure;
+    
     int nXBlocks = (nOvrXSize + nBlockXSize - 1) / nBlockXSize;
     int nYBlocks = (nOvrYSize + nBlockYSize - 1) / nBlockYSize;
     
@@ -514,7 +518,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
         OGR_DS_ExecuteSQL(hDS, "ROLLBACK", NULL, NULL);
     
     VSIFree(pabyMEMDSBuffer);
-        
+    
 /* -------------------------------------------------------------------- */
 /*      Update raster_pyramids table                                    */
 /* -------------------------------------------------------------------- */
@@ -528,6 +532,34 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
                             "pixel_x_size DOUBLE NOT NULL,"
                             "pixel_y_size DOUBLE NOT NULL,"
                             "tile_count INTEGER NOT NULL)");
+            OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            
+            osSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
+                          "pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
+                          "pixel_y_size >= %.15f AND pixel_y_size <= %.15f",
+                          osMetatadataLayer.c_str(),
+                          padfXResolutions[0] - 1e-15, padfXResolutions[0] + 1e-15,
+                          padfYResolutions[0] - 1e-15, padfYResolutions[0] + 1e-15);
+                          
+            int nBlocksMainRes = 0;
+            
+            hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            if (hSQLLyr)
+            {
+                OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
+                if (hFeat)
+                {
+                    nBlocksMainRes = OGR_F_GetFieldAsInteger(hFeat, 0);
+                    OGR_F_Destroy(hFeat);
+                }
+                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            }
+            
+            osSQL.Printf("INSERT INTO raster_pyramids "
+                         "( table_prefix, pixel_x_size, pixel_y_size, tile_count ) "
+                         "VALUES ( '%s', %.18f, %.18f, %d )",
+                         osTableName.c_str(), padfXResolutions[0], padfYResolutions[0],
+                         nBlocksMainRes);
             OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
         }
         
@@ -617,13 +649,14 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
     }
     
     int i;
-    for(i=0;i<nOverviews;i++)
+    for(i=0;i<nOverviews && eErr == CE_None;i++)
     {
         if (panOverviewList[i] <= 1)
             continue;
 
-        CleanOverviewLevel(panOverviewList[i]);
-        CreateOverviewLevel(panOverviewList[i], pfnProgress, pProgressData);
+        eErr = CleanOverviewLevel(panOverviewList[i]);
+        if (eErr == CE_None)
+            eErr = CreateOverviewLevel(panOverviewList[i], pfnProgress, pProgressData);
     
         ReloadOverviews();
     }
