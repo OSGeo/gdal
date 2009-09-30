@@ -1899,8 +1899,6 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
             delete poRectangle1;
             delete poRectangle2;
             
-            Sub360ToLon(poGeom2);
-            
             OGRwkbGeometryType eNewType;
             if (eType == wkbPolygon || eType == wkbMultiPolygon)
                 eNewType = wkbMultiPolygon;
@@ -1918,6 +1916,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
             }
             if (poGeom2)
             {
+                Sub360ToLon(poGeom2);
                 AddSimpleGeomToMulti(poUnion, poGeom2);
                 delete poGeom2;
             }
