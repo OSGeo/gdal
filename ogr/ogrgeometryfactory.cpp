@@ -1818,7 +1818,7 @@ static void Sub360ToLon( OGRGeometry* poGeom )
 }
 
 static void AddSimpleGeomToMulti(OGRGeometryCollection* poMulti,
-                                 OGRGeometry* poGeom)
+                                 const OGRGeometry* poGeom)
 {
     switch (wkbFlatten(poGeom->getGeometryType()))
     {
@@ -1846,12 +1846,97 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection* poMulti,
     }
 }
 
+static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
+                                               const OGRGeometry* poGeom)
+{
+    switch (wkbFlatten(poGeom->getGeometryType()))
+    {
+        case wkbPolygon:
+        case wkbLineString:
+        {
+            int bWrapDateline = FALSE;
+            OGREnvelope oEnvelope;
+            
+            poGeom->getEnvelope(&oEnvelope);
+            
+            /* Naive heuristics... Place to improvement... */
+            OGRGeometry* poDupGeom = NULL;
+            
+            if (oEnvelope.MinX < -170 && oEnvelope.MaxX > 170)
+            {
+                bWrapDateline = TRUE;
+                poDupGeom = poGeom->clone();
+                Add360ToNegLon(poDupGeom);
+            }
+            else if (oEnvelope.MinX > 170 && oEnvelope.MaxX > 180)
+                bWrapDateline = TRUE;
+
+            if (bWrapDateline)
+            {
+#ifndef HAVE_GEOS
+                CPLError( CE_Failure, CPLE_NotSupported, 
+                          "GEOS support not enabled." );
+
+                poMulti->addGeometry(poGeom);
+#else
+                const OGRGeometry* poWorkGeom = (poDupGeom) ? poDupGeom : poGeom;
+                OGRGeometry* poRectangle1 = NULL;
+                OGRGeometry* poRectangle2 = NULL;
+                const char* pszWKT1 = "POLYGON((0 90,180 90,180 -90,0 -90,0 90))";
+                const char* pszWKT2 = "POLYGON((180 90,360 90,360 -90,180 -90,180 90))";
+                OGRGeometryFactory::createFromWkt((char**)&pszWKT1, NULL, &poRectangle1);
+                OGRGeometryFactory::createFromWkt((char**)&pszWKT2, NULL, &poRectangle2);
+                OGRGeometry* poGeom1 = poWorkGeom->Intersection(poRectangle1);
+                OGRGeometry* poGeom2 = poWorkGeom->Intersection(poRectangle2);
+                delete poRectangle1;
+                delete poRectangle2;
+                
+                if (poGeom1 != NULL && poGeom2 != NULL)
+                {
+                    AddSimpleGeomToMulti(poMulti, poGeom1);
+                    Sub360ToLon(poGeom2);
+                    AddSimpleGeomToMulti(poMulti, poGeom2);
+                }
+                else
+                {
+                    AddSimpleGeomToMulti(poMulti, poGeom);
+                }
+                
+                delete poGeom1;
+                delete poGeom2;
+                delete poDupGeom;
+#endif
+            }
+            else
+            {
+                poMulti->addGeometry(poGeom);
+            }   
+            break;
+        }
+            
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            int nSubGeomCount = OGR_G_GetGeometryCount((OGRGeometryH)poGeom);
+            for( int iGeom = 0; iGeom < nSubGeomCount; iGeom++ )
+            {
+                OGRGeometry* poSubGeom =
+                    (OGRGeometry*)OGR_G_GetGeometryRef((OGRGeometryH)poGeom, iGeom);
+                CutGeometryOnDateLineAndAddToMulti(poMulti, poSubGeom);
+            }
+            break;
+        }
+            
+        default:
+            break;
+    }
+}
+
 OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcGeom,
                                                        OGRCoordinateTransformation *poCT,
                                                        char** papszOptions )
 {
-    int bWrapDateline = FALSE;
-   
     OGRGeometry* poDstGeom = poSrcGeom->clone();
     OGRErr eErr = poDstGeom->transform(poCT);
     if (eErr != OGRERR_NONE)
@@ -1862,82 +1947,35 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
     
     if (CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")))
     {
-        OGREnvelope oEnvelope;
-        
-        poDstGeom->getEnvelope(&oEnvelope);
-        
-        /* Naive heuristics... Place to improvement... */
-        if (oEnvelope.MinX < -170 && oEnvelope.MaxX > 170)
-        {
-            bWrapDateline = TRUE;
-            Add360ToNegLon(poDstGeom);
-        }
-        else if (oEnvelope.MinX > 170 && oEnvelope.MaxX > 180)
-            bWrapDateline = TRUE;
-    }
-    
-    if (bWrapDateline)
-    {
-#ifndef HAVE_GEOS
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "GEOS support not enabled." );
-#else
-
         OGRwkbGeometryType eType = wkbFlatten(poSrcGeom->getGeometryType());
-        if (eType == wkbPolygon || eType == wkbLineString ||
-            eType == wkbMultiPolygon || eType == wkbMultiLineString ||
-            eType == wkbGeometryCollection)
+        OGRwkbGeometryType eNewType;
+        if (eType == wkbPolygon || eType == wkbMultiPolygon)
+            eNewType = wkbMultiPolygon;
+        else if (eType == wkbLineString || eType == wkbMultiLineString)
+            eNewType = wkbMultiLineString;
+        else
+            eNewType = wkbGeometryCollection;
+        
+        OGRGeometryCollection* poMulti =
+            (OGRGeometryCollection* )createGeometry(eNewType);
+            
+        CutGeometryOnDateLineAndAddToMulti(poMulti, poDstGeom);
+        
+        if (poMulti->getNumGeometries() == 0)
         {
-            OGRGeometry* poRectangle1 = NULL;
-            OGRGeometry* poRectangle2 = NULL;
-            const char* pszWKT1 = "POLYGON((0 90,180 90,180 -90,0 -90,0 90))";
-            const char* pszWKT2 = "POLYGON((180 90,360 90,360 -90,180 -90,180 90))";
-            createFromWkt((char**)&pszWKT1, NULL, &poRectangle1);
-            createFromWkt((char**)&pszWKT2, NULL, &poRectangle2);
-            OGRGeometry* poGeom1 = poDstGeom->Intersection(poRectangle1);
-            OGRGeometry* poGeom2 = poDstGeom->Intersection(poRectangle2);
-            delete poRectangle1;
-            delete poRectangle2;
-            
-            OGRwkbGeometryType eNewType;
-            if (eType == wkbPolygon || eType == wkbMultiPolygon)
-                eNewType = wkbMultiPolygon;
-            else if (eType == wkbLineString || eType == wkbMultiLineString)
-                eNewType = wkbMultiLineString;
-            else
-                eNewType = wkbGeometryCollection;
-            
-            OGRGeometryCollection* poUnion =
-                (OGRGeometryCollection* )createGeometry(eNewType);
-            if (poGeom1)
-            {
-                AddSimpleGeomToMulti(poUnion, poGeom1);
-                delete poGeom1;
-            }
-            if (poGeom2)
-            {
-                Sub360ToLon(poGeom2);
-                AddSimpleGeomToMulti(poUnion, poGeom2);
-                delete poGeom2;
-            }
-            
-            if (poUnion->getNumGeometries() == 0)
-            {
-                delete poUnion;
-            }            
-            else if (poUnion->getNumGeometries() == 1)
-            {
-                delete poDstGeom;
-                poDstGeom = poUnion->getGeometryRef(0)->clone();
-                delete poUnion;
-            }
-            else
-            {
-                delete poDstGeom;
-                poDstGeom = poUnion;
-            }
+            delete poMulti;
+        }            
+        else if (poMulti->getNumGeometries() == 1)
+        {
+            delete poDstGeom;
+            poDstGeom = poMulti->getGeometryRef(0)->clone();
+            delete poMulti;
         }
-#endif
+        else
+        {
+            delete poDstGeom;
+            poDstGeom = poMulti;
+        }
     }
 
     return poDstGeom;
