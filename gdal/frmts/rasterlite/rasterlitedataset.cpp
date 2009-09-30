@@ -29,97 +29,12 @@
 
 #include "gdal_frmts.h"
 #include "cpl_string.h"
-#include "gdal_pam.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
 #include "rasterlitedataset.h"
 
 CPL_CVSID("$Id$");
-
-
-class RasterliteBand;
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              RasterliteDataset                       */
-/* ==================================================================== */
-/************************************************************************/
-
-class RasterliteDataset : public GDALPamDataset
-{
-    friend class RasterliteBand;
-    
-  public:
-                 RasterliteDataset();
-                 RasterliteDataset(RasterliteDataset* poMainDS, int nLevel);
-                 
-    virtual     ~RasterliteDataset();
-    
-    virtual char **GetMetadata( const char *pszDomain );
-    
-    virtual CPLErr GetGeoTransform( double* padfGeoTransform );
-    virtual const char* GetProjectionRef();
-    
-    virtual char** GetFileList();
-    
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
-    
-  private:
-  
-    int bMustFree;
-    RasterliteDataset* poMainDS;
-    int nLevel;
-    
-    char** papszMetadata;
-    char** papszImageStructure;
-    char** papszSubDatasets;
-    
-    int nResolutions;
-    double* padfXResolutions, *padfYResolutions;
-    RasterliteDataset** papoOverviews;
-    
-    int bValidGeoTransform;
-    double adfGeoTransform[6];
-    char* pszSRS;
-    
-    GDALColorTable* poCT;
-    
-    CPLString osTableName;
-    CPLString osFileName;
-    
-    OGRDataSourceH hDS;
-    
-    void AddSubDataset( const char* pszDSName);
-    int  GetBlockParams(OGRLayerH hRasterLyr, int nLevel, int* pnBands,
-                        GDALDataType* peDataType,
-                        int* pnBlockXSize, int* pnBlockYSize);
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              RasterliteBand                          */
-/* ==================================================================== */
-/************************************************************************/
-
-class RasterliteBand: public GDALPamRasterBand
-{
-    friend class RasterliteDataset;
-
-  public:
-                            RasterliteBand( RasterliteDataset* poDS, int nBand,
-                                            GDALDataType eDataType,
-                                            int nBlockXSize, int nBlockYSize);
-
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable* GetColorTable();
-
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int nLevel);
-
-    virtual CPLErr          IReadBlock( int, int, void * );
-};
 
 /************************************************************************/
 /*                            RasterliteBand()                          */
@@ -513,7 +428,12 @@ int RasterliteBand::GetOverviewCount()
 {
     RasterliteDataset* poGDS = (RasterliteDataset*) poDS;
     
-    return poGDS->nResolutions - 1;
+    if (poGDS->nLimitOvrCount >= 0)
+        return poGDS->nLimitOvrCount;
+    else if (poGDS->nResolutions > 1)
+        return poGDS->nResolutions - 1;
+    else
+        return GDALPamRasterBand::GetOverviewCount();
 }
 
 /************************************************************************/
@@ -524,10 +444,23 @@ GDALRasterBand* RasterliteBand::GetOverview(int nLevel)
 {
     RasterliteDataset* poGDS = (RasterliteDataset*) poDS;
     
+    if (poGDS->nLimitOvrCount >= 0)
+    {
+        if (nLevel < 0 || nLevel >= poGDS->nLimitOvrCount)
+            return NULL;
+    }
+    
+    if (poGDS->nResolutions == 1)
+        return GDALPamRasterBand::GetOverview(nLevel);
+    
     if (nLevel < 0 || nLevel >= poGDS->nResolutions - 1)
         return NULL;
         
-    return poGDS->papoOverviews[nLevel]->GetRasterBand(nBand);
+    GDALDataset* poOvrDS = poGDS->papoOverviews[nLevel];
+    if (poOvrDS)
+        return poOvrDS->GetRasterBand(nBand);
+    else
+        return NULL;
 }
 
 /************************************************************************/
@@ -576,6 +509,7 @@ GDALColorTable* RasterliteBand::GetColorTable()
 
 RasterliteDataset::RasterliteDataset()
 {
+    nLimitOvrCount = -1;
     bValidGeoTransform = FALSE;
     bMustFree = FALSE;
     nLevel = 0;
@@ -591,6 +525,7 @@ RasterliteDataset::RasterliteDataset()
     papszImageStructure =
         CSLAddString(NULL, "INTERLEAVE=PIXEL");
     poCT = NULL;
+    bCheckForExistingOverview = TRUE;
 }
 
 /************************************************************************/
@@ -599,6 +534,7 @@ RasterliteDataset::RasterliteDataset()
 
 RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDS, int nLevel)
 {
+    nLimitOvrCount = -1;
     bMustFree = FALSE;
     this->nLevel = nLevel;
     this->poMainDS = poMainDS;
@@ -612,6 +548,7 @@ RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDS, int nLevel)
     papszSubDatasets = poMainDS->papszSubDatasets;
     papszImageStructure =  poMainDS->papszImageStructure;
     poCT =  poMainDS->poCT;
+    bCheckForExistingOverview = TRUE;
 
     osTableName = poMainDS->osTableName;
     osFileName = poMainDS->osFileName;
@@ -690,7 +627,7 @@ char **RasterliteDataset::GetMetadata( const char *pszDomain )
 {
     if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
         return papszSubDatasets;
-
+        
     if( CSLCount(papszSubDatasets) < 2 &&
         pszDomain != NULL && EQUAL(pszDomain,"IMAGE_STRUCTURE") )
         return papszImageStructure;
@@ -699,6 +636,30 @@ char **RasterliteDataset::GetMetadata( const char *pszDomain )
         return papszMetadata;
         
     return GDALPamDataset::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *RasterliteDataset::GetMetadataItem( const char *pszName, 
+                                                const char *pszDomain )
+{
+    if (pszDomain != NULL &&EQUAL(pszDomain,"OVERVIEWS") )
+    {
+        if (nResolutions > 1 || CSLCount(papszSubDatasets) > 2)
+            return NULL;
+        else
+        {
+            osOvrFileName.Printf("%s_%s", osFileName.c_str(), osTableName.c_str());
+            if (bCheckForExistingOverview == FALSE ||
+                CPLCheckForFile((char*) osOvrFileName.c_str(), NULL))
+                return osOvrFileName.c_str();
+            else
+                return NULL;
+        }
+    }
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/
@@ -888,7 +849,7 @@ int RasterliteDataset::Identify(GDALOpenInfo* poOpenInfo)
 
 GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 {
-    const char* pszDBName = NULL;
+    CPLString osFileName;
     CPLString osTableName;
     char **papszTokens = NULL;
     int nLevel = 0;
@@ -902,7 +863,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     if (poOpenInfo->nHeaderBytes >= 1024 &&
         EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
     {
-        pszDBName = poOpenInfo->pszFilename;
+        osFileName = poOpenInfo->pszFilename;
     }
     else if (!EQUALN(poOpenInfo->pszFilename, "RASTERLITE:", 11))
     {
@@ -919,7 +880,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             return NULL;
         }
                 
-        pszDBName = papszTokens[0];
+        osFileName = papszTokens[0];
         
         int i;
         for(i=1;i<nTokens;i++)
@@ -971,22 +932,13 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     /* fetch non spatial tables */
     const char* pszOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
     CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
-    OGRDataSourceH hDS = OGROpen(pszDBName, TRUE, NULL);
+    OGRDataSourceH hDS = OGROpen(osFileName.c_str(), TRUE, NULL);
     CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", pszOldVal);
     
     RasterliteDataset* poDS = NULL;
 
     if (hDS == NULL)
         goto end;
-    
-
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "The rasterlite driver does not support update access to existing"
-                  " datasets.\n" );
-        goto end;
-    }
     
     if (strlen(osTableName) == 0)
     {
@@ -1125,8 +1077,9 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 
         poDS = new RasterliteDataset();
         poDS->SetDescription( poOpenInfo->pszFilename );
+        poDS->eAccess = poOpenInfo->eAccess;
         poDS->osTableName = osTableName;
-        poDS->osFileName = pszDBName;
+        poDS->osFileName = osFileName;
         poDS->hDS = hDS;
         
         /* poDS will release it from now */
@@ -1303,6 +1256,22 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         }
 
     }
+
+    if (poDS)
+    {
+/* -------------------------------------------------------------------- */
+/*      Setup PAM info for this subdatasets                             */
+/* -------------------------------------------------------------------- */
+        poDS->SetPhysicalFilename( osFileName.c_str() );
+        
+        CPLString osSubdatasetName;
+        osSubdatasetName.Printf("RASTERLITE:%s:table=%s",
+                                osFileName.c_str(), osTableName.c_str());
+        poDS->SetSubdatasetName( osSubdatasetName.c_str() );
+        poDS->TryLoadXML();
+        poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
+    }
+
     
 end:
     if (hDS)
@@ -1343,6 +1312,17 @@ void GDALRegister_Rasterlite()
 "   <Option name='DRIVER' type='string' default='GTiff' description='GDAL driver to use for storing tiles'/>"
 "   <Option name='COMPRESS' type='string' default='Compression method of the GTiff driver'/>"
 "   <Option name='QUALITY' type='int' description='JPEG quality 1-100 (GTiff / JPEG drivers)' default='75'/>"
+"   <Option name='PHOTOMETRIC' type='string-select' description='Photometric interpretation of the GTiff driver'>"
+"       <Value>MINISBLACK</Value>"
+"       <Value>MINISWHITE</Value>"
+"       <Value>PALETTE</Value>"
+"       <Value>RGB</Value>"
+"       <Value>CMYK</Value>"
+"       <Value>YCBCR</Value>"
+"       <Value>CIELAB</Value>"
+"       <Value>ICCLAB</Value>"
+"       <Value>ITULAB</Value>"
+"   </Option>"
 "</CreationOptionList>" );
 
         poDriver->pfnOpen = RasterliteDataset::Open;
