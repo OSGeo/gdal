@@ -243,7 +243,8 @@ typedef enum
   /** Raw Binary data */                        OFTBinary = 8,
   /** Date */                                   OFTDate = 9,
   /** Time */                                   OFTTime = 10,
-  /** Date and Time */                          OFTDateTime = 11
+  /** Date and Time */                          OFTDateTime = 11,
+                                                OFTMaxType = 11
 } OGRFieldType;
 
 /**
