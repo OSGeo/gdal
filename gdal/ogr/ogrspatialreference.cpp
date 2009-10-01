@@ -153,7 +153,9 @@ OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther)
  * \brief OGRSpatialReference destructor. 
  *
  * The C function OSRDestroySpatialReference() does the same thing as this
- * method. 
+ * method. Preferred C++ method : OGRSpatialReference::DestroySpatialReference() 
+  *
+ * @deprecated
  */
 
 OGRSpatialReference::~OGRSpatialReference()
@@ -164,6 +166,30 @@ OGRSpatialReference::~OGRSpatialReference()
 }
 
 /************************************************************************/
+/*                      DestroySpatialReference()                       */
+/************************************************************************/
+
+/**
+ * \brief OGRSpatialReference destructor. 
+ *
+ * This static method will destroy a OGRSpatialReference.  It is
+ * equivalent to calling delete on the object, but it ensures that the
+ * deallocation is properly executed within the OGR libraries heap on
+ * platforms where this can matter (win32).  
+ *
+ * This function is the same as OSRDestroySpatialReference()
+ *
+ * @param poSRS the object to delete
+ *
+ * @since GDAL 1.7.0
+ */
+ 
+void OGRSpatialReference::DestroySpatialReference(OGRSpatialReference* poSRS)
+{
+    delete poSRS;
+}
+
+/************************************************************************/
 /*                     OSRDestroySpatialReference()                     */
 /************************************************************************/
 
@@ -171,6 +197,9 @@ OGRSpatialReference::~OGRSpatialReference()
  * \brief OGRSpatialReference destructor. 
  *
  * This function is the same as OGRSpatialReference::~OGRSpatialReference()
+ * and OGRSpatialReference::DestroySpatialReference()
+ *
+ * @param hSRS the object to delete
  */
 void CPL_STDCALL OSRDestroySpatialReference( OGRSpatialReferenceH hSRS )
 
