@@ -36,7 +36,7 @@ int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
 
 static void Usage();
-static void TestOGRLayer( OGRLayer * );
+static void TestOGRLayer( OGRDataSource *, OGRLayer * );
 
 /************************************************************************/
 /*                                main()                                */
@@ -46,6 +46,7 @@ int main( int nArgc, char ** papszArgv )
 
 {
     const char  *pszDataSource = NULL;
+    char** papszLayers = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -65,8 +66,10 @@ int main( int nArgc, char ** papszArgv )
         {
             Usage();
         }
-        else
+        else if (pszDataSource == NULL)
             pszDataSource = papszArgv[iArg];
+        else
+            papszLayers = CSLAddString(papszLayers, papszArgv[iArg]);
     }
 
     if( pszDataSource == NULL )
@@ -125,26 +128,52 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-    for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+    if (papszLayers == NULL)
     {
-        OGRLayer        *poLayer = poDS->GetLayer(iLayer);
-
-        if( poLayer == NULL )
+        for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
         {
-            printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
-                    iLayer );
-            exit( 1 );
-        }
+            OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
-        printf( "INFO: Testing layer %s.\n",
-                poLayer->GetLayerDefn()->GetName() );
-        TestOGRLayer( poLayer );
+            if( poLayer == NULL )
+            {
+                printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
+                        iLayer );
+                exit( 1 );
+            }
+
+            printf( "INFO: Testing layer %s.\n",
+                    poLayer->GetLayerDefn()->GetName() );
+            TestOGRLayer( poDS, poLayer );
+        }
+    }
+    else
+    {
+/* -------------------------------------------------------------------- */
+/*      Or process layers specified by the user                         */
+/* -------------------------------------------------------------------- */
+        while (*papszLayers)
+        {
+            OGRLayer        *poLayer = poDS->GetLayerByName(*papszLayers);
+
+            if( poLayer == NULL )
+            {
+                printf( "FAILURE: Couldn't fetch requested layer %s!\n",
+                        *papszLayers );
+                exit( 1 );
+            }
+            
+            printf( "INFO: Testing layer %s.\n",
+                    poLayer->GetLayerDefn()->GetName() );
+            TestOGRLayer( poDS, poLayer );
+            
+            papszLayers ++;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
-    delete poDS;
+    OGRDataSource::DestroyDataSource(poDS);
 
 #ifdef DBMALLOC
     malloc_dump(1);
@@ -160,7 +189,7 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: test_ogrsf [-ro] [-q] datasource_name\n" );
+    printf( "Usage: test_ogrsf [-ro] [-q] datasource_name [layer1_name, layer2_name, ...]\n" );
     exit( 1 );
 }
 
@@ -171,7 +200,7 @@ static void Usage()
 /*      features returned during sequential reading.                    */
 /************************************************************************/
 
-static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
+static void TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer )
 
 {
     int         nFC = 0, nClaimedFC = poLayer->GetFeatureCount();
@@ -212,7 +241,7 @@ static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
             CPLFree( pszFeatureSRSWKT );
         }
         
-        delete poFeature;
+        OGRFeature::DestroyFeature(poFeature);
     }
 
     if( nFC != nClaimedFC )
@@ -224,6 +253,21 @@ static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
                 nFC, poLayer->GetFeatureCount() );
     else if( bVerbose )
         printf( "INFO: Feature count verified.\n" );
+        
+    CPLString osSQL;
+    osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", poLayer->GetLayerDefn()->GetName());
+    OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
+    if (poSQLLyr)
+    {
+        OGRFeature* poFeatCount = poSQLLyr->GetNextFeature();
+        if (nClaimedFC != poFeatCount->GetFieldAsInteger(0))
+        {
+            printf( "ERROR: Claimed feature count %d doesn't match '%s' one, %d.\n",
+                    nClaimedFC, osSQL.c_str(), poFeatCount->GetFieldAsInteger(0) );
+        }
+        OGRFeature::DestroyFeature(poFeatCount);
+        poDS->ReleaseResultSet(poSQLLyr);
+    }
 
     if( bVerbose && !bWarnAboutSRS )
     {
@@ -282,7 +326,7 @@ static void TestOGRLayerRandomRead( OGRLayer *poLayer )
         return;
     }
 
-    delete poFeature;
+    OGRFeature::DestroyFeature(poFeature);
 
 /* -------------------------------------------------------------------- */
 /*      Test feature 5.                                                 */
@@ -298,13 +342,13 @@ static void TestOGRLayerRandomRead( OGRLayer *poLayer )
         return;
     }
 
-    delete poFeature;
+    OGRFeature::DestroyFeature(poFeature);
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     for( iFeature = 0; iFeature < 5; iFeature++ )
-        delete papoFeatures[iFeature];
+        OGRFeature::DestroyFeature(papoFeatures[iFeature]);
 
     if( bVerbose )
         printf( "INFO: Random read test passed.\n" );
@@ -365,7 +409,7 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
         return;
     }
 
-    delete poFeature;
+    OGRFeature::DestroyFeature(poFeature);
     
     poFeature = poLayer->GetNextFeature();
     if( !poFeature->Equal( papoFeatures[2] ) )
@@ -378,7 +422,7 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
         return;
     }
 
-    delete poFeature;
+    OGRFeature::DestroyFeature(poFeature);
     
 /* -------------------------------------------------------------------- */
 /*      Test feature at index 3.                                        */
@@ -400,7 +444,7 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
         return;
     }
 
-    delete poFeature;
+    OGRFeature::DestroyFeature(poFeature);
     
     poFeature = poLayer->GetNextFeature();
     if( !poFeature->Equal( papoFeatures[4] ) )
@@ -413,13 +457,13 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
         return;
     }
 
-    delete poFeature;
+    OGRFeature::DestroyFeature(poFeature);
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     for( iFeature = 0; iFeature < 5; iFeature++ )
-        delete papoFeatures[iFeature];
+        OGRFeature::DestroyFeature(papoFeatures[iFeature]);
 
     if( bVerbose )
         printf( "INFO: SetNextByIndex() read test passed.\n" );
@@ -509,10 +553,10 @@ static void TestOGRLayerRandomWrite( OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
-    delete poFeature;
+    OGRFeature::DestroyFeature(poFeature);
 
     for( iFeature = 0; iFeature < 5; iFeature++ )
-        delete papoFeatures[iFeature];
+        OGRFeature::DestroyFeature(papoFeatures[iFeature]);
 }
 
 /************************************************************************/
@@ -553,7 +597,7 @@ static void TestSpatialFilter( OGRLayer *poLayer )
         printf( "INFO: Skipping Spatial Filter test for %s,\n"
                 "      target feature has no geometry.\n",
                 poTargetFeature->GetDefnRef()->GetName() );
-        delete poTargetFeature;
+        OGRFeature::DestroyFeature(poTargetFeature);
         return;
     }
 
@@ -582,11 +626,11 @@ static void TestSpatialFilter( OGRLayer *poLayer )
     {
         if( poFeature->Equal(poTargetFeature) )
         {
-            delete poFeature;
+            OGRFeature::DestroyFeature(poFeature);
             break;
         }
         else
-            delete poFeature;
+            OGRFeature::DestroyFeature(poFeature);
     }
 
     if( poFeature == NULL )
@@ -622,11 +666,11 @@ static void TestSpatialFilter( OGRLayer *poLayer )
     {
         if( poFeature->Equal(poTargetFeature) )
         {
-            delete poFeature;
+            OGRFeature::DestroyFeature(poFeature);
             break;
         }
         else
-            delete poFeature;
+            OGRFeature::DestroyFeature(poFeature);
     }
 
     if( poFeature != NULL )
@@ -644,7 +688,7 @@ static void TestSpatialFilter( OGRLayer *poLayer )
         printf( "INFO: Spatial filter exclusion seems to work.\n" );
     }
 
-    delete poTargetFeature;
+    OGRFeature::DestroyFeature(poTargetFeature);
 }
 
 
@@ -652,7 +696,7 @@ static void TestSpatialFilter( OGRLayer *poLayer )
 /*                            TestOGRLayer()                            */
 /************************************************************************/
 
-static void TestOGRLayer( OGRLayer * poLayer )
+static void TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer )
 
 {
 /* -------------------------------------------------------------------- */
@@ -668,7 +712,7 @@ static void TestOGRLayer( OGRLayer * poLayer )
 /* -------------------------------------------------------------------- */
 /*      Test feature count accuracy.                                    */
 /* -------------------------------------------------------------------- */
-    TestOGRLayerFeatureCount( poLayer );
+    TestOGRLayerFeatureCount( poDS, poLayer );
 
 /* -------------------------------------------------------------------- */
 /*      Test spatial filtering                                          */
