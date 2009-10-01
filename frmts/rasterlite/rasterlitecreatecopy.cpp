@@ -39,29 +39,44 @@ CPL_CVSID("$Id$");
 /*                  RasterliteGetTileDriverOptions ()                   */
 /************************************************************************/
 
+static char** RasterliteAddTileDriverOptionsForDriver(char** papszOptions,
+                                                    char** papszTileDriverOptions,
+                                                    const char* pszOptionName,
+                                                    const char* pszExpectedDriverName)
+{
+    const char* pszVal = CSLFetchNameValue(papszOptions, pszOptionName);
+    if (pszVal)
+    {
+        const char* pszDriverName =
+            CSLFetchNameValueDef(papszOptions, "DRIVER", "GTiff");
+        if (EQUAL(pszDriverName, pszExpectedDriverName))
+        {
+            papszTileDriverOptions =
+                CSLSetNameValue(papszTileDriverOptions, pszOptionName, pszVal);
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unexpected option '%s' for driver '%s'",
+                     pszOptionName, pszDriverName);
+        }
+    }
+    return papszTileDriverOptions;
+}
+
 static char** RasterliteGetTileDriverOptions(char** papszOptions)
 {
     char** papszTileDriverOptions = NULL;
 
     const char* pszDriverName =
         CSLFetchNameValueDef(papszOptions, "DRIVER", "GTiff");
-    
-    const char* pszCompress = CSLFetchNameValue(papszOptions, "COMPRESS");
-    if (pszCompress)
+        
+    if (EQUAL(pszDriverName, "EPSILON"))
     {
-        if (EQUAL(pszDriverName, "GTiff"))
-        {
-            papszTileDriverOptions =
-                CSLSetNameValue(papszTileDriverOptions, "COMPRESS", pszCompress);
-        }
-        else
-        {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                     "Unexpected option '%s' for driver '%s'",
-                     "COMPRESS", pszDriverName);
-        }
+        papszTileDriverOptions = CSLSetNameValue(papszTileDriverOptions,
+                                                "RASTERLITE_OUTPUT", "YES");
     }
-            
+    
     const char* pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
     if (pszQuality)
     {
@@ -83,21 +98,14 @@ static char** RasterliteGetTileDriverOptions(char** papszOptions)
         }
     }
     
-    const char* pszPhotometric = CSLFetchNameValue(papszOptions, "PHOTOMETRIC");
-    if (pszPhotometric)
-    {
-        if (EQUAL(pszDriverName, "GTiff"))
-        {
-            papszTileDriverOptions =
-                CSLSetNameValue(papszTileDriverOptions, "PHOTOMETRIC", pszPhotometric);
-        }
-        else
-        {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                     "Unexpected option '%s' for driver '%s'",
-                     "PHOTOMETRIC", pszDriverName);
-        }
-    }
+    papszTileDriverOptions = RasterliteAddTileDriverOptionsForDriver(
+                papszOptions, papszTileDriverOptions, "COMPRESS", "GTiff");
+    papszTileDriverOptions = RasterliteAddTileDriverOptionsForDriver(
+                papszOptions, papszTileDriverOptions, "PHOTOMETRIC", "GTiff");
+    papszTileDriverOptions = RasterliteAddTileDriverOptionsForDriver(
+                papszOptions, papszTileDriverOptions, "TARGET", "EPSILON");
+    papszTileDriverOptions = RasterliteAddTileDriverOptionsForDriver(
+                papszOptions, papszTileDriverOptions, "FILTER", "EPSILON");
     
     return papszTileDriverOptions;
 }
@@ -617,14 +625,18 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 break;
             }
             
-            GDALDataset* poGTiffDS = poTileDriver->CreateCopy(
+            CPLErrorReset();
+            CPLSetConfigOption("GDAL_RELOAD_AFTER_CREATE_COPY", "FALSE");
+            GDALDataset* poOutDS = poTileDriver->CreateCopy(
                                         osTempFileName.c_str(), poMemDS, FALSE,
                                         papszTileDriverOptions, NULL, NULL);
+            CPLSetConfigOption("GDAL_RELOAD_AFTER_CREATE_COPY", "YES");
 
             GDALClose(poMemDS);
-            if (poGTiffDS)
-                GDALClose(poGTiffDS);
-            else
+            if (poOutDS)
+                GDALClose(poOutDS);
+
+            if (CPLGetLastErrorType() != 0)
             {
                 eErr = CE_Failure;
                 break;
