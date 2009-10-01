@@ -542,7 +542,7 @@ could be used to display this derived band:
 
 \code
 <VRTDataset rasterXSize="1000" rasterYSize="1000">
-  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">>
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
     <Description>Magnitude</Description>
     <PixelFunctionType>MyFirstFunction</PixelFunctionType>
     <SimpleSource>
@@ -587,7 +587,7 @@ calling the pixel function, and the imaginary portion would be lost.
 
 \code
 <VRTDataset rasterXSize="1000" rasterYSize="1000">
-  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">>
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
     <Description>Magnitude</Description>
     <PixelFunctionType>MyFirstFunction</PixelFunctionType>
     <SourceTransferType>"CFloat64"</SourceTransferType>
