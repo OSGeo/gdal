@@ -144,6 +144,8 @@ class CPL_DLL OGRSpatialReference
                 OGRSpatialReference(const char * = NULL);
                 
     virtual    ~OGRSpatialReference();
+    
+    static void DestroySpatialReference(OGRSpatialReference* poSRS);
                 
     OGRSpatialReference &operator=(const OGRSpatialReference&);
 
@@ -510,6 +512,8 @@ class CPL_DLL OGRCoordinateTransformation
 {
 public:
     virtual ~OGRCoordinateTransformation() {}
+    
+    static void DestroyCT(OGRCoordinateTransformation* poCT);
 
     // From CT_CoordinateTransformation
 
