@@ -15,13 +15,21 @@
   <a href="http://www.gaia-gis.it/spatialite">rasterlite</a> distribution,
   such as rasterlite_load, rasterlite_pyramids, ....<br>
   The driver supports reading grayscale, paletted and RGB images stored as GIF, PNG, TIFF or JPEG tiles.
-  The driver also supports reading overviews/pyramids, spatial reference system and spatial extent.<p>
-  Wavelet compressed tiles are not supported by GDAL, unless the <a href="frmt_epsilon.html">EPSILON</a> driver is compiled.
+  The driver also supports reading overviews/pyramids, spatial reference system and spatial extent.
+</p>
+  Wavelet compressed tiles are not supported by default by GDAL, unless the <a href="frmt_epsilon.html">EPSILON</a> driver is compiled.
 </p>
 
 <p>GDAL/OGR must be compiled with OGR SQLite driver support. For read support, linking against spatialite library is not required, but
 recent enough sqlite3 library is needed to read rasterlite databases. rasterlite library is not required either.</p>
 <p>For write support a new table, linking against spatialite library *is* required.</p>
+
+<p>
+  Although the Rasterlite documentation only mentions GIF, PNG, TIFF, JPEG and WAVELET (EPSILON driver) as
+  compression formats for tiles, the driver supports reading and writing internal tiles in any format handled by GDAL.
+  Furthermore, the Rasterlite driver also allow reading and writing as many bands and as many band types as supported by
+  the driver for the internal tiles.
+<p>
 
 <h2>Connexion string syntax in read mode </h2>
 
@@ -41,6 +49,8 @@ where :
 
 <p>If data already exists in the raster table, the new data will be added. You can use the WIPE=YES creation options to erase existing data.</p>
 
+<p>The driver does not support updating a block in an existing raster table. It can only append new data.</p>
+
 <p>Syntax for the name of the output dataset: 'RASTERLITE:rasterlitedb_name,table=raster_table_prefix'</p>
 
 <h3>Creation options</h3>
@@ -50,10 +60,19 @@ where :
 <li><b>TILED</b> (=YES by default) : Set to NO if the source dataset must be written as a single tile in the raster table</li><p>
 <li><b>BLOCKXSIZE</b>=n: Sets tile width, defaults to 256.</li><p>
 <li><b>BLOCKYSIZE</b>=n: Sets tile height, defaults to 256.</li><p>
-<li><b>DRIVER</b>=[GTiff/GIF/PNG/JPEG/...] : name of the GDAL driver to use for storing tiles. Defaults to GTiff</li><p>
-<li><b>COMPRESS</b>=[LZW/JPEG/DEFLATE/...] : name of the compression method of the GTiff driver</li><p>
-<li><b>QUALITY</b> : JPEG quality 1-100 (GTiff / JPEG drivers). Defaults to 75</li><p>
+<li><b>DRIVER</b>=[GTiff/GIF/PNG/JPEG/EPSILON/...] : name of the GDAL driver to use for storing tiles. Defaults to GTiff</li><p>
+<li><b>COMPRESS</b>=[LZW/JPEG/DEFLATE/...] : (GTiff driver) name of the compression method</li><p>
+<li><b>PHOTOMETRIC</b>=[RGB/YCbCr/...] : (GTiff driver) photometric interpretation</li><p>
+<li><b>QUALITY</b> : (GTiff / JPEG drivers) JPEG quality 1-100. Defaults to 75</li><p>
+<li><b>TARGET</b> : (EPSILON driver) target size reduction as a percentage of the original (0-100). Defaults to 96.</li><p>
+<li><b>FILTER</b> : (EPSILON driver) Filter ID. Defaults to 'daub97lift'.</li><p>
 </ul>
+
+<h2>Overviews</h2>
+
+<p>The driver supports building (if the dataset is opened in update mode) and reading internal overviews.</p>
+
+<p>If no internal overview is detected, the driver will try using external overviews (.ovr files).</p>
 
 <h2>Examples:</h2>
 
@@ -130,6 +149,24 @@ $ gdalinfo RASTERLITE:multirasterdb.sqlite,table=raster1
 <li>Creating a new rasterlite DB with data encoded in JPEG tiles :
 <pre>
 $ gdal_translate -of Rasterlite source.tif RASTERLITE:my_db.sqlite,table=source -co DRIVER=JPEG
+</pre>
+</li>
+
+<li>Creating internal overviews :
+<pre>
+$ gdaladdo RASTERLITE:my_db.sqlite,table=source 2 4 8 16
+</pre>
+</li>
+
+<li>Cleaning internal overviews :
+<pre>
+$ gdaladdo -clean RASTERLITE:my_db.sqlite,table=source
+</pre>
+</li>
+
+<li>Creating external overviews in a .ovr file:
+<pre>
+$ gdaladdo -ro RASTERLITE:my_db.sqlite,table=source 2 4 8 16
 </pre>
 </li>
 
