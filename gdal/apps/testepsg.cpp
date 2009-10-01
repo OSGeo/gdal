@@ -147,7 +147,7 @@ int main( int nArgc, char ** papszArgv )
                 printf( "Old Style WKT[%s] = %s\n", 
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
-                delete poSRS2;
+                OGRSpatialReference::DestroySpatialReference( poSRS2 );
 
                 poSRS2 = oSRS.Clone();
                 poSRS2->morphToESRI();
@@ -155,7 +155,7 @@ int main( int nArgc, char ** papszArgv )
                 printf( "ESRI'ified WKT[%s] = \n%s\n", 
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
-                delete poSRS2;
+                OGRSpatialReference::DestroySpatialReference( poSRS2 );
 
                 oSRS.exportToProj4( &pszWKT );
                 printf( "PROJ.4 rendering of [%s] = %s\n", 

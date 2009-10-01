@@ -291,9 +291,9 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
     CSLDestroy( papszOptions );
-    delete poDS;
+    OGRDataSource::DestroyDataSource( poDS );
     if (poSpatialFilter)
-        delete poSpatialFilter;
+        OGRGeometryFactory::destroyGeometry( poSpatialFilter );
 
     delete OGRSFDriverRegistrar::GetRegistrar();
     OSRCleanup();
@@ -402,7 +402,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         while( (poFeature = poLayer->GetNextFeature()) != NULL )
         {
             poFeature->DumpReadable( NULL, papszOptions );
-            delete poFeature;
+            OGRFeature::DestroyFeature( poFeature );
         }
     }
     else if( nFetchFID != OGRNullFID )
@@ -416,7 +416,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         else
         {
             poFeature->DumpReadable( NULL, papszOptions );
-            delete poFeature;
+            OGRFeature::DestroyFeature( poFeature );
         }
     }
 }
