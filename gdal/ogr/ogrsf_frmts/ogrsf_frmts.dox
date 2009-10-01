@@ -71,7 +71,7 @@
 
     ... use the data source ...
 
-    delete poDS;
+    OGRDataSource::DestroyDataSource(poDS);
   </pre>
 
 */
