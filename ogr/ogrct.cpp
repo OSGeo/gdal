@@ -259,11 +259,44 @@ char *OCTProj4Normalize( const char *pszProj4Src )
 /*                 OCTDestroyCoordinateTransformation()                 */
 /************************************************************************/
 
+/**
+ * \brief OGRCoordinateTransformation destructor. 
+ *
+ * This function is the same as OGRCoordinateTransformation::DestroyCT()
+ *
+ * @param hCT the object to delete
+ */
+ 
 void CPL_STDCALL
 OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
 
 {
     delete (OGRCoordinateTransformation *) hCT;
+}
+
+/************************************************************************/
+/*                             DestroyCT()                              */
+/************************************************************************/
+
+/**
+ * \brief OGRCoordinateTransformation destructor. 
+ *
+ * This function is the same as OGRCoordinateTransformation::~OGRCoordinateTransformation()
+ * and OCTDestroyCoordinateTransformation()
+ *
+ * This static method will destroy a OGRCoordinateTransformation.  It is
+ * equivalent to calling delete on the object, but it ensures that the
+ * deallocation is properly executed within the OGR libraries heap on
+ * platforms where this can matter (win32).  
+ *
+ * @param poCT the object to delete
+ *
+ * @since GDAL 1.7.0
+ */
+ 
+void OGRCoordinateTransformation::DestroyCT(OGRCoordinateTransformation* poCT)
+{
+    delete poCT;
 }
 
 /************************************************************************/
