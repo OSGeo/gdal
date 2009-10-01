@@ -234,7 +234,7 @@ int main( int nArgc, char ** papszArgv )
                             alreadyExistingSpatialRef =
                                     (poLayer->GetSpatialRef()) ? poLayer->GetSpatialRef()->Clone() : NULL;
                         }
-                        delete poDS;
+                        OGRDataSource::DestroyDataSource( poDS );
                     }
                 }
             }
@@ -374,7 +374,7 @@ int main( int nArgc, char ** papszArgv )
 				if( fieldCount != poFeatureDefn->GetFieldCount())
 				{
 					printf( "Number of attributes of subsequent layers does not match ... terminating.\n" );
-					delete poDstDS;
+					OGRDataSource::DestroyDataSource( poDstDS );
 					exit( 1 );
 				}
 				
@@ -393,7 +393,7 @@ int main( int nArgc, char ** papszArgv )
 						|| !EQUAL( poField->GetNameRef(), poFieldCur->GetNameRef() ) )
 					{
 						printf( "Schema of attributes of subsequent layers does not match ... terminating.\n" );
-						delete poDstDS;
+						OGRDataSource::DestroyDataSource( poDstDS );
 						exit( 1 );
 					}
 				}
@@ -438,7 +438,7 @@ int main( int nArgc, char ** papszArgv )
             if( poDstLayer->CreateFeature( &oTileFeat ) != OGRERR_NONE )
             {
                 printf( "Failed to create feature on tile index ... terminating." );
-                delete poDstDS;
+                OGRDataSource::DestroyDataSource( poDstDS );
                 exit( 1 );
             }
         }
@@ -447,17 +447,17 @@ int main( int nArgc, char ** papszArgv )
 /*      Cleanup this data source.                                       */
 /* -------------------------------------------------------------------- */
         CPLFree(fileNameToWrite);
-        delete poDS;
+        OGRDataSource::DestroyDataSource( poDS );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Close tile index and clear buffers.                             */
 /* -------------------------------------------------------------------- */
-    delete poDstDS;
-	delete poFeatureDefn;
+    OGRDataSource::DestroyDataSource( poDstDS );
+	OGRFeatureDefn::DestroyFeatureDefn( poFeatureDefn );
   
     if (alreadyExistingSpatialRef != NULL)
-        delete alreadyExistingSpatialRef;
+        OGRSpatialReference::DestroySpatialReference( alreadyExistingSpatialRef );
   
     CPLFree(current_path);
     
