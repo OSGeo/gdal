@@ -629,10 +629,10 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
-    delete poOutputSRS;
-    delete poSourceSRS;
-    delete poODS;
-    delete poDS;
+    OGRSpatialReference::DestroySpatialReference(poOutputSRS);
+    OGRSpatialReference::DestroySpatialReference(poSourceSRS);
+    OGRDataSource::DestroyDataSource(poODS);
+    OGRDataSource::DestroyDataSource(poDS);
 
     CSLDestroy(papszSelFields);
     CSLDestroy( papszArgv );
@@ -1080,7 +1080,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Cleaning                                                        */
 /* -------------------------------------------------------------------- */
-    delete poCT;
+    OGRCoordinateTransformation::DestroyCT(poCT);
 
     return TRUE;
 }
