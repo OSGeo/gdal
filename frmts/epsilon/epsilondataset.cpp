@@ -299,13 +299,13 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                                         poGDS->pabyBlockData, &hdr) != EPS_OK)
         {
             for(iBand=0;iBand<poGDS->nBands;iBand++)
-                CPLFree(pTempData[i]);
+                CPLFree(pTempData[iBand]);
             memset(pImage, 0, nBlockXSize * nBlockYSize);
             return CE_Failure;
         }
         
         for(iBand=0;iBand<poGDS->nBands;iBand++)
-            CPLFree(pTempData[i]);
+            CPLFree(pTempData[iBand]);
             
         poGDS->nBufferedBlock = nBlock;
         memcpy(pImage,
