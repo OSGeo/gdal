@@ -34,7 +34,8 @@ is to say, the <i>FID</i> element is not specified</li>
 
 The root element of the XML control file is <b>OGRVRTDataSource</b>.  It has
 an <b>OGRVRTLayer</b> child for each layer in the virtual datasource.  That
-element may have the following subelements:
+element should have a <b>name</b> attribute with the layer name, and may have the 
+following subelements:
 
 <ul>
 <li> <b>SrcDataSource</b> (mandatory): The value is the name of the datasource
@@ -56,6 +57,10 @@ layers.<p>
 
 <li> <b>FID</b> (optional): Name of the attribute column from which the 
 FID of features should be derived.  If not provided, the FID of the source
+features will be used directly.<p>
+
+<li> <b>Style</b> (optional): Name of the attribute column from which the 
+style of features should be derived.  If not provided, the style of the source
 features will be used directly.<p>
 
 <li> <b>GeometryType</b> (optional): The geometry type to be assigned to the 
@@ -96,6 +101,21 @@ a valid WKT string defining a polygon. An optional <b>clip</b> attribute
 can be set to "TRUE" to clip the geometries to the source region, otherwise
 the source geometries are not modified.<p>
 
+<li> <b>Field</b> (optional, from GDAL 1.7.0): One or more attribute fields 
+may be defined with Field elements.  If no Field elements are defined, the 
+fields of the source layer/sql will be defined on the VRT layer.  The Field 
+may have the following attributes:
+<ul>
+<li> <b>name</b> (required): the name of the field.
+<li> <b>type</b>: the field type, one of "Integer", "IntegerList", 
+"Real", "RealList", "String", "StringList", "Binary", "Date", "Time", 
+or "DateTime" - defaults to "String".
+<li> <b>width</b>: the field width, defaults to unknown.
+<li> <b>precision</b>: the field width, defaults to zero.
+<li> <b>src</b>: the name of the source field to be copied to this one.  By
+default defaults to the value of "name".
+</ul>
+
 </ul>
 
 <h2>Example: ODBC Point Layer</h2>
@@ -120,14 +140,30 @@ the layer as a point layer, and as being in the WGS84 coordinate system.<p>
 
 <h2>Example: Renaming attributes</h2>
 
-It can be usefull in some circumstances to be able to rename the field names from
-a source layer to other names. This is particularly true when you want to transcode
-to a format whose schema is fixed, such as GPX (&lt;name&gt;, &lt;desc&gt, etc.).<p>
+It can be usefull in some circumstances to be able to rename the field names 
+from a source layer to other names. This is particularly true when you want 
+to transcode to a format whose schema is fixed, such as GPX 
+(&lt;name&gt;, &lt;desc&gt, etc.).  This can be accomplished using
+SQL this way:<p>
 
 <pre>&lt;OGRVRTDataSource&gt;
     &lt;OGRVRTLayer name="remapped_layer"&gt;
         &lt;SrcDataSource&gt;your_source.shp&lt;/SrcDataSource&gt;
         &lt;SrcSQL&gt;SELECT src_field_1 AS name, src_field_2 AS desc FROM your_source_layer_name&lt;/SrcSQL&gt;
+    &lt;/OGRVRTLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+</pre>
+
+This can also be accomplished (from GDAL 1.7.0) using explicit field
+definitions:
+
+<pre>
+&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTLayer name="remapped_layer"&gt;
+        &lt;SrcDataSource&gt;your_source.shp&lt;/SrcDataSource&gt;
+        &lt;SrcLayer&gt;your_source&lt;/SrcSQL&gt;
+        &lt;Field name="name" src="src_field_1" /&gt;
+        &lt;Field name="desc" src="src_field_2" type="String" width="45" /&gt;
     &lt;/OGRVRTLayer&gt;
 &lt;/OGRVRTDataSource&gt;
 </pre>

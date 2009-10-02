@@ -332,7 +332,9 @@ def ogr_vrt_9():
 
     sub_layer.ResetReading()
     if sub_layer.GetFeatureCount() != 1:
+        print sub_layer.GetFeatureCount()
         gdaltest.post_reason( 'attribute filter not passed to sublayer.' )
+        return 'fail'
 
     lyr.SetAttributeFilter( None )
 
@@ -776,6 +778,108 @@ def ogr_vrt_16():
 
     return 'success'
 
+
+###############################################################################
+# Test explicit field definitions.
+
+def ogr_vrt_17():
+
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">data/prime_meridian.csv</SrcDataSource>
+        <SrcLayer>prime_meridian</SrcLayer>
+        <Field name="pm_code" src="PRIME_MERIDIAN_CODE" type="integer" width="4" />
+        <Field name="prime_meridian_name" width="24" />
+        <Field name="new_col" type="Real" width="12" precision="3" />
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+        
+    vrt_ds = ogr.Open( vrt_xml )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+
+    if vrt_lyr.GetLayerDefn().GetFieldCount() != 3:
+        gdaltest.post_reason( 'unexpected field count.' )
+        return 'fail'
+
+    flddef = vrt_lyr.GetLayerDefn().GetFieldDefn(0)
+    if flddef.GetName() != 'pm_code' \
+       or flddef.GetType() != ogr.OFTInteger \
+       or flddef.GetWidth() != 4 \
+       or flddef.GetPrecision() != 0:
+        gdaltest.post_reason( 'pm_code field definition wrong.' )
+        return 'fail'
+
+    flddef = vrt_lyr.GetLayerDefn().GetFieldDefn(1)
+    if flddef.GetName() != 'prime_meridian_name' \
+       or flddef.GetType() != ogr.OFTString \
+       or flddef.GetWidth() != 24 \
+       or flddef.GetPrecision() != 0:
+        gdaltest.post_reason( 'prime_meridian_name field definition wrong.' )
+        return 'fail'
+
+    flddef = vrt_lyr.GetLayerDefn().GetFieldDefn(2)
+    if flddef.GetName() != 'new_col' \
+       or flddef.GetType() != ogr.OFTReal \
+       or flddef.GetWidth() != 12 \
+       or flddef.GetPrecision() != 3:
+        gdaltest.post_reason( 'new_col field definition wrong.' )
+        return 'fail'
+
+    feat = vrt_lyr.GetNextFeature()
+
+    if feat.GetField(0) != 8901 or feat.GetField(1) != "Greenwich" \
+       or feat.GetField(2) != None:
+        gdaltest.post_reason( 'did not get expected field value(s).' )
+        return 'fail'
+    
+    feat.Destroy()
+    
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    return 'success'
+
+###############################################################################
+# Test that attribute filters are *not* passed to sublayer by default
+# when explicit fields are defined.
+
+def ogr_vrt_18():
+
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">data/prime_meridian.csv</SrcDataSource>
+        <SrcLayer>prime_meridian</SrcLayer>
+        <Field name="pm_code" src="PRIME_MERIDIAN_CODE" type="integer" width="4" />
+        <Field name="prime_meridian_name" width="24" />
+        <Field name="new_col" type="Real" width="12" precision="3" />
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+        
+    vrt_ds = ogr.Open( vrt_xml )
+    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+    vrt_lyr.SetAttributeFilter( 'pm_code=8904' )
+    
+    feat = vrt_lyr.GetNextFeature()
+
+    if feat.GetField(0) != 8904:
+        gdaltest.post_reason( 'Attribute filter not working properly' )
+        return 'fail'
+    
+    feat.Destroy()
+    
+    vrt_ds.Destroy()
+    vrt_ds = None
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -806,6 +910,8 @@ gdaltest_list = [
     ogr_vrt_14,
     ogr_vrt_15,
     ogr_vrt_16,
+    ogr_vrt_17,
+    ogr_vrt_18,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
