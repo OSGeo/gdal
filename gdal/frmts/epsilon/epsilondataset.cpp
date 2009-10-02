@@ -39,6 +39,16 @@ CPL_CVSID("$Id$");
 
 class EpsilonRasterBand;
 
+typedef struct
+{
+    int x;
+    int y;
+    int w;
+    int h;
+    vsi_l_offset offset;
+} BlockDesc;
+
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              EpsilonDataset                          */
@@ -48,20 +58,34 @@ class EpsilonRasterBand;
 class EpsilonDataset : public GDALPamDataset
 {
     friend class EpsilonRasterBand;
-    GByte*   pabyData;
-    int      nOff;
-    int      nDataSize;
+
+    FILE*    fp;
+    vsi_l_offset nFileOff;
+    
+    GByte*   pabyFileBuf;
+    int      nFileBufMaxSize;
+    int      nFileBufCurSize;
+    int      nFileBufOffset;
+    int      bEOF;
+    int      bError;
     
     GByte*   pabyBlockData;
     int      nBlockDataSize;
+    vsi_l_offset nStartBlockFileOff;
     
-    GByte*   pImageData;
+    int      bRegularTiling;
     
+    int        nBlocks;
+    BlockDesc* pasBlocks;
+    
+    int      nBufferedBlock;
+    GByte*   pabyRGBData;
+    
+    void     Seek(vsi_l_offset nPos);
+    int      GetNextByte();
     int      GetNextBlockData();
-    int      DecodeBlock(eps_block_header* phdr, int x, int y, int w, int h);
-    void     FillImageBuffer(int x, int y, int w, int h,
-                             int nBand, unsigned char** pImage2D);
-    
+    int      ScanBlocks(int *pnBands);
+
   public:
                  EpsilonDataset();
     virtual     ~EpsilonDataset();
@@ -82,6 +106,7 @@ class EpsilonRasterBand : public GDALPamRasterBand
                             EpsilonRasterBand(EpsilonDataset* poDS, int nBand);
                  
     virtual CPLErr          IReadBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation();
 };
 
 /************************************************************************/
@@ -90,14 +115,27 @@ class EpsilonRasterBand : public GDALPamRasterBand
 
 EpsilonDataset::EpsilonDataset()
 {
-    pabyData = NULL;
-    nDataSize = 0;
-    nOff = 0;
+    fp = NULL;
+    nFileOff = 0;
+    
+    pabyFileBuf = NULL;
+    nFileBufMaxSize = 0;
+    nFileBufCurSize = 0;
+    nFileBufOffset = 0;
+    bEOF = FALSE;
+    bError = FALSE;
     
     pabyBlockData = NULL;
     nBlockDataSize = 0;
+    nStartBlockFileOff = 0;
     
-    pImageData = NULL;
+    bRegularTiling = FALSE;
+    
+    nBlocks = 0;
+    pasBlocks = NULL;
+    
+    nBufferedBlock = -1;
+    pabyRGBData = NULL;
 }
 
 /************************************************************************/
@@ -106,8 +144,11 @@ EpsilonDataset::EpsilonDataset()
 
 EpsilonDataset::~EpsilonDataset()
 {
-    VSIFree(pabyData);
-    VSIFree(pImageData);
+    if (fp)
+        VSIFCloseL(fp);
+    VSIFree(pabyFileBuf);
+    VSIFree(pasBlocks);
+    CPLFree(pabyRGBData);
 }
 
 /************************************************************************/
@@ -119,8 +160,30 @@ EpsilonRasterBand::EpsilonRasterBand(EpsilonDataset* poDS, int nBand)
     this->poDS = poDS;
     this->nBand = nBand;
     this->eDataType = GDT_Byte;
-    this->nBlockXSize = poDS->nRasterXSize;
-    this->nBlockYSize = poDS->nRasterYSize;
+    this->nBlockXSize = poDS->pasBlocks[0].w;
+    this->nBlockYSize = poDS->pasBlocks[0].h;
+}
+
+/************************************************************************/
+/*                   GetColorInterpretation()                           */
+/************************************************************************/
+
+GDALColorInterp EpsilonRasterBand::GetColorInterpretation()
+{
+    EpsilonDataset* poGDS = (EpsilonDataset*) poDS;
+    if (poGDS->nBands == 1)
+    {
+        return GCI_GrayIndex;
+    }
+    else
+    {
+        if (nBand == 1)
+            return GCI_RedBand;
+        else if (nBand == 2)
+            return GCI_GreenBand;
+        else
+            return GCI_BlueBand;
+    }
 }
 
 /************************************************************************/
@@ -131,112 +194,393 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                                       int nBlockYOff, void * pImage)
 {
     EpsilonDataset* poGDS = (EpsilonDataset*) poDS;
-    memcpy(pImage, poGDS->pImageData + (nBand - 1) * nBlockXSize * nBlockYSize,
-           nBlockXSize * nBlockYSize);
+    
+    //CPLDebug("EPSILON", "IReadBlock(nBand=%d,nBlockXOff=%d,nBlockYOff=%d)",
+    //         nBand, nBlockXOff, nBlockYOff);
+
+    int nBlocksPerRow = (poGDS->nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    int nBlock = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    
+    BlockDesc* psDesc = &poGDS->pasBlocks[nBlock];
+#ifdef DEBUG
+    int nBlocksPerColumn = (poGDS->nRasterYSize + nBlockYSize - 1) / nBlockYSize;
+    CPLAssert(psDesc->x == nBlockXOff * nBlockXSize);
+    CPLAssert(psDesc->y == nBlockYOff * nBlockYSize);
+    CPLAssert(psDesc->w == (nBlockXOff < nBlocksPerRow - 1) ?
+                                nBlockXSize : poGDS->nRasterXSize - psDesc->x);
+    CPLAssert(psDesc->h == (nBlockYOff < nBlocksPerColumn - 1) ?
+                                nBlockYSize : poGDS->nRasterYSize - psDesc->y);
+#endif
+
+    poGDS->Seek(psDesc->offset);
+        
+    if (!poGDS->GetNextBlockData())
+    {
+        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        return CE_Failure;
+    }
+    
+    eps_block_header hdr;
+    if (eps_read_block_header (poGDS->pabyBlockData,
+                               poGDS->nBlockDataSize, &hdr) != EPS_OK)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "cannot read block header");
+        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        return CE_Failure;
+    }
+
+    if (hdr.chk_flag == EPS_BAD_CRC ||
+        hdr.crc_flag == EPS_BAD_CRC)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "bad CRC");
+        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        return CE_Failure;
+    }
+    
+    int w = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.w : hdr.tc.w;
+    int h = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.h : hdr.tc.h;
+    int i;
+
+    if (poGDS->nBands == 1)
+    {
+        unsigned char ** pTempData =
+            (unsigned char **) CPLMalloc(h * sizeof(unsigned char*));        
+        for(i=0;i<h;i++)
+            pTempData[i] = ((GByte*)pImage) + i * nBlockXSize;
+
+        if (w != nBlockXSize || h != nBlockYSize)
+            memset(pImage, 0, nBlockXSize * nBlockYSize);
+
+        if (eps_decode_grayscale_block (pTempData,
+                                        poGDS->pabyBlockData, &hdr) != EPS_OK)
+        {
+            CPLFree(pTempData);
+            memset(pImage, 0, nBlockXSize * nBlockYSize);
+            return CE_Failure;
+        }
+        CPLFree(pTempData);
+    }
+    else
+    {
+        if (poGDS->pabyRGBData == NULL)
+        {
+            poGDS->pabyRGBData =
+                            (GByte*) VSIMalloc3(nBlockXSize, nBlockYSize, 3);
+            if (poGDS->pabyRGBData == NULL)
+            {
+                memset(pImage, 0, nBlockXSize * nBlockYSize);
+                return CE_Failure;
+            }
+        }
+            
+        if (poGDS->nBufferedBlock == nBlock)
+        {
+            memcpy(pImage,
+                   poGDS->pabyRGBData + (nBand - 1) * nBlockXSize * nBlockYSize,
+                   nBlockXSize * nBlockYSize);
+            return CE_None;
+        }
+    
+        unsigned char ** pTempData[3];
+        int iBand;
+        for(iBand=0;iBand<3;iBand++)
+        {
+            pTempData[iBand] =
+                (unsigned char **) CPLMalloc(h * sizeof(unsigned char*));
+            for(i=0;i<h;i++)
+                pTempData[iBand][i] = poGDS->pabyRGBData +
+                    iBand * nBlockXSize * nBlockYSize + i * nBlockXSize;
+        }
+    
+        if (w != nBlockXSize || h != nBlockYSize)
+            memset(poGDS->pabyRGBData, 0, 3 * nBlockXSize * nBlockYSize);
+            
+        if (eps_decode_truecolor_block (pTempData[0], pTempData[1], pTempData[2],
+                                        poGDS->pabyBlockData, &hdr) != EPS_OK)
+        {
+            for(iBand=0;iBand<poGDS->nBands;iBand++)
+                CPLFree(pTempData[i]);
+            memset(pImage, 0, nBlockXSize * nBlockYSize);
+            return CE_Failure;
+        }
+        
+        for(iBand=0;iBand<poGDS->nBands;iBand++)
+            CPLFree(pTempData[i]);
+            
+        poGDS->nBufferedBlock = nBlock;
+        memcpy(pImage,
+               poGDS->pabyRGBData + (nBand - 1) * nBlockXSize * nBlockYSize,
+               nBlockXSize * nBlockYSize);
+                   
+        if (nBand == 1)
+        {
+            int iOtherBand;
+            for(iOtherBand=2;iOtherBand<=poGDS->nBands;iOtherBand++)
+            {
+                GDALRasterBlock *poBlock;
+
+                poBlock = poGDS->GetRasterBand(iOtherBand)->
+                    GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
+                if (poBlock == NULL)
+                    break;
+                    
+                GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                if( pabySrcBlock == NULL )
+                {
+                    poBlock->DropLock();
+                    break;
+                }
+
+                memcpy(pabySrcBlock,
+                       poGDS->pabyRGBData + (iOtherBand - 1) * nBlockXSize * nBlockYSize,
+                       nBlockXSize * nBlockYSize);
+
+                poBlock->DropLock();
+            }
+        }
+    }
+    
     return CE_None;
+}
+
+/************************************************************************/
+/*                              Seek()                                  */
+/************************************************************************/
+
+void EpsilonDataset::Seek(vsi_l_offset nPos)
+{
+    bEOF = FALSE;
+    VSIFSeekL(fp, nPos, SEEK_SET);
+    nFileBufOffset = 0;
+    nFileBufCurSize = 0;
+    nFileOff = nPos;
+}
+
+/************************************************************************/
+/*                          GetNextByte()                               */
+/************************************************************************/
+
+#define BUFFER_CHUNK    16384
+
+int EpsilonDataset::GetNextByte()
+{
+    if (nFileBufOffset < nFileBufCurSize)
+    {
+        nFileOff ++;
+        return pabyFileBuf[nFileBufOffset ++];
+    }
+        
+    if (bError || bEOF)
+        return -1;
+
+    if (nFileBufCurSize + BUFFER_CHUNK > nFileBufMaxSize)
+    {
+        GByte* pabyFileBufNew =
+            (GByte*)VSIRealloc(pabyFileBuf, nFileBufCurSize + BUFFER_CHUNK);
+        if (pabyFileBufNew == NULL)
+        {
+            bError = TRUE;
+            return -1;
+        }
+        pabyFileBuf = pabyFileBufNew;
+        nFileBufMaxSize = nFileBufCurSize + BUFFER_CHUNK;
+    }
+    int nBytesRead =
+        (int)VSIFReadL(pabyFileBuf + nFileBufCurSize, 1, BUFFER_CHUNK, fp);
+    nFileBufCurSize += nBytesRead;
+    if (nBytesRead < BUFFER_CHUNK)
+        bEOF = TRUE;
+    if (nBytesRead == 0)
+        return -1;
+    
+    nFileOff ++;
+    return pabyFileBuf[nFileBufOffset ++];
 }
 
 /************************************************************************/
 /*                     GetNextBlockData()                               */
 /************************************************************************/
 
+#define MAX_SIZE_BEFORE_BLOCK_MARKER        100
+
 int EpsilonDataset::GetNextBlockData()
 {
-    nBlockDataSize = 0;
+    int nStartBlockBufOffset = 0;
     pabyBlockData = NULL;
+    nBlockDataSize = 0;
     
-    while (nOff < nDataSize)
+    while (nFileBufOffset < MAX_SIZE_BEFORE_BLOCK_MARKER)
     {
-        if (pabyData[nOff] != EPS_MARKER)
+        int chNextByte = GetNextByte();
+        if (chNextByte < 0)
+            return FALSE;
+        
+        if (chNextByte != EPS_MARKER)
         {
-            pabyBlockData = pabyData + nOff;
-            nOff ++;
-            nBlockDataSize ++;
+            nStartBlockFileOff = nFileOff - 1;
+            nStartBlockBufOffset = nFileBufOffset - 1;
+            nBlockDataSize = 1;
             break;
         }
-        nOff++;
     }
-    if (nOff == nDataSize)
+    if (nFileBufOffset == MAX_SIZE_BEFORE_BLOCK_MARKER)
         return FALSE;
         
-    while (nOff < nDataSize)
+    while (nFileBufOffset < BLOCK_DATA_MAX_SIZE)
     {
-        if (pabyData[nOff] == EPS_MARKER)
+        int chNextByte = GetNextByte();
+        if (chNextByte < 0)
+            break;
+
+        if (chNextByte == EPS_MARKER)
+        {
+            pabyBlockData = pabyFileBuf + nStartBlockBufOffset;
             return TRUE;
+        }
             
-        nOff ++;
         nBlockDataSize ++;
     }
     
+    pabyBlockData = pabyFileBuf + nStartBlockBufOffset;
     return TRUE;
 }
 
 /************************************************************************/
-/*                      FillImageBuffer()                               */
+/*                           ScanBlocks()                               */
 /************************************************************************/
 
-void EpsilonDataset::FillImageBuffer(int x, int y, int w, int h,
-                                     int nBand, unsigned char** pImage2D)
+int EpsilonDataset::ScanBlocks(int* pnBands)
 {
-    int j;
-    GByte* pData = pImageData + (nBand - 1) * nRasterXSize * nRasterYSize;
-    
-    if (x < 0 || x + w > nRasterXSize || y < 0 || y + h > nRasterYSize)
-        return;
-    
-    for(j=0;j<h;j++)
-    {
-        memcpy(pData + (j + y) * nRasterXSize + x, pImage2D[j], w);
-    }
-}
+    int bRet = FALSE;
 
-/************************************************************************/
-/*                          DecodeBlock()                               */
-/************************************************************************/
+    int nExpectedX = 0;
+    int nExpectedY = 0;
 
-int EpsilonDataset::DecodeBlock(eps_block_header* phdr,
-                                int x, int y, int w, int h)
-{
-    if (nBands == 1)
+    int nTileW = -1;
+    int nTileH = -1;
+    
+    *pnBands = 0;
+
+    bRegularTiling = TRUE;
+    
+    eps_block_header hdr;
+    while(TRUE)
     {
-        unsigned char ** pTempData1 =
-            (unsigned char **) eps_malloc_2D (w, h, 1);
-        if (eps_decode_grayscale_block (pTempData1,
-                                        pabyBlockData, phdr) != EPS_OK)
-        {
-            eps_free_2D ((void **) pTempData1, w, h);
-            
-            return FALSE;
-        }
-        FillImageBuffer(x, y, w, h, 1, pTempData1);
-    }
-    else
-    {
-        unsigned char ** pTempData1 =
-            (unsigned char **) eps_malloc_2D (w, h, 1);
-        unsigned char ** pTempData2 =
-            (unsigned char **) eps_malloc_2D (w, h, 1);
-        unsigned char ** pTempData3 = 
-            (unsigned char **) eps_malloc_2D (w, h, 1);
-        if (eps_decode_truecolor_block (pTempData1, pTempData2, pTempData3,
-                                        pabyBlockData, phdr) != EPS_OK)
-        {
-            eps_free_2D ((void **) pTempData1, w, h);
-            eps_free_2D ((void **) pTempData2, w, h);
-            eps_free_2D ((void **) pTempData3, w, h);
-            
-            return FALSE;
-        }
-        FillImageBuffer(x, y, w, h, 1, pTempData1);
-        FillImageBuffer(x, y, w, h, 2, pTempData2);
-        FillImageBuffer(x, y, w, h, 3, pTempData3);
+        Seek(nStartBlockFileOff + nBlockDataSize);
         
-        eps_free_2D ((void **) pTempData1, w, h);
-        eps_free_2D ((void **) pTempData2, w, h);
-        eps_free_2D ((void **) pTempData3, w, h);
-    }
-    
-    return TRUE;
+        if (!GetNextBlockData())
+        {
+            break;
+        }
+        
+        /* Ignore rasterlite wavelet header */
+        int nRasterliteWaveletHeaderLen = strlen(RASTERLITE_WAVELET_HEADER);
+        if (nBlockDataSize >= nRasterliteWaveletHeaderLen &&
+            memcmp(pabyBlockData, RASTERLITE_WAVELET_HEADER,
+                   nRasterliteWaveletHeaderLen) == 0)
+        {
+            continue;
+        }
+        
+        /* Stop at rasterlite wavelet footer */
+        int nRasterlineWaveletFooterLen = strlen(RASTERLITE_WAVELET_FOOTER);
+        if (nBlockDataSize >= nRasterlineWaveletFooterLen &&
+            memcmp(pabyBlockData, RASTERLITE_WAVELET_FOOTER,
+                   nRasterlineWaveletFooterLen) == 0)
+        {
+            break;
+        }
+        
+        if (eps_read_block_header (pabyBlockData,
+                                   nBlockDataSize, &hdr) != EPS_OK)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "cannot read block header");
+            continue;
+        }
+
+        if (hdr.chk_flag == EPS_BAD_CRC ||
+            hdr.crc_flag == EPS_BAD_CRC)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "bad CRC");
+            continue;
+        }
+        
+        int W = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.W : hdr.tc.W;
+        int H = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.H : hdr.tc.H;
+        int x = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.x : hdr.tc.x;
+        int y = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.y : hdr.tc.y;
+        int w = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.w : hdr.tc.w;
+        int h = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.h : hdr.tc.h;
+
+        //CPLDebug("EPSILON", "W=%d,H=%d,x=%d,y=%d,w=%d,h=%d,offset=" CPL_FRMT_GUIB,
+        //                    W, H, x, y, w, h, nStartBlockFileOff);
+        
+        int nNewBands = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? 1 : 3;
+        if (nRasterXSize == 0)
+        {
+            if (W <= 0 || H <= 0)
+            {
+                break;
+            }
+            
+            bRet = TRUE;
+            nRasterXSize = W;
+            nRasterYSize = H;
+            *pnBands = nNewBands;
+        }
+        
+        if (nRasterXSize != W || nRasterYSize != H || *pnBands != nNewBands ||
+            x < 0 || y < 0 || x + w > W || y + h > H)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Bad block characteristics");
+            bRet = FALSE;
+            break;
+        }
+        
+        nBlocks++;
+        pasBlocks = (BlockDesc*)VSIRealloc(pasBlocks, sizeof(BlockDesc) * nBlocks);
+        pasBlocks[nBlocks-1].x = x;
+        pasBlocks[nBlocks-1].y = y;
+        pasBlocks[nBlocks-1].w = w;
+        pasBlocks[nBlocks-1].h = h;
+        pasBlocks[nBlocks-1].offset = nStartBlockFileOff;
+        
+        if (bRegularTiling)
+        {
+            if (nTileW < 0)
+            {
+                nTileW = w;
+                nTileH = h;
+            }
+            
+            if (x != nExpectedX)
+                bRegularTiling = FALSE;
+
+            if (y != nExpectedY || nTileH != h)
+            {
+                if (y + h != H)
+                    bRegularTiling = FALSE;
+            }
+            
+            if (nTileW != w)
+            {
+                if (x + w != W)
+                    bRegularTiling = FALSE;
+                else
+                {
+                    nExpectedX = 0;
+                    nExpectedY += nTileW;
+                }
+            }
+            else
+                nExpectedX += nTileW;
+            
+            //if (!bRegularTiling)
+            //    CPLDebug("EPSILON", "not regular tiling!");
+        }
+    } 
+
+    return bRet;
 }
 
 /************************************************************************/
@@ -284,137 +628,34 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
     if (fp == NULL)
         return NULL;
     
-    VSIFSeekL(fp, 0, SEEK_END);
-    int nSize = (int)VSIFTellL(fp);
-    if (nSize > 10 * 1000 * 1000)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "EPSILON driver cannot support reading too big files");
-        VSIFCloseL(fp);
-        return NULL;
-    }
-    
-    GByte* pabyData = (GByte*)VSIMalloc(nSize);
-    if (pabyData == NULL)
-    {
-        VSIFCloseL(fp);
-        return NULL;
-    }
-
-    VSIFSeekL(fp, 0, SEEK_SET);
-    if ((int)VSIFReadL(pabyData, 1, nSize, fp) != nSize)
-    {
-        CPLFree(pabyData);
-        VSIFCloseL(fp);
-        return NULL;
-    }
-    
-    VSIFCloseL(fp);
-    fp = NULL;
-        
     EpsilonDataset* poDS = new EpsilonDataset();
-    poDS->pabyData = pabyData;
-    poDS->nDataSize = nSize;
+    poDS->fp = fp;
     
     poDS->nRasterXSize = 0;
     poDS->nRasterYSize = 0;
     
-    eps_block_header hdr;
-    while(TRUE)
+    int nBandsToAdd = 0;
+    if (!poDS->ScanBlocks(&nBandsToAdd))
     {
-        if (!poDS->GetNextBlockData())
-        {
-            if (poDS->nRasterXSize == 0)
-            {
-                delete poDS;
-                return NULL;
-            }
-            break;
-        }
-        
-        /* Ignore rasterlite wavelet header */
-        int nRasterliteWaveletHeaderLen = strlen(RASTERLITE_WAVELET_HEADER);
-        if (poDS->nBlockDataSize >= nRasterliteWaveletHeaderLen &&
-            memcmp(poDS->pabyBlockData, RASTERLITE_WAVELET_HEADER,
-                   nRasterliteWaveletHeaderLen) == 0)
-        {
-            continue;
-        }
-        
-        /* Stop at rasterlite wavelet footer */
-        int nRasterlineWaveletFooterLen = strlen(RASTERLITE_WAVELET_FOOTER);
-        if (poDS->nBlockDataSize >= nRasterlineWaveletFooterLen &&
-            memcmp(poDS->pabyBlockData, RASTERLITE_WAVELET_FOOTER,
-                   nRasterlineWaveletFooterLen) == 0)
-        {
-            break;
-        }
-        
-        if (eps_read_block_header (poDS->pabyBlockData,
-                                   poDS->nBlockDataSize, &hdr) != EPS_OK)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined, "cannot read block header");
-            continue;
-        }
+        delete poDS;
+        return NULL;
+    }
 
-        if (hdr.chk_flag == EPS_BAD_CRC ||
-            hdr.crc_flag == EPS_BAD_CRC)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined, "bad CRC");
-            continue;
-        }
-        
-        int W = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.W : hdr.tc.W;
-        int H = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.H : hdr.tc.H;
-        int x = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.x : hdr.tc.x;
-        int y = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.y : hdr.tc.y;
-        int w = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.w : hdr.tc.w;
-        int h = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? hdr.gs.h : hdr.tc.h;
-        
-        //printf("W=%d,H=%d,x=%d,y=%d,w=%d,h=%d\n", W, H, x, y, w, h);
-        
-        int nNewBands = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? 1 : 3;
-        if (poDS->nRasterXSize == 0)
-        {
-            int i;
-            if (W <= 0 || H <= 0)
-            {
-                delete poDS;
-                return NULL;
-            }
-            
-            poDS->nRasterXSize = W;
-            poDS->nRasterYSize = H;
-
-            for(i=1;i<=nNewBands;i++)
-                poDS->SetBand(i, new EpsilonRasterBand(poDS, i));
-                
-            poDS->pImageData = (GByte*)VSICalloc(poDS->nBands, W * H);
-            if (poDS->pImageData == NULL)
-            {
-                delete poDS;
-                return NULL;
-            }
-        }
-        else if (poDS->nRasterXSize != W ||
-                 poDS->nRasterYSize != H ||
-                 poDS->nBands != nNewBands)
-        {
-            delete poDS;
-            return NULL;
-        }
-        
-        if (!poDS->DecodeBlock(&hdr, x, y, w, h))
-        {
-            delete poDS;
-            return NULL;
-        }
-        
-    } 
+    if (!poDS->bRegularTiling)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The EPSILON driver does not support reading "
+                  "not regularly blocked files.\n" );
+        delete poDS;
+        return NULL;
+    }
     
-    VSIFree(poDS->pabyData);
-    poDS->pabyData = NULL;
-    poDS->pabyBlockData = NULL;
+    int i;
+    for(i=1;i<=nBandsToAdd;i++)
+        poDS->SetBand(i, new EpsilonRasterBand(poDS, i));
+        
+    if (nBandsToAdd > 1)
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     
     return poDS;
 }
@@ -715,10 +956,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Reopen the dataset, unless asked for not (Rasterlite optim)     */
 /* -------------------------------------------------------------------- */
-    if (CSLTestBoolean(CPLGetConfigOption("GDAL_RELOAD_AFTER_CREATE_COPY", "YES")))
-        return (GDALDataset*) GDALOpen(pszFilename, GA_ReadOnly);
-    else
-        return NULL;
+    return (GDALDataset*) GDALOpen(pszFilename, GA_ReadOnly);
 }
 
 /************************************************************************/
