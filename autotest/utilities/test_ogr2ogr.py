@@ -36,6 +36,7 @@ sys.path.append( '../ogr' )
 
 import gdal
 import ogr
+import osr
 import gdaltest
 import ogrtest
 import test_cli_utilities
@@ -485,6 +486,60 @@ def test_ogr2ogr_17():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
     return 'success'
 
+###############################################################################
+# Test -wrapdateline
+
+def test_ogr2ogr_18():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    if ogrtest.have_geos() is False:
+        return 'skip'
+
+    try:
+        os.stat('tmp/wrapdateline_src.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
+    except:
+        pass
+        
+    try:
+        os.stat('tmp/wrapdateline_dst.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
+    except:
+        pass
+        
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32660);
+    lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POLYGON((700000 4000000,800000 4000000,800000 3000000,700000 3000000,700000 4000000))')
+    feat.SetGeometryDirectly(geom)
+    lyr.CreateFeature(feat)
+    feat.Destroy()
+    ds.Destroy()
+    
+    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -wrapdateline -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp').read()
+    
+    expected_wkt = 'MULTIPOLYGON (((179.222391385437419 36.124095832129363,180.0 36.10605558800065,180.0 27.090340569400169,179.017505655195095 27.107979523625211,179.222391385437419 36.124095832129363)),((-180.0 36.10605558800065,-179.667822828781084 36.098349195413753,-179.974688335419557 27.089886143076747,-180.0 27.090340569400169,-180.0 36.10605558800065)))'
+    expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
+    ds = ogr.Open('tmp/wrapdateline_dst.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    ret = ogrtest.check_feature_geometry(feat, expected_geom)
+    feat.Destroy()
+    expected_geom.Destroy()
+    ds.Destroy()
+    
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
+
+    if ret == 0:
+        return 'success'
+    else:
+        return 'fail'
+    
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -502,9 +557,8 @@ gdaltest_list = [
     test_ogr2ogr_14,
     test_ogr2ogr_15,
     test_ogr2ogr_16,
-    test_ogr2ogr_17
-    ]
-
+    test_ogr2ogr_17,
+    test_ogr2ogr_18]
 
 if __name__ == '__main__':
 
