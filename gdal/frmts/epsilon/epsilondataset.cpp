@@ -553,6 +553,9 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
                 nTileH = h;
             }
             
+            if (w > nTileW || h > nTileH)
+                bRegularTiling = FALSE;
+            
             if (x != nExpectedX)
                 bRegularTiling = FALSE;
 
