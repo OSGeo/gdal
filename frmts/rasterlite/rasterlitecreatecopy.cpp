@@ -625,18 +625,14 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 break;
             }
             
-            CPLErrorReset();
-            CPLSetConfigOption("GDAL_RELOAD_AFTER_CREATE_COPY", "FALSE");
             GDALDataset* poOutDS = poTileDriver->CreateCopy(
                                         osTempFileName.c_str(), poMemDS, FALSE,
                                         papszTileDriverOptions, NULL, NULL);
-            CPLSetConfigOption("GDAL_RELOAD_AFTER_CREATE_COPY", "YES");
 
             GDALClose(poMemDS);
             if (poOutDS)
                 GDALClose(poOutDS);
-
-            if (CPLGetLastErrorType() != 0)
+            else
             {
                 eErr = CE_Failure;
                 break;
