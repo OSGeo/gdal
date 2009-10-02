@@ -30,6 +30,7 @@
 #ifndef _OGR_VRT_H_INCLUDED
 #define _OGR_VRT_H_INCLUDED
 
+#include <vector>
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
@@ -57,6 +58,7 @@ class OGRVRTLayer : public OGRLayer
     int                 bNeedReset;
     int                 bSrcLayerFromSQL;
     int                 bSrcDSShared;
+    int                 bAttrFilterPassThrough;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
@@ -67,6 +69,7 @@ class OGRVRTLayer : public OGRLayer
     OGRGeometry         *poSrcRegion;
 
     int                 iFIDField; // -1 means pass through. 
+    int                 iStyleField; // -1 means pass through.
 
     // Geometry interpretation related.
     OGRVRTGeometryStyle eGeometryType;
@@ -79,8 +82,8 @@ class OGRVRTLayer : public OGRLayer
     int                 bUseSpatialSubquery;
 
     // Attribute Mapping
-    int                *panSrcField;
-    int                *pabDirectCopy;
+    std::vector<int>    anSrcField;
+    std::vector<int>    abDirectCopy;
 
     int                 bUpdate;
 

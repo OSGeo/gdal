@@ -8,7 +8,7 @@
     </OGRVRTLayer>
 
     <OGRVRTLayer name="test3">
-        <SrcDataSource>data/flat.dbf</SrcDataSource> 
+        <SrcDataSource shared="TRUE">data/flat.dbf</SrcDataSource> 
  	<SrcLayer>flat</SrcLayer> 
         <LayerSRS>WGS84</LayerSRS>
 	<FID>fid</FID>
