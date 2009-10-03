@@ -267,6 +267,89 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
 }
 
 /************************************************************************/
+/*                             CSLLoad2()                               */
+/************************************************************************/
+
+/**
+ * Load a text file into a string list.
+ *
+ * The VSI*L API is used, so VSIFOpenL() supported objects that aren't
+ * physical files can also be accessed.  Files are returned as a string list,
+ * with one item in the string list per line.  End of line markers are
+ * stripped (by CPLReadLineL()). 
+ *
+ * If reading the file fails a CPLError() will be issued and NULL returned.
+ *
+ * @param pszFname the name of the file to read.
+ * @param nMaxLines maximum number of lines to read before stopping, or -1 for no limit.
+ * @param nMaxCols  maximum number of characters in a line before stopping, or -1 for no limit.
+ * @param papszOptions NULL-terminated array of options. Unused for now.
+ * 
+ * @return a string list with the files lines, now owned by caller. To be freed with CSLDestroy()
+ *
+ * @since GDAL 1.7.0
+ */
+
+char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszOptions)
+{
+    FILE        *fp;
+    const char  *pszLine;
+    char        **papszStrList=NULL;
+    int          nLines = 0;
+    int          nAllocatedLines = 0;
+
+    fp = VSIFOpenL(pszFname, "rb");
+
+    if (fp)
+    {
+        CPLErrorReset();
+        while(!VSIFEofL(fp) && (nMaxLines == -1 || nLines < nMaxLines))
+        {
+            if ( (pszLine = CPLReadLine2L(fp, nMaxCols, papszOptions)) != NULL )
+            {
+                if (nLines >= nAllocatedLines)
+                {
+                    char** papszStrListNew;
+                    nAllocatedLines = 16 + nAllocatedLines * 2;
+                    papszStrListNew = (char**) VSIRealloc(papszStrList,
+                                                nAllocatedLines * sizeof(char*));
+                    if (papszStrListNew == NULL)
+                    {
+                        VSIFCloseL(fp);
+                        CPLReadLineL( NULL );
+                        CPLError( CE_Failure, CPLE_OutOfMemory,
+                             "CSLLoad2(\"%s\") failed: not enough memory to allocate lines.",
+                            pszFname );
+                        return papszStrList;
+                    }
+                    papszStrList = papszStrListNew;
+                }
+                papszStrList[nLines] = CPLStrdup(pszLine);
+                papszStrList[nLines + 1] = NULL;
+                nLines ++;
+            }
+            else if (CPLGetLastErrorType() != 0)
+            {
+                break;
+            }
+        }
+
+        VSIFCloseL(fp);
+
+        CPLReadLineL( NULL );
+    }
+    else
+    {
+        /* Unable to open file */
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "CSLLoad2(\"%s\") failed: unable to open output file.",
+                  pszFname );
+    }
+
+    return papszStrList;
+}
+
+/************************************************************************/
 /*                              CSLLoad()                               */
 /************************************************************************/
 
@@ -282,40 +365,12 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
  *
  * @param pszFname the name of the file to read.
  * 
- * @return a string list with the files lines, now owned by caller.
+ * @return a string list with the files lines, now owned by caller. To be freed with CSLDestroy()
  */
-
+ 
 char **CSLLoad(const char *pszFname)
 {
-    FILE        *fp;
-    const char  *pszLine;
-    char        **papszStrList=NULL;
-
-    fp = VSIFOpenL(pszFname, "rb");
-
-    if (fp)
-    {
-        while(!VSIFEofL(fp))
-        {
-            if ( (pszLine = CPLReadLineL(fp)) != NULL )
-            {
-                papszStrList = CSLAddString(papszStrList, pszLine);
-            }
-        }
-
-        VSIFCloseL(fp);
-
-        CPLReadLineL( NULL );
-    }
-    else
-    {
-        /* Unable to open file */
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "CSLLoad(\"%s\") failed: unable to open output file.",
-                  pszFname );
-    }
-
-    return papszStrList;
+    return CSLLoad2(pszFname, -1, -1, NULL);
 }
 
 /**********************************************************************
