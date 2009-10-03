@@ -74,6 +74,7 @@ char CPL_DLL *CPLStrlwr( char *);
 char CPL_DLL *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
 const char CPL_DLL *CPLReadLineL( FILE * );
+const char CPL_DLL *CPLReadLine2L( FILE * , int nMaxCols, char** papszOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Convert ASCII string to floationg point number                  */

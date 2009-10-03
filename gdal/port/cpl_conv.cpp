@@ -431,12 +431,14 @@ static char *CPLReadLineBuffer( int nRequiredSize )
     {
         int nNewSize = nRequiredSize + 4 + 500;
 
-        pnAlloc = (GUInt32 *) CPLRealloc(pnAlloc,nNewSize);
-        if( pnAlloc == NULL )
+        GUInt32* pnAllocNew = (GUInt32 *) VSIRealloc(pnAlloc,nNewSize);
+        if( pnAllocNew == NULL )
         {
+            VSIFree( pnAlloc );
             CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
             return NULL;
         }
+        pnAlloc = pnAllocNew;
             
         *pnAlloc = nNewSize - 4;
         CPLSetTLS( CTLS_RLBUFFERINFO, pnAlloc, TRUE );
@@ -535,6 +537,31 @@ const char *CPLReadLine( FILE * fp )
  */
 
 const char *CPLReadLineL( FILE * fp )
+{
+    return CPLReadLine2L( fp, -1, NULL );
+}
+
+/************************************************************************/
+/*                           CPLReadLine2L()                            */
+/************************************************************************/
+
+/**
+ * Simplified line reading from text file.
+ * 
+ * Similar to CPLReadLine(), but reading from a large file API handle.
+ *
+ * @param fp file pointer opened with VSIFOpenL().
+ * @param nMaxCars  maximum number of characters allowed, or -1 for no limit.
+ * @param papszOptions NULL-terminated array of options. Unused for now.
+
+ * @return pointer to an internal buffer containing a line of text read
+ * from the file or NULL if the end of file was encountered or the maximum
+ * number of characters allowed readched.
+ *
+ * @since GDAL 1.7.0
+ */
+
+const char *CPLReadLine2L( FILE * fp, int nMaxCars, char** papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -609,7 +636,15 @@ const char *CPLReadLineL( FILE * fp )
                 bBreak = TRUE;
             }
             else
+            {
                 pszRLBuffer[nBufLength++] = szChunk[nChunkBytesConsumed++];
+                if (nMaxCars >= 0 && nBufLength == nMaxCars)
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                             "Maximum number of characters allowed reached.");
+                    return NULL;
+                }
+            }
         }
 
         if( bBreak )
