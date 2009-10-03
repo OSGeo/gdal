@@ -494,7 +494,7 @@ def test_ogr2ogr_18():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
         
-    if ogrtest.have_geos() is False:
+    if ogrtest.have_geos() is 0:
         return 'skip'
 
     try:
