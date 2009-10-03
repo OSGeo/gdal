@@ -114,7 +114,8 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
     this->bReadWholeFile = bReadWholeFile;
 
     const char* pszShortFilename = CPLGetFilename(pszFilename);
-    if (EQUAL(pszShortFilename, "nav.dat"))
+    if (EQUAL(pszShortFilename, "nav.dat") ||
+        EQUAL(pszShortFilename, "earth_nav.dat"))
     {
         poReader = OGRXPlaneCreateNavFileReader(this);
     }
@@ -122,11 +123,13 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
     {
         poReader = OGRXPlaneCreateAptFileReader(this);
     }
-    else if (EQUAL(pszShortFilename, "fix.dat"))
+    else if (EQUAL(pszShortFilename, "fix.dat") ||
+             EQUAL(pszShortFilename, "earth_fix.dat"))
     {
         poReader = OGRXPlaneCreateFixFileReader(this);
     }
-    else if (EQUAL(pszShortFilename, "awy.dat"))
+    else if (EQUAL(pszShortFilename, "awy.dat") ||
+             EQUAL(pszShortFilename, "earth_awy.dat"))
     {
         poReader = OGRXPlaneCreateAwyFileReader(this);
     }
