@@ -1018,14 +1018,17 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
         }
     }
 
-    if ( pszProj && pszProjParms )
+    if ( papszLines[4][0] != '\0' && pszProj && pszProjParms )
     {
-        oSRS.importFromOzi( papszLines[4], pszProj, pszProjParms );
-        if ( ppszWKT != NULL )
-            oSRS.exportToWkt( ppszWKT );
+        if (oSRS.importFromOzi( papszLines[4], pszProj, pszProjParms ) ==
+                                                                   OGRERR_NONE)
+        {
+            if ( ppszWKT != NULL )
+                oSRS.exportToWkt( ppszWKT );
 
-        poLatLong = oSRS.CloneGeogCS();
-        poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
+            poLatLong = oSRS.CloneGeogCS();
+            poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
+        }
     }
 
     // Iterate all lines in the TAB-file
@@ -1077,6 +1080,8 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 
     if ( poTransform )
         delete poTransform;
+    if ( poLatLong )
+        delete poLatLong;
 
     CSLDestroy( papszTok );
     CSLDestroy( papszLines );

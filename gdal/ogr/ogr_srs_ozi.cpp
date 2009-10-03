@@ -103,9 +103,15 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
-    char    **papszProj = CSLTokenizeStringComplex( pszProj, ",", TRUE, FALSE );
+    char    **papszProj = CSLTokenizeStringComplex( pszProj, ",", TRUE, TRUE );
     char    **papszProjParms = CSLTokenizeStringComplex( pszProjParms, ",", 
-                                                         TRUE, FALSE );
+                                                         TRUE, TRUE );
+    char    **papszDatum = NULL;
+                                                         
+    if (CSLCount(papszProj) < 2)
+    {
+        goto not_enough_data;
+    }
 
     if ( EQUALN(papszProj[1], "Latitude/Longitude", 18) )
     {
@@ -113,6 +119,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
 
     else if ( EQUALN(papszProj[1], "Mercator", 8) )
     {
+        if (CSLCount(papszProjParms) < 6) goto not_enough_data;
         SetMercator( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
                      CPLAtof(papszProjParms[3]),
                      CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
@@ -120,6 +127,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
 
     else if ( EQUALN(papszProj[1], "Transverse Mercator", 19) )
     {
+        if (CSLCount(papszProjParms) < 6) goto not_enough_data;
         SetTM( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
                CPLAtof(papszProjParms[3]),
                CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
@@ -127,6 +135,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
 
     else if ( EQUALN(papszProj[1], "Lambert Conformal Conic", 23) )
     {
+        if (CSLCount(papszProjParms) < 8) goto not_enough_data;
         SetLCC( CPLAtof(papszProjParms[6]), CPLAtof(papszProjParms[7]),
                 CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
                 CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
@@ -134,12 +143,14 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
 
     else if ( EQUALN(papszProj[1], "Sinusoidal", 10) )
     {
+        if (CSLCount(papszProjParms) < 6) goto not_enough_data;
         SetSinusoidal( CPLAtof(papszProjParms[2]),
                        CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
     }
 
     else if ( EQUALN(papszProj[1], "Albers Equal Area", 17) )
     {
+        if (CSLCount(papszProjParms) < 8) goto not_enough_data;
         SetACEA( CPLAtof(papszProjParms[6]), CPLAtof(papszProjParms[7]),
                  CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
                  CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
@@ -155,11 +166,13 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
 /* -------------------------------------------------------------------- */
 /*      Try to translate the datum/spheroid.                            */
 /* -------------------------------------------------------------------- */
-    char    **papszDatum = CSLTokenizeString2( pszDatum, ",",
+    papszDatum = CSLTokenizeString2( pszDatum, ",",
                                                CSLT_ALLOWEMPTYTOKENS
                                                | CSLT_STRIPLEADSPACES
                                                | CSLT_STRIPENDSPACES );
-
+    if ( papszDatum == NULL)
+        goto not_enough_data;
+        
     if ( !IsLocal() )
     {
         const OZIDatums   *paoDatum = aoDatums;
@@ -193,7 +206,19 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
         SetLinearUnits( SRS_UL_METER, 1.0 );
 
     FixupOrdering();
+    
+    CSLDestroy(papszProj);
+    CSLDestroy(papszProjParms);
+    CSLDestroy(papszDatum);
 
     return OGRERR_NONE;
+    
+not_enough_data:
+
+    CSLDestroy(papszProj);
+    CSLDestroy(papszProjParms);
+    CSLDestroy(papszDatum);
+    
+    return OGRERR_NOT_ENOUGH_DATA;
 }
 
