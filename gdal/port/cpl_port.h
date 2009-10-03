@@ -201,7 +201,12 @@ typedef unsigned long    GUIntBig;
 #define CPL_FRMT_GIB     "%" CPL_FRMT_GB_WITHOUT_PREFIX "d"
 #define CPL_FRMT_GUIB    "%" CPL_FRMT_GB_WITHOUT_PREFIX "u"
 
-
+/* Workaround VC6 bug */
+#if defined(_MSC_VER) && (_MSC_VER <= 1200)
+#define GUINTBIG_TO_DOUBLE(x) (double)(GIntBig)(x)
+#else
+#define GUINTBIG_TO_DOUBLE(x) (double)(x)
+#endif
 
 /* ==================================================================== */
 /*      Other standard services.                                        */
