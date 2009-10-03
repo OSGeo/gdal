@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_srs_panorama.cpp 15643 2008-10-29 21:18:47Z warmerdam $
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference translation from OziExplorer
@@ -32,7 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_csv.h"
 
-CPL_CVSID("$Id: ogr_srs_panorama.cpp 15643 2008-10-29 21:18:47Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*  Correspondence between Ozi and EPSG datum codes.                    */
