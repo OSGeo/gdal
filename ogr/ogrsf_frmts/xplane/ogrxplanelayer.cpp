@@ -41,7 +41,9 @@ OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName )
 
 {
     nFID = 0;
-    nCurrentID = 0;
+    nFeatureArraySize = 0;
+    nFeatureArrayMaxSize = 0;
+    nFeatureArrayIndex = 0;
     papoFeatures = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
@@ -65,12 +67,12 @@ OGRXPlaneLayer::~OGRXPlaneLayer()
 
     poSRS->Release();
 
-    for(int i=0;i<nFID;i++)
+    for(int i=0;i<nFeatureArraySize;i++)
     {
         if (papoFeatures[i])
             delete papoFeatures[i];
     }
-    nFID = 0;
+    nFeatureArraySize = 0;
 
     CPLFree(papoFeatures);
     papoFeatures = NULL;
@@ -90,17 +92,18 @@ OGRXPlaneLayer::~OGRXPlaneLayer()
 void OGRXPlaneLayer::ResetReading()
 
 {
-    nCurrentID = 0;
     if (poReader)
     {
-        for(int i=0;i<nFID;i++)
+        for(int i=0;i<nFeatureArraySize;i++)
         {
             if (papoFeatures[i])
                 delete papoFeatures[i];
         }
         nFID = 0;
+        nFeatureArraySize = 0;
         poReader->Rewind();
     }
+    nFeatureArrayIndex = 0;
 }
 
 /************************************************************************/
@@ -138,7 +141,7 @@ void  OGRXPlaneLayer::AutoAdjustColumnsWidth()
                 poFieldDefn->GetType() == OFTInteger)
             {
                 int nMaxLen = 0;
-                for(int i=0;i<nFID;i++)
+                for(int i=0;i<nFeatureArraySize;i++)
                 {
                     int nLen = strlen(papoFeatures[i]->GetFieldAsString(col));
                     if (nLen > nMaxLen)
@@ -167,21 +170,21 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
     {
         while(TRUE)
         {
-            if (nCurrentID == nFID)
+            if ( nFeatureArrayIndex == nFeatureArraySize)
             {
-                nCurrentID = nFID = 0;
+                nFeatureArrayIndex = nFeatureArraySize = 0;
 
                 if (poReader->GetNextFeature() == FALSE)
                     return NULL;
-                if (nFID == 0)
+                if (nFeatureArraySize == 0)
                     return NULL;
             }
 
             do
             {
-                poFeature = papoFeatures[nCurrentID];
-                papoFeatures[nCurrentID] = NULL;
-                nCurrentID++;
+                poFeature = papoFeatures[nFeatureArrayIndex];
+                papoFeatures[nFeatureArrayIndex] = NULL;
+                nFeatureArrayIndex++;
 
                 if( (m_poFilterGeom == NULL
                     || FilterGeometry( poFeature->GetGeometryRef() ) )
@@ -192,20 +195,20 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
                 }
 
                 delete poFeature;
-            } while(nCurrentID < nFID);
+            } while(nFeatureArrayIndex < nFeatureArraySize);
         }
     }
 
-    while(nCurrentID < nFID)
+    while(nFeatureArrayIndex < nFeatureArraySize)
     {
-        poFeature = papoFeatures[nCurrentID ++];
+        poFeature = papoFeatures[nFeatureArrayIndex ++];
         CPLAssert (poFeature != NULL);
 
         if( (m_poFilterGeom == NULL
               || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
-        {
+        {   
                 return poFeature->Clone();
         }
     }
@@ -222,7 +225,7 @@ OGRFeature *  OGRXPlaneLayer::GetFeature( long nFID )
     if (poReader)
         return OGRLayer::GetFeature(nFID);
 
-    if (nFID >= 0 && nFID < this->nFID)
+    if (nFID >= 0 && nFID < nFeatureArraySize)
     {
         return papoFeatures[nFID]->Clone();
     }
@@ -239,7 +242,7 @@ OGRFeature *  OGRXPlaneLayer::GetFeature( long nFID )
 int  OGRXPlaneLayer::GetFeatureCount( int bForce )
 {
     if (poReader == NULL && m_poFilterGeom == NULL && m_poAttrQuery == NULL)
-        return nFID;
+        return nFeatureArraySize;
     else
         return OGRLayer::GetFeatureCount( bForce ) ;
 }
@@ -250,6 +253,13 @@ int  OGRXPlaneLayer::GetFeatureCount( int bForce )
 
 int  OGRXPlaneLayer::TestCapability( const char * pszCap )
 {
+    if (EQUAL(pszCap,OLCFastFeatureCount) ||
+        EQUAL(pszCap,OLCRandomRead))
+    {
+        if (poReader == NULL && m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+            return TRUE;
+    }
+            
     return FALSE;
 }
 
@@ -266,9 +276,15 @@ void OGRXPlaneLayer::RegisterFeature( OGRFeature* poFeature )
     if (poGeom)
         poGeom->assignSpatialReference( poSRS );
 
-    papoFeatures = (OGRFeature**) CPLRealloc(papoFeatures, (nFID + 1) * sizeof(OGRFeature*));
-    papoFeatures[nFID] = poFeature;
+    if (nFeatureArraySize == nFeatureArrayMaxSize)
+    {
+        nFeatureArrayMaxSize = 2 * nFeatureArrayMaxSize + 1;
+        papoFeatures = (OGRFeature**)CPLRealloc(papoFeatures,
+                                nFeatureArrayMaxSize * sizeof(OGRFeature*));
+    }
+    papoFeatures[nFeatureArraySize] = poFeature;
     poFeature->SetFID( nFID );
     nFID ++;
+    nFeatureArraySize ++;
 }
 
