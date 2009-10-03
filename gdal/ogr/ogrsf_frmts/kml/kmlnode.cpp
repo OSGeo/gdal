@@ -126,17 +126,19 @@ KMLNode::~KMLNode()
     CPLAssert( NULL != pvpoChildren_ );
     CPLAssert( NULL != pvoAttributes_ );
 
-    for( kml_nodes_t::iterator it = pvpoChildren_->begin();
-         it != pvpoChildren_->end(); ++it)
+    kml_nodes_t::iterator itChild;
+    for( itChild = pvpoChildren_->begin();
+         itChild != pvpoChildren_->end(); ++itChild)
     {
-        delete (*it);
+        delete (*itChild);
     }
     delete pvpoChildren_;
 
-    for( kml_attributes_t::iterator it = pvoAttributes_->begin();
-         it != pvoAttributes_->end(); ++it)
+    kml_attributes_t::iterator itAttr;
+    for( itAttr = pvoAttributes_->begin();
+         itAttr != pvoAttributes_->end(); ++itAttr)
     {
-        delete (*it);
+        delete (*itAttr);
     }
     delete pvoAttributes_;
 
@@ -146,7 +148,7 @@ KMLNode::~KMLNode()
 void KMLNode::print(unsigned int what)
 {
     std::string indent;
-    for(std::size_t z = 0; z < nLevel_; z++)
+    for(std::size_t l = 0; l < nLevel_; l++)
         indent += " ";
 
     if(nLevel_ > 0)

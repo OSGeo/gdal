@@ -35,6 +35,14 @@
 #include <string>
 #include <vector>
 
+/* Workaround VC6 bug */
+#if defined(_MSC_VER) && (_MSC_VER <= 1200)
+namespace std
+{
+  typedef ::size_t size_t;
+}
+#endif
+
 #include "cpl_port.h"
 #include "kmlutility.h"
 
