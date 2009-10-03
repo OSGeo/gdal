@@ -251,10 +251,38 @@ OGRFeature*
 {
     int nCount = 0;
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
-    OGRLineString* lineString = new OGRLineString();
-    lineString->addPoint(dfLon1, dfLat1);
-    lineString->addPoint(dfLon2, dfLat2);
-    poFeature->SetGeometryDirectly( lineString );
+    if (fabs(dfLon1 - dfLon2) < 270)
+    {
+        OGRLineString* lineString = new OGRLineString();
+        lineString->addPoint(dfLon1, dfLat1);
+        lineString->addPoint(dfLon2, dfLat2);
+        poFeature->SetGeometryDirectly( lineString );
+    }
+    else
+    {
+        /* Crossing antemeridian */
+        OGRMultiLineString* multiLineString = new OGRMultiLineString();
+        OGRLineString* lineString1 = new OGRLineString();
+        OGRLineString* lineString2 = new OGRLineString();
+        double dfLatInt;
+        lineString1->addPoint(dfLon1, dfLat1);
+        if (dfLon1 < dfLon2)
+        {
+            dfLatInt = dfLat1 + (dfLat2 - dfLat1) * (-180 - dfLon1) / ((dfLon2 - 360) - dfLon1);
+            lineString1->addPoint(-180, dfLatInt);
+            lineString2->addPoint(180, dfLatInt);
+        }
+        else
+        {
+            dfLatInt = dfLat1 + (dfLat2 - dfLat1) * (180 - dfLon1) / ((dfLon2 + 360) - dfLon1);
+            lineString1->addPoint(180, dfLatInt);
+            lineString2->addPoint(-180, dfLatInt);
+        }
+        lineString2->addPoint(dfLon2, dfLat2);
+        multiLineString->addGeometryDirectly( lineString1 );
+        multiLineString->addGeometryDirectly( lineString2 );
+        poFeature->SetGeometryDirectly( multiLineString );
+    }
     poFeature->SetField( nCount++, pszAirwaySegmentName );
     poFeature->SetField( nCount++, pszFirstPointName );
     poFeature->SetField( nCount++, pszSecondPointName );
