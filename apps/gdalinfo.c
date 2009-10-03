@@ -246,7 +246,29 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( bShowGCPs && GDALGetGCPCount( hDataset ) > 0 )
     {
-        printf( "GCP Projection = %s\n", GDALGetGCPProjection(hDataset) );
+        if (GDALGetGCPProjection(hDataset) != NULL)
+        {
+            OGRSpatialReferenceH  hSRS;
+            char		      *pszProjection;
+
+            pszProjection = (char *) GDALGetGCPProjection( hDataset );
+
+            hSRS = OSRNewSpatialReference(NULL);
+            if( OSRImportFromWkt( hSRS, &pszProjection ) == CE_None )
+            {
+                char	*pszPrettyWkt = NULL;
+
+                OSRExportToPrettyWkt( hSRS, &pszPrettyWkt, FALSE );
+                printf( "GCP Projection = \n%s\n", pszPrettyWkt );
+                CPLFree( pszPrettyWkt );
+            }
+            else
+                printf( "GCP Projection = %s\n",
+                        GDALGetGCPProjection( hDataset ) );
+
+            OSRDestroySpatialReference( hSRS );
+        }
+
         for( i = 0; i < GDALGetGCPCount(hDataset); i++ )
         {
             const GDAL_GCP	*psGCP;
