@@ -45,7 +45,11 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
+#if defined(_MSC_VER) && (_MSC_VER <= 1200)
+  return InterlockedExchangeAdd((LONG*)(ptr), (LONG)(increment)) + increment;
+#else
   return InterlockedExchangeAdd((volatile LONG*)(ptr), (LONG)(increment)) + increment;
+#endif
 }
 
 #elif defined(__MINGW32__) && defined(__i386__)

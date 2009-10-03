@@ -791,6 +791,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
     GByte* pabyDestBuf3  = (GByte*) CPLMalloc(nXSize);
     GByte* pabyDestBuf4  = (GByte*) CPLMalloc(nXSize);
     int nR = 0, nG = 0, nB = 0, nA = 0;
+    int i, j;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
@@ -799,7 +800,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
         goto end;
     }
 
-    for ( int i = 0; i < nYSize; i++)
+    for ( i = 0; i < nYSize; i++)
     {
         /* Read source buffer */
         GDALRasterIO(   hSrcBand,
@@ -811,7 +812,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
                         GDT_Float32,
                         0, 0);
 
-        for (int j = 0; j < nXSize; j++)
+        for ( j = 0; j < nXSize; j++)
         {
             GDALColorReliefInterpolateVal  (pasColorAssociation,
                                             nColorAssociation,

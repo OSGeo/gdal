@@ -3796,7 +3796,7 @@ static void NITFPatchImageLength( const char *pszFilename,
 /*      Update the image data length.                                   */
 /* -------------------------------------------------------------------- */
     GUIntBig nImageSize = nFileLen-nImageOffset;
-    if ((double)nImageSize >= 1e10)
+    if (GUINTBIG_TO_DOUBLE(nImageSize) >= 1e10)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big image size : " CPL_FRMT_GUIB". Truncating to 9999999999",
@@ -3838,7 +3838,7 @@ static void NITFPatchImageLength( const char *pszFilename,
 
         if( EQUAL(pszIC,"C8") ) /* jpeg2000 */
         {
-            double dfRate = (nFileLen-nImageOffset) * 8 / (double) nPixelCount;
+            double dfRate = (GIntBig)(nFileLen-nImageOffset) * 8 / (double) nPixelCount;
             dfRate = MAX(0.01,MIN(99.99,dfRate));
         
             // We emit in wxyz format with an implicit decimal place
@@ -3988,7 +3988,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
     GUIntBig nFileLen = VSIFTellL( fpVSIL );
 
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
-    if ((double)nFileLen >= 1e12)
+    if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999999",

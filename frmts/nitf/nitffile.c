@@ -890,7 +890,7 @@ int NITFCreate( const char *pszFilename,
 
     /* According to the spec, CLEVEL 7 supports up to 10,737,418,330 bytes */
     /* but we can support technically much more */
-    if (EQUAL(pszIC, "NC") && (double)nCur >= 1e12)
+    if (EQUAL(pszIC, "NC") && GUINTBIG_TO_DOUBLE(nCur) >= 1e12)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big file : " CPL_FRMT_GUIB, nCur);
