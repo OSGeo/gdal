@@ -42,7 +42,10 @@ class OGRXPlaneLayer : public OGRLayer
 {
   private:
     int                nFID;
-    int                nCurrentID;
+    int                nFeatureArraySize;
+    int                nFeatureArrayMaxSize;
+    int                nFeatureArrayIndex;
+    
     OGRFeature**       papoFeatures;
     OGRSpatialReference *poSRS;
 
@@ -57,7 +60,7 @@ class OGRXPlaneLayer : public OGRLayer
     virtual                   ~OGRXPlaneLayer();
 
     void                      SetReader(OGRXPlaneReader* poReader);
-    int                       IsEmpty() { return nFID == 0; }
+    int                       IsEmpty() { return nFeatureArraySize == 0; }
     void                      AutoAdjustColumnsWidth();
 
     virtual void              ResetReading();
