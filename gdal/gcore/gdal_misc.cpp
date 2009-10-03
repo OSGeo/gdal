@@ -995,6 +995,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined,
         "GDALLoadOziMapFile(): file \"%s\" is not in OziExplorer Map format.",
                   pszFilename );
+        CSLDestroy( papszLines );
         return FALSE;
     }
 
