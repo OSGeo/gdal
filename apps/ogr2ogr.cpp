@@ -551,9 +551,10 @@ int main( int nArgc, char ** papszArgv )
         long* panLayerCountFeatures = (long*) CPLMalloc(sizeof(long) * nLayerCount);
         long nCountLayersFeatures = 0;
         long nAccCountFeatures = 0;
+        int iLayer;
 
         /* First pass to apply filters and count all features if necessary */
-        for( int iLayer = 0; 
+        for( iLayer = 0; 
             iLayer < nLayerCount; 
             iLayer++ )
         {
@@ -583,7 +584,7 @@ int main( int nArgc, char ** papszArgv )
         }
 
         /* Second pass to do the real job */
-        for( int iLayer = 0; 
+        for( iLayer = 0; 
             iLayer < nLayerCount; 
             iLayer++ )
         {

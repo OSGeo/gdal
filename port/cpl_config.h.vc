@@ -105,6 +105,11 @@
 #  define VSI_STAT64_T __stat64
 #endif
 
+/* VC6 doesn't known intptr_t */
+#if (_MSC_VER <= 1200)
+    typedef int intptr_t;
+#endif
+
 #pragma warning(disable: 4786)
 
 /* #define CPL_DISABLE_DLL */
