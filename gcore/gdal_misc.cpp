@@ -981,7 +981,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
     VALIDATE_POINTER1( pnGCPCount, "GDALLoadOziMapFile", FALSE );
     VALIDATE_POINTER1( ppasGCPs, "GDALLoadOziMapFile", FALSE );
 
-    papszLines = CSLLoad( pszFilename );
+    papszLines = CSLLoad2( pszFilename, 1000, 200, NULL );
 
     if ( !papszLines )
         return FALSE;
@@ -1186,7 +1186,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
     int	        nCoordinateCount = 0;
     GDAL_GCP    asGCPs[MAX_GCP];
     
-    papszLines = CSLLoad( pszFilename );
+    papszLines = CSLLoad2( pszFilename, 1000, 200, NULL );
 
     if ( !papszLines )
         return FALSE;
@@ -1394,7 +1394,7 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
     VALIDATE_POINTER1( pszFilename, "GDALLoadWorldFile", FALSE );
     VALIDATE_POINTER1( padfGeoTransform, "GDALLoadWorldFile", FALSE );
 
-    papszLines = CSLLoad( pszFilename );
+    papszLines = CSLLoad2( pszFilename, 100, 100, NULL );
 
     if ( !papszLines )
         return FALSE;
