@@ -1439,7 +1439,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         if( fpHDR != NULL )
         {
             VSIFCloseL( fpHDR );
-            papszLines=CSLLoad(pszHDR);
+            papszLines=CSLLoad2(pszHDR, 16, 200, NULL);
             if (CSLCount(papszLines) == 16)
             {
 
