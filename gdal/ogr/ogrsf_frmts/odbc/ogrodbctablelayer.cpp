@@ -303,13 +303,9 @@ OGRErr OGRODBCTableLayer::SetAttributeFilter( const char *pszQuery )
 int OGRODBCTableLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCSequentialWrite) 
-             || EQUAL(pszCap,OLCRandomWrite) )
-        return bUpdateAccess;
-
-    else if( EQUAL(pszCap,OLCCreateField) )
-        return bUpdateAccess;
-
+    if( EQUAL(pszCap,OLCRandomRead) )
+        return TRUE;
+        
     else 
         return OGRODBCLayer::TestCapability( pszCap );
 }
