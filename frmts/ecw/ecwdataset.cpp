@@ -111,7 +111,9 @@ class CPL_DLL ECWDataset : public GDALPamDataset
 		~ECWDataset();
                 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          IdentifyJPEG2000( GDALOpenInfo * poOpenInfo );
     static GDALDataset *OpenJPEG2000( GDALOpenInfo * );
+    static int          IdentifyECW( GDALOpenInfo * poOpenInfo );
     static GDALDataset *OpenECW( GDALOpenInfo * );
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
@@ -955,33 +957,50 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                            OpenJPEG2000()                            */
+/*                        IdentifyJPEG2000()                            */
+/*                                                                      */
+/*          Open method that only supports JPEG2000 files.              */
 /************************************************************************/
 
-GDALDataset *ECWDataset::OpenJPEG2000( GDALOpenInfo * poOpenInfo )
+int ECWDataset::IdentifyJPEG2000( GDALOpenInfo * poOpenInfo )
 
 {
     if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
-        return Open( poOpenInfo );
+        return TRUE;
 
     else if( poOpenInfo->nHeaderBytes >= 16 
         && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
                     sizeof(jpc_header) ) == 0
             || memcmp( poOpenInfo->pabyHeader, jp2_header, 
                     sizeof(jp2_header) ) == 0) )
-        return Open( poOpenInfo );
+        return TRUE;
     
     else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                            OpenJPEG2000()                            */
+/*                                                                      */
+/*          Open method that only supports JPEG2000 files.              */
+/************************************************************************/
+
+GDALDataset *ECWDataset::OpenJPEG2000( GDALOpenInfo * poOpenInfo )
+
+{
+    if (!IdentifyJPEG2000(poOpenInfo))
         return NULL;
+
+    return Open( poOpenInfo );
 }
     
 /************************************************************************/
-/*                              OpenECW()                               */
+/*                           IdentifyECW()                              */
 /*                                                                      */
-/*      Open method that only supports ECW files.                       */
+/*      Identify method that only supports ECW files.                   */
 /************************************************************************/
 
-GDALDataset *ECWDataset::OpenECW( GDALOpenInfo * poOpenInfo )
+int ECWDataset::IdentifyECW( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
@@ -991,7 +1010,22 @@ GDALDataset *ECWDataset::OpenECW( GDALOpenInfo * poOpenInfo )
     if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
          || poOpenInfo->nHeaderBytes == 0)
         && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
-        return( NULL );
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                              OpenECW()                               */
+/*                                                                      */
+/*      Open method that only supports ECW files.                       */
+/************************************************************************/
+
+GDALDataset *ECWDataset::OpenECW( GDALOpenInfo * poOpenInfo )
+
+{
+    if (!IdentifyECW(poOpenInfo))
+        return NULL;
 
     return Open( poOpenInfo );
 }
@@ -1578,6 +1612,7 @@ void GDALRegister_ECW()
                                    "frmt_ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
         
+        poDriver->pfnIdentify = ECWDataset::IdentifyECW;
         poDriver->pfnOpen = ECWDataset::OpenECW;
         poDriver->pfnUnloadDriver = GDALDeregister_ECW;
 #ifdef HAVE_COMPRESS
@@ -1637,6 +1672,7 @@ void GDALRegister_JP2ECW()
                                    "frmt_jp2ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
         
+        poDriver->pfnIdentify = ECWDataset::IdentifyJPEG2000;
         poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
 #ifdef HAVE_COMPRESS
         poDriver->pfnCreate = ECWCreateJPEG2000;
