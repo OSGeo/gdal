@@ -400,10 +400,7 @@ int OGRODBCDataSource::OpenTable( const char *pszNewName,
 int OGRODBCDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
-    else
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/
