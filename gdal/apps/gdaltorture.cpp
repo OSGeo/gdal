@@ -287,6 +287,6 @@ int main( int argc, char ** argv )
     CSLDestroy( argv );
     GDALDestroyDriverManager();
 
-    exit( 0 );
+    return 0;
 }
 
