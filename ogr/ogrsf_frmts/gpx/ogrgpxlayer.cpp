@@ -30,6 +30,7 @@
 #include "ogr_gpx.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_minixml.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -1054,9 +1055,8 @@ OGRSpatialReference *OGRGPXLayer::GetSpatialRef()
 }
 
 /************************************************************************/
-/*                      WriteFeatureAttributes()                        */
+/*                  OGRGPX_GetXMLCompatibleTagName()                    */
 /************************************************************************/
-
 
 static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
                                             const char* pszName)
@@ -1077,6 +1077,80 @@ static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
     }
     return pszModName;
 }
+
+/************************************************************************/
+/*                     OGRGPX_GetUTF8String()                           */
+/************************************************************************/
+
+static char* OGRGPX_GetUTF8String(const char* pszString)
+{
+    char *pszEscaped;
+    if (!CPLIsUTF8(pszString, -1) &&
+         CSLTestBoolean(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
+    {
+        static int bFirstTime = TRUE;
+        if (bFirstTime)
+        {
+            bFirstTime = FALSE;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "%s is not a valid UTF-8 string. Forcing it to ASCII.\n"
+                    "If you still want the original string and change the XML file encoding\n"
+                    "afterwards, you can define OGR_FORCE_ASCII=NO as configuration option.\n"
+                    "This warning won't be issued anymore", pszString);
+        }
+        else
+        {
+            CPLDebug("OGR", "%s is not a valid UTF-8 string. Forcing it to ASCII",
+                    pszString);
+        }
+        pszEscaped = CPLForceToASCII(pszString, -1, '?');
+    }
+    else
+        pszEscaped = CPLStrdup(pszString);
+
+    return pszEscaped;
+}
+
+/************************************************************************/
+/*                   OGRGPX_WriteXMLExtension()                          */
+/************************************************************************/
+
+static int OGRGPX_WriteXMLExtension(FILE* fp,
+                                    const char* pszTagName,
+                                    const char* pszContent)
+{
+    CPLXMLNode* poXML = CPLParseXMLString(pszContent);
+    if (poXML)
+    {
+        char* pszTagNameWithNS;
+        const char* pszXMLNS = NULL;
+        const char* pszUnderscore = strchr(pszTagName, '_');
+        pszTagNameWithNS = CPLStrdup(pszTagName);
+        if (pszUnderscore)
+            pszTagNameWithNS[pszUnderscore - pszTagName] = ':';
+
+        /* If we detect a Garmin GPX extension, add its xmlns */
+        if (strcmp(pszTagName, "gpxx_WaypointExtension") == 0)
+            pszXMLNS = " xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\"";
+            
+        /* Don't XML escape here */
+        char *pszUTF8 = OGRGPX_GetUTF8String( pszContent );
+        VSIFPrintf(fp, "    <%s%s>%s</%s>\n",
+                   pszTagNameWithNS, (pszXMLNS) ? pszXMLNS : "", pszUTF8, pszTagNameWithNS);
+        CPLFree(pszUTF8);
+        
+        CPLFree(pszTagNameWithNS);
+        CPLDestroyXMLNode(poXML);
+        
+        return TRUE;
+    }
+    
+    return FALSE;
+}
+
+/************************************************************************/
+/*                      WriteFeatureAttributes()                        */
+/************************************************************************/
 
 void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
 {
@@ -1137,9 +1211,31 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
             {
                 char* compatibleName =
                         OGRGPX_GetXMLCompatibleTagName(pszExtensionsNS, poFieldDefn->GetNameRef());
+                const char *pszRaw = poFeature->GetFieldAsString( i );
+                
+                /* Try to detect XML content */
+                if (pszRaw[0] == '<' && pszRaw[strlen(pszRaw) - 1] == '>')
+                {
+                    if (OGRGPX_WriteXMLExtension(fp, compatibleName, pszRaw))
+                        continue;
+                }
+                
+                /* Try to detect XML escaped content */
+                else if (strncmp(pszRaw, "&lt;", 4) == 0 &&
+                         strncmp(pszRaw + strlen(pszRaw) - 4, "&gt;", 4) == 0)
+                {
+                    char* pszUnescapedContent = CPLUnescapeString( pszRaw, NULL, CPLES_XML );
+                    
+                    if (OGRGPX_WriteXMLExtension(fp, compatibleName, pszUnescapedContent))
+                    {
+                        CPLFree(pszUnescapedContent);
+                        continue;
+                    }
+                    
+                    CPLFree(pszUnescapedContent);
+                }
 
                 /* Remove leading spaces for a numeric field */
-                const char *pszRaw = poFeature->GetFieldAsString( i );
                 if (poFieldDefn->GetType() == OFTInteger || poFieldDefn->GetType() == OFTReal)
                 {
                     while( *pszRaw == ' ' )
