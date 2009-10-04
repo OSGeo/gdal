@@ -219,7 +219,7 @@ class MrSIDDataset : public GDALPamDataset
                 MrSIDDataset();
                 ~MrSIDDataset();
 
-    static GDALDataset  *Open( GDALOpenInfo * );
+    static GDALDataset  *Open( GDALOpenInfo * poOpenInfo, int bIsJP2 );
     virtual CPLErr      GetGeoTransform( double * padfTransform );
     const char          *GetProjectionRef();
 
@@ -1240,38 +1240,52 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 }
 
 /************************************************************************/
-/*                             MrSIDOpen()                              */
+/*                         MrSIDIdentify()                              */
 /*                                                                      */
-/*      This is just a jacket to verify that the file is MrSID.         */
+/*          Identify method that only supports MrSID files.             */
 /************************************************************************/
 
-static GDALDataset *MrSIDOpen( GDALOpenInfo * poOpenInfo )
+static int MrSIDIdentify( GDALOpenInfo * poOpenInfo )
 {
     if( poOpenInfo->nHeaderBytes < 32 )
-        return NULL;
+        return FALSE;
 
     if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
-        return NULL;
-
-    return MrSIDDataset::Open( poOpenInfo );
+        return FALSE;
+        
+    return TRUE;
 }
 
 /************************************************************************/
-/*                              JP2Open()                               */
+/*                          MrSIDOpen()                                 */
 /*                                                                      */
-/*      This is just a jacket to verify that the file is JPEG2000.      */
+/*          Open method that only supports MrSID files.                 */
 /************************************************************************/
+
+static GDALDataset* MrSIDOpen( GDALOpenInfo *poOpenInfo )
+{
+    if (!MrSIDIdentify(poOpenInfo))
+        return NULL;
+        
+    return MrSIDDataset::Open( poOpenInfo, FALSE );
+}
+
+
+#ifdef MRSID_J2K
 
 static const unsigned char jpc_header[] = 
 {0xff,0x4f};
 
-#ifdef MRSID_J2K
+/************************************************************************/
+/*                         JP2Identify()                                */
+/*                                                                      */
+/*        Identify method that only supports JPEG2000 files.            */
+/************************************************************************/
 
-static GDALDataset *JP2Open( GDALOpenInfo *poOpenInfo )
-
+static int JP2Identify( GDALOpenInfo *poOpenInfo )
 {
     if( poOpenInfo->nHeaderBytes < 32 )
-        return NULL;
+        return FALSE;
 
     if( memcmp( poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header) ) == 0 )
     {
@@ -1282,39 +1296,36 @@ static GDALDataset *JP2Open( GDALOpenInfo *poOpenInfo )
         if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
             && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
             && !EQUAL(pszExtension,"j2c") && !EQUAL(pszExtension,"ntf"))
-            return NULL;
+            return FALSE;
     }
     else if( !EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
-        return NULL;
+        return FALSE;
 
-    return MrSIDDataset::Open( poOpenInfo );
+    return TRUE;
 }
-#endif /* def MRSID_J2K */
+
+/************************************************************************/
+/*                            JP2Open()                                 */
+/*                                                                      */
+/*      Open method that only supports JPEG2000 files.                  */
+/************************************************************************/
+
+static GDALDataset* JP2Open( GDALOpenInfo *poOpenInfo )
+{
+    if (!JP2Identify(poOpenInfo))
+        return NULL;
+        
+    return MrSIDDataset::Open( poOpenInfo, TRUE );
+}
+
+#endif // MRSID_J2K
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 {
-    int     bIsJP2 = FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Is this a mrsid or jpeg 2000 file?                              */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 32 )
-        return NULL;
-
-    if( EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
-        bIsJP2 = TRUE;
-
-    else if( memcmp( poOpenInfo->pabyHeader, jpc_header, 
-                     sizeof(jpc_header) ) == 0 )
-        bIsJP2 = TRUE;
-
-    else if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
-        return NULL;
-
     if(poOpenInfo->fp)
     {
         VSIFClose( poOpenInfo->fp );
@@ -1423,7 +1434,9 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Add MrSID version.                                              */
 /* -------------------------------------------------------------------- */
+#ifdef MRSID_J2K
     if( !bIsJP2 )
+#endif
     {
         lt_uint8 major;
         lt_uint8 minor;
@@ -3281,7 +3294,7 @@ void GDALRegister_MrSID()
 
         poDriver->pfnCreateCopy = MrSIDCreateCopy;
 #endif
-
+        poDriver->pfnIdentify = MrSIDIdentify;
         poDriver->pfnOpen = MrSIDOpen;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
@@ -3313,6 +3326,7 @@ void GDALRegister_MrSID()
 
         poDriver->pfnCreateCopy = JP2CreateCopy;
 #endif
+        poDriver->pfnIdentify = JP2Identify;
         poDriver->pfnOpen = JP2Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
