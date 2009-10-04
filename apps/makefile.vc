@@ -19,7 +19,9 @@ default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
 		nearblack.exe gdalmanage.exe gdalenhance.exe gdaltransform.exe\
 		gdaldem.exe $(OGR_PROGRAMS)
 
-all:	default gdalwarpsimple.exe
+all:	default multireadtest.exe \
+			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \
+			gdaltorture.exe gdal2ogr.exe test_ogrsf.exe
 
 gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) \
@@ -123,6 +125,26 @@ test_ogrsf.exe:	test_ogrsf.cpp $(GDALLIB) $(XTRAOBJ)
 	
 gdalbuildvrt.exe:	gdalbuildvrt.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalbuildvrt.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+dumpoverviews.exe:	dumpoverviews.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) dumpoverviews.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+gdalflattenmask.exe:	gdalflattenmask.c $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalflattenmask.c $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+gdaltorture.exe:	gdaltorture.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdaltorture.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+gdal2ogr.exe:	gdal2ogr.c $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal2ogr.c $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	

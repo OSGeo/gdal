@@ -278,7 +278,7 @@ int main(int argc, char* argv[])
                                then replace the value of the pixel by the transparent value */
                             if (pabyMaskBuffer[iCol] == 0 ||
                                 ((nMaskFlag & GMF_ALPHA) != 0 && pabyMaskBuffer[iCol] < 128))
-                                pabyBuffer[iCol] = dfNoDataValue;
+                                pabyBuffer[iCol] = (GByte)dfNoDataValue;
                         }
                         break;
                     }
