@@ -158,7 +158,18 @@ def jpeg2000_6():
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Open byte.jp2.gz (test use of the VSIL API)
 
+def jpeg2000_7():
+
+    if gdaltest.jpeg2000_drv is None:
+        return 'skip'
+    
+    tst = gdaltest.GDALTest( 'JPEG2000', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
+    return tst.testOpen()
+    
 ###############################################################################
 def jpeg2000_online_1():
 
@@ -339,6 +350,7 @@ gdaltest_list = [
     jpeg2000_4,
     jpeg2000_5,
     jpeg2000_6,
+    jpeg2000_7,
     jpeg2000_online_1,
     jpeg2000_online_2,
     jpeg2000_online_3,
