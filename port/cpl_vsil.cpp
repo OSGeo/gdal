@@ -275,8 +275,12 @@ FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 {
     VSIFilesystemHandler *poFSHandler = 
         VSIFileManager::GetHandler( pszFilename );
+        
+    FILE* fp = (FILE *) poFSHandler->Open( pszFilename, pszAccess );
 
-    return (FILE *) poFSHandler->Open( pszFilename, pszAccess );
+    VSIDebug3( "VSIFOpenL(%s,%s) = %p", pszFilename, pszAccess, fp );
+        
+    return fp;
 }
 
 /************************************************************************/
@@ -302,6 +306,9 @@ int VSIFCloseL( FILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    
+    VSIDebug1( "VSICloseL(%p)", fp );
+    
     int nResult = poFileHandle->Close();
     
     delete poFileHandle;
