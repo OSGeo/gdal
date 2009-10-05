@@ -13,10 +13,10 @@ Prerequisites:
   - For major and minor releases, there must be no function signature change
     for the C API. Only new functions are allowed.
 
-  - For major releases, the allowed changes in C++ API should (or must?) be such that
-    user calling C++ code can still compile against new headers without modification
-    (existing methods can become virtual, default arguments can be added, new methods
-     or members can be added)
+  - For major releases, the allowed changes in C++ API should (or must?) be 
+    such that user calling C++ code can still compile against new headers 
+    without modification (existing methods can become virtual, default 
+    arguments can be added, new methods or members can be added)
 
   - For minor releases (1.6.1 versus 1.6.0), the C++ ABI stability must be
     preserved : no method signature change, no addition of virtual methods, no
