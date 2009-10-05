@@ -106,19 +106,19 @@ int VSIFSeek( FILE * fp, long nOffset, int nWhence )
 #ifdef VSI_DEBUG
     if( nWhence == SEEK_SET )
     {
-        VSIDebug3( "VSIFSeek(%p,%d,SEEK_SET) = %d", fp, nOffset, nResult );
+        VSIDebug3( "VSIFSeek(%p,%ld,SEEK_SET) = %d", fp, nOffset, nResult );
     }
     else if( nWhence == SEEK_END )
     {
-        VSIDebug3( "VSIFSeek(%p,%d,SEEK_END) = %d", fp, nOffset, nResult );
+        VSIDebug3( "VSIFSeek(%p,%ld,SEEK_END) = %d", fp, nOffset, nResult );
     }
     else if( nWhence == SEEK_CUR )
     {
-        VSIDebug3( "VSIFSeek(%p,%d,SEEK_CUR) = %d", fp, nOffset, nResult );
+        VSIDebug3( "VSIFSeek(%p,%ld,SEEK_CUR) = %d", fp, nOffset, nResult );
     }
     else
     {
-        VSIDebug4( "VSIFSeek(%p,%d,%d-Unknown) = %d",
+        VSIDebug4( "VSIFSeek(%p,%ld,%d-Unknown) = %d",
                    fp, nOffset, nWhence, nResult );
     }
 #endif 
