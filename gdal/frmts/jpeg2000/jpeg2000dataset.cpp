@@ -187,6 +187,7 @@ class JPEG2000Dataset : public GDALPamDataset
                 JPEG2000Dataset();
                 ~JPEG2000Dataset();
     
+    static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );
 
     CPLErr              GetGeoTransform( double* );
@@ -546,6 +547,27 @@ static void JPEG2000Init()
 }
 
 /************************************************************************/
+/*                            Identify()                                */
+/************************************************************************/
+
+int JPEG2000Dataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    static const unsigned char jpc_header[] = {0xff,0x4f};
+    static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
+        
+    if( poOpenInfo->nHeaderBytes >= 16 
+        && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
+                    sizeof(jpc_header) ) == 0
+            || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp, 
+                    sizeof(jp2_box_jp) ) == 0) )
+        return TRUE;
+    
+    else
+        return FALSE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -555,6 +577,9 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     int         iFormat;
     char        *pszFormatName = NULL;
     jas_stream_t *sS;
+    
+    if (!Identify(poOpenInfo))
+        return NULL;
 
     JPEG2000Init();
     if( !(sS = JPEG2000_VSIL_fopen( poOpenInfo->pszFilename, "rb" )) )
@@ -1156,6 +1181,7 @@ void GDALRegister_JPEG2000()
         
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+        poDriver->pfnIdentify = JPEG2000Dataset::Identify;
         poDriver->pfnOpen = JPEG2000Dataset::Open;
         poDriver->pfnCreateCopy = JPEG2000CreateCopy;
 
