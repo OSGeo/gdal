@@ -560,7 +560,12 @@ int JPEG2000Dataset::Identify( GDALOpenInfo * poOpenInfo )
         && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
                     sizeof(jpc_header) ) == 0
             || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp, 
-                    sizeof(jp2_box_jp) ) == 0) )
+                    sizeof(jp2_box_jp) ) == 0)
+            /* PGX file*/
+            || (memcmp( poOpenInfo->pabyHeader, "PG", 2) == 0 &&
+                (poOpenInfo->pabyHeader[2] == ' ' || poOpenInfo->pabyHeader[2] == '\t') &&
+                (memcmp( poOpenInfo->pabyHeader + 3, "ML", 2) == 0 ||
+                 memcmp( poOpenInfo->pabyHeader + 3, "LM", 2) == 0)) )
         return TRUE;
     
     else
