@@ -470,7 +470,7 @@
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( nLen$argnum ) {
-    CPLFree( pBuf$argnum );
+    free( pBuf$argnum );
   }
 }
 
