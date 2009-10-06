@@ -1042,5 +1042,7 @@ Open = _gdal.Open
 OpenShared = _gdal.OpenShared
 IdentifyDriver = _gdal.IdentifyDriver
 GeneralCmdLineProcessor = _gdal.GeneralCmdLineProcessor
+__version__ = _gdal.VersionInfo("RELEASE_NAME") 
+
 
 
