@@ -30,7 +30,6 @@
 
 #if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %{
-
 static
 CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
                             int xoff, int yoff, int xsize, int ysize,
@@ -40,8 +39,19 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
                             int band_list, int *pband_list )
 {
   CPLErr result;
-  *buf_size = (size_t)buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list;
-  *buf = (char*) VSIMalloc3( buf_xsize, buf_ysize, (GDALGetDataTypeSize( buf_type ) / 8) * band_list );
+  
+  *buf_size = buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list;
+  
+  if (buf_xsize < 0 || buf_ysize < 0 || *buf_size == 0 ||
+      *buf_size != (GIntBig)buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list)
+  {
+      CPLError(CE_Failure, CPLE_OutOfMemory, "Invalid dimensions : %d x %d", buf_xsize, buf_ysize);
+      *buf = 0;
+      *buf_size = 0;
+      return CE_Failure;
+  }
+  
+  *buf = (char*) malloc( *buf_size );
   if (*buf)
   {
     result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
@@ -55,6 +65,7 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
   }
   else
   {
+    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate %d bytes", *buf_size);
     result = CE_Failure;
     *buf = 0;
     *buf_size = 0;
