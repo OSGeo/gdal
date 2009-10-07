@@ -131,6 +131,23 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( osGeomColumn.size()
             && EQUAL(oField.GetNameRef(),osGeomColumn) )
             continue;
+        
+        int nColType = sqlite3_column_type( hStmt, iCol );
+        const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
+        //CPLDebug("SQLITE", "decltype(%s) = %s",
+        //         oField.GetNameRef(), pszDeclType ? pszDeclType : "null");
+        if (pszDeclType != NULL)
+        {
+            if (EQUAL(pszDeclType, "INTEGER"))
+                nColType = SQLITE_INTEGER;
+            else if (EQUAL(pszDeclType, "FLOAT"))
+                nColType = SQLITE_FLOAT;
+            else if (EQUAL(pszDeclType, "BLOB"))
+                nColType = SQLITE_BLOB;
+            else if (EQUAL(pszDeclType, "TEXT") ||
+                     EQUAL(pszDeclType, "VARCHAR"))
+                nColType = SQLITE_TEXT;
+        }
 
         // Recognise some common geometry column names.
         if( (EQUAL(oField.GetNameRef(),"wkt_geometry") 
@@ -139,7 +156,7 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
              || EQUALN(oField.GetNameRef(), "astext(", 7))
             && osGeomColumn.size() == 0 )
         {
-            if( sqlite3_column_type( hStmt, iCol ) == SQLITE_BLOB )
+            if( nColType == SQLITE_BLOB )
             {
                 osGeomColumn = oField.GetNameRef();
                 eGeomFormat = OSGF_WKB;
@@ -148,7 +165,7 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 /* bTriedAsSpatiaLite is not FALSE */
                 continue;
             }
-            else if( sqlite3_column_type( hStmt, iCol ) == SQLITE_TEXT )
+            else if( nColType == SQLITE_TEXT )
             {
                 osGeomColumn = oField.GetNameRef();
                 eGeomFormat = OSGF_WKT;
@@ -173,7 +190,7 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( EQUAL(oField.GetNameRef(),"OGC_FID") )
             continue;
 
-        switch( sqlite3_column_type( hStmt, iCol ) )
+        switch( nColType )
         {
           case SQLITE_INTEGER:
             oField.SetType( OFTInteger );
