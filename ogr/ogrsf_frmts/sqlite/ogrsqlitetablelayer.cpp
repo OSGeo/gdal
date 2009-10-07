@@ -750,7 +750,11 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Add geometry.                                                   */
 /* -------------------------------------------------------------------- */
-    if( osGeomColumn.size() != 0 && poFeature->GetGeometryRef() != NULL )
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+
+    if( osGeomColumn.size() != 0 &&
+        poGeom != NULL &&
+        eGeomFormat != OSGF_FGF )
     {
 
         if( bNeedComma )
@@ -770,11 +774,10 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /*      Add field values.                                               */
 /* -------------------------------------------------------------------- */
     int iField;
+    int nFieldCount = poFeatureDefn->GetFieldCount();
 
-    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for( iField = 0; iField < nFieldCount; iField++ )
     {
-        const char *pszRawValue;
-
         if( !poFeature->IsFieldSet( iField ) )
             continue;
 
@@ -788,37 +791,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         osCommand +=poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
         osCommand += "'";
 
-        if( poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTBinary  )
-        {
-            int binaryCount = 0;
-            GByte* binaryData = poFeature->GetFieldAsBinary( iField, &binaryCount );
-            char* pszHexValue = CPLBinaryToHex( binaryCount, binaryData );
-            osValues += "X'";
-            osValues += pszHexValue;
-            osValues += "'";
-            CPLFree( pszHexValue );
-        }
-        else
-        {
-            pszRawValue = poFeature->GetFieldAsString( iField );
-
-            if( strchr( pszRawValue, '\'' ) != NULL )
-            {
-                char *pszEscapedValue = 
-                    CPLEscapeString( pszRawValue, -1, CPLES_SQL );
-                osValues += "'";
-                osValues += pszEscapedValue;
-                osValues += "'";
-
-                CPLFree( pszEscapedValue );
-            }
-            else
-            {
-                osValues += "'";
-                osValues += pszRawValue;
-                osValues += "'";
-            }
-        }
+        osValues += "?";
 
         bNeedComma = TRUE;
     }
@@ -853,19 +826,17 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Bind the geometry                                               */
 /* -------------------------------------------------------------------- */
-    if( osGeomColumn.size() != 0 )
+    int nBindField = 1;
+
+    if( osGeomColumn.size() != 0 &&
+        poGeom != NULL &&
+        eGeomFormat != OSGF_FGF )
     {
-        OGRGeometry *poGeom = poFeature->GetGeometryRef();
-        if( poGeom == NULL )
-        {
-            /* no binding */
-            rc = SQLITE_OK;
-        }
-        else if ( eGeomFormat == OSGF_WKT )
+        if ( eGeomFormat == OSGF_WKT )
         {
             char *pszWKT = NULL;
             poGeom->exportToWkt( &pszWKT );
-            rc = sqlite3_bind_text( hInsertStmt, 1, pszWKT, -1, CPLFree );
+            rc = sqlite3_bind_text( hInsertStmt, nBindField++, pszWKT, -1, CPLFree );
         }
         else if( eGeomFormat == OSGF_WKB )
         {
@@ -873,7 +844,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
             GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
 
             poGeom->exportToWkb( wkbNDR, pabyWKB );
-            rc = sqlite3_bind_blob( hInsertStmt, 1, pabyWKB, nWKBLen, CPLFree );
+            rc = sqlite3_bind_blob( hInsertStmt, nBindField++, pabyWKB, nWKBLen, CPLFree );
         }
         else if ( eGeomFormat == OSGF_SpatiaLite )
         {
@@ -882,7 +853,11 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 
             ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR,
                                       &pabySLBLOB, &nBLOBLen );
-            rc = sqlite3_bind_blob( hInsertStmt, 1, pabySLBLOB, nBLOBLen, CPLFree );
+            rc = sqlite3_bind_blob( hInsertStmt, nBindField++, pabySLBLOB, nBLOBLen, CPLFree );
+        }
+        else
+        {
+            CPLAssert(0);
         }
 
         if( rc != SQLITE_OK )
@@ -891,6 +866,65 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
                       "sqlite3_bind_blob/text() failed:\n  %s", 
                       sqlite3_errmsg(hDB) );
             
+            sqlite3_finalize( hInsertStmt );
+            return OGRERR_FAILURE;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Bind field values.                                              */
+/* -------------------------------------------------------------------- */
+    
+    for( iField = 0; iField < nFieldCount; iField++ )
+    {
+        const char *pszRawValue;
+
+        if( !poFeature->IsFieldSet( iField ) )
+            continue;
+
+        switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
+        {
+            case OFTInteger:
+            {
+                int nFieldVal = poFeature->GetFieldAsInteger( iField );
+                rc = sqlite3_bind_int(hInsertStmt, nBindField++, nFieldVal);
+                break;
+            }
+            
+            case OFTReal:
+            {
+                double dfFieldVal = poFeature->GetFieldAsDouble( iField );
+                rc = sqlite3_bind_double(hInsertStmt, nBindField++, dfFieldVal);
+                break;
+            }
+            
+            case OFTBinary:
+            {
+                int nDataLength = 0;
+                GByte* pabyData =
+                    poFeature->GetFieldAsBinary( iField, &nDataLength );
+                rc = sqlite3_bind_blob(hInsertStmt, nBindField++,
+                                       pabyData, nDataLength, SQLITE_TRANSIENT);
+                break;
+            }
+            
+            default:
+            {
+                pszRawValue = poFeature->GetFieldAsString( iField );
+                rc = sqlite3_bind_text(hInsertStmt, nBindField++,
+                                       pszRawValue, -1, SQLITE_TRANSIENT);
+                break;
+            }
+        }
+        
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "sqlite3_bind_() for column %s failed:\n  %s", 
+                      poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                      sqlite3_errmsg(hDB) );
+            
+            sqlite3_finalize( hInsertStmt );
             return OGRERR_FAILURE;
         }
     }
@@ -905,6 +939,8 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "sqlite3_step() failed:\n  %s", 
                   sqlite3_errmsg(hDB) );
+                  
+        sqlite3_finalize( hInsertStmt );
         return OGRERR_FAILURE;
     }
 
