@@ -1644,7 +1644,7 @@ OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
  * This method will initialize the spatial reference based on the
  * passed in EPSG GCS or PCS code.  
  * 
- * This method is similar to importFromEPSGA() except that EPSG preferred 
+ * This method is similar to importFromEPSG() except that EPSG preferred 
  * axis ordering *will* be applied for geographic coordinate systems.
  * EPSG normally defines geographic coordinate systems to use lat/long 
  * contrary to typical GIS use).  See OGRSpatialReference::importFromEPSG() 
