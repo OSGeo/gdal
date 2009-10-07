@@ -85,15 +85,35 @@ def ogr_sqlite_2():
 
     ######################################################
     # Setup Schema
+    
+    fields = [ ('AREA', ogr.OFTReal),
+               ('EAS_ID', ogr.OFTInteger),
+               ('PRFEDEA', ogr.OFTString),
+               ('BINCONTENT', ogr.OFTBinary)]
+    
     ogrtest.quick_create_layer_def( gdaltest.sl_lyr,
-                                    [ ('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString) ] )
+                                    fields )
+                                      
+    ######################################################
+    # Reopen database to be sure that the data types are properly read
+    # even if no record are written
+    
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName( 'tpoly')
+    
+    for field_desc in fields:
+        feature_def = gdaltest.sl_lyr.GetLayerDefn()
+        field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex(field_desc[0]))
+        if field_defn.GetType() != field_desc[1]:
+            print 'Expected type for %s is %s, not %s' % \
+                (field_desc[0], field_defn.GetFieldTypeName(field_defn.GetType()), \
+                 field_defn.GetFieldTypeName(field_desc[1]))
 
     ######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature( feature_def )
 
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
@@ -101,6 +121,8 @@ def ogr_sqlite_2():
     
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
+    
+    gdaltest.sl_lyr.StartTransaction()
     
     while feat is not None:
 
@@ -112,6 +134,8 @@ def ogr_sqlite_2():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
+    
+    gdaltest.sl_lyr.CommitTransaction()
         
     return 'success'
 
@@ -177,6 +201,8 @@ def ogr_sqlite_4():
 
     dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
     wkt_list = [ '10', '2', '1', '3d_1', '4', '5', '6' ]
+    
+    gdaltest.sl_lyr.StartTransaction()
 
     for item in wkt_list:
 
@@ -209,6 +235,8 @@ def ogr_sqlite_4():
         feat_read.Destroy()
 
     dst_feat.Destroy()
+    
+    gdaltest.sl_lyr.CommitTransaction()
     
     return 'success'
     
@@ -649,12 +677,16 @@ def ogr_sqlite_15():
               ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POLYGON ((5 6,7 8)))' ),
               ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POINT(0 1))' ) ]
 
+    gdaltest.sl_lyr.StartTransaction()
+    
     for geom in geoms:
         dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
         dst_feat.SetGeometry( geom )
         gdaltest.sl_lyr.CreateFeature( dst_feat )
         dst_feat.Destroy()
 
+    gdaltest.sl_lyr.CommitTransaction()
+    
     ######################################################
     # Reopen DB
     gdaltest.sl_ds.Destroy()
@@ -843,6 +875,8 @@ def ogr_spatialite_2():
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     lyr = ds.CreateLayer( 'test_spatialfilter', srs = srs)
+    
+    lyr.StartTransaction()
 
     for i in range(10):
         for j in range(10):
@@ -851,6 +885,8 @@ def ogr_spatialite_2():
             dst_feat.SetGeometry( geom )
             lyr.CreateFeature( dst_feat )
             dst_feat.Destroy()
+            
+    lyr.CommitTransaction()
 
     ds.Destroy()
 
