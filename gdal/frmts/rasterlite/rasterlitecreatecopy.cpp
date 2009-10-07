@@ -216,10 +216,6 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
                         "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
                         "raster BLOB NOT NULL)", osRasterLayer.c_str());
         OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-        
-        /* Insert fake entry in it, otherwise SQLite doesn't return the right type for the raster column */
-        osSQL.Printf("INSERT INTO \"%s\" (id, raster) VALUES (NULL, X'00')", osRasterLayer.c_str());
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
             
         /* Create _metadata table */
         osSQL.Printf   ("CREATE TABLE \"%s\" ("
@@ -261,10 +257,6 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
         CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
         hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
         CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", pszOldVal);
-        
-        /* Now that we have reopened the DB, remove the fake entry */
-        osSQL.Printf("DELETE FROM \"%s\"", osRasterLayer.c_str());
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
     }
     else
     {
