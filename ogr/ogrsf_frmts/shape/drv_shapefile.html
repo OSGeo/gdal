@@ -61,7 +61,7 @@ in a shapefile and its value ranges from 1 to 12.</p>
 
 <p>
   Otherwise, the <a href="http://mapserver.org">MapServer</a> shptree utility can be used:
-<pre>shptree <shpfile> [<depth>] [<index_format>]</pre>
+<pre>shptree &lt;shpfile&gt; [&lt;depth&gt;] [&lt;index_format&gt;]</pre>
 </p>
 
 <p>
@@ -136,6 +136,15 @@ as well as deleting shapes.  Deleted shapes are marked for deletion in
 the .dbf file, and then ignored by OGR.  To actually remove them permanently
 (resulting in renumbering of FIDs) invoke the SQL 'REPACK <tablename>' via
 the datasource ExecuteSQL() method.<p>
+
+<h2>Size Issues</h2>
+
+Geometry: The Shapefile format explicitly uses 32bit offsets and so cannot
+go over 8GB (it actually uses 32bit offsets to 16bit words).
+Hence, it is is not recommended to use a file size over 4GB.<p>
+
+Attributes: The dbf format does not have any offsets in it, so it can be
+arbitrarily large.
 
 <h3>Dataset Creation Options</h3>
 
