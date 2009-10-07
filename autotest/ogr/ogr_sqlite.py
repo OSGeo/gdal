@@ -201,8 +201,6 @@ def ogr_sqlite_4():
 
     dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
     wkt_list = [ '10', '2', '1', '3d_1', '4', '5', '6' ]
-    
-    gdaltest.sl_lyr.StartTransaction()
 
     for item in wkt_list:
 
@@ -235,8 +233,6 @@ def ogr_sqlite_4():
         feat_read.Destroy()
 
     dst_feat.Destroy()
-    
-    gdaltest.sl_lyr.CommitTransaction()
     
     return 'success'
     
