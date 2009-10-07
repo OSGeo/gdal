@@ -147,6 +147,8 @@ tif_ds = gtiff_driver.Create( tif_filename,
 
 tif_ds.SetProjection( src_ds.GetProjection() )
 tif_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+if src_ds.GetGCPCount() > 0:
+    tif_ds.SetGCPs( src_ds.GetGCPs(), src_ds.GetGCPProjection() )
 
 # ----------------------------------------------------------------------------
 # Do the processing one scanline at a time. 
