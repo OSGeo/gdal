@@ -455,7 +455,6 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
                                          int bApproxOK )
 
 {
-    char                szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
 
     ResetReading();
@@ -470,26 +469,6 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
         oField.SetName( pszSafeName );
         CPLFree( pszSafeName );
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Work out the SQLite type.                                       */
-/* -------------------------------------------------------------------- */
-    if( oField.GetType() == OFTInteger )
-    {
-        strcpy( szFieldType, "INTEGER" );
-    }
-    else if( oField.GetType() == OFTReal )
-    {
-        strcpy( szFieldType, "FLOAT" );
-    }
-    else if( oField.GetType() == OFTBinary )
-    {
-        strcpy( szFieldType, "BLOB" );
-    }
-    else
-    {
-        strcpy( szFieldType, "VARCHAR" );
     }
 
 /* -------------------------------------------------------------------- */
