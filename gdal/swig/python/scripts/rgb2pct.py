@@ -140,6 +140,8 @@ tif_ds.GetRasterBand(1).SetRasterColorTable( ct )
 
 tif_ds.SetProjection( src_ds.GetProjection() )
 tif_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+if src_ds.GetGCPCount() > 0:
+    tif_ds.SetGCPs( src_ds.GetGCPs(), src_ds.GetGCPProjection() )
 
 # ----------------------------------------------------------------------------
 # Actually transfer and dither the data.
