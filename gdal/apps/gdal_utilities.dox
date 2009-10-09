@@ -688,6 +688,9 @@ This program burns vector geometries (points, lines and polygons) into the
 raster band(s) of a raster image.  Vectors are read from OGR supported vector 
 formats. 
 
+Note that the vector data must in the same coordinate system as the 
+raster data, on the fly reprojection is not provided.
+
 <dl>
 <dt> <b>-b</b> <em>band</em>: </dt><dd> 
 The band(s) to burn values into.  Multiple -b arguments may be used to burn 
