@@ -42,7 +42,7 @@ static void Usage()
     printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]\n"
             "                [-ro] [-clean] [--help-general] filename levels\n"
             "\n"
-            "  -r : choice of resampling method\n"
+            "  -r : choice of resampling method (default: nearest)\n"
             "  -ro : open the dataset in read-only mode, in order to generate\n"
             "        external overview (for GeoTIFF datasets especially)\n"
             "  -clean : remove all overviews\n"
