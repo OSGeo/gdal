@@ -1998,7 +1998,69 @@ def ogr_pg_45():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test that we can read more than 500 features and update each one
+# with SetFeature()
+
+def ogr_pg_46():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+        
+    nFeatures = 1000
+        
+    # Create a table with nFeatures records
+    lyr = gdaltest.pg_ds.CreateLayer('bigtable')
+    field_defn = ogr.FieldDefn("field1", ogr.OFTInteger)
+    lyr.CreateField(field_defn)
+    field_defn.Destroy()
+
+    feature_defn = lyr.GetLayerDefn()
+
+    lyr.StartTransaction()
+    for i in range(nFeatures):
+        feat = ogr.Feature(feature_defn)
+        feat.SetField(0, i)
+        lyr.CreateFeature(feat)
+        feat.Destroy()
+    lyr.CommitTransaction()
+        
+    # Check that we can read more than 500 features and update each one
+    # with SetFeature()
+    count = 0
+    sqllyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM bigtable ORDER BY OGC_FID ASC')
+    feat = sqllyr.GetNextFeature()
+    while feat is not None:
+        expected_val = count
+        if feat.GetFieldAsInteger(0) != expected_val:
+            gdaltest.post_reason('expected value was %d. Got %d' % (expected_val, feat.GetFieldAsInteger(0)))
+            return 'fail'
+        feat.SetField(0, -count)
+        lyr.SetFeature(feat)
+        feat.Destroy()
+
+        count = count + 1
+        
+        feat = sqllyr.GetNextFeature()
+        
+    if count != nFeatures:
+        gdaltest.post_reason('did not get expected %d features' % nFeatures)
+        return 'fail'
     
+    # Check that 1 feature has been correctly updated
+    sqllyr.SetNextByIndex(1)
+    feat = sqllyr.GetNextFeature()
+    expected_val = -1
+    if feat.GetFieldAsInteger(0) != expected_val:
+        gdaltest.post_reason('expected value was %d. Got %d' % (expected_val, feat.GetFieldAsInteger(0)))
+        return 'fail'
+    feat.Destroy()
+        
+    gdaltest.pg_ds.ReleaseResultSet(sqllyr)
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -2025,6 +2087,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DROP VIEW testview')
     gdaltest.pg_ds.ExecuteSQL( "DELETE FROM geometry_columns WHERE f_table_name='testview'")
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:select' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:bigtable' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -2099,8 +2162,8 @@ gdaltest_list_internal = [
     ogr_pg_43,
     ogr_pg_44,
     ogr_pg_45,
+    ogr_pg_46,
     ogr_pg_cleanup ]
-
 
 ###############################################################################
 # Run gdaltest_list_internal with PostGIS enabled and then with PostGIS disabled
