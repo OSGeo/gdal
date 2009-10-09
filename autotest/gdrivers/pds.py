@@ -103,10 +103,19 @@ def pds_3():
 
     return 'success'
 
+###############################################################################
+# Read a hacked example of reading a detached file with an offset per #3177.
+
+def pds_4():
+
+    tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 4028 )
+    return tst.testOpen()
+
 gdaltest_list = [
     pds_1,
     pds_2,
-    pds_3 ]
+    pds_3,
+    pds_4 ]
 
 if __name__ == '__main__':
 
