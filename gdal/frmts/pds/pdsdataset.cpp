@@ -214,24 +214,30 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     // ^IMAGE                         = "MEGT90N000CB.IMG"
     // ^SPECTRAL_QUBE = 5  for multi-band images
 
-    const char *pszQube = poDS->GetKeyword( "^IMAGE", "" );
+    CPLString osImageKeyword = "^IMAGE";
+    CPLString osQube = poDS->GetKeyword( osImageKeyword, "" );
     CPLString osTargetFile = poOpenInfo->pszFilename;
 
-    if (EQUAL(pszQube,"")) {
-        pszQube = poDS->GetKeyword( "^SPECTRAL_QUBE" );
+    if (EQUAL(osQube,"")) {
+        osImageKeyword = "^SPECTRAL_QUBE";
+        osQube = poDS->GetKeyword( osImageKeyword );
     }
-    int nQube = atoi(pszQube);
 
-    if( pszQube[0] == '"' )
+    int nQube = atoi(osQube);
+    int nDetachedOffset = 0;
+
+    if( osQube[0] == '(' )
+    {
+        osQube = poDS->GetKeywordSub( osImageKeyword, 1 ); 
+        nDetachedOffset = atoi(poDS->GetKeywordSub( osImageKeyword, 2 ));
+    }
+
+    if( osQube[0] == '"' )
     {
         CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
-        CPLString osFilename = pszQube;
+        CPLString osFilename = osQube;
         poDS->CleanString( osFilename );
         osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
-    }
-    else if( pszQube[0] == '(' )
-    {
-        CPLAssert( FALSE ); // TODO
     }
 
     GDALDataType eDataType = GDT_Byte;
@@ -333,6 +339,8 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (nQube > 0)
         nSkipBytes = (nQube - 1) * record_bytes;     
+    else if( nDetachedOffset > 0 )
+        nSkipBytes = nDetachedOffset;
     else
         nSkipBytes = 0;     
     
