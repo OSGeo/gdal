@@ -106,8 +106,8 @@ OGRPGLayer::OGRPGLayer()
     poSRS = NULL;
     nSRSId = -2; // we haven't even queried the database for it yet.
 
-    /* Eventually we may need to make these a unique name */
-    pszCursorName = "OGRPGLayerReader";
+    pszCursorName = CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this));
+    
     hCursorResult = NULL;
     bCursorActive = FALSE;
 
@@ -137,6 +137,7 @@ OGRPGLayer::~OGRPGLayer()
     CPLFree( pszFIDColumn );
     CPLFree( pszQueryStatement );
     CPLFree( panMapFieldNameToIndex );
+    CPLFree( pszCursorName );
 
     if( poSRS != NULL )
         poSRS->Release();
