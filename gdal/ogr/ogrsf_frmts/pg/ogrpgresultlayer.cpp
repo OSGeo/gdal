@@ -49,9 +49,6 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
 
     pszRawStatement = CPLStrdup(pszRawQueryIn);
 
-    /* Eventually we may need to make these a unique name */
-    pszCursorName = "OGRPGResultLayerReader";
-
     osWHERE = "";
 
     BuildFullQueryStatement();
