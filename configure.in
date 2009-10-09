@@ -1111,13 +1111,21 @@ else
     LIBS="-L$HDF_LIB_DIR $LIBS"
   fi
 
-  AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf)
+dnl Debian supplies the HDF4 library which does not conflict with NetCDF.
+dnl Test for Debian flavor first. Hint: install the libhdf4-alt-dev package.
+  AC_CHECK_LIB(mfhdfalt,SDreaddata,HDF_LIB_NAME="-lmfhdfalt -ldfalt",HDF_LIB_NAME=missing,-ldfalt)
+
+dnl If it fails, test again for normal libmfhdf/libdf
   if test "$HDF_LIB_NAME" = "missing" ; then
     unset ac_cv_lib_mfhdf_SDreaddata
-    AC_CHECK_LIB(hdf4,SDreaddata,HDF_LIB_NAME=-lhdf4,HDF_LIB_NAME=missing,)
+    AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf)
+    if test "$HDF_LIB_NAME" = "missing" ; then
+      unset ac_cv_lib_mfhdf_SDreaddata
+      AC_CHECK_LIB(hdf4,SDreaddata,HDF_LIB_NAME=-lhdf4,HDF_LIB_NAME=missing,)
+    fi
   fi
 
-dnl Check again, with -ldf, -ljpeg and -lz this time.
+dnl Test again, with -ldf, -ljpeg and -lz this time.
   if test "$HDF_LIB_NAME" = "missing" ; then
     unset ac_cv_lib_mfhdf_SDreaddata
     AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf -ljpeg -lz)
