@@ -47,6 +47,7 @@ static void NITFLoadLocationTable( NITFImage *psImage );
 static void NITFLoadColormapSubSection( NITFImage *psImage );
 static void NITFLoadSubframeMaskTable( NITFImage *psImage );
 static int NITFLoadVQTables( NITFImage *psImage );
+static int NITFReadGEOLOB( NITFImage *psImage );
 
 void NITFGetGCP ( const char* pachCoord, GDAL_GCP *psIGEOLOGCPs, int iCoord );
 int NITFReadBLOCKA_GCPs ( NITFImage *psImage, GDAL_GCP *psIGEOLOGCPs );
@@ -1018,6 +1019,12 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     CPLFree( psIGEOLOGCPs );
         
 /* -------------------------------------------------------------------- */
+/*      We override the coordinates found in IGEOLO in case a GEOLOB is */
+/*      present.  It provides higher precision lat/long values.         */
+/* -------------------------------------------------------------------- */
+    NITFReadGEOLOB( psImage );
+
+/* -------------------------------------------------------------------- */
 /*      If we have an RPF CoverageSectionSubheader, read the more       */
 /*      precise bounds from it.                                         */
 /* -------------------------------------------------------------------- */
@@ -1408,7 +1415,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Unable to read %d byte block from " CPL_FRMT_GUIB ".", 
-                      nRawBytes, psImage->panBlockStart[iFullBlock] );
+                      (int) nRawBytes, psImage->panBlockStart[iFullBlock] );
             CPLFree( pabyRawData );
             return BLKREAD_FAIL;
         }
@@ -1468,7 +1475,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Unable to read %d byte block from " CPL_FRMT_GUIB ".", 
-                      nRawBytes, psImage->panBlockStart[iFullBlock] );
+                      (int) nRawBytes, psImage->panBlockStart[iFullBlock] );
             return BLKREAD_FAIL;
         }
         
@@ -2580,6 +2587,81 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage, GDAL_GCP *psIGEOLOGCPs )
     /* ---------------------------------------------------------------- */
 
     psImage->chICORDS = 'D';
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                        NITFReadGEOLOB()                              */
+/*                                                                      */
+/*      The GEOLOB contains high precision lat/long geotransform        */
+/*      values.                                                         */
+/************************************************************************/
+
+static int NITFReadGEOLOB( NITFImage *psImage )
+{
+    const char *pachTRE;
+    int        nTRESize;
+    char       szTemp[128];
+    int        nRemainingBytes;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
+                           "GEOLOB", &nTRESize );
+
+    if( pachTRE == NULL )
+        return FALSE;
+
+    if( !CSLTestBoolean(CPLGetConfigOption( "NITF_USEGEOLOB", "YES" )) )
+    {
+        CPLDebug( "NITF", "GEOLOB available, but ignored by request." );
+        return FALSE;
+    }
+
+    if( nTRESize != 48 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Cannot read GEOLOB TRE. Wrong size.");
+        return FALSE;
+    }
+
+    nRemainingBytes = psImage->nTREBytes - (pachTRE - psImage->pachTRE);
+    if (nRemainingBytes < 48)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Cannot read GEOLOB TRE. Not enough bytes");
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+    {
+        double dfARV = atoi(NITFGetField( szTemp, pachTRE, 0, 9 ));
+        double dfBRV = atoi(NITFGetField( szTemp, pachTRE, 9, 9 ));
+        
+        double dfLSO = atof(NITFGetField( szTemp, pachTRE, 18, 15 ));
+        double dfPSO = atof(NITFGetField( szTemp, pachTRE, 33, 15 ));
+        
+        double dfPixelWidth  = 360.0 / dfARV;
+        double dfPixelHeight = 360.0 / dfBRV;
+        
+        psImage->dfULX = dfLSO;
+        psImage->dfURX = psImage->dfULX + psImage->nCols * dfPixelWidth;
+        psImage->dfLLX = psImage->dfULX;
+        psImage->dfLRX = psImage->dfURX;
+        
+        psImage->dfULY = dfPSO;
+        psImage->dfURY = psImage->dfULY;
+        psImage->dfLLY = psImage->dfULY - psImage->nRows * dfPixelHeight;
+        psImage->dfLRY = psImage->dfLLY;
+        
+        psImage->chICORDS = 'D';
+        
+        CPLDebug( "NITF", "IGEOLO bounds overridden by GEOLOB TRE." );
+    }
 
     return TRUE;
 }
