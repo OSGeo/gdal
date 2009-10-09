@@ -106,7 +106,7 @@ class OGRPGLayer : public OGRLayer
 
     char               *pszQueryStatement;
 
-    const char         *pszCursorName;
+    char               *pszCursorName;
     PGresult           *hCursorResult;
     int                 bCursorActive;
 
