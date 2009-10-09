@@ -370,7 +370,7 @@ most supported file formats with one over several downsampling algorithms.
 
 <dl>
 <dt> <b>-r</b>
-<i>{nearest,average,gauss,cubic,average_mp,average_magphase,mode}</i>:</dt><dd>
+<i>{nearest (default),average,gauss,cubic,average_mp,average_magphase,mode}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
 <dt> <b>-ro</b></dt>:<dd> (available from GDAL 1.6.0) open the dataset in read-only mode, in order to generate
 external overview (for GeoTIFF especially). </dd>
