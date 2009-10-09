@@ -201,13 +201,11 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszQube = poDS->GetKeyword( "^QUBE" );
     int nQube = atoi(pszQube);
 
-    if( pszQube[0] == '"' )
+    if( pszQube[0] == '"' || pszQube[0] == '(' )
     {
-        CPLAssert( FALSE ); // TODO
-    }
-    else if( pszQube[0] == '(' )
-    {
-        CPLAssert( FALSE ); // TODO
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "ISIS2 driver does not support detached images." );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -518,18 +516,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* END ISIS2 Label Read */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     
-/* -------------------------------------------------------------------- */
-/*     Is the CUB detached - if so, reset name to binary file?          */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    // Frank - is this correct?
-    //The extension already added on so don't add another. But is this needed?
-    char *pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
-    char *pszName = CPLStrdup( CPLGetBasename( poOpenInfo->pszFilename ) );
-    if (bIsDetached)
-        pszCUBFilename = CPLFormCIFilename( pszPath, detachedCub, "" );
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
 /*      this never having been considered to be a match. This isn't     */
