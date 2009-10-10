@@ -271,6 +271,10 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
     else if( psImage->nBitsPerSample == 64 
              && EQUAL(psImage->szPVType,"R") )
         eDataType = GDT_Float64;
+    else if( psImage->nBitsPerSample == 64
+              && EQUAL(psImage->szPVType,"C") )
+        eDataType = GDT_CFloat32;
+    /* ERO : note I'm not sure if CFloat64 can be transmitted as NBPP is only 2 characters */
     else
     {
         eDataType = GDT_Unknown;
@@ -3179,14 +3183,13 @@ static const char *GDALToNITFDataType( GDALDataType eType )
         return NULL;
 
       case GDT_CFloat32:
-      case GDT_CFloat64:
         pszPVType = "C";
         break;
 
       default:
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unsupported raster pixel type (%d).", 
-                  (int) eType );
+                  "Unsupported raster pixel type (%s).", 
+                  GDALGetDataTypeName(eType) );
         return NULL;
     }
 
