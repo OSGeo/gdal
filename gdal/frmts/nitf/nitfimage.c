@@ -2102,34 +2102,27 @@ static void NITFSwapWordsInternal( void *pData, int nWordSize, int nWordCount,
     }
 }
 
-/* Swap real of complex types */
+/* Swap real or complex types */
 static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount )
 
 {
-    int nWordSize;
     if( EQUAL(psImage->szPVType,"C") )
     {
         /* According to http://jitc.fhu.disa.mil/nitf/tag_reg/imagesubheader/pvtype.html */
         /* "C values shall be represented with the Real and Imaginary parts, each represented */
         /* in IEEE 32 or 64-bit floating point representation (IEEE 754) and appearing in */
         /* adjacent four or eight-byte blocks, first Real, then Imaginary" */
-        nWordSize = psImage->nWordSize / 2;
         NITFSwapWordsInternal(  pData,
-                        nWordSize,
-                        nWordCount,
-                        nWordSize );
-        NITFSwapWordsInternal( ((GByte *) pData)+nWordSize, 
-                        nWordSize,
-                        nWordCount,
-                        nWordSize );
+                                psImage->nWordSize / 2,
+                                2 * nWordCount,
+                                psImage->nWordSize / 2 );
     }
     else
     {
-        nWordSize = psImage->nWordSize;
         NITFSwapWordsInternal( pData,
-                       nWordSize,
-                       nWordCount, 
-                       nWordSize );
+                               psImage->nWordSize,
+                               nWordCount, 
+                               psImage->nWordSize );
     }
 }
 
