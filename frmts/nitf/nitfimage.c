@@ -39,8 +39,7 @@ CPL_CVSID("$Id$");
 
 static char *NITFTrimWhite( char * );
 #ifdef CPL_LSB
-static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
-                           int nWordSkip );
+static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount );
 #endif
 
 static void NITFLoadLocationTable( NITFImage *psImage );
@@ -1248,9 +1247,10 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         {
 #ifdef CPL_LSB
             if( psImage->nWordSize * 8 == psImage->nBitsPerSample )
-                NITFSwapWords( pData, psImage->nWordSize, 
-                               psImage->nBlockWidth * psImage->nBlockHeight, 
-                               psImage->nWordSize );
+            {
+                NITFSwapWords( psImage, pData,
+                            psImage->nBlockWidth * psImage->nBlockHeight);
+            }
 #endif
 
             return BLKREAD_OK;
@@ -1326,9 +1326,8 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         }
 
 #ifdef CPL_LSB
-        NITFSwapWords( pData, psImage->nWordSize, 
-                       psImage->nBlockWidth * psImage->nBlockHeight, 
-                       psImage->nWordSize );
+        NITFSwapWords( psImage, pData,
+                       psImage->nBlockWidth * psImage->nBlockHeight);
 #endif
 
         CPLFree( pabyWrkBuf );
@@ -1535,9 +1534,8 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M' )
     {
 #ifdef CPL_LSB
-        NITFSwapWords( pData, psImage->nWordSize, 
-                       psImage->nBlockWidth * psImage->nBlockHeight, 
-                       psImage->nWordSize );
+        NITFSwapWords( psImage, pData,
+                       psImage->nBlockWidth * psImage->nBlockHeight);
 #endif
 
         if( VSIFSeekL( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
@@ -1554,9 +1552,8 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         {
 #ifdef CPL_LSB
             /* restore byte order to original */
-            NITFSwapWords( pData, psImage->nWordSize, 
-                           psImage->nBlockWidth * psImage->nBlockHeight, 
-                           psImage->nWordSize );
+            NITFSwapWords( psImage, pData,
+                       psImage->nBlockWidth * psImage->nBlockHeight);
 #endif
 
             return BLKREAD_OK;
@@ -1622,8 +1619,7 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         VSIFReadL( pData, 1, nLineSize, psImage->psFile->fp );
 
 #ifdef CPL_LSB
-        NITFSwapWords( pData, psImage->nWordSize, 
-                       psImage->nBlockWidth, psImage->nWordSize );
+        NITFSwapWords( psImage, pData, psImage->nBlockWidth);
 #endif
 
         return BLKREAD_OK;
@@ -1661,8 +1657,7 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         }
 
 #ifdef CPL_LSB
-        NITFSwapWords( (void *) pabyDst, psImage->nWordSize, 
-                       psImage->nBlockWidth, psImage->nWordSize );
+        NITFSwapWords(  psImage, pabyDst, psImage->nBlockWidth);
 #endif
     }
 
@@ -1718,15 +1713,13 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset )
     {
 #ifdef CPL_LSB
-        NITFSwapWords( (void *) pData, psImage->nWordSize, 
-                       psImage->nCols, psImage->nWordSize );
+        NITFSwapWords( psImage, pData, psImage->nCols );
 #endif
 
         VSIFWriteL( pData, 1, nLineSize, psImage->psFile->fp );
 
 #ifdef CPL_LSB
-        NITFSwapWords( (void *) pData, psImage->nWordSize, 
-                       psImage->nCols, psImage->nWordSize );
+        NITFSwapWords( psImage, pData, psImage->nCols );
 #endif
 
         return BLKREAD_OK;
@@ -1762,8 +1755,7 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
                     pabyDst + iPixel * psImage->nWordSize, 
                     psImage->nWordSize );
 #ifdef CPL_LSB
-        NITFSwapWords( pabyDst + iPixel * psImage->nWordSize, 
-                       psImage->nWordSize, 1, psImage->nWordSize );
+            NITFSwapWords( psImage, pabyDst + iPixel * psImage->nWordSize, 1 );
 #endif
         }
     }
@@ -2037,8 +2029,9 @@ char *NITFTrimWhite( char *pszTarget )
 /************************************************************************/
 
 #ifdef CPL_LSB
-static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
-                           int nWordSkip )
+
+static void NITFSwapWordsInternal( void *pData, int nWordSize, int nWordCount,
+                                   int nWordSkip )
 
 {
     int         i;
@@ -2106,6 +2099,37 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
 
       default:
         break;
+    }
+}
+
+/* Swap real of complex types */
+static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount )
+
+{
+    int nWordSize;
+    if( EQUAL(psImage->szPVType,"C") )
+    {
+        /* According to http://jitc.fhu.disa.mil/nitf/tag_reg/imagesubheader/pvtype.html */
+        /* "C values shall be represented with the Real and Imaginary parts, each represented */
+        /* in IEEE 32 or 64-bit floating point representation (IEEE 754) and appearing in */
+        /* adjacent four or eight-byte blocks, first Real, then Imaginary" */
+        nWordSize = psImage->nWordSize / 2;
+        NITFSwapWordsInternal(  pData,
+                        nWordSize,
+                        nWordCount,
+                        nWordSize );
+        NITFSwapWordsInternal( ((GByte *) pData)+nWordSize, 
+                        nWordSize,
+                        nWordCount,
+                        nWordSize );
+    }
+    else
+    {
+        nWordSize = psImage->nWordSize;
+        NITFSwapWordsInternal( pData,
+                       nWordSize,
+                       nWordCount, 
+                       nWordSize );
     }
 }
 
