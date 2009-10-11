@@ -1216,7 +1216,8 @@ OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
     }
     else
     {
-        setPoints( nPointCount, xyz, xyz+nPointCount, xyz+nPointCount*2 );
+        setPoints( nPointCount, xyz, xyz+nPointCount,
+                   ( padfZ ) ? xyz+nPointCount*2 : NULL);
         CPLFree( xyz );
 
         assignSpatialReference( poCT->GetTargetCS() );
