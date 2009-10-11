@@ -2152,7 +2152,7 @@ void NITFDataset::CheckGeoSDEInfo()
     }
     int nParmCount = atoi(NITFGetField(szParm,pszPRJPSB,82,1));
     int i;
-    double adfParm[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    double adfParm[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     double dfFN;
     double dfFE;
     if (nRemainingBytesPRJPSB < 83+15*nParmCount+15+15)
