@@ -307,7 +307,7 @@ char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszO
         {
             if ( (pszLine = CPLReadLine2L(fp, nMaxCols, papszOptions)) != NULL )
             {
-                if (nLines >= nAllocatedLines)
+                if (nLines + 1 >= nAllocatedLines)
                 {
                     char** papszStrListNew;
                     nAllocatedLines = 16 + nAllocatedLines * 2;
