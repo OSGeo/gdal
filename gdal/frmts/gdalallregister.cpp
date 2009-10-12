@@ -425,6 +425,10 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_epsilon
     GDALRegister_EPSILON();
 #endif
+
+#ifdef FRMT_wktraster
+    GDALRegister_WKTRaster();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
