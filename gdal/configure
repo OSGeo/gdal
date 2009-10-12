@@ -1566,7 +1566,7 @@ Optional Packages:
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
   --with-threads=linkoptInclude thread safe support
   --with-libz=ARG       Include libz support (ARG=internal or libz directory)
-  --with-pg=ARG           Include PostgreSQL OGR Support (ARG=path to
+  --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=path to
                           pg_config)
   --with-grass=ARG      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)
   --with-libgrass=ARG   Include GRASS support based on libgrass (GRASS 5.0+)

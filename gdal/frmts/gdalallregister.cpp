@@ -414,10 +414,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GEOR();
 #endif
 
-#ifdef FRMT_wktraster
-    GDALRegister_WKTRaster();
-#endif
-
 #ifdef FRMT_rasterlite
     GDALRegister_Rasterlite();
 #endif
