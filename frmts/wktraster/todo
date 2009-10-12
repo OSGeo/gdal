@@ -1,0 +1,12 @@
+TODO List :
+
+Objective						Planned schedule	state
+------------------------------------------------------------------------------------------
+Block reading improvement				October 2009		On going
+Out-db data reading support				October 2009		On going
+GDAL tools update 					November 2009		Todo
+RASTER_COLUMNS table update				November 2009		Todo
+Support for reading non-regularly blocked rasters	December 2009		Todo
+Bulk update of data blocks				December 2009		Todo
+Support for creating new WKT Rasters			December 2009		Todo
+
