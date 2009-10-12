@@ -5,7 +5,7 @@
  * Author:   Jorge Arevalo, jorgearevalo@gis4free.org
  * 
  * Last changes:
- * $Id: wktrasterdataset.cpp 59 2009-08-15 15:59:40Z jorgearevalo $
+ * $Id$
  *
  * NOTE:
  * 	There are many small functions in this class. Some of these functions
@@ -59,6 +59,8 @@
 #ifdef _WIN32
 #define rint(x) floor((x) + 0.5)
 #endif
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void GDALRegister_WKTRaster(void);
@@ -1687,6 +1689,8 @@ CPLErr WKTRasterDataset::SetGeoTransform(double * padfTransform)
     dfPixelSizeY = padfTransform[5];
 
     // TODO: Update all data blocks with these values
+    
+    return CE_None;
 }
 
 
