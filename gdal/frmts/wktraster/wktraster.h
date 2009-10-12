@@ -4,7 +4,7 @@
  * Purpose:  Main header file for PostGIS WKTRASTER/GDAL Driver 
  * Author:   Jorge Arevalo, jorgearevalo@gis4free.org
  * 
- * Last changes: $Id: wktraster.h 36 2009-07-19 12:24:29Z jorgearevalo 
+ * Last changes: $Id$
  *
  ******************************************************************************
  * Copyright (c) 2009, Jorge Arevalo, jorgearevalo@gis4free.org
