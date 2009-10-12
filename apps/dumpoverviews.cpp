@@ -45,6 +45,7 @@ int main( int argc, char ** argv )
 
 {
     const char *pszSrcFilename = NULL;
+    const char *pszRasterFilename = NULL;
     int iArg;
     int anReqOverviews[1000];
     int nReqOverviewCount = 0;
@@ -67,7 +68,41 @@ int main( int argc, char ** argv )
         }
         else if( pszSrcFilename == NULL )
         {
-            pszSrcFilename = argv[iArg];
+            /* -------------------------------------------------------------------- */
+            /*      Check if filename is a PostgreSQL connection.                   */
+            /* -------------------------------------------------------------------- */
+            if (EQUALN(argv[iArg], "PG:", 3)) {
+                char * pszStart = NULL;
+                char * pszEnd = NULL;
+                char szTemp[1024];
+
+                // get only the name of the table
+                pszStart = strstr(argv[iArg], "table='");
+                if (pszStart == NULL)
+                    pszStart = strstr(argv[iArg], "TABLE='");
+                if (pszStart == NULL) {
+                    printf("Can't find a table name. Is connection string in the format \
+					  PG:[host='<host>]' user='<user>' [password='<password>]' \
+					  dbname='<dbname>' table='<raster_table>' \
+					  [mode='working_mode' where='<where_clause>'] ?\n");
+                    exit(1);
+                }
+
+                // Get the table name as filename
+                pszStart += strlen("table='");
+                pszEnd = strstr(pszStart, "'");
+
+                memset(szTemp, '\0', 1024*sizeof(char));
+                memcpy(szTemp, pszStart, pszEnd - pszStart);
+
+                pszRasterFilename = szTemp;
+                pszSrcFilename = argv[iArg];
+            }
+
+            else {
+                pszSrcFilename = argv[iArg];
+                pszRasterFilename = pszSrcFilename;
+            }
         }
         else if( atoi(argv[iArg]) > 0 || EQUAL(argv[iArg],"0") )
         {
@@ -136,7 +171,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
             CPLString osFilename;
             osFilename.Printf( "%s_%d_%d.tif",
-                               CPLGetBasename(pszSrcFilename), 
+                               CPLGetBasename(pszRasterFilename),
                                iBand+1, iOverview );
             DumpBand( hSrcDS, hSrcOver, osFilename );
         }
@@ -148,7 +183,7 @@ int main( int argc, char ** argv )
         {
             CPLString osFilename;
             osFilename.Printf( "%s_%d_mask.tif",
-                               CPLGetBasename(pszSrcFilename), 
+                               CPLGetBasename(pszRasterFilename),
                                iBand+1 );
             DumpBand( hSrcDS, GDALGetMaskBand(hBaseBand), osFilename );
         }
