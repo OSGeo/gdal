@@ -4,7 +4,7 @@
  * Purpose:  Implementation of a wrapper around the WKTRaster and its bands
  * Author:   Jorge Arevalo, jorgearevalo@gis4free.org
  *
- * Last changes: $Id: wktrasterwrapper.cpp 63 2009-08-16 17:46:16Z jorgearevalo $
+ * Last changes: $Id$
  *
  ******************************************************************************
  * Copyright (c) 2009, Jorge Arevalo, jorgearevalo@gis4free.org
@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 #include "wktraster.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************
  * ====================================================================
