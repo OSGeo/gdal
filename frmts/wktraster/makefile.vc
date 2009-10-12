@@ -1,7 +1,7 @@
 
 OBJ	=	wktrasterdataset.obj wktrasterrasterband.obj wktrasterwrapper.obj
 
-EXTRAFLAGS =  -I..\iso8211
+EXTRAFLAGS =  -I$(PG_INC_DIR)
 
 GDAL_ROOT	=	..\..
 
