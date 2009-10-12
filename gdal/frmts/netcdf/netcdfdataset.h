@@ -155,8 +155,6 @@ class netCDFDataset : public GDALPamDataset
     int           cdfid;
     char         **papszMetadata;
     char          papszDimName[NC_MAX_NAME][1024];
-    char          papszDimXName[1024];
-    char          papszDimYName[1024];
     int          *paDimIds;
     size_t        xdim, ydim;
     int           nDimXid, nDimYid;
