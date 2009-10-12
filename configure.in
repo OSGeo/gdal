@@ -367,7 +367,7 @@ PG_CONFIG=no
 
 AC_ARG_WITH(pg,
 	    AS_HELP_STRING([--with-pg[=ARG]],
-	       [Include PostgreSQL OGR Support (ARG=path to pg_config)]),,)
+	       [Include PostgreSQL GDAL/OGR Support (ARG=path to pg_config)]),,)
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
   AC_PATH_PROG(PG_CONFIG, pg_config, no)
