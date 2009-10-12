@@ -5,7 +5,7 @@
  * Author:   Jorge Arevalo, jorgearevalo@gis4free.org
  * 
  * Last changes:
- * $Id: wktrasterrasterband.cpp 63 2009-08-16 17:46:16Z jorgearevalo $
+ * $Id$
  *
  * TODO:
  *  - Block caching, to avoid fetching the whole raster from database each time
@@ -40,6 +40,7 @@
 #include "ogr_geometry.h"
 #include <gdal_priv.h>
 
+CPL_CVSID("$Id$");
 
 /**
  * Constructor.
