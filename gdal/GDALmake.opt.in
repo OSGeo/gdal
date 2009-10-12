@@ -106,9 +106,10 @@ GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal
 MACOSX_FRAMEWORK = @MACOSX_FRAMEWORK@
 
 #
-# OGR/PostgreSQL support.
+# GDAL/OGR PostgreSQL support.
 #
 HAVE_OGR_PG     = @HAVE_PG@
+HAVE_WKTRASTER  = @HAVE_PG@
 PG_INC	=	@PG_INC@
 
 #
@@ -324,7 +325,7 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 		sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b \
 		nitf bmp pcidsk airsar rs2 ilwis rmf leveller sgi srtmhgt \
 		idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg \
-		coasp tsx terragen blx msgn til r wktraster \
+		coasp tsx terragen blx msgn til r \
 		@OPT_GDAL_FORMATS@
 
 ifneq ($(LIBZ_SETTING),no)
@@ -335,6 +336,10 @@ ifeq ($(OGR_ENABLED),yes)
 ifeq ($(HAVE_SQLITE),yes)
 GDAL_FORMATS := $(GDAL_FORMATS) rasterlite
 endif
+endif
+
+ifeq ($(HAVE_WKTRASTER),yes)
+GDAL_FORMATS := $(GDAL_FORMATS) wktraster
 endif
 
 #

@@ -139,7 +139,6 @@ void CPL_DLL GDALRegister_EIR(void);
 void CPL_DLL GDALRegister_GEOR(void);
 void CPL_DLL GDALRegister_TIL(void);
 void CPL_DLL GDALRegister_R(void);
-void CPL_DLL GDALRegister_WKTRaster(void);
 void CPL_DLL GDALRegister_Rasterlite(void);
 void CPL_DLL GDALRegister_EPSILON(void);
 void CPL_DLL GDALRegister_WKTRaster(void);

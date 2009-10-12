@@ -297,8 +297,8 @@ char * WKTRasterWrapper::GetWktExtent() {
      * Create WKT string for raster extent
      * BE CAREFUL: With irregular blocking is not valid in this way...
      */
-    double dfRasterWidth = fabs(rint(dfScaleX * nWidth));
-    double dfRasterHeight = fabs(rint(dfScaleY * nHeight));
+    double dfRasterWidth = fabs((int)(dfScaleX * nWidth + 0.5));
+    double dfRasterHeight = fabs((int)(dfScaleY * nHeight + 0.5));
 
     double dfBlockEndX = dfIpX + dfRasterWidth;
     double dfBlockEndY = dfIpY - dfRasterHeight;
