@@ -223,6 +223,21 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
     CSLDestroy( poDS->papszMetadata );
     poDS->papszMetadata = CSLDuplicate( papszMetaGlobal );
     CSLDestroy( papszMetaGlobal );
+
+/* check for chunksize and set it as the blocksize (optimizes read) */
+    hid_t listid = H5Dget_create_plist(((HDF5ImageDataset * )poDS)->dataset_id);
+    if (listid>0)
+    {
+        if(H5Pget_layout(listid) == H5D_CHUNKED)
+        {
+            hsize_t panChunkDims[3];
+            int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
+            nBlockXSize   = panChunkDims[nDimSize-1];
+            nBlockYSize   = panChunkDims[nDimSize-2];
+        }
+        H5Pclose(listid);
+    }
+
 }
 
 /************************************************************************/
@@ -281,16 +296,24 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	col_dims[0] = 1;
     }
 
-    offset[poGDS->ndims - 2] = nBlockYOff;
-    offset[poGDS->ndims - 1] = nBlockXOff;
-    count[poGDS->ndims - 2]  = 1;
-    count[poGDS->ndims - 1]  = poGDS->GetRasterXSize( );
+    offset[poGDS->ndims - 2] = nBlockYOff*nBlockYSize;
+    offset[poGDS->ndims - 1] = nBlockXOff*nBlockXSize;
+    count[poGDS->ndims - 2]  = nBlockYSize;
+    count[poGDS->ndims - 1]  = nBlockXSize;
 
     nSizeOfData = H5Tget_size( poGDS->native );
-    memset( pImage,0,count[poGDS->ndims-1]-offset[poGDS->ndims-1]*nSizeOfData );
+    memset( pImage,0,nBlockXSize*nBlockYSize*nSizeOfData );
+
+/*  blocksize may not be a multiple of imagesize */
+    count[poGDS->ndims - 2]  = MIN( size_t(nBlockYSize),
+                                    poDS->GetRasterYSize() -
+                                            offset[poGDS->ndims - 2]);
+    count[poGDS->ndims - 1]  = MIN( size_t(nBlockXSize),
+                                    poDS->GetRasterXSize()-
+                                            offset[poGDS->ndims - 1]);
 
 /* -------------------------------------------------------------------- */
-/*      Select 1 line                                                   */
+/*      Select block from file space                                    */
 /* -------------------------------------------------------------------- */
     status =  H5Sselect_hyperslab( poGDS->dataspace_id, 
 				  H5S_SELECT_SET, 
@@ -300,9 +323,14 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Create memory space to receive the data                         */
 /* -------------------------------------------------------------------- */
-    col_dims[poGDS->ndims-2]=1;
-    col_dims[poGDS->ndims-1]=count[poGDS->ndims-1];
+    col_dims[poGDS->ndims-2]=nBlockYSize;
+    col_dims[poGDS->ndims-1]=nBlockXSize;
     memspace = H5Screate_simple( rank, col_dims, NULL );
+    H5OFFSET_TYPE mem_offset[3] = {0, 0, 0};
+    status =  H5Sselect_hyperslab(memspace,
+                                  H5S_SELECT_SET,
+                                  mem_offset, NULL,
+                                  count, NULL);
 
     status = H5Dread ( poGDS->dataset_id,
 		      poGDS->native, 
