@@ -2668,7 +2668,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
 /*      Read actual data and build histogram.                           */
 /* -------------------------------------------------------------------- */
-    double      dfScale = nBuckets / (dfMax - dfMin);
+    double      dfScale;
 
     if( !pfnProgress( 0.0, "Compute Histogram", pProgressData ) )
     {
@@ -2848,6 +2848,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         {
             int  iXBlock, iYBlock, nXCheck, nYCheck;
             GDALRasterBlock *poBlock;
+            void* pData;
 
             if( !pfnProgress( iSampleBlock
                               / ((double)nBlocksPerRow * nBlocksPerColumn),
@@ -2866,6 +2867,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                 return CE_Failure;
             }
             
+            pData = poBlock->GetDataRef();
+            
             if( (iXBlock+1) * nBlockXSize > GetXSize() )
                 nXCheck = GetXSize() - iXBlock * nBlockXSize;
             else
@@ -2877,13 +2880,13 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                 nYCheck = nBlockYSize;
 
             /* this is a special case for a common situation */
-            if( poBlock->GetDataType() == GDT_Byte && !bSignedByte
+            if( eDataType == GDT_Byte && !bSignedByte
                 && dfScale == 1.0 && (dfMin >= -0.5 && dfMin <= 0.5)
                 && nYCheck == nBlockYSize && nXCheck == nBlockXSize
                 && nBuckets == 256 )
             {
                 int    nPixels = nXCheck * nYCheck;
-                GByte  *pabyData = (GByte *) poBlock->GetDataRef();
+                GByte  *pabyData = (GByte *) pData;
                 
                 for( int i = 0; i < nPixels; i++ )
                     panHistogram[pabyData[i]]++;
@@ -2901,40 +2904,40 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     int    nIndex;
                     double dfValue = 0.0;
 
-                    switch( poBlock->GetDataType() )
+                    switch( eDataType )
                     {
                       case GDT_Byte:
                       {
                         if (bSignedByte)
-                            dfValue = ((signed char *) poBlock->GetDataRef())[iOffset];
+                            dfValue = ((signed char *) pData)[iOffset];
                         else
-                            dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                            dfValue = ((GByte *) pData)[iOffset];
                         break;
                       }
                       case GDT_UInt16:
-                        dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GUInt16 *) pData)[iOffset];
                         break;
                       case GDT_Int16:
-                        dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GInt16 *) pData)[iOffset];
                         break;
                       case GDT_UInt32:
-                        dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GUInt32 *) pData)[iOffset];
                         break;
                       case GDT_Int32:
-                        dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GInt32 *) pData)[iOffset];
                         break;
                       case GDT_Float32:
-                        dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((float *) pData)[iOffset];
                         break;
                       case GDT_Float64:
-                        dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((double *) pData)[iOffset];
                         break;
                       case GDT_CInt16:
                         {
                             double  dfReal =
-                                ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                                ((GInt16 *) pData)[iOffset*2];
                             double  dfImag =
-                                ((GInt16 *) poBlock->GetDataRef())[iOffset*2+1];
+                                ((GInt16 *) pData)[iOffset*2+1];
                             if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
                                 continue;
                             dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
@@ -2943,9 +2946,9 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                       case GDT_CInt32:
                         {
                             double  dfReal =
-                                ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                                ((GInt32 *) pData)[iOffset*2];
                             double  dfImag =
-                                ((GInt32 *) poBlock->GetDataRef())[iOffset*2+1];
+                                ((GInt32 *) pData)[iOffset*2+1];
                             if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
                                 continue;
                             dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
@@ -2954,9 +2957,9 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                       case GDT_CFloat32:
                         {
                             double  dfReal =
-                                ((float *) poBlock->GetDataRef())[iOffset*2];
+                                ((float *) pData)[iOffset*2];
                             double  dfImag =
-                                ((float *) poBlock->GetDataRef())[iOffset*2+1];
+                                ((float *) pData)[iOffset*2+1];
                             if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
                                 continue;
                             dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
@@ -2965,9 +2968,9 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                       case GDT_CFloat64:
                         {
                             double  dfReal =
-                                ((double *) poBlock->GetDataRef())[iOffset*2];
+                                ((double *) pData)[iOffset*2];
                             double  dfImag =
-                                ((double *) poBlock->GetDataRef())[iOffset*2+1];
+                                ((double *) pData)[iOffset*2+1];
                             if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
                                 continue;
                             dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
@@ -3556,6 +3559,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         {
             int  iXBlock, iYBlock, nXCheck, nYCheck;
             GDALRasterBlock *poBlock;
+            void* pData;
 
             iYBlock = iSampleBlock / nBlocksPerRow;
             iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
@@ -3568,6 +3572,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 poBlock->DropLock();
                 continue;
             }
+            
+            pData = poBlock->GetDataRef();
             
             if( (iXBlock+1) * nBlockXSize > GetXSize() )
                 nXCheck = GetXSize() - iXBlock * nBlockXSize;
@@ -3587,51 +3593,51 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     int    iOffset = iX + iY * nBlockXSize;
                     double dfValue = 0.0;
 
-                    switch( poBlock->GetDataType() )
+                    switch( eDataType )
                     {
                       case GDT_Byte:
                       {
                         if (bSignedByte)
-                            dfValue = ((signed char *)poBlock->GetDataRef())[iOffset];
+                            dfValue = ((signed char *)pData)[iOffset];
                         else
-                            dfValue = ((GByte *)poBlock->GetDataRef())[iOffset];
+                            dfValue = ((GByte *)pData)[iOffset];
                         break;
                       }
                       case GDT_UInt16:
-                        dfValue = ((GUInt16 *)poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GUInt16 *)pData)[iOffset];
                         break;
                       case GDT_Int16:
-                        dfValue = ((GInt16 *)poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GInt16 *)pData)[iOffset];
                         break;
                       case GDT_UInt32:
-                        dfValue = ((GUInt32 *)poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GUInt32 *)pData)[iOffset];
                         break;
                       case GDT_Int32:
-                        dfValue = ((GInt32 *)poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GInt32 *)pData)[iOffset];
                         break;
                       case GDT_Float32:
-                        dfValue = ((float *)poBlock->GetDataRef())[iOffset];
+                        dfValue = ((float *)pData)[iOffset];
                         if (CPLIsNan(dfValue))
                             continue;
                         break;
                       case GDT_Float64:
-                        dfValue = ((double *)poBlock->GetDataRef())[iOffset];
+                        dfValue = ((double *)pData)[iOffset];
                         if (CPLIsNan(dfValue))
                             continue;
                         break;
                       case GDT_CInt16:
-                        dfValue = ((GInt16 *)poBlock->GetDataRef())[iOffset*2];
+                        dfValue = ((GInt16 *)pData)[iOffset*2];
                         break;
                       case GDT_CInt32:
-                        dfValue = ((GInt32 *)poBlock->GetDataRef())[iOffset*2];
+                        dfValue = ((GInt32 *)pData)[iOffset*2];
                         break;
                       case GDT_CFloat32:
-                        dfValue = ((float *)poBlock->GetDataRef())[iOffset*2];
+                        dfValue = ((float *)pData)[iOffset*2];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
                       case GDT_CFloat64:
-                        dfValue = ((double *)poBlock->GetDataRef())[iOffset*2];
+                        dfValue = ((double *)pData)[iOffset*2];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
@@ -4016,6 +4022,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         {
             int  iXBlock, iYBlock, nXCheck, nYCheck;
             GDALRasterBlock *poBlock;
+            void* pData;
 
             iYBlock = iSampleBlock / nBlocksPerRow;
             iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
@@ -4029,6 +4036,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                 continue;
             }
             
+            pData = poBlock->GetDataRef();
+            
             if( (iXBlock+1) * nBlockXSize > GetXSize() )
                 nXCheck = GetXSize() - iXBlock * nBlockXSize;
             else
@@ -4038,7 +4047,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                 nYCheck = GetYSize() - iYBlock * nBlockYSize;
             else
                 nYCheck = nBlockYSize;
-
+                
             /* this isn't the fastest way to do this, but is easier for now */
             for( int iY = 0; iY < nYCheck; iY++ )
             {
@@ -4047,51 +4056,51 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     int    iOffset = iX + iY * nBlockXSize;
                     double dfValue = 0.0;
 
-                    switch( poBlock->GetDataType() )
+                    switch( eDataType )
                     {
                       case GDT_Byte:
                       {
                         if (bSignedByte)
-                            dfValue = ((signed char *) poBlock->GetDataRef())[iOffset];
+                            dfValue = ((signed char *) pData)[iOffset];
                         else
-                            dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                            dfValue = ((GByte *) pData)[iOffset];
                         break;
                       }
                       case GDT_UInt16:
-                        dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GUInt16 *) pData)[iOffset];
                         break;
                       case GDT_Int16:
-                        dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GInt16 *) pData)[iOffset];
                         break;
                       case GDT_UInt32:
-                        dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GUInt32 *) pData)[iOffset];
                         break;
                       case GDT_Int32:
-                        dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((GInt32 *) pData)[iOffset];
                         break;
                       case GDT_Float32:
-                        dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((float *) pData)[iOffset];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
                       case GDT_Float64:
-                        dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                        dfValue = ((double *) pData)[iOffset];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
                       case GDT_CInt16:
-                        dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                        dfValue = ((GInt16 *) pData)[iOffset*2];
                         break;
                       case GDT_CInt32:
-                        dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                        dfValue = ((GInt32 *) pData)[iOffset*2];
                         break;
                       case GDT_CFloat32:
-                        dfValue = ((float *) poBlock->GetDataRef())[iOffset*2];
+                        dfValue = ((float *) pData)[iOffset*2];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
                       case GDT_CFloat64:
-                        dfValue = ((double *) poBlock->GetDataRef())[iOffset*2];
+                        dfValue = ((double *) pData)[iOffset*2];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
