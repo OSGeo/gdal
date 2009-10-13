@@ -37,14 +37,17 @@ int FileDataSource::DataSourceFgetc()
 
 int FileDataSource::DataSourceUngetc(int c)
 {
-    VSIFSeekL( fp, -1, SEEK_CUR );
+    DataSourceFseek(-1, SEEK_CUR );
     
     return c;
 }
 
 int FileDataSource::DataSourceFseek(long offset, int origin)
 {
-    return VSIFSeekL(fp, offset, origin);
+    if (origin == SEEK_CUR && offset < 0)
+        return VSIFSeekL(fp, VSIFTellL(fp) + offset, SEEK_SET);
+    else
+        return VSIFSeekL(fp, offset, origin);
 }
 
 int FileDataSource::DataSourceFeof()
