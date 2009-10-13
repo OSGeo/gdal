@@ -427,7 +427,7 @@ OGRErr OGRCSVDataSource::DeleteLayer( int iLayer )
                   "Layer %d cannot be deleted.\n",
                   pszName, iLayer );
 
-        return NULL;
+        return OGRERR_FAILURE;
     }
 
     if( iLayer < 0 || iLayer >= nLayers )
