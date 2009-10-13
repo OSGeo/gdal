@@ -68,7 +68,6 @@ class OGRMemLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     int                 GetFeatureCount( int );
-    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
