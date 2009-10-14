@@ -712,13 +712,11 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
     nBasePathLen = strlen(pszBaseDir);
 
 /* -------------------------------------------------------------------- */
-/*      One simple case is where neither file has a path.  We return    */
-/*      the original target filename and it is relative.                */
+/*      One simple case is when the base dir is '.' and the target      */
+/*      filename is relative.                                           */
 /* -------------------------------------------------------------------- */
-    const char *pszTargetPath = CPLGetPath(pszTarget);
-
     if( (nBasePathLen == 0 || EQUAL(pszBaseDir,"."))
-        && (strlen(pszTargetPath) == 0 || EQUAL(pszTargetPath,".")) )
+        && CPLIsFilenameRelative(pszTarget) )
     {
         if( pbGotRelative != NULL )
             *pbGotRelative = TRUE;
