@@ -1039,33 +1039,45 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
-
+       
+        
 /* -------------------------------------------------------------------- */
 /*      Read into a temporary buffer.                                   */
 /* -------------------------------------------------------------------- */
     float *pafData;
     CPLErr eErr;
-
-    pafData = (float *) CPLMalloc(nOutXSize*nOutYSize*sizeof(float));
-    eErr = poRasterBand->RasterIO( GF_Read, 
-                                   nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                                   pafData, nOutXSize, nOutYSize, GDT_Float32,
-                                   sizeof(float), sizeof(float) * nOutXSize );
-    if( eErr != CE_None )
-    {
-        CPLFree( pafData );
-        return eErr;
-    }
-
     GDALColorTable* poColorTable = NULL;
-    if (nColorTableComponent != 0)
+
+    if( bDoScaling && bNoDataSet == FALSE && dfScaleRatio == 0)
     {
-        poColorTable = poRasterBand->GetColorTable();
-        if (poColorTable == NULL)
+/* -------------------------------------------------------------------- */
+/*      Optimization when outputing a constant value                    */
+/*      (used by the -addalpha option of gdalbuildvrt)                  */
+/* -------------------------------------------------------------------- */
+        pafData = NULL;
+    }
+    else
+    {
+        pafData = (float *) CPLMalloc(nOutXSize*nOutYSize*sizeof(float));
+        eErr = poRasterBand->RasterIO( GF_Read, 
+                                       nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                                       pafData, nOutXSize, nOutYSize, GDT_Float32,
+                                       sizeof(float), sizeof(float) * nOutXSize );
+        if( eErr != CE_None )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Source band has no color table.");
-            return CE_Failure;
+            CPLFree( pafData );
+            return eErr;
+        }
+
+        if (nColorTableComponent != 0)
+        {
+            poColorTable = poRasterBand->GetColorTable();
+            if (poColorTable == NULL)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Source band has no color table.");
+                return CE_Failure;
+            }
         }
     }
 
@@ -1081,34 +1093,41 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         {
             float fResult;
 
-            fResult = pafData[iX + iY * nOutXSize];
-            if( bNoDataSet && fResult == dfNoDataValue )
-                continue;
-
-            if (nColorTableComponent)
+            if (pafData)
             {
-                const GDALColorEntry* poEntry = poColorTable->GetColorEntry((int)fResult);
-                if (poEntry)
-                {
-                    if (nColorTableComponent == 1)
-                        fResult = poEntry->c1;
-                    else if (nColorTableComponent == 2)
-                        fResult = poEntry->c2;
-                    else if (nColorTableComponent == 3)
-                        fResult = poEntry->c3;
-                    else if (nColorTableComponent == 4)
-                        fResult = poEntry->c4;
-                }
-                else
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "No entry %d.", (int)fResult);
-                    return CE_Failure;
-                }
-            }
+                fResult = pafData[iX + iY * nOutXSize];
+                if( bNoDataSet && fResult == dfNoDataValue )
+                    continue;
 
-            if( bDoScaling )
-                fResult = (float) (fResult * dfScaleRatio + dfScaleOff);
+                if (nColorTableComponent)
+                {
+                    const GDALColorEntry* poEntry = poColorTable->GetColorEntry((int)fResult);
+                    if (poEntry)
+                    {
+                        if (nColorTableComponent == 1)
+                            fResult = poEntry->c1;
+                        else if (nColorTableComponent == 2)
+                            fResult = poEntry->c2;
+                        else if (nColorTableComponent == 3)
+                            fResult = poEntry->c3;
+                        else if (nColorTableComponent == 4)
+                            fResult = poEntry->c4;
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "No entry %d.", (int)fResult);
+                        return CE_Failure;
+                    }
+                }
+
+                if( bDoScaling )
+                    fResult = (float) (fResult * dfScaleRatio + dfScaleOff);
+            }
+            else
+            {
+                fResult = (float) dfScaleOff;
+            }
 
             if (nLUTItemCount)
                 fResult = (float) LookupValue( fResult );
