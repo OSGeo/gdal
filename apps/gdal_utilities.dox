@@ -525,8 +525,9 @@ Builds a VRT from a list of datasets. (compiled by default since GDAL 1.6.1)
 \section gdalbuildvrt_synopsis SYNOPSIS
 
 \verbatim
-gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average}]
-             [-separate] [-allow_projection_difference] 
+gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]
+             [-tr xres yres] [-separate] [-allow_projection_difference] [-quiet]
+             [-te xmin ymin xmax ymax]
              [-input_file_list my_liste.txt] output.vrt [gdalfile]*
 \endverbatim
 
@@ -562,9 +563,24 @@ in GDAL 1.6.1.
 Use the specified value as the tile index field, instead of the default value with is 'location'. 
 </dd>
 
-<dt> <b>-resolution</b>:</dt><dd> 
+<dt> <b>-resolution</b> {highest|lowest|average|user}:</dt><dd> 
 In case the resolution of all input files is not the same, the -resolution flag
-enables the user to control the way the output resolution is computed. average is the default.
+enables the user to control the way the output resolution is computed. 'average' is the default.
+'highest' will pick the smallest values of pixel dimensions within the set of source rasters.
+'lowest' will pick the largest values of pixel dimensions within the set of source rasters.
+'average' will compute an average of pixel dimensions within the set of source rasters.
+'user' is new in GDAL 1.7.0 and must be used in combination with the -tr option to specify the target resolution.
+</dd>
+
+<dt> <b>-tr</b> xres yres :</dt><dd>  (starting with GDAL 1.7.0)
+set target resolution. The values must be expressed in georeferenced units.
+Both must be positive values. Specifying those values is of curse incompatible with
+highest|lowest|average values for -resolution option.
+</dd>
+
+<dt> <b>-te</b> xmin ymin xmax ymax :</dt><dd>  (starting with GDAL 1.7.0)
+set georeferenced extents of VRT file. The values must be expressed in georeferenced units.
+If not specified, the extent of the VRT is the minimum bounding box of the set of source rasters.
 </dd>
 
 <dt> <b>-separate</b>:</dt><dd> (starting with GDAL 1.7.0)
@@ -580,7 +596,11 @@ just be ignored.
 </dd>
 
 <dt> <b>-input_file_list</b>:</dt><dd> 
-To specify a text file with an input filename on each line/
+To specify a text file with an input filename on each line
+</dd>
+
+<dt> <b>-quiet</b>:</dt><dd> (starting with GDAL 1.7.0)
+To disable the progress bar on the console
 </dd>
 
 </dl>
