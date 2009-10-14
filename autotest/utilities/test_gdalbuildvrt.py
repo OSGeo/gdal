@@ -52,7 +52,7 @@ def test_gdalbuildvrt_check():
     expected_gt = [ 2, 0.1, 0, 49, 0, -0.1 ]
     for i in range(6):
         if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (gt, expected_gt) )
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
             return 'fail'
 
     if ds.RasterXSize != 20 or ds.RasterYSize != 20:
@@ -214,7 +214,7 @@ def test_gdalbuildvrt_6():
     expected_gt = [ 2, 0.1, 0, 49, 0, -0.1 ]
     for i in range(6):
         if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (gt, expected_gt) )
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
             return 'fail'
 
     if ds.RasterXSize != 20 or ds.RasterYSize != 20:
@@ -289,6 +289,58 @@ def test_gdalbuildvrt_7():
     return 'success'
 
 ###############################################################################
+# Test -tr option
+
+def test_gdalbuildvrt_8():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.05 0.05 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif').read()
+    
+    ds = gdal.Open('tmp/mosaic2.vrt')
+
+    gt = ds.GetGeoTransform()
+    expected_gt = [ 2, 0.05, 0, 49, 0, -0.05 ]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i] > 1e-5):
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            return 'fail'
+
+    if ds.RasterXSize != 40 or ds.RasterYSize != 40:
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        return 'fail'
+    
+    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.1 0.1 tmp/mosaic.vrt tmp/mosaic2.vrt').read()
+
+    return test_gdalbuildvrt_check()
+
+###############################################################################
+# Test -te option
+
+def test_gdalbuildvrt_9():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 1 46 5 50 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif').read()
+
+    ds = gdal.Open('tmp/mosaic2.vrt')
+
+    gt = ds.GetGeoTransform()
+    expected_gt = [ 1, 0.1, 0, 50, 0, -0.1 ]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i] > 1e-5):
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            return 'fail'
+
+    if ds.RasterXSize != 40 or ds.RasterYSize != 40:
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        return 'fail'
+   
+    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 2 47 4 49 tmp/mosaic.vrt tmp/mosaic2.vrt').read()
+
+    return test_gdalbuildvrt_check()
+    
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
@@ -299,6 +351,7 @@ def test_gdalbuildvrt_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/tileindex.shp')
 
     gdal.GetDriverByName('VRT').Delete('tmp/mosaic.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/mosaic2.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/stacked.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt7.vrt')
 
@@ -327,6 +380,8 @@ gdaltest_list = [
     test_gdalbuildvrt_5,
     test_gdalbuildvrt_6,
     test_gdalbuildvrt_7,
+    test_gdalbuildvrt_8,
+    test_gdalbuildvrt_9,
     test_gdalbuildvrt_cleanup
     ]
 
