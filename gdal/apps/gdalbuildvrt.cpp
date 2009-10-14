@@ -84,7 +84,7 @@ static void Usage()
     fprintf(stdout, "%s", 
             "Usage: gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]\n"
             "                    [-tr xres yres] [-separate] [-allow_projection_difference] [-quiet]\n"
-            "                    [-te xmin ymin xmax ymax]\n"
+            "                    [-te xmin ymin xmax ymax] [-addalpha] \n"
             "                    [-input_file_list my_liste.txt] output.vrt [gdalfile]*\n"
             "\n"
             "eg.\n"
@@ -157,6 +157,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                      double we_res, double ns_res,
                      double minX, double minY, double maxX, double maxY,
                      int bSeparate, int bAllowProjectionDifference,
+                     int bAddAlpha,
                      GDALProgressFunc pfnProgress, void * pProgressData)
 {
     char* projectionRef = NULL;
@@ -550,6 +551,14 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
             if (bandProperties[j].bHasNoData)
                 GDALSetRasterNoDataValue(hBand, bandProperties[j].noDataValue);
         }
+        
+        if (bAddAlpha)
+        {
+            GDALRasterBandH hBand;
+            GDALAddBand(hVRTDS, GDT_Byte, NULL);
+            hBand = GDALGetRasterBand(hVRTDS, nBands + 1);
+            GDALSetRasterColorInterpretation(hBand, GCI_AlphaBand);
+        }
     
         for(i=0;i<nInputFiles;i++)
         {
@@ -596,6 +605,19 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                                     nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                     "near", VRT_NODATA_UNSET);
             }
+            
+            if (bAddAlpha)
+            {
+                VRTSourcedRasterBandH hVRTBand =
+                        (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, nBands + 1);
+                /* Little trick : we use an offset of 255 and a scaling of 0, so that in areas covered */
+                /* by the source, the value of the alpha band will be 255, otherwise it will be 0 */
+                VRTAddComplexSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                    nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+                                    nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                                    255, 0, VRT_NODATA_UNSET);
+            }
+            
             GDALDereferenceDataset(hProxyDS);
         }
     }
@@ -730,6 +752,7 @@ int main( int nArgc, char ** papszArgv )
     GDALProgressFunc pfnProgress = NULL;
     double we_res = 0, ns_res = 0;
     double xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+    int bAddAlpha = FALSE;
 
     GDALAllRegister();
 
@@ -806,6 +829,10 @@ int main( int nArgc, char ** papszArgv )
             xmax = atof(papszArgv[++iArg]);
             ymax = atof(papszArgv[++iArg]);
         }
+        else if ( strcmp(papszArgv[iArg],"-addalpha") == 0 )
+        {
+            bAddAlpha = TRUE;
+        }
         else if ( papszArgv[iArg][0] == '-' )
         {
             printf("Unrecognized option : %s\n", papszArgv[iArg]);
@@ -834,6 +861,12 @@ int main( int nArgc, char ** papszArgv )
         fprintf(stderr, "-tr option is not compatible with -resolution %s\n", resolution);
         Usage();
     }
+    
+    if (bAddAlpha && bSeparate)
+    {
+        fprintf(stderr, "-addalpha option is not compatible with -separate\n");
+        Usage();
+    }
         
     ResolutionStrategy eStrategy = AVERAGE_RESOLUTION;
     if ( resolution == NULL || EQUAL(resolution, "user") )
@@ -860,7 +893,7 @@ int main( int nArgc, char ** papszArgv )
 
     GDALBuildVRT(pszOutputFilename, &nInputFiles, &ppszInputFilenames,
                  eStrategy, we_res, ns_res, xmin, ymin, xmax, ymax,
-                 bSeparate, bAllowProjectionDifference, pfnProgress, NULL);
+                 bSeparate, bAllowProjectionDifference, bAddAlpha, pfnProgress, NULL);
     
     for(i=0;i<nInputFiles;i++)
     {

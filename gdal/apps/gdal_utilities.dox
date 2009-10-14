@@ -527,7 +527,7 @@ Builds a VRT from a list of datasets. (compiled by default since GDAL 1.6.1)
 \verbatim
 gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]
              [-tr xres yres] [-separate] [-allow_projection_difference] [-quiet]
-             [-te xmin ymin xmax ymax]
+             [-te xmin ymin xmax ymax] [-addalpha]
              [-input_file_list my_liste.txt] output.vrt [gdalfile]*
 \endverbatim
 
@@ -581,6 +581,11 @@ highest|lowest|average values for -resolution option.
 <dt> <b>-te</b> xmin ymin xmax ymax :</dt><dd>  (starting with GDAL 1.7.0)
 set georeferenced extents of VRT file. The values must be expressed in georeferenced units.
 If not specified, the extent of the VRT is the minimum bounding box of the set of source rasters.
+</dd>
+
+<dt> <b>-addalpha</b>:</dt><dd> (starting with GDAL 1.7.0)
+Adds an alpha mask band to the VRT. Mainly useful for RGB sources. This
+option is not compatible with -separate.
 </dd>
 
 <dt> <b>-separate</b>:</dt><dd> (starting with GDAL 1.7.0)
