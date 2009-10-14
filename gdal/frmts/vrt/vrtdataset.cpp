@@ -730,6 +730,12 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
     VRTDataset *poDS;
     int nXSize = atoi(CPLGetXMLValue(psTree,"rasterXSize","0"));
     int nYSize = atoi(CPLGetXMLValue(psTree,"rasterYSize","0"));
+    
+    if ( !GDALCheckDatasetDimensions(nXSize, nYSize) )
+    {
+        CPLDestroyXMLNode( psTree );
+        return NULL;
+    }
 
     if( strstr(pszXML,"VRTWarpedDataset") != NULL )
         poDS = new VRTWarpedDataset( nXSize, nYSize );
