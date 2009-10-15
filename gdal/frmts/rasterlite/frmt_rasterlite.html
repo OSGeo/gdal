@@ -51,7 +51,9 @@ where :
 
 <p>The driver does not support updating a block in an existing raster table. It can only append new data.</p>
 
-<p>Syntax for the name of the output dataset: 'RASTERLITE:rasterlitedb_name,table=raster_table_prefix'</p>
+<p>Syntax for the name of the output dataset: 'RASTERLITE:rasterlitedb_name,table=raster_table_prefix' or 'rasterlitedb_name' </p>
+
+It is possible to specify only the DB name as in the later form, but only if the database does not already exists. In that case, the raster table name will be base on the DB name itself.
 
 <h3>Creation options</h3>
 
