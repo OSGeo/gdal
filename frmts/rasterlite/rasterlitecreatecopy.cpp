@@ -383,54 +383,59 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     
 /* -------------------------------------------------------------------- */
-/*      Check filename format                                           */
+/*      Analyze arguments                                               */
 /* -------------------------------------------------------------------- */
+    
+    CPLString osDBName;
+    CPLString osTableName;
+    VSIStatBuf sBuf;
+    int bExists;
 
-    if (!EQUALN(pszFilename, "RASTERLITE:", 11))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Expected name for dataset should be following "
-                 "RASTERLITE:dbname.sqlite,table=table_name");
-        return NULL;
-    }
+    /* Skip optionnal RASTERLITE: prefix */
+    const char* pszFilenameWithoutPrefix = pszFilename;
+    if (EQUALN(pszFilename, "RASTERLITE:", 11))
+        pszFilenameWithoutPrefix += 11;
     
     char** papszTokens = CSLTokenizeStringComplex( 
-                pszFilename + 11, ", ", FALSE, FALSE );
+                pszFilenameWithoutPrefix, ", ", FALSE, FALSE );
     int nTokens = CSLCount(papszTokens);
     if (nTokens == 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Expected name for dataset should be following "
-                 "RASTERLITE:dbname.sqlite,table=table_name");
-        CSLDestroy(papszTokens);
-        return NULL;
+        osDBName = pszFilenameWithoutPrefix;
+        osTableName = CPLGetBasename(pszFilenameWithoutPrefix);
     }
-                
-    CPLString osDBName = papszTokens[0];
-    CPLString osTableName;
-    
-    int i;
-    for(i=1;i<nTokens;i++)
+    else
     {
-        if (EQUALN(papszTokens[i], "table=", 6))
-            osTableName = papszTokens[i] + 6;
-        else
+        osDBName = papszTokens[0];
+        
+        int i;
+        for(i=1;i<nTokens;i++)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Invalid option : %s", papszTokens[i]);
+            if (EQUALN(papszTokens[i], "table=", 6))
+                osTableName = papszTokens[i] + 6;
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid option : %s", papszTokens[i]);
+            }
         }
     }
     
     CSLDestroy(papszTokens);
     papszTokens = NULL;
     
+    bExists = (VSIStat(osDBName.c_str(), &sBuf) == 0);
+
     if (osTableName.size() == 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Expected name for dataset should be following "
-                 "RASTERLITE:dbname.sqlite,table=table_name");
-        return NULL;
-    }
+        if (bExists)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Database already exists. Explicit table name must be specified");
+            return NULL;
+        }
+        osTableName = CPLGetBasename(osDBName.c_str());
+    }    
     
     CPLString osRasterLayer;
     osRasterLayer.Printf("%s_rasters", osTableName.c_str());
@@ -451,9 +456,6 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load OGR SQLite driver");
         return NULL;
     }   
-    
-    VSIStatBuf sBuf;
-    int bExists = (VSIStat(osDBName.c_str(), &sBuf) == 0);
     
     OGRDataSourceH hDS;
     
