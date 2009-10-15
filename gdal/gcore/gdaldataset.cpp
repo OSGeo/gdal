@@ -2117,6 +2117,9 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
         GDALDriver      *poDriver = poDM->GetDriver( iDriver );
         GDALDataset     *poDS;
 
+        if ( poDriver->pfnOpen == NULL )
+            continue;
+
         poDS = poDriver->pfnOpen( &oOpenInfo );
         if( poDS != NULL )
         {
