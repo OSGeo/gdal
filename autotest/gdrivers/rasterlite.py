@@ -243,13 +243,148 @@ def rasterlite_5():
     ds = None
         
     return 'success'
+
+###############################################################################
+# Test CreateCopy()
+
+def rasterlite_6():
+
+    if gdaltest.rasterlite_drv is None:
+        return 'skip'
+        
+    # Test first if spatialite is available
+    ogr_ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ogr_ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
+    gdal.PopErrorHandler()
+    if sql_lyr is None:
+        gdaltest.has_spatialite = False
+        ogr_ds.Destroy()
+        return 'skip'
+
+    gdaltest.has_spatialite = True
+    ogr_ds.ReleaseResultSet(sql_lyr)
+    ogr_ds.Destroy()
     
+    # Test now CreateCopy()
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('RASTERLITE').CreateCopy( 'RASTERLITE:tmp/byte.sqlite,table=byte', src_ds )
+    if ds is None:
+        return 'fail'
+        
+    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('Wrong checksum')
+        print ds.GetRasterBand(1).Checksum()
+        return 'fail'
+    
+    gt = ds.GetGeoTransform()
+    expected_gt = src_ds.GetGeoTransform()
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i] > 1e-5):
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            return 'fail'
+            
+    if ds.GetProjectionRef().find('NAD27 / UTM zone 11N') == -1:
+        gdaltest.post_reason('Wrong SRS')
+        return 'fail'
+    
+    src_ds = None
+    ds = None
+    
+    return 'success'
+
+###############################################################################
+# Test BuildOverviews()
+
+def rasterlite_7():
+
+    if gdaltest.rasterlite_drv is None:
+        return 'skip'
+        
+    if gdaltest.has_spatialite is False:
+        return 'skip'
+
+    ds = gdal.Open( 'tmp/byte.sqlite', gdal.GA_Update )
+    
+    # Resampling method is not taken into account
+    ds.BuildOverviews( 'NEAREST', overviewlist = [2, 4] )
+    
+    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
+        gdaltest.post_reason('Wrong checksum for overview 0')
+        print ds.GetRasterBand(1).GetOverview(0).Checksum()
+        return 'fail'
+        
+    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 233:
+        gdaltest.post_reason('Wrong checksum for overview 1')
+        print ds.GetRasterBand(1).GetOverview(1).Checksum()
+        return 'fail'
+        
+    # Reopen and test
+    ds = None
+    ds = gdal.Open( 'tmp/byte.sqlite' )
+    
+    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
+        gdaltest.post_reason('Wrong checksum for overview 0')
+        print ds.GetRasterBand(1).GetOverview(0).Checksum()
+        return 'fail'
+        
+    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 233:
+        gdaltest.post_reason('Wrong checksum for overview 1')
+        print ds.GetRasterBand(1).GetOverview(1).Checksum()
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
+# Test CleanOverviews()
+
+def rasterlite_8():
+
+    if gdaltest.rasterlite_drv is None:
+        return 'skip'
+        
+    if gdaltest.has_spatialite is False:
+        return 'skip'
+
+    ds = gdal.Open( 'tmp/byte.sqlite', gdal.GA_Update )
+    
+    ds.BuildOverviews( overviewlist = [] )
+    
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        return 'fail'
+        
+    return 'success'
+    
+###############################################################################
+# Cleanup
+
+def rasterlite_cleanup():
+
+    if gdaltest.rasterlite_drv is None:
+        return 'skip'
+
+    try:
+        os.remove( 'tmp/spatialite_test.db' )
+    except:
+        pass
+
+    try:
+        os.remove( 'tmp/byte.sqlite' )
+    except:
+        pass
+        
+    return 'success'
+
 gdaltest_list = [
     rasterlite_1,
     rasterlite_2,
     rasterlite_3,
     rasterlite_4,
-    rasterlite_5 ]
+    rasterlite_5,
+    rasterlite_6,
+    rasterlite_7,
+    rasterlite_8,
+    rasterlite_cleanup ]
 
 if __name__ == '__main__':
 
@@ -258,4 +393,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
