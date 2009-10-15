@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.48 2007/11/21 21:15:45 dmorissette Exp $
+ * $Id: mitab_spatialref.cpp,v 1.49 2009-10-15 16:16:37 fwarmerdam Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.49  2009-10-15 16:16:37  fwarmerdam
+ * add the default EPSG/OGR name for new zealand datums (gdal #3187)
+ *
  * Revision 1.48  2007/11/21 21:15:45  dmorissette
  * Fix asDatumInfoList[] and asSpheroidInfoList[] defns/refs (bug 1826)
  *
@@ -234,6 +237,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {29, "European_Datum_1979",         4, -86,  -98,  -119,0, 0, 0, 0, 0},
 {30, "Gandajika_1970",              4, -133, -321, 50,  0, 0, 0, 0, 0},
 {31, "New_Zealand_GD49",            4, 84,   -22,  209, 0, 0, 0, 0, 0},
+{31, "New_Zealand_Geodetic_Datum_1949",4,84, -22,  209, 0, 0, 0, 0, 0},
 {32, "GRS_67",                      21,0,    0,    0,   0, 0, 0, 0, 0},
 {33, "GRS_80",                      0, 0,    0,    0,   0, 0, 0, 0, 0},
 {34, "Guam_1963",                   7, -100, -248, 259, 0, 0, 0, 0, 0},
@@ -320,6 +324,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {115, "Euref_98",                   0, 0,    0,   0,    0, 0, 0, 0, 0},
 {116, "GDA94",                      0, 0,    0,   0,    0, 0, 0, 0, 0},
 {117, "NZGD2000",                   0, 0,    0,   0,    0, 0, 0, 0, 0},
+{117, "New_Zealand_Geodetic_Datum_2000",0,0, 0,   0,    0, 0, 0, 0, 0},
 {118, "America_Samoa",              7, -115, 118, 426,  0, 0, 0, 0, 0},
 {119, "Antigua_Astro_1965",         6, -270, 13,  62,   0, 0, 0, 0, 0},
 {120, "Ayabelle_Lighthouse",        6, -79, -129, 145,  0, 0, 0, 0, 0},
