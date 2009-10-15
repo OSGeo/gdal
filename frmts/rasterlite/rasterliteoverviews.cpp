@@ -308,12 +308,19 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
     int nYBlocks = (nOvrYSize + nBlockYSize - 1) / nBlockYSize;
     
     const char* pszDriverName = "GTiff";
-    GDALDriver* poTileDriver = ((GDALDriver*)GDALGetDriverByName(pszDriverName));
-    if (poTileDriver == NULL)
+    GDALDriverH hTileDriver = GDALGetDriverByName(pszDriverName);
+    if (hTileDriver == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL %s driver", pszDriverName);
         return CE_Failure;
     }
+    
+    GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
+    if (hMemDriver == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL MEM driver");
+        return CE_Failure;
+    }   
 
     GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
     int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
@@ -401,46 +408,45 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
             if ((nBlockYOff+1) * nBlockYSize > nOvrYSize)
                 nReqYSize = nOvrYSize - nBlockYOff * nBlockYSize;
             
-            char szMemFilename[128];
-            sprintf(szMemFilename, "MEM:::DATAPOINTER=" CPL_FRMT_GUIB ","
-                    "PIXELS=%d,LINES=%d,BANDS=%d,DATATYPE=%s,PIXELOFFSET=%d,"
-                    "LINEOFFSET=%d,BANDOFFSET=%d",
-                    (GUIntBig)pabyMEMDSBuffer,
-                    nReqXSize, nReqYSize, nBands, GDALGetDataTypeName(eDataType),
-                    nDataTypeSize * nBands,
-                    nDataTypeSize * nReqXSize * nBands,
-                    nDataTypeSize);
-
             eErr = RasterIO(GF_Read,
                             nBlockXOff * nBlockXSize * nOvrFactor,
                             nBlockYOff * nBlockYSize * nOvrFactor,
                             nReqXSize * nOvrFactor, nReqYSize * nOvrFactor,
                             pabyMEMDSBuffer, nReqXSize, nReqYSize,
                             eDataType, nBands, NULL,
-                            nDataTypeSize * nBands,
-                            nDataTypeSize * nReqXSize * nBands,
-                            nDataTypeSize);
-            
+                            0, 0, 0);
             if (eErr != CE_None)
             {
                 break;
             }
             
-            GDALDataset* poMemDS =
-                (GDALDataset*) GDALOpen(szMemFilename, GA_ReadOnly);
-            if (poMemDS == NULL)
+            GDALDatasetH hMemDS = GDALCreate(hMemDriver, "MEM:::",
+                                              nReqXSize, nReqYSize, 0, 
+                                              eDataType, NULL);
+            if (hMemDS == NULL)
             {
                 eErr = CE_Failure;
                 break;
             }
             
-            GDALDataset* poGTiffDS = poTileDriver->CreateCopy(
-                                        osTempFileName.c_str(), poMemDS, FALSE,
+            int iBand;
+            for(iBand = 0; iBand < nBands; iBand ++)
+            {
+                char** papszOptions = NULL;
+                char szTmp[128];
+                sprintf(szTmp, CPL_FRMT_GUIB, (GUIntBig)(pabyMEMDSBuffer + iBand * nDataTypeSize * nReqXSize * nReqYSize));
+                papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szTmp);
+                GDALAddBand(hMemDS, eDataType, papszOptions);
+                CSLDestroy(papszOptions);
+            }
+            
+            GDALDatasetH hOutDS = GDALCreateCopy(hTileDriver,
+                                        osTempFileName.c_str(), hMemDS, FALSE,
                                         papszTileDriverOptions, NULL, NULL);
 
-            GDALClose(poMemDS);
-            if (poGTiffDS)
-                GDALClose(poGTiffDS);
+            GDALClose(hMemDS);
+            if (hOutDS)
+                GDALClose(hOutDS);
             else
             {
                 eErr = CE_Failure;
@@ -533,6 +539,14 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
                             "pixel_y_size DOUBLE NOT NULL,"
                             "tile_count INTEGER NOT NULL)");
             OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            
+            /* Re-open the DB to take into account the new tables*/
+            OGRReleaseDataSource(hDS);
+            
+            const char* pszOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
+            CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
+            hDS = OGROpen(osFileName.c_str(), TRUE, NULL);
+            CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", pszOldVal);
             
             osSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
                           "pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
