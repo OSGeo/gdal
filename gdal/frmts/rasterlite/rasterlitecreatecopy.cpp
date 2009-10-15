@@ -332,12 +332,19 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     
     const char* pszDriverName = CSLFetchNameValueDef(papszOptions, "DRIVER", "GTiff");
-    GDALDriver* poTileDriver = ((GDALDriver*)GDALGetDriverByName(pszDriverName));
-    if (poTileDriver == NULL)
+    GDALDriverH hTileDriver = GDALGetDriverByName(pszDriverName);
+    if ( hTileDriver == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL %s driver", pszDriverName);
         return NULL;
     }
+    
+    GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
+    if (hMemDriver == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL MEM driver");
+        return NULL;
+    }   
 
     int nXSize = GDALGetRasterXSize(poSrcDS);
     int nYSize = GDALGetRasterYSize(poSrcDS);
@@ -584,16 +591,6 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 nReqXSize = nXSize - nBlockXOff * nBlockXSize;
             if ((nBlockYOff+1) * nBlockYSize > nYSize)
                 nReqYSize = nYSize - nBlockYOff * nBlockYSize;
-            
-            char szMemFilename[128];
-            sprintf(szMemFilename, "MEM:::DATAPOINTER=" CPL_FRMT_GUIB ","
-                    "PIXELS=%d,LINES=%d,BANDS=%d,DATATYPE=%s,PIXELOFFSET=%d,"
-                    "LINEOFFSET=%d,BANDOFFSET=%d",
-                    (GUIntBig)pabyMEMDSBuffer,
-                    nReqXSize, nReqYSize, nBands, GDALGetDataTypeName(eDataType),
-                    nDataTypeSize * nBands,
-                    nDataTypeSize * nReqXSize * nBands,
-                    nDataTypeSize);
 
             eErr = poSrcDS->RasterIO(GF_Read,
                                      nBlockXOff * nBlockXSize,
@@ -601,29 +598,39 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                      nReqXSize, nReqYSize,
                                      pabyMEMDSBuffer, nReqXSize, nReqYSize,
                                      eDataType, nBands, NULL,
-                                     nDataTypeSize * nBands,
-                                     nDataTypeSize * nReqXSize * nBands,
-                                     nDataTypeSize);
+                                     0, 0, 0);
             if (eErr != CE_None)
             {
                 break;
             }
             
-            GDALDataset* poMemDS =
-                (GDALDataset*) GDALOpen(szMemFilename, GA_ReadOnly);
-            if (poMemDS == NULL)
+            GDALDatasetH hMemDS = GDALCreate(hMemDriver, "MEM:::",
+                                              nReqXSize, nReqYSize, 0, 
+                                              eDataType, NULL);
+            if (hMemDS == NULL)
             {
                 eErr = CE_Failure;
                 break;
             }
             
-            GDALDataset* poOutDS = poTileDriver->CreateCopy(
-                                        osTempFileName.c_str(), poMemDS, FALSE,
+            int iBand;
+            for(iBand = 0; iBand < nBands; iBand ++)
+            {
+                char** papszOptions = NULL;
+                char szTmp[128];
+                sprintf(szTmp, CPL_FRMT_GUIB, (GUIntBig)(pabyMEMDSBuffer + iBand * nDataTypeSize * nReqXSize * nReqYSize));
+                papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szTmp);
+                GDALAddBand(hMemDS, eDataType, papszOptions);
+                CSLDestroy(papszOptions);
+            }
+            
+            GDALDatasetH hOutDS = GDALCreateCopy(hTileDriver,
+                                        osTempFileName.c_str(), hMemDS, FALSE,
                                         papszTileDriverOptions, NULL, NULL);
 
-            GDALClose(poMemDS);
-            if (poOutDS)
-                GDALClose(poOutDS);
+            GDALClose(hMemDS);
+            if (hOutDS)
+                GDALClose(hOutDS);
             else
             {
                 eErr = CE_Failure;
