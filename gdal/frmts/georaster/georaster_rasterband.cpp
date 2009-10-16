@@ -122,11 +122,6 @@ CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
                                         int nBlockYOff,
                                         void *pImage )
 {
-    if( poDS->GetAccess() == GA_Update )
-    {
-        return CE_None;
-    }
-
     if( poGeoRaster->GetDataBlock( nBand,
                                    nOverviewLevel,
                                    nBlockXOff,
