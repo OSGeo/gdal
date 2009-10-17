@@ -233,7 +233,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     
     validity = GEORSS_VALIDITY_UNKNOWN;
     
-    XML_Parser oParser = XML_ParserCreate(NULL);
+    XML_Parser oParser = OGRCreateExpatXMLParser();
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);

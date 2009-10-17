@@ -155,7 +155,7 @@ void KML::checkValidity()
         return;
     }
 
-    XML_Parser oParser = XML_ParserCreate(NULL);
+    XML_Parser oParser = OGRCreateExpatXMLParser();
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, startElementValidate, NULL);
     XML_SetCharacterDataHandler(oParser, dataHandlerValidate);

@@ -277,7 +277,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     bUseExtensions = FALSE;
     nElementsRead = 0;
     
-    XML_Parser oParser = XML_ParserCreate(NULL);
+    XML_Parser oParser = OGRCreateExpatXMLParser();
     oCurrentParser = oParser;
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
