@@ -36,7 +36,7 @@ int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
 
 static void Usage();
-static void TestOGRLayer( OGRDataSource *, OGRLayer * );
+static void TestOGRLayer( OGRDataSource * poDS, OGRLayer * poLayer, int bIsSQLLayer );
 
 /************************************************************************/
 /*                                main()                                */
@@ -47,6 +47,7 @@ int main( int nArgc, char ** papszArgv )
 {
     const char  *pszDataSource = NULL;
     char** papszLayers = NULL;
+    const char  *pszSQLStatement = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -62,6 +63,8 @@ int main( int nArgc, char ** papszArgv )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") )
             bVerbose = FALSE;
+        else if( EQUAL(papszArgv[iArg],"-sql") && iArg + 1 < nArgc)
+            pszSQLStatement = papszArgv[++iArg];
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -124,11 +127,26 @@ int main( int nArgc, char ** papszArgv )
                 "      different from user name `%s'.\n",
                 poDS->GetName(), pszDataSource );
     }
-
+    
+/* -------------------------------------------------------------------- */
+/*      Process optionnal SQL request.                                  */
+/* -------------------------------------------------------------------- */
+    if (pszSQLStatement != NULL)
+    {
+        OGRLayer  *poResultSet = poDS->ExecuteSQL(pszSQLStatement, NULL, NULL);
+        if (poResultSet == NULL)
+            exit(1);
+            
+        printf( "INFO: Testing layer %s.\n",
+                    poResultSet->GetLayerDefn()->GetName() );
+        TestOGRLayer( poDS, poResultSet, TRUE );
+        
+        poDS->ReleaseResultSet(poResultSet);
+    }
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-    if (papszLayers == NULL)
+    else if (papszLayers == NULL)
     {
         for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
         {
@@ -143,7 +161,7 @@ int main( int nArgc, char ** papszArgv )
 
             printf( "INFO: Testing layer %s.\n",
                     poLayer->GetLayerDefn()->GetName() );
-            TestOGRLayer( poDS, poLayer );
+            TestOGRLayer( poDS, poLayer, FALSE );
         }
     }
     else
@@ -164,7 +182,7 @@ int main( int nArgc, char ** papszArgv )
             
             printf( "INFO: Testing layer %s.\n",
                     poLayer->GetLayerDefn()->GetName() );
-            TestOGRLayer( poDS, poLayer );
+            TestOGRLayer( poDS, poLayer, FALSE );
             
             papszLayers ++;
         }
@@ -189,7 +207,7 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: test_ogrsf [-ro] [-q] datasource_name [layer1_name, layer2_name, ...]\n" );
+    printf( "Usage: test_ogrsf [-ro] [-q] datasource_name [[layer1_name, layer2_name, ...] | [-sql statement]]\n" );
     exit( 1 );
 }
 
@@ -200,7 +218,7 @@ static void Usage()
 /*      features returned during sequential reading.                    */
 /************************************************************************/
 
-static void TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer )
+static void TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int bIsSQLLayer )
 
 {
     int         nFC = 0, nClaimedFC = poLayer->GetFeatureCount();
@@ -254,19 +272,22 @@ static void TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer )
     else if( bVerbose )
         printf( "INFO: Feature count verified.\n" );
         
-    CPLString osSQL;
-    osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", poLayer->GetLayerDefn()->GetName());
-    OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
-    if (poSQLLyr)
+    if (!bIsSQLLayer)
     {
-        OGRFeature* poFeatCount = poSQLLyr->GetNextFeature();
-        if (nClaimedFC != poFeatCount->GetFieldAsInteger(0))
+        CPLString osSQL;
+        osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", poLayer->GetLayerDefn()->GetName());
+        OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
+        if (poSQLLyr)
         {
-            printf( "ERROR: Claimed feature count %d doesn't match '%s' one, %d.\n",
-                    nClaimedFC, osSQL.c_str(), poFeatCount->GetFieldAsInteger(0) );
+            OGRFeature* poFeatCount = poSQLLyr->GetNextFeature();
+            if (nClaimedFC != poFeatCount->GetFieldAsInteger(0))
+            {
+                printf( "ERROR: Claimed feature count %d doesn't match '%s' one, %d.\n",
+                        nClaimedFC, osSQL.c_str(), poFeatCount->GetFieldAsInteger(0) );
+            }
+            OGRFeature::DestroyFeature(poFeatCount);
+            poDS->ReleaseResultSet(poSQLLyr);
         }
-        OGRFeature::DestroyFeature(poFeatCount);
-        poDS->ReleaseResultSet(poSQLLyr);
     }
 
     if( bVerbose && !bWarnAboutSRS )
@@ -696,7 +717,7 @@ static void TestSpatialFilter( OGRLayer *poLayer )
 /*                            TestOGRLayer()                            */
 /************************************************************************/
 
-static void TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer )
+static void TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLayer )
 
 {
 /* -------------------------------------------------------------------- */
@@ -712,7 +733,7 @@ static void TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer )
 /* -------------------------------------------------------------------- */
 /*      Test feature count accuracy.                                    */
 /* -------------------------------------------------------------------- */
-    TestOGRLayerFeatureCount( poDS, poLayer );
+    TestOGRLayerFeatureCount( poDS, poLayer, bIsSQLLayer );
 
 /* -------------------------------------------------------------------- */
 /*      Test spatial filtering                                          */
