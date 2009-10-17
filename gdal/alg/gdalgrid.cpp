@@ -820,6 +820,9 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     CPLAssert( padfY );
     CPLAssert( padfZ );
     CPLAssert( pData );
+    
+    if ( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
 
     if ( nXSize == 0 || nYSize == 0 )
     {
