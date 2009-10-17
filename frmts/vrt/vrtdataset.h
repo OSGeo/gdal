@@ -238,7 +238,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
 class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 {
-
+    int            bAlreadyInIRasterIO;
+    
     void           Initialize( int nXSize, int nYSize );
 
   public:
