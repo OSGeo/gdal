@@ -753,6 +753,7 @@ int main( int nArgc, char ** papszArgv )
     double we_res = 0, ns_res = 0;
     double xmin = 0, ymin = 0, xmax = 0, ymax = 0;
     int bAddAlpha = FALSE;
+    int bForceOverwrite = FALSE;
 
     GDALAllRegister();
 
@@ -833,6 +834,10 @@ int main( int nArgc, char ** papszArgv )
         {
             bAddAlpha = TRUE;
         }
+        else if ( strcmp(papszArgv[iArg],"-overwrite") == 0 )
+        {
+            bForceOverwrite = TRUE;
+        }
         else if ( papszArgv[iArg][0] == '-' )
         {
             printf("Unrecognized option : %s\n", papszArgv[iArg]);
@@ -854,7 +859,28 @@ int main( int nArgc, char ** papszArgv )
 
     if (!bQuiet)
         pfnProgress = GDALTermProgress;
-        
+       
+    /* Avoid overwriting a non VRT dataset if the user did not put the */
+    /* filenames in the right order */
+    VSIStatBuf sBuf;
+    if (!bForceOverwrite)
+    {
+        int bExists = (VSIStat(pszOutputFilename, &sBuf) == 0);
+        if (bExists)
+        {
+            GDALDriverH hDriver = GDALIdentifyDriver( pszOutputFilename, NULL );
+            if (hDriver && !EQUAL(GDALGetDriverShortName(hDriver), "VRT"))
+            {
+                fprintf(stderr,
+                        "'%s' is an existing GDAL dataset managed by %s driver.\n"
+                        "There is an high chance you did not put filenames in the right order.\n"
+                        "If you want to overwrite %s, add -overwrite option to the command line.\n\n",
+                        pszOutputFilename, GDALGetDriverShortName(hDriver), pszOutputFilename);
+                Usage();
+            }
+        }
+    }
+    
     if (we_res != 0 && ns_res != 0 &&
         resolution != NULL && !EQUAL(resolution, "user"))
     {
