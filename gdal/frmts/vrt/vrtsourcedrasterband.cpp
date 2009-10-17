@@ -94,6 +94,7 @@ void VRTSourcedRasterBand::Initialize( int nXSize, int nYSize )
     nSources = 0;
     papoSources = NULL;
     bEqualAreas = FALSE;
+    bAlreadyInIRasterIO = FALSE;
 }
 
 /************************************************************************/
@@ -128,6 +129,17 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Writing through VRTSourcedRasterBand is not supported." );
+        return CE_Failure;
+    }
+    
+    /* When using GDALProxyPoolDataset for sources, the recusion will not be */
+    /* detected at VRT opening but when doing RasterIO. As the proxy pool will */
+    /* return the already opened dataset, we can just test a member variable. */
+    if ( bAlreadyInIRasterIO )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "VRTSourcedRasterBand::IRasterIO() called recursively on the same band. "
+                  "It looks like the VRT is referencing itself." );
         return CE_Failure;
     }
 
@@ -180,6 +192,8 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               eBufType, nPixelSpace, nLineSpace ) == CE_None )
             return CE_None;
     }
+    
+    bAlreadyInIRasterIO = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Overlay each source in turn over top this.                      */
@@ -191,6 +205,8 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                             pData, nBufXSize, nBufYSize, 
                                             eBufType, nPixelSpace, nLineSpace);
     }
+    
+    bAlreadyInIRasterIO = FALSE;
     
     return eErr;
 }
