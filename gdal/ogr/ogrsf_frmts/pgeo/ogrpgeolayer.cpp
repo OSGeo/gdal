@@ -827,3 +827,29 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 
     return OGRERR_FAILURE;
 }
+
+/************************************************************************/
+/*                            GetFIDColumn()                            */
+/************************************************************************/
+
+const char *OGRPGeoLayer::GetFIDColumn() 
+
+{
+    if( pszFIDColumn != NULL )
+        return pszFIDColumn;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                         GetGeometryColumn()                          */
+/************************************************************************/
+
+const char *OGRPGeoLayer::GetGeometryColumn() 
+
+{
+    if( pszGeomColumn != NULL )
+        return pszGeomColumn;
+    else
+        return "";
+}
