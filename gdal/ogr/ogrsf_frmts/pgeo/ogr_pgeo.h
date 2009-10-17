@@ -110,6 +110,9 @@ class OGRPGeoLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
+
+    virtual const char *GetFIDColumn();
+    virtual const char *GetGeometryColumn();
 };
 
 /************************************************************************/
