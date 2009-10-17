@@ -820,6 +820,9 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     CPLAssert( padfY );
     CPLAssert( padfZ );
     CPLAssert( pData );
+    
+    if ( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
 
     if ( nXSize == 0 || nYSize == 0 )
     {
@@ -906,11 +909,11 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                 ((double *)pData)[nYPoint * nXSize + nXPoint] = dfValue;
         }
 
-	if( !pfnProgress( (double)(nYPoint + 1) / nYSize, NULL, pProgressArg ) )
-	{
-	    CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-	    return CE_Failure;
-	}
+        if( !pfnProgress( (double)(nYPoint + 1) / nYSize, NULL, pProgressArg ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            return CE_Failure;
+        }
     }
 
     return CE_None;
