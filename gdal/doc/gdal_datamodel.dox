@@ -205,7 +205,7 @@ this getting copied along with datasets it is placed in a special domain
 called IMAGE_STRUCTURE that should not normally be copied to new formats. 
 
 Currently the following items are defined by 
-<a href="http://trac.osgeo.org/gdal/rfc14_imagestructure">RFC 14</a> 
+<a href="http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure">RFC 14</a> 
 as having specific semantics in the IMAGE_STRUCTURE domain. 
 
 <ul>
