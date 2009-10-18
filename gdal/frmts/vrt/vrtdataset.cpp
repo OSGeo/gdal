@@ -960,3 +960,57 @@ VRTDataset::Create( const char * pszName,
     }
 }
 
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char** VRTDataset::GetFileList()
+{
+    char** papszFileList = GDALDataset::GetFileList();
+    
+    int nSize = CSLCount(papszFileList);
+    int nMaxSize = nSize;
+    
+    /* Don't need an element desallocator as each string points to an */
+    /* element of the papszFileList */
+    CPLHashSet* hSetFiles = CPLHashSetNew(CPLHashSetHashStr,
+                                          CPLHashSetEqualStr,
+                                          NULL);
+                                          
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+       ((VRTRasterBand *) papoBands[iBand])->GetFileList(
+                                &papszFileList, &nSize, &nMaxSize, hSetFiles);
+    }
+                                          
+    CPLHashSetDestroy(hSetFiles);
+    
+    return papszFileList;
+}
+
+/************************************************************************/
+/*                              Delete()                                */
+/************************************************************************/
+
+/* We implement Delete() to avoid that the default implementation */
+/* in GDALDriver::Delete() destroys the source files listed by GetFileList(),*/
+/* which would be an undesired effect... */
+CPLErr VRTDataset::Delete( const char * pszFilename )
+{
+    GDALDriverH hDriver = GDALIdentifyDriver(pszFilename, NULL);
+    if (hDriver && EQUAL(GDALGetDriverShortName(hDriver), "VRT"))
+    {
+        if( VSIUnlink( pszFilename ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Deleting %s failed:\n%s",
+                      pszFilename,
+                      VSIStrerror(errno) );
+            return CE_Failure;
+        }
+        
+        return CE_None;
+    }
+    else
+        return CE_Failure;
+}

@@ -48,6 +48,15 @@ VRTSource::~VRTSource()
 }
 
 /************************************************************************/
+/*                             GetFileList()                            */
+/************************************************************************/
+
+void VRTSource::GetFileList(char*** ppapszFileList, int *pnSize,
+                            int *pnMaxSize, CPLHashSet* hSetFiles)
+{
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                          VRTSimpleSource                             */
 /* ==================================================================== */
@@ -349,6 +358,51 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                             GetFileList()                            */
+/************************************************************************/
+
+void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
+                                  int *pnMaxSize, CPLHashSet* hSetFiles)
+{
+    const char* pszFilename;
+    if (poRasterBand != NULL && poRasterBand->GetDataset() != NULL &&
+        (pszFilename = poRasterBand->GetDataset()->GetDescription()) != NULL)
+    {
+/* -------------------------------------------------------------------- */
+/*      Is the filename even a real filesystem object?                  */
+/* -------------------------------------------------------------------- */
+        VSIStatBufL  sStat;
+        if( VSIStatL( pszFilename, &sStat ) != 0 )
+            return;
+            
+/* -------------------------------------------------------------------- */
+/*      Is it already in the list ?                                     */
+/* -------------------------------------------------------------------- */
+        if( CPLHashSetLookup(hSetFiles, pszFilename) != NULL )
+            return;
+        
+/* -------------------------------------------------------------------- */
+/*      Grow array if necessary                                         */
+/* -------------------------------------------------------------------- */
+        if (*pnSize + 1 >= *pnMaxSize)
+        {
+            *pnMaxSize = 2 + 2 * (*pnMaxSize);
+            *ppapszFileList = (char **) CPLRealloc(
+                        *ppapszFileList, sizeof(char*)  * (*pnMaxSize) );
+        }
+            
+/* -------------------------------------------------------------------- */
+/*      Add the string to the list                                      */
+/* -------------------------------------------------------------------- */
+        (*ppapszFileList)[*pnSize] = CPLStrdup(pszFilename);
+        (*ppapszFileList)[(*pnSize + 1)] = NULL;
+        CPLHashSetInsert(hSetFiles, (*ppapszFileList)[*pnSize]);
+        
+        (*pnSize) ++;
+    }
 }
 
 /************************************************************************/

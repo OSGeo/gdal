@@ -714,3 +714,12 @@ VRTRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                                 ppanHistogram, bForce, 
                                                 pfnProgress,pProgressData);
 }
+
+/************************************************************************/
+/*                             GetFileList()                            */
+/************************************************************************/
+
+void VRTRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
+                                int *pnMaxSize, CPLHashSet* hSetFiles)
+{
+}
