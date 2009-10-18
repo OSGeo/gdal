@@ -33,6 +33,7 @@
 #include "gdal_priv.h"
 #include "gdal_pam.h"
 #include "gdal_vrt.h"
+#include "cpl_hash_set.h"
 
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
@@ -53,6 +54,9 @@ public:
 
     virtual CPLErr  XMLInit( CPLXMLNode *psTree, const char * ) = 0;
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath ) = 0;
+    
+    virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
+                               int *pnMaxSize, CPLHashSet* hSetFiles);
 };
 
 typedef VRTSource *(*VRTSourceParser)(CPLXMLNode *, const char *);
@@ -106,6 +110,8 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     virtual CPLErr AddBand( GDALDataType eType, 
                             char **papszOptions=NULL );
+                            
+    virtual char      **GetFileList();
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
@@ -116,6 +122,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     static GDALDataset *Create( const char * pszName,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszOptions );
+    static CPLErr       Delete( const char * pszFilename );
 };
 
 /************************************************************************/
@@ -151,6 +158,8 @@ public:
 
     virtual CPLErr AddBand( GDALDataType eType, 
                             char **papszOptions=NULL );
+                            
+    virtual char      **GetFileList();
     
     CPLErr            ProcessBlock( int iBlockX, int iBlockY );
 
@@ -230,6 +239,9 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
                                         int nBuckets, int *panHistogram );
 
     CPLErr         CopyCommonInfoFrom( GDALRasterBand * );
+    
+    virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
+                               int *pnMaxSize, CPLHashSet* hSetFiles);
 };
 
 /************************************************************************/
@@ -292,6 +304,9 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 
 
     virtual CPLErr IReadBlock( int, int, void * );
+    
+    virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
+                               int *pnMaxSize, CPLHashSet* hSetFiles);
 };
 
 /************************************************************************/
@@ -454,7 +469,9 @@ public:
                               double &dfXOut, double &dfYOut );
     void            SrcToDst( double dfX, double dfY,
                               double &dfXOut, double &dfYOut );
-
+    
+    virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
+                               int *pnMaxSize, CPLHashSet* hSetFiles);
 };
 
 /************************************************************************/

@@ -363,6 +363,34 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char** VRTWarpedDataset::GetFileList()
+{
+    char** papszFileList = GDALDataset::GetFileList();
+    
+    if( poWarper != NULL )
+    {
+        const GDALWarpOptions *psWO = poWarper->GetOptions();
+        const char* pszFilename;
+        
+        if( psWO->hSrcDS != NULL &&
+            (pszFilename =
+                    ((GDALDataset*)psWO->hSrcDS)->GetDescription()) != NULL )
+        {
+            VSIStatBufL  sStat;
+            if( VSIStatL( pszFilename, &sStat ) == 0 )
+            {
+                papszFileList = CSLAddString(papszFileList, pszFilename);
+            }
+        }
+    }
+    
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                     VRTWarpedOverviewTransform()                     */
 /************************************************************************/
 

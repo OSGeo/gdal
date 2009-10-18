@@ -769,3 +769,16 @@ CPLErr VRTSourcedRasterBand::SetMetadata( char **papszNewMD, const char *pszDoma
         return VRTRasterBand::SetMetadata( papszNewMD, pszDomain );
 }
 
+/************************************************************************/
+/*                             GetFileList()                            */
+/************************************************************************/
+
+void VRTSourcedRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
+                                       int *pnMaxSize, CPLHashSet* hSetFiles)
+{
+    for( int i = 0; i < nSources; i++ )
+    {
+        papoSources[i]->GetFileList(ppapszFileList, pnSize,
+                                    pnMaxSize, hSetFiles);
+    }
+}
