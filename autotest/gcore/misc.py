@@ -118,14 +118,18 @@ def misc_4():
 # Test Create() with various band numbers (including 0) and datatype
 
 def misc_5_internal(drv, datatype, nBands):
-    dirname = 'tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+    dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
     #print 'drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
     try:
         os.mkdir(dirname)
     except:
-        reason = 'Cannot create %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-        gdaltest.post_reason(reason)
-        return
+        try:
+            os.stat(dirname)
+            # Hum the directory already exists... Not expected, but let's try to go on
+        except:
+            reason = 'Cannot create %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+            gdaltest.post_reason(reason)
+            return
 
     filename = '%s/foo' % dirname
     ds = drv.Create(filename, 100, 100, nBands, datatype)
@@ -148,7 +152,17 @@ def misc_5():
         shutil.rmtree('tmp/tmp')
     except:
         pass
-
+        
+    try:
+        os.mkdir('tmp/tmp')
+    except:
+        try:
+            os.stat(dirname)
+            # Hum the directory already exists... Not expected, but let's try to go on
+        except:
+            gdaltest.post_reason('Cannot create tmp/tmp')
+            return 'fail'
+            
     # Test Create() with various band numbers, including 0
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
@@ -203,17 +217,19 @@ def misc_6_internal(datatype, nBands):
                             skip = True
                 if drv.ShortName == 'JP2ECW' and datatype == gdal.GDT_Float64:
                     skip = True
-                if drv.ShortName == 'NITF' and gdal.DataTypeIsComplex(datatype) == 1:
-                    skip = True
 
                 if skip is False:
-                    dirname = 'tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+                    dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                     try:
                         os.mkdir(dirname)
                     except:
-                        reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-                        gdaltest.post_reason(reason)
-                        return 'fail'
+                        try:
+                            os.stat(dirname)
+                            # Hum the directory already exists... Not expected, but let's try to go on
+                        except:
+                            reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+                            gdaltest.post_reason(reason)
+                            return 'fail'
 
                     filename = '%s/foo' % dirname
                     dst_ds = drv.CreateCopy(filename, ds)
@@ -241,6 +257,16 @@ def misc_6():
     except:
         pass
 
+    try:
+        os.mkdir('tmp/tmp')
+    except:
+        try:
+            os.stat(dirname)
+            # Hum the directory already exists... Not expected, but let's try to go on
+        except:
+            gdaltest.post_reason('Cannot create tmp/tmp')
+            return 'fail'
+        
     datatype = gdal.GDT_Byte
     for nBands in range(6):
         ret = misc_6_internal(datatype, nBands)
@@ -307,6 +333,16 @@ def misc_8():
 
     return 'success'
 
+###############################################################################
+def misc_cleanup():
+
+    try:
+        shutil.rmtree('tmp/tmp')
+    except:
+        pass
+
+    return 'success'
+    
 gdaltest_list = [ misc_1,
                   misc_2,
                   misc_3,
@@ -314,7 +350,8 @@ gdaltest_list = [ misc_1,
                   misc_5,
                   misc_6,
                   misc_7,
-                  misc_8 ]
+                  misc_8,
+                  misc_cleanup ]
 
 if __name__ == '__main__':
 
