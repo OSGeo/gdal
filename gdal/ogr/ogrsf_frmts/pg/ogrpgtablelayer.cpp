@@ -1249,18 +1249,11 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
 {
     PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult = NULL;
+    PGresult            *hResult;
     CPLString           osCommand;
-    int                 i = 0;
+    int                 i;
     int                 bNeedComma = FALSE;
-    OGRErr              eErr = OGRERR_FAILURE;
-    
-    if( NULL == poFeature )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "NULL pointer to OGRFeature passed to CreateFeatureViaInsert()." );
-        return eErr;
-    }
+    OGRErr              eErr;
 
     eErr = poDS->SoftStartTransaction();
     if( eErr != OGRERR_NONE )
@@ -1273,12 +1266,14 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     osCommand.Printf( "INSERT INTO %s (", pszSqlTableName );
 
-    if( bHasWkb && poFeature->GetGeometryRef() != NULL )
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+
+    if( bHasWkb && poGeom != NULL )
     {
         osCommand += "WKB_GEOMETRY ";
         bNeedComma = TRUE;
     }
-    else if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL )
+    else if( bHasPostGISGeometry && poGeom != NULL )
     {
         osCommand = osCommand + "\"" + pszGeomColumn + "\" ";
         bNeedComma = TRUE;
@@ -1293,7 +1288,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    int nFieldCount = poFeatureDefn->GetFieldCount();
+    for( i = 0; i < nFieldCount; i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
             continue;
@@ -1310,20 +1306,15 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     osCommand += ") VALUES (";
 
     /* Set the geometry */
-    bNeedComma = poFeature->GetGeometryRef() != NULL;
-    if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL)
+    bNeedComma = poGeom != NULL;
+    if( bHasPostGISGeometry && poGeom != NULL)
     {
         char    *pszWKT = NULL;
 
-        if( poFeature->GetGeometryRef() != NULL )
-        {
-            OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
+        poGeom->closeRings();
+        poGeom->setCoordinateDimension( nCoordDimension );
 
-            poGeom->closeRings();
-            poGeom->setCoordinateDimension( nCoordDimension );
-
-            poGeom->exportToWkt( &pszWKT );
-        }
+        poGeom->exportToWkt( &pszWKT );
 
         if( pszWKT != NULL )
         {
@@ -1340,9 +1331,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         else
             osCommand += "''";
     }
-    else if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
+    else if( bHasWkb && !bWkbAsOid && poGeom != NULL )
     {
-        char    *pszBytea = GeometryToBYTEA( poFeature->GetGeometryRef() );
+        char    *pszBytea = GeometryToBYTEA( poGeom );
 
         if( pszBytea != NULL )
         {
@@ -1352,9 +1343,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         else
             osCommand += "''";
     }
-    else if( bHasWkb && bWkbAsOid && poFeature->GetGeometryRef() != NULL )
+    else if( bHasWkb && bWkbAsOid && poGeom != NULL )
     {
-        Oid     oid = GeometryToOID( poFeature->GetGeometryRef() );
+        Oid     oid = GeometryToOID( poGeom );
 
         if( oid != 0 )
         {
@@ -1374,7 +1365,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     }
 
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( i = 0; i < nFieldCount; i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
             continue;
