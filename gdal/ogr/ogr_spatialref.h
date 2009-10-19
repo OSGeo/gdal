@@ -503,9 +503,12 @@ class CPL_DLL OGRSpatialReference
 /************************************************************************/
 
 /**
- * Object for transforming between coordinate systems.
+ * Interface for transforming between coordinate systems.
  *
- * Also, see OGRCreateSpatialReference() for creating transformations.
+ * Currently, the only implementation within OGR is OGRProj4CT, which
+ * requires the PROJ.4 library to be available at run-time.
+ *
+ * Also, see OGRCreateCoordinateTransformation() for creating transformations.
  */
  
 class CPL_DLL OGRCoordinateTransformation
