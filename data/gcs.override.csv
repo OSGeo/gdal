@@ -25,4 +25,10 @@
 # From Jan: http://bugzilla.remotesensing.org/show_bug.cgi?id=1336
 #
 4313,Belge 1972,6313,Reseau National Belge 1972,6313,9122,7022,8901,1,0,6422,9606,106.868628,-52.297783,103.723893,-0.336570,0.456955,-1.842183,1.0000012747
+#
+# Seven-parameter transformation for Pulkovo 1942
+# as defined by the GOST P 51794-2001.
+# See http://trac.osgeo.org/gdal/ticket/3176 for details.
+#
+4284,Pulkovo 1942,6284,Pulkovo 1942,6284,9122,7024,8901,1,0,6422,9607,23.9,-141.3,-80.9,0,-0.37,-0.85,-0.12
 
