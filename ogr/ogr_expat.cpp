@@ -32,6 +32,8 @@
 #include "ogr_expat.h"
 #include "cpl_error.h"
 
+CPL_CVSID("$Id$");
+
 #define OGR_EXPAT_MAX_ALLOWED_ALLOC 10000000
 
 static void* OGRExpatMalloc(size_t size)
