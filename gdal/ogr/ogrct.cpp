@@ -314,6 +314,8 @@ void OGRCoordinateTransformation::DestroyCT(OGRCoordinateTransformation* poCT)
  * The delete operator, or OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects. 
  *
+ * The PROJ.4 library must be available at run-time.
+ *
  * @param poSource source spatial reference system. 
  * @param poTarget target spatial reference system. 
  * @return NULL on failure or a ready to use transformation object.
