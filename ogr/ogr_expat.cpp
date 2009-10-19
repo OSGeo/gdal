@@ -32,7 +32,7 @@
 #include "ogr_expat.h"
 #include "cpl_error.h"
 
-#define OGR_EXPAT_MAX_ALLOWED_ALLOC 100000
+#define OGR_EXPAT_MAX_ALLOWED_ALLOC 10000000
 
 static void* OGRExpatMalloc(size_t size)
 {
