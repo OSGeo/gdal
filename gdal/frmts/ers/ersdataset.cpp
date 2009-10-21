@@ -746,7 +746,7 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( EQUAL(poHeader->Find("DataSetType",""),"Translated") )
     {
         poDS->poDepFile = (GDALDataset *) 
-            GDALOpenShared( osDataFile, poOpenInfo->eAccess );
+            GDALOpenShared( osDataFilePath, poOpenInfo->eAccess );
 
         if( poDS->poDepFile != NULL 
             && poDS->poDepFile->GetRasterCount() >= nBands )
