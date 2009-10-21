@@ -192,6 +192,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
             return CE_Failure;
         }
         
+        /* We work with negative north-south resolution in all the following code */
         ns_res = -ns_res;
     }
     else
@@ -425,12 +426,14 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                 else if (resolutionStrategy == HIGHEST_RESOLUTION)
                 {
                     we_res = MIN(we_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES]);
-                    ns_res = MIN(ns_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES]);
+                    /* Yes : as ns_res is negative, the highest resolution is the max value */
+                    ns_res = MAX(ns_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES]);
                 }
                 else
                 {
                     we_res = MAX(we_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES]);
-                    ns_res = MAX(ns_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES]);
+                    /* Yes : as ns_res is negative, the lowest resolution is the min value */
+                    ns_res = MIN(ns_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES]);
                 }
             }
 
