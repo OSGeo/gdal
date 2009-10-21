@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ehdrdataset.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  ERMapper .ers Driver
  * Purpose:  Implementation of .ers driver.
@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "ershdrnode.h"
 
-CPL_CVSID("$Id: ehdrdataset.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
@@ -638,6 +638,7 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poHeader->ParseChildren( fpERS ) )
     {
         delete poHeader;
+        VSIFCloseL( fpERS );
         return NULL;
     }
 
@@ -675,6 +676,13 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     int nBands = atoi(poHeader->Find( "RasterInfo.NrOfBands" ));
     poDS->nRasterXSize = atoi(poHeader->Find( "RasterInfo.NrOfCellsPerLine" ));
     poDS->nRasterYSize = atoi(poHeader->Find( "RasterInfo.NrOfLines" ));
+    
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(nBands, FALSE))
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*     Get the HeaderOffset if it exists in the header                  */
