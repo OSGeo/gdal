@@ -651,7 +651,10 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                           "width=%d, height=%d, numcmpts=%d, bpp=%d",
                           (int)box->data.ihdr.width, (int)box->data.ihdr.height,
                           (int)box->data.ihdr.numcmpts, (box->data.ihdr.bpc & 0x7F) + 1 );
-                if ( box->data.ihdr.bpc )
+                /* ISO/IEC 15444-1:2004 §I.5.3.1 specifies that 255 means that all */
+                /* components have not the same bit depth and/or sign and that a */
+                /* BPCC box must then follow to specify them for each component */
+                if ( box->data.ihdr.bpc != 255 )
                 {
                     paiDepth = (int *)CPLMalloc(poDS->nBands * sizeof(int));
                     pabSignedness = (int *)CPLMalloc(poDS->nBands * sizeof(int));
@@ -676,7 +679,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                         CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
                     for( iBand = 0; iBand < (int)box->data.bpcc.numcmpts; iBand++ )
                     {
-                        paiDepth[iBand] = box->data.bpcc.bpcs[iBand] && 0x7F;
+                        paiDepth[iBand] = (box->data.bpcc.bpcs[iBand] & 0x7F) + 1;
                         pabSignedness[iBand] = box->data.bpcc.bpcs[iBand] >> 7;
                         CPLDebug( "JPEG2000",
                                   "Component %d: bpp=%d, signedness=%d",
@@ -701,7 +704,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                         CPLMalloc( box->data.pclr.numchans * sizeof(int) );
                 for( iBand = 0; iBand < (int)box->data.pclr.numchans; iBand++ )
                 {
-                    paiDepth[iBand] = box->data.pclr.bpc[iBand] && 0x7F;
+                    paiDepth[iBand] = (box->data.pclr.bpc[iBand] & 0x7F) + 1;
                     pabSignedness[iBand] = box->data.pclr.bpc[iBand] >> 7;
                     CPLDebug( "JPEG2000",
                               "Component %d: bpp=%d, signedness=%d",
