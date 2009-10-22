@@ -537,7 +537,30 @@ def ecw_18():
     
     tst = gdaltest.GDALTest( 'JP2ECW', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
     return tst.testOpen( check_prj = srs, check_gt = gt )
+    
+###############################################################################
+# Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
 
+def ecw_19():
+
+    if gdaltest.jp2ecw_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open('data/3_13bit_and_1bit.jp2')
+    
+    expected_checksums = [ 64570, 57277, 56048, 61292]
+    
+    for i in range(4):
+        if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
+            return 'fail'
+
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        gdaltest.post_reason('unexpected data type')
+        return 'fail'
+            
+    return 'success'
+    
 ###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
@@ -680,6 +703,7 @@ gdaltest_list = [
     ecw_16,
     ecw_17,
     ecw_18,
+    ecw_19,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,

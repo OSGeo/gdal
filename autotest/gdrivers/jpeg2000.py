@@ -171,6 +171,29 @@ def jpeg2000_7():
     return tst.testOpen()
     
 ###############################################################################
+# Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
+
+def jpeg2000_8():
+
+    if gdaltest.jpeg2000_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open('data/3_13bit_and_1bit.jp2')
+    
+    expected_checksums = [ 64570, 57277, 56048, 61292]
+    
+    for i in range(4):
+        if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
+            return 'fail'
+
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        gdaltest.post_reason('unexpected data type')
+        return 'fail'
+            
+    return 'success'
+    
+###############################################################################
 def jpeg2000_online_1():
 
     if gdaltest.jpeg2000_drv is None:
@@ -268,6 +291,7 @@ def jpeg2000_online_4():
     tst = gdaltest.GDALTest( 'JPEG2000', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1 )
 
     # Jasper cannot handle this image
+    # Actually, a patched Jasper can ;-)
     if tst.testOpen() != 'success':
         gdaltest.post_reason('Expected failure: Jasper cannot handle this image yet')
         return 'expected_fail'
@@ -351,6 +375,7 @@ gdaltest_list = [
     jpeg2000_5,
     jpeg2000_6,
     jpeg2000_7,
+    jpeg2000_8,
     jpeg2000_online_1,
     jpeg2000_online_2,
     jpeg2000_online_3,
