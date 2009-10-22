@@ -50,6 +50,9 @@ OGRODBCTableLayer::OGRODBCTableLayer( OGRODBCDataSource *poDSIn )
     nSRSId = -1;
 
     poFeatureDefn = NULL;
+    
+    pszTableName = NULL;
+    pszSchemaName = NULL;
 }
 
 /************************************************************************/
@@ -59,6 +62,9 @@ OGRODBCTableLayer::OGRODBCTableLayer( OGRODBCDataSource *poDSIn )
 OGRODBCTableLayer::~OGRODBCTableLayer()
 
 {
+    CPLFree( pszTableName );
+    CPLFree( pszSchemaName );
+
     CPLFree( pszQuery );
     ClearStatement();
 }
@@ -67,7 +73,7 @@ OGRODBCTableLayer::~OGRODBCTableLayer()
 /*                             Initialize()                             */
 /************************************************************************/
 
-CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName, 
+CPLErr OGRODBCTableLayer::Initialize( const char *pszLayerName, 
                                       const char *pszGeomCol )
 
 {
@@ -77,11 +83,29 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
     pszFIDColumn = NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Parse out schema name if present in layer.  We assume a         */
+/*      schema is provided if there is a dot in the name, and that      */
+/*      it is in the form <schema>.<tablename>                          */
+/* -------------------------------------------------------------------- */
+    const char *pszDot = strstr(pszLayerName,".");
+    if( pszDot != NULL )
+    {
+        pszTableName = CPLStrdup(pszDot + 1);
+        pszSchemaName = CPLStrdup(pszLayerName);
+        pszSchemaName[pszDot - pszLayerName] = '\0';
+    }
+    else
+    {
+        pszTableName = CPLStrdup(pszLayerName);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetKey( poSession );
     
-    if( oGetKey.GetPrimaryKeys( pszTableName ) && oGetKey.Fetch() )
+    if( oGetKey.GetPrimaryKeys( pszTableName, NULL, pszSchemaName ) 
+        && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
         
@@ -110,10 +134,10 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
     CPLODBCStatement oGetCol( poSession );
     CPLErr eErr;
 
-    if( !oGetCol.GetColumns( pszTableName ) )
+    if( !oGetCol.GetColumns( pszTableName, NULL, pszSchemaName ) )
         return CE_Failure;
 
-    eErr = BuildFeatureDefn( pszTableName, &oGetCol );
+    eErr = BuildFeatureDefn( pszLayerName, &oGetCol );
     if( eErr != CE_None )
         return eErr;
 
@@ -121,7 +145,7 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No column definitions found for table '%s', layer not usable.", 
-                  pszTableName );
+                  pszLayerName );
         return CE_Failure;
     }
 
@@ -135,7 +159,7 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
     {
         bHaveSpatialExtents = TRUE;
         CPLDebug( "OGR_ODBC", "Table %s has geometry extent fields.",
-                  pszTableName );
+                  pszLayerName );
     }
         
 /* -------------------------------------------------------------------- */
