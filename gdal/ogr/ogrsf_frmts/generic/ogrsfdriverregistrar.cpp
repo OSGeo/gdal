@@ -168,11 +168,15 @@ void OGRCleanupAll()
 OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 
 {
-    CPLMutexHolderD( &hDRMutex );
-    
     if( poRegistrar == NULL )
-        poRegistrar = new OGRSFDriverRegistrar();
+    {
+        CPLMutexHolderD( &hDRMutex );
 
+        if( poRegistrar == NULL )
+            poRegistrar = new OGRSFDriverRegistrar();
+    }
+   
+    CPLAssert( NULL != poRegistrar );
     return poRegistrar;
 }
 
