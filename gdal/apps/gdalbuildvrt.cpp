@@ -107,44 +107,60 @@ static void Usage()
 }
 
     
-void GetSrcDstWin(DatasetProperty* psDatasetProperties,
+int  GetSrcDstWin(DatasetProperty* psDP,
                   double we_res, double ns_res,
                   double minX, double minY, double maxX, double maxY,
                   int* pnSrcXOff, int* pnSrcYOff, int* pnSrcXSize, int* pnSrcYSize,
                   int* pnDstXOff, int* pnDstYOff, int* pnDstXSize, int* pnDstYSize)
 {
-    *pnSrcXSize = psDatasetProperties->nRasterXSize;
-    *pnSrcYSize = psDatasetProperties->nRasterYSize;
-    if ( psDatasetProperties->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] < minX )
+    /* Check that the destination bounding box intersects the source bounding box */
+    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
+         psDP->nRasterXSize *
+         psDP->adfGeoTransform[GEOTRSFRM_WE_RES] < minX )
+         return FALSE;
+    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] > maxX )
+         return FALSE;
+    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
+         psDP->nRasterYSize *
+         psDP->adfGeoTransform[GEOTRSFRM_NS_RES] > maxY )
+         return FALSE;
+    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] < minY )
+         return FALSE;
+
+    *pnSrcXSize = psDP->nRasterXSize;
+    *pnSrcYSize = psDP->nRasterYSize;
+    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] < minX )
     {
-        *pnSrcXOff = (int)((minX - psDatasetProperties->adfGeoTransform[GEOTRSFRM_TOPLEFT_X]) /
-            psDatasetProperties->adfGeoTransform[GEOTRSFRM_WE_RES] + 0.5);
+        *pnSrcXOff = (int)((minX - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X]) /
+            psDP->adfGeoTransform[GEOTRSFRM_WE_RES] + 0.5);
         *pnDstXOff = 0;
     }
     else
     {
         *pnSrcXOff = 0;
         *pnDstXOff = (int)
-            (0.5 + (psDatasetProperties->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
+            (0.5 + (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
     }
-    if ( maxY < psDatasetProperties->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y])
+    if ( maxY < psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y])
     {
-        *pnSrcYOff = (int)((psDatasetProperties->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - maxY) /
-            -psDatasetProperties->adfGeoTransform[GEOTRSFRM_NS_RES] + 0.5);
+        *pnSrcYOff = (int)((psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - maxY) /
+            -psDP->adfGeoTransform[GEOTRSFRM_NS_RES] + 0.5);
         *pnDstYOff = 0;
     }
     else
     {
         *pnSrcYOff = 0;
         *pnDstYOff = (int)
-            (0.5 + (maxY - psDatasetProperties->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
+            (0.5 + (maxY - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
     }
     *pnDstXSize = (int)
-        (0.5 + psDatasetProperties->nRasterXSize *
-         psDatasetProperties->adfGeoTransform[GEOTRSFRM_WE_RES] / we_res);
+        (0.5 + psDP->nRasterXSize *
+         psDP->adfGeoTransform[GEOTRSFRM_WE_RES] / we_res);
     *pnDstYSize = (int)
-        (0.5 + psDatasetProperties->nRasterYSize *
-         psDatasetProperties->adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res);
+        (0.5 + psDP->nRasterYSize *
+         psDP->adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res);
+         
+    return TRUE;
 }
 
 /************************************************************************/
@@ -495,6 +511,15 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
         {
             if (psDatasetProperties[i].isFileOK == 0)
                 continue;
+                
+            int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+                nDstXOff, nDstYOff, nDstXSize, nDstYSize;
+            if ( ! GetSrcDstWin(&psDatasetProperties[i],
+                         we_res, ns_res, minX, minY, maxX, maxY,
+                         &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
+                         &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize) )
+                continue;
+
             const char* dsFileName = ppszInputFilenames[i];
 
             GDALAddBand(hVRTDS, psDatasetProperties[i].firstBandType, NULL);
@@ -509,13 +534,6 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                                                 psDatasetProperties[i].firstBandType,
                                                 psDatasetProperties[i].nBlockXSize,
                                                 psDatasetProperties[i].nBlockYSize);
-
-            int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                nDstXOff, nDstYOff, nDstXSize, nDstYSize;
-            GetSrcDstWin(&psDatasetProperties[i],
-                         we_res, ns_res, minX, minY, maxX, maxY,
-                         &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
-                         &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize);
 
             VRTSourcedRasterBandH hVRTBand =
                     (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, iBand);
@@ -567,6 +585,15 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
         {
             if (psDatasetProperties[i].isFileOK == 0)
                 continue;
+    
+            int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
+                nDstXOff, nDstYOff, nDstXSize, nDstYSize;
+            if ( ! GetSrcDstWin(&psDatasetProperties[i],
+                         we_res, ns_res, minX, minY, maxX, maxY,
+                         &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
+                         &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize) )
+                continue;
+                
             const char* dsFileName = ppszInputFilenames[i];
     
             GDALProxyPoolDatasetH hProxyDS =
@@ -583,13 +610,6 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                                                 psDatasetProperties[i].nBlockXSize,
                                                 psDatasetProperties[i].nBlockYSize);
             }
-    
-            int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                nDstXOff, nDstYOff, nDstXSize, nDstYSize;
-            GetSrcDstWin(&psDatasetProperties[i],
-                         we_res, ns_res, minX, minY, maxX, maxY,
-                         &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
-                         &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize);
     
             for(j=0;j<nBands;j++)
             {
