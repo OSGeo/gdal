@@ -55,9 +55,9 @@ class OGRODBCLayer : public OGRLayer
 
     OGRODBCDataSource    *poDS;
 
-    int                 bGeomColumnWKB;
-    char                *pszGeomColumn;
-    char                *pszFIDColumn;
+    int                bGeomColumnWKB;
+    char               *pszGeomColumn;
+    char               *pszFIDColumn;
 
     int                *panFieldOrdinals;
 
@@ -99,6 +99,9 @@ class OGRODBCTableLayer : public OGRODBCLayer
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();
+
+    char               *pszTableName;
+    char               *pszSchemaName;
 
   public:
                         OGRODBCTableLayer( OGRODBCDataSource * );

@@ -14,7 +14,7 @@ support is potentially available on Unix and Windows platforms, but is
 only included in unix builds by special configuration options.<p>
 
 ODBC datasources are accessed using a datasource name of the form
-<b>ODBC:<i>userid</i>/<i>password</i>@<i>dsn</i>,<i>tablename(geometrycolname),...</i>:<i>srs_tablename(sridcolumn,srtextcolumn)</i></b>.
+<b>ODBC:<i>userid</i>/<i>password</i>@<i>dsn</i>,<i>schema.tablename(geometrycolname),...</i>:<i>srs_tablename(sridcolumn,srtextcolumn)</i></b>.
 With optional items dropped the following are also acceptable:
 
 <ul>
@@ -52,9 +52,11 @@ and YMAX then direct table queries with a spatial filter accelerate the
 spatial query.  The XMIN, YMIN, XMAX and YMAX fields should represent the
 extent of the geometry in the row in the tables coordinate system.<p>
 
-<p>By default, SQL statements are passed directly to the underlying database engine.
-It's also possible to request the driver to handle SQL commands with <a href="/ogr/ogr_sql.html">OGR SQL</a> engine,
-by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL() method, as name of the SQL dialect.</p>
+<p>By default, SQL statements are passed directly to the underlying database 
+engine.  It's also possible to request the driver to handle SQL commands 
+with the <a href="/ogr/ogr_sql.html">OGR SQL</a> engine, by passing 
+<strong>"OGRSQL"</strong> string to the ExecuteSQL() method, as name of 
+the SQL dialect.</p>
 
 <h2>Creation Issues</h2>
 
@@ -64,7 +66,7 @@ may be removed in the future. <p>
 <h3>See Also</h3>
 
 <ul>
-<li> <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/odbc/htm/odbcodbc_api_reference.asp">MSDN ODBC API Reference</a><p>
+<li> <a href="http://msdn.microsoft.com/en-us/library/ms714562(VS.85).aspx">MSDN ODBC API Reference</a><p>
 </ul>
 
 </body>
