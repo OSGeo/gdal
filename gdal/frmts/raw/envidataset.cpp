@@ -2026,6 +2026,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             osBandId = CPLSPrintf("Band_%i", i+1);
             poDS->SetMetadataItem(osBandId, osBandName);
         }
+        CSLDestroy( papszWL );
         CSLDestroy( papszBandNames );
     }
 /* -------------------------------------------------------------------- */
