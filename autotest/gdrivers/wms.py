@@ -54,7 +54,7 @@ def wms_1():
     # This is a dirty hack checking if remote WMS service is online.
     # Nothing genuine but helps to keep the buildbot waterfall green.
     try:
-        srv = 'http://onearth.jpl.nasa.gov/wms.cgi?'
+        srv = 'http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?'
         web = urllib2.urlopen(srv)
     except urllib2.HTTPError, e:
         print 'Test WMS service is down (HTTP Error: %d)' % e.code
@@ -76,7 +76,7 @@ def wms_2():
     if gdaltest.wms_drv is None:
         return 'skip'
 
-    gdaltest.wms_ds = gdal.Open( 'data/test_wms.txt' )
+    gdaltest.wms_ds = gdal.Open( 'data/pop_wms.xml' )
 
     if gdaltest.wms_ds is not None:
         return 'success'
@@ -92,8 +92,8 @@ def wms_3():
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
 	return 'skip'
 
-    if gdaltest.wms_ds.RasterXSize != 2666666 \
-       or gdaltest.wms_ds.RasterYSize != 1333333 \
+    if gdaltest.wms_ds.RasterXSize != 36000 \
+       or gdaltest.wms_ds.RasterYSize != 14500 \
        or gdaltest.wms_ds.RasterCount != 3:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
@@ -105,10 +105,10 @@ def wms_3():
         
     gt = gdaltest.wms_ds.GetGeoTransform()
     if abs(gt[0]- -180) > 0.00001 \
-       or abs(gt[3]- 90) > 0.00001 \
-       or abs(gt[1] - 0.000135) > 0.00001 \
+       or abs(gt[3]- 85) > 0.00001 \
+       or abs(gt[1] - 0.01) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
-       or abs(gt[5] - -0.000135) > 0.00001 \
+       or abs(gt[5] - -0.01) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
         gdaltest.post_reason( 'wrong geotransform' )
         print gt
@@ -146,7 +146,7 @@ def wms_4():
         print msg
         return 'skip'
 
-    if cs != 3903:
+    if cs != 57182:
         gdaltest.post_reason( 'Wrong checksum: ' + str(cs) )
         return 'fail'
 
