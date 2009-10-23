@@ -50,6 +50,17 @@ def wktraster_init():
     if gdaltest.wktrasterDriver is None:
         return 'skip'
 
+    try:
+        ds = gdal.Open( "PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='utm'" )
+    except:
+        gdaltest.wktrasterDriver = None
+
+    if ds is None:
+        gdaltest.wktrasterDriver = None
+
+    if gdaltest.wktrasterDriver is None:
+        return 'skip'
+
     return 'success'
     
 
