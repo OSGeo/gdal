@@ -33,68 +33,7 @@
  * Define the extensions for Band (nee GDALRasterBandShadow)
  *
 *************************************************************************/
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
-%{
-static
-CPLErr ReadRaster_internal( GDALRasterBandShadow *obj, 
-                            int xoff, int yoff, int xsize, int ysize,
-                            int buf_xsize, int buf_ysize,
-                            GDALDataType buf_type,
-                            int *buf_size, char **buf )
-{
-  CPLErr result;
-  
-  *buf_size = buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8);
-  
-  if (buf_xsize < 0 || buf_ysize < 0 || *buf_size == 0 ||
-      *buf_size != (GIntBig)buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8))
-  {
-      CPLError(CE_Failure, CPLE_OutOfMemory, "Invalid dimensions : %d x %d", buf_xsize, buf_ysize);
-      *buf = 0;
-      *buf_size = 0;
-      return CE_Failure;
-  }
-  
-  *buf = (char*) malloc( *buf_size );
-  if (*buf)
-  {
-    result =  GDALRasterIO( obj, GF_Read, xoff, yoff, xsize, ysize,
-                                    (void *) *buf, buf_xsize, buf_ysize,
-                                    buf_type, 0, 0 );
-    if ( result != CE_None ) {
-        free( *buf );
-        *buf = 0;
-        *buf_size = 0;
-    }
-  }
-  else
-  {
-    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate %d bytes", *buf_size);
-    result = CE_Failure;
-    *buf = 0;
-    *buf_size = 0;
-  }
-  return result;
-}
 
-static
-CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
-                             int xoff, int yoff, int xsize, int ysize,
-                             int buf_xsize, int buf_ysize,
-                             GDALDataType buf_type,
-                             int buf_size, char *buffer )
-{
-    if ( buf_size < buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type) /8) ) {
-      CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
-      return CE_Failure;
-    }
-
-    return GDALRasterIO( obj, GF_Write, xoff, yoff, xsize, ysize, 
-		        (void *) buffer, buf_xsize, buf_ysize, buf_type, 0, 0 );
-}
-%}
-
-#else
 
 %{
 /* Returned size is in bytes or 0 if an error occured */
@@ -155,6 +94,72 @@ int ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
     }
 
     return (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + nPixelSize;
+}
+%}
+
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+%{
+static
+CPLErr ReadRaster_internal( GDALRasterBandShadow *obj, 
+                            int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            int *buf_size, char **buf,
+                            int pixel_space, int line_space)
+{
+  CPLErr result;
+  
+  *buf_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+                                       pixel_space, line_space, FALSE );
+  
+  if (*buf_size == 0)
+  {
+      *buf = 0;
+      return CE_Failure;
+  }
+  
+  *buf = (char*) malloc( *buf_size );
+  if (*buf)
+  {
+    result =  GDALRasterIO( obj, GF_Read, xoff, yoff, xsize, ysize,
+                                    (void *) *buf, buf_xsize, buf_ysize,
+                                    buf_type, pixel_space, line_space );
+    if ( result != CE_None ) {
+        free( *buf );
+        *buf = 0;
+        *buf_size = 0;
+    }
+  }
+  else
+  {
+    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate %d bytes", *buf_size);
+    result = CE_Failure;
+    *buf = 0;
+    *buf_size = 0;
+  }
+  return result;
+}
+
+static
+CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
+                             int xoff, int yoff, int xsize, int ysize,
+                             int buf_xsize, int buf_ysize,
+                             GDALDataType buf_type,
+                             int buf_size, char *buffer,
+                             int pixel_space, int line_space)
+{
+    int min_buffer_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+                                                   pixel_space, line_space, FALSE );
+    if ( min_buffer_size == 0 )
+      return CE_Failure;
+      
+    if ( buf_size < min_buffer_size ) {
+      CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
+      return CE_Failure;
+    }
+
+    return GDALRasterIO( obj, GF_Write, xoff, yoff, xsize, ysize, 
+		        (void *) buffer, buf_xsize, buf_ysize, buf_type, pixel_space, line_space );
 }
 %}
 
@@ -316,13 +321,17 @@ public:
                      int *buf_len, char **buf,
                      int *buf_xsize = 0,
                      int *buf_ysize = 0,
-                     int *buf_type = 0 ) {
+                     int *buf_type = 0,
+                     int *buf_pixel_space = 0,
+                     int *buf_line_space = 0) {
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
-                                nxsize, nysize, ntype, buf_len, buf );
+                                nxsize, nysize, ntype, buf_len, buf, pixel_space, line_space );
   }
 %clear (int *buf_len, char **buf );
 %clear (int*);
@@ -334,13 +343,17 @@ public:
                       int buf_len, char *buf_string,
                       int *buf_xsize = 0,
                       int *buf_ysize = 0,
-                      int *buf_type = 0 ) {
+                      int *buf_type = 0,
+                      int *buf_pixel_space = 0,
+                      int *buf_line_space = 0) {
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
-                                 nxsize, nysize, ntype, buf_len, buf_string );
+                                 nxsize, nysize, ntype, buf_len, buf_string, pixel_space, line_space );
   }
 %clear (int buf_len, char *buf_string);
 %clear (int*);

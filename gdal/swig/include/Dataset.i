@@ -28,54 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
-%{
-static
-CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
-                            int xoff, int yoff, int xsize, int ysize,
-                            int buf_xsize, int buf_ysize,
-                            GDALDataType buf_type,
-                            int *buf_size, char **buf,
-                            int band_list, int *pband_list )
-{
-  CPLErr result;
-  
-  *buf_size = buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list;
-  
-  if (buf_xsize < 0 || buf_ysize < 0 || *buf_size == 0 ||
-      *buf_size != (GIntBig)buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list)
-  {
-      CPLError(CE_Failure, CPLE_OutOfMemory, "Invalid dimensions : %d x %d", buf_xsize, buf_ysize);
-      *buf = 0;
-      *buf_size = 0;
-      return CE_Failure;
-  }
-  
-  *buf = (char*) malloc( *buf_size );
-  if (*buf)
-  {
-    result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
-                                    (void*) *buf, buf_xsize, buf_ysize, buf_type,
-                                    band_list, pband_list, 0, 0, 0 );
-    if ( result != CE_None ) {
-        free( *buf );
-        *buf = 0;
-        *buf_size = 0;
-    }
-  }
-  else
-  {
-    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate %d bytes", *buf_size);
-    result = CE_Failure;
-    *buf = 0;
-    *buf_size = 0;
-  }
-  return result;
-}
-%}
-
-#else
-
 %{
 /* Returned size is in bytes or 0 if an error occured */
 static
@@ -159,6 +111,51 @@ int ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
     }
 
     return (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + (nBands - 1) * nBandSpace + nPixelSize;
+}
+%}
+
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+%{
+static
+CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
+                            int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            int *buf_size, char **buf,
+                            int band_list, int *pband_list,
+                            int pixel_space, int line_space, int band_space)
+{
+  CPLErr result;
+  
+  *buf_size = ComputeDatasetRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+                                          band_list ? band_list : GDALGetRasterCount(obj), pband_list, band_list,
+                                          pixel_space, line_space, band_space, FALSE);
+  if (*buf_size == 0)
+  {
+      *buf = 0;
+      return CE_Failure;
+  }
+  
+  *buf = (char*) malloc( *buf_size );
+  if (*buf)
+  {
+    result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
+                                    (void*) *buf, buf_xsize, buf_ysize, buf_type,
+                                    band_list, pband_list, pixel_space, line_space, band_space );
+    if ( result != CE_None ) {
+        free( *buf );
+        *buf = 0;
+        *buf_size = 0;
+    }
+  }
+  else
+  {
+    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate %d bytes", *buf_size);
+    result = CE_Failure;
+    *buf = 0;
+    *buf_size = 0;
+  }
+  return result;
 }
 %}
 
@@ -325,7 +322,9 @@ public:
 	              int buf_len, char *buf_string,
                       int *buf_xsize = 0, int *buf_ysize = 0,
                       GDALDataType *buf_type = 0,
-                      int band_list = 0, int *pband_list = 0 ) {
+                      int band_list = 0, int *pband_list = 0,
+                      int* buf_pixel_space = 0, int* buf_line_space = 0, int* buf_band_space = 0) {
+    CPLErr eErr;
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype;
@@ -333,39 +332,33 @@ public:
       ntype = (GDALDataType) *buf_type;
     } else {
       int lastband = GDALGetRasterCount( self ) - 1;
+      if (lastband < 0)
+        return CE_Failure;
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
     }
-    bool myBandList = false;
-    int nBandCount;
-    int *pBandList;
-    if ( band_list != 0 ) {
-      myBandList = false;
-      nBandCount = band_list;
-      pBandList = pband_list;
-    }
-    else {
-      myBandList = true;
-      nBandCount = GDALGetRasterCount( self );
-      pBandList = (int*) CPLMalloc( sizeof(int) * nBandCount );
-      for( int i = 0; i< nBandCount; ++i ) {
-        pBandList[i] = i;
-      }
-    }
 
-    if ( buf_len < nxsize * nysize * band_list * GDALGetDataTypeSize( ntype) /8 ) {
-      CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
-      if ( myBandList ) {
-       CPLFree( pBandList );
-      }
-      return CE_Failure;
-    }
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    int band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
-    return GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
+    int min_buffer_size =
+      ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
+                                  band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
+                                  pixel_space, line_space, band_space, FALSE);
+    if (min_buffer_size == 0)
+        return CE_Failure;
+
+    if ( buf_len < min_buffer_size )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
+        return CE_Failure;
+    }
+  
+    eErr = GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
                                 (void*) buf_string, nxsize, nysize, ntype,
-                                band_list, pband_list, 0, 0, 0 );
-    if ( myBandList ) {
-       CPLFree( pBandList );
-    }
+                                band_list, pband_list, pixel_space, line_space, band_space );
+
+    return eErr;
   }
 %clear (int band_list, int *pband_list );
 %clear (GDALDataType *buf_type);
@@ -383,9 +376,10 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 	              int *buf_len, char **buf,
                       int *buf_xsize = 0, int *buf_ysize = 0,
                       GDALDataType *buf_type = 0,
-                      int band_list = 0, int *pband_list = 0  )
+                      int band_list = 0, int *pband_list = 0,
+                      int* buf_pixel_space = 0, int* buf_line_space = 0, int* buf_band_space = 0 )
 {
-
+    CPLErr eErr;
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype;
@@ -393,33 +387,22 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
       ntype = (GDALDataType) *buf_type;
     } else {
       int lastband = GDALGetRasterCount( self ) - 1;
+      if (lastband < 0)
+        return CE_Failure;
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
     }
-    bool myBandList = false;
-    int nBandCount;
-    int *pBandList;
-    if ( band_list != 0 ) {
-      myBandList = false;
-      nBandCount = band_list;
-      pBandList = pband_list;
-    }
-    else {
-      myBandList = true;
-      nBandCount = GDALGetRasterCount( self );
-      pBandList = (int*) CPLMalloc( sizeof(int) * nBandCount );
-      for( int i = 0; i< nBandCount; ++i ) {
-        pBandList[i] = i;
-      }
-    }
+
+    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    int band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
                             
-    return DSReadRaster_internal( self, xoff, yoff, xsize, ysize,
+    eErr = DSReadRaster_internal( self, xoff, yoff, xsize, ysize,
                                 nxsize, nysize, ntype,
                                 buf_len, buf, 
-                                nBandCount, pBandList);
-    if ( myBandList ) {
-       CPLFree( pBandList );
-    }
+                                band_list, pband_list,
+                                pixel_space, line_space, band_space);
 
+    return eErr;
 }
   
 %clear (int *buf_len, char **buf );

@@ -137,7 +137,8 @@
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
                     buf_xsize = None, buf_ysize = None, buf_type = None,
-                    band_list = None ):
+                    band_list = None,
+                    buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
 
         if buf_xsize is None:
             buf_xsize = xsize;
@@ -148,17 +149,15 @@
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType
 
-        if len(buf_string) < buf_xsize * buf_ysize * len(band_list) \
-           * (_gdal.GetDataTypeSize(buf_type) / 8):
-            raise ValueError, "raster buffer too small in WriteRaster"
-        else:    
-            return _gdal.Dataset_WriteRaster(self,
+        return _gdal.Dataset_WriteRaster(self,
                  xoff, yoff, xsize, ysize,
-                buf_string, buf_xsize, buf_ysize, buf_type, band_list )
+                buf_string, buf_xsize, buf_ysize, buf_type, band_list,
+                buf_pixel_space, buf_line_space, buf_band_space )
 
     def ReadRaster(self, xoff, yoff, xsize, ysize,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
-                   band_list = None ):
+                   band_list = None,
+                   buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
 
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
@@ -171,7 +170,7 @@
             buf_type = self.GetRasterBand(1).DataType;
         return _gdal.Dataset_ReadRaster(self, xoff, yoff, xsize, ysize,
                                            buf_xsize, buf_ysize, buf_type,
-                                           band_list)
+                                           band_list, buf_pixel_space, buf_line_space, buf_band_space )
 
     def GetSubDatasets(self):
         sd_list = []
