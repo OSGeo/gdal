@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*- 
 # Copyright (c) 2000, Atlantis Scientific Inc. (www.atlsci.com)
 # Copyright (C) 2005  Gabriel Ebner <ge@gabrielebner.at>
 # 
@@ -75,12 +76,14 @@ class file_info:
 		self.lry = self.uly + self.geotransform[5] * self.ysize
 
 		self.band_types = [None]
+ 		self.block_sizes = [None] 
 		self.nodata = [None]
 		self.cts = [None]
 		self.color_interps = [None]
 		for i in range(1, fh.RasterCount+1):
 			band = fh.GetRasterBand(i)
 			self.band_types.append(band.DataType)
+			self.block_sizes.append(band.GetBlockSize()) 
 			if band.GetNoDataValue() != None:
 				self.nodata.append(band.GetNoDataValue())
 			self.color_interps.append(band.GetRasterColorInterpretation())
@@ -142,6 +145,11 @@ class file_info:
 		t_fh.write(('\t\t\t<SourceFilename relativeToVRT="1">%s' + 
 			'</SourceFilename>\n') % self.filename)
 		t_fh.write('\t\t\t<SourceBand>%i</SourceBand>\n' % s_band)
+		data_type_name = gdal.GetDataTypeName(self.band_types[s_band]) 
+ 		block_size_x, block_size_y = self.block_sizes[s_band] 
+		t_fh.write('\t\t\t<SourceProperties RasterXSize="%i" RasterYSize="%i"' \
+					' DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n' \
+					% (self.xsize, self.ysize, data_type_name, block_size_x, block_size_y))
 		t_fh.write('\t\t\t<SrcRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n' \
 			% (sw_xoff, sw_yoff, sw_xsize, sw_ysize))
 		t_fh.write('\t\t\t<DstRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n' \
@@ -150,8 +158,9 @@ class file_info:
 
 # =============================================================================
 def Usage():
-	print 'Usage: gdal_merge.py [-o out_filename] [-separate] [-pct]'
-	print '           [-ul_lr ulx uly lrx lry] [-ot datatype] input_files'
+	print 'Usage: gdal_vrtmerge.py [-o out_filename] [-separate] [-pct]'
+	print '           [-ul_lr ulx uly lrx lry] [-ot datatype] [-i input_file_list'
+	print '           | input_files]'
 
 # =============================================================================
 #
@@ -180,6 +189,11 @@ if __name__ == '__main__':
 		if arg == '-o':
 			i = i + 1
 			out_file = argv[i]
+            
+		elif arg == '-i': 
+			i = i + 1 
+			in_file_list = open(argv[i]) 
+			names.extend(in_file_list.read().split()) 
 
 		elif arg == '-separate':
 			separate = True
