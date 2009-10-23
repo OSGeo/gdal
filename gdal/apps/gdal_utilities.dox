@@ -267,7 +267,7 @@ converts raster data between different formats
 gdal_translate [--help-general]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-       [-of format] [-b band] [-expand {rgb|rgba}]
+       [-of format] [-b band] [-expand {gray|rgb|rgba}]
        [-outsize xsize[%] ysize[%]]
        [-scale [src_min src_max [dst_min dst_max]]]
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
@@ -295,10 +295,12 @@ is GeoTIFF (GTiff).  Use the short format name.</dd>
 output. Bands are numbered from 1 Multiple <b>-b</b> switches may be used
 to select a set of input bands to write to the output file, or to reorder
 bands.</dd>
-<dt> <b>-expand</b> <i>rgb|rgba</i>:</dt><dd> (From GDAL 1.6.0) To expose a dataset with 1 band
+<dt> <b>-expand</b> <i>gray|rgb|rgba</i>:</dt><dd> (From GDAL 1.6.0) To expose a dataset with 1 band
 with a color table as a dataset with 3 (RGB) or 4 (RGBA) bands. Usefull for
 output drivers such as JPEG, JPEG2000, MrSID, ECW that don't support color
-indexed datasets.</dd>
+indexed datasets. The 'gray' value (from GDAL 1.7.0) enables to expand a
+dataset with a color table that only contains gray levels to a gray indexed
+dataset.</dd>
 <dt> <b>-outsize</b> <i>xsize[%] ysize[%]</i>:</dt><dd> Set the size of the output
 file.  Outsize is in pixels and lines unless '%' is attached in which case it
 is as a fraction of the input image size.</dd>

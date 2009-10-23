@@ -52,7 +52,7 @@ static void Usage()
     printf( "Usage: gdal_translate [--help-general]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
-            "       [-of format] [-b band] [-expand {rgb|rgba}]\n"
+            "       [-of format] [-b band] [-expand {gray|rgb|rgba}]\n"
             "       [-outsize xsize[%%] ysize[%%]]\n"
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
@@ -326,13 +326,15 @@ static int ProxyMain( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-expand") && i < argc-1 )
         {
-            if (EQUAL(argv[i+1], "rgb"))
+            if (EQUAL(argv[i+1], "gray"))
+                nRGBExpand = 1;
+            else if (EQUAL(argv[i+1], "rgb"))
                 nRGBExpand = 3;
             else if (EQUAL(argv[i+1], "rgba"))
                 nRGBExpand = 4;
             else
             {
-                printf( "Value %s unsupported. Only rgb or rgba are supported.\n\n", 
+                printf( "Value %s unsupported. Only gray, rgb or rgba are supported.\n\n", 
                     argv[i] );
                 Usage();
                 GDALDestroyDriverManager();
@@ -783,7 +785,8 @@ static int ProxyMain( int argc, char ** argv )
         {
             poSrcBand = ((GDALDataset *) 
                      hDataset)->GetRasterBand(panBandList[0]);
-            if (poSrcBand->GetColorTable() == NULL)
+            GDALColorTable* poColorTable = poSrcBand->GetColorTable();
+            if (poColorTable == NULL)
             {
                 fprintf(stderr, "Error : band %d has no color table\n", panBandList[0]);
                 GDALClose( hDataset );
@@ -792,6 +795,23 @@ static int ProxyMain( int argc, char ** argv )
                 CSLDestroy( argv );
                 CSLDestroy( papszCreateOptions );
                 exit( 1 );
+            }
+            
+            /* Check that the color table only contains gray levels */
+            /* when using -expand gray */
+            if (nRGBExpand == 1)
+            {
+                int nColorCount = poColorTable->GetColorEntryCount();
+                int nColor;
+                for( nColor = 0; nColor < nColorCount; nColor++ )
+                {
+                    const GDALColorEntry* poEntry = poColorTable->GetColorEntry(nColor);
+                    if (poEntry->c1 != poEntry->c2 || poEntry->c1 != poEntry->c2)
+                    {
+                        fprintf(stderr, "Warning : color table contains non gray levels colors\n");
+                        break;
+                    }
+                }
             }
         }
         else
@@ -859,7 +879,11 @@ static int ProxyMain( int argc, char ** argv )
 
         /* In case of color table translate, we only set the color interpretation */
         /* other info copied by CopyCommonInfoFrom are not relevant in RGB expansion */
-        if (nRGBExpand != 0 && i < nRGBExpand)
+        if (nRGBExpand == 1)
+        {
+            poVRTBand->SetColorInterpretation( GCI_GrayIndex );
+        }
+        else if (nRGBExpand != 0 && i < nRGBExpand)
         {
             poVRTBand->SetColorInterpretation( (GDALColorInterp) (GCI_RedBand + i) );
         }
