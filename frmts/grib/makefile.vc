@@ -13,7 +13,7 @@ LINK_PNG	=	..\png\libpng\*.obj
 
 
 default:	$(OBJ)
-        cd degrib18 && nmake /NOLOGO /f makefile.vc && cd ..
+        cd degrib18 && $(MAKE) /f makefile.vc && cd ..
 	xcopy /D  /Y *.obj ..\o
 
 clean:

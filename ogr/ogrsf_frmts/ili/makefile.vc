@@ -12,13 +12,13 @@ EXTRAFLAGS =	-I. -Iiom -I.. -I..\.. $(XERCES_INCLUDE) $(GEOS_CFLAGS)
 
 default:	$(OBJ)
 	cd iom
-	nmake /f makefile.vc
+	$(MAKE) /f makefile.vc
 	cd ..
 
 clean:
 	-del *.lib
 	-del *.obj *.pdb
 	cd iom
-	nmake /f makefile.vc clean
+	$(MAKE) /f makefile.vc clean
 	cd ..
 
