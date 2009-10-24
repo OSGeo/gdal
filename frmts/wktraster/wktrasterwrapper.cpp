@@ -52,19 +52,29 @@ CPL_CVSID("$Id$");
  ************************************************************************/
 
 /**
- * Class constructor. Fill all the raster properties with the string
+ * Class constructor.
+ */
+WKTRasterWrapper::WKTRasterWrapper() {
+    papoBands = NULL;
+    pszHexWkb = NULL;
+    pbyHexWkb = NULL;
+    pszWktExtent = NULL;
+}
+
+/**
+ * Fill all the raster properties with the string
  * hexwkb representation given as input.
  * This method swaps words if the raster endianess is distinct from
  * the machine endianess
  * Properties:
  *  const char *: the string hexwkb representation of the raster
  */
-WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
-    GUInt32 nTransformedBytes = 0;
-    GUInt32 nRasterHexWkbLen = 0;
-    GUInt32 nRasterHeaderLen = 0;
-    GUInt32 nRasterBandHeaderLen = 0;
-    GUInt32 nRasterDataLen = 0;
+int WKTRasterWrapper::Initialize(const char* pszHex) { 
+    int nTransformedBytes = 0; 
+    int nRasterHexWkbLen = 0; 
+    int nRasterHeaderLen = 0; 
+    int nRasterBandHeaderLen = 0; 
+    int nRasterDataLen = 0;
     GByte * pbyAuxPtr;
     GByte byMachineEndianess = NDR; // by default
 
@@ -79,7 +89,7 @@ WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
     if (pszHex == NULL || strlen(pszHex) % 2) {
         CPLError(CE_Failure, CPLE_NotSupported,
                 "Couldn't create raster wrapper, invalid raster hex wkb string");
-        return;
+        return FALSE;
     }
 
     /************************************************************************
@@ -88,18 +98,33 @@ WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
     nLengthHexWkbString = strlen(pszHex);
     nLengthByWkbString = nLengthHexWkbString / 2;
 
-    pszHexWkb = (char *) CPLCalloc(nLengthHexWkbString, sizeof (char));
+    pszHexWkb = (char *) VSIMalloc(nLengthHexWkbString);
     if (pszHexWkb == NULL) {
         CPLError(CE_Failure, CPLE_ObjectNull,
                 "Couldn't allocate memory for raster wrapper, aborting");
-        return;
+        return FALSE;
     }
 
     memcpy(pszHexWkb, pszHex, nLengthHexWkbString * sizeof (char));
-    pbyHexWkb = CPLHexToBinary(pszHexWkb, (int *) & nTransformedBytes);
-    CPLAssert(nTransformedBytes == nLengthByWkbString);
+    pbyHexWkb = CPLHexToBinary(pszHexWkb, &nTransformedBytes);
+
+    // TODO: Check this assert. Sometimes fails
+    //CPLAssert(nTransformedBytes == nLengthByWkbString);
     nRasterHexWkbLen = nLengthByWkbString;
 
+     // Set raster header length
+    nRasterHeaderLen =
+        sizeof (GByte) +
+        4 * sizeof (GUInt16) +
+ 	sizeof (GInt32) +
+ 	6 * sizeof (GFloat64);
+
+    /* Check that we have enough bytes for reading header */
+    if (nRasterHexWkbLen < nRasterHeaderLen)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Not enough data");
+ 	return FALSE;
+    }
 
 
     /***********************************************************************
@@ -128,7 +153,7 @@ WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
                 "WKT Raster version not supported (%d). Supported raster\
                 version is %d\n", nVersion, WKT_RASTER_VERSION);
 
-        return;
+        return FALSE;
     }
 
 
@@ -181,24 +206,14 @@ WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
     if (byEndianess != byMachineEndianess)
         GDALSwapWords(&nHeight, sizeof (GUInt16), 1, sizeof (GUInt16));
     pbyAuxPtr += sizeof (GUInt16);
-
-    // Set raster header length
-    nRasterHeaderLen =
-            sizeof (GByte) +
-            4 * sizeof (GUInt16) +
-            sizeof (GInt32) +
-            6 * sizeof (GFloat64);
-
-
+    
     // Allocate memory for bands
-    papoBands = (WKTRasterBandWrapper **) CPLCalloc(nBands,
+    papoBands = (WKTRasterBandWrapper **) VSICalloc(nBands,
             sizeof (WKTRasterBandWrapper *));
     if (papoBands == NULL) {
-        CPLFree(pszHexWkb);
-        CPLFree(pbyHexWkb);
         CPLError(CE_Failure, CPLE_ObjectNull,
                 "Couldn't allocate memory for raster wrapper bands, aborting");
-        return;
+        return FALSE;
     }
 
     // Create band objects
@@ -207,6 +222,7 @@ WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
         int nPixTypeBytes = 0;
         GFloat64 dfNoDataValue = 0.0;
 
+        // TODO : check that there are enough bytes in the buffer
         memcpy(&byFirstByteBandHeader, pbyAuxPtr, sizeof (GByte));
         pbyAuxPtr += sizeof (GByte);
 
@@ -227,6 +243,12 @@ WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
                 nPixTypeBytes = 1;
         }
 
+        // TODO : check that there are enough bytes in the buffer
+
+        // FIXME : this is likely wrong (disclaimer: I've not checked the spec).
+        // dfNoDataValue is a double. Doesn't make sense to fetch less than 8 bytes
+        // if 1 byte, should be put into a Byte and then casted to a double
+        // if 2 bytes, should be put into a Int16/UInt16 and then casted to a double, etc...
         memcpy(&dfNoDataValue, pbyAuxPtr, nPixTypeBytes);
 
         if (byEndianess != byMachineEndianess)
@@ -237,13 +259,14 @@ WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
         nRasterDataLen = ((nRasterHexWkbLen - nRasterHeaderLen) / nBands) -
                 ((1 + nPixTypeBytes));
 
-        
+        // TODO : check that there are enough bytes in the buffer
+
         /**************************************************************
          * In-db raster. Next bytes are the raster data and must be
          * swapped, if needed
          **************************************************************/
-       if ((byFirstByteBandHeader >> 7 ) == FALSE) {
-            
+        if ((byFirstByteBandHeader >> 7) == FALSE) {
+
             // In this case, data are a nWidth * nHeight array
             CPLAssert(nRasterDataLen == (nWidth * nHeight * nPixTypeBytes));
 
@@ -261,12 +284,13 @@ WKTRasterWrapper::WKTRasterWrapper(const char * pszHex) {
         papoBands[i]->SetData(pbyAuxPtr, nRasterDataLen);
 
         pbyAuxPtr += nRasterDataLen;
-        
+
     }
 
     // Set raster extent
     pszWktExtent = NULL;
 
+    return TRUE;
 }
 
 /**
@@ -279,12 +303,9 @@ WKTRasterWrapper::~WKTRasterWrapper() {
         CPLFree(papoBands);
     }
 
-    if (pszHexWkb)
-        CPLFree(pszHexWkb);
-    if (pbyHexWkb)
-        CPLFree(pbyHexWkb);
-    if (pszWktExtent)
-        CPLFree(pszWktExtent);
+    CPLFree(pszHexWkb);
+    CPLFree(pbyHexWkb);
+    CPLFree(pszWktExtent);
 }
 
 /**
@@ -294,32 +315,25 @@ WKTRasterWrapper::~WKTRasterWrapper() {
  * Returns:
  *  char *: The polygon in WKT format
  */
-char * WKTRasterWrapper::GetWktExtent() {
+const char * WKTRasterWrapper::GetWktExtent() {
     /**
      * Create WKT string for raster extent
      * BE CAREFUL: With irregular blocking is not valid in this way...
      */
-    double dfRasterWidth = ABS((int)(dfScaleX * nWidth + 0.5));
-    double dfRasterHeight = ABS((int)(dfScaleY * nHeight + 0.5));
+    double dfRasterWidth = ABS((int) (dfScaleX * nWidth + 0.5));
+    double dfRasterHeight = ABS((int) (dfScaleY * nHeight + 0.5));
 
     double dfBlockEndX = dfIpX + dfRasterWidth;
     double dfBlockEndY = dfIpY - dfRasterHeight;
     char szTemp[1024];
 
-    memset(szTemp, '\0', 1024 * sizeof (char));
     sprintf(szTemp,
             "POLYGON((%f %f, %f %f ,%f %f ,%f %f, %f %f))", dfIpX, dfBlockEndY,
             dfIpX, dfIpY, dfBlockEndX, dfBlockEndY, dfBlockEndX, dfIpY, dfIpX,
             dfBlockEndY);
 
-    if (pszWktExtent != NULL)
-        CPLFree(pszWktExtent);
-
-    pszWktExtent = (char *) CPLCalloc(strlen(szTemp), sizeof (char));
-    if (pszWktExtent != NULL) {
-        memcpy(pszWktExtent, szTemp, strlen(szTemp));
-    }
-
+    CPLFree(pszWktExtent);
+    pszWktExtent = CPLStrdup(szTemp);
 
     return pszWktExtent;
 }
@@ -347,7 +361,7 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
     int nTransformedBytes = 0;
     int nPixTypeBytes = 0;
 
-    GByte * pbyTmpRepresentation = (GByte *) CPLCalloc(nLengthByWkbString,
+    GByte * pbyTmpRepresentation = (GByte *) VSICalloc(nLengthByWkbString,
             sizeof (GByte));
     if (pbyTmpRepresentation == NULL) {
         CPLError(CE_Warning, CPLE_ObjectNull,
@@ -454,6 +468,8 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
          * original nodata size's value. If not, we couldn't know how much
          * memory need.
          */
+
+        // FIXME : this is likely incorrect. see previous FIXME
         switch (papoBands[i]->byPixelType & 0x0f) {
             case 0: case 1: case 2: case 3: case 4:
                 nPixTypeBytes = 1;
@@ -510,9 +526,9 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
         if (papoBands[i]->bIsOffline == TRUE) {
 
             // copy outdb band number
-            memcpy(pbyAuxPtr, &(papoBands[i]->nOutDbBandNumber), sizeof(GByte));
-            pbyAuxPtr += sizeof(GByte);
-            nTransformedBytes += sizeof(GByte);
+            memcpy(pbyAuxPtr, &(papoBands[i]->nOutDbBandNumber), sizeof (GByte));
+            pbyAuxPtr += sizeof (GByte);
+            nTransformedBytes += sizeof (GByte);
 
             // copy path to the external file (pbyData). Don't need to swap
             memcpy(pbyAuxPtr, papoBands[i]->pbyData, papoBands[i]->nDataSize);
@@ -520,8 +536,7 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
             nTransformedBytes += papoBands[i]->nDataSize * sizeof (GByte);
 
         }
-
-        // in-db band
+            // in-db band
         else {
             // Copy data
             memcpy(pbyAuxPtr, papoBands[i]->pbyData, papoBands[i]->nDataSize);
@@ -531,14 +546,15 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
             pbyAuxPtr += papoBands[i]->nDataSize * sizeof (GByte);
             nTransformedBytes += papoBands[i]->nDataSize * sizeof (GByte);
         }
-        
+
     }
 
     /**
      * Now, copy the new binary array into the old one and free the allocated
      * memory
      */
-    CPLAssert(nTransformedBytes == nLengthByWkbString);
+    // TODO: Check this assert. Sometimes fails
+    //CPLAssert(nTransformedBytes == nLengthByWkbString);
     memcpy(pbyHexWkb, pbyTmpRepresentation, nTransformedBytes *
             sizeof (GByte));
     CPLFree(pbyTmpRepresentation);
@@ -568,7 +584,7 @@ char * WKTRasterWrapper::GetHexWkbRepresentation() {
         return pszHexWkb;
     }
 
-    CPLAssert(strlen(pszAuxRepresentation) == nLengthHexWkbString);
+    CPLAssert((int)strlen(pszAuxRepresentation) == nLengthHexWkbString);
     memcpy(pszHexWkb, pszAuxRepresentation, nLengthByWkbString *
             sizeof (char));
 
@@ -576,8 +592,6 @@ char * WKTRasterWrapper::GetHexWkbRepresentation() {
 
     return pszHexWkb;
 }
-
-
 
 /**
  * Gets a wrapper of a RasterBand, as a WKTRasterBandWrapper object.
@@ -639,8 +653,7 @@ WKTRasterBandWrapper::WKTRasterBandWrapper(WKTRasterWrapper * poWKTRW,
  * Class destructor. Frees the memory and resources allocated.
  */
 WKTRasterBandWrapper::~WKTRasterBandWrapper() {
-    if (pbyData != NULL)
-        CPLFree(pbyData);
+    CPLFree(pbyData);
 }
 
 /**
@@ -674,24 +687,22 @@ CPLErr WKTRasterBandWrapper::SetData(GByte * pbyDataArray, GUInt32 nSize) {
         nDataSize = 0;
         return CE_Failure;
     }
-
-    /**********************************************************
-     * Out-db raster: extract the band number first, and
-     * copy the rest of the data (will be the path to file)
-     **********************************************************/
+        /**********************************************************
+         * Out-db raster: extract the band number first, and
+         * copy the rest of the data (will be the path to file)
+         **********************************************************/
     else if (bIsOffline == TRUE) {
-        memcpy(&nOutDbBandNumber, pbyDataArray, sizeof(GByte));
-        nSizeMemToAllocate = nSize - sizeof(GByte);
-        pbyAux = pbyDataArray + sizeof(GByte);
+        memcpy(&nOutDbBandNumber, pbyDataArray, sizeof (GByte));
+        nSizeMemToAllocate = nSize - sizeof (GByte);
+        pbyAux = pbyDataArray + sizeof (GByte);
 
         // the bandnumber read is 0-based
         nOutDbBandNumber++;
     }
 
-
-    /*********************************************************
-     * In-db raster: all the buffer is the data.
-     *********************************************************/
+        /*********************************************************
+         * In-db raster: all the buffer is the data.
+         *********************************************************/
     else {
         nOutDbBandNumber = -1;
         nSizeMemToAllocate = nSize;
@@ -701,10 +712,9 @@ CPLErr WKTRasterBandWrapper::SetData(GByte * pbyDataArray, GUInt32 nSize) {
 
     /*********************************************************
      * Now, really copy the data buffer to the class property
-     *********************************************************/
-    if (pbyData != NULL)
-        CPLFree(pbyData);
-    pbyData = (GByte *) CPLCalloc(nSizeMemToAllocate, sizeof (GByte));
+     *********************************************************/    
+    CPLFree(pbyData);
+    pbyData = (GByte *) VSICalloc(nSizeMemToAllocate, sizeof (GByte));
     if (pbyData == NULL) {
         CPLError(CE_Failure, CPLE_ObjectNull,
                 "Couldn't allocate memory for raster data in band %d",
@@ -716,7 +726,7 @@ CPLErr WKTRasterBandWrapper::SetData(GByte * pbyDataArray, GUInt32 nSize) {
         nDataSize = nSizeMemToAllocate;
         return CE_None;
     }
-    
+
 }
 
 /**
