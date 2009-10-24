@@ -22,8 +22,8 @@ python: gdalvars
 
 csharp: gdalvars
         cd csharp
-        nmake /f makefile.vc interface
-        nmake /f makefile.vc
+        $(MAKE) /f makefile.vc interface
+        $(MAKE) /f makefile.vc
 
 java: gdalvars
         cd java
@@ -49,7 +49,7 @@ java: gdalvars
         cd const
         $(SWIG) -java -c++ -package org.gdal.gdalconst -outdir ../org/gdal/gdalconst -I../../include/java -o gdalconst_wrap.cpp ../../../include/gdalconst.i
         cd ..
-        nmake /f makefile.vc
+        $(MAKE) /f makefile.vc
 
 ruby: gdalvars
         cd ruby
@@ -57,8 +57,8 @@ ruby: gdalvars
         $(SWIG) -c++ -ruby -I../include/ruby -o gdal_wrap.cpp -autorename -prefix "gdal::" ../include/gdal.i
         $(SWIG) -c++ -ruby -I../include/ruby -o osr_wrap.cpp -autorename -prefix "gdal::" ../include/osr.i
         $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp -autorename -prefix "gdal::" ../include/ogr.i
-        nmake /f makefile.vc build
-        nmake /f makefile.vc install 
+        $(MAKE) /f makefile.vc build
+        $(MAKE) /f makefile.vc install 
         
 test: gdalvars
 				cd $(GDAL_HOME)\..\gdalautotest
@@ -66,15 +66,15 @@ test: gdalvars
 clean:
         -del setup.ini
         cd csharp
-        nmake /f makefile.vc clean
+        $(MAKE) /f makefile.vc clean
         cd ..
         cd python
         if exist build\nul rmdir /S /Q build
         cd ..
         cd java
-        nmake /f makefile.vc clean
+        $(MAKE) /f makefile.vc clean
         cd ..
         cd ruby
-        nmake /f makefile.vc clean
+        $(MAKE) /f makefile.vc clean
         cd ..
 
