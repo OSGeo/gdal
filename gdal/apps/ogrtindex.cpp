@@ -52,6 +52,8 @@ int main( int nArgc, char ** papszArgv )
     int write_absolute_path = FALSE;
     int skip_different_projection = FALSE;
     char* current_path = NULL;
+    int accept_different_schemas = FALSE;
+    int bFirstWarningForNonMatchingAttributes = TRUE;
     
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -83,6 +85,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-skip_different_projection"))
         {
             skip_different_projection = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-accept_different_schemas"))
+        {
+            accept_different_schemas = TRUE;
         }
         else if( EQUAL(papszArgv[iArg],"-tileindex") && iArg < nArgc-1 )
         {
@@ -195,6 +201,8 @@ int main( int nArgc, char ** papszArgv )
         exit( 1 );
     }
 
+    OGRFeatureDefn* poFeatureDefn = NULL;
+
     /* Load in memory existing file names in SHP */
     int nExistingLayers = 0;
     char** existingLayersTab = NULL;
@@ -233,6 +241,9 @@ int main( int nArgc, char ** papszArgv )
                             alreadyExistingSpatialRefValid = TRUE;
                             alreadyExistingSpatialRef =
                                     (poLayer->GetSpatialRef()) ? poLayer->GetSpatialRef()->Clone() : NULL;
+                                    
+                            if (poFeatureDefn == NULL)
+                                poFeatureDefn = poLayer->GetLayerDefn()->Clone();
                         }
                         OGRDataSource::DestroyDataSource( poDS );
                     }
@@ -255,7 +266,6 @@ int main( int nArgc, char ** papszArgv )
 /* ==================================================================== */
 /*      Process each input datasource in turn.                          */
 /* ==================================================================== */
-	OGRFeatureDefn* poFeatureDefn = NULL;
 
 	for(; nFirstSourceDataset < nArgc; nFirstSourceDataset++ )
     {
@@ -364,7 +374,7 @@ int main( int nArgc, char ** papszArgv )
 			{
 				poFeatureDefn = poLayer->GetLayerDefn()->Clone();
 			}
-			else
+			else if ( !accept_different_schemas )
 			{
 				OGRFeatureDefn* poFeatureDefnCur = poLayer->GetLayerDefn();
 				assert(NULL != poFeatureDefnCur);
@@ -375,6 +385,12 @@ int main( int nArgc, char ** papszArgv )
 				{
 					fprintf( stderr, "Number of attributes of layer %s of %s does not match ... skipping it.\n",
                              poLayer->GetLayerDefn()->GetName(), papszArgv[nFirstSourceDataset]);
+                    if (bFirstWarningForNonMatchingAttributes)
+                    {
+                        fprintf( stderr, "Note : you can override this behaviour with -accept_different_schemas option\n"
+                                         "but this may result in a tileindex incompatible with MapServer\n");
+                        bFirstWarningForNonMatchingAttributes = FALSE;
+                    }
 					continue;
 				}
 				
@@ -395,6 +411,12 @@ int main( int nArgc, char ** papszArgv )
 					{
 						fprintf( stderr, "Schema of attributes of layer %s of %s does not match ... skipping it.\n",
                                  poLayer->GetLayerDefn()->GetName(), papszArgv[nFirstSourceDataset]);
+                        if (bFirstWarningForNonMatchingAttributes)
+                        {
+                            fprintf( stderr, "Note : you can override this behaviour with -accept_different_schemas option\n"
+                                             "but this may result in a tileindex incompatible with MapServer\n");
+                            bFirstWarningForNonMatchingAttributes = FALSE;
+                        }
                         bSkip = TRUE; 
                         break;
 					}
@@ -488,6 +510,7 @@ static void Usage()
 {
     printf( "Usage: ogrtindex [-lnum n]... [-lname name]... [-f output_format]\n"
             "                 [-write_absolute_path] [-skip_different_projection]\n"
+            "                 [-accept_different_schemas]\n"
             "                 output_dataset src_dataset...\n" );
     printf( "\n" );
     printf( "  -lnum n: Add layer number 'n' from each source file\n"
@@ -501,6 +524,10 @@ static void Usage()
     printf( "  -write_absolute_path: Filenames are written with absolute paths.\n" );
     printf( "  -skip_different_projection: Only layers with same projection ref \n"
             "        as layers already inserted in the tileindex will be inserted.\n" );
+    printf( "  -accept_different_schemas: by default ogrtindex checks that all layers inserted\n"
+            "                             into the index have the same attribute schemas. If you\n"
+            "                             specify this option, this test will be disabled. Be aware that\n"
+            "                             resulting index may be incompatible with MapServer!\n" );
     printf( "\n" );
     printf( "If no -lnum or -lname arguments are given it is assumed that\n"
             "all layers in source datasets should be added to the tile index\n"
