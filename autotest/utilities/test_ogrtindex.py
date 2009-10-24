@@ -34,13 +34,14 @@ import os
 sys.path.append( '../pymod' )
 
 import ogr
+import osr
 import gdaltest
 import test_cli_utilities
 
 ###############################################################################
 # Simple test
 
-def test_ogrtindex_1():
+def test_ogrtindex_1(srs = None):
     if test_cli_utilities.get_ogrtindex_path() is None:
         return 'skip'
 
@@ -58,28 +59,32 @@ def test_ogrtindex_1():
         os.remove('tmp/tileindex.shx')
     except:
         pass
+    try:
+        os.remove('tmp/tileindex.prj')
+    except:
+        pass
 
     shape_ds = shape_drv.CreateDataSource( 'tmp' )
 
-    shape_lyr = shape_ds.CreateLayer( 'point1' )
+    shape_lyr = shape_ds.CreateLayer( 'point1', srs = srs)
     dst_feat = ogr.Feature( feature_def = shape_lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(49 2)'))
     shape_lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
 
-    shape_lyr = shape_ds.CreateLayer( 'point2' )
+    shape_lyr = shape_ds.CreateLayer( 'point2', srs = srs )
     dst_feat = ogr.Feature( feature_def = shape_lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(49 3)'))
     shape_lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
 
-    shape_lyr = shape_ds.CreateLayer( 'point3' )
+    shape_lyr = shape_ds.CreateLayer( 'point3', srs = srs )
     dst_feat = ogr.Feature( feature_def = shape_lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(48 2)'))
     shape_lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
 
-    shape_lyr = shape_ds.CreateLayer( 'point4' )
+    shape_lyr = shape_ds.CreateLayer( 'point4', srs = srs )
     dst_feat = ogr.Feature( feature_def = shape_lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(48 3)'))
     shape_lyr.CreateFeature( dst_feat )
@@ -91,7 +96,17 @@ def test_ogrtindex_1():
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
+        gdaltest.post_reason('did not get expected feature count')
         return 'fail'
+        
+    if srs is not None:
+        if ds.GetLayer(0).GetSpatialRef() == None or not ds.GetLayer(0).GetSpatialRef().IsSame(srs):
+            gdaltest.post_reason('did not get expected spatial ref')
+            return 'fail'
+    else:
+        if ds.GetLayer(0).GetSpatialRef() is not None:
+            gdaltest.post_reason('did not get expected spatial ref')
+            return 'fail'
 
     expected_wkts =['POLYGON ((49 2,49 2,49 2,49 2,49 2))',
                     'POLYGON ((49 3,49 3,49 3,49 3,49 3))',
@@ -110,6 +125,16 @@ def test_ogrtindex_1():
     return 'success'
 
 ###############################################################################
+# Same test but with a SRS set on the different tiles to index
+
+def test_ogrtindex_2():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    return test_ogrtindex_1(srs)
+
+###############################################################################
 # Cleanup
 
 def test_ogrtindex_cleanup():
@@ -126,6 +151,7 @@ def test_ogrtindex_cleanup():
 
 gdaltest_list = [
     test_ogrtindex_1,
+    test_ogrtindex_2,
     test_ogrtindex_cleanup
     ]
 
