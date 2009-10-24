@@ -134,19 +134,19 @@ int main( int nArgc, char ** papszArgv )
 
         if( poDriver == NULL )
         {
-            printf( "Unable to find driver `%s'.\n", pszFormat );
-            printf( "The following drivers are available:\n" );
+            fprintf( stderr, "Unable to find driver `%s'.\n", pszFormat );
+            fprintf( stderr, "The following drivers are available:\n" );
         
             for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
             {
-                printf( "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
+                fprintf( stderr, "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
             }
             exit( 1 );
         }
 
         if( !poDriver->TestCapability( ODrCCreateDataSource ) )
         {
-            printf( "%s driver does not support data source creation.\n",
+            fprintf( stderr, "%s driver does not support data source creation.\n",
                     pszFormat );
             exit( 1 );
         }
@@ -158,7 +158,7 @@ int main( int nArgc, char ** papszArgv )
         poDstDS = poDriver->CreateDataSource( pszOutputName, NULL );
         if( poDstDS == NULL )
         {
-            printf( "%s driver failed to create %s\n", 
+            fprintf( stderr, "%s driver failed to create %s\n", 
                     pszFormat, pszOutputName );
             exit( 1 );
         }
@@ -182,7 +182,7 @@ int main( int nArgc, char ** papszArgv )
     poDstLayer = poDstDS->GetLayer(0);
     if( poDstLayer == NULL )
     {
-        printf( "Can't find any layer in output tileindex!\n" );
+        fprintf( stderr, "Can't find any layer in output tileindex!\n" );
         exit( 1 );
     }
 
@@ -190,7 +190,7 @@ int main( int nArgc, char ** papszArgv )
         poDstLayer->GetLayerDefn()->GetFieldIndex( pszTileIndexField );
     if( iTileIndexField == -1 )
     {
-        printf( "Can't find %s field in tile index dataset.\n", 
+        fprintf( stderr, "Can't find %s field in tile index dataset.\n", 
                 pszTileIndexField );
         exit( 1 );
     }
@@ -286,7 +286,7 @@ int main( int nArgc, char ** papszArgv )
 
         if( poDS == NULL )
         {
-            printf( "Failed to open dataset %s, skipping.\n", 
+            fprintf( stderr, "Failed to open dataset %s, skipping.\n", 
                     papszArgv[nFirstSourceDataset] );
             CPLFree(fileNameToWrite);
             continue;
@@ -373,11 +373,12 @@ int main( int nArgc, char ** papszArgv )
 
 				if( fieldCount != poFeatureDefn->GetFieldCount())
 				{
-					printf( "Number of attributes of subsequent layers does not match ... terminating.\n" );
-					OGRDataSource::DestroyDataSource( poDstDS );
-					exit( 1 );
+					fprintf( stderr, "Number of attributes of layer %s of %s does not match ... skipping it.\n",
+                             poLayer->GetLayerDefn()->GetName(), papszArgv[nFirstSourceDataset]);
+					continue;
 				}
 				
+                int bSkip = FALSE;
 				for( int fn = 0; fn < poFeatureDefnCur->GetFieldCount(); fn++ )
 				{
  					OGRFieldDefn* poField = poFeatureDefn->GetFieldDefn(fn);
@@ -392,11 +393,15 @@ int main( int nArgc, char ** papszArgv )
 						|| poField->GetPrecision() != poFieldCur->GetPrecision() 
 						|| !EQUAL( poField->GetNameRef(), poFieldCur->GetNameRef() ) )
 					{
-						printf( "Schema of attributes of subsequent layers does not match ... terminating.\n" );
-						OGRDataSource::DestroyDataSource( poDstDS );
-						exit( 1 );
+						fprintf( stderr, "Schema of attributes of layer %s of %s does not match ... skipping it.\n",
+                                 poLayer->GetLayerDefn()->GetName(), papszArgv[nFirstSourceDataset]);
+                        bSkip = TRUE; 
+                        break;
 					}
 				}
+                
+                if (bSkip)
+                    continue;
 			}
 
 
@@ -410,7 +415,7 @@ int main( int nArgc, char ** papszArgv )
 
             if( poLayer->GetExtent( &sExtents, TRUE ) != OGRERR_NONE )
             {
-                printf( "GetExtent() failed on layer %s of %s, skipping.\n", 
+                fprintf( stderr, "GetExtent() failed on layer %s of %s, skipping.\n", 
                         poLayer->GetLayerDefn()->GetName(), 
                         papszArgv[nFirstSourceDataset] );
                 continue;
@@ -437,7 +442,7 @@ int main( int nArgc, char ** papszArgv )
 
             if( poDstLayer->CreateFeature( &oTileFeat ) != OGRERR_NONE )
             {
-                printf( "Failed to create feature on tile index ... terminating." );
+                fprintf( stderr, "Failed to create feature on tile index ... terminating." );
                 OGRDataSource::DestroyDataSource( poDstDS );
                 exit( 1 );
             }
