@@ -487,19 +487,26 @@ class WKTRasterWrapper {
 public:
 
     /**
-     * Class constructor. Fill all the raster properties with the string
-     * hexwkb representation given as input.
-     * This method swaps words if the raster endianess is distinct from
-     * the machine endianess
-     * Properties:
-     *  const char *: the string hexwkb representation of the raster     
+     * Class constructor
      */
-    WKTRasterWrapper(const char *);
+    WKTRasterWrapper();
 
     /**
      * Class destructor. Frees the memory and resources allocated.
      */
     ~WKTRasterWrapper();
+
+    /**
+     * Fill all the raster properties with the string
+     * hexwkb representation given as input.
+     * This method swaps words if the raster endianess is distinct from
+     * the machine endianess
+     * Properties:
+     *  const char *: the string hexwkb representation of the raster
+     * Returns :
+     *   - int : TRUE if all right
+     */
+     int Initialize(const char* pszHex);
 
     /**
      * Creates a polygon in WKT representation that wrapps all the extent
@@ -508,7 +515,7 @@ public:
      * Returns:
      *  char *: The polygon in WKT format
      */
-    char * GetWktExtent();
+    const char * GetWktExtent();
 
     /**
      * Constructs the binary representation of the PostGIS WKT raster wrapped

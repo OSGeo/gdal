@@ -1,3 +1,9 @@
+
+#include <string>
+
+
+#include "cpl_string.h"
+
 /******************************************************************************
  * File :    wktrasterrasterband.cpp
  * Project:  WKT Raster driver
@@ -91,9 +97,10 @@ WKTRasterRasterBand::WKTRasterRasterBand(WKTRasterDataset *poDS,
         bIsSignedByte = bSignedByte;
     }
 
-    // Add NBITS to metadata
-    SetMetadataItem("NBITS", CPLString().Printf( "%d", nBitDepth ),
-                "IMAGE_STRUCTURE" );   
+    // Add NBITS to metadata only for sub-byte types
+    if (nBitDepth < 8)
+        SetMetadataItem("NBITS", CPLString().Printf( "%d", nBitDepth ),
+            "IMAGE_STRUCTURE" );
 }
 
 /**
@@ -139,7 +146,7 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
     }
 
     WKTRasterDataset * poWKTRasterDS = (WKTRasterDataset *) poDS;
-    char szCommand[1024];
+    CPLString osCommand;
     PGresult * hPGresult;
     int nPixelSize;
     int nPixelXInitPosition;
@@ -237,7 +244,6 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
      * this block
      *************************************************************************/
 
-    memset(szCommand, '\0', 1024 * sizeof (char));
     if (poWKTRasterDS->pszWhereClause != NULL) {
 
         /**
@@ -259,7 +265,7 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
              * setting the block size to the smallest tile size. The problem is
              * how do we know all the tiles size?
              */
-            sprintf(szCommand,
+            osCommand.Printf(
                     "SELECT rid, %s FROM %s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
                     (ST_Point(%f, %f),ST_Point(%f, %f)), %d) AND %s",
                     poWKTRasterDS->pszRasterColumnName, 
@@ -272,7 +278,7 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
              * Table hasn't a GIST index. Normal searching
              */
         else {
-            sprintf(szCommand,
+            osCommand.Printf(
                     "SELECT rid, %s FROM %s WHERE _ST_Contains(%s, ST_SetSRID(\
                     ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d)) AND \
                     %s",
@@ -293,7 +299,7 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
          */
         if (poWKTRasterDS->bTableHasGISTIndex) {
 
-            sprintf(szCommand,
+            osCommand.Printf(
                     "SELECT rid, %s FROM %s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
                     (ST_Point(%f, %f), ST_Point(%f, %f)), %d)",
                     poWKTRasterDS->pszRasterColumnName, 
@@ -306,7 +312,7 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
              * Table hasn't a GIST index. Normal searching
              */
         else {
-            sprintf(szCommand,
+            osCommand.Printf(
                     "SELECT rid, %s FROM %s WHERE _ST_Contains(%s, ST_SetSRID(\
                     ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d))",
                     poWKTRasterDS->pszRasterColumnName,
@@ -318,9 +324,9 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
     }
 
 
-    //printf("query: %s\n", szCommand);
+    //printf("query: %s\n", osCommand.c_str());
 
-    hPGresult = PQexec(poWKTRasterDS->hPGconn, szCommand);
+    hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
     if (hPGresult == NULL || PQresultStatus(hPGresult) != PGRES_TUPLES_OK) {
         if (hPGresult)
             PQclear(hPGresult);
@@ -345,13 +351,12 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
          * first block of the table and modify it.
          */
         PQclear(hPGresult);
-        memset(szCommand, '\0', 1024 * sizeof (char));
-        sprintf(szCommand,
+        osCommand.Printf(
                 "SELECT %s FROM %s LIMIT 1 OFFSET 0",
                 poWKTRasterDS->pszRasterColumnName,
                 poWKTRasterDS->pszTableName);
 
-        hPGresult = PQexec(poWKTRasterDS->hPGconn, szCommand);
+        hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
 
         /**
          * Empty table, What should we do? Is it an error?
@@ -372,11 +377,12 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
         PQclear(hPGresult);
 
         // Create a wrapper object with this data
-        poWKTRasterWrapper = new WKTRasterWrapper(pszHexWkb);
+        poWKTRasterWrapper = new WKTRasterWrapper();
 
         // Should we try creating the raster block in other way?
-        if (poWKTRasterWrapper == NULL) {
+        if (poWKTRasterWrapper->Initialize(pszHexWkb) == FALSE) {
             CPLFree(pszHexWkb);
+            delete poWKTRasterWrapper; 
             return CE_Failure;
         }
 
@@ -397,12 +403,11 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
                 (nBlockXSize * nBlockYSize) * nPixelSize * sizeof (GByte));
 
         // Insert new block into table. First, we need a new rid
-        memset(szCommand, '\0', 1024*sizeof(char));
-        sprintf(szCommand,
+        osCommand.Printf(
                 "SELECT rid FROM %s ORDER BY rid DESC LIMIT 1 OFFSET 0",
                 poWKTRasterDS->pszTableName);
 
-        hPGresult = PQexec(poWKTRasterDS->hPGconn, szCommand);
+        hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
         if (
                 hPGresult == NULL ||
                 PQresultStatus(hPGresult) != PGRES_TUPLES_OK ||
@@ -419,14 +424,13 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
         int nRid = atoi(PQgetvalue(hPGresult, 0, 0)) + 1;
         pszHexWkb = poWKTRasterWrapper->GetHexWkbRepresentation();
 
-        // Insert the block
-        memset(szCommand, '\0', 1024*sizeof(char));
-        sprintf(szCommand,
+        // Insert the block        
+        osCommand.Printf(
                 "INSERT INTO %s (rid, %s) VALUES (%d, %s)",
                 poWKTRasterDS->pszTableName, poWKTRasterDS->pszRasterColumnName,
                 nRid, pszHexWkb);
 
-        hPGresult = PQexec(poWKTRasterDS->hPGconn, szCommand);
+        hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
         if (hPGresult == NULL || 
                 PQresultStatus(hPGresult) != PGRES_COMMAND_OK) {
             CPLError(CE_Failure, CPLE_NoWriteAccess,
@@ -458,9 +462,10 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
 
         // Create wrapper
          // Should we try creating the raster block in other way?
-        poWKTRasterWrapper = new WKTRasterWrapper(pszHexWkb);
-        if (poWKTRasterWrapper == NULL) {
+        poWKTRasterWrapper = new WKTRasterWrapper();
+ 	if (poWKTRasterWrapper->Initialize(pszHexWkb) == FALSE) {
             CPLFree(pszHexWkb);
+            delete poWKTRasterWrapper; 
             return CE_Failure;
         }
 
@@ -514,12 +519,11 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
 
 
         // update register
-        memset(szCommand, '\0', 1024*sizeof(char));
-        sprintf(szCommand,
+        osCommand.Printf(
                 "UPDATE %s SET %s = %s WHERE rid = %d",
                 poWKTRasterDS->pszTableName, poWKTRasterDS->pszRasterColumnName,
                 pszHexWkb, nRid);
-        hPGresult = PQexec(poWKTRasterDS->hPGconn, szCommand);
+        hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
         if (hPGresult == NULL ||
                 PQresultStatus(hPGresult) != PGRES_COMMAND_OK) {
             if (hPGresult)
@@ -567,7 +571,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
         int nBlockYOff, void * pImage) {
 
     WKTRasterDataset * poWKTRasterDS = (WKTRasterDataset *) poDS;
-    char szCommand[1024];
+    CPLString osCommand;
     PGresult * hPGresult;
     int nPixelSize;
     int nPixelXInitPosition;
@@ -676,7 +680,6 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
      * or tiles/blocks (in case of non-regular blocking) that contain this block
      **************************************************************************/
 
-    memset(szCommand, '\0', 1024 * sizeof (char));
     if (poWKTRasterDS->pszWhereClause != NULL) {
 
         /**
@@ -698,7 +701,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
              * setting the block size to the smallest tile size. The problem is
              * how do we know all the tiles size?
              */
-            sprintf(szCommand,
+            osCommand.Printf(
                     "SELECT rid, %s FROM %s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
                     (ST_Point(%f, %f),ST_Point(%f, %f)), %d) AND %s",
                     poWKTRasterDS->pszRasterColumnName,
@@ -711,7 +714,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
              * Table hasn't a GIST index. Normal searching
              */
         else {
-            sprintf(szCommand,
+            osCommand.Printf(
                     "SELECT rid, %s FROM %s WHERE _ST_Contains(%s, ST_SetSRID(\
                     ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d)) AND\
                     %s",
@@ -735,7 +738,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
          */
         if (poWKTRasterDS->bTableHasGISTIndex) {
 
-            sprintf(szCommand,
+            osCommand.Printf(
                     "SELECT rid, %s FROM %s WHERE %s ~ ST_SetSRID(ST_MakeBox2D(\
                     ST_Point(%f, %f),ST_Point(%f, %f)), %d)",
                     poWKTRasterDS->pszRasterColumnName,
@@ -748,7 +751,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
              * Table hasn't a GIST index. Normal searching
              */
         else {
-            sprintf(szCommand,
+            osCommand.Printf(
                     "SELECT rid, %s FROM %s WHERE _ST_Contains(%s, ST_SetSRID(\
                     ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d))",
                     poWKTRasterDS->pszRasterColumnName, 
@@ -762,7 +765,7 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
 
     //printf("query: %s\n", szCommand);
 
-    hPGresult = PQexec(poWKTRasterDS->hPGconn, szCommand);
+    hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
 
     if (hPGresult == NULL ||
             PQresultStatus(hPGresult) != PGRES_TUPLES_OK ||
@@ -809,9 +812,10 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
 
 
         // Create a wrapper object
-        poWKTRasterWrapper = new WKTRasterWrapper(pszHexWkb);
-        if (poWKTRasterWrapper == NULL) {
+        poWKTRasterWrapper = new WKTRasterWrapper();
+        if (poWKTRasterWrapper->Initialize(pszHexWkb) == FALSE) {
             CPLFree(pszHexWkb);
+            delete poWKTRasterWrapper;
             return CE_Failure;
         }
         
