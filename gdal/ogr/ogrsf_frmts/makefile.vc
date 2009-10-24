@@ -77,7 +77,7 @@ DODS_OBJ = dods\*.obj
 default:
 	for %d in ( $(DIRLIST) ) do \
 		cd %d \
-		&& nmake /NOLOGO /f makefile.vc \
+		&& $(MAKE) /f makefile.vc \
 		&& cd ..
 
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
@@ -110,7 +110,7 @@ clean:
 	-del ogrsf_frmts_sup.lib
 	for %d in ( $(DIRLIST) ) do \
 		cd %d \
-		&& nmake /NOLOGO /f makefile.vc clean \
+		&& $(MAKE) /f makefile.vc clean \
 		&& cd ..
 
 html-install:

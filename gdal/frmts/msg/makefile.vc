@@ -12,13 +12,13 @@ default:	$(OBJ) waveletlib
 
 waveletlib:
 	cd PublicDecompWT\COMP\WT\Src \
-	&& nmake /NOLOGO /f makefile.vc \
+	&& $(MAKE) /f makefile.vc \
 	&& cd ..\..\..\..
 	cd PublicDecompWT\COMP\Src \
-	&& nmake /NOLOGO /f makefile.vc \
+	&& $(MAKE) /f makefile.vc \
 	&& cd ..\..\..
 	cd PublicDecompWT\DISE \
-	&& nmake /NOLOGO /f makefile.vc \
+	&& $(MAKE) /f makefile.vc \
 	&& cd ..\..
 
 clean:
