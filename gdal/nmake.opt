@@ -249,6 +249,9 @@ JPEG12_SUPPORTED = 1
 # SQLite Libraries
 #SQLITE_INC=-IN:\pkg\sqlite-win32
 #SQLITE_LIB=N:\pkg\sqlite-win32\sqlite3_i.lib
+# For spatialite support, try this instead (assuming you grab the libspatialite-amalgamation-2.3.1 and installed it in osgeo4w):
+#SQLITE_INC=-IC:\osgeo4w\include -DHAVE_SPATIALITE
+#SQLITE_LIB=C:\osgeo4w\lib\spatialite_i.lib
 
 # Informix Data Blade
 #INFORMIXDIR="C:\Program Files\IBM\Informix\Client-SDK"
