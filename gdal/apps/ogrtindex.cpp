@@ -174,9 +174,56 @@ int main( int nArgc, char ** papszArgv )
             OGRFieldDefn oLocation( pszTileIndexField, OFTString );
             
             oLocation.SetWidth( 200 );
+            
+            if( nFirstSourceDataset < nArgc && papszArgv[nFirstSourceDataset][0] == '-' )
+            {
+                nFirstSourceDataset++;
+            }
+            
+            OGRSpatialReference* poSrcSpatialRef = NULL;
+            
+            /* Fetches the SRS of the first layer and use it when creating the tileindex layer */
+            if (nFirstSourceDataset < nArgc)
+            {
+                OGRDataSource* poDS = OGRSFDriverRegistrar::Open( papszArgv[nFirstSourceDataset], 
+                                           FALSE );
+                                           
+                if (poDS)
+                {
+                    int iLayer;
 
-            poDstLayer = poDstDS->CreateLayer( "tileindex" );
+                    for( iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+                    {
+                        int bRequested = bLayersWildcarded;
+                        OGRLayer *poLayer = poDS->GetLayer(iLayer);
+
+                        for( iArg = 1; iArg < nArgc && !bRequested; iArg++ )
+                        {
+                            if( EQUAL(papszArgv[iArg],"-lnum") 
+                                && atoi(papszArgv[iArg+1]) == iLayer )
+                                bRequested = TRUE;
+                            else if( EQUAL(papszArgv[iArg],"-lname") 
+                                     && EQUAL(papszArgv[iArg+1],
+                                              poLayer->GetLayerDefn()->GetName()) )
+                                bRequested = TRUE;
+                        }
+
+                        if( !bRequested )
+                            continue;
+                            
+                        if ( poLayer->GetSpatialRef() )
+                            poSrcSpatialRef = poLayer->GetSpatialRef()->Clone();
+                        break;
+                    }
+                }
+                
+                OGRDataSource::DestroyDataSource( poDS );
+            }
+
+            poDstLayer = poDstDS->CreateLayer( "tileindex", poSrcSpatialRef );
             poDstLayer->CreateField( &oLocation, OFTString );
+            
+            OGRSpatialReference::DestroySpatialReference( poSrcSpatialRef );
         }
     }
 
