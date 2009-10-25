@@ -1163,8 +1163,16 @@ GDALDataset *RPFTOCDataset::Open( GDALOpenInfo * poOpenInfo )
     if (IsNonNITFFileTOC((entryName != NULL) ? NULL : poOpenInfo, pszFilename))
     {
         GDALDataset* poDS = OpenFileTOC(NULL, pszFilename, entryName, poOpenInfo->pszFilename);
+        
         CPLFree(entryName);
 
+        if (poDS && poOpenInfo->eAccess == GA_Update)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "RPFTOC driver does not support update mode");
+            delete poDS;
+            return NULL;
+        }
+        
         return poDS;
     }
 
@@ -1173,7 +1181,7 @@ GDALDataset *RPFTOCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     NITFFile *psFile;
 
-    psFile = NITFOpen( pszFilename, poOpenInfo->eAccess == GA_Update );
+    psFile = NITFOpen( pszFilename, FALSE );
     if( psFile == NULL )
     {
         CPLFree(entryName);
@@ -1189,6 +1197,13 @@ GDALDataset *RPFTOCDataset::Open( GDALOpenInfo * poOpenInfo )
         NITFClose( psFile );
         CPLFree(entryName);
 
+        if (poDS && poOpenInfo->eAccess == GA_Update)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "RPFTOC driver does not support update mode");
+            delete poDS;
+            return NULL;
+        }
+        
         return poDS;
     }
     else
