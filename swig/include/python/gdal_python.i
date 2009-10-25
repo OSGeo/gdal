@@ -131,9 +131,9 @@
 
 %extend GDALDatasetShadow {
 %pythoncode {
-    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None ):
+    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None ):
         import gdalnumeric
-        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize )
+        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize, buf_obj )
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
                     buf_xsize = None, buf_ysize = None, buf_type = None,
