@@ -567,6 +567,24 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
+    /* Avoid overwriting an existing destination file that cannot be opened in */
+    /* update mode with a new GTiff file */
+    if ( hDstDS == NULL )
+    {
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        hDstDS = GDALOpen( pszDstFilename, GA_ReadOnly );
+        CPLPopErrorHandler();
+        
+        if (hDstDS)
+        {
+            fprintf( stderr, 
+                     "Output dataset %s exists, but cannot be opened in update mode\n",
+                     pszDstFilename );
+            GDALClose(hDstDS);
+            exit( 1 );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If not, we need to create it.                                   */
 /* -------------------------------------------------------------------- */
