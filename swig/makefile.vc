@@ -16,6 +16,7 @@ python: gdalvars
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/gdal_wrap.cpp -outdir osgeo ..\include\gdal.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/osr_wrap.cpp -outdir osgeo ..\include\osr.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/ogr_wrap.cpp -outdir osgeo ..\include\ogr.i
+        $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/gdal_array_wrap.cpp -outdir osgeo ..\include\gdal_array.i
         $(PYDIR)\python.exe setup.py build
         
 #d:\Python\debug\Python-2.4\PCbuild\python_d.exe setup.py build   --debug
