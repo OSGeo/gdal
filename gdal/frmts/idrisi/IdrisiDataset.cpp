@@ -248,8 +248,8 @@ char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter = NULL );
 //----- Get the "to meter"
 int GetToMeterIndex( const char *pszToMeter );
 
-//----- FormatCRLF
-void FormatCRLF( const char *pszFilename );
+//----- CSLSaveCRLF
+int  SaveAsCRLF(char **papszStrList, const char *pszFname);
 
 //----- Classes pre-definition:
 class IdrisiDataset;
@@ -402,11 +402,7 @@ IdrisiDataset::~IdrisiDataset()
             }
 
             CSLSetNameValueSeparator( papszRDC, ": " );
-            CSLSave( papszRDC, pszDocFilename );
-
-#ifndef WIN32        
-            FormatCRLF( pszDocFilename );
-#endif 
+            SaveAsCRLF( papszRDC, pszDocFilename );
         }
         CSLDestroy( papszRDC );
     }
@@ -799,10 +795,7 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
     pszLDocFilename = CPLResetExtension( pszFilename, extRDC );
 
     CSLSetNameValueSeparator( papszLRDC, ": " );
-    CSLSave( papszLRDC, pszLDocFilename );
-#ifndef WIN32        
-    FormatCRLF( pszLDocFilename );
-#endif 
+    SaveAsCRLF( papszLRDC, pszLDocFilename );
     CSLDestroy( papszLRDC );
 
     // ---------------------------------------------------------------- 
@@ -1019,64 +1012,9 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     //      Copy image data
     // --------------------------------------------------------------------
 
-    int nXSize = poDS->GetRasterXSize();
-    int nYSize = poDS->GetRasterYSize();
-    int nBlockXSize, nBlockYSize;
-
-    poDS->GetRasterBand( 1 )->GetBlockSize( &nBlockXSize, &nBlockYSize );
-
-    void *pData = VSIMalloc3( nBlockXSize, nBlockYSize, 
-                              GDALGetDataTypeSize( eType ) / 8 );
-
-    if( pData == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                "IdrisiRasterBand::CreateCopy : Out of memory " );
-        delete poDS;
-        return NULL;
-    }
-
-    for( int iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++ )
-    {
-        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand );
-        GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand );
-
-        int    iYOffset, iXOffset;
-        CPLErr eErr = CE_None;
-
-        for( iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
-        {
-            for( iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
-            {
-                eErr = poSrcBand->RasterIO( GF_Read, 
-                    iXOffset, iYOffset, 
-                    nBlockXSize, nBlockYSize,
-                    pData, nBlockXSize, nBlockYSize,
-                    eType, 0, 0 );
-                if( eErr != CE_None )
-                {
-                    return NULL;
-                }
-                eErr = poDstBand->RasterIO( GF_Write, 
-                    iXOffset, iYOffset, 
-                    nBlockXSize, nBlockYSize,
-                    pData, nBlockXSize, nBlockYSize,
-                    eType, 0, 0 );
-                if( eErr != CE_None )
-                {
-                    return NULL;
-                }
-            }
-            if( ( eErr == CE_None ) &&( ! pfnProgress( 
-                ( iYOffset + 1 ) /( double ) nYSize, NULL, pProgressData ) ) )
-            {
-                eErr = CE_Failure;
-                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()" );
-            }
-        }
-    }
-
-    CPLFree( pData );
+    GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+                                (GDALDatasetH) poDS, NULL,
+                                pfnProgress, pProgressData );
 
     // --------------------------------------------------------------------
     //      Finalize
@@ -1343,7 +1281,7 @@ CPLErr IdrisiRasterBand::IReadBlock( int nBlockXOff,
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
     if( VSIFSeekL( poGDS->fp, 
-		vsi_l_offset(nRecordSize) * nBlockYOff, SEEK_SET ) < 0 )
+        vsi_l_offset(nRecordSize) * nBlockYOff, SEEK_SET ) < 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't seek(%s) block with X offset %d and Y offset %d.\n%s", 
@@ -1405,7 +1343,7 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
         if( nBand > 1 ) 
         {
             VSIFSeekL( poGDS->fp, 
-				vsi_l_offset(nRecordSize) * nBlockYOff, SEEK_SET );
+                vsi_l_offset(nRecordSize) * nBlockYOff, SEEK_SET );
             VSIFReadL( pabyScanLine, 1, nRecordSize, poGDS->fp );
         }
         int i, j;
@@ -2842,10 +2780,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     if( nParameters > 1 )
         papszRef = CSLAddNameValue( papszRef, refSTANDL_2, CPLSPrintf( "%.9g", dfStdP2 ) );
     CSLSetNameValueSeparator( papszRef, ": " );
-    CSLSave( papszRef, CPLResetExtension( pszFilename, extREF ) );
-#ifndef WIN32        
-    FormatCRLF( CPLResetExtension( pszFilename, extREF ) );
-#endif 
+    SaveAsCRLF( papszRef, CPLResetExtension( pszFilename, extREF ) );
     CSLDestroy( papszRef );
 
     *pszRefSystem = CPLStrdup( CPLGetBasename( pszFilename ) );
@@ -2971,79 +2906,50 @@ char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter )
 }
 
 /************************************************************************/
-/*                               FormatCRLF()                           */
+/*                               CSLSaveCRLF()                          */
 /************************************************************************/
 
-void FormatCRLF( const char *pszFilename )
+/***
+ * Write a stringlist to a CR + LF terminated text file.
+ *
+ * Returns the number of lines written, or 0 if the file could not 
+ * be written.
+ */
+
+int  SaveAsCRLF(char **papszStrList, const char *pszFname)
 {
-    const char *pszTempfile;
-    FILE *fpIn;
-    FILE *fpOut;
-    char ch;
+    FILE    *fp;
+    int     nLines = 0;
 
-    char* pszFilenameDup = CPLStrdup( pszFilename );
-    pszTempfile = CPLResetExtension( pszFilenameDup, "$$$" );
-    CPLFree( pszFilenameDup );
-
-    fpIn  = VSIFOpen( pszFilename, "r" );
-    fpOut = VSIFOpen( pszTempfile, "w" );
-
-    if ( fpIn == NULL )
+    if (papszStrList)
     {
-        return;
-    }
-
-    if ( fpOut == NULL )
-    {
-        VSIFClose( fpIn );
-        return;
-    }
-
-    // Copy data
-
-    ch = (char) VSIFGetc( fpIn );
-
-    while( VSIFEof( fpIn ) == FALSE )
-    {
-        VSIFPutc( ch, fpOut );
-        ch = (char) VSIFGetc( fpIn );
-    }
-
-    VSIFClose( fpIn );
-    VSIFClose( fpOut );
-
-    // Convert format
-
-    fpIn  = VSIFOpen( pszTempfile, "r" );
-    fpOut = VSIFOpen( pszFilename, "w" );
-
-    if ( fpIn == NULL )
-    {
-        return;
-    }
-
-    if ( fpOut == NULL )
-    {
-        VSIFClose( fpIn );
-        return;
-    }
-
-    ch = (char) VSIFGetc( fpIn );
-
-    while( VSIFEof( fpIn ) == FALSE )
-    {
-        if( ch == '\012' )
+        if ((fp = VSIFOpenL(pszFname, "wt")) != NULL)
         {
-            VSIFPutc( '\015', fpOut );
-        }     
-        VSIFPutc( ch, fpOut );
-        ch = (char) VSIFGetc( fpIn );
+            while(*papszStrList != NULL)
+            {
+                if( VSIFPrintfL( fp, "%s\r\n", *papszStrList ) < 1 )
+                {
+                    CPLError( CE_Failure, CPLE_FileIO,
+                    "CSLSaveCRLF(\"%s\") failed: unable to write to output file.",
+                              pszFname );
+                    break;
+                }
+
+                nLines++;
+                papszStrList++;
+            }
+
+            VSIFCloseL(fp);
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "CSLSaveCRLF(\"%s\") failed: unable to open output file.",
+                      pszFname );
+        }
     }
 
-    VSIFClose( fpIn );
-    VSIFClose( fpOut );
-
-    VSIUnlink( pszTempfile );    
+    return nLines;
 }
 
 /************************************************************************/
