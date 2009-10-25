@@ -399,6 +399,8 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
 
     void           ClearRawLink();
 
+    virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
+                               int *pnMaxSize, CPLHashSet* hSetFiles);
 };
 
 /************************************************************************/
