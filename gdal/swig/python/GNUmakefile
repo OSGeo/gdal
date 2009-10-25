@@ -37,7 +37,7 @@ veryclean: clean
 	-rm -f ${SWIGOUTPUTDIR}/gdalconst_wrap.c
 	-rm -f ${SWIGOUTPUTDIR}/ogr_wrap.cpp
 	-rm -f ${SWIGOUTPUTDIR}/osr_wrap.cpp
-	-rm -f ${SWIGOUTPUTDIR}/_gdal_array.cpp
+	-rm -f ${SWIGOUTPUTDIR}/gdal_array_wrap.cpp
 
 gdal_wrap.cpp: ../include/python/gdal_python.i
 
