@@ -18,10 +18,22 @@
  *      (August 2009)
  *
  * TODO:
- * 	- Allow non-regular blocking table arrangements
- * 	- Allow <schema>.<table> syntax, instead of <table>
+ *	- Allow non-regular blocking table arrangements (in general)
+ *  	- Allow <schema>.<table> syntax, instead of <table> in OpenConnection
  *      - Update data blocks in SetProjection
  *      - Update data blocks in SetGeoTransform
+ *      - Disable sequential scanning in OpenConnection in the database instance
+ *        has support for GEOMETRY type (is a good idea?)
+ *      - In SetRasterProperties, if we can't create OGRGeometry from database,
+ *        we should "attack" directly the WKT representation of geometry, not
+ *        abort the program. For example, when pszProjectionRef is NULL
+ *       (SRID = -1), when poSR or prGeom are NULL...
+ *
+ *    Low priority:
+ *      - Add support for rotated images in SetRasterProperties
+ *      - Check if the tiles of a table REALLY have regular blocking arrangement.
+ *        The fact that "regular_blocking" field in RASTER_COLUMNS table is set
+ *        to TRUE doesn't proof it. Method TableHasRegularBlocking.
  *
  ******************************************************************************
  * Copyright (c) 2009, Jorge Arevalo, jorgearevalo@gis4free.org
@@ -451,7 +463,7 @@ PGconn * OpenConnection(const char *pszConnectionString) {
      *  Test to see if this database instance has support for the
      *  PostGIS Geometry type.
      *  TODO: If so, disable sequential scanning so we will get the
-     *  value of the gist indexes.
+     *  value of the gist indexes. (is it a good idea?)
      *****************************************************************/
     hPGresult = PQexec(hPGconn,
             "SELECT oid FROM pg_type WHERE typname = 'geometry'");
@@ -544,7 +556,9 @@ CPLErr WKTRasterDataset::SetRasterProperties() {
          *  Populate georeference related fields
          *  Note: From now (July 2009), only
          *  north up images (unrotated) will be
-         *  supported
+         *  supported.
+         *
+         *  TODO: Support for rotated images?
          ********************************************/
         dfRotationX = 0.0;
         dfRotationY = 0.0;
@@ -1067,7 +1081,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
      * 	Check if the table has regular_blocking
      * 	constraint enabled. From now (July 2009)
      * 	only regular_blocking tables are allowed.
-     * 	NOTE: The fact that "regular_blocking"
+     *
+     * 	TODO: The fact that "regular_blocking"
      * 	is set to TRUE doesn't mean that all the
      * 	tiles read are regular. Need to check it
      ****************************************************/
@@ -1098,7 +1113,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     /*********************************************************************
      * At this point, we can start working with the given database and
      * table. Of course, the working mode is essential from now.
-     * NOTE: Only REGULARLY_TILED_WORKING_MODE (this is, regular_blocking) is
+     *
+     * TODO: Only REGULARLY_TILED_WORKING_MODE (this is, regular_blocking) is
      * allowed, but the code must be prepared for supporting the rest of the
      * working modes
      *********************************************************************/
