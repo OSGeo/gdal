@@ -121,7 +121,6 @@ def tiff_write_4():
 
     try:
         import gdalnumeric
-        gdalnumeric.zeros
     except:
         return 'skip'
 
@@ -130,9 +129,15 @@ def tiff_write_4():
     new_ds = gdaltest.tiff_drv.Create( 'tmp/test_4.tif', 40, 50, 3,
                                        gdal.GDT_Byte, options )
 
-    data_red = gdalnumeric.zeros( (50, 40) )
-    data_green = gdalnumeric.zeros( (50, 40) )
-    data_blue = gdalnumeric.zeros( (50, 40) )
+    try:
+        data_red = gdalnumeric.zeros( (50, 40) )
+        data_green = gdalnumeric.zeros( (50, 40) )
+        data_blue = gdalnumeric.zeros( (50, 40) )
+    except:
+        import numpy
+        data_red = numpy.zeros( (50, 40) )
+        data_green = numpy.zeros( (50, 40) )
+        data_blue = numpy.zeros( (50, 40) )
 
     for y in range(50):
         for x in range(40):
@@ -145,9 +150,12 @@ def tiff_write_4():
         data_green = data_green.astype(gdalnumeric.UnsignedInt8)
         data_blue  = data_blue.astype(gdalnumeric.UnsignedInt8)
     except AttributeError:
-        data_red   = data_red.astype(gdalnumeric.uint8)
-        data_green = data_green.astype(gdalnumeric.uint8)
-        data_blue  = data_blue.astype(gdalnumeric.uint8)
+        try:
+            data_red   = data_red.astype(gdalnumeric.uint8)
+            data_green = data_green.astype(gdalnumeric.uint8)
+            data_blue  = data_blue.astype(gdalnumeric.uint8)
+        except:
+            pass
         
     new_ds.GetRasterBand(1).WriteArray( data_red )
     new_ds.GetRasterBand(2).WriteArray( data_green )
