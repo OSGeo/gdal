@@ -418,3 +418,39 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
     
     return psTree;
 }
+
+/************************************************************************/
+/*                             GetFileList()                            */
+/************************************************************************/
+
+void VRTRawRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
+                                int *pnMaxSize, CPLHashSet* hSetFiles)
+{
+    if (pszSourceFilename == NULL)
+        return;
+        
+/* -------------------------------------------------------------------- */
+/*      Is it already in the list ?                                     */
+/* -------------------------------------------------------------------- */
+    if( CPLHashSetLookup(hSetFiles, pszSourceFilename) != NULL )
+        return;
+        
+/* -------------------------------------------------------------------- */
+/*      Grow array if necessary                                         */
+/* -------------------------------------------------------------------- */
+    if (*pnSize + 1 >= *pnMaxSize)
+    {
+        *pnMaxSize = 2 + 2 * (*pnMaxSize);
+        *ppapszFileList = (char **) CPLRealloc(
+                    *ppapszFileList, sizeof(char*)  * (*pnMaxSize) );
+    }
+            
+/* -------------------------------------------------------------------- */
+/*      Add the string to the list                                      */
+/* -------------------------------------------------------------------- */
+    (*ppapszFileList)[*pnSize] = CPLStrdup(pszSourceFilename);
+    (*ppapszFileList)[(*pnSize + 1)] = NULL;
+    CPLHashSetInsert(hSetFiles, (*ppapszFileList)[*pnSize]);
+    
+    (*pnSize) ++;
+}
