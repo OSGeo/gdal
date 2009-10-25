@@ -160,6 +160,87 @@ def numpy_rw_5():
 
     return 'success'
 
+###############################################################################
+# Check that Band.ReadAsArray() can accept an already allocated array (#2658, #3028)
+
+def numpy_rw_6():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+    import gdalnumeric
+        
+    ds = gdal.Open( 'data/byte.tif' )
+    array = numpy.zeros( [ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
+    array_res = ds.GetRasterBand(1).ReadAsArray(buf_obj = array)
+    
+    if array is not array_res:
+        return 'fail'
+
+    ds2 = gdalnumeric.OpenArray( array )
+    if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Check that Dataset.ReadAsArray() can accept an already allocated array (#2658, #3028)
+
+def numpy_rw_7():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+    import gdalnumeric
+        
+    ds = gdal.Open( 'data/byte.tif' )
+    array = numpy.zeros( [1, ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
+    array_res = ds.ReadAsArray(buf_obj = array)
+    
+    if array is not array_res:
+        return 'fail'
+
+    ds2 = gdalnumeric.OpenArray( array )
+    if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
+        return 'fail'
+        
+    # Try again with a 2D array
+    array = numpy.zeros( [ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
+    array_res = ds.ReadAsArray(buf_obj = array)
+    
+    if array is not array_res:
+        return 'fail'
+
+    ds2 = gdalnumeric.OpenArray( array )
+    if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
+        return 'fail'
+        
+    return 'success'
+    
+###############################################################################
+# Check that Dataset.ReadAsArray() with multi-band data
+
+def numpy_rw_8():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+    import gdalnumeric
+        
+    ds = gdal.Open( 'data/rgbsmall.tif' )
+    array = numpy.zeros( [ds.RasterCount,ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
+    array_res = ds.ReadAsArray(buf_obj = array)
+
+    ds2 = gdalnumeric.OpenArray( array )
+    for i in range(1, ds.RasterCount):
+        if ds2.GetRasterBand(i).Checksum() != ds.GetRasterBand(i).Checksum():
+            return 'fail'
+        
+    return 'success'
+    
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
@@ -171,6 +252,9 @@ gdaltest_list = [
     numpy_rw_3,
     numpy_rw_4,
     numpy_rw_5,
+    numpy_rw_6,
+    numpy_rw_7,
+    numpy_rw_8,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':
