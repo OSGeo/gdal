@@ -162,7 +162,7 @@ ogr_module = Extension('osgeo._ogr',
 
 
 array_module = Extension('osgeo._gdal_array',
-                    sources=['extensions/_gdal_array.cpp'],
+                    sources=['extensions/gdal_array_wrap.cpp'],
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 

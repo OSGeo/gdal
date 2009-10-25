@@ -18,7 +18,7 @@ SCRIPTS			= `ls ./scripts`
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
                         gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
                         gcps2vec.py
-PY_MODULES      =       ${PACKAGE_DIR}/gdal.py ${PACKAGE_DIR}/ogr.py ${PACKAGE_DIR}/osr.py ${PACKAGE_DIR}/gdalconst.py
+PY_MODULES      =       ${PACKAGE_DIR}/gdal.py ${PACKAGE_DIR}/ogr.py ${PACKAGE_DIR}/osr.py ${PACKAGE_DIR}/gdalconst.py ${PACKAGE_DIR}/gdal_array.py
 
 clean:
 	-rm -f ${PACKAGE_DIR}/*.pyc
@@ -37,6 +37,7 @@ veryclean: clean
 	-rm -f ${SWIGOUTPUTDIR}/gdalconst_wrap.c
 	-rm -f ${SWIGOUTPUTDIR}/ogr_wrap.cpp
 	-rm -f ${SWIGOUTPUTDIR}/osr_wrap.cpp
+	-rm -f ${SWIGOUTPUTDIR}/_gdal_array.cpp
 
 gdal_wrap.cpp: ../include/python/gdal_python.i
 
@@ -44,8 +45,11 @@ ogr_wrap.cpp: ../include/python/ogr_python.i
 
 osr_wrap.cpp: ../include/python/osr_python.i
 
+gdal_array_wrap.cpp:  ../include/gdal_array.i ../include/python/typemaps_python.i
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ gdal_array.i
+
 # Remove the following hack (cat, mv) as soon we have upgraded to SWIG >= 1.3.36
-generate: ${WRAPPERS}
+generate: ${WRAPPERS} gdal_array_wrap.cpp
 	sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/gdal_wrap.cpp > ${SWIGOUTPUTDIR}/gdal_wrap.cpp.tmp
 	mv -f ${SWIGOUTPUTDIR}/gdal_wrap.cpp.tmp ${SWIGOUTPUTDIR}/gdal_wrap.cpp
 	sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/gdalconst_wrap.c > ${SWIGOUTPUTDIR}/gdalconst_wrap.c.tmp
@@ -54,7 +58,9 @@ generate: ${WRAPPERS}
 	mv -f ${SWIGOUTPUTDIR}/ogr_wrap.cpp.tmp ${SWIGOUTPUTDIR}/ogr_wrap.cpp
 	sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/osr_wrap.cpp > ${SWIGOUTPUTDIR}/osr_wrap.cpp.tmp
 	mv -f ${SWIGOUTPUTDIR}/osr_wrap.cpp.tmp ${SWIGOUTPUTDIR}/osr_wrap.cpp
-
+	sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/gdal_array_wrap.cpp > ${SWIGOUTPUTDIR}/gdal_array_wrap.cpp.tmp
+	mv -f ${SWIGOUTPUTDIR}/gdal_array_wrap.cpp.tmp ${SWIGOUTPUTDIR}/gdal_array_wrap.cpp
+    
 build:
 	$(PYTHON) setup.py build
 
