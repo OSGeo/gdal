@@ -49,6 +49,15 @@ CPL_CVSID("$Id$");
  * If you access the pszHexWkb or pbyHexWkb variables directly, you may
  * get a non-updated version of the raster. Anyway, you only can access
  * this variables from friend classes.
+ *
+ * TODO:
+ * - Check assertions that sometimes fail (in several places of the code):
+ *   CPLAssert(nTransformedBytes == nLengthByWkbString)
+ * - Check that there is enough data in buffer (method Initialize)
+ * - FIXME: dfNoDataValue is a double. Doesn't make sense to fetch less than 8 bytes
+ *   if 1 byte, should be put into a Byte and then casted to a double,
+ *   if 2 bytes, should be put into a Int16/UInt16 and then casted to a double, etc...
+ * - Modify GetWktExtent method to accept non-regular blocking
  ************************************************************************/
 
 /**
@@ -318,7 +327,7 @@ WKTRasterWrapper::~WKTRasterWrapper() {
 const char * WKTRasterWrapper::GetWktExtent() {
     /**
      * Create WKT string for raster extent
-     * BE CAREFUL: With irregular blocking is not valid in this way...
+     * TODO: With irregular blocking is not valid in this way...
      */
     double dfRasterWidth = ABS((int) (dfScaleX * nWidth + 0.5));
     double dfRasterHeight = ABS((int) (dfScaleY * nHeight + 0.5));
