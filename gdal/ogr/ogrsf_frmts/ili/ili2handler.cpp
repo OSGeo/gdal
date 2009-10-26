@@ -148,6 +148,29 @@ void ILI2Handler::endElement(
   }
 }
 
+/************************************************************************/
+/*                     characters() (xerces 3 version)                  */
+/************************************************************************/
+
+void ILI2Handler::characters( const XMLCh *const chars,
+                     const XMLSize_t length ) {
+  
+  // add the text element
+  if (level >= 3) {
+    char *tmpC = XMLString::transcode(chars);
+    
+    // only add the text if it is not empty
+    if (trim(tmpC) != "") 
+      dom_elem->appendChild(dom_doc->createTextNode(chars));
+    
+    XMLString::release(&tmpC);
+  }
+}
+
+/************************************************************************/
+/*                     characters() (xerces 2 version)                  */
+/************************************************************************/
+
 void ILI2Handler::characters( const XMLCh *const chars,
                      const unsigned int length ) {
   

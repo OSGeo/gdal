@@ -115,7 +115,24 @@ void GMLXercesHandler::endElement(const   XMLCh* const    uri,
 }
 
 /************************************************************************/
-/*                             characters()                             */
+/*                             characters() (xerces 3 version)          */
+/************************************************************************/
+
+void GMLXercesHandler::characters(const XMLCh* const chars_in,
+                                  const XMLSize_t length )
+{
+    char* utf8String = tr_strdup(chars_in);
+    int nLen = strlen(utf8String);
+    OGRErr eErr = GMLHandler::dataHandler(utf8String, nLen);
+    CPLFree(utf8String);
+    if (eErr == CE_Failure)
+    {
+        throw SAXNotSupportedException("Out of memory");
+    }
+}
+
+/************************************************************************/
+/*                             characters() (xerces 2 version)          */
 /************************************************************************/
 
 void GMLXercesHandler::characters(const XMLCh* const chars_in,
