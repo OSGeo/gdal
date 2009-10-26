@@ -100,7 +100,9 @@ public:
         const   XMLCh* const    qname
     );
     void characters( const XMLCh *const chars,
-                     const unsigned int length );
+                     const XMLSize_t length ); // xerces 3
+    void characters( const XMLCh *const chars,
+                     const unsigned int length ); // xerces 2
 
     void startEntity (const XMLCh *const name);
 
