@@ -61,6 +61,8 @@ CPL_C_END
 
 void ECWInitialize( void );
 
+GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo);
+
 /************************************************************************/
 /* ==================================================================== */
 /*				ECWDataset				*/
@@ -107,10 +109,10 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     CPLErr      LoadNextLine();
 
   public:
-		ECWDataset();
+		ECWDataset(int bIsJPEG2000);
 		~ECWDataset();
                 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open( GDALOpenInfo *, int bIsJPEG2000 );
     static int          IdentifyJPEG2000( GDALOpenInfo * poOpenInfo );
     static GDALDataset *OpenJPEG2000( GDALOpenInfo * );
     static int          IdentifyECW( GDALOpenInfo * poOpenInfo );
@@ -498,7 +500,7 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 /*                            ECWDataset()                              */
 /************************************************************************/
 
-ECWDataset::ECWDataset()
+ECWDataset::ECWDataset(int bIsJPEG2000)
 
 {
     bUsingCustomStream = FALSE;
@@ -518,6 +520,8 @@ ECWDataset::ECWDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    
+    poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2ECW" : "ECW" );
 }
 
 /************************************************************************/
@@ -991,7 +995,7 @@ GDALDataset *ECWDataset::OpenJPEG2000( GDALOpenInfo * poOpenInfo )
     if (!IdentifyJPEG2000(poOpenInfo))
         return NULL;
 
-    return Open( poOpenInfo );
+    return Open( poOpenInfo, TRUE );
 }
     
 /************************************************************************/
@@ -1027,14 +1031,14 @@ GDALDataset *ECWDataset::OpenECW( GDALOpenInfo * poOpenInfo )
     if (!IdentifyECW(poOpenInfo))
         return NULL;
 
-    return Open( poOpenInfo );
+    return Open( poOpenInfo, FALSE );
 }
     
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
 {
     CNCSJP2FileView *poFileView = NULL;
@@ -1236,7 +1240,7 @@ try_again:
 /* -------------------------------------------------------------------- */
     ECWDataset  *poDS;
 
-    poDS = new ECWDataset();
+    poDS = new ECWDataset(bIsJPEG2000);
 
     poDS->poFileView = poFileView;
 
@@ -1647,6 +1651,14 @@ void GDALRegister_ECW_JP2ECW()
 {
     GDALRegister_ECW();
     GDALRegister_JP2ECW();
+}
+
+/************************************************************************/
+/*                     ECWDatasetOpenJPEG2000()                         */
+/************************************************************************/
+GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo)
+{
+    return ECWDataset::OpenJPEG2000(poOpenInfo);
 }
 
 /************************************************************************/
