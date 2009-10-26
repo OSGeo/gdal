@@ -814,19 +814,37 @@ void  ParserHandler::endElement (const XMLCh *const uri
 }
 
 
+/************************************************************************/
+/*                     characters() (xerces 3 version)                  */
+/************************************************************************/
 
-void ParserHandler::characters(  const   XMLCh* const    chars
-								    , const unsigned int    length)
+void ParserHandler::characters( const XMLCh* const chars,
+                                const XMLSize_t length )
 {
-	if(state==ST_BEFORE_CHARACTERS
-			|| state==CV_C1
-			|| state==CV_C2
-			|| state==CV_C3
-			){
-		propertyValue.append(chars,length);
-	}
+    if(   state==ST_BEFORE_CHARACTERS
+       || state==CV_C1
+       || state==CV_C2
+       || state==CV_C3 )
+    {
+        propertyValue.append(chars,length);
+    }
 }
 
+/************************************************************************/
+/*                     characters() (xerces 2 version)                  */
+/************************************************************************/
+
+void ParserHandler::characters( const XMLCh* const chars,
+                                const unsigned int length )
+{
+    if(   state==ST_BEFORE_CHARACTERS
+       || state==CV_C1
+       || state==CV_C2
+       || state==CV_C3 )
+    {
+        propertyValue.append(chars,length);
+    }
+}
 
 void ParserHandler::error(const SAXParseException& e)
 {
