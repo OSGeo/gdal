@@ -242,41 +242,65 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Process each data source layer.                                 */
-/* -------------------------------------------------------------------- */
     CPLDebug( "OGR", "GetLayerCount() = %d\n", poDS->GetLayerCount() );
 
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
-        for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+        if ( CSLCount(papszLayers) == 0 )
         {
-            OGRLayer        *poLayer = poDS->GetLayer(iLayer);
-
-            if( poLayer == NULL )
+/* -------------------------------------------------------------------- */ 
+/*      Process each data source layer.                                 */ 
+/* -------------------------------------------------------------------- */ 
+            for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
             {
-                printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
-                        iLayer );
-                exit( 1 );
+                OGRLayer        *poLayer = poDS->GetLayer(iLayer);
+
+                if( poLayer == NULL )
+                {
+                    printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
+                            iLayer );
+                    exit( 1 );
+                }
+
+                if (!bAllLayers)
+                {
+                    printf( "%d: %s",
+                            iLayer+1,
+                            poLayer->GetLayerDefn()->GetName() );
+
+                    if( poLayer->GetLayerDefn()->GetGeomType() != wkbUnknown )
+                        printf( " (%s)", 
+                                OGRGeometryTypeToName( 
+                                    poLayer->GetLayerDefn()->GetGeomType() ) );
+
+                    printf( "\n" );
+                }
+                else
+                {
+                    if( iRepeat != 0 )
+                        poLayer->ResetReading();
+
+                    ReportOnLayer( poLayer, pszWHERE, poSpatialFilter );
+                }
             }
-
-            if( CSLCount(papszLayers) == 0 && !bAllLayers )
+        }
+        else
+        {
+/* -------------------------------------------------------------------- */ 
+/*      Process specified data source layers.                           */ 
+/* -------------------------------------------------------------------- */ 
+            char** papszIter = papszLayers;
+            for( ; *papszIter != NULL; papszIter++ )
             {
-                printf( "%d: %s",
-                        iLayer+1,
-                        poLayer->GetLayerDefn()->GetName() );
+                OGRLayer        *poLayer = poDS->GetLayerByName(*papszIter);
 
-                if( poLayer->GetLayerDefn()->GetGeomType() != wkbUnknown )
-                    printf( " (%s)", 
-                            OGRGeometryTypeToName( 
-                                poLayer->GetLayerDefn()->GetGeomType() ) );
+                if( poLayer == NULL )
+                {
+                    printf( "FAILURE: Couldn't fetch requested layer %s!\n",
+                            *papszIter );
+                    exit( 1 );
+                }
 
-                printf( "\n" );
-            }
-            else if( bAllLayers 
-                     || CSLFindString( papszLayers,
-                                   poLayer->GetLayerDefn()->GetName() ) != -1 )
-            {
                 if( iRepeat != 0 )
                     poLayer->ResetReading();
 
