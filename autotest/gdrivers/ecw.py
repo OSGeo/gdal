@@ -138,8 +138,9 @@ def ecw_5():
 	return 'skip'
 
     ds = gdal.Open( 'data/small.vrt' )
-    gdaltest.jp2ecw_drv.CreateCopy( 'tmp/ecw_5.jp2', ds )
-#				    options = ['TARGET=100'] )
+    ds_out = gdaltest.jp2ecw_drv.CreateCopy( 'tmp/ecw_5.jp2', ds )
+    if ds_out.GetDriver().ShortName != "JP2ECW":
+        return 'fail'
     ds = None
 
     return 'success' 

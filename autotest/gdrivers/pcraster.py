@@ -46,7 +46,7 @@ def pcraster_1():
     if gdaltest.pcraster_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PNG', 'ldd.map', 1, 4528 )
+    tst = gdaltest.GDALTest( 'PCRaster', 'ldd.map', 1, 4528 )
     return tst.testOpen()
 
 ###############################################################################

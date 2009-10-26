@@ -269,7 +269,11 @@ class GDALTest:
         if ds is None:
             post_reason( 'Failed to open dataset: ' + wrk_filename )
             return 'fail'
-
+            
+        if ds.GetDriver().ShortName != gdal.GetDriverByName( self.drivername ).ShortName:
+            post_reason( 'The driver of the returned dataset is %s instead of %s.' % ( ds.GetDriver().ShortName, self.drivername ) )
+            return 'fail'
+            
         if self.xsize == 0 and self.ysize == 0:
             self.xsize = ds.RasterXSize
             self.ysize = ds.RasterYSize
@@ -395,6 +399,10 @@ class GDALTest:
         if new_ds is None:
             post_reason( 'Failed to create test file using CreateCopy method.'\
                          + '\n' + gdal.GetLastErrorMsg() )
+            return 'fail'
+            
+        if new_ds.GetDriver().ShortName != gdal.GetDriverByName( self.drivername ).ShortName:
+            post_reason( 'The driver of the returned dataset is %s instead of %s.' % ( new_ds.GetDriver().ShortName, self.drivername ) )
             return 'fail'
 
         if self.band > 0 and skip_preclose_test == 0:
