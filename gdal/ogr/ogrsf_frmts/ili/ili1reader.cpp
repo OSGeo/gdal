@@ -61,6 +61,7 @@ ILI1Reader::ILI1Reader() {
   fpItf = NULL;
   nLayers = 0;
   papoLayers = NULL;
+  curLayer = NULL;
   SetArcDegrees(1);
 }
 
