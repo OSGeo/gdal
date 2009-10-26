@@ -46,6 +46,8 @@ CPL_C_END
 
 void ECWInitialize( void );
 
+GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo);
+
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
 
 class GDALECWCompressor : public CNCSFile {
@@ -1023,11 +1025,16 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALDataset *poDS = (GDALDataset *) 
-        GDALOpen( pszFilename, GA_ReadOnly );
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    GDALPamDataset *poDS;
+    
+    if (bIsJPEG2000)
+        poDS = (GDALPamDataset*) ECWDatasetOpenJPEG2000(&oOpenInfo);
+    else
+        poDS = (GDALPamDataset*) GDALOpen(pszFilename, GA_ReadOnly);
 
     if( poDS )
-        ((GDALPamDataset *) poDS)->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
 }

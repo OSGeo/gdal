@@ -935,6 +935,8 @@ JP2KAKDataset::JP2KAKDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    
+    poDriver = (GDALDriver*) GDALGetDriverByName( "JP2KAK" );
 }
 
 /************************************************************************/
@@ -2924,8 +2926,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *) 
-        GDALOpen( pszFilename, GA_ReadOnly );
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    GDALPamDataset *poDS = (GDALPamDataset*) JP2KAKDataset::Open(&oOpenInfo);
 
     if( poDS )
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );

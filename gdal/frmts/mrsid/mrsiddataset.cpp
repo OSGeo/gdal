@@ -216,7 +216,7 @@ class MrSIDDataset : public GDALPamDataset
                                    int, int );
 
   public:
-                MrSIDDataset();
+                MrSIDDataset(int bIsJPEG2000);
                 ~MrSIDDataset();
 
     static GDALDataset  *Open( GDALOpenInfo * poOpenInfo, int bIsJP2 );
@@ -674,7 +674,7 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 /*                           MrSIDDataset()                             */
 /************************************************************************/
 
-MrSIDDataset::MrSIDDataset()
+MrSIDDataset::MrSIDDataset(int bIsJPEG2000)
 {
     poImageReader = NULL;
 #ifdef MRSID_ESDK
@@ -707,6 +707,8 @@ MrSIDDataset::MrSIDDataset()
     poParentDS = this;
     nOverviewCount = 0;
     papoOverviewDS = NULL;
+    
+    poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2MrSID" : "MrSID" );
 }
 
 /************************************************************************/
@@ -1338,7 +1340,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
     MrSIDDataset    *poDS;
     LT_STATUS       eStat;
 
-    poDS = new MrSIDDataset();
+    poDS = new MrSIDDataset(bIsJP2);
     eStat = poDS->oStream.initialize( poOpenInfo->pszFilename, "rb" );
     if ( !LT_SUCCESS(eStat) )
     {
@@ -1472,7 +1474,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 
         for ( i = 0; i < poDS->nOverviewCount; i++ )
         {
-            poDS->papoOverviewDS[i] = new MrSIDDataset();
+            poDS->papoOverviewDS[i] = new MrSIDDataset(bIsJP2);
             poDS->papoOverviewDS[i]->poImageReader = poDS->poImageReader;
             poDS->papoOverviewDS[i]->OpenZoomLevel( i + 1 );
             poDS->papoOverviewDS[i]->bIsOverview = TRUE;
@@ -3240,10 +3242,10 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *) 
-        GDALOpen( pszFilename, GA_ReadOnly );
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    GDALPamDataset *poDS = (GDALPamDataset*) JP2Open(&oOpenInfo);
 
-    if( poDS )
+    if( poDS )  
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
