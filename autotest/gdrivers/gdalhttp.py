@@ -48,7 +48,7 @@ def http_1():
     except:
 	return 'skip'
 
-    tst = gdaltest.GDALTest( 'HTTP','http://home.gdal.org/~warmerda/frank.gif',
+    tst = gdaltest.GDALTest( 'GIF','http://home.gdal.org/~warmerda/frank.gif',
                              1, 35415, filename_absolute = 1 )
     return tst.testOpen()
 
