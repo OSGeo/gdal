@@ -253,8 +253,9 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
     }
 }
 
+#if XERCES_VERSION_MAJOR >= 3
 /************************************************************************/
-/*                             characters() (xerces 3 version)          */
+/*                             characters()                             */
 /************************************************************************/
 
 void GMLHandler::characters(const XMLCh* const chars_in,
@@ -305,8 +306,9 @@ void GMLHandler::characters(const XMLCh* const chars_in,
     }
 }
 
+#else
 /************************************************************************/
-/*                             characters() (xerces 2 version)          */
+/*                             characters()                             */
 /************************************************************************/
 
 void GMLHandler::characters(const XMLCh* const chars_in,
@@ -357,6 +359,7 @@ void GMLHandler::characters(const XMLCh* const chars_in,
         m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
     }
 }
+#endif
 
 /************************************************************************/
 /*                             fatalError()                             */
