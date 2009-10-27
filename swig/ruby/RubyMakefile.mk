@@ -36,7 +36,6 @@ clean:
 	rm -f *.lo
 	
 veryclean: clean
-	rm -frd $(INSTALL_DIR)
 
 $(INSTALL_DIR):
 	mkdir -p $(DESTDIR)$(INSTALL_DIR)
