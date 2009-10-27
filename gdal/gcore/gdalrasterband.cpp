@@ -2566,7 +2566,7 @@ int CPL_STDCALL GDALGetBandNumber( GDALRasterBandH hBand )
  * Note that some GDALRasterBands are not considered to be a part of a dataset,
  * such as overviews or other "freestanding" bands. 
  *
- * There is currently no C analog to this method.
+ * This method is the same as the C function GDALGetBandDataset()
  *
  * @return the pointer to the GDALDataset to which this band belongs, or
  * NULL if this cannot be determined.
