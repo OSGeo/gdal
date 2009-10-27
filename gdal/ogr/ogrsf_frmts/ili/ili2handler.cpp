@@ -145,8 +145,9 @@ void ILI2Handler::endElement(
   }
 }
 
+#if XERCES_VERSION_MAJOR >= 3
 /************************************************************************/
-/*                     characters() (xerces 3 version)                  */
+/*                     characters()                                     */
 /************************************************************************/
 
 void ILI2Handler::characters( const XMLCh *const chars,
@@ -164,8 +165,9 @@ void ILI2Handler::characters( const XMLCh *const chars,
   }
 }
 
+#else
 /************************************************************************/
-/*                     characters() (xerces 2 version)                  */
+/*                     characters()                                     */
 /************************************************************************/
 
 void ILI2Handler::characters( const XMLCh *const chars,
@@ -182,6 +184,7 @@ void ILI2Handler::characters( const XMLCh *const chars,
     XMLString::release(&tmpC);
   }
 }
+#endif
 
 void ILI2Handler::fatalError(const SAXParseException&) {
   // FIXME Error handling

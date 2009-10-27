@@ -814,8 +814,9 @@ void  ParserHandler::endElement (const XMLCh *const uri
 }
 
 
+#if XERCES_VERSION_MAJOR >= 3
 /************************************************************************/
-/*                     characters() (xerces 3 version)                  */
+/*                     characters()                                     */
 /************************************************************************/
 
 void ParserHandler::characters( const XMLCh* const chars,
@@ -830,8 +831,9 @@ void ParserHandler::characters( const XMLCh* const chars,
     }
 }
 
+#else
 /************************************************************************/
-/*                     characters() (xerces 2 version)                  */
+/*                     characters()                                     */
 /************************************************************************/
 
 void ParserHandler::characters( const XMLCh* const chars,
@@ -845,6 +847,7 @@ void ParserHandler::characters( const XMLCh* const chars,
         propertyValue.append(chars,length);
     }
 }
+#endif
 
 void ParserHandler::error(const SAXParseException& e)
 {
