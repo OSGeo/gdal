@@ -11,6 +11,30 @@
 #define SWIGPYTHON
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
+
+#ifdef __cplusplus
+/* SwigValueWrapper is described in swig.swg */
+template<typename T> class SwigValueWrapper {
+  struct SwigMovePointer {
+    T *ptr;
+    SwigMovePointer(T *p) : ptr(p) { }
+    ~SwigMovePointer() { delete ptr; }
+    SwigMovePointer& operator=(SwigMovePointer& rhs) { T* oldptr = ptr; ptr = 0; delete oldptr; ptr = rhs.ptr; rhs.ptr = 0; return *this; }
+  } pointer;
+  SwigValueWrapper& operator=(const SwigValueWrapper<T>& rhs);
+  SwigValueWrapper(const SwigValueWrapper<T>& rhs);
+public:
+  SwigValueWrapper() : pointer(0) { }
+  SwigValueWrapper& operator=(const T& t) { SwigMovePointer tmp(new T(t)); pointer = tmp; return *this; }
+  operator T&() const { return *pointer.ptr; }
+  T *operator&() { return pointer.ptr; }
+};
+
+template <typename T> T SwigValueInit() {
+  return T();
+}
+#endif
+
 /* -----------------------------------------------------------------------------
  *  This section contains generic SWIG labels for method/variable
  *  declarations/attributes, and other compiler dependent labels.
@@ -2660,9 +2684,12 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_char swig_types[0]
-static swig_type_info *swig_types[2];
-static swig_module_info swig_module = {swig_types, 1, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[0]
+#define SWIGTYPE_p_PyArrayObject swig_types[1]
+#define SWIGTYPE_p_char swig_types[2]
+#define SWIGTYPE_p_int swig_types[3]
+static swig_type_info *swig_types[5];
+static swig_module_info swig_module = {swig_types, 4, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2675,29 +2702,749 @@ static swig_module_info swig_module = {swig_types, 1, 0, 0, 0, 0};
 #endif
 
 /*-----------------------------------------------
-              @(target):= _gdalconst.so
+              @(target):= _gdal_array.so
   ------------------------------------------------*/
 #if PY_VERSION_HEX >= 0x03000000
-#  define SWIG_init    PyInit__gdalconst
+#  define SWIG_init    PyInit__gdal_array
 
 #else
-#  define SWIG_init    init_gdalconst
+#  define SWIG_init    init_gdal_array
 
 #endif
-#define SWIG_name    "_gdalconst"
+#define SWIG_name    "_gdal_array"
 
 #define SWIGVERSION 0x010339 
 #define SWIG_VERSION SWIGVERSION
 
 
-#define SWIG_as_voidptr(a) (void *)((const void *)(a)) 
-#define SWIG_as_voidptrptr(a) ((void)SWIG_as_voidptr(*a),(void**)(a)) 
+#define SWIG_as_voidptr(a) const_cast< void * >(static_cast< const void * >(a)) 
+#define SWIG_as_voidptrptr(a) ((void)SWIG_as_voidptr(*a),reinterpret_cast< void** >(a)) 
 
 
-#include "gdal.h"
-#include "gdalwarper.h"
-#include "cpl_string.h"
-#include "cpl_minixml.h"
+#include <stdexcept>
+
+
+namespace swig {
+  class SwigPtr_PyObject {
+  protected:
+    PyObject *_obj;
+
+  public:
+    SwigPtr_PyObject() :_obj(0)
+    {
+    }
+
+    SwigPtr_PyObject(const SwigPtr_PyObject& item) : _obj(item._obj)
+    {
+      Py_XINCREF(_obj);      
+    }
+    
+    SwigPtr_PyObject(PyObject *obj, bool initial_ref = true) :_obj(obj)
+    {
+      if (initial_ref) {
+        Py_XINCREF(_obj);
+      }
+    }
+    
+    SwigPtr_PyObject & operator=(const SwigPtr_PyObject& item) 
+    {
+      Py_XINCREF(item._obj);
+      Py_XDECREF(_obj);
+      _obj = item._obj;
+      return *this;      
+    }
+    
+    ~SwigPtr_PyObject() 
+    {
+      Py_XDECREF(_obj);
+    }
+    
+    operator PyObject *() const
+    {
+      return _obj;
+    }
+
+    PyObject *operator->() const
+    {
+      return _obj;
+    }
+  };
+}
+
+
+namespace swig {
+  struct SwigVar_PyObject : SwigPtr_PyObject {
+    SwigVar_PyObject(PyObject* obj = 0) : SwigPtr_PyObject(obj, false) { }
+    
+    SwigVar_PyObject & operator = (PyObject* obj)
+    {
+      Py_XDECREF(_obj);
+      _obj = obj;
+      return *this;      
+    }
+  };
+}
+
+
+#include "gdal_priv.h"
+#ifdef _DEBUG
+#undef _DEBUG
+#include "Python.h"
+#define _DEBUG
+#else
+#include "Python.h"
+#endif
+#include "numpy/arrayobject.h"
+
+#ifdef DEBUG 
+typedef struct GDALRasterBandHS GDALRasterBandShadow;
+#else
+typedef void GDALRasterBandShadow;
+#endif
+
+CPL_C_START
+
+GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
+                                             GDALDataType, int, int, int );
+CPL_C_END
+
+typedef char retStringAndCPLFree;
+
+class NUMPYDataset : public GDALDataset
+{
+    PyArrayObject *psArray;
+
+    double	  adfGeoTransform[6];
+    char	  *pszProjection;
+
+    int           nGCPCount;
+    GDAL_GCP      *pasGCPList;
+    char          *pszGCPProjection;
+
+  public:
+                 NUMPYDataset();
+                 ~NUMPYDataset();
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
+
+    static GDALDataset *Open( GDALOpenInfo * );
+};
+
+
+
+/************************************************************************/
+/*                          GDALRegister_NUMPY()                        */
+/************************************************************************/
+   
+static void GDALRegister_NUMPY(void)
+
+{
+    GDALDriver	*poDriver;
+
+    if( GDALGetDriverByName( "NUMPY" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+        
+        poDriver->SetDescription( "NUMPY" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Numeric Python Array" );
+        
+        poDriver->pfnOpen = NUMPYDataset::Open;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+
+    }
+}
+
+/************************************************************************/
+/*                            NUMPYDataset()                            */
+/************************************************************************/
+
+NUMPYDataset::NUMPYDataset()
+
+{
+    pszProjection = CPLStrdup("");
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    pszGCPProjection = CPLStrdup("");
+}
+
+/************************************************************************/
+/*                            ~NUMPYDataset()                            */
+/************************************************************************/
+
+NUMPYDataset::~NUMPYDataset()
+
+{
+    CPLFree( pszProjection );
+
+    CPLFree( pszGCPProjection );
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
+    FlushCache();
+    Py_DECREF( psArray );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *NUMPYDataset::GetProjectionRef()
+
+{
+    return( pszProjection );
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr NUMPYDataset::SetProjection( const char * pszNewProjection )
+
+{
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszNewProjection );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr NUMPYDataset::GetGeoTransform( double * padfTransform )
+
+{
+    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr NUMPYDataset::SetGeoTransform( double * padfTransform )
+
+{
+    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int NUMPYDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *NUMPYDataset::GetGCPProjection()
+
+{
+    return pszGCPProjection;
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *NUMPYDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
+/*                              SetGCPs()                               */
+/************************************************************************/
+
+CPLErr NUMPYDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                              const char *pszGCPProjection )
+
+{
+    CPLFree( this->pszGCPProjection );
+    if( this->nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( this->nGCPCount, this->pasGCPList );
+        CPLFree( this->pasGCPList );
+    }
+
+    this->pszGCPProjection = CPLStrdup(pszGCPProjection);
+
+    this->nGCPCount = nGCPCount;
+
+    this->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+    PyArrayObject *psArray;
+    GDALDataType  eType;
+    int     nBands;
+
+/* -------------------------------------------------------------------- */
+/*      Is this a numpy dataset name?                                   */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN(poOpenInfo->pszFilename,"NUMPY:::",8) 
+        || poOpenInfo->fp != NULL )
+        return NULL;
+
+    psArray = NULL;
+    sscanf( poOpenInfo->pszFilename+8, "%p", &(psArray) );
+    if( psArray == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to parse meaningful pointer value from NUMPY name\n"
+                  "string: %s\n", 
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we likely have corrupt definitions of the NUMPY stuff,       */
+/*      then warn now.                                                  */
+/* -------------------------------------------------------------------- */
+#ifdef NUMPY_DEFS_WRONG
+    CPLError( CE_Warning, CPLE_AppDefined, 
+              "It would appear you have built GDAL without having it use\n"
+              "the Numeric python include files.  Old definitions have\n"
+              "been used instead at build time, and it is quite possible that\n"
+              "the things will shortly fail or crash if they are wrong.\n"
+              "Consider installing Numeric, and rebuilding with HAVE_NUMPY\n"
+              "enabled in gdal\nmake.opt." );
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Is this a directly mappable Python array?  Verify rank, and     */
+/*      data type.                                                      */
+/* -------------------------------------------------------------------- */
+
+    if( psArray->nd < 2 || psArray->nd > 3 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal numpy array rank %d.\n", 
+                  psArray->nd );
+        return NULL;
+    }
+
+    switch( psArray->descr->type_num )
+    {
+      case NPY_CDOUBLE:
+        eType = GDT_CFloat64;
+        break;
+
+      case NPY_CFLOAT:
+        eType = GDT_CFloat32;
+        break;
+
+      case NPY_DOUBLE:
+        eType = GDT_Float64;
+        break;
+
+      case NPY_FLOAT:
+        eType = GDT_Float32;
+        break;
+
+      case NPY_INT:
+      case NPY_LONG:
+        eType = GDT_Int32;
+        break;
+
+      case NPY_UINT:
+      case NPY_ULONG:
+        eType = GDT_UInt32;
+        break;
+
+      case NPY_SHORT:
+        eType = GDT_Int16;
+        break;
+
+      case NPY_USHORT:
+        eType = GDT_UInt16;
+        break;
+
+      case NPY_BYTE:
+      case NPY_UBYTE:
+        eType = GDT_Byte;
+        break;
+
+      default:
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to access numpy arrays of typecode `%c'.\n", 
+                  psArray->descr->type );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the new NUMPYDataset object.                             */
+/* -------------------------------------------------------------------- */
+    NUMPYDataset *poDS;
+
+    poDS = new NUMPYDataset();
+
+    poDS->psArray = psArray;
+
+    poDS->eAccess = GA_ReadOnly;
+
+/* -------------------------------------------------------------------- */
+/*      Add a reference to the array.                                   */
+/* -------------------------------------------------------------------- */
+    Py_INCREF( psArray );
+
+/* -------------------------------------------------------------------- */
+/*      Workout the data layout.                                        */
+/* -------------------------------------------------------------------- */
+    int    nBandOffset;
+    int    nPixelOffset;
+    int    nLineOffset;
+
+    if( psArray->nd == 3 )
+    {
+        nBands = psArray->dimensions[0];
+        nBandOffset = psArray->strides[0];
+        poDS->nRasterXSize = psArray->dimensions[2];
+        nPixelOffset = psArray->strides[2];
+        poDS->nRasterYSize = psArray->dimensions[1];
+        nLineOffset = psArray->strides[1];
+    }
+    else
+    {
+        nBands = 1;
+        nBandOffset = 0;
+        poDS->nRasterXSize = psArray->dimensions[1];
+        nPixelOffset = psArray->strides[1];
+        poDS->nRasterYSize = psArray->dimensions[0];
+        nLineOffset = psArray->strides[0];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        poDS->SetBand( iBand+1, 
+                       (GDALRasterBand *) 
+                       MEMCreateRasterBand( poDS, iBand+1, 
+                                (GByte *) psArray->data + nBandOffset*iBand,
+                                          eType, nPixelOffset, nLineOffset,
+                                          FALSE ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to return a regular handle on the file.                     */
+/* -------------------------------------------------------------------- */
+    return poDS;
+}
+
+/* Returned size is in bytes or 0 if an error occured */
+static
+int ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
+                             int nPixelSpace, int nLineSpace,
+                             int bSpacingShouldBeMultipleOfPixelSize )
+{
+    const int MAX_INT = 0x7fffffff;
+    if (buf_xsize <= 0 || buf_ysize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
+        return 0;
+    }
+
+    if (nPixelSpace < 0 || nLineSpace < 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for space arguments");
+        return 0;
+    }
+
+    if (nPixelSize == 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Illegal value for data type");
+        return 0;
+    }
+
+    if( nPixelSpace == 0 )
+        nPixelSpace = nPixelSize;
+    else if ( bSpacingShouldBeMultipleOfPixelSize && (nPixelSpace % nPixelSize) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "nPixelSpace should be a multiple of nPixelSize");
+        return 0;
+    }
+
+    if( nLineSpace == 0 )
+    {
+        if (nPixelSpace > MAX_INT / buf_xsize)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+            return 0;
+        }
+        nLineSpace = nPixelSpace * buf_xsize;
+    }
+    else if ( bSpacingShouldBeMultipleOfPixelSize && (nLineSpace % nPixelSize) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "nLineSpace should be a multiple of nPixelSize");
+        return 0;
+    }
+
+    if ((buf_ysize - 1) > MAX_INT / nLineSpace ||
+        (buf_xsize - 1) > MAX_INT / nPixelSpace ||
+        (buf_ysize - 1) * nLineSpace > MAX_INT - (buf_xsize - 1) * nPixelSpace ||
+        (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace > MAX_INT - nPixelSize)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
+        return 0;
+    }
+
+    return (buf_ysize - 1) * nLineSpace + (buf_xsize - 1) * nPixelSpace + nPixelSize;
+}
+
+
+
+retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
+{
+    char      szString[128];
+    
+    GDALRegister_NUMPY();
+    
+    /* I wish I had a safe way of checking the type */        
+    sprintf( szString, "NUMPY:::%p", psArray );
+    return CPLStrdup(szString);
+}
+
+
+  CPLErr BandReadRasterNumPy( GDALRasterBandShadow* band, int xoff, int yoff, int xsize, int ysize,
+                     PyArrayObject *psArray,
+                     int *buf_xsize = 0,
+                     int *buf_ysize = 0,
+                     int *buf_type = 0,
+                     int *buf_pixel_space = 0,
+                     int *buf_line_space = 0) {
+
+    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(band)
+                                        : (GDALDataType)*buf_type;
+    if( psArray->nd < 2 || psArray->nd > 3 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal numpy array rank %d.\n", 
+                  psArray->nd );
+        return CE_Failure;
+    }
+    
+    int xdim = ( psArray->nd == 2) ? 1 : 2;
+    int ydim = ( psArray->nd == 2) ? 0 : 1;
+    
+    int nxsize, nysize, pixel_space, line_space;
+    if (buf_xsize == 0)
+        nxsize = psArray->dimensions[xdim];
+    else
+        nxsize = *buf_xsize;
+        
+    if (buf_ysize == 0)
+        nysize = psArray->dimensions[ydim];
+    else
+        nysize = *buf_ysize;
+        
+    if (buf_pixel_space == 0)
+        pixel_space = psArray->strides[xdim];
+    else
+        pixel_space = *buf_pixel_space;
+        
+    if (buf_line_space == 0)
+        line_space = psArray->strides[ydim];
+    else
+        line_space = *buf_line_space;
+    
+    int min_buf_size = ComputeBandRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
+                                                pixel_space, line_space, FALSE );
+    if (min_buf_size == 0)
+        return CE_Failure;
+        
+    if (PyArray_NBYTES(psArray) < min_buf_size)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
+        return CE_Failure;
+    }
+
+    return  GDALRasterIO( band, GF_Read, xoff, yoff, xsize, ysize,
+                          psArray->data, nxsize, nysize,
+                          ntype, pixel_space, line_space );
+  }
+
+
+#include <limits.h>
+#if !defined(SWIG_NO_LLONG_MAX)
+# if !defined(LLONG_MAX) && defined(__GNUC__) && defined (__LONG_LONG_MAX__)
+#   define LLONG_MAX __LONG_LONG_MAX__
+#   define LLONG_MIN (-LLONG_MAX - 1LL)
+#   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
+# endif
+#endif
+
+
+SWIGINTERN int
+SWIG_AsVal_double (PyObject *obj, double *val)
+{
+  int res = SWIG_TypeError;
+  if (PyFloat_Check(obj)) {
+    if (val) *val = PyFloat_AsDouble(obj);
+    return SWIG_OK;
+  } else if (PyInt_Check(obj)) {
+    if (val) *val = PyInt_AsLong(obj);
+    return SWIG_OK;
+  } else if (PyLong_Check(obj)) {
+    double v = PyLong_AsDouble(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    double d = PyFloat_AsDouble(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = d;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      long v = PyLong_AsLong(obj);
+      if (!PyErr_Occurred()) {
+	if (val) *val = v;
+	return SWIG_AddCast(SWIG_AddCast(SWIG_OK));
+      } else {
+	PyErr_Clear();
+      }
+    }
+  }
+#endif
+  return res;
+}
+
+
+#include <float.h>
+
+
+#include <math.h>
+
+
+SWIGINTERNINLINE int
+SWIG_CanCastAsInteger(double *d, double min, double max) {
+  double x = *d;
+  if ((min <= x && x <= max)) {
+   double fx = floor(x);
+   double cx = ceil(x);
+   double rd =  ((x - fx) < 0.5) ? fx : cx; /* simple rint */
+   if ((errno == EDOM) || (errno == ERANGE)) {
+     errno = 0;
+   } else {
+     double summ, reps, diff;
+     if (rd < x) {
+       diff = x - rd;
+     } else if (rd > x) {
+       diff = rd - x;
+     } else {
+       return 1;
+     }
+     summ = rd + x;
+     reps = diff/summ;
+     if (reps < 8*DBL_EPSILON) {
+       *d = rd;
+       return 1;
+     }
+   }
+  }
+  return 0;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_long (PyObject *obj, long* val)
+{
+  if (PyInt_Check(obj)) {
+    if (val) *val = PyInt_AsLong(obj);
+    return SWIG_OK;
+  } else if (PyLong_Check(obj)) {
+    long v = PyLong_AsLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    long v = PyInt_AsLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      double d;
+      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, LONG_MIN, LONG_MAX)) {
+	if (val) *val = (long)(d);
+	return res;
+      }
+    }
+  }
+#endif
+  return SWIG_TypeError;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_int (PyObject * obj, int *val)
+{
+  long v;
+  int res = SWIG_AsVal_long (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v < INT_MIN || v > INT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = static_cast< int >(v);
+    }
+  }  
+  return res;
+}
 
 
   #define SWIG_From_long   PyInt_FromLong 
@@ -2709,68 +3456,245 @@ SWIG_From_int  (int value)
   return SWIG_From_long  (value);
 }
 
-
-SWIGINTERN swig_type_info*
-SWIG_pchar_descriptor(void)
-{
-  static int init = 0;
-  static swig_type_info* info = 0;
-  if (!init) {
-    info = SWIG_TypeQuery("_p_char");
-    init = 1;
-  }
-  return info;
-}
-
-
-SWIGINTERNINLINE PyObject *
-SWIG_FromCharPtrAndSize(const char* carray, size_t size)
-{
-  if (carray) {
-    if (size > INT_MAX) {
-      swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
-      return pchar_descriptor ? 
-	SWIG_NewPointerObj((char *)(carray), pchar_descriptor, 0) : SWIG_Py_Void();
-    } else {
-#if PY_VERSION_HEX >= 0x03000000
-      return PyUnicode_FromStringAndSize(carray, (int)(size));
-#else
-      return PyString_FromStringAndSize(carray, (int)(size));
-#endif
-    }
-  } else {
-    return SWIG_Py_Void();
-  }
-}
-
-
-SWIGINTERNINLINE PyObject * 
-SWIG_FromCharPtr(const char *cptr)
-{ 
-  return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
-}
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+SWIGINTERN PyObject *_wrap_GetArrayFilename(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  PyArrayObject *arg1 = (PyArrayObject *) 0 ;
+  PyObject * obj0 = 0 ;
+  retStringAndCPLFree *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:GetArrayFilename",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in,numinputs=1) (PyArrayObject  *psArray) */
+    if (obj0 != NULL && PyArray_Check(obj0))
+    {
+      arg1 = (PyArrayObject*)(obj0);
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a numpy array");
+      SWIG_fail;
+    }
+  }
+  result = (retStringAndCPLFree *)GetArrayFilename(arg1);
+  {
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if(result)
+    {
+      resultobj = PyString_FromString( (const char *)result);
+      CPLFree(result);
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_BandReadRasterNumPy(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  int arg4 ;
+  int arg5 ;
+  PyArrayObject *arg6 = (PyArrayObject *) 0 ;
+  int *arg7 = (int *) 0 ;
+  int *arg8 = (int *) 0 ;
+  int *arg9 = (int *) 0 ;
+  int *arg10 = (int *) 0 ;
+  int *arg11 = (int *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  int val5 ;
+  int ecode5 = 0 ;
+  int val7 ;
+  int val8 ;
+  int val9 ;
+  int val10 ;
+  int val11 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  PyObject * obj9 = 0 ;
+  PyObject * obj10 = 0 ;
+  char *  kwnames[] = {
+    (char *) "band",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "psArray",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "buf_type",(char *) "buf_pixel_space",(char *) "buf_line_space", NULL 
+  };
+  CPLErr result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOO|OOOOO:BandReadRasterNumPy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "BandReadRasterNumPy" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "BandReadRasterNumPy" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "BandReadRasterNumPy" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "BandReadRasterNumPy" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  ecode5 = SWIG_AsVal_int(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "BandReadRasterNumPy" "', argument " "5"" of type '" "int""'");
+  } 
+  arg5 = static_cast< int >(val5);
+  {
+    /* %typemap(in,numinputs=1) (PyArrayObject  *psArray) */
+    if (obj5 != NULL && PyArray_Check(obj5))
+    {
+      arg6 = (PyArrayObject*)(obj5);
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a numpy array");
+      SWIG_fail;
+    }
+  }
+  if (obj6) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj6 == Py_None ) {
+        arg7 = 0;
+      }
+      else if ( PyArg_Parse( obj6,"i" ,&val7 ) ) {
+        arg7 = (int *) &val7;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
+  if (obj7) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj7 == Py_None ) {
+        arg8 = 0;
+      }
+      else if ( PyArg_Parse( obj7,"i" ,&val8 ) ) {
+        arg8 = (int *) &val8;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
+  if (obj8) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj8 == Py_None ) {
+        arg9 = 0;
+      }
+      else if ( PyArg_Parse( obj8,"i" ,&val9 ) ) {
+        arg9 = (int *) &val9;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
+  if (obj9) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj9 == Py_None ) {
+        arg10 = 0;
+      }
+      else if ( PyArg_Parse( obj9,"i" ,&val10 ) ) {
+        arg10 = (int *) &val10;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
+  if (obj10) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj10 == Py_None ) {
+        arg11 = 0;
+      }
+      else if ( PyArg_Parse( obj10,"i" ,&val11 ) ) {
+        arg11 = (int *) &val11;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
+  result = (CPLErr)BandReadRasterNumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
+	 { (char *)"GetArrayFilename", _wrap_GetArrayFilename, METH_VARARGS, (char *)"GetArrayFilename(PyArrayObject psArray) -> retStringAndCPLFree"},
+	 { (char *)"BandReadRasterNumPy", (PyCFunction) _wrap_BandReadRasterNumPy, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
+		"BandReadRasterNumPy(Band band, int xoff, int yoff, int xsize, int ysize, \n"
+		"    PyArrayObject psArray, int buf_xsize = None, \n"
+		"    int buf_ysize = None, int buf_type = None, \n"
+		"    int buf_pixel_space = None, int buf_line_space = None) -> CPLErr\n"
+		""},
 	 { NULL, NULL, 0, NULL }
 };
 
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
+static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_PyArrayObject = {"_p_PyArrayObject", "PyArrayObject *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "CPLErr *|int *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_GDALRasterBandShadow,
+  &_swigt__p_PyArrayObject,
   &_swigt__p_char,
+  &_swigt__p_int,
 };
 
+static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_PyArrayObject[] = {  {&_swigt__p_PyArrayObject, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_GDALRasterBandShadow,
+  _swigc__p_PyArrayObject,
   _swigc__p_char,
+  _swigc__p_int,
 };
 
 
@@ -3364,109 +4288,10 @@ SWIG_init(void) {
   SWIG_InstallConstants(d,swig_const_table);
   
   
-  SWIG_Python_SetConstant(d, "GDT_Unknown",SWIG_From_int((int)(GDT_Unknown)));
-  SWIG_Python_SetConstant(d, "GDT_Byte",SWIG_From_int((int)(GDT_Byte)));
-  SWIG_Python_SetConstant(d, "GDT_UInt16",SWIG_From_int((int)(GDT_UInt16)));
-  SWIG_Python_SetConstant(d, "GDT_Int16",SWIG_From_int((int)(GDT_Int16)));
-  SWIG_Python_SetConstant(d, "GDT_UInt32",SWIG_From_int((int)(GDT_UInt32)));
-  SWIG_Python_SetConstant(d, "GDT_Int32",SWIG_From_int((int)(GDT_Int32)));
-  SWIG_Python_SetConstant(d, "GDT_Float32",SWIG_From_int((int)(GDT_Float32)));
-  SWIG_Python_SetConstant(d, "GDT_Float64",SWIG_From_int((int)(GDT_Float64)));
-  SWIG_Python_SetConstant(d, "GDT_CInt16",SWIG_From_int((int)(GDT_CInt16)));
-  SWIG_Python_SetConstant(d, "GDT_CInt32",SWIG_From_int((int)(GDT_CInt32)));
-  SWIG_Python_SetConstant(d, "GDT_CFloat32",SWIG_From_int((int)(GDT_CFloat32)));
-  SWIG_Python_SetConstant(d, "GDT_CFloat64",SWIG_From_int((int)(GDT_CFloat64)));
-  SWIG_Python_SetConstant(d, "GDT_TypeCount",SWIG_From_int((int)(GDT_TypeCount)));
-  SWIG_Python_SetConstant(d, "GA_ReadOnly",SWIG_From_int((int)(GA_ReadOnly)));
-  SWIG_Python_SetConstant(d, "GA_Update",SWIG_From_int((int)(GA_Update)));
-  SWIG_Python_SetConstant(d, "GF_Read",SWIG_From_int((int)(GF_Read)));
-  SWIG_Python_SetConstant(d, "GF_Write",SWIG_From_int((int)(GF_Write)));
-  SWIG_Python_SetConstant(d, "GCI_Undefined",SWIG_From_int((int)(GCI_Undefined)));
-  SWIG_Python_SetConstant(d, "GCI_GrayIndex",SWIG_From_int((int)(GCI_GrayIndex)));
-  SWIG_Python_SetConstant(d, "GCI_PaletteIndex",SWIG_From_int((int)(GCI_PaletteIndex)));
-  SWIG_Python_SetConstant(d, "GCI_RedBand",SWIG_From_int((int)(GCI_RedBand)));
-  SWIG_Python_SetConstant(d, "GCI_GreenBand",SWIG_From_int((int)(GCI_GreenBand)));
-  SWIG_Python_SetConstant(d, "GCI_BlueBand",SWIG_From_int((int)(GCI_BlueBand)));
-  SWIG_Python_SetConstant(d, "GCI_AlphaBand",SWIG_From_int((int)(GCI_AlphaBand)));
-  SWIG_Python_SetConstant(d, "GCI_HueBand",SWIG_From_int((int)(GCI_HueBand)));
-  SWIG_Python_SetConstant(d, "GCI_SaturationBand",SWIG_From_int((int)(GCI_SaturationBand)));
-  SWIG_Python_SetConstant(d, "GCI_LightnessBand",SWIG_From_int((int)(GCI_LightnessBand)));
-  SWIG_Python_SetConstant(d, "GCI_CyanBand",SWIG_From_int((int)(GCI_CyanBand)));
-  SWIG_Python_SetConstant(d, "GCI_MagentaBand",SWIG_From_int((int)(GCI_MagentaBand)));
-  SWIG_Python_SetConstant(d, "GCI_YellowBand",SWIG_From_int((int)(GCI_YellowBand)));
-  SWIG_Python_SetConstant(d, "GCI_BlackBand",SWIG_From_int((int)(GCI_BlackBand)));
-  SWIG_Python_SetConstant(d, "GCI_YCbCr_YBand",SWIG_From_int((int)(GCI_YCbCr_YBand)));
-  SWIG_Python_SetConstant(d, "GCI_YCbCr_CrBand",SWIG_From_int((int)(GCI_YCbCr_CrBand)));
-  SWIG_Python_SetConstant(d, "GCI_YCbCr_CbBand",SWIG_From_int((int)(GCI_YCbCr_CbBand)));
-  SWIG_Python_SetConstant(d, "GRA_NearestNeighbour",SWIG_From_int((int)(GRA_NearestNeighbour)));
-  SWIG_Python_SetConstant(d, "GRA_Bilinear",SWIG_From_int((int)(GRA_Bilinear)));
-  SWIG_Python_SetConstant(d, "GRA_Cubic",SWIG_From_int((int)(GRA_Cubic)));
-  SWIG_Python_SetConstant(d, "GRA_CubicSpline",SWIG_From_int((int)(GRA_CubicSpline)));
-  SWIG_Python_SetConstant(d, "GRA_Lanczos",SWIG_From_int((int)(GRA_Lanczos)));
-  SWIG_Python_SetConstant(d, "GPI_Gray",SWIG_From_int((int)(GPI_Gray)));
-  SWIG_Python_SetConstant(d, "GPI_RGB",SWIG_From_int((int)(GPI_RGB)));
-  SWIG_Python_SetConstant(d, "GPI_CMYK",SWIG_From_int((int)(GPI_CMYK)));
-  SWIG_Python_SetConstant(d, "GPI_HLS",SWIG_From_int((int)(GPI_HLS)));
-  SWIG_Python_SetConstant(d, "CXT_Element",SWIG_From_int((int)(CXT_Element)));
-  SWIG_Python_SetConstant(d, "CXT_Text",SWIG_From_int((int)(CXT_Text)));
-  SWIG_Python_SetConstant(d, "CXT_Attribute",SWIG_From_int((int)(CXT_Attribute)));
-  SWIG_Python_SetConstant(d, "CXT_Comment",SWIG_From_int((int)(CXT_Comment)));
-  SWIG_Python_SetConstant(d, "CXT_Literal",SWIG_From_int((int)(CXT_Literal)));
-  SWIG_Python_SetConstant(d, "CE_None",SWIG_From_int((int)(CE_None)));
-  SWIG_Python_SetConstant(d, "CE_Debug",SWIG_From_int((int)(CE_Debug)));
-  SWIG_Python_SetConstant(d, "CE_Warning",SWIG_From_int((int)(CE_Warning)));
-  SWIG_Python_SetConstant(d, "CE_Failure",SWIG_From_int((int)(CE_Failure)));
-  SWIG_Python_SetConstant(d, "CE_Fatal",SWIG_From_int((int)(CE_Fatal)));
-  SWIG_Python_SetConstant(d, "CPLE_None",SWIG_From_int((int)(CPLE_None)));
-  SWIG_Python_SetConstant(d, "CPLE_AppDefined",SWIG_From_int((int)(CPLE_AppDefined)));
-  SWIG_Python_SetConstant(d, "CPLE_OutOfMemory",SWIG_From_int((int)(CPLE_OutOfMemory)));
-  SWIG_Python_SetConstant(d, "CPLE_FileIO",SWIG_From_int((int)(CPLE_FileIO)));
-  SWIG_Python_SetConstant(d, "CPLE_OpenFailed",SWIG_From_int((int)(CPLE_OpenFailed)));
-  SWIG_Python_SetConstant(d, "CPLE_IllegalArg",SWIG_From_int((int)(CPLE_IllegalArg)));
-  SWIG_Python_SetConstant(d, "CPLE_NotSupported",SWIG_From_int((int)(CPLE_NotSupported)));
-  SWIG_Python_SetConstant(d, "CPLE_AssertionFailed",SWIG_From_int((int)(CPLE_AssertionFailed)));
-  SWIG_Python_SetConstant(d, "CPLE_NoWriteAccess",SWIG_From_int((int)(CPLE_NoWriteAccess)));
-  SWIG_Python_SetConstant(d, "CPLE_UserInterrupt",SWIG_From_int((int)(CPLE_UserInterrupt)));
-  SWIG_Python_SetConstant(d, "DMD_LONGNAME",SWIG_FromCharPtr(GDAL_DMD_LONGNAME));
-  SWIG_Python_SetConstant(d, "DMD_HELPTOPIC",SWIG_FromCharPtr(GDAL_DMD_HELPTOPIC));
-  SWIG_Python_SetConstant(d, "DMD_MIMETYPE",SWIG_FromCharPtr(GDAL_DMD_MIMETYPE));
-  SWIG_Python_SetConstant(d, "DMD_EXTENSION",SWIG_FromCharPtr(GDAL_DMD_EXTENSION));
-  SWIG_Python_SetConstant(d, "DMD_CREATIONOPTIONLIST",SWIG_FromCharPtr(GDAL_DMD_CREATIONOPTIONLIST));
-  SWIG_Python_SetConstant(d, "DMD_CREATIONDATATYPES",SWIG_FromCharPtr(GDAL_DMD_CREATIONDATATYPES));
-  SWIG_Python_SetConstant(d, "DCAP_CREATE",SWIG_FromCharPtr(GDAL_DCAP_CREATE));
-  SWIG_Python_SetConstant(d, "DCAP_CREATECOPY",SWIG_FromCharPtr(GDAL_DCAP_CREATECOPY));
-  SWIG_Python_SetConstant(d, "DCAP_VIRTUALIO",SWIG_FromCharPtr(GDAL_DCAP_VIRTUALIO));
-  SWIG_Python_SetConstant(d, "CPLES_BackslashQuotable",SWIG_From_int((int)(CPLES_BackslashQuotable)));
-  SWIG_Python_SetConstant(d, "CPLES_XML",SWIG_From_int((int)(CPLES_XML)));
-  SWIG_Python_SetConstant(d, "CPLES_URL",SWIG_From_int((int)(CPLES_URL)));
-  SWIG_Python_SetConstant(d, "CPLES_SQL",SWIG_From_int((int)(CPLES_SQL)));
-  SWIG_Python_SetConstant(d, "CPLES_CSV",SWIG_From_int((int)(CPLES_CSV)));
-  SWIG_Python_SetConstant(d, "GFT_Integer",SWIG_From_int((int)(GFT_Integer)));
-  SWIG_Python_SetConstant(d, "GFT_Real",SWIG_From_int((int)(GFT_Real)));
-  SWIG_Python_SetConstant(d, "GFT_String",SWIG_From_int((int)(GFT_String)));
-  SWIG_Python_SetConstant(d, "GFU_Generic",SWIG_From_int((int)(GFU_Generic)));
-  SWIG_Python_SetConstant(d, "GFU_PixelCount",SWIG_From_int((int)(GFU_PixelCount)));
-  SWIG_Python_SetConstant(d, "GFU_Name",SWIG_From_int((int)(GFU_Name)));
-  SWIG_Python_SetConstant(d, "GFU_Min",SWIG_From_int((int)(GFU_Min)));
-  SWIG_Python_SetConstant(d, "GFU_Max",SWIG_From_int((int)(GFU_Max)));
-  SWIG_Python_SetConstant(d, "GFU_MinMax",SWIG_From_int((int)(GFU_MinMax)));
-  SWIG_Python_SetConstant(d, "GFU_Red",SWIG_From_int((int)(GFU_Red)));
-  SWIG_Python_SetConstant(d, "GFU_Green",SWIG_From_int((int)(GFU_Green)));
-  SWIG_Python_SetConstant(d, "GFU_Blue",SWIG_From_int((int)(GFU_Blue)));
-  SWIG_Python_SetConstant(d, "GFU_Alpha",SWIG_From_int((int)(GFU_Alpha)));
-  SWIG_Python_SetConstant(d, "GFU_RedMin",SWIG_From_int((int)(GFU_RedMin)));
-  SWIG_Python_SetConstant(d, "GFU_GreenMin",SWIG_From_int((int)(GFU_GreenMin)));
-  SWIG_Python_SetConstant(d, "GFU_BlueMin",SWIG_From_int((int)(GFU_BlueMin)));
-  SWIG_Python_SetConstant(d, "GFU_AlphaMin",SWIG_From_int((int)(GFU_AlphaMin)));
-  SWIG_Python_SetConstant(d, "GFU_RedMax",SWIG_From_int((int)(GFU_RedMax)));
-  SWIG_Python_SetConstant(d, "GFU_GreenMax",SWIG_From_int((int)(GFU_GreenMax)));
-  SWIG_Python_SetConstant(d, "GFU_BlueMax",SWIG_From_int((int)(GFU_BlueMax)));
-  SWIG_Python_SetConstant(d, "GFU_AlphaMax",SWIG_From_int((int)(GFU_AlphaMax)));
-  SWIG_Python_SetConstant(d, "GFU_MaxCount",SWIG_From_int((int)(GFU_MaxCount)));
-  SWIG_Python_SetConstant(d, "GMF_ALL_VALID",SWIG_From_int((int)(0x01)));
-  SWIG_Python_SetConstant(d, "GMF_PER_DATASET",SWIG_From_int((int)(0x02)));
-  SWIG_Python_SetConstant(d, "GMF_ALPHA",SWIG_From_int((int)(0x04)));
-  SWIG_Python_SetConstant(d, "GMF_NODATA",SWIG_From_int((int)(0x08)));
+  
+  import_array();
+  GDALRegister_NUMPY();
+  
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else
