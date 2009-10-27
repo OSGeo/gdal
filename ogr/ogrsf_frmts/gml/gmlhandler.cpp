@@ -114,6 +114,7 @@ void GMLXercesHandler::endElement(const   XMLCh* const    uri,
     }
 }
 
+#if XERCES_VERSION_MAJOR >= 3
 /************************************************************************/
 /*                             characters() (xerces 3 version)          */
 /************************************************************************/
@@ -131,6 +132,7 @@ void GMLXercesHandler::characters(const XMLCh* const chars_in,
     }
 }
 
+#else
 /************************************************************************/
 /*                             characters() (xerces 2 version)          */
 /************************************************************************/
@@ -148,6 +150,7 @@ void GMLXercesHandler::characters(const XMLCh* const chars_in,
         throw SAXNotSupportedException("Out of memory");
     }
 }
+#endif
 
 /************************************************************************/
 /*                             fatalError()                             */
