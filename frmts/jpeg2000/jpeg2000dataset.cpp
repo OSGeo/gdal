@@ -180,7 +180,8 @@ class JPEG2000Dataset : public GDALPamDataset
     double      adfGeoTransform[6];
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
-    
+
+    int         bAlreadyDecoded;
     int         DecodeImage();
 
   public:
@@ -211,6 +212,9 @@ class JPEG2000RasterBand : public GDALPamRasterBand
     JPEG2000Dataset     *poGDS;
 
     jas_matrix_t        *psMatrix;
+    
+    int                  iDepth;
+    int                  bSignedness;
 
   public:
 
@@ -233,6 +237,8 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
     this->poDS = poDS;
     poGDS = poDS;
     this->nBand = nBand;
+    this->iDepth = iDepth;
+    this->bSignedness = bSignedness;
 
     // XXX: JasPer can't handle data with depth > 32 bits
     // Maximum possible depth for JPEG2000 is 38!
@@ -414,6 +420,7 @@ JPEG2000Dataset::JPEG2000Dataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    bAlreadyDecoded = FALSE;
     
     poDriver = (GDALDriver *)GDALGetDriverByName("JPEG2000");
 }
@@ -446,13 +453,62 @@ JPEG2000Dataset::~JPEG2000Dataset()
 /************************************************************************/
 int JPEG2000Dataset::DecodeImage()
 {
-    if (psImage)
-        return TRUE;
+    if (bAlreadyDecoded)
+        return psImage != NULL;
+        
+    bAlreadyDecoded = TRUE;    
     if ( !( psImage = jas_image_decode(psStream, iFormat, 0) ) )
     {
         CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
                   jas_image_fmttostr( iFormat ), iFormat );
         return FALSE;
+    }
+    
+    /* Case of a JP2 image : check that the properties given by */
+    /* the JP2 boxes match the ones of the code stream */
+    if (nBands != 0)
+    {
+        if (nBands != jas_image_numcmpts( psImage ))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The number of components indicated in the IHDR box (%d) mismatch "
+                     "the value specified in the code stream (%d)",
+                     nBands, jas_image_numcmpts( psImage ));
+            jas_image_destroy( psImage );
+            psImage = NULL;
+            return FALSE;
+        }
+        
+        if (nRasterXSize != jas_image_cmptwidth( psImage, 0 ) ||
+            nRasterYSize != jas_image_cmptheight( psImage, 0 ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The dimensions indicated in the IHDR box (%d x %d) mismatch "
+                     "the value specified in the code stream (%d x %d)",
+                     nRasterXSize, nRasterYSize,
+                     jas_image_cmptwidth( psImage, 0 ),
+                     jas_image_cmptheight( psImage, 0 ));
+            jas_image_destroy( psImage );
+            psImage = NULL;
+            return FALSE;
+        }
+        
+        int iBand;
+        for ( iBand = 0; iBand < nBands; iBand++ )
+        {
+            JPEG2000RasterBand* poBand = (JPEG2000RasterBand*) GetRasterBand(iBand+1);
+            if (poBand->iDepth != jas_image_cmptprec( psImage, iBand ) ||
+                poBand->bSignedness != jas_image_cmptsgnd( psImage, iBand ))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "The bit depth of band %d indicated in the IHDR box (%d) mismatch "
+                         "the value specified in the code stream (%d)",
+                         iBand + 1, poBand->iDepth, jas_image_cmptprec( psImage, iBand ));
+                jas_image_destroy( psImage );
+                psImage = NULL;
+                return FALSE;
+            }
+        }
     }
     
     /* Ask for YCbCr -> RGB translation */
@@ -748,6 +804,15 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
             paiDepth[iBand] = jas_image_cmptprec( poDS->psImage, iBand );
             pabSignedness[iBand] = jas_image_cmptsgnd( poDS->psImage, iBand );
         }
+    }
+    
+    if ( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+         !GDALCheckBandCount(poDS->nBands, 0) )
+    {
+        CPLFree( paiDepth );
+        CPLFree( pabSignedness );
+        delete poDS;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
