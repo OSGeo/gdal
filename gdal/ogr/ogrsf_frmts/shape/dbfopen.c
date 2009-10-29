@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.83 2008/11/12 14:28:15 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.84 2009-10-29 19:59:48 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.84  2009-10-29 19:59:48  fwarmerdam
+ * avoid crash on truncated header (gdal #3093)
+ *
  * Revision 1.83  2008/11/12 14:28:15  fwarmerdam
  * DBFCreateField() now works on files with records
  *
@@ -145,7 +148,7 @@
 #include <ctype.h>
 #include <string.h>
 
-SHP_CVSID("$Id: dbfopen.c,v 1.83 2008/11/12 14:28:15 fwarmerdam Exp $")
+SHP_CVSID("$Id: dbfopen.c,v 1.84 2009-10-29 19:59:48 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -466,6 +469,15 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     psDBF->nHeaderLength = nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
     psDBF->nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
     psDBF->iLanguageDriver = pabyBuf[29];
+
+    if (nHeadLen < 32)
+    {
+        psDBF->sHooks.FClose( psDBF->fp );
+        if( pfCPG ) psDBF->sHooks.FClose( pfCPG );
+        free( pabyBuf );
+        free( psDBF );
+        return NULL;
+    }
 
     psDBF->nFields = nFields = (nHeadLen - 32) / 32;
 
