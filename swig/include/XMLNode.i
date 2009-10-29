@@ -131,7 +131,7 @@ typedef struct _CPLXMLNode
 #else
     void AddXMLChild( CPLXMLNode *psChild )
     {
-        return CPLAddXMLChild( self, psChild );
+        CPLAddXMLChild( self, psChild );
     }
     
     int RemoveXMLChild( CPLXMLNode *psChild )
@@ -141,7 +141,7 @@ typedef struct _CPLXMLNode
     
     void AddXMLSibling( CPLXMLNode *psNewSibling )
     {
-        return CPLAddXMLSibling( self, psNewSibling );
+        CPLAddXMLSibling( self, psNewSibling );
     }
     
     CPLXMLNode *CreateXMLElementAndValue( const char *pszName, 
