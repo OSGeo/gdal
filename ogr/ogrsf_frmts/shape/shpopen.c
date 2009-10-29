@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.59 2008/03/14 05:25:31 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.60 2009-09-17 20:50:02 bram Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,7 +34,10 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
- * Revision 1.59  2008/03/14 05:25:31  fwarmerdam
+ * Revision 1.60  2009-09-17 20:50:02  bram
+ * on Win32, define snprintf as alias to _snprintf
+ *
+ * Revision 1.59  2008-03-14 05:25:31  fwarmerdam
  * Correct crash on buggy geometries (gdal #2218)
  *
  * Revision 1.58  2008/01/08 23:28:26  bram
@@ -231,7 +234,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.59 2008/03/14 05:25:31 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.60 2009-09-17 20:50:02 bram Exp $")
 
 typedef unsigned char uchar;
 
@@ -250,6 +253,12 @@ typedef int	      int32;
 #ifndef MAX
 #  define MIN(a,b)      ((a<b) ? a : b)
 #  define MAX(a,b)      ((a>b) ? a : b)
+#endif
+
+#if defined(WIN32) || defined(_WIN32)
+#  ifndef snprintf
+#     define snprintf _snprintf
+#  endif
 #endif
 
 static int 	bBigEndian;
