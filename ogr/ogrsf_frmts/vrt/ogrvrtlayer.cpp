@@ -202,7 +202,13 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory,
 /* -------------------------------------------------------------------- */
 try_again:
     CPLErrorReset();
-    if( bSrcDSShared )
+    if( EQUAL(pszSrcDSName,"@dummy@") )
+    {
+        OGRSFDriver *poMemDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        poSrcDS = poMemDriver->CreateDataSource( "@dummy@" );
+        poSrcDS->CreateLayer( "@dummy@" );
+    }
+    else if( bSrcDSShared )
         poSrcDS = poReg->OpenShared( pszSrcDSName, bUpdate, NULL );
     else
         poSrcDS = poReg->Open( pszSrcDSName, bUpdate, NULL );
