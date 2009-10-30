@@ -1598,10 +1598,26 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
     
     if( nLineSpace == 0 )
+    {
+        if (nPixelSpace > INT_MAX / nBufXSize)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Int overflow : %d x %d", nPixelSpace, nBufXSize );
+            return CE_Failure;
+        }
         nLineSpace = nPixelSpace * nBufXSize;
+    }
     
     if( nBandSpace == 0 )
+    {
+        if (nLineSpace > INT_MAX / nBufYSize)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Int overflow : %d x %d", nLineSpace, nBufYSize );
+            return CE_Failure;
+        }
         nBandSpace = nLineSpace * nBufYSize;
+    }
 
     if( panBandMap == NULL )
     {
@@ -1628,8 +1644,8 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Do some validation of parameters.                               */
 /* -------------------------------------------------------------------- */
-    if( nXOff < 0 || nXOff + nXSize > nRasterXSize
-        || nYOff < 0 || nYOff + nYSize > nRasterYSize )
+    if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
+        || nYOff < 0 || nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Access window out of range in RasterIO().  Requested\n"

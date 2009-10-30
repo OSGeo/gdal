@@ -190,7 +190,15 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
         nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
     
     if( nLineSpace == 0 )
+    {
+        if (nPixelSpace > INT_MAX / nBufXSize)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Int overflow : %d x %d", nPixelSpace, nBufXSize );
+            return CE_Failure;
+        }
         nLineSpace = nPixelSpace * nBufXSize;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Some size values are "noop".  Lets just return to avoid         */
@@ -211,8 +219,8 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Do some validation of parameters.                               */
 /* -------------------------------------------------------------------- */
-    if( nXOff < 0 || nXOff + nXSize > nRasterXSize
-        || nYOff < 0 || nYOff + nYSize > nRasterYSize )
+    if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
+        || nYOff < 0 || nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Access window out of range in RasterIO().  Requested\n"
@@ -365,8 +373,10 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
     CPLAssert( pImage != NULL );
     
-    if( nXBlockOff < 0
-        || nXBlockOff*nBlockXSize >= nRasterXSize )
+    if( !InitBlockInfo() )
+        return CE_Failure;
+        
+    if( nXBlockOff < 0 || nXBlockOff >= nBlocksPerRow )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nXBlockOff value (%d) in "
@@ -376,8 +386,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
         return( CE_Failure );
     }
 
-    if( nYBlockOff < 0
-        || nYBlockOff*nBlockYSize >= nRasterYSize )
+    if( nYBlockOff < 0 || nYBlockOff >= nBlocksPerColumn )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nYBlockOff value (%d) in "
@@ -386,9 +395,6 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 
         return( CE_Failure );
     }
-    
-    if( !InitBlockInfo() )
-        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
@@ -470,9 +476,11 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 /*      Validate arguments.                                             */
 /* -------------------------------------------------------------------- */
     CPLAssert( pImage != NULL );
-    
-    if( nXBlockOff < 0
-        || nXBlockOff*nBlockXSize >= GetXSize() )
+
+    if( !InitBlockInfo() )
+        return CE_Failure;
+
+    if( nXBlockOff < 0 || nXBlockOff >= nBlocksPerRow )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nXBlockOff value (%d) in "
@@ -482,8 +490,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
         return( CE_Failure );
     }
 
-    if( nYBlockOff < 0
-        || nYBlockOff*nBlockYSize >= GetYSize() )
+    if( nYBlockOff < 0 || nYBlockOff >= nBlocksPerColumn )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nYBlockOff value (%d) in "
@@ -501,9 +508,6 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 
         return( CE_Failure );
     }
-
-    if( !InitBlockInfo() )
-        return CE_Failure;
     
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
@@ -665,7 +669,7 @@ int GDALRasterBand::InitBlockInfo()
         /* Check that the block size is not overflowing int capacity as it is */
         /* (reasonnably) assumed in many places (GDALRasterBlock::Internalize(), */
         /* GDALRasterBand::Fill(), many drivers...) */
-        /* As 10000 * 10000 * 16 < 0x7ffffff, we don't need to do the multiplication in other cases */
+        /* As 10000 * 10000 * 16 < INT_MAX, we don't need to do the multiplication in other cases */
 
         int nSizeInBytes = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
 
