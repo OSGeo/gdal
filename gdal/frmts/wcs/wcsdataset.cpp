@@ -1572,9 +1572,28 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 /*      CPLHTTPFetch().                                                 */
 /* -------------------------------------------------------------------- */
     if( psResult == NULL || psResult->nDataLen == 0 ||
-        (psResult->pszContentType != NULL && strstr(psResult->pszContentType, "html") != NULL) ||
         CPLGetLastErrorNo() != 0 )
     {
+        CPLHTTPDestroyResult( psResult );
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we got an html document, we presume it is an error           */
+/*      message and report it verbatim up to a certain size limit.      */
+/* -------------------------------------------------------------------- */
+
+    if( psResult->pszContentType != NULL 
+        && strstr(psResult->pszContentType, "html") != NULL )
+    {
+        CPLString osErrorMsg = (char *) psResult->pabyData;
+
+        if( osErrorMsg.size() > 2048 )
+            osErrorMsg.resize( 2048 );
+
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Malformed Result:\n%s", 
+                  osErrorMsg.c_str() );
         CPLHTTPDestroyResult( psResult );
         return TRUE;
     }
