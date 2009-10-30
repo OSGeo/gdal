@@ -47,6 +47,9 @@ set.<p>
 <li> <b>BlockYSize</b>: The block height to use for block cached remote access.
 <li> <b>NoDataValue</b>: The nodata value to use for all the bands (blank for none).  Normally defaulted from CoverageOffering info.
 <li> <b>Timeout</b>: The timeout to use for remote service requests.  If not provided, the libcurl default is used.
+<li> <b>UserPwd</b>: May be supplied with <i>userid:password</i> to pass a 
+userid and password to the remote server.
+<li> <b>HttpAuth</b>: May be BASIC, NTLM or ANY to control the authentication scheme to be used.
 <li> <b>OverviewCount</b>: The number of overviews to represent bands as having.  Defaults to a number such that the top overview is fairly smaller (less than 1K x 1K or so).
 <li> <b>GetCoverageExtra</b>: An additional set of keywords to add to GetCoverage requests in URL encoded form.  eg. "&RESAMPLE=BILINEAR&Band=1"
 <li> <b>DescribeCoverageExtra</b>: An additional set of keywords to add to DescribeCoverage requests in URL encoded form.  eg. "&CustNo=775"
