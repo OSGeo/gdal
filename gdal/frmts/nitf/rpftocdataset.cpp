@@ -411,15 +411,18 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 poBlock = 
                     poDS->GetRasterBand(2)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
-                poBlock->DropLock();
+                if (poBlock)
+                    poBlock->DropLock();
 
                 poBlock = 
                     poDS->GetRasterBand(3)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
-                poBlock->DropLock();
+                if (poBlock)
+                    poBlock->DropLock();
 
                 poBlock = 
                     poDS->GetRasterBand(4)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
-                poBlock->DropLock();
+                if (poBlock)
+                    poBlock->DropLock();
             }
         }
         else
