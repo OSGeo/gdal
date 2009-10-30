@@ -82,6 +82,8 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     void        FlushMemoryResult();
     CPLString   osResultFilename;
     GByte      *pabySavedDataBuffer;
+
+    char      **papszHttpOptions;
     
   public:
                 WCSDataset();
@@ -421,6 +423,7 @@ WCSDataset::WCSDataset()
     adfGeoTransform[5] = 1.0;
 
     pabySavedDataBuffer = NULL;
+    papszHttpOptions = NULL;
 }
 
 /************************************************************************/
@@ -441,6 +444,8 @@ WCSDataset::~WCSDataset()
 
     CPLFree( pszProjection );
     pszProjection = NULL;
+
+    CSLDestroy( papszHttpOptions );
 
     FlushMemoryResult();
 }
@@ -774,16 +779,9 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
-    CPLString osTimeout = "TIMEOUT=";
-    osTimeout += CPLGetXMLValue( psService, "Timeout", "30" );
-    char *apszOptions[] = { 
-        (char *) osTimeout.c_str(),
-        NULL 
-    };
-
     CPLErrorReset();
 
-    *ppsResult = CPLHTTPFetch( osRequest, apszOptions );
+    *ppsResult = CPLHTTPFetch( osRequest, papszHttpOptions );
 
     if( ProcessError( *ppsResult ) )
         return CE_Failure;
@@ -823,7 +821,7 @@ int WCSDataset::DescribeCoverage()
 
     CPLErrorReset();
     
-    CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, NULL );
+    CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, papszHttpOptions );
 
     if( ProcessError( psResult ) )
         return FALSE;
@@ -1930,6 +1928,28 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psService = psService;
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->nVersion = nVersion;
+
+/* -------------------------------------------------------------------- */
+/*      Capture HTTP parameters.                                        */
+/* -------------------------------------------------------------------- */
+    const char  *pszParm;
+
+    poDS->papszHttpOptions = 
+        CSLSetNameValue(poDS->papszHttpOptions,
+                        "TIMEOUT",
+                        CPLGetXMLValue( psService, "Timeout", "30" ) );
+
+    pszParm = CPLGetXMLValue( psService, "HTTPAUTH", NULL );
+    if( pszParm )
+        poDS->papszHttpOptions = 
+            CSLSetNameValue( poDS->papszHttpOptions, 
+                             "HTTPAUTH", pszParm );
+
+    pszParm = CPLGetXMLValue( psService, "USERPWD", NULL );
+    if( pszParm )
+        poDS->papszHttpOptions = 
+            CSLSetNameValue( poDS->papszHttpOptions, 
+                             "USERPWD", pszParm );
 
 /* -------------------------------------------------------------------- */
 /*      If we don't have the DescribeCoverage result for this           */
