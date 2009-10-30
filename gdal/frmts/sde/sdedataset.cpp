@@ -162,6 +162,10 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     }
     CPLDebug("SDERASTER", "Tile origin: %.5f, %.5f", x0, y0);
 
+    // we also need to adjust dfMaxX and dfMinY otherwise the cell size will change
+    dfMaxX = (x0-dfMinX) + dfMaxX;
+    dfMinY = (y0-dfMaxY) + dfMinY;
+
     // adjust the bbox based on the tile origin.
     dfMinX = MIN(x0, dfMinX);
     dfMaxY = MAX(y0, dfMaxY);
