@@ -225,8 +225,17 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                     chNext = ReadChar( psContext );
                     AddToToken( psContext, chNext );
                 }
-                while( chNext != ']'
+                while( chNext != ']' && chNext != '\0'
                     && !EQUALN(psContext->pszInput+psContext->nInputOffset,"]>", 2) );
+                    
+                if (chNext == '\0')
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Parse error in DOCTYPE on or before line %d, "
+                          "reached end of file without ']'.", 
+                          psContext->nInputLine );
+                    break;
+                }
 
                 chNext = ReadChar( psContext );
                 AddToToken( psContext, chNext );
