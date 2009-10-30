@@ -93,6 +93,8 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
  * <li>TIMEOUT=val, where val is in seconds</li>
  * <li>HEADERS=val, where val is an extra header to use when getting a web page.
  *                  For example "Accept: application/x-ogcwkt"
+ * <li>HTTPAUTH=[BASIC/NTLM/ANY] to specify an authentication scheme to use.
+ * <li>USERPWD=userid:password to specify a user and password for authentication
  * </ul>
  *
  * @return a CPLHTTPResult* structure that must be freed by CPLHTTPDestroyResult(),
@@ -119,6 +121,28 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     http_handle = curl_easy_init();
 
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
+
+    /* Support control over HTTPAUTH */
+    const char *pszHttpAuth = CSLFetchNameValue( papszOptions, "HTTPAUTH" );
+    if( pszHttpAuth == NULL )
+        /* do nothing */;
+    else if( EQUAL(pszHttpAuth,"BASIC") )
+        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
+    else if( EQUAL(pszHttpAuth,"NTLM") )
+        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
+    else if( EQUAL(pszHttpAuth,"ANY") )
+        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unsupported HTTPAUTH value '%s', ignored.", 
+                  pszHttpAuth );
+    }
+
+    /* Support setting userid:password */
+    const char *pszUserPwd = CSLFetchNameValue( papszOptions, "USERPWD" );
+    if( pszUserPwd != NULL )
+        curl_easy_setopt(http_handle, CURLOPT_USERPWD, pszUserPwd );
 
     /* Enable following redirections.  Requires libcurl 7.10.1 at least */
     curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
