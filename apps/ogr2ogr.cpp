@@ -38,6 +38,15 @@ CPL_CVSID("$Id$");
 
 static void Usage();
 
+static int IsNumber(const char* pszStr)
+{
+    if (*pszStr == '-' || *pszStr == '+')
+        pszStr ++;
+    if (*pszStr == '.')
+        pszStr ++;
+    return (*pszStr >= '0' && *pszStr <= '9');
+}
+
 static int TranslateLayer( OGRDataSource *poSrcDS, 
                            OGRLayer * poSrcLayer,
                            OGRDataSource *poDstDS,
@@ -312,6 +321,7 @@ int main( int nArgc, char ** papszArgv )
         {
             bClipSrc = TRUE;
             if (papszArgv[iArg+1] != NULL 
+                 && IsNumber(papszArgv[iArg+1])
                  && papszArgv[iArg+2] != NULL 
                  && papszArgv[iArg+3] != NULL 
                  && papszArgv[iArg+4] != NULL)
