@@ -47,6 +47,82 @@ static int IsNumber(const char* pszStr)
     return (*pszStr >= '0' && *pszStr <= '9');
 }
 
+static OGRGeometry* LoadGeometry( const char* pszDS,
+                                  const char* pszSQL,
+                                  const char* pszLyr,
+                                  const char* pszWhere)
+{
+    OGRDataSource       *poDS;
+    OGRLayer            *poLyr;
+    OGRFeature          *poFeat;
+    OGRGeometry         *poGeom = NULL;
+        
+    poDS = OGRSFDriverRegistrar::Open( pszDS, FALSE );
+    if (poDS == NULL)
+        return NULL;
+
+    if (pszSQL != NULL)
+        poLyr = poDS->ExecuteSQL( pszSQL, NULL, NULL ); 
+    else if (pszLyr != NULL)
+        poLyr = poDS->GetLayerByName(pszLyr);
+    else
+        poLyr = poDS->GetLayer(0);
+        
+    if (poLyr == NULL)
+    {
+        fprintf( stderr, "Failed to identify source layer from datasource.\n" );
+        OGRDataSource::DestroyDataSource(poDS);
+        return NULL;
+    }
+    
+    if (pszWhere)
+        poLyr->SetAttributeFilter(pszWhere);
+        
+    while ((poFeat = poLyr->GetNextFeature()) != NULL)
+    {
+        OGRGeometry* poSrcGeom = poFeat->GetGeometryRef();
+        if (poSrcGeom)
+        {
+            OGRwkbGeometryType eType = wkbFlatten( poSrcGeom->getGeometryType() );
+            
+            if (poGeom == NULL)
+                poGeom = OGRGeometryFactory::createGeometry( wkbMultiPolygon );
+
+            if( eType == wkbPolygon )
+                ((OGRGeometryCollection*)poGeom)->addGeometry( poSrcGeom );
+            else if( eType == wkbMultiPolygon )
+            {
+                int iGeom;
+                int nGeomCount = OGR_G_GetGeometryCount( (OGRGeometryH)poSrcGeom );
+
+                for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+                {
+                    ((OGRGeometryCollection*)poGeom)->addGeometry(
+                                ((OGRGeometryCollection*)poSrcGeom)->getGeometryRef(iGeom) );
+                }
+            }
+            else
+            {
+                fprintf( stderr, "ERROR: Geometry not of polygon type.\n" );
+                OGRGeometryFactory::destroyGeometry(poGeom);
+                OGRFeature::DestroyFeature(poFeat);
+                if( pszSQL != NULL )
+                    poDS->ReleaseResultSet( poLyr );
+                OGRDataSource::DestroyDataSource(poDS);
+                return NULL;
+            }
+        }
+    
+        OGRFeature::DestroyFeature(poFeat);
+    }
+    
+    if( pszSQL != NULL )
+        poDS->ReleaseResultSet( poLyr );
+    OGRDataSource::DestroyDataSource(poDS);
+    
+    return poGeom;
+}
+
 static int TranslateLayer( OGRDataSource *poSrcDS, 
                            OGRLayer * poSrcLayer,
                            OGRDataSource *poDstDS,
@@ -105,7 +181,15 @@ int main( int nArgc, char ** papszArgv )
     int          bWrapDateline = FALSE;
     int          bClipSrc = FALSE;
     OGRGeometry* poClipSrc = NULL;
+    const char  *pszClipSrcDS = NULL;
+    const char  *pszClipSrcSQL = NULL;
+    const char  *pszClipSrcLayer = NULL;
+    const char  *pszClipSrcWhere = NULL;
     OGRGeometry *poClipDst = NULL;
+    const char  *pszClipDstDS = NULL;
+    const char  *pszClipDstSQL = NULL;
+    const char  *pszClipDstLayer = NULL;
+    const char  *pszClipDstWhere = NULL;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -338,24 +422,89 @@ int main( int nArgc, char ** papszArgv )
                 ((OGRPolygon *) poClipSrc)->addRing( &oRing );
                 iArg += 4;
             }
+            else if (papszArgv[iArg+1] != NULL &&
+                     (EQUALN(papszArgv[iArg+1], "POLYGON", 7) ||
+                      EQUALN(papszArgv[iArg+1], "MULTIPOLYGON", 12)))
+            {
+                OGRGeometryFactory::createFromWkt(&papszArgv[iArg+1], NULL, &poClipSrc);
+                if (poClipSrc == NULL)
+                {
+                    fprintf( stderr, "FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n\n");
+                    Usage();
+                }
+                iArg ++;
+            }
+            else if (papszArgv[iArg+1] != NULL)
+            {
+                pszClipSrcDS = papszArgv[iArg+1];
+                iArg ++;
+            }
         }
-        else if( EQUAL(papszArgv[iArg],"-clipdst") 
-                 && papszArgv[iArg+1] != NULL 
+        else if( EQUAL(papszArgv[iArg],"-clipsrcsql") && iArg < nArgc-1 )
+        {
+            pszClipSrcSQL = papszArgv[iArg+1];
+            iArg ++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-clipsrclayer") && iArg < nArgc-1 )
+        {
+            pszClipSrcLayer = papszArgv[iArg+1];
+            iArg ++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-clipsrcwhere") && iArg < nArgc-1 )
+        {
+            pszClipSrcWhere = papszArgv[iArg+1];
+            iArg ++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-clipdst") && iArg < nArgc-1 )
+        {
+            if ( IsNumber(papszArgv[iArg+1])
                  && papszArgv[iArg+2] != NULL 
                  && papszArgv[iArg+3] != NULL 
-                 && papszArgv[iArg+4] != NULL )
+                 && papszArgv[iArg+4] != NULL)
+            {
+                OGRLinearRing  oRing;
+
+                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
+                oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
+                oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
+                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+
+                poClipDst = new OGRPolygon();
+                ((OGRPolygon *) poClipDst)->addRing( &oRing );
+                iArg += 4;
+            }
+            else if (EQUALN(papszArgv[iArg+1], "POLYGON", 7) ||
+                     EQUALN(papszArgv[iArg+1], "MULTIPOLYGON", 12))
+            {
+                OGRGeometryFactory::createFromWkt(&papszArgv[iArg+1], NULL, &poClipDst);
+                if (poClipDst == NULL)
+                {
+                    fprintf( stderr, "FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n\n");
+                    Usage();
+                }
+                iArg ++;
+            }
+            else
+            {
+                pszClipDstDS = papszArgv[iArg+1];
+                iArg ++;
+            }
+        }
+        else if( EQUAL(papszArgv[iArg],"-clipdstsql") && iArg < nArgc-1 )
         {
-            OGRLinearRing  oRing;
-
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
-            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
-            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
-
-            poClipDst = new OGRPolygon();
-            ((OGRPolygon *) poClipDst)->addRing( &oRing );
-            iArg += 4;
+            pszClipDstSQL = papszArgv[iArg+1];
+            iArg ++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-clipdstlayer") && iArg < nArgc-1 )
+        {
+            pszClipDstLayer = papszArgv[iArg+1];
+            iArg ++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-clipdstwhere") && iArg < nArgc-1 )
+        {
+            pszClipDstWhere = papszArgv[iArg+1];
+            iArg ++;
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -372,14 +521,33 @@ int main( int nArgc, char ** papszArgv )
     if( pszDataSource == NULL )
         Usage();
         
-    if( bClipSrc && poClipSrc == NULL )
+    if( bClipSrc && pszClipSrcDS != NULL)
+    {
+        poClipSrc = LoadGeometry(pszClipSrcDS, pszClipSrcSQL, pszClipSrcLayer, pszClipSrcWhere);
+        if (poClipSrc == NULL)
+        {
+            fprintf( stderr, "FAILURE: cannot load source clip geometry\n\n" );
+            Usage();
+        }
+    }
+    else if( bClipSrc && poClipSrc == NULL )
     {
         if (poSpatialFilter)
             poClipSrc = poSpatialFilter->clone();
         if (poClipSrc == NULL)
         {
             fprintf( stderr, "FAILURE: -clipsrc must be used with -spat option or a\n"
-                             "bounding box must be specified\n\n");
+                             "bounding box, WKT string or datasource must be specified\n\n");
+            Usage();
+        }
+    }
+    
+    if( pszClipDstDS != NULL)
+    {
+        poClipDst = LoadGeometry(pszClipDstDS, pszClipDstSQL, pszClipDstLayer, pszClipDstWhere);
+        if (poClipDst == NULL)
+        {
+            fprintf( stderr, "FAILURE: cannot load dest clip geometry\n\n" );
             Usage();
         }
     }
@@ -733,7 +901,12 @@ static void Usage()
             "               [-select field_list] [-where restricted_where] \n"
             "               [-progress] [-sql <sql statement>] [-wrapdateline]\n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
-            "               [-clipsrc [xmin ymin xmax ymax]] [-clipdst xmin ymin xmax ymax]]\n"
+            "               [-clipsrc [[xmin ymin xmax ymax]|WKT|datasource]] \n"
+            "               [-clipsrcsql sql_statement] [-clipsrclayer layer] \n"
+            "               [-clipsrcwhere expression]\n"
+            "               [-clipdst [xmin ymin xmax ymax]|WKT|datasource]\n"
+            "               [-clipdstsql sql_statement] [-clipdstlayer layer] \n"
+            "               [-clipdstwhere expression]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n"
@@ -1093,6 +1266,11 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             if (poClipSrc)
             {
                 OGRGeometry* poClipped = poDstGeometry->Intersection(poClipSrc);
+                if (poClipped == NULL || poClipped->IsEmpty())
+                {
+                    OGRGeometryFactory::destroyGeometry(poClipped);
+                    goto end_loop;
+                }
                 poDstFeature->SetGeometryDirectly(poClipped);
                 poDstGeometry = poClipped;
             }
@@ -1127,6 +1305,12 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             if (poClipDst)
             {
                 OGRGeometry* poClipped = poDstGeometry->Intersection(poClipDst);
+                if (poClipped == NULL || poClipped->IsEmpty())
+                {
+                    OGRGeometryFactory::destroyGeometry(poClipped);
+                    goto end_loop;
+                }
+                
                 poDstFeature->SetGeometryDirectly(poClipped);
                 poDstGeometry = poClipped;
             }
@@ -1146,8 +1330,6 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             }
         }
 
-        OGRFeature::DestroyFeature( poFeature );
-
         CPLErrorReset();
         if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE 
             && !bSkipFailures )
@@ -1155,10 +1337,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             if( nGroupTransactions )
                 poDstLayer->RollbackTransaction();
 
+            OGRFeature::DestroyFeature( poFeature );
             OGRFeature::DestroyFeature( poDstFeature );
             return FALSE;
         }
 
+end_loop:
+        OGRFeature::DestroyFeature( poFeature );
         OGRFeature::DestroyFeature( poDstFeature );
 
         /* Report progress */
