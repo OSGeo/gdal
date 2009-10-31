@@ -401,11 +401,10 @@ int main( int nArgc, char ** papszArgv )
         {
             bWrapDateline = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-clipsrc") )
+        else if( EQUAL(papszArgv[iArg],"-clipsrc") && iArg < nArgc-1 )
         {
             bClipSrc = TRUE;
-            if (papszArgv[iArg+1] != NULL 
-                 && IsNumber(papszArgv[iArg+1])
+            if ( IsNumber(papszArgv[iArg+1])
                  && papszArgv[iArg+2] != NULL 
                  && papszArgv[iArg+3] != NULL 
                  && papszArgv[iArg+4] != NULL)
@@ -422,9 +421,8 @@ int main( int nArgc, char ** papszArgv )
                 ((OGRPolygon *) poClipSrc)->addRing( &oRing );
                 iArg += 4;
             }
-            else if (papszArgv[iArg+1] != NULL &&
-                     (EQUALN(papszArgv[iArg+1], "POLYGON", 7) ||
-                      EQUALN(papszArgv[iArg+1], "MULTIPOLYGON", 12)))
+            else if (EQUALN(papszArgv[iArg+1], "POLYGON", 7) ||
+                     EQUALN(papszArgv[iArg+1], "MULTIPOLYGON", 12))
             {
                 OGRGeometryFactory::createFromWkt(&papszArgv[iArg+1], NULL, &poClipSrc);
                 if (poClipSrc == NULL)
@@ -434,7 +432,11 @@ int main( int nArgc, char ** papszArgv )
                 }
                 iArg ++;
             }
-            else if (papszArgv[iArg+1] != NULL)
+            else if (EQUAL(papszArgv[iArg+1], "spat_extent") )
+            {
+                iArg ++;
+            }
+            else
             {
                 pszClipSrcDS = papszArgv[iArg+1];
                 iArg ++;
@@ -901,7 +903,7 @@ static void Usage()
             "               [-select field_list] [-where restricted_where] \n"
             "               [-progress] [-sql <sql statement>] [-wrapdateline]\n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
-            "               [-clipsrc [[xmin ymin xmax ymax]|WKT|datasource]] \n"
+            "               [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent] \n"
             "               [-clipsrcsql sql_statement] [-clipsrclayer layer] \n"
             "               [-clipsrcwhere expression]\n"
             "               [-clipdst [xmin ymin xmax ymax]|WKT|datasource]\n"
@@ -937,10 +939,6 @@ static void Usage()
             " -skipfailures: skip features or layers that fail to convert\n"
             " -gt n: group n features per transaction (default 200)\n"
             " -spat xmin ymin xmax ymax: spatial query extents\n"
-            " -clipsrc [xmin ymin xmax ymax]: clip geometries to the specified bounding box\n"
-            "                                 (in source SRS), or to one specified by -spat\n"
-            " -clipdst xmin ymin xmax ymax: clip geometries to the specified bounding box\n"
-            "                               (in dest SRS) after reprojection\n"
             " -segmentize max_dist: maximum distance between 2 nodes.\n"
             "                       Used to create intermediate points\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
