@@ -53,6 +53,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            char** papszFieldTypesToString,
                            long nCountLayerFeatures,
                            int bWrapDateline,
+                           OGRGeometry* poClipSrc,
+                           OGRGeometry *poClipDst,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg);
 
@@ -92,6 +94,9 @@ int main( int nArgc, char ** papszArgv )
     GDALProgressFunc pfnProgress = NULL;
     void        *pProgressArg = NULL;
     int          bWrapDateline = FALSE;
+    int          bClipSrc = FALSE;
+    OGRGeometry* poClipSrc = NULL;
+    OGRGeometry *poClipDst = NULL;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -303,6 +308,45 @@ int main( int nArgc, char ** papszArgv )
         {
             bWrapDateline = TRUE;
         }
+        else if( EQUAL(papszArgv[iArg],"-clipsrc") )
+        {
+            bClipSrc = TRUE;
+            if (papszArgv[iArg+1] != NULL 
+                 && papszArgv[iArg+2] != NULL 
+                 && papszArgv[iArg+3] != NULL 
+                 && papszArgv[iArg+4] != NULL)
+            {
+                OGRLinearRing  oRing;
+
+                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
+                oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
+                oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
+                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+
+                poClipSrc = new OGRPolygon();
+                ((OGRPolygon *) poClipSrc)->addRing( &oRing );
+                iArg += 4;
+            }
+        }
+        else if( EQUAL(papszArgv[iArg],"-clipdst") 
+                 && papszArgv[iArg+1] != NULL 
+                 && papszArgv[iArg+2] != NULL 
+                 && papszArgv[iArg+3] != NULL 
+                 && papszArgv[iArg+4] != NULL )
+        {
+            OGRLinearRing  oRing;
+
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
+            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
+            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+
+            poClipDst = new OGRPolygon();
+            ((OGRPolygon *) poClipDst)->addRing( &oRing );
+            iArg += 4;
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -317,7 +361,19 @@ int main( int nArgc, char ** papszArgv )
 
     if( pszDataSource == NULL )
         Usage();
-
+        
+    if( bClipSrc && poClipSrc == NULL )
+    {
+        if (poSpatialFilter)
+            poClipSrc = poSpatialFilter->clone();
+        if (poClipSrc == NULL)
+        {
+            fprintf( stderr, "FAILURE: -clipsrc must be used with -spat option or a\n"
+                             "bounding box must be specified\n\n");
+            Usage();
+        }
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
@@ -481,7 +537,7 @@ int main( int nArgc, char ** papszArgv )
                                  pszNewLayerName, bTransform, poOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
                                  bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
-                                 nCountLayerFeatures, bWrapDateline, pfnProgress, pProgressArg))
+                                 nCountLayerFeatures, bWrapDateline, poClipSrc, poClipDst, pfnProgress, pProgressArg))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -608,7 +664,7 @@ int main( int nArgc, char ** papszArgv )
                                 pszNewLayerName, bTransform, poOutputSRS,
                                 poSourceSRS, papszSelFields, bAppend, eGType,
                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
-                                panLayerCountFeatures[iLayer], bWrapDateline, pfnProgress, pProgressArg) 
+                                panLayerCountFeatures[iLayer], bWrapDateline, poClipSrc, poClipDst, pfnProgress, pProgressArg) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -634,6 +690,9 @@ int main( int nArgc, char ** papszArgv )
     OGRSpatialReference::DestroySpatialReference(poSourceSRS);
     OGRDataSource::DestroyDataSource(poODS);
     OGRDataSource::DestroyDataSource(poDS);
+    OGRGeometryFactory::destroyGeometry(poSpatialFilter);
+    OGRGeometryFactory::destroyGeometry(poClipSrc);
+    OGRGeometryFactory::destroyGeometry(poClipDst);
 
     CSLDestroy(papszSelFields);
     CSLDestroy( papszArgv );
@@ -664,6 +723,7 @@ static void Usage()
             "               [-select field_list] [-where restricted_where] \n"
             "               [-progress] [-sql <sql statement>] [-wrapdateline]\n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
+            "               [-clipsrc [xmin ymin xmax ymax]] [-clipdst xmin ymin xmax ymax]]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n"
@@ -683,15 +743,21 @@ static void Usage()
     printf( " -append: Append to existing layer instead of creating new if it exists\n"
             " -overwrite: delete the output layer and recreate it empty\n"
             " -update: Open existing output datasource in update mode\n"
-            " -progress: Display progress on terminal. Only works if input layers have the \"fast feature count\" capability\n"
+            " -progress: Display progress on terminal. Only works if input layers have the \n"
+            "                                          \"fast feature count\" capability\n"
             " -select field_list: Comma-delimited list of fields from input layer to\n"
             "                     copy to the new layer (defaults to all)\n" 
             " -where restricted_where: Attribute query (like SQL WHERE)\n" 
-            " -wrapdateline: split geometries crossing the dateline meridian (long. = +/- 180deg)\n" 
+            " -wrapdateline: split geometries crossing the dateline meridian\n"
+            "                (long. = +/- 180deg)\n" 
             " -sql statement: Execute given SQL statement and save result.\n"
             " -skipfailures: skip features or layers that fail to convert\n"
             " -gt n: group n features per transaction (default 200)\n"
             " -spat xmin ymin xmax ymax: spatial query extents\n"
+            " -clipsrc [xmin ymin xmax ymax]: clip geometries to the specified bounding box\n"
+            "                                 (in source SRS), or to one specified by -spat\n"
+            " -clipdst xmin ymin xmax ymax: clip geometries to the specified bounding box\n"
+            "                               (in dest SRS) after reprojection\n"
             " -segmentize max_dist: maximum distance between 2 nodes.\n"
             "                       Used to create intermediate points\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
@@ -702,9 +768,9 @@ static void Usage()
             "      MULTIPOLYGON, or MULTILINESTRING.  Add \"25D\" for 3D layers.\n"
             "      Default is type of source layer.\n"
             " -fieldTypeToString type1,...: Converts fields of specified types to\n"
-            "      fields of type string in the new layer. Valid types are : \n"
-            "      Integer, Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n"
-            "      StringList. Special value All can be used to convert all fields to strings.\n");
+            "      fields of type string in the new layer. Valid types are : Integer,\n"
+            "      Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n"
+            "      StringList. Special value All will convert all fields to strings.\n");
 
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"
@@ -735,6 +801,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            char** papszFieldTypesToString,
                            long nCountLayerFeatures,
                            int bWrapDateline,
+                           OGRGeometry* poClipSrc,
+                           OGRGeometry *poClipDst,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg)
 
@@ -948,7 +1016,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
         }
     }
-
+    
 /* -------------------------------------------------------------------- */
 /*      Transfer features.                                              */
 /* -------------------------------------------------------------------- */
@@ -1011,6 +1079,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         {
             if (dfMaxSegmentLength > 0)
                 poDstGeometry->segmentize(dfMaxSegmentLength);
+                
+            if (poClipSrc)
+            {
+                OGRGeometry* poClipped = poDstGeometry->Intersection(poClipSrc);
+                poDstFeature->SetGeometryDirectly(poClipped);
+                poDstGeometry = poClipped;
+            }
 
             if( poCT )
             {
@@ -1037,6 +1112,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             else if (poOutputSRS != NULL)
             {
                 poDstGeometry->assignSpatialReference(poOutputSRS);
+            }
+            
+            if (poClipDst)
+            {
+                OGRGeometry* poClipped = poDstGeometry->Intersection(poClipDst);
+                poDstFeature->SetGeometryDirectly(poClipped);
+                poDstGeometry = poClipped;
             }
 
             if( bForceToPolygon )

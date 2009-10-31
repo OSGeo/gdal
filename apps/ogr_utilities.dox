@@ -177,6 +177,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]
                [-select field_list] [-where restricted_where] 
                [-progress] [-sql <sql statement>] [-wrapdateline]
                [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]
+               [-clipsrc [xmin ymin xmax ymax]] [-clipdst xmin ymin xmax ymax]]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]
@@ -217,7 +218,12 @@ The resulting table/layer will be saved to the output.</dd>
 <dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE)</dd>
 <dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
 <dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 200)</dd>
-<dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents</dd>
+<dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents. Only features
+whose geometry intersects the extents will be selected. The geometries will not be clipped unless -clipsrc is specified</dd>
+<dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]</em>:</dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding box
+(expressed in source SRS), or to one specified by -spat</dd>
+<dt> <b>-clipdst</b><em> xmin ymin xmax ymax</em>:</dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding box
+(expressed in dest SRS) after reprojection</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
 <dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
@@ -248,6 +254,12 @@ Example appending to an existing layer (both flags need to be used):
 
 \verbatim
 % ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda abc.tab
+\endverbatim
+
+Example reprojecting from ETRS_1989_LAEA_52N_10E to EPSG:4326 and clipping to a bounding box
+
+\verbatim
+% ogr2ogr -wrapdateline -t_srs EPSG:4326 -clipdst -5 40 15 55 france_4326.shp europe_laea.shp
 \endverbatim
 
 More examples are given in the individual format pages.
