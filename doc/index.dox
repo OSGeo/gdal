@@ -32,8 +32,8 @@ Download:
 <ul>
 <li> <a href="http://trac.osgeo.org/gdal/">Wiki</a> - Various user and developer contributed documentation and hints
 <li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries">Downloads</a> - Ready to use binaries (executables)
-<li> <a href="formats_list.html">Supported Formats</a>
-<li> <a href="gdal_utilities.html">GDAL Utility Programs</a>
+<li> <a href="formats_list.html">Supported Formats</a> : GeoTIFF, Erdas Imagine, SDTS, ECW, MrSID, JPEG2000, DTED, NITF, ...
+<li> <a href="gdal_utilities.html">GDAL Utility Programs</a> : gdalinfo, gdal_translate, gdaladdo, gdalwarp, ...
 <li> <a href="http://trac.osgeo.org/gdal/wiki/FAQ">GDAL FAQ</a>
 <li> <a href="gdal_datamodel.html">GDAL Data Model</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/GovernanceAndCommunity">GDAL/OGR Governance and Community Participation</a>
