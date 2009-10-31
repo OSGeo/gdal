@@ -52,9 +52,11 @@ Creation Options:<p>
 <li> <b>QUALITY=n</b>: Set the compressed size ratio as a percentage
 of the size of the uncompressed image.  The default is 20 indicating that
 the resulting image should be 20% of the size of the uncompressed image. 
-A value of 100 will result in use of the lossless compression algorithm . 
-Actual final image size may not exactly match that requested depending on 
-various factors.<P>
+Actual final image size may not exactly match that requested depending on
+various factors. A value of 100 will result in use of the lossless compression
+algorithm . On typical image data, if you specify a value greater than 65, it
+might be worth trying with QUALITY=100 instead as lossless compression might
+produce better compression than lossy compression. <P>
 
 <li> <b>BLOCKXSIZE=n</b>: Set the tile width to use.  Defaults to 20000.
 <p>
