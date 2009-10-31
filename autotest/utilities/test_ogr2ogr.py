@@ -539,6 +539,39 @@ def test_ogr2ogr_18():
         return 'success'
     else:
         return 'fail'
+
+###############################################################################
+# Test -clipsrc
+
+def test_ogr2ogr_19():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+
+    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc spat_extent -spat 479609 4764629 479764 4764817').read()
+
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
+        return 'fail'
+        
+    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
+        print ds.GetLayer(0).GetExtent()
+        gdaltest.post_reason('unexpected extent')
+        return 'fail'
+        
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+
+    return 'success'
     
 gdaltest_list = [
     test_ogr2ogr_1,
@@ -558,8 +591,9 @@ gdaltest_list = [
     test_ogr2ogr_15,
     test_ogr2ogr_16,
     test_ogr2ogr_17,
-    test_ogr2ogr_18]
-
+    test_ogr2ogr_18,
+    test_ogr2ogr_19 ]
+    
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'test_ogr2ogr' )
