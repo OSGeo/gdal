@@ -12,9 +12,9 @@ OGR is a part of the <a href="http://www.gdal.org/">GDAL</a> library.<p>
 
 <ul>
 
-<li> <a href="ogr_formats.html">OGR Supported Formats</a>
+<li> <a href="ogr_formats.html">OGR Supported Formats</a> : ESRI Shapefile, ESRI ArcSDE, MapInfo (tab and mid/mif), GML, KML, PostGIS, Oracle Spatial, ...
 
-<li> <a href="../ogr_utilities.html">OGR Utility Programs</a>
+<li> <a href="../ogr_utilities.html">OGR Utility Programs</a> : ogrinfo, ogr2ogr, ogrtindex
 
 <li> <a href="hierarchy.html">OGR Class Documentation</a>
 
