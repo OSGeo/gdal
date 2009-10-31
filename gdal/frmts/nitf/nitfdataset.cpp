@@ -44,7 +44,6 @@ static void NITFPatchImageLength( const char *pszFilename,
                                   GIntBig nPixelCount, const char *pszIC );
 static void NITFWriteTextSegments( const char *pszFilename, char **papszList );
 
-static GDALDataset *poWritableJ2KDataset = NULL;
 static CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
                                           int nBand,
                                           GDALColorInterp eInterp );
@@ -134,6 +133,7 @@ class NITFDataset : public GDALPamDataset
                                     int, int *, GDALProgressFunc, void * );
 
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Open( GDALOpenInfo *, GDALDataset *poWritableJ2KDataset);
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *
     NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
@@ -877,6 +877,8 @@ NITFDataset::NITFDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    
+    poDriver = (GDALDriver*) GDALGetDriverByName("NITF");
 }
 
 /************************************************************************/
@@ -1026,6 +1028,11 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
+{
+    return Open(poOpenInfo, NULL);
+}
+
+GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritableJ2KDataset)
 
 {
     int nIMIndex = -1;
@@ -3203,25 +3210,27 @@ static const char *GDALToNITFDataType( GDALDataType eType )
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static const char **NITFJP2Options( char **papszOptions )
+static char **NITFJP2Options( char **papszOptions )
 
 {
     int i;
-    static const char *apszOptions[] = { 
-        "PROFILE=NPJE", 
-        "CODESTREAM_ONLY=TRUE", 
-        NULL,
-        NULL };
+    char** papszJP2Options = NULL;
+    
+    papszJP2Options = CSLAddString(papszJP2Options, "PROFILE=NPJE");
+    papszJP2Options = CSLAddString(papszJP2Options, "CODESTREAM_ONLY=TRUE");
     
     for( i = 0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
     {
         if( EQUALN(papszOptions[i],"PROFILE=",8) )
-            apszOptions[0] = papszOptions[i];
-        if( EQUALN(papszOptions[i],"TARGET=",7) )
-            apszOptions[2] = papszOptions[i];
+        {
+            CPLFree(papszJP2Options[0]);
+            papszJP2Options[0] = CPLStrdup(papszOptions[i]);
+        }
+        else if( EQUALN(papszOptions[i],"TARGET=",7) )
+            papszJP2Options = CSLAddString(papszJP2Options, papszOptions[i]);
     }
 
-    return apszOptions;
+    return papszJP2Options;
 }
 
 /************************************************************************/
@@ -3282,6 +3291,7 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 /* -------------------------------------------------------------------- */
 /*      Various special hacks related to JPEG2000 encoded files.        */
 /* -------------------------------------------------------------------- */
+    GDALDataset* poWritableJ2KDataset = NULL;
     if( poJ2KDriver )
     {
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
@@ -3293,9 +3303,11 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 
         NITFClose( psFile );
 
+        char** papszJP2Options = NITFJP2Options(papszOptions);
         poWritableJ2KDataset = 
             poJ2KDriver->Create( osDSName, nXSize, nYSize, nBands, eType, 
-                                 (char **)NITFJP2Options( papszOptions ) );
+                                 papszJP2Options );
+        CSLDestroy(papszJP2Options);
 
         if( poWritableJ2KDataset == NULL )
             return NULL;
@@ -3304,7 +3316,8 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 /* -------------------------------------------------------------------- */
 /*      Open the dataset in update mode.                                */
 /* -------------------------------------------------------------------- */
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
+    return NITFDataset::Open(&oOpenInfo, poWritableJ2KDataset);
 }
 
 /************************************************************************/
@@ -3610,10 +3623,12 @@ NITFDataset::NITFCreateCopy(
 
         if (EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
         {
+            char** papszJP2Options = NITFJP2Options(papszOptions);
             poJ2KDataset = 
                 poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
-                                         (char **)NITFJP2Options(papszOptions),
+                                         papszJP2Options,
                                          pfnProgress, pProgressData );
+            CSLDestroy(papszJP2Options);
         }
         else
         {
