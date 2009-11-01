@@ -3841,7 +3841,7 @@ public class ProgressCallback
   * @param dfComplete progression percentage between 0 and 1
   * @param message processing message, may be null
   *
-  * @return 0 if you want to interrupt the processing, any value different from 1 to go on
+  * @return 0 if you want to interrupt the processing, any value different from 0 to go on
   *
   * @since Java bindings 1.7.0
   */
