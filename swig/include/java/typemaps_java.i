@@ -1215,7 +1215,7 @@ OPTIONAL_POD(int,i);
  * Typemaps for double *argout[ANY]
  ***************************************************/
 
-%typemap(in) (double *argout[ANY]) (double *argout[$dim0])
+%typemap(in) (double *argout[ANY]) (double *argout)
 {
   /* %typemap(in) (double *argout[ANY]) */
   if($input == NULL || jenv->GetArrayLength($input) != $dim0) {
@@ -1224,19 +1224,19 @@ OPTIONAL_POD(int,i);
       SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, errorMsg);
       return $null;
   }
-  $1 = argout;
+  $1 = &argout;
 }
 
 %typemap(argout) (double *argout[ANY])
 {
   /* %typemap(argout) (double *argout[ANY]) */
-  jenv->SetDoubleArrayRegion($input, (jsize)0, (jsize)$dim0, $1[0]);
+  jenv->SetDoubleArrayRegion($input, (jsize)0, (jsize)$dim0, *$1);
 }
 
 %typemap(freearg) (double *argout[ANY])
 {
   /* %typemap(freearg) (double *argout[ANY]) */
-  CPLFree($1);
+  CPLFree(*$1);
 }
 
 %typemap(jni) (double *argout[ANY]) "jdoubleArray"
