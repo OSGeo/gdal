@@ -89,6 +89,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
         if( nSRSId == -2 )
             GetSpatialRef();
     }
+    
+    bHasWarnedIncompatibleGeom = FALSE;
 }
 
 //************************************************************************/
@@ -1310,6 +1312,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     if( bHasPostGISGeometry && poGeom != NULL)
     {
         char    *pszWKT = NULL;
+        
+        CheckGeomTypeCompatibility(poGeom);
 
         poGeom->closeRings();
         poGeom->setCoordinateDimension( nCoordDimension );
@@ -1426,6 +1430,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     {
         poGeometry->closeRings();
         poGeometry->setCoordinateDimension( nCoordDimension );
+        
+        CheckGeomTypeCompatibility(poGeometry);
 
         if (bHasWkb)
             pszGeom = GeometryToBYTEA( poGeometry );
@@ -2134,4 +2140,36 @@ CPLString OGRPGTableLayer::BuildCopyFields()
     }
 
     return osFieldList;
+}
+
+/************************************************************************/
+/*                    CheckGeomTypeCompatibility()                      */
+/************************************************************************/
+
+void OGRPGTableLayer::CheckGeomTypeCompatibility(OGRGeometry* poGeom)
+{
+    if (bHasWarnedIncompatibleGeom)
+        return;
+        
+    OGRwkbGeometryType eFlatLayerGeomType = wkbFlatten(poFeatureDefn->GetGeomType());
+    OGRwkbGeometryType eFlatGeomType = wkbFlatten(poGeom->getGeometryType());
+    if (eFlatLayerGeomType == wkbUnknown)
+        return;
+
+    if (eFlatLayerGeomType == wkbGeometryCollection)
+        bHasWarnedIncompatibleGeom = eFlatGeomType != wkbMultiPoint &&
+                                     eFlatGeomType != wkbMultiLineString &&
+                                     eFlatGeomType != wkbMultiPolygon &&
+                                     eFlatGeomType != wkbGeometryCollection;
+    else
+        bHasWarnedIncompatibleGeom = (eFlatGeomType != eFlatLayerGeomType);
+    
+    if (bHasWarnedIncompatibleGeom)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Geometry to be inserted is of type %s, whereas the layer geometry type is %s.\n"
+                 "Insertion is likely to fail",
+                 OGRGeometryTypeToName(poGeom->getGeometryType()), 
+                 OGRGeometryTypeToName(poFeatureDefn->GetGeomType()));
+    }
 }
