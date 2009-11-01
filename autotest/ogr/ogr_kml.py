@@ -525,6 +525,30 @@ def ogr_kml_check_write_1():
 
     return 'success'
 
+
+###############################################################################
+# Test reading attributes with XML content in them
+#
+def ogr_kml_xml_attributes():
+    
+    if not gdaltest.have_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/description_with_xml.kml')
+
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('description') != 'Description<br></br><i attr="val">Interesting</i><br></br>':
+        gdaltest.post_reason( 'Wrong description field value' )
+        print 'got: ', feat.GetField('description')
+        return 'fail'
+        
+    feat.Destroy()
+    ds.Destroy()
+
+    return 'success'
+    
 ###############################################################################
 #  Cleanup
 
@@ -552,6 +576,7 @@ gdaltest_list = [
     ogr_kml_polygon_read,
     ogr_kml_write_1,
     ogr_kml_check_write_1,
+    ogr_kml_xml_attributes,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
