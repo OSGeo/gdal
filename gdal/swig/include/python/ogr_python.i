@@ -293,7 +293,18 @@ layer[0:4] would return a list of the first four features."""
   def __setstate__(self, state):
       result = CreateGeometryFromWkb(state)
       self.this = result.this
-
+        
+  def __iter__(self):
+      self.iter_subgeom = 0
+      return self
+      
+  def next(self):
+      if self.iter_subgeom < self.GetGeometryCount():
+          subgeom = self.GetGeometryRef(self.iter_subgeom)
+          self.iter_subgeom += 1
+          return subgeom
+      else:
+          raise StopIteration
 }
 }
 
