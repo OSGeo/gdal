@@ -195,6 +195,10 @@ class OGRPGTableLayer : public OGRPGLayer
 
     void                AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
                                          OGRFeature* poFeature, int i);
+                  
+    int                 bHasWarnedIncompatibleGeom;
+    void                CheckGeomTypeCompatibility(OGRGeometry* poGeom);
+    
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
                                          CPLString& osCurrentSchema,
