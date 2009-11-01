@@ -241,8 +241,9 @@ void XMLCALL KML::startElement(void* pUserData, const char* pszName, const char*
         {
             sNewContent += " ";
             sNewContent += ppszAttr[i];
-            sNewContent += "=";
+            sNewContent += "=\"";
             sNewContent += ppszAttr[i + 1];
+            sNewContent += "\"";
         }
         sNewContent += ">";
         if(poKML->poCurrent_->numContent() == 0)
