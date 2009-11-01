@@ -245,7 +245,10 @@ void XMLCALL KML::startElement(void* pUserData, const char* pszName, const char*
             sNewContent += ppszAttr[i + 1];
         }
         sNewContent += ">";
-        poKML->poCurrent_->addContent(sNewContent);
+        if(poKML->poCurrent_->numContent() == 0)
+            poKML->poCurrent_->addContent(sNewContent);
+        else
+            poKML->poCurrent_->appendContent(sNewContent);
     }
 }
 
@@ -436,7 +439,10 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
         std::string sNewContent = "</";
         sNewContent += pszName;
         sNewContent += ">";
-        poKML->poCurrent_->addContent(sNewContent);
+        if(poKML->poCurrent_->numContent() == 0)
+            poKML->poCurrent_->addContent(sNewContent);
+        else
+            poKML->poCurrent_->appendContent(sNewContent);
     }
 }
 
