@@ -20,8 +20,10 @@ supplied with the GDAL project that can build other kinds of output)</em></p>
 <h3>KML Reading</h3>
 <p>KML reading is only available if GDAL/OGR is built with the Expat XML Parser, otherwise only KML writing will be supported.</p>
 
-<p>  Currently supported geometry types are <code>Point</code>, <code>Linestring</code> and <code>Polygon</code>. There are other limitations as well, for example: nested folders in a source KML file are disregarded; folder <code>&lt;description&gt;</code> tags will
-  not carry through to ouput; folders containing multiple geometry types, like <code>POINT</code> and <code>POLYGON</code>, will be disregarded. The last example can be a source of confusion. If the only Folder in a KML source file contains mixed or unsupported geometry types, the Folder will be rejected and the driver will report 'no layers found.' </p>
+<p>  Supported geometry types are <code>Point</code>, <code>Linestring</code>, <code>Polygon</code>, <code>MultiPoint</code>,
+<code>MultiLineString</code>, <code>MultiPolygon</code> and <code>MultiGeometry</code>. There are limitations,
+for example: the nested nature of folders in a source KML file is lost; folder <code>&lt;description&gt;</code> tags will
+not carry through to ouput. Since GDAL 1.6.1, folders containing multiple geometry types, like POINT and POLYGON, are supported.</p>
 
 <h3>KML Writing</h3>
 <p>Since not all features of KML
