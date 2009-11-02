@@ -202,7 +202,11 @@ int OGRS57Layer::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return TRUE;
+        return !(m_poFilterGeom != NULL || m_poAttrQuery != NULL 
+                 || nFeatureCount == -1 ||
+                 ( EQUAL(poFeatureDefn->GetName(), "SOUNDG") &&
+                   poDS->GetModule(0) != NULL &&
+                   (poDS->GetModule(0)->GetOptionFlags() & S57M_SPLIT_MULTIPOINT)));
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
     {
@@ -243,8 +247,7 @@ OGRErr OGRS57Layer::GetExtent( OGREnvelope *psExtent, int bForce )
 int OGRS57Layer::GetFeatureCount (int bForce)
 {
     
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL 
-        || nFeatureCount == -1 )
+    if( !TestCapability(OLCFastFeatureCount) )
         return OGRLayer::GetFeatureCount( bForce );
     else
         return nFeatureCount;
