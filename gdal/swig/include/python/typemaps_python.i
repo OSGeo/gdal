@@ -443,8 +443,11 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     while (*stringarray != NULL ) {
       char const *valptr;
       char *keyptr;
-      valptr = CPLParseNameValue( *stringarray, &keyptr );
-      if ( valptr != 0 ) {
+      const char* pszSep = strchr( *stringarray, '=' );
+      if ( pszSep != NULL) {
+        keyptr = CPLStrdup(*stringarray);
+        keyptr[pszSep - *stringarray] = '\0';
+        valptr = pszSep + 1;
         PyObject *nm = PyString_FromString( keyptr );
         PyObject *val = PyString_FromString( valptr );
         PyDict_SetItem($result, nm, val );
