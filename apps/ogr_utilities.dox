@@ -225,9 +225,13 @@ The resulting table/layer will be saved to the output.</dd>
 <dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 200)</dd>
 <dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents. Only features
 whose geometry intersects the extents will be selected. The geometries will not be clipped unless -clipsrc is specified</dd>
-<dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:</dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding box
-(expressed in source SRS), WKT geometry (POLYGON or MULTIPOLYGON), from a datasource or to the spatial extent of the -spat option if you use the spat_extent keyword.
-When specifying a datasource, you will generally want to use it in combination of the -clipsrclayer, -clipsrcwhere or -clipsrcsql options</dd>
+<dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
+</dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding
+box (expressed in source SRS), WKT geometry (POLYGON or MULTIPOLYGON), from a
+datasource or to the spatial extent of the <b>-spat</b> option if you use the
+<em>spat_extent</em> keyword. When specifying a datasource, you will generally
+want to use it in combination of the <b>-clipsrclayer</b>,
+<b>-clipsrcwhere</b> or <b>-clipsrcsql</b> options</dd>
 <dt> <b>-clipsrcsql</b> <em>sql_statement</em>:</dt><dd>Select desired geometries using an SQL query instead.</dd>
 <dt> <b>-clipsrclayer</b> <em>layername</em>:</dt><dd>Select the named layer from the source clip datasource.</dd>
 <dt> <b>-clipsrcwhere</b> <em>expression</em>:</dt><dd>Restrict desired geometries based on attribute query.</dd>
