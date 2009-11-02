@@ -709,8 +709,7 @@ def nitf_31():
         print md
         return 'fail'
 
-    # Check that the leading space in the CUSTOM metadata item is preserved (#3088)
-    # As md['CUSTOM'] will remove it, so check with GetMetadataItem()
+    # Check that the leading space in the CUSTOM metadata item is preserved (#3088, #3204)
     try:
         if ds.GetMetadataItem( 'CUSTOM', 'TRE') != ' Test TRE1\\0MORE':
             gdaltest.post_reason( 'Did not get expected TRE contents' )
@@ -719,7 +718,7 @@ def nitf_31():
     except:
         pass
         
-    if md['CUSTOM'] != 'Test TRE1\\0MORE' \
+    if md['CUSTOM'] != ' Test TRE1\\0MORE' \
        or md['TOTEST'] != 'SecondTRE':
         gdaltest.post_reason( 'Did not get expected TRE contents' )
         print md
