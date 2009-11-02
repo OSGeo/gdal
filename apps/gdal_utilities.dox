@@ -1354,8 +1354,26 @@ its parameters. See \ref gdal_grid_algorithms and \ref gdal_grid_metrics
 sections for further discussion of available options.</dd>
 
 <dt> <b>-spat</b> <i>xmin ymin xmax ymax</i>:</dt><dd> Adds a spatial filter
-to select only features intersecting the bounding box described by
+to select only features contained within the bounding box described by
 (xmin, ymin) - (xmax, ymax).</dd>
+
+<dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
+</dt><dd> Adds a spatial filter to select only features contained within the
+specified bounding box (expressed in source SRS), WKT geometry (POLYGON or
+MULTIPOLYGON), from a datasource or to the spatial extent of the <b>-spat</b>
+option if you use the <em>spat_extent</em> keyword. When specifying a
+datasource, you will generally want to use it in combination of the
+<b>-clipsrclayer</b>, <b>-clipsrcwhere</b> or <b>-clipsrcsql</b>
+options.</dd>
+
+<dt> <b>-clipsrcsql</b> <em>sql_statement</em>:</dt><dd>Select desired
+geometries using an SQL query instead.</dd>
+
+<dt> <b>-clipsrclayer</b> <em>layername</em>:</dt><dd>Select the named layer
+from the source clip datasource.</dd>
+
+<dt> <b>-clipsrcwhere</b> <em>expression</em>:</dt><dd>Restrict desired
+geometries based on attribute query.</dd>
 
 <dt> <b>-l</b> <em>layername</em>: </dt><dd> Indicates the layer(s) from the
 datasource that will be used for input features.  May be specified multiple
