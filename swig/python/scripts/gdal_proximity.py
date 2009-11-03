@@ -41,13 +41,13 @@ def Usage():
     print """
 gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n] 
                   [-of format] [-co name=value]*
-	          [-ot Byte/Int16/Int32/Float32/etc]
+                  [-ot Byte/Int16/Int32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
                   [-maxdist n] [-nodata n] [-fixed-buf-val n]"""
     sys.exit(1)
 
 # =============================================================================
-# 	Mainline
+#     Mainline
 # =============================================================================
 
 format = 'GTiff'
@@ -124,7 +124,7 @@ if src_filename is None or dst_filename is None:
     Usage()
     
 # =============================================================================
-#	Open source file
+#    Open source file
 # =============================================================================
 
 src_ds = gdal.Open( src_filename )
@@ -150,7 +150,7 @@ except:
     dst_ts = None
 
 # =============================================================================
-# 	Create output file.
+#     Create output file.
 # =============================================================================
 if dst_ds is None:
     drv = gdal.GetDriverByName(format)
@@ -164,7 +164,7 @@ if dst_ds is None:
     dstband = dst_ds.GetRasterBand(1)
 
 # =============================================================================
-#	Invoke algorithm.
+#    Invoke algorithm.
 # =============================================================================
 
 gdal.ComputeProximity( srcband, dstband, options,
