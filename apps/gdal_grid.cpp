@@ -45,6 +45,9 @@ static const char szAlgNameNearest[] = "nearest";
 static const char szAlgNameMinimum[] = "minimum";
 static const char szAlgNameMaximum[] = "maximum";
 static const char szAlgNameRange[] = "range";
+static const char szAlgNameCount[] = "count";
+static const char szAlgNameAverageDistance[] = "average_distance";
+static const char szAlgNameAverageDistancePts[] = "average_distance_pts";
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -69,7 +72,7 @@ static void Usage()
         "    [-quiet]\n"
         "    <src_datasource> <dst_filename>\n"
         "\n"
-        "Available algorithms and parameters with their defaults:\n"
+        "Available algorithms and parameters with their's defaults:\n"
         "    Inverse distance to a power (default)\n"
         "        invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0\n"
         "    Moving average\n"
@@ -82,6 +85,9 @@ static void Usage()
         "            minimum\n"
         "            maximum\n"
         "            range\n"
+        "            count\n"
+        "            average_distance\n"
+        "            average_distance_pts\n"
         "\n");
 
     GDALDestroyDriverManager();
@@ -166,8 +172,41 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
                 (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
                 ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
             break;
+        case GGA_MetricCount:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameCount );
+            printf( "Options are "
+                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                    ":nodata=%f\"\n",
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
+                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
+            break;
+        case GGA_MetricAverageDistance:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameAverageDistance );
+            printf( "Options are "
+                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                    ":nodata=%f\"\n",
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
+                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
+            break;
+        case GGA_MetricAverageDistancePts:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameAverageDistancePts );
+            printf( "Options are "
+                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                    ":nodata=%f\"\n",
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
+                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
+            break;
         default:
-            printf( "Algorithm unknown.\n" );
+            printf( "Algorithm is unknown.\n" );
             break;
     }
 }
@@ -201,6 +240,12 @@ static CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
         *peAlgorithm = GGA_MetricMaximum;
     else if ( EQUAL(papszParms[0], szAlgNameRange) )
         *peAlgorithm = GGA_MetricRange;
+    else if ( EQUAL(papszParms[0], szAlgNameCount) )
+        *peAlgorithm = GGA_MetricCount;
+    else if ( EQUAL(papszParms[0], szAlgNameAverageDistance) )
+        *peAlgorithm = GGA_MetricAverageDistance;
+    else if ( EQUAL(papszParms[0], szAlgNameAverageDistancePts) )
+        *peAlgorithm = GGA_MetricAverageDistancePts;
     else
     {
         fprintf( stderr, "Unsupported gridding method \"%s\".\n",
@@ -303,6 +348,9 @@ static CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
         case GGA_MetricMinimum:
         case GGA_MetricMaximum:
         case GGA_MetricRange:
+        case GGA_MetricCount:
+        case GGA_MetricAverageDistance:
+        case GGA_MetricAverageDistancePts:
             *ppOptions =
                 CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
 

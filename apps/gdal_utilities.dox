@@ -1492,6 +1492,18 @@ ellipse.</dd>
 <dt><i>range</i>:</dt> <dd>A difference between the minimum and maximum values
 found in grid node search ellipse.</dd>
 
+<dt><i>count</i>:</dt> <dd> A number of data points found in grid node search
+ellipse.</dd>
+
+<dt><i>average_distance</i>:</dt> <dd>An average distance between the grid
+node (center of the search ellipse) and all of the data points found in grid
+node search ellipse.</dd>
+
+<dt><i>average_distance_pts</i>:</dt> <dd>An average distance between the data
+points found in grid node search ellipse. The distance between each pair of
+points within ellipse is calculated and average of all distances is set as a
+grid node value.</dd>
+
 </dl>
 
 All the metrics have the same set of options:
