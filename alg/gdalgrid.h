@@ -74,6 +74,19 @@ CPLErr
 GDALGridDataMetricRange( const void *, GUInt32,
                          const double *, const double *, const double *,
                          double, double, double * );
+CPLErr
+GDALGridDataMetricCount( const void *, GUInt32,
+                         const double *, const double *, const double *,
+                         double, double, double * );
+CPLErr
+GDALGridDataMetricAverageDistance( const void *, GUInt32,
+                                   const double *, const double *,
+                                   const double *, double, double, double * );
+CPLErr
+GDALGridDataMetricAverageDistancePts( const void *, GUInt32,
+                                      const double *, const double *,
+                                      const double *, double, double,
+                                      double * );
 CPL_C_END
 
 #endif /* GDALGRID_H_INCLUDED */
