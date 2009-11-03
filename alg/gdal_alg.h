@@ -331,7 +331,8 @@ typedef enum {
   /*! Data Range (Data Metric) */       GGA_MetricRange = 6,
   /*! Number of Points (Data Metric) */ GGA_MetricCount = 7,
   /*! Average Distance (Data Metric) */ GGA_MetricAverageDistance = 8,
-  /*! Average Distance (Data Metric) */ GGA_MetricAverageDistancePts = 9
+  /*! Average Distance Between Data Points (Data Metric) */
+                                        GGA_MetricAverageDistancePts = 9
 } GDALGridAlgorithm;
 
 /** Inverse distance to a power method control options */
