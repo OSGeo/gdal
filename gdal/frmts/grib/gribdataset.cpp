@@ -30,6 +30,7 @@
  */
 
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 #include "degrib18/degrib/degrib2.h"
 #include "degrib18/degrib/inventory.h"
@@ -62,6 +63,7 @@ class GRIBDataset : public GDALPamDataset
 		~GRIBDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
@@ -357,12 +359,38 @@ const char *GRIBDataset::GetProjectionRef()
 }
 
 /************************************************************************/
+/*                            Identify()                                */
+/************************************************************************/
+
+int GRIBDataset::Identify( GDALOpenInfo * poOpenInfo )
+{
+    if (poOpenInfo->nHeaderBytes < 8)
+        return FALSE;
+        
+/* -------------------------------------------------------------------- */
+/*      Does a part of what ReadSECT0() but in a thread-safe way.       */
+/* -------------------------------------------------------------------- */
+    int i;
+    for(i=0;i<poOpenInfo->nHeaderBytes-3;i++)
+    {
+        if (EQUALN((const char*)poOpenInfo->pabyHeader + i, "GRIB", 4) ||
+            EQUALN((const char*)poOpenInfo->pabyHeader + i, "TDLP", 4))
+            return TRUE;
+    }
+    
+    return FALSE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    if( !Identify(poOpenInfo) )
+        return NULL;
+        
 /* -------------------------------------------------------------------- */
 /*      A fast "probe" on the header that is partially read in memory.  */
 /* -------------------------------------------------------------------- */
@@ -374,6 +402,10 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
     sInt4 sect0[SECT0LEN_WORD];
     uInt4 gribLen;
     int version;
+// grib is not thread safe, make sure not to cause problems
+// for other thread safe formats
+    static void *mutex = 0;
+    CPLMutexHolderD(&mutex);
     MemoryDataSource mds (poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
     if (ReadSECT0 (mds, &buff, &buffLen, -1, sect0, &gribLen, &version) < 0) {
         free (buff);
@@ -639,6 +671,7 @@ void GDALRegister_GRIB()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grb" );
 
         poDriver->pfnOpen = GRIBDataset::Open;
+        poDriver->pfnIdentify = GRIBDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
