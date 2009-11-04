@@ -1897,9 +1897,14 @@ public class Dataset:public int GetRasterCount()
  * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
  * writing from various organization of buffers. 
  * <p>
- * For highest performance full resolution data access, read and write
- * on "block boundaries" as returned by GetBlockSize(), or use the
- * ReadBlock() and WriteBlock() methods.
+ * For highest performance full resolution data access, read
+ * on "block boundaries" as returned by <a href="Band.html#GetBlockSize(int[], int[])">Band.GetBlockSize(int[], int[])</a>, or use the
+ * <a href="Band.html#ReadBlock_Direct(int, int, java.nio.ByteBuffer)">Band.ReadBlock(int, int, java.nio.ByteBuffer)</a> method.
+ * <p>
+ * When requesting a multi-byte datatype (GDT_Int16, GDT_Int32, GDT_Float32, ...),
+ * you should generally set the byte order of the buffer to the native order of the machine
+ * with nioBuffer.order(ByteOrder.nativeOrder()) (the default is BIG_ENDIAN) if you use
+ * the getShort(), getInt(), getFloat(), ... methods of the ByteBuffer class.
  *
  * @param xoff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
@@ -1917,8 +1922,10 @@ public class Dataset:public int GetRasterCount()
  * @param buf_ysize the height of the buffer image into which the desired
  * region is to be read.
  *
- * @param buf_type the type of the pixel values in the nioBuffer data buffer.  The
- * pixel values will automatically be translated to/from the Band
+ * @param buf_type the type of the pixel values in the nioBuffer data buffer. One of
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
+ * The pixel values will automatically be translated to/from the Band
  * data type as needed.
  *
  * @param nioBuffer The buffer into which the data should be read, or from which
@@ -1997,9 +2004,14 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
  * writing from various organization of buffers. 
  * <p>
- * For highest performance full resolution data access, read and write
- * on "block boundaries" as returned by GetBlockSize(), or use the
- * ReadBlock() and WriteBlock() methods.
+ * For highest performance full resolution data access, write
+ * on "block boundaries" as returned by <a href="Band.html#GetBlockSize(int[], int[])">Band.GetBlockSize(int[], int[])</a>, or use the
+ * <a href="Band.html#WriteBlock_Direct(int, int, java.nio.ByteBuffer)">Band.WriteBlock(int, int, java.nio.ByteBuffer)</a> method.
+ *<p>
+ * Before writing into a multi-byte datatype buffer (GDT_Int16, GDT_Int32, GDT_Float32, ...),
+ * you should generally set the byte order of the buffer to the native order of the machine
+ * with nioBuffer.order(ByteOrder.nativeOrder()) (the default is BIG_ENDIAN) if you use
+ * the putShort(), putInt(), putFloat(), ... methods of the ByteBuffer class.
  *
  * @param xoff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
@@ -2015,8 +2027,10 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  *
  * @param buf_ysize the height of the buffer image from which the desired region is to be written.
  *
- * @param buf_type the type of the pixel values in the nioBuffer data buffer.  The
- * pixel values will automatically be translated to/from the Band
+ * @param buf_type the type of the pixel values in the nioBuffer data buffer. One of
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
+ * The pixel values will automatically be translated to/from the Band
  * data type as needed.
  *
  * @param nioBuffer The buffer into which the data should be read, or from which
@@ -2862,7 +2876,7 @@ public class Band:public boolean HasArbitraryOverviews()
  * (buf_type) of the buffer is different than that of the GDALRasterBand.
  * The method also takes care of image decimation / replication if the
  * buffer size (buf_xsize x buf_ysize) is different than the size of the
- * region being accessed (xsize x yszie).
+ * region being accessed (xsize x ysize).
  *<p>
  * The nPixelSpace and nLineSpace parameters allow reading into or
  * writing from unusually organized buffers.  This is primarily used
@@ -2872,9 +2886,14 @@ public class Band:public boolean HasArbitraryOverviews()
  * Some formats may efficiently implement decimation into a buffer by
  * reading from lower resolution overview images.
  * <p>
- * For highest performance full resolution data access, read and write
- * on "block boundaries" as returned by GetBlockSize(), or use the
- * ReadBlock() and WriteBlock() methods.
+ * For highest performance full resolution data access, read
+ * on "block boundaries" as returned by <a href="#GetBlockSize(int[], int[])">GetBlockSize(int[], int[])</a>, or use the
+ * <a href="#ReadBlock_Direct(int, int, java.nio.ByteBuffer)">ReadBlock(int, int, java.nio.ByteBuffer)</a> method.
+ * <p>
+ * When requesting a multi-byte datatype (GDT_Int16, GDT_Int32, GDT_Float32, ...),
+ * you should generally set the byte order of the buffer to the native order of the machine
+ * with nioBuffer.order(ByteOrder.nativeOrder()) (the default is BIG_ENDIAN) if you use
+ * the getShort(), getInt(), getFloat() etc... methods of the ByteBuffer class.
  *
  * @param xoff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
@@ -2892,8 +2911,10 @@ public class Band:public boolean HasArbitraryOverviews()
  * @param buf_ysize the height of the buffer image into which the desired region is
  * to be read, or from which it is to be written.
  *
- * @param buf_type the type of the pixel values in the pData data buffer.  The
- * pixel values will automatically be translated to/from the GDALRasterBand
+ * @param buf_type the type of the pixel values in the nioBuffer data buffer. One of
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
+ * The pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
  * @param nioBuffer The buffer into which the data should be read.
@@ -2963,7 +2984,7 @@ public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, in
  *
  * Same as below but buffer is allocated by the method
  *
- * @return a newly allocated byte buffer with the read region
+ * @return a newly allocated byte buffer with the read region. Its byte order is BIG_ENDIAN by default.
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
  *
@@ -2976,7 +2997,7 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  *
  * Same as below with buf_xsize = xsize, buf_ysize = ysize, nPixelSpace == 0 and nLineSpace == 0 but buffer is allocated by the method
  *
- * @return a newly allocated byte buffer with the read region
+ * @return a newly allocated byte buffer with the read region. Its byte order is BIG_ENDIAN by default.
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
@@ -2989,7 +3010,7 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  *
  * Same as below with nPixelSpace == 0 and nLineSpace == 0 but buffer is allocated by the method
  *
- * @return a newly allocated byte buffer with the read region
+ * @return a newly allocated byte buffer with the read region. Its byte order is BIG_ENDIAN by default.
  *
  * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
  *
@@ -3006,7 +3027,7 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  * (buf_type) of the buffer is different than that of the GDALRasterBand.
  * The method also takes care of image decimation / replication if the
  * buffer size (buf_xsize x buf_ysize) is different than the size of the
- * region being accessed (xsize x yszie).
+ * region being accessed (xsize x ysize).
  *<p>
  * The nPixelSpace and nLineSpace parameters allow reading into or
  * writing from unusually organized buffers.  This is primarily used
@@ -3016,9 +3037,14 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  * Some formats may efficiently implement decimation into a buffer by
  * reading from lower resolution overview images.
  * <p>
- * For highest performance full resolution data access, read and write
- * on "block boundaries" as returned by GetBlockSize(), or use the
- * ReadBlock() and WriteBlock() methods.
+ * For highest performance full resolution data access, write
+ * on "block boundaries" as returned by <a href="#GetBlockSize(int[], int[])">GetBlockSize(int[], int[])</a>, or use the
+ * <a href="#WriteBlock_Direct(int, int, java.nio.ByteBuffer)">WriteBlock(int, int, java.nio.ByteBuffer)</a> method.
+ *<p>
+ * Before writing into a multi-byte datatype buffer (GDT_Int16, GDT_Int32, GDT_Float32, ...),
+ * you should generally set the byte order of the buffer to the native order of the machine
+ * with nioBuffer.order(ByteOrder.nativeOrder()) (the default is BIG_ENDIAN) if you use
+ * the putShort(), putInt(), putFloat(), ... methods of the ByteBuffer class.
  *
  * @param xoff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
@@ -3034,8 +3060,10 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  *
  * @param buf_ysize the height of the buffer image from which the desired region is to be written.
  *
- * @param buf_type the type of the pixel values in the pData data buffer.  The
- * pixel values will automatically be translated to/from the GDALRasterBand
+ * @param buf_type the type of the pixel values in the nioBuffer data buffer. One of
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
+ * The pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
  * @param nioBuffer The buffer into which the data should be read.
