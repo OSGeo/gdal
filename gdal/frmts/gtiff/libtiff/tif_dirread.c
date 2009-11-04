@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.153 2009-02-09 14:29:08 fwarmerdam Exp $ */
+/* $Id: tif_dirread.c,v 1.155 2009-10-29 20:04:07 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -168,6 +168,7 @@ static uint64 TIFFReadUInt64(const uint8 *value);
 
 typedef union _UInt64Aligned_t
 {
+        double d;
 	uint64 l;
 	uint32 i[2];
 	uint16 s[4];
@@ -2917,9 +2918,16 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryCheckedSrational(TIFF* tif, TIFF
 
 static void TIFFReadDirEntryCheckedFloat(TIFF* tif, TIFFDirEntry* direntry, float* value)
 {
+         union
+	 {
+	   float  f;
+	   uint32 i;
+	 } float_union;
 	assert(sizeof(float)==4);
 	assert(sizeof(uint32)==4);
-	*(uint32*)value=*(uint32*)(&direntry->tdir_offset);
+	assert(sizeof(float_union)==4);
+	float_union.i=*(uint32*)(&direntry->tdir_offset);
+	*value=float_union.f;
 	if (tif->tif_flags&TIFF_SWAB)
 		TIFFSwabLong((uint32*)value);
 }
@@ -2928,6 +2936,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryCheckedDouble(TIFF* tif, TIFFDir
 {
 	assert(sizeof(double)==8);
 	assert(sizeof(uint64)==8);
+	assert(sizeof(UInt64Aligned_t)==8);
 	if (!(tif->tif_flags&TIFF_BIGTIFF))
 	{
 		enum TIFFReadDirEntryErr err;
@@ -2939,7 +2948,11 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryCheckedDouble(TIFF* tif, TIFFDir
 			return(err);
 	}
 	else
-		*(uint64*)value=direntry->tdir_offset.toff_long8;
+	{
+	       UInt64Aligned_t uint64_union;
+	       uint64_union.l=direntry->tdir_offset.toff_long8;
+	       *value=uint64_union.d;
+	}
 	if (tif->tif_flags&TIFF_SWAB)
 		TIFFSwabLong8((uint64*)value);
 	return(TIFFReadDirEntryErrOk);
@@ -4140,6 +4153,8 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 			}
 			switch (dp->tdir_tag)
 			{
+				case IGNORE:
+					break;
 				case EXIFTAG_SUBJECTDISTANCE:
 					(void) TIFFFetchSubjectDistance(tif,dp);
 					break;

@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.31 2007/10/01 12:43:49 joris Exp $ */
+/* $Id: tif_pixarlog.c,v 1.32 2009-10-31 23:42:27 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -1143,10 +1143,11 @@ PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	    we need to simplify this code to reflect a ZLib that is likely updated
 	    to deal with 8byte memory sizes, though this code will respond
 	    apropriately even before we simplify it */
-	sp->stream.avail_in = n * sizeof(uint16);
-	if (sp->stream.avail_in != n * sizeof(uint16))
+	sp->stream.avail_in = (uInt) (n * sizeof(uint16));
+	if ((sp->stream.avail_in / sizeof(uint16)) != (uInt) n)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "ZLib cannot deal with buffers this size");
+		TIFFErrorExt(tif->tif_clientdata, module,
+			     "ZLib cannot deal with buffers this size");
 		return (0);
 	}
 
