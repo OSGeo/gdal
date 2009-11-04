@@ -97,6 +97,7 @@ typedef enum
 %rename (hex_to_binary) CPLHexToBinary;
 %rename (file_from_mem_buffer) wrapper_VSIFileFromMemBuffer;
 %rename (unlink) VSIUnlink;
+%rename (has_thread_support) wrapper_HasThreadSupport;
 #else
 %rename (PushErrorHandler) CPLPushErrorHandler;
 %rename (PopErrorHandler) CPLPopErrorHandler;
@@ -115,6 +116,7 @@ typedef enum
 %rename (CPLHexToBinary) CPLHexToBinary;
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
 %rename (Unlink) VSIUnlink;
+%rename (HasThreadSupport) wrapper_HasThreadSupport;
 #endif
 
 #ifndef SWIGJAVA
@@ -237,5 +239,15 @@ void wrapper_VSIFileFromMemBuffer( const char* pszFilename, int nBytes, const GB
 
 /* Added in GDAL 1.7.0 */
 int VSIUnlink(const char * pszFilename );
+
+/* Added in GDAL 1.7.0 */
+/* Thread support is necessary for binding languages with threaded GC */
+/* even if the user doesn't explicitely use threads */
+%inline {
+int wrapper_HasThreadSupport()
+{
+    return strcmp(CPLGetThreadingModel(), "stub") != 0;
+}
+}
 
 #endif

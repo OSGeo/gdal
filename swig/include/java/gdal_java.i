@@ -24,6 +24,12 @@
     try {
       System.loadLibrary("gdaljni");
       available = true;
+      
+      if (gdal.HasThreadSupport() == 0)
+      {
+        System.err.println("WARNING : GDAL should be compiled with thread support for safe execution in Java.");
+      }
+      
     } catch (UnsatisfiedLinkError e) {
       available = false;
       System.err.println("Native library load failed.");
