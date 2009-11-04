@@ -1398,6 +1398,12 @@ OPTIONAL_POD(int,i);
         return $null;
     }
     $1 = jenv->GetDirectBufferAddress($input);
+    if ($1 == NULL)
+    {
+        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException, 
+                                "Unable to get address of direct buffer. Buffer must be allocated direct.");
+        return $null;
+    }
 
     /* The cast to long is actually not that correct, but anyway afterwards */
     /* we check that the theoretical minimum buffer size is not larger than INT_MAX */
