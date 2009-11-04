@@ -54,6 +54,7 @@ using namespace std;
 
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 #include "gdal.h"
 #include "gdal_priv.h"
