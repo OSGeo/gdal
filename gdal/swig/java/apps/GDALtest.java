@@ -32,6 +32,7 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -221,6 +222,7 @@ public class GDALtest extends JFrame implements ActionListener{
 			System.out.println("Allocating ByteBuffer of size: " + buf_size);
 
 			ByteBuffer data = ByteBuffer.allocateDirect(buf_size);
+			data.order(ByteOrder.nativeOrder());
 
 			int returnVal = 0;
 			try {
