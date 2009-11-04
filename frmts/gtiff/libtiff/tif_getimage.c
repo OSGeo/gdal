@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.71 2009-05-03 14:29:36 fwarmerdam Exp $ */
+/* $Id: tif_getimage.c,v 1.73 2009-09-03 17:41:02 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -616,7 +616,7 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	for (col = 0; col < w; col += tw) 
         {
 	    if (TIFFReadTile(tif, buf, col+img->col_offset,  
-			     row+img->row_offset, 0, 0)!=(tmsize_t)(-1) && img->stoponerr)
+			     row+img->row_offset, 0, 0)==(tmsize_t)(-1) && img->stoponerr)
             {
                 ret = 0;
                 break;
@@ -735,14 +735,14 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		for (col = 0; col < w; col += tw)
 		{
 			if (TIFFReadTile(tif, p0, col+img->col_offset,  
-			    row+img->row_offset,0,0)!=(tmsize_t)(-1) && img->stoponerr)
+			    row+img->row_offset,0,0)==(tmsize_t)(-1) && img->stoponerr)
 			{
 				ret = 0;
 				break;
 			}
 			if (colorchannels > 1 
                             && TIFFReadTile(tif, p1, col+img->col_offset,  
-                                            row+img->row_offset,0,1) != (tmsize_t)(-1) 
+                                            row+img->row_offset,0,1) == (tmsize_t)(-1) 
                             && img->stoponerr)
 			{
 				ret = 0;
@@ -750,7 +750,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 			}
 			if (colorchannels > 1 
                             && TIFFReadTile(tif, p2, col+img->col_offset,  
-                                            row+img->row_offset,0,2) != (tmsize_t)(-1) 
+                                            row+img->row_offset,0,2) == (tmsize_t)(-1) 
                             && img->stoponerr)
 			{
 				ret = 0;
@@ -758,7 +758,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 			}
 			if (alpha
                             && TIFFReadTile(tif,pa,col+img->col_offset,  
-                                            row+img->row_offset,0,colorchannels) != (tmsize_t)(-1) 
+                                            row+img->row_offset,0,colorchannels) == (tmsize_t)(-1) 
                             && img->stoponerr)
                         {
                             ret = 0;
@@ -858,7 +858,7 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		if (TIFFReadEncodedStrip(tif,
 		    TIFFComputeStrip(tif,row+img->row_offset, 0),
 		    buf,
-		    ((row + img->row_offset)%rowsperstrip + nrowsub) * scanline)!=(tmsize_t)(-1)
+		    ((row + img->row_offset)%rowsperstrip + nrowsub) * scanline)==(tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
@@ -957,7 +957,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		nrow = (row + rowstoread > h ? h - row : rowstoread);
 		offset_row = row + img->row_offset;
 		if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 0),
-		    p0, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)!=(tmsize_t)(-1)
+		    p0, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)==(tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
@@ -965,7 +965,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		}
 		if (colorchannels > 1 
                     && TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 1),
-                                            p1, ((row + img->row_offset)%rowsperstrip + nrow) * scanline) != (tmsize_t)(-1)
+                                            p1, ((row + img->row_offset)%rowsperstrip + nrow) * scanline) == (tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
@@ -973,7 +973,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		}
 		if (colorchannels > 1 
                     && TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 2),
-                                            p2, ((row + img->row_offset)%rowsperstrip + nrow) * scanline) != (tmsize_t)(-1)
+                                            p2, ((row + img->row_offset)%rowsperstrip + nrow) * scanline) == (tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
@@ -982,7 +982,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		if (alpha)
 		{
 			if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, colorchannels),
-			    pa, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)!=(tmsize_t)(-1)
+			    pa, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)==(tmsize_t)(-1)
 			    && img->stoponerr)
 			{
 				ret = 0;
@@ -2080,7 +2080,7 @@ DECLARESepPutFunc(putseparate8bitYCbCr11tile)
 static int
 initYCbCrConversion(TIFFRGBAImage* img)
 {
-	static char module[] = "initYCbCrConversion";
+	static const char module[] = "initYCbCrConversion";
 
 	float *luma, *refBlackWhite;
 
@@ -2109,7 +2109,7 @@ initYCbCrConversion(TIFFRGBAImage* img)
 static tileContigRoutine
 initCIELabConversion(TIFFRGBAImage* img)
 {
-	static char module[] = "initCIELabConversion";
+	static const char module[] = "initCIELabConversion";
 
 	float   *whitePoint;
 	float   refWhite[3];

@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.23 2008/01/01 15:41:22 fwarmerdam Exp $ */
+/* $Id: tif_aux.c,v 1.23 2008-01-01 15:41:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler

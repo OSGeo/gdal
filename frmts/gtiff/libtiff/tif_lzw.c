@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.40 2009-06-22 04:47:12 fwarmerdam Exp $ */
+/* $Id: tif_lzw.c,v 1.42 2009-11-01 00:16:49 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -360,7 +360,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 	static const char module[] = "LZWDecode";
 	LZWCodecState *sp = DecoderState(tif);
 	char *op = (char*) op0;
-	tmsize_t occ = occ0;
+	long occ = (long) occ0;
 	char *tp;
 	unsigned char *bp;
 	hcode_t code;
@@ -371,6 +371,12 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 	(void) s;
 	assert(sp != NULL);
         assert(sp->dec_codetab != NULL);
+
+	/*
+	  Fail if value does not fit in long.
+	*/
+	if ((tmsize_t) occ != occ0)
+	        return (0);
 	/*
 	 * Restart interrupted output operation.
 	 */
@@ -379,7 +385,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 
 		codep = sp->dec_codep;
 		residue = codep->length - sp->dec_restart;
-		if ((tmsize_t)residue > occ) {
+		if (residue > occ) {
 			/*
 			 * Residue from previous decode is sufficient
 			 * to satisfy decode request.  Skip to the
@@ -389,7 +395,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			sp->dec_restart += occ;
 			do {
 				codep = codep->next;
-			} while ((tmsize_t)(--residue) > occ && codep);
+			} while (--residue > occ && codep);
 			if (codep) {
 				tp = op + occ;
 				do {
@@ -437,7 +443,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			NextCode(tif, sp, bp, code, GetNextCode);
 			if (code == CODE_EOI)
 				break;
-			if (code == CODE_CLEAR) {
+			if (code >= CODE_CLEAR) {
 				TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 				"LZWDecode: Corrupted LZW table at scanline %d",
 					     tif->tif_row);
@@ -491,7 +497,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 				    tif->tif_row);
 				return (0);
 			}
-			if ((tmsize_t)(codep->length) > occ) {
+			if (codep->length > occ) {
 				/*
 				 * String is too long for decode buffer,
 				 * locate portion that will fit, copy to
@@ -501,7 +507,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 				sp->dec_codep = codep;
 				do {
 					codep = codep->next;
-				} while (codep && (tmsize_t)(codep->length) > occ);
+				} while (codep && codep->length > occ);
 				if (codep) {
 					sp->dec_restart = (long)occ;
 					tp = op + occ;
@@ -527,7 +533,7 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			    codeLoop(tif, module);
 			    break;
 			}
-			assert(occ>=(tmsize_t)len);
+			assert(occ >= len);
 			op += len, occ -= len;
 		} else
 			*op++ = (char)code, occ--;
@@ -579,7 +585,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 	static const char module[] = "LZWDecodeCompat";
 	LZWCodecState *sp = DecoderState(tif);
 	char *op = (char*) op0;
-	tmsize_t occ = occ0;
+	long occ = (long) occ0;
 	char *tp;
 	unsigned char *bp;
 	int code, nbits;
@@ -588,6 +594,13 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 
 	(void) s;
 	assert(sp != NULL);
+
+	/*
+	  Fail if value does not fit in long.
+	*/
+	if ((tmsize_t) occ != occ0)
+	        return (0);
+
 	/*
 	 * Restart interrupted output operation.
 	 */
@@ -596,7 +609,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 
 		codep = sp->dec_codep;
 		residue = codep->length - sp->dec_restart;
-		if ((tmsize_t)residue > occ) {
+		if (residue > occ) {
 			/*
 			 * Residue from previous decode is sufficient
 			 * to satisfy decode request.  Skip to the
@@ -606,7 +619,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			sp->dec_restart += occ;
 			do {
 				codep = codep->next;
-			} while ((tmsize_t)(--residue) > occ);
+			} while (--residue > occ);
 			tp = op + occ;
 			do {
 				*--tp = codep->value;
@@ -649,7 +662,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 			NextCode(tif, sp, bp, code, GetNextCodeCompat);
 			if (code == CODE_EOI)
 				break;
-			if (code == CODE_CLEAR) {
+			if (code >= CODE_CLEAR) {
 				TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 				"LZWDecode: Corrupted LZW table at scanline %d",
 					     tif->tif_row);
@@ -690,7 +703,6 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 		}
 		oldcodep = codep;
 		if (code >= 256) {
-			char *op_orig = op;
 			/*
 			 * Code maps to a string, copy string
 			 * value to output (written in reverse).
@@ -702,7 +714,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 				    tif->tif_row);
 				return (0);
 			}
-			if ((tmsize_t)(codep->length) > occ) {
+			if (codep->length > occ) {
 				/*
 				 * String is too long for decode buffer,
 				 * locate portion that will fit, copy to
@@ -712,7 +724,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 				sp->dec_codep = codep;
 				do {
 					codep = codep->next;
-				} while ((tmsize_t)(codep->length) > occ);
+				} while (codep->length > occ);
 				sp->dec_restart = occ;
 				tp = op + occ;
 				do  {
@@ -721,12 +733,12 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 				}  while (--occ);
 				break;
 			}
-			assert(occ>=(tmsize_t)(codep->length));
+			assert(occ >= codep->length);
 			op += codep->length, occ -= codep->length;
 			tp = op;
 			do {
 				*--tp = codep->value;
-			} while( (codep = codep->next) != NULL && tp > op_orig);
+			} while( (codep = codep->next) != NULL );
 		} else
 			*op++ = code, occ--;
 	}
