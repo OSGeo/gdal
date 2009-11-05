@@ -707,14 +707,9 @@ int main( int argc, char ** argv )
     const char      *pszClipSrcLayer = NULL;
     const char      *pszClipSrcWhere = NULL;
 
-    /* Check that we are running against at least GDAL 1.5 */
-    /* Note to developers : if we use newer API, please change the requirement */
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1500)
-    {
-        fprintf(stderr, "At least, GDAL >= 1.5.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
+    /* Check strict compilation and runtime library version as we use C++ API */
+    if (! GDAL_CHECK_VERSION(argv[0]))
         exit(1);
-    }
 
     GDALAllRegister();
     OGRRegisterAll();
