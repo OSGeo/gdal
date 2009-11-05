@@ -1058,24 +1058,24 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
     // Search for the first point within the search ellipse
     while ( i < nPoints - 1 )
     {
-        double  dfRX = padfX[i] - dfXPoint;
-        double  dfRY = padfY[i] - dfYPoint;
+        double  dfRX1 = padfX[i] - dfXPoint;
+        double  dfRY1 = padfY[i] - dfYPoint;
 
         if ( bRotated )
         {
-            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+            double dfRXRotated = dfRX1 * dfCoeff1 + dfRY1 * dfCoeff2;
+            double dfRYRotated = dfRY1 * dfCoeff1 - dfRX1 * dfCoeff2;
 
-            dfRX = dfRXRotated;
-            dfRY = dfRYRotated;
+            dfRX1 = dfRXRotated;
+            dfRY1 = dfRYRotated;
         }
 
         // Is this point located inside the search ellipse?
-        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        if ( dfRadius2 * dfRX1 * dfRX1 + dfRadius1 * dfRY1 * dfRY1 <= dfR12 )
         {
             GUInt32 j;
             
-            // Search all the remainong points within the ellipse and compute
+            // Search all the remaining points within the ellipse and compute
             // distances between them and the first point
             for ( j = i + 1; j < nPoints; j++ )
             {
@@ -1091,10 +1091,14 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
                     dfRY2 = dfRYRotated;
                 }
 
-                const double dfRX3 = padfX[j] - padfX[i];
-                const double dfRY3 = padfY[j] - padfY[i];
-                dfAccumulator += sqrt( dfRX3 * dfRX3 + dfRY3 * dfRY3 );
-                n++;
+                if ( dfRadius2 * dfRX2 * dfRX2 + dfRadius1 * dfRY2 * dfRY2 <= dfR12 )
+                {
+                    const double dfRX = padfX[j] - padfX[i];
+                    const double dfRY = padfY[j] - padfY[i];
+
+                    dfAccumulator += sqrt( dfRX * dfRX + dfRY * dfRY );
+                    n++;
+                }
             }
         }
 
