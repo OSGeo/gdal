@@ -127,7 +127,7 @@ points may have failed) or FALSE if the overall transformation fails.
  * The trickiest part of using the function is ensuring that the 
  * transformer created is from source file pixel/line coordinates to 
  * output file georeferenced coordinates.  This can be accomplished with 
- * GDALCreateGenImProjTransformer() by passing a NULL for the hDstDS.  
+ * GDALCreateGenImgProjTransformer() by passing a NULL for the hDstDS.  
  *
  * @param hSrcDS the input image (it is assumed the whole input images is
  * being transformed). 
@@ -187,7 +187,7 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
  * The trickiest part of using the function is ensuring that the 
  * transformer created is from source file pixel/line coordinates to 
  * output file georeferenced coordinates.  This can be accomplished with 
- * GDALCreateGenImProjTransformer() by passing a NULL for the hDstDS.  
+ * GDALCreateGenImgProjTransformer() by passing a NULL for the hDstDS.  
  *
  * @param hSrcDS the input image (it is assumed the whole input images is
  * being transformed). 
