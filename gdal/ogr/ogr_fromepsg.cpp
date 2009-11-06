@@ -2149,3 +2149,16 @@ int OGRSpatialReference::EPSGTreatsAsLatLong()
 
     return FALSE;
 }
+
+/************************************************************************/
+/*                       OSREPSGTreatsAsLatLong()                       */
+/************************************************************************/
+
+int OSREPSGTreatsAsLatLong( OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSREPSGTreatsAsLatLong", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->EPSGTreatsAsLatLong();
+}
+
