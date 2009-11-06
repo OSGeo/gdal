@@ -229,6 +229,10 @@ public:
     return OSRIsLocal(self);
   }
 
+  int EPSGTreatsAsLatLong() {
+    return OSREPSGTreatsAsLatLong(self);
+  }
+
   OGRErr SetAuthority( const char * pszTargetKey,
                        const char * pszAuthority,
                        int nCode ) {
@@ -689,6 +693,10 @@ public:
 
   OGRErr ImportFromEPSG( int arg ) {
     return OSRImportFromEPSG(self, arg);
+  }
+
+  OGRErr ImportFromEPSGA( int arg ) {
+    return OSRImportFromEPSGA(self, arg);
   }
 
   OGRErr ImportFromPCI( char const *proj, char const *units = "METRE",
