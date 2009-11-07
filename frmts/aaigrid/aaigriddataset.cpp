@@ -552,7 +552,9 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         
         if( poOpenInfo->pabyHeader[i-1] == '\n' 
-            || poOpenInfo->pabyHeader[i-2] == '\n' )
+            || poOpenInfo->pabyHeader[i-2] == '\n' 
+            || poOpenInfo->pabyHeader[i-1] == '\r' 
+            || poOpenInfo->pabyHeader[i-2] == '\r' )
         {
             if( !isalpha(poOpenInfo->pabyHeader[i]) )
             {
