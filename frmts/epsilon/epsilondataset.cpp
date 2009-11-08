@@ -643,7 +643,13 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
         delete poDS;
         return NULL;
     }
-
+    
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(nBandsToAdd, FALSE))
+    {
+        delete poDS;
+        return NULL;
+    }
     if (!poDS->bRegularTiling)
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -665,7 +671,7 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 
 
 /************************************************************************/
-/*                       RasterliteCreateCopy ()                        */
+/*                  EpsilonDatasetCreateCopy ()                         */
 /************************************************************************/
 
 GDALDataset *
