@@ -1872,7 +1872,7 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
     if ( psExtent == NULL )
         return OGRERR_FAILURE;
 
-    if ( TestCapability(OLCFastGetExtent) )
+    if ( TestCapability(OLCFastGetExtent) || bHasPostGISGeography )
     {
         PGconn      *hPGConn = poDS->GetPGConn();
         PGresult    *hResult = NULL;
