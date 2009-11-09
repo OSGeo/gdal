@@ -60,6 +60,10 @@ that are based on tables with multiple PostGIS geometry column is known to have 
 side-effects on the other layers as they are closely tied. Thus, that capability should currently
 be thought as mostly read-only.<p>
 
+Starting with GDAL 1.7.0, the driver also supports the
+<a href="http://postgis.refractions.net/documentation/manual-svn/ch04.html#PostGIS_Geography"><i>geography</i></a>
+column type introduced in PostGIS 1.5.
+
 <h2>Layers</h2>
 Starting with GDAL 1.6.0, even when PostGIS is enabled, if the user defines the environment variable
 <pre>PG_LIST_ALL_TABLES=YES</pre> (and does not specify tables=), all regular user tables and named views
@@ -163,8 +167,8 @@ None<p>
 <ul>
 <li>
 <b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
-one of "Geometry", "BYTEA" or "OID" to force the type of geometry used for
-a table. <p>
+one of "geometry", "geography" (PostGIS >= 1.5), "BYTEA" or "OID" to force the type of geometry used for
+a table. For a PostGIS database, "geometry" is the default value.<p>
 <li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
 desired name to be destroyed before creating the requested layer.<p>
 <li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
@@ -180,7 +184,7 @@ FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
 Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
 on the geometry dimension during loading.<p>
 <li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
-omitted it defaults to wkb_geometry.<p>
+omitted it defaults to <i>wkb_geometry</i> for GEOM_TYPE=geometry, or <i>the_geog</i> for GEOM_TYPE=geography.<p>
 <li> <b>SCHEMA</b>: Set name of schema for new table.
 Using the same layer name in different schemas is supported, but not in the public schema and others. Note that
 using the -overwrite option of ogr2ogr and -lco SCHEMA= option at the same time will not work, as the ogr2ogr utility

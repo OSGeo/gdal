@@ -1110,6 +1110,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     if( wkbFlatten(eType) == eType )
         nDimension = 2;
 
+    if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
+        nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
+        
     /* Postgres Schema handling:
        Extract schema name from input layer name or passed with -lco SCHEMA.
        Set layer name to "schema.table" or to "table" if schema == current_schema()
@@ -1187,10 +1190,11 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
             pszGeomType = "bytea";
     }
 
-    if( bHavePostGIS && !EQUAL(pszGeomType,"geometry") )
+    if( bHavePostGIS && !EQUAL(pszGeomType,"geometry") &&
+        !EQUAL(pszGeomType, "geography") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't override GEOM_TYPE in PostGIS enabled databases.\n"
+                  "GEOM_TYPE in PostGIS enabled databases must be 'geometry' or 'geography' (the latter is available in PostGIS >= 1.5).\n"
                   "Creation of layer %s with GEOM_TYPE %s has failed.",
                   pszLayerName, pszGeomType );
         CPLFree( pszLayerName );
@@ -1206,14 +1210,52 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
     if( poSRS != NULL )
         nSRSId = FetchSRSId( poSRS );
+        
+    const char *pszGeometryType;
+    switch( wkbFlatten(eType) )
+    {
+        case wkbPoint:
+            pszGeometryType = "POINT";
+            break;
 
+        case wkbLineString:
+            pszGeometryType = "LINESTRING";
+            break;
+
+        case wkbPolygon:
+            pszGeometryType = "POLYGON";
+            break;
+
+        case wkbMultiPoint:
+            pszGeometryType = "MULTIPOINT";
+            break;
+
+        case wkbMultiLineString:
+            pszGeometryType = "MULTILINESTRING";
+            break;
+
+        case wkbMultiPolygon:
+            pszGeometryType = "MULTIPOLYGON";
+            break;
+
+        case wkbGeometryCollection:
+            pszGeometryType = "GEOMETRYCOLLECTION";
+            break;
+
+        default:
+            pszGeometryType = "GEOMETRY";
+            break;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
-
+    
+    const char *pszGFldName = NULL;
+    
     if( !bHavePostGIS )
     {
         osCommand.Printf(
@@ -1222,6 +1264,22 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                  "   WKB_GEOMETRY %s, "
                  "   CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
                  pszSchemaName, pszTableName, pszGeomType, pszTableName );
+    }
+    else if ( EQUAL(pszGeomType, "geography") )
+    {
+        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
+            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
+        else
+            pszGFldName = "the_geog";
+        
+        if (nSRSId)
+            osCommand.Printf(
+                     "CREATE TABLE \"%s\".\"%s\" ( OGC_FID SERIAL, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
+                     pszSchemaName, pszTableName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName );
+        else
+            osCommand.Printf(
+                     "CREATE TABLE \"%s\".\"%s\" ( OGC_FID SERIAL, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
+                     pszSchemaName, pszTableName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName );
     }
     else
     {
@@ -1251,18 +1309,12 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      "geometric layers", capturing the WKT projection, and           */
 /*      perhaps some other housekeeping.                                */
 /* -------------------------------------------------------------------- */
-    if( bHavePostGIS )
+    if( bHavePostGIS && !EQUAL(pszGeomType, "geography"))
     {
-        const char *pszGeometryType;
-        const char *pszGFldName;
- 
-        if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
-            nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
-
         if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
             pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
-	else
-	    pszGFldName = "wkb_geometry";
+        else
+            pszGFldName = "wkb_geometry";
 
         /* Sometimes there is an old cruft entry in the geometry_columns
          * table if things were not properly cleaned up before.  We make
@@ -1274,42 +1326,6 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         hResult = PQexec(hPGConn, osCommand.c_str());
         OGRPGClearResult( hResult );
-
-        switch( wkbFlatten(eType) )
-        {
-            case wkbPoint:
-                pszGeometryType = "POINT";
-                break;
-
-            case wkbLineString:
-                pszGeometryType = "LINESTRING";
-                break;
-
-            case wkbPolygon:
-                pszGeometryType = "POLYGON";
-                break;
-
-            case wkbMultiPoint:
-                pszGeometryType = "MULTIPOINT";
-                break;
-
-            case wkbMultiLineString:
-                pszGeometryType = "MULTILINESTRING";
-                break;
-
-            case wkbMultiPolygon:
-                pszGeometryType = "MULTIPOLYGON";
-                break;
-
-            case wkbGeometryCollection:
-                pszGeometryType = "GEOMETRYCOLLECTION";
-                break;
-
-            default:
-                pszGeometryType = "GEOMETRY";
-                break;
-
-        }
 
         osCommand.Printf(
                  "SELECT AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
@@ -1337,7 +1353,10 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         }
 
         OGRPGClearResult( hResult );
-
+    }
+    
+    if( bHavePostGIS )
+    {
 /* -------------------------------------------------------------------- */
 /*      Create the spatial index.                                       */
 /*                                                                      */

@@ -327,9 +327,12 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
         return (m_poFilterGeom == NULL || 
                 ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2)) && m_poAttrQuery == NULL;
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) || EQUAL(pszCap,OLCFastGetExtent) )
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2) && m_poAttrQuery == NULL;
 
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return (bHasPostGISGeometry && nSRSId != -2) && m_poAttrQuery == NULL;
+        
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
 
@@ -417,6 +420,12 @@ OGRErr OGRPGResultLayer::GetExtent( OGREnvelope *psExtent, int bForce )
         osCommand.Printf( "SELECT Extent(\"%s\") FROM (%s) AS ogrpgextent", 
                          pszGeomColumn, pszRawStatement );
     }
-
+    else if ( bHasPostGISGeography )
+    {
+        /* Probably not very efficient, but more efficient than client-side implementation */
+        osCommand.Printf( "SELECT Extent(ST_GeomFromWKB(ST_AsBinary(\"%s\"))) FROM (%s) AS ogrpgextent", 
+                          pszGeomColumn, pszRawStatement );
+    }
+    
     return RunGetExtentRequest(psExtent, bForce, osCommand);
 }

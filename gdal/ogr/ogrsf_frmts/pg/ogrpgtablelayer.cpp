@@ -1555,12 +1555,13 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     {
         osCommand = "\\N";
     }
-    osCommand += "\t";
-
 
     /* Next process the field id column */
     if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
     {
+        if (osCommand.size() > 0)
+            osCommand += "\t";
+            
         /* Set the FID */
         if( poFeature->GetFID() != OGRNullFID )
         {
@@ -1570,8 +1571,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         {
             osCommand += "\\N" ;
         }
-
-        osCommand += "\t";
     }
 
 
@@ -1583,12 +1582,12 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         const char *pszStrValue = poFeature->GetFieldAsString(i);
         char *pszNeedToFree = NULL;
 
+        if (osCommand.size() > 0)
+            osCommand += "\t";
+            
         if( !poFeature->IsFieldSet( i ) )
         {
             osCommand += "\\N" ;
-
-            if( i < nFieldCount - 1 )
-                osCommand += "\t";
 
             continue;
         }
@@ -1694,9 +1693,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
         if( pszNeedToFree )
             CPLFree( pszNeedToFree );
-
-        if( i < nFieldCount - 1 )
-            osCommand += "\t";
     }
 
     /* Add end of line marker */
@@ -1712,6 +1708,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     /* This is for postgresql  7.4 and higher */
 #if !defined(PG_PRE74)
     int copyResult = PQputCopyData(hPGConn, osCommand.c_str(), strlen(osCommand.c_str()));
+    //CPLDebug("PG", "PQputCopyData(%s)", osCommand.c_str());
 
     switch (copyResult)
     {
@@ -1768,7 +1765,7 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
-        return bHasPostGISGeometry || bHasPostGISGeography;
+        return bHasPostGISGeometry;
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
@@ -2052,14 +2049,29 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
         poDS->SoftStartTransaction();
 
-        osCommand.Printf(
-                 "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s'",
-                 (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
-
-        if (pszGeomColumn)
+        if (bHasPostGISGeography)
         {
-            osCommand += CPLString().Printf(" AND f_geometry_column = '%s'", pszGeomColumn);
+            osCommand.Printf(
+                     "SELECT srid FROM geography_columns "
+                     "WHERE f_table_name = '%s'",
+                     (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
+
+            if (pszGeomColumn)
+            {
+                osCommand += CPLString().Printf(" AND f_geography_column = '%s'", pszGeomColumn);
+            }
+        }
+        else
+        {
+            osCommand.Printf(
+                     "SELECT srid FROM geometry_columns "
+                     "WHERE f_table_name = '%s'",
+                     (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
+
+            if (pszGeomColumn)
+            {
+                osCommand += CPLString().Printf(" AND f_geometry_column = '%s'", pszGeomColumn);
+            }
         }
 
         if (pszSchemaName)
@@ -2098,6 +2110,12 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     if ( TestCapability(OLCFastGetExtent) )
     {
         osCommand.Printf( "SELECT Extent(\"%s\") FROM %s", 
+                          pszGeomColumn, pszSqlTableName );
+    }
+    else if ( bHasPostGISGeography )
+    {
+        /* Probably not very efficient, but more efficient than client-side implementation */
+        osCommand.Printf( "SELECT Extent(ST_GeomFromWKB(ST_AsBinary(\"%s\"))) FROM %s", 
                           pszGeomColumn, pszSqlTableName );
     }
 
