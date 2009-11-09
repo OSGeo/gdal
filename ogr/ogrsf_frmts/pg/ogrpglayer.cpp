@@ -92,6 +92,7 @@ OGRPGLayer::OGRPGLayer()
     bHasWkb = FALSE;
     bWkbAsOid = FALSE;
     bHasPostGISGeometry = FALSE;
+    bHasPostGISGeography = FALSE;
     pszGeomColumn = NULL;
     pszQueryStatement = NULL;
 
@@ -626,9 +627,32 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /*      Handle PostGIS geometry                                         */
 /* -------------------------------------------------------------------- */
 
-        if( bHasPostGISGeometry)
+        if( bHasPostGISGeometry || bHasPostGISGeography )
         {
-            if ( poDS->bUseBinaryCursor &&
+            if ( poDS->bUseBinaryCursor && 
+                 EQUAL(PQfname(hCursorResult,iField),"ST_AsBinary") )
+            {
+                GByte * pabyWKB = (GByte*) PQgetvalue( hCursorResult,
+                                             iRecord, iField);
+
+                int nLength = PQgetlength(hCursorResult, iRecord, iField);
+
+                /* No geometry */
+                if (nLength == 0)
+                    continue;
+                    
+                OGRGeometry * poGeom = NULL;
+                OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeom, nLength );
+
+                if( poGeom != NULL )
+                {
+                    poGeom->assignSpatialReference( poSRS );
+                    poFeature->SetGeometryDirectly( poGeom );
+                }
+
+                continue;
+            }
+            else if ( poDS->bUseBinaryCursor &&
                  (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn) ||
                   EQUAL(PQfname(hCursorResult,iField),"AsEWKB")) )
             {
@@ -662,7 +686,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             }
             else if (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn) ||
                      EQUAL(PQfname(hCursorResult,iField),"asEWKT") ||
-                     EQUAL(PQfname(hCursorResult,iField),"asText") )
+                     EQUAL(PQfname(hCursorResult,iField),"asText") ||
+                     EQUAL(PQfname(hCursorResult,iField),"ST_AsText") )
             {
                 /* Handle WKT */
                 char        *pszWKT;

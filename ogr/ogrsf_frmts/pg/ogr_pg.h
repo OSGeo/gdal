@@ -115,6 +115,7 @@ class OGRPGLayer : public OGRLayer
     int                 bHasWkb;
     int                 bWkbAsOid;
     int                 bHasPostGISGeometry;
+    int                 bHasPostGISGeography;
     char                *pszGeomColumn;
 
     int                 bHasFid;
@@ -305,6 +306,7 @@ class OGRPGDataSource : public OGRDataSource
     int                 DeleteLayer( int iLayer );
 
     Oid                 nGeometryOID;
+    Oid                 nGeographyOID;
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
@@ -362,6 +364,7 @@ class OGRPGDataSource : public OGRDataSource
     OGRErr              FlushSoftTransaction();
 
     Oid                 GetGeometryOID() { return nGeometryOID; }
+    Oid                 GetGeographyOID() { return nGeographyOID; }
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,

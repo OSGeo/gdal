@@ -54,6 +54,9 @@ OGRPGDataSource::OGRPGDataSource()
     bUseBinaryCursor = FALSE;
     nSoftTransactionLevel = 0;
     bBinaryTimeFormatIsInt8 = FALSE;
+    
+    nGeometryOID = (Oid) 0;
+    nGeographyOID = (Oid) 0;
 
     nKnownSRID = 0;
     panSRID = NULL;
@@ -679,6 +682,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      specified through the TABLES connection string param           */
 /* -------------------------------------------------------------------- */
 
+    int bHasGeography = FALSE;
     CPLHashSet* hSetTables = CPLHashSetNew(OGRPGHashTableEntry, OGRPGEqualTableEntry, OGRPGFreeTableEntry);
 
     if (papszTableNames == NULL)
@@ -692,11 +696,41 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             /* Caution : in PostGIS case, the result has 3 columns, whereas in the */
             /* non-PostGIS case it has only 2 columns */
             if ( bHavePostGIS && !bListAllTables )
-                hResult = PQexec(hPGConn,
-                                "DECLARE mycursor CURSOR for "
-                                "SELECT c.relname, n.nspname, g.f_geometry_column FROM pg_class c, pg_namespace n, geometry_columns g "
-                                "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
-                                "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
+            {
+                /* PostGIS 1.5 brings support for 'geography' type. */
+                /* Checks that the type exists */
+                if (sPostGISVersion.nMajor > 1 ||
+                    (sPostGISVersion.nMajor == 1 && sPostGISVersion.nMinor >= 5))
+                {
+                    hResult = PQexec(hPGConn,
+                                    "SELECT oid FROM pg_type WHERE typname = 'geography'" );
+
+                    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+                        && PQntuples(hResult) > 0)
+                    {
+                        bHasGeography = TRUE;
+                        nGeographyOID = atoi(PQgetvalue(hResult,0,0));
+                    }
+                    
+                    OGRPGClearResult( hResult );
+                }
+                
+                if (bHasGeography)
+                    hResult = PQexec(hPGConn,
+                                    "DECLARE mycursor CURSOR for "
+                                    "SELECT c.relname, n.nspname, g.f_geometry_column, 0 FROM pg_class c, pg_namespace n, geometry_columns g "
+                                    "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                    "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)"
+                                    "UNION SELECT c.relname, n.nspname, g.f_geography_column, 1 FROM pg_class c, pg_namespace n, geography_columns g "
+                                    "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                    "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
+                else
+                    hResult = PQexec(hPGConn,
+                                    "DECLARE mycursor CURSOR for "
+                                    "SELECT c.relname, n.nspname, g.f_geometry_column FROM pg_class c, pg_namespace n, geometry_columns g "
+                                    "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                    "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
+            }
             else
                 hResult = PQexec(hPGConn,
                                 "DECLARE mycursor CURSOR for "
