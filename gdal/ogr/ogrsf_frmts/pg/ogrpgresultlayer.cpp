@@ -81,6 +81,11 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
 
         OGRPGClearResult(hSRSIdResult);
     }
+    else if (bHasPostGISGeography)
+    {
+        // FIXME? But for the moment, PostGIS 1.5 only handles SRID:4326.
+        nSRSId = 4326;
+    }
 
     /* Now set the cursor that will fetch the first rows */
     /* This is usefull when used in situations like */
@@ -135,12 +140,25 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultI
                  EQUAL(oField.GetNameRef(),"asEWKT") ||
                  EQUAL(oField.GetNameRef(),"asText") )
         {
-            if (bHasPostGISGeometry)
+            if (bHasPostGISGeometry || bHasPostGISGeography )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "More than one geometry column was found in the result of the SQL request. Only last one will be used");
             }
             bHasPostGISGeometry = TRUE;
+            CPLFree(pszGeomColumn);
+            pszGeomColumn = CPLStrdup(oField.GetNameRef());
+            continue;
+        }
+        else if( nTypeOID == poDS->GetGeographyOID()  ||
+                 EQUAL(oField.GetNameRef(),"ST_AsText") )
+        {
+            if (bHasPostGISGeometry || bHasPostGISGeography )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "More than one geometry column was found in the result of the SQL request. Only last one will be used");
+            }
+            bHasPostGISGeography = TRUE;
             CPLFree(pszGeomColumn);
             pszGeomColumn = CPLStrdup(oField.GetNameRef());
             continue;
@@ -307,10 +325,10 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCFastFeatureCount) ||
         EQUAL(pszCap,OLCFastSetNextByIndex) )
         return (m_poFilterGeom == NULL || 
-                (bHasPostGISGeometry && nSRSId != -2)) && m_poAttrQuery == NULL;
+                ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2)) && m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) || EQUAL(pszCap,OLCFastGetExtent) )
-        return (bHasPostGISGeometry && nSRSId != -2) && m_poAttrQuery == NULL;
+        return ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2) && m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
@@ -337,7 +355,7 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
             return NULL;
 
         if( (m_poFilterGeom == NULL
-            || (bHasPostGISGeometry && nSRSId != -2)
+            || ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2)
             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
@@ -356,7 +374,7 @@ void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 {
     if( InstallFilter( poGeomIn ) )
     {
-        if (bHasPostGISGeometry && nSRSId != -2)
+        if ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2)
         {
             if( m_poFilterGeom != NULL)
             {
