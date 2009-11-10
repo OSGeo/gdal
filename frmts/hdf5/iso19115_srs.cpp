@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: hdf5imagedataset.cpp 17802 2009-10-13 04:48:48Z chaitanya $
+ * $Id$
  *
  * Project:  BAG Driver
  * Purpose:  Implements code to parse ISO 19115 metadata to extract a
@@ -33,7 +33,7 @@
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id: hdf5imagedataset.cpp 17802 2009-10-13 04:48:48Z chaitanya $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                     OGR_SRS_ImportFromISO19115()                     */
@@ -64,6 +64,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find <referenceSystemInfo> in metadata." );
+        CPLDestroyXMLNode( psRoot );
         return OGRERR_FAILURE;
     }
 
@@ -78,6 +79,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     if( strlen(pszDatum) > 0 
         && poThis->SetWellKnownGeogCS( pszDatum ) != OGRERR_NONE )
     {
+        CPLDestroyXMLNode( psRoot );
         return OGRERR_FAILURE;
     }
     
