@@ -445,7 +445,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( CPLString& osCurrentSchema
     OGRPGClearResult( hResult );
 
     // get layer geometry type (for PostGIS dataset)
-    if ( bHasPostGISGeometry )
+    if ( bHasPostGISGeometry || bHasPostGISGeography )
     {
       /* Get the geometry type and dimensions from the table, or */
       /* from its parents if it is a derived table, or from the parent of the parent, etc.. */
@@ -453,97 +453,15 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( CPLString& osCurrentSchema
       while(bGoOn)
       {
         osCommand.Printf(
-            "SELECT type, coord_dimension%s FROM geometry_columns WHERE f_table_name='%s'",
+            "SELECT type, coord_dimension%s FROM %s WHERE f_table_name='%s'",
             (nSRSId == -2) ? ", srid" : "",
+            (bHasPostGISGeometry) ? "geometry_columns" : "geography_columns",
             (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn);
         if (pszGeomColumn)
         {
-            osCommand += CPLString().Printf(" AND f_geometry_column='%s'", pszGeomColumn);
-        }
-        if (pszSchemaName)
-        {
-            osCommand += CPLString().Printf(" AND f_table_schema='%s'", pszSchemaName);
-        }
-
-        hResult = PQexec(hPGConn,osCommand);
-
-        if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
-        {
-            char * pszType = PQgetvalue(hResult,0,0);
-            OGRwkbGeometryType nGeomType = wkbUnknown;
-
-            nCoordDimension = MAX(2,MIN(3,atoi(PQgetvalue(hResult,0,1))));
-
-            if (nSRSId == -2)
-                nSRSId = atoi(PQgetvalue(hResult,0,2));
-
-            // check only standard OGC geometry types
-            if ( EQUAL(pszType, "POINT") )
-                nGeomType = wkbPoint;
-            else if ( EQUAL(pszType,"LINESTRING"))
-                nGeomType = wkbLineString;
-            else if ( EQUAL(pszType,"POLYGON"))
-                nGeomType = wkbPolygon;
-            else if ( EQUAL(pszType,"MULTIPOINT"))
-                nGeomType = wkbMultiPoint;
-            else if ( EQUAL(pszType,"MULTILINESTRING"))
-                nGeomType = wkbMultiLineString;
-            else if ( EQUAL(pszType,"MULTIPOLYGON"))
-                nGeomType = wkbMultiPolygon;
-            else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
-                nGeomType = wkbGeometryCollection;
-
-            if( nCoordDimension == 3 && nGeomType != wkbUnknown )
-                nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
-
-            CPLDebug("PG","Layer '%s' geometry type: %s:%s, Dim=%d",
-                     pszTableIn, pszType, OGRGeometryTypeToName(nGeomType),
-                     nCoordDimension );
-
-            poDefn->SetGeomType( nGeomType );
-
-            bGoOn = FALSE;
-        }
-        else
-        {
-            /* Fetch the name of the parent table */
-            osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
-                             "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
-                             "(SELECT pg_class.oid FROM pg_class WHERE relname = '%s'))",
-                             (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn );
-
-            OGRPGClearResult( hResult );
-            hResult = PQexec(hPGConn, osCommand.c_str() );
-
-            if ( hResult && PQntuples( hResult ) == 1 && !PQgetisnull( hResult,0,0 ) )
-            {
-                CPLFree(pszSqlGeomParentTableName);
-                pszSqlGeomParentTableName = CPLStrdup( PQgetvalue(hResult,0,0) );
-            }
-            else
-            {
-                /* No more parent : stop recursion */
-                bGoOn = FALSE;
-            }
-        }
-
-        OGRPGClearResult( hResult );
-      }
-    }
-    else if ( bHasPostGISGeography )
-    {
-      /* Get the geography type and dimensions from the table, or */
-      /* from its parents if it is a derived table, or from the parent of the parent, etc.. */
-      int bGoOn = TRUE;
-      while(bGoOn)
-      {
-        osCommand.Printf(
-            "SELECT type, coord_dimension%s FROM geography_columns WHERE f_table_name='%s'",
-            (nSRSId == -2) ? ", srid" : "",
-            (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableIn);
-        if (pszGeomColumn)
-        {
-            osCommand += CPLString().Printf(" AND f_geography_column='%s'", pszGeomColumn);
+            osCommand += CPLString().Printf(" AND %s='%s'",
+                (bHasPostGISGeometry) ? "f_geometry_column" : "f_geography_column",
+                pszGeomColumn);
         }
         if (pszSchemaName)
         {
