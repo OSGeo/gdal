@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: hdf5imagedataset.cpp 17802 2009-10-13 04:48:48Z chaitanya $
+ * $Id$
  *
  * Project:  Hierarchical Data Format Release 5 (HDF5)
  * Purpose:  Read BAG datasets.
@@ -34,7 +34,7 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: hdf5imagedataset.cpp 17802 2009-10-13 04:48:48Z chaitanya $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void    GDALRegister_BAG(void);
