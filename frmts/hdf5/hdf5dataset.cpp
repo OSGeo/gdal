@@ -68,6 +68,7 @@ void GDALRegister_HDF5()
 				      "frmt_hdf5.html");
 	    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hdf5");
 	    poDriver->pfnOpen = HDF5Dataset::Open;
+	    poDriver->pfnIdentify = HDF5Dataset::Identify;
 	    GetGDALDriverManager()->RegisterDriver(poDriver);
 	}
 }
@@ -194,6 +195,25 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Is it an HDF5 file?                                             */
+/* -------------------------------------------------------------------- */
+    static const char achSignature[] = "\211HDF\r\n\032\n";
+
+    if( poOpenInfo->pabyHeader == NULL
+        || memcmp(poOpenInfo->pabyHeader,achSignature,8) != 0 )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
@@ -201,19 +221,9 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
     HDF5Dataset *poDS;
     CPLErr      Err;
     
-    if( poOpenInfo->nHeaderBytes < 32 )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
-    if( !EQUALN((const char *) (poOpenInfo->pabyHeader+1), "HDF",3) )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*  We have special routine in the HDF library for format checking!     */
-/* -------------------------------------------------------------------- */
-    if( !H5Fis_hdf5( poOpenInfo->pszFilename ) ) {
-	return NULL;
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      Create datasource.                                              */
 /* -------------------------------------------------------------------- */
