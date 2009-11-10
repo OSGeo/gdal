@@ -88,9 +88,6 @@ class BAGRasterBand : public GDALPamRasterBand
     hid_t       native;
     hid_t       dataspace;
 
-    int         bNoDataSet;
-    double      dfNoDataValue;
-
     bool        bMinMaxSet;
     double      dfMinimum;
     double      dfMaximum;
@@ -100,11 +97,10 @@ public:
     BAGRasterBand( BAGDataset *, int );
     ~BAGRasterBand();
 
-    bool                    Initialize( hid_t hDataset );
+    bool                    Initialize( hid_t hDataset, const char *pszName );
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual double	    GetNoDataValue( int * ); 
-    virtual CPLErr	    SetNoDataValue( double );
 
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum(int *pbSuccess = NULL );
@@ -135,13 +131,12 @@ BAGRasterBand::~BAGRasterBand()
 /*                             Initialize()                             */
 /************************************************************************/
 
-bool BAGRasterBand::Initialize( hid_t hDatasetID )
+bool BAGRasterBand::Initialize( hid_t hDatasetID, const char *pszName )
 
 {
-    this->hDatasetID = hDatasetID;
+    SetDescription( pszName );
 
-    bNoDataSet    = FALSE;
-    dfNoDataValue = -9999;
+    this->hDatasetID = hDatasetID;
 
     hid_t datatype     = H5Dget_type( hDatasetID );
     dataspace          = H5Dget_space( hDatasetID );
@@ -188,17 +183,23 @@ bool BAGRasterBand::Initialize( hid_t hDatasetID )
 /* -------------------------------------------------------------------- */
 /*      Load min/max information.                                       */
 /* -------------------------------------------------------------------- */
-    if( nBand == 1
+    if( EQUAL(pszName,"elevation") 
         && GH5_FetchAttribute( hDatasetID, "Maximum Elevation Value", 
-                               dfMaximum ) 
+                            dfMaximum ) 
         && GH5_FetchAttribute( hDatasetID, "Minimum Elevation Value", 
                                dfMinimum ) )
         bMinMaxSet = true;
-    else if( nBand == 2
-        && GH5_FetchAttribute( hDatasetID, "Maximum Uncertainty Value", 
-                               dfMaximum ) 
-        && GH5_FetchAttribute( hDatasetID, "Minimum Uncertainty Value", 
-                               dfMinimum ) )
+    else if( EQUAL(pszName,"uncertainty") 
+             && GH5_FetchAttribute( hDatasetID, "Maximum Uncertainty Value", 
+                                    dfMaximum ) 
+             && GH5_FetchAttribute( hDatasetID, "Minimum Uncertainty Value", 
+                                    dfMinimum ) )
+        bMinMaxSet = true;
+    else if( EQUAL(pszName,"nominal_elevation") 
+             && GH5_FetchAttribute( hDatasetID, "max_value", 
+                                    dfMaximum ) 
+             && GH5_FetchAttribute( hDatasetID, "min_value", 
+                                    dfMinimum ) )
         bMinMaxSet = true;
 
     return true;
@@ -244,27 +245,17 @@ double BAGRasterBand::GetMaximum( int * pbSuccess )
 double BAGRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    if( bNoDataSet )
-    {
-        if( pbSuccess )
-            *pbSuccess = bNoDataSet;
-        
-        return dfNoDataValue;
-    }
+    if( pbSuccess )
+        *pbSuccess = TRUE;
+
+    if( EQUAL(GetDescription(),"elevation") )
+        return  1000000.0;
+    else if( EQUAL(GetDescription(),"uncertainty") )
+        return 0.0;
+    else if( EQUAL(GetDescription(),"nominal_elevation") )
+        return 1000000.0;
     else
         return GDALPamRasterBand::GetNoDataValue( pbSuccess );
-}
-
-/************************************************************************/
-/*                           SetNoDataValue()                           */
-/************************************************************************/
-CPLErr BAGRasterBand::SetNoDataValue( double dfNoData )
-
-{
-    bNoDataSet = TRUE;
-    dfNoDataValue = dfNoData;
-
-    return CE_None;
 }
 
 /************************************************************************/
@@ -445,6 +436,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Fetch the elevation dataset and attach as a band.               */
 /* -------------------------------------------------------------------- */
+    int nNextBand = 1;
     hid_t hElevation = H5Dopen( hHDF5, "/BAG_root/elevation" );
     if( hElevation < 0 )
     {
@@ -452,9 +444,9 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    BAGRasterBand *poElevBand = new BAGRasterBand( poDS, 1 );
+    BAGRasterBand *poElevBand = new BAGRasterBand( poDS, nNextBand );
 
-    if( !poElevBand->Initialize( hElevation ) )
+    if( !poElevBand->Initialize( hElevation, "elevation" ) )
     {
         delete poElevBand;
         delete poDS;
@@ -464,19 +456,39 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = poElevBand->nRasterXSize;
     poDS->nRasterYSize = poElevBand->nRasterYSize;
 
-    poDS->SetBand( 1, poElevBand );
+    poDS->SetBand( nNextBand++, poElevBand );
 
 /* -------------------------------------------------------------------- */
 /*      Try to do the same for the uncertainty band.                    */
 /* -------------------------------------------------------------------- */
     hid_t hUncertainty = H5Dopen( hHDF5, "/BAG_root/uncertainty" );
-    BAGRasterBand *poUBand = new BAGRasterBand( poDS, 2 );
+    BAGRasterBand *poUBand = new BAGRasterBand( poDS, nNextBand );
 
-    if( hUncertainty >= 0 && poUBand->Initialize( hUncertainty ) )
-        poDS->SetBand( 2, poUBand );
+    if( hUncertainty >= 0 && poUBand->Initialize( hUncertainty, "uncertainty") )
+    {
+        poDS->SetBand( nNextBand++, poUBand );
+    }
     else
         delete poUBand;
 
+/* -------------------------------------------------------------------- */
+/*      Try to do the same for the uncertainty band.                    */
+/* -------------------------------------------------------------------- */
+    hid_t hNominal = -1;
+
+    H5E_BEGIN_TRY {
+        hNominal = H5Dopen( hHDF5, "/BAG_root/nominal_elevation" );
+    } H5E_END_TRY;
+
+    BAGRasterBand *poNBand = new BAGRasterBand( poDS, nNextBand );
+    if( hNominal >= 0 && poNBand->Initialize( hNominal,
+                                              "nominal_elevation" ) )
+    {
+        poDS->SetBand( nNextBand++, poNBand );
+    }
+    else
+        delete poNBand;
+        
 /* -------------------------------------------------------------------- */
 /*      Load the XML metadata.                                          */
 /* -------------------------------------------------------------------- */
