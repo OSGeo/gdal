@@ -137,6 +137,10 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultI
             continue;
         }
         else if( nTypeOID == poDS->GetGeometryOID()  ||
+                 nTypeOID == poDS->GetGeographyOID()  ||
+                 EQUAL(oField.GetNameRef(),"ST_AsText") ||
+                 EQUAL(oField.GetNameRef(),"ST_AsBinary") ||
+                 EQUAL(oField.GetNameRef(),"AsBinary") ||
                  EQUAL(oField.GetNameRef(),"asEWKT") ||
                  EQUAL(oField.GetNameRef(),"asText") )
         {
@@ -145,20 +149,10 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultI
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "More than one geometry column was found in the result of the SQL request. Only last one will be used");
             }
-            bHasPostGISGeometry = TRUE;
-            CPLFree(pszGeomColumn);
-            pszGeomColumn = CPLStrdup(oField.GetNameRef());
-            continue;
-        }
-        else if( nTypeOID == poDS->GetGeographyOID()  ||
-                 EQUAL(oField.GetNameRef(),"ST_AsText") )
-        {
-            if (bHasPostGISGeometry || bHasPostGISGeography )
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "More than one geometry column was found in the result of the SQL request. Only last one will be used");
-            }
-            bHasPostGISGeography = TRUE;
+            if (nTypeOID == poDS->GetGeographyOID())
+                bHasPostGISGeography = TRUE;
+            else
+                bHasPostGISGeometry = TRUE;
             CPLFree(pszGeomColumn);
             pszGeomColumn = CPLStrdup(oField.GetNameRef());
             continue;
