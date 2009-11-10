@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: hdf5imagedataset.cpp 17802 2009-10-13 04:48:48Z chaitanya $
+ * $Id$
  *
  * Project:  Hierarchical Data Format Release 5 (HDF5)
  * Purpose:  HDF5 convenience functions.
@@ -29,7 +29,7 @@
 
 #include "gh5_convenience.h"
 
-CPL_CVSID("$Id: hdf5imagedataset.cpp 17802 2009-10-13 04:48:48Z chaitanya $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                    GH5_FetchAttribute(CPLString)                     */
@@ -145,7 +145,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attribute %s of unsupported type for conversion to double.",
                       pszAttrName );
-
+        CPLFree( buf );
         return false;
     }
 
