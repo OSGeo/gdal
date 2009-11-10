@@ -629,8 +629,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
         if( bHasPostGISGeometry || bHasPostGISGeography )
         {
-            if ( poDS->bUseBinaryCursor && 
-                 EQUAL(PQfname(hCursorResult,iField),"ST_AsBinary") )
+            if ( EQUAL(PQfname(hCursorResult,iField),"ST_AsBinary") ||
+                 EQUAL(PQfname(hCursorResult,iField),"AsBinary") )
             {
                 GByte * pabyWKB = (GByte*) PQgetvalue( hCursorResult,
                                              iRecord, iField);
@@ -642,8 +642,17 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     continue;
                     
                 OGRGeometry * poGeom = NULL;
-                OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeom, nLength );
-
+                if( !poDS->bUseBinaryCursor && nLength >= 4 &&
+                    (EQUALN((const char*)pabyWKB,"\\000",4) || EQUALN((const char*)pabyWKB,"\\001",4)) )
+                {
+                    const char* pszBYTEA = (const char*)pabyWKB;
+                    pabyWKB = BYTEAToGByteArray(pszBYTEA, &nLength);
+                    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeom, nLength );
+                    CPLFree(pabyWKB);
+                }
+                else
+                    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeom, nLength );
+                
                 if( poGeom != NULL )
                 {
                     poGeom->assignSpatialReference( poSRS );
@@ -667,7 +676,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     continue;
 
                 OGRGeometry * poGeom;
-                if( EQUALN(pabyData,"00",2) || EQUALN(pabyData,"01",2) )
+                if( nLength >= 2 && (EQUALN(pabyData,"00",2) || EQUALN(pabyData,"01",2)) )
                 {
                     poGeom = HEXToGeometry(pabyData);
                 }
