@@ -94,7 +94,7 @@ class HDF5Dataset : public GDALPamDataset
   ~HDF5Dataset();
     
   static GDALDataset *Open(GDALOpenInfo *);
-
+  static int Identify(GDALOpenInfo *);
 };
 
 
