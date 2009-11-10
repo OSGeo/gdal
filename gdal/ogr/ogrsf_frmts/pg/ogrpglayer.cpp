@@ -1886,13 +1886,25 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
         }
 
         char * pszBox = PQgetvalue(hResult,0,0);
-        char * ptr = pszBox;
+        char * ptr, *ptrEndParenthesis;
         char szVals[64*6+6];
 
-        while ( *ptr != '(' && ptr ) ptr++; ptr++;
+        ptr = strchr(pszBox, '(');
+        if (ptr)
+            ptr ++;
+        if (ptr == NULL ||
+            (ptrEndParenthesis = strchr(ptr, ')')) == NULL ||
+            ptrEndParenthesis - ptr > (int)(sizeof(szVals) - 1))
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "Bad extent representation: '%s'", pszBox);
 
-        strncpy(szVals,ptr,strstr(ptr,")") - ptr);
-        szVals[strstr(ptr,")") - ptr] = '\0';
+            OGRPGClearResult( hResult );
+            return OGRERR_FAILURE;
+        }
+
+        strncpy(szVals,ptr,ptrEndParenthesis - ptr);
+        szVals[ptrEndParenthesis - ptr] = '\0';
 
         char ** papszTokens = CSLTokenizeString2(szVals," ,",CSLT_HONOURSTRINGS);
         int nTokenCnt = poDS->sPostGISVersion.nMajor >= 1 ? 4 : 6;
