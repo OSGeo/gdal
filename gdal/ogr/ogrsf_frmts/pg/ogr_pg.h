@@ -298,6 +298,7 @@ class OGRPGDataSource : public OGRDataSource
 
     int                 bDSUpdate;
     int                 bHavePostGIS;
+    int                 bHaveGeography;
 
     int                 nSoftTransactionLevel;
 
