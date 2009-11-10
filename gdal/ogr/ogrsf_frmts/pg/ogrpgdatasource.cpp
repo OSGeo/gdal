@@ -51,6 +51,7 @@ OGRPGDataSource::OGRPGDataSource()
     nLayers = 0;
     hPGConn = NULL;
     bHavePostGIS = FALSE;
+    bHaveGeography = FALSE;
     bUseBinaryCursor = FALSE;
     nSoftTransactionLevel = 0;
     bBinaryTimeFormatIsInt8 = FALSE;
@@ -682,7 +683,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      specified through the TABLES connection string param           */
 /* -------------------------------------------------------------------- */
 
-    int bHasGeography = FALSE;
     CPLHashSet* hSetTables = CPLHashSetNew(OGRPGHashTableEntry, OGRPGEqualTableEntry, OGRPGFreeTableEntry);
 
     if (papszTableNames == NULL)
@@ -708,14 +708,18 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
                         && PQntuples(hResult) > 0)
                     {
-                        bHasGeography = TRUE;
+                        bHaveGeography = TRUE;
                         nGeographyOID = atoi(PQgetvalue(hResult,0,0));
+                    }
+                    else
+                    {
+                        CPLDebug("PG", "PostGIS >= 1.5 detected but cannot find 'geography' type");
                     }
                     
                     OGRPGClearResult( hResult );
                 }
                 
-                if (bHasGeography)
+                if (bHaveGeography)
                     hResult = PQexec(hPGConn,
                                     "DECLARE mycursor CURSOR for "
                                     "SELECT c.relname, n.nspname, g.f_geometry_column, 0 FROM pg_class c, pg_namespace n, geometry_columns g "
@@ -1189,14 +1193,32 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         else
             pszGeomType = "bytea";
     }
+    
+    if( EQUAL(pszGeomType, "geography") && !bHaveGeography )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "GEOM_TYPE=geography is only supported in PostGIS >= 1.5.\n"
+                  "Creation of layer %s has failed.",
+                  pszLayerName );
+        CPLFree( pszLayerName );
+        CPLFree( pszSchemaName );
+        return NULL;
+    }
 
     if( bHavePostGIS && !EQUAL(pszGeomType,"geometry") &&
         !EQUAL(pszGeomType, "geography") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "GEOM_TYPE in PostGIS enabled databases must be 'geometry' or 'geography' (the latter is available in PostGIS >= 1.5).\n"
-                  "Creation of layer %s with GEOM_TYPE %s has failed.",
-                  pszLayerName, pszGeomType );
+        if( bHaveGeography )
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "GEOM_TYPE in PostGIS enabled databases must be 'geometry' or 'geography'.\n"
+                      "Creation of layer %s with GEOM_TYPE %s has failed.",
+                      pszLayerName, pszGeomType );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "GEOM_TYPE in PostGIS enabled databases must be 'geometry'.\n"
+                      "Creation of layer %s with GEOM_TYPE %s has failed.",
+                      pszLayerName, pszGeomType );
+
         CPLFree( pszLayerName );
         CPLFree( pszSchemaName );
         return NULL;
