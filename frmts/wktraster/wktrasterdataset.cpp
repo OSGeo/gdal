@@ -216,7 +216,7 @@ GBool TableHasGISTIndex(PGconn * hPGconn, const char * pszTable) {
 
 
 /**
- * Check if the table has an index
+ * Check if the RASTER_COLUMNS table exists
  * Parameters:
  *  - PGconn *: pointer to connection
  * Output:
@@ -1250,13 +1250,6 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
                 nBitDepth = 32;
             }
 
-
-            // Be careful with this format...
-            else if (EQUALN(papszPixelTypes[iBand], "16BF",
-                    4 * sizeof (char))) {
-                hDataType = GDT_Float32;
-                nBitDepth = 16;
-            }
                 
             else if (EQUALN(papszPixelTypes[iBand], "32BF",
                     4 * sizeof (char))) {
