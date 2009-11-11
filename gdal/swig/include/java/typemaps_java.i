@@ -255,7 +255,7 @@
  * Typemaps for (int nLen, unsigned char *pBuf )
  ***************************************************/
 
-%typemap(in) (int nLen, unsigned char *pBuf ) (jboolean isCopy)
+%typemap(in) (int nLen, unsigned char *pBuf )
 {
   /* %typemap(in) (int nLen, unsigned char *pBuf ) */
   $1 = 0;
@@ -263,7 +263,7 @@
   if ($input)
   {
     $1 = jenv->GetArrayLength($input);
-    $2 = (unsigned char *)jenv->GetByteArrayElements($input, &isCopy);
+    $2 = (unsigned char *)jenv->GetByteArrayElements($input, NULL);
   }
 }
 
@@ -278,7 +278,7 @@
   /* This calls JNI_ABORT, so any modifications will not be passed back
       into the Java caller
    */
-  if($2 && isCopy$argnum == JNI_TRUE) {
+  if($2) {
     jenv->ReleaseByteArrayElements($input, (jbyte *)$2, JNI_ABORT);
   }
 }
@@ -1255,7 +1255,7 @@ OPTIONAL_POD(int,i);
  * Typemaps for double argin[ANY]
  ***************************************************/
 
-%typemap(in) (double argin[ANY]) (jboolean isCopy)
+%typemap(in) (double argin[ANY])
 {
   /* %typemap(in) (double argin[ANY]) */
   if($input == NULL || jenv->GetArrayLength($input) != $dim0) {
@@ -1264,7 +1264,7 @@ OPTIONAL_POD(int,i);
       SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, errorMsg);
       return $null;
   }
-  $1 = (double *)jenv->GetDoubleArrayElements($input, &isCopy);
+  $1 = (double *)jenv->GetDoubleArrayElements($input, NULL);
 }
 
 %typemap(argout) (double argin[ANY])
@@ -1275,7 +1275,7 @@ OPTIONAL_POD(int,i);
 %typemap(freearg) (double argin[ANY])
 {
   /* %typemap(in) (double argin[ANY]) */
-  if(isCopy$argnum == JNI_TRUE) {
+  if($1) {
     jenv->ReleaseDoubleArrayElements($input, (jdouble *)$1, JNI_ABORT);
   }
 }
