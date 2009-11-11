@@ -281,6 +281,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( CPLString& osCurrentSchema
     int            iRecord;
 
     poDefn->Reference();
+    poDefn->SetGeomType( wkbNone );
     if (pszGeomColumnIn)
       pszGeomColumn = CPLStrdup(pszGeomColumnIn);
 
@@ -306,6 +307,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( CPLString& osCurrentSchema
             bHasPostGISGeometry = TRUE;
             if (!pszGeomColumn)
                 pszGeomColumn = CPLStrdup(oField.GetNameRef());
+            poDefn->SetGeomType( wkbUnknown );
             continue;
         }
         else if( EQUAL(pszType,"geography") )
@@ -324,6 +326,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( CPLString& osCurrentSchema
                 if( EQUAL(pszType,"OID") )
                     bWkbAsOid = TRUE;
             }
+            poDefn->SetGeomType( wkbUnknown );
             continue;
         }
 
