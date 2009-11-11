@@ -88,6 +88,12 @@ the features, and not treated as a regular field. <p>
 The layer name may be of the form "schema.table". The schema must exist, and the 
 user needs to have write permissions for the target and the public schema.<p>
 
+<p>Starting with GDAL 1.7.0, if the user defines the environment variable
+<pre>PG_SKIP_VIEWS=YES</pre> (and does not specify tables=), only the regular
+user tables will be treated as layers. The default action is to include the
+views. This variable is particularly useful when you want to copy the data into
+another format while avoiding the redundant data from the views.
+
 <h2>Named views</h2>
 
 When PostGIS is enabled for the accessed database, named views are supported, provided that 

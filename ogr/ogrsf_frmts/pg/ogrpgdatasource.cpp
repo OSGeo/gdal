@@ -719,7 +719,27 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                     OGRPGClearResult( hResult );
                 }
                 
-                if (bHaveGeography)
+                if( CSLTestBoolean(CPLGetConfigOption("PG_SKIP_VIEWS", "NO")) )
+                {
+                  if (bHaveGeography)
+                    hResult = PQexec(hPGConn,
+                                    "DECLARE mycursor CURSOR for "
+                                    "SELECT c.relname, n.nspname, g.f_geometry_column, 0 FROM pg_class c, pg_namespace n, geometry_columns g "
+                                    "WHERE (c.relkind in ('r') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                    "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)"
+                                    "UNION SELECT c.relname, n.nspname, g.f_geography_column, 1 FROM pg_class c, pg_namespace n, geography_columns g "
+                                    "WHERE (c.relkind in ('r') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                    "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
+                  else
+                    hResult = PQexec(hPGConn,
+                                    "DECLARE mycursor CURSOR for "
+                                    "SELECT c.relname, n.nspname, g.f_geometry_column FROM pg_class c, pg_namespace n, geometry_columns g "
+                                    "WHERE (c.relkind in ('r') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                    "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
+                }
+                else
+                {
+                  if (bHaveGeography)
                     hResult = PQexec(hPGConn,
                                     "DECLARE mycursor CURSOR for "
                                     "SELECT c.relname, n.nspname, g.f_geometry_column, 0 FROM pg_class c, pg_namespace n, geometry_columns g "
@@ -728,14 +748,21 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                                     "UNION SELECT c.relname, n.nspname, g.f_geography_column, 1 FROM pg_class c, pg_namespace n, geography_columns g "
                                     "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
                                     "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
-                else
+                  else
                     hResult = PQexec(hPGConn,
                                     "DECLARE mycursor CURSOR for "
                                     "SELECT c.relname, n.nspname, g.f_geometry_column FROM pg_class c, pg_namespace n, geometry_columns g "
                                     "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
                                     "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
+                }
             }
             else
+              if( CSLTestBoolean(CPLGetConfigOption("PG_SKIP_VIEWS", "NO")) )
+                hResult = PQexec(hPGConn,
+                                "DECLARE mycursor CURSOR for "
+                                "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n "
+                                "WHERE (c.relkind in ('r') AND c.relname !~ '^pg' AND c.relnamespace=n.oid)" );
+              else
                 hResult = PQexec(hPGConn,
                                 "DECLARE mycursor CURSOR for "
                                 "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n "
