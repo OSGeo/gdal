@@ -39,6 +39,10 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+#
+# To initialize the required WKTRaster DB instance, run data/load_wktraster_test_data.sh
+#
+
 ###############################################################################
 # 
 def wktraster_init():
@@ -49,9 +53,11 @@ def wktraster_init():
 
     if gdaltest.wktrasterDriver is None:
         return 'skip'
+        
+    gdaltest.wktraster_connection_string="PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' "
 
     try:
-        ds = gdal.Open( "PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='utm'" )
+        ds = gdal.Open( gdaltest.wktraster_connection_string + "table='utm'" )
     except:
         gdaltest.wktrasterDriver = None
 
@@ -70,7 +76,7 @@ def wktraster_test_open_error1():
     if gdaltest.wktrasterDriver is None:
         return 'skip'
 
-    ds = gdal.Open("PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='unexistent'")
+    ds = gdal.Open(gdaltest.wktraster_connection_string + "table='unexistent'")
     if ds is None:
         return 'success'
     else:
@@ -83,7 +89,7 @@ def wktraster_test_open_error2():
     if gdaltest.wktrasterDriver is None:
         return 'skip'
 
-    ds = gdal.Open("PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='utm' mode='unexistent'")
+    ds = gdal.Open(gdaltest.wktraster_connection_string + "table='utm' mode='unexistent'")
     if ds is None:
         return 'success'
     else:
@@ -97,7 +103,7 @@ def wktraster_compare_utm():
         return 'skip'
         
     src_ds = gdal.Open( 'data/utm.tif' )
-    dst_ds = gdal.Open( "PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='utm'" )
+    dst_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='utm'" )
     
     diff = gdaltest.compare_ds(src_ds, dst_ds, verbose = 1)
     if diff == 0:
@@ -112,7 +118,7 @@ def wktraster_compare_small_world():
         return 'skip'
         
     src_ds = gdal.Open( 'data/small_world.tif' )
-    dst_ds = gdal.Open( "PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='small_world'" )
+    dst_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
     
     diff = gdaltest.compare_ds(src_ds, dst_ds, verbose = 1)
     if diff == 0:
@@ -138,7 +144,7 @@ def wktraster_test_utm_open():
     cs = rb.Checksum()
     
     # Try to open WKTRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('WKTRaster', "PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='utm'", 1, cs, filename_absolute = 1)
+    tst = gdaltest.GDALTest('WKTRaster', gdaltest.wktraster_connection_string + "table='utm'", 1, cs, filename_absolute = 1)
     return tst.testOpen(check_prj = prj, check_gt = gt)
     
     
@@ -160,7 +166,7 @@ def wktraster_test_small_world_open_b1():
     cs = rb.Checksum()
     
     # Try to open WKTRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('WKTRaster', "PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='small_world'", 1, cs, filename_absolute = 1)    
+    tst = gdaltest.GDALTest('WKTRaster', gdaltest.wktraster_connection_string + "table='small_world'", 1, cs, filename_absolute = 1)    
     return tst.testOpen(check_prj = prj, check_gt = gt)    
     
     
@@ -181,7 +187,7 @@ def wktraster_test_small_world_open_b2():
     cs = rb.Checksum()
     
     # Try to open WKTRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('WKTRaster', "PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='small_world'", 2, cs, filename_absolute = 1)    
+    tst = gdaltest.GDALTest('WKTRaster', gdaltest.wktraster_connection_string + "table='small_world'", 2, cs, filename_absolute = 1)    
     return tst.testOpen(check_prj = prj, check_gt = gt)
     
     
@@ -202,7 +208,7 @@ def wktraster_test_small_world_open_b3():
     cs = rb.Checksum()
     
     # Checksum for each band can be obtained by gdalinfo -checksum <file>
-    tst = gdaltest.GDALTest('WKTRaster', "PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' table='small_world'", 3, cs, filename_absolute = 1)
+    tst = gdaltest.GDALTest('WKTRaster', gdaltest.wktraster_connection_string + "table='small_world'", 3, cs, filename_absolute = 1)
     
     return tst.testOpen(check_prj = prj, check_gt = gt)        
 
