@@ -52,10 +52,15 @@ class MetaCRSTest:
     def parse_line( self ):
         test_line = self.test_line
 
-        self.src_srs = self.build_srs(test_line['srcCrsType'],
+        self.src_srs = self.build_srs(test_line['srcCrsAuth'],
                                       test_line['srcCrs'])
-        self.dst_srs = self.build_srs(test_line['ExpCrsType'],
-                                      test_line['expCrs'])
+        try:
+            self.dst_srs = self.build_srs(test_line['tgtCrsAuth'],
+                                          test_line['tgtCrs'])
+        except:
+            # Old style
+            self.dst_srs = self.build_srs(test_line['tgtCrsType'],
+                                          test_line['tgtCrs'])
 
         if self.src_srs is None or self.dst_srs is None:
             return 'fail'
@@ -69,12 +74,12 @@ class MetaCRSTest:
                              float(test_line['srcOrd2']),
                              0.0 )
         try:
-            self.dst_xyz = ( float(test_line['expOrd1']),
-                             float(test_line['expOrd2']),
-                             float(test_line['expOrd3']) )
+            self.dst_xyz = ( float(test_line['tgtOrd1']),
+                             float(test_line['tgtOrd2']),
+                             float(test_line['tgtOrd3']) )
         except:
-            self.dst_xyz = ( float(test_line['expOrd1']),
-                             float(test_line['expOrd2']),
+            self.dst_xyz = ( float(test_line['tgtOrd1']),
+                             float(test_line['tgtOrd2']),
                              0.0 )
         try:
             self.dst_error = max(float(test_line['tolOrd1']),
