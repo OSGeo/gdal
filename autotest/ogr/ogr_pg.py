@@ -1975,7 +1975,7 @@ def ogr_pg_45():
     if gdaltest.pg_ds is None:
         return 'skip'
         
-    lyr = gdaltest.pg_ds.GetLayerByName('poly')
+    lyr = gdaltest.pg_ds.GetLayerByName('tpoly')
     
     if not lyr.TestCapability(ogr.OLCFastSetNextByIndex):
         gdaltest.post_reason('OLCFastSetNextByIndex returned false')
@@ -2062,6 +2062,104 @@ def ogr_pg_46():
     return 'success'
 
 ###############################################################################
+# Test that we can handle 'geography' column type introduced in PostGIS 1.5
+
+def ogr_pg_47():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+        
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+        
+    if gdaltest.pg_ds.GetLayerByName('geography_columns') is None:
+        gdaltest.post_reason('autotest database must be created with PostGIS >= 1.5')
+        return 'skip'
+
+    # Create table with geography column
+    lyr = gdaltest.pg_ds.CreateLayer('test_geog', options = [ 'GEOM_TYPE=geography', 'GEOMETRY_NAME=my_geog' ] )
+    field_defn = ogr.FieldDefn("test_string", ogr.OFTString)
+    lyr.CreateField(field_defn)
+    field_defn.Destroy()
+
+    feature_defn = lyr.GetLayerDefn()
+
+    # Create feature
+    feat = ogr.Feature(feature_defn)
+    feat.SetField(0, "test_string")
+    geom = ogr.CreateGeometryFromWkt('POINT (3 50)')
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+    feat.Destroy()
+    
+    # Update feature
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
+    feat.SetGeometry(geom)
+    lyr.SetFeature(feat)
+    feat.Destroy()
+    
+    # Re-open DB
+    gdaltest.pg_ds.Destroy()
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    
+    # Check if the layer is listed
+    found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, 'test_geog')
+    if found is False:
+        gdaltest.post_reason( 'layer test_geog not listed' )
+        return 'fail'
+        
+    # Get the layer by name
+    lyr = gdaltest.pg_ds.GetLayerByName('test_geog')
+    if lyr.GetExtent() != (2.0, 2.0, 49.0, 49.0):
+        gdaltest.post_reason( 'bad extent for test_geog' )
+        return 'fail'
+    
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason( 'bad geometry for test_geog' )
+        return 'fail'
+    feat.Destroy()
+        
+    # Check with result set
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM test_geog')
+    if sql_lyr.GetExtent() != (2.0, 2.0, 49.0, 49.0):
+        gdaltest.post_reason( 'bad extent for SELECT * FROM test_geog' )
+        return 'fail'
+        
+    feat = sql_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason( 'bad geometry for SELECT * FROM test_geog' )
+        return 'fail'
+    feat.Destroy()
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+       
+    # Check ST_AsText  
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT ST_AsText(my_geog) FROM test_geog')
+    feat = sql_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason( 'bad geometry for SELECT ST_AsText(my_geog) FROM test_geog' )
+        return 'fail'
+    feat.Destroy()
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+        
+    # Check ST_AsBinary  
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT ST_AsBinary(my_geog) FROM test_geog')
+    feat = sql_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason( 'bad geometry for SELECT ST_AsBinary(my_geog) FROM test_geog' )
+        return 'fail'
+    feat.Destroy()
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2088,6 +2186,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( "DELETE FROM geometry_columns WHERE f_table_name='testview'")
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:select' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:bigtable' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_geog' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -2163,6 +2262,7 @@ gdaltest_list_internal = [
     ogr_pg_44,
     ogr_pg_45,
     ogr_pg_46,
+    ogr_pg_47,
     ogr_pg_cleanup ]
 
 ###############################################################################
