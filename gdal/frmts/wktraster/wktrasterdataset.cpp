@@ -859,6 +859,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     char ** papszNodataValues = NULL;
     GDALDataType hDataType = GDT_Byte;
     double dfNoDataValue = 0.0;
+    int nCountNoDataValues = 0;
 
 
     /********************************************************
@@ -1068,7 +1069,6 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
      ********************************************/
     poDS->SetRasterProperties();
 
-
     /****************************************************************
      * Get pixel_types and nodata string representations (PQ arrays)
      ****************************************************************/    
@@ -1099,7 +1099,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
              */
             if (nBands != 0)
                 papszNodataValues = poDS->ExplodeArrayString(pszArrayNodataValues,
-                    NULL);
+                    &nCountNoDataValues);
 
             // We don't have a value for nBands, try to fetch one
             else
@@ -1204,7 +1204,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
             nBitDepth = 8;
         }
 
-        if (pszArrayNodataValues != NULL && papszNodataValues != NULL) {
+        if (pszArrayNodataValues != NULL && papszNodataValues != NULL &&
+            iBand < nCountNoDataValues) {
             dfNoDataValue = atof(papszNodataValues[iBand]);
         }
 
