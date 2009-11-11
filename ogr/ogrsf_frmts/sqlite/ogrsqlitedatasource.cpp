@@ -652,7 +652,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      "geometric layers", capturing the WKT projection, and           */
 /*      perhaps some other housekeeping.                                */
 /* -------------------------------------------------------------------- */
-    if( bHaveGeometryColumns )
+    if( bHaveGeometryColumns && eType != wkbNone )
     {
         int nCoordDim;
 
