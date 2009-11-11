@@ -683,7 +683,7 @@ CPLErr WKTRasterDataset::SetRasterProperties() {
  *  - const char *: a string representing an array
  *  - int *: pointer to an int that will contain the number of elements
  * Returns:
- *  char **: An array of strings, one per element
+ *  char **: An array of strings, one per element. Must be freed with CSLDestroy
  */
 char ** WKTRasterDataset::ExplodeArrayString(
         const char * pszPQarray, int * pnNumberOfElements) {
@@ -698,106 +698,15 @@ char ** WKTRasterDataset::ExplodeArrayString(
             *pnNumberOfElements = 0;
         return NULL;
     }
-
-    char ** ppszElements = NULL;
-    int nNumberOfCommas = 0;
-    char *pszStr = NULL;
-    char *pszNextStr = NULL;
-    char szElement[1024];
-    char * pszFirstComma = NULL;
-    char * pszLastComma = NULL;
-    int i;
-    int nElements = 0;
-
-    /***************************************************************
-     * First, we are going to count the number of elements
-     ***************************************************************/
-    // Get first and last commas
-    pszFirstComma = (char*)strchr(pszPQarray, ',');
-    pszLastComma = (char*)strrchr(pszPQarray, ',');
-
-    if (pszFirstComma == NULL) {
-        // no commas, check if is empty
-        if (EQUALN(pszPQarray, "{}", 2 * sizeof (char))) {
-            if (pnNumberOfElements)
-                *pnNumberOfElements = 0;
-            return NULL;
-        }
-        else {
-            // One element, read it directly
-            ppszElements = (char **) VSICalloc(1, sizeof (char *));
-            if (ppszElements == NULL) {
-                return NULL;
-            }
-
-            memset(szElement, '\0', 1024 * sizeof (char));
-            memcpy(szElement,
-                    (char *) pszPQarray + sizeof (char), // avoid { or ,
-                    strlen(pszPQarray) - 2 * sizeof (char)); // avoid copying {}
-            ppszElements[0] = (char *) CPLStrdup(szElement);
-
-            if (pnNumberOfElements)
-                *pnNumberOfElements = 1;
-
-            return ppszElements;
-        }
-    }
-
-
-    else {
-        /**
-         * We have at least 2 commas, but the for loop will count the first one
-         */
-        nNumberOfCommas = 1;
-
-        for (
-                pszStr = pszFirstComma;
-                pszStr != pszLastComma;
-                pszStr = strchr(pszStr + sizeof (char), ','), nNumberOfCommas++
-                )
-            ;
-
-        nElements = nNumberOfCommas + 1;
-    }
-
-
-    /*****************************************************************
-     * Now, we know the number of elements. Let's read them
-     *****************************************************************/
-
-    ppszElements = (char **) VSICalloc(nElements, sizeof (char *));
-    if (ppszElements == NULL) {
-        if (pnNumberOfElements)
-            *pnNumberOfElements = 0;
-        return NULL;
-    }
-
-    pszStr = (char *) pszPQarray;
-    for (i = 0; i < nElements; i++) {
-        memset(szElement, '\0', 1024 * sizeof (char)); // clean buffer
-        pszNextStr = strchr(pszStr + sizeof (char), ',');
-        if (pszNextStr == NULL) // no commas, find }
-            pszNextStr = strchr(pszStr, '}');
-
-        /**
-         * Copy characters between consecutive commas, or between comma and }
-         * (last element). Avoid copying comma
-         */
-        memcpy(szElement,
-                pszStr + sizeof (char),
-                strlen(pszStr) - strlen(pszNextStr) - 1);
-
-        // Allocate memory for the new element and copy it into the buffer
-        ppszElements[i] = (char *) CPLStrdup(szElement);
-
-        // move pszStr pointer
-        pszStr = strchr(pszStr + sizeof (char), ',');
-    }
-
+    
+    char* pszTemp = CPLStrdup(pszPQarray + 1);
+    pszTemp[strlen(pszTemp) - 1] ='\0';
+    char** papszRet = CSLTokenizeString2( pszTemp, ",", 0 );
+    CPLFree(pszTemp);
+    
     if (pnNumberOfElements)
-        *pnNumberOfElements = nElements;
-
-    return ppszElements;
+        *pnNumberOfElements = CSLCount(papszRet);
+    return papszRet;
 }
 
 
@@ -1455,23 +1364,10 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     /***********************************************************
      * Free memory
      ***********************************************************/
-    if (pszArrayPixelTypes != NULL && papszPixelTypes != NULL) {
-        int i = 0;
-        for (i = 0; i < poDS->nBands; i++)
-            CPLFree(papszPixelTypes[i]);
-        CPLFree(papszPixelTypes);
-        CPLFree(pszArrayPixelTypes);
-
-    }
-
-    if (pszArrayNodataValues != NULL && papszNodataValues != NULL) {
-        int i = 0;
-        for (i = 0; i < poDS->nBands; i++)
-            CPLFree(papszNodataValues[i]);
-        CPLFree(papszNodataValues);
-        CPLFree(pszArrayNodataValues);
-    }
-
+    CSLDestroy(papszPixelTypes);
+    CSLDestroy(papszNodataValues);
+    CPLFree(pszArrayPixelTypes);
+    CPLFree(pszArrayNodataValues);
 
      // All WKT Raster bans are consecutives
     poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
