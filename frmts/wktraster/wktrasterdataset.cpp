@@ -485,8 +485,8 @@ PGconn * OpenConnection(const char *pszConnectionString) {
 }
 
 /**
- * Extract LAST field from the connection string:
- * PG:host='<host>' user='<user>' password='<password>' 
+ * Extract a field from the connection string:
+ * PG:[host='<host>'] [user='<user>'] [password='<password>']
  * dbname='<dbname>' table='<raster_table>' [mode='<working_mode>'
  * where='<where_clause>']
  * The idea is to extract the fields that PQconnect function doesn't accept
@@ -494,18 +494,18 @@ PGconn * OpenConnection(const char *pszConnectionString) {
  *
  * Parameters:
  * 	char **: pointer to connection string, to be modified
- * 	char *: field init (ex.: "where='", "table='")
+ * 	char *: field init (ex.: "where=", "table=")
  * Output:
- * 	char *: The last field (where clause or table name) of the connection string
+ * 	char *: The field (where clause or table name) of the connection string
  * 	if everything works fine, NULL otherwise
  */
 static
-char * ExtractLastField(char ** ppszConnectionString, const char * pszFieldInit) {
+char * ExtractField(char ** ppszConnectionString, const char * pszFieldInit) {
 
     // Security checkings
-    VALIDATE_POINTER1(ppszConnectionString, "ExtractLastField", NULL);
-    VALIDATE_POINTER1(*ppszConnectionString, "ExtractLastField", NULL);
-    VALIDATE_POINTER1(pszFieldInit, "ExtractLastField", NULL);
+    VALIDATE_POINTER1(ppszConnectionString, "ExtractField", NULL);
+    VALIDATE_POINTER1(*ppszConnectionString, "ExtractField", NULL);
+    VALIDATE_POINTER1(pszFieldInit, "ExtractField", NULL);
 
     char * pszField = NULL;
     char * pszStart = NULL;
@@ -515,19 +515,38 @@ char * ExtractLastField(char ** ppszConnectionString, const char * pszFieldInit)
      * Get the value of the field to extract, and delete the whole field
      * from the connection string
      ************************************************************************/
-    pszStart = strstr(*ppszConnectionString, pszFieldInit);
+     
+    int i;
+    int nFieldInitLen = strlen(pszFieldInit);
+    int nConnectionStringLen = strlen(*ppszConnectionString);
+    for(i=0;i<=nConnectionStringLen-nFieldInitLen;i++)
+    {
+        if (EQUALN(*ppszConnectionString + i, pszFieldInit, nFieldInitLen))
+        {
+            pszStart = *ppszConnectionString + i;
+            break;
+        }
+    }
+     
     if (pszStart == NULL)
         return NULL;
-    else {
-        // Copy the last field of the connection string to another var
-        pszField = CPLStrdup(pszStart + strlen(pszFieldInit));
-        pszField[strlen(pszField) - 1] = '\0';
+        
+    int bHasQuote = pszStart[nFieldInitLen] == '\'';
 
-        // Delete the field's part from the connection string
-        memset(pszStart - 1, '\0', strlen(pszField) + strlen(pszFieldInit) + 2);
-
-        return pszField;
+    // Copy the field of the connection string to another var
+    pszField = CPLStrdup(pszStart + nFieldInitLen + bHasQuote);
+    char* pszEndField = strchr(pszField, (bHasQuote) ? '\'' : ' ');
+    if (pszEndField)
+    {
+        *pszEndField = '\0';
+        char* pszEnd = pszStart + nFieldInitLen + bHasQuote + (pszEndField - pszField) + 1;
+        memmove(pszStart, pszEnd, strlen(pszEnd) + 1);
     }
+    else
+        // Delete the field's part from the connection string
+        *pszStart = '\0';
+
+    return pszField;
 }
 
 /**
@@ -976,30 +995,26 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     /************************************************
      * Extract table name, mode and where clause
      ***********************************************/
-    pszWhereClause = ExtractLastField(&(poOpenInfo->pszFilename), "where='");
-    if (pszWhereClause == NULL)
-        pszWhereClause = ExtractLastField(&(poOpenInfo->pszFilename),
-                "WHERE='");
+    char* pszConnectionString = CPLStrdup(poOpenInfo->pszFilename);
+    
+    pszWhereClause = ExtractField(&pszConnectionString, "where=");
 
     // Working mode by default: REGULARLY_TILED_MODE
-    pszWorkingMode = ExtractLastField(&(poOpenInfo->pszFilename), "mode='");
-    if (pszWorkingMode == NULL)
-        pszWorkingMode = ExtractLastField(&(poOpenInfo->pszFilename), "MODE='");
+    pszWorkingMode = ExtractField(&pszConnectionString, "mode=");
     if (pszWorkingMode == NULL)
         pszWorkingMode = CPLStrdup(REGULARLY_TILED_MODE);
 
-    pszTableName = ExtractLastField(&(poOpenInfo->pszFilename), "table='");
-    if (pszTableName == NULL)
-        pszTableName = ExtractLastField(&(poOpenInfo->pszFilename), "TABLE='");
+    pszTableName = ExtractField(&pszConnectionString, "table=");
 
     if (pszTableName == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Can't find a table name. Is connection string in the format \n"
- 	        "PG:[host='<host>]' user='<user>' [password='<password>]' \n"
- 	        "   dbname='<dbname>' table='<raster_table>' [mode='working_mode'] \n"
- 	        "  [where='<where_clause>'] ?\n");
+                "PG:[host='<host>]' [user='<user>'] [password='<password>]' \n"
+                "   dbname='<dbname>' table='<raster_table>' [mode='working_mode'] \n"
+                "   [where='<where_clause>'] ?\n");
         CPLFree(pszWorkingMode);
         CPLFree(pszWhereClause);
+        CPLFree(pszConnectionString);
 
         return NULL;
 
@@ -1017,6 +1032,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
         CPLFree(pszTableName);
         CPLFree(pszWorkingMode);        
         CPLFree(pszWhereClause);
+        CPLFree(pszConnectionString);
 
         return NULL;
     }
@@ -1030,7 +1046,10 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     /********************************************************
      * 		Open a database connection
      ********************************************************/
-    hPGconn = OpenConnection(poOpenInfo->pszFilename);
+    hPGconn = OpenConnection(pszConnectionString);
+    
+    CPLFree(pszConnectionString);
+    pszConnectionString = NULL;
 
     if (hPGconn == NULL) {
         CPLFree(pszTableName);
