@@ -367,6 +367,28 @@ char* CreatePath( HDF5GroupObjects *poH5Object )
     return( poH5Object->pszPath );
 }
 
+/************************************************************************/
+/*                      HDF5GroupCheckDuplicate()                       */
+/*                                                                      */
+/*      Returns TRUE if an ancestor has the same objno[] as passed      */
+/*      in - used to avoid looping in files with "links up" #(3218).    */
+/************************************************************************/
+
+static int HDF5GroupCheckDuplicate( HDF5GroupObjects *poHparent,
+                                    unsigned long *objno )
+
+{
+    while( poHparent != NULL )
+    {
+        if( poHparent->objno[0] == objno[0]
+            && poHparent->objno[1] == objno[1] )
+            return TRUE;
+
+        poHparent = poHparent->poHparent;
+    }
+
+    return FALSE;
+}
 
 /************************************************************************/
 /*                      HDF5CreateGroupObjs()                           */
@@ -425,6 +447,8 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
     poHchild->nRank     = 0;
     poHchild->paDims    = 0;
     poHchild->HDatatype = 0;
+    poHchild->objno[0]  = oStatbuf.objno[0];
+    poHchild->objno[1]  = oStatbuf.objno[1];
     if( poHchild->pszPath == NULL ) {
 	poHchild->pszPath  = CreatePath( poHchild );
     }
@@ -466,10 +490,14 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
 	    }
 	    else 
 		poHchild->poHchild = NULL;
-	    
-	    ret = H5Giterate( hHDF5, pszObjName, NULL, 
-			     HDF5CreateGroupObjs,  (void*) poHchild );
-	    ret = H5Gclose( hGroupID );
+
+            if( !HDF5GroupCheckDuplicate( poHparent, oStatbuf.objno ) )
+                H5Giterate( hHDF5, pszObjName, NULL, 
+                            HDF5CreateGroupObjs,  (void*) poHchild );
+            else
+                CPLDebug( "HDF5", "avoiding link looping on node '%s'.", 
+                          pszObjName );
+	    H5Gclose( hGroupID );
 	    break;
 	    
 	case H5G_DATASET:
@@ -875,11 +903,17 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     poRootGroup->nType     = H5G_GROUP;
     poRootGroup->poHparent = NULL;
     poRootGroup->pszPath = NULL;
-    
+
     if( hHDF5 < 0 )  {
 	printf( "hHDF5 <0!!\n" );
 	return CE_None;
     }
+    
+    H5G_stat_t  oStatbuf;
+    if( H5Gget_objinfo( hHDF5, "/", FALSE, &oStatbuf ) < 0  )
+	return CE_Failure;
+    poRootGroup->objno[0] = oStatbuf.objno[0];
+    poRootGroup->objno[1] = oStatbuf.objno[1];
     
     hGroupID = H5Gopen( hHDF5, "/" ); 
     if( hGroupID < 0 ){
