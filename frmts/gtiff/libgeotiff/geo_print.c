@@ -34,7 +34,7 @@
 #define FMT_KEYS    "Keyed_Information:"
 #define FMT_KEYEND  "End_Of_Keys."
 #define FMT_GEOEND  "End_Of_Geotiff."
-#define FMT_DOUBLE  "%-17.9g"
+#define FMT_DOUBLE  "%-17.15g"
 #define FMT_SHORT   "%-11hd"
 
 static void DefaultPrint(char *string, void *aux);
