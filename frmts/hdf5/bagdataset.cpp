@@ -271,7 +271,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     hsize_t     col_dims[3];
     hsize_t     rank = 2;
 
-    offset[0] = nBlockYOff*nBlockYSize;
+    offset[0] = nRasterYSize - nBlockYOff*nBlockYSize - 1;
     offset[1] = nBlockXOff*nBlockXSize;
     count[0]  = nBlockYSize;
     count[1]  = nBlockXSize;
