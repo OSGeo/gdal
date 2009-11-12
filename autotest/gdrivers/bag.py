@@ -64,18 +64,18 @@ def bag_2():
     ds = gdal.Open( 'data/true_n_nominal.bag' )
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 1152:
-        gdaltest.post_reason( 'Wrong checksum on band 1.' )
+    if cs != 1072:
+        gdaltest.post_reason( 'Wrong checksum on band 1, got %d.' % cs )
         return 'fail'
     
     cs = ds.GetRasterBand(2).Checksum()
     if cs != 150:
-        gdaltest.post_reason( 'Wrong checksum on band 2.' )
+        gdaltest.post_reason( 'Wrong checksum on band 2, got %d.' % cs )
         return 'fail'
     
     cs = ds.GetRasterBand(3).Checksum()
-    if cs != 1349:
-        gdaltest.post_reason( 'Wrong checksum on band 3.' )
+    if cs != 1315:
+        gdaltest.post_reason( 'Wrong checksum on band 3, got %d.' % cs )
         return 'fail'
 
     b1 = ds.GetRasterBand(1)
