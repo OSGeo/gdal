@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.h 1569 2009-04-22 21:35:16Z warmerdam $
+ * $Id: geo_normalize.h 1641 2009-09-24 19:35:59Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Include file related to geo_normalize.c containing Code to
@@ -127,6 +127,9 @@ typedef struct {
 
     /** UTM, or State Plane Zone number, zero if not known. */
     int		Zone;
+
+    /** Do we have any definition at all?  0 if no geokeys found */
+    int         DefnSet;
 
 } GTIFDefn;
 

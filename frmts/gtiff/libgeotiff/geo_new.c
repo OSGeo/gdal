@@ -244,7 +244,9 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
             else if (offset + count > tempData->tk_asciiParamsLength)
                 return (0);
 
-            keyptr->gk_data = (char *) _GTIFcalloc (MAX(1,count+1));
+            keyptr->gk_count = MAX(1,count+1);
+            keyptr->gk_data = (char *) _GTIFcalloc (keyptr->gk_count);
+
             _GTIFmemcpy (keyptr->gk_data,
                          tempData->tk_asciiParams + offset, count);
             if( keyptr->gk_data[MAX(0,count-1)] == '|' )

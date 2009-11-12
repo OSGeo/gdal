@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c 1565 2009-04-06 04:13:09Z hobu $
+ * $Id: geotiff_proj4.c 1670 2009-10-09 16:29:38Z hobu $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -76,6 +76,7 @@ static char **OSRProj4Tokenize( const char *pszFull )
                     {
                         char szAsBoolean[100];
                         strncpy( szAsBoolean,pszStart, sizeof(szAsBoolean)-1-4);
+                        szAsBoolean[sizeof(szAsBoolean)-1-4] = '\0';
                         strcat( szAsBoolean,"=yes" );
                         papszTokens[nTokens++] = strdup(szAsBoolean);
                     }
@@ -149,7 +150,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 {
     const char *pszValue = OSR_GSV( papszNV, pszField );
 
-    // special hack to use k_0 if available.
+    /* special hack to use k_0 if available. */
     if( pszValue == NULL && EQUAL(pszField,"k") )
         return OSR_GDV( papszNV, "k_0", dfDefaultValue );
 
@@ -183,7 +184,7 @@ int GTIFSetFromProj4( GTIF *gtif, const char *proj4 )
 {
     char **papszNV = OSRProj4Tokenize( proj4 );
     short nSpheroid = KvUserDefined;
-    double dfSemiMajor, dfSemiMinor=0.0, dfInvFlattening=0.0;
+    double dfSemiMajor=0.0, dfSemiMinor=0.0, dfInvFlattening=0.0;
     int	   nDatum = KvUserDefined;
     int    nGCS = KvUserDefined;    
     const char  *value;
@@ -675,7 +676,7 @@ int GTIFSetFromProj4( GTIF *gtif, const char *proj4 )
         SetKrovak( OSR_GDV( papszNV, "lat_0", 0.0 ), 
                    OSR_GDV( papszNV, "lon_0", 0.0 ), 
                    OSR_GDV( papszNV, "alpha", 0.0 ), 
-                   0.0, // pseudo_standard_parallel_1
+                   0.0, /* pseudo_standard_parallel_1 */
                    OSR_GDV( papszNV, "k", 1.0 ), 
                    OSR_GDV( papszNV, "x_0", 0.0 ), 
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -846,22 +847,10 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     char	szUnits[64];
     double      dfFalseEasting, dfFalseNorthing;
 
-    int     nKeyCount = 0;
-    int     anVersion[3];
-
-    if( psDefn != NULL ) 
-    {
-        GTIFDirectoryInfo( psDefn, anVersion, &nKeyCount );
-    } 
-    else 
-    { 
+    if( psDefn == NULL || !psDefn->DefnSet )
         return strdup("");
-    }
-    
 
     szProjection[0] = '\0';
-    
-    if ( !nKeyCount ) return strdup( szProjection );
     
 /* ==================================================================== */
 /*      Translate the units of measure.                                 */
@@ -1038,9 +1027,10 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     else if( psDefn->CTProjection == CT_Equirectangular )
     {
         sprintf( szProjection+strlen(szProjection),
-                 "+proj=eqc +lat_ts=%.9f +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                 "+proj=eqc +lat_0=%.9f +lon_0=%.9f +lat_ts=%.9f +x_0=%.3f +y_0=%.3f ",
                  psDefn->ProjParm[0],
                  psDefn->ProjParm[1],
+                 psDefn->ProjParm[2],
                  dfFalseEasting,
                  dfFalseNorthing );
     }
