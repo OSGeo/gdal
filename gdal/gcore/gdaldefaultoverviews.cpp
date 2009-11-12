@@ -45,6 +45,8 @@ GDALDefaultOverviews::GDALDefaultOverviews()
     bOvrIsAux = FALSE;
 
     bCheckedForMask = FALSE;
+    bCheckedForOverviews = FALSE;
+
     poMaskDS = NULL;
 
     bOwnMaskDS = FALSE;
