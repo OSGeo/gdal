@@ -46,6 +46,7 @@ typedef struct HDF5GroupObjects {
   hsize_t       *paDims;
   hid_t          native;
   hid_t          HDatatype;
+  unsigned long  objno[2];
   struct HDF5GroupObjects *poHparent;
   struct HDF5GroupObjects *poHchild;
 } HDF5GroupObjects;
