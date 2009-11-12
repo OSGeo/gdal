@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 1584 2009-06-03 20:07:15Z warmerdam $
+ * $Id: geo_normalize.c 1685 2009-11-11 17:08:09Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -983,6 +983,14 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
         return( CT_Mercator );  /* 1SP and 2SP not differentiated */
 
       case 9805:
+        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        
+      /* Mercator 1SP (Spherical) For EPSG:3785 */
+      case 9841:
+        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        
+      /* Google Mercator For EPSG:3857 */
+      case 1024:
         return( CT_Mercator );  /* 1SP and 2SP not differentiated */
 
       case 9806:
@@ -1972,6 +1980,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      Initially we default all the information we can.                */
 /* -------------------------------------------------------------------- */
+    psDefn->DefnSet = 1;
     psDefn->Model = KvUserDefined;
     psDefn->PCS = KvUserDefined;
     psDefn->GCS = KvUserDefined;
@@ -1999,6 +2008,21 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 
     psDefn->MapSys = KvUserDefined;
     psDefn->Zone = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have any geokeys?                                         */
+/* -------------------------------------------------------------------- */
+    {
+        int     nKeyCount = 0;
+        int     anVersion[3];
+        GTIFDirectoryInfo( psGTIF, anVersion, &nKeyCount );
+
+        if( nKeyCount == 0 )
+        {
+            psDefn->DefnSet = 0;
+            return FALSE;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*	Try to get the overall model type.				*/
@@ -2273,6 +2297,15 @@ const char *GTIFDecToDMS( double dfAngle, const char * pszAxis,
 void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Do we have anything to report?                                  */
+/* -------------------------------------------------------------------- */
+    if( !psDefn->DefnSet )
+    {
+        fprintf( fp, "No GeoKeys found.\n" );
+        return;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Get the PCS name if possible.                                   */
 /* -------------------------------------------------------------------- */
