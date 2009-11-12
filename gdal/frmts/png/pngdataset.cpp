@@ -1093,7 +1093,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
        dfNoDataValue = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
 
-       if ( dfNoDataValue > 0 && dfNoDataValue < 65536 )
+       if ( bHaveNoData && dfNoDataValue >= 0 && dfNoDataValue < 65536 )
        {
           sTRNSColor.gray = (png_uint_16) dfNoDataValue;
           png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
@@ -1122,18 +1122,20 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
        // Otherwise, get the nodata value from the bands.
        else
        {
-          int	  bHaveNoData = FALSE;
+          int	  bHaveNoDataRed = FALSE;
+          int	  bHaveNoDataGreen = FALSE;
+          int	  bHaveNoDataBlue = FALSE;
           double dfNoDataValueRed = -1;
           double dfNoDataValueGreen = -1;
           double dfNoDataValueBlue = -1;
 
-          dfNoDataValueRed  = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
-          dfNoDataValueGreen= poSrcDS->GetRasterBand(2)->GetNoDataValue( &bHaveNoData );
-          dfNoDataValueBlue = poSrcDS->GetRasterBand(3)->GetNoDataValue( &bHaveNoData );
+          dfNoDataValueRed  = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoDataRed );
+          dfNoDataValueGreen= poSrcDS->GetRasterBand(2)->GetNoDataValue( &bHaveNoDataGreen );
+          dfNoDataValueBlue = poSrcDS->GetRasterBand(3)->GetNoDataValue( &bHaveNoDataBlue );
 
-          if ( ( dfNoDataValueRed > 0 && dfNoDataValueRed < 65536 ) &&
-             ( dfNoDataValueGreen > 0 && dfNoDataValueGreen < 65536 ) &&
-             ( dfNoDataValueBlue > 0 && dfNoDataValueBlue < 65536 ) )
+          if ( ( bHaveNoDataRed && dfNoDataValueRed >= 0 && dfNoDataValueRed < 65536 ) &&
+               ( bHaveNoDataGreen && dfNoDataValueGreen >= 0 && dfNoDataValueGreen < 65536 ) &&
+               ( bHaveNoDataBlue && dfNoDataValueBlue >= 0 && dfNoDataValueBlue < 65536 ) )
           {
              sTRNSColor.red   = (png_uint_16) dfNoDataValueRed;
              sTRNSColor.green = (png_uint_16) dfNoDataValueGreen;
@@ -1553,7 +1555,7 @@ CPLErr PNGDataset::write_png_header()
     {
         dfNoDataValue = this->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
 
-        if ( dfNoDataValue > 0 && dfNoDataValue < 65536 )
+        if ( bHaveNoData && dfNoDataValue >= 0 && dfNoDataValue < 65536 )
         {
             sTRNSColor.gray = (png_uint_16) dfNoDataValue;
             png_set_tRNS( m_hPNG, m_psPNGInfo, NULL, 0, &sTRNSColor );
@@ -1582,18 +1584,20 @@ CPLErr PNGDataset::write_png_header()
         // Otherwise, get the nodata value from the bands.
         else
         {
-            int	  bHaveNoData = FALSE;
+            int	  bHaveNoDataRed = FALSE;
+            int	  bHaveNoDataGreen = FALSE;
+            int	  bHaveNoDataBlue = FALSE;
             double dfNoDataValueRed = -1;
             double dfNoDataValueGreen = -1;
             double dfNoDataValueBlue = -1;
 
-            dfNoDataValueRed  = this->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
-            dfNoDataValueGreen= this->GetRasterBand(2)->GetNoDataValue( &bHaveNoData );
-            dfNoDataValueBlue = this->GetRasterBand(3)->GetNoDataValue( &bHaveNoData );
+            dfNoDataValueRed  = this->GetRasterBand(1)->GetNoDataValue( &bHaveNoDataRed );
+            dfNoDataValueGreen= this->GetRasterBand(2)->GetNoDataValue( &bHaveNoDataGreen );
+            dfNoDataValueBlue = this->GetRasterBand(3)->GetNoDataValue( &bHaveNoDataBlue );
 
-            if ( ( dfNoDataValueRed > 0 && dfNoDataValueRed < 65536 ) &&
-                 ( dfNoDataValueGreen > 0 && dfNoDataValueGreen < 65536 ) &&
-                 ( dfNoDataValueBlue > 0 && dfNoDataValueBlue < 65536 ) )
+            if ( ( bHaveNoDataRed && dfNoDataValueRed >= 0 && dfNoDataValueRed < 65536 ) &&
+                 ( bHaveNoDataGreen && dfNoDataValueGreen >= 0 && dfNoDataValueGreen < 65536 ) &&
+                 ( bHaveNoDataBlue && dfNoDataValueBlue >= 0 && dfNoDataValueBlue < 65536 ) )
             {
                 sTRNSColor.red   = (png_uint_16) dfNoDataValueRed;
                 sTRNSColor.green = (png_uint_16) dfNoDataValueGreen;
