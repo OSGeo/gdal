@@ -18,8 +18,8 @@
  *      (August 2009)
  *
  * TODO:
- *	- Allow non-regular blocking table arrangements (in general)
- *  	- Allow <schema>.<table> syntax, instead of <table> in OpenConnection
+ *			- Allow non-regular blocking table arrangements (in general)
+ *  		- Allow <schema>.<table> syntax, instead of <table> in OpenConnection
  *      - Update data blocks in SetProjection
  *      - Update data blocks in SetGeoTransform
  *      - Disable sequential scanning in OpenConnection in the database instance
@@ -85,6 +85,7 @@ CPL_C_END
 WKTRasterDataset::WKTRasterDataset() {
     hPGconn = NULL;
     bCloseConnection = FALSE;
+		pszSchemaName = NULL;
     pszTableName = NULL;
     pszRasterColumnName = NULL;
     pszWhereClause = NULL;
@@ -117,7 +118,8 @@ WKTRasterDataset::WKTRasterDataset() {
      * Destructor. Frees allocated memory.
      */
 WKTRasterDataset::~WKTRasterDataset() {
-    CPLFree(pszTableName);
+		CPLFree(pszSchemaName);
+		CPLFree(pszTableName);
     CPLFree(pszWorkingMode);
     CPLFree(pszWhereClause);
     CPLFree(pszRasterColumnName);
@@ -519,18 +521,15 @@ char * ExtractField(char ** ppszConnectionString, const char * pszFieldInit) {
     int i;
     int nFieldInitLen = strlen(pszFieldInit);
     int nConnectionStringLen = strlen(*ppszConnectionString);
-    for(i=0;i<=nConnectionStringLen-nFieldInitLen;i++)
-    {
-        if (EQUALN(*ppszConnectionString + i, pszFieldInit, nFieldInitLen))
-        {
-            pszStart = *ppszConnectionString + i;
-            break;
-        }
-    }
-     
+    
+
+    /*
+     * Get the initial position of the field in the string
+     */
+    pszStart = strstr(*ppszConnectionString, pszFieldInit); 
     if (pszStart == NULL)
         return NULL;
-        
+    
     int bHasQuote = pszStart[nFieldInitLen] == '\'';
 
     // Copy the field of the connection string to another var
@@ -846,6 +845,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     GBool bTableHasRegularBlocking = TRUE;
     GBool bExistsOverviewsTable = FALSE;
     char * pszRasterColumnName = NULL;
+		char * pszSchemaName = NULL;
     char * pszTableName = NULL;
     char * pszWhereClause = NULL;
     WKTRasterDataset * poDS = NULL;
@@ -929,7 +929,11 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
         return NULL;
 
     }
-
+		
+		/* 
+		 * Extract schema name from table name
+		 * TODO 
+		 */
 
     /*********************************************************
      * Check working mode
