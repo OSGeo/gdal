@@ -2402,16 +2402,6 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
 
 /* -------------------------------------------------------------------- */
-/*      Don't generate output pixels for which the destination valid    */
-/*      mask exists and is already set.                                 */
-/* -------------------------------------------------------------------- */
-            iDstOffset = iDstX + iDstY * nDstXSize;
-            if( poWK->panDstValid != NULL
-                && (poWK->panDstValid[iDstOffset>>5]
-                    & (0x01 << (iDstOffset & 0x1f))) )
-                continue;
-
-/* -------------------------------------------------------------------- */
 /*      Do not try to apply transparent/invalid source pixels to the    */
 /*      destination.  This currently ignores the multi-pixel input      */
 /*      of bilinear and cubic resamples.                                */
@@ -2440,6 +2430,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             int iBand;
             int bHasFoundDensity = FALSE;
             
+            iDstOffset = iDstX + iDstY * nDstXSize;
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
                 double dfBandDensity = 0.0;
@@ -3190,19 +3181,6 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
 
 /* -------------------------------------------------------------------- */
-/*      Don't generate output pixels for which the destination valid    */
-/*      mask exists and is already set.                                 */
-/*                                                                      */
-/*      -- NFW -- FIXME: I think this test is in error.  We should,     */
-/*      generally, be pasteing over existing valid data.                */
-/* -------------------------------------------------------------------- */
-            iDstOffset = iDstX + iDstY * nDstXSize;
-            if( poWK->panDstValid != NULL
-                && (poWK->panDstValid[iDstOffset>>5]
-                    & (0x01 << (iDstOffset & 0x1f))) )
-                continue;
-
-/* -------------------------------------------------------------------- */
 /*      Do not try to apply invalid source pixels to the dest.          */
 /* -------------------------------------------------------------------- */
             if( poWK->panUnifiedSrcValid != NULL
@@ -3226,6 +3204,8 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
+
+            iDstOffset = iDstX + iDstY * nDstXSize;
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
@@ -3952,16 +3932,6 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
 
 /* -------------------------------------------------------------------- */
-/*      Don't generate output pixels for which the destination valid    */
-/*      mask exists and is already set.                                 */
-/* -------------------------------------------------------------------- */
-            iDstOffset = iDstX + iDstY * nDstXSize;
-            if( poWK->panDstValid != NULL
-                && (poWK->panDstValid[iDstOffset>>5]
-                    & (0x01 << (iDstOffset & 0x1f))) )
-                continue;
-
-/* -------------------------------------------------------------------- */
 /*      Don't generate output pixels for which the source valid         */
 /*      mask exists and is invalid.                                     */
 /* -------------------------------------------------------------------- */
@@ -3986,6 +3956,7 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
+            iDstOffset = iDstX + iDstY * nDstXSize;
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
@@ -4288,16 +4259,6 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
             iSrcOffset = iSrcX + iSrcY * nSrcXSize;
 
 /* -------------------------------------------------------------------- */
-/*      Don't generate output pixels for which the destination valid    */
-/*      mask exists and is already set.                                 */
-/* -------------------------------------------------------------------- */
-            iDstOffset = iDstX + iDstY * nDstXSize;
-            if( poWK->panDstValid != NULL
-                && (poWK->panDstValid[iDstOffset>>5]
-                    & (0x01 << (iDstOffset & 0x1f))) )
-                continue;
-
-/* -------------------------------------------------------------------- */
 /*      Do not try to apply invalid source pixels to the dest.          */
 /* -------------------------------------------------------------------- */
             if( poWK->panUnifiedSrcValid != NULL
@@ -4321,6 +4282,8 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
+
+            iDstOffset = iDstX + iDstY * nDstXSize;
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
