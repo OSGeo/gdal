@@ -1537,26 +1537,35 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
 /* -------------------------------------------------------------------- */
 /*      If we have destination nodata values create, or update the      */
-/*      validity mask.                                                  */
+/*      validity mask.  We clear the DstValid for any pixel that we     */
+/*      do no have valid data in *any* of the source bands.             */
+/*                                                                      */
+/*      Note that we don't support any concept of unified nodata on     */
+/*      the destination image.  At some point that should be added      */
+/*      and then this logic will be significantly different.            */
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None && psOptions->padfDstNoDataReal != NULL )
     {
-        GUInt32 *panBandMask = NULL;
+        GUInt32 *panBandMask = NULL, *panMergedMask = NULL;
         int     nMaskWords = (oWK.nDstXSize * oWK.nDstYSize + 31)/32;
 
         eErr = CreateKernelMask( &oWK, 0, "DstValid" );
         if( eErr == CE_None )
+        {
             panBandMask = (GUInt32 *) CPLMalloc(nMaskWords*4);
+            panMergedMask = (GUInt32 *) CPLCalloc(nMaskWords,4);
+        }
 
         if( eErr == CE_None && panBandMask != NULL )
         {
             int iBand, iWord;
-
-            memset( oWK.panDstValid, 0, nMaskWords * 4 );
+            
             for( iBand = 0; iBand < psOptions->nBandCount; iBand++ )
             {
                 double adfNoData[2];
             
+                memset( panBandMask, 0xff, nMaskWords * 4 );
+
                 adfNoData[0] = psOptions->padfDstNoDataReal[iBand];
                 adfNoData[1] = psOptions->padfDstNoDataImag[iBand];
             
@@ -1569,9 +1578,14 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                                           FALSE, panBandMask );
 
                 for( iWord = nMaskWords - 1; iWord >= 0; iWord-- )
-                    oWK.panDstValid[iWord] |= panBandMask[iWord];
+                    panMergedMask[iWord] |= panBandMask[iWord];
             }
             CPLFree( panBandMask );
+
+            for( iWord = nMaskWords - 1; iWord >= 0; iWord-- )
+                oWK.panDstValid[iWord] &= panMergedMask[iWord];
+
+            CPLFree( panMergedMask );
         }
     }
         
