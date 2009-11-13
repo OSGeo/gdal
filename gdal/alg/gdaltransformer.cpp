@@ -521,8 +521,90 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     return pRet;
 }
 
+
+
 /************************************************************************/
-/*                  GDALCreateGenImgProjTransformer()                   */
+/*                          InsertCenterLong()                          */
+/*                                                                      */
+/*      Insert a CENTER_LONG Extension entry on a GEOGCS to indicate    */
+/*      the center longitude of the dataset for wrapping purposes.      */
+/************************************************************************/
+
+static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
+
+{								        
+    if( !EQUALN(osWKT.c_str(), "GEOGCS[", 7) )
+        return osWKT;
+    
+    if( strstr(osWKT,"EXTENSION[\"CENTER_LONG") != NULL )
+        return osWKT;
+
+/* -------------------------------------------------------------------- */
+/*      For now we only do this if we have a geotransform since         */
+/*      other forms require a bunch of extra work.                      */
+/* -------------------------------------------------------------------- */
+    double   adfGeoTransform[6];
+
+    if( GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None )
+        return osWKT;
+
+/* -------------------------------------------------------------------- */
+/*      Compute min/max longitude based on testing the four corners.    */
+/* -------------------------------------------------------------------- */
+    double dfMinLong, dfMaxLong;
+    int nXSize = GDALGetRasterXSize( hDS );
+    int nYSize = GDALGetRasterYSize( hDS );
+
+    dfMinLong = 
+        MIN(MIN(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+                + 0 * adfGeoTransform[2],
+                adfGeoTransform[0] + nXSize * adfGeoTransform[1]
+                + 0 * adfGeoTransform[2]),
+            MIN(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+                + nYSize * adfGeoTransform[2],
+                adfGeoTransform[0] + nXSize * adfGeoTransform[1]
+                + nYSize * adfGeoTransform[2]));
+    dfMaxLong = 
+        MAX(MAX(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+                + 0 * adfGeoTransform[2],
+                adfGeoTransform[0] + nXSize * adfGeoTransform[1]
+                + 0 * adfGeoTransform[2]),
+            MAX(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+                + nYSize * adfGeoTransform[2],
+                adfGeoTransform[0] + nXSize * adfGeoTransform[1]
+                + nYSize * adfGeoTransform[2]));
+
+    if( dfMaxLong - dfMinLong > 360.0 )
+        return osWKT;
+
+/* -------------------------------------------------------------------- */
+/*      Insert center long.                                             */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS( osWKT );
+    double dfCenterLong = (dfMaxLong + dfMinLong) / 2.0;
+    OGR_SRSNode *poExt;
+
+    poExt  = new OGR_SRSNode( "EXTENSION" );
+    poExt->AddChild( new OGR_SRSNode( "CENTER_LONG" ) );
+    poExt->AddChild( new OGR_SRSNode( CPLString().Printf("%g",dfCenterLong) ));
+    
+    oSRS.GetRoot()->AddChild( poExt->Clone() );
+    delete poExt;
+
+/* -------------------------------------------------------------------- */
+/*      Convert back to wkt.                                            */
+/* -------------------------------------------------------------------- */
+    char *pszWKT = NULL;
+    oSRS.exportToWkt( &pszWKT );
+    
+    osWKT = pszWKT;
+    CPLFree( pszWKT );
+
+    return osWKT;
+}
+
+/************************************************************************/
+/*                  GDALCreateGenImgProjTransformer2()                  */
 /************************************************************************/
 
 /**
@@ -740,8 +822,12 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         && pszDstWKT != NULL && strlen(pszDstWKT) > 0 
         && !EQUAL(pszSrcWKT,pszDstWKT) )
     {
+        CPLString osSrcWKT = pszSrcWKT;
+        if (hSrcDS)
+            osSrcWKT = InsertCenterLong( hSrcDS, osSrcWKT );
+        
         psInfo->pReprojectArg = 
-            GDALCreateReprojectionTransformer( pszSrcWKT, pszDstWKT );
+            GDALCreateReprojectionTransformer( osSrcWKT.c_str(), pszDstWKT );
     }
         
 /* -------------------------------------------------------------------- */
