@@ -586,6 +586,33 @@ def test_gdalwarp_23():
 
     return 'success'
 
+###############################################################################
+# Test warping an image crossing the 180E/180W longitude (#3206)
+
+def test_gdalwarp_24():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+        
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/testgdalwarp24src.tif', 100, 100)
+    ds.SetGeoTransform([179.5, 0.01, 0, 45, 0, -0.01])
+    ds.SetProjection('GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]')
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32660 tmp/testgdalwarp24src.tif tmp/testgdalwarp24dst.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp24dst.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 50634:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -611,6 +638,14 @@ def test_gdalwarp_cleanup():
             pass
     try:
         os.remove('tmp/testgdalwarp_gcp.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/testgdalwarp24src.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/testgdalwarp24dst.tif')
     except:
         pass
 
@@ -641,9 +676,9 @@ gdaltest_list = [
     test_gdalwarp_21,
     test_gdalwarp_22,
     test_gdalwarp_23,
+    test_gdalwarp_24,
     test_gdalwarp_cleanup
     ]
-
 
 if __name__ == '__main__':
 
