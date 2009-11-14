@@ -1046,7 +1046,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
         if( poFDefn->GetWidth() != 0 )
         {
-            snprintf( szFormat, TEMP_BUFFER_SIZE, "%%%d.%df",
+            snprintf( szFormat, sizeof(szFormat), "%%%d.%df",
                       poFDefn->GetWidth(), poFDefn->GetPrecision() );
         }
         else
@@ -1121,7 +1121,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
             snprintf( szItem, sizeof(szItem), "%d",
                       pauFields[iField].IntegerList.paList[i] );
             if( strlen(szTempBuffer) + strlen(szItem) + 6
-                > sizeof(szTempBuffer) )
+                >= sizeof(szTempBuffer) )
             {
                 break;
             }
@@ -1159,7 +1159,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
             snprintf( szItem, sizeof(szItem), szFormat,
                       pauFields[iField].RealList.paList[i] );
             if( strlen(szTempBuffer) + strlen(szItem) + 6
-                > sizeof(szTempBuffer) )
+                >= sizeof(szTempBuffer) )
             {
                 break;
             }
@@ -1187,7 +1187,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
             const char  *pszItem = pauFields[iField].StringList.paList[i];
             
             if( strlen(szTempBuffer) + strlen(pszItem)  + 6
-                > sizeof(szTempBuffer) )
+                >= sizeof(szTempBuffer) )
             {
                 break;
             }
