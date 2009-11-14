@@ -235,10 +235,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             }
         }
     }
-    if (ret == CE_None) {
-        const char *bands_count = CPLGetXMLValue(config, "BandsCount", "3");
-        m_bands_count = atoi(bands_count);
-    }
+    
+    const char *bands_count = CPLGetXMLValue(config, "BandsCount", "3");
+    int nBandCount = atoi(bands_count);
+    
     if (ret == CE_None) {
         CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
         if (cache_node != NULL) {
@@ -293,12 +293,12 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         nRasterYSize = m_data_window.m_sy;
 
         if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) ||
-            !GDALCheckBandCount(m_bands_count, TRUE))
+            !GDALCheckBandCount(nBandCount, TRUE))
         {
             return CE_Failure;
         }
 
-        for (int i = 0; i < m_bands_count; ++i) {
+        for (int i = 0; i < nBandCount; ++i) {
             GDALWMSRasterBand *band = new GDALWMSRasterBand(this, i, 1.0);
             SetBand(i + 1, band);
             double scale = 0.5;
