@@ -39,6 +39,10 @@ backslashes and double quotes will be backslashed escaped.  The
 CPLUnescapeString() function can be used to unescape the data into binary
 format using scheme CPLES_BackslashQuotable. <p>
 
+While GDAL does not support parsing or rendering CGM data, at least one user 
+has found the <a href="http://sk1project.org/modules.php?name=Products&product=uniconvertor">UniConverter</a> 
+library useful for this purpose.
+
 <h2>Multi-Image NITF Files</h2>
 
 NITF files with more than one image segment (IM) will present the image
