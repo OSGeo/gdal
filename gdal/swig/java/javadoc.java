@@ -1,4 +1,32 @@
-/* This file contains the Javadoc for all classes */
+/* ***************************************************************************
+* $Id$
+*
+* Project:  GDAL/OGR Java bindings
+* Purpose:  Documentation for the Java bindings
+* Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+* 
+*******************************************************************************
+* Copyright (c) 2009, Even Rouault <even dot rouault at mines dash paris dot org>
+* Copyright (c) 1999-2009, Frank Warmerdam
+* 
+* Permission is hereby granted, free of charge, to any person obtaining a
+* copy of this software and associated documentation files (the "Software"),
+* to deal in the Software without restriction, including without limitation
+* the rights to use, copy, modify, merge, publish, distribute, sublicense,
+* and/or sell copies of the Software, and to permit persons to whom the
+* Software is furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included
+* in all copies or substantial portions of the Software.
+* 
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*************************************************************************** */
 
 /* Class gdal */
 
@@ -1359,7 +1387,7 @@ public class gdal:public static Dataset OpenShared(String name)
  * target file, including the target file. The filenames will not include any
  * path components, are an essentially just the output of CPLReadDir() on the
  * parent directory. If the target object does not have filesystem semantics
- * then the file list should be NULL.
+ * then the file list should be null.
  *
  * @param name the name of the file to access.  In the case of
  * exotic drivers this may not refer to a physical file, but instead contain
@@ -1388,7 +1416,7 @@ public class gdal:public static Driver IdentifyDriver(String name)
  * Parse an XML string into tree form.
  *
  * The passed document is parsed into a  XMLNode tree representation. 
- * If the document is not well formed XML then NULL is returned, and errors
+ * If the document is not well formed XML then null is returned, and errors
  * are reported via CPLError().  No validation beyond wellformedness is
  * done.
  *
@@ -1470,10 +1498,100 @@ public class gdal:public static int InvGeoTransform(double[] gt_in, double[] gt_
  */
 public class gdal:public static double[] InvGeoTransform(double[] gt_in)
 
+
+@hide public class gdal:public static int HasThreadSupport()
+
+/* Class ColorTable */
+
+/**
+ * Class ColorTable represents a color table / palette.
+ *
+ * <p>
+ * The ColorTable class is a binding for the C++ <a href="http://gdal.org/classGDALColorTable.html">GDALColorTable</a> class.
+ */
+public class ColorTable
+
+/**
+ * Construct a new color table.
+ *
+ * Same as below with ePaletteInterpretation == gdalconst.GPI_RGB
+ *
+ * @see #ColorTable(int ePaletteInterpretation)
+ */
+public class ColorTable:public ColorTable()
+
+/**
+ * Construct a new color table.
+ */
+public class ColorTable:public ColorTable(int ePaletteInterpretation)
+
+/**
+ * Make a copy of a color table.
+ */
+public class ColorTable:public Object clone()
+
+/**
+ * Make a copy of a color table.
+ */
+public class ColorTable:public ColorTable Clone()
+
+/**
+ * Create color ramp.
+ *
+ * Automatically creates a color ramp from one color entry to another. It can be called several times to create multiples ramps in the same color table.
+ *
+ * @param nStartIndex 	index to start the ramp on the color table [0..255]
+ * @param startcolor 	a color value to start the ramp
+ * @param nEndIndex 	index to end the ramp on the color table [0..255]
+ * @param endcolor 	a color value to end the ramp
+ */
+public class ColorTable:public void CreateColorRamp(int nStartIndex, java.awt.Color startcolor, int nEndIndex, java.awt.Color endcolor)
+
+/**
+ * Fetch a color entry from table.
+ *
+ * @param entry entry offset from zero to GetCount()-1.
+ *
+ * @return  color entry, or null if index is out of range. 
+ */
+public class ColorTable:public java.awt.Color GetColorEntry(int entry) 
+
+/**
+ * Get number of color entries in table.
+ *
+ * @return the number of color entries. 
+ */
+public class ColorTable:public int GetCount()
+
+/**
+ * Fetch palette interpretation.
+ *
+ * The returned value is used to interprete the values in the GDALColorEntry.
+ *
+ * @return palette interpretation enumeration value, usually gdalconst.GPI_RGB. 
+ */
+public class ColorTable:public int GetPaletteInterpretation()
+
+/**
+ * Set entry in color table.
+ *
+ * The passed in entry must match the color interpretation of the table to which it is being assigned.
+ *
+ * The table is grown as needed to hold the supplied offset.
+ *
+ * @param entry entry offset from zero to GetCount()-1.
+ * @param centry value to assign to table.
+ */
+public class ColorTable:public void SetColorEntry(int entry, java.awt.Color centry)
+
 /* Class Dataset */
 
 /**
  * Class Dataset is an uninstanciable class providing various methods to access a set of associated raster bands, usually from one file.
+ *
+ * <p>
+ * The Dataset class is a binding for the C++ <a href="http://gdal.org/classGDALDataset.html">GDALDataset</a> class.
+ *
  * <p>
  * A dataset encapsulating one or more raster bands. Details are further discussed in the <a href="http://gdal.org/gdal_datamodel.html#GDALDataset">GDAL Data Model</a>.
  * <p>
@@ -1928,8 +2046,7 @@ public class Dataset:public int GetRasterCount()
  * The pixel values will automatically be translated to/from the Band
  * data type as needed.
  *
- * @param nioBuffer The buffer into which the data should be read, or from which
- * it should be written.  This buffer must contain at least
+ * @param nioBuffer The buffer into which the data will be written.  This buffer must contain at least
  * buf_xsize * buf_ysize * nBandCount words of type buf_type.  It is organized
  * in left to right,top to bottom pixel order.  Spacing is controlled by the
  * nPixelSpace, and nLineSpace parameters.
@@ -1939,16 +2056,16 @@ public class Dataset:public int GetRasterCount()
  * nBandCount bands.
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
- * pData to the start of the next pixel value within a scanline.  If defaulted
- * (0) the size of the datatype eBufType is used.
+ * the buffer to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype buf_type is used.
  *
  * @param nLineSpace The byte offset from the start of one scanline in
- * pData to the start of the next.  If defaulted the size of the datatype
- * eBufType * nBufXSize is used.
+ * the buffer to the start of the next.  If defaulted the size of the datatype
+ * buf_type * buf_xsize is used.
  *
  * @param nBandSpace the byte offset from the start of one bands data to the
  * start of the next.  If defaulted (zero) the value will be 
- * nLineSpace * nBufYSize implying band sequential organization
+ * nLineSpace * buf_ysize implying band sequential organization
  * of the data buffer. 
  *
  * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
@@ -1957,27 +2074,8 @@ public class Dataset:public int GetRasterCount()
  */
 public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
-/**
- * Read a region of image data from multiple bands.
- *
- * Same as below with nBandSpace == 0
- *
- * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
- *
- * @since Java bindings 1.7.0
- */
-public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace)
-
-/**
- * Read a region of image data from multiple bands.
- *
- * Same as below with nLineSpace == 0 and nBandSpace == 0
- *
- * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
- *
- * @since Java bindings 1.7.0
- */
-public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace)
+@hide public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace)
+@hide public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace)
 
 /**
  * Read a region of image data from multiple bands.
@@ -1989,6 +2087,181 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  * @since Java bindings 1.7.0
  */
 public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * This method allows reading a region of one or more Band's from
+ * this dataset into a buffer. It automatically takes care of data type
+ * translation if the data type (buf_type) of the buffer is different than
+ * that of the Band.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (buf_xsize x buf_ysize) is different than the size of the
+ * region being accessed (xsize x ysize).
+ * <p>
+ * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
+ * writing from various organization of buffers. 
+ * <p>
+ * For highest performance full resolution data access, read
+ * on "block boundaries" as returned by <a href="Band.html#GetBlockSize(int[], int[])">Band.GetBlockSize(int[], int[])</a>, or use the
+ * <a href="Band.html#ReadBlock_Direct(int, int, java.nio.ByteBuffer)">Band.ReadBlock(int, int, java.nio.ByteBuffer)</a> method.
+ * <p>
+ *
+ * @param xoff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param yoff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param xsize The width of the region of the band to be accessed in pixels.
+ *
+ * @param ysize The height of the region of the band to be accessed in lines.
+
+ * @param buf_xsize the width of the buffer image into which the desired region
+ * is to be read.
+ *
+ * @param buf_ysize the height of the buffer image into which the desired
+ * region is to be read.
+ *
+ * @param buf_type the type of the pixel values in the array. One of
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
+ * The pixel values will automatically be translated to/from the Band
+ * data type as needed. The GDAL type must be consistant with the type of the Java array.
+ *
+ * @param array The array into which the data will be written. This buffer must contain at least
+ * buf_xsize * buf_ysize elements * nBandCount .  It is organized
+ * in left to right,top to bottom pixel order.  Spacing is controlled by the
+ * nPixelSpace, and nLineSpace parameters.
+ *
+ * @param band_list the list of band numbers being read/written.
+ * Note band numbers are 1 based.   This may be null to select the first 
+ * nBandCount bands.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * the buffer to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype buf_type is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * the buffer to the start of the next.  If defaulted the size of the datatype
+ * buf_type * buf_xsize is used.
+ *
+ * @param nBandSpace the byte offset from the start of one bands data to the
+ * start of the next.  If defaulted (zero) the value will be 
+ * nLineSpace * buf_ysize implying band sequential organization
+ * of the data buffer. 
+ *
+ * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+@hide public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Read a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list)
 
 /**
  * Write a region of image data from multiple bands.
@@ -2044,16 +2317,16 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  * nBandCount bands.
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
- * pData to the start of the next pixel value within a scanline.  If defaulted
- * (0) the size of the datatype eBufType is used.
+ * the buffer to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype buf_type is used.
  *
  * @param nLineSpace The byte offset from the start of one scanline in
- * pData to the start of the next.  If defaulted the size of the datatype
- * eBufType * nBufXSize is used.
+ * the buffer to the start of the next.  If defaulted the size of the datatype
+ * buf_type * buf_xsize is used.
  *
  * @param nBandSpace the byte offset from the start of one bands data to the
  * start of the next.  If defaulted (zero) the value will be 
- * nLineSpace * nBufYSize implying band sequential organization
+ * nLineSpace * buf_ysize implying band sequential organization
  * of the data buffer. 
  *
  * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
@@ -2062,27 +2335,9 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  */
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
 
-/**
- * Write a region of image data from multiple bands.
- *
- * Same as below with nBandSpace == 0
- *
- * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
- *
- * @since Java bindings 1.7.0
- */
-public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace)
+@hide public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace)
 
-/**
- * Write a region of image data from multiple bands.
- *
- * Same as below with nLineSpace == 0 and nBandSpace == 0
- *
- * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
- *
- * @since Java bindings 1.7.0
- */
-public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace)
+@hide public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list, int nPixelSpace)
 
 /**
  * Write a region of image data from multiple bands.
@@ -2096,13 +2351,241 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
 public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int[] band_list)
 
 
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * This method allows writing data from a buffer into a region 
+ * of the Band's.  It automatically takes care of data type
+ * translation if the data type (buf_type) of the buffer is different than
+ * that of the Band.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (buf_xsize x buf_ysize) is different than the size of the
+ * region being accessed (xsize x ysize).
+ * <p>
+ * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
+ * writing from various organization of buffers. 
+ * <p>
+ * For highest performance full resolution data access, write
+ * on "block boundaries" as returned by <a href="Band.html#GetBlockSize(int[], int[])">Band.GetBlockSize(int[], int[])</a>, or use the
+ * <a href="Band.html#WriteBlock_Direct(int, int, java.nio.ByteBuffer)">Band.WriteBlock(int, int, java.nio.ByteBuffer)</a> method.
+ *<p>
+ *
+ * @param xoff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param yoff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param xsize The width of the region of the band to be accessed in pixels.
+ *
+ * @param ysize The height of the region of the band to be accessed in lines.
+
+ * @param buf_xsize the width of the buffer image from which the desired region is to be written.
+ *
+ * @param buf_ysize the height of the buffer image from which the desired region is to be written.
+  *
+ * @param buf_type the type of the pixel values in the array. One of
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
+ * The pixel values will automatically be translated to/from the Band
+ * data type as needed. The GDAL type must be consistant with the type of the Java array.
+ *
+ * @param array The array from which the data will be read. This buffer must contain at least
+ * buf_xsize * buf_ysize elements * nBandCount .  It is organized
+ * in left to right,top to bottom pixel order.  Spacing is controlled by the
+ * nPixelSpace, and nLineSpace parameters.
+ *
+ * @param band_list the list of band numbers being read/written.
+ * Note band numbers are 1 based.   This may be null to select the first 
+ * nBandCount bands.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * the buffer to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype buf_type is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * the buffer to the start of the next.  If defaulted the size of the datatype
+ * buf_type * buf_xsize is used.
+ *
+ * @param nBandSpace the byte offset from the start of one bands data to the
+ * start of the next.  If defaulted (zero) the value will be 
+ * nLineSpace * buf_ysize implying band sequential organization
+ * of the data buffer. 
+ *
+ * @return gdalconst.CE_Failure if the access fails, otherwise gdalconst.CE_None.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list)
+
+
+
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int[] band_list)
+
+
+
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int[] band_list)
+
+
+
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int[] band_list)
+
+
+
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace)
+
+@hide public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace)
+
+/**
+ * Write a region of image data from multiple bands.
+ *
+ * Same as below with nPixelSpace == 0, nLineSpace == 0 and nBandSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list, int nPixelSpace, int nLineSpace, int nBandSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Dataset:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int[] band_list)
+
+
+
+
+
+
+
+
 /* Class Band */
 
 /**
  * Class Band is an uninstanciable class providing various methods to access a single raster band (or channel).
+ *
+ * <p>
+ * The Band class is a binding for the C++ <a href="http://gdal.org/classGDALRasterBand.html">GDALRasterBand</a> class.
  * <p>
  * Band objects are returned by methods from other classes, such as
  * Dataset.<a href="Dataset.html#GetRasterBand(int)">GetRasterBand()</a>
+ *
+ * Users of the Java bindings must be aware that the Java primitive types byte, short, int are signed types, whereas a few GDAL
+ * data types (GDT_Byte, GDT_UInt16 and GDT_UInt32) are unsigned. To read/write those data types, you may have to
+ * choose a "larger" type for example (short/GDT_Int16 for GDT_Byte, int/GDT_Int32 for GDT_UInt16, double/GDT_Float64 for GDT_UInt32), or use
+ * some tricks to hold unsigned values into signed data type. For example :
+ * <pre>
+ *   byte[] byteArray = new byte[xsize * ysize];
+ *   byte[] byteArray2 = new byte[xsize * ysize];
+ *   band.ReadRaster(0, 0, xsize, ysize, gdalconst.GDT_Byte, byteArray);
+ *   for(int j=0; j &lt; ysize; j++)
+ *   {
+ *      for(int i=0; i &lt; xsize; i++)
+ *      {
+ *          byte bVal = byteArray[j*xsize+i]; // ranging from -128 to 127
+ *          int nVal = ((int)bVal) & 0xff; // remapped to range from 0 to 255
+ *          int nVal2;
+ *          if (nVal > threshold)
+ *              nVal2 = 255;
+ *          else
+ *              nVal2 = 0;
+ *          byte bVal2 = (nVal2 > 127) ? nVal2 - 256 : nVal2; // remapped to range from -128 to 127
+ *          byteArray2[j*xsize+i] = bVal2;
+ *      }
+ *   }
+ *   band2.WriteRaster(0, 0, xsize, ysize, gdalconst.GDT_Byte, byteArray2);
+ * </pre>
+ * 
+ *
  */
 public class Band
 
@@ -2230,16 +2713,7 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev)
 
-/**
- * Compute image statistics. 
- *
- * Same as below with stddev == null and callback == null
- *
- * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
- */
-public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean)
+@hide public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean)
 
 /**
  * Compute image statistics. 
@@ -2252,16 +2726,7 @@ public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, 
  */
 public class Band:public int ComputeStatistics(boolean approx_ok, double[] min, double[] max)
 
-/**
- * Compute image statistics. 
- *
- * Same as below with max == null, mean == null, stddev == null and callback == null
- *
- * @see #ComputeStatistics(boolean approx_ok, double[] min, double[] max, double[] mean, double[] stddev, ProgressCallback callback)
- *
- * @since Java bindings 1.7.0
- */
-public class Band:public int ComputeStatistics(boolean approx_ok, double[] min)
+@hide public class Band:public int ComputeStatistics(boolean approx_ok, double[] min)
 
 /**
  * Compute image statistics. 
@@ -2858,7 +3323,7 @@ public class Band:public int GetYSize()
  * This returns true if the underlying datastore can compute arbitrary 
  * overviews efficiently, such as is the case with OGDI over a network. 
  * Datastores with arbitrary overviews don't generally have any fixed
- * overviews, but the RasterIO() method can be used in downsampling mode
+ * overviews, but the ReadRaster() method can be used in downsampling mode
  * to get overview data efficiently.
  *
  * @return true if arbitrary overviews available (efficiently), otherwise
@@ -2924,12 +3389,12 @@ public class Band:public boolean HasArbitraryOverviews()
  * and nLineSpace parameters.
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
- * pData to the start of the next pixel value within a scanline.  If defaulted
- * (0) the size of the datatype eBufType is used.
+ * the buffer to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype buf_type is used.
  *
  * @param nLineSpace The byte offset from the start of one scanline in
- * pData to the start of the next.  If defaulted the size of the datatype
- * eBufType * nBufXSize is used.
+ * the buffer to the start of the next.  If defaulted the size of the datatype
+ * buf_type * buf_xsize is used.
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  *
@@ -2937,16 +3402,7 @@ public class Band:public boolean HasArbitraryOverviews()
  */
 public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
 
-/**
- * Read a region of image data for this band.
- *
- * Same as below with nLineSpace == 0
- *
- * @see #ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
- *
- * @since Java bindings 1.7.0
- */
-public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace)
+@hide public class Band:public int ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace)
 
 /**
  * Read a region of image data for this band.
@@ -3018,6 +3474,299 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  */
 public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type)
 
+
+
+/**
+ * Read a region of image data for this band.
+ *
+ * This method allows reading a region of a GDALRasterBand into a buffer.  It
+ * automatically takes care of data type translation if the data type
+ * (buf_type) of the buffer is different than that of the GDALRasterBand.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (buf_xsize x buf_ysize) is different than the size of the
+ * region being accessed (xsize x ysize).
+ *<p>
+ * The nPixelSpace and nLineSpace parameters allow reading into or
+ * writing from unusually organized buffers.  This is primarily used
+ * for buffers containing more than one bands raster data in interleaved
+ * format. 
+ *<p>
+ * Some formats may efficiently implement decimation into a buffer by
+ * reading from lower resolution overview images.
+ * <p>
+ * For highest performance full resolution data access, read
+ * on "block boundaries" as returned by <a href="#GetBlockSize(int[], int[])">GetBlockSize(int[], int[])</a>, or use the
+ * <a href="#ReadBlock_Direct(int, int, java.nio.ByteBuffer)">ReadBlock(int, int, java.nio.ByteBuffer)</a> method.
+ *
+ * @param xoff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param yoff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param xsize The width of the region of the band to be accessed in pixels.
+ *
+ * @param ysize The height of the region of the band to be accessed in lines.
+ *
+ * @param buf_xsize the width of the buffer image into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param buf_ysize the height of the buffer image into which the desired region is
+ * to be read, or from which it is to be written.
+ *
+ * @param buf_type the type of the pixel values in the array. One of
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
+ * The pixel values will automatically be translated to/from the Band
+ * data type as needed. The GDAL type must be consistant with the type of the Java array.
+ *
+ * @param array The buffer into which the data should be read.
+ * This buffer must contain at least buf_xsize *
+ * buf_ysize words of type buf_type.  It is organized in left to right,
+ * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+ * and nLineSpace parameters.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * the buffer to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype buf_type is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * the buffer to the start of the next.  If defaulted the size of the datatype
+ * buf_type * buf_xsize is used.
+ *
+ * @return CE_Failure if the access fails, otherwise CE_None.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, byte[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, buf_type = gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, byte[] array)
+
+
+
+
+
+/**
+ * Read a region of image data for this band.
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, short[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, buf_type = gdalconst.GDT_Int16, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, short[] array)
+
+
+
+
+/**
+ * Read a region of image data for this band.
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, int[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, buf_type = gdalconst.GDT_Int32, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int[] array)
+
+
+
+
+/**
+ * Read a region of image data for this band.
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, buf_type = gdalconst.GDT_Float32, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, float[] array)
+
+
+
+
+/**
+ * Read a region of image data for this band.
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, double[] array)
+
+/**
+ * Read a region of image data for this band.
+ *
+ * Same as below with buf_xsize = xsize, buf_ysize = ysize, buf_type = gdalconst.GDT_Float64, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int ReadRaster(int xoff, int yoff, int xsize, int ysize, double[] array)
+
+
+
+
 /**
  * Write a region of image data for this band.
  *
@@ -3073,12 +3822,12 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  * and nLineSpace parameters.
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
- * pData to the start of the next pixel value within a scanline.  If defaulted
- * (0) the size of the datatype eBufType is used.
+ * the buffer to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype buf_type is used.
  *
  * @param nLineSpace The byte offset from the start of one scanline in
- * pData to the start of the next.  If defaulted the size of the datatype
- * eBufType * nBufXSize is used.
+ * the buffer to the start of the next.  If defaulted the size of the datatype
+ * buf_type * buf_xsize is used.
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  *
@@ -3086,16 +3835,7 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
 
-/**
- * Write a region of image data for this band.
- *
- * Same as below with nLineSpace == 0
- *
- * @see #WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace, int nLineSpace)
- *
- * @since Java bindings 1.7.0
- */
-public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace)
+@hide public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, java.nio.ByteBuffer nioBuffer, int nPixelSpace)
 
 /**
  * Write a region of image data for this band.
@@ -3139,12 +3879,295 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  */
 public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize, java.nio.ByteBuffer nioBuffer)
 
+
+
+
+
+/**
+ * Write a region of image data for this band.
+ *
+ * This method allows writing data from a buffer into a region 
+ * of the Band.  It
+ * automatically takes care of data type translation if the data type
+ * (buf_type) of the buffer is different than that of the GDALRasterBand.
+ * The method also takes care of image decimation / replication if the
+ * buffer size (buf_xsize x buf_ysize) is different than the size of the
+ * region being accessed (xsize x ysize).
+ *<p>
+ * The nPixelSpace and nLineSpace parameters allow reading into or
+ * writing from unusually organized buffers.  This is primarily used
+ * for buffers containing more than one bands raster data in interleaved
+ * format. 
+ *<p>
+ * Some formats may efficiently implement decimation into a buffer by
+ * reading from lower resolution overview images.
+ * <p>
+ * For highest performance full resolution data access, write
+ * on "block boundaries" as returned by <a href="#GetBlockSize(int[], int[])">GetBlockSize(int[], int[])</a>, or use the
+ * <a href="#WriteBlock_Direct(int, int, java.nio.ByteBuffer)">WriteBlock(int, int, java.nio.ByteBuffer)</a> method.
+ *
+ * @param xoff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param yoff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param xsize The width of the region of the band to be accessed in pixels.
+ *
+ * @param ysize The height of the region of the band to be accessed in lines.
+ *
+ * @param buf_xsize the width of the buffer image from which the desired region is to be written.
+ *
+ * @param buf_ysize the height of the buffer image from which the desired region is to be written.
+ *
+ * @param buf_type the type of the pixel values in the array. One of
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
+ * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
+ * The pixel values will automatically be translated to/from the Band
+ * data type as needed. The GDAL type must be consistant with the type of the Java array.
+ *
+ * @param array The buffer into which the data should be read.
+ * This buffer must contain at least buf_xsize *
+ * buf_ysize words of type buf_type.  It is organized in left to right,
+ * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+ * and nLineSpace parameters.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * the buffer to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype buf_type is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * the buffer to the start of the next.  If defaulted the size of the datatype
+ * buf_type * buf_xsize is used.
+ *
+ * @return CE_Failure if the access fails, otherwise CE_None.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, byte[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, buf_type == gdalconst.GDT_Byte, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, byte[] array)
+
+
+/**
+ * Write a region of image data for this band.
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, short[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, buf_type == gdalconst.GDT_Int16, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, short[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, short[] array)
+
+
+/**
+ * Write a region of image data for this band.
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, int[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, buf_type == gdalconst.GDT_Int32, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, int[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int[] array)
+
+
+/**
+ * Write a region of image data for this band.
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, buf_type == gdalconst.GDT_Float32, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, float[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, float[] array)
+
+
+/**
+ * Write a region of image data for this band.
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, byte[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
+
+@hide public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, double[] array)
+
+/**
+ * Write a region of image data for this band.
+ *
+ * Same as below with buf_xsize == xsize, buf_ysize == ysize, buf_type == gdalconst.GDT_Float64, nPixelSpace == 0 and nLineSpace == 0
+ *
+ * @see #WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, double[] array, int nPixelSpace, int nLineSpace)
+ *
+ * @since Java bindings 1.7.0
+ */
+public class Band:public int WriteRaster(int xoff, int yoff, int xsize, int ysize, double[] array)
+
+
 /**
  * Read a block of image data efficiently.
  *
  * This method accesses a "natural" block from the raster band without
  * resampling, or data type conversion.  For a more generalized, but
- * potentially less efficient access use RasterIO().
+ * potentially less efficient access use ReadRaster().
  *
  * @param nXBlockOff the horizontal block offset, with zero indicating
  * the left most block, 1 the next block and so forth. 
@@ -3167,7 +4190,7 @@ public class Band:public int ReadBlock_Direct(int nXBlockOff, int nYBlockOff, ja
  *
  * This method accesses a "natural" block from the raster band without
  * resampling, or data type conversion.  For a more generalized, but
- * potentially less efficient access use RasterIO().
+ * potentially less efficient access use WriteRaster().
  *
  * @param nXBlockOff the horizontal block offset, with zero indicating
  * the left most block, 1 the next block and so forth. 
@@ -3310,6 +4333,9 @@ public class Band:public int SetStatistics(double min, double max, double mean, 
  * some cases), and might have attributes such as the histogram count for
  * that range, the color pixels of that range should be drawn names of classes
  * or any other generic information. 
+ *
+ * <p>
+ * The RasterAttributeTable class is a binding for the C++ <a href="http://gdal.org/classGDALRasterAttributeTable.html">GDALRasterAttributeTable</a> class.
  * <p>
  * Raster attribute tables can be used to represent histograms, color tables,
  * and classification information.  
@@ -3560,6 +4586,9 @@ public class RasterAttributeTable:public void SetValueAsString(int iRow, int iCo
 
 /**
  * Class Driver is an uninstanciable class providing various methods for a format specific driver.
+ *
+ * <p>
+ * The Driver class is a binding for the C++ <a href="http://gdal.org/classGDALDriver.html">GDALDriver</a> class.
  * <p>
  * An instance of this class is created for each supported format, and manages information about the format.
  * This roughly corresponds to a file format, though some drivers may be gateways to many formats through a secondary multi-library.
@@ -3907,6 +4936,9 @@ public class TermProgressCallback
 
 /**
   * Class used for object with metadata. 
+  *
+  * <p>
+  * The MajorObject class is a binding for the C++ <a href="http://gdal.org/classGDALMajorObject.html">GDALMajorObject</a> class.
   */
 public class MajorObject
 
@@ -3943,7 +4975,7 @@ public class MajorObject:public void SetDescription(String newDescription)
  *
  * Returns metadata as (key, value) tuples in the result table
  *
- * @param domain the domain of interest.  Use "" or NULL for the default
+ * @param domain the domain of interest.  Use "" or null for the default
  * domain.
  * 
  * @return null or a hash table with metadata
@@ -3967,7 +4999,7 @@ public class MajorObject:public java.util.Hashtable GetMetadata_Dict()
  *
  * Returns metadata as a vector of strings of the format "KEY=VALUE".
  *
- * @param domain the domain of interest.  Use "" or NULL for the default
+ * @param domain the domain of interest.  Use "" or null for the default
  * domain.
  * 
  * @return null or a vector of strings
@@ -3991,7 +5023,7 @@ public class MajorObject:public java.util.Vector GetMetadata_List()
  * The metadata is set into the domain specified.
  *
  * @param metadata the metadata as a table of (key, value) tuples to apply
- * @param domain the domain of interest.  Use "" or NULL for the default
+ * @param domain the domain of interest.  Use "" or null for the default
  * domain. 
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
  * metadata has been accepted, but is likely not maintained persistently 
@@ -4021,7 +5053,7 @@ public class MajorObject:public int SetMetadata(java.util.Hashtable metadata)
  * The metadata is set into the domain specified.
  *
  * @param metadataString the metadata to apply as a string of the format "KEY=VALUE".
- * @param domain the domain of interest.  Use "" or NULL for the default
+ * @param domain the domain of interest.  Use "" or null for the default
  * domain. 
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
  * metadata has been accepted, but is likely not maintained persistently 
@@ -4051,7 +5083,7 @@ public class MajorObject:public int SetMetadata(String metadataString)
  * The metadata is set into the domain specified.
  *
  * @param metadata the metadata to apply as a vector of strings of the format "KEY=VALUE".
- * @param domain the domain of interest.  Use "" or NULL for the default
+ * @param domain the domain of interest.  Use "" or null for the default
  * domain. 
  * @return gdalconst.CE_None on success, gdalconst.CE_Failure on failure and gdalconst.CE_Warning if the
  * metadata has been accepted, but is likely not maintained persistently 
@@ -4081,7 +5113,7 @@ public class MajorObject:public int SetMetadata(java.util.Vector metadata)
  * Fetch single metadata item.
  *
  * @param name the key for the metadata item to fetch.
- * @param domain the domain to fetch for, use NULL for the default domain.
+ * @param domain the domain to fetch for, use null for the default domain.
  *
  * @return null on failure to find the key, or the value string on success.
  */
@@ -4164,7 +5196,7 @@ public class Transformer
  * coordinates to destination image coordinates.  This is done using the
  * destination image geotransform, or if not available, using a polynomial 
  * model derived from GCPs. If GCPs are used this stage is accomplished using 
- * GDALGCPTransform().  This stage is skipped if hDstDS is NULL when the
+ * GDALGCPTransform().  This stage is skipped if dst_ds is null when the
  * transformation is created. 
  *
  * Supported Options:
@@ -4480,6 +5512,10 @@ public interface gdalconstConstants:public final static int GA_ReadOnly
  */
 public interface gdalconstConstants:public final static int GA_Update
 
+@hide public interface gdalconstConstants:public final static int GF_Read
+
+@hide public interface gdalconstConstants:public final static int GF_Write
+
 /**
  * GCI_Undefined(0) : undefined (color interpretation)
  */
@@ -4714,6 +5750,9 @@ public interface gdalconstConstants:public final static int GPI_HLS
 
 /**
  * Class Driver is an uninstanciable class providing various methods to represents an operational format driver.
+ *
+ * <p>
+ * The Driver class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRSFDriver.html">OGRSFDriver</a> class.
  */
 public class org.gdal.ogr.Driver
 
@@ -4868,6 +5907,10 @@ public class org.gdal.ogr.Driver:public String GetName()
 /* Class DataSource */
 /**
   * This class represents a data source.
+  *
+  * <p>
+  * The DataSource class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRDataSource.html">OGRDataSource</a> class.
+  * <p>
   * A data source potentially consists of many layers (<a href="Layer.html">Layer</a>). A data source normally consists of one, or a
   * related set of files, though the name doesn't have to be a real item in the file system.
   * When an DataSource is destroyed, all it's associated Layer objects are also destroyed.
@@ -5188,6 +6231,9 @@ public class DataSource:public int GetSummaryRefCount()
 
 /**
   * This class represents a layer of simple features, with access methods.
+  *
+  * <p>
+  * The Layer class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRLayer.html">OGRLayer</a> class.
   */
 public class Layer
 
@@ -5322,7 +6368,7 @@ public class Layer:public int DeleteFeature(int fid)
  value cannot be OGRNullFID.  Success or failure of this operation is
  unaffected by the spatial or attribute filters.
  <p>
- If this method returns a non-NULL feature, it is guaranteed that its 
+ If this method returns a non-null feature, it is guaranteed that its 
  feature id (Feature.GetFID()) will be the same as fid.
  <p>
  Use Layer.<a href="#TestCapability(java.lang.String)">TestCapability</a>(ogr.OLCRandomRead) to establish if this layer
@@ -5702,6 +6748,9 @@ public class Layer:public boolean TestCapability(String cap)
 
 /**
  * A simple feature, including geometry and attributes.
+ *
+ * <p>
+ * The Feature class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRFeature.html">OGRFeature</a> class.
  */
 public class Feature
 
@@ -6253,6 +7302,9 @@ public class Feature:public void UnsetField(String name)
 /**
  * Abstract base class for all geometry classes.
  *
+ * <p>
+ * The Geometry class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRGeometry.html">OGRGeometry</a> class.
+ * <p>
  * Note that the family of spatial analysis methods (Equal(), Disjoint(), ...,
  * ConvexHull(), Buffer(), ...) are not implemented at ths time.  Some other
  * required and optional geometry methods have also been omitted at this
@@ -7236,7 +8288,10 @@ public class Geometry:public int WkbSize()
 /**
  * Definition of a feature class or feature layer.
  *
- * This object contains schema information for a set of OGRFeatures. In table based systems,
+ * <p>
+ * The FeatureDefn class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRFeatureDefn.html">OGRFeatureDefn</a> class.
+ * <p>
+ * This object contains schema information for a set of Feature. In table based systems,
  * a FeatureDefn is essentially a layer. In more object oriented approaches (such as SF CORBA)
  * this can represent a class of features but doesn't necessarily relate to all of a layer, or just one layer.
  * <p>
@@ -7355,6 +8410,9 @@ public class FeatureDefn:public int GetReferenceCount()
 
 /**
   * Definition of an attribute of a FeatureDefn.
+  *
+  * <p>
+  * The FieldDefn class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRFieldDefn.html">OGRFieldDefn</a> class.
   */
 public class FieldDefn
 
@@ -7898,7 +8956,9 @@ public class ogr:public static int SetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_
  * This class respresents a OpenGIS Spatial Reference System, and contains
  * methods for converting between this object organization and well known
  * text (WKT) format.  This object is reference counted as one instance of
- * the object is normally shared between many OGRGeometry objects.
+ * the object is normally shared between many Geometry objects.
+ * <p>
+ * The SpatialReference class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRSpatialReference.html">OGRSpatialReference</a> class.
  * <p>
  * Normally application code can fetch needed parameter values for this
  * SRS using GetAttrValue(), but in special cases the underlying parse tree
@@ -9067,7 +10127,7 @@ public class SpatialReference:public int SetGeogCS(String pszGeogName, String ps
  * 1/f = 1.0 / (1.0 - semiminor/semimajor).
  *
  * @param pszPMName the name of the prime merdidian (not to serve as a key)
- * If this is NULL a default value of "Greenwich" will be used. 
+ * If this is null a default value of "Greenwich" will be used. 
  * 
  * @param dfPMOffset the longitude of greenwich relative to this prime
  * meridian.
@@ -9376,6 +10436,9 @@ public class SpatialReference:public int Validate()
 
 /**
  * Object for transforming between coordinate systems.
+ *
+ * <p>
+ * The CoordinateTransformation class is a binding for the C++ <a href="http://gdal.org/ogr/classOGRCoordinateTransformation.html">OGRCoordinateTransformation</a> class.
  */
 public class CoordinateTransformation
 
