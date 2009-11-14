@@ -312,6 +312,9 @@ static void MorphNameToESRI( char ** ppszName )
 {
     int         i, j;
     char        *pszName = *ppszName;
+    
+    if (pszName[0] == '\0')
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Translate non-alphanumeric values to underscores.               */
