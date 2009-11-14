@@ -178,7 +178,6 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
     // Buffer for srsName attribute (srsName="...")
     char szSrsName[30] = { 0 }; 
     int nSrsNameLength = 0;
-    OGRBoolean bAddSrsName = FALSE; 
 
     const OGRSpatialReference* poSRS = NULL;
     poSRS = poGeometry->getSpatialReference();
@@ -200,22 +199,15 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
             if( EQUAL( pszAuthName, "EPSG" ) )
             {
                 pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-                if( NULL != pszAuthCode )
+                if( NULL != pszAuthCode && strlen(pszAuthCode) < 10 )
                 {
                     sprintf( szSrsName, " srsName=\"%s:%s\"",
                             pszAuthName, pszAuthCode );
 
-                    /* Yes, attach srsName attribute per geometry. */
-                    bAddSrsName = TRUE; 
+                    nSrsNameLength = strlen(szSrsName);
                 }
             }
         }
-    }
-
-    /* Include srsName attribute in new buffer allocation. */
-    if( bAddSrsName )
-    {
-        nSrsNameLength = strlen(szSrsName);
     }
 
 /* -------------------------------------------------------------------- */
