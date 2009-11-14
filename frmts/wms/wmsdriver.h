@@ -222,7 +222,6 @@ protected:
     int m_overview_count;
     GDALDataType m_data_type;
     int m_block_size_x, m_block_size_y;
-    int m_bands_count;
     GDALWMSRasterIOHint m_hint;
     int m_use_advise_read;
     int m_verify_advise_read;
