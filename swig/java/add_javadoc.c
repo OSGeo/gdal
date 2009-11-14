@@ -45,6 +45,7 @@ typedef struct
     char* compactMethodName;
     char* javadoc;
     int bUsed;
+    int bHide;
 } JavaDocInstance;
 
 char* stripline(char* pszBuf)
@@ -154,8 +155,18 @@ begin:
             else if (strstr(szLine, "*") == NULL)
             {
                 instances[nInstances].javadoc = strdup(javadoc);
-                instances[nInstances].methodName = strdup(stripline(szLine));
-                instances[nInstances].compactMethodName = strdup(removeargnames(stripline(szLine)));
+                
+                char* pszLine = szLine;
+                if (strncmp(pszLine, "@hide ", 6) == 0)
+                {
+                    instances[nInstances].bHide = 1;
+                    pszLine += 6;
+                }
+                else
+                    instances[nInstances].bHide = 0;
+                
+                instances[nInstances].methodName = strdup(stripline(pszLine));
+                instances[nInstances].compactMethodName = strdup(removeargnames(stripline(pszLine)));
                 nInstances++;
             }
             else
@@ -241,8 +252,21 @@ begin:
                 {
                     if (strcmp(instances[j].compactMethodName, szMethodName) == 0)
                     {
-                        //fprintf(stderr, "found match for %s\n", szMethodName);
                         instances[j].bUsed = TRUE;
+
+                        //fprintf(stderr, "found match for %s\n", szMethodName);
+                        if (instances[j].bHide)
+                        {
+                            if (strstr(szLine, "final static") == NULL)
+                            {
+                                do
+                                {
+                                    fgets(szLine, 255, fSrc);
+                                } while (!strchr(szLine,'}'));
+                            }
+                            break;
+                        }
+                            
                         fprintf(fDst, "%s", instances[j].javadoc);
                         if (strchr(szMethodName, '('))
                         {

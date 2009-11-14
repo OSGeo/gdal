@@ -197,9 +197,23 @@ import org.gdal.gdalconst.gdalconstConstants;
     }
 %}
 
+
 %extend GDALDatasetShadow {
 %apply (int nList, int* pList) { (int band_list, int *pband_list) };
 %apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
+
+%apply (char *regularArrayOut, long nRegularArraySizeOut) { (char *regularArrayOut, long nRegularArraySizeOut) };
+%apply (short *regularArrayOut, long nRegularArraySizeOut) { (short *regularArrayOut, long nRegularArraySizeOut) };
+%apply (int *regularArrayOut, long nRegularArraySizeOut) { (int *regularArrayOut, long nRegularArraySizeOut) };
+%apply (float *regularArrayOut, long nRegularArraySizeOut) { (float *regularArrayOut, long nRegularArraySizeOut) };
+%apply (double *regularArrayOut, long nRegularArraySizeOut) { (double *regularArrayOut, long nRegularArraySizeOut) };
+
+%apply (char *regularArrayIn, long nRegularArraySizeIn) { (char *regularArrayIn, long nRegularArraySizeIn) };
+%apply (short *regularArrayIn, long nRegularArraySizeIn) { (short *regularArrayIn, long nRegularArraySizeIn) };
+%apply (int *regularArrayIn, long nRegularArraySizeIn) { (int *regularArrayIn, long nRegularArraySizeIn) };
+%apply (float *regularArrayIn, long nRegularArraySizeIn) { (float *regularArrayIn, long nRegularArraySizeIn) };
+%apply (double *regularArrayIn, long nRegularArraySizeIn) { (double *regularArrayIn, long nRegularArraySizeIn) };
+
   CPLErr ReadRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
@@ -233,6 +247,59 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 }
 
+
+  %define DEFINE_DS_READ_RASTER(ctype, gdal_type)
+CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            ctype *regularArrayOut, long nRegularArraySizeOut,
+                            int band_list, int *pband_list,
+                            int nPixelSpace = 0, int nLineSpace = 0, int nBandSpace = 0)
+{
+    if ((gdal_type == GDT_Int16 && buf_type != GDT_Int16 && buf_type != GDT_UInt16 && buf_type != GDT_CInt16) ||
+        (gdal_type == GDT_Int32 && buf_type != GDT_Int32 && buf_type != GDT_UInt32 && buf_type != GDT_CInt32) ||
+        (gdal_type == GDT_Float32 && buf_type != GDT_Float32 && buf_type != GDT_CFloat32) ||
+        (gdal_type == GDT_Float64 && buf_type != GDT_Float64 && buf_type != GDT_CFloat64))
+  {
+      CPLError(CE_Failure, CPLE_AppDefined,
+              "Java array type is not compatible with GDAL data type");
+      return CE_Failure;
+  }
+    
+  if (band_list == 0)
+  {
+      if (pband_list != NULL)
+          return CE_Failure;
+
+      band_list = GDALGetRasterCount(self);
+  }
+
+  int nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+                         buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                         band_list, pband_list, band_list,
+                         nPixelSpace, nLineSpace, nBandSpace, sizeof(ctype) > 1 );
+  if (nMinBufferSizeInBytes == 0)
+      return CE_Failure;
+  if (nRegularArraySizeOut < nMinBufferSizeInBytes)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined,
+              "Buffer is too small");
+      return CE_Failure;
+  }
+  return  GDALDatasetRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
+                                regularArrayOut, buf_xsize, buf_ysize,
+                                buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
+
+}
+  %enddef
+  
+  DEFINE_DS_READ_RASTER(char, GDT_Byte)
+  DEFINE_DS_READ_RASTER(short, GDT_Int16)
+  DEFINE_DS_READ_RASTER(int, GDT_Int32)
+  DEFINE_DS_READ_RASTER(float, GDT_Float32)
+  DEFINE_DS_READ_RASTER(double, GDT_Float64)
+  
+
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
@@ -264,13 +331,62 @@ import org.gdal.gdalconst.gdalconstConstants;
                                 nioBuffer, buf_xsize, buf_ysize,
                                 buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
 }
-//%clear (void *nioBuffer, long nioBufferSize);
+
+  %define DEFINE_DS_WRITE_RASTER(ctype, gdal_type)
+  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            ctype *regularArrayIn, long nRegularArraySizeIn,
+                            int band_list, int *pband_list,
+                            int nPixelSpace = 0, int nLineSpace = 0, int nBandSpace = 0)
+{
+    if ((gdal_type == GDT_Int16 && buf_type != GDT_Int16 && buf_type != GDT_UInt16 && buf_type != GDT_CInt16) ||
+        (gdal_type == GDT_Int32 && buf_type != GDT_Int32 && buf_type != GDT_UInt32 && buf_type != GDT_CInt32) ||
+        (gdal_type == GDT_Float32 && buf_type != GDT_Float32 && buf_type != GDT_CFloat32) ||
+        (gdal_type == GDT_Float64 && buf_type != GDT_Float64 && buf_type != GDT_CFloat64))
+  {
+      CPLError(CE_Failure, CPLE_AppDefined,
+              "Java array type is not compatible with GDAL data type");
+      return CE_Failure;
+  }
+
+  if (band_list == 0)
+  {
+      if (pband_list != NULL)
+          return CE_Failure;
+
+      band_list = GDALGetRasterCount(self);
+  }
+
+  int nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+                         buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                         band_list, pband_list, band_list,
+                         nPixelSpace, nLineSpace, nBandSpace, sizeof(ctype) > 1 );
+  if (nMinBufferSizeInBytes == 0)
+      return CE_Failure;
+  if (nRegularArraySizeIn < nMinBufferSizeInBytes)
+  {
+      CPLError(CE_Failure, CPLE_AppDefined,
+              "Buffer is too small");
+      return CE_Failure;
+  }
+  return  GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
+                                regularArrayIn, buf_xsize, buf_ysize,
+                                buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
+}
+ %enddef
+    
+  DEFINE_DS_WRITE_RASTER(char, GDT_Byte)
+  DEFINE_DS_WRITE_RASTER(short, GDT_Int16)
+  DEFINE_DS_WRITE_RASTER(int, GDT_Int32)
+  DEFINE_DS_WRITE_RASTER(float, GDT_Float32)
+  DEFINE_DS_WRITE_RASTER(double, GDT_Float64)
+
 %clear (int band_list, int *pband_list);
 
 } /* extend */
 
 %extend GDALRasterBandShadow {
-//%apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
   CPLErr ReadRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
@@ -295,6 +411,47 @@ import org.gdal.gdalconst.gdalconstConstants;
 
   }
 
+  %define DEFINE_READ_RASTER(ctype, gdal_type)
+  CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
+                     int buf_xsize, int buf_ysize,
+                     GDALDataType buf_type,
+                     ctype *regularArrayOut, long nRegularArraySizeOut,
+                     int nPixelSpace = 0, int nLineSpace = 0)
+  {
+    if ((gdal_type == GDT_Int16 && buf_type != GDT_Int16 && buf_type != GDT_UInt16 && buf_type != GDT_CInt16) ||
+        (gdal_type == GDT_Int32 && buf_type != GDT_Int32 && buf_type != GDT_UInt32 && buf_type != GDT_CInt32) ||
+        (gdal_type == GDT_Float32 && buf_type != GDT_Float32 && buf_type != GDT_CFloat32) ||
+        (gdal_type == GDT_Float64 && buf_type != GDT_Float64 && buf_type != GDT_CFloat64))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Java array type is not compatible with GDAL data type");
+        return CE_Failure;
+    }
+  
+    int nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+                            buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                            nPixelSpace, nLineSpace, sizeof(ctype) > 1 );
+    if (nMinBufferSizeInBytes == 0)
+        return CE_Failure;
+    if (nRegularArraySizeOut < nMinBufferSizeInBytes)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Buffer is too small");
+        return CE_Failure;
+    }
+
+    return GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize,
+                                   regularArrayOut, buf_xsize, buf_ysize,
+                                   buf_type, nPixelSpace, nLineSpace );
+  }
+  %enddef
+  
+  DEFINE_READ_RASTER(char, GDT_Byte)
+  DEFINE_READ_RASTER(short, GDT_Int16)
+  DEFINE_READ_RASTER(int, GDT_Int32)
+  DEFINE_READ_RASTER(float, GDT_Float32)
+  DEFINE_READ_RASTER(double, GDT_Float64)
+  
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
@@ -317,7 +474,48 @@ import org.gdal.gdalconst.gdalconstConstants;
                                     nioBuffer, buf_xsize, buf_ysize,
                                     buf_type, nPixelSpace, nLineSpace );
   }
+  
+  %define DEFINE_WRITE_RASTER(ctype, gdal_type)
+  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            ctype *regularArrayIn, long nRegularArraySizeIn,
+                            int nPixelSpace = 0, int nLineSpace = 0)
+  {
+    if ((gdal_type == GDT_Int16 && buf_type != GDT_Int16 && buf_type != GDT_UInt16 && buf_type != GDT_CInt16) ||
+        (gdal_type == GDT_Int32 && buf_type != GDT_Int32 && buf_type != GDT_UInt32 && buf_type != GDT_CInt32) ||
+        (gdal_type == GDT_Float32 && buf_type != GDT_Float32 && buf_type != GDT_CFloat32) ||
+        (gdal_type == GDT_Float64 && buf_type != GDT_Float64 && buf_type != GDT_CFloat64))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Java array type is not compatible with GDAL data type");
+        return CE_Failure;
+    }
+    
+    int nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+                            buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                            nPixelSpace, nLineSpace, sizeof(ctype) > 1 );
+    if (nMinBufferSizeInBytes == 0)
+        return CE_Failure;
+    if (nRegularArraySizeIn < nMinBufferSizeInBytes)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Buffer is too small");
+        return CE_Failure;
+    }
 
+    return GDALRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
+                                    regularArrayIn, buf_xsize, buf_ysize,
+                                    buf_type, nPixelSpace, nLineSpace );
+  }
+  %enddef
+  
+  DEFINE_WRITE_RASTER(char, GDT_Byte)
+  DEFINE_WRITE_RASTER(short, GDT_Int16)
+  DEFINE_WRITE_RASTER(int, GDT_Int32)
+  DEFINE_WRITE_RASTER(float, GDT_Float32)
+  DEFINE_WRITE_RASTER(double, GDT_Float64)
+  
   CPLErr ReadBlock_Direct( int nXBlockOff, int nYBlockOff, void *nioBuffer, long nioBufferSize )
   {
     if (BandBlockReadWrite_Validate((GDALRasterBandH)self, nioBuffer, nioBufferSize) != CE_None)
@@ -334,6 +532,18 @@ import org.gdal.gdalconst.gdalconstConstants;
     return GDALWriteBlock(self, nXBlockOff, nYBlockOff, nioBuffer);
   }
 %clear (void *nioBuffer, long nioBufferSize);
+
+%clear (char *regularArrayOut, long nRegularArraySizeOut);
+%clear (short *regularArrayOut, long nRegularArraySizeOut);
+%clear (int *regularArrayOut, long nRegularArraySizeOut);
+%clear (float *regularArrayOut, long nRegularArraySizeOut);
+%clear (double *regularArrayOut, long nRegularArraySizeOut);
+
+%clear (char *regularArrayIn, long nRegularArraySizeIn);
+%clear (short *regularArrayIn, long nRegularArraySizeIn);
+%clear (int *regularArrayIn, long nRegularArraySizeIn);
+%clear (float *regularArrayIn, long nRegularArraySizeIn);
+%clear (double *regularArrayIn, long nRegularArraySizeIn);
 
 %apply (int nList, int* pListOut) {(int buckets, int *panHistogram)};
   CPLErr GetHistogram(double min,
@@ -516,6 +726,46 @@ import org.gdal.gdalconst.gdalconstConstants;
        return ReadRaster_Direct(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte);
    }
 
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, byte[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, byte[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte, array);
+   }
+   
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, short[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, short[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int16, array);
+   }
+   
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, int[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+   
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int32, array);
+   }
+   
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+   
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, float[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Float32, array);
+   }
+   
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, double[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+   
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, double[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Float64, array);
+   }
+   
    public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize,
                                 int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer) {
        return WriteRaster_Direct(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, gdalconstConstants.GDT_Byte, nioBuffer);
@@ -529,6 +779,46 @@ import org.gdal.gdalconst.gdalconstConstants;
    public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize,
                                  java.nio.ByteBuffer nioBuffer) {
        return WriteRaster_Direct(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte, nioBuffer);
+   }
+
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, byte[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, byte[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte, array);
+   }
+   
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, short[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, short[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int16, array);
+   }
+   
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, int[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+   
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int32, array);
+   }
+   
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+   
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, float[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Float32, array);
+   }
+   
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, double[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+   
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, double[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Float64, array);
    }
 %}
 

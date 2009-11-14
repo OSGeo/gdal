@@ -44,6 +44,9 @@ public class GDALTestIO implements Runnable
 {
     String filename;
     int    nbIters;
+    static final int METHOD_DBB = 1;
+    static final int METHOD_JAVA_ARRAYS = 2;
+    static int    method;
     
     public GDALTestIO(String filename, int nbIters)
     {
@@ -57,56 +60,89 @@ public class GDALTestIO implements Runnable
         Driver driver = null;
         Band band = null;
         
-        int xsize = 4;
-        int ysize = 4;
+        int xsize = 4000;
+        int ysize = 400;
         
         driver = gdal.GetDriverByName("GTiff");
             
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * xsize);
         byteBuffer.order(ByteOrder.nativeOrder());
         FloatBuffer floatBuffer = byteBuffer.asFloatBuffer();
+        int[] intArray = new int[xsize];
+        float[] floatArray = new float[xsize];
+        
+        dataset = driver.Create(filename, xsize, ysize, 1, gdalconst.GDT_Float32);
+        band = dataset.GetRasterBand(1);
         
         for(int iter = 0; iter < nbIters; iter++)
         {
-            dataset = driver.Create(filename, xsize, ysize, 1, gdalconst.GDT_Float32);
-            band = dataset.GetRasterBand(1);
-            
-            for( int i = 0; i < ysize; i++) {
-                for( int j = 0; j < xsize; j++) {
-                    floatBuffer.put(j, (float) (i + j));
-                }
-                band.WriteRaster_Direct(0, i, xsize, 1, gdalconst.GDT_Float32, byteBuffer);
-            }
-            
-            dataset.delete();
-            
-            /* Open the file to check the values */
-            dataset = gdal.Open(filename);
-            band = dataset.GetRasterBand(1);
-            
-            if (band.Checksum() != 48)
-                throw new RuntimeException("Bad checksum : " + band.Checksum());
-            
-            for( int i = 0; i < ysize; i++) {
-                band.ReadRaster_Direct(0, i, xsize, 1, xsize, 1, gdalconst.GDT_Int32, byteBuffer);
-                for( int j = 0; j < xsize; j++) {
-                    int val = byteBuffer.getInt(j*4);
-                    if (val != (i + j))
-                        throw new RuntimeException("Bad value for (" + j + "," + i + ") : " + val);
+            if (method == METHOD_DBB)
+            {
+                for( int i = 0; i < ysize; i++) {
+                    for( int j = 0; j < xsize; j++) {
+                        floatBuffer.put(j, (float) (i + j));
+                    }
+                    band.WriteRaster_Direct(0, i, xsize, 1, gdalconst.GDT_Float32, byteBuffer);
                 }
             }
-            dataset.delete();
-            
-            /* Free the memory occupied by the /vsimem file */
-            gdal.Unlink(filename);  
+            else
+            {
+                for( int i = 0; i < ysize; i++) {
+                    for( int j = 0; j < xsize; j++) {
+                        floatArray[j] = (float) (i + j);
+                    }
+                    band.WriteRaster(0, i, xsize, 1, floatArray);
+                }
+            }
         }
+        
+        dataset.delete();
+        
+        /* Open the file to check the values */
+        dataset = gdal.Open(filename);
+        band = dataset.GetRasterBand(1);
+        
+        for(int iter = 0; iter < nbIters; iter++)
+        {
+            if (method == METHOD_DBB)
+            {
+                for( int i = 0; i < ysize; i++) {
+                    band.ReadRaster_Direct(0, i, xsize, 1, xsize, 1, gdalconst.GDT_Int32, byteBuffer);
+                    for( int j = 0; j < xsize; j++) {
+                        int val = byteBuffer.getInt(j*4);
+                        if (val != (i + j))
+                            throw new RuntimeException("Bad value for (" + j + "," + i + ") : " + val);
+                    }
+                }
+            }
+            else
+            {
+                for( int i = 0; i < ysize; i++) {
+                    band.ReadRaster(0, i, xsize, 1, intArray);
+                    for( int j = 0; j < xsize; j++) {
+                        int val = intArray[j];
+                        if (val != (i + j))
+                            throw new RuntimeException("Bad value for (" + j + "," + i + ") : " + val);
+                    }
+                } 
+            }
+        }
+        
+        dataset.delete();
+        
+        /* Free the memory occupied by the /vsimem file */
+        gdal.Unlink(filename);  
     }
 
     public static void main(String[] args) throws InterruptedException
     {
         gdal.AllRegister();
         
-        int nbIters = 5000;
+        int nbIters = 50;
+        
+        method = METHOD_JAVA_ARRAYS;
+        if (args.length >= 1 && args[0].equalsIgnoreCase("-dbb"))
+            method = METHOD_DBB;
         
         Thread t1 = new Thread(new GDALTestIO("/vsimem/test1.tif", nbIters));
         Thread t2 = new Thread(new GDALTestIO("/vsimem/test2.tif", nbIters));
