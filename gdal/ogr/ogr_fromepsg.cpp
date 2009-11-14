@@ -66,6 +66,9 @@ void OGREPSGDatumNameMassage( char ** ppszDatum )
     int         i, j;
     char        *pszDatum = *ppszDatum;
 
+    if (pszDatum[0] == '\0')
+        return;
+
 /* -------------------------------------------------------------------- */
 /*      Translate non-alphanumeric values to underscores.               */
 /* -------------------------------------------------------------------- */
