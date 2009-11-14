@@ -1851,7 +1851,15 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( poTOWGS84 != NULL )
     {
-        if( poTOWGS84->GetChildCount() > 2
+        int bOverflow = FALSE;
+        int iChild;
+        for(iChild=0;iChild<poTOWGS84->GetChildCount() && !bOverflow;iChild++)
+        {
+            if (strlen(poTOWGS84->GetChild(iChild)->GetValue()) > 24)
+                bOverflow = TRUE;
+        }
+        
+        if( !bOverflow && poTOWGS84->GetChildCount() > 2
             && (poTOWGS84->GetChildCount() < 6 
                 || (EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
                 && EQUAL(poTOWGS84->GetChild(4)->GetValue(),"")
@@ -1864,7 +1872,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      poTOWGS84->GetChild(2)->GetValue() );
             pszPROJ4Datum = szTOWGS84;
         }
-        else if( poTOWGS84->GetChildCount() > 6 )
+        else if( !bOverflow && poTOWGS84->GetChildCount() > 6)
         {
             sprintf( szTOWGS84, "+towgs84=%s,%s,%s,%s,%s,%s,%s",
                      poTOWGS84->GetChild(0)->GetValue(),
