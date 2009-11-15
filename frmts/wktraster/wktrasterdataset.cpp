@@ -18,8 +18,8 @@
  *      (August 2009)
  *
  * TODO:
- *			- Allow non-regular blocking table arrangements (in general)
- *  		- Allow <schema>.<table> syntax, instead of <table> in OpenConnection
+ *	- Allow non-regular blocking table arrangements (in general)
+ *  	- Allow <schema>.<table> syntax, instead of <table> in OpenConnection
  *      - Update data blocks in SetProjection
  *      - Update data blocks in SetGeoTransform
  *      - Disable sequential scanning in OpenConnection in the database instance
@@ -85,7 +85,7 @@ CPL_C_END
 WKTRasterDataset::WKTRasterDataset() {
     hPGconn = NULL;
     bCloseConnection = FALSE;
-		pszSchemaName = NULL;
+    pszSchemaName = NULL;
     pszTableName = NULL;
     pszRasterColumnName = NULL;
     pszWhereClause = NULL;
@@ -118,8 +118,8 @@ WKTRasterDataset::WKTRasterDataset() {
      * Destructor. Frees allocated memory.
      */
 WKTRasterDataset::~WKTRasterDataset() {
-		CPLFree(pszSchemaName);
-		CPLFree(pszTableName);
+    CPLFree(pszSchemaName);
+    CPLFree(pszTableName);
     CPLFree(pszWorkingMode);
     CPLFree(pszWhereClause);
     CPLFree(pszRasterColumnName);
@@ -161,11 +161,13 @@ WKTRasterDataset::~WKTRasterDataset() {
  * Parameters:
  *  - PGconn *: pointer to connection
  *  - const char *: table name
+ *  - const char *: table schema
  * Output:
  *  - GBool: TRUE if the table has an index, FALSE otherwise
  */
 static
-GBool TableHasGISTIndex(PGconn * hPGconn, const char * pszTable) {
+GBool TableHasGISTIndex(PGconn * hPGconn, const char * pszTable,
+        const char * pszSchema) {
 
     // Security checkings
     VALIDATE_POINTER1(hPGconn, "TableHasGISTIndex", FALSE);
@@ -181,15 +183,16 @@ GBool TableHasGISTIndex(PGconn * hPGconn, const char * pszTable) {
      * Check if the table has an index in PostgreSQL system tables
      *****************************************************************/
     osCommand.Printf(
-            "SELECT \
-				relhasindex \
-			FROM pg_class, pg_attribute, pg_type \
-			WHERE \
-				pg_class.oid = pg_attribute.attrelid and \
-				pg_class.relname = '%s' and \
-				pg_attribute.atttypid = pg_type.oid and \
-				pg_type.typname = 'raster'",
-            pszTable);
+            "SELECT relhasindex	\
+            FROM pg_class, pg_attribute, pg_type, pg_namespace \
+            WHERE \
+                pg_class.oid = pg_attribute.attrelid and \
+                pg_class.relname = '%s' and \
+                pg_class.relowner = pg_namespace.nspowner and \
+                pg_namespace.nspname = '%s' and \
+                pg_attribute.atttypid = pg_type.oid and \
+                pg_type.typname = 'raster'",
+            pszTable, pszSchema);
 
     hPGresult = PQexec(hPGconn, osCommand.c_str());
     if (
@@ -198,7 +201,8 @@ GBool TableHasGISTIndex(PGconn * hPGconn, const char * pszTable) {
             PQntuples(hPGresult) > 0
             ) {
         pszResultString = PQgetvalue(hPGresult, 0, 0);
-        if (pszResultString != NULL && EQUALN(pszResultString, "t", sizeof (char)) != 0) {
+        if (pszResultString != NULL && EQUALN(pszResultString, "t",
+                sizeof (char)) != 0) {
             bTableHasIndex = TRUE;
             PQclear(hPGresult);
         } else {
@@ -229,7 +233,8 @@ GBool ExistsRasterColumnsTable(PGconn * hPGconn) {
      // Security checkings
     VALIDATE_POINTER1(hPGconn, "ExistsRasterColumnsTable", FALSE);
 
-    const char* szCommand = "SELECT relname FROM pg_class WHERE relname = 'raster_columns'"; 
+    const char* szCommand = "SELECT relname FROM pg_class \
+    WHERE relname = 'raster_columns'";
     PGresult * hPGresult = NULL;
     char * pszResultString;
     GBool bExistsRasterColumnsTable = FALSE;
@@ -278,7 +283,8 @@ GBool ExistsOverviewsTable(PGconn * hPGconn) {
     // Security checkings
     VALIDATE_POINTER1(hPGconn, "ExistsOverviewsTable", FALSE);
 
-    const char* szCommand = "SELECT relname FROM pg_class WHERE relname = 'raster_overviews'";
+    const char* szCommand =
+        "SELECT relname FROM pg_class WHERE relname = 'raster_overviews'";
     PGresult * hPGresult = NULL;
     char * pszResultString;
     GBool bExistsOverviewTable = FALSE;
@@ -322,12 +328,13 @@ GBool ExistsOverviewsTable(PGconn * hPGconn) {
  *  - PGconn *: pointer to connection
  *  - const char *: table name
  *  - const char *: raster column name
+ *  - const char *: schema name
  * Returns:
  *  - GBool: TRUE if the table has regular_blocking constraint, FALSE otherwise
  */
 static
 GBool TableHasRegularBlocking(PGconn * hPGconn, const char * pszTable,
-        const char * pszColumn) {
+        const char * pszColumn, const char * pszSchema) {
 
     // Security checkings
     VALIDATE_POINTER1(hPGconn, "TableHasRegularBlocking", FALSE);
@@ -349,8 +356,9 @@ GBool TableHasRegularBlocking(PGconn * hPGconn, const char * pszTable,
 			FROM raster_columns \
 			WHERE \
 				r_table_name = '%s' and \
-				r_column = '%s'",
-            pszTable, pszColumn);
+				r_column = '%s' and \
+                                r_table_schema = '%s'",
+            pszTable, pszColumn, pszSchema);
 
 
 
@@ -383,12 +391,14 @@ GBool TableHasRegularBlocking(PGconn * hPGconn, const char * pszTable,
  * Get the name of the column of type raster
  * Parameters:
  * 	PGconn *: pointer to connection
+ *      const char *: schema name
  * 	const char *: table name
  * Output:
  * 	char *: The column name, or NULL if doesn't exist
  */
 static
-char * GetWKTRasterColumnName(PGconn * hPGconn, const char * pszTable) {
+char * GetWKTRasterColumnName(PGconn * hPGconn, const char * pszSchemaName,
+        const char * pszTable) {
 
     // Security checkings
     VALIDATE_POINTER1(hPGconn, "GetWKTRasterColumnName", NULL);
@@ -403,15 +413,16 @@ char * GetWKTRasterColumnName(PGconn * hPGconn, const char * pszTable) {
      * Get the attribute name of type 'raster' of the table
      ************************************************************/
     osCommand.Printf(
-            "SELECT \
-				attname \
-			FROM pg_class, pg_attribute, pg_type \
-			WHERE \
-				pg_class.oid = pg_attribute.attrelid and \
-				pg_class.relname = '%s' and \
-				pg_attribute.atttypid = pg_type.oid and \
-				pg_type.typname = 'raster'",
-            pszTable);
+            "SELECT attname \
+            FROM pg_class, pg_attribute, pg_type, pg_namespace \
+            WHERE \
+		pg_class.oid = pg_attribute.attrelid and \
+		pg_class.relname = '%s' and \
+                pg_class.relowner = pg_namespace.nspowner and \
+                pg_namespace.nspname = '%s' and \
+		pg_attribute.atttypid = pg_type.oid and \
+		pg_type.typname = 'raster'",
+            pszTable, pszSchemaName);
 
     hPGresult = PQexec(hPGconn, osCommand.c_str());
     if (
@@ -517,11 +528,7 @@ char * ExtractField(char ** ppszConnectionString, const char * pszFieldInit) {
      * Get the value of the field to extract, and delete the whole field
      * from the connection string
      ************************************************************************/
-     
-    int i;
     int nFieldInitLen = strlen(pszFieldInit);
-    int nConnectionStringLen = strlen(*ppszConnectionString);
-    
 
     /*
      * Get the initial position of the field in the string
@@ -538,7 +545,8 @@ char * ExtractField(char ** ppszConnectionString, const char * pszFieldInit) {
     if (pszEndField)
     {
         *pszEndField = '\0';
-        char* pszEnd = pszStart + nFieldInitLen + bHasQuote + (pszEndField - pszField) + 1;
+        char* pszEnd = pszStart + nFieldInitLen + bHasQuote +
+            (pszEndField - pszField) + 1;
         memmove(pszStart, pszEnd, strlen(pszEnd) + 1);
     }
     else
@@ -587,8 +595,9 @@ CPLErr WKTRasterDataset::SetRasterProperties() {
         osCommand.Printf(
                 "SELECT srid, ST_AsText(extent), pixelsize_x, pixelsize_y, \
                 blocksize_x, blocksize_y FROM raster_columns WHERE r_table_name\
-                = '%s' AND r_column = '%s'",
-                pszTableName, pszRasterColumnName);
+                = '%s' AND r_column = '%s' and r_table_schema = '%s'",
+                pszTableName, pszRasterColumnName, pszSchemaName);
+
         hPGresult = PQexec(hPGconn, osCommand.c_str());
         if (
                 hPGresult != NULL &&
@@ -845,7 +854,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     GBool bTableHasRegularBlocking = TRUE;
     GBool bExistsOverviewsTable = FALSE;
     char * pszRasterColumnName = NULL;
-		char * pszSchemaName = NULL;
+    char * pszSchemaName = NULL;
     char * pszTableName = NULL;
     char * pszWhereClause = NULL;
     WKTRasterDataset * poDS = NULL;
@@ -914,14 +923,20 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     if (pszWorkingMode == NULL)
         pszWorkingMode = CPLStrdup(REGULARLY_TILED_MODE);
 
+
+    pszSchemaName = ExtractField(&pszConnectionString, "schema=");
+    if (pszSchemaName == NULL)
+        pszSchemaName = CPLStrdup(DEFAULT_SCHEMA);
+
     pszTableName = ExtractField(&pszConnectionString, "table=");
 
     if (pszTableName == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined,
-                "Can't find a table name. Is connection string in the format \n"
-                "PG:[host='<host>]' [user='<user>'] [password='<password>]' \n"
-                "   dbname='<dbname>' table='<raster_table>' [mode='working_mode'] \n"
-                "   [where='<where_clause>'] ?\n");
+                "Can't find a table name. Is connection string in the format \
+                PG:[host=<host>] [user=<user>] [password=<password>] \
+                dbname=<dbname> table=<raster_table> [schema=<schema>] \
+                [mode=<working_mode>] [where=<where_clause>] ?\n");
+        CPLFree(pszSchemaName);
         CPLFree(pszWorkingMode);
         CPLFree(pszWhereClause);
         CPLFree(pszConnectionString);
@@ -930,20 +945,16 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
 
     }
 		
-		/* 
-		 * Extract schema name from table name
-		 * TODO 
-		 */
-
     /*********************************************************
      * Check working mode
      *********************************************************/
     if (!EQUALN(pszWorkingMode, REGULARLY_TILED_MODE,
             strlen(REGULARLY_TILED_MODE))) {
         CPLError(CE_Failure, CPLE_AppDefined,
-                "Sorry, but the only working mode accepted from now is the " \
-                    "REGULARLY_TILED_MODE\n");
+                "Sorry, but the only working mode accepted from now is the \
+                    REGULARLY_TILED_MODE\n");
         CPLFree(pszTableName);
+        CPLFree(pszSchemaName);
         CPLFree(pszWorkingMode);        
         CPLFree(pszWhereClause);
         CPLFree(pszConnectionString);
@@ -967,6 +978,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
 
     if (hPGconn == NULL) {
         CPLFree(pszTableName);
+        CPLFree(pszSchemaName);
         CPLFree(pszWorkingMode);        
         CPLFree(pszWhereClause);
 
@@ -984,6 +996,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
 
         PQfinish(hPGconn);
         CPLFree(pszTableName);
+        CPLFree(pszSchemaName);
         CPLFree(pszWorkingMode);
         CPLFree(pszWhereClause);
 
@@ -995,16 +1008,17 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     /******************************************************
      * Check if the table has a column of the type raster
      ******************************************************/
-    pszRasterColumnName = GetWKTRasterColumnName(hPGconn, pszTableName);
+    pszRasterColumnName = GetWKTRasterColumnName(hPGconn, pszSchemaName,
+            pszTableName);
     if (pszRasterColumnName == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Can't find a WKT raster column in %s table\n",
                 pszTableName);
         PQfinish(hPGconn);
         CPLFree(pszTableName);
+        CPLFree(pszSchemaName);
         CPLFree(pszWorkingMode);
-        if (pszWhereClause != NULL)
-            CPLFree(pszWhereClause);
+        CPLFree(pszWhereClause);
 
         return NULL;
     }
@@ -1020,7 +1034,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
      * 	tiles read are regular. Need to check it
      ****************************************************/
     bTableHasRegularBlocking = TableHasRegularBlocking(hPGconn, pszTableName,
-            pszRasterColumnName);
+            pszRasterColumnName, pszSchemaName);
     if (bTableHasRegularBlocking == FALSE) {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Sorry, but table %s doesn't seem to have regular blocking \
@@ -1029,6 +1043,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
                 pszTableName);
         PQfinish(hPGconn);
         CPLFree(pszTableName);
+        CPLFree(pszSchemaName);
         CPLFree(pszWorkingMode);        
         CPLFree(pszWhereClause);
         CPLFree(pszRasterColumnName);
@@ -1040,7 +1055,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
      * 	Check if the table has an index
      *  Useful for spatial queries in raster band
      ********************************************/
-    bTableHasIndex = TableHasGISTIndex(hPGconn, pszTableName);
+    bTableHasIndex = TableHasGISTIndex(hPGconn, pszTableName, pszSchemaName);
 
 
     /*********************************************************************
@@ -1061,6 +1076,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     poDS->pszRasterColumnName = pszRasterColumnName;
     poDS->bTableHasGISTIndex = bTableHasIndex;
     poDS->pszTableName = pszTableName;
+    poDS->pszSchemaName = pszSchemaName;
     poDS->pszWorkingMode = pszWorkingMode;
     poDS->pszWhereClause = pszWhereClause;
     poDS->eAccess = poOpenInfo->eAccess;
@@ -1078,8 +1094,9 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
      ****************************************************************/    
     osCommand.Printf(
             "select pixel_types, nodata_values from raster_columns \
-            where r_table_name = '%s' and r_column = '%s'",
-            poDS->pszTableName, poDS->pszRasterColumnName);
+            where r_table_schema = '%s' and r_table_name = '%s' and \
+            r_column = '%s'",
+            poDS->pszSchemaName, poDS->pszTableName, poDS->pszRasterColumnName);
     hPGresult = PQexec(poDS->hPGconn, osCommand.c_str());
     if (
             hPGresult == NULL ||
@@ -1094,7 +1111,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
 
         // Explode PQ arrays into char **
         if (pszArrayPixelTypes != NULL)
-            papszPixelTypes = poDS->ExplodeArrayString(pszArrayPixelTypes, &nBands);
+            papszPixelTypes = poDS->ExplodeArrayString(pszArrayPixelTypes,
+                    &nBands);
         if (pszArrayNodataValues != NULL) {
 
             /**
@@ -1102,12 +1120,14 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
              * need to fetch it in the next call
              */
             if (nBands != 0)
-                papszNodataValues = poDS->ExplodeArrayString(pszArrayNodataValues,
+                papszNodataValues =
+                        poDS->ExplodeArrayString(pszArrayNodataValues,
                     &nCountNoDataValues);
 
             // We don't have a value for nBands, try to fetch one
             else
-                papszNodataValues = poDS->ExplodeArrayString(pszArrayNodataValues,
+                papszNodataValues =
+                        poDS->ExplodeArrayString(pszArrayNodataValues,
                     &nBands);
         }
 
@@ -1234,9 +1254,10 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
 
         // Count the number of overviews        
         osCommand.Printf(
-                "select o_table_name, overview_factor, o_column from \
-                raster_overviews where r_table_name = '%s'",
-                poDS->pszTableName);
+                "select o_table_name, overview_factor, o_column, \
+                o_table_schema from raster_overviews where \
+                r_table_schema = '%s' and r_table_name = '%s'",
+                poDS->pszSchemaName, poDS->pszTableName);
         hPGresult = PQexec(poDS->hPGconn, osCommand.c_str());
 
         // no overviews
@@ -1263,8 +1284,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
                     sizeof (WKTRasterDataset *));
             if (poDS->papoWKTRasterOv == NULL) {
                 CPLError(CE_Warning, CPLE_ObjectNull,
-                        "Couldn't allocate memory for overviews. Number of overviews \
-                        will be set to 0");
+                        "Couldn't allocate memory for overviews. Number of \
+                        overviews will be set to 0");
                 poDS->nOverviews = 0;
             }
             else {
@@ -1286,6 +1307,8 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
                             0));
                     char * pszOVColumnName = CPLStrdup(PQgetvalue(hPGresult, i,
                             2));
+                    char * pszOVSchemaName = CPLStrdup(PQgetvalue(hPGresult, i,
+                            3));
 
                     /**
                      * m/px is bigger in ov, because we are more far...
@@ -1318,6 +1341,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
                     // children datasets don't close connection
                     poDS->papoWKTRasterOv[i]->bCloseConnection = FALSE;
                     poDS->papoWKTRasterOv[i]->pszTableName = pszOVTableName;
+                    poDS->papoWKTRasterOv[i]->pszSchemaName = pszOVSchemaName;
                     poDS->papoWKTRasterOv[i]->pszRasterColumnName =
                             pszOVColumnName;
 
@@ -1329,7 +1353,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
                                 NULL;
 
                     GBool bOVTableHasIndex = TableHasGISTIndex(poDS->hPGconn,
-                            pszOVTableName);
+                            pszOVTableName, pszOVSchemaName);
                     poDS->papoWKTRasterOv[i]->bTableHasGISTIndex =
                             bOVTableHasIndex;
 

@@ -44,6 +44,8 @@
 #define IRREGULARLY_TILED_MODE  "IRREGULARLY_TILED_MODE"
 #define IMAGE_WAREHOUSE         "IMAGE_WAREHOUSE"
 
+#define DEFAULT_SCHEMA          "public"
+
 // Supported raster version
 #define WKT_RASTER_VERSION (GUInt16)0
 

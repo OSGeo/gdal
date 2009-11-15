@@ -266,9 +266,10 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
              * how do we know all the tiles size?
              */
             osCommand.Printf(
-                    "SELECT rid, %s FROM %s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
+                    "SELECT rid, %s FROM %s.%s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
                     (ST_Point(%f, %f),ST_Point(%f, %f)), %d) AND %s",
-                    poWKTRasterDS->pszRasterColumnName, 
+                    poWKTRasterDS->pszRasterColumnName,
+                    poWKTRasterDS->pszSchemaName,
                     poWKTRasterDS->pszTableName,
                     poWKTRasterDS->pszRasterColumnName, fProjLowerLeftX,
                     fProjLowerLeftY, fProjUpperRightX, fProjUpperRightY,
@@ -279,10 +280,11 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
              */
         else {
             osCommand.Printf(
-                    "SELECT rid, %s FROM %s WHERE _ST_Contains(%s, ST_SetSRID(\
+                    "SELECT rid, %s FROM %s.%s WHERE _ST_Contains(%s, ST_SetSRID(\
                     ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d)) AND \
                     %s",
-                    poWKTRasterDS->pszRasterColumnName, 
+                    poWKTRasterDS->pszRasterColumnName,
+                    poWKTRasterDS->pszSchemaName,
                     poWKTRasterDS->pszTableName,
                     poWKTRasterDS->pszRasterColumnName, fProjLowerLeftX,
                     fProjLowerLeftY, fProjUpperRightX, fProjUpperRightY,
@@ -300,9 +302,10 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
         if (poWKTRasterDS->bTableHasGISTIndex) {
 
             osCommand.Printf(
-                    "SELECT rid, %s FROM %s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
+                    "SELECT rid, %s FROM %s.%s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
                     (ST_Point(%f, %f), ST_Point(%f, %f)), %d)",
-                    poWKTRasterDS->pszRasterColumnName, 
+                    poWKTRasterDS->pszRasterColumnName,
+                    poWKTRasterDS->pszSchemaName,
                     poWKTRasterDS->pszTableName,
                     poWKTRasterDS->pszRasterColumnName, fProjLowerLeftX,
                     fProjLowerLeftY, fProjUpperRightX, fProjUpperRightY,
@@ -313,9 +316,10 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
              */
         else {
             osCommand.Printf(
-                    "SELECT rid, %s FROM %s WHERE _ST_Contains(%s, ST_SetSRID(\
+                    "SELECT rid, %s FROM %s.%s WHERE _ST_Contains(%s, ST_SetSRID(\
                     ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d))",
                     poWKTRasterDS->pszRasterColumnName,
+                    poWKTRasterDS->pszSchemaName,
                     poWKTRasterDS->pszTableName,
                     poWKTRasterDS->pszRasterColumnName, fProjLowerLeftX, 
                     fProjLowerLeftY, fProjUpperRightX, fProjUpperRightY,
@@ -352,8 +356,9 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
          */
         PQclear(hPGresult);
         osCommand.Printf(
-                "SELECT %s FROM %s LIMIT 1 OFFSET 0",
+                "SELECT %s FROM %s.%s LIMIT 1 OFFSET 0",
                 poWKTRasterDS->pszRasterColumnName,
+                poWKTRasterDS->pszSchemaName,
                 poWKTRasterDS->pszTableName);
 
         hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
@@ -404,8 +409,8 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
 
         // Insert new block into table. First, we need a new rid
         osCommand.Printf(
-                "SELECT rid FROM %s ORDER BY rid DESC LIMIT 1 OFFSET 0",
-                poWKTRasterDS->pszTableName);
+                "SELECT rid FROM %s.%s ORDER BY rid DESC LIMIT 1 OFFSET 0",
+                poWKTRasterDS->pszSchemaName, poWKTRasterDS->pszTableName);
 
         hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
         if (
@@ -426,9 +431,9 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
 
         // Insert the block        
         osCommand.Printf(
-                "INSERT INTO %s (rid, %s) VALUES (%d, %s)",
-                poWKTRasterDS->pszTableName, poWKTRasterDS->pszRasterColumnName,
-                nRid, pszHexWkb);
+                "INSERT INTO %s.%s (rid, %s) VALUES (%d, %s)",
+                poWKTRasterDS->pszSchemaName,poWKTRasterDS->pszTableName,
+                poWKTRasterDS->pszRasterColumnName,nRid, pszHexWkb);
 
         hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
         if (hPGresult == NULL || 
@@ -520,9 +525,9 @@ CPLErr WKTRasterRasterBand::IWriteBlock(int nBlockXOff,
 
         // update register
         osCommand.Printf(
-                "UPDATE %s SET %s = %s WHERE rid = %d",
-                poWKTRasterDS->pszTableName, poWKTRasterDS->pszRasterColumnName,
-                pszHexWkb, nRid);
+                "UPDATE %s.%s SET %s = %s WHERE rid = %d",
+                poWKTRasterDS->pszSchemaName, poWKTRasterDS->pszTableName,
+                poWKTRasterDS->pszRasterColumnName, pszHexWkb, nRid);
         hPGresult = PQexec(poWKTRasterDS->hPGconn, osCommand.c_str());
         if (hPGresult == NULL ||
                 PQresultStatus(hPGresult) != PGRES_COMMAND_OK) {
@@ -702,9 +707,10 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
              * how do we know all the tiles size?
              */
             osCommand.Printf(
-                    "SELECT rid, %s FROM %s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
+                    "SELECT rid, %s FROM %s.%s WHERE %s ~ ST_SetSRID(ST_MakeBox2D\
                     (ST_Point(%f, %f),ST_Point(%f, %f)), %d) AND %s",
                     poWKTRasterDS->pszRasterColumnName,
+                    poWKTRasterDS->pszSchemaName,
                     poWKTRasterDS->pszTableName,
                     poWKTRasterDS->pszRasterColumnName, dfProjLowerLeftX,
                     dfProjLowerLeftY, dfProjUpperRightX, dfProjUpperRightY,
@@ -715,10 +721,11 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
              */
         else {
             osCommand.Printf(
-                    "SELECT rid, %s FROM %s WHERE _ST_Contains(%s, ST_SetSRID(\
+                    "SELECT rid, %s FROM %s.%s WHERE _ST_Contains(%s, ST_SetSRID(\
                     ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d)) AND\
                     %s",
-                    poWKTRasterDS->pszRasterColumnName, 
+                    poWKTRasterDS->pszRasterColumnName,
+                    poWKTRasterDS->pszSchemaName,
                     poWKTRasterDS->pszTableName,
                     poWKTRasterDS->pszRasterColumnName, dfProjLowerLeftX,
                     dfProjLowerLeftY, dfProjUpperRightX, dfProjUpperRightY,
@@ -739,9 +746,10 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
         if (poWKTRasterDS->bTableHasGISTIndex) {
 
             osCommand.Printf(
-                    "SELECT rid, %s FROM %s WHERE %s ~ ST_SetSRID(ST_MakeBox2D(\
+                    "SELECT rid, %s FROM %s.%s WHERE %s ~ ST_SetSRID(ST_MakeBox2D(\
                     ST_Point(%f, %f),ST_Point(%f, %f)), %d)",
                     poWKTRasterDS->pszRasterColumnName,
+                    poWKTRasterDS->pszSchemaName,
                     poWKTRasterDS->pszTableName,
                     poWKTRasterDS->pszRasterColumnName, dfProjLowerLeftX,
                     dfProjLowerLeftY,dfProjUpperRightX, dfProjUpperRightY,
@@ -752,9 +760,10 @@ CPLErr WKTRasterRasterBand::IReadBlock(int nBlockXOff,
              */
         else {
             osCommand.Printf(
-                    "SELECT rid, %s FROM %s WHERE _ST_Contains(%s, ST_SetSRID(\
+                    "SELECT rid, %s FROM %s.%s WHERE _ST_Contains(%s, ST_SetSRID(\
                     ST_MakeBox2D(ST_Point(%f, %f), ST_Point(%f, %f)), %d))",
-                    poWKTRasterDS->pszRasterColumnName, 
+                    poWKTRasterDS->pszRasterColumnName,
+                    poWKTRasterDS->pszSchemaName,
                     poWKTRasterDS->pszTableName,
                     poWKTRasterDS->pszRasterColumnName, dfProjLowerLeftX,
                     dfProjLowerLeftY, dfProjUpperRightX, dfProjUpperRightY,
