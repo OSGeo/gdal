@@ -788,28 +788,28 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj, "wag1") )
+    else if( EQUAL(pszProj, "wag4") )
     {
         SetWagner( 4, 0.0,
                    OSR_GDV( papszNV, "x_0", 0.0 ), 
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj, "wag1") )
+    else if( EQUAL(pszProj, "wag5") )
     {
         SetWagner( 5, 0.0,
                    OSR_GDV( papszNV, "x_0", 0.0 ), 
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj, "wag1") )
+    else if( EQUAL(pszProj, "wag6") )
     {
         SetWagner( 6, 0.0,
                    OSR_GDV( papszNV, "x_0", 0.0 ), 
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj, "wag1") )
+    else if( EQUAL(pszProj, "wag7") )
     {
         SetWagner( 7, 0.0,
                    OSR_GDV( papszNV, "x_0", 0.0 ), 
@@ -1657,7 +1657,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_II) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 "+proj=wag2 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
     }
@@ -1665,7 +1665,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_III) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=wag1 +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
+                 "+proj=wag3 +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
@@ -1674,7 +1674,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_IV) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 "+proj=wag4 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
     }
@@ -1682,7 +1682,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_V) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 "+proj=wag5 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
     }
@@ -1690,7 +1690,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_VI) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 "+proj=wag6 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
     }
@@ -1698,7 +1698,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_VII) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 "+proj=wag7 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
     }
