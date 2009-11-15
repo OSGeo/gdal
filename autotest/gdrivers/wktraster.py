@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  WKTRaster Testing.
@@ -54,7 +54,7 @@ def wktraster_init():
     if gdaltest.wktrasterDriver is None:
         return 'skip'
         
-    gdaltest.wktraster_connection_string="PG:host='localhost' dbname='gdal_wktraster_test' user='postgres' "
+    gdaltest.wktraster_connection_string="PG:host='localhost' dbname='gisdb' user='gis' password='gis' schema='gis_schema' "
 
     try:
         ds = gdal.Open( gdaltest.wktraster_connection_string + "table='utm'" )
