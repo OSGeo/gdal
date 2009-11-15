@@ -1199,6 +1199,65 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
             GDALClose( hSrcDS );
             return NULL;
         }
+        
+        if (CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", NULL ) == NULL)
+        {
+            double MinX = adfExtent[0];
+            double MaxX = adfExtent[2];
+            double MaxY = adfExtent[3];
+            double MinY = adfExtent[1];
+            int bSuccess = TRUE;
+            
+            /* Check that the the edges of the target image are in the validity area */
+            /* of the target projection */
+#define N_STEPS 20
+            int i,j;
+            for(i=0;i<=N_STEPS && bSuccess;i++)
+            {
+                for(j=0;j<=N_STEPS && bSuccess;j++)
+                {
+                    double dfRatioI = i * 1.0 / N_STEPS;
+                    double dfRatioJ = j * 1.0 / N_STEPS;
+                    double expected_x = (1 - dfRatioI) * MinX + dfRatioI * MaxX;
+                    double expected_y = (1 - dfRatioJ) * MinY + dfRatioJ * MaxY;
+                    double x = expected_x;
+                    double y = expected_y;
+                    double z = 0;
+                    /* Target SRS coordinates to source image pixel coordinates */
+                    if (!GDALGenImgProjTransform(hTransformArg, TRUE, 1, &x, &y, &z, &bSuccess) || !bSuccess)
+                        bSuccess = FALSE;
+                    /* Source image pixel coordinates to target SRS coordinates */
+                    if (!GDALGenImgProjTransform(hTransformArg, FALSE, 1, &x, &y, &z, &bSuccess) || !bSuccess)
+                        bSuccess = FALSE;
+                    if (fabs(x - expected_x) > (MaxX - MinX) / nThisPixels ||
+                        fabs(y - expected_y) > (MaxY - MinY) / nThisLines)
+                        bSuccess = FALSE;
+                }
+            }
+            
+            /* If not, retry with CHECK_WITH_INVERT_PROJ=TRUE that forces ogrct.cpp */
+            /* to check the consistency of each requested projection result with the */
+            /* invert projection */
+            if (!bSuccess)
+            {
+                CPLSetConfigOption( "CHECK_WITH_INVERT_PROJ", "TRUE" );
+                CPLDebug("WARP", "Recompute out extent with CHECK_WITH_INVERT_PROJ=TRUE");
+                GDALDestroyGenImgProjTransformer(hTransformArg);
+                hTransformArg = 
+                    GDALCreateGenImgProjTransformer2( hSrcDS, NULL, papszTO );
+                    
+                if( GDALSuggestedWarpOutput2( hSrcDS, 
+                                      GDALGenImgProjTransform, hTransformArg, 
+                                      adfThisGeoTransform, 
+                                      &nThisPixels, &nThisLines, 
+                                      adfExtent, 0 ) != CE_None )
+                {
+                    CPLFree( pszThisTargetSRS );
+                    GDALClose( hSrcDS );
+                    return NULL;
+                }
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Expand the working bounds to include this region, ensure the    */
