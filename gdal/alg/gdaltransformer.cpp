@@ -159,6 +159,130 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                                      adfExtent, 0 );
 }
 
+
+ static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
+                     GDALTransformerFunc pfnTransformer, void *pTransformArg,
+                     double* padfExtent, int nPixels, int nLines,
+                     double dfPixelSizeX, double dfPixelSizeY)
+ {
+    int nSamplePoints;
+    double dfRatio;
+    int bErr;
+    int nBadCount;
+    int    abSuccess[21] = { 0 };
+    double adfX[21] = { 0 };
+    double adfY[21] = { 0 };
+    double adfZ[21] = { 0 };
+    
+    //double dfMinXOut = padfExtent[0];
+    //double dfMinYOut = padfExtent[1];
+    double dfMaxXOut = padfExtent[2];
+    double dfMaxYOut = padfExtent[3];
+    
+    // Take 20 steps 
+    nSamplePoints = 0;
+    for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05 )
+    {
+        // Ensure we end exactly at the end.
+        if( dfRatio > 0.99 )
+            dfRatio = 1.0;
+
+        // Along right
+        adfX[nSamplePoints]   = dfMaxXOut;
+        adfY[nSamplePoints]   = dfMaxYOut - dfPixelSizeY * dfRatio * nLines;
+        adfZ[nSamplePoints++] = 0.0;
+    }
+    
+    bErr = FALSE;
+    if( !pfnTransformer( pTransformArg, TRUE, nSamplePoints, 
+                             adfX, adfY, adfZ, abSuccess ) )
+    {
+        bErr = TRUE;
+    }
+    
+    if( !bErr && !pfnTransformer( pTransformArg, FALSE, nSamplePoints, 
+                             adfX, adfY, adfZ, abSuccess ) )
+    {
+        bErr = TRUE;
+    }
+    
+    nSamplePoints = 0;
+    nBadCount = 0;
+    for( dfRatio = 0.0; !bErr && dfRatio <= 1.01; dfRatio += 0.05 )
+    {
+        double expected_x = dfMaxXOut;
+        double expected_y = dfMaxYOut - dfPixelSizeY * dfRatio * nLines;
+        if (fabs(adfX[nSamplePoints] -  expected_x) > dfPixelSizeX ||
+            fabs(adfY[nSamplePoints] -  expected_y) > dfPixelSizeY)
+            nBadCount ++;
+        nSamplePoints ++;
+    }
+    
+    return (nBadCount == nSamplePoints);
+}
+
+
+ static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
+                     GDALTransformerFunc pfnTransformer, void *pTransformArg,
+                     double* padfExtent, int nPixels, int nLines,
+                     double dfPixelSizeX, double dfPixelSizeY)
+ {
+    int nSamplePoints;
+    double dfRatio;
+    int bErr;
+    int nBadCount;
+    int    abSuccess[21] = { 0 };
+    double adfX[21] = { 0 };
+    double adfY[21] = { 0 };
+    double adfZ[21] = { 0 };
+    
+    double dfMinXOut = padfExtent[0];
+    double dfMinYOut = padfExtent[1];
+    //double dfMaxXOut = padfExtent[2];
+    //double dfMaxYOut = padfExtent[3];
+    
+    // Take 20 steps 
+    nSamplePoints = 0;
+    for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05 )
+    {
+        // Ensure we end exactly at the end.
+        if( dfRatio > 0.99 )
+            dfRatio = 1.0;
+
+        // Along right
+        adfX[nSamplePoints]   = dfMinXOut + dfPixelSizeX * dfRatio * nPixels;
+        adfY[nSamplePoints]   = dfMinYOut;
+        adfZ[nSamplePoints++] = 0.0;
+    }
+    
+    bErr = FALSE;
+    if( !pfnTransformer( pTransformArg, TRUE, nSamplePoints, 
+                             adfX, adfY, adfZ, abSuccess ) )
+    {
+        bErr = TRUE;
+    }
+    
+    if( !bErr && !pfnTransformer( pTransformArg, FALSE, nSamplePoints, 
+                             adfX, adfY, adfZ, abSuccess ) )
+    {
+        bErr = TRUE;
+    }
+    
+    nSamplePoints = 0;
+    nBadCount = 0;
+    for( dfRatio = 0.0; !bErr && dfRatio <= 1.01; dfRatio += 0.05 )
+    {
+        double expected_x = dfMinXOut + dfPixelSizeX * dfRatio * nPixels;
+        double expected_y = dfMinYOut;
+        if (fabs(adfX[nSamplePoints] -  expected_x) > dfPixelSizeX ||
+            fabs(adfY[nSamplePoints] -  expected_y) > dfPixelSizeY)
+            nBadCount ++;
+        nSamplePoints ++;
+    }
+    
+    return (nBadCount == nSamplePoints);
+}
+
 /************************************************************************/
 /*                      GDALSuggestedWarpOutput2()                      */
 /************************************************************************/
@@ -203,7 +327,6 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
  * @return CE_None if successful or CE_Failure otherwise. 
  */
 
-
 CPLErr CPL_STDCALL
 GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS, 
                           GDALTransformerFunc pfnTransformer, 
@@ -219,16 +342,20 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
     int    nSamplePoints = 0;
-    int    abSuccess[441] = { 0 };;
-    double adfX[441] = { 0 };
-    double adfY[441] = { 0 };
-    double adfZ[441] = { 0 };
+#define N_STEPS 20
+    int    abSuccess[(N_STEPS+1)*(N_STEPS+1)] = { 0 };;
+    double adfX[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
+    double adfY[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
+    double adfZ[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
+    double adfXRevert[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
+    double adfYRevert[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
+    double adfZRevert[(N_STEPS+1)*(N_STEPS+1)] = { 0 };
     double dfRatio = 0;
     int    nInXSize = GDALGetRasterXSize( hSrcDS );
     int    nInYSize = GDALGetRasterYSize( hSrcDS );
 
-    // Take 20 steps 
-    for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05 )
+    // Take N_STEPS steps 
+    for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 1. / N_STEPS )
     {
         
         // Ensure we end exactly at the end.
@@ -256,7 +383,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         adfZ[nSamplePoints++] = 0.0;
     }
 
-    CPLAssert( nSamplePoints == 84 );
+    CPLAssert( nSamplePoints == 4 * (N_STEPS + 1) );
 
     memset( abSuccess, 1, sizeof(abSuccess) );
 
@@ -279,6 +406,56 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         if( !abSuccess[i] )
             nFailedCount++;
     }
+    
+/* -------------------------------------------------------------------- */
+/*      Check if the computed target coordinates are revertable.        */
+/*      If not, try the detailed grid sampling.                         */
+/* -------------------------------------------------------------------- */
+    if (nFailedCount == 0 )
+    {
+        memcpy(adfXRevert, adfX, sizeof(adfX));
+        memcpy(adfYRevert, adfY, sizeof(adfY));
+        memcpy(adfZRevert, adfZ, sizeof(adfZ));
+        if( !pfnTransformer( pTransformArg, TRUE, nSamplePoints, 
+                             adfXRevert, adfYRevert,adfZRevert, abSuccess ) )
+        {
+            nFailedCount = 1;
+        }
+        else
+        {
+            for( i = 0; nFailedCount == 0 && i < nSamplePoints; i++ )
+            {
+                if( !abSuccess[i] )
+                    nFailedCount++;
+                
+                double dfExpectedX, dfExpectedY;
+                if ((i % 4) == 0)
+                {
+                    dfExpectedX   = dfRatio * nInXSize;
+                    dfExpectedY   = 0.0;
+                }
+                else if ((i % 4) == 1)
+                {
+                    dfExpectedX   = dfRatio * nInXSize;
+                    dfExpectedY   = nInYSize;
+                }
+                else if ((i % 4) == 2)
+                {
+                    dfExpectedX   = 0.0;
+                    dfExpectedY   = dfRatio * nInYSize;
+                }
+                else
+                {
+                    dfExpectedX   = nInXSize;
+                    dfExpectedY   = dfRatio * nInYSize;
+                }
+                
+                if (fabs(adfX[i] - dfExpectedX) > nInXSize / N_STEPS ||
+                    fabs(adfX[i] - dfExpectedX) > nInYSize / N_STEPS)
+                    nFailedCount ++;
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If any of the edge points failed to transform, we need to       */
@@ -290,14 +467,14 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         double dfRatio2;
         nSamplePoints = 0;
 
-        // Take 20 steps 
-        for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05 )
+        // Take N_STEPS steps 
+        for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 1. / N_STEPS )
         {
             // Ensure we end exactly at the end.
             if( dfRatio > 0.99 )
                 dfRatio = 1.0;
 
-            for( dfRatio2 = 0.0; dfRatio2 <= 1.01; dfRatio2 += 0.05 )
+            for( dfRatio2 = 0.0; dfRatio2 <= 1.01; dfRatio2 += 1. / N_STEPS )
             {
                 // Ensure we end exactly at the end.
                 if( dfRatio2 > 0.99 )
@@ -310,7 +487,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
             }
         }
 
-        CPLAssert( nSamplePoints == 441 );
+        CPLAssert( nSamplePoints == (N_STEPS+1)*(N_STEPS+1) );
 
         if( !pfnTransformer( pTransformArg, FALSE, nSamplePoints, 
                              adfX, adfY, adfZ, abSuccess ) )
@@ -331,6 +508,82 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     nFailedCount = 0;
     for( i = 0; i < nSamplePoints; i++ )
     {
+        
+        int x_i = i % (N_STEPS+1);
+        int y_i = i / (N_STEPS+1);
+
+        if (x_i > 0 && (abSuccess[i-1] || abSuccess[i]))
+        {
+            double x_out_before = adfX[i-1];
+            double x_out_after = adfX[i];
+            int nIter = 0;
+            double x_in_before = (x_i - 1) * nInXSize * 1.0 / N_STEPS;
+            double x_in_after = x_i * nInXSize * 1.0 / N_STEPS;
+            int valid_before = abSuccess[i-1];
+            int valid_after = abSuccess[i];
+            
+            /* Detect discontinuity in target coordinates when the target x coordinates */
+            /* change sign. This may be a false positive when the targe tx is around 0 */
+            /* Dichotomic search to reduce the interval to near the discontinuity and */
+            /* get a better out extent */
+            while ( (!valid_before || !valid_after ||
+                     x_out_before * x_out_after < 0) && nIter < 16 )
+            {
+                double x = (x_in_before + x_in_after) / 2;
+                double y = y_i * nInYSize * 1.0 / N_STEPS;
+                double z= 0;
+                //fprintf(stderr, "[%d] (%f, %f) -> ", nIter, x, y);
+                int bSuccess = TRUE;
+                if( !pfnTransformer( pTransformArg, FALSE, 1, 
+                                     &x, &y, &z, &bSuccess ) || !bSuccess )
+                {
+                    //fprintf(stderr, "invalid\n");
+                    if (!valid_before)
+                    {
+                        x_in_before = (x_in_before + x_in_after) / 2;
+                    }
+                    else if (!valid_after)
+                    {
+                        x_in_after = (x_in_before + x_in_after) / 2;
+                    }
+                    else
+                        break;
+                }
+                else
+                {
+                    //fprintf(stderr, "(%f, %f)\n", x, y);
+                    
+                    if( !bGotInitialPoint )
+                    {
+                        bGotInitialPoint = TRUE;
+                        dfMinXOut = dfMaxXOut = x;
+                        dfMinYOut = dfMaxYOut = y;
+                    }
+                    else
+                    {
+                        dfMinXOut = MIN(dfMinXOut,x);
+                        dfMinYOut = MIN(dfMinYOut,y);
+                        dfMaxXOut = MAX(dfMaxXOut,x);
+                        dfMaxYOut = MAX(dfMaxYOut,y);
+                    }
+                    
+                    if (!valid_before || x_out_before * x < 0)
+                    {
+                        valid_after = TRUE;
+                        x_in_after = (x_in_before + x_in_after) / 2;
+                        x_out_after = x;
+                    }
+                    else
+                    {
+                        valid_before = TRUE;
+                        x_out_before = x;
+                        x_in_before = (x_in_before + x_in_after) / 2;
+                    }
+                }
+                nIter ++;
+            }
+        }
+        
         if( !abSuccess[i] )
         {
             nFailedCount++;
@@ -387,14 +640,6 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     }
 
     dfDiagonalDist = sqrt( dfDeltaX * dfDeltaX + dfDeltaY * dfDeltaY );
-
-/* -------------------------------------------------------------------- */
-/*      Return raw extents.                                             */
-/* -------------------------------------------------------------------- */
-    padfExtent[0] = dfMinXOut;
-    padfExtent[1] = dfMinYOut;
-    padfExtent[2] = dfMaxXOut;
-    padfExtent[3] = dfMaxYOut;
     
 /* -------------------------------------------------------------------- */
 /*      Compute a pixel size from this.                                 */
@@ -406,16 +651,86 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 
     *pnPixels = (int) ((dfMaxXOut - dfMinXOut) / dfPixelSize + 0.5);
     *pnLines = (int) ((dfMaxYOut - dfMinYOut) / dfPixelSize + 0.5);
+    
+    double dfPixelSizeX = dfPixelSize;
+    double dfPixelSizeY = dfPixelSize;
+   
+    double adfExtent[4];
+    const double adfRatioArray[] = { 0, 0.001, 0.01, 0.1, 1 };
+    size_t nRetry;
+    
+#define N_ELEMENTS(x) (sizeof(x) / sizeof(x[0]))
 
 /* -------------------------------------------------------------------- */
-/*      Set the output geotransform.                                    */
+/*      Check that the right border is not completely out of source     */
+/*      image. If so, adjust the x pixel size a bit in the hope it will */
+/*      fit.                                                            */
 /* -------------------------------------------------------------------- */
+    for( nRetry = 0; nRetry < N_ELEMENTS(adfRatioArray); nRetry ++ )
+    {
+        double dfTryPixelSizeX =
+            dfPixelSizeX - dfPixelSizeX * adfRatioArray[nRetry] / *pnPixels;
+        adfExtent[0] = dfMinXOut;
+        adfExtent[1] = dfMaxYOut - (*pnLines) * dfPixelSizeY;
+        adfExtent[2] = dfMinXOut + (*pnPixels) * dfTryPixelSizeX;
+        adfExtent[3] = dfMaxYOut;
+        if (!GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
+                                            pfnTransformer, pTransformArg,
+                                            adfExtent, *pnPixels,  *pnLines,
+                                            dfTryPixelSizeX, dfPixelSizeY))
+        {
+            dfPixelSizeX = dfTryPixelSizeX;
+            break;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Check that the bottom border is not completely out of source    */
+/*      image. If so, adjust the y pixel size a bit in the hope it will */
+/*      fit.                                                            */
+/* -------------------------------------------------------------------- */
+    for( nRetry = 0; nRetry < N_ELEMENTS(adfRatioArray); nRetry ++ )
+    {
+        double dfTryPixelSizeY =
+            dfPixelSizeY - dfPixelSizeY * adfRatioArray[nRetry] / *pnLines;
+        adfExtent[0] = dfMinXOut;
+        adfExtent[1] = dfMaxYOut - (*pnLines) * dfTryPixelSizeY;
+        adfExtent[2] = dfMinXOut + (*pnPixels) * dfPixelSizeX;
+        adfExtent[3] = dfMaxYOut;
+        if (!GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
+                                            pfnTransformer, pTransformArg,
+                                            adfExtent, *pnPixels,  *pnLines,
+                                            dfPixelSizeX, dfTryPixelSizeY))
+        {
+            dfPixelSizeY = dfTryPixelSizeY;
+            break;
+        }
+    }
+    
+    
+/* -------------------------------------------------------------------- */
+/*      Recompute some bounds so that all return values are consistant  */
+/* -------------------------------------------------------------------- */
+    dfMaxXOut = dfMinXOut + (*pnPixels) * dfPixelSizeX;
+    dfMinYOut = dfMaxYOut - (*pnLines) * dfPixelSizeY;
+    
+    /* -------------------------------------------------------------------- */
+    /*      Return raw extents.                                             */
+    /* -------------------------------------------------------------------- */
+    padfExtent[0] = dfMinXOut;
+    padfExtent[1] = dfMinYOut;
+    padfExtent[2] = dfMaxXOut;
+    padfExtent[3] = dfMaxYOut;
+
+    /* -------------------------------------------------------------------- */
+    /*      Set the output geotransform.                                    */
+    /* -------------------------------------------------------------------- */
     padfGeoTransformOut[0] = dfMinXOut;
-    padfGeoTransformOut[1] = dfPixelSize;
+    padfGeoTransformOut[1] = dfPixelSizeX;
     padfGeoTransformOut[2] = 0.0;
     padfGeoTransformOut[3] = dfMaxYOut;
     padfGeoTransformOut[4] = 0.0;
-    padfGeoTransformOut[5] = - dfPixelSize;
+    padfGeoTransformOut[5] = - dfPixelSizeY;
     
     return CE_None;
 }
@@ -1926,7 +2241,7 @@ void GDALDestroyApproxTransformer( void * pCBData )
  * GDALTransformerFunc() signature.  Details of the arguments are described
  * there. 
  */
-
+ 
 int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints, 
                          double *x, double *y, double *z, int *panSuccess )
 
