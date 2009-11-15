@@ -631,16 +631,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                       OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj,"eck4") )
+    else if( EQUAL(pszProj,"eck1") || EQUAL(pszProj,"eck2") || EQUAL(pszProj,"eck3") ||
+             EQUAL(pszProj,"eck4") || EQUAL(pszProj,"eck5") || EQUAL(pszProj,"eck6"))
     {
-        SetEckertIV( OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                     OSR_GDV( papszNV, "x_0", 0.0 ), 
-                     OSR_GDV( papszNV, "y_0", 0.0 ) );
-    }
-
-    else if( EQUAL(pszProj,"eck6") )
-    {
-        SetEckertVI( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+        SetEckert(   pszProj[3] - '0',
+                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
                      OSR_GDV( papszNV, "x_0", 0.0 ), 
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -1403,6 +1398,33 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
+    else if( EQUAL(pszProjection,SRS_PT_ECKERT_I) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=eck1 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_ECKERT_II) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=eck2 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_ECKERT_III) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=eck3 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+    
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_IV) )
     {
         sprintf( szProj4+strlen(szProj4),
@@ -1411,7 +1433,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-
+    
+    else if( EQUAL(pszProjection,SRS_PT_ECKERT_V) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=eck5 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+    
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_VI) )
     {
         sprintf( szProj4+strlen(szProj4),
