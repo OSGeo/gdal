@@ -19,7 +19,7 @@
  *
  * TODO:
  *	- Allow non-regular blocking table arrangements (in general)
- *  	- Allow <schema>.<table> syntax, instead of <table> in OpenConnection
+ *  	- Allow PQ connection string parameters in any order
  *      - Update data blocks in SetProjection
  *      - Update data blocks in SetGeoTransform
  *      - Disable sequential scanning in OpenConnection in the database instance
