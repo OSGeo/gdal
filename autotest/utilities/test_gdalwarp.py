@@ -615,6 +615,160 @@ def test_gdalwarp_24():
     return 'success'
 
 ###############################################################################
+# Test warping a full EPSG:4326 extent to +proj=sinu (#2305)
+
+def test_gdalwarp_25():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=sinu" data/w_jpeg.tiff tmp/testgdalwarp25.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp25.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 8016:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+        
+    gt = ds.GetGeoTransform()
+    expected_gt = [-20037508.342789248, 78245.302611923355, 0.0, 10001965.729313632, 0.0, -77939.656898595524]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1:
+            print gt
+            gdaltest.post_reason('Bad gt')
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test warping a full EPSG:4326 extent to +proj=eck4 (#2305)
+
+def test_gdalwarp_26():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=eck4" data/w_jpeg.tiff tmp/testgdalwarp26.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp26.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 8582:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+        
+    gt = ds.GetGeoTransform()
+    expected_gt = [-16921202.922943164, 41752.719393322564, 0.0, 8460601.4614715818, 0.0, -41701.109109770863]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1:
+            print gt
+            gdaltest.post_reason('Bad gt')
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test warping a full EPSG:4326 extent to +proj=vandg (#2305)
+
+def test_gdalwarp_27():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=vandg" data/w_jpeg.tiff tmp/testgdalwarp27.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp27.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 22006:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+        
+    gt = ds.GetGeoTransform()
+    expected_gt = [-20015109.356056381, 98651.645855415176, 0.0, 20015109.356056374, 0.0, -98651.645855415176]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1:
+            print gt
+            gdaltest.post_reason('Bad gt')
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test warping a full EPSG:4326 extent to +proj=aeqd +lat_0=45 +lon_0=90 (#2305)
+
+def test_gdalwarp_28():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=aeqd +lat_0=45 +lon_0=90" data/w_jpeg.tiff tmp/testgdalwarp28.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp28.tif')
+    if ds is None:
+        return 'fail'
+
+    # First is GCC; Second is MSVC 6.0
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 47506 and cs != 46728:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+        
+    gt = ds.GetGeoTransform()
+    # First is GCC; Second is MSVC 6.0
+    expected_gt1 = [-10009026.853177125, 43693.733128680084, 0.0, 5024463.6669970695, 0.0, -43693.733128680084]
+    expected_gt2 = [-10009026.853177125, 43691.280523668691, 0.0, 5022121.8610583926, 0.0, -43691.280523668691]
+    for i in range(6):
+        if abs(gt[i] - expected_gt1[i]) > 1 and abs(gt[i] - expected_gt2[i]) > 1:
+            print gt
+            gdaltest.post_reason('Bad gt')
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test warping a full EPSG:4326 extent to EPSG:3785 (#2305)
+
+def test_gdalwarp_29():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:3785 data/w_jpeg.tiff tmp/testgdalwarp29.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp29.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 55149:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+        
+    gt = ds.GetGeoTransform()
+    expected_gt = [ -20037508.342789248, 90054.726863985939, 0.0, 16213801.067583967, 0.0, -90056.750611190684 ]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1:
+            print gt
+            gdaltest.post_reason('Bad gt')
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -623,7 +777,7 @@ def test_gdalwarp_cleanup():
     if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) == 'ON':
         return 'success'
     
-    for i in range(23):
+    for i in range(29):
         try:
             os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
         except:
@@ -677,6 +831,11 @@ gdaltest_list = [
     test_gdalwarp_22,
     test_gdalwarp_23,
     test_gdalwarp_24,
+    test_gdalwarp_25,
+    test_gdalwarp_26,
+    test_gdalwarp_27,
+    test_gdalwarp_28,
+    test_gdalwarp_29,
     test_gdalwarp_cleanup
     ]
 
