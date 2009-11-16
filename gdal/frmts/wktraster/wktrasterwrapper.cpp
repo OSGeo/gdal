@@ -126,7 +126,7 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
         sizeof (GByte) +
         4 * sizeof (GUInt16) +
  	sizeof (GInt32) +
- 	6 * sizeof (GFloat64);
+ 	6 * sizeof (double);
 
     /* Check that we have enough bytes for reading header */
     if (nRasterHexWkbLen < nRasterHeaderLen)
@@ -171,35 +171,35 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
         GDALSwapWords(&nBands, sizeof (GUInt16), 1, sizeof (GUInt16));
     pbyAuxPtr += sizeof (GUInt16);
 
-    memcpy(&dfScaleX, pbyAuxPtr, sizeof (GFloat64));
+    memcpy(&dfScaleX, pbyAuxPtr, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(&dfScaleX, sizeof (GFloat64), 1, sizeof (GFloat64));
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(&dfScaleX, sizeof (double), 1, sizeof (double));
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(&dfScaleY, pbyAuxPtr, sizeof (GFloat64));
+    memcpy(&dfScaleY, pbyAuxPtr, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(&dfScaleY, sizeof (GFloat64), 1, sizeof (GFloat64));
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(&dfScaleY, sizeof (double), 1, sizeof (double));
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(&dfIpX, pbyAuxPtr, sizeof (GFloat64));
+    memcpy(&dfIpX, pbyAuxPtr, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(&dfIpX, sizeof (GFloat64), 1, sizeof (GFloat64));
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(&dfIpX, sizeof (double), 1, sizeof (double));
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(&dfIpY, pbyAuxPtr, sizeof (GFloat64));
+    memcpy(&dfIpY, pbyAuxPtr, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(&dfIpY, sizeof (GFloat64), 1, sizeof (GFloat64));
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(&dfIpY, sizeof (double), 1, sizeof (double));
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(&dfSkewX, pbyAuxPtr, sizeof (GFloat64));
+    memcpy(&dfSkewX, pbyAuxPtr, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(&dfSkewX, sizeof (GFloat64), 1, sizeof (GFloat64));
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(&dfSkewX, sizeof (double), 1, sizeof (double));
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(&dfSkewY, pbyAuxPtr, sizeof (GFloat64));
+    memcpy(&dfSkewY, pbyAuxPtr, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(&dfSkewY, sizeof (GFloat64), 1, sizeof (GFloat64));
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(&dfSkewY, sizeof (double), 1, sizeof (double));
+    pbyAuxPtr += sizeof (double);
 
     memcpy(&nSrid, pbyAuxPtr, sizeof (GInt32));
     if (byEndianess != byMachineEndianess)
@@ -229,7 +229,7 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
     for (int i = 0; i < nBands; i++) {
         GByte byFirstByteBandHeader = 0;
         int nPixTypeBytes = 0;
-        GFloat64 dfNoDataValue = 0.0;
+        double dfNoDataValue = 0.0;
 
         // TODO : check that there are enough bytes in the buffer
         memcpy(&byFirstByteBandHeader, pbyAuxPtr, sizeof (GByte));
@@ -400,41 +400,41 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
     nTransformedBytes += sizeof (GUInt16);
     pbyAuxPtr += sizeof (GUInt16);
 
-    memcpy(pbyAuxPtr, &dfScaleX, sizeof (GFloat64));
+    memcpy(pbyAuxPtr, &dfScaleX, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(pbyAuxPtr, sizeof (GFloat64), 1, sizeof (GFloat64));
-    nTransformedBytes += sizeof (GFloat64);
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(pbyAuxPtr, sizeof (double), 1, sizeof (double));
+    nTransformedBytes += sizeof (double);
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(pbyAuxPtr, &dfScaleY, sizeof (GFloat64));
+    memcpy(pbyAuxPtr, &dfScaleY, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(pbyAuxPtr, sizeof (GFloat64), 1, sizeof (GFloat64));
-    nTransformedBytes += sizeof (GFloat64);
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(pbyAuxPtr, sizeof (double), 1, sizeof (double));
+    nTransformedBytes += sizeof (double);
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(pbyAuxPtr, &dfIpX, sizeof (GFloat64));
+    memcpy(pbyAuxPtr, &dfIpX, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(pbyAuxPtr, sizeof (GFloat64), 1, sizeof (GFloat64));
-    nTransformedBytes += sizeof (GFloat64);
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(pbyAuxPtr, sizeof (double), 1, sizeof (double));
+    nTransformedBytes += sizeof (double);
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(pbyAuxPtr, &dfIpY, sizeof (GFloat64));
+    memcpy(pbyAuxPtr, &dfIpY, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(pbyAuxPtr, sizeof (GFloat64), 1, sizeof (GFloat64));
-    nTransformedBytes += sizeof (GFloat64);
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(pbyAuxPtr, sizeof (double), 1, sizeof (double));
+    nTransformedBytes += sizeof (double);
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(pbyAuxPtr, &dfSkewX, sizeof (GFloat64));
+    memcpy(pbyAuxPtr, &dfSkewX, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(pbyAuxPtr, sizeof (GFloat64), 1, sizeof (GFloat64));
-    nTransformedBytes += sizeof (GFloat64);
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(pbyAuxPtr, sizeof (double), 1, sizeof (double));
+    nTransformedBytes += sizeof (double);
+    pbyAuxPtr += sizeof (double);
 
-    memcpy(pbyAuxPtr, &dfSkewY, sizeof (GFloat64));
+    memcpy(pbyAuxPtr, &dfSkewY, sizeof (double));
     if (byEndianess != byMachineEndianess)
-        GDALSwapWords(pbyAuxPtr, sizeof (GFloat64), 1, sizeof (GFloat64));
-    nTransformedBytes += sizeof (GFloat64);
-    pbyAuxPtr += sizeof (GFloat64);
+        GDALSwapWords(pbyAuxPtr, sizeof (double), 1, sizeof (double));
+    nTransformedBytes += sizeof (double);
+    pbyAuxPtr += sizeof (double);
 
     memcpy(pbyAuxPtr, &nSrid, sizeof (GInt32));
     if (byEndianess != byMachineEndianess)
@@ -512,12 +512,12 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
                 break;
             case 11:
                 nPixTypeBytes = 8;
-                memcpy(pbyAuxPtr, &(papoBands[i]->dfNodata), sizeof (GFloat64));
+                memcpy(pbyAuxPtr, &(papoBands[i]->dfNodata), sizeof (double));
                 if (byEndianess != byMachineEndianess)
-                    GDALSwapWords(pbyAuxPtr, sizeof (GFloat64), 1,
-                        sizeof (GFloat64));
-                pbyAuxPtr += sizeof (GFloat64);
-                nTransformedBytes += sizeof (GFloat64);
+                    GDALSwapWords(pbyAuxPtr, sizeof (double), 1,
+                        sizeof (double));
+                pbyAuxPtr += sizeof (double);
+                nTransformedBytes += sizeof (double);
                 break;
             default:
                 nPixTypeBytes = 1;
@@ -631,7 +631,7 @@ WKTRasterBandWrapper * WKTRasterWrapper::GetBand(GUInt16 nBandNumber) {
  *  - Allow changing the size of the nodatavalue, that implies modify the
  *  allocated memory for HexWkb representation of the WKT Raster. Now, you
  *  only can change the value, not the size.
- *  - Avoid the use of GFloat64 instead of double, to ensure compatibility
+ *  - Avoid the use of double instead of double, to ensure compatibility
  *  with WKTRasterRasterBand types. Discuss it.
  ***************************************************************************/
 
@@ -642,11 +642,11 @@ WKTRasterBandWrapper * WKTRasterWrapper::GetBand(GUInt16 nBandNumber) {
  *  - GUInt16: band number
  *  - GByte: The first byte of the band header (contains the value for
  *          other class properties).
- *  - GFloat64: The nodata value. Could be any kind of data (GByte,
+ *  - double: The nodata value. Could be any kind of data (GByte,
  *          GUInt16, GInt32...) but the variable has the bigger type
  */
 WKTRasterBandWrapper::WKTRasterBandWrapper(WKTRasterWrapper * poWKTRW,
-        GUInt16 nBandNumber, GByte byFirstByteOfHeader, GFloat64 fNodataValue) {
+        GUInt16 nBandNumber, GByte byFirstByteOfHeader, double fNodataValue) {
 
     bIsOffline = byFirstByteOfHeader >> 7;
     byReserved = (byFirstByteOfHeader >> 4) & 0x07;
