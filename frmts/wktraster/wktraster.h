@@ -50,9 +50,6 @@
 #define WKT_RASTER_VERSION (GUInt16)0
 
 
-// This type is not defined in cpl_port.h...
-typedef double GFloat64;
-
 
 // Utility function
 GByte GetMachineEndianess();
@@ -367,7 +364,7 @@ public:
  *  - Allow changing the size of the nodatavalue, that implies modify the
  *  allocated memory for HexWkb representation of the WKT Raster. Now, you
  *  only can change the value, not the size.
- *  - Avoid the use of GFloat64 instead of double, to ensure compatibility
+ *  - Avoid the use of double instead of double, to ensure compatibility
  *  with WKTRasterRasterBand types. Discuss it.
  ***************************************************************************/
 
@@ -383,7 +380,7 @@ class WKTRasterBandWrapper {
     GBool bIsOffline;
     GByte byReserved;
     GByte byPixelType;
-    GFloat64 dfNodata;
+    double dfNodata;
     GByte * pbyData;
     GUInt32 nDataSize;
     GUInt16 nBand;
@@ -401,10 +398,10 @@ public:
      *  - GUInt16: band number
      *  - GByte: The first byte of the band header (contains the value for
      *          other class properties).
-     *  - GFloat64: The nodata value. Could be any kind of data (GByte,
+     *  - double: The nodata value. Could be any kind of data (GByte,
      *          GUInt16, GInt32...) but the variable has the bigger type
      */
-    WKTRasterBandWrapper(WKTRasterWrapper *, GUInt16, GByte, GFloat64);
+    WKTRasterBandWrapper(WKTRasterWrapper *, GUInt16, GByte, double);
 
 
     /**
@@ -465,12 +462,12 @@ class WKTRasterWrapper {
     GByte byEndianess;
     GUInt16 nVersion;
     GUInt16 nBands;
-    GFloat64 dfScaleX;
-    GFloat64 dfScaleY;
-    GFloat64 dfIpX;
-    GFloat64 dfIpY;
-    GFloat64 dfSkewX;
-    GFloat64 dfSkewY;
+    double dfScaleX;
+    double dfScaleY;
+    double dfIpX;
+    double dfIpY;
+    double dfSkewX;
+    double dfSkewY;
     GInt32 nSrid;
     GUInt16 nWidth;
     GUInt16 nHeight;
