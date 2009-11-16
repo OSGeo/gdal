@@ -43,19 +43,15 @@ TODO List :
 	- Allow changing the size of the nodatavalue, that implies modify the
  	  allocated memory for HexWkb representation of the WKT Raster. Now, you
  	  only can change the value, not the size.
-	- Avoid the use of GFloat64 instead of double, to ensure compatibility
-	  with WKTRasterRasterBand types. Discuss it.
 
 
 2.- General objectives
 
 Objective											Planned schedule	state
 ------------------------------------------------------------------------------------------
-Block reading improvement							November 2009		On going
-Out-db data reading support							November 2009		On going
-GDAL tools update 									November 2009		Todo
-RASTER_COLUMNS table update							November 2009		Todo
-Support for reading non-regularly blocked rasters	December 2009		Todo
-Bulk update of data blocks							December 2009		Todo
-Support for creating new WKT Rasters				December 2009		Todo
+Block reading improvement							December 2009		On going
+Out-db data reading support							December 2009		On going
+Support for reading non-regularly blocked rasters	2010        		Todo
+Support for creating new WKT Rasters				2010        		Todo
+Minor fixes (i.e: modify some GDAL tools)           2010                Todo
 
