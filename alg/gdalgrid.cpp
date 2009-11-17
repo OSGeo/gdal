@@ -1230,6 +1230,8 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
     const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
 
+    static int bHasWarnedAboutOutOfRange = FALSE;
+
     for ( nYPoint = 0; nYPoint < nYSize; nYPoint++ )
     {
         const double    dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
@@ -1248,20 +1250,81 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                 return CE_Failure;
             }
 
-            if ( eType == GDT_Byte )
-                ((GByte *)pData)[nYPoint * nXSize + nXPoint] = (GByte)dfValue;
-            else if ( eType == GDT_UInt16 )
-                ((GUInt16 *)pData)[nYPoint * nXSize + nXPoint] = (GUInt16)dfValue;
-            else if ( eType == GDT_Int16 )
-                ((GInt16 *)pData)[nYPoint * nXSize + nXPoint] = (GInt16)dfValue;
-            else if ( eType == GDT_UInt32 )
-                ((GUInt32 *)pData)[nYPoint * nXSize + nXPoint] = (GUInt32)dfValue;
-            else if ( eType == GDT_Int32 )
-                ((GInt32 *)pData)[nYPoint * nXSize + nXPoint] = (GInt32)dfValue;
-            else if ( eType == GDT_Float32 )
+/* -------------------------------------------------------------------- */
+/*  Depending on output data type do the type casting and clamping      */
+/*  (if needed) into the requested range.                               */
+/*  TODO: Clamping function probably could be moved into the CPL and    */
+/*        optimized a bit.                                              */
+/* -------------------------------------------------------------------- */
+#define WARN_OUT_OF_RANGE()                                                 \
+    do                                                                      \
+    {                                                                       \
+        if ( !bHasWarnedAboutOutOfRange )                                   \
+        {                                                                   \
+            CPLError( CE_Warning, CPLE_AppDefined,                          \
+                      "At least one output value does not fit into the "    \
+                      "output validity range and will be clamped." );       \
+        }                                                                   \
+        bHasWarnedAboutOutOfRange = TRUE;                                   \
+    } while(0)
+
+#define CLAMP(type, minval, maxval)                                         \
+    do                                                                      \
+    {                                                                       \
+        if ( dfValue < (minval) )                                           \
+        {                                                                   \
+            ((type *)pData)[nYPoint * nXSize + nXPoint] = (type)(minval);   \
+            WARN_OUT_OF_RANGE();                                            \
+        }                                                                   \
+        else if ( dfValue > (maxval) )                                      \
+        {                                                                   \
+            ((type *)pData)[nYPoint * nXSize + nXPoint] = (type)(maxval);   \
+            WARN_OUT_OF_RANGE();                                            \
+        }                                                                   \
+        else                                                                \
+        {                                                                   \
+            ((type *)pData)[nYPoint * nXSize + nXPoint] = ((minval) < 0) ?  \
+                (type)floor(dfValue + 0.5) : (type)(dfValue + 0.5);         \
+        }                                                                   \
+    } while(0)
+
+            switch ( eType )
+            {
+              case GDT_Byte:
+                CLAMP( GByte, 0.0, 255.0 );
+                break;
+
+              case GDT_Int16:
+                CLAMP( GInt16, -32768.0, 32767.0 );
+                break;
+
+              case GDT_UInt16:
+                CLAMP( GUInt16, 0.0, 65535.0 );
+                break;
+
+              case GDT_UInt32:
+                CLAMP( GUInt32, 0.0, 4294967295.0 );
+                break;
+
+              case GDT_Int32:
+                CLAMP( GInt32, -2147483648.0, 2147483647.0 );
+                break;
+
+              case GDT_Float32:
                 ((float *)pData)[nYPoint * nXSize + nXPoint] = (float)dfValue;
-            else if ( eType == GDT_Float64 )
+                break;
+
+              case GDT_Float64:
                 ((double *)pData)[nYPoint * nXSize + nXPoint] = dfValue;
+                break;
+
+              default:
+                break;
+            }
+
+#undef WARN_OUT_OF_RANGE
+#undef CLAMP
+
         }
 
         if( !pfnProgress( (double)(nYPoint + 1) / nYSize, NULL, pProgressArg ) )
