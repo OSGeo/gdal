@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_vsi.h"
 #include "gdalgrid.h"
 
 CPL_CVSID("$Id$");
@@ -1163,7 +1164,7 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     CPLAssert( padfY );
     CPLAssert( padfZ );
     CPLAssert( pData );
-    
+
     if ( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
@@ -1230,18 +1231,27 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
     const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
 
-    static int bHasWarnedAboutOutOfRange = FALSE;
-
+/* -------------------------------------------------------------------- */
+/*  Allocate a buffer of scanline size, fill it with gridded values     */
+/*  and use GDALCopyWords() to copy values into output data array with  */
+/*  appropriate data type conversion.                                   */
+/* -------------------------------------------------------------------- */
+    double      *padfValues = (double *)VSIMalloc( sizeof(double) * nXSize );
+    GByte       *pabyData = (GByte *)pData;
+    int         nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
+    int         nLineSpace = nXSize * nDataTypeSize;
+    
     for ( nYPoint = 0; nYPoint < nYSize; nYPoint++ )
     {
         const double    dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
+
         for ( nXPoint = 0; nXPoint < nXSize; nXPoint++ )
         {
             const double    dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
-            double          dfValue = 0.0;
+
             if ( (*pfnGDALGridMethod)( poOptions, nPoints, padfX, padfY, padfZ,
                                        dfXPoint, dfYPoint,
-                                       &dfValue ) != CE_None )
+                                       padfValues + nXPoint ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Gridding failed at X position %lu, Y position %lu",
@@ -1249,83 +1259,12 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                           (long unsigned int)nYPoint );
                 return CE_Failure;
             }
-
-/* -------------------------------------------------------------------- */
-/*  Depending on output data type do the type casting and clamping      */
-/*  (if needed) into the requested range.                               */
-/*  TODO: Clamping function probably could be moved into the CPL and    */
-/*        optimized a bit.                                              */
-/* -------------------------------------------------------------------- */
-#define WARN_OUT_OF_RANGE()                                                 \
-    do                                                                      \
-    {                                                                       \
-        if ( !bHasWarnedAboutOutOfRange )                                   \
-        {                                                                   \
-            CPLError( CE_Warning, CPLE_AppDefined,                          \
-                      "At least one output value does not fit into the "    \
-                      "output validity range and will be clamped." );       \
-        }                                                                   \
-        bHasWarnedAboutOutOfRange = TRUE;                                   \
-    } while(0)
-
-#define CLAMP(type, minval, maxval)                                         \
-    do                                                                      \
-    {                                                                       \
-        if ( dfValue < (minval) )                                           \
-        {                                                                   \
-            ((type *)pData)[nYPoint * nXSize + nXPoint] = (type)(minval);   \
-            WARN_OUT_OF_RANGE();                                            \
-        }                                                                   \
-        else if ( dfValue > (maxval) )                                      \
-        {                                                                   \
-            ((type *)pData)[nYPoint * nXSize + nXPoint] = (type)(maxval);   \
-            WARN_OUT_OF_RANGE();                                            \
-        }                                                                   \
-        else                                                                \
-        {                                                                   \
-            ((type *)pData)[nYPoint * nXSize + nXPoint] = ((minval) < 0) ?  \
-                (type)floor(dfValue + 0.5) : (type)(dfValue + 0.5);         \
-        }                                                                   \
-    } while(0)
-
-            switch ( eType )
-            {
-              case GDT_Byte:
-                CLAMP( GByte, 0.0, 255.0 );
-                break;
-
-              case GDT_Int16:
-                CLAMP( GInt16, -32768.0, 32767.0 );
-                break;
-
-              case GDT_UInt16:
-                CLAMP( GUInt16, 0.0, 65535.0 );
-                break;
-
-              case GDT_UInt32:
-                CLAMP( GUInt32, 0.0, 4294967295.0 );
-                break;
-
-              case GDT_Int32:
-                CLAMP( GInt32, -2147483648.0, 2147483647.0 );
-                break;
-
-              case GDT_Float32:
-                ((float *)pData)[nYPoint * nXSize + nXPoint] = (float)dfValue;
-                break;
-
-              case GDT_Float64:
-                ((double *)pData)[nYPoint * nXSize + nXPoint] = dfValue;
-                break;
-
-              default:
-                break;
-            }
-
-#undef WARN_OUT_OF_RANGE
-#undef CLAMP
-
         }
+
+        GDALCopyWords( padfValues, GDT_Float64, sizeof(double),
+                       pabyData, eType, nDataTypeSize,
+                       nXSize );
+        pabyData += nLineSpace;
 
         if( !pfnProgress( (double)(nYPoint + 1) / nYSize, NULL, pProgressArg ) )
         {
@@ -1333,6 +1272,8 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             return CE_Failure;
         }
     }
+
+    VSIFree( padfValues );
 
     return CE_None;
 }
