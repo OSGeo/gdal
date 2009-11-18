@@ -18,10 +18,10 @@
 GDAL2WKTRASTER_PATH=/home/jorge/src/wktraster/scripts
 IMG_TEST_FILES_PATH=/home/jorge/test_data/tiff_files
 SQL_OUTPUT_FILES_PATH=/home/jorge/test_data/sql
-DATABASE_NAME=gdal_wktraster_test
-DATABASE_SCHEMA=public
+DATABASE_NAME=gisdb
+DATABASE_SCHEMA=gis_schema
 HOST_NAME=localhost
-USER_NAME=postgres
+USER_NAME=gis
 
 # We add -V option to create the RASTER_OVERVIEWS table. Only one time.
 
