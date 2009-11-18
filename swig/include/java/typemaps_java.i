@@ -1147,35 +1147,6 @@
   }
 
 /***************************************************
- ***************************************************/
-%define OPTIONAL_POD(type,argstring)
-%typemap(in) (type *optional_##type)
-{
-  /* %typemap(in) (type *optional_##type) */
-  $1 = ($1_type)$input;
-}
-%typemap(argout) (type *optional_##type)
-{
-  /* %typemap(in) (type *optional_##type) */
-}
-%typemap(typecheck,precedence=0) (type *optional_##type)
-{
-  /* %typemap(typecheck,precedence=0) (type *optionalInt) */
-}
-
-%typemap(jni) (type *optional_##type) "jintArray"
-%typemap(jtype) (type *optional_##type) "int[]"
-%typemap(jstype) (type *optional_##type) "int[]"
-%typemap(javain) (type *optional_##type) "$javainput"
-%typemap(javaout) (type *optional_##type) {
-    return $jnicall;
-  }
-%enddef
-
-OPTIONAL_POD(int,i);
-
-
-/***************************************************
  * Typemaps for char **argout. 
  ***************************************************/
 
