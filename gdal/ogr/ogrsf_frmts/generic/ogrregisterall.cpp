@@ -124,6 +124,9 @@ void OGRRegisterAll()
 #ifdef INGRES_ENABLED
     RegisterOGRIngres();
 #endif
+#ifdef PCIDSK_ENABLED
+    RegisterOGRPCIDSK();
+#endif
 #ifdef SDE_ENABLED
     RegisterOGRSDE();
 #endif

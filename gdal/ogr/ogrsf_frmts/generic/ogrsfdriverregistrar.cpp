@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 static void *hDRMutex = NULL;
-static OGRSFDriverRegistrar *poRegistrar = NULL;
+static OGRSFDriverRegistrar * volatile poRegistrar = NULL;
 
 static const char *pszUpdatableINST_DATA = 
 "__INST_DATA_TARGET:                                                                                                                                      ";
