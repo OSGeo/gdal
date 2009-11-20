@@ -79,8 +79,7 @@ WKTRasterWrapper::WKTRasterWrapper() {
  *  const char *: the string hexwkb representation of the raster
  */
 int WKTRasterWrapper::Initialize(const char* pszHex) { 
-    int nTransformedBytes = 0; 
-    int nRasterHexWkbLen = 0; 
+    int nBufferDataWithoutHeaderLen = 0;
     int nRasterHeaderLen = 0; 
     int nRasterBandHeaderLen = 0; 
     int nRasterDataLen = 0;
@@ -94,18 +93,42 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
     byMachineEndianess = XDR;
 #endif
 
-    // Check parameters
+    /*************************************************************************
+     *  Check parameters
+     *************************************************************************/
     if (pszHex == NULL || strlen(pszHex) % 2) {
         CPLError(CE_Failure, CPLE_NotSupported,
-                "Couldn't create raster wrapper, invalid raster hex wkb string");
+                "Couldn't create raster wrapper, invalid raster hexwkb string");
         return FALSE;
     }
 
-    /************************************************************************
-     * Set HexWkb string as class property and convert it to binary format
-     ************************************************************************/
-    nLengthHexWkbString = strlen(pszHex);
-    nLengthByWkbString = nLengthHexWkbString / 2;
+    /*************************************************************************
+     * Check if raster has enough data
+     *************************************************************************/
+    nRasterHeaderLen =
+        sizeof (GByte) +
+        4 * sizeof (GUInt16) +
+ 	sizeof (GInt32) +
+ 	6 * sizeof (double);
+
+    nBufferDataWithoutHeaderLen =
+        strlen(pszHex + 2*nRasterHeaderLen) / 2;
+
+    pbyHexWkb = CPLHexToBinary(pszHex, &nLengthByWkbString);    
+    
+    if (nRasterHeaderLen > nLengthByWkbString || 
+        nLengthByWkbString != nRasterHeaderLen + nBufferDataWithoutHeaderLen)
+    {       
+        CPLError(CE_Failure, CPLE_ObjectNull,
+                "Raster object is corrupted, not enough data");
+        return FALSE;
+    }
+
+
+    /*************************************************************************
+     * Copy raster as class attribute, and transform it to binary
+     *************************************************************************/
+    nLengthHexWkbString = strlen(pszHex);   
 
     pszHexWkb = (char *) VSIMalloc(nLengthHexWkbString);
     if (pszHexWkb == NULL) {
@@ -114,28 +137,9 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
         return FALSE;
     }
 
-    memcpy(pszHexWkb, pszHex, nLengthHexWkbString * sizeof (char));
-    pbyHexWkb = CPLHexToBinary(pszHexWkb, &nTransformedBytes);
+    memcpy(pszHexWkb, pszHex, nLengthHexWkbString * sizeof (GByte));
 
-    // TODO: Check this assert. Sometimes fails
-    //CPLAssert(nTransformedBytes == nLengthByWkbString);
-    nRasterHexWkbLen = nLengthByWkbString;
-
-     // Set raster header length
-    nRasterHeaderLen =
-        sizeof (GByte) +
-        4 * sizeof (GUInt16) +
- 	sizeof (GInt32) +
- 	6 * sizeof (double);
-
-    /* Check that we have enough bytes for reading header */
-    if (nRasterHexWkbLen < nRasterHeaderLen)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Not enough data");
- 	return FALSE;
-    }
-
-
+   
     /***********************************************************************
      * Get endianess. This is important, because we could need to swap
      * words if the data endianess is distinct from machine endianess
@@ -251,9 +255,7 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
             default:
                 nPixTypeBytes = 1;
         }
-
-        // TODO : check that there are enough bytes in the buffer
-
+        
         // FIXME : this is likely wrong (disclaimer: I've not checked the spec).
         // dfNoDataValue is a double. Doesn't make sense to fetch less than 8 bytes
         // if 1 byte, should be put into a Byte and then casted to a double
@@ -265,7 +267,7 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
         pbyAuxPtr += nPixTypeBytes;
 
         nRasterBandHeaderLen = (1 + nPixTypeBytes) * sizeof (GByte);
-        nRasterDataLen = ((nRasterHexWkbLen - nRasterHeaderLen) / nBands) -
+        nRasterDataLen = ((nLengthByWkbString - nRasterHeaderLen) / nBands) -
                 ((1 + nPixTypeBytes));
 
         // TODO : check that there are enough bytes in the buffer
