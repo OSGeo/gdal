@@ -134,7 +134,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     use Geo::OGR;
     use Geo::OSR;
     our $VERSION = '0.23';
-    our $GDAL_VERSION = '1.6.2';
+    our $GDAL_VERSION = '1.6.3';
     use vars qw/
 	%TYPE_STRING2INT %TYPE_INT2STRING
 	%ACCESS_STRING2INT %ACCESS_INT2STRING
