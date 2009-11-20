@@ -1,4 +1,90 @@
-= GDAL/OGR 1.6.2-RC1 =
+= GDAL/OGR 1.6.3-RC1 =
+
+11/19/2009
+
+General:
+ * r13533 (ogr postgis plugin) have been added to the stable branch only
+   <http://trac.osgeo.org/gdal/ticket/3125/>
+ * GRIB detection not thread safe <http://trac.osgeo.org/gdal/ticket/3209/>
+
+GDAL:
+ * GDALRasterizeLayers() and GDALRasterizeGeometries() segfault when passed
+   invalid band numbers <http://trac.osgeo.org/gdal/ticket/3146/>
+ * Patch for HDF5 block size recognition
+   <http://trac.osgeo.org/gdal/ticket/2270/>
+ * Gdal doesn't calculate stats correctly if it is negative number
+   <http://trac.osgeo.org/gdal/ticket/2511/>
+ * ERS file pointing to an ECW file is not opening when a full path name is
+   not specified <http://trac.osgeo.org/gdal/ticket/2907/>
+ * Keyword causing format unrecognized (PDS)
+   <http://trac.osgeo.org/gdal/ticket/2956/>
+ * Add support for large NITF files <http://trac.osgeo.org/gdal/ticket/2989/>
+ * do not remove leading spaces after TRE=xxxx= metadata when writing them
+   <http://trac.osgeo.org/gdal/ticket/3088/>
+ * [PATCH] TSX COSAR driver and 'pixel validity mask'
+   <http://trac.osgeo.org/gdal/ticket/3112/>
+ * GDALDataset::BlockBasedRasterIO() does not use overviews
+   <http://trac.osgeo.org/gdal/ticket/3124/>
+ * SIGBUS when reading A.TOC on Solaris
+   <http://trac.osgeo.org/gdal/ticket/3130/>
+ * Cleanup of drivers when using ECW data is very expensive
+   <http://trac.osgeo.org/gdal/ticket/3134/>
+ * When PIXELTYPE=SIGNEDBYTE, band.GetStatistics returns wrong values
+   <http://trac.osgeo.org/gdal/ticket/3151/>
+ * HFA doesn't support reading COMPRESSED + SIGNEDBYTE
+   <http://trac.osgeo.org/gdal/ticket/3152/>
+ * undefined reference to ... error with gdalbuildvrt.cpp
+   <http://trac.osgeo.org/gdal/ticket/3167/>
+ * variation on label to image pointer (PDS)
+   <http://trac.osgeo.org/gdal/ticket/3177/>
+ * GDALGridCreate with NULL progress callback function
+   <http://trac.osgeo.org/gdal/ticket/3189/>
+ * ERS driver fails with ERSs containing relative paths to non-ERStorage
+   rasters <http://trac.osgeo.org/gdal/ticket/3196/>
+ * Wrong type casting in GDALGrid data metrics functions
+   <http://trac.osgeo.org/gdal/ticket/3207/>
+ * HDF5 driver crashes with stackoverflow on this HDF5 image
+   <http://trac.osgeo.org/gdal/ticket/3218/>
+
+Utilities:
+ * Python utililities should support command-line wildcards
+   <http://trac.osgeo.org/gdal/ticket/2783/>
+ * gdalbuildvrt -resolution lowest/highest does not work correcty for y pixel
+   size <http://trac.osgeo.org/gdal/ticket/3198/>
+ * [PATCH] Part of the reprojected image is missing from GDAL 1.6.0 along
+   180E/180W longitude <http://trac.osgeo.org/gdal/ticket/3206/>
+
+OGR:
+ * OGRLayer::GetFIDColumn() and GetGeometryColumn() just return empty strings
+   from Python bindings <http://trac.osgeo.org/gdal/ticket/2694/>
+ * GML read failure for GDAL 1.6+ <http://trac.osgeo.org/gdal/ticket/2948/>
+ * GML reading problems with Xerces 3.x
+   <http://trac.osgeo.org/gdal/ticket/3156/>
+ * OGRLayer::GetFeatureCount returns a wrong value for SOUNDG layer
+   <http://trac.osgeo.org/gdal/ticket/3163/>
+ * XPlane driver causes fatal memory allocation in ogrinfo/ogr2ogr
+   <http://trac.osgeo.org/gdal/ticket/3164/>
+
+Configuration:
+ * libtool: /bin/sh: arg list too long (powerpc-ibm-aix5.3)
+   <http://trac.osgeo.org/gdal/ticket/3080/>
+ * Error when building the gdal 1.6.2 for Linux
+   <http://trac.osgeo.org/gdal/ticket/3149/>
+
+Python:
+ * Add __version__ to python bindings
+   <http://trac.osgeo.org/gdal/ticket/3137/>
+ * ReadRaster() crashes when GDAL is built with MinGW
+   <http://trac.osgeo.org/gdal/ticket/3173/>
+
+OGR Spatial References:
+ * EPSG:3785 does not support spherical mercator hack
+   <http://trac.osgeo.org/gdal/ticket/3136/>
+ * Add 2 NZ coordinate system definition to mitab driver
+   <http://trac.osgeo.org/gdal/ticket/3187/>
+
+
+= GDAL/OGR 1.6.2 =
 
 7/31/2009
 
