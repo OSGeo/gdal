@@ -141,8 +141,6 @@ double NWT_GRDRasterBand::GetNoDataValue( int *pbSuccess )
 
 GDALColorInterp NWT_GRDRasterBand::GetColorInterpretation()
 {
-    NWT_GRDDataset * poDS = (NWT_GRDDataset *) poDS;
-
     //return GCI_RGB;
     if( nBand == 4 )
         return GCI_Undefined;
