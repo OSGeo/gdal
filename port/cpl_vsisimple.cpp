@@ -39,6 +39,10 @@
 #include "cpl_vsi.h"
 #include "cpl_error.h"
 
+/* Uncomment to check consistent usage of VSIMalloc(), VSIRealloc(), */
+/* VSICalloc(), VSIFree(), VSIStrdup() */
+// #define DEBUG_VSIMALLOC
+
 CPL_CVSID("$Id$");
 
 /* for stat() */
@@ -287,7 +291,13 @@ int VSIFPutc( int nChar, FILE * fp )
 void *VSICalloc( size_t nCount, size_t nSize )
 
 {
+#ifdef DEBUG_VSIMALLOC
+    void* ptr = VSIMalloc(nCount * nSize);
+    memset(ptr, 0, nCount * nSize);
+    return ptr;
+#else
     return( calloc( nCount, nSize ) );
+#endif
 }
 
 /************************************************************************/
@@ -297,8 +307,29 @@ void *VSICalloc( size_t nCount, size_t nSize )
 void *VSIMalloc( size_t nSize )
 
 {
+#ifdef DEBUG_VSIMALLOC
+    char* ptr = (char*) malloc(4 + nSize);
+    ptr[0] = 'V';
+    ptr[1] = 'S';
+    ptr[2] = 'I';
+    ptr[3] = 'M';
+    return ptr + 4;
+#else
     return( malloc( nSize ) );
+#endif
 }
+
+#ifdef DEBUG_VSIMALLOC
+void VSICheckMarker(char* ptr)
+{
+    if (memcmp(ptr, "VSIM", 4) != 0)
+    {
+        CPLError(CE_Fatal, CPLE_AppDefined,
+                 "Inconsistant use of VSI memory allocation primitives for %p : %c%c%c%c",
+                 ptr, ptr[0], ptr[1], ptr[2], ptr[3]);
+    }
+}
+#endif
 
 /************************************************************************/
 /*                             VSIRealloc()                             */
@@ -307,7 +338,16 @@ void *VSIMalloc( size_t nSize )
 void * VSIRealloc( void * pData, size_t nNewSize )
 
 {
+#ifdef DEBUG_VSIMALLOC
+    if (pData == NULL)
+        return VSIMalloc(nNewSize);
+        
+    char* ptr = (char*)pData;
+    VSICheckMarker(ptr-4);
+    return 4 + (char*) realloc((void*)(ptr - 4), nNewSize + 4);
+#else
     return( realloc( pData, nNewSize ) );
+#endif
 }
 
 /************************************************************************/
@@ -317,8 +357,21 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 void VSIFree( void * pData )
 
 {
+#ifdef DEBUG_VSIMALLOC
+    if (pData == NULL)
+        return;
+
+    char* ptr = (char*)pData;
+    VSICheckMarker(ptr-4);
+    ptr[-4] = 'M';
+    ptr[-3] = 'I';
+    ptr[-2] = 'S';
+    ptr[-1] = 'V';
+    free(ptr - 4);
+#else
     if( pData != NULL )
         free( pData );
+#endif
 }
 
 /************************************************************************/
@@ -328,7 +381,14 @@ void VSIFree( void * pData )
 char *VSIStrdup( const char * pszString )
 
 {
+#ifdef DEBUG_VSIMALLOC
+    int nSize = strlen(pszString) + 1;
+    char* ptr = (char*) VSIMalloc(nSize);
+    memcpy(ptr, pszString, nSize);
+    return ptr;
+#else
     return( strdup( pszString ) );
+#endif
 }
 
 /************************************************************************/
