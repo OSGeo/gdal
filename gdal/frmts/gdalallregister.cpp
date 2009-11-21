@@ -398,6 +398,11 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HDF5Image();
 #endif
 
+#ifdef FRMT_northwood
+	GDALRegister_NWT_GRD();
+	GDALRegister_NWT_GRC();
+#endif
+
 #ifdef FRMT_adrg
     GDALRegister_ADRG();
     GDALRegister_SRP();
