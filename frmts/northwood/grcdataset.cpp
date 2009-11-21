@@ -137,7 +137,8 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
 
     poGDS->poColorTable->SetColorEntry( 0, &oEntry );
 
-    for( int i=0; i < (int) poGDS->pGrd->stClassDict->nNumClassifiedItems; i++ )
+    int i;
+    for( i=0; i < (int) poGDS->pGrd->stClassDict->nNumClassifiedItems; i++ )
     {
         oEntry.c1 = poGDS->pGrd->stClassDict->stClassifedItem[i]->r;
         oEntry.c2 = poGDS->pGrd->stClassDict->stClassifedItem[i]->g;
@@ -151,7 +152,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
 
     // find the max value used in the grc
     int maxValue = 0;
-    for( int i=0; i < (int) poDS->pGrd->stClassDict->nNumClassifiedItems; i++ )
+    for( i=0; i < (int) poDS->pGrd->stClassDict->nNumClassifiedItems; i++ )
     {
         if( poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal > maxValue )
             maxValue = poDS->pGrd->stClassDict->stClassifedItem[i]->usPixVal;
