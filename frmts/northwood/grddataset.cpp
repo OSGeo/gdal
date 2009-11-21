@@ -30,10 +30,12 @@
 #include "gdal_pam.h"
 #include "northwood.h"
 
+#ifdef OGR_ENABLED
 #ifdef MSVC
 #include "..\..\ogr\ogrsf_frmts\mitab\mitab.h"
 #else
 #include "../../ogr/ogrsf_frmts/mitab/mitab.h"
+#endif
 #endif
 
 
@@ -321,11 +323,13 @@ CPLErr NWT_GRDDataset::GetGeoTransform( double *padfTransform )
 /************************************************************************/
 const char *NWT_GRDDataset::GetProjectionRef()
 {
+#ifdef OGR_ENABLED
     OGRSpatialReference *poSpatialRef;
     poSpatialRef = MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
     poSpatialRef->exportToWkt( &pszProjection );
     poSpatialRef->Release();
     poSpatialRef = NULL;
+#endif
     return( (const char *)pszProjection );
 }
 
