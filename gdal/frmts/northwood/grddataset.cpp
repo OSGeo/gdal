@@ -400,7 +400,7 @@ void GDALRegister_NWT_GRD()
     {
         poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "Northwood_GRD" );
+        poDriver->SetDescription( "NWT_GRD" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                  "Northwood Numeric Grid Format .grd/.tab" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#grd");
