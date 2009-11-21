@@ -424,7 +424,7 @@ GDALRegister_NWT_GRC()
     {
         poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "Northwood_GRC" );
+        poDriver->SetDescription( "NWT_GRC" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                  "Northwood Classified Grid Format .grc/.tab");
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
