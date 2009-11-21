@@ -357,79 +357,79 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL );
     poDS->SetMetadataItem( "DTED_VerticalAccuracy_UHL", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY_ACC );
     poDS->SetMetadataItem( "DTED_VerticalAccuracy_ACC", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_SECURITYCODE_UHL );
     poDS->SetMetadataItem( "DTED_SecurityCode_UHL", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_SECURITYCODE_DSI );
     poDS->SetMetadataItem( "DTED_SecurityCode_DSI", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_UNIQUEREF_UHL );
     poDS->SetMetadataItem( "DTED_UniqueRef_UHL", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_UNIQUEREF_DSI );
     poDS->SetMetadataItem( "DTED_UniqueRef_DSI", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_DATA_EDITION );
     poDS->SetMetadataItem( "DTED_DataEdition", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_MATCHMERGE_VERSION );
     poDS->SetMetadataItem( "DTED_MatchMergeVersion", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_MAINT_DATE );
     poDS->SetMetadataItem( "DTED_MaintenanceDate", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_MATCHMERGE_DATE );
     poDS->SetMetadataItem( "DTED_MatchMergeDate", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_MAINT_DESCRIPTION );
     poDS->SetMetadataItem( "DTED_MaintenanceDescription", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_PRODUCER );
     poDS->SetMetadataItem( "DTED_Producer", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTDATUM );
     poDS->SetMetadataItem( "DTED_VerticalDatum", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_HORIZDATUM );
     poDS->SetMetadataItem( "DTED_HorizontalDatum", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_DIGITIZING_SYS );
     poDS->SetMetadataItem( "DTED_DigitizingSystem", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_COMPILATION_DATE );
     poDS->SetMetadataItem( "DTED_CompilationDate", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_HORIZACCURACY );
     poDS->SetMetadataItem( "DTED_HorizontalAccuracy", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_REL_HORIZACCURACY );
     poDS->SetMetadataItem( "DTED_RelHorizontalAccuracy", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_REL_VERTACCURACY );
     poDS->SetMetadataItem( "DTED_RelVerticalAccuracy", pszValue );
-    CPLFree( pszValue );
+    free( pszValue );
     
     poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
