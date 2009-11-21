@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalpamdataset.cpp 11782 2007-07-25 22:18:54Z warmerdam $
+ * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of the GDAL PAM Proxy database interface.
@@ -35,7 +35,7 @@
 #include "ogr_spatialref.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id: gdalpamdataset.cpp 11782 2007-07-25 22:18:54Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
