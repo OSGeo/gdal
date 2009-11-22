@@ -138,7 +138,7 @@ struct ReferenceTab {
 };
 
 //----- USA State's reference table to USGS PCS Code
-static ReferenceTab aoUSStateTable[] = {
+static const ReferenceTab aoUSStateTable[] = {
     {101,     "al"},
     {201,     "az"},
     {301,     "ar"},
@@ -208,7 +208,7 @@ struct ConvertionTab {
 };
 
 //----- Linear Unit Conversion Table
-static ConvertionTab aoLinearUnitsConv[] = {
+static const ConvertionTab aoLinearUnitsConv[] = {
     {"m",            /*  0 */  0,   1,  1.0},
     {SRS_UL_METER,   /*  1 */  0,   1,  1.0},
     {"meters",       /*  2 */  0,   1,  1.0},
@@ -2145,6 +2145,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
         oSRS.SetWellKnownGeogCS( "WGS84" );
         oSRS.SetUTM( nZone,( cNorth == 'n' ) );
         oSRS.exportToWkt( pszProjString );
+        CPLFree( pszRefSystemLower );
         return CE_None;
     }
 
@@ -2166,6 +2167,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
             if( oSRS.SetStatePlane( nZone, ( nNAD == 83 ) ) != OGRERR_FAILURE )
             {
                 oSRS.exportToWkt( pszProjString );
+                CPLFree( pszRefSystemLower );
                 return CE_None;
             }
 
@@ -2177,6 +2179,9 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
             oSRS.SetWellKnownGeogCS( CPLSPrintf( "NAD%d", nNAD ) );
         }
     }
+    
+    CPLFree( pszRefSystemLower );
+    pszRefSystemLower = NULL;
 
     // ------------------------------------------------------------------
     //  Search for georeference file <RefSystem>.ref
@@ -2637,54 +2642,54 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
 
         if EQUAL( pszProjName, SRS_PT_MERCATOR_1SP )
         {
-            pszProjectionOut = CPLStrdup( "Mercator" );
+            pszProjectionOut =  "Mercator" ;
         }
         if EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR )         
         {   
-            pszProjectionOut = CPLStrdup( "Transverse Mercator" );
+            pszProjectionOut =  "Transverse Mercator" ;
         }
         else if EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP )
         {
-            pszProjectionOut = CPLStrdup( "Lambert Conformal Conic" );
+            pszProjectionOut =  "Lambert Conformal Conic" ;
         }
         else if EQUAL( pszProjName, SRS_PT_EQUIRECTANGULAR )
         {
-            pszProjectionOut = CPLStrdup( "Plate Carr" "\xE9" "e" ); /* 'eacute' in ISO-8859-1 */
+            pszProjectionOut =  "Plate Carr" "\xE9" "e" ; /* 'eacute' in ISO-8859-1 */
         }
         else if EQUAL( pszProjName, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA )
         {   
             double dfCenterLat = oSRS.GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL );
             if( dfCenterLat == 0.0 )
-                pszProjectionOut = CPLStrdup( "Lambert Transverse Azimuthal Equal Area" ); 
+                pszProjectionOut =  "Lambert Transverse Azimuthal Equal Area" ; 
             else if( fabs( dfCenterLat ) == 90.0 )
-                pszProjectionOut = CPLStrdup( "Lambert Oblique Polar Azimuthal Equal Area" );
+                pszProjectionOut =  "Lambert Oblique Polar Azimuthal Equal Area" ;
             else if( dfCenterLat > 0.0 )
-                pszProjectionOut = CPLStrdup( "Lambert North Oblique Azimuthal Equal Area" ); 
+                pszProjectionOut =  "Lambert North Oblique Azimuthal Equal Area" ; 
             else
-                pszProjectionOut = CPLStrdup( "Lambert South Oblique Azimuthal Equal Area" );
+                pszProjectionOut =  "Lambert South Oblique Azimuthal Equal Area" ;
         }
         else if EQUAL( pszProjName, SRS_PT_POLAR_STEREOGRAPHIC )
         {
             if( oSRS.GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL ) > 0 )
-                pszProjectionOut = CPLStrdup( "North Polar Stereographic" );
+                pszProjectionOut =  "North Polar Stereographic" ;
             else
-                pszProjectionOut = CPLStrdup( "South Polar Stereographic" );
+                pszProjectionOut =  "South Polar Stereographic" ;
         }
         else if EQUAL( pszProjName, SRS_PT_STEREOGRAPHIC )
         {
-            pszProjectionOut = CPLStrdup( "Transverse Stereographic" );
+            pszProjectionOut =  "Transverse Stereographic" ;
         }
         else if EQUAL( pszProjName, SRS_PT_OBLIQUE_STEREOGRAPHIC )
         {
-            pszProjectionOut = CPLStrdup( "Oblique Stereographic" );
+            pszProjectionOut =  "Oblique Stereographic" ;
         }
         else if EQUAL( pszProjName, SRS_PT_SINUSOIDAL )
         {
-            pszProjectionOut = CPLStrdup( "Sinusoidal" );
+            pszProjectionOut =  "Sinusoidal" ;
         }
         else if EQUAL( pszProjName, SRS_PT_ALBERS_CONIC_EQUAL_AREA )
         {
-            pszProjectionOut = CPLStrdup( "Alber's Equal Area Conic" );
+            pszProjectionOut =  "Alber's Equal Area Conic" ;
         }
 
         // ---------------------------------------------------------
@@ -2704,7 +2709,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     }
     else
     {
-        pszProjectionOut = CPLStrdup( "none" );
+        pszProjectionOut =  "none" ;
     }
 
     // ---------------------------------------------------------
@@ -2747,12 +2752,12 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             if( dfStdP2 != -0.1 )
                 nParameters = 2;
         }
-        pszLinearUnit   = CPLStrdup( GetUnitDefault( oSRS.GetAttrValue( "PROJCS|UNIT" ),
-                          CPLSPrintf( "%f", oSRS.GetLinearUnits() ) ) );
+        pszLinearUnit   = GetUnitDefault( oSRS.GetAttrValue( "PROJCS|UNIT" ),
+                                          CPLSPrintf( "%f", oSRS.GetLinearUnits() ) ) ;
     }
     else
     {
-        pszLinearUnit   = CPLStrdup( GetUnitDefault( pszAngularUnit ) );
+        pszLinearUnit   = GetUnitDefault( pszAngularUnit );
     }
 
     // ---------------------------------------------------------
