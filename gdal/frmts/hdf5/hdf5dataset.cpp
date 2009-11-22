@@ -391,8 +391,8 @@ char* CreatePath( HDF5GroupObjects *poH5Object )
 
 	}
 	poH5Object->pszUnderscorePath  = 
-	    (char *)strdup( pszUnderscoreSpaceInName );
-	poH5Object->pszPath  = (char *)strdup( pszPath );
+	    CPLStrdup( pszUnderscoreSpaceInName );
+	poH5Object->pszPath  = CPLStrdup( pszPath );
     }
 
     return( poH5Object->pszPath );
@@ -470,7 +470,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
 /* -------------------------------------------------------------------- */
 /*      Save child information                                          */
 /* -------------------------------------------------------------------- */
-    poHchild->pszName  = (char *)strdup( pszObjName );
+    poHchild->pszName  = CPLStrdup( pszObjName );
     
     poHchild->nType  = oStatbuf.type;
     poHchild->nIndex = idx;
@@ -930,7 +930,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     poRootGroup = new HDF5GroupObjects;
     
     poH5RootGroup=poRootGroup;
-    poRootGroup->pszName   = strdup( "/" );
+    poRootGroup->pszName   = CPLStrdup( "/" );
     poRootGroup->nType     = H5G_GROUP;
     poRootGroup->poHparent = NULL;
     poRootGroup->pszPath = NULL;
