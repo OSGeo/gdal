@@ -349,11 +349,16 @@ CPLErr NWT_GRCDataset::GetGeoTransform( double *padfTransform )
 const char *NWT_GRCDataset::GetProjectionRef()
 {
 #ifdef OGR_ENABLED
-    OGRSpatialReference *poSpatialRef;
-    poSpatialRef = MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
-    poSpatialRef->exportToWkt( &pszProjection );
-    poSpatialRef->Release();
-    poSpatialRef = NULL;
+    if (pszProjection == NULL)
+    {
+        OGRSpatialReference *poSpatialRef;
+        poSpatialRef = MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
+        if (poSpatialRef)
+        {
+            poSpatialRef->exportToWkt( &pszProjection );
+            poSpatialRef->Release();
+        }
+    }
 #endif
     return ( (const char *) pszProjection );
 }
@@ -392,11 +397,16 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     VSIFSeek( poDS->fp, 0, SEEK_SET );
     VSIFRead( poDS->abyHeader, 1, 1024, poDS->fp );
-    poDS->pGrd = (NWT_GRID *) CPLMalloc( sizeof (NWT_GRID) );
+    poDS->pGrd = (NWT_GRID *) malloc( sizeof (NWT_GRID) );
 
     poDS->pGrd->fp = poDS->fp;
 
-    nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader );
+    if (!nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader ) ||
+        poDS->pGrd->stClassDict == NULL)
+    {
+        delete poDS;
+        return NULL;
+    }
 
     poDS->nRasterXSize = poDS->pGrd->nXSide;
     poDS->nRasterYSize = poDS->pGrd->nYSide;
