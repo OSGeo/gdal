@@ -402,6 +402,7 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->pGrd->fp = poDS->fp;
 
     if (!nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader ) ||
+        !GDALCheckDatasetDimensions(poDS->pGrd->nXSide, poDS->pGrd->nYSide) ||
         poDS->pGrd->stClassDict == NULL)
     {
         delete poDS;
