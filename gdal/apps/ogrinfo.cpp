@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "ogr_api.h"
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
 #include "cpl_conv.h"
@@ -319,12 +320,7 @@ int main( int nArgc, char ** papszArgv )
     if (poSpatialFilter)
         OGRGeometryFactory::destroyGeometry( poSpatialFilter );
 
-    delete OGRSFDriverRegistrar::GetRegistrar();
-    OSRCleanup();
-    CPLFinderClean();
-    VSICleanupFileManager();
-    CPLFreeConfig();
-    CPLCleanupTLS();
+    OGRCleanupAll();
 
     return 0;
 }
