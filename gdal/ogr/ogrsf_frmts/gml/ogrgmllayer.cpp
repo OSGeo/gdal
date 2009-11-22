@@ -183,7 +183,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                           && pszGML_FID[i] <= '9' && j<8)
                 i--, j++;
             /* i points the last character of the fid */
-            if( i >= 0 && j < 8)
+            if( i >= 0 && j < 8 && pszFIDPrefix == NULL)
             {
                 pszFIDPrefix = (char *) CPLMalloc(i+2);
                 pszFIDPrefix[i+1] = '\0';
