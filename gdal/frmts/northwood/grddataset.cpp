@@ -371,7 +371,8 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeek( poDS->fp, 0, SEEK_SET );
     VSIFRead( poDS->abyHeader, 1, 1024, poDS->fp );
     poDS->pGrd = (NWT_GRID *) malloc(sizeof(NWT_GRID));
-    if (!nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader ))
+    if (!nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader ) ||
+        !GDALCheckDatasetDimensions(poDS->pGrd->nXSide, poDS->pGrd->nYSide) )
     {
         delete poDS;
         return NULL;
