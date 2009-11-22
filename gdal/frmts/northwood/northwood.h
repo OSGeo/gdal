@@ -123,7 +123,7 @@ typedef struct
     NWT_RGB_ROW stRGBRow;
 } NWT_GRID;
 
-void nwt_ParseHeader( NWT_GRID * pGrd, char *nwHeader );
+int nwt_ParseHeader( NWT_GRID * pGrd, char *nwHeader );
 NWT_GRID *nwtOpenGrid( char *filename );
 void nwtCloseGrid( NWT_GRID * pGrd );
 void nwtPrintGridHeader( NWT_GRID * pGrd );

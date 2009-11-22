@@ -35,7 +35,7 @@
 #include "northwood.h"
 
 
-void nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
+int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 {
     int i;
     unsigned short usTmp;
@@ -47,6 +47,7 @@ void nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     else if( nwtHeader[4] == '8' )
         pGrd->cFormat = 0x80;        //  grc classified type
 
+    pGrd->stClassDict = NULL;
 
     memcpy( (void *) &pGrd->fVersion, (void *) &nwtHeader[5],
               sizeof(pGrd->fVersion) );
@@ -102,6 +103,7 @@ void nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
     memcpy( (void *) &pGrd->cMICoordSys, (void *) &nwtHeader[256],
             sizeof(pGrd->cMICoordSys) );
+    pGrd->cMICoordSys[sizeof(pGrd->cMICoordSys)-1] = '\0';
 
     pGrd->iZUnits = nwtHeader[512];
 
@@ -117,8 +119,16 @@ void nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     memcpy( (void *) &pGrd->iNumColorInflections, (void *) &nwtHeader[516],
             sizeof(2) );
 
+    if (pGrd->iNumColorInflections > 32)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Corrupt header");
+        pGrd->iNumColorInflections = i;
+        return FALSE;
+    }
+    
     for( i = 0; i < pGrd->iNumColorInflections; i++ )
     {
+        
         memcpy( (void *) &pGrd->stInflection[i].zVal,
                 (void *) &nwtHeader[518 + (7 * i)], 4 );
         memcpy( (void *) &pGrd->stInflection[i].r,
@@ -156,7 +166,7 @@ void nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                SEEK_SET );
 
         if( !fread( &usTmp, 2, 1, pGrd->fp) )
-            return;
+            return FALSE;
         pGrd->stClassDict =
             (NWT_CLASSIFIED_DICT *) calloc( sizeof(NWT_CLASSIFIED_DICT), 1 );
 
@@ -174,7 +184,7 @@ void nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
             pGrd->stClassDict->stClassifedItem[usTmp] =
               (NWT_CLASSIFIED_ITEM *) calloc( sizeof(NWT_CLASSIFIED_ITEM), 1 );
             if( !fread( &cTmp, 9, 1, pGrd->fp ) )
-                return;
+                return FALSE;
             memcpy( (void *) &pGrd->stClassDict->
                     stClassifedItem[usTmp]->usPixVal, (void *) &cTmp[0], 2 );
             memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->res1,
@@ -189,12 +199,20 @@ void nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                     (void *) &cTmp[6], 1 );
             memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->usLen,
                     (void *) &cTmp[7], 2 );
+                    
+            if ( pGrd->stClassDict->stClassifedItem[usTmp]->usLen > 256)
+                return FALSE;
+
             if( !fread( &pGrd->stClassDict->stClassifedItem[usTmp]->szClassName,
                         pGrd->stClassDict->stClassifedItem[usTmp]->usLen,
                         1, pGrd->fp ) )
-            return;
+                return FALSE;
+                
+            pGrd->stClassDict->stClassifedItem[usTmp]->szClassName[255] = '\0';
         }
     }
+    
+    return TRUE;
 }
 
 
@@ -411,7 +429,7 @@ void nwtCloseGrid( NWT_GRID * pGrd )
 {
     unsigned short usTmp;
 
-    if( pGrd->cFormat & 0x80 )        // if is GRC - free the Dictionary
+    if( (pGrd->cFormat & 0x80) && pGrd->stClassDict )        // if is GRC - free the Dictionary
     {
         for( usTmp = 0; usTmp < pGrd->stClassDict->nNumClassifiedItems; usTmp++ )
         {
