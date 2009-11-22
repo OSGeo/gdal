@@ -1212,6 +1212,16 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
             GDALDestroyTransformer( psWO->pTransformerArg );
             psWO->pTransformerArg = NULL;
         }
+        if( psWO->hSrcDS != NULL )
+        {
+            GDALClose( psWO->hSrcDS );
+            psWO->hSrcDS = NULL;
+        }
+        if( psWO->hDstDS != NULL )
+        {
+            GDALClose( psWO->hDstDS );
+            psWO->hDstDS = NULL;
+        }
         GDALDestroyWarpOptions( psWO );
         return NULL;
     }
