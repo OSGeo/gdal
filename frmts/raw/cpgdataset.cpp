@@ -1143,6 +1143,8 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     else
       poDS = (CPGDataset *) InitializeType3Dataset( poOpenInfo->pszFilename );
 
+    if (poDS == NULL)
+        return NULL;
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
