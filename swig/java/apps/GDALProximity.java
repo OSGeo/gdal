@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Project: GDAL
  * Purpose: Compute each pixel's proximity to a set of target pixels.
@@ -108,9 +108,9 @@ public class GDALProximity {
         float Nodata = 0.0F;
         float BufferValue = 0.0F;
         boolean hasBufferValue = false;
-        String OutputFormat = null;
+        String OutputFormat = "GTiff";
         String OutputType = null;
-
+        
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-of")) {
                 i++;
@@ -210,6 +210,7 @@ public class GDALProximity {
 
         SourceDataset.delete();
 
+        /* Not strictly required. delete() will also FlushCache() */
         WorkProximityDataset.FlushCache();
 
         WorkProximityDataset.delete();
@@ -368,13 +369,14 @@ public class GDALProximity {
         ProximityBand.FlushCache();
 
         /*
-         * Delete temporary file (not sure that is way to do it)
+         * Delete temporary file
          */
 
         if (WorkProximityDS != null) {
             WorkProximityDS.delete();
-            File f = new File(tempFilename);
-            f.deleteOnExit();
+            /* /vsimem files are not standard, so they must be deleted */
+            /* with GDAL API to free the associated memory */
+            gdal.Unlink(tempFilename);
         }
     }
 
