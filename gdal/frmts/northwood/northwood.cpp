@@ -277,6 +277,9 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
             index = (int)( ( (pGrd->stInflection[i].zVal - pGrd->fZMin) /
                                               (pGrd->fZMax - pGrd->fZMin) )
                            * mapSize);
+                           
+            if ( index >= mapSize )
+                index = mapSize - 1;
             createIP( index,
                       pGrd->stInflection[i].r,
                       pGrd->stInflection[i].g,
