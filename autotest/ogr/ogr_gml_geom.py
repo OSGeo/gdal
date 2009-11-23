@@ -104,6 +104,40 @@ def gml_pos_point():
     return 'success'
 
 ###############################################################################
+# Test GML 3.1.1 "pos" element for a polygon. (ticket #3244)
+
+def gml_pos_polygon():
+
+    gml = '''<gml:Polygon>
+                <gml:exterior>
+                    <gml:LinearRing>
+                        <gml:pos>0 0</gml:pos>
+                        <gml:pos>4 0</gml:pos>
+                        <gml:pos>4 4</gml:pos>
+                        <gml:pos>0 4</gml:pos>
+                        <gml:pos>0 0</gml:pos>
+                    </gml:LinearRing>
+                </gml:exterior>
+                <gml:interior>
+                    <gml:LinearRing>
+                        <gml:pos>1 1</gml:pos>
+                        <gml:pos>2 1</gml:pos>
+                        <gml:pos>2 2</gml:pos>
+                        <gml:pos>1 2</gml:pos>
+                        <gml:pos>1 1</gml:pos>
+                    </gml:LinearRing>
+                </gml:interior>
+            </gml:Polygon>'''
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))':
+        gdaltest.post_reason( '<gml:Polygon> not correctly parsed' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Test GML 3.x "posList" element for a linestring.
 
 def gml_posList_line():
@@ -345,6 +379,7 @@ for filename in files:
 
 gdaltest_list.append( gml_space_test )
 gdaltest_list.append( gml_pos_point )
+gdaltest_list.append( gml_pos_polygon )
 gdaltest_list.append( gml_posList_line )
 gdaltest_list.append( gml_posList_line3d )
 gdaltest_list.append( gml_polygon )
