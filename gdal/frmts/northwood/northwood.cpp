@@ -221,16 +221,17 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
 {
     int i;
-    NWT_RGB *pColor;
+    NWT_RGB sColor;
+    int nWarkerMark = 0;
 
-    createIP( 0, 255, 255, 255, pMap );
+    createIP( 0, 255, 255, 255, pMap, &nWarkerMark );
     // If Zmin is less than the 1st inflection use the 1st inflections color to
     // the start of the ramp
     if( pGrd->fZMin <= pGrd->stInflection[0].zVal )
     {
         createIP( 1, pGrd->stInflection[0].r,
                      pGrd->stInflection[0].g,
-                     pGrd->stInflection[0].b, pMap );
+                     pGrd->stInflection[0].b, pMap, &nWarkerMark );
     }
     // find what inflections zmin is between
     for( i = 0; i < pGrd->iNumColorInflections; i++ )
@@ -238,10 +239,10 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
         if( pGrd->fZMin < pGrd->stInflection[i].zVal )
         {
             // then we must be between i and i-1
-            pColor = linearColor( &pGrd->stInflection[i - 1],
+            linearColor( &sColor, &pGrd->stInflection[i - 1],
                                   &pGrd->stInflection[i],
                                   pGrd->fZMin );
-            createIP( 1, pColor->r, pColor->g, pColor->b, pMap );
+            createIP( 1, sColor.r, sColor.g, sColor.b, pMap, &nWarkerMark );
             break;
         }
     }
@@ -252,12 +253,12 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
                   pGrd->stInflection[pGrd->iNumColorInflections - 1].r,
                   pGrd->stInflection[pGrd->iNumColorInflections - 1].g,
                   pGrd->stInflection[pGrd->iNumColorInflections - 1].b,
-                  pMap );
+                  pMap, &nWarkerMark );
         createIP( mapSize - 1,
                   pGrd->stInflection[pGrd->iNumColorInflections - 1].r,
                   pGrd->stInflection[pGrd->iNumColorInflections - 1].g,
                   pGrd->stInflection[pGrd->iNumColorInflections - 1].b,
-                  pMap );
+                  pMap, &nWarkerMark );
     }
     else
     {
@@ -267,10 +268,11 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
             if( pGrd->fZMax < pGrd->stInflection[i].zVal )
             {
                 // then we must be between i and i-1
-                pColor = linearColor( &pGrd->stInflection[i - 1],
+                linearColor( &sColor, &pGrd->stInflection[i - 1],
                                       &pGrd->stInflection[i], pGrd->fZMin );
                 index = mapSize - 1;
-                createIP( index, pColor->r, pColor->g, pColor->b, pMap );
+                createIP( index, sColor.r, sColor.g, sColor.b, pMap,
+                           &nWarkerMark );
                 break;
             }
             // save the inflections between zmin and zmax
@@ -284,55 +286,50 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
                       pGrd->stInflection[i].r,
                       pGrd->stInflection[i].g,
                       pGrd->stInflection[i].b,
-                      pMap );
+                      pMap, &nWarkerMark );
         }
         if( index < mapSize - 1 )
             createIP( mapSize - 1,
                       pGrd->stInflection[pGrd->iNumColorInflections - 1].r,
                       pGrd->stInflection[pGrd->iNumColorInflections - 1].g,
                       pGrd->stInflection[pGrd->iNumColorInflections - 1].b,
-                      pMap );
+                      pMap, &nWarkerMark );
     }
     return 0;
 }
 
 //solve for a color between pIPLow and pIPHigh
-NWT_RGB *linearColor( NWT_INFLECTION * pIPLow, NWT_INFLECTION * pIPHigh,
+void linearColor( NWT_RGB * pRGB, NWT_INFLECTION * pIPLow, NWT_INFLECTION * pIPHigh,
                       float fMid )
 {
-    static NWT_RGB rgb;
     if( fMid < pIPLow->zVal )
     {
-        rgb.r = pIPLow->r;
-        rgb.g = pIPLow->g;
-        rgb.b = pIPLow->b;
-        return &rgb;
+        pRGB->r = pIPLow->r;
+        pRGB->g = pIPLow->g;
+        pRGB->b = pIPLow->b;
     }
     else if( fMid > pIPHigh->zVal )
     {
-        rgb.r = pIPHigh->r;
-        rgb.g = pIPHigh->g;
-        rgb.b = pIPHigh->b;
-        return &rgb;
+        pRGB->r = pIPHigh->r;
+        pRGB->g = pIPHigh->g;
+        pRGB->b = pIPHigh->b;
     }
     else
     {
         float scale = (fMid - pIPLow->zVal) / (pIPHigh->zVal - pIPLow->zVal);
-        rgb.r = (unsigned char)
+        pRGB->r = (unsigned char)
                 (scale * (pIPHigh->r - pIPLow->r) + pIPLow->r + 0.5);
-        rgb.g = (unsigned char)
+        pRGB->g = (unsigned char)
                 (scale * (pIPHigh->g - pIPLow->g) + pIPLow->g + 0.5);
-        rgb.b = (unsigned char)
+        pRGB->b = (unsigned char)
                 (scale * (pIPHigh->b - pIPLow->b) + pIPLow->b + 0.5);
-        return &rgb;
     }
 }
 
 // insert IP's into the map filling as we go
 void createIP( int index, unsigned char r, unsigned char g, unsigned char b,
-               NWT_RGB * map )
+               NWT_RGB * map, int *pnWarkerMark )
 {
-    static int waterMark;
     int i;
 
     if( index == 0 )
@@ -340,14 +337,14 @@ void createIP( int index, unsigned char r, unsigned char g, unsigned char b,
         map[0].r = r;
         map[0].g = g;
         map[0].b = b;
-        waterMark = 0;
+        *pnWarkerMark = 0;
         return;
     }
 
-    if( index <= waterMark )
+    if( index <= *pnWarkerMark )
         return;
 
-    int wm = waterMark;
+    int wm = *pnWarkerMark;
 
     float rslope = (float)(r - map[wm].r) / (float)(index - wm);
     float gslope = (float)(g - map[wm].g) / (float)(index - wm);
@@ -361,7 +358,7 @@ void createIP( int index, unsigned char r, unsigned char g, unsigned char b,
     map[index].r = r;
     map[index].g = g;
     map[index].b = b;
-    waterMark = index;
+    *pnWarkerMark = index;
     return;
 }
 
