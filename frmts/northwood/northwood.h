@@ -132,8 +132,8 @@ void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
                     char *h );
 
 void createIP( int index, unsigned char r, unsigned char g, unsigned char b,
-               NWT_RGB * map );
-NWT_RGB *linearColor( NWT_INFLECTION * pIPLow, NWT_INFLECTION * pIPHigh,
+               NWT_RGB * map, int *pnWarkerMark );
+void linearColor( NWT_RGB * pRGB, NWT_INFLECTION * pIPLow, NWT_INFLECTION * pIPHigh,
                       float fMid );
 
 #define  HLSMAX   1024            /* H,L, and S vary over 0-HLSMAX */
