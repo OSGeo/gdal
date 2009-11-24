@@ -238,7 +238,15 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
 /*      Default a few parameters.                                       */
 /* -------------------------------------------------------------------- */
     if( hDstDriver == NULL )
+    {
         hDstDriver = GDALGetDriverByName( "GTiff" );
+        if (hDstDriver == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GDALCreateAndReprojectImage needs GTiff driver");
+            return CE_Failure;
+        }
+    }
 
     if( pszSrcWKT == NULL )
         pszSrcWKT = GDALGetProjectionRef( hSrcDS );
