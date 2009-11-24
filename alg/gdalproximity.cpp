@@ -239,9 +239,17 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
         || eProxType == GDT_UInt16
         || eProxType == GDT_UInt32 )
     {
+        GDALDriverH hDriver = GDALGetDriverByName("GTiff");
+        if (hDriver == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GDALComputeProximity needs GTiff driver");
+            eErr = CE_Failure;
+            goto end;
+        }
         CPLString osTmpFile = CPLGenerateTempFilename( "proximity" );
         hWorkProximityDS = 
-            GDALCreate( GDALGetDriverByName("GTiff"), osTmpFile,
+            GDALCreate( hDriver, osTmpFile,
                         nXSize, nYSize, 1, GDT_Float32, NULL );
         if (hWorkProximityDS == NULL)
         {
