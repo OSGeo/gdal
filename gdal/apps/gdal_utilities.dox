@@ -404,8 +404,8 @@ be recomputed and rewritten in place.
 
 Some format drivers do not support overviews at all.  Many format drivers
 store overviews in a secondary file with the extension .ovr that is actually
-in TIFF format.  The GeoTIFF driver stores overviews internally to the file 
-operated on, unless the -ro flag is specified.
+in TIFF format.  By default, the GeoTIFF driver stores overviews internally to the file 
+operated on (if it is writable), unless the -ro flag is specified.
 
 External overviews created in TIFF format may be compressed using the COMPRESS_OVERVIEW 
 configuration option.  All compression methods, supported by the GeoTIFF 
@@ -450,10 +450,12 @@ gdaladdo -r average abc.tif 2 4 8 16
 Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
 
 \verbatim
-gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
+gdaladdo -ro --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
 \endverbatim
 
-Create an external JPEG-compressed GeoTIFF overview file from a 3-band RGB dataset:
+Create an external JPEG-compressed GeoTIFF overview file from a 3-band RGB dataset
+(if the dataset is a writable GeoTIFF, you also need to add the -ro option to
+force the generation of external overview):
 
 \verbatim
 gdaladdo --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR
