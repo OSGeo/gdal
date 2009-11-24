@@ -439,6 +439,13 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /*      Create a work file to hold the Y "last value" indices.          */
 /* -------------------------------------------------------------------- */
     GDALDriverH  hDriver = GDALGetDriverByName( "GTiff" );
+    if (hDriver == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALFillNodata needs GTiff driver");
+        return CE_Failure;
+    }
+    
     GDALDatasetH hYDS;
     GDALRasterBandH hYBand;
     static const char *apszOptions[] = { "COMPRESS=LZW", NULL };
