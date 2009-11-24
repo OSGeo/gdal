@@ -80,6 +80,13 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
 /*      base band.                                                      */
 /* -------------------------------------------------------------------- */
         GDALDriver *poHFADriver = (GDALDriver *) GDALGetDriverByName("HFA");
+        if (poHFADriver == NULL)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "HFA driver is unavailable." );
+            return CE_Failure;
+        }
+        
         const char *apszOptions[3] = { "COMPRESSED=YES", NULL, NULL };
         
         CPLString osDepFileOpt = "DEPENDENT_FILE=";
