@@ -170,7 +170,7 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
  * @param pszUnits Grid units code ("DEGREE" or "METRE"). If NULL "METRE" will
  * be used.
  *
- * @param padfPrjParams Array of 16 coordinate system parameters:
+ * @param padfPrjParams Array of 17 coordinate system parameters:
  *
  * [0]  Spheroid semi major axis
  * [1]  Spheroid semi minor axis
@@ -204,7 +204,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 {
     Clear();
 
-    if( pszProj == NULL )
+    if( pszProj == NULL || CPLStrnlen(pszProj, 16) < 16 )
         return OGRERR_CORRUPT_DATA;
 
 #ifdef DEBUG
