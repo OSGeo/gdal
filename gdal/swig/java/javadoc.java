@@ -9540,8 +9540,8 @@ public class SpatialReference:public int ImportFromPCI(String proj, String units
  * @param units Grid units code ("DEGREE" or "METRE"). If null, "METRE" will
  * be used.
  *
- * @param prjParams Array of 16 coordinate system parameters:
- *
+ * @param prjParams Array of 17 coordinate system parameters:
+ * <pre>
  * [0]  Spheroid semi major axis
  * [1]  Spheroid semi minor axis
  * [2]  Reference Longitude
@@ -9559,7 +9559,7 @@ public class SpatialReference:public int ImportFromPCI(String proj, String units
  * [14] Azimuth east of north for center line
  * [15] Landsat satellite number
  * [16] Landsat path number
- *
+ * </pre>
  * Particular projection uses different parameters, unused ones may be set to
  * zero. If null supplied instead of array pointer default values will be
  * used (i.e., zeroes).

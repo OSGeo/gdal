@@ -143,6 +143,7 @@ CPLValueType CPL_DLL CPLGetValueType(const char* pszValue);
 
 size_t CPL_DLL CPLStrlcpy(char* pszDest, const char* pszSrc, size_t nDestSize);
 size_t CPL_DLL CPLStrlcat(char* pszDest, const char* pszSrc, size_t nDestSize);
+size_t CPL_DLL CPLStrnlen (const char *pszStr, size_t nMaxLen);
 
 /* -------------------------------------------------------------------- */
 /*      RFC 23 character set conversion/recoding API (cpl_recode.cpp).  */
