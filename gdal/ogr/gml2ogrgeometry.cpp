@@ -243,6 +243,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psPos;
     
+    int bHasFoundPosElement = FALSE;
     for( psPos = psGeomNode->psChild; 
          psPos != NULL;
          psPos = psPos->psNext )
@@ -277,9 +278,15 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
         }
 
         CSLDestroy( papszTokens );
-
-        return bSuccess;
+        
+        if (bSuccess)
+            bHasFoundPosElement = TRUE;
+        else
+            return FALSE;
     }
+    
+    if (bHasFoundPosElement)
+        return TRUE;
     
 
 /* -------------------------------------------------------------------- */
