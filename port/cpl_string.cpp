@@ -2087,3 +2087,37 @@ size_t CPLStrlcat(char* pszDest, const char* pszSrc, size_t nDestSize)
 
     return pszDestIter - pszDest + CPLStrlcpy(pszDestIter, pszSrc, nDestSize);
 }
+
+/************************************************************************/
+/*                              CPLStrnlen()                            */
+/************************************************************************/
+
+/**
+ * Returns the length of a NUL terminated string by reading at most
+ * the specified number of bytes.
+ *
+ * The CPLStrnlen() function returns MIN(strlen(pszStr), nMaxLen).
+ * Only the first nMaxLen bytes of the string will be read. Usefull to
+ * test if a string contains at least nMaxLen characters without reading
+ * the full string up to the NUL terminating character.
+ *
+ * @param pszStr    a NUL terminated string
+ * @param nMaxLen   maximum number of bytes to read in pszStr
+ *
+ * @return strlen(pszStr) if the length is lesser than nMaxLen, otherwise
+ * nMaxLen if the NUL character has not been found in the first nMaxLen bytes.
+ *
+ * @since GDAL 1.7.0
+ */
+ 
+size_t CPLStrnlen (const char *pszStr, size_t nMaxLen)
+{
+    size_t nLen = 0;
+    while(nLen < nMaxLen && *pszStr != '\0')
+    {
+        nLen ++;
+        pszStr ++;
+    }
+    return nLen;
+}
+    
