@@ -62,9 +62,31 @@ def grib_2():
     tst = gdaltest.GDALTest( 'GRIB', 'Sample_QuikSCAT.grb', 4, 50714 )
     return tst.testOpen()
 
+###############################################################################
+# This file has different raster sizes for some of the products, which
+# we sort-of-support per ticket Test a small GRIB 1 sample file.
+
+def grib_3():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+    
+    tst = gdaltest.GDALTest( 'GRIB', 'bug3246.grb', 4, 4081 )
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    result = tst.testOpen()
+    gdal.PopErrorHandler()
+
+    msg = gdal.GetLastErrorMsg()
+    if string.find(msg,'data access may be incomplete') == -1 \
+       or gdal.GetLastErrorType() != 2:
+        gdaltest.post_reason( 'did not get expected warning.' )
+    
+    return result
+
 gdaltest_list = [
     grib_1,
-    grib_2
+    grib_2,
+    grib_3
     ]
 
 if __name__ == '__main__':
