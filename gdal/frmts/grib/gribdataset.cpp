@@ -99,8 +99,12 @@ private:
     sInt4 start;
     int subgNum;
     char *longFstLevel;
+
     double * m_Grib_Data;
     grib_MetaData* m_Grib_MetaData;
+
+    int      nGribDataXSize;
+    int      nGribDataYSize;
 };
 
 
@@ -122,6 +126,9 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand,
 
     nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
+
+    nGribDataXSize = poDS->nRasterXSize;
+    nGribDataYSize = poDS->nRasterYSize;
 
     SetMetadataItem( "GRIB_UNIT", psInv->unitName );
     SetMetadataItem( "GRIB_COMMENT", psInv->comment );
@@ -237,13 +244,59 @@ CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         FileDataSource grib_fp (poGDS->fp);
 
+        // we don't seem to have any way to detect errors in this!
         ReadGribData(grib_fp, start, subgNum, &m_Grib_Data, &m_Grib_MetaData);
+
+/* -------------------------------------------------------------------- */
+/*      Check that this band matches the dataset as a whole, size       */
+/*      wise. (#3246)                                                   */
+/* -------------------------------------------------------------------- */
+        nGribDataXSize = m_Grib_MetaData->gds.Nx;
+        nGribDataYSize = m_Grib_MetaData->gds.Ny;
+
+        if( nGribDataXSize != nRasterXSize 
+            || nGribDataYSize != nRasterYSize )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Band %d of GRIB dataset is %dx%d, while the first band and dataset is %dx%d.  Georeferencing of band %d may be incorrect, and data access may be incomplete.", 
+                      nBand, 
+                      nGribDataXSize, nGribDataYSize, 
+                      nRasterXSize, nRasterYSize, 
+                      nBand );
+        }
     }
 
-    // Somehow this decoder guarantees us that the image is upside-down (GRIB scan mode 0100). Therefore reverse it again.
-    memcpy(pImage, m_Grib_Data + nRasterXSize * (nRasterYSize - nBlockYOff - 1), nRasterXSize * sizeof(double));
+/* -------------------------------------------------------------------- */
+/*      The image as read is always upside down to our normal           */
+/*      orientation so we need to effectively flip it at this           */
+/*      point.  We also need to deal with bands that are a different    */
+/*      size than the dataset as a whole.                               */
+/* -------------------------------------------------------------------- */
+    if( nGribDataXSize == nRasterXSize
+        && nGribDataYSize == nRasterYSize )
+    {
+        // Simple 1:1 case.
+        memcpy(pImage, 
+               m_Grib_Data + nRasterXSize * (nRasterYSize - nBlockYOff - 1), 
+               nRasterXSize * sizeof(double));
+        
+        return CE_None;
+    }
+    else
+    {
+        memset( pImage, 0, sizeof(double)*nRasterXSize );
 
-    return CE_None;
+        if( nBlockYOff >= nGribDataYSize ) // off image?
+            return CE_None;
+
+        int nCopyWords = MIN(nRasterXSize,nGribDataXSize);
+
+        memcpy( pImage, 
+                m_Grib_Data + nGribDataXSize*(nGribDataYSize-nBlockYOff-1),
+                nCopyWords * sizeof(double) );
+        
+        return CE_None;
+    }
 }
 
 /************************************************************************/
