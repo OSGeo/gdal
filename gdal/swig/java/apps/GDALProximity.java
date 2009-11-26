@@ -3,9 +3,9 @@
  *
  * Project: GDAL
  * Purpose: Compute each pixel's proximity to a set of target pixels.
- * Author:  Ivan Lucena, ivan.lucena@pmldnet.com
- *          translated from "GDALProximity.cpp" by
- *          Frank Warmerdam, warmerdam@pobox.com
+ * Author:  Ivan Lucena, ivan.lucena@pmldnet.com,
+ *          translated from GDALProximity.cpp and gdal_proximity.py
+ *          originally written by Frank Warmerdam, warmerdam@pobox.com
  ******************************************************************************
  * Copyright (c) 2008, Frank Warmerdam
  *
@@ -27,9 +27,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-package proximity;
-
-import java.io.File;
 
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
@@ -103,14 +100,19 @@ public class GDALProximity {
          * Parse arguments
          */
 
+        int SourceBand = 1;
+        int DestinyBand = 1;
         float MaxDistance = -1.0F;
         boolean GeoUnits = false;
         float Nodata = 0.0F;
         float BufferValue = 0.0F;
         boolean hasBufferValue = false;
         String OutputFormat = "GTiff";
-        String OutputType = null;
-        
+        String OutputType = "Float32";
+        int TargetValues[] = new int[0];
+        float DistMult = 1.0F;
+        String Options = "";
+       
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-of")) {
                 i++;
@@ -121,6 +123,12 @@ public class GDALProximity {
             } else if (args[i].equals("-maxdist")) {
                 i++;
                 MaxDistance = Float.parseFloat(args[i]);
+            } else if (args[i].equals("-srcband")) {
+                i++;
+                SourceBand = Integer.parseInt(args[i]);
+            } else if (args[i].equals("-dstband")) {
+                i++;
+                DestinyBand = Integer.parseInt(args[i]);
             } else if (args[i].equals("-distunits")) {
                 i++;
                 if( args[i].equals("geo") ) {
@@ -133,9 +141,16 @@ public class GDALProximity {
             } else if (args[i].equals("-nodata")) {
                 i++;
                 Nodata = Float.parseFloat(args[i]);
-            /*
-             * TODO: parse "-values"
-             */
+            } else if (args[i].equals("-co")) {
+                i++;
+                Options += args[i] + ';';
+            } else if (args[i].equals("-values")) {
+                i++;
+                String valStr[] = args[i].split(",");
+                TargetValues = new int[valStr.length];
+                for (int j = 0; j < valStr.length; j++) {
+                    TargetValues[j] = Integer.parseInt(valStr[j].trim());
+                }
             } else if (args[i].equals("-fixed-buf-val")) {
                 i++;
                 BufferValue = Float.parseFloat(args[i]);
@@ -178,16 +193,26 @@ public class GDALProximity {
         WorkProximityDriver = gdal.IdentifyDriver(OutputFilename);
 
         if (WorkProximityDriver != null) {
+            
             WorkProximityDataset = gdal.Open(OutputFilename, gdalconstConstants.GA_Update);
+
+            if (WorkProximityDataset == null) {
+                System.err.println("GDALOpen failed - " + gdal.GetLastErrorNo());
+                System.err.println(gdal.GetLastErrorMsg());
+                System.exit(1);
+            }
         } else {
+
             /*
              * Create a new output dataset
              */
+          
             WorkProximityDriver = gdal.GetDriverByName(OutputFormat);
 
             WorkProximityDataset = WorkProximityDriver.Create(OutputFilename, 
                     SourceDataset.getRasterXSize(), SourceDataset.getRasterYSize(),
-                    SourceDataset.getRasterCount(), gdalconstConstants.GDT_Float32);
+                    SourceDataset.getRasterCount(), gdal.GetDataTypeByName(OutputType),
+                    Options.split(";"));
 
             WorkProximityDataset.SetGeoTransform(SourceDataset.GetGeoTransform());
             WorkProximityDataset.SetProjection(SourceDataset.GetProjectionRef());
@@ -200,18 +225,42 @@ public class GDALProximity {
             System.exit(1);
         }
 
+        /*
+         * Are we using pixels or georeferenced coordinates for distances?
+         */
+
+        if( GeoUnits ) {
+            double geoTransform[] = SourceDataset.GetGeoTransform();
+            
+            if( Math.abs(geoTransform[1]) != Math.abs(geoTransform[5])) {
+                System.err.println("Pixels not square, distances will be inaccurate.");
+            }
+
+            DistMult = (float) Math.abs(geoTransform[1]);
+        }
+
         long startTime = System.currentTimeMillis();
 
-        Run(SourceDataset.GetRasterBand(1),
-                WorkProximityDataset.GetRasterBand(1), MaxDistance, GeoUnits, Nodata,
-                hasBufferValue, BufferValue);
+        /*
+         * Calculate Proximity
+         */
+
+        Run(SourceDataset.GetRasterBand(SourceBand),
+                WorkProximityDataset.GetRasterBand(DestinyBand),
+                DistMult,
+                MaxDistance,
+                Nodata,
+                hasBufferValue,
+                BufferValue,
+                TargetValues);
+
+        /*
+         * Clean up
+         */
 
         long stopTime = System.currentTimeMillis();
 
         SourceDataset.delete();
-
-        /* Not strictly required. delete() will also FlushCache() */
-        WorkProximityDataset.FlushCache();
 
         WorkProximityDataset.delete();
 
@@ -221,17 +270,11 @@ public class GDALProximity {
     }
 
     public static void Run(Band SrcBand, Band ProximityBand,
-            float MaxDistance, boolean GeoUnits, float NoData,
-            boolean HasBufferValue, float BufferValue) {
+            float DistMult, float MaxDistance, float NoData,
+            boolean HasBufferValue, float BufferValue, int TargetValues[]) {
 
         /*
-         * TODO: Are we using pixels or georeferenced coordinates for distances?
-         */
-
-        float DistMult = 1.0F;
-
-        /*
-         *
+         * What is our maxdist value?
          */
 
         if (MaxDistance == -1.0F) {
@@ -263,7 +306,7 @@ public class GDALProximity {
         int ySize = WorkProximityBand.getYSize();
 
         /*
-         * AllocateDirect buffers as Byte
+         * Allocate buffers
          */
 
         short nearXBuffer[] = new short[xSize];
@@ -294,14 +337,16 @@ public class GDALProximity {
              */
 
             ProcessProximityLine(scanline, nearXBuffer, nearYBuffer,
-                    true, iLine, xSize, MaxDistance, proximityBuffer);
+                    true, iLine, xSize, MaxDistance, proximityBuffer,
+                    TargetValues);
 
             /*
              * Right to Left
              */
 
             ProcessProximityLine(scanline, nearXBuffer, nearYBuffer,
-                    false, iLine, xSize, MaxDistance, proximityBuffer);
+                    false, iLine, xSize, MaxDistance, proximityBuffer,
+                    TargetValues);
 
             /*
              * Write to Proximity Band
@@ -333,14 +378,16 @@ public class GDALProximity {
              */
 
             ProcessProximityLine(scanline, nearXBuffer, nearYBuffer,
-                    false, iLine, xSize, MaxDistance, proximityBuffer);
+                    false, iLine, xSize, MaxDistance, proximityBuffer,
+                    TargetValues);
 
             /*
              * Left to Right
              */
 
             ProcessProximityLine(scanline, nearXBuffer, nearYBuffer,
-                    true, iLine, xSize, MaxDistance, proximityBuffer);
+                    true, iLine, xSize, MaxDistance, proximityBuffer,
+                    TargetValues);
 
             /*
              * Final post processing of distances.
@@ -374,15 +421,17 @@ public class GDALProximity {
 
         if (WorkProximityDS != null) {
             WorkProximityDS.delete();
-            /* /vsimem files are not standard, so they must be deleted */
-            /* with GDAL API to free the associated memory */
+            /*
+             * Delete virtual file from memory
+             */
             gdal.Unlink(tempFilename);
         }
     }
 
     public static void ProcessProximityLine(int[] scanlineArray,
             short[] nearXArray, short[] nearYArray, boolean Forward,
-            int iLine, int XSize, float MaxDist, float[] proximityArray) {
+            int iLine, int XSize, float MaxDist, float[] proximityArray,
+            int TargetValues[]) {
 
         int iStart, iEnd, iStep, iPixel;
 
@@ -399,11 +448,22 @@ public class GDALProximity {
         for (iPixel = iStart; iPixel != iEnd; iPixel += iStep) {
 
             /*
-             * TODO: Is the current pixel a target pixel?
+             * Is the current pixel a target pixel?
              */
 
-            boolean isATarger = scanlineArray[iPixel] != 0.0F;
-
+            boolean isATarger = false;
+            
+            if( TargetValues.length == 0) {
+                isATarger = scanlineArray[iPixel] != 0.0F;
+            } else {
+                for( int i = 0; i < TargetValues.length; i++) {
+                    if( scanlineArray[iPixel] == TargetValues[i] ) {
+                        isATarger = true;
+                        break;
+                    }
+                }
+            }
+            
             if (isATarger) {
                 proximityArray[iPixel] = 0.0F;
                 nearXArray[iPixel] = (short) iPixel;
