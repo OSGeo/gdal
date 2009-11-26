@@ -314,7 +314,21 @@ void PCIDSKDataset::WriteGeoSegment( )
     }
     else
     {
-        CPLPrintStringFill( szTemp + 32, "PIXEL", 16 );
+        if( adfGeoTransform[0] == 0.0
+            && adfGeoTransform[1] == 1.0
+            && adfGeoTransform[2] == 0.0
+            && adfGeoTransform[3] == 0.0
+            && adfGeoTransform[4] == 0.0
+            && ABS(adfGeoTransform[5]) == 1.0 ) 
+        {
+            // no georeferencing at all.
+            CPLPrintStringFill( szTemp + 32, "PIXEL", 16 );
+        }
+        else
+        {
+            // georeferenced but not a known coordinate system.
+            CPLPrintStringFill( szTemp + 32, "METER", 16 );
+        }
         CPLPrintInt32( szTemp + 48, 3, 8 );
         CPLPrintInt32( szTemp + 56, 3, 8 );
         CPLPrintStringFill( szTemp + 64, "METER", 16 );
