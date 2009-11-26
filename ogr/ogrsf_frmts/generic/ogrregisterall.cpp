@@ -140,6 +140,9 @@ void OGRRegisterAll()
 #ifdef DWGDIRECT_ENABLED
     RegisterOGRDXFDWG();
 #endif
+#ifdef DXF_ENABLED
+    RegisterOGRDXF();
+#endif
 #ifdef GRASS_ENABLED
     RegisterOGRGRASS();
 #endif
