@@ -35,6 +35,10 @@
 
 CPL_CVSID("$Id$");
 
+#ifndef PI
+#define PI  3.14159265358979323846
+#endif 
+
 /************************************************************************/
 /*                           createFromWkb()                            */
 /************************************************************************/
@@ -1723,7 +1727,7 @@ OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData,
 
 
 /************************************************************************/
-/*                       transformWithOptions()                         */
+/*                           Add360ToNegLon()                           */
 /************************************************************************/
 
 static void Add360ToNegLon( OGRGeometry* poGeom )
@@ -1773,6 +1777,10 @@ static void Add360ToNegLon( OGRGeometry* poGeom )
     }
 }
 
+/************************************************************************/
+/*                            Sub360ToLon()                             */
+/************************************************************************/
+
 static void Sub360ToLon( OGRGeometry* poGeom )
 {
     switch (wkbFlatten(poGeom->getGeometryType()))
@@ -1817,6 +1825,10 @@ static void Sub360ToLon( OGRGeometry* poGeom )
     }
 }
 
+/************************************************************************/
+/*                        AddSimpleGeomToMulti()                        */
+/************************************************************************/
+
 static void AddSimpleGeomToMulti(OGRGeometryCollection* poMulti,
                                  const OGRGeometry* poGeom)
 {
@@ -1845,6 +1857,10 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection* poMulti,
             break;
     }
 }
+
+/************************************************************************/
+/*                 CutGeometryOnDateLineAndAddToMulti()                 */
+/************************************************************************/
 
 static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                                                const OGRGeometry* poGeom)
@@ -1933,6 +1949,10 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
     }
 }
 
+/************************************************************************/
+/*                       transformWithOptions()                         */
+/************************************************************************/
+
 OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcGeom,
                                                        OGRCoordinateTransformation *poCT,
                                                        char** papszOptions )
@@ -1979,4 +1999,76 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
     }
 
     return poDstGeom;
+}
+
+/************************************************************************/
+/*                        approximateArcAngles()                        */
+/************************************************************************/
+
+/**
+ * Stroke arc to linestring.
+ *
+ * Stroke an arc of a circle to a linestring based on a center
+ * point, radius, start angle and end angle, all angles in degrees.
+ *
+ * @param dfCenterX center X
+ * @param dfCenterY center Y
+ * @param dfZ center Z
+ * @param dfRadius radius of circle
+ * @param dfStartAngle angle to first point on arc (clockwise of X-positive?) 
+ * @param dfEndAngle angle to last point on arc (clockwise of X-positive?) 
+ * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the arc.
+ * 
+ * @return OGRLineString geometry representing an approximation of the arc.
+ */
+
+OGRGeometry* OGRGeometryFactory::approximateArcAngles( 
+    double dfCenterX, double dfCenterY, double dfZ,
+    double dfRadius, 
+    double dfStartAngle, double dfEndAngle,
+    double dfMaxAngleStepSizeDegrees )
+
+{
+    double             dfArcX, dfArcY, dfSlice;
+    int                iPoint, iAppendLocation, nVertexCount;
+    double             dfEps = dfRadius / 100000.0;
+    OGRLineString     *poLine = new OGRLineString();
+
+    nVertexCount = (int) 
+        ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1;
+    nVertexCount = MAX(2,nVertexCount);
+    dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+
+    for( iPoint=0; iPoint < nVertexCount; iPoint++ )
+    {
+        double      dfAngle;
+
+        dfAngle = (dfStartAngle + iPoint * dfSlice) * PI / 180.0;
+
+        dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
+        dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
+
+        if( iPoint == 0 )
+        {
+            iAppendLocation = poLine->getNumPoints();
+
+            if( poLine->getNumPoints() > 0 
+                && fabs(poLine->getX(poLine->getNumPoints()-1)-dfArcX) < dfEps
+                && fabs(poLine->getY(poLine->getNumPoints()-1)-dfArcY) < dfEps)
+            {
+                poLine->setNumPoints( 
+                    poLine->getNumPoints() + nVertexCount - 1 );
+            }
+            else
+            {
+                poLine->setNumPoints( 
+                    poLine->getNumPoints() + nVertexCount - 1 );
+                poLine->setPoint( iAppendLocation++, dfArcX, dfArcY, dfZ );
+            }
+        }
+        else
+            poLine->setPoint( iAppendLocation++, dfArcX, dfArcY, dfZ );
+    }
+
+    return poLine;
 }
