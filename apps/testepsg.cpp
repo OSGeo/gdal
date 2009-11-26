@@ -186,4 +186,6 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy( papszArgv );
     OSRCleanup();
     CPLFinderClean();
+    
+    return 0;
 }
