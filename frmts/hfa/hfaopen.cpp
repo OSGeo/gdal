@@ -47,16 +47,19 @@ static const char *apszAuxMetadataItems[] = {
 
 // node/entry            field_name                  metadata_key       type
 
- "Statistics",           "dminimum",              "STATISTICS_MINIMUM", "Esta_Statistics",
- "Statistics",           "dmaximum",              "STATISTICS_MAXIMUM", "Esta_Statistics",
- "Statistics",           "dmean",                 "STATISTICS_MEAN",    "Esta_Statistics",
- "Statistics",           "dmedian",               "STATISTICS_MEDIAN",  "Esta_Statistics",
- "Statistics",           "dmode",                 "STATISTICS_MODE",    "Esta_Statistics",
- "Statistics",           "dstddev",               "STATISTICS_STDDEV",  "Esta_Statistics",
- "HistogramParameters",  "lBinFunction.numBins",  "STATISTICS_HISTONUMBINS", "Eimg_StatisticsParameters830",
- "HistogramParameters",  "dBinFunction.minLimit", "STATISTICS_HISTOMIN", "Eimg_StatisticsParameters830",
- "HistogramParameters",  "dBinFunction.maxLimit", "STATISTICS_HISTOMAX", "Eimg_StatisticsParameters830",
- "",                     "elayerType",            "LAYER_TYPE",          "",
+ "Statistics",           "dminimum",              "STATISTICS_MINIMUM",     "Esta_Statistics",
+ "Statistics",           "dmaximum",              "STATISTICS_MAXIMUM",     "Esta_Statistics",
+ "Statistics",           "dmean",                 "STATISTICS_MEAN",        "Esta_Statistics",
+ "Statistics",           "dmedian",               "STATISTICS_MEDIAN",      "Esta_Statistics",
+ "Statistics",           "dmode",                 "STATISTICS_MODE",        "Esta_Statistics",
+ "Statistics",           "dstddev",               "STATISTICS_STDDEV",      "Esta_Statistics",
+ "HistogramParameters",  "lBinFunction.numBins",  "STATISTICS_HISTONUMBINS","Eimg_StatisticsParameters830",
+ "HistogramParameters",  "dBinFunction.minLimit", "STATISTICS_HISTOMIN",    "Eimg_StatisticsParameters830",
+ "HistogramParameters",  "dBinFunction.maxLimit", "STATISTICS_HISTOMAX",    "Eimg_StatisticsParameters830",
+ "StatisticsParameters", "lSkipFactorX",          "STATISTICS_SKIPFACTORX", "",
+ "StatisticsParameters", "lSkipFactorY",          "STATISTICS_SKIPFACTORY", "",
+ "StatisticsParameters", "lExcludedValues",       "STATISTICS_EXCLUDEDVALUE","",
+ "",                     "elayerType",            "LAYER_TYPE",             "",
  NULL
 };
 
@@ -2669,14 +2672,14 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 if ( EQUALN( "Statistics", pszAuxMetaData[i], 10 ) )
                     bCreatedStatistics = TRUE;
                 
-                if ( EQUALN( "HistogramParameters", pszAuxMetaData[i], 19 ) )
+                if( EQUALN( "HistogramParameters", pszAuxMetaData[i], 19 ) )
                 {
                     // this is a bit nasty I need to set the string field for the object
                     // first because the SetStringField sets the count for the object
                     // BinFunction to the length of the string
                     poEntry->MakeData( 70 );
                     poEntry->SetStringField( "BinFunction.binFunctionType", "linear" );
-
+                    
                     bCreatedHistogramParameters = TRUE;
                 }
             }
