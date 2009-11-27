@@ -57,7 +57,7 @@ init_list = [ \
     ('utmsmall_2.hdf', 1, 50054, None)]
 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'HDF4', item[0], item[1], item[2] )
+    ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2] )
     if ut is None:
 	print( 'HDF4 tests skipped' )
 	sys.exit()
