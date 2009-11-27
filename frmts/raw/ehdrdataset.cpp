@@ -1388,27 +1388,23 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         if (fp != NULL)
         {
-            char	**papszLines;
-            char  **iter;
+            const char  *pszLine;
             int bUTM = FALSE;
             int bWGS84 = FALSE;
             int bNorth = FALSE;
             int bSouth = FALSE;
             int utmZone = 0;
 
-            VSIFCloseL( fp );
-
-            iter = papszLines = CSLLoad( pszPrjFilename );
-            while (iter && *iter)
+            while( (pszLine = CPLReadLineL( fp )) )
             {
-                if (strncmp(*iter, "PROJ_ID", strlen("PROJ_ID")) == 0 &&
-                    strstr(*iter, "UTM"))
+                if (strncmp(pszLine, "PROJ_ID", strlen("PROJ_ID")) == 0 &&
+                    strstr(pszLine, "UTM"))
                 {
                     bUTM = TRUE;
                 }
-                else if (strncmp(*iter, "PROJ_ZONE", strlen("PROJ_ZONE")) == 0)
+                else if (strncmp(pszLine, "PROJ_ZONE", strlen("PROJ_ZONE")) == 0)
                 {
-                    char* c = strchr(*iter, '"');
+                    const char* c = strchr(pszLine, '"');
                     if (c)
                     {
                         c++;
@@ -1417,11 +1413,11 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                             utmZone = atoi(c);
                             if (utmZone >= 1 && utmZone <= 60)
                             {
-                                if (strstr(*iter, "Nord") || strstr(*iter, "NORD"))
+                                if (strstr(pszLine, "Nord") || strstr(pszLine, "NORD"))
                                 {
                                     bNorth = TRUE;
                                 }
-                                else if (strstr(*iter, "Sud") || strstr(*iter, "SUD"))
+                                else if (strstr(pszLine, "Sud") || strstr(pszLine, "SUD"))
                                 {
                                     bSouth = TRUE;
                                 }
@@ -1429,10 +1425,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
                     }
                 }
-                else if (strncmp(*iter, "PROJ_CODE", strlen("PROJ_CODE")) == 0 &&
-                         strstr(*iter, "FR-MINDEF"))
+                else if (strncmp(pszLine, "PROJ_CODE", strlen("PROJ_CODE")) == 0 &&
+                         strstr(pszLine, "FR-MINDEF"))
                 {
-                    char* c = strchr(*iter, 'A');
+                    const char* c = strchr(pszLine, 'A');
                     if (c)
                     {
                         c++;
@@ -1441,11 +1437,13 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                             utmZone = atoi(c);
                             if (utmZone >= 1 && utmZone <= 60)
                             {
-                                if (c[1] == 'N' || c[2] == 'N')
+                                if (c[1] == 'N' ||
+                                    (c[1] != '\0' && c[2] == 'N'))
                                 {
                                     bNorth = TRUE;
                                 }
-                                else if (c[1] == 'S' || c[2] == 'S')
+                                else if (c[1] == 'S' ||
+                                         (c[1] != '\0' && c[2] == 'S'))
                                 {
                                     bSouth = TRUE;
                                 }
@@ -1453,24 +1451,26 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
                     }
                 }
-                else if (strncmp(*iter, "HORIZ_DATUM", strlen("HORIZ_DATUM")) == 0 &&
-                         (strstr(*iter, "WGS 84") || strstr(*iter, "WGS84")))
+                else if (strncmp(pszLine, "HORIZ_DATUM", strlen("HORIZ_DATUM")) == 0 &&
+                         (strstr(pszLine, "WGS 84") || strstr(pszLine, "WGS84")))
                 {
                     bWGS84 = TRUE;
                 }
-                else if (strncmp(*iter, "MAP_NUMBER", strlen("MAP_NUMBER")) == 0)
+                else if (strncmp(pszLine, "MAP_NUMBER", strlen("MAP_NUMBER")) == 0)
                 {
-                    char* c = strchr(*iter, '"');
+                    char* c = strchr(pszLine, '"');
                     if (c)
                     {
-                        char* c2 = strchr(c+1, '"');
+                        char* pszMapNumber = CPLStrdup(c+1);
+                        char* c2 = strchr(pszMapNumber, '"');
                         if (c2) *c2 = 0;
-                        poDS->SetMetadataItem("SPDF_MAP_NUMBER", c + 1);
+                        poDS->SetMetadataItem("SPDF_MAP_NUMBER", pszMapNumber);
+                        CPLFree(pszMapNumber);
                     }
                 }
-                else if (strncmp(*iter, "PRODUCTION_DATE", strlen("PRODUCTION_DATE")) == 0)
+                else if (strncmp(pszLine, "PRODUCTION_DATE", strlen("PRODUCTION_DATE")) == 0)
                 {
-                    char* c = *iter + strlen("PRODUCTION_DATE");
+                    const char* c = pszLine + strlen("PRODUCTION_DATE");
                     while(*c == ' ')
                         c++;
                     if (*c)
@@ -1478,8 +1478,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         poDS->SetMetadataItem("SPDF_PRODUCTION_DATE", c );
                     }
                 }
-                iter++;
             }
+            
+            VSIFCloseL( fp );
 
             if (utmZone != 0 && bUTM && bWGS84 && (bNorth || bSouth))
             {
@@ -1501,8 +1502,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 CPLError( CE_Warning, CPLE_NotSupported, "Cannot retrive projection from IMAGE.REP");
             }
-
-            CSLDestroy( papszLines );
         }
     }
 
