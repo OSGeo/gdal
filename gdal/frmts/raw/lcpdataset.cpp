@@ -94,12 +94,12 @@ CPLErr LCPDataset::GetGeoTransform( double * padfTransform )
 {
     double      dfEast, dfWest, dfNorth, dfSouth, dfCellX, dfCellY;
 
-    dfEast = *((double *) (pachHeader + 4172));
-    dfWest = *((double *) (pachHeader + 4180));
-    dfNorth = *((double *) (pachHeader + 4188));
-    dfSouth = *((double *) (pachHeader + 4196));
-    dfCellX = *((double *) (pachHeader + 4208));
-    dfCellY = *((double *) (pachHeader + 4216));
+    memcpy(&dfEast, pachHeader + 4172, sizeof(double));
+    memcpy(&dfWest, pachHeader + 4180, sizeof(double));
+    memcpy(&dfNorth, pachHeader + 4188, sizeof(double));
+    memcpy(&dfSouth, pachHeader + 4196, sizeof(double));
+    memcpy(&dfCellX, pachHeader + 4208, sizeof(double));
+    memcpy(&dfCellY, pachHeader + 4216, sizeof(double));
     CPL_LSBPTR64(&dfEast);
     CPL_LSBPTR64(&dfWest);
     CPL_LSBPTR64(&dfNorth);
