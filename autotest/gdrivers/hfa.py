@@ -59,10 +59,22 @@ def hfa_histread():
         gdaltest.post_reason( 'STATISTICS_HISTOMAX is wrong.' )
         return 'fail'
 
-
     if md['STATISTICS_HISTOBINVALUES'] != '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|':
         gdaltest.post_reason( 'STATISTICS_HISTOBINVALUES is wrong.' )
         return 'fail'
+
+    if md['STATISTICS_SKIPFACTORX'] != '1':
+        gdaltest.post_reason( 'STATISTICS_SKIPFACTORX is wrong.' )
+        return 'fail'
+
+    if md['STATISTICS_SKIPFACTORY'] != '1':
+        gdaltest.post_reason( 'STATISTICS_SKIPFACTORY is wrong.' )
+        return 'fail'
+
+    if md['STATISTICS_EXCLUDEDVALUE'] != '0':
+        gdaltest.post_reason( 'STATISTICS_EXCLUDEDVALUE is wrong.' )
+        return 'fail'
+
 
     return 'success'
     
