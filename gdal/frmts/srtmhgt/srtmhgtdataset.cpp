@@ -3,9 +3,9 @@
  *
  * Project:  SRTM HGT Driver
  * Purpose:  SRTM HGT File Read Support.
- *           ftp://e0srp01u.ecs.nasa.gov/srtm/version2/Documentation/SRTM_Topo.pdf
+ *           http://dds.cr.usgs.gov/srtm/version2_1/Documentation/SRTM_Topo.pdf
  *           http://www2.jpl.nasa.gov/srtm/faq.html
- *           ftp://e0srp01u.ecs.nasa.gov/srtm/version2
+ *           http://dds.cr.usgs.gov/srtm/version2_1
  * Authors:  Michael Mazzella, Even Rouault
  *
  ******************************************************************************
@@ -358,6 +358,8 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
   poDS->adfGeoTransform[4] = 0.0000000000;
   poDS->adfGeoTransform[5] = -1.0 / (numPixels-1);
 
+  poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+  
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
