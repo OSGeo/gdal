@@ -1458,7 +1458,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else if (strncmp(pszLine, "MAP_NUMBER", strlen("MAP_NUMBER")) == 0)
                 {
-                    char* c = strchr(pszLine, '"');
+                    const char* c = strchr(pszLine, '"');
                     if (c)
                     {
                         char* pszMapNumber = CPLStrdup(c+1);
