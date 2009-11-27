@@ -1,5 +1,5 @@
 /******************************************************************************
- * lcpdataset.cpp
+ * $Id$
  *
  * Project:  LCP Driver
  * Purpose:  FARSITE v.4 Landscape file (.lcp) reader for GDAL
@@ -29,6 +29,9 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void    GDALRegister_LCP(void);
@@ -47,16 +50,21 @@ class LCPDataset : public RawDataset
     FILE    *fpImage;       // image data file.
     char	pachHeader[LCP_HEADER_SIZE];
 
-    double  adfGeoTransform[6];
+    CPLString   osPrjFilename;
+    char        *pszProjection;
 
   public:
                 LCPDataset();
                 ~LCPDataset();
 
+    virtual char **GetFileList(void);
+
     virtual CPLErr GetGeoTransform( double * );
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
+    
+    virtual const char *GetProjectionRef(void);
 };
 
 /************************************************************************/
@@ -66,12 +74,7 @@ class LCPDataset : public RawDataset
 LCPDataset::LCPDataset()
 {
     fpImage = NULL;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
+    pszProjection = NULL;
 }
 
 /************************************************************************/
@@ -84,6 +87,7 @@ LCPDataset::~LCPDataset()
     FlushCache();
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
+    CPLFree(pszProjection);
 }
 
 /************************************************************************/
@@ -143,6 +147,21 @@ int LCPDataset::Identify( GDALOpenInfo * poOpenInfo )
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **LCPDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    if( pszProjection != NULL )
+        papszFileList = CSLAddString( papszFileList, osPrjFilename );
+
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -663,6 +682,46 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            break;
         }
    }
+   
+/* -------------------------------------------------------------------- */
+/*      Try to read projection file.                                    */
+/* -------------------------------------------------------------------- */
+    char        *pszDirname, *pszBasename;
+    VSIStatBufL   sStatBuf;
+
+    pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
+
+    poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
+    int nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
+
+#ifndef WIN32
+    if( nRet != 0 )
+    {
+        poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "PRJ" );
+        nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
+    }
+#endif
+
+    if( nRet == 0 )
+    {
+        OGRSpatialReference     oSRS;
+
+        char** papszPrj = CSLLoad( poDS->osPrjFilename );
+
+        CPLDebug( "LCP", "Loaded SRS from %s", 
+                  poDS->osPrjFilename.c_str() );
+
+        if( oSRS.importFromESRI( papszPrj ) == OGRERR_NONE )
+        {
+            oSRS.exportToWkt( &(poDS->pszProjection) );
+        }
+        
+        CSLDestroy(papszPrj);
+    }
+
+    CPLFree( pszDirname );
+    CPLFree( pszBasename );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -674,7 +733,16 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return( poDS );
 }
+ 
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+ 
+const char *LCPDataset::GetProjectionRef()
 
+{
+    return pszProjection;
+}
 
 /************************************************************************/
 /*                         GDALRegister_LCP()                           */
