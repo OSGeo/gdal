@@ -1510,12 +1510,18 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char  *pszCLRFilename = CPLFormCIFilename( osPath, osName, "clr" );
     
-    fp = VSIFOpenL( pszCLRFilename, "r" );
+    /* Only read the .clr for byte, int16 or uint16 bands */
+    if (nItemSize <= 2)
+        fp = VSIFOpenL( pszCLRFilename, "r" );
+    else
+        fp = NULL;
+        
     if( fp != NULL )
     {
         GDALColorTable oColorTable;
+        int bHasWarned = FALSE;
 
-        for(i = 0;;)
+        while(TRUE)
         {
             const char  *pszLine =  CPLReadLineL(fp);
             if ( !pszLine )
@@ -1530,12 +1536,26 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
             if ( CSLCount(papszValues) >= 4 )
             {
-                oEntry.c1 = atoi( papszValues[1] ); // Red
-                oEntry.c2 = atoi( papszValues[2] ); // Green
-                oEntry.c3 = atoi( papszValues[3] ); // Blue
-                oEntry.c4 = 255;
+                int nIndex = atoi( papszValues[0] ); // Index
+                if (nIndex >= 0 && nIndex < 65536)
+                {
+                    oEntry.c1 = atoi( papszValues[1] ); // Red
+                    oEntry.c2 = atoi( papszValues[2] ); // Green
+                    oEntry.c3 = atoi( papszValues[3] ); // Blue
+                    oEntry.c4 = 255;
 
-                oColorTable.SetColorEntry( i++, &oEntry );
+                    oColorTable.SetColorEntry( nIndex, &oEntry );
+                }
+                else
+                {
+                    /* Negative values are valid. At least we can find use of */
+                    /* them here : http://www.ngdc.noaa.gov/mgg/topo/elev/esri/clr/ */
+                    /* but there's no way of representing them with GDAL color */
+                    /* table model */
+                    if (!bHasWarned)
+                        CPLDebug("EHdr", "Ignoring color index : %d", nIndex);
+                    bHasWarned = TRUE;
+                }
             }
 
             CSLDestroy( papszValues );
