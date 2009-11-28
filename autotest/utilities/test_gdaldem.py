@@ -198,6 +198,38 @@ def test_gdaldem_color_relief():
     ds = None
 
     return 'success'
+    
+
+###############################################################################
+# Test gdaldem color relief with -nearest_color_entry
+
+def test_gdaldem_color_relief_nearest_color_entry():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief -nearest_color_entry ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief_nearest.tif')
+    ds = gdal.Open('tmp/n43_colorrelief_nearest.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 57296:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 42926:
+        print ds.GetRasterBand(2).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 47181:
+        print ds.GetRasterBand(3).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
 ###############################################################################
 # Cleanup
 
@@ -218,6 +250,10 @@ def test_gdaldem_cleanup():
         os.remove('tmp/n43_colorrelief.tif')
     except:
         pass
+    try:
+        os.remove('tmp/n43_colorrelief_nearest.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -225,6 +261,7 @@ gdaltest_list = [
     test_gdaldem_slope,
     test_gdaldem_aspect,
     test_gdaldem_color_relief,
+    test_gdaldem_color_relief_nearest_color_entry,
     test_gdaldem_cleanup
     ]
 
