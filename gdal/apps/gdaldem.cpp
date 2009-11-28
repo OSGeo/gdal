@@ -124,7 +124,7 @@ static void Usage()
             "\n"
             " - To generate a color relief map from any GDAL-supported elevation raster\n"
             "     gdaldem color-relief input_dem color_text_file output_color_relief_map\n"
-            "                 [-alpha]\n"
+            "                 [-alpha] [-exact_color_entry | -nearest_color_entry]\n"
             "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
             "     where color_text_file contains lines of the format \"elevation_value red green blue\"\n"
             "\n"
@@ -517,13 +517,21 @@ static int GDALColorReliefSortColors(const void* pA, const void* pB)
            (pC1->dfVal == pC2->dfVal) ? 0 : 1;
 }
 
-static void GDALColorReliefInterpolateVal(ColorAssociation* pasColorAssociation,
-                                          int nColorAssociation,
-                                          double dfVal,
-                                          int* pnR,
-                                          int* pnG,
-                                          int* pnB,
-                                          int* pnA)
+typedef enum
+{
+    COLOR_SELECTION_INTERPOLATE,
+    COLOR_SELECTION_NEAREST_ENTRY,
+    COLOR_SELECTION_EXACT_ENTRY
+} ColorSelectionMode;
+
+static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
+                                   int nColorAssociation,
+                                   double dfVal,
+                                   ColorSelectionMode eColorSelectionMode,
+                                   int* pnR,
+                                   int* pnG,
+                                   int* pnB,
+                                   int* pnA)
 {
     int i;
     int lower = 0;
@@ -557,20 +565,73 @@ static void GDALColorReliefInterpolateVal(ColorAssociation* pasColorAssociation,
 
     if (i == 0)
     {
-        *pnR = pasColorAssociation[0].nR;
-        *pnG = pasColorAssociation[0].nG;
-        *pnB = pasColorAssociation[0].nB;
-        *pnA = pasColorAssociation[0].nA;
+        if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY &&
+            pasColorAssociation[0].dfVal != dfVal)
+        {
+            *pnR = 0;
+            *pnG = 0;
+            *pnB = 0;
+            *pnA = 0;
+            return FALSE;
+        }
+        else
+        {
+            *pnR = pasColorAssociation[0].nR;
+            *pnG = pasColorAssociation[0].nG;
+            *pnB = pasColorAssociation[0].nB;
+            *pnA = pasColorAssociation[0].nA;
+            return TRUE;
+        }
     }
     else if (i == nColorAssociation)
     {
-        *pnR = pasColorAssociation[i-1].nR;
-        *pnG = pasColorAssociation[i-1].nG;
-        *pnB = pasColorAssociation[i-1].nB;
-        *pnA = pasColorAssociation[i-1].nA;
+        if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY &&
+            pasColorAssociation[i-1].dfVal != dfVal)
+        {
+            *pnR = 0;
+            *pnG = 0;
+            *pnB = 0;
+            *pnA = 0;
+            return FALSE;
+        }
+        else
+        {
+            *pnR = pasColorAssociation[i-1].nR;
+            *pnG = pasColorAssociation[i-1].nG;
+            *pnB = pasColorAssociation[i-1].nB;
+            *pnA = pasColorAssociation[i-1].nA;
+            return TRUE;
+        }
     }
     else
     {
+        if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY &&
+            pasColorAssociation[i-1].dfVal != dfVal)
+        {
+            *pnR = 0;
+            *pnG = 0;
+            *pnB = 0;
+            *pnA = 0;
+            return FALSE;
+        }
+        
+        if (eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY &&
+            pasColorAssociation[i-1].dfVal != dfVal)
+        {
+            int index;
+            if (dfVal - pasColorAssociation[i-1].dfVal <
+                pasColorAssociation[i].dfVal - dfVal)
+                index = i -1;
+            else
+                index = i;
+
+            *pnR = pasColorAssociation[index].nR;
+            *pnG = pasColorAssociation[index].nG;
+            *pnB = pasColorAssociation[index].nB;
+            *pnA = pasColorAssociation[index].nA;
+            return TRUE;
+        }
+        
         double dfRatio = (dfVal - pasColorAssociation[i-1].dfVal) /
             (pasColorAssociation[i].dfVal - pasColorAssociation[i-1].dfVal);
         *pnR = (int)(0.45 + pasColorAssociation[i-1].nR + dfRatio *
@@ -589,6 +650,8 @@ static void GDALColorReliefInterpolateVal(ColorAssociation* pasColorAssociation,
                 (pasColorAssociation[i].nA - pasColorAssociation[i-1].nA));
         if (*pnA < 0) *pnA = 0;
         else if (*pnA > 255) *pnA = 255;
+        
+        return TRUE;
     }
 }
 
@@ -763,6 +826,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
                         GDALRasterBandH hDstBand3,
                         GDALRasterBandH hDstBand4,
                         const char* pszColorFilename,
+                        ColorSelectionMode eColorSelectionMode,
                         GDALProgressFunc pfnProgress,
                         void * pProgressData)
 {
@@ -814,13 +878,14 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
 
         for ( j = 0; j < nXSize; j++)
         {
-            GDALColorReliefInterpolateVal  (pasColorAssociation,
-                                            nColorAssociation,
-                                            pafSourceBuf[j],
-                                            &nR,
-                                            &nG,
-                                            &nB,
-                                            &nA);
+            GDALColorReliefGetRGBA  (pasColorAssociation,
+                                     nColorAssociation,
+                                     pafSourceBuf[j],
+                                     eColorSelectionMode,
+                                     &nR,
+                                     &nG,
+                                     &nB,
+                                     &nA);
             pabyDestBuf1[j] = nR;
             pabyDestBuf2[j] = nG;
             pabyDestBuf3[j] = nB;
@@ -991,6 +1056,7 @@ int main( int argc, char ** argv )
     int bAddAlpha = FALSE;
     int bZeroForFlat = FALSE;
     int bAngleAsAzimuth = TRUE;
+    ColorSelectionMode eColorSelectionMode = COLOR_SELECTION_INTERPOLATE;
     
     int nBand = 1;
     double  adfGeoTransform[6];
@@ -1091,6 +1157,14 @@ int main( int argc, char ** argv )
         else if ( eUtilityMode == ASPECT && EQUAL(argv[i], "-zero_for_flat"))
         {
             bZeroForFlat = TRUE;
+        }
+        else if ( eUtilityMode == COLOR_RELIEF && EQUAL(argv[i], "-exact_color_entry"))
+        {
+            eColorSelectionMode = COLOR_SELECTION_EXACT_ENTRY;
+        }
+        else if ( eUtilityMode == COLOR_RELIEF && EQUAL(argv[i], "-nearest_color_entry"))
+        {
+            eColorSelectionMode = COLOR_SELECTION_NEAREST_ENTRY;
         }
         else if( i + 1 < argc &&
             (EQUAL(argv[i], "--s") || 
@@ -1309,6 +1383,7 @@ int main( int argc, char ** argv )
                          GDALGetRasterBand(hDstDataset, 3),
                          (bAddAlpha) ? GDALGetRasterBand(hDstDataset, 4) : NULL,
                          pszColorFilename,
+                         eColorSelectionMode,
                          pfnProgress, NULL);
     }
     else if (eUtilityMode == TRI)
