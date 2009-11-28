@@ -831,6 +831,10 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
                         void * pProgressData)
 {
     CPLErr eErr;
+    
+    if (hSrcBand == NULL || hDstBand1 == NULL || hDstBand2 == NULL ||
+        hDstBand3 == NULL)
+        return CE_Failure;
 
     int nColorAssociation = 0;
     ColorAssociation* pasColorAssociation =
@@ -844,17 +848,53 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
 
     if (pfnProgress == NULL)
         pfnProgress = GDALDummyProgress;
+        
+    int nR = 0, nG = 0, nB = 0, nA = 0;
+    
+/* -------------------------------------------------------------------- */
+/*      Precompute the map from values to RGBA quadruplets              */
+/*      for GDT_Byte, GDT_Int16 or GDT_UInt16                           */
+/* -------------------------------------------------------------------- */
+    GDALDataType eDT = GDALGetRasterDataType(hSrcBand);
+    GByte* pabyPrecomputed = NULL;
+    int nIndexOffset = (eDT == GDT_Int16) ? 32768 : 0;
+    if (eDT == GDT_Byte ||
+        ((eDT == GDT_Int16 || eDT == GDT_UInt16) && nXSize * nYSize > 65536))
+    {
+        int iMax = (eDT == GDT_Byte) ? 256: 65536;
+        pabyPrecomputed = (GByte*) VSIMalloc(4 * iMax);
+        if (pabyPrecomputed)
+        {
+            int i;
+            for(i=0;i<iMax;i++)
+            {
+                GDALColorReliefGetRGBA  (pasColorAssociation,
+                                         nColorAssociation,
+                                         i - nIndexOffset,
+                                         eColorSelectionMode,
+                                         &nR, &nG, &nB, &nA);
+                pabyPrecomputed[4 * i] = (GByte) nR;
+                pabyPrecomputed[4 * i + 1] = (GByte) nG;
+                pabyPrecomputed[4 * i + 2] = (GByte) nB;
+                pabyPrecomputed[4 * i + 3] = (GByte) nA;
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize progress counter.                                    */
 /* -------------------------------------------------------------------- */
 
-    float* pafSourceBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
-    GByte* pabyDestBuf1  = (GByte*) CPLMalloc(nXSize);
-    GByte* pabyDestBuf2  = (GByte*) CPLMalloc(nXSize);
-    GByte* pabyDestBuf3  = (GByte*) CPLMalloc(nXSize);
-    GByte* pabyDestBuf4  = (GByte*) CPLMalloc(nXSize);
-    int nR = 0, nG = 0, nB = 0, nA = 0;
+    float* pafSourceBuf = NULL;
+    int* panSourceBuf = NULL;
+    if (pabyPrecomputed)
+        panSourceBuf = (int *) CPLMalloc(sizeof(int)*nXSize);
+    else
+        pafSourceBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
+    GByte* pabyDestBuf1  = (GByte*) CPLMalloc( 4 * nXSize );
+    GByte* pabyDestBuf2  =  pabyDestBuf1 + nXSize;
+    GByte* pabyDestBuf3  =  pabyDestBuf2 + nXSize;
+    GByte* pabyDestBuf4  =  pabyDestBuf3 + nXSize;
     int i, j;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
@@ -867,51 +907,80 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
     for ( i = 0; i < nYSize; i++)
     {
         /* Read source buffer */
-        GDALRasterIO(   hSrcBand,
+        eErr = GDALRasterIO(   hSrcBand,
                         GF_Read,
                         0, i,
                         nXSize, 1,
-                        pafSourceBuf,
+                        (panSourceBuf) ? (void*) panSourceBuf : (void* )pafSourceBuf,
                         nXSize, 1,
-                        GDT_Float32,
+                        (panSourceBuf) ? GDT_Int32 : GDT_Float32,
                         0, 0);
+        if (eErr != CE_None)
+            goto end;
 
-        for ( j = 0; j < nXSize; j++)
+        if (panSourceBuf)
         {
-            GDALColorReliefGetRGBA  (pasColorAssociation,
-                                     nColorAssociation,
-                                     pafSourceBuf[j],
-                                     eColorSelectionMode,
-                                     &nR,
-                                     &nG,
-                                     &nB,
-                                     &nA);
-            pabyDestBuf1[j] = nR;
-            pabyDestBuf2[j] = nG;
-            pabyDestBuf3[j] = nB;
-            pabyDestBuf4[j] = nA;
+            for ( j = 0; j < nXSize; j++)
+            {
+                int nIndex = panSourceBuf[j] + nIndexOffset;
+                pabyDestBuf1[j] = pabyPrecomputed[4 * nIndex];
+                pabyDestBuf2[j] = pabyPrecomputed[4 * nIndex + 1];
+                pabyDestBuf3[j] = pabyPrecomputed[4 * nIndex + 2];
+                pabyDestBuf4[j] = pabyPrecomputed[4 * nIndex + 3];
+            }
         }
-
+        else
+        {
+            for ( j = 0; j < nXSize; j++)
+            {
+                GDALColorReliefGetRGBA  (pasColorAssociation,
+                                         nColorAssociation,
+                                         pafSourceBuf[j],
+                                         eColorSelectionMode,
+                                         &nR,
+                                         &nG,
+                                         &nB,
+                                         &nA);
+                pabyDestBuf1[j] = (GByte) nR;
+                pabyDestBuf2[j] = (GByte) nG;
+                pabyDestBuf3[j] = (GByte) nB;
+                pabyDestBuf4[j] = (GByte) nA;
+            }
+        }
+        
         /* -----------------------------------------
          * Write Line to Raster
          */
-        GDALRasterIO(hDstBand1,
+        eErr = GDALRasterIO(hDstBand1,
                       GF_Write,
                       0, i, nXSize,
                       1, pabyDestBuf1, nXSize, 1, GDT_Byte, 0, 0);
-        GDALRasterIO(hDstBand2,
+        if (eErr != CE_None)
+            goto end;
+
+        eErr = GDALRasterIO(hDstBand2,
                       GF_Write,
                       0, i, nXSize,
                       1, pabyDestBuf2, nXSize, 1, GDT_Byte, 0, 0);
-        GDALRasterIO(hDstBand3,
+        if (eErr != CE_None)
+            goto end;
+            
+        eErr = GDALRasterIO(hDstBand3,
                       GF_Write,
                       0, i, nXSize,
                       1, pabyDestBuf3, nXSize, 1, GDT_Byte, 0, 0);
+        if (eErr != CE_None)
+            goto end;
+            
         if (hDstBand4)
-            GDALRasterIO(hDstBand4,
+        {
+            eErr = GDALRasterIO(hDstBand4,
                         GF_Write,
                         0, i, nXSize,
                         1, pabyDestBuf4, nXSize, 1, GDT_Byte, 0, 0);
+            if (eErr != CE_None)
+                goto end;
+        }
 
         if( !pfnProgress( 1.0 * (i+1) / nYSize, NULL, pProgressData ) )
         {
@@ -924,11 +993,10 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
     eErr = CE_None;
 
 end:
+    VSIFree(pabyPrecomputed);
     CPLFree(pafSourceBuf);
+    CPLFree(panSourceBuf);
     CPLFree(pabyDestBuf1);
-    CPLFree(pabyDestBuf2);
-    CPLFree(pabyDestBuf3);
-    CPLFree(pabyDestBuf4);
     CPLFree(pasColorAssociation);
 
     return eErr;
