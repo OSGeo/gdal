@@ -1638,7 +1638,7 @@ Usage:
 
 - To generate a color relief map from any GDAL-supported elevation raster
     gdaldem color-relief input_dem color_text_file output_color_relief_map
-                [-alpha]
+                [-alpha] [-exact_color_entry | -nearest_color_entry]
                 [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-quiet]
     where color_text_file contains lines of the format "elevation_value red green blue"
     
@@ -1735,15 +1735,20 @@ to the one of Matthew Perry's aspect.cpp utility.
 
 \subsection gdaldem_color_relief color-relief
 
-This command outputs a 3-band (RGB) raster with values are computed from the elevation
+This command outputs a 3-band (RGB) or 4-band (RGBA) raster with values are computed from the elevation
 and a text-based color configuration file, containing the association between various elevation
-values and the corresponding wished color. The colors between the given elevation values
-are blended smoothly and the result is a nice colorized DEM.
+values and the corresponding wished color. By default, the colors between the given elevation values
+are blended smoothly and the result is a nice colorized DEM. The -exact_color_entry or
+-nearest_color_entry options can be used to avoid that linear interpolation for values that don't match an index
+of the color configuration file.
 
 The following specifics options are available :
 <dl>
 <dt> <i>color_text_file</i>:</dt><dd> text-based color configuration file</dd>
 <dt> <b>-alpha</b> :</dt><dd>add an alpha channel to the output raster</dd>
+<dt> <b>-exact_color_entry</b> :</dt><dd>use strict matching when searching in the color configuration file.
+ If none matching color entry is found, the "0,0,0,0" RGBA quadruplet will be used</dd>
+<dt> <b>-nearest_color_entry</b> :</dt><dd></dd>use the RGBA quadruplet corresponding to the closest entry in the color configuration file.</dd>
 </dl>
 
 The text-based color configuration file generally contains 4 columns per line : the elevation value and the
@@ -1758,8 +1763,9 @@ Various field separators are accepted : comma, tabulation, spaces, ':'.
 Common colors used by GRASS can also be specified by using their name, instead of the RGB triplet. The supported list is :
 white, black, red, green, blue, yellow, magenta, cyan, aqua, grey/gray, orange, brown, purple/violet and indigo.
 
-Note: the syntax of the color configuration file is derived from the one supported by GRASS r.colors utility. The alpha component
-and the support of tablulations and commma as separators are GDAL specific extensions.
+Note: the syntax of the color configuration file is derived from the one supported by GRASS r.colors utility.
+ESRI HDR color table files (.clr) also match that syntax.
+The alpha component and the support of tablulations and commma as separators are GDAL specific extensions.
 
 For example :
 \verbatim
