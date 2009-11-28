@@ -264,6 +264,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
    if ( nTemp == 1 )
       poDS->SetMetadataItem( "LINEAR_UNIT", "Feet" );
 
+   poDS->pachHeader[LCP_HEADER_SIZE-1] = '\0';
    poDS->SetMetadataItem( "DESCRIPTION", poDS->pachHeader + 6804 );
 
 
