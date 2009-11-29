@@ -38,16 +38,16 @@ import gdaltest
 import test_cli_utilities
 
 ###############################################################################
-# Test gdaldem shade
+# Test gdaldem hillshade
 
-def test_gdaldem_shade():
+def test_gdaldem_hillshade():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' shade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_shade.tif').read()
+    os.popen(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif').read()
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.Open('tmp/n43_shade.tif')
+    ds = gdal.Open('tmp/n43_hillshade.tif')
     if ds is None:
         return 'fail'
 
@@ -76,6 +76,27 @@ def test_gdaldem_shade():
 
     return 'success'
 
+###############################################################################
+# Test gdaldem hillshade to PNG
+
+def test_gdaldem_hillshade_png():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdaldem_path() + ' hillshade -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.png').read()
+
+    ds = gdal.Open('tmp/n43_hillshade.png')
+    if ds is None:
+        return 'fail'
+        
+    if ds.GetRasterBand(1).Checksum() != 45587:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+        
+    ds = None
+
+    return 'success'
+    
 ###############################################################################
 # Test gdaldem slope
 
@@ -201,6 +222,104 @@ def test_gdaldem_color_relief():
     
 
 ###############################################################################
+# Test gdaldem color relief from a Float32 dataset
+
+def test_gdaldem_color_relief_from_float32():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+        
+    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -ot Float32 ../gdrivers/data/n43.dt0 tmp/n43_float32.tif')
+    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.tif')
+    ds = gdal.Open('tmp/n43_colorrelief_from_float32.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 55009:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 37543:
+        print ds.GetRasterBand(2).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 47711:
+        print ds.GetRasterBand(3).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
+# Test gdaldem color relief to PNG
+
+def test_gdaldem_color_relief_png():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.png')
+    ds = gdal.Open('tmp/n43_colorrelief.png')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 55009:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 37543:
+        print ds.GetRasterBand(2).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 47711:
+        print ds.GetRasterBand(3).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
+# Test gdaldem color relief from a Float32 to PNG
+
+def test_gdaldem_color_relief_from_float32_to_png():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+        
+    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.png')
+    ds = gdal.Open('tmp/n43_colorrelief_from_float32.png')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 55009:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 37543:
+        print ds.GetRasterBand(2).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 47711:
+        print ds.GetRasterBand(3).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Test gdaldem color relief with -nearest_color_entry
 
 def test_gdaldem_color_relief_nearest_color_entry():
@@ -235,7 +354,12 @@ def test_gdaldem_color_relief_nearest_color_entry():
 
 def test_gdaldem_cleanup():
     try:
-        os.remove('tmp/n43_shade.tif')
+        os.remove('tmp/n43_hillshade.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/n43_hillshade.png')
+        os.remove('tmp/n43_hillshade.png.aux.xml')
     except:
         pass
     try:
@@ -251,16 +375,35 @@ def test_gdaldem_cleanup():
     except:
         pass
     try:
+        os.remove('tmp/n43_float32.tif')
+        os.remove('tmp/n43_colorrelief_from_float32.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/n43_colorrelief.png')
+        os.remove('tmp/n43_colorrelief.png.aux.xml')
+    except:
+        pass
+    try:
+        os.remove('tmp/n43_colorrelief_from_float32.png')
+        os.remove('tmp/n43_colorrelief_from_float32.png.aux.xml')
+    except:
+        pass
+    try:
         os.remove('tmp/n43_colorrelief_nearest.tif')
     except:
         pass
     return 'success'
 
 gdaltest_list = [
-    test_gdaldem_shade,
+    test_gdaldem_hillshade,
+    test_gdaldem_hillshade_png,
     test_gdaldem_slope,
     test_gdaldem_aspect,
     test_gdaldem_color_relief,
+    test_gdaldem_color_relief_from_float32,
+    test_gdaldem_color_relief_png,
+    test_gdaldem_color_relief_from_float32_to_png,
     test_gdaldem_color_relief_nearest_color_entry,
     test_gdaldem_cleanup
     ]
