@@ -429,9 +429,27 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
 /*      type 50 appears to just be an alias for normal line             */
 /*      strings. (#1484)                                                */
+/*      Type 51 appears to just be an alias for normal polygon. (#3100) */
+/*      TODO: These types include additional attributes including       */
+/*      non-linear segments and such. They should be handled.           */
 /* -------------------------------------------------------------------- */
-    if( nSHPType == 50 )
+    switch( nSHPType )
+    {
+      case 50:
         nSHPType = SHPT_ARC;
+        break;
+      case 51:
+        nSHPType = SHPT_POLYGON;
+        break;
+      case 52:
+        nSHPType = SHPT_POINT;
+        break;
+      case 53:
+        nSHPType = SHPT_MULTIPOINT;
+        break;
+      case 54:
+        nSHPType = SHPT_MULTIPATCH;
+    }
 
 /* ==================================================================== */
 /*  Extract vertices for a Polygon or Arc.				*/
