@@ -36,6 +36,7 @@ except ImportError:
     import gdal
 
 sys.path.append( '../pymod' )
+sys.path.append( '../../wktraster/scripts' )
 
 import gdaltest
 
