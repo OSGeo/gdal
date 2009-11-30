@@ -2253,6 +2253,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GByte 	*pabyScanline;
     CPLErr      eErr = CE_None;
     int         nWorkDTSize = GDALGetDataTypeSize(eWorkDT) / 8;
+    bool        bClipWarn = false;
 
     pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * nWorkDTSize );
 
@@ -2265,7 +2266,26 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                 nBands, anBandList, 
                                 nBands*nWorkDTSize, nBands * nXSize * nWorkDTSize, nWorkDTSize );
 
-        // Should we clip values over 4095 (12bit)? 
+        // clamp 16bit values to 12bit.
+        if( nWorkDTSize == 2 )
+        {
+            GUInt16 *panScanline = (GUInt16 *) pabyScanline;
+            int iPixel;
+
+            for( iPixel = 0; iPixel < nXSize*nBands; iPixel++ )
+            {
+                if( panScanline[iPixel] > 4095 )
+                {
+                    panScanline[iPixel] = 4095;
+                    if( !bClipWarn )
+                    {
+                        bClipWarn = true;
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "One or more pixels clipped to fit 12bit domain for jpeg output." );
+                    }
+                }
+            }
+        }
 
         ppSamples = (JSAMPLE *) pabyScanline;
 
