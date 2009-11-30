@@ -292,7 +292,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
     if( EQUAL(pszFilename,"stdout") )
         fpOutput = stdout;
     else
-        fpOutput = VSIFOpen( pszFilename, "w" );
+        fpOutput = VSIFOpen( pszFilename, "wb" );
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
