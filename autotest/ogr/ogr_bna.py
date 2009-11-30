@@ -225,7 +225,27 @@ def ogr_bna_6():
     except:
         pass
 
-    return ogr_bna_write( ['MULTILINE=NO', 'COORDINATE_PRECISION=3'] )
+    ret = ogr_bna_write( ['LINEFORMAT=LF','MULTILINE=NO', 'COORDINATE_PRECISION=3'] )
+    if ret != 'success':
+        return ret
+        
+    size = os.stat('tmp/out.bna').st_size
+    if size != 1576:
+        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1576))
+        return 'fail'
+
+    os.remove( 'tmp/out.bna' )
+    
+    ret = ogr_bna_write( ['LINEFORMAT=CRLF','MULTILINE=NO', 'COORDINATE_PRECISION=3'] )
+    if ret != 'success':
+        return ret
+        
+    size = os.stat('tmp/out.bna').st_size
+    if size != 1584:
+        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1584))
+        return 'fail'
+    
+    return 'success'
 
 ###############################################################################
 # 
