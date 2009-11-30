@@ -167,7 +167,8 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
     {
         nBlockYSizeToRead = nYSize - nBlockYSize * nBlockYOff;
     }
-
+    
+    bool bClipWarn = false;
     for( int iLine = 0; iLine < nBlockYSize && eErr == CE_None; iLine++ )
     {
         JSAMPLE      *ppSamples;
@@ -196,7 +197,26 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
 #endif
         }
 
-        // Should we clip values over 4095 (12bit)? 
+        // clamp 16bit values to 12bit.
+        if( eDT == GDT_UInt16 )
+        {
+            GUInt16 *panScanline = (GUInt16 *) pabyScanline;
+            int iPixel;
+
+            for( iPixel = 0; iPixel < nXSize*nBands; iPixel++ )
+            {
+                if( panScanline[iPixel] > 4095 )
+                {
+                    panScanline[iPixel] = 4095;
+                    if( !bClipWarn )
+                    {
+                        bClipWarn = true;
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "One or more pixels clipped to fit 12bit domain for jpeg output." );
+                    }
+                }
+            }
+        }
 
         ppSamples = (JSAMPLE *) pabyScanline;
 
