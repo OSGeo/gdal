@@ -464,6 +464,7 @@ bool OWStatement::Execute( int nRows )
         return false;
     }
 
+
     if( nStatus == OCI_SUCCESS_WITH_INFO || nStatus == OCI_NO_DATA )
     {
         return false;
@@ -1355,9 +1356,6 @@ bool CheckError( sword nStatus, OCIError* hError )
     case OCI_SUCCESS:
         return false;
         break;
-    case OCI_SUCCESS_WITH_INFO:
-        CPLError( CE_Failure, CPLE_AppDefined, "OCI_SUCCESS_WITH_INFO\n" );
-        break;
     case OCI_NEED_DATA:
         CPLError( CE_Failure, CPLE_AppDefined, "OCI_NEED_DATA\n" );
         break;
@@ -1373,7 +1371,7 @@ bool CheckError( sword nStatus, OCIError* hError )
     case OCI_CONTINUE:
         CPLError( CE_Failure, CPLE_AppDefined, "OCI_CONTINUE\n" );
         break;
-    case OCI_ERROR:
+    case OCI_ERROR || OCI_SUCCESS_WITH_INFO:
 
         if( hError == NULL)
         {
@@ -1393,9 +1391,23 @@ bool CheckError( sword nStatus, OCIError* hError )
         CPLError( CE_Failure, CPLE_AppDefined, "%.*s",
             sizeof(szMsg), szMsg );
         break;
-
+    
     default:
-        break;
+
+            if( hError == NULL)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "OCI_ERROR with no error handler" );
+            }
+
+            OCIErrorGet( (dvoid *) hError, (ub4) 1,
+                (text *) NULL, &nCode, szMsg,
+                (ub4) sizeof(szMsg), OCI_HTYPE_ERROR);
+
+            CPLError( CE_Failure, CPLE_AppDefined, "%.*s",
+                sizeof(szMsg), szMsg );
+            break;
+
     }
 
     return true;
