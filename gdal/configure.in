@@ -34,7 +34,7 @@ define([AC_CACHE_SAVE], )
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(GDALmake.opt.in)
 AC_CONFIG_MACRO_DIR(m4)
-AC_CONFIG_HEADER(port/cpl_config.h)
+AC_CONFIG_HEADER(port/cpl_config.h:port/cpl_config.h.in:port/cpl_config_extras.h)
 
 dnl We require autoconf 2.52+ for libtool support on cygwin/mingw hosts
 AC_PREREQ(2.52)
@@ -93,7 +93,6 @@ AC_HAVE_LONG_LONG
 AC_UNIX_STDIO_64
 
 AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(void*)
 dnl Some compilers (IBM VisualAge) has these types defined, so check it here.
@@ -2228,6 +2227,12 @@ dnl ---------------------------------------------------------------------------
 dnl MacOS X Framework Build
 
 if test ! -z "`uname | grep Darwin`" ; then
+  ARCHFLAGS="-arch ppc -arch i386 -arch ppc64 -arch x86_64"
+
+  CXXFLAGS="$ARCHFLAGS $CXXFLAGS"
+  CFLAGS="$ARCHFLAGS $CFLAGS"
+  LIBS="$ARCHFLAGS $LIBS"
+
   MACOSX_FRAMEWORK=no
   AC_ARG_WITH(,[  --with-macosx-framework         Build and install GDAL as a Mac OS X Framework],,)
   AC_MSG_CHECKING([for Mac OS X Framework build])
