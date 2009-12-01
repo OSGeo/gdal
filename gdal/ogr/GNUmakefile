@@ -72,6 +72,7 @@ web-update:	docs
 	cp html/* $(INST_HTML)/ogr
 	cp ogrsf_frmts/*/drv_*.html $(INST_HTML)/ogr
 	cp ogrsf_frmts/ogr_formats.html $(INST_HTML)/ogr
+	cp ../doc/ogr/*.gif $(INST_HTML)/ogr
 
 install:
 	for f in $(INST_H_FILES) ; \
