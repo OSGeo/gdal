@@ -341,6 +341,44 @@ def test_gdalbuildvrt_9():
     return test_gdalbuildvrt_check()
     
 ###############################################################################
+# Test explicit nodata setting (#3254)
+
+def test_gdalbuildvrt_10():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_1.tif', 10, 10, 1, gdal.GDT_Byte, options = ['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
+    out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:4326')
+    out_ds.SetProjection(srs.ExportToWkt())
+
+    out_ds.GetRasterBand(1).WriteRaster( 1, 1, 3, 3, '\x01', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds = None
+
+    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_2.tif', 10, 10, 1, gdal.GDT_Byte, options = ['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
+    out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:4326')
+    out_ds.SetProjection(srs.ExportToWkt())
+
+    out_ds.GetRasterBand(1).WriteRaster( 6, 6, 3, 3, '\x01', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds = None
+
+    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -srcnodata 0 tmp/gdalbuildvrt10.vrt tmp/test_gdalbuildvrt_10_1.tif tmp/test_gdalbuildvrt_10_2.tif').read()
+
+    ds = gdal.Open('tmp/gdalbuildvrt10.vrt')
+
+    if ds.GetRasterBand(1).Checksum() != 18:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
@@ -354,6 +392,7 @@ def test_gdalbuildvrt_cleanup():
     gdal.GetDriverByName('VRT').Delete('tmp/mosaic2.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/stacked.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt7.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt10.vrt')
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -364,6 +403,8 @@ def test_gdalbuildvrt_cleanup():
     drv.Delete('tmp/gdalbuildvrt5.tif')
     drv.Delete('tmp/vrtnull1.tif')
     drv.Delete('tmp/vrtnull2.tif')
+    drv.Delete('tmp/test_gdalbuildvrt_10_1.tif')
+    drv.Delete('tmp/test_gdalbuildvrt_10_2.tif')
     try:
         os.remove('tmp/filelist.txt')
     except:
@@ -382,6 +423,7 @@ gdaltest_list = [
     test_gdalbuildvrt_7,
     test_gdalbuildvrt_8,
     test_gdalbuildvrt_9,
+    test_gdalbuildvrt_10,
     test_gdalbuildvrt_cleanup
     ]
 
