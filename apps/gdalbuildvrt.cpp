@@ -85,6 +85,7 @@ static void Usage()
             "Usage: gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]\n"
             "                    [-tr xres yres] [-separate] [-allow_projection_difference] [-quiet]\n"
             "                    [-te xmin ymin xmax ymax] [-addalpha] \n"
+            "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
             "                    [-input_file_list my_liste.txt] output.vrt [gdalfile]*\n"
             "\n"
             "eg.\n"
@@ -174,6 +175,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                      double minX, double minY, double maxX, double maxY,
                      int bSeparate, int bAllowProjectionDifference,
                      int bAddAlpha,
+                     const char* pszSrcNoData, const char* pszVRTNoData,
                      GDALProgressFunc pfnProgress, void * pProgressData)
 {
     char* projectionRef = NULL;
@@ -221,6 +223,48 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
 
     DatasetProperty* psDatasetProperties =
             (DatasetProperty*) CPLCalloc(nInputFiles, sizeof(DatasetProperty));
+            
+    
+    int bAllowSrcNoData = TRUE;
+    double* padfSrcNoData = NULL;
+    int nSrcNoDataCount = 0;
+    if (pszSrcNoData != NULL)
+    {
+        if (EQUAL(pszSrcNoData, "none"))
+        {
+            bAllowSrcNoData = FALSE;
+        }
+        else
+        {
+            char **papszTokens = CSLTokenizeString( pszSrcNoData );
+            nSrcNoDataCount = CSLCount(papszTokens);
+            padfSrcNoData = (double *) CPLMalloc(sizeof(double) * nSrcNoDataCount);
+            for(i=0;i<nSrcNoDataCount;i++)
+                padfSrcNoData[i] = atof(papszTokens[i]);
+            CSLDestroy(papszTokens);
+        }
+    }
+    
+    
+    int bAllowVRTNoData = TRUE;
+    double* padfVRTNoData = NULL;
+    int nVRTNoDataCount = 0;
+    if (pszVRTNoData != NULL)
+    {
+        if (EQUAL(pszVRTNoData, "none"))
+        {
+            bAllowVRTNoData = FALSE;
+        }
+        else
+        {
+            char **papszTokens = CSLTokenizeString( pszVRTNoData );
+            nVRTNoDataCount = CSLCount(papszTokens);
+            padfVRTNoData = (double *) CPLMalloc(sizeof(double) * nVRTNoDataCount);
+            for(i=0;i<nVRTNoDataCount;i++)
+                padfVRTNoData[i] = atof(papszTokens[i]);
+            CSLDestroy(papszTokens);
+        }
+    }
 
     for(i=0;i<nInputFiles;i++)
     {
@@ -320,9 +364,20 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
             psDatasetProperties[i].panHasNoData = (int*)CPLMalloc(sizeof(int) * _nBands);
             for(j=0;j<_nBands;j++)
             {
-                psDatasetProperties[i].padfNoDataValues[j]  =
-                    GDALGetRasterNoDataValue(GDALGetRasterBand(hDS, j+1),
-                                            &psDatasetProperties[i].panHasNoData[j]);
+                if (nSrcNoDataCount > 0)
+                {
+                    psDatasetProperties[i].panHasNoData[j] = TRUE;
+                    if (j < nSrcNoDataCount)
+                        psDatasetProperties[i].padfNoDataValues[j] = padfSrcNoData[j];
+                    else
+                        psDatasetProperties[i].padfNoDataValues[j] = padfSrcNoData[nSrcNoDataCount - 1];
+                }
+                else
+                {
+                    psDatasetProperties[i].padfNoDataValues[j]  =
+                        GDALGetRasterNoDataValue(GDALGetRasterBand(hDS, j+1),
+                                                &psDatasetProperties[i].panHasNoData[j]);
+                }
             }
 
             if (bFirst)
@@ -359,8 +414,20 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                         }
                         else
                             bandProperties[j].colorTable = 0;
-                        bandProperties[j].noDataValue =
-                                GDALGetRasterNoDataValue(hRasterBand, &bandProperties[j].bHasNoData);
+                            
+                        if (nVRTNoDataCount > 0)
+                        {
+                            bandProperties[j].bHasNoData = TRUE;
+                            if (j < nVRTNoDataCount)
+                                bandProperties[j].noDataValue = padfVRTNoData[j];
+                            else
+                                bandProperties[j].noDataValue = padfVRTNoData[nVRTNoDataCount - 1];
+                        }
+                        else
+                        {
+                            bandProperties[j].noDataValue =
+                                    GDALGetRasterNoDataValue(hRasterBand, &bandProperties[j].bHasNoData);
+                        }
                     }
                 }
             }
@@ -537,7 +604,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
 
             VRTSourcedRasterBandH hVRTBand =
                     (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, iBand);
-            if (psDatasetProperties[i].panHasNoData[0])
+            if (bAllowSrcNoData && psDatasetProperties[i].panHasNoData[0])
             {
                 GDALSetRasterNoDataValue(hVRTBand, psDatasetProperties[i].padfNoDataValues[0]);
                 VRTAddComplexSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
@@ -569,7 +636,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
             {
                 GDALSetRasterColorTable(hBand, bandProperties[j].colorTable);
             }
-            if (bandProperties[j].bHasNoData)
+            if (bAllowVRTNoData && bandProperties[j].bHasNoData)
                 GDALSetRasterNoDataValue(hBand, bandProperties[j].noDataValue);
         }
         
@@ -617,7 +684,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                         (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, j + 1);
     
                 /* Place the raster band at the right position in the VRT */
-                if (psDatasetProperties[i].panHasNoData[j])
+                if (bAllowSrcNoData && psDatasetProperties[i].panHasNoData[j])
                     VRTAddComplexSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, j + 1),
                                     nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
                                     nDstXOff, nDstYOff, nDstXSize, nDstYSize,
@@ -662,6 +729,8 @@ end:
     }
     CPLFree(bandProperties);
     CPLFree(projectionRef);
+    CPLFree(padfSrcNoData);
+    CPLFree(padfVRTNoData);
 
     return eErr;
 }
@@ -777,6 +846,8 @@ int main( int nArgc, char ** papszArgv )
     double xmin = 0, ymin = 0, xmax = 0, ymax = 0;
     int bAddAlpha = FALSE;
     int bForceOverwrite = FALSE;
+    const char* pszSrcNoData = NULL;
+    const char* pszVRTNoData = NULL;
 
     GDALAllRegister();
 
@@ -795,17 +866,17 @@ int main( int nArgc, char ** papszArgv )
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( strcmp(papszArgv[iArg],"-tileindex") == 0 &&
+        else if( EQUAL(papszArgv[iArg],"-tileindex") &&
                  iArg + 1 < nArgc)
         {
             tile_index = papszArgv[++iArg];
         }
-        else if( strcmp(papszArgv[iArg],"-resolution") == 0 &&
+        else if( EQUAL(papszArgv[iArg],"-resolution") &&
                  iArg + 1 < nArgc)
         {
             resolution = papszArgv[++iArg];
         }
-        else if( strcmp(papszArgv[iArg],"-input_file_list") == 0 &&
+        else if( EQUAL(papszArgv[iArg],"-input_file_list") &&
                  iArg + 1 < nArgc)
         {
             const char* input_file_list = papszArgv[++iArg];
@@ -823,43 +894,51 @@ int main( int nArgc, char ** papszArgv )
                 VSIFClose(f);
             }
         }
-        else if ( strcmp(papszArgv[iArg],"-separate") == 0 )
+        else if ( EQUAL(papszArgv[iArg],"-separate") )
         {
             bSeparate = TRUE;
         }
-        else if ( strcmp(papszArgv[iArg],"-allow_projection_difference") == 0 )
+        else if ( EQUAL(papszArgv[iArg],"-allow_projection_difference") )
         {
             bAllowProjectionDifference = TRUE;
         }
         /* Alternate syntax for output file */
-        else if( strcmp(papszArgv[iArg],"-o") == 0 &&
+        else if( EQUAL(papszArgv[iArg],"-o")  &&
                  iArg + 1 < nArgc)
         {
             pszOutputFilename = papszArgv[++iArg];
         }
-        else if ( strcmp(papszArgv[iArg],"-quiet") == 0 )
+        else if ( EQUAL(papszArgv[iArg],"-quiet") )
         {
             bQuiet = TRUE;
         }
-        else if ( strcmp(papszArgv[iArg],"-tr") == 0 && iArg + 2 < nArgc)
+        else if ( EQUAL(papszArgv[iArg],"-tr") && iArg + 2 < nArgc)
         {
             we_res = atof(papszArgv[++iArg]);
             ns_res = atof(papszArgv[++iArg]);
         }
-        else if ( strcmp(papszArgv[iArg],"-te") == 0 && iArg + 4 < nArgc)
+        else if ( EQUAL(papszArgv[iArg],"-te") && iArg + 4 < nArgc)
         {
             xmin = atof(papszArgv[++iArg]);
             ymin = atof(papszArgv[++iArg]);
             xmax = atof(papszArgv[++iArg]);
             ymax = atof(papszArgv[++iArg]);
         }
-        else if ( strcmp(papszArgv[iArg],"-addalpha") == 0 )
+        else if ( EQUAL(papszArgv[iArg],"-addalpha") )
         {
             bAddAlpha = TRUE;
         }
-        else if ( strcmp(papszArgv[iArg],"-overwrite") == 0 )
+        else if ( EQUAL(papszArgv[iArg],"-overwrite") )
         {
             bForceOverwrite = TRUE;
+        }
+        else if ( EQUAL(papszArgv[iArg],"-srcnodata") && iArg + 1 < nArgc)
+        {
+            pszSrcNoData = papszArgv[++iArg];
+        }
+        else if ( EQUAL(papszArgv[iArg],"-vrtnodata") && iArg + 1 < nArgc)
+        {
+            pszVRTNoData = papszArgv[++iArg];
         }
         else if ( papszArgv[iArg][0] == '-' )
         {
@@ -939,10 +1018,16 @@ int main( int nArgc, char ** papszArgv )
         fprintf(stderr, "invalid value (%s) for -resolution\n", resolution);
         Usage();
     }
+    
+    /* If -srcnodata is specified, use it as the -vrtnodata if the latter is not */
+    /* specified */
+    if (pszSrcNoData != NULL && pszVRTNoData == NULL)
+        pszVRTNoData = pszSrcNoData;
 
     GDALBuildVRT(pszOutputFilename, &nInputFiles, &ppszInputFilenames,
                  eStrategy, we_res, ns_res, xmin, ymin, xmax, ymax,
-                 bSeparate, bAllowProjectionDifference, bAddAlpha, pfnProgress, NULL);
+                 bSeparate, bAllowProjectionDifference, bAddAlpha,
+                 pszSrcNoData, pszVRTNoData, pfnProgress, NULL);
     
     for(i=0;i<nInputFiles;i++)
     {
