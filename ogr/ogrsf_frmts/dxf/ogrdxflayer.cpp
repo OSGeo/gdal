@@ -604,6 +604,84 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 }
 
 /************************************************************************/
+/*                           TranslateTEXT()                            */
+/************************************************************************/
+
+OGRFeature *OGRDXFLayer::TranslateTEXT()
+
+{
+    char szLineBuf[257];
+    int nCode;
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    double dfAngle = 0.0;
+    double dfHeight = 0.0;
+    CPLString osText;
+
+    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+    {
+        switch( nCode )
+        {
+          case 10:
+            dfX = atof(szLineBuf);
+            break;
+
+          case 20:
+            dfY = atof(szLineBuf);
+            break;
+
+          case 30:
+            dfZ = atof(szLineBuf);
+            break;
+
+          case 40:
+            dfHeight = atof(szLineBuf);
+            break;
+
+          case 1:
+          case 3:
+            osText += szLineBuf;
+            break;
+
+          case 50:
+            dfAngle = atof(szLineBuf);
+            break;
+
+          default:
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+        }
+    }
+
+    if( nCode == 0 )
+        poDS->UnreadValue();
+
+    poFeature->SetField( "Text", osText );
+    poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+
+/* -------------------------------------------------------------------- */
+/*      Prepare style string.                                           */
+/* -------------------------------------------------------------------- */
+    CPLString osStyle;
+
+    osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
+
+    if( dfAngle != 0.0 )
+        osStyle += CPLString().Printf(",a:%.3g", dfAngle);
+
+    if( dfHeight != 0.0 )
+        osStyle += CPLString().Printf(",s:%.3gg", dfHeight);
+
+    // add color!
+
+    osStyle += ")";
+
+    poFeature->SetStyleString( osStyle );
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                           TranslatePOINT()                           */
 /************************************************************************/
 
@@ -1115,11 +1193,18 @@ OGRFeature *OGRDXFLayer::TranslateARC()
 class GeometryInsertTransformer : public OGRCoordinateTransformation
 {
 public:
-    GeometryInsertTransformer() : dfXOffset(0),dfYOffset(0),dfZOffset(0) {}
+    GeometryInsertTransformer() : 
+            dfXOffset(0),dfYOffset(0),dfZOffset(0),
+            dfXScale(1.0),dfYScale(1.0),dfZScale(1.0),
+            dfAngle(0.0) {}
 
     double dfXOffset;
     double dfYOffset;
     double dfZOffset;
+    double dfXScale;
+    double dfYScale;
+    double dfZScale;
+    double dfAngle;
 
     OGRSpatialReference *GetSourceCS() { return NULL; }
     OGRSpatialReference *GetTargetCS() { return NULL; }
@@ -1134,6 +1219,18 @@ public:
             int i;
             for( i = 0; i < nCount; i++ )
             {
+                double dfXNew, dfYNew;
+
+                x[i] *= dfXScale;
+                y[i] *= dfYScale;
+                z[i] *= dfZScale;
+
+                dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
+                dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
+
+                x[i] = dfXNew;
+                y[i] = dfYNew;
+
                 x[i] += dfXOffset;
                 y[i] += dfYOffset;
                 z[i] += dfZOffset;
@@ -1177,6 +1274,22 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
             oTransformer.dfZOffset = atof(szLineBuf);
             break;
 
+          case 41:
+            oTransformer.dfXScale = atof(szLineBuf);
+            break;
+
+          case 42:
+            oTransformer.dfYScale = atof(szLineBuf);
+            break;
+
+          case 43:
+            oTransformer.dfZScale = atof(szLineBuf);
+            break;
+
+          case 50:
+            oTransformer.dfAngle = atof(szLineBuf) * PI / 180.0;
+            break;
+
           case 2: 
             osBlockName = szLineBuf;
             break;
@@ -1191,26 +1304,62 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
         poDS->UnreadValue();
 
 /* -------------------------------------------------------------------- */
-/*      Try to fetch geometry corresponding to the blockname.           */
+/*      Lookup the block.                                               */
 /* -------------------------------------------------------------------- */
-    OGRGeometry* poGeometry = poDS->LookupBlock( osBlockName );
-    if( poGeometry == NULL )
+    DXFBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
+    
+    if( poBlock == NULL )
     {
         delete poFeature;
         return NULL;
     }
 
-    poGeometry = poGeometry->clone();
+/* -------------------------------------------------------------------- */
+/*      Transform the geometry.                                         */
+/* -------------------------------------------------------------------- */
+    if( poBlock->poGeometry != NULL )
+    {
+        OGRGeometry *poGeometry = poBlock->poGeometry->clone();
+
+        poGeometry->transform( &oTransformer );
+
+        poFeature->SetGeometryDirectly( poGeometry );
+    }
 
 /* -------------------------------------------------------------------- */
-/*      Transform the geometry.  For now we just offset, but            */
-/*      eventually we should also apply scaling.                        */
+/*      If we have complete features associated with the block, push    */
+/*      them on the pending feature stack copying over key override     */
+/*      information.                                                    */
+/*                                                                      */
+/*      Note that while we transform the geometry of the features we    */
+/*      don't adjust subtle things like text angle.                     */
 /* -------------------------------------------------------------------- */
-    poGeometry->transform( &oTransformer );
+    unsigned int iSubFeat;
 
-    poFeature->SetGeometryDirectly( poGeometry );
+    for( iSubFeat = 0; iSubFeat < poBlock->apoFeatures.size(); iSubFeat++ )
+    {
+        OGRFeature *poSubFeature = poBlock->apoFeatures[iSubFeat]->Clone();
 
-    return poFeature;
+        if( poSubFeature->GetGeometryRef() != NULL )
+            poSubFeature->GetGeometryRef()->transform( &oTransformer );
+
+        apoPendingFeatures.push( poSubFeature );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return the working feature if we had geometry, otherwise        */
+/*      return NULL and let the machinery find the rest of the          */
+/*      features in the pending feature stack.                          */
+/* -------------------------------------------------------------------- */
+    if( poBlock->poGeometry == NULL )
+    {
+        delete poFeature;
+        return NULL;
+    }
+    else
+    {
+        return poFeature;
+    }
 }
 
 /************************************************************************/
@@ -1277,6 +1426,10 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         else if( EQUAL(szLineBuf,"MTEXT") )
         {
             poFeature = TranslateMTEXT();
+        }
+        else if( EQUAL(szLineBuf,"TEXT") )
+        {
+            poFeature = TranslateTEXT();
         }
         else if( EQUAL(szLineBuf,"LINE") )
         {
