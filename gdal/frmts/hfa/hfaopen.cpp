@@ -58,7 +58,7 @@ static const char *apszAuxMetadataItems[] = {
  "HistogramParameters",  "dBinFunction.maxLimit", "STATISTICS_HISTOMAX",    "Eimg_StatisticsParameters830",
  "StatisticsParameters", "lSkipFactorX",          "STATISTICS_SKIPFACTORX", "",
  "StatisticsParameters", "lSkipFactorY",          "STATISTICS_SKIPFACTORY", "",
- "StatisticsParameters", "lExcludedValues",       "STATISTICS_EXCLUDEDVALUE","",
+ "StatisticsParameters", "dExcludedValues",       "STATISTICS_EXCLUDEDVALUES","",
  "",                     "elayerType",            "LAYER_TYPE",             "",
  NULL
 };
