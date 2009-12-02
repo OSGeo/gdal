@@ -497,7 +497,12 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 	
     start[nBandXPos] = 0;          // x dim can move arround in array
-    start[nBandYPos] = nBlockYOff; // y
+    // check y order
+    if( ( ( netCDFDataset *) poDS )->bBottomUp ) {
+        start[nBandYPos] = ( ( netCDFDataset * ) poDS )->ydim - 1 - nBlockYOff;
+    } else {
+        start[nBandYPos] = nBlockYOff; // y
+    }
         
     edge[nBandXPos] = nBlockXSize; 
     edge[nBandYPos] = 1;
@@ -601,6 +606,7 @@ netCDFDataset::netCDFDataset()
     papszName        = NULL;
     pszFilename      = NULL;
     cdfid             = 0;
+    bBottomUp        = FALSE;
 }
 
 
@@ -684,6 +690,7 @@ void netCDFDataset::SetProjection( int var )
     double       *pdfXCoord;
     double       *pdfYCoord;
     char         szDimNameX[ MAX_NC_NAME ];
+    char         szDimNameY[ MAX_NC_NAME ];
     int          nSpacingBegin;
     int          nSpacingMiddle;
     int          nSpacingLast;
@@ -734,6 +741,11 @@ void netCDFDataset::SetProjection( int var )
 	szDimNameX[i] = tolower( ( poDS->papszDimName[poDS->nDimXid] )[i] );
     }
     szDimNameX[3] = '\0';
+    for( i = 0; (i < strlen( poDS->papszDimName[ poDS->nDimYid ] )  && 
+		 i < 3 ); i++ ) {
+	szDimNameY[i] = tolower( ( poDS->papszDimName[poDS->nDimYid] )[i] );
+    }
+    szDimNameY[3] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*      Read grid_mappinginformation and set projections               */
@@ -1023,8 +1035,10 @@ void netCDFDataset::SetProjection( int var )
                     yMinMax[1] = pdfYCoord[ydim-1];
                     node_offset = 0;
                 }
+                /* for CF-1 conventions, assume bottom first */
+                if( EQUAL( szDimNameY, "lat" ) && pdfYCoord[0] < pdfYCoord[1] )
+                    poDS->bBottomUp = TRUE;
 
-#ifdef notdef
                 // Check for reverse order of y-coordinate
                 if ( yMinMax[0] > yMinMax[1] ) {
                     dummy[0] = yMinMax[1];
@@ -1032,7 +1046,6 @@ void netCDFDataset::SetProjection( int var )
                     yMinMax[0] = dummy[0];
                     yMinMax[1] = dummy[1];
                 }
-#endif
 
                 poDS->adfGeoTransform[0] = xMinMax[0];
                 poDS->adfGeoTransform[2] = 0;

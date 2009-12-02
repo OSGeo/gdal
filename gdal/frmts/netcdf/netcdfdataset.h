@@ -158,6 +158,7 @@ class netCDFDataset : public GDALPamDataset
     int          *paDimIds;
     size_t        xdim, ydim;
     int           nDimXid, nDimYid;
+    bool          bBottomUp;
 
 		netCDFDataset( );
 		~netCDFDataset( );
