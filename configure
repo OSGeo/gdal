@@ -27346,7 +27346,6 @@ echo $GDAL_VER > VERSION
 
 
 if test ! -z "`uname | grep Darwin`" ; then
-  ARCHFLAGS="-arch ppc -arch i386 -arch ppc64 -arch x86_64"
 
   CXXFLAGS="$ARCHFLAGS $CXXFLAGS"
   CFLAGS="$ARCHFLAGS $CFLAGS"
