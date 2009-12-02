@@ -634,14 +634,12 @@ class CPL_DLL OGRGeometryFactory
                                               OGRCoordinateTransformation *poCT,
                                               char** papszOptions );
 
-    static OGRGeometry* approximateCircle( double dfX, double dfY, double dfZ,
-                                           double dfRadius, 
-                                           double dfMaxAngleStpeSizeDegrees );
     static OGRGeometry* 
         approximateArcAngles( double dfX, double dfY, double dfZ,
-                              double dfRadius, 
+                              double dfPrimaryRadius, double dfSecondaryAxis, 
+                              double dfRotation, 
                               double dfStartAngle, double dfEndAngle,
-                              double dfMaxAngleStpeSizeDegrees );
+                              double dfMaxAngleStepSizeDegrees );
 };
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
