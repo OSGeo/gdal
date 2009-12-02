@@ -69,25 +69,36 @@ void OGRDXFDataSource::ReadBlocksSection()
         if( EQUAL(szLineBuf,"ENDBLK") )
             continue;
 
+        UnreadValue();
+
         // Now we will process entities till we run out at the ENDBLK code.
         // we aggregate the geometries of the features into a multi-geometry,
         // but throw away other stuff attached to the features.
 
         OGRFeature *poFeature;
         OGRGeometryCollection *poColl = new OGRGeometryCollection();
+        std::vector<OGRFeature*> apoFeatures;
 
         while( (poFeature = apoLayers[0]->GetNextUnfilteredFeature()) != NULL )
         {
-            poColl->addGeometry( poFeature->GetGeometryRef() );
-            delete poFeature;
+            if( strstr(poFeature->GetStyleString(),"LABEL") != NULL )
+            {
+                apoFeatures.push_back( poFeature );
+            }
+            else
+            {
+                poColl->addGeometryDirectly( poFeature->StealGeometry() );
+                delete poFeature;
+            }
         }
 
         if( poColl->getNumGeometries() == 0 )
             delete poColl;
         else
-        {
-            oBlockMap[osBlockName] = SimplifyBlockGeometry(poColl);
-        }
+            oBlockMap[osBlockName].poGeometry = SimplifyBlockGeometry(poColl);
+
+        if( apoFeatures.size() > 0 )
+            oBlockMap[osBlockName].apoFeatures = apoFeatures;
     }
 
     CPLDebug( "DXF", "Read %d blocks with meaningful geometry.", 
@@ -132,7 +143,7 @@ OGRGeometry *OGRDXFDataSource::SimplifyBlockGeometry(
 /*      should be cloned for use.                                       */
 /************************************************************************/
 
-OGRGeometry *OGRDXFDataSource::LookupBlock( const char *pszName )
+DXFBlockDefinition *OGRDXFDataSource::LookupBlock( const char *pszName )
 
 {
     CPLString osName = pszName;
@@ -140,5 +151,23 @@ OGRGeometry *OGRDXFDataSource::LookupBlock( const char *pszName )
     if( oBlockMap.count( osName ) == 0 )
         return NULL;
     else
-        return oBlockMap[osName];
+        return &(oBlockMap[osName]);
+}
+
+/************************************************************************/
+/*                        ~DXFBlockDefinition()                         */
+/*                                                                      */
+/*      Safe cleanup of a block definition.                             */
+/************************************************************************/
+
+DXFBlockDefinition::~DXFBlockDefinition()
+
+{
+    delete poGeometry;
+
+    while( !apoFeatures.empty() > 0 )
+    {
+        delete apoFeatures.back();
+        apoFeatures.pop_back();
+    }
 }

@@ -74,14 +74,6 @@ OGRDXFDataSource::~OGRDXFDataSource()
         VSIFCloseL( fp );
         fp = NULL;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Destroy loaded block geometries.                                */
-/* -------------------------------------------------------------------- */
-    std::map<CPLString,OGRGeometry*>::iterator it;
-    
-    for( it = oBlockMap.begin(); it != oBlockMap.end(); it++ )
-        delete it->second;
 }
 
 /************************************************************************/
