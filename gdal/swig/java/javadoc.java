@@ -8578,6 +8578,28 @@ public class ogr:public static void UseExceptions()
 public class ogr:public static void DontUseExceptions()
 
 /**
+ * Stroke arc to linestring.
+ *
+ * Stroke an arc of a circle to a linestring based on a center
+ * point, radius, start angle and end angle, all angles in degrees.
+ *
+ * @param dfCenterX center X
+ * @param dfCenterY center Y
+ * @param dfZ center Z
+ * @param dfPrimaryRadius X radius of ellipse.
+ * @param dfSecondaryRadius Y radius of ellipse. 
+ * @param dfRotation rotation of the ellipse clockwise.
+ * @param dfStartAngle angle to first point on arc (clockwise of X-positive) 
+ * @param dfEndAngle angle to last point on arc (clockwise of X-positive) 
+ * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the arc.
+ * 
+ * @return LineString geometry representing an approximation of the arc.
+ *
+ * @since Java bindings 1.7.0
+ */
+public class ogr:public static Geometry ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, double dfStartAngle, double dfEndAngle, double dfMaxAngleStepSizeDegrees) 
+
+/**
  * Build a ring from a bunch of arcs.
  *
  * Same as below with bAutoClose == 0 and dfTolerance == 0.
