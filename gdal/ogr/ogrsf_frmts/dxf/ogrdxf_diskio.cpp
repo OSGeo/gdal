@@ -174,7 +174,13 @@ int OGRDXFDataSource::ReadValue( char *pszValueBuf, int nValueBufSize )
 /* -------------------------------------------------------------------- */
     nLastValueSize = iSrcBufferOffset - iStartSrcBufferOffset;
 
-    return nValueCode;
+/* -------------------------------------------------------------------- */
+/*      Is this a comment?  If so, tail recurse to get another line.    */
+/* -------------------------------------------------------------------- */
+    if( nValueCode == 999 )
+        return ReadValue(pszValueBuf,nValueBufSize);
+    else
+        return nValueCode;
 }
 
 /************************************************************************/
