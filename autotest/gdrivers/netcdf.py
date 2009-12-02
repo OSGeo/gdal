@@ -144,12 +144,34 @@ def netcdf_4():
     return result
     
 ###############################################################################
+# In #2583 5dimensional files were having problems unrolling the highest
+# dimension - check handling now on band 7.
+
+def netcdf_5():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NetCDF',
+                             'NETCDF:data/foo_5dimensional.nc:temperature',
+                             7, 1227, filename_absolute = 1 )
+
+    # We don't want to gum up the test stream output with the
+    # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    result = tst.testOpen()
+    gdal.PopErrorHandler()
+
+    return result
+    
+###############################################################################
 
 gdaltest_list = [
     netcdf_1,
     netcdf_2,
     netcdf_3,
-    netcdf_4 ]
+    netcdf_4,
+    netcdf_5 ]
 
 
 if __name__ == '__main__':
