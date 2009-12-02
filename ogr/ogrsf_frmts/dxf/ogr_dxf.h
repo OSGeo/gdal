@@ -34,6 +34,7 @@
 #include "cpl_conv.h"
 #include <vector>
 #include <map>
+#include <stack>
 
 class OGRDXFDataSource;
 
@@ -49,15 +50,27 @@ class OGRDXFLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextFID;
 
+    std::stack<OGRFeature*> apoPendingFeatures;
+    void                ClearPendingFeatures();
+
+    std::map<CPLString,CPLString> oStyleProperties;
+    
     void                TranslateGenericProperty( OGRFeature *poFeature, 
                                                   int nCode, char *pszValue );
+    void                PrepareLineStyle( OGRFeature *poFeature );
 
     OGRFeature *        TranslatePOINT();
     OGRFeature *        TranslateLINE();
     OGRFeature *        TranslatePOLYLINE();
     OGRFeature *        TranslateLWPOLYLINE();
     OGRFeature *        TranslateCIRCLE();
+    OGRFeature *        TranslateELLIPSE();
+    OGRFeature *        TranslateARC();
     OGRFeature *        TranslateINSERT();
+    OGRFeature *        TranslateMTEXT();
+    OGRFeature *        TranslateDIMENSION();
+
+    void                FormatDimension( CPLString &osText, double dfValue );
 
   public:
     OGRDXFLayer( OGRDXFDataSource *poDS );
@@ -94,6 +107,11 @@ class OGRDXFDataSource : public OGRDataSource
     int                 nLastValueSize;
 
     std::map<CPLString,OGRGeometry*> oBlockMap;
+    std::map<CPLString,CPLString> oHeaderVariables;
+
+    // indexed by layer name, then by property name.
+    std::map< CPLString, std::map<CPLString,CPLString> > 
+                        oLayerTable;
 
   public:
                         OGRDXFDataSource();
@@ -123,6 +141,17 @@ class OGRDXFDataSource : public OGRDataSource
     void                ReadBlocksSection();
     OGRGeometry        *SimplifyBlockGeometry( OGRGeometryCollection * );
     OGRGeometry        *LookupBlock( const char *pszName );
+
+    // Layer Table Handling (ogrdxf_tables.cpp)
+    void                ReadTablesSection();
+    void                ReadLayerDefinition();
+    const char         *LookupLayerProperty( const char *pszLayer, 
+                                             const char *pszProperty );
+
+    // Header variables. 
+    void                ReadHeaderSection();
+    const char         *GetVariable(const char *pszName, 
+                                    const char *pszDefault=NULL );
 };
 
 /************************************************************************/

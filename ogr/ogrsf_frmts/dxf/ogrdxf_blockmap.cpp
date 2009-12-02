@@ -43,7 +43,7 @@ void OGRDXFDataSource::ReadBlocksSection()
 
 {
     char szLineBuf[257];
-    int  nCode, nBlockCount = 0;
+    int  nCode;
 
     iEntitiesSectionOffset = iSrcBufferFileOffset + iSrcBufferOffset;
 
@@ -87,11 +87,11 @@ void OGRDXFDataSource::ReadBlocksSection()
         else
         {
             oBlockMap[osBlockName] = SimplifyBlockGeometry(poColl);
-            nBlockCount++;
         }
     }
 
-    CPLDebug( "DXF", "Read %d blocks with meaningful geometry.", nBlockCount );
+    CPLDebug( "DXF", "Read %d blocks with meaningful geometry.", 
+              (int) oBlockMap.size() );
 }
 
 /************************************************************************/

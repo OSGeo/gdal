@@ -3,7 +3,7 @@
 include ../../../GDALmake.opt
 
 OBJ	=	ogrdxfdriver.o ogrdxfdatasource.o ogrdxflayer.o \
-		ogrdxf_diskio.o ogrdxf_blockmap.o
+		ogrdxf_diskio.o ogrdxf_blockmap.o ogrdxf_dimension.o
 
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 

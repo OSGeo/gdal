@@ -32,11 +32,15 @@
 
 CPL_CVSID("$Id: ogrmemlayer.cpp 17807 2009-10-13 18:18:09Z rouault $");
 
+#ifndef PI
+#define PI  3.14159265358979323846
+#endif 
+
 /* -------------------------------------------------------------------- */
 /*      DXF color table, derived from dxflib.                           */
 /* -------------------------------------------------------------------- */
 
-const double dxfColors[][3] = {
+const static double dxfColors[][3] = {
     {0,0,0},                // unused
     {1,0,0},                // 1
     {1,1,0},
@@ -312,17 +316,20 @@ OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDS )
     OGRFieldDefn  oLayerField( "Layer", OFTString );
     poFeatureDefn->AddFieldDefn( &oLayerField );
 
-    OGRFieldDefn  oClassField( "SubClass", OFTString );
+    OGRFieldDefn  oClassField( "SubClasses", OFTString );
     poFeatureDefn->AddFieldDefn( &oClassField );
 
     OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
     poFeatureDefn->AddFieldDefn( &oExtendedField );
 
-    OGRFieldDefn  oColorField( "Color", OFTInteger );
-    poFeatureDefn->AddFieldDefn( &oColorField );
-
     OGRFieldDefn  oLinetypeField( "Linetype", OFTString );
     poFeatureDefn->AddFieldDefn( &oLinetypeField );
+
+    OGRFieldDefn  oEntityHandleField( "EntityHandle", OFTString );
+    poFeatureDefn->AddFieldDefn( &oEntityHandleField );
+
+    OGRFieldDefn  oTextField( "Text", OFTString );
+    poFeatureDefn->AddFieldDefn( &oTextField );
 }
 
 /************************************************************************/
@@ -332,6 +339,7 @@ OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDS )
 OGRDXFLayer::~OGRDXFLayer()
 
 {
+    ClearPendingFeatures();
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "DXF", "%d features read on layer '%s'.",
@@ -344,6 +352,20 @@ OGRDXFLayer::~OGRDXFLayer()
 }
 
 /************************************************************************/
+/*                        ClearPendingFeatures()                        */
+/************************************************************************/
+
+void OGRDXFLayer::ClearPendingFeatures()
+
+{
+    while( !apoPendingFeatures.empty() )
+    {
+        delete apoPendingFeatures.top();
+        apoPendingFeatures.pop();
+    }
+}
+
+/************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
 
@@ -351,6 +373,7 @@ void OGRDXFLayer::ResetReading()
 
 {
     iNextFID = 0;
+    ClearPendingFeatures();
     poDS->RestartEntities();
 }
 
@@ -372,15 +395,30 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         break;
             
       case 100: 
-        poFeature->SetField( "SubClass", pszValue );
-        break;
+      {
+          CPLString osSubClass = poFeature->GetFieldAsString("SubClasses");
+          if( osSubClass.size() > 0 )
+              osSubClass += ":";
+          osSubClass += pszValue;
+          poFeature->SetField( "SubClasses", osSubClass.c_str() );
+      }
+      break;
 
       case 62:
-        poFeature->SetField( "Color", pszValue );
+        oStyleProperties["Color"] = pszValue;
         break;
 
       case 6:
         poFeature->SetField( "Linetype", pszValue );
+        break;
+
+      case 370:
+      case 39:
+        oStyleProperties["LineWeight"] = pszValue;
+        break;
+
+      case 5:
+        poFeature->SetField( "EntityHandle", pszValue );
         break;
 
         // Extended entity data
@@ -406,6 +444,163 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       default:
         break;
     }
+}
+
+/************************************************************************/
+/*                          PrepareLineStyle()                          */
+/*                                                                      */
+/*      For now I don't bother trying to translate the dash/dot         */
+/*      linetype into the style string since I'm not aware of any       */
+/*      application that will honour it anyways.                        */
+/************************************************************************/
+
+void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
+
+{
+    CPLString osLayer = poFeature->GetFieldAsString("Layer");
+
+/* -------------------------------------------------------------------- */
+/*      Work out the color for this feature.                            */
+/* -------------------------------------------------------------------- */
+    int nColor = 256;
+
+    if( oStyleProperties.count("Color") > 0 )
+        nColor = atoi(oStyleProperties["Color"]);
+
+    // Use layer color? 
+    if( nColor < 1 || nColor > 255 )
+    {
+        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
+        if( pszValue != NULL )
+            nColor = atoi(pszValue);
+    }
+        
+    if( nColor < 1 || nColor > 255 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Get line weight if available.                                   */
+/* -------------------------------------------------------------------- */
+    double dfWeight = 0.0;
+
+    if( oStyleProperties.count("LineWeight") > 0 )
+    {
+        CPLString osWeight = oStyleProperties["LineWeight"];
+
+        if( osWeight == "-1" )
+            osWeight = poDS->LookupLayerProperty(osLayer,"LineWeight");
+
+        dfWeight = atof(osWeight) / 100.0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Format the style string.                                        */
+/* -------------------------------------------------------------------- */
+    CPLString osStyle;
+
+    osStyle.Printf( "PEN(c:#%02x%02x%02x", 
+                    MAX(0,MIN(255,(int) (dxfColors[nColor][0] * 255))), 
+                    MAX(0,MIN(255,(int) (dxfColors[nColor][1] * 255))), 
+                    MAX(0,MIN(255,(int) (dxfColors[nColor][2] * 255))) );
+
+    if( dfWeight > 0.0 )
+        osStyle += CPLString().Printf( ",w:%.2gmm", dfWeight );
+
+    osStyle += ")";
+    
+    poFeature->SetStyleString( osStyle );
+}
+
+/************************************************************************/
+/*                           TranslateMTEXT()                           */
+/************************************************************************/
+
+OGRFeature *OGRDXFLayer::TranslateMTEXT()
+
+{
+    char szLineBuf[257];
+    int nCode;
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    double dfAngle = 0.0;
+    double dfHeight = 0.0;
+    int nAttachmentPoint = -1;
+    CPLString osText;
+
+    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+    {
+        switch( nCode )
+        {
+          case 10:
+            dfX = atof(szLineBuf);
+            break;
+
+          case 20:
+            dfY = atof(szLineBuf);
+            break;
+
+          case 30:
+            dfZ = atof(szLineBuf);
+            break;
+
+          case 40:
+            dfHeight = atof(szLineBuf);
+            break;
+
+          case 71:
+            nAttachmentPoint = atoi(szLineBuf);
+            break;
+
+          case 1:
+          case 3:
+            osText += szLineBuf;
+            break;
+
+          case 50:
+            dfAngle = atof(szLineBuf);
+            break;
+
+          default:
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+        }
+    }
+
+    if( nCode == 0 )
+        poDS->UnreadValue();
+
+    poFeature->SetField( "Text", osText );
+    poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+
+/* -------------------------------------------------------------------- */
+/*      Prepare style string.                                           */
+/* -------------------------------------------------------------------- */
+    CPLString osStyle;
+
+    osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
+
+    if( dfAngle != 0.0 )
+        osStyle += CPLString().Printf(",a:%.3g", dfAngle);
+
+    if( dfHeight != 0.0 )
+        osStyle += CPLString().Printf(",s:%.3gg", dfHeight);
+
+    if( nAttachmentPoint != -1 )
+    {
+        const static int anAttachmentMap[10] = 
+            { -1, 7, 8, 9, 4, 5, 6, 1, 2, 3 };
+        
+        osStyle += 
+            CPLString().Printf(",p:%d", anAttachmentMap[nAttachmentPoint]);
+    }
+    
+    // add color!
+
+    osStyle += ")";
+
+    poFeature->SetStyleString( osStyle );
+
+    return poFeature;
 }
 
 /************************************************************************/
@@ -512,6 +707,8 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
 
     poFeature->SetGeometryDirectly( poLS );
 
+    PrepareLineStyle( poFeature );
+
     return poFeature;
 }
 
@@ -588,6 +785,8 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     }
 
     poFeature->SetGeometryDirectly( poLS );
+
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -676,6 +875,8 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
 
     poFeature->SetGeometryDirectly( poLS );
 
+    PrepareLineStyle( poFeature );
+
     return poFeature;
 }
 
@@ -728,8 +929,181 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
 /* -------------------------------------------------------------------- */
     poFeature->SetGeometryDirectly( 
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
-                                                  dfRadius, 0.0, 360.0, 
+                                                  dfRadius, dfRadius, 0.0,
+                                                  0.0, 360.0, 
                                                   6.0 ) );
+
+    PrepareLineStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                          TranslateELLIPSE()                          */
+/************************************************************************/
+
+OGRFeature *OGRDXFLayer::TranslateELLIPSE()
+
+{
+    char szLineBuf[257];
+    int nCode;
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    double dfX1 = 0.0, dfY1 = 0.0, dfZ1 = 0.0, dfRatio = 0.0;
+    double dfStartAngle = 0.0, dfEndAngle = 360.0;
+    double dfAxisX=0.0, dfAxisY=0.0, dfAxisZ=0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Process values.                                                 */
+/* -------------------------------------------------------------------- */
+    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+    {
+        switch( nCode )
+        {
+          case 10:
+            dfX1 = atof(szLineBuf);
+            break;
+
+          case 20:
+            dfY1 = atof(szLineBuf);
+            break;
+
+          case 30:
+            dfZ1 = atof(szLineBuf);
+            break;
+
+          case 11:
+            dfAxisX = atof(szLineBuf);
+            break;
+
+          case 21:
+            dfAxisY = atof(szLineBuf);
+            break;
+
+          case 31:
+            dfAxisZ = atof(szLineBuf);
+            break;
+
+          case 40:
+            dfRatio = atof(szLineBuf);
+            break;
+
+          case 41:
+            dfEndAngle = -1 * atof(szLineBuf) * 180.0 / PI;
+            break;
+
+          case 42:
+            dfStartAngle = -1 * atof(szLineBuf) * 180.0 / PI;
+            break;
+
+          default:
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+        }
+    }
+
+    if( nCode == 0 )
+        poDS->UnreadValue();
+
+/* -------------------------------------------------------------------- */
+/*      Compute primary and secondary axis lengths, and the angle of    */
+/*      rotation for the ellipse.                                       */
+/* -------------------------------------------------------------------- */
+    double dfPrimaryRadius, dfSecondaryRadius;
+    double dfRotation;
+
+    if( dfStartAngle > dfEndAngle )
+        dfEndAngle += 360.0;
+
+    dfPrimaryRadius = sqrt( dfAxisX * dfAxisX 
+                            + dfAxisY * dfAxisY
+                            + dfAxisZ * dfAxisZ );
+
+    dfSecondaryRadius = dfRatio * dfPrimaryRadius;
+
+    dfRotation = -1 * atan2( dfAxisY, dfAxisX ) * 180 / PI;
+
+/* -------------------------------------------------------------------- */
+/*      Create geometry                                                 */
+/* -------------------------------------------------------------------- */
+    poFeature->SetGeometryDirectly( 
+        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
+                                                  dfPrimaryRadius, 
+                                                  dfSecondaryRadius,
+                                                  dfRotation, 
+                                                  dfStartAngle, dfEndAngle,
+                                                  6.0 ) );
+
+    PrepareLineStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                            TranslateARC()                            */
+/************************************************************************/
+
+OGRFeature *OGRDXFLayer::TranslateARC()
+
+{
+    char szLineBuf[257];
+    int nCode;
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    double dfX1 = 0.0, dfY1 = 0.0, dfZ1 = 0.0, dfRadius = 0.0;
+    double dfStartAngle = 0.0, dfEndAngle = 360.0;
+
+/* -------------------------------------------------------------------- */
+/*      Process values.                                                 */
+/* -------------------------------------------------------------------- */
+    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+    {
+        switch( nCode )
+        {
+          case 10:
+            dfX1 = atof(szLineBuf);
+            break;
+
+          case 20:
+            dfY1 = atof(szLineBuf);
+            break;
+
+          case 30:
+            dfZ1 = atof(szLineBuf);
+            break;
+
+          case 40:
+            dfRadius = atof(szLineBuf);
+            break;
+
+          case 50:
+            dfEndAngle = -1 * atof(szLineBuf);
+            break;
+
+          case 51:
+            dfStartAngle = -1 * atof(szLineBuf);
+            break;
+
+          default:
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+        }
+    }
+
+    if( nCode == 0 )
+        poDS->UnreadValue();
+
+/* -------------------------------------------------------------------- */
+/*      Create geometry                                                 */
+/* -------------------------------------------------------------------- */
+    if( dfStartAngle > dfEndAngle )
+        dfEndAngle += 360.0;
+
+    poFeature->SetGeometryDirectly( 
+        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
+                                                  dfRadius, dfRadius, 0.0,
+                                                  dfStartAngle, dfEndAngle,
+                                                  6.0 ) );
+
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -846,10 +1220,23 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
 OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
 
 {
+    OGRFeature *poFeature = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If we have pending features, return one of them.                */
+/* -------------------------------------------------------------------- */
+    if( !apoPendingFeatures.empty() )
+    {
+        poFeature = apoPendingFeatures.top();
+        apoPendingFeatures.pop();
+
+        poFeature->SetFID( iNextFID++ );
+        return poFeature;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Read the entity type.                                           */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature = NULL;
     char szLineBuf[257];
     int nCode;
 
@@ -881,9 +1268,15 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Handle the entity.                                              */
 /* -------------------------------------------------------------------- */
+        oStyleProperties.clear();
+
         if( EQUAL(szLineBuf,"POINT") )
         {
             poFeature = TranslatePOINT();
+        }
+        else if( EQUAL(szLineBuf,"MTEXT") )
+        {
+            poFeature = TranslateMTEXT();
         }
         else if( EQUAL(szLineBuf,"LINE") )
         {
@@ -901,9 +1294,21 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateCIRCLE();
         }
+        else if( EQUAL(szLineBuf,"ELLIPSE") )
+        {
+            poFeature = TranslateELLIPSE();
+        }
+        else if( EQUAL(szLineBuf,"ARC") )
+        {
+            poFeature = TranslateARC();
+        }
         else if( EQUAL(szLineBuf,"INSERT") )
         {
             poFeature = TranslateINSERT();
+        }
+        else if( EQUAL(szLineBuf,"DIMENSION") )
+        {
+            poFeature = TranslateDIMENSION();
         }
         else
         {
