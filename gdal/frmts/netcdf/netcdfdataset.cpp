@@ -185,15 +185,16 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
 
     for( i=0; i < nd-2 ; i++ ) {
 	if( i != nd - 2 -1 ) {
+            Sum = 1;
 	    for( j=i+1; j < nd-2; j++ ) {
 		Sum *= panBandZLev[j];
 	    }
-	    result = (int) ( ( nLevel-Taken ) / Sum );
+	    result = (int) ( ( nLevel-Taken) / Sum );
 	}
 	else {
-	    result = (int) ( ( nLevel-Taken ) % Sum );
+	    result = (int) ( ( nLevel-Taken) % Sum );
 	}
-
+        
 	strcpy(szVarName, poDS->papszDimName[poDS->paDimIds[
 			  panBandZPos[i]]] );
 
@@ -516,22 +517,25 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*  BandPos1 = (nBand - (3*4) ) / (4)                                   */
 /*  BandPos2 = (nBand - (3*4) ) % (4)                                   */
 /* -------------------------------------------------------------------- */
-    if( nd > 3 ) {
-	for( i=0; i < nd-2-1 ; i++ ) {
-	    Sum  = 1;
-	    Taken = 0;
-	    for( j=i+1; j < nd-2; j++ ) {
-		Sum *= panBandZLev[j];
-	    }
-	    start[panBandZPos[i]] = ( nLevel-Taken ) / Sum;
-	    edge[panBandZPos[i]] = 1;
-	    Taken += Sum;
-	}
-	start[panBandZPos[i]] = ( nLevel-( Taken-Sum ) ) % Sum;
-	edge[panBandZPos[i]] = 1;
+    if (nd > 3) 
+    {
+        Taken = 0;
+        for( i=0; i < nd-2 ; i++ ) 
+        {
+            if( i != nd - 2 -1 ) {
+                Sum = 1;
+                for( j=i+1; j < nd-2; j++ ) {
+                    Sum *= panBandZLev[j];
+                }
+                start[panBandZPos[i]] = (int) ( ( nLevel-Taken) / Sum );
+                edge[panBandZPos[i]] = 1;
+            } else {
+                start[panBandZPos[i]] = (int) ( ( nLevel-Taken) % Sum );
+                edge[panBandZPos[i]] = 1;
+            }
+            Taken += start[panBandZPos[i]] * Sum;
+        }
     }
-
-
 
     if( eDataType == GDT_Byte )
         nErr = nc_get_vara_uchar( cdfid, nZId, start, edge, 
