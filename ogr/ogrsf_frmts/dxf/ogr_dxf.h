@@ -39,6 +39,22 @@
 class OGRDXFDataSource;
 
 /************************************************************************/
+/*                          DXFBlockDefinition                          */
+/*                                                                      */
+/*      Container for info about a block.                               */
+/************************************************************************/
+
+class DXFBlockDefinition
+{
+public:
+    DXFBlockDefinition() : poGeometry(NULL) {}
+    ~DXFBlockDefinition();
+
+    OGRGeometry                *poGeometry;
+    std::vector<OGRFeature *>  apoFeatures;
+};
+
+/************************************************************************/
 /*                             OGRDXFLayer                              */
 /************************************************************************/
 class OGRDXFDataSource;
@@ -68,6 +84,7 @@ class OGRDXFLayer : public OGRLayer
     OGRFeature *        TranslateARC();
     OGRFeature *        TranslateINSERT();
     OGRFeature *        TranslateMTEXT();
+    OGRFeature *        TranslateTEXT();
     OGRFeature *        TranslateDIMENSION();
 
     void                FormatDimension( CPLString &osText, double dfValue );
@@ -106,7 +123,7 @@ class OGRDXFDataSource : public OGRDataSource
     
     int                 nLastValueSize;
 
-    std::map<CPLString,OGRGeometry*> oBlockMap;
+    std::map<CPLString,DXFBlockDefinition> oBlockMap;
     std::map<CPLString,CPLString> oHeaderVariables;
 
     // indexed by layer name, then by property name.
@@ -140,7 +157,7 @@ class OGRDXFDataSource : public OGRDataSource
     // Implemented in ogrdxf_blockmap.cpp
     void                ReadBlocksSection();
     OGRGeometry        *SimplifyBlockGeometry( OGRGeometryCollection * );
-    OGRGeometry        *LookupBlock( const char *pszName );
+    DXFBlockDefinition *LookupBlock( const char *pszName );
 
     // Layer Table Handling (ogrdxf_tables.cpp)
     void                ReadTablesSection();

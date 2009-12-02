@@ -33,6 +33,10 @@
 
 CPL_CVSID("$Id: ogrmemlayer.cpp 17807 2009-10-13 18:18:09Z rouault $");
 
+#ifndef PI
+#define PI  3.14159265358979323846
+#endif 
+
 /************************************************************************/
 /*                         TranslateDIMENSION()                         */
 /************************************************************************/
@@ -110,10 +114,6 @@ OGRFeature *OGRDXFLayer::TranslateDIMENSION()
 
           case 1:
             osText = szLineBuf;
-            break;
-
-          case 50:
-            dfAngle = atof(szLineBuf);
             break;
 
           default:
@@ -215,13 +215,17 @@ the approach is as above in all these cases.
     }
 
 /* -------------------------------------------------------------------- */
+/*      Compute the text angle.                                         */
+/* -------------------------------------------------------------------- */
+    dfAngle = atan2(dfVec2Y,dfVec2X) * 180.0 / PI;
+
+/* -------------------------------------------------------------------- */
 /*      Rescale the direction vectors so we can use them in             */
 /*      constructing arrowheads.  We want them to be about 3% of the    */
 /*      length of line on which the arrows will be drawn.               */
 /* -------------------------------------------------------------------- */
 #define VECTOR_LEN(x,y) sqrt( (x)*(x) + (y)*(y) )
 #define POINT_DIST(x1,y1,x2,y2)  VECTOR_LEN((x2-x1),(y2-y1))
-
 
     double dfBaselineLength = POINT_DIST(dfArrowX1,dfArrowY1,
                                          dfArrowX2,dfArrowY2);
@@ -321,10 +325,8 @@ the approach is as above in all these cases.
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\",p:5",osText.c_str());
 
-#ifdef notdef
     if( dfAngle != 0.0 )
         osStyle += CPLString().Printf(",a:%.3g", dfAngle);
-#endif
 
     if( dfHeight != 0.0 )
         osStyle += CPLString().Printf(",s:%.3gg", dfHeight);
