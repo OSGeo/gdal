@@ -605,31 +605,54 @@ void HFARasterBand::ReadAuxMetadata()
         {
           case 'd':
           {
+              int nCount, iValue;
               double dfValue;
+              CPLString osValueList;
 
-              dfValue = poEntry->GetDoubleField( pszFieldName, &eErr );
-              if( eErr == CE_None )
+              nCount = poEntry->GetFieldCount( pszFieldName, &eErr );
+              for( iValue = 0; eErr == CE_None && iValue < nCount; iValue++ )
               {
-                  char szValueAsString[100];
+                  CPLString osSubFieldName;
+                  osSubFieldName.Printf( "%s[%d]", pszFieldName, iValue );
+                  dfValue = poEntry->GetDoubleField( osSubFieldName, &eErr );
+                  if( eErr != CE_None )
+                      break;
 
+                  char szValueAsString[100];
                   sprintf( szValueAsString, "%.14g", dfValue );
-                  SetMetadataItem( pszAuxMetaData[i+2],
-                                   szValueAsString );
+
+                  if( iValue > 0 )
+                      osValueList += ",";
+                  osValueList += szValueAsString;
               }
+              if( eErr == CE_None )
+                  SetMetadataItem( pszAuxMetaData[i+2], osValueList );
           }
           break;
           case 'i':
           case 'l':
           {
-              int nValue;
-              nValue = poEntry->GetIntField( pszFieldName, &eErr );
-              if( eErr == CE_None )
-              {
-                  char szValueAsString[100];
+              int nValue, nCount, iValue;
+              CPLString osValueList;
 
+              nCount = poEntry->GetFieldCount( pszFieldName, &eErr );
+              for( iValue = 0; eErr == CE_None && iValue < nCount; iValue++ )
+              {
+                  CPLString osSubFieldName;
+                  osSubFieldName.Printf( "%s[%d]", pszFieldName, iValue );
+                  nValue = poEntry->GetIntField( osSubFieldName, &eErr );
+                  if( eErr != CE_None )
+                      break;
+
+                  char szValueAsString[100];
                   sprintf( szValueAsString, "%d", nValue );
-                  SetMetadataItem( pszAuxMetaData[i+2], szValueAsString );
+
+                  if( iValue > 0 )
+                      osValueList += ",";
+                  osValueList += szValueAsString;
               }
+              if( eErr == CE_None )
+                  SetMetadataItem( pszAuxMetaData[i+2], osValueList );
           }
           break;
           case 's':
