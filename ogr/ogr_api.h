@@ -77,6 +77,12 @@ OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *, OGRSpatialReferenceH,
                                     OGRGeometryH *, int, int * );
 void   CPL_DLL OGR_G_DestroyGeometry( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_CreateGeometry( OGRwkbGeometryType );
+OGRGeometryH CPL_DLL 
+OGR_G_ApproximateArcAngles( 
+    double dfCenterX, double dfCenterY, double dfZ,
+    double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, 
+    double dfStartAngle, double dfEndAngle,
+    double dfMaxAngleStepSizeDegrees );
 
 int    CPL_DLL OGR_G_GetDimension( OGRGeometryH );
 int    CPL_DLL OGR_G_GetCoordinateDimension( OGRGeometryH );
