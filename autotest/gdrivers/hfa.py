@@ -71,7 +71,7 @@ def hfa_histread():
         gdaltest.post_reason( 'STATISTICS_SKIPFACTORY is wrong.' )
         return 'fail'
 
-    if md['STATISTICS_EXCLUDEDVALUE'] != '0':
+    if md['STATISTICS_EXCLUDEDVALUES'] != '0':
         gdaltest.post_reason( 'STATISTICS_EXCLUDEDVALUE is wrong.' )
         return 'fail'
 
@@ -959,6 +959,22 @@ def hfa_delete_colortable2():
     return 'success'
 
 ###############################################################################
+# Verify we can read the special histogram metadata from a provided image.
+
+def hfa_excluded_values():
+
+    ds = gdal.Open('data/dem10.img')
+    md = ds.GetRasterBand(1).GetMetadata()
+    ds = None
+
+    if md['STATISTICS_EXCLUDEDVALUES'] != '0,8,9':
+        gdaltest.post_reason( 'STATISTICS_EXCLUDEDVALUE is wrong.' )
+        return 'fail'
+
+
+    return 'success'
+    
+###############################################################################
 #
 
 gdaltest_list = [
@@ -989,8 +1005,8 @@ gdaltest_list = [
     hfa_unique_values_hist,
     hfa_xforms_3rd,
     hfa_delete_colortable,
-    hfa_delete_colortable2
-    ]
+    hfa_delete_colortable2,
+    hfa_excluded_values ]
 
 if __name__ == '__main__':
 
