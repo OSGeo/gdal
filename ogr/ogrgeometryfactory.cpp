@@ -2014,9 +2014,11 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
  * @param dfCenterX center X
  * @param dfCenterY center Y
  * @param dfZ center Z
- * @param dfRadius radius of circle
- * @param dfStartAngle angle to first point on arc (clockwise of X-positive?) 
- * @param dfEndAngle angle to last point on arc (clockwise of X-positive?) 
+ * @param dfPrimaryRadius X radius of ellipse.
+ * @param dfSecondaryRadius Y radius of ellipse. 
+ * @param dfRotation rotation of the ellipse clockwise.
+ * @param dfStartAngle angle to first point on arc (clockwise of X-positive) 
+ * @param dfEndAngle angle to last point on arc (clockwise of X-positive) 
  * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the arc.
  * 
  * @return OGRLineString geometry representing an approximation of the arc.
@@ -2024,51 +2026,69 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
 
 OGRGeometry* OGRGeometryFactory::approximateArcAngles( 
     double dfCenterX, double dfCenterY, double dfZ,
-    double dfRadius, 
+    double dfPrimaryRadius, double dfSecondaryRadius, double dfRotation, 
     double dfStartAngle, double dfEndAngle,
     double dfMaxAngleStepSizeDegrees )
 
 {
-    double             dfArcX, dfArcY, dfSlice;
-    int                iPoint, iAppendLocation, nVertexCount;
-    double             dfEps = dfRadius / 100000.0;
+    double             dfSlice;
+    int                iPoint, nVertexCount;
     OGRLineString     *poLine = new OGRLineString();
+    double             dfRotationRadians = dfRotation * PI / 180.0;
+    
+    // switch direction 
+    dfStartAngle *= -1;
+    dfEndAngle *= -1;
 
+    // Figure out the number of slices to make this into.
     nVertexCount = (int) 
         ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1;
     nVertexCount = MAX(2,nVertexCount);
     dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
+/* -------------------------------------------------------------------- */
+/*      Compute the interpolated points.                                */
+/* -------------------------------------------------------------------- */
     for( iPoint=0; iPoint < nVertexCount; iPoint++ )
     {
-        double      dfAngle;
+        double      dfAngleOnEllipse;
+        double      dfArcX, dfArcY;
+        double      dfEllipseX, dfEllipseY;
 
-        dfAngle = (dfStartAngle + iPoint * dfSlice) * PI / 180.0;
+        dfAngleOnEllipse = (dfStartAngle + iPoint * dfSlice) * PI / 180.0;
 
-        dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
-        dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
+        // Compute position on the unrotated ellipse. 
+        dfEllipseX = cos(dfAngleOnEllipse) * dfPrimaryRadius;
+        dfEllipseY = sin(dfAngleOnEllipse) * dfSecondaryRadius;
+        
+        // Rotate this position around the center of the ellipse.
+        dfArcX = dfCenterX 
+            + dfEllipseX * cos(dfRotationRadians) 
+            + dfEllipseY * sin(dfRotationRadians);
+        dfArcY = dfCenterY 
+            - dfEllipseX * sin(dfRotationRadians)
+            + dfEllipseY * cos(dfRotationRadians);
 
-        if( iPoint == 0 )
-        {
-            iAppendLocation = poLine->getNumPoints();
-
-            if( poLine->getNumPoints() > 0 
-                && fabs(poLine->getX(poLine->getNumPoints()-1)-dfArcX) < dfEps
-                && fabs(poLine->getY(poLine->getNumPoints()-1)-dfArcY) < dfEps)
-            {
-                poLine->setNumPoints( 
-                    poLine->getNumPoints() + nVertexCount - 1 );
-            }
-            else
-            {
-                poLine->setNumPoints( 
-                    poLine->getNumPoints() + nVertexCount - 1 );
-                poLine->setPoint( iAppendLocation++, dfArcX, dfArcY, dfZ );
-            }
-        }
-        else
-            poLine->setPoint( iAppendLocation++, dfArcX, dfArcY, dfZ );
+        poLine->setPoint( iPoint, dfArcX, dfArcY, dfZ );
     }
 
     return poLine;
+}
+
+/************************************************************************/
+/*                     OGR_G_ApproximateArcAngles()                     */
+/************************************************************************/
+
+OGRGeometryH CPL_DLL 
+OGR_G_ApproximateArcAngles( 
+    double dfCenterX, double dfCenterY, double dfZ,
+    double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, 
+    double dfStartAngle, double dfEndAngle,
+    double dfMaxAngleStepSizeDegrees )
+
+{
+    return (OGRGeometryH) OGRGeometryFactory::approximateArcAngles(
+        dfCenterX, dfCenterY, dfZ, 
+        dfPrimaryRadius, dfSecondaryAxis, dfRotation,
+        dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees );
 }

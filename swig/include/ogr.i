@@ -1294,6 +1294,26 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
   }
 %}
 
+%newobject ApproximateArcAngles;
+#ifndef SWIGJAVA
+%feature( "kwargs" ) ApproximateArcAngles;
+#endif
+%inline %{
+  OGRGeometryShadow* ApproximateArcAngles( 
+        double dfCenterX, double dfCenterY, double dfZ,
+  	double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, 
+        double dfStartAngle, double dfEndAngle,
+        double dfMaxAngleStepSizeDegrees ) {
+  
+  return OGR_G_ApproximateArcAngles( 
+             dfCenterX, dfCenterY, dfZ, 
+             dfPrimaryRadius, dfSecondaryAxis, dfRotation,
+             dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees );
+  }
+%}
+
+
+
 /************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
