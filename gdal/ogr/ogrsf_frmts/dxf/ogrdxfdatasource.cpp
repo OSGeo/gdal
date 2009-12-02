@@ -143,11 +143,8 @@ int OGRDXFDataSource::Open( const char * pszFilename )
 /*      Process the header, picking up a few useful pieces of           */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
-           && !EQUAL(szLineBuf,"ENDSEC") )
-    {
-        //printf("H:%d/%s\n", nCode, szLineBuf );
-    }
+    ReadHeaderSection();
+    ReadValue(szLineBuf);
 
 /* -------------------------------------------------------------------- */
 /*      Process the CLASSES section, if present.                        */
@@ -178,11 +175,8 @@ int OGRDXFDataSource::Open( const char * pszFilename )
 
     if( EQUAL(szLineBuf,"TABLES") )
     {
-        while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1 
-               && !EQUAL(szLineBuf,"ENDSEC") )
-        {
-            //printf("T:%d/%s\n", nCode, szLineBuf );
-        }
+        ReadTablesSection();
+        ReadValue(szLineBuf);
     }
 
 /* -------------------------------------------------------------------- */
@@ -219,5 +213,150 @@ int OGRDXFDataSource::Open( const char * pszFilename )
     apoLayers[0]->ResetReading();
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                         ReadTablesSection()                          */
+/************************************************************************/
+
+void OGRDXFDataSource::ReadTablesSection()
+
+{
+    char szLineBuf[257];
+    int  nCode;
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
+           && !EQUAL(szLineBuf,"ENDSEC") )
+    {
+        // We are only interested in extracting tables.
+        if( nCode != 0 || !EQUAL(szLineBuf,"TABLE") )
+            continue;
+
+        // Currently we are only interested in the LAYER table.
+        nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
+
+        if( nCode != 2 || !EQUAL(szLineBuf,"LAYER") )
+            continue;
+
+        while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
+               && !EQUAL(szLineBuf,"ENDTAB") )
+        {
+            if( nCode == 0 && EQUAL(szLineBuf,"LAYER") )
+                ReadLayerDefinition();
+        }
+    }
+
+    CPLDebug( "DXF", "Read %d layer definitions.", (int) oLayerTable.size() );
+}
+
+/************************************************************************/
+/*                        ReadLayerDefinition()                         */
+/************************************************************************/
+
+void OGRDXFDataSource::ReadLayerDefinition()
+
+{
+    char szLineBuf[257];
+    int  nCode;
+    std::map<CPLString,CPLString> oLayerProperties;
+    CPLString osLayerName = "";
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
+    {
+        switch( nCode )
+        {
+          case 2:
+            osLayerName = szLineBuf;
+            break;
+
+          case 6:
+            oLayerProperties["Linetype"] = szLineBuf;
+            break;
+            
+          case 62:
+            oLayerProperties["Color"] = szLineBuf;
+            break;
+            
+          case 70:
+            oLayerProperties["Flags"] = szLineBuf;
+            break;
+
+          case 370:
+          case 39:
+            oLayerProperties["LineWeight"] = szLineBuf;
+            break;
+
+          default:
+            break;
+        }
+    }
+
+    if( oLayerProperties.size() > 0 )
+        oLayerTable[osLayerName] = oLayerProperties;
+    
+    UnreadValue();
+}
+
+/************************************************************************/
+/*                        LookupLayerProperty()                         */
+/************************************************************************/
+
+const char *OGRDXFDataSource::LookupLayerProperty( const char *pszLayer,
+                                                   const char *pszProperty )
+
+{
+    if( pszLayer == NULL )
+        return NULL;
+
+    try {
+        return (oLayerTable[pszLayer])[pszProperty];
+    } catch( ... ) {
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                         ReadHeaderSection()                          */
+/************************************************************************/
+
+void OGRDXFDataSource::ReadHeaderSection()
+
+{
+    char szLineBuf[257];
+    int  nCode;
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
+           && !EQUAL(szLineBuf,"ENDSEC") )
+    {
+        if( nCode != 9 )
+            continue;
+
+        CPLString osName = szLineBuf;
+
+        ReadValue( szLineBuf, sizeof(szLineBuf) );
+
+        CPLString osValue = szLineBuf;
+
+        oHeaderVariables[osName] = osValue;
+    }
+
+    CPLDebug( "DXF", "Read %d header variables.", 
+              (int) oHeaderVariables.size() );
+}
+
+/************************************************************************/
+/*                            GetVariable()                             */
+/*                                                                      */
+/*      Fetch a variable that came from the HEADER section.             */
+/************************************************************************/
+
+const char *OGRDXFDataSource::GetVariable( const char *pszName, 
+                                           const char *pszDefault )
+
+{
+    if( oHeaderVariables.count(pszName) == 0 )
+        return pszDefault;
+    else 
+        return oHeaderVariables[pszName];
 }
 
