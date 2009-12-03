@@ -166,7 +166,7 @@ DXFBlockDefinition::~DXFBlockDefinition()
 {
     delete poGeometry;
 
-    while( !apoFeatures.empty() > 0 )
+    while( !apoFeatures.empty() )
     {
         delete apoFeatures.back();
         apoFeatures.pop_back();
