@@ -70,7 +70,7 @@ class WKTRasterDataset : public GDALDataset {
     // Private attributes and methods
     PGconn * hPGconn; 
     GBool bCloseConnection;
-		char * pszSchemaName;
+    char * pszSchemaName;
     char * pszTableName;
     char * pszRasterColumnName;
     char * pszWhereClause;
