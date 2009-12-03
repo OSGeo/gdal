@@ -723,7 +723,7 @@ burns vector geometries into a raster
 
 \verbatim
 Usage: gdal_rasterize [-b band] [-i] [-at]
-       [-burn value] | [-a attribute_name] | [-3d]
+       [-burn value] | [-a attribute_name] [-3d]
        [-l layername]* [-where expression] [-sql select_statement]
        <src_datasource> <dst_filename>
 \endverbatim
@@ -763,7 +763,7 @@ The value will be burned into all output bands.</dd>
 
 <dt> <b>-3d</b>: </dt><dd> 
 Indicates that a burn value should be extracted from the "Z" values of the 
-feature (not yet implemented).</dd>
+feature. As of now, only points and lines are drawn in 3D.</dd>
 
 <dt> <b>-l</b> <em>layername</em>: </dt><dd> 
 Indicates the layer(s) from the datasource that will be used for input 
