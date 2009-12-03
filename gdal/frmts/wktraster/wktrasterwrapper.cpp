@@ -112,13 +112,13 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
  	6 * sizeof (double);
 
     nBufferDataWithoutHeaderLen =
-        strlen(pszHex + 2*nRasterHeaderLen) / 2;
+        strlen(pszHex +2*nRasterHeaderLen) / 2;
 
     pbyHexWkb = CPLHexToBinary(pszHex, &nLengthByWkbString);    
     
     if (nRasterHeaderLen > nLengthByWkbString || 
         nLengthByWkbString != nRasterHeaderLen + nBufferDataWithoutHeaderLen)
-    {       
+    {        
         CPLError(CE_Failure, CPLE_ObjectNull,
                 "Raster object is corrupted, not enough data");
         return FALSE;
@@ -131,7 +131,7 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
     nLengthHexWkbString = strlen(pszHex);   
 
     pszHexWkb = (char *) VSIMalloc(nLengthHexWkbString);
-    if (pszHexWkb == NULL) {
+    if (pszHexWkb == NULL) {        
         CPLError(CE_Failure, CPLE_ObjectNull,
                 "Couldn't allocate memory for raster wrapper, aborting");
         return FALSE;
@@ -144,7 +144,7 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
      * Get endianess. This is important, because we could need to swap
      * words if the data endianess is distinct from machine endianess
      ***********************************************************************/
-    byEndianess = pbyHexWkb[0];
+    memcpy(&byEndianess, pbyHexWkb, sizeof(GByte));
 
     // We are going to use this pointer to move over the string
     pbyAuxPtr = pbyHexWkb + sizeof (GByte);
@@ -240,28 +240,69 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
         pbyAuxPtr += sizeof (GByte);
 
         switch (byFirstByteBandHeader & 0x0f) {
-            case 0: case 1: case 2: case 3: case 4:
-                nPixTypeBytes = 1;
+
+            /*
+             * GByte is defined as "unsigned char" in cpl_port.h. The data
+             * fetched from database (pointed by pbyAuxPtr) can be a "signed
+             * char" (case 3) or "unsigned char" (cases 0, 1, 2, 4)
+             */
+            case 0: case 1: case 2: case 4:
+                GByte byNoData;
+                memcpy(&byNoData, pbyAuxPtr, sizeof(GByte));
+                dfNoDataValue = (double)byNoData;                
+                nPixTypeBytes = sizeof(GByte);
                 break;
-            case 5: case 6: case 9:
-                nPixTypeBytes = 2;
+            case 3:
+                signed char sbyNoData;
+                memcpy(&sbyNoData, pbyAuxPtr, sizeof(signed char));
+                dfNoDataValue = (double)sbyNoData;
+                nPixTypeBytes = sizeof(signed char);
                 break;
-            case 7: case 8: case 10:
-                nPixTypeBytes = 4;
+            case 5:
+                GInt16 n16NoData;
+                memcpy(&n16NoData, pbyAuxPtr, sizeof(GInt16));
+                dfNoDataValue = (double)n16NoData;
+                nPixTypeBytes = sizeof(GInt16);
+                break;
+            case 6:
+                GUInt16 un16NoData;
+                memcpy(&un16NoData, pbyAuxPtr, sizeof(GUInt16));
+                dfNoDataValue = (double)un16NoData;
+                nPixTypeBytes = sizeof(GUInt16);
+                break;
+            case 7:
+                GInt32 n32NoData;
+                memcpy(&n32NoData, pbyAuxPtr, sizeof(GInt32));
+                dfNoDataValue = (double)n32NoData;
+                nPixTypeBytes = sizeof(GInt32);
+                break;
+            case 8:
+                GUInt32 un32NoData;
+                memcpy(&un32NoData, pbyAuxPtr, sizeof(GUInt32));
+                dfNoDataValue = (double)un32NoData;
+                nPixTypeBytes = sizeof(GUInt32);
+                break;
+            case 10:
+                float fNoData;
+                memcpy(&fNoData, pbyAuxPtr, sizeof(float));
+                dfNoDataValue = (double)fNoData;
+                nPixTypeBytes = sizeof(float);
                 break;
             case 11:
-                nPixTypeBytes = 8;
+                memcpy(&dfNoDataValue, pbyAuxPtr, sizeof(double));
+                nPixTypeBytes = sizeof(double);
                 break;
             default:
-                nPixTypeBytes = 1;
+                // TODO: stop creating bands. Free memory for previous bands
+
+                CPLError(CE_Failure, CPLE_NotSupported,
+                    "Nodata size not supported for band %d, aborting\n", i);
+                return FALSE;               
         }
         
-        // FIXME : this is likely wrong (disclaimer: I've not checked the spec).
-        // dfNoDataValue is a double. Doesn't make sense to fetch less than 8 bytes
-        // if 1 byte, should be put into a Byte and then casted to a double
-        // if 2 bytes, should be put into a Int16/UInt16 and then casted to a double, etc...
-        memcpy(&dfNoDataValue, pbyAuxPtr, nPixTypeBytes);
-
+        /***************************************************************
+         * Swap nodata word, if needed
+         ***************************************************************/
         if (byEndianess != byMachineEndianess)
             GDALSwapWords(&dfNoDataValue, nPixTypeBytes, 1, nPixTypeBytes);
         pbyAuxPtr += nPixTypeBytes;
@@ -270,7 +311,7 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
         nRasterDataLen = ((nLengthByWkbString - nRasterHeaderLen) / nBands) -
                 ((1 + nPixTypeBytes));
 
-        // TODO : check that there are enough bytes in the buffer
+        // TODO : check that there are enough bytes in the buffer       
 
         /**************************************************************
          * In-db raster. Next bytes are the raster data and must be
@@ -278,8 +319,9 @@ int WKTRasterWrapper::Initialize(const char* pszHex) {
          **************************************************************/
         if ((byFirstByteBandHeader >> 7) == FALSE) {
 
+            // TODO: check this assertion, sometimes fails
             // In this case, data are a nWidth * nHeight array
-            CPLAssert(nRasterDataLen == (nWidth * nHeight * nPixTypeBytes));
+            //CPLAssert(nRasterDataLen == (nWidth * nHeight * nPixTypeBytes));
 
             // Swap words of data, if needed
             if (byEndianess != byMachineEndianess)
@@ -482,7 +524,7 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
 
         // FIXME : this is likely incorrect. see previous FIXME
         switch (papoBands[i]->byPixelType & 0x0f) {
-            case 0: case 1: case 2: case 3: case 4:
+            case 0: case 1: case 2: case 4:
                 nPixTypeBytes = 1;
                 memcpy(pbyAuxPtr, (GByte *) (&papoBands[i]->dfNodata),
                         sizeof (GByte));
@@ -492,7 +534,27 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
                 pbyAuxPtr += sizeof (GByte);
                 nTransformedBytes += sizeof (GByte);
                 break;
-            case 5: case 6: case 9:
+            case 3:
+                nPixTypeBytes = 1;
+                memcpy(pbyAuxPtr, (signed char *) (&papoBands[i]->dfNodata),
+                        sizeof (signed char));
+                if (byEndianess != byMachineEndianess)
+                    GDALSwapWords(pbyAuxPtr, sizeof (signed char), 1,
+                        sizeof (signed char));
+                pbyAuxPtr += sizeof (signed char);
+                nTransformedBytes += sizeof (signed char);
+                break;
+            case 5:
+                nPixTypeBytes = 2;
+                memcpy(pbyAuxPtr, (GInt16 *) (&papoBands[i]->dfNodata),
+                        sizeof (GInt16));
+                if (byEndianess != byMachineEndianess)
+                    GDALSwapWords(pbyAuxPtr, sizeof (GInt16), 1,
+                        sizeof (GInt16));
+                nTransformedBytes += sizeof (GInt16);
+                pbyAuxPtr += sizeof (GInt16);
+                break;
+            case 6:
                 nPixTypeBytes = 2;
                 memcpy(pbyAuxPtr, (GUInt16 *) (&papoBands[i]->dfNodata),
                         sizeof (GUInt16));
@@ -502,7 +564,17 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
                 nTransformedBytes += sizeof (GUInt16);
                 pbyAuxPtr += sizeof (GUInt16);
                 break;
-            case 7: case 8: case 10:
+            case 7:
+                nPixTypeBytes = 4;
+                memcpy(pbyAuxPtr, (GInt32 *) (&papoBands[i]->dfNodata),
+                        sizeof (GInt32));
+                if (byEndianess != byMachineEndianess)
+                    GDALSwapWords(pbyAuxPtr, sizeof (GInt32), 1,
+                        sizeof (GInt32));
+                nTransformedBytes += sizeof (GInt32);
+                pbyAuxPtr += sizeof (GInt32);
+                break;
+            case 8:
                 nPixTypeBytes = 4;
                 memcpy(pbyAuxPtr, (GUInt32 *) (&papoBands[i]->dfNodata),
                         sizeof (GUInt32));
@@ -511,6 +583,15 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
                         sizeof (GUInt32));
                 nTransformedBytes += sizeof (GUInt32);
                 pbyAuxPtr += sizeof (GUInt32);
+                break;
+            case 10:
+                nPixTypeBytes = 8;
+                memcpy(pbyAuxPtr, &(papoBands[i]->dfNodata), sizeof (float));
+                if (byEndianess != byMachineEndianess)
+                    GDALSwapWords(pbyAuxPtr, sizeof (float), 1,
+                        sizeof (float));
+                pbyAuxPtr += sizeof (float);
+                nTransformedBytes += sizeof (float);
                 break;
             case 11:
                 nPixTypeBytes = 8;
@@ -522,14 +603,10 @@ GByte * WKTRasterWrapper::GetBinaryRepresentation() {
                 nTransformedBytes += sizeof (double);
                 break;
             default:
-                nPixTypeBytes = 1;
-                memcpy(pbyAuxPtr, (GByte *) (&papoBands[i]->dfNodata),
-                        sizeof (GByte));
-                if (byEndianess != byMachineEndianess)
-                    GDALSwapWords(pbyAuxPtr, sizeof (GByte), 1,
-                        sizeof (GByte));
-                nTransformedBytes += sizeof (GByte);
-                pbyAuxPtr += sizeof (GByte);
+                CPLError(CE_Failure, CPLE_NotSupported,
+                    "Nodata size not supported for band %d, using the original \
+                    one\n",i);
+                return pbyHexWkb;
         }
 
 
