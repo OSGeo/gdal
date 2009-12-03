@@ -46,7 +46,7 @@ static void Usage()
 {
     printf( 
         "Usage: gdal_rasterize [-b band] [-i] [-at]\n"
-        "       [-burn value] | [-a attribute_name] | [-3d]\n"
+        "       [-burn value] | [-a attribute_name] [-3d]\n"
 //      "       [-of format_driver] [-co key=value]\n"       
 //      "       [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "       [-l layername]* [-where expression] [-sql select_statement]\n"
@@ -225,14 +225,21 @@ static void ProcessLayer(
             if( adfBurnValues.size() > 0 )
                 adfFullBurnValues.push_back( 
                     adfBurnValues[MIN(iBand,adfBurnValues.size()-1)] );
-            else if( b3D )
-            {
-                // TODO: get geometry "z" value 
-                adfFullBurnValues.push_back( 0.0 );
-            }
             else if( pszBurnAttribute )
             {
                 adfFullBurnValues.push_back( OGR_F_GetFieldAsDouble( hFeat, iBurnField ) );
+            }
+            /* I have made the 3D option exclusive to other options since it
+               can be used to modify the value from "-burn value" or
+               "-a attribute_name" */
+            if( b3D )
+            {
+                // TODO: get geometry "z" value
+                /* Points and Lines will have their "z" values collected at the
+                   point and line levels respectively. However filled polygons
+                   (GDALdllImageFilledPolygon) can use some help by getting
+                   their "z" values here. */
+                adfFullBurnValues.push_back( 0.0 );
             }
         }
         
@@ -324,6 +331,8 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-3d")  )
         {
             b3D = TRUE;
+            papszRasterizeOptions = 
+                CSLSetNameValue( papszRasterizeOptions, "BURN_VALUE_FROM", "Z");
         }
         else if( EQUAL(argv[i],"-i")  )
         {
