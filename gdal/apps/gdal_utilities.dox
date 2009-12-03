@@ -763,7 +763,9 @@ The value will be burned into all output bands.</dd>
 
 <dt> <b>-3d</b>: </dt><dd> 
 Indicates that a burn value should be extracted from the "Z" values of the 
-feature. As of now, only points and lines are drawn in 3D.</dd>
+feature. These values are adjusted by the burn value given by "-burn value" or
+"-a attribute_name" if provided. As of now, only points and lines are drawn in
+3D.</dd>
 
 <dt> <b>-l</b> <em>layername</em>: </dt><dd> 
 Indicates the layer(s) from the datasource that will be used for input 
