@@ -80,12 +80,11 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
     //
     if ( !InstallMdbDriver() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to install MDB driver for ODBC!\n" );
-        return NULL;
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
     }
-
-    CPLDebug( "PGeo", "MDB Tools driver installed successfully!");
+    else
+        CPLDebug( "PGeo", "MDB Tools driver installed successfully!");
 
 #endif /* ndef WIN32 */
 
