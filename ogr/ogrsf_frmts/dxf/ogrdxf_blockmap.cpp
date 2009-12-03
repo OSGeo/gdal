@@ -81,7 +81,8 @@ void OGRDXFDataSource::ReadBlocksSection()
 
         while( (poFeature = apoLayers[0]->GetNextUnfilteredFeature()) != NULL )
         {
-            if( strstr(poFeature->GetStyleString(),"LABEL") != NULL )
+            if( poFeature->GetStyleString() != NULL
+                && strstr(poFeature->GetStyleString(),"LABEL") != NULL )
             {
                 apoFeatures.push_back( poFeature );
             }
