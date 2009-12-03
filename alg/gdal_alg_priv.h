@@ -40,23 +40,29 @@ CPL_C_START
 /************************************************************************/
 
 typedef void (*llScanlineFunc)( void *, int, int, int );
-typedef void (*llPointFunc)( void *, int, int );
+typedef void (*llPointFunc)( void *, int, int, double );
 
-void GDALdllImagePoint( int, int, int, int *, double *, double *,
-                        llPointFunc, void * );
+void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
+                        int nPartCount, int *panPartSize,
+                        double *padfX, double *padfY, double *padfVariant,
+                        llPointFunc pfnPointFunc, void *pCBData );
 
 void GDALdllImageLine( int nRasterXSize, int nRasterYSize, 
                        int nPartCount, int *panPartSize,
-                       double *padfX, double *padfY,
+                       double *padfX, double *padfY, double *padfVariant,
                        llPointFunc pfnPointFunc, void *pCBData );
 
 void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize, 
                                 int nPartCount, int *panPartSize,
                                 double *padfX, double *padfY,
+                                double *padfVariant,
                                 llPointFunc pfnPointFunc, void *pCBData );
 
-void GDALdllImageFilledPolygon( int, int, int, int *, double *, double *,
-                               llScanlineFunc, void * );
+void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize, 
+                               int nPartCount, int *panPartSize,
+                               double *padfX, double *padfY,
+                               double *padfVariant,
+                               llScanlineFunc pfnScanlineFunc, void *pCBData );
 
 CPL_C_END
 
