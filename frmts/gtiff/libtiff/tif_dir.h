@@ -1,4 +1,4 @@
-/* $Id: tif_dir.h,v 1.50 2007/07/12 13:59:34 dron Exp $ */
+/* $Id: tif_dir.h,v 1.51 2009-11-30 18:19:16 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -82,6 +82,7 @@ typedef struct {
 	uint16  td_ycbcrpositioning;
 	/* Colorimetry parameters */
 	uint16* td_transferfunction[3];
+	float*	td_refblackwhite;
 	/* CMYK parameters */
 	int     td_inknameslen;
 	char*   td_inknames;
@@ -136,6 +137,7 @@ typedef struct {
 #define FIELD_HALFTONEHINTS            37
 #define FIELD_YCBCRSUBSAMPLING         39
 #define FIELD_YCBCRPOSITIONING         40
+#define	FIELD_REFBLACKWHITE            41
 #define FIELD_TRANSFERFUNCTION         44
 #define FIELD_INKNAMES                 46
 #define FIELD_SUBIFD                   49

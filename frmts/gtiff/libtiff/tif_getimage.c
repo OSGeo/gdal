@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.73 2009-09-03 17:41:02 fwarmerdam Exp $ */
+/* $Id: tif_getimage.c,v 1.74 2009-11-30 12:22:26 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -54,7 +54,7 @@ static const char photoTag[] = "PhotometricInterpretation";
  * Color conversion constants. We will define display types here.
  */
 
-TIFFDisplay display_sRGB = {
+static const TIFFDisplay display_sRGB = {
 	{			/* XYZ -> luminance matrix */
 		{  3.2410F, -1.5374F, -0.4986F },
 		{  -0.9692F, 1.8760F, 0.0416F },
