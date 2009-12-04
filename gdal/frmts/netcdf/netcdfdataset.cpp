@@ -1081,7 +1081,7 @@ void netCDFDataset::SetProjection( int var )
 	
 	if( pszWKT != NULL ) {
 	    
-	    pszProjection = strdup( pszWKT );
+	    pszProjection = CPLStrdup( pszWKT );
 	    
 	    strcpy(szTemp,szGridMappingValue);
 	    strcat( szTemp, "#" );
