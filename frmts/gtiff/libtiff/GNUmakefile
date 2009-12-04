@@ -91,7 +91,7 @@ import:
 
 install-obj:	$(EXTRA_DEP) $(O_OBJ:.o=.$(OBJ_EXT))
 
-../../o/%.$(OBJ_EXT):	%.c
+../../o/%.$(OBJ_EXT):	%.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
 	$(CC) -c -I../../port $(ALL_C_FLAGS) $< -o $@
 
 libjpeg12src:
