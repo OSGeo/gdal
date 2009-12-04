@@ -2553,6 +2553,71 @@ def tiff_write_77():
     return 'success'
     
 ###############################################################################
+# Test generating & reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259)
+
+def tiff_write_78():
+
+    src_ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_78_src.tif', 16, 2048, 3 )
+    src_ds.GetRasterBand(2).Fill(255)
+
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_78.tif', src_ds,
+                                            options = ['BLOCKYSIZE=%d' % src_ds.RasterYSize,
+                                                       'COMPRESS=JPEG',
+                                                       'PHOTOMETRIC=YCBCR'] )
+                             
+    # Make sure the file is flushed so that we re-read from it rather from cached blocks
+    new_ds.FlushCache()
+    
+    if 'GetBlockSize' in dir(gdal.Band):
+        (blockx, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
+        if blocky == 1:
+            print 'using SplitBand'
+        else:
+            print 'using regular band (libtiff <= 3.9.2 or <= 4.0.0beta5, or SplitBand disabled by config option)'
+
+    # Test reading a few samples to check that random reading works
+    band_lines = [ (1,0), (1,5), (1,3), (2,10), (1,100), (2,1000), (2,500),
+                    (1,500), (2,500), (2,2047), (2,2047), (3,2047), (1,2047) ]
+    for band_line in band_lines:
+        cs = new_ds.GetRasterBand(band_line[0]).Checksum(0,band_line[1],1,1)
+        if band_line[0] == 1:
+            expected_cs = 0 % 7;
+        elif band_line[0] == 2:
+            expected_cs = 255 % 7;
+        else:
+            # We should expect 0, but due to JPEG YCbCr compression & decompression,
+            # this ends up being 1
+            expected_cs = 1 % 7;
+        if cs != expected_cs:
+            print attempt
+            print cs
+            print expected_cs
+            print band_line
+            gdaltest.post_reason( 'Got wrong checksum' )
+            return 'fail'
+
+    # Test whole bands
+    for i in range(3):
+        cs = new_ds.GetRasterBand(i+1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+        if i == 2:
+            # We should expect 0, but due to JPEG YCbCr compression & decompression,
+            # this ends up being 32768
+            expected_cs = 32768
+        if cs != expected_cs:
+            print cs
+            gdaltest.post_reason( 'Got wrong checksum' )
+            return 'fail'
+
+    new_ds = None
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_78.tif' )
+    
+    src_ds = None
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_78_src.tif' )
+    
+    return 'success'
+    
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -2637,6 +2702,7 @@ gdaltest_list = [
     tiff_write_75,
     tiff_write_76,
     tiff_write_77,
+    tiff_write_78,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
