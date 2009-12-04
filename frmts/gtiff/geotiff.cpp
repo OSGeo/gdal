@@ -4838,9 +4838,24 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         && nBitsPerSample == 8
         && nBlockYSize == nYSize 
         && nYSize > 2000
-        && !bTreatAsRGBA )
+        && !bTreatAsRGBA 
+        && CSLTestBoolean(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")))
     {
-        bTreatAsSplit = TRUE;
+        /* libtiff 3.9.2 (20091104) and older, libtiff 4.0.0beta5 (also 20091104) */
+        /* and older will crash when trying to open a all-in-one-strip */
+        /* YCbCr JPEG compressed TIFF (see #3259). BUG_3259_FIXED is defined */
+        /* in internal libtiff tif_config.h until a 4.0.0beta6 is released */
+#if (TIFFLIB_VERSION <= 20091104 && !defined(BIGTIFF_SUPPORT)) || \
+    (TIFFLIB_VERSION <= 20091104 && defined(BIGTIFF_SUPPORT) && !defined(BUG_3259_FIXED))
+        if (nPhotometric == PHOTOMETRIC_YCBCR  &&
+            nCompression == COMPRESSION_JPEG)
+        {
+            CPLDebug("GTiff", "Avoid using split band to open all-in-one-strip "
+                              "YCbCr JPEG compressed TIFF because of older libtiff");
+        }
+        else
+#endif
+            bTreatAsSplit = TRUE;
     }
     
 /* -------------------------------------------------------------------- */

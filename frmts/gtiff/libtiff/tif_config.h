@@ -83,6 +83,8 @@
 #  define LIBJPEG_12_PATH "../../jpeg/libjpeg12/jpeglib.h"
 #endif
 
-
-
-
+/* GDAL specific to indicate that internal libtiff is patched */
+/* with fix for GDAL ticket #3259. Can be removed as well as */
+/* its reference in geotiff.cpp as soon as a libtiff 4.0.0beta6 */
+/* will be released */
+#define BUG_3259_FIXED  1
