@@ -123,7 +123,7 @@ TIFFXYZToRGB(TIFFCIELabToRGB *cielab, float X, float Y, float Z,
  */
 int
 TIFFCIELabToRGBInit(TIFFCIELabToRGB* cielab,
-		    TIFFDisplay *display, float *refWhite)
+		    const TIFFDisplay *display, float *refWhite)
 {
 	int i;
 	double gamma;
