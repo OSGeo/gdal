@@ -86,7 +86,7 @@ import:
 
 	@echo
 	@echo 'Now do something like:'
-	@echo '% cvs commit -m "updated to libtiff 3.6.0"'
+	@echo '% svn commit -m "updated to libtiff 3.6.0"'
 	@echo
 
 install-obj:	$(EXTRA_DEP) $(O_OBJ:.o=.$(OBJ_EXT))
