@@ -85,6 +85,9 @@ IGMLReader *CreateGMLReader()
     return new GMLReader();
 }
 
+int GMLReader::m_bXercesInitialized = FALSE;
+int GMLReader::m_nInstanceCount = 0;
+
 /************************************************************************/
 /*                             GMLReader()                              */
 /************************************************************************/
@@ -92,6 +95,7 @@ IGMLReader *CreateGMLReader()
 GMLReader::GMLReader()
 
 {
+    m_nInstanceCount++;
     m_nClassCount = 0;
     m_papoClass = NULL;
 
@@ -129,6 +133,10 @@ GMLReader::~GMLReader()
     CPLFree( m_pszFilename );
 
     CleanupParser();
+
+    --m_nInstanceCount;
+    if( m_nInstanceCount == 0 && m_bXercesInitialized )
+        XMLPlatformUtils::Terminate();
 
 #ifdef HAVE_EXPAT
     if (fpGML)
@@ -176,9 +184,8 @@ int GMLReader::SetupParser()
 
 {
 #if HAVE_XERCES == 1
-    static int bXercesInitialized = FALSE;
 
-    if( !bXercesInitialized )
+    if( !m_bXercesInitialized )
     {
         try
         {
@@ -192,7 +199,7 @@ int GMLReader::SetupParser()
                       tr_strdup(toCatch.getMessage()) );
             return FALSE;
         }
-        bXercesInitialized = TRUE;
+        m_bXercesInitialized = TRUE;
     }
 
     // Cleanup any old parser.
@@ -200,6 +207,9 @@ int GMLReader::SetupParser()
         CleanupParser();
 
     // Create and initialize parser.
+    XMLCh* xmlUriValid = NULL;
+    XMLCh* xmlUriNS = NULL;
+
     try{
         m_poSAXReader = XMLReaderFactory::createXMLReader();
     
@@ -211,11 +221,12 @@ int GMLReader::SetupParser()
         m_poSAXReader->setEntityResolver( m_poGMLHandler );
         m_poSAXReader->setDTDHandler( m_poGMLHandler );
 
+        xmlUriValid = XMLString::transcode("http://xml.org/sax/features/validation");
+        xmlUriNS = XMLString::transcode("http://xml.org/sax/features/namespaces");
+
 #if (OGR_GML_VALIDATION)
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/validation"), true);
-        m_poSAXReader->setFeature(
-            XMLString::transcode("http://xml.org/sax/features/namespaces"), true);
+        m_poSAXReader->setFeature( xmlUriValid, true);
+        m_poSAXReader->setFeature( xmlUriNS, true);
 
         m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, true );
         m_poSAXReader->setFeature( XMLUni::fgXercesSchema, true );
@@ -232,9 +243,14 @@ int GMLReader::SetupParser()
 #endif
 
 #endif
+        XMLString::release( &xmlUriValid );
+        XMLString::release( &xmlUriNS );
     }
     catch (...)
     {
+        XMLString::release( &xmlUriValid );
+        XMLString::release( &xmlUriNS );
+
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Exception initializing Xerces based GML reader.\n" );
         return FALSE;
