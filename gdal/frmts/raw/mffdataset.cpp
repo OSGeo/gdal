@@ -619,7 +619,10 @@ void MFFDataset::ScanForProjectionInfo()
 
         poTransform = OGRCreateCoordinateTransformation( &oLL, &oProj );
         if( poTransform == NULL )
+        {
+            CPLErrorReset();
             bSuccess = FALSE;
+        }
 
         for(gcp_index=0;gcp_index<nGCPCount;gcp_index++)
         {
