@@ -66,6 +66,18 @@ static const char *apszDefDefn[] = {
     "Eprj_MapProjection842",
     "{1:x{1:x{0:pcstring,}Emif_String,type,1:x{0:pcstring,}Emif_String,MIFDictionary,0:pCMIFObject,}Emif_MIFObject,projection,1:x{0:pcstring,}Emif_String,title,}Eprj_MapProjection842",
 
+    "Emif_MIFObject",
+    "{1:x{0:pcstring,}Emif_String,type,1:x{0:pcstring,}Emif_String,MIFDictionary,0:pCMIFObject,}Emif_MIFObject",
+
+    "Eprj_ProParameters",
+    "{1:e2:EPRJ_INTERNAL,EPRJ_EXTERNAL,proType,1:lproNumber,0:pcproExeName,0:pcproName,1:lproZone,0:pdproParams,1:*oEprj_Spheroid,proSpheroid,}Eprj_ProParameters",
+    
+    "Eprj_Datum",
+    "{0:pcdatumname,1:e3:EPRJ_DATUM_PARAMETRIC,EPRJ_DATUM_GRID,EPRJ_DATUM_REGRESSION,type,0:pdparams,0:pcgridname,}Eprj_Datum",
+
+    "Eprj_Spheroid",
+    "{0:pcsphereName,1:da,1:db,1:deSquared,1:dradius,}Eprj_Spheroid",
+
     NULL,
     NULL };
     
