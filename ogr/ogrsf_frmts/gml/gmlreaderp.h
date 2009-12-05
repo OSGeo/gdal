@@ -200,6 +200,8 @@ public:
 class GMLReader : public IGMLReader 
 {
 private:
+    static int    m_bXercesInitialized;
+    static int    m_nInstanceCount;
     int           m_bClassListLocked;
 
     int         m_nClassCount;
