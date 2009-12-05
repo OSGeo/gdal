@@ -561,8 +561,10 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
         oLL.importFromWkt(&pszGCPtemp);
         poTransform = OGRCreateCoordinateTransformation( &oUTM, &oLL );
         if( poTransform == NULL )
+        {
             bSuccess = FALSE;
-
+            CPLErrorReset();
+        }
     }
     else if ((( CSLFetchNameValue( papszGeoref, "projection.name" ) != NULL ) &&
               ( !EQUAL(CSLFetchNameValue( papszGeoref, "projection.name" ),"LL" ))) ||
