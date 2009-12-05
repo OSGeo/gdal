@@ -1472,10 +1472,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         char **papszName =
             CSLTokenizeString2( poOpenInfo->pszFilename,
                                 ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES );
-
-	if( CSLCount(papszName) == 3 )
+                   
+    /* -------------------------------------------------------------------- */
+    /*    Check for drive name in windows NETCDF:"D:\...                    */
+    /* -------------------------------------------------------------------- */
+        if ( CSLCount(papszName) == 4 &&
+             strlen(papszName[1]) == 1 &&
+             (papszName[2][0] == '/' || papszName[2][0] == '\\') )
         {
-	    poDS->osFilename = papszName[1];
+            poDS->osFilename = papszName[1];
+            poDS->osFilename += ':';
+            poDS->osFilename += papszName[2];
+            poDS->osSubdatasetName = papszName[3];
+            poDS->bTreatAsSubdataset = TRUE;
+            CSLDestroy( papszName );
+        }
+        else if( CSLCount(papszName) == 3 )
+        {
+            poDS->osFilename = papszName[1];
             poDS->osSubdatasetName = papszName[2];
             poDS->bTreatAsSubdataset = TRUE;
             CSLDestroy( papszName );
