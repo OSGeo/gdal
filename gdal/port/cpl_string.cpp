@@ -2120,4 +2120,3 @@ size_t CPLStrnlen (const char *pszStr, size_t nMaxLen)
     }
     return nLen;
 }
-    
