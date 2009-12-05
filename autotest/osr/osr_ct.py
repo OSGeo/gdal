@@ -68,7 +68,7 @@ def osr_ct_1():
             return 'fail'
 
     gdal.PopErrorHandler()
-    if ct is None:
+    if ct is None or ct.this is None:
         gdaltest.post_reason( 'Unable to create simple CoordinateTransformat.')
         return 'fail'
 
