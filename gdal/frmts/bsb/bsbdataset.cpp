@@ -443,6 +443,8 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 
             delete poCT;
         }
+        else
+            CPLErrorReset();
     }
 
 /* -------------------------------------------------------------------- */
