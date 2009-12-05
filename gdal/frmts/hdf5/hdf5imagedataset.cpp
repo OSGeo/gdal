@@ -356,7 +356,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     HDF5ImageDataset    *poDS;
     char szFilename[2048];
 
-    if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) )
+    if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) ||
+        strlen(poOpenInfo->pszFilename) > sizeof(szFilename) - 3 )
 	return NULL;
     
 /* -------------------------------------------------------------------- */
