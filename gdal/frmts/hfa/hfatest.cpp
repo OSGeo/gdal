@@ -141,7 +141,9 @@ int main( int argc, char ** argv )
             int nBlockXSize, nBlockYSize, nCompressionType;
         
             HFAGetBandInfo( hHFA, i, &nDataType, &nBlockXSize, &nBlockYSize, 
-                            &nOverviews, &nCompressionType );
+                            &nCompressionType );
+            nOverviews = HFAGetOverviewCount( hHFA, i );
+
             printf( "Band %d: %dx%d tiles, type = %d\n",
                     i, nBlockXSize, nBlockYSize, nDataType );
 
