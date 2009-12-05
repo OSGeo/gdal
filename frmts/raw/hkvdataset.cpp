@@ -1159,7 +1159,10 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
   
         poTransform = OGRCreateCoordinateTransformation( &oLL, &oUTM );
         if( poTransform == NULL )
+        {
+            CPLErrorReset();
             bSuccess = FALSE;
+        }
 
         for(gcp_index=0;gcp_index<5;gcp_index++)
         {
