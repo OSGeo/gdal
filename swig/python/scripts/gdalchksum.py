@@ -36,7 +36,7 @@ except ImportError:
 import sys
 
 def Usage():
-    print 'Usage: gdalchksum.py [-b band] [-srcwin xoff yoff xsize ysize] file'
+    print('Usage: gdalchksum.py [-b band] [-srcwin xoff yoff xsize ysize] file')
     sys.exit(1)
 
 # =============================================================================
@@ -82,7 +82,7 @@ if filename is None:
 
 ds = gdal.Open( filename )
 if ds is None:
-    print 'Unable to open ', filename
+    print('Unable to open ', filename)
     sys.exit(1)
 
 # Default values
@@ -91,7 +91,7 @@ if srcwin is None:
     srcwin = [ 0, 0, ds.RasterXSize, ds.RasterYSize ]
 
 if len(bands) == 0:
-    bands = range(1,(ds.RasterCount+1))
+    bands = list(range(1,(ds.RasterCount+1)))
 
 
 # Generate checksums
@@ -99,7 +99,7 @@ if len(bands) == 0:
 for band_num in bands:
     oBand = ds.GetRasterBand( band_num )
     result = oBand.Checksum( srcwin[0], srcwin[1], srcwin[2], srcwin[3] )
-    print result
+    print(result)
 
 ds = None
 

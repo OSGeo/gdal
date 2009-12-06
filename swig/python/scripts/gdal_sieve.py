@@ -38,10 +38,10 @@ import sys
 import os.path
 
 def Usage():
-    print """
+    print("""
 gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
            srcfile [-nomask] [-mask filename] [-of format] [dstfile]
-"""
+""")
     sys.exit(1)
     
 # =============================================================================
@@ -120,10 +120,10 @@ if src_filename is None:
 try:
     gdal.SieveFilter
 except:
-    print
-    print 'gdal.SieveFilter() not available.  You are likely using "old gen"'
-    print 'bindings or an older version of the next gen bindings.'
-    print
+    print()
+    print('gdal.SieveFilter() not available.  You are likely using "old gen"')
+    print('bindings or an older version of the next gen bindings.')
+    print()
     sys.exit(1)
 
 # =============================================================================
@@ -136,7 +136,7 @@ else:
     src_ds = gdal.Open( src_filename, gdal.GA_ReadOnly )
     
 if src_ds is None:
-    print 'Unable to open ', src_filename
+    print('Unable to open ', src_filename)
     sys.exit(1)
 
 srcband = src_ds.GetRasterBand(1)

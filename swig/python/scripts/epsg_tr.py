@@ -42,8 +42,8 @@ import string
 # =============================================================================
 def Usage():
 
-    print 'Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]'
-    print '                  [-skip] [-list filename] [start_code [end_code]]'
+    print('Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]')
+    print('                  [-skip] [-list filename] [start_code [end_code]]')
     sys.exit(1)
 
 # =============================================================================
@@ -57,24 +57,24 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
         err = 1
 
     if err != 0 and report_error:
-        print 'Unable to lookup ',code,', either not a valid EPSG'
-        print 'code, or it the EPSG csv files are not accessable.'
+        print('Unable to lookup ',code,', either not a valid EPSG')
+        print('code, or it the EPSG csv files are not accessable.')
         sys.exit(2)
     else:
         if output_format == '-pretty_wkt':
             if gen_dict_line:
-                print 'EPSG:',code
+                print('EPSG:',code)
 
-            print prj_srs.ExportToPrettyWkt()
+            print(prj_srs.ExportToPrettyWkt())
 
         if output_format == '-xml':
-            print prj_srs.ExportToXML()
+            print(prj_srs.ExportToXML())
             
         if output_format == '-wkt':
             if gen_dict_line:
-                print 'EPSG:',code
+                print('EPSG:',code)
                     
-            print prj_srs.ExportToWkt()
+            print(prj_srs.ExportToWkt())
                 
         if output_format == '-proj4':
             out_string = prj_srs.ExportToProj4()
@@ -86,12 +86,12 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             if name is None:
                 name = 'Unknown'
             
-            print '# %s' % name
-            if err == 0 and string.find(out_string,'+proj=') > -1:
-                print '<%s> %s <>' % (str(code), out_string)
+            print('# %s' % name)
+            if err == 0 and out_string.find('+proj=') > -1:
+                print('<%s> %s <>' % (str(code), out_string))
             else:
-                print '# Unable to translate coordinate system EPSG:%d into PROJ.4 format.' % code
-                print '#'
+                print('# Unable to translate coordinate system EPSG:%d into PROJ.4 format.' % code)
+                print('#')
 
         if output_format == '-postgis':
             name = prj_srs.GetAttrValue('PROJCS')
@@ -104,17 +104,17 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
                 err = 1
             wkt = prj_srs.ExportToWkt()
             
-            print '---'
-            print '--- EPSG %d : %s' % (code, name)
-            print '---'
+            print('---')
+            print('--- EPSG %d : %s' % (code, name))
+            print('---')
 
             if err:
-                print '-- (unable to translate)'
+                print('-- (unable to translate)')
             else:
                 wkt = gdal.EscapeString(wkt,scheme=gdal.CPLES_SQL)
                 proj4text = gdal.EscapeString(proj4text,scheme=gdal.CPLES_SQL)
-                print 'INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%s,\'EPSG\',%s,\'%s\',\'%s\');' % \
-                      (str(code),str(code),wkt,proj4text)
+                print('INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%s,\'EPSG\',%s,\'%s\',\'%s\');' % \
+                      (str(code),str(code),wkt,proj4text))
             
 # =============================================================================
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     # Output BEGIN transaction for PostGIS
     if output_format == '-postgis':
-        print 'BEGIN;'
+        print('BEGIN;')
 
     # Do we need to produce a single output definition, or include a
     # dictionary line for each entry?
@@ -189,7 +189,7 @@ if __name__ == '__main__':
         line = list_fd.readline()
         while len(line) > 0:
             try:
-                c_offset = string.find(line,',')
+                c_offset = line.find(',')
                 if c_offset > 0:
                     line = line[:c_offset]
                     
@@ -197,7 +197,7 @@ if __name__ == '__main__':
             except:
                 code = -1
 
-            if code <> -1:
+            if code != -1:
                 trHandleCode(code, gen_dict_line, report_error, output_format)
                 
             line = list_fd.readline()
@@ -207,7 +207,7 @@ if __name__ == '__main__':
         
     # Output COMMIT transaction for PostGIS
     if output_format == '-postgis':
-        print 'COMMIT;'
-        print 'VACUUM ANALYZE spatial_ref_sys;'
+        print('COMMIT;')
+        print('VACUUM ANALYZE spatial_ref_sys;')
 
 

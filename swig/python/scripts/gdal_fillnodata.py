@@ -44,11 +44,11 @@ def CopyBand( srcband, dstband ):
                              buf_type = srcband.DataType )
         
 def Usage():
-    print """
+    print("""
 gdal_nodatafill [-q] [-md max_distance] [-si smooth_iterations]
                 [-o name=value] [-b band]
                 srcfile [-nomask] [-mask filename] [-of format] [dstfile]
-"""
+""")
     sys.exit(1)
     
 # =============================================================================
@@ -130,10 +130,10 @@ if src_filename is None:
 try:
     gdal.FillNodata
 except:
-    print
-    print 'gdal.FillNodata() not available.  You are likely using "old gen"'
-    print 'bindings or an older version of the next gen bindings.'
-    print
+    print()
+    print('gdal.FillNodata() not available.  You are likely using "old gen"')
+    print('bindings or an older version of the next gen bindings.')
+    print()
     sys.exit(1)
 
 # =============================================================================
@@ -146,7 +146,7 @@ else:
     src_ds = gdal.Open( src_filename, gdal.GA_ReadOnly )
     
 if src_ds is None:
-    print 'Unable to open ', src_filename
+    print('Unable to open ', src_filename)
     sys.exit(1)
 
 srcband = src_ds.GetRasterBand(src_band)

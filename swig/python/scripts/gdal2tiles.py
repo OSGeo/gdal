@@ -624,11 +624,11 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		# Output the results
 
 		if self.options.verbose:
-			print "Options:", self.options
-			print "Input:", self.input
-			print "Output:", self.output
-			print "Cache: %s MB" % (gdal.GetCacheMax() / 1024 / 1024)
-			print
+			print("Options:", self.options)
+			print("Input:", self.input)
+			print("Output:", self.output)
+			print("Cache: %s MB" % (gdal.GetCacheMax() / 1024 / 1024))
+			print('')
 
 	# -------------------------------------------------------------------------
 	def optparse_init(self):
@@ -713,7 +713,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 			raise Exception("No input file was specified")
 
 		if self.options.verbose:
-			print "Input file:", "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize, self.in_ds.RasterCount)
+			print("Input file:", "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize, self.in_ds.RasterCount))
 
 		if not self.in_ds:
 			# Note: GDAL prints the ERROR message too
@@ -737,21 +737,21 @@ gdal2tiles temp.vrt""" % self.input )
 			if self.in_ds.GetRasterBand(i).GetNoDataValue() != None:
 				self.in_nodata.append( self.in_ds.GetRasterBand(i).GetNoDataValue() )
 		if self.options.srcnodata:
-			nds = map( float, self.options.srcnodata.split(','))
+			nds = list(map( float, self.options.srcnodata.split(',')))
 			if len(nds) < self.in_ds.RasterCount:
 				self.in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
 			else:
 				self.in_nodata = nds
 
 		if self.options.verbose:
-			print "NODATA: %s" % self.in_nodata
+			print("NODATA: %s" % self.in_nodata)
 
 		#
 		# Here we should have RGBA input dataset opened in self.in_ds
 		#
 
 		if self.options.verbose:
-			print "Preprocessed file:", "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize, self.in_ds.RasterCount)
+			print("Preprocessed file:", "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize, self.in_ds.RasterCount))
 
 		# Spatial Reference System of the input raster
 
@@ -803,7 +803,7 @@ gdal2tiles temp.vrt""" % self.input )
 					# TODO: HIGH PRIORITY: Correction of AutoCreateWarpedVRT according the max zoomlevel for correct direct warping!!!
 					
 					if self.options.verbose:
-						print "Warping of the raster by AutoCreateWarpedVRT (result saved into 'tiles.vrt')"
+						print("Warping of the raster by AutoCreateWarpedVRT (result saved into 'tiles.vrt')")
 						self.out_ds.GetDriver().CreateCopy("tiles.vrt", self.out_ds)
 						
 					# Note: self.in_srs and self.in_srs_wkt contain still the non-warped reference system!!!
@@ -838,7 +838,7 @@ gdal2tiles temp.vrt""" % self.input )
 						self.out_ds.SetMetadataItem('NODATA_VALUES','%i %i %i' % (self.in_nodata[0],self.in_nodata[1],self.in_nodata[2]))
 
 						if self.options.verbose:
-							print "Modified warping result saved into 'tiles1.vrt'"
+							print("Modified warping result saved into 'tiles1.vrt'")
 							open("tiles1.vrt","w").write(s)
 
 					# -----------------------------------
@@ -867,7 +867,7 @@ gdal2tiles temp.vrt""" % self.input )
 						os.unlink(tempfilename)
 
 						if self.options.verbose:
-							print "Modified -dstalpha warping result saved into 'tiles1.vrt'"
+							print("Modified -dstalpha warping result saved into 'tiles1.vrt'")
 							open("tiles1.vrt","w").write(s)
 					s = '''
 					'''
@@ -876,7 +876,7 @@ gdal2tiles temp.vrt""" % self.input )
 				self.error("Input file has unknown SRS.", "Use --s_srs ESPG:xyz (or similar) to provide source reference system." )
 
 			if self.out_ds and self.options.verbose:
-				print "Projected file:", "tiles.vrt", "( %sP x %sL - %s bands)" % (self.out_ds.RasterXSize, self.out_ds.RasterYSize, self.out_ds.RasterCount)
+				print("Projected file:", "tiles.vrt", "( %sP x %sL - %s bands)" % (self.out_ds.RasterXSize, self.out_ds.RasterYSize, self.out_ds.RasterCount))
 		
 		if not self.out_ds:
 			self.out_ds = self.in_ds
@@ -901,7 +901,7 @@ gdal2tiles temp.vrt""" % self.input )
 			self.kml = True
 			self.isepsg4326 = True
 			if self.options.verbose:
-				print "KML autotest OK!"
+				print("KML autotest OK!")
 
 		# Read the georeference 
 
@@ -934,7 +934,7 @@ gdal2tiles temp.vrt""" % self.input )
 		# Note: maybe round(x, 14) to avoid the gdal_translate behaviour, when 0 becomes -1e-15
 
 		if self.options.verbose:
-			print "Bounds (output srs):", round(self.ominx, 13), self.ominy, self.omaxx, self.omaxy
+			print("Bounds (output srs):", round(self.ominx, 13), self.ominy, self.omaxx, self.omaxy)
 
 		#
 		# Calculating ranges for tiles in different zoom levels
@@ -948,7 +948,7 @@ gdal2tiles temp.vrt""" % self.input )
 			self.tileswne = self.mercator.TileLatLonBounds
 
 			# Generate table with min max tile coordinates for all zoomlevels
-			self.tminmax = range(0,32)
+			self.tminmax = list(range(0,32))
 			for tz in range(0, 32):
 				tminx, tminy = self.mercator.MetersToTile( self.ominx, self.ominy, tz )
 				tmaxx, tmaxy = self.mercator.MetersToTile( self.omaxx, self.omaxy, tz )
@@ -968,9 +968,9 @@ gdal2tiles temp.vrt""" % self.input )
 				self.tmaxz = self.mercator.ZoomForPixelSize( self.out_gt[1] )
 			
 			if self.options.verbose:
-				print "Bounds (latlong):", self.mercator.MetersToLatLon( self.ominx, self.ominy), self.mercator.MetersToLatLon( self.omaxx, self.omaxy)
-				print 'MinZoomLevel:', self.tminz
-				print "MaxZoomLevel:", self.tmaxz, "(", self.mercator.Resolution( self.tmaxz ),")"
+				print("Bounds (latlong):", self.mercator.MetersToLatLon( self.ominx, self.ominy), self.mercator.MetersToLatLon( self.omaxx, self.omaxy))
+				print('MinZoomLevel:', self.tminz)
+				print("MaxZoomLevel:", self.tmaxz, "(", self.mercator.Resolution( self.tmaxz ),")")
 
 		if self.options.profile == 'geodetic':
 
@@ -980,7 +980,7 @@ gdal2tiles temp.vrt""" % self.input )
 			self.tileswne = self.geodetic.TileLatLonBounds
 			
 			# Generate table with min max tile coordinates for all zoomlevels
-			self.tminmax = range(0,32)
+			self.tminmax = list(range(0,32))
 			for tz in range(0, 32):
 				tminx, tminy = self.geodetic.LatLonToTile( self.ominx, self.ominy, tz )
 				tmaxx, tmaxy = self.geodetic.LatLonToTile( self.omaxx, self.omaxy, tz )
@@ -1000,7 +1000,7 @@ gdal2tiles temp.vrt""" % self.input )
 				self.tmaxz = self.geodetic.ZoomForPixelSize( self.out_gt[1] )
 			
 			if self.options.verbose:
-				print "Bounds (latlong):", self.ominx, self.ominy, self.omaxx, self.omaxy
+				print("Bounds (latlong):", self.ominx, self.ominy, self.omaxx, self.omaxy)
 					
 		if self.options.profile == 'raster':
 			
@@ -1010,7 +1010,7 @@ gdal2tiles temp.vrt""" % self.input )
 			                           math.ceil(log2(self.out_ds.RasterYSize/float(self.tilesize)))))
 			
 			if self.options.verbose:
-				print "Native zoom of the raster:", self.nativezoom
+				print("Native zoom of the raster:", self.nativezoom)
 
 			# Get the minimal zoom level (whole raster in one tile)
 			if self.tminz == None:
@@ -1021,8 +1021,8 @@ gdal2tiles temp.vrt""" % self.input )
 				self.tmaxz = self.nativezoom
 
 			# Generate table with min max tile coordinates for all zoomlevels
-			self.tminmax = range(0, self.tmaxz+1)
-			self.tsize = range(0, self.tmaxz+1)
+			self.tminmax = list(range(0, self.tmaxz+1))
+			self.tsize = list(range(0, self.tmaxz+1))
 			for tz in range(0, self.tmaxz+1):
 				tsize = 2.0**(self.nativezoom-tz)*self.tilesize
 				tminx, tminy = 0, 0
@@ -1136,16 +1136,16 @@ gdal2tiles temp.vrt""" % self.input )
 	def generate_base_tiles(self):
 		"""Generation of the base tiles (the lowest in the pyramid) directly from the input raster"""
 		
-		print "Generating Base Tiles:"
+		print("Generating Base Tiles:")
 		
 		if self.options.verbose:
 			#mx, my = self.out_gt[0], self.out_gt[3] # OriginX, OriginY
 			#px, py = self.mercator.MetersToPixels( mx, my, self.tmaxz)
 			#print "Pixel coordinates:", px, py, (mx, my)
-			print
-			print "Tiles generated from the max zoom level:"
-			print "----------------------------------------"
-			print
+			print('')
+			print("Tiles generated from the max zoom level:")
+			print("----------------------------------------")
+			print('')
 
 
 		# Set the bounds
@@ -1162,8 +1162,8 @@ gdal2tiles temp.vrt""" % self.input )
 		querysize = self.querysize
 		
 		if self.options.verbose:
-			print "dataBandsCount: ", self.dataBandsCount
-			print "tilebands: ", tilebands
+			print("dataBandsCount: ", self.dataBandsCount)
+			print("tilebands: ", tilebands)
 		
 		#print tminx, tminy, tmaxx, tmaxy
 		tcount = (1+abs(tmaxx-tminx)) * (1+abs(tmaxy-tminy))
@@ -1179,11 +1179,11 @@ gdal2tiles temp.vrt""" % self.input )
 				ti += 1
 				tilefilename = os.path.join(self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
 				if self.options.verbose:
-					print ti,'/',tcount, tilefilename #, "( TileMapService: z / x / y )"
+					print(ti,'/',tcount, tilefilename) #, "( TileMapService: z / x / y )"
 
 				if self.options.resume and os.path.exists(tilefilename):
 					if self.options.verbose:
-						print "Tile generation skiped because of --resume"
+						print("Tile generation skiped because of --resume")
 					else:
 						self.progressbar( ti / float(tcount) )
 					continue
@@ -1207,7 +1207,7 @@ gdal2tiles temp.vrt""" % self.input )
 					rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1])
 					nativesize = wb[0]+wb[2] # Pixel size in the raster covering query geo extent
 					if self.options.verbose:
-						print "\tNative Extent (querysize",nativesize,"): ", rb, wb
+						print("\tNative Extent (querysize",nativesize,"): ", rb, wb)
 
 					# Tile bounds in raster coordinates for ReadRaster query
 					rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1], querysize=querysize)
@@ -1243,19 +1243,19 @@ gdal2tiles temp.vrt""" % self.input )
 						wy = self.tilesize - wysize
 					
 				if self.options.verbose:
-					print "\tReadRaster Extent: ", (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize)
+					print("\tReadRaster Extent: ", (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
 					
 				# Query is in 'nearest neighbour' but can be bigger in then the tilesize
 				# We scale down the query to the tilesize by supplied algorithm.
 
 				# Tile dataset in memory
 				dstile = self.mem_drv.Create('', self.tilesize, self.tilesize, tilebands)
-				data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, band_list=range(1,self.dataBandsCount+1))
+				data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, band_list=list(range(1,self.dataBandsCount+1)))
 				alpha = self.alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
 				if self.tilesize == querysize:
 					# Use the ReadRaster result directly in tiles ('nearest neighbour' query)
-					dstile.WriteRaster(wx, wy, wxsize, wysize, data, band_list=range(1,self.dataBandsCount+1))
+					dstile.WriteRaster(wx, wy, wxsize, wysize, data, band_list=list(range(1,self.dataBandsCount+1)))
 					dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
 					# Note: For source drivers based on WaveLet compression (JPEG2000, ECW, MrSID)
@@ -1267,7 +1267,7 @@ gdal2tiles temp.vrt""" % self.input )
 					# TODO: fill the null value in case a tile without alpha is produced (now only png tiles are supported)
 					#for i in range(1, tilebands+1):
 					#	dsquery.GetRasterBand(1).Fill(tilenodata)
-					dsquery.WriteRaster(wx, wy, wxsize, wysize, data, band_list=range(1,self.dataBandsCount+1))
+					dsquery.WriteRaster(wx, wy, wxsize, wysize, data, band_list=list(range(1,self.dataBandsCount+1)))
 					dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
 					self.scale_query_to_tile(dsquery, dstile, tilefilename)
@@ -1296,7 +1296,7 @@ gdal2tiles temp.vrt""" % self.input )
 	def generate_overview_tiles(self):
 		"""Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
 		
-		print "Generating Overview Tiles:"
+		print("Generating Overview Tiles:")
 		
 		tilebands = self.dataBandsCount + 1
 		
@@ -1323,11 +1323,11 @@ gdal2tiles temp.vrt""" % self.input )
 					tilefilename = os.path.join( self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext) )
 
 					if self.options.verbose:
-						print ti,'/',tcount, tilefilename #, "( TileMapService: z / x / y )"
+						print(ti,'/',tcount, tilefilename) #, "( TileMapService: z / x / y )"
 					
 					if self.options.resume and os.path.exists(tilefilename):
 						if self.options.verbose:
-							print "Tile generation skiped because of --resume"
+							print("Tile generation skiped because of --resume")
 						else:
 							self.progressbar( ti / float(tcount) )
 						continue
@@ -1365,7 +1365,7 @@ gdal2tiles temp.vrt""" % self.input )
 									tileposx = 0
 								dsquery.WriteRaster( tileposx, tileposy, self.tilesize, self.tilesize,
 									dsquerytile.ReadRaster(0,0,self.tilesize,self.tilesize),
-									band_list=range(1,tilebands+1))
+									band_list=list(range(1,tilebands+1)))
 								children.append( [x, y, tz+1] )
 
 					self.scale_query_to_tile(dsquery, dstile, tilefilename)
@@ -1375,7 +1375,7 @@ gdal2tiles temp.vrt""" % self.input )
 						self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
 
 					if self.options.verbose:
-						print "\tbuild from zoom", tz+1," tiles:", (2*tx, 2*ty), (2*tx+1, 2*ty),(2*tx, 2*ty+1), (2*tx+1, 2*ty+1)
+						print("\tbuild from zoom", tz+1," tiles:", (2*tx, 2*ty), (2*tx+1, 2*ty),(2*tx, 2*ty+1), (2*tx+1, 2*ty+1))
 
 					# Create a KML file for this tile.
 					if self.kml:
@@ -1529,12 +1529,12 @@ gdal2tiles temp.vrt""" % self.input )
 		"""
 		args['tx'], args['ty'], args['tz'] = tx, ty, tz
 		args['tileformat'] = self.tileext
-		if not args.has_key('tilesize'):
+		if 'tilesize' not in args:
 			args['tilesize'] = self.tilesize
 
-		if not args.has_key('minlodpixels'):
+		if 'minlodpixels' not in args:
 			args['minlodpixels'] = int( args['tilesize'] / 2 ) # / 2.56) # default 128
-		if not args.has_key('maxlodpixels'):
+		if 'maxlodpixels' not in args:
 			args['maxlodpixels'] = int( args['tilesize'] * 8 ) # 1.7) # default 2048 (used to be -1)
 		if children == []:
 			args['maxlodpixels'] = -1
