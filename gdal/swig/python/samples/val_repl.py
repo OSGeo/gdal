@@ -55,9 +55,9 @@ import sys
 
 # =============================================================================
 def Usage():
-    print 'Usage: val_repl.py -innd in_nodata_value -outnd out_nodata_value'
-    print '                   [-of out_format] [-ot out_type] infile outfile'
-    print
+    print('Usage: val_repl.py -innd in_nodata_value -outnd out_nodata_value')
+    print('                   [-of out_format] [-ot out_type] infile outfile')
+    print('')
     sys.exit( 1 )
 
 # =============================================================================
@@ -65,29 +65,29 @@ def Usage():
 # =============================================================================
 def ParseType(type):
     if type == 'Byte':
-	return GDT_Byte
+        return GDT_Byte
     elif type == 'Int16':
-	return GDT_Int16
+        return GDT_Int16
     elif type == 'UInt16':
-	return GDT_UInt16
+        return GDT_UInt16
     elif type == 'Int32':
-	return GDT_Int32
+        return GDT_Int32
     elif type == 'UInt32':
-	return GDT_UInt32
+        return GDT_UInt32
     elif type == 'Float32':
-	return GDT_Float32
+        return GDT_Float32
     elif type == 'Float64':
-	return GDT_Float64
+        return GDT_Float64
     elif type == 'CInt16':
-	return GDT_CInt16
+        return GDT_CInt16
     elif type == 'CInt32':
-	return GDT_CInt32
+        return GDT_CInt32
     elif type == 'CFloat32':
-	return GDT_CFloat32
+        return GDT_CFloat32
     elif type == 'CFloat64':
-	return GDT_CFloat64
+        return GDT_CFloat64
     else:
-	return GDT_Byte
+        return GDT_Byte
 # =============================================================================
 
 inNoData = None
@@ -103,12 +103,12 @@ while i < len(sys.argv):
     arg = sys.argv[i]
 
     if arg == '-innd':
-	i = i + 1
-	inNoData = float(sys.argv[i])
+        i = i + 1
+        inNoData = float(sys.argv[i])
 
     elif arg == '-outnd':
-	i = i + 1
-	outNoData = float(sys.argv[i])
+        i = i + 1
+        outNoData = float(sys.argv[i])
 
     elif arg == '-of':
         i = i + 1
@@ -119,13 +119,13 @@ while i < len(sys.argv):
         type = ParseType(sys.argv[i])
 
     elif infile is None:
-	infile = arg
+        infile = arg
 
     elif outfile is None:
-	outfile = arg
+        outfile = arg
 
     else:
-	Usage()
+        Usage()
 
     i = i + 1
 
@@ -148,8 +148,8 @@ for iBand in range(1, indataset.RasterCount + 1):
     outband = outdataset.GetRasterBand(iBand)
 
     for i in range(inband.YSize - 1, -1, -1):
-	scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
+        scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
         scanline = gdalnumeric.choose( gdalnumeric.equal( scanline, inNoData),
                                        (scanline, outNoData) )
-	outband.WriteArray(scanline, 0, i)
+        outband.WriteArray(scanline, 0, i)
 

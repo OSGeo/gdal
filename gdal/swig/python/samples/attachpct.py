@@ -38,7 +38,7 @@ import sys
 import string
 
 if len(sys.argv) < 3:
-    print 'Usage: attachpct.py <pctfile> <infile> <outfile>'
+    print('Usage: attachpct.py <pctfile> <infile> <outfile>')
     sys.exit(1)
 
 # =============================================================================
@@ -48,7 +48,7 @@ ds = gdal.Open( sys.argv[1] )
 ct = ds.GetRasterBand(1).GetRasterColorTable()
 
 if ct is None:
-    print 'No color table on file ', sys.argv[1]
+    print('No color table on file ', sys.argv[1])
     sys.exit(1)
 
 ct = ct.Clone()

@@ -42,13 +42,13 @@ import sys
 
 # =============================================================================
 def Usage():
-    print
-    print 'Read coordinate system and geotransformation matrix from input'
-    print 'file and report latitude/longitude coordinates for the center'
-    print 'of the specified pixel.'
-    print
-    print 'Usage: tolatlong.py pixel line infile'
-    print
+    print('')
+    print('Read coordinate system and geotransformation matrix from input')
+    print('file and report latitude/longitude coordinates for the center')
+    print('of the specified pixel.')
+    print('')
+    print('Usage: tolatlong.py pixel line infile')
+    print('')
     sys.exit( 1 )
 
 # =============================================================================
@@ -65,16 +65,16 @@ while i < len(sys.argv):
     arg = sys.argv[i]
 
     if pixel is None:
-	pixel = float(arg)
+        pixel = float(arg)
 
     elif line is None:
-	line = float(arg)
+        line = float(arg)
 
     elif infile is None:
-	infile = arg
+        infile = arg
 
     else:
-	Usage()
+        Usage()
 
     i = i + 1
 
@@ -104,11 +104,11 @@ srs.ImportFromWkt(indataset.GetProjection())
 
 srsLatLong = srs.CloneGeogCS()
 ct = osr.CoordinateTransformation(srs, srsLatLong)
-(long, lat, height) = ct.TransformPoint(X, Y)
+(int, lat, height) = ct.TransformPoint(X, Y)
 
 # Report results
-print 'pixel: %g\t\t\tline: %g' % (pixel, line)
-print 'latitude: %fd\t\tlongitude: %fd' % (lat, long)
-print 'latitude: ', gdal.DecToDMS(lat, 'Lat', 2), \
-    '\tlongitude: ', gdal.DecToDMS(long, 'Long', 2)
+print('pixel: %g\t\t\tline: %g' % (pixel, line))
+print('latitude: %fd\t\tlongitude: %fd' % (lat, int))
+print('latitude: ', gdal.DecToDMS(lat, 'Lat', 2), \
+    '\tlongitude: ', gdal.DecToDMS(int, 'Long', 2))
 

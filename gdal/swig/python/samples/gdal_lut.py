@@ -67,7 +67,7 @@ def read_lut( filename ):
 # =============================================================================
 
 def Usage():
-    print """
+    print("""
 Usage: gdal_lut.py src_file [-srcband] [dst_file] [-dstband] -lutfile filename
                    [-of format] [-co name=value]*
 
@@ -86,7 +86,7 @@ would map input pixel values 0,1,2,3,4,5 to 0,5,11,12,12,13 respectively.
 Values not mapped by the lut file (for instance values 6-255 in the above
 case) will be left unaltered.  Sixteen bit (UInt16) output values are
 supported as well as luts of more than 256 input values.
-"""                   
+""")                   
     sys.exit(1)
 
 # =============================================================================
@@ -187,7 +187,7 @@ else:
     dst_ds = None
     
 if src_ds is None:
-    print 'Unable to open ', src_filename
+    print('Unable to open ', src_filename)
     sys.exit(1)
 
 src_band = src_ds.GetRasterBand(src_band_n)
@@ -197,7 +197,7 @@ src_band = src_ds.GetRasterBand(src_band_n)
 
 dst_driver = gdal.GetDriverByName(format)
 if dst_driver is None:
-    print '"%s" driver not registered.' % format
+    print('"%s" driver not registered.' % format)
     sys.exit(1)
 
 if dst_ds is None:

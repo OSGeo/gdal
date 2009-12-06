@@ -68,9 +68,9 @@ def Esc(x):
 
 #############################################################################
 def Usage():
-    print 'Usage: ogr2vrt.py [-relative] [-schema] '
-    print '                  in_datasource out_vrtfile [layers]'
-    print
+    print('Usage: ogr2vrt.py [-relative] [-schema] ')
+    print('                  in_datasource out_vrtfile [layers]')
+    print('')
     sys.exit(1)
 
 #############################################################################
@@ -97,10 +97,10 @@ while i < len(argv):
         schema = 1
 
     elif infile is None:
-	infile = arg
+        infile = arg
 
     elif outfile is None:
-	outfile = arg
+        outfile = arg
 
     else:
         layer_list.append( arg )
