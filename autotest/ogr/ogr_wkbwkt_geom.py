@@ -90,8 +90,8 @@ class wkb_wkt_unit:
         geom_wkb = ogr.CreateGeometryFromWkb( wkb_xdr )
 
         if str(geom_wkb) != str(geom_wkt):
-            print geom_wkb
-            print geom_wkt
+            print(geom_wkb)
+            print(geom_wkt)
             gdaltest.post_reason( 'XDR WKB encoding/decoding failure.' )
             return 'fail'
 

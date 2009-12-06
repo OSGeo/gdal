@@ -30,7 +30,7 @@
 import sys
 import string
 import os
-import urllib2
+
 try:
     from osgeo import gdal
     from osgeo import osr
@@ -57,6 +57,12 @@ jp2kak_drv_unregistered = False
 jpeg2000_drv_unregistered = False
 jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
+
+from sys import version_info
+if version_info >= (3,0,0):
+    from gdaltest_python3 import *
+else:
+    from gdaltest_python2 import *
 
 # Process commandline arguments for stuff like --debug, --locale, --config
 
@@ -95,21 +101,8 @@ def run_tests( test_list ):
         sys.stdout.flush()
             
         reason = None
-        try:
-            result = func()
-            print result
-        except SystemExit,x:
-            import traceback
-            traceback.print_exc()
-            
-            raise x
-        except:
-            result = 'fail (blowup)'
-            print result
-            
-            import traceback
-            traceback.print_exc()
-
+        result = run_func(func)
+        
         if result[:4] == 'fail':
             if had_errors_this_script == 0:
                 failure_summary.append( 'Script: ' + cur_name )
@@ -119,7 +112,7 @@ def run_tests( test_list ):
                 failure_summary.append( '    ' + reason )
 
         if reason is not None:
-            print '    ' + reason
+            print(('    ' + reason))
 
         if result == 'success':
             success_counter = success_counter + 1
@@ -146,16 +139,16 @@ def summarize():
     global success_counter, failure_counter, blow_counter, skip_counter
     global cur_name
     
-    print
-    print 'Test Script: %s' % cur_name
-    print 'Succeeded: %d' % success_counter
-    print 'Failed:    %d (%d blew exceptions)' \
-          % (failure_counter+blow_counter, blow_counter)
-    print 'Skipped:   %d' % skip_counter
-    print 'Expected fail:%d' % expected_failure_counter
+    print('')
+    print('Test Script: %s' % cur_name)
+    print('Succeeded: %d' % success_counter)
+    print('Failed:    %d (%d blew exceptions)' \
+          % (failure_counter+blow_counter, blow_counter))
+    print('Skipped:   %d' % skip_counter)
+    print('Expected fail:%d' % expected_failure_counter)
     if count_skipped_tests != 0:
-        print 'As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests
-    print
+        print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests)
+    print('')
 
     return failure_counter + blow_counter
 
@@ -178,13 +171,11 @@ def run_all( dirlist, option_list ):
                 wd = os.getcwd()
                 os.chdir( dir_name )
                 
-                exec "import " + module
+                exec("import " + module)
                 try:
-                    exec "test_list = " + module + ".gdaltest_list"
-
-                    print 'Running tests from %s/%s' % (dir_name,file)
+                    print('Running tests from %s/%s' % (dir_name,file))
                     setup_run( '%s/%s' % (dir_name,file) )
-                    run_tests( test_list )
+                    exec("run_tests( " + module + ".gdaltest_list)")
                 except:
                     pass
                 
@@ -192,7 +183,7 @@ def run_all( dirlist, option_list ):
 
             except:
                 os.chdir( wd )
-                print '... failed to load %s ... skipping.' % file
+                print('... failed to load %s ... skipping.' % file)
 
                 import traceback
                 traceback.print_exc()
@@ -202,11 +193,11 @@ def run_all( dirlist, option_list ):
         sys.path = old_path
 
     if len(failure_summary) > 0:
-        print
-        print ' ------------ Failures ------------'
+        print('')
+        print(' ------------ Failures ------------')
         for item in failure_summary:
-            print item
-        print ' ----------------------------------'
+            print(item)
+        print(' ----------------------------------')
 
 ###############################################################################
 
@@ -288,9 +279,9 @@ class GDALTest:
             new_osr = osr.SpatialReference( wkt=new_prj )
 
             if not src_osr.IsSame(new_osr):
-                print
-                print 'old = ', src_osr.ExportToPrettyWkt()
-                print 'new = ', new_osr.ExportToPrettyWkt()
+                print('')
+                print('old = ', src_osr.ExportToPrettyWkt())
+                print('new = ', new_osr.ExportToPrettyWkt())
                 post_reason( 'Projections differ' )
                 return 'fail'
 
@@ -303,9 +294,9 @@ class GDALTest:
             new_gt = ds.GetGeoTransform()
             for i in range(6):
                 if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
-                    print
-                    print 'old = ', check_gt
-                    print 'new = ', new_gt
+                    print('')
+                    print('old = ', check_gt)
+                    print('new = ', new_gt)
                     post_reason( 'Geotransform differs.' )
                     return 'fail'
 
@@ -331,9 +322,9 @@ class GDALTest:
                     return 'fail'
 
                 if abs(new_stat[i]-check_approx_stat[i]) > stat_epsilon:
-                    print
-                    print 'old = ', check_approx_stat
-                    print 'new = ', new_stat
+                    print('')
+                    print('old = ', check_approx_stat)
+                    print('new = ', new_stat)
                     post_reason( 'Approximate statistics differs.' )
                     return 'fail'
 
@@ -355,9 +346,9 @@ class GDALTest:
                     return 'fail'
 
                 if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
-                    print
-                    print 'old = ', check_stat
-                    print 'new = ', new_stat
+                    print('')
+                    print('old = ', check_stat)
+                    print('new = ', new_stat)
                     post_reason( 'Statistics differs.' )
                     return 'fail'
 
@@ -456,9 +447,9 @@ class GDALTest:
                or abs(new_gt[3] - src_gt[3]) > eps \
                or abs(new_gt[4] - src_gt[4]) > eps \
                or abs(new_gt[5] - src_gt[5]) > eps:
-                print
-                print 'old = ', src_gt
-                print 'new = ', new_gt
+                print('')
+                print('old = ', src_gt)
+                print('new = ', new_gt)
                 post_reason( 'Geotransform differs.' )
                 return 'fail'
 
@@ -470,9 +461,9 @@ class GDALTest:
             new_osr = osr.SpatialReference( wkt=new_prj )
 
             if not src_osr.IsSame(new_osr):
-                print
-                print 'old = ', src_osr.ExportToPrettyWkt()
-                print 'new = ', new_osr.ExportToPrettyWkt()
+                print('')
+                print('old = ', src_osr.ExportToPrettyWkt())
+                print('new = ', new_osr.ExportToPrettyWkt())
                 post_reason( 'Projections differ' )
                 return 'fail'
 
@@ -528,8 +519,8 @@ class GDALTest:
             computed_minmax = new_ds.GetRasterBand(band).ComputeRasterMinMax()
             if computed_minmax != minmax and check_minmax:
                 post_reason( 'Did not get expected min/max values on still-open file.' )
-                print 'expect: ', minmax
-                print 'got: ', computed_minmax 
+                print('expect: ', minmax)
+                print('got: ', computed_minmax) 
                 return 'fail'
         
         new_ds = None
@@ -593,9 +584,9 @@ class GDALTest:
             or abs(new_gt[3] - gt[3]) > eps \
             or abs(new_gt[4] - gt[4]) > eps \
             or abs(new_gt[5] - gt[5]) > eps:
-            print
-            print 'old = ', gt
-            print 'new = ', new_gt
+            print('')
+            print('old = ', gt)
+            print('new = ', new_gt)
             post_reason( 'Did not get expected geotransform.' )
             return 'fail'
 
@@ -647,10 +638,10 @@ class GDALTest:
         new_osr.ImportFromWkt(new_ds.GetProjection())
         if not new_osr.IsSame(src_osr):
             post_reason( 'Did not get expected projection reference.' )
-            print 'Got: '
-            print new_osr.ExportToPrettyWkt()
-            print 'Expected:'
-            print src_osr.ExportToPrettyWkt()
+            print('Got: ')
+            print(new_osr.ExportToPrettyWkt())
+            print('Expected:')
+            print(src_osr.ExportToPrettyWkt())
             return 'fail'
 
         new_ds = None
@@ -811,8 +802,8 @@ def equal_srs_from_wkt( expected_wkt, got_wkt ):
     if got_srs.IsSame( expected_srs ):
         return 1
     else:
-        print 'Expected:', expected_wkt
-        print 'Got:     ', got_wkt
+        print('Expected:', expected_wkt)
+        print('Got:     ', got_wkt)
         
         post_reason( 'SRS differs from expected.' )
         return 0
@@ -835,41 +826,41 @@ def rpcs_equal( md1, md2 ):
         try:
             if not approx_equal(float(md1[sf]),float(md2[sf])):
                 post_reason( '%s values differ.' % sf )
-                print md1[sf]
-                print md2[sf]
+                print(md1[sf])
+                print(md2[sf])
                 return 0
         except:
             post_reason( '%s value missing or corrupt.' % sf )
-            print md1
-            print md2
+            print(md1)
+            print(md2)
             return 0
 
     for cf in coef_fields:
 
         try:
-            list1 = string.split(md1[cf])
-            list2 = string.split(md2[cf])
+            list1 = md1[cf].split()
+            list2 = md2[cf].split()
 
         except:
             post_reason( '%s value missing or corrupt.' % cf )
-            print md1[cf]
-            print md2[cf]
+            print(md1[cf])
+            print(md2[cf])
             return 0
 
         if len(list1) != 20:
             post_reason( '%s value list length wrong(1)' % cf )
-            print list1
+            print(list1)
             return 0
 
         if len(list2) != 20:
             post_reason( '%s value list length wrong(2)' % cf )
-            print list2
+            print(list2)
             return 0
 
         for i in range(20):
             if not approx_equal(float(list1[i]),float(list2[i])):
                 post_reason( '%s[%d] values differ.' % (cf,i) )
-                print list1[i], list2[i]
+                print(list1[i], list2[i])
                 return 0
 
     return 1
@@ -881,9 +872,9 @@ def rpcs_equal( md1, md2 ):
 def geotransform_equals(gt1, gt2, gt_epsilon):
     for i in range(6):
         if abs(gt1[i]-gt2[i]) > gt_epsilon:
-            print
-            print 'gt1 = ', gt1
-            print 'gt2 = ', gt2
+            print('')
+            print('gt1 = ', gt1)
+            print('gt2 = ', gt2)
             post_reason( 'Geotransform differs.' )
             return False
     return True
@@ -902,26 +893,22 @@ def download_file(url, filename, download_size = -1):
         os.stat( 'tmp/cache/' + filename )
         return True
     except:
-        if os.environ.has_key('GDAL_DOWNLOAD_TEST_DATA'):
+        if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ:
             val = None
             try:
-                handle = urllib2.urlopen(url)
+                handle = gdalurlopen(url)
                 if download_size == -1:
                     try:
                         handle_info = handle.info()
                         content_length = handle_info['content-length']
-                        print 'Downloading %s (length = %s bytes)...' % (url, content_length)
+                        print('Downloading %s (length = %s bytes)...' % (url, content_length))
                     except:
-                        print 'Downloading %s...' % (url)
+                        print('Downloading %s...' % (url))
                     val = handle.read()
                 else:
-                    print 'Downloading %d bytes from %s...' % (download_size, url)
+                    print('Downloading %d bytes from %s...' % (download_size, url))
                     val = handle.read(download_size)
-            except urllib2.HTTPError, e:
-                print 'HTTP service for %s is down (HTTP Error: %d)' % (url, e.code)
-                return False
             except:
-                print 'HTTP service for %s is down.' %(url)
                 return False
 
             try:
@@ -933,11 +920,11 @@ def download_file(url, filename, download_size = -1):
                 open( 'tmp/cache/' + filename, 'wb').write(val)
                 return True
             except:
-                print 'Cannot write %s' % (filename)
+                print('Cannot write %s' % (filename))
                 return False
         else:
             if count_skipped_tests == 0:
-                print 'As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, some tests relying on data to downloaded from the Web will be skipped'
+                print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, some tests relying on data to downloaded from the Web will be skipped')
             count_skipped_tests = count_skipped_tests + 1
             return False
 
@@ -987,13 +974,13 @@ def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0, verbose=1):
             if abs(diff) > maxdiff:
                 maxdiff = abs(diff)
                 if verbose:
-                    print "Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff)
+                    print("Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff))
             elif ndiffs < 10:
                 if verbose:
-                    print "Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff)
+                    print("Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff))
     if maxdiff != 0 and verbose:
-        print "Max diff : %d" % (maxdiff)
-        print "Number of diffs : %d" % (ndiffs)
+        print("Max diff : %d" % (maxdiff))
+        print("Number of diffs : %d" % (ndiffs))
 
     return maxdiff
 
@@ -1011,7 +998,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2kak_drv = gdal.GetDriverByName('JP2KAK')
         if name_of_driver_to_keep != 'JP2KAK' and jp2kak_drv:
-            print 'Deregistering JP2KAK'
+            print('Deregistering JP2KAK')
             jp2kak_drv.Deregister()
             jp2kak_drv_unregistered = True
     except:
@@ -1020,7 +1007,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
         if name_of_driver_to_keep != 'JPEG2000' and jpeg2000_drv:
-            print 'Deregistering JPEG2000'
+            print('Deregistering JPEG2000')
             jpeg2000_drv.Deregister()
             jpeg2000_drv_unregistered = True
     except:
@@ -1029,7 +1016,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
         if name_of_driver_to_keep != 'JP2ECW' and jp2ecw_drv:
-            print 'Deregistering JP2ECW'
+            print('Deregistering JP2ECW')
             jp2ecw_drv.Deregister()
             jp2ecw_drv_unregistered = True
     except:
@@ -1038,7 +1025,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
         if name_of_driver_to_keep != 'JP2MrSID' and jp2mrsid_drv:
-            print 'Deregistering JP2MrSID'
+            print('Deregistering JP2MrSID')
             jp2mrsid_drv.Deregister()
             jp2mrsid_drv_unregistered = True
     except:
@@ -1058,7 +1045,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2kak_drv_unregistered:
             jp2kak_drv.Register()
             jp2kak_drv_unregistered = False
-            print 'Registering JP2KAK'
+            print('Registering JP2KAK')
     except:
         pass
 
@@ -1066,7 +1053,7 @@ def reregister_all_jpeg2000_drivers():
         if jpeg2000_drv_unregistered:
             jpeg2000_drv.Register()
             jpeg2000_drv_unregistered = False
-            print 'Registering JPEG2000'
+            print('Registering JPEG2000')
     except:
         pass
 
@@ -1074,7 +1061,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2ecw_drv_unregistered:
             jp2ecw_drv.Register()
             jp2ecw_drv_unregistered = False
-            print 'Registering JP2ECW'
+            print('Registering JP2ECW')
     except:
         pass
 
@@ -1082,7 +1069,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2mrsid_drv_unregistered:
             jp2mrsid_drv.Register()
             jp2mrsid_drv_unregistered = False
-            print 'Registering JP2MrSID'
+            print('Registering JP2MrSID')
     except:
         pass
 
@@ -1095,7 +1082,11 @@ def reregister_all_jpeg2000_drivers():
 
 def filesystem_supports_sparse_files(path):
 
-    (child_stdin, child_stdout, child_stderr) = os.popen3('stat -f -c "%T" ' + path)
+    # TODO: Should be ported to Python 3
+    try:
+        (child_stdin, child_stdout, child_stderr) = os.popen3('stat -f -c "%T" ' + path)
+    except:
+        return False
     ret = child_stdout.read()
     err = child_stderr.read()
     child_stdin.close()

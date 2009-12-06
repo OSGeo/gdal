@@ -134,8 +134,8 @@ def vrt_read_3():
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
-	print( 'VRT tests skipped' )
-	sys.exit()
+        print( 'VRT tests skipped' )
+        sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
     
 gdaltest_list.append( vrt_read_1 )

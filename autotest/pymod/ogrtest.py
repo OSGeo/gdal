@@ -163,7 +163,7 @@ def quick_create_feature( layer, field_values, wkt_geometry ):
     if wkt_geometry is not None:
         geom = ogr.CreateGeometryFromWkt( wkt_geometry )
         if geom is None:
-            raise ValueError, 'Failed to create geometry from: ' + wkt_geometry
+            raise ValueError('Failed to create geometry from: ' + wkt_geometry)
         feature.SetGeometryDirectly( geom )
 
     result = layer.CreateFeature( feature )
@@ -171,7 +171,7 @@ def quick_create_feature( layer, field_values, wkt_geometry ):
     feature.Destroy()
     
     if result != 0:
-        raise ValueError, 'CreateFeature() failed in ogrtest.quick_create_feature()'
+        raise ValueError('CreateFeature() failed in ogrtest.quick_create_feature()')
 
 ###############################################################################
 def have_geos():

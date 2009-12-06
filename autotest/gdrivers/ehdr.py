@@ -72,8 +72,7 @@ def ehdr_4():
     drv = gdal.GetDriverByName( 'EHdr' )
     ds = drv.Create( 'tmp/test_4.bil', 200, 100, 1, gdal.GDT_Byte )
 
-    list = range(200)
-    raw_data = array.array('h',list).tostring()
+    raw_data = array.array('h',list(range(200))).tostring()
 
     for line in range(100):
         ds.WriteRaster( 0, line, 200, 1, raw_data,
@@ -145,13 +144,14 @@ def ehdr_8():
     src_ds = None
 
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
-    if not md.has_key('PIXELTYPE') or md['PIXELTYPE'] != 'SIGNEDBYTE':
+    if 'PIXELTYPE' not in md or md['PIXELTYPE'] != 'SIGNEDBYTE':
         gdaltest.post_reason( 'Failed to detect SIGNEDBYTE' )
         return 'fail'
 
     cs = ds.GetRasterBand(1).Checksum()
     expected = 4672
     if cs != expected:
+        print(cs)
         gdaltest.post_reason( 'Did not get expected image checksum.' )
         return 'fail'
 

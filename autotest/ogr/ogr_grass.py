@@ -70,11 +70,11 @@ def ogr_grass_2():
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 0)':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     if feat.GetFieldAsString('name') != 'my point':
-        print feat.GetFieldAsString('name')
+        print(feat.GetFieldAsString('name'))
         return 'fail'
 
     ds = None

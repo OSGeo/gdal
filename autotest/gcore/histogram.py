@@ -52,7 +52,7 @@ def histogram_1():
 
     if hist != exp_hist:
         gdaltest.post_reason( 'did not get expected histogram.' )
-        print hist
+        print(hist)
         return 'fail'
     
     return 'success' 
@@ -69,7 +69,7 @@ def histogram_2():
 
     if hist != exp_hist:
         gdaltest.post_reason( 'did not get expected histogram.' )
-        print hist
+        print(hist)
         return 'fail'
     
     return 'success' 
@@ -88,7 +88,7 @@ def histogram_3():
 
     if hist != exp_hist:
         gdaltest.post_reason( 'did not get expected histogram.' )
-        print hist
+        print(hist)
         return 'fail'
     
     return 'success' 
@@ -107,7 +107,7 @@ def histogram_4():
 
     if hist != exp_hist:
         gdaltest.post_reason( 'did not get expected histogram.' )
-        print hist
+        print(hist)
         return 'fail'
 
     ds = None
@@ -131,7 +131,7 @@ def histogram_5():
 
     if hist != exp_hist:
         gdaltest.post_reason( 'did not get expected histogram.' )
-        print hist
+        print(hist)
         return 'fail'
 
     ds = None

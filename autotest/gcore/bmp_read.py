@@ -67,8 +67,8 @@ def bmp_online_2():
 for item in init_list:
     ut = gdaltest.GDALTest( 'BMP', item[0], item[1], item[2] )
     if ut is None:
-	print( 'BMP tests skipped' )
-	sys.exit()
+        print( 'BMP tests skipped' )
+        sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
 
 gdaltest_list.append( bmp_online_1 )

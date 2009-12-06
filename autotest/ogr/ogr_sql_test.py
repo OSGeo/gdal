@@ -367,35 +367,35 @@ def ogr_sql_17():
 
     if fld_def.GetName() != 'fid':
         gdaltest.post_reason( 'got wrong fid field name' )
-        print fld_def.GetName()
+        print(fld_def.GetName())
         return 'fail'
 
     if fld_def.GetType() != ogr.OFTString:
         gdaltest.post_reason( 'got wrong fid field type' )
-        print fld_def.GetType()
+        print(fld_def.GetType())
         
     if fld_def.GetWidth() != 10:
         gdaltest.post_reason( 'got wrong fid field width' )
-        print fld_def.GetWidth()
+        print(fld_def.GetWidth())
         
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(1)
 
     if fld_def.GetName() != 'block':
         gdaltest.post_reason( 'got wrong block field name' )
-        print fld_def.GetName()
+        print(fld_def.GetName())
         return 'fail'
 
     if fld_def.GetType() != ogr.OFTReal:
         gdaltest.post_reason( 'got wrong block field type' )
-        print fld_def.GetType()
+        print(fld_def.GetType())
         
     if fld_def.GetWidth() != 7:
         gdaltest.post_reason( 'got wrong block field width' )
-        print fld_def.GetWidth()
+        print(fld_def.GetWidth())
         
     if fld_def.GetPrecision() != 3:
         gdaltest.post_reason( 'got wrong block field precision' )
-        print fld_def.GetPrecision()
+        print(fld_def.GetPrecision())
         
     tr = ogrtest.check_features_against_list( sql_lyr, 'fid', expect )
 
@@ -413,14 +413,14 @@ def ogr_sql_17():
 
 def ogr_sql_18():
 
-    name = u'data/departs.vrt'
+    name = 'data/departs.vrt'
 
-    ds = ogr.Open( name.encode('latin-1') )
+    ds = ogr.Open( name )
     if ds is None:
         return 'fail'
     
-    sql = u'select * from D\303\251parts'
-    sql_lyr = ds.ExecuteSQL( sql.encode('latin-1') )
+    sql = 'select * from D\303\251parts'
+    sql_lyr = ds.ExecuteSQL( sql )
     if sql_lyr is None:
         ds = None
         return 'fail'
@@ -561,7 +561,7 @@ def ogr_sql_24():
 
     feat = sql_layer.GetNextFeature()
     if len(feat.GetStyleString()) < 10:
-        print feat.GetStyleString()
+        print(feat.GetStyleString())
         gdaltest.post_reason( 'style string apparently not propagated to OGR SQL results.' )
         result = 'fail'
     feat = None

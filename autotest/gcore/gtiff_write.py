@@ -59,7 +59,7 @@ gdaltest_list.append( (ut.testSetMetadata, item[0]) )
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
-	print( 'GTiff tests skipped' )
+        print( 'GTiff tests skipped' )
     gdaltest_list.append( (ut.testCreateCopy, item[0]) )
     gdaltest_list.append( (ut.testCreate, item[0]) )
     gdaltest_list.append( (ut.testSetNoDataValue, item[0]) )

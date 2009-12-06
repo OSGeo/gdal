@@ -194,7 +194,7 @@ def ogr_georss_test_rss(filename, only_first_feature):
     feat = lyr.GetNextFeature()
     expected_wkt = 'POINT (2 49)'
     if feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print feat.GetGeometryRef().ExportToWkt()
+        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
         return 'fail'
     if feat.GetFieldAsString('title') != 'A point':
         return 'fail'
@@ -217,7 +217,7 @@ def ogr_georss_test_rss(filename, only_first_feature):
     feat = lyr.GetNextFeature()
     expected_wkt = 'LINESTRING (2 48,2.1 48.1,2.2 48.0)'
     if only_first_feature is False and feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print feat.GetGeometryRef().ExportToWkt()
+        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
         return 'fail'
     if feat.GetFieldAsString('title') != 'A line':
         return 'fail'
@@ -226,7 +226,7 @@ def ogr_georss_test_rss(filename, only_first_feature):
     feat = lyr.GetNextFeature()
     expected_wkt = 'POLYGON ((2 50,2.1 50.1,2.2 48.1,2.1 46.1,2 50))'
     if only_first_feature is False and feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print feat.GetGeometryRef().ExportToWkt()
+        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
         return 'fail'
     if feat.GetFieldAsString('title') != 'A polygon':
         return 'fail'
@@ -235,7 +235,7 @@ def ogr_georss_test_rss(filename, only_first_feature):
     feat = lyr.GetNextFeature()
     expected_wkt = 'POLYGON ((2 49,2.0 49.5,2.2 49.5,2.2 49.0,2 49))'
     if only_first_feature is False and feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print feat.GetGeometryRef().ExportToWkt()
+        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
         return 'fail'
     if feat.GetFieldAsString('title') != 'A box':
         return 'fail'
@@ -356,7 +356,7 @@ def ogr_georss_4():
 
     content = open('tmp/test_rss2.xml').read()
     if content.find('<georss:point>49.0') == -1:
-        print content
+        print(('%s' % content))
         return 'fail'
 
     return 'success'
@@ -378,7 +378,7 @@ def ogr_georss_6():
 
     content = open('tmp/test_rss2.xml').read()
     if content.find('<georss:where><gml:Point><gml:pos>49.0') == -1:
-        print content
+        print(('%s' % content))
         return 'fail'
 
     return 'success'
@@ -402,7 +402,7 @@ def ogr_georss_8():
 
     content = open('tmp/test_rss2.xml').read()
     if content.find('<geo:lat>49.0') == -1 or content.find('<geo:long>2.0') == -1:
-        print content
+        print(('%s' % content))
         return 'fail'
 
     return 'success'
@@ -460,7 +460,7 @@ def ogr_georss_10():
 
     content = open('tmp/test32631.rss').read()
     if content.find('<georss:where><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000.0') == -1:
-        print content
+        print(('%s' % content))
         return 'fail'
 
     return 'success'
@@ -486,14 +486,14 @@ def ogr_georss_11():
         return 'fail'
 
     if lyr.GetSpatialRef().ExportToWkt().find('AXIS["Easting",EAST],AXIS["Northing",NORTH]') == -1:
-        print lyr.GetSpatialRef().ExportToWkt()
+        print(('%s' % lyr.GetSpatialRef().ExportToWkt()))
         gdaltest.post_reason('AXIS definition expected is AXIS["Easting",EAST],AXIS["Northing",NORTH]!')
         return 'fail'
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POINT (500000 4000000)'
     if feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print feat.GetGeometryRef().ExportToWkt()
+        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
         return 'fail'
 
     feat.Destroy()
@@ -570,13 +570,13 @@ def ogr_georss_13():
 
     content = open('tmp/nonstandard.rss').read()
     if content.find('<myns:field>val</myns:field>') == -1:
-        print content
+        print(('%s' % content))
         return 'fail'
     if content.find('<ogr:field2>val2</ogr:field2>') == -1:
-        print content
+        print(('%s' % content))
         return 'fail'
     if content.find('<ogr:field3>val3</ogr:field3>') == -1:
-        print content
+        print(('%s' % content))
         return 'fail'
 
     return 'success'
@@ -595,13 +595,13 @@ def ogr_georss_14():
     feat = lyr.GetNextFeature()
 
     if feat.GetFieldAsString('myns_field') != 'val':
-        print 'Expected %s. Got %s' % ('val', feat.GetFieldAsString('myns_field'))
+        print(('Expected %s. Got %s' % ('val', feat.GetFieldAsString('myns_field'))))
         return 'fail'
     if feat.GetFieldAsString('ogr_field2') != 'val2':
-        print 'Expected %s. Got %s' % ('val2', feat.GetFieldAsString('ogr_field2'))
+        print(('Expected %s. Got %s' % ('val2', feat.GetFieldAsString('ogr_field2'))))
         return 'fail'
     if feat.GetFieldAsString('ogr_field3') != 'val3':
-        print 'Expected %s. Got %s' % ('val3', feat.GetFieldAsString('ogr_field3'))
+        print(('Expected %s. Got %s' % ('val3', feat.GetFieldAsString('ogr_field3'))))
         return 'fail'
 
     feat.Destroy()
@@ -647,7 +647,7 @@ def ogr_georss_15():
     feat = lyr.GetNextFeature()
 
     if feat.GetFieldAsString('title') != 'item title':
-        print 'Expected %s. Got %s' % ('item title', feat.GetFieldAsString('title'))
+        print(('Expected %s. Got %s' % ('item title', feat.GetFieldAsString('title'))))
         return 'fail'
 
     feat.Destroy()

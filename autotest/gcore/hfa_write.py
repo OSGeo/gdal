@@ -80,7 +80,7 @@ def hfa_write_4bit():
 
     if cs != 252:
         gdaltest.post_reason( 'Got wrong checksum on 4bit image.' )
-        print cs
+        print(cs)
         return 'fail'
 
     ds = None
@@ -105,7 +105,7 @@ def hfa_write_4bit_compressed():
 
     if cs != 252:
         gdaltest.post_reason( 'Got wrong checksum on 4bit image.' )
-        print cs
+        print(cs)
         return 'fail'
 
     ds = None
@@ -130,7 +130,7 @@ def hfa_write_nd_invalid():
 
     if cs != 29754:
         gdaltest.post_reason( 'Got wrong checksum on invalid image.' )
-        print cs
+        print(cs)
         return 'fail'
 
     ds = None
@@ -152,7 +152,7 @@ def hfa_update_overviews():
     result = ds.BuildOverviews( overviewlist = [2] )
 
     if result != 0:
-        print result
+        print(result)
         gdaltest.post_reason( 'BuildOverviews() failed.' )
         return 'fail'
     ds = None
@@ -227,7 +227,7 @@ def hfa_use_rrd():
     gdal.SetConfigOption('HFA_USE_RRD', old_value)
 
     if result != 0:
-        print result
+        print(result)
         gdaltest.post_reason( 'BuildOverviews() failed.' )
         return 'fail'
     ds = None
@@ -244,7 +244,7 @@ def hfa_use_rrd():
 
     ds = gdal.Open('tmp/small.img' )
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 26148:
-        print ds.GetRasterBand(1).GetOverview(0).Checksum()
+        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
         gdaltest.post_reason( 'Unexpected checksum.' )
         return 'fail'
         
@@ -283,7 +283,7 @@ gdaltest_list = [ hfa_write_desc,
 for item in init_list:
     ut1 = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2] )
     if ut1 is None:
-	print( 'HFA tests skipped' )
+        print( 'HFA tests skipped' )
     gdaltest_list.append( (ut1.testCreateCopy, item[0]) )
     gdaltest_list.append( (ut1.testCreate, item[0]) )
     gdaltest_list.append( (ut1.testSetGeoTransform, item[0]) )
@@ -299,14 +299,14 @@ for item in short_list:
     ut2 = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2],
                              options = [ 'USE_SPILL=YES' ] )
     if ut2 is None:
-	print( 'HFA tests skipped' )
+        print( 'HFA tests skipped' )
     gdaltest_list.append( (ut2.testCreateCopy, item[0] + ' (spill)') )
     gdaltest_list.append( (ut2.testCreate, item[0] + ' (spill)') )
 
     ut2 = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2],
                              options = [ 'COMPRESS=YES' ] )
     if ut2 is None:
-	print( 'HFA tests skipped' )
+        print( 'HFA tests skipped' )
 #    gdaltest_list.append( (ut2.testCreateCopy, item[0] + ' (compressed)') )
     gdaltest_list.append( (ut2.testCreate, item[0] + ' (compressed)') )
 

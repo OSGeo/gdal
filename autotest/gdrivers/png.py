@@ -81,8 +81,8 @@ def png_3():
     gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(gt[i] - gt_expected[i]) > 0.0001:
-            print 'expected:', gt_expected
-            print 'got:', gt
+            print('expected:', gt_expected)
+            print('got:', gt)
             
             gdaltest.post_reason( 'Mixed locale world file read improperly.' )
             return 'fail'

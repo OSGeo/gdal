@@ -106,9 +106,9 @@ def ogr_sqlite_2():
         feature_def = gdaltest.sl_lyr.GetLayerDefn()
         field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex(field_desc[0]))
         if field_defn.GetType() != field_desc[1]:
-            print 'Expected type for %s is %s, not %s' % \
+            print('Expected type for %s is %s, not %s' % \
                 (field_desc[0], field_defn.GetFieldTypeName(field_defn.GetType()), \
-                 field_defn.GetFieldTypeName(field_desc[1]))
+                 field_defn.GetFieldTypeName(field_desc[1])))
 
     ######################################################
     # Copy in poly.shp
@@ -901,7 +901,7 @@ def ogr_spatialite_2():
         return 'fail'
 
     if lyr.GetFeatureCount() != 49:
-        print lyr.GetFeatureCount()
+        print(lyr.GetFeatureCount())
         return 'fail'
 
     # Remove spatial index
@@ -926,7 +926,7 @@ def ogr_spatialite_2():
         return 'fail'
 
     if lyr.GetFeatureCount() != 49:
-        print lyr.GetFeatureCount()
+        print(lyr.GetFeatureCount())
         return 'fail'
 
     ds.Destroy()

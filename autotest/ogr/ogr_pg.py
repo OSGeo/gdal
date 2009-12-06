@@ -91,13 +91,13 @@ def ogr_pg_1():
 
     if gdaltest.pg_has_postgis:
         if gdal.GetConfigOption('PG_USE_POSTGIS', 'YES') == 'YES':
-            print 'PostGIS available !'
+            print('PostGIS available !')
         else:
             gdaltest.pg_has_postgis = False
-            print 'PostGIS available but will NOT be used because of PG_USE_POSTGIS=NO !'
+            print('PostGIS available but will NOT be used because of PG_USE_POSTGIS=NO !')
     else:
         gdaltest.pg_has_postgis = False
-        print 'PostGIS NOT available !'
+        print('PostGIS NOT available !')
 
     return 'success'
 
@@ -450,7 +450,7 @@ def ogr_pg_9():
         return 'fail'
 
     if ogrtest.check_feature_geometry( feat, 'POINT(5 6 7)' ) != 0:
-        print feat.GetGeometryRef()
+        print(feat.GetGeometryRef())
         gdaltest.post_reason( 'Geometry update failed' )
         return 'fail'
 
@@ -471,7 +471,7 @@ def ogr_pg_9():
 
     feat = gdaltest.pg_lyr.GetFeature( fid )
     if feat.GetGeometryRef() != None:
-        print feat.GetGeometryRef()
+        print(feat.GetGeometryRef())
         gdaltest.post_reason( 'Geometry update failed. null geometry expected' )
         return 'fail'
 
@@ -1778,7 +1778,7 @@ def ogr_pg_41():
 
     layer = ds.GetLayerByName('tpoly')
     if layer.GetFeatureCount() != 3:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     found = ogr_pg_check_layer_in_list(ds, 'AutoTest-schema.tpoly')
@@ -1788,7 +1788,7 @@ def ogr_pg_41():
 
     layer = ds.GetLayerByName('AutoTest-schema.tpoly')
     if layer.GetFeatureCount() != 3:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     found = ogr_pg_check_layer_in_list(ds, 'public.tpoly')
@@ -1798,7 +1798,7 @@ def ogr_pg_41():
 
     layer = ds.GetLayerByName('public.tpoly')
     if layer.GetFeatureCount() != 19:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
@@ -1814,12 +1814,12 @@ def ogr_pg_41():
 
     layer = ds.GetLayerByName('test41')
     if layer.GetFeatureCount() != 0:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     layer = ds.GetLayerByName('AutoTest-schema.test41')
     if layer.GetFeatureCount() != 0:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     ds.Destroy()
@@ -1843,7 +1843,7 @@ def ogr_pg_42():
 
     layer = ds.GetLayerByName('tpoly')
     if layer.GetFeatureCount() != 3:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     found = ogr_pg_check_layer_in_list(ds, 'AutoTest-schema.tpoly')
@@ -1853,7 +1853,7 @@ def ogr_pg_42():
 
     layer = ds.GetLayerByName('AutoTest-schema.tpoly')
     if layer.GetFeatureCount() != 3:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     found = ogr_pg_check_layer_in_list(ds, 'public.tpoly')
@@ -1863,7 +1863,7 @@ def ogr_pg_42():
 
     layer = ds.GetLayerByName('public.tpoly')
     if layer.GetFeatureCount() != 19:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     found = ogr_pg_check_layer_in_list(ds, 'test41')
@@ -1873,12 +1873,12 @@ def ogr_pg_42():
 
     layer = ds.GetLayerByName('test41')
     if layer.GetFeatureCount() != 0:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     layer = ds.GetLayerByName('AutoTest-schema.test41')
     if layer.GetFeatureCount() != 0:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     ds.Destroy()
@@ -1903,7 +1903,7 @@ def ogr_pg_43():
 
     layer = ds.GetLayerByName('tpoly')
     if layer.GetFeatureCount() != 19:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     found = ogr_pg_check_layer_in_list(ds, 'AutoTest-schema.tpoly')
@@ -1913,7 +1913,7 @@ def ogr_pg_43():
 
     layer = ds.GetLayerByName('AutoTest-schema.tpoly')
     if layer.GetFeatureCount() != 3:
-        print layer.GetFeatureCount()
+        print(layer.GetFeatureCount())
         return 'fail'
 
     ds.Destroy()

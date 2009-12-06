@@ -114,10 +114,21 @@ def mrsid_2():
 
     ds = None
     
+    is_bytes = False
+    try:
+        if (isinstance(data, bytes) and not isinstance(data, str)):
+            is_bytes = True
+    except:
+        pass
+
     # check that we got roughly the right values by checking mean.
     sum = 0
-    for i in range(len(data)):
-        sum = sum + ord(data[i])
+    if is_bytes is True:
+        for i in range(len(data)):
+            sum = sum + data[i]
+    else:
+        for i in range(len(data)):
+            sum = sum + ord(data[i])
 
     mean = float(sum) / len(data)
 
@@ -149,9 +160,9 @@ def mrsid_3():
     stat_epsilon = 0.0001
     for i in range(4):
         if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
-            print
-            print 'old = ', check_stat
-            print 'new = ', new_stat
+            print('')
+            print('old = ', check_stat)
+            print('new = ', new_stat)
             post_reason( 'Statistics differ.' )
             return 'fail'
     
@@ -208,7 +219,7 @@ def mrsid_5():
 def mrsid_6():
 
     if gdaltest.jp2mrsid_drv is None:
-	return 'skip'
+        return 'skip'
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -241,7 +252,7 @@ def mrsid_6():
 def mrsid_7():
 
     if gdaltest.jp2mrsid_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'data/int16.tif' )
     ds_ref = gdal.Open( 'data/int16.tif' )
@@ -253,8 +264,8 @@ def mrsid_7():
     
     # Perfect match theoritically
     if maxdiff > 1:
-        print ds.GetRasterBand(1).Checksum()
-        print ds_ref.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
+        print(ds_ref.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
@@ -287,7 +298,7 @@ def mrsid_8():
     ds = gdal.Open( 'tmp/mercator.sid' )
 
     if new_srs != ds.GetProjectionRef():
-        print ds.GetProjectionRef()
+        print(ds.GetProjectionRef())
         gdaltest.post_reason( 'SRS Override failed.' )
         return 'fail'
 
@@ -383,8 +394,8 @@ def mrsid_online_3():
 
     # Difference between the image before and after compression
     if maxdiff > 17:
-        print ds.GetRasterBand(1).Checksum()
-        print ds_ref.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
+        print(ds_ref.GetRasterBand(1).Checksum())
         
         gdaltest.compare_ds(ds, ds_ref,verbose=1)
         gdaltest.post_reason('Image too different from reference')
@@ -418,8 +429,8 @@ def mrsid_online_4():
 
     # Difference between the image before and after compression
     if maxdiff > 1:
-        print ds.GetRasterBand(1).Checksum()
-        print ds_ref.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
+        print(ds_ref.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 

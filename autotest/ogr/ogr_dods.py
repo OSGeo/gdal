@@ -174,7 +174,7 @@ def ogr_dods_4():
     wkt_geom = 'LINESTRING (0.00000000 14.81000042,10.00000000 14.81000042,20.00000000 14.81000042,30.00000000 14.60999966,39.00000000 14.60999966)'
 
     if ogrtest.check_feature_geometry( feat, wkt_geom ) != 0:
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     feat.Destroy()

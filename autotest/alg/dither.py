@@ -87,8 +87,8 @@ def dither_1():
             if ct_data[j] != ref_data[j]:
                 gdaltest.post_reason( 'color table mismatch' )
                 for k in range(nColors):
-                    print ct.GetColorEntry( k )
-                    print ref_ct[k]
+                    print(ct.GetColorEntry( k ))
+                    print(ref_ct[k])
                 return 'fail'
 
     if cs == cs_expected \
@@ -96,7 +96,7 @@ def dither_1():
         drv.Delete( 'tmp/rgbsmall.tif' )
 
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:

@@ -54,7 +54,7 @@ def test_ogr2ogr_1():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
@@ -78,7 +78,7 @@ def test_ogr2ogr_2():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -sql "select * from poly"').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -sql "select * from poly"')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
@@ -102,7 +102,7 @@ def test_ogr2ogr_3():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -spat 479609 4764629 479764 4764817').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -spat 479609 4764629 479764 4764817')
 
     ds = ogr.Open('tmp/poly.shp')
     if ogrtest.have_geos():
@@ -130,7 +130,7 @@ def test_ogr2ogr_4():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -where "EAS_ID=171"').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -where "EAS_ID=171"')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
@@ -154,8 +154,8 @@ def test_ogr2ogr_5():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp').read()
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -update -append tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update -append tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
@@ -183,17 +183,17 @@ def test_ogr2ogr_6():
         return 'skip'
     gdaltest.pg_ds.Destroy()
 
-    os.popen(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly').read()
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -update -overwrite -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update -overwrite -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     if ds is None or ds.GetLayerByName('tpoly').GetFeatureCount() != 10:
         return 'fail'
     ds.Destroy()
 
-    os.popen(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
 
     return 'success'
 
@@ -214,16 +214,16 @@ def test_ogr2ogr_7():
         return 'skip'
     gdaltest.pg_ds.Destroy()
 
-    os.popen(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly -gt 1').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:' + gdaltest.pg_connection_string + ' ../ogr/data/poly.shp -nln tpoly -gt 1')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     if ds is None or ds.GetLayerByName('tpoly').GetFeatureCount() != 10:
         return 'fail'
     ds.Destroy()
 
-    os.popen(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
 
     return 'success'
 
@@ -240,7 +240,7 @@ def test_ogr2ogr_8():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -t_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -t_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
@@ -264,7 +264,7 @@ def test_ogr2ogr_9():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -a_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -a_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
@@ -288,7 +288,7 @@ def test_ogr2ogr_10():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -select AREA tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -select AREA tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds.GetLayer(0).GetLayerDefn().GetFieldCount() != 1:
@@ -312,7 +312,7 @@ def test_ogr2ogr_11():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -lco SHPT=POLYGONZ tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -lco SHPT=POLYGONZ tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
@@ -336,7 +336,7 @@ def test_ogr2ogr_12():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -nlt POLYGON25D tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -nlt POLYGON25D tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
@@ -360,7 +360,7 @@ def test_ogr2ogr_13():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp poly').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp poly')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
@@ -384,7 +384,7 @@ def test_ogr2ogr_14():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -segmentize 100 tmp/poly.shp ../ogr/data/poly.shp poly').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -segmentize 100 tmp/poly.shp ../ogr/data/poly.shp poly')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
@@ -412,7 +412,7 @@ def test_ogr2ogr_15():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
@@ -420,7 +420,7 @@ def test_ogr2ogr_15():
     ds.Destroy()
 
     # Overwrite
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
@@ -444,7 +444,7 @@ def test_ogr2ogr_16():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -fid 8 tmp/poly.shp ../ogr/data/poly.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -fid 8 tmp/poly.shp ../ogr/data/poly.shp')
 
     src_ds = ogr.Open('../ogr/data/poly.shp')
     ds = ogr.Open('tmp/poly.shp')
@@ -474,7 +474,7 @@ def test_ogr2ogr_17():
     except:
         pass
 
-    ret = os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -progress tmp/poly.shp ../ogr/data/poly.shp').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -progress tmp/poly.shp ../ogr/data/poly.shp')
     if ret.find('0...10...20...30...40...50...60...70...80...90...100 - done.') == -1:
         return 'fail'
 
@@ -520,7 +520,7 @@ def test_ogr2ogr_18():
     feat.Destroy()
     ds.Destroy()
     
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -wrapdateline -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -wrapdateline -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp')
     
     expected_wkt = 'MULTIPOLYGON (((179.222391385437419 36.124095832129363,180.0 36.10605558800065,180.0 27.090340569400169,179.017505655195095 27.107979523625211,179.222391385437419 36.124095832129363)),((-180.0 36.10605558800065,-179.667822828781084 36.098349195413753,-179.974688335419557 27.089886143076747,-180.0 27.090340569400169,-180.0 36.10605558800065)))'
     expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
@@ -556,14 +556,14 @@ def test_ogr2ogr_19():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc spat_extent -spat 479609 4764629 479764 4764817').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc spat_extent -spat 479609 4764629 479764 4764817')
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
         return 'fail'
         
     if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
-        print ds.GetLayer(0).GetExtent()
+        print(ds.GetLayer(0).GetExtent())
         gdaltest.post_reason('unexpected extent')
         return 'fail'
         

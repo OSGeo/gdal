@@ -332,7 +332,7 @@ def ogr_vrt_9():
 
     sub_layer.ResetReading()
     if sub_layer.GetFeatureCount() != 1:
-        print sub_layer.GetFeatureCount()
+        print(sub_layer.GetFeatureCount())
         gdaltest.post_reason( 'attribute filter not passed to sublayer.' )
         return 'fail'
 
@@ -380,8 +380,8 @@ def ogr_vrt_11():
         return 'skip'
 
     f = open('tmp/test.csv', 'wb')
-    f.write('x,val1,y,val2\n')
-    f.write('2,"val11",49,"val12"\n')
+    f.write('x,val1,y,val2\n'.encode('ascii'))
+    f.write('2,"val11",49,"val12"\n'.encode('ascii'))
     f.close()
 
     try:
@@ -440,7 +440,7 @@ def ogr_vrt_11():
 
     # Add a .csvt file to specify the x and y columns as reals
     f = open('tmp/test.csvt', 'wb')
-    f.write('Real,String,Real,String\n')
+    f.write('Real,String,Real,String\n'.encode('ascii'))
     f.close()
 
     vrt_ds = ogr.Open( vrt_xml, update = 1 )
@@ -466,8 +466,8 @@ def ogr_vrt_12():
         return 'skip'
 
     f = open('tmp/test.csv', 'wb')
-    f.write('wkt_geom,val1,val2\n')
-    f.write('POINT (2 49),"val11","val12"\n')
+    f.write('wkt_geom,val1,val2\n'.encode('ascii'))
+    f.write('POINT (2 49),"val11","val12"\n'.encode('ascii'))
     f.close()
 
     vrt_xml = """
@@ -512,7 +512,7 @@ def ogr_vrt_13():
         return 'skip'
 
     f = open('tmp/test.csv', 'wb')
-    f.write('wkb_geom,val1,val2\n')
+    f.write('wkb_geom,val1,val2\n'.encode('ascii'))
     f.close()
 
     vrt_xml = """
@@ -623,10 +623,10 @@ def ogr_vrt_14():
 
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
     if vrt_lyr.GetFeatureCount() != 1:
-        if string.find(gdal.GetLastErrorMsg(),'GEOS support not enabled') != -1:
+        if gdal.GetLastErrorMsg().find('GEOS support not enabled') != -1:
             return 'skip'
         
-        print vrt_lyr.GetFeatureCount()
+        print(vrt_lyr.GetFeatureCount())
         gdaltest.post_reason( 'did not get one feature on rect spatial filter.' )
         return 'fail'
 
@@ -656,11 +656,11 @@ def ogr_vrt_15():
         return 'skip'
 
     f = open('tmp/test.csv', 'wb')
-    f.write('wkt_geom,val1,val2\n')
-    f.write('POINT (-10 49),,\n')
-    f.write('POINT (-10 49),,\n')
-    f.write('POINT (2 49),,\n')
-    f.write('POINT (-10 49),,\n')
+    f.write('wkt_geom,val1,val2\n'.encode('ascii'))
+    f.write('POINT (-10 49),,\n'.encode('ascii'))
+    f.write('POINT (-10 49),,\n'.encode('ascii'))
+    f.write('POINT (2 49),,\n'.encode('ascii'))
+    f.write('POINT (-10 49),,\n'.encode('ascii'))
     f.close()
 
     vrt_xml = """
@@ -718,15 +718,15 @@ def ogr_vrt_16():
         return 'skip'
 
     f = open('tmp/test.csvt', 'wb')
-    f.write('Real,Real,String,String\n')
+    f.write('Real,Real,String,String\n'.encode('ascii'))
     f.close()
 
     f = open('tmp/test.csv', 'wb')
-    f.write('x,y,val1,val2\n')
-    f.write('-10,49,,\n')
-    f.write('-10,49,,\n')
-    f.write('2,49,,\n')
-    f.write('-10,49,,\n')
+    f.write('x,y,val1,val2\n'.encode('ascii'))
+    f.write('-10,49,,\n'.encode('ascii'))
+    f.write('-10,49,,\n'.encode('ascii'))
+    f.write('2,49,,\n'.encode('ascii'))
+    f.write('-10,49,,\n'.encode('ascii'))
     f.close()
 
     vrt_xml = """
@@ -758,7 +758,7 @@ def ogr_vrt_16():
 
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
     if vrt_lyr.GetFeatureCount() != 1:
-        if string.find(gdal.GetLastErrorMsg(),'GEOS support not enabled') != -1:
+        if gdal.GetLastErrorMsg().find('GEOS support not enabled') != -1:
             return 'skip'
         return 'fail'
 

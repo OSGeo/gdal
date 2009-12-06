@@ -106,7 +106,7 @@ def test_gdalbuildvrt_1():
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
 
     return test_gdalbuildvrt_check()
 
@@ -136,9 +136,9 @@ def test_gdalbuildvrt_2():
     except:
         pass
 
-    os.popen(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/tileindex.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/tileindex.shp')
 
     return test_gdalbuildvrt_check()
 
@@ -151,7 +151,7 @@ def test_gdalbuildvrt_3():
 
     open('tmp/filelist.txt', 'wt').write('tmp/gdalbuildvrt1.tif\ntmp/gdalbuildvrt2.tif\ntmp/gdalbuildvrt3.tif\ntmp/gdalbuildvrt4.tif')
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -input_file_list tmp/filelist.txt tmp/mosaic.vrt').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -input_file_list tmp/filelist.txt tmp/mosaic.vrt')
 
     return test_gdalbuildvrt_check()
 
@@ -171,7 +171,7 @@ def test_gdalbuildvrt_4():
     ds.SetGeoTransform( [ 47, 0.1, 0, 2, 0, -0.1 ] )
     ds = None
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif tmp/gdalbuildvrt5.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif tmp/gdalbuildvrt5.tif')
 
     return test_gdalbuildvrt_check()
 
@@ -192,7 +192,7 @@ def test_gdalbuildvrt_5():
     ds.SetGeoTransform( [ 47, 0.1, 0, 2, 0, -0.1 ] )
     ds = None
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif tmp/gdalbuildvrt5.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif tmp/gdalbuildvrt5.tif')
 
     return test_gdalbuildvrt_check()
 
@@ -203,7 +203,7 @@ def test_gdalbuildvrt_6():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -separate tmp/stacked.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -separate tmp/stacked.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
 
     ds = gdal.Open('tmp/stacked.vrt')
     if ds.GetProjectionRef().find('WGS 84') == -1:
@@ -247,8 +247,13 @@ def test_gdalbuildvrt_7():
     out_ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
     out_ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     out_ds.GetRasterBand(1).SetNoDataValue(256)
+    
+    try:
+        ff = '\xff'.encode('latin1')
+    except:
+        ff = '\xff'
 
-    out_ds.GetRasterBand(1).WriteRaster( 0, 0, 10, 10, '\xff', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds.GetRasterBand(1).WriteRaster( 0, 0, 10, 10, ff, buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
     out_ds.GetRasterBand(2).WriteRaster( 0, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
     out_ds.GetRasterBand(3).WriteRaster( 0, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
     out_ds = None
@@ -264,11 +269,11 @@ def test_gdalbuildvrt_7():
     out_ds.GetRasterBand(1).SetNoDataValue(256)
 
     out_ds.GetRasterBand(1).WriteRaster( 10, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
-    out_ds.GetRasterBand(2).WriteRaster( 10, 0, 10, 10, '\xff', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
+    out_ds.GetRasterBand(2).WriteRaster( 10, 0, 10, 10, ff, buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
     out_ds.GetRasterBand(3).WriteRaster( 10, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
     out_ds = None
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/gdalbuildvrt7.vrt tmp/vrtnull1.tif tmp/vrtnull2.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/gdalbuildvrt7.vrt tmp/vrtnull1.tif tmp/vrtnull2.tif')
 
     ds = gdal.Open('tmp/gdalbuildvrt7.vrt')
 
@@ -295,7 +300,7 @@ def test_gdalbuildvrt_8():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.05 0.05 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.05 0.05 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
     
     ds = gdal.Open('tmp/mosaic2.vrt')
 
@@ -310,7 +315,7 @@ def test_gdalbuildvrt_8():
         gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
         return 'fail'
     
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.1 0.1 tmp/mosaic.vrt tmp/mosaic2.vrt').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.1 0.1 tmp/mosaic.vrt tmp/mosaic2.vrt')
 
     return test_gdalbuildvrt_check()
 
@@ -321,7 +326,7 @@ def test_gdalbuildvrt_9():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 1 46 5 50 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 1 46 5 50 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
 
     ds = gdal.Open('tmp/mosaic2.vrt')
 
@@ -336,7 +341,7 @@ def test_gdalbuildvrt_9():
         gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
         return 'fail'
    
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 2 47 4 49 tmp/mosaic.vrt tmp/mosaic2.vrt').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 2 47 4 49 tmp/mosaic.vrt tmp/mosaic2.vrt')
 
     return test_gdalbuildvrt_check()
     
@@ -365,12 +370,12 @@ def test_gdalbuildvrt_10():
     out_ds.GetRasterBand(1).WriteRaster( 6, 6, 3, 3, '\x01', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1 )
     out_ds = None
 
-    os.popen(test_cli_utilities.get_gdalbuildvrt_path() + ' -srcnodata 0 tmp/gdalbuildvrt10.vrt tmp/test_gdalbuildvrt_10_1.tif tmp/test_gdalbuildvrt_10_2.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -srcnodata 0 tmp/gdalbuildvrt10.vrt tmp/test_gdalbuildvrt_10_1.tif tmp/test_gdalbuildvrt_10_2.tif')
 
     ds = gdal.Open('tmp/gdalbuildvrt10.vrt')
 
     if ds.GetRasterBand(1).Checksum() != 18:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
 

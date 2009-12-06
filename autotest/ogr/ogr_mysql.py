@@ -410,7 +410,7 @@ def ogr_mysql_9():
         return 'fail'
 
     if ogrtest.check_feature_geometry( feat, 'POINT(5 6)' ) != 0:
-        print feat.GetGeometryRef()
+        print(feat.GetGeometryRef())
         gdaltest.post_reason( 'Geometry update failed' )
         return 'fail'
 

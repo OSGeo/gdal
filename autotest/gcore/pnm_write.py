@@ -42,7 +42,7 @@ gdaltest_list = []
 for item in init_list:
     ut = gdaltest.GDALTest( 'PNM', item[0], item[1], item[2] )
     if ut is None:
-	print( 'PNM tests skipped' )
+        print( 'PNM tests skipped' )
     gdaltest_list.append( (ut.testCreateCopy, item[0]) )
     gdaltest_list.append( (ut.testCreate, item[0]) )
 

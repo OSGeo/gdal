@@ -56,7 +56,7 @@ def rik_online_1():
         file_to_test = 'tmp/cache/sverige500_swe99.rik'
     except:
         try:
-            print 'Uncompressing ZIP file...'
+            print('Uncompressing ZIP file...')
             import zipfile
             zfobj = zipfile.ZipFile('tmp/cache/sverige500_swe99.zip')
             outfile = open('tmp/cache/sverige500_swe99.rik', 'wb')

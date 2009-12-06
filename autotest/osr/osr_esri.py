@@ -215,7 +215,7 @@ def osr_esri_7():
     srs_wkt = osr.SpatialReference(wkt = wkt)
 
     if not srs_prj.IsSame( srs_wkt ):
-        print 'got: ', srs_prj.ExportToPrettyWkt()
+        print('got: ', srs_prj.ExportToPrettyWkt())
         gdaltest.post_reason( 'old style ESRI projection imported wrong, perhaps linear units?' )
         return 'fail'
 
@@ -282,9 +282,9 @@ def osr_esri_9():
     srs.MorphFromESRI()
     wkt = srs.ExportToWkt()
     if wkt != expected:
-        print
-        print 'Got:      ', wkt
-        print 'Expected: ', expected
+        print('')
+        print('Got:      ', wkt)
+        print('Expected: ', expected)
         gdaltest.post_reason( 'Did not get expected Equidistant Conic SRS after morphFromESRI' )
         return 'fail'
 
@@ -293,9 +293,9 @@ def osr_esri_9():
     srs.MorphToESRI()
     wkt = srs.ExportToWkt()
     if wkt != expected:
-        print
-        print 'Got:      ', wkt
-        print 'Expected: ', expected
+        print('')
+        print('Got:      ', wkt)
+        print('Expected: ', expected)
         gdaltest.post_reason( 'Did not get expected Equidistant Conic SRS after morphToESRI' )
         return 'fail'
 
@@ -314,9 +314,9 @@ def osr_esri_10():
     srs.MorphFromESRI()
     wkt = srs.ExportToWkt()
     if wkt != expected:
-        print
-        print 'Got:      ', wkt
-        print 'Expected: ', expected
+        print('')
+        print('Got:      ', wkt)
+        print('Expected: ', expected)
         gdaltest.post_reason( 'Did not get expected Equirectangular SRS after morphFromESRI' )
         return 'fail'
 
@@ -325,9 +325,9 @@ def osr_esri_10():
     srs.MorphToESRI()
     wkt = srs.ExportToWkt()
     if wkt != expected:
-        print
-        print 'Got:      ', wkt
-        print 'Expected: ', expected
+        print('')
+        print('Got:      ', wkt)
+        print('Expected: ', expected)
         gdaltest.post_reason( 'Did not get expected Equidistant_Cylindrical SRS after morphToESRI' )
         return 'fail'
 
@@ -358,9 +358,9 @@ def osr_esri_11():
     srs.MorphFromESRI()
     wkt = srs.ExportToWkt()
     if wkt != expected:
-        print
-        print 'Got:      ', wkt
-        print 'Expected: ', expected
+        print('')
+        print('Got:      ', wkt)
+        print('Expected: ', expected)
         gdaltest.post_reason( 'Did not get expected TM SRS after morphFromESRI' )
         return 'fail'
 
@@ -443,7 +443,7 @@ def osr_esri_14():
                           'DATUM NAD83',
                           'PARAMETERS' ] )
     if srs.GetAuthorityCode( 'PROJCS' ) != None:
-        print srs.GetAuthorityCode( 'PROJCS' )
+        print(srs.GetAuthorityCode( 'PROJCS' ))
         gdaltest.post_reason( 'Get epsg authority code inappropriately.' )
         return 'fail'
     
@@ -454,7 +454,7 @@ def osr_esri_14():
                           'DATUM NAD83',
                           'PARAMETERS' ] )
     if srs.GetAuthorityCode( 'PROJCS' ) != '32104':
-        print srs.GetAuthorityCode( 'PROJCS' )
+        print(srs.GetAuthorityCode( 'PROJCS' ))
         gdaltest.post_reason( 'Did not get epsg authority code when expected.')
         return 'fail'
 
@@ -475,21 +475,21 @@ def osr_esri_15():
     srs.MorphFromESRI()
     wkt = srs.ExportToWkt()
 
-    if string.find(wkt,'rectified_grid_angle') == -1:
-        print wkt
+    if wkt.find('rectified_grid_angle') == -1:
+        print(wkt)
         gdaltest.post_reason( 'Did not get rectified_grid_angle as expected.')
         return 'fail'
 
     srs.MorphToESRI()
     wkt = srs.ExportToWkt()
-    if string.find(wkt,'rectified_grid_angle') != -1:
+    if wkt.find('rectified_grid_angle') != -1:
         gdaltest.post_reason('did not get rectified_grid_angle removed as expected.' )
         return 'fail'
 
     if wkt != expected:
-        print
-        print 'Got:      ', wkt
-        print 'Expected: ', expected
+        print('')
+        print('Got:      ', wkt)
+        print('Expected: ', expected)
         gdaltest.post_reason( 'Did not get expected HOM projection after morphing' )
         return 'fail'
 
@@ -510,7 +510,7 @@ def osr_esri_16():
     wkt = srs.ExportToWkt()
 
     if expected != wkt:
-        print wkt
+        print(wkt)
         gdaltest.post_reason( 'Did not get expected equidistant cylindrical.' )
         return 'fail'
 
@@ -531,9 +531,9 @@ def osr_esri_17():
     srs.MorphToESRI()
     wkt = srs.ExportToWkt()
     if wkt != expected:
-        print
-        print 'Got:      ', wkt
-        print 'Expected: ', expected
+        print('')
+        print('Got:      ', wkt)
+        print('Expected: ', expected)
         gdaltest.post_reason( 'Did not get expected LAEA SRS after morphToESRI' )
         return 'fail'
 
@@ -542,9 +542,9 @@ def osr_esri_17():
     srs.MorphFromESRI()
     wkt = srs.ExportToWkt()
     if wkt != expected:
-        print
-        print 'Got:      ', wkt
-        print 'Expected: ', expected
+        print('')
+        print('Got:      ', wkt)
+        print('Expected: ', expected)
         gdaltest.post_reason( 'Did not get expected LAEA SRS after morphFromESRI' )
         return 'fail'
 
@@ -578,9 +578,9 @@ def osr_esri_18():
     srs_expected = osr.SpatialReference( wkt = expected )
     
     if not srs.IsSame(srs_expected):
-        print
-        print 'Got:      ', srs.ExportToPrettyWkt()
-        print 'Expected: ', srs_expected.ExportToPrettyWkt()
+        print('')
+        print('Got:      ', srs.ExportToPrettyWkt())
+        print('Expected: ', srs_expected.ExportToPrettyWkt())
         gdaltest.post_reason( 'Did not get expected EC SRS after morphFromESRI' )
         return 'fail'
 
@@ -588,9 +588,9 @@ def osr_esri_18():
     srs_expected = osr.SpatialReference( wkt = original )
     
     if not srs.IsSame(srs_expected):
-        print
-        print 'Got:      ', srs.ExportToPrettyWkt()
-        print 'Expected: ', srs_expected.ExportToPrettyWkt()
+        print('')
+        print('Got:      ', srs.ExportToPrettyWkt())
+        print('Expected: ', srs_expected.ExportToPrettyWkt())
         gdaltest.post_reason( 'Did not get expected EC SRS after morphToESRI' )
         return 'fail'
 

@@ -375,13 +375,13 @@ def ogr_mem_11():
     f = lyr.GetFeature(1)
     try:
         # Old-gen bindings don't accept this form of SetField
-        f.SetField("WHEN", 2008, 03, 19, 16, 15, 00, 0)
+        f.SetField("WHEN", 2008, 3, 19, 16, 15, 00, 0)
     except:
         return 'skip'
     lyr.SetFeature(f)
     f = lyr.GetFeature(1)
     idx = f.GetFieldIndex('WHEN')
-    print f.GetFieldAsDateTime(idx)
+    print(f.GetFieldAsDateTime(idx))
     return 'success'
 
 ###############################################################################
@@ -409,17 +409,17 @@ def ogr_mem_12():
 
     feat.SetFieldStringList(0, ['a', 'b'])
     if feat.GetFieldAsStringList(0) != ['a', 'b']:
-        print feat.GetFieldAsStringList(0)
+        print(feat.GetFieldAsStringList(0))
         return 'fail'
 
     feat.SetFieldIntegerList(1, [2, 3])
     if feat.GetFieldAsIntegerList(1) != [2, 3]:
-        print feat.GetFieldAsIntegerList(1)
+        print(feat.GetFieldAsIntegerList(1))
         return 'fail'
 
     feat.SetFieldDoubleList(2, [4., 5.])
     if feat.GetFieldAsDoubleList(2) != [4., 5.]:
-        print feat.GetFieldAsDoubleList(2)
+        print(feat.GetFieldAsDoubleList(2))
         return 'fail'
 
     return 'success'

@@ -87,7 +87,7 @@ def osr_proj4_3():
     except RuntimeError:
         gdal.PopErrorHandler()
 
-    if string.find(gdal.GetLastErrorMsg(),'No translation') != -1:
+    if gdal.GetLastErrorMsg().find('No translation') != -1:
         return 'success'
 
     gdaltest.post_reason( 'empty srs not handled properly' )
@@ -112,7 +112,7 @@ def osr_proj4_4():
     except RuntimeError:
         gdal.PopErrorHandler()
 
-    if string.find(gdal.GetLastErrorMsg(),'No translation') != -1:
+    if gdal.GetLastErrorMsg().find('No translation') != -1:
         return 'success'
 
     gdaltest.post_reason( 'unknown srs not handled properly' )
@@ -142,8 +142,8 @@ def osr_proj4_5():
 
     if not srs.IsSame(srs2):
         gdaltest.post_reason( 'round trip via PROJ.4 damaged srs?' )
-        print srs.ExportToPrettyWkt()
-        print srs2.ExportToPrettyWkt()
+        print(srs.ExportToPrettyWkt())
+        print(srs2.ExportToPrettyWkt())
     
     return 'success'
 
@@ -178,8 +178,8 @@ def osr_proj4_6():
     proj4 = srs.ExportToProj4()
 
     if proj4 != expect_proj4:
-        print 'Got:', proj4
-        print 'Expected:', expect_proj4
+        print('Got:', proj4)
+        print('Expected:', expect_proj4)
         gdaltest.post_reason( 'Failed to translate non-zero lat-of-origin mercator.' )
         return 'fail'
 
@@ -207,8 +207,8 @@ def osr_proj4_6():
     srs.SetFromUserInput( proj4 )
     wkt = srs.ExportToPrettyWkt()
     if wkt != expect_wkt:
-        print 'Got:   ',wkt
-        print 'Expect:',expect_wkt
+        print('Got:   ',wkt)
+        print('Expect:',expect_wkt)
         gdaltest.post_reason( 'did not get expected mercator_2sp result.' )
         return 'fail'
 
@@ -227,9 +227,9 @@ def osr_proj4_7():
     expected = '+proj=somerc +lat_0=47.14439372222222 +lon_0=19.04857177777778 +k_0=0.99993 +x_0=650000 +y_0=200000 +ellps=GRS67 +units=m +no_defs '
     if proj4 != expected:
         gdaltest.post_reason( 'did not get expected proj.4 translation of somerc' )
-        print
-        print 'Got:     "%s"' % proj4
-        print 'Expected:"%s"' % expected
+        print('')
+        print('Got:     "%s"' % proj4)
+        print('Expected:"%s"' % expected)
         return 'fail'
 
     srs.ImportFromProj4( proj4 )
@@ -253,7 +253,7 @@ def osr_proj4_7():
     srs_expected = osr.SpatialReference( wkt = expected )
     if not srs.IsSame(srs_expected):
         gdaltest.post_reason( 'did not get expected wkt.' )
-        print 'Got: ', srs.ExportToPrettyWkt()
+        print('Got: ', srs.ExportToPrettyWkt())
         return 'fail'
     
     return 'success'
@@ -271,7 +271,7 @@ def osr_proj4_8():
     expected = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs'
     if proj4 != expected:
         gdaltest.post_reason( 'did not get expected EPSG:3857 (google mercator) result.' )
-        print proj4
+        print(proj4)
         return 'fail'
 
     srs = osr.SpatialReference()
@@ -280,7 +280,7 @@ def osr_proj4_8():
     proj4 = srs.ExportToProj4()
     if proj4 != expected:
         gdaltest.post_reason( 'did not get expected EPSG:3785 (google mercator) result.' )
-        print proj4
+        print(proj4)
         return 'fail'
 
     return 'success'

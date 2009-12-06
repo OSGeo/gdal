@@ -371,7 +371,7 @@ def ogr_geom_transform_to():
     geom.TransformTo(sr2)
 
     if abs(geom.GetX() - 426857) > 1 or abs(geom.GetY() - 5427937) > 1:
-        print geom.ExportToWkt()
+        print(geom.ExportToWkt())
         return 'fail'
 
     return 'success'
@@ -397,7 +397,7 @@ def ogr_geom_transform():
     geom.Transform(ct)
 
     if abs(geom.GetX() - 426857) > 1 or abs(geom.GetY() - 5427937) > 1:
-        print geom.ExportToWkt()
+        print(geom.ExportToWkt())
         return 'fail'
 
     return 'success'
@@ -411,12 +411,12 @@ def ogr_geom_closerings():
     geom.CloseRings()
 
     if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
-        print geom.ExportToWkt()
+        print(geom.ExportToWkt())
         return 'fail'
 
     geom.CloseRings()
     if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
-        print geom.ExportToWkt()
+        print(geom.ExportToWkt())
         return 'fail'
 
     return 'success'
@@ -435,7 +435,7 @@ def ogr_geom_segmentize():
     geom.Segmentize(1.00001)
 
     if geom.ExportToWkt() != 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)':
-        print geom.ExportToWkt()
+        print(geom.ExportToWkt())
         return 'fail'
 
     return 'success'
@@ -449,20 +449,20 @@ def ogr_geom_flattenTo2D():
 
     # Point is 0 dimension, LineString 1, ...
     if geom.GetDimension() != 0:
-        print geom.GetDimension()
+        print(geom.GetDimension())
         return 'fail'
 
     if geom.GetCoordinateDimension() != 3:
-        print geom.GetCoordinateDimension()
+        print(geom.GetCoordinateDimension())
         return 'fail'
 
     geom.FlattenTo2D()
     if geom.GetCoordinateDimension() != 2:
-        print geom.GetCoordinateDimension()
+        print(geom.GetCoordinateDimension())
         return 'fail'
 
     if geom.ExportToWkt() != 'POINT (1 2)':
-        print geom.ExportToWkt()
+        print(geom.ExportToWkt())
         return 'fail'
 
     return 'success'

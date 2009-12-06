@@ -93,12 +93,12 @@ def test_gdal_grid_1():
     shape_ds.Destroy()
 
     # Create a GDAL dataset from the previous generated OGR grid
-    os.popen(test_cli_utilities.get_gdal_grid_path() + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 tmp/n43.shp tmp/n43.tif  -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_grid_path() + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 tmp/n43.shp tmp/n43.tif  -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256')
 
     # We should get the same values as in n43.td0
     ds2 = gdal.Open('tmp/n43.tif')
     if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
-        print 'bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum() , ds2.GetRasterBand(1).Checksum())
+        print('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum() , ds2.GetRasterBand(1).Checksum()))
         return 'fail'
 
     ds = None

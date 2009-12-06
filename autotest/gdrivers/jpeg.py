@@ -62,11 +62,11 @@ def jpeg_2():
            or md['EXIF_GPSVersionID'] != '0x2 00 00 00' \
            or md['EXIF_ExifVersion'] != '0210' \
            or md['EXIF_XResolution'] != '(96)':
-            print md
+            print(md)
             gdaltest.post_reason( 'Exif metadata wrong.' )
             return 'fail'
     except:
-        print md
+        print(md)
         gdaltest.post_reason( 'Exit metadata apparently missing.' )
         return 'fail'
 
@@ -75,15 +75,15 @@ def jpeg_2():
         return 'fail'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
-    if not md.has_key('INTERLEAVE') or md['INTERLEAVE'] != 'PIXEL':
+    if 'INTERLEAVE' not in md or md['INTERLEAVE'] != 'PIXEL':
         gdaltest.post_reason( 'missing INTERLEAVE metadata' )
         return 'fail'
-    if not md.has_key('COMPRESSION') or md['COMPRESSION'] != 'JPEG':
+    if 'COMPRESSION' not in md or md['COMPRESSION'] != 'JPEG':
         gdaltest.post_reason( 'missing INTERLEAVE metadata' )
         return 'fail'
 
     md = ds.GetRasterBand(3).GetMetadata('IMAGE_STRUCTURE')
-    if not md.has_key('COMPRESSION') or md['COMPRESSION'] != 'JPEG':
+    if 'COMPRESSION' not in md or md['COMPRESSION'] != 'JPEG':
         gdaltest.post_reason( 'missing INTERLEAVE metadata' )
         return 'fail'
 
@@ -103,12 +103,12 @@ def jpeg_3():
                                                   
     if ds.GetRasterBand(1).Checksum() != 4794:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_GrayIndex:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     ds = None
@@ -137,7 +137,7 @@ def jpeg_4():
     cs = refband.GetMaskBand().Checksum()
     if cs != 770:
         gdaltest.post_reason( 'Wrong mask checksum' )
-        print cs
+        print(cs)
         return 'fail'
 
     return 'success'
@@ -165,7 +165,7 @@ def jpeg_5():
     cs = refband.GetMaskBand().Checksum()
     if cs != 770:
         gdaltest.post_reason( 'Wrong checksum on copied images mask.')
-        print cs
+        print(cs)
         return 'fail'
 
     ds2 = None
@@ -184,7 +184,7 @@ def jpeg_6():
 
     # Bacause of the optimization done in r17446, we should'nt yet get this error
     if gdal.GetLastErrorType() == 2 \
-       and string.find(gdal.GetLastErrorMsg(),'Ignoring EXIF') != -1:
+       and gdal.GetLastErrorMsg().find('Ignoring EXIF') != -1:
         gdaltest.post_reason( 'got error too soon.')
         return 'fail'
 
@@ -192,13 +192,13 @@ def jpeg_6():
 
     # Did we get an exif related warning?
     if gdal.GetLastErrorType() != 2 \
-       or string.find(gdal.GetLastErrorMsg(),'Ignoring EXIF') == -1:
+       or gdal.GetLastErrorMsg().find('Ignoring EXIF') == -1:
         gdaltest.post_reason( 'we did not get expected error.')
         return 'fail'
 
     if len(md) != 1 or md['EXIF_Software'] != 'IrfanView':
         gdaltest.post_reason( 'did not get expected metadata.' )
-        print md
+        print(md)
         return 'fail'
 
     ds = None
@@ -220,7 +220,7 @@ def jpeg_7():
 
     if ds.GetRasterBand(1).Checksum() != 4794:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     ds = None
@@ -237,37 +237,37 @@ def jpeg_8():
 
     if ds.GetRasterBand(1).Checksum() != 20385:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_RedBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     if ds.GetRasterBand(2).Checksum() != 20865:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(2).Checksum()
+        print(ds.GetRasterBand(2).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_GreenBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(2).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(2).GetRasterColorInterpretation())
         return 'fail'
 
     if ds.GetRasterBand(3).Checksum() != 19441:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(3).Checksum()
+        print(ds.GetRasterBand(3).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(3).GetRasterColorInterpretation()!= gdal.GCI_BlueBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(3).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(3).GetRasterColorInterpretation())
         return 'fail'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
 
-    if not md.has_key('SOURCE_COLOR_SPACE') or md['SOURCE_COLOR_SPACE'] != 'CMYK':
+    if 'SOURCE_COLOR_SPACE' not in md or md['SOURCE_COLOR_SPACE'] != 'CMYK':
         gdaltest.post_reason( 'missing SOURCE_COLOR_SPACE metadata' )
         return 'fail'
 
@@ -284,42 +284,42 @@ def jpeg_9():
 
     if ds.GetRasterBand(1).Checksum() != 21187:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     if ds.GetRasterBand(2).Checksum() != 21054:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(2).Checksum()
+        print(ds.GetRasterBand(2).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_MagentaBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(2).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(2).GetRasterColorInterpretation())
         return 'fail'
 
     if ds.GetRasterBand(3).Checksum() != 21499:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(3).Checksum()
+        print(ds.GetRasterBand(3).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(3).GetRasterColorInterpretation()!= gdal.GCI_YellowBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(3).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(3).GetRasterColorInterpretation())
         return 'fail'
 
     if ds.GetRasterBand(4).Checksum() != 21069:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
-        print ds.GetRasterBand(4).Checksum()
+        print(ds.GetRasterBand(4).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_BlackBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(4).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(4).GetRasterColorInterpretation())
         return 'fail'
 
     return 'success'
@@ -341,7 +341,7 @@ def jpeg_10():
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
     if stats[2] < 3613 or stats[2] > 3614:
-        print stats
+        print(stats)
         return 'fail'
     ds = None
 
@@ -368,7 +368,7 @@ def jpeg_11():
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
     if stats[2] < 3613 or stats[2] > 3614:
-        print stats
+        print(stats)
         return 'fail'
     ds = None
 

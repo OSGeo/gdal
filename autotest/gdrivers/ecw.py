@@ -47,7 +47,7 @@ def ecw_1():
         gdaltest.ecw_drv = gdal.GetDriverByName( 'ECW' )
         gdaltest.jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
     except:
-	gdaltest.ecw_drv = None
+        gdaltest.ecw_drv = None
         gdaltest.jp2ecw_drv = None
         return 'skip'
 
@@ -61,7 +61,7 @@ def ecw_1():
 def ecw_2():
 
     if gdaltest.ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'data/jrc.ecw' )
     
@@ -69,19 +69,19 @@ def ecw_2():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
-	gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
-	return 'fail'
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-467498.5) > 0.1 \
-	or abs(geotransform[1]-16.5475) > 0.001 \
-	or abs(geotransform[2]-0) > 0.001 \
-	or abs(geotransform[3]-5077883.2825) > 0.1 \
-	or abs(geotransform[4]-0) > 0.001 \
-	or abs(geotransform[5]- -16.5475) > 0.001:
-	print geotransform
-	gdaltest.post_reason( 'geotransform differs from expected' )
-	return 'fail'
+        or abs(geotransform[1]-16.5475) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-5077883.2825) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -16.5475) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
 
     return 'success'
 
@@ -90,21 +90,21 @@ def ecw_2():
 
 def ecw_3():
     if gdaltest.ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'data/jrc.ecw' )
     gdaltest.ecw_drv.CreateCopy( 'tmp/jrc_out.ecw', ds )
     ds = None
 
     return 'success' 
-	
+
 ###############################################################################
 # Verify various information about our generated image. 
 
 def ecw_4():
 
     if gdaltest.ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'tmp/jrc_out.ecw' )
     
@@ -112,19 +112,19 @@ def ecw_4():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean-exp_mean) > 1.5 or abs(stddev-exp_stddev) > 0.5:
-	gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
-	return 'fail'
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-467498.5) > 0.1 \
-	or abs(geotransform[1]-16.5475) > 0.001 \
-	or abs(geotransform[2]-0) > 0.001 \
-	or abs(geotransform[3]-5077883.2825) > 0.1 \
-	or abs(geotransform[4]-0) > 0.001 \
-	or abs(geotransform[5]- -16.5475) > 0.001:
-	print geotransform
-	gdaltest.post_reason( 'geotransform differs from expected' )
-	return 'fail'
+        or abs(geotransform[1]-16.5475) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-5077883.2825) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -16.5475) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
 
     ds = None
 
@@ -135,7 +135,7 @@ def ecw_4():
 
 def ecw_5():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'data/small.vrt' )
     ds_out = gdaltest.jp2ecw_drv.CreateCopy( 'tmp/ecw_5.jp2', ds )
@@ -144,14 +144,14 @@ def ecw_5():
     ds = None
 
     return 'success' 
-	
+
 ###############################################################################
 # Verify various information about our generated image. 
 
 def ecw_6():
 
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'tmp/ecw_5.jp2' )
     
@@ -161,8 +161,8 @@ def ecw_6():
     # The difference in the stddev is outragously large between win32 and
     # linux, but I don't know why. 
     if abs(mean-exp_mean) > 1.5 or abs(stddev-exp_stddev) > 6:
-	gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
-	return 'fail'
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
 
     (exp_mean, exp_stddev) = (144.422, 44.9075)
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
@@ -170,24 +170,24 @@ def ecw_6():
     # The difference in the stddev is outragously large between win32 and
     # linux, but I don't know why. 
     if abs(mean-exp_mean) > 1.0 or abs(stddev-exp_stddev) > 6:
-	gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
-	return 'fail'
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-440720) > 0.1 \
-	or abs(geotransform[1]-60) > 0.001 \
-	or abs(geotransform[2]-0) > 0.001 \
-	or abs(geotransform[3]-3751320) > 0.1 \
-	or abs(geotransform[4]-0) > 0.001 \
-	or abs(geotransform[5]- -60) > 0.001:
-	print geotransform
-	gdaltest.post_reason( 'geotransform differs from expected' )
-	return 'fail'
+        or abs(geotransform[1]-60) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-3751320) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -60) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
 
     prj = ds.GetProjectionRef()
-    if string.find(prj,'UTM') == -1 or string.find(prj,'NAD27') == -1 \
-       or string.find(prj,'one 11') == -1:
-        print prj
+    if prj.find('UTM') == -1 or prj.find('NAD27') == -1 \
+       or prj.find('one 11') == -1:
+        print(prj)
         gdaltest.post_reason( 'Coordinate system not UTM 11, NAD27?' )
         return 'fail'
 
@@ -200,7 +200,7 @@ def ecw_6():
 
 def ecw_7():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'data/small.vrt' )
     drv = gdal.GetDriverByName( 'NITF' )
@@ -208,14 +208,14 @@ def ecw_7():
     ds = None
 
     return 'success' 
-	
+
 ###############################################################################
 # Verify various information about our generated image. 
 
 def ecw_8():
 
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'tmp/ecw_7.ntf' )
     
@@ -223,29 +223,29 @@ def ecw_8():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean-exp_mean) > 1.0 or abs(stddev-exp_stddev) > 1.0:
-	gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
-	return 'fail'
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
 
     (exp_mean, exp_stddev) = (145.57, 43.1712)
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
     if abs(mean-exp_mean) > 1.0 or abs(stddev-exp_stddev) > 1.0:
-	gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
-	return 'fail'
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-440720) > 0.1 \
-	or abs(geotransform[1]-60) > 0.001 \
-	or abs(geotransform[2]-0) > 0.001 \
-	or abs(geotransform[3]-3751320) > 0.1 \
-	or abs(geotransform[4]-0) > 0.001 \
-	or abs(geotransform[5]- -60) > 0.001:
-	print geotransform
-	gdaltest.post_reason( 'geotransform differs from expected' )
-	return 'fail'
+        or abs(geotransform[1]-60) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-3751320) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -60) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
 
     prj = ds.GetProjectionRef()
-    if string.find(prj,'UTM Zone 11') == -1 or string.find(prj,'WGS84') == -1:
+    if prj.find('UTM Zone 11') == -1 or prj.find('WGS84') == -1:
         gdaltest.post_reason( 'Coordinate system not UTM 11, WGS84?' )
         return 'fail'
 
@@ -258,7 +258,7 @@ def ecw_8():
 
 def ecw_9():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdaltest.jp2ecw_drv.Create( 'tmp/ecw9.jp2', 200, 100, 1,
                                      gdal.GDT_Int16 )
@@ -266,7 +266,7 @@ def ecw_9():
 
     ds.SetProjection( 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]' )
 
-    raw_data = array.array('h',range(200)).tostring()
+    raw_data = array.array('h',list(range(200))).tostring()
 
     for line in range(100):
         ds.WriteRaster( 0, line, 200, 1, raw_data,
@@ -280,7 +280,7 @@ def ecw_9():
 
 def ecw_10():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'tmp/ecw9.jp2' )
     
@@ -288,39 +288,38 @@ def ecw_10():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean-exp_mean) > 1.1 or abs(stddev-exp_stddev) > 0.1:
-	gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
-	return 'fail'
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        return 'fail'
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-100) > 0.1 \
-	or abs(geotransform[1]-0.1) > 0.001 \
-	or abs(geotransform[2]-0) > 0.001 \
-	or abs(geotransform[3]-30) > 0.1 \
-	or abs(geotransform[4]-0) > 0.001 \
-	or abs(geotransform[5]- -0.1) > 0.001:
-	print geotransform
-	gdaltest.post_reason( 'geotransform differs from expected' )
-	return 'fail'
+        or abs(geotransform[1]-0.1) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-30) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -0.1) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
 
     # should check the projection, but I'm too lazy just now.
 
     return 'success' 
-	
 
 ###############################################################################
 # Test direct creation of an NITF/JPEG2000 file.
 
 def ecw_11():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     drv = gdal.GetDriverByName( 'NITF' )
     ds = drv.Create( 'tmp/test_11.ntf', 200, 100, 3, gdal.GDT_Byte,
                      [ 'ICORDS=G' ] )
     ds.SetGeoTransform( (100, 0.1, 0.0, 30.0, 0.0, -0.1 ) )
 
-    list = range(200) + range(20,220) + range(30,230)
-    raw_data = array.array('h',list).tostring()
+    my_list = list(range(200)) + list(range(20,220)) + list(range(30,230))
+    raw_data = array.array('h',my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster( 0, line, 200, 1, raw_data,
@@ -340,20 +339,20 @@ def ecw_11():
 
 def ecw_12():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'tmp/test_11.ntf' )
     
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-100) > 0.1 \
-	or abs(geotransform[1]-0.1) > 0.001 \
-	or abs(geotransform[2]-0) > 0.001 \
-	or abs(geotransform[3]-30.0) > 0.1 \
-	or abs(geotransform[4]-0) > 0.001 \
-	or abs(geotransform[5]- -0.1) > 0.001:
-	print geotransform
-	gdaltest.post_reason( 'geotransform differs from expected' )
-	return 'fail'
+        or abs(geotransform[1]-0.1) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-30.0) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -0.1) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
         gdaltest.post_reason( 'Got wrong color interpretation.' )
@@ -379,7 +378,7 @@ def ecw_12():
 
 def ecw_13():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'data/rgb16_ecwsdk.jp2' )
 
@@ -399,7 +398,7 @@ def ecw_13():
 
     if checksums != ( 19253, 17848, 19127 ):
         gdaltest.post_reason( 'Expected checksums do match expected checksums')
-        print checksums
+        print(checksums)
         return 'fail'
 
     return 'success'
@@ -409,7 +408,7 @@ def ecw_13():
 
 def ecw_14():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'data/rgb_gcp.vrt' )
     gdaltest.jp2ecw_drv.CreateCopy( 'tmp/rgb_gcp.jp2', ds )
@@ -423,16 +422,16 @@ def ecw_14():
 def ecw_15():
 
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'tmp/rgb_gcp.jp2' )
 
     gcp_srs = ds.GetGCPProjection()
     if gcp_srs[:6] != 'GEOGCS' \
-       or string.find(gcp_srs,'WGS') == -1 \
-       or string.find(gcp_srs,'84') == -1:
+       or gcp_srs.find('WGS') == -1 \
+       or gcp_srs.find('84') == -1:
         gdaltest.post_reason('GCP Projection not retained.')
-        print gcp_srs
+        print(gcp_srs)
         return 'fail'
 
     gcps = ds.GetGCPs()
@@ -443,20 +442,20 @@ def ecw_15():
        or gcps[1].GCPY     != 50 \
        or gcps[1].GCPZ     != 0:
         gdaltest.post_reason( 'GCPs wrong.' )
-        print gcps
+        print(gcps)
         return 'fail'
     
     ds = None
 
     return 'success'
-		
+
 ###############################################################################
 # Open byte.jp2
 
 def ecw_16():
 
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -488,14 +487,14 @@ def ecw_16():
 def ecw_17():
 
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     ds = gdal.Open( 'data/int16.jp2' )
     ds_ref = gdal.Open( 'data/int16.tif' )
     
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
+    print(ds.GetRasterBand(1).Checksum())
+    print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None
@@ -506,14 +505,14 @@ def ecw_17():
         return 'fail'
 
     return 'success'
-		
+
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
 def ecw_18():
 
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -565,7 +564,7 @@ def ecw_19():
 ###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
     
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
         return 'skip'
@@ -585,7 +584,7 @@ def ecw_online_1():
 ###############################################################################
 def ecw_online_2():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
     
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
         return 'skip'
@@ -614,7 +613,7 @@ def ecw_online_2():
 ###############################################################################
 def ecw_online_3():
     if gdaltest.jp2ecw_drv is None:
-	return 'skip'
+        return 'skip'
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
         return 'skip'
@@ -630,8 +629,8 @@ def ecw_online_3():
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
+    print(ds.GetRasterBand(1).Checksum())
+    print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None
@@ -663,8 +662,8 @@ def ecw_online_4():
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, width = 256, height = 256)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
+    print(ds.GetRasterBand(1).Checksum())
+    print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None

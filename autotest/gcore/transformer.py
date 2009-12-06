@@ -58,7 +58,7 @@ def transformer_1():
        or abs(pnt[0]- 441920) > 0.00000001 \
        or abs(pnt[1]-3750720) > 0.00000001 \
        or pnt[2] != 0.0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong forward transform result.' )
         return 'fail'
 
@@ -68,7 +68,7 @@ def transformer_1():
        or abs(pnt[0]-20) > 0.00000001 \
        or abs(pnt[1]-10) > 0.00000001 \
        or pnt[2] != 0.0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
@@ -91,7 +91,7 @@ def transformer_2():
        or abs(pnt[0]-441920) > 0.001 \
        or abs(pnt[1]-3750720) > 0.001 \
        or pnt[2] != 0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong forward transform result.' )
         return 'fail'
 
@@ -101,7 +101,7 @@ def transformer_2():
        or abs(pnt[0]-20) > 0.001 \
        or abs(pnt[1]-10) > 0.001 \
        or pnt[2] != 0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
@@ -124,7 +124,7 @@ def transformer_3():
        or abs(pnt[0]-441920) > 0.001 \
        or abs(pnt[1]-3750720) > 0.001 \
        or pnt[2] != 0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong forward transform result.' )
         return 'fail'
 
@@ -134,7 +134,7 @@ def transformer_3():
        or abs(pnt[0]-20) > 0.001 \
        or abs(pnt[1]-10) > 0.001 \
        or pnt[2] != 0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
@@ -157,7 +157,7 @@ def transformer_4():
        or abs(pnt[0]+81.961341857910156) > 0.000001 \
        or abs(pnt[1]-29.612689971923828) > 0.000001 \
        or pnt[2] != 0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong forward transform result.' )
         return 'fail'
 
@@ -167,7 +167,7 @@ def transformer_4():
        or abs(pnt[0]-20) > 0.001 \
        or abs(pnt[1]-10) > 0.001 \
        or pnt[2] != 0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
@@ -190,7 +190,7 @@ def transformer_5():
        or abs(pnt[0]-125.64830100509131) > 0.000001 \
        or abs(pnt[1]-39.869433991997553) > 0.000001 \
        or pnt[2] != 0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong forward transform result.' )
         return 'fail'
 
@@ -200,7 +200,7 @@ def transformer_5():
        or abs(pnt[0]-20) > 0.001 \
        or abs(pnt[1]-10) > 0.001 \
        or pnt[2] != 0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
 
@@ -212,7 +212,7 @@ def transformer_5():
        or abs(pnt[0]-125.64828521533849) > 0.000001 \
        or abs(pnt[1]-39.869345204440144) > 0.000001 \
        or pnt[2] != 30:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong forward transform result.(2)' )
         return 'fail'
 
@@ -222,7 +222,7 @@ def transformer_5():
        or abs(pnt[0]-20) > 0.001 \
        or abs(pnt[1]-10) > 0.001 \
        or pnt[2] != 30:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.(2)' )
         return 'fail'
 
@@ -246,7 +246,7 @@ def transformer_6():
        or abs(pnt[0][0]- 441920) > 0.00000001 \
        or abs(pnt[0][1]-3750720) > 0.00000001 \
        or pnt[0][2] != 0.0:
-        print success, pnt
+        print(success, pnt)
         gdaltest.post_reason( 'got wrong forward transform result.' )
         return 'fail'
 

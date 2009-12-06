@@ -422,8 +422,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    if not os.environ.has_key('OCI_DSNAME'):
-        print 'Enter ORACLE connection (eg. OCI:scott/tiger@orcl): ',
+    if 'OCI_DSNAME' not in os.environ:
+        print('Enter ORACLE connection (eg. OCI:scott/tiger@orcl): ')
         oci_dsname = string.strip(sys.stdin.readline())
         os.environ['OCI_DSNAME'] = oci_dsname
 

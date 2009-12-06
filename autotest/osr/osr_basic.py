@@ -229,8 +229,8 @@ def osr_basic_6():
     wkt_1 = osr.GetUserInputAsWKT( 'urn:x-ogc:def:crs:EPSG::4326' )
     wkt_2 = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]"""
     if wkt_1 != wkt_2:
-        print wkt_1
-        print wkt_2
+        print(wkt_1)
+        print(wkt_2)
         gdaltest.post_reason( 'EPSG:4326 urn lookup not as expected.' )
         return 'fail'
 
@@ -244,8 +244,8 @@ def osr_basic_7():
     wkt_1 = osr.GetUserInputAsWKT( 'urn:ogc:def:crs:OGC::AUTO42001:-117:33' )
     wkt_2 = 'PROJCS["UTM Zone 11, Northern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]]]'
     if wkt_1 != wkt_2:
-        print wkt_1
-        print wkt_2
+        print(wkt_1)
+        print(wkt_2)
         gdaltest.post_reason( 'AUTO42001 urn lookup not as expected.' )
         return 'fail'
 
@@ -278,7 +278,7 @@ def osr_basic_8():
         return 'fail'
 
     if abs(fe-3280.840) > 0.01:
-        print fe
+        print(fe)
         gdaltest.post_reason( 'wrong updated false easting value.' )
         return 'fail'
 

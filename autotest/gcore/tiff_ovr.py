@@ -178,7 +178,7 @@ def tiff_ovr_4():
 
     ovband = wrk_ds.GetRasterBand(1).GetOverview(1)
     md = ovband.GetMetadata()
-    if not md.has_key('RESAMPLING') \
+    if 'RESAMPLING' not in md \
        or md['RESAMPLING'] != 'AVERAGE_BIT2GRAYSCALE':
         gdaltest.post_reason( 'Did not get expected RESAMPLING metadata.' )
         return 'fail'
@@ -188,12 +188,24 @@ def tiff_ovr_4():
 
     pix_count = ovband.XSize * ovband.YSize
     sum = 0.0
-    for i in range(pix_count):
-        sum = sum + ord(ovimage[i])
+    is_bytes = False
+    try:
+        if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
+            is_bytes = True
+    except:
+        pass
+
+    if is_bytes is True:
+        for i in range(pix_count):
+            sum = sum + ovimage[i]
+    else:
+        for i in range(pix_count):
+            sum = sum + ord(ovimage[i])
+            
     average = sum / pix_count
     exp_average = 154.8144
     if abs(average - exp_average) > 0.1:
-        print average
+        print(average)
         gdaltest.post_reason( 'got wrong average for overview image' )
         return 'fail'
 
@@ -206,13 +218,17 @@ def tiff_ovr_4():
 
     pix_count = ovband.XSize * ovband.YSize
     sum = 0.0
-    for i in range(pix_count):
-        sum = sum + ord(ovimage[i])
+    if is_bytes is True:
+        for i in range(pix_count):
+            sum = sum + ovimage[i]
+    else:
+        for i in range(pix_count):
+            sum = sum + ord(ovimage[i])
     average = sum / pix_count
     exp_average = 0.6096
     
     if abs(average - exp_average) > 0.01:
-        print average
+        print(average)
         gdaltest.post_reason( 'got wrong average for downsampled image' )
         return 'fail'
 
@@ -241,7 +257,7 @@ def tiff_ovr_5():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -277,7 +293,7 @@ def tiff_ovr_6():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -307,7 +323,7 @@ def tiff_ovr_7():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -337,7 +353,7 @@ def tiff_ovr_8():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -371,7 +387,7 @@ def tiff_ovr_9():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     # Re-check after dataset reopening
@@ -384,7 +400,7 @@ def tiff_ovr_9():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -423,7 +439,7 @@ def tiff_ovr_10():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -444,7 +460,7 @@ def tiff_ovr_11():
 
     md = gdaltest.tiff_drv.GetMetadata()
     try:
-        if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+        if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or \
            int(gdal.VersionInfo('VERSION_NUM')) < 1700:
             # The two following lines are necessary with inverted endianness
             # for the moment with older libtiff
@@ -472,7 +488,7 @@ def tiff_ovr_11():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -494,7 +510,7 @@ def tiff_ovr_12():
 
     md = gdaltest.tiff_drv.GetMetadata()
     try:
-        if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+        if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or \
            int(gdal.VersionInfo('VERSION_NUM')) < 1700:
             # The two following lines are necessary with inverted endianness
             # for the moment with older libtiff
@@ -523,7 +539,7 @@ def tiff_ovr_12():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -588,7 +604,7 @@ def tiff_ovr_14():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -610,7 +626,7 @@ def tiff_ovr_15():
 
     md = gdaltest.tiff_drv.GetMetadata()
     try:
-        if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1 or \
+        if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or \
            int(gdal.VersionInfo('VERSION_NUM')) < 1700:
             # The two following lines are necessary with inverted endianness
             # for the moment with older libtiff
@@ -639,7 +655,7 @@ def tiff_ovr_15():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -678,7 +694,7 @@ def tiff_ovr_16():
     exp_cs = 1122
     if cs != exp_cs:
         gdaltest.post_reason( 'bad checksum' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     ds = None
@@ -709,7 +725,7 @@ def tiff_ovr_17():
     exp_cs = 1122
     if cs != exp_cs:
         gdaltest.post_reason( 'bad checksum' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     ds = None
@@ -738,7 +754,7 @@ def tiff_ovr_18():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     return 'success'
@@ -752,7 +768,7 @@ def tiff_ovr_19():
 
     drv = gdal.GetDriverByName( 'GTiff' )
     md = drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds=gdal.GetDriverByName('GTiff').Create('tmp/ovr19.tif',100,100,1)
@@ -765,17 +781,17 @@ def tiff_ovr_19():
     ds.BuildOverviews('NEAR', overviewlist = [2,4])
 
     if ds.GetRasterBand(1).GetOverviewCount() != 2 is None:
-        print 'Overview could not be generated'
+        print('Overview could not be generated')
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 2500:
-        print cs
+        print(cs)
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs != 625:
-        print cs
+        print(cs)
         return 'fail'
 
     ds = None
@@ -790,7 +806,7 @@ def tiff_ovr_20():
 
     drv = gdal.GetDriverByName( 'GTiff' )
     md = drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/ovr20.tif', 100, 100, 1 )
@@ -828,7 +844,7 @@ def tiff_ovr_21():
 
     drv = gdal.GetDriverByName( 'GTiff' )
     md = drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/ovr21.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'] )
@@ -865,7 +881,7 @@ def tiff_ovr_22():
 
     drv = gdal.GetDriverByName( 'GTiff' )
     md = drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/ovr22.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'] )
@@ -900,7 +916,7 @@ def tiff_ovr_23():
 
     drv = gdal.GetDriverByName( 'GTiff' )
     md = drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/ovr23.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'] )
@@ -939,7 +955,7 @@ def tiff_ovr_24():
 
     drv = gdal.GetDriverByName( 'GTiff' )
     md = drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/ovr24.tif', 85000, 100000, 1, options = ['SPARSE_OK=YES'] )
@@ -1245,9 +1261,9 @@ def tiff_ovr_34():
     data = ds.GetRasterBand(1).ReadRaster( 0,0,20,20,buf_xsize=5,buf_ysize=5)
     ds = None
 
-    if data != '                         ':
+    if data != '                         '.encode('ascii'):
         gdaltest.post_reason( 'did not get expected cleared overview.' )
-        print '[%s]' % data
+        print('[%s]' % data)
         return 'fail'
 
     gdaltest.tiff_drv.Delete( 'tmp/ovr34.tif' )
@@ -1270,9 +1286,9 @@ def tiff_ovr_35():
     data = ds.ReadRaster( 0,0,20,20,buf_xsize=5,buf_ysize=5,band_list=[1])
     ds = None
 
-    if data != '                         ':
+    if data != '                         '.encode('ascii'):
         gdaltest.post_reason( 'did not get expected cleared overview.' )
-        print '[%s]' % data
+        print('[%s]' % data)
         return 'fail'
 
     gdaltest.tiff_drv.Delete( 'tmp/ovr35.tif' )
@@ -1312,7 +1328,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr17.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr18.tif' )
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') != -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') != -1:
         gdaltest.tiff_drv.Delete( 'tmp/ovr19.tif' )
         gdaltest.tiff_drv.Delete( 'tmp/ovr20.tif' )
         gdaltest.tiff_drv.Delete( 'tmp/ovr21.tif' )

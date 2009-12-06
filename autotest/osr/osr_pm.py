@@ -67,11 +67,11 @@ def osr_pm_2():
     srs.ImportFromEPSG( 27572 )
     proj4_srs = srs.ExportToProj4()
 
-    if string.find( proj4_srs, '+pm=paris' ) == -1:
+    if proj4_srs.find('+pm=paris' ) == -1:
         gdaltest.post_reason( 'prime meridian wrong or missing.' )
         return 'fail'
     
-    if string.find( proj4_srs, '+lon_0=0' ) == -1:
+    if proj4_srs.find('+lon_0=0' ) == -1:
         gdaltest.post_reason( '+lon_0 is wrong.' )
         return 'fail'
     

@@ -476,7 +476,7 @@ def warp_19_internal(size, datatype, resampling_string):
     ds.GetRasterBand(1).Fill(10.1, 20.1)
     ds = None
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -r ' + resampling_string + ' tmp/test.tif tmp/testwarp.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -r ' + resampling_string + ' tmp/test.tif tmp/testwarp.tif')
 
     ref_ds = gdal.Open( 'tmp/test.tif' )
     ds = gdal.Open( 'tmp/testwarp.tif' )
@@ -488,7 +488,7 @@ def warp_19_internal(size, datatype, resampling_string):
     gdaltest.tiff_drv.Delete('tmp/testwarp.tif')
 
     if checksum != checksum_ref:
-        print 'got %d, expected %d' % (checksum, checksum_ref)
+        print('got %d, expected %d' % (checksum, checksum_ref))
         gdaltest.post_reason('Result different from source')
         return 'fail'
 
@@ -525,11 +525,11 @@ def warp_19():
     sizes = [ 1, 2, 3, 7 ]
 
     for k in range(len(sizes)):
-        print 'Testing size = %d ...' % (sizes[k])
+        print('Testing size = %d ...' % (sizes[k]))
         for j in range(len(methods)):
             for i in range(len(datatypes)):
                 if warp_19_internal(sizes[k], datatypes[i], methods[j]) != 'success':
-                    print 'fail with size = %d, data type = %d and method %s' % (sizes[k], datatypes[i], methods[j])
+                    print('fail with size = %d, data type = %d and method %s' % (sizes[k], datatypes[i], methods[j]))
                     return 'fail'
 
     return 'success'

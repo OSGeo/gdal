@@ -32,7 +32,6 @@ import os
 import sys
 import string
 import array
-import urllib2
 import gdal
 
 sys.path.append( '../pymod' )
@@ -56,15 +55,10 @@ def wcs_1():
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WCS service is online.
     # Nothing genuine but helps to keep the buildbot waterfall green.
-    try:
-        srv = 'http://geodata.telascience.org/cgi-bin/mapserv_dem?'
-        web = urllib2.urlopen(srv)
-    except urllib2.HTTPError, e:
-        print 'Test WCS service is down (HTTP Error: %d)' % e.code
+    srv = 'http://geodata.telascience.org/cgi-bin/mapserv_dem?'
+    if gdaltest.gdalurlopen(srv) is None:
         gdaltest.wcs_drv = None
-    except:
-        print 'Test WCS service is down.'
-        gdaltest.wcs_drv = None
+
 
     if gdaltest.wcs_drv is None:
         return 'skip'
@@ -77,7 +71,7 @@ def wcs_1():
 def wcs_2():
 
     if gdaltest.wcs_drv is None:
-	return 'skip'
+        return 'skip'
 
     # first, copy to tmp directory.
     open('tmp/srtmplus.wcs','w').write(open('data/srtmplus.wcs').read())
@@ -97,7 +91,7 @@ def wcs_2():
 def wcs_3():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-	return 'skip'
+        return 'skip'
 
     if gdaltest.wcs_ds.RasterXSize != 43200 \
        or gdaltest.wcs_ds.RasterYSize != 21600 \
@@ -118,7 +112,7 @@ def wcs_3():
        or abs(gt[5] - -0.00833333) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
         gdaltest.post_reason( 'wrong geotransform' )
-        print gt
+        print(gt)
         return 'fail'
     
     if gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() < 1:
@@ -137,7 +131,7 @@ def wcs_3():
 def wcs_4():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-	return 'skip'
+        return 'skip'
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum( 0, 0, 100, 100 )
     if cs != 10469:
@@ -152,7 +146,7 @@ def wcs_4():
 def wcs_5():
 
     if gdaltest.wcs_drv is None:
-	return 'skip'
+        return 'skip'
 
     fn = '<WCS_GDAL><ServiceURL>http://geodata.telascience.org/cgi-bin/mapserv_dem?</ServiceURL><CoverageName>srtmplus_raw</CoverageName><Timeout>75</Timeout></WCS_GDAL>'
 

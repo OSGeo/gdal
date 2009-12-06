@@ -73,7 +73,7 @@ def proximity_1():
         drv.Delete( 'tmp/proximity_1.tif' )
     
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
@@ -115,7 +115,7 @@ def proximity_2():
         drv.Delete( 'tmp/proximity_2.tif' )
     
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:

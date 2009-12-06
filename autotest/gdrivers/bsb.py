@@ -69,7 +69,7 @@ def bsb_2():
         return 'skip'
 
     md = gdaltest.bsb_dr.GetMetadata()
-    if not md.has_key('DMD_CREATIONDATATYPES'):
+    if 'DMD_CREATIONDATATYPES' not in md:
         return 'skip'
 
     tst = gdaltest.GDALTest( 'BSB', 'rgbsmall.kap', 1, 30321 )

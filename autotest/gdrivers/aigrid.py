@@ -164,7 +164,7 @@ def aigrid_online_1():
     try:
         rat = ds.GetRasterBand(1).GetDefaultRAT()
     except:
-        print 'Skipping RAT checking... OG Python bindings have no RAT API'
+        print('Skipping RAT checking... OG Python bindings have no RAT API')
         return 'sucess'
 
     if rat is None:

@@ -77,7 +77,7 @@ def grib_3():
     gdal.PopErrorHandler()
 
     msg = gdal.GetLastErrorMsg()
-    if string.find(msg,'data access may be incomplete') == -1 \
+    if msg.find('data access may be incomplete') == -1 \
        or gdal.GetLastErrorType() != 2:
         gdaltest.post_reason( 'did not get expected warning.' )
     

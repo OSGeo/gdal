@@ -28,8 +28,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import gdal
+import gdaltest
 
 cli_exe_path = { }
 
@@ -40,11 +40,7 @@ def get_cli_utility_path_internal(cli_utility_name):
     # This is the case for the buildbot directory tree
     try:
         cli_utility_path = os.path.join(os.getcwd(), '..', '..', 'gdal', 'apps', cli_utility_name)
-        (child_stdin, child_stdout, child_stderr) = os.popen3(cli_utility_path + ' --utility_version')
-        ret = child_stdout.read()
-        child_stdin.close()
-        child_stdout.close()
-        child_stderr.close()
+        ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
 
         if ret.find('GDAL') != -1:
             #print ret
@@ -55,11 +51,7 @@ def get_cli_utility_path_internal(cli_utility_name):
     # Otherwise look up in the system path
     try:
         cli_utility_path = cli_utility_name
-        (child_stdin, child_stdout, child_stderr) = os.popen3(cli_utility_path + ' --utility_version')
-        ret = child_stdout.read()
-        child_stdin.close()
-        child_stdout.close()
-        child_stderr.close()
+        ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
 
         if ret.find('GDAL') != -1:
             #print ret
@@ -73,7 +65,7 @@ def get_cli_utility_path_internal(cli_utility_name):
 # 
 def get_cli_utility_path(cli_utility_name):
     global cli_exe_path
-    if cli_exe_path.has_key(cli_utility_name):
+    if cli_utility_name in cli_exe_path:
         return cli_exe_path[cli_utility_name]
     else:
         cli_exe_path[cli_utility_name] = get_cli_utility_path_internal(cli_utility_name)

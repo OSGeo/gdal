@@ -100,9 +100,9 @@ def usgsdem_5():
     gt2 = ds2.GetGeoTransform()
     for i in range(6):
         if abs(gt1[i]-gt2[i]) > 1e-5:
-            print
-            print 'old = ', gt1
-            print 'new = ', gt2
+            print('')
+            print('old = ', gt1)
+            print('new = ', gt2)
             gdaltest.post_reason( 'Geotransform differs.' )
             return 'fail'
 
@@ -172,9 +172,9 @@ def usgsdem_7():
     got_gt = ds2.GetGeoTransform()
     for i in range(6):
         if abs(expected_gt[i]-got_gt[i]) > 1e-5:
-            print
-            print 'expected = ', expected_gt
-            print 'got = ', got_gt
+            print('')
+            print('expected = ', expected_gt)
+            print('got = ', got_gt)
             gdaltest.post_reason( 'Geotransform differs.' )
             return 'fail'
 

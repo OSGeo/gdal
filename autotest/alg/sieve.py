@@ -71,7 +71,7 @@ def sieve_1():
         drv.Delete( 'tmp/sieve_1.tif' )
     
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
@@ -108,7 +108,7 @@ def sieve_2():
         drv.Delete( 'tmp/sieve_2.tif' )
     
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
@@ -144,7 +144,7 @@ def sieve_3():
         drv.Delete( 'tmp/sieve_3.tif' )
     
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
@@ -180,7 +180,7 @@ def sieve_4():
         drv.Delete( 'tmp/sieve_4.tif' )
     
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
@@ -218,7 +218,7 @@ def sieve_5():
         drv.Delete( 'tmp/sieve_1.tif' )
     
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:

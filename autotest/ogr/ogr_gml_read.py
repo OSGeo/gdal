@@ -54,7 +54,7 @@ def ogr_gml_1():
         gml_ds = None
 
     if gml_ds is None:
-        if string.find(gdal.GetLastErrorMsg(),'Xerces') != -1:
+        if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
         else:
             gdaltest.post_reason( 'failed to open test file.' )

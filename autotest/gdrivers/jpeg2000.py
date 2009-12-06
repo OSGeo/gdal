@@ -97,8 +97,8 @@ def jpeg2000_3():
     ds_ref = gdal.Open( 'data/int16.tif' )
 
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
+    print(ds.GetRasterBand(1).Checksum())
+    print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None
@@ -264,8 +264,8 @@ def jpeg2000_online_3():
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
+    print(ds.GetRasterBand(1).Checksum())
+    print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None
@@ -299,8 +299,8 @@ def jpeg2000_online_4():
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print ds.GetRasterBand(1).Checksum()
-    print ds_ref.GetRasterBand(1).Checksum()
+    print(ds.GetRasterBand(1).Checksum())
+    print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None
@@ -328,7 +328,7 @@ def jpeg2000_online_5():
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
     if cs1 != 48954 or cs2 != 4939 or cs3 != 17734:
-        print cs1, cs2, cs3
+        print(cs1, cs2, cs3)
         gdaltest.post_reason('Did not get expected checksums')
         return 'fail'
         
@@ -352,7 +352,7 @@ def jpeg2000_online_6():
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
     if cs1 != 25337 or cs2 != 28262 or cs3 != 59580:
-        print cs1, cs2, cs3
+        print(cs1, cs2, cs3)
         gdaltest.post_reason('Did not get expected checksums')
         return 'fail'
         
