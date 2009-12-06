@@ -30,6 +30,7 @@
 
 import gdal
 import gdaltest
+import os
 
 cli_exe_path = { }
 
