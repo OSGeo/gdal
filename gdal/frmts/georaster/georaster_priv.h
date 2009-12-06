@@ -73,6 +73,15 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
 
 #define DEFAULT_BMP_MASK -99999
 
+#define MCL_CENTER		0
+#define MCL_UPPERLEFT	1
+
+/***************************************************************************/
+/*                            default Model Coordinate Location is CENTER  */
+/***************************************************************************/
+
+#define MCL_DEFAULT		MCL_CENTER
+
 //  ---------------------------------------------------------------------------
 //  GeoRaster wrapper classe definitions
 //  ---------------------------------------------------------------------------
@@ -394,6 +403,8 @@ public:
     int                 nPyramidMaxLevel;
 
     bool                bHasBitmapMask;
+
+	int					eModelCoordLocation;
 
     void                SetOrdelyAccess( bool bValue )
                         {
