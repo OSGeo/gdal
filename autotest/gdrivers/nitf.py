@@ -1057,6 +1057,28 @@ def nitf_43_jp2ecw():
     return nitf_43('JP2ECW', ['IC=C8', 'TARGET=0'])
 
 ###############################################################################
+# Check creating a monoblock 10000x1 image (ticket #3263)
+
+def nitf_44():
+
+    out_ds = gdal.GetDriverByName('NITF').Create('tmp/nitf44.ntf', 10000, 1)
+    out_ds.GetRasterBand(1).Fill(255)
+    out_ds = None
+
+    ds = gdal.Open('tmp/nitf44.ntf')
+    
+    if 'GetBlockSize' in dir(gdal.Band):
+        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        if blockx != 10000:
+            return 'fail'
+    
+    if ds.GetRasterBand(1).Checksum() != 57182:
+        return 'fail'
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -1604,6 +1626,11 @@ def nitf_cleanup():
     except:
         pass
 
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf44.ntf' )
+    except:
+        pass
+        
     return 'success'
 
 gdaltest_list = [
@@ -1653,6 +1680,7 @@ gdaltest_list = [
     nitf_42,
     nitf_43_jasper,
     nitf_43_jp2ecw,
+    nitf_44,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
