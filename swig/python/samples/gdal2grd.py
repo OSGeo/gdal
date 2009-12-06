@@ -49,14 +49,14 @@ import sys
 
 # =============================================================================
 def Usage():
-    print 'Usage: gdal2grd.py [-b band] [-quiet] infile outfile'
-    print 'Write out ASCII GRD rasters (used in Golden Software Surfer)'
-    print
-    print '  -b band	    Select a band number to convert (1 based)'
-    print '  -quiet	    Do not report any diagnostic information'
-    print '  infile	    Name of the input GDAL supported file'
-    print '  outfile	    Name of the output GRD file'
-    print
+    print('Usage: gdal2grd.py [-b band] [-quiet] infile outfile')
+    print('Write out ASCII GRD rasters (used in Golden Software Surfer)')
+    print('')
+    print('  -b band	    Select a band number to convert (1 based)')
+    print('  -quiet	    Do not report any diagnostic information')
+    print('  infile	    Name of the input GDAL supported file')
+    print('  outfile	    Name of the output GRD file')
+    print('')
     sys.exit(1)
 
 # =============================================================================
@@ -76,16 +76,16 @@ while i < len(sys.argv):
         iBand = int(sys.argv[i])
 
     elif arg == '-quiet':
-	quiet = 1
+        quiet = 1
 
     elif infile is None:
-	infile = arg
+        infile = arg
 
     elif outfile is None:
-	outfile = arg
+        outfile = arg
 
     else:
-	Usage()
+        Usage()
 
     i = i + 1
 
@@ -96,20 +96,20 @@ if  outfile is None:
 
 indataset = gdal.Open(infile, GA_ReadOnly)
 if infile == None:
-    print 'Cannot open', infile
+    print('Cannot open', infile)
     sys.exit(2)
 geotransform = indataset.GetGeoTransform()
 band = indataset.GetRasterBand(iBand)
 if band == None:
-    print 'Cannot load band', iBand, 'from the', infile
+    print('Cannot load band', iBand, 'from the', infile)
     sys.exit(2)
 
 if not quiet:
-    print 'Size is ',indataset.RasterXSize,'x',indataset.RasterYSize,'x',indataset.RasterCount
-    print 'Projection is ',indataset.GetProjection()
-    print 'Origin = (',geotransform[0], ',',geotransform[3],')'
-    print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
-    print 'Converting band number',iBand,'with type',gdal.GetDataTypeName(band.DataType)
+    print('Size is ',indataset.RasterXSize,'x',indataset.RasterYSize,'x',indataset.RasterCount)
+    print('Projection is ',indataset.GetProjection())
+    print('Origin = (',geotransform[0], ',',geotransform[3],')')
+    print('Pixel Size = (',geotransform[1], ',',geotransform[5],')')
+    print('Converting band number',iBand,'with type',gdal.GetDataTypeName(band.DataType))
 
 # Header printing
 fpout = open(outfile, "wt")
@@ -130,15 +130,15 @@ for i in range(band.YSize - 1, -1, -1):
     scanline = band.ReadAsArray(0, i, band.XSize, 1, band.XSize, 1)
     j = 0
     while j < band.XSize:
-	fpout.write(str(scanline[0, j]))
-	j = j + 1
-	if j % 10:	    # Print no more than 10 values per line
-	    fpout.write(" ")
-	else:
-	    fpout.write("\n")
+        fpout.write(str(scanline[0, j]))
+        j = j + 1
+        if j % 10:	    # Print no more than 10 values per line
+            fpout.write(" ")
+        else:
+            fpout.write("\n")
     fpout.write("\n")
 
     # Display progress report on terminal
     if not quiet:
-	gdal.TermProgress(float(band.YSize - i) / band.YSize)
+        gdal.TermProgress(float(band.YSize - i) / band.YSize)
 

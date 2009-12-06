@@ -41,8 +41,8 @@ import sys
 
 #############################################################################
 def Usage():
-    print 'Usage: load2odbc.py [-where attr_filter] infile odbc_dsn layer'
-    print
+    print('Usage: load2odbc.py [-where attr_filter] infile odbc_dsn layer')
+    print('')
     sys.exit(1)
 
 #############################################################################
@@ -81,7 +81,7 @@ in_ds = ogr.Open( infile, update = 0 )
 in_layer = in_ds.GetLayerByName( layername )
 
 if in_layer is None:
-    print 'Did not find layer: ', layername
+    print('Did not find layer: ', layername)
     sys.exit( 1 )
 
 if attr_filter is not None:
@@ -99,7 +99,7 @@ else:
     out_ds = ogr.Open( odbc_dsn )
 
     if out_ds is None:
-        print 'Unable to connect to ' + odbc_dsn 
+        print('Unable to connect to ' + odbc_dsn) 
         sys.exit(1)
 
 #############################################################################
@@ -108,7 +108,7 @@ else:
 try:
     cmd = 'drop table ' + layername
     if out_ds is None:
-        print cmd
+        print(cmd)
     else:
         out_ds.ExecuteSQL( cmd )
 except:
@@ -125,20 +125,20 @@ for iField in range(defn.GetFieldCount()):
     fielddef = defn.GetFieldDefn(iField)
     cmd = cmd + ', ' + fielddef.GetName()
     if fielddef.GetType() == ogr.OFTInteger:
-	cmd = cmd + ' INTEGER' 
+        cmd = cmd + ' INTEGER' 
     elif fielddef.GetType() == ogr.OFTString:
         cmd = cmd + ' TEXT' 
     elif fielddef.GetType() == ogr.OFTReal:
         cmd = cmd + ' NUMBER'
     else:
-	cmd = cmd + ' TEXT' 
+        cmd = cmd + ' TEXT' 
 
 cmd = cmd + ')'
 
 if out_ds is None:
-    print cmd
+    print(cmd)
 else:
-    print 'ExecuteSQL: ', cmd
+    print('ExecuteSQL: ', cmd)
     result = out_ds.ExecuteSQL( cmd )
     if result is not None:
         out_ds.ReleaseResultSet( result )
@@ -155,11 +155,11 @@ while feat is not None:
 
     geom = feat.GetGeometryRef()
     if geom is not None:
-	cmd_start = cmd_start + ', WKT_GEOMETRY'
-	cmd_end = cmd_end + ", '" + geom.ExportToWkt() + "'"
+        cmd_start = cmd_start + ', WKT_GEOMETRY'
+        cmd_end = cmd_end + ", '" + geom.ExportToWkt() + "'"
 
     if extents_flag and geom is not None:
-	extent = geom.GetEnvelope()
+        extent = geom.GetEnvelope()
         cmd_start = cmd_start + ', XMIN, XMAX, YMIN, YMAX'
         cmd_end = cmd_end + (', %.7f, %.7f, %.7f, %.7f' % extent)
 
@@ -168,21 +168,21 @@ while feat is not None:
         if feat.IsFieldSet( iField ) != 0:
             cmd_start = cmd_start + ', ' + fielddef.GetName()
 
-	    if fielddef.GetType() == ogr.OFTInteger:
-		cmd_end = cmd_end + ', ' + feat.GetFieldAsString(iField)
-	    elif fielddef.GetType() == ogr.OFTString:
-		cmd_end = cmd_end + ", '" + feat.GetFieldAsString(iField) + "'"
-	    elif fielddef.GetType() == ogr.OFTReal:
-		cmd_end = cmd_end + ', ' + feat.GetFieldAsString(iField)
-	    else:
-		cmd_end = cmd_end + ", '" + feat.GetFieldAsString(iField) + "'"
+        if fielddef.GetType() == ogr.OFTInteger:
+            cmd_end = cmd_end + ', ' + feat.GetFieldAsString(iField)
+        elif fielddef.GetType() == ogr.OFTString:
+            cmd_end = cmd_end + ", '" + feat.GetFieldAsString(iField) + "'"
+        elif fielddef.GetType() == ogr.OFTReal:
+            cmd_end = cmd_end + ', ' + feat.GetFieldAsString(iField)
+        else:
+            cmd_end = cmd_end + ", '" + feat.GetFieldAsString(iField) + "'"
 
     cmd = cmd_start + cmd_end + ')'
 
     if out_ds is None:
-        print cmd
+        print(cmd)
     else:
-        print 'ExecuteSQL: ', cmd
+        print('ExecuteSQL: ', cmd)
         out_ds.ExecuteSQL( cmd )
 
     feat.Destroy()
