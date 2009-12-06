@@ -925,7 +925,7 @@ def nitf_40():
     x = width - 1
     y = height - 1
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf40.ntf', width, height)
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf40.ntf', width, height, options = ['BLOCKSIZE=256'])
     data = struct.pack('B' * 1, 123)
 
     # Write a non NULL byte at the bottom right corner of the image (around 10 GB offset)
