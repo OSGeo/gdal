@@ -8,6 +8,7 @@
 %feature("autodoc");
 
 %include "python_exceptions.i"
+%include "python_strings.i"
 
 %{
 static PyObject *
