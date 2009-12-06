@@ -42,8 +42,8 @@ import sys
 
 #############################################################################
 def Usage():
-    print 'Usage: get_soundg.py <s57file> <shapefile>'
-    print
+    print('Usage: get_soundg.py <s57file> <shapefile>')
+    print('')
     sys.exit(1)
 
 #############################################################################

@@ -41,27 +41,27 @@ import sys
 import os.path
 
 if len(sys.argv) < 3:
-    print "Usage: gdalcopyproj.py source_file dest_file"
+    print("Usage: gdalcopyproj.py source_file dest_file")
     sys.exit(1)
 
 input = sys.argv[1]
 dataset = gdal.Open( input )
 if dataset is None:
-    print 'Unable to open', input, 'for reading'
+    print('Unable to open', input, 'for reading')
     sys.exit(1)
 
 projection   = dataset.GetProjection()
 geotransform = dataset.GetGeoTransform()
 
 if projection is None and geotransform is None:
-    print 'No projection or geotransform found on file' + input
+    print('No projection or geotransform found on file' + input)
     sys.exit(1)
 
 output = sys.argv[2]
 dataset2 = gdal.Open( output, gdal.GA_Update )
 
 if dataset2 is None:
-    print 'Unable to open', output, 'for writing'
+    print('Unable to open', output, 'for writing')
     sys.exit(1)
 
 if geotransform is not None:
