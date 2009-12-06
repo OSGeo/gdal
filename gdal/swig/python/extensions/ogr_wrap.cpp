@@ -3719,6 +3719,19 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *s
   return hPolygon;
   }
 
+
+  OGRGeometryShadow* ApproximateArcAngles( 
+        double dfCenterX, double dfCenterY, double dfZ,
+  	double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, 
+        double dfStartAngle, double dfEndAngle,
+        double dfMaxAngleStepSizeDegrees ) {
+  
+  return OGR_G_ApproximateArcAngles( 
+             dfCenterX, dfCenterY, dfZ, 
+             dfPrimaryRadius, dfSecondaryAxis, dfRotation,
+             dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees );
+  }
+
 SWIGINTERN void delete_OGRGeometryShadow(OGRGeometryShadow *self){
     OGR_G_DestroyGeometry( self );
   }
@@ -10278,6 +10291,111 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_ApproximateArcAngles(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  double arg1 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  double arg8 ;
+  double arg9 ;
+  double val1 ;
+  int ecode1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  double val8 ;
+  int ecode8 = 0 ;
+  double val9 ;
+  int ecode9 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  char *  kwnames[] = {
+    (char *) "dfCenterX",(char *) "dfCenterY",(char *) "dfZ",(char *) "dfPrimaryRadius",(char *) "dfSecondaryAxis",(char *) "dfRotation",(char *) "dfStartAngle",(char *) "dfEndAngle",(char *) "dfMaxAngleStepSizeDegrees", NULL 
+  };
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOOO:ApproximateArcAngles",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8)) SWIG_fail;
+  ecode1 = SWIG_AsVal_double(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "ApproximateArcAngles" "', argument " "1"" of type '" "double""'");
+  } 
+  arg1 = static_cast< double >(val1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ApproximateArcAngles" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "ApproximateArcAngles" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "ApproximateArcAngles" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "ApproximateArcAngles" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "ApproximateArcAngles" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "ApproximateArcAngles" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  ecode8 = SWIG_AsVal_double(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "ApproximateArcAngles" "', argument " "8"" of type '" "double""'");
+  } 
+  arg8 = static_cast< double >(val8);
+  ecode9 = SWIG_AsVal_double(obj8, &val9);
+  if (!SWIG_IsOK(ecode9)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "ApproximateArcAngles" "', argument " "9"" of type '" "double""'");
+  } 
+  arg9 = static_cast< double >(val9);
+  {
+    result = (OGRGeometryShadow *)ApproximateArcAngles(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_delete_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -15127,6 +15245,12 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"BuildPolygonFromEdges", (PyCFunction) _wrap_BuildPolygonFromEdges, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort = 0, int bAutoClose = 0, \n"
 		"    double dfTolerance = 0) -> Geometry\n"
+		""},
+	 { (char *)"ApproximateArcAngles", (PyCFunction) _wrap_ApproximateArcAngles, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
+		"ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, \n"
+		"    double dfSecondaryAxis, \n"
+		"    double dfRotation, double dfStartAngle, double dfEndAngle, \n"
+		"    double dfMaxAngleStepSizeDegrees) -> Geometry\n"
 		""},
 	 { (char *)"delete_Geometry", _wrap_delete_Geometry, METH_VARARGS, (char *)"delete_Geometry(Geometry self)"},
 	 { (char *)"new_Geometry", (PyCFunction) _wrap_new_Geometry, METH_VARARGS | METH_KEYWORDS, (char *)"\n"

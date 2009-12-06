@@ -230,6 +230,10 @@ class SpatialReference(_object):
         """IsLocal(self) -> int"""
         return _osr.SpatialReference_IsLocal(self, *args)
 
+    def EPSGTreatsAsLatLong(self, *args):
+        """EPSGTreatsAsLatLong(self) -> int"""
+        return _osr.SpatialReference_EPSGTreatsAsLatLong(self, *args)
+
     def SetAuthority(self, *args):
         """SetAuthority(self, char pszTargetKey, char pszAuthority, int nCode) -> OGRErr"""
         return _osr.SpatialReference_SetAuthority(self, *args)
@@ -571,6 +575,10 @@ class SpatialReference(_object):
     def ImportFromEPSG(self, *args):
         """ImportFromEPSG(self, int arg) -> OGRErr"""
         return _osr.SpatialReference_ImportFromEPSG(self, *args)
+
+    def ImportFromEPSGA(self, *args):
+        """ImportFromEPSGA(self, int arg) -> OGRErr"""
+        return _osr.SpatialReference_ImportFromEPSGA(self, *args)
 
     def ImportFromPCI(self, *args):
         """ImportFromPCI(self, char proj, char units = "METRE", double argin = 0) -> OGRErr"""
