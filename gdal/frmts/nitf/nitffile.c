@@ -501,26 +501,45 @@ int NITFCreate( const char *pszFilename,
     
     if( CSLFetchNameValue( papszOptions, "NPPBV" ) != NULL )
         nNPPBV = atoi(CSLFetchNameValue( papszOptions, "NPPBV" ));
-    
-    if( nNPPBH <= 0 || nNPPBV <= 0 ||
-        nNPPBH > 9999 || nNPPBV > 9999  )
-        nNPPBH = nNPPBV = 256;
-
-    nNBPR = (nPixels + nNPPBH - 1) / nNPPBH;
-    nNBPC = (nLines + nNPPBV - 1) / nNPPBV;
-    if ( nNBPR > 9999 || nNBPC > 9999 )
+        
+        
+    if (EQUAL(pszIC, "NC") &&
+        (nPixels > 8192 || nLines > 8192) && 
+        nNPPBH == nPixels && nNPPBV == nLines)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to create file %s,\n"
-                  "Too many blocks : %d x %d",
-                 pszFilename, nNBPR, nNBPC);
-        return FALSE;
+        /* See MIL-STD-2500-C, paragraph 5.4.2.2-d (#3263) */
+        nNBPR = 1;
+        nNBPC = 1;
+        nNPPBH = 0;
+        nNPPBV = 0;
+        
+        nImageSize = 
+            ((nBitsPerSample)/8) 
+            * ((GIntBig) nPixels *nLines)
+            * nBands;
     }
+    else
+    {
+        if( nNPPBH <= 0 || nNPPBV <= 0 ||
+            nNPPBH > 9999 || nNPPBV > 9999  )
+            nNPPBH = nNPPBV = 256;
 
-    nImageSize = 
-        ((nBitsPerSample)/8) 
-        * ((GIntBig) nNBPR * nNBPC)
-        * nNPPBH * nNPPBV * nBands;
+        nNBPR = (nPixels + nNPPBH - 1) / nNPPBH;
+        nNBPC = (nLines + nNPPBV - 1) / nNPPBV;
+        if ( nNBPR > 9999 || nNBPC > 9999 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to create file %s,\n"
+                      "Too many blocks : %d x %d",
+                     pszFilename, nNBPR, nNBPC);
+            return FALSE;
+        }
+
+        nImageSize = 
+            ((nBitsPerSample)/8) 
+            * ((GIntBig) nNBPR * nNBPC)
+            * nNPPBH * nNPPBV * nBands;
+    }
 
     if (EQUAL(pszIC, "NC"))
     {
