@@ -111,10 +111,8 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
 
     if( psInfo->eBurnValueSource == GBV_UserBurnValue )
     {
-        fprintf(stderr,"psInfo->eType = %d\n",psInfo->eType);
         if( psInfo->eType == GDT_Byte )
         {
-        fprintf(stderr,"psInfo->eType = GDT_Byte\n",psInfo->eType);
             for( iBand = 0; iBand < psInfo->nBands; iBand++ )
             {
                 unsigned char *pbyInsert = psInfo->pabyChunkBuf 
