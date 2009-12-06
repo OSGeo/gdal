@@ -2688,6 +2688,15 @@ def BuildPolygonFromEdges(*args, **kwargs):
         double dfTolerance = 0) -> Geometry
     """
   return _ogr.BuildPolygonFromEdges(*args, **kwargs)
+
+def ApproximateArcAngles(*args, **kwargs):
+  """
+    ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, 
+        double dfSecondaryAxis, 
+        double dfRotation, double dfStartAngle, double dfEndAngle, 
+        double dfMaxAngleStepSizeDegrees) -> Geometry
+    """
+  return _ogr.ApproximateArcAngles(*args, **kwargs)
 class Geometry(_object):
     """Proxy of C++ OGRGeometryShadow class"""
     __swig_setmethods__ = {}
@@ -3429,7 +3438,18 @@ class Geometry(_object):
     def __setstate__(self, state):
         result = CreateGeometryFromWkb(state)
         self.this = result.this
-
+          
+    def __iter__(self):
+        self.iter_subgeom = 0
+        return self
+        
+    def next(self):
+        if self.iter_subgeom < self.GetGeometryCount():
+            subgeom = self.GetGeometryRef(self.iter_subgeom)
+            self.iter_subgeom += 1
+            return subgeom
+        else:
+            raise StopIteration
 
 Geometry_swigregister = _ogr.Geometry_swigregister
 Geometry_swigregister(Geometry)
