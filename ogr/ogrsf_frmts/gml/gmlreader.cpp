@@ -135,11 +135,13 @@ GMLReader::~GMLReader()
     CleanupParser();
 
     --m_nInstanceCount;
+#if HAVE_XERCES == 1
     if( m_nInstanceCount == 0 && m_bXercesInitialized )
     {
         XMLPlatformUtils::Terminate();
         m_bXercesInitialized = FALSE;
     }
+#endif
 
 #ifdef HAVE_EXPAT
     if (fpGML)
