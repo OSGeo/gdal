@@ -3109,6 +3109,9 @@ SWIGINTERN int OSRSpatialReferenceShadow_IsProjected(OSRSpatialReferenceShadow *
 SWIGINTERN int OSRSpatialReferenceShadow_IsLocal(OSRSpatialReferenceShadow *self){
     return OSRIsLocal(self);
   }
+SWIGINTERN int OSRSpatialReferenceShadow_EPSGTreatsAsLatLong(OSRSpatialReferenceShadow *self){
+    return OSREPSGTreatsAsLatLong(self);
+  }
 
 #include <limits.h>
 #if !defined(SWIG_NO_LLONG_MAX)
@@ -3528,6 +3531,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromESRI(OSRSpatialReferenceSh
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromEPSG(OSRSpatialReferenceShadow *self,int arg){
     return OSRImportFromEPSG(self, arg);
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromEPSGA(OSRSpatialReferenceShadow *self,int arg){
+    return OSRImportFromEPSGA(self, arg);
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromPCI(OSRSpatialReferenceShadow *self,char const *proj,char const *units="METRE",double argin[17]=0){
     return OSRImportFromPCI( self, proj, units, argin );
@@ -4133,6 +4139,36 @@ SWIGINTERN PyObject *_wrap_SpatialReference_IsLocal(PyObject *SWIGUNUSEDPARM(sel
   arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
   {
     result = (int)OSRSpatialReferenceShadow_IsLocal(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_EPSGTreatsAsLatLong(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_EPSGTreatsAsLatLong",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_EPSGTreatsAsLatLong" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    result = (int)OSRSpatialReferenceShadow_EPSGTreatsAsLatLong(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -9712,6 +9748,61 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromEPSGA(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:SpatialReference_ImportFromEPSGA",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_ImportFromEPSGA" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_ImportFromEPSGA" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  {
+    result = (OGRErr)OSRSpatialReferenceShadow_ImportFromEPSGA(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromPCI(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -11353,6 +11444,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_IsGeographic", _wrap_SpatialReference_IsGeographic, METH_VARARGS, (char *)"SpatialReference_IsGeographic(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsProjected", _wrap_SpatialReference_IsProjected, METH_VARARGS, (char *)"SpatialReference_IsProjected(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsLocal", _wrap_SpatialReference_IsLocal, METH_VARARGS, (char *)"SpatialReference_IsLocal(SpatialReference self) -> int"},
+	 { (char *)"SpatialReference_EPSGTreatsAsLatLong", _wrap_SpatialReference_EPSGTreatsAsLatLong, METH_VARARGS, (char *)"SpatialReference_EPSGTreatsAsLatLong(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_SetAuthority", _wrap_SpatialReference_SetAuthority, METH_VARARGS, (char *)"\n"
 		"SpatialReference_SetAuthority(SpatialReference self, char pszTargetKey, char pszAuthority, \n"
 		"    int nCode) -> OGRErr\n"
@@ -11537,6 +11629,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_ImportFromUrl", _wrap_SpatialReference_ImportFromUrl, METH_VARARGS, (char *)"SpatialReference_ImportFromUrl(SpatialReference self, char url) -> OGRErr"},
 	 { (char *)"SpatialReference_ImportFromESRI", _wrap_SpatialReference_ImportFromESRI, METH_VARARGS, (char *)"SpatialReference_ImportFromESRI(SpatialReference self, char ppszInput) -> OGRErr"},
 	 { (char *)"SpatialReference_ImportFromEPSG", _wrap_SpatialReference_ImportFromEPSG, METH_VARARGS, (char *)"SpatialReference_ImportFromEPSG(SpatialReference self, int arg) -> OGRErr"},
+	 { (char *)"SpatialReference_ImportFromEPSGA", _wrap_SpatialReference_ImportFromEPSGA, METH_VARARGS, (char *)"SpatialReference_ImportFromEPSGA(SpatialReference self, int arg) -> OGRErr"},
 	 { (char *)"SpatialReference_ImportFromPCI", _wrap_SpatialReference_ImportFromPCI, METH_VARARGS, (char *)"\n"
 		"SpatialReference_ImportFromPCI(SpatialReference self, char proj, char units = \"METRE\", \n"
 		"    double argin = 0) -> OGRErr\n"
