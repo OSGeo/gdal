@@ -48,9 +48,9 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
             nodata )
 
     if verbose != 0:
-        print 'Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
+        print('Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
               % (s_xoff, s_yoff, s_xsize, s_ysize,
-             t_xoff, t_yoff, t_xsize, t_ysize )
+             t_xoff, t_yoff, t_xsize, t_ysize ))
 
     s_band = s_fh.GetRasterBand( s_band_n )
     t_band = t_fh.GetRasterBand( t_band_n )
@@ -73,9 +73,9 @@ def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
         import Numeric
     
     if verbose != 0:
-        print 'Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
+        print('Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
               % (s_xoff, s_yoff, s_xsize, s_ysize,
-             t_xoff, t_yoff, t_xsize, t_ysize )
+             t_xoff, t_yoff, t_xsize, t_ysize ))
 
     s_band = s_fh.GetRasterBand( s_band_n )
     t_band = t_fh.GetRasterBand( t_band_n )
@@ -147,13 +147,13 @@ class file_info:
         return 1
 
     def report( self ):
-        print 'Filename: '+ self.filename
-        print 'File Size: %dx%dx%d' \
-              % (self.xsize, self.ysize, self.bands)
-        print 'Pixel Size: %f x %f' \
-              % (self.geotransform[1],self.geotransform[5])
-        print 'UL:(%f,%f)   LR:(%f,%f)' \
-              % (self.ulx,self.uly,self.lrx,self.lry)
+        print('Filename: '+ self.filename)
+        print('File Size: %dx%dx%d' \
+              % (self.xsize, self.ysize, self.bands))
+        print('Pixel Size: %f x %f' \
+              % (self.geotransform[1],self.geotransform[5]))
+        print('UL:(%f,%f)   LR:(%f,%f)' \
+              % (self.ulx,self.uly,self.lrx,self.lry))
 
     def copy_into( self, t_fh, s_band = 1, t_band = 1, nodata_arg=None ):
         """
@@ -230,12 +230,12 @@ class file_info:
 
 # =============================================================================
 def Usage():
-    print 'Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*'
-    print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
-    print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]'
-    print '                     [-ot datatype] [-createonly] input_files'
-    print '                     [--help-general]'
-    print
+    print('Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*')
+    print('                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]')
+    print('                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]')
+    print('                     [-ot datatype] [-createonly] input_files')
+    print('                     [--help-general]')
+    print()
 
 # =============================================================================
 #
@@ -291,7 +291,7 @@ if __name__ == '__main__':
             i = i + 1
             band_type = gdal.GetDataTypeByName( argv[i] )
             if band_type == gdal.GDT_Unknown:
-                print 'Unknown GDAL data type: ', argv[i]
+                print('Unknown GDAL data type: ', argv[i])
                 sys.exit( 1 )
 
         elif arg == '-init':
@@ -328,7 +328,7 @@ if __name__ == '__main__':
             i = i + 4
 
         elif arg[:1] == '-':
-            print 'Unrecognised command option: ', arg
+            print('Unrecognised command option: ', arg)
             Usage()
             sys.exit( 1 )
 
@@ -336,23 +336,23 @@ if __name__ == '__main__':
             # Expand any possible wildcards from command line arguments
             f = glob.glob( arg )
             if len(f) == 0:
-                print 'File not found: "%s"' % (str( arg ))
+                print('File not found: "%s"' % (str( arg )))
             names += f # append 1 or more files
         i = i + 1
 
     if len(names) == 0:
-        print 'No input files selected.'
+        print('No input files selected.')
         Usage()
         sys.exit( 1 )
 
     Driver = gdal.GetDriverByName(format)
     if Driver is None:
-        print 'Format driver %s not found, pick a supported driver.' % format
+        print('Format driver %s not found, pick a supported driver.' % format)
         sys.exit( 1 )
 
     DriverMD = Driver.GetMetadata()
-    if not DriverMD.has_key('DCAP_CREATE'):
-        print 'Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % format
+    if 'DCAP_CREATE' not in DriverMD:
+        print('Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % format)
         sys.exit( 1 )
 
     # Collect information on all the source files.
@@ -397,7 +397,7 @@ if __name__ == '__main__':
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
                               band_type, create_options )
         if t_fh is None:
-            print 'Creation failed, terminating gdal_merge.'
+            print('Creation failed, terminating gdal_merge.')
             sys.exit( 1 )
             
         t_fh.SetGeoTransform( geotransform )
@@ -409,7 +409,7 @@ if __name__ == '__main__':
         if separate != 0:
             bands = len(file_infos)
             if t_fh.RasterCount < bands :
-                print 'Existing output file has less bands than the number of input files. You should delete it before. Terminating gdal_merge.'
+                print('Existing output file has less bands than the number of input files. You should delete it before. Terminating gdal_merge.')
                 sys.exit( 1 )
         else:
             bands = min(file_infos[0].bands,t_fh.RasterCount)
@@ -426,7 +426,7 @@ if __name__ == '__main__':
             continue
         
         if verbose != 0:
-            print
+            print()
             fi.report()
 
         if separate == 0 :

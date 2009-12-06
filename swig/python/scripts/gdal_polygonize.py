@@ -37,10 +37,10 @@ import sys
 import os.path
 
 def Usage():
-    print """
+    print("""
 gdal_polygonize [-o name=value] [-nomask] [-mask filename] raster_file [-b band]
                 [-q] [-f ogr_format] out_file [layer] [fieldname]
-"""
+""")
     sys.exit(1)
 
 # =============================================================================
@@ -117,10 +117,10 @@ if dst_layername is None:
 try:
     gdal.Polygonize
 except:
-    print
-    print 'gdal.Polygonize() not available.  You are likely using "old gen"'
-    print 'bindings or an older version of the next gen bindings.'
-    print
+    print()
+    print('gdal.Polygonize() not available.  You are likely using "old gen"')
+    print('bindings or an older version of the next gen bindings.')
+    print()
     sys.exit(1)
 
 # =============================================================================
@@ -130,7 +130,7 @@ except:
 src_ds = gdal.Open( src_filename )
     
 if src_ds is None:
-    print 'Unable to open ', src_filename
+    print('Unable to open ', src_filename)
     sys.exit(1)
 
 srcband = src_ds.GetRasterBand(src_band_n)
@@ -160,7 +160,7 @@ except:
 if dst_ds is None:
     drv = ogr.GetDriverByName(format)
     if not quiet_flag:
-        print 'Creating output %s of format %s.' % (dst_filename, format)
+        print('Creating output %s of format %s.' % (dst_filename, format))
     dst_ds = drv.CreateDataSource( dst_filename )
 
 # =============================================================================

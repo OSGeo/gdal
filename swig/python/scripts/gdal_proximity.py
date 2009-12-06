@@ -38,12 +38,12 @@ import sys
 import os.path
 
 def Usage():
-    print """
+    print("""
 gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n] 
                   [-of format] [-co name=value]*
                   [-ot Byte/Int16/Int32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
-                  [-maxdist n] [-nodata n] [-fixed-buf-val n]"""
+                  [-maxdist n] [-nodata n] [-fixed-buf-val n]""")
     sys.exit(1)
 
 # =============================================================================
@@ -130,7 +130,7 @@ if src_filename is None or dst_filename is None:
 src_ds = gdal.Open( src_filename )
     
 if src_ds is None:
-    print 'Unable to open ', src_filename
+    print('Unable to open ', src_filename)
     sys.exit(1)
 
 srcband = src_ds.GetRasterBand(src_band_n)

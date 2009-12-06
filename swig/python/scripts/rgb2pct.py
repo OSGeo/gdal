@@ -38,7 +38,7 @@ import sys
 import os.path
 
 def Usage():
-    print 'Usage: rgb2pct.py [-n colors | -pct palette_file] [-of format] source_file dest_file'
+    print('Usage: rgb2pct.py [-n colors | -pct palette_file] [-of format] source_file dest_file')
     sys.exit(1)
 
 # =============================================================================
@@ -91,19 +91,19 @@ if dst_filename is None:
 
 src_ds = gdal.Open( src_filename )
 if src_ds is None:
-    print 'Unable to open ', src_filename
+    print('Unable to open ', src_filename)
     sys.exit(1)
 
 if src_ds.RasterCount < 3:
-    print '%s has %d band(s), need 3 for inputs red, green and blue.' \
-          % (src_filename, src_ds.RasterCount)
+    print('%s has %d band(s), need 3 for inputs red, green and blue.' \
+          % (src_filename, src_ds.RasterCount))
     sys.exit(1)
 
 # Ensure we recognise the driver.
 
 dst_driver = gdal.GetDriverByName(format)
 if dst_driver is None:
-    print '"%s" driver not registered.' % format
+    print('"%s" driver not registered.' % format)
     sys.exit(1)
 
 # Generate palette
@@ -156,7 +156,7 @@ err = gdal.DitherRGB2PCT( src_ds.GetRasterBand(1),
 
 tif_ds = None
 
-if tif_filename <> dst_filename:
+if tif_filename != dst_filename:
     tif_ds = gdal.Open( tif_filename )
     dst_driver.CreateCopy( dst_filename, tif_ds )
     tif_ds = None

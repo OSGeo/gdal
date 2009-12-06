@@ -43,9 +43,9 @@ except ImportError:
 
 # =============================================================================
 def Usage():
-    print 'Usage: gdal2xyz.py [-skip factor] [-srcwin xoff yoff width height]'
-    print '                   [-band b] srcfile [dstfile]'
-    print
+    print('Usage: gdal2xyz.py [-skip factor] [-srcwin xoff yoff width height]')
+    print('                   [-band b] srcfile [dstfile]')
+    print()
     sys.exit( 1 )
 
 # =============================================================================
@@ -105,14 +105,14 @@ if __name__ == '__main__':
     # Open source file. 
     srcds = gdal.Open( srcfile )
     if srcds is None:
-        print 'Could not open %s.' % srcfile
+        print('Could not open %s.' % srcfile)
         sys.exit( 1 )
 
     bands = []
     for band_num in band_nums: 
         band = srcds.GetRasterBand(band_num)
         if band is None:
-            print 'Could not get band %d' % band_num
+            print('Could not get band %d' % band_num)
             sys.exit( 1 )
         bands.append(band)
 
