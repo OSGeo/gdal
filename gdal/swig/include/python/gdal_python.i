@@ -15,12 +15,27 @@
 %}
 
 %pythoncode %{
+
+  
+  have_warned = 0
+  def deprecation_warn( module ):
+    global have_warned
+
+    if have_warned == 1:
+        return
+
+    have_warned = 1
+
+    from warnings import warn
+    warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module,module),
+         DeprecationWarning)
+         
+         
   from gdalconst import *
   import gdalconst
 
 
   import sys
-  have_warned = 0
   byteorders = {"little": "<",
                 "big": ">"}
   array_modes = { gdalconst.GDT_Int16:    ("%si2" % byteorders[sys.byteorder]),
@@ -34,19 +49,6 @@
                   gdalconst.GDT_Byte:     ("%st8" % byteorders[sys.byteorder]),
   }
 
-  
-  def deprecation_warn( module ):
-    global have_warned
-
-    if have_warned == 1:
-        return
-
-    have_warned = 1
-
-    from warnings import warn
-    warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module,module),
-         DeprecationWarning)
-
   def RGBFile2PCTFile( src_filename, dst_filename ):
     src_ds = Open(src_filename)
     if src_ds is None or src_ds == 'NULL':
@@ -57,7 +59,7 @@
                                src_ds.GetRasterBand(2),
                                src_ds.GetRasterBand(3),
                                256, ct )
-    if err <> 0:
+    if err != 0:
         return err
 
     gtiff_driver = GetDriverByName('GTiff')
@@ -82,6 +84,7 @@
 
 
 %include "python_exceptions.i"
+%include "python_strings.i"
 
 %extend GDAL_GCP {
 %pythoncode {
