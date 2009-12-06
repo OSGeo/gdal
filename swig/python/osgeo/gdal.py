@@ -213,6 +213,10 @@ def FileFromMemBuffer(*args):
 def Unlink(*args):
   """Unlink(char pszFilename) -> int"""
   return _gdal.Unlink(*args)
+
+def HasThreadSupport(*args):
+  """HasThreadSupport() -> int"""
+  return _gdal.HasThreadSupport(*args)
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class"""
     __swig_setmethods__ = {}

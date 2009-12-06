@@ -2812,6 +2812,7 @@ using namespace std;
 
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 #include "gdal.h"
 #include "gdal_priv.h"
@@ -3240,6 +3241,12 @@ void wrapper_VSIFileFromMemBuffer( const char* pszFilename, int nBytes, const GB
     VSIFCloseL(VSIFileFromMemBuffer(pszFilename, (GByte*) pabyDataDup, nBytes, TRUE));
 }
 
+
+
+int wrapper_HasThreadSupport()
+{
+    return strcmp(CPLGetThreadingModel(), "stub") != 0;
+}
 
 SWIGINTERN char const *GDALMajorObjectShadow_GetDescription(GDALMajorObjectShadow *self){
     return GDALGetDescription( self );
@@ -5447,6 +5454,27 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_HasThreadSupport(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":HasThreadSupport")) SWIG_fail;
+  {
+    result = (int)wrapper_HasThreadSupport();
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_MajorObject_GetDescription(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
@@ -5568,8 +5596,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict(PyObject *SWIGUNUSEDPARM
       while (*stringarray != NULL ) {
         char const *valptr;
         char *keyptr;
-        valptr = CPLParseNameValue( *stringarray, &keyptr );
-        if ( valptr != 0 ) {
+        const char* pszSep = strchr( *stringarray, '=' );
+        if ( pszSep != NULL) {
+          keyptr = CPLStrdup(*stringarray);
+          keyptr[pszSep - *stringarray] = '\0';
+          valptr = pszSep + 1;
           PyObject *nm = PyString_FromString( keyptr );
           PyObject *val = PyString_FromString( valptr );
           PyDict_SetItem(resultobj, nm, val );
@@ -17347,6 +17378,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"CPLHexToBinary", _wrap_CPLHexToBinary, METH_VARARGS, (char *)"CPLHexToBinary(char pszHex, int pnBytes) -> GByte"},
 	 { (char *)"FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, (char *)"FileFromMemBuffer(char pszFilename, int nBytes)"},
 	 { (char *)"Unlink", _wrap_Unlink, METH_VARARGS, (char *)"Unlink(char pszFilename) -> int"},
+	 { (char *)"HasThreadSupport", _wrap_HasThreadSupport, METH_VARARGS, (char *)"HasThreadSupport() -> int"},
 	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, (char *)"MajorObject_GetDescription(MajorObject self) -> char"},
 	 { (char *)"MajorObject_SetDescription", _wrap_MajorObject_SetDescription, METH_VARARGS, (char *)"MajorObject_SetDescription(MajorObject self, char pszNewDesc)"},
 	 { (char *)"MajorObject_GetMetadata_Dict", _wrap_MajorObject_GetMetadata_Dict, METH_VARARGS, (char *)"MajorObject_GetMetadata_Dict(MajorObject self, char pszDomain = \"\") -> char"},
