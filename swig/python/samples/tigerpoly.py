@@ -47,8 +47,8 @@ class Module:
 
 #############################################################################
 def Usage():
-    print 'Usage: tigerpoly.py infile [outfile].shp'
-    print
+    print('Usage: tigerpoly.py infile [outfile].shp')
+    print('')
     sys.exit(1)
 
 #############################################################################
@@ -62,13 +62,13 @@ while i < len(sys.argv):
     arg = sys.argv[i]
 
     if infile is None:
-	infile = arg
+        infile = arg
 
     elif outfile is None:
-	outfile = arg
+        outfile = arg
 
     else:
-	Usage()
+        Usage()
 
     i = i + 1
 
@@ -139,7 +139,7 @@ while feat is not None:
 
     feat = line_layer.GetNextFeature()
 
-print 'Got %d lines in %d modules.' % (line_count,len(modules_hash))
+print('Got %d lines in %d modules.' % (line_count,len(modules_hash)))
 
 #############################################################################
 # Read all polygon/chain links and build a hash keyed by POLY_ID listing
@@ -185,7 +185,7 @@ while feat is not None:
 
     feat = link_layer.GetNextFeature()
 
-print 'Processed %d links.' % link_count
+print('Processed %d links.' % link_count)
 
 #############################################################################
 # Process all polygon features.
@@ -233,16 +233,16 @@ while feat is not None:
 
         poly_count = poly_count + 1
     except:
-        print 'BuildPolygonFromEdges failed.'
+        print('BuildPolygonFromEdges failed.')
 
     feat.Destroy()
 
     feat = poly_layer.GetNextFeature()
 
 if degenerate_count: 
-    print 'Discarded %d degenerate polygons.' % degenerate_count
+    print('Discarded %d degenerate polygons.' % degenerate_count)
 
-print 'Built %d polygons.' % poly_count
+print('Built %d polygons.' % poly_count)
 
 #############################################################################
 # Cleanup
