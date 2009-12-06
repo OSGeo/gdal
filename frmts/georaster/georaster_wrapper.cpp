@@ -2196,7 +2196,7 @@ bool GeoRasterWrapper::FlushMetadata()
     //  --------------------------------------------------------------------
 
 	double dfXCoef[3], dfYCoef[3];
-	int eModel = MCL_CENTER;t777777777tu
+	int eModel = MCL_CENTER;
 
 	dfXCoef[0] = dfXCoefficient[0]; // scale
 	dfXCoef[1] = dfXCoefficient[1]; // rotation
