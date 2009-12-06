@@ -270,7 +270,11 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
   Py_XDECREF($result);
+%#if PY_VERSION_HEX >= 0x03000000
+  $result = PyBytes_FromStringAndSize( *$2, *$1 );
+%#else
   $result = PyString_FromStringAndSize( *$2, *$1 );
+%#endif
 }
 %typemap(freearg) (int *nLen, char **pBuf )
 {
@@ -279,18 +283,44 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     free( *$2 );
   }
 }
-%typemap(in,numinputs=1) (int nLen, char *pBuf )
+
+
+%typemap(in,numinputs=1) (int nLen, char *pBuf ) (int alloc = 0)
 {
-  Py_ssize_t   safeLen;
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-  if (!PyString_Check($input))
+%#if PY_VERSION_HEX>=0x03000000
+  if (PyUnicode_Check($input))
   {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
+    size_t safeLen;
+    int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    if (!SWIG_IsOK(ret)) {
+      SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+    }
+
+    if (safeLen) safeLen--;
+    $1 = (int) safeLen;
   }
-  PyString_AsStringAndSize($input, (char**) &$2, &safeLen );
+  else
+  {
+    Py_ssize_t safeLen;
+    PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
+    $1 = (int) safeLen;
+  }
+%#else
+  Py_ssize_t safeLen;
+  PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
   $1 = (int) safeLen;
+%#endif
 }
+
+%typemap(freearg) (int nLen, char *pBuf )
+{
+  /* %typemap(freearg) (int *nLen, char *pBuf ) */
+  if( alloc$argnum == SWIG_NEWOBJ ) {
+    delete[] $2;
+  }
+}
+
 
 /*
  * Typemap argout used in Feature::GetFieldAsIntegerList()
@@ -448,8 +478,8 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         keyptr = CPLStrdup(*stringarray);
         keyptr[pszSep - *stringarray] = '\0';
         valptr = pszSep + 1;
-        PyObject *nm = PyString_FromString( keyptr );
-        PyObject *val = PyString_FromString( valptr );
+        PyObject *nm = GDALPythonObjectFromCStr( keyptr );
+        PyObject *val = GDALPythonObjectFromCStr( valptr );
         PyDict_SetItem($result, nm, val );
         Py_DECREF(nm);
         Py_DECREF(val);
@@ -567,7 +597,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     int len = CSLCount( stringarray );
     $result = PyList_New( len );
     for ( int i = 0; i < len; ++i ) {
-      PyObject *o = PyString_FromString( stringarray[i] );
+      PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
       PyList_SetItem($result, i, o );
     }
   }
@@ -587,7 +617,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     int len = CSLCount( stringarray );
     $result = PyList_New( len );
     for ( int i = 0; i < len; ++i ) {
-      PyObject *o = PyString_FromString( stringarray[i] );
+      PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
       PyList_SetItem($result, i, o );
     }
   }
@@ -619,7 +649,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* %typemap(argout) (char **argout) */
   PyObject *o;
   if ( $1 != NULL && *$1 != NULL) {
-    o = PyString_FromString( *$1 );
+    o = GDALPythonObjectFromCStr( *$1 );
   }
   else {
     o = Py_None;
@@ -680,7 +710,7 @@ OPTIONAL_POD(int,i);
     SWIG_fail;
   }
  
-  $1 = PyString_AsString(str); 
+  $1 = GDALPythonObjectToCStr(str); 
 }
 %typemap(freearg)(tostring argin)
 {
@@ -689,6 +719,7 @@ OPTIONAL_POD(int,i);
   {
     Py_DECREF(str$argnum);
   }
+  GDALPythonFreeCStr($1);
 }
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
@@ -1106,7 +1137,7 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
     /* %typemap(out) (retStringAndCPLFree*) */
     if(result)
     {
-        $result = PyString_FromString( (const char *)result);
+        $result = GDALPythonObjectFromCStr( (const char *)result);
         CPLFree(result);
     }
 }

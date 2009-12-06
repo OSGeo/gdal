@@ -50,12 +50,12 @@ try:
     # check version
     numpy_major = numpy.__version__.split('.')[0]
     if int(numpy_major) < 1:
-        print "numpy version must be > 1.0.0"
+        print("numpy version must be > 1.0.0")
         HAVE_NUMPY = False
     else:
-        print 'numpy include', get_numpy_include()
+        print ('numpy include', get_numpy_include())
         if get_numpy_include() =='.':
-            print "numpy headers were not found!  Array support will not be enabled"
+            print("numpy headers were not found!  Array support will not be enabled")
             HAVE_NUMPY=False
 except ImportError:
     pass
@@ -74,17 +74,22 @@ from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
 from distutils.sysconfig import get_python_inc
 
-
-import popen2
-
-
 def get_gdal_config(option, gdal_config='gdal-config'):
 
     command = gdal_config + " --%s" % option
-    p = popen2.popen3(command)
-    r = p[0].readline().strip()
-    if not r:
-        raise Warning(p[2].readline())
+    try:
+        import popen2
+        p = popen2.popen3(command)
+        r = p[0].readline().strip()
+        if not r:
+            raise Warning(p[2].readline())
+    except:
+        import subprocess
+        p = subprocess.Popen([gdal_config, " --%s" % option], stdout=subprocess.PIPE)
+        r = p.stdout.readline().decode('ascii').strip()
+        p.stdout.close()
+        p.wait()
+
     return r
     
 class gdal_ext(build_ext):
@@ -131,7 +136,7 @@ class gdal_ext(build_ext):
             self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
             self.include_dirs.append(os.path.join(self.gdaldir,'include'))
         except:
-            print 'Could not run gdal-config!!!!'
+            print ('Could not run gdal-config!!!!')
 
 gdal_version = '1.6.0'
 
@@ -182,7 +187,7 @@ if HAVE_NUMPY:
 
 packages = ["osgeo",]
 
-readme = file('README.txt','rb').read()
+readme = str(open('README.txt','rb').read())
 
 name = 'GDAL'
 version = gdal_version
