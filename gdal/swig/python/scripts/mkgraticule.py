@@ -49,7 +49,7 @@ def float_range(*args):
     elif (len(args) == 3):
         (start, stop, step) = args
     else:
-        raise TypeError, "float_range needs 1-3 float arguments"
+        raise TypeError("float_range needs 1-3 float arguments")
 
     the_range = []
     steps = (stop-start)/step
@@ -63,9 +63,9 @@ def float_range(*args):
 
 #############################################################################
 def Usage():
-    print 'Usage: mkgraticule [-connected] [-s stepsize] [-substep substepsize]'
-    print '         [-t_srs srs] [-range xmin ymin xmax ymax] outfile'
-    print
+    print ('Usage: mkgraticule [-connected] [-s stepsize] [-substep substepsize]')
+    print ('         [-t_srs srs] [-range xmin ymin xmax ymax] outfile')
+    print ()
     sys.exit(1)
 
 #############################################################################

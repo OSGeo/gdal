@@ -43,22 +43,22 @@ if argv is None:
     sys.exit( 0 )
 
 if len(argv) < 2:
-    print "Usage: gdalimport.py [--help-general] source_file [newfile]"
+    print("Usage: gdalimport.py [--help-general] source_file [newfile]")
     sys.exit(1)
 
 def progress_cb( complete, message, cb_data ):
-    print cb_data, complete
+    print(cb_data, complete)
     
 
 filename = argv[1]
 dataset = gdal.Open( filename )
 if dataset is None:
-    print 'Unable to open ', filename
+    print('Unable to open ', filename)
     sys.exit(1)
 
 geotiff = gdal.GetDriverByName("GTiff")
 if geotiff is None:
-    print 'GeoTIFF driver not registered.'
+    print('GeoTIFF driver not registered.')
     sys.exit(1)
 
 if len(argv) < 3: 
@@ -71,19 +71,19 @@ if len(argv) < 3:
 else:
     newfile = argv[2]
 
-print 'Importing to Tiled GeoTIFF file:', newfile
+print('Importing to Tiled GeoTIFF file:', newfile)
 new_dataset = geotiff.CreateCopy( newfile, dataset, 0,
                                   ['TILED=YES',],
                                   callback = progress_cb,
                                   callback_data = 'Translate: ' )
 dataset = None
 
-print 'Building overviews'
+print('Building overviews')
 new_dataset.BuildOverviews( "average", callback=progress_cb,
                             callback_data = 'Overviews: ' )
 new_dataset = None
 
-print 'Done'
+print('Done')
 
 
 

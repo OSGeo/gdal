@@ -42,7 +42,7 @@ import glob
 # 	Usage()
 # =============================================================================
 def Usage():
-    print 'Usage: gdalident.py [-r] file(s)'
+    print('Usage: gdalident.py [-r] file(s)')
     sys.exit(1)
 
 # =============================================================================
@@ -57,9 +57,9 @@ def ProcessTarget( target, recursive, report_failure, filelist = None ):
         driver = gdal.IdentifyDriver( target )
 
     if driver is not None:
-        print '%s: %s' % (target, driver.ShortName)
+        print('%s: %s' % (target, driver.ShortName))
     elif report_failure:
-        print '%s: unrecognised' % target
+        print('%s: unrecognised' % target)
 
     if recursive and driver is None:
         try:
@@ -101,7 +101,7 @@ while i < len(argv):
         # Expand any possible wildcards from command line arguments
         f = glob.glob( arg )
         if len(f) == 0:
-            print 'File not found: "%s"' % ( str( arg ) )
+            print('File not found: "%s"' % ( str( arg ) ))
         files += f # append 1 or more files
 
     i = i + 1
