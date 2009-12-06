@@ -87,6 +87,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
     bHasBitmapMask      = false;
+	eModelCoordLocation	= MCL_DEFAULT;
 }
 
 //  ---------------------------------------------------------------------------
@@ -896,6 +897,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
     bHasBitmapMask      = false;
+	eModelCoordLocation	= MCL_DEFAULT;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1135,6 +1137,20 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  Prepare to get Extents
     //  -------------------------------------------------------------------
 
+    char szModelCoord[OWCODE];
+
+    strcpy( szModelCoord, CPLGetXMLValue( phMetadata,
+		"spatialReferenceInfo.modelCoordinateLocation", "UPPERLEFT" ) );
+
+	if( EQUAL( szModelCoord, "CENTER") )
+	{
+		eModelCoordLocation	= MCL_CENTER;
+	}
+	else
+	{
+		eModelCoordLocation	= MCL_UPPERLEFT;
+	}
+
     bIsReferenced       = EQUAL( "TRUE", CPLGetXMLValue( phMetadata,
                             "spatialReferenceInfo.isReferenced", "FALSE" ) );
 
@@ -1160,20 +1176,40 @@ bool GeoRasterWrapper::GetImageExtent( double *padfTransform )
     sdo_geometry*   poLowerLeft   = NULL;
     sdo_geometry*   poLowerRight  = NULL;
 
-    poStmt = poConnection->CreateStatement( CPLSPrintf(
-        "SELECT\n"
-        "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
-        "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
-        "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
-        "  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d))\n"
-        "FROM  %s%s T\n"
-        "WHERE %s",
-        pszColumn, 0,            0,
-        pszColumn, 0,            nRasterColumns,
-        pszColumn, nRasterRows,  0,
-        pszColumn, nRasterRows,  nRasterColumns,
-        pszSchema, pszTable,
-        pszWhere ) );
+	if( eModelCoordLocation == MCL_UPPERLEFT )
+	{
+		poStmt = poConnection->CreateStatement( CPLSPrintf(
+			"SELECT\n"
+			"  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
+			"  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
+			"  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d)),\n"
+			"  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%d, %d))\n"
+			"FROM  %s%s T\n"
+			"WHERE %s",
+				pszColumn, 0, 0,
+				pszColumn, 0, nRasterColumns,
+				pszColumn, nRasterRows, 0,
+				pszColumn, nRasterRows, nRasterColumns,
+				pszSchema, pszTable,
+				pszWhere ) );
+	}
+	else
+	{
+		poStmt = poConnection->CreateStatement( CPLSPrintf(
+			"SELECT\n"
+			"  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%.1f, %.1f)),\n"
+			"  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%.1f, %.1f)),\n"
+			"  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%.1f, %.1f)),\n"
+			"  SDO_GEOR.getModelCoordinate(%s, 0, SDO_NUMBER_ARRAY(%.1f, %.1f))\n"
+			"FROM  %s%s T\n"
+			"WHERE %s",
+				pszColumn, -0.5, -0.5,
+				pszColumn, -0.5, (nRasterColumns - 0.5),
+				pszColumn, (nRasterRows - 0.5), -0.5,
+				pszColumn, (nRasterRows - 0.5), (nRasterColumns - 0.5),
+				pszSchema, pszTable,
+				pszWhere ) );
+	}
 
     poStmt->Define( &poUpperLeft );
     poStmt->Define( &poLowerLeft );
@@ -2159,11 +2195,16 @@ bool GeoRasterWrapper::FlushMetadata()
     //  Update the Metadata directly from the XML text
     //  --------------------------------------------------------------------
 
-    int nModelCoordinateLocation = 0;
+	double dfXCoef[3], dfYCoef[3];
+	int eModel = MCL_CENTER;t777777777tu
 
-#if defined(OW_DEFAULT_CENTER)
-    nModelCoordinateLocation = 1;
-#endif
+	dfXCoef[0] = dfXCoefficient[0]; // scale
+	dfXCoef[1] = dfXCoefficient[1]; // rotation
+	dfXCoef[2] = dfXCoefficient[2] + ( dfXCoef[0] / 2 ); // offset
+
+	dfYCoef[0] = dfYCoefficient[0]; // rotation
+	dfYCoef[1] = dfYCoefficient[1]; // scale
+	dfYCoef[2] = dfYCoefficient[2] + ( dfYCoef[1] / 2 ); // offset
 
     char* pszXML = CPLSerializeXMLTree( phMetadata );
 
@@ -2202,13 +2243,13 @@ bool GeoRasterWrapper::FlushMetadata()
         pszSchema, pszTable, pszColumn, pszWhere ) );
 
     poStmt->Bind( &nSRID );
-    poStmt->Bind( &nModelCoordinateLocation );
-    poStmt->Bind( &dfXCoefficient[0] );
-    poStmt->Bind( &dfXCoefficient[1] );
-    poStmt->Bind( &dfXCoefficient[2] );
-    poStmt->Bind( &dfYCoefficient[0] );
-    poStmt->Bind( &dfYCoefficient[1] );
-    poStmt->Bind( &dfYCoefficient[2] );
+    poStmt->Bind( &eModel );
+    poStmt->Bind( &dfXCoef[0] );
+    poStmt->Bind( &dfXCoef[1] );
+    poStmt->Bind( &dfXCoef[2] );
+    poStmt->Bind( &dfYCoef[0] );
+    poStmt->Bind( &dfYCoef[1] );
+    poStmt->Bind( &dfYCoef[2] );
 
     if( ! poStmt->Execute() )
     {
