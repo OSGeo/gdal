@@ -38,7 +38,7 @@ import sys
 import string
 
 if len(sys.argv) < 2:
-    print 'Usage: esri2wkt.py <esri .prj file>'
+    print('Usage: esri2wkt.py <esri .prj file>')
     sys.exit(1)
     
 prj_fd = open( sys.argv[1] )
@@ -51,7 +51,7 @@ for i in range(len(prj_lines)):
 prj_srs = osr.SpatialReference()
 err = prj_srs.ImportFromESRI( prj_lines )
 if err != 0:
-    print 'Error = ', err
+    print('Error = ', err)
 else:
-    print prj_srs.ExportToPrettyWkt()
+    print(prj_srs.ExportToPrettyWkt())
 

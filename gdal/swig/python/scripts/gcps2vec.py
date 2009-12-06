@@ -47,7 +47,7 @@ except ImportError:
 import sys
 
 def Usage():
-    print 'Usage: gcp2vec.py [-of <ogr_drivername>] <raster_file> <vector_file>'
+    print('Usage: gcp2vec.py [-of <ogr_drivername>] <raster_file> <vector_file>')
     sys.exit(1)
 
 # =============================================================================
@@ -94,7 +94,7 @@ if out_file is None:
 # ----------------------------------------------------------------------------
 ds = gdal.Open( in_file )
 if ds is None:
-    print 'Unable to open ', filename
+    print('Unable to open ', filename)
     sys.exit(1)
 
 gcp_srs = ds.GetGCPProjection()
@@ -103,7 +103,7 @@ gcps = ds.GetGCPs()
 ds = None
 
 if gcps is None or len(gcps) == 0:
-    print 'No GCPs on file %s!' % in_file
+    print('No GCPs on file %s!' % in_file)
     sys.exit(1)
 
 # ----------------------------------------------------------------------------
@@ -112,7 +112,7 @@ if gcps is None or len(gcps) == 0:
 
 drv = ogr.GetDriverByName( format )
 if drv is None:
-    print 'No driver named %s available.' % format
+    print('No driver named %s available.' % format)
     sys.exit(1)
 
 ds = drv.CreateDataSource( out_file )
