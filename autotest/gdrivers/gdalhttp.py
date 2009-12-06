@@ -46,7 +46,7 @@ def http_1():
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
     except:
-	return 'skip'
+        return 'skip'
 
     tst = gdaltest.GDALTest( 'GIF','http://home.gdal.org/~warmerda/frank.gif',
                              1, 35415, filename_absolute = 1 )

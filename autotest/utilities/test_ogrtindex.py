@@ -92,7 +92,7 @@ def test_ogrtindex_1(srs = None):
 
     shape_ds.Destroy()
 
-    os.popen(test_cli_utilities.get_ogrtindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp').read()
+    gdaltest.runexternal(test_cli_utilities.get_ogrtindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp')
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
@@ -116,7 +116,7 @@ def test_ogrtindex_1(srs = None):
     feat = ds.GetLayer(0).GetNextFeature()
     while feat is not None:
         if feat.GetGeometryRef().ExportToWkt() != expected_wkts[i]:
-            print 'i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt())
+            print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
             return 'fail'
         i = i + 1
         feat = ds.GetLayer(0).GetNextFeature()

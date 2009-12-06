@@ -74,16 +74,17 @@ class ProjTest:
         try:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             ct = osr.CoordinateTransformation( src, dst )
-        except ValueError, (err_msg):
+        except ValueError:
             gdal.PopErrorHandler()
-            if string.find(str(err_msg),'Unable to load PROJ.4') != -1:
+            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
                 gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
                 return 'skip'
             else:
-                gdaltest.post_reason( 'failed to create coordinate transformation.%s')
+                gdaltest.post_reason( 'failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
                 return 'fail'
         except:
-            gdaltest.post_reason( 'failed to create coordinate transformation.%s')
+            gdal.PopErrorHandler()
+            gdaltest.post_reason( 'failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
             return 'fail'
 
         ######################################################################

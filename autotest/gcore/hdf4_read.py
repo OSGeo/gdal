@@ -59,8 +59,8 @@ init_list = [ \
 for item in init_list:
     ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2] )
     if ut is None:
-	print( 'HDF4 tests skipped' )
-	sys.exit()
+        print( 'HDF4 tests skipped' )
+        sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
 
 if __name__ == '__main__':

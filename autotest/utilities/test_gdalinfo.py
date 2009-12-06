@@ -43,7 +43,7 @@ def test_gdalinfo_1():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
     if ret.find('Driver: GTiff/GeoTIFF') == -1:
         return 'fail'
 
@@ -56,7 +56,7 @@ def test_gdalinfo_2():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -checksum ../gcore/data/byte.tif').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -checksum ../gcore/data/byte.tif')
     if ret.find('Checksum=4672') == -1:
         return 'fail'
 
@@ -69,11 +69,11 @@ def test_gdalinfo_3():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
     if ret.find('Metadata') == -1:
         return 'fail'
 
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -nomd ../gcore/data/byte.tif').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -nomd ../gcore/data/byte.tif')
     if ret.find('Metadata') != -1:
         return 'fail'
 
@@ -86,11 +86,11 @@ def test_gdalinfo_4():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/bug407.gif').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/bug407.gif')
     if ret.find('0: 255,255,255,255') == -1:
         return 'fail'
 
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -noct ../gdrivers/data/bug407.gif').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -noct ../gdrivers/data/bug407.gif')
     if ret.find('0: 255,255,255,255') != -1:
         return 'fail'
 
@@ -108,16 +108,16 @@ def test_gdalinfo_5():
     except:
         pass
     
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
     if ret.find('STATISTICS_MINIMUM=74') != -1:
         gdaltest.post_reason( 'got wrong minimum.' )
-        print ret
+        print(ret)
         return 'fail'
 
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -stats ../gcore/data/byte.tif').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -stats ../gcore/data/byte.tif')
     if ret.find('STATISTICS_MINIMUM=74') == -1:
         gdaltest.post_reason( 'got wrong minimum (2).' )
-        print ret
+        print(ret)
         return 'fail'
 
     # We will blow an exception if the file does not exist now!
@@ -132,7 +132,7 @@ def test_gdalinfo_6():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/int.img').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/int.img')
     if ret.find('Overviews') == -1:
         return 'fail'
     if ret.find('GDALRasterAttributeTable') == -1:

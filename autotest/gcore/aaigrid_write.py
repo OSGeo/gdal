@@ -49,8 +49,8 @@ init_list = [ \
 for item in init_list:
     ut = gdaltest.GDALTest( 'AAIGrid', item[0], item[1], item[2] )
     if ut is None:
-	print( 'AAIGrid tests skipped' )
-	sys.exit()
+        print( 'AAIGrid tests skipped' )
+        sys.exit()
     gdaltest_list.append( (ut.testCreateCopy, item[0]) )
 
 if __name__ == '__main__':

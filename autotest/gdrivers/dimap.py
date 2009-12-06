@@ -72,10 +72,10 @@ def dimap_2():
     
     gcp_srs = ds.GetGCPProjection()
     if gcp_srs[:6] != 'GEOGCS' \
-       or string.find(gcp_srs,'WGS') == -1 \
-       or string.find(gcp_srs,'84') == -1:
+       or gcp_srs.find('WGS') == -1 \
+       or gcp_srs.find('84') == -1:
         gdaltest.post_reason('GCP Projection not retained.')
-        print gcp_srs
+        print(gcp_srs)
         return 'fail'
 
     gcps = ds.GetGCPs()
@@ -86,8 +86,8 @@ def dimap_2():
        or abs(gcps[0].GCPY - 44.2082255) > 0.0000002 \
        or abs(gcps[0].GCPZ - 0) > 0.0000002:
         gdaltest.post_reason( 'GCPs wrong.' )
-        print len(gcps)
-        print gcps[0]
+        print(len(gcps))
+        print(gcps[0])
         return 'fail'
     
     return 'success'

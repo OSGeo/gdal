@@ -211,7 +211,7 @@ def ogr_dxf_7():
     exp_area = 445.748
 
     if area < exp_area - 0.5 or area > exp_area + 0.5:
-        print envelope
+        print(envelope)
         gdaltest.post_reason( 'envelope area not as expected, got %g.' % area )
         return 'fail'
 

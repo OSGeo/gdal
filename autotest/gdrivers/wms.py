@@ -32,7 +32,6 @@ import os
 import sys
 import string
 import array
-import urllib2
 import gdal
 
 sys.path.append( '../pymod' )
@@ -53,14 +52,9 @@ def wms_1():
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WMS service is online.
     # Nothing genuine but helps to keep the buildbot waterfall green.
-    try:
-        srv = 'http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?'
-        web = urllib2.urlopen(srv)
-    except urllib2.HTTPError, e:
-        print 'Test WMS service is down (HTTP Error: %d)' % e.code
-        gdaltest.wms_drv = None
-    except:
-        print 'Test WMS service is down.'
+    
+    srv = 'http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?'
+    if gdaltest.gdalurlopen(srv) is None:
         gdaltest.wms_drv = None
 
     if gdaltest.wms_drv is None:
@@ -90,7 +84,7 @@ def wms_2():
 def wms_3():
 
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
-	return 'skip'
+        return 'skip'
 
     if gdaltest.wms_ds.RasterXSize != 36000 \
        or gdaltest.wms_ds.RasterYSize != 14500 \
@@ -111,7 +105,7 @@ def wms_3():
        or abs(gt[5] - -0.01) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
         gdaltest.post_reason( 'wrong geotransform' )
-        print gt
+        print(gt)
         return 'fail'
     
     if gdaltest.wms_ds.GetRasterBand(1).GetOverviewCount() < 1:
@@ -130,7 +124,7 @@ def wms_3():
 def wms_4():
 
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
-	return 'skip'
+        return 'skip'
 
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -142,8 +136,8 @@ def wms_4():
     msg = gdal.GetLastErrorMsg()
     gdal.ErrorReset()
 
-    if msg is not None and string.find(msg, 'Service denied due to system overload') != -1:
-        print msg
+    if msg is not None and msg.find('Service denied due to system overload') != -1:
+        print(msg)
         return 'skip'
 
     if cs != 57182:
@@ -158,7 +152,7 @@ def wms_4():
 def wms_5():
 
     if gdaltest.wms_drv is None:
-	return 'skip'
+        return 'skip'
 
     fn = '<GDAL_WMS><Service name="WMS"><Version>1.1.1</Version><ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl><SRS>EPSG:4326</SRS><ImageFormat>image/jpeg</ImageFormat><Layers>modis,global_mosaic</Layers><Styles></Styles></Service><DataWindow><UpperLeftX>-180.0</UpperLeftX><UpperLeftY>90.0</UpperLeftY><LowerRightX>180.0</LowerRightX><LowerRightY>-90.0</LowerRightY><SizeX>2666666</SizeX><SizeY>1333333</SizeY></DataWindow><Projection>EPSG:4326</Projection><BandsCount>3</BandsCount></GDAL_WMS>'
 
@@ -189,14 +183,8 @@ def wms_6():
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WMS service is online.
     # Nothing genuine but helps to keep the buildbot waterfall green.
-    try:
-        srv = 'http://s0.tileservice.worldwindcentral.com/getTile?'
-        web = urllib2.urlopen(srv)
-    except urllib2.HTTPError, e:
-        print 'Test WMS service is down (HTTP Error: %d)' % e.code
-        gdaltest.wms_drv = None
-    except:
-        print 'Test WMS service is down.'
+    srv = 'http://s0.tileservice.worldwindcentral.com/getTile?'
+    if gdaltest.gdalurlopen(srv) is None:
         gdaltest.wms_drv = None
 
     if gdaltest.wms_drv is None:
@@ -259,14 +247,14 @@ def wms_7():
        or ds.RasterYSize != 134217728 \
        or ds.RasterCount != 3:
         gdaltest.post_reason( 'wrong size or bands' )
-        print ds.RasterXSize
-        print ds.RasterYSize
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverview(18).XSize != 512 \
        or ds.GetRasterBand(1).GetOverview(18).YSize != 256:
-        print ds.GetRasterBand(1).GetOverview(18).XSize
-        print ds.GetRasterBand(1).GetOverview(18).YSize
+        print(ds.GetRasterBand(1).GetOverview(18).XSize)
+        print(ds.GetRasterBand(1).GetOverview(18).YSize)
         return 'fail'
 
     ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)

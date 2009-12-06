@@ -264,7 +264,7 @@ def ogr_dgn_8():
        or genvelope[2] < -0.0962 or genvelope[2] > -0.0960 \
        or genvelope[3] < 9.26310 or genvelope[3] > 9.2632:
         gdaltest.post_reason( 'feature 2: geometry extents seem odd' )
-        print genvelope
+        print(genvelope)
         return 'fail'
 
     feat.Destroy()

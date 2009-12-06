@@ -44,7 +44,7 @@ def test_gdaldem_hillshade():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif')
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_hillshade.tif')
@@ -83,7 +83,7 @@ def test_gdaldem_hillshade_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' hillshade -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.png').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.png')
 
     ds = gdal.Open('tmp/n43_hillshade.png')
     if ds is None:
@@ -104,7 +104,7 @@ def test_gdaldem_slope():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' slope -s 111120 ../gdrivers/data/n43.dt0 tmp/n43_slope.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' slope -s 111120 ../gdrivers/data/n43.dt0 tmp/n43_slope.tif')
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_slope.tif')
@@ -143,7 +143,7 @@ def test_gdaldem_aspect():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' aspect ../gdrivers/data/n43.dt0 tmp/n43_aspect.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' aspect ../gdrivers/data/n43.dt0 tmp/n43_aspect.tif')
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_aspect.tif')
@@ -182,24 +182,24 @@ def test_gdaldem_color_relief():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.tif')
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_colorrelief.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 55009:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(2).Checksum() != 37543:
-        print ds.GetRasterBand(2).Checksum()
+        print(ds.GetRasterBand(2).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(3).Checksum() != 47711:
-        print ds.GetRasterBand(3).Checksum()
+        print(ds.GetRasterBand(3).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -230,24 +230,24 @@ def test_gdaldem_color_relief_from_float32():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
         
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -ot Float32 ../gdrivers/data/n43.dt0 tmp/n43_float32.tif')
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -ot Float32 ../gdrivers/data/n43.dt0 tmp/n43_float32.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.tif')
     ds = gdal.Open('tmp/n43_colorrelief_from_float32.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 55009:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(2).Checksum() != 37543:
-        print ds.GetRasterBand(2).Checksum()
+        print(ds.GetRasterBand(2).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(3).Checksum() != 47711:
-        print ds.GetRasterBand(3).Checksum()
+        print(ds.GetRasterBand(3).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -262,23 +262,23 @@ def test_gdaldem_color_relief_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.png')
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.png')
     ds = gdal.Open('tmp/n43_colorrelief.png')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 55009:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(2).Checksum() != 37543:
-        print ds.GetRasterBand(2).Checksum()
+        print(ds.GetRasterBand(2).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(3).Checksum() != 47711:
-        print ds.GetRasterBand(3).Checksum()
+        print(ds.GetRasterBand(3).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -295,23 +295,23 @@ def test_gdaldem_color_relief_from_float32_to_png():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
         
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.png')
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.png')
     ds = gdal.Open('tmp/n43_colorrelief_from_float32.png')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 55009:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(2).Checksum() != 37543:
-        print ds.GetRasterBand(2).Checksum()
+        print(ds.GetRasterBand(2).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(3).Checksum() != 47711:
-        print ds.GetRasterBand(3).Checksum()
+        print(ds.GetRasterBand(3).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -326,23 +326,23 @@ def test_gdaldem_color_relief_nearest_color_entry():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaldem_path() + ' color-relief -nearest_color_entry ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief_nearest.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -nearest_color_entry ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief_nearest.tif')
     ds = gdal.Open('tmp/n43_colorrelief_nearest.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 57296:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(2).Checksum() != 42926:
-        print ds.GetRasterBand(2).Checksum()
+        print(ds.GetRasterBand(2).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     if ds.GetRasterBand(3).Checksum() != 47181:
-        print ds.GetRasterBand(3).Checksum()
+        print(ds.GetRasterBand(3).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 

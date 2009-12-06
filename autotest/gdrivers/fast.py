@@ -100,13 +100,13 @@ def fast_3():
 
     gain = float(md['GAIN1'])
     if abs(gain - gb_expected[0]) > 0.0001:
-            print 'expected:', gb_expected[0]
-            print 'got:', gain
+            print('expected:', gb_expected[0])
+            print('got:', gain)
 
     bias = float(md['BIAS1'])
     if abs(bias - gb_expected[1]) > 0.0001:
-            print 'expected:', gb_expected[1]
-            print 'got:', bias
+            print('expected:', gb_expected[1])
+            print('got:', bias)
 
     return 'success'
 

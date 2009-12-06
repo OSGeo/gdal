@@ -58,13 +58,13 @@ def osr_ct_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     try:
         ct = osr.CoordinateTransformation( ll_srs, utm_srs )
-    except ValueError, (err_msg):
+    except ValueError:
         gdal.PopErrorHandler()
-        if string.find(str(err_msg),'Unable to load PROJ.4') != -1:
+        if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
             gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
             return 'skip'
         else:
-            gdaltest.post_reason( str(err_msg) )
+            gdaltest.post_reason( gdal.GetLastErrorMsg() )
             return 'fail'
 
     gdal.PopErrorHandler()

@@ -59,8 +59,8 @@ init_list = [ \
 for item in init_list:
     ut = gdaltest.GDALTest( 'BMP', item[0], item[1], item[2] )
     if ut is None:
-	print( 'BMP tests skipped' )
-	sys.exit()
+        print( 'BMP tests skipped' )
+        sys.exit()
     gdaltest_list.append( (ut.testCreateCopy, item[0]) )
     gdaltest_list.append( (ut.testCreate, item[0]) )
 

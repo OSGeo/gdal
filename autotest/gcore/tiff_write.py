@@ -217,7 +217,7 @@ def tiff_write_5():
 
     new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_5.tif', src_ds )
 
-    if string.find(new_ds.GetGCPProjection(),
+    if new_ds.GetGCPProjection().find(
                    'AUTHORITY["EPSG","26711"]') == -1:
         gdaltest.post_reason( 'GCP Projection not set properly.' )
         return 'fail'
@@ -255,7 +255,7 @@ def tiff_write_5():
 def tiff_write_6():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     options= [ 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32',
@@ -264,7 +264,7 @@ def tiff_write_6():
                                    gdal.GDT_Byte, options )
 
     # make a 32x32 byte buffer 
-    buf = array.array('B',range(32)).tostring()
+    buf = array.array('B',list(range(32))).tostring()
     for i in range(5):
         buf = buf + buf
 
@@ -294,7 +294,7 @@ def tiff_write_6():
 def tiff_write_7():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     options= [ 'TILED=YES', 'COMPRESS=LZW', 'PREDICTOR=2' ]
@@ -302,7 +302,7 @@ def tiff_write_7():
                                    gdal.GDT_Byte, options )
 
     # make a 32x32 byte buffer 
-    buf = array.array('B',range(32)).tostring()
+    buf = array.array('B',list(range(32))).tostring()
     for i in range(5):
         buf = buf + buf
 
@@ -332,7 +332,7 @@ def tiff_write_8():
                                    gdal.GDT_Byte, options )
 
     # make a 32x32 byte buffer 
-    buf = array.array('B',range(32)).tostring()
+    buf = array.array('B',list(range(32))).tostring()
     for i in range(5):
         buf = buf + buf
 
@@ -405,7 +405,7 @@ def tiff_write_11():
 def tiff_write_12():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'JPEG') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
     
     ut = gdaltest.GDALTest( 'GTiff', 'sasha.tif', 3, 31952 )
@@ -418,7 +418,7 @@ def tiff_write_12():
 def tiff_write_13():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'JPEG') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
     ut = gdaltest.GDALTest( 'GTiff', 'sasha.tif', 3, 17255,
@@ -460,12 +460,12 @@ def tiff_write_15():
         return 'fail'
 
     md = ds.GetMetadata()
-    if not md.has_key('test'):
+    if 'test' not in md:
         gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if not md.has_key('testBand'):
+    if 'testBand' not in md:
         gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
         return 'fail'
 
@@ -484,12 +484,12 @@ def tiff_write_15():
     ds = gdal.Open( 'tmp/tw_15.tif' )
 
     md = ds.GetMetadata()
-    if md.has_key('test'):
+    if 'test' in md:
         gdaltest.post_reason( 'Metadata written to BASELINE file.' )
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if md.has_key('testBand'):
+    if 'testBand' in md:
         gdaltest.post_reason( 'Metadata written to BASELINE file.' )
         return 'fail'
 
@@ -527,12 +527,12 @@ def tiff_write_16():
         return 'fail'
 
     md = ds.GetMetadata()
-    if not md.has_key('test'):
+    if 'test' not in md:
         gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if not md.has_key('testBand'):
+    if 'testBand' not in md:
         gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
         return 'fail'
 
@@ -551,12 +551,12 @@ def tiff_write_16():
     ds = gdal.Open( 'tmp/tw_16.tif' )
 
     md = ds.GetMetadata()
-    if md.has_key('test'):
+    if 'test' in md:
         gdaltest.post_reason( 'Metadata written to BASELINE file.' )
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if md.has_key('testBand'):
+    if 'testBand' in md:
         gdaltest.post_reason( 'Metadata written to BASELINE file.' )
         return 'fail'
 
@@ -647,7 +647,7 @@ def tiff_write_18():
        or imd_md['numColumns'] != '30324' \
        or imd_md['IMAGE_1.sunEl'] != '39.7':
         gdaltest.post_reason( 'IMD contents wrong?' )
-        print imd_md
+        print(imd_md)
         return 'fail'
 
     ds = None
@@ -732,7 +732,7 @@ def tiff_write_20():
     new_ds = gdal.Open( 'tmp/tags.tif' )
     md = new_ds.GetMetadata()
     for item in values:
-        if not md.has_key(item[0]):
+        if item[0] not in md:
             gdaltest.post_reason( 'Couldnt find tag %s' %(item[0]))
             return 'fail'
 
@@ -1016,7 +1016,7 @@ def tiff_write_29():
 def tiff_write_30():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 1, 1, 1, options = ['BigTIFF=YES'] )
@@ -1047,7 +1047,7 @@ def tiff_write_30():
 def tiff_write_31():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 100000, 100000, 1,
@@ -1100,9 +1100,9 @@ def tiff_write_32():
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i]-gt[i]) > 1e-5:
-            print
-            print 'old = ', gt
-            print 'new = ', new_gt
+            print('')
+            print(('old = ', gt))
+            print(('new = ', new_gt))
             gdaltest.post_reason( 'Geotransform differs.' )
             return 'fail'
 
@@ -1131,12 +1131,12 @@ def tiff_write_33():
     ds = gdal.Open( 'tmp/tw_33.tif' )
 
     md = ds.GetMetadata()
-    if not md.has_key('test'):
+    if 'test' not in md:
         gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if not md.has_key('testBand'):
+    if 'testBand' not in md:
         gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
         return 'fail'
 
@@ -1155,12 +1155,12 @@ def tiff_write_33():
     ds = gdal.Open( 'tmp/tw_33.tif' )
 
     md = ds.GetMetadata()
-    if md.has_key('test'):
+    if 'test' in md:
         gdaltest.post_reason( 'Metadata written to GeoTIFF file.' )
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if md.has_key('testBand'):
+    if 'testBand' in md:
         gdaltest.post_reason( 'Metadata written to GeoTIFF file.' )
         return 'fail'
 
@@ -1186,12 +1186,12 @@ def tiff_write_34():
     ds = gdal.Open( 'tmp/tw_34.tif' )
 
     md = ds.GetMetadata()
-    if not md.has_key('test'):
+    if 'test' not in md:
         gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if not md.has_key('testBand'):
+    if 'testBand' not in md:
         gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
         return 'fail'
 
@@ -1210,12 +1210,12 @@ def tiff_write_34():
     ds = gdal.Open( 'tmp/tw_34.tif' )
 
     md = ds.GetMetadata()
-    if md.has_key('test'):
+    if 'test' in md:
         gdaltest.post_reason( 'Metadata written to GeoTIFF file.' )
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if md.has_key('testBand'):
+    if 'testBand' in md:
         gdaltest.post_reason( 'Metadata written to GeoTIFF file.' )
         return 'fail'
 
@@ -1274,7 +1274,7 @@ def tiff_write_35():
     gdal.PopErrorHandler()
 
     md = ds.GetMetadata()
-    if not md.has_key('test') or len(md['test']) != 32768:
+    if 'test' not in md or len(md['test']) != 32768:
         gdaltest.post_reason( 'Did not get expected metadata.' )
         return 'fail'
 
@@ -1475,7 +1475,7 @@ def tiff_write_46():
     got = struct.unpack('B' * 10, data)
     for i in range(len(got)):
         if got[i] != 1:
-            print got
+            print(got)
             gdal.SetCacheMax(oldSize)
             return 'fail'
 
@@ -1548,7 +1548,7 @@ def tiff_write_49():
     # At this point, for the purpose of the copy, the dataset will have been opened as RAW
     if new_ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        print((ds.GetRasterBand(1).GetRasterColorInterpretation()))
         return 'fail'
 
     new_ds = None
@@ -1583,7 +1583,7 @@ def tiff_write_50():
 
     if new_ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        print((ds.GetRasterBand(1).GetRasterColorInterpretation()))
         return 'fail'
 
     new_ds = None
@@ -1631,13 +1631,13 @@ def tiff_write_51():
     expected_wkt = ds.GetProjection()
     ds = None
 
-    if string.find(wkt,'NAD') != -1 or string.find(wkt,'North Am') != -1:
+    if wkt.find('NAD') != -1 or wkt.find('North Am') != -1:
         gdaltest.post_reason( 'It appears the NAD27 datum was not properly cleared.' )
         return 'fail'
     
-    if wkt != expected_wkt or string.find(wkt, 'WGS 84 / UTM zone 1N') == -1:
-        print wkt
-        print expected_wkt
+    if wkt != expected_wkt or wkt.find( 'WGS 84 / UTM zone 1N') == -1:
+        print(wkt)
+        print(expected_wkt)
         gdaltest.post_reason( 'coordinate system does not exactly match.' )
         return 'fail'
 
@@ -1668,7 +1668,7 @@ def tiff_write_52():
     ct = ds.GetRasterBand(1).GetRasterColorTable()
 
     if ct.GetColorEntry(0) != (255,0,0,255):
-        print ct.GetColorEntry(0)
+        print((ct.GetColorEntry(0)))
         gdaltest.post_reason( 'Did not get expected color 0.' )
         return 'fail'
 
@@ -1703,7 +1703,7 @@ def tiff_write_53():
     ct = ds.GetRasterBand(1).GetRasterColorTable()
 
     if ct.GetColorEntry(0) != (255,0,0,255):
-        print ct.GetColorEntry(0)
+        print((ct.GetColorEntry(0)))
         gdaltest.post_reason( 'Did not get expected color 0.' )
         return 'fail'
 
@@ -1741,7 +1741,7 @@ def tiff_write_53_bis():
     ct = ds.GetRasterBand(1).GetRasterColorTable()
 
     if ct.GetColorEntry(0) != (255,0,0,255):
-        print ct.GetColorEntry(0)
+        print((ct.GetColorEntry(0)))
         gdaltest.post_reason( 'Did not get expected color 0.' )
         return 'fail'
 
@@ -1789,7 +1789,7 @@ def tiff_write_55():
     ds = None
 
     if srs != srs_expected:
-        print srs
+        print(srs)
         gdaltest.post_reason( 'failed to preserve Equirectangular projection as expected, old libgeotiff?' )
         return 'fail'
 
@@ -1804,7 +1804,7 @@ def tiff_write_56():
 
     md = gdaltest.tiff_drv.GetMetadata()
     # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     test_ct_data = [ (255,0,0), (0,255,0), (0,0,255), (255,255,255,0)]
@@ -1846,7 +1846,7 @@ def tiff_write_57():
 
     md = gdaltest.tiff_drv.GetMetadata()
     # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     # copy a file to tmp dir to modify.
@@ -1863,7 +1863,7 @@ def tiff_write_57():
     ds = None
 
     if gt != (100,1,3,200,3,1):
-        print gt
+        print(gt)
         gdaltest.post_reason( 'did not get expected geotransform, perhaps unset is not working?' )
         return 'fail'
     
@@ -1880,7 +1880,7 @@ def tiff_write_58():
 
     for compression in ('NONE', 'JPEG', 'LZW', 'DEFLATE', 'PACKBITS'):
 
-        if string.find(md['DMD_CREATIONOPTIONLIST'],compression) != -1:
+        if md['DMD_CREATIONOPTIONLIST'].find(compression) != -1:
             ds = gdaltest.tiff_drv.Create('tmp/tiff_write_58.tif', 4, 4000, 1, options = ['COMPRESS=' + compression] )
             ds.GetRasterBand(1).Fill(255)
             ds = None
@@ -1893,7 +1893,7 @@ def tiff_write_58():
 
             gdaltest.tiff_drv.Delete('tmp/tiff_write_58.tif')
         else:
-            print 'Skipping compression method %s' % compression
+            print(('Skipping compression method %s' % compression))
 
 
     return 'success'
@@ -1937,8 +1937,8 @@ def tiff_write_59():
             got = struct.unpack(ctype * 10, data)
             for i in range(len(got)):
                 if got[i] != 0:
-                    print 'nbands=%d, NBITS=%d' % (nbands, nbits)
-                    print got
+                    print(('nbands=%d, NBITS=%d' % (nbands, nbits)))
+                    print(got)
                     ret = 'fail'
                     break
     
@@ -1964,8 +1964,8 @@ def tiff_write_60():
     
         ds = gdal.Open('tmp/tiff_write_60.tif')
         if ds.GetGeoTransform() != gt:
-            print 'case1'
-            print ds.GetGeoTransform()
+            print('case1')
+            print((ds.GetGeoTransform()))
             return 'fail'
     
         ds = None
@@ -1985,8 +1985,8 @@ def tiff_write_60():
     
         ds = gdal.Open('tmp/tiff_write_60.tif')
         if ds.GetGeoTransform() != gt:
-            print 'case2'
-            print ds.GetGeoTransform()
+            print('case2')
+            print((ds.GetGeoTransform()))
             return 'fail'
     
         ds = None
@@ -2005,7 +2005,7 @@ def tiff_write_60():
 def tiff_write_61():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 50000, 50000, 1,
@@ -2037,7 +2037,7 @@ def tiff_write_61():
 def tiff_write_62():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 50000, 50000, 1,
@@ -2069,7 +2069,7 @@ def tiff_write_62():
 def tiff_write_63():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
     try:
         if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
@@ -2106,8 +2106,8 @@ def tiff_write_64():
     expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
 
     if wkt != expected_wkt:
-        print wkt
-        print expected_wkt
+        print(wkt)
+        print(expected_wkt)
         gdaltest.post_reason( 'coordinate system does not exactly match.' )
         return 'fail'
 
@@ -2223,7 +2223,7 @@ def tiff_write_69():
 
     ds = gdal.Open('tmp/tiff_write_69.tif')
     if ds.GetRasterBand(1).Checksum() != 0:
-        print ds.GetRasterBand(1).Checksum()
+        print((ds.GetRasterBand(1).Checksum()))
         return 'fail'
     ds = None
 
@@ -2250,7 +2250,7 @@ def tiff_write_70():
 
     ds = gdal.Open('tmp/tiff_write_70.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        print ds.GetRasterBand(1).Checksum()
+        print((ds.GetRasterBand(1).Checksum()))
         return 'fail'
     ds = None
 
@@ -2266,7 +2266,7 @@ def tiff_write_70():
 def tiff_write_71():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
@@ -2335,7 +2335,10 @@ def tiff_write_72():
         fileobj = open( 'tmp/tiff_write_72.tif', mode='rb')
         binvalues = array.array('b')
         fileobj.seek(4)
-        binvalues.read(fileobj, 4)
+        try:
+            binvalues.read(fileobj, 4)
+        except:
+            binvalues.fromfile(fileobj, 4)
         fileobj.close()
 
         # Directory should be at offset 8 of the file
@@ -2369,7 +2372,10 @@ def tiff_write_73():
     fileobj = open( 'tmp/tiff_write_73.tif', mode='rb')
     binvalues = array.array('b')
     fileobj.seek(4)
-    binvalues.read(fileobj, 4)
+    try:
+        binvalues.read(fileobj, 4)
+    except:
+        binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     # Directory should be at offset 8 of the file
@@ -2384,7 +2390,10 @@ def tiff_write_73():
     fileobj = open( 'tmp/tiff_write_73.tif', mode='rb')
     binvalues = array.array('b')
     fileobj.seek(4)
-    binvalues.read(fileobj, 4)
+    try:
+        binvalues.read(fileobj, 4)
+    except:
+        binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     # Directory should be at offset 8 of the file
@@ -2414,7 +2423,7 @@ def tiff_write_74():
     gdal.PopErrorHandler()
     gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', old_accum )
     
-    if string.find(gdal.GetLastErrorMsg(),
+    if gdal.GetLastErrorMsg().find(
                    'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
@@ -2433,7 +2442,7 @@ def tiff_write_74():
 
     if stats[2] < 2150 or stats[2] > 2180:
         gdaltest.post_reason( 'did not get expected mean for band1.')
-        print stats
+        print(stats)
         return 'fail'
 
     try:
@@ -2444,7 +2453,7 @@ def tiff_write_74():
 
     if compression != 'YCbCr JPEG':
         gdaltest.post_reason( 'did not get expected COMPRESSION value' )
-        print 'COMPRESSION="%s"' % compression
+        print(('COMPRESSION="%s"' % compression))
         return 'fail'
 
     try:
@@ -2489,7 +2498,7 @@ def tiff_write_76():
     
     cs = new_ds.GetRasterBand(1).Checksum()
     if cs != 3322:
-        print cs
+        print(cs)
         gdaltest.post_reason( 'Got wrong checksum' )
         return 'fail'
         
@@ -2526,7 +2535,7 @@ def tiff_write_77():
                 else:
                     expected_cs = 0 % 7;
                 if cs != expected_cs:
-                    print cs
+                    print(cs)
                     gdaltest.post_reason( 'Got wrong checksum' )
                     return 'fail'
 
@@ -2535,7 +2544,7 @@ def tiff_write_77():
                 cs = new_ds.GetRasterBand(i+1).Checksum()
                 expected_cs = src_ds.GetRasterBand(i+1).Checksum()
                 if cs != expected_cs:
-                    print cs
+                    print(cs)
                     gdaltest.post_reason( 'Got wrong checksum' )
                     return 'fail'
 
@@ -2571,9 +2580,9 @@ def tiff_write_78():
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
         if blocky == 1:
-            print 'using SplitBand'
+            print('using SplitBand')
         else:
-            print 'using regular band (libtiff <= 3.9.2 or <= 4.0.0beta5, or SplitBand disabled by config option)'
+            print('using regular band (libtiff <= 3.9.2 or <= 4.0.0beta5, or SplitBand disabled by config option)')
 
     # Test reading a few samples to check that random reading works
     band_lines = [ (1,0), (1,5), (1,3), (2,10), (1,100), (2,1000), (2,500),
@@ -2589,10 +2598,10 @@ def tiff_write_78():
             # this ends up being 1
             expected_cs = 1 % 7;
         if cs != expected_cs:
-            print attempt
-            print cs
-            print expected_cs
-            print band_line
+            print(attempt)
+            print(cs)
+            print(expected_cs)
+            print(band_line)
             gdaltest.post_reason( 'Got wrong checksum' )
             return 'fail'
 
@@ -2605,7 +2614,7 @@ def tiff_write_78():
             # this ends up being 32768
             expected_cs = 32768
         if cs != expected_cs:
-            print cs
+            print(cs)
             gdaltest.post_reason( 'Got wrong checksum' )
             return 'fail'
 

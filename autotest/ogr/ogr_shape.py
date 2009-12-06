@@ -161,8 +161,8 @@ def ogr_shape_4():
         return 'fail'
 
     if feat_read.GetGeometryRef() is not None:
-        print feat_read.GetGeometryRef()
-        print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef())
+        print(feat_read.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason( 'Didnt get null geometry as expected.' )
         return 'fail'
         
@@ -638,9 +638,9 @@ def ogr_shape_18():
     srs.ImportFromEPSG( 27700 )
 
     if not srs_lyr.IsSame(srs):
-        print
-        print 'expected = ', srs.ExportToPrettyWkt()
-        print 'existing = ', srs_lyr.ExportToPrettyWkt()
+        print('')
+        print('expected = ', srs.ExportToPrettyWkt())
+        print('existing = ', srs_lyr.ExportToPrettyWkt())
         gdaltest.post_reason( 'Projections differ' )
         return 'fail'
 
@@ -852,7 +852,7 @@ def ogr_shape_23_write_valid_and_invalid(layer_name, wkt, invalid_wkt, wkbType, 
 
     if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt(wkt),
                                 max_error = 0.000000001 ) != 0:
-        print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     return 'success'
@@ -887,14 +887,14 @@ def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
 
     if expected_geom is None:
         if feat_read.GetGeometryRef() is not None:
-            print feat_read.GetGeometryRef().ExportToWkt()
+            print(feat_read.GetGeometryRef().ExportToWkt())
             return 'fail'
         else:
             return 'success'
 
     if ogrtest.check_feature_geometry(feat_read,expected_geom,
                                 max_error = 0.000000001 ) != 0:
-        print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     return 'success'
@@ -990,7 +990,7 @@ def ogr_shape_23():
 
     if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))'),
                                 max_error = 0.000000001 ) != 0:
-        print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
 
@@ -1149,7 +1149,7 @@ def ogr_shape_27():
     feat = lyr.GetNextFeature()
 
     if feat.installe_1 != '1989/04/25':
-        print feat.installe_1
+        print(feat.installe_1)
         gdaltest.post_reason( 'got wrong date result!' )
         result = 'fail'
 
@@ -1193,18 +1193,18 @@ def ogr_shape_28():
 
     # Set recourd count to 24,000,000
     file.seek(4, 0)
-    file.write("\x00")
-    file.write("\x36")
-    file.write("\x6e")
-    file.write("\x01")
+    file.write("\x00".encode('latin1'))
+    file.write("\x36".encode('latin1'))
+    file.write("\x6e".encode('latin1'))
+    file.write("\x01".encode('latin1'))
 
-    # Set value for record 23,900,000 at offset 2,390,000,066 = (23,900,000 * (99 + 1) + 65) + 1
+    # Set value for record 23,900,000 at offset 2,390,000,066 = (23,900,000 * (99 + 1) + 65) + 1    
     file.seek(2390000066, 0)
-    file.write("value_over_2GB")
+    file.write("value_over_2GB".encode('latin1'))
 
     # Extend to 3 GB file
     file.seek(3000000000, 0)
-    file.write("0")
+    file.write("0".encode('latin1'))
 
     file.close()
 
@@ -1217,7 +1217,7 @@ def ogr_shape_28():
     lyr = ds.GetLayer(0)
     feat = lyr.GetFeature(23900000);
     if feat.GetFieldAsString(0) != 'value_over_2GB':
-        print feat.GetFieldAsString(0)
+        print(feat.GetFieldAsString(0))
         return 'fail'
 
     # Update with a new value
@@ -1233,7 +1233,7 @@ def ogr_shape_28():
     lyr = ds.GetLayer(0)
     feat = lyr.GetFeature(23900000);
     if feat.GetFieldAsString(0) != 'updated_value':
-        print feat.GetFieldAsString(0)
+        print(feat.GetFieldAsString(0))
         return 'fail'
     feat.Destroy()
 

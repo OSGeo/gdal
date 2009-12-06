@@ -41,7 +41,7 @@ import gdalconst
 # Test writing a 1x1 buffer to a 10x6 raster and read it back
 
 def rasterio_1():
-    data = 'A'
+    data = 'A'.encode('ascii')
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.Create('tmp/rasterio1.tif', 10, 6, 1)
@@ -70,7 +70,7 @@ def rasterio_1():
 # Test writing a 5x4 buffer to a 10x6 raster and read it back
 
 def rasterio_2():
-    data = 'AAAAAAAAAAAAAAAAAAAA'
+    data = 'AAAAAAAAAAAAAAAAAAAA'.encode('ascii')
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.Create('tmp/rasterio2.tif', 10, 6, 1)
@@ -105,6 +105,7 @@ def rasterio_3():
         for ysize in range(4):
             for m in range((xsize + 1) * (ysize + 1)):
                 data[xsize][ysize] = data[xsize][ysize] + 'A'
+            data[xsize][ysize] = data[xsize][ysize].encode('ascii')
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.Create('tmp/rasterio3.tif', 10, 6, 1)
@@ -146,6 +147,7 @@ def rasterio_4():
     for size in range(5 * 4):
         for k in range(size+1):
             data[size] = data[size] + 'A'
+        data[size] = data[size].encode('ascii')
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.Create('tmp/rasterio4.tif', 20, 20, 1, options = [ 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16' ])

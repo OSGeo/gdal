@@ -44,7 +44,7 @@ def test_ogrinfo_1():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp')
     if ret.find('ESRI Shapefile') == -1:
         return 'fail'
 
@@ -57,7 +57,7 @@ def test_ogrinfo_2():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' -ro ../ogr/data/poly.shp').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro ../ogr/data/poly.shp')
     if ret.find('ESRI Shapefile') == -1:
         return 'fail'
 
@@ -70,7 +70,7 @@ def test_ogrinfo_3():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' -al ../ogr/data/poly.shp').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al ../ogr/data/poly.shp')
     if ret.find('Feature Count: 10') == -1:
         return 'fail'
 
@@ -83,7 +83,7 @@ def test_ogrinfo_4():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly')
     if ret.find('Feature Count: 10') == -1:
         return 'fail'
 
@@ -96,7 +96,7 @@ def test_ogrinfo_5():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp -sql "select * from poly"').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp -sql "select * from poly"')
     if ret.find('Feature Count: 10') == -1:
         return 'fail'
 
@@ -109,7 +109,7 @@ def test_ogrinfo_6():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -geom=no').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -geom=no')
     if ret.find('Feature Count: 10') == -1:
         return 'fail'
     if ret.find('POLYGON') != -1:
@@ -124,7 +124,7 @@ def test_ogrinfo_6():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -geom=summary').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -geom=summary')
     if ret.find('Feature Count: 10') == -1:
         return 'fail'
     if ret.find('POLYGON (') != -1:
@@ -141,7 +141,7 @@ def test_ogrinfo_7():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -spat 479609 4764629 479764 4764817').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -spat 479609 4764629 479764 4764817')
     if ogrtest.have_geos():
         if ret.find('Feature Count: 4') == -1:
             return 'fail'
@@ -158,7 +158,7 @@ def test_ogrinfo_8():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -where "EAS_ID=171"').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -where "EAS_ID=171"')
     if ret.find('Feature Count: 1') == -1:
         return 'fail'
 
@@ -171,7 +171,7 @@ def test_ogrinfo_9():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -fid 9').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -fid 9')
     if ret.find('OGRFeature(poly):9') == -1:
         return 'fail'
 
@@ -184,7 +184,7 @@ def test_ogrinfo_10():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -fields=no').read()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -fields=no')
     if ret.find('AREA (Real') != -1:
         return 'fail'
     if ret.find('POLYGON (') == -1:

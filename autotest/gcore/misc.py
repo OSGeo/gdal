@@ -89,7 +89,7 @@ def misc_3():
     cache_size2 = gdal.GetCacheUsed()
 
     if cache_size != cache_size2:
-        print "--> OpenShared didn't work as expected"
+        print("--> OpenShared didn't work as expected")
 
     ds = None
     ds2 = None
@@ -167,7 +167,7 @@ def misc_5():
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
         md = drv.GetMetadata()
-        if md.has_key('DCAP_CREATE'):
+        if 'DCAP_CREATE' in md:
             datatype = gdal.GDT_Byte
             for nBands in range(6):
                 misc_5_internal(drv, datatype, nBands)
@@ -206,8 +206,8 @@ def misc_6_internal(datatype, nBands):
         for i in range(gdal.GetDriverCount()):
             drv = gdal.GetDriver(i)
             md = drv.GetMetadata()
-            if md.has_key('DCAP_CREATECOPY') or md.has_key('DCAP_CREATE'):
-                #print 'drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+            if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md:
+                # print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
 
                 skip = False
                 # FIXME: A few cases that crashes and should be investigated
@@ -305,13 +305,13 @@ def misc_7():
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.InvGeoTransform(gt)
     if res[0] != 1:
-        print res
+        print(res)
         return 'fail'
 
     expected_inv_gt = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0)
     for i in range(6):
         if abs(res[1][i] - expected_inv_gt[i]) > 1e-6:
-            print res
+            print(res)
             return 'fail'
 
     return 'success'

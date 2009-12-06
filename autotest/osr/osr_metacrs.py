@@ -109,18 +109,19 @@ class MetaCRSTest:
             return result
         
         try:
-            #gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             ct = osr.CoordinateTransformation( self.src_srs, self.dst_srs )
-        except ValueError, (err_msg):
+        except ValueError:
             gdal.PopErrorHandler()
-            if string.find(str(err_msg),'Unable to load PROJ.4') != -1:
+            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
                 gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
                 return 'skip'
             else:
-                gdaltest.post_reason( 'failed to create coordinate transformation.')
+                gdaltest.post_reason( 'failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
                 return 'fail'
         except:
-            gdaltest.post_reason( 'failed to create coordinate transformation.')
+            gdal.PopErrorHandler()
+            gdaltest.post_reason( 'failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
             return 'fail'
 
         ######################################################################
@@ -163,7 +164,7 @@ class MetaCRSTest:
 
 gdaltest_list = []
 
-csv_reader = csv.DictReader(open('data/Test_Data_File.csv','rb'))
+csv_reader = csv.DictReader(open('data/Test_Data_File.csv','rt'))
 
 for test in csv_reader:
     ut = MetaCRSTest( test )

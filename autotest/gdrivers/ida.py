@@ -55,7 +55,7 @@ def ida_2():
 
     if gt[0] != -17.875 or gt[1] != 0.25 or gt[2] != 0 \
        or gt[3] != 37.875 or gt[4] != 0 or gt[5] != -0.25:
-        print 'got: ', gt
+        print('got: ', gt)
         gdaltest.post_reason( 'Aaigrid geotransform wrong.' )
         return 'fail'
 

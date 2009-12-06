@@ -50,7 +50,7 @@ def test_gdaladdo_1():
     shutil.copy('../gcore/data/mfloat32.vrt', 'tmp/mfloat32.vrt')
     shutil.copy('../gcore/data/float32.tif', 'tmp/float32.tif')
 
-    os.popen(test_cli_utilities.get_gdaladdo_path() + ' tmp/mfloat32.vrt 2 4').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' tmp/mfloat32.vrt 2 4')
 
     ds = gdal.Open('tmp/mfloat32.vrt')
     ret = tiff_ovr.tiff_ovr_check(ds)
@@ -72,7 +72,7 @@ def test_gdaladdo_2():
 
     shutil.copyfile( '../gcore/data/nodata_byte.tif', 'tmp/ovr5.tif' )
 
-    os.popen(test_cli_utilities.get_gdaladdo_path() + ' -r average tmp/ovr5.tif 2').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -r average tmp/ovr5.tif 2')
 
     ds = gdal.Open('tmp/ovr5.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -80,7 +80,7 @@ def test_gdaladdo_2():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     ds = None
@@ -98,7 +98,7 @@ def test_gdaladdo_3():
 
     shutil.copyfile( '../gcore/data/nodata_byte.tif', 'tmp/test_gdaladdo_3.tif' )
 
-    os.popen(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/test_gdaladdo_3.tif 2').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/test_gdaladdo_3.tif 2')
 
     ds = gdal.Open('tmp/test_gdaladdo_3.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -106,7 +106,7 @@ def test_gdaladdo_3():
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
-        print exp_cs, cs
+        print(exp_cs, cs)
         return 'fail'
 
     ds = None
@@ -126,7 +126,7 @@ def test_gdaladdo_4():
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdaladdo_path() + ' -clean tmp/test_gdaladdo_3.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -clean tmp/test_gdaladdo_3.tif')
 
     ds = gdal.Open('tmp/test_gdaladdo_3.tif')
     cnt = ds.GetRasterBand(1).GetOverviewCount()

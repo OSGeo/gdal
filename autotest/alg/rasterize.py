@@ -97,7 +97,7 @@ def rasterize_1():
                                burn_values = [200,220,240] )
 
     if err != 0:
-        print err
+        print(err)
         gdaltest.post_reason( 'got non-zero result code from RasterizeLayer' )
         return 'fail'
 
@@ -106,7 +106,7 @@ def rasterize_1():
     expected = 6452
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
-        print checksum
+        print(checksum)
         gdaltest.post_reason( 'Did not get expected image checksum' )
 
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_1.tif',target_ds)
@@ -150,7 +150,7 @@ def rasterize_2():
     gdal.PopErrorHandler()
 
     if err != 0:
-        print err
+        print(err)
         gdaltest.post_reason( 'got non-zero result code from RasterizeLayer' )
         return 'fail'
 
@@ -159,7 +159,7 @@ def rasterize_2():
     expected = 121
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
-        print checksum
+        print(checksum)
         gdaltest.post_reason( 'Did not get expected image checksum' )
 
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif',target_ds)

@@ -87,7 +87,7 @@ def ogr_kml_attributes_1():
 
     if feat.GetField('description')[:23] != 'Attached to the ground.':
         gdaltest.post_reason( 'Wrong description field value' )
-        print 'got: ', feat.GetField('description')[:23]
+        print('got: ', feat.GetField('description')[:23])
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -101,7 +101,7 @@ def ogr_kml_attributes_1():
 
     if feat.GetField('description')[:25] != 'Floats a defined distance':
         gdaltest.post_reason( 'Wrong description field value' )
-        print 'got: ', feat.GetField('description')[:25]
+        print('got: ', feat.GetField('description')[:25])
         return 'fail'
     
     feat = lyr.GetNextFeature()
@@ -115,7 +115,7 @@ def ogr_kml_attributes_1():
 
     if feat.GetField('description') != 'Tethered to the ground by a customizable \"tail\"':
         gdaltest.post_reason( 'Wrong description field value' )
-        print 'got: ', feat.GetField('description')
+        print('got: ', feat.GetField('description'))
         return 'fail'
 
     return 'success'
@@ -213,7 +213,7 @@ def ogr_kml_attributes_4():
         name = 'Building %d' % i
         if feat.GetField('Name') != name:
             gdaltest.post_reason( 'Wrong name field value' )
-            print 'Got: "%s"' % feat.GetField('name')
+            print('Got: "%s"' % feat.GetField('name'))
             return 'fail'
 
         if feat.GetField('description') != '':
@@ -373,7 +373,7 @@ def ogr_kml_write_1():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
     if dst_feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        print dst_feat.GetGeometryRef().ExportToWkt()
+        print(dst_feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('CreateFeature changed the geometry.')
         return 'fail'
     dst_feat.Destroy()
@@ -459,64 +459,64 @@ def ogr_kml_check_write_1():
 
     feat = lyr.GetNextFeature()
     if feat.GetField('name') != 'my_name':
-        print feat.GetField('name')
+        print(feat.GetField('name'))
         gdaltest.post_reason('Unexpected name.')
         return 'fail'
     if feat.GetField('description') != 'my_description':
-        print feat.GetField('description')
+        print(feat.GetField('description'))
         gdaltest.post_reason('Unexpected description.')
         return 'fail'
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49 1)':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 1,2 3,4 5,0 1),(0 1,2 3,4 5,0 1))':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOINT (2 49,2 49)':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'MULTILINESTRING ((0 1,2 3),(0 1,2 3))':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((0 1,2 3,4 5,0 1),(0 1,2 3,4 5,0 1)),((0 1,2 3,4 5,0 1),(0 1,2 3,4 5,0 1)))':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1,2 3))':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
     feat.Destroy()
@@ -541,7 +541,7 @@ def ogr_kml_xml_attributes():
 
     if feat.GetField('description') != 'Description<br></br><i attr="val">Interesting</i><br></br>':
         gdaltest.post_reason( 'Wrong description field value' )
-        print 'got: ', feat.GetField('description')
+        print('got: ', feat.GetField('description'))
         return 'fail'
         
     feat.Destroy()

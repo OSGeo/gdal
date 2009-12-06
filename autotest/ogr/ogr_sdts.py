@@ -71,9 +71,9 @@ def ogr_sdts_1():
         feat_read = lyr.GetNextFeature()
         for item in layer[3]:
             if feat_read.GetFieldAsString(item[0]) != item[1]:
-                print layer[0]
-                print '"%s"' % (item[1])
-                print '"%s"' % (feat_read.GetField(item[0]))
+                print(layer[0])
+                print('"%s"' % (item[1]))
+                print('"%s"' % (feat_read.GetField(item[0])))
                 return 'fail'
 
     gdaltest.sdts_ds.Destroy()

@@ -119,8 +119,8 @@ def jp2kak_6():
 
     if wkt != exp_wkt:
         gdaltest.post_reason( 'did not get expected WKT, should be WGS84' )
-        print 'got: ', wkt
-        print 'exp: ', exp_wkt
+        print('got: ', wkt)
+        print('exp: ', exp_wkt)
         return 'fail'
 
     gt = ds.GetGeoTransform()
@@ -130,7 +130,7 @@ def jp2kak_6():
        or abs(gt[4] - 0.0) > 0.000000000005 \
        or abs(gt[5] - -0.000761397164) > 0.000000000005:
         gdaltest.post_reason( 'did not get expected geotransform' )
-        print 'got: ', gt
+        print('got: ', gt)
         return 'fail'
        
     ds = None
@@ -155,8 +155,8 @@ def jp2kak_7():
 
     if wkt != exp_wkt:
         gdaltest.post_reason( 'did not get expected WKT, should be WGS84' )
-        print 'got: ', wkt
-        print 'exp: ', exp_wkt
+        print('got: ', wkt)
+        print('exp: ', exp_wkt)
         return 'fail'
 
     gt = ds.GetGeoTransform()
@@ -169,7 +169,7 @@ def jp2kak_7():
        or abs(gt[4] - gte[4]) > 0.000000000005 \
        or abs(gt[5] - gte[5]) > 0.000000000005:
         gdaltest.post_reason( 'did not get expected geotransform' )
-        print 'got: ', gt
+        print('got: ', gt)
         return 'fail'
        
     ds = None
@@ -225,7 +225,7 @@ def jp2kak_10():
         got.append( (ord(data[x*100]), ord(data[80000 + x*100])) )
 
     if got != expected:
-        print got
+        print(got)
         gdaltest.post_reason( 'did not get expected values.' )
         return 'fail'
 
@@ -282,7 +282,7 @@ def jp2kak_13():
     expected = 12083
 
     if checksum != expected:
-        print checksum
+        print(checksum)
         gdaltest.post_reason( 'did not get expected overview checksum' )
         return 'fail'
 
@@ -315,7 +315,7 @@ def jp2kak_14():
     expected = 12288
 
     if checksum != expected:
-        print checksum
+        print(checksum)
         gdaltest.post_reason( 'did not get expected overview checksum' )
         return 'fail'
 
@@ -328,7 +328,7 @@ def jp2kak_14():
     expected = 2957
 
     if checksum != expected:
-        print checksum
+        print(checksum)
         gdaltest.post_reason( 'did not get expected overview checksum (2)' )
         return 'fail'
 

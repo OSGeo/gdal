@@ -53,7 +53,7 @@ def mem_1():
     gdaltest.mem_ds = drv.Create( 'mem_1.mem', 50, 3, gdal.GDT_Int32, 1 )
     ds = gdaltest.mem_ds
 
-    raw_data = array.array('f',range(150)).tostring()
+    raw_data = array.array('f',list(range(150))).tostring()
     ds.WriteRaster( 0, 0, 50, 3, raw_data,
                     buf_type = gdal.GDT_Float32,
                     band_list = [1] )
@@ -84,7 +84,7 @@ def mem_1():
 
     if band.Checksum() != 1531:
         gdaltest.post_reason( 'checksum wrong' )
-        print band.Checksum()
+        print(band.Checksum())
         return 'fail'
 
     gdaltest.mem_ds = None
@@ -117,14 +117,14 @@ def mem_2():
     chksum = ds.GetRasterBand(1).Checksum()
     if chksum != 750:
         gdaltest.post_reason( 'checksum failed.' )
-        print chksum
+        print(chksum)
         return 'fail'
 
     ds.GetRasterBand(1).Fill( 100.0 )
     ds.FlushCache()
 
     if gdal.ptrvalue(p,5) != 100.0:
-        print gdal.ptrvalue(p,5)
+        print(gdal.ptrvalue(p,5))
         gdaltest.post_reason( 'fill seems to have failed.' )
         return 'fail'
 

@@ -80,8 +80,8 @@ def nitf_create(creation_options):
                      creation_options )
     ds.SetGeoTransform( (100, 0.1, 0.0, 30.0, 0.0, -0.1 ) )
 
-    list = range(200) + range(20,220) + range(30,230)
-    raw_data = array.array('h',list).tostring()
+    my_list = list(range(200)) + list(range(20,220)) + list(range(30,230))
+    raw_data = array.array('h',my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster( 0, line, 200, 1, raw_data,
@@ -113,34 +113,34 @@ def nitf_check_created_file(checksum1, checksum2, checksum3):
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = checksum1
     if chksum != chksum_expect:
-	gdaltest.post_reason( 'Did not get expected chksum for band 1' )
-	print chksum, chksum_expect
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+        print(chksum, chksum_expect)
+        return 'fail'
 
     chksum = ds.GetRasterBand(2).Checksum()
     chksum_expect = checksum2
     if chksum != chksum_expect:
-	gdaltest.post_reason( 'Did not get expected chksum for band 2' )
-	print chksum, chksum_expect
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected chksum for band 2' )
+        print(chksum, chksum_expect)
+        return 'fail'
 
     chksum = ds.GetRasterBand(3).Checksum()
     chksum_expect = checksum3
     if chksum != chksum_expect:
-	gdaltest.post_reason( 'Did not get expected chksum for band 3' )
-	print chksum, chksum_expect
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected chksum for band 3' )
+        print(chksum, chksum_expect)
+        return 'fail'
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-100) > 0.1 \
-	or abs(geotransform[1]-0.1) > 0.001 \
-	or abs(geotransform[2]-0) > 0.001 \
-	or abs(geotransform[3]-30.0) > 0.1 \
-	or abs(geotransform[4]-0) > 0.001 \
-	or abs(geotransform[5]- -0.1) > 0.001:
-	print geotransform
-	gdaltest.post_reason( 'geotransform differs from expected' )
-	return 'fail'
+        or abs(geotransform[1]-0.1) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-30.0) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -0.1) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
         gdaltest.post_reason( 'Got wrong color interpretation.' )
@@ -193,9 +193,9 @@ def nitf_8():
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
     if chksum != chksum_expect:
-	gdaltest.post_reason( 'Did not get expected chksum for band 1' )
-	print chksum, chksum_expect
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+        print(chksum, chksum_expect)
+        return 'fail'
 
     md = ds.GetMetadata()
     if md['NITF_FHDR'] != 'NSIF01.00':
@@ -234,7 +234,7 @@ def nitf_9():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
     
     if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
-        print mean, stddev
+        print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
         return 'fail'
 
@@ -317,8 +317,8 @@ def nitf_13():
     ds.SetGeoTransform( (400000, 10, 0.0, 6000000, 0.0, -10 ) )
     ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
 
-    list = range(200)
-    raw_data = array.array('f',list).tostring()
+    my_list = list(range(200))
+    raw_data = array.array('f',my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster( 0, line, 200, 1, raw_data,
@@ -339,7 +339,7 @@ def nitf_14():
     chksum_expect = 55964
     if chksum != chksum_expect:
         gdaltest.post_reason( 'Did not get expected chksum for band 1' )
-        print chksum, chksum_expect
+        print(chksum, chksum_expect)
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
@@ -349,13 +349,13 @@ def nitf_14():
     or abs(geotransform[3]-6000000) > .1 \
     or abs(geotransform[4]-0) > 0.001 \
     or abs(geotransform[5]- -10) > 0.001:
-        print geotransform
+        print(geotransform)
         gdaltest.post_reason( 'geotransform differs from expected' )
         return 'fail'
 
     prj = ds.GetProjectionRef()
-    if string.find(prj,'UTM Zone 11, Southern Hemisphere') == -1:
-        print prj
+    if prj.find('UTM Zone 11, Southern Hemisphere') == -1:
+        print(prj)
         gdaltest.post_reason( 'Coordinate system not UTM Zone 11, Southern Hemisphere' )
         return 'fail'
 
@@ -663,9 +663,9 @@ def nitf_30():
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
     if chksum != chksum_expect:
-	gdaltest.post_reason( 'Did not get expected chksum for band 1' )
-	print chksum, chksum_expect
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+        print(chksum, chksum_expect)
+        return 'fail'
 
     md = ds.GetMetadata()
     if md['NITF_FHDR'] != 'NSIF01.00':
@@ -706,14 +706,14 @@ def nitf_31():
     md = ds.GetMetadata( 'TRE' )
     if len(md) != 2:
         gdaltest.post_reason( 'Did not get expected TRE count' )
-        print md
+        print(md)
         return 'fail'
 
     # Check that the leading space in the CUSTOM metadata item is preserved (#3088, #3204)
     try:
         if ds.GetMetadataItem( 'CUSTOM', 'TRE') != ' Test TRE1\\0MORE':
             gdaltest.post_reason( 'Did not get expected TRE contents' )
-            print ds.GetMetadataItem( 'CUSTOM', 'TRE')
+            print(ds.GetMetadataItem( 'CUSTOM', 'TRE'))
             return 'fail'
     except:
         pass
@@ -721,7 +721,7 @@ def nitf_31():
     if md['CUSTOM'] != ' Test TRE1\\0MORE' \
        or md['TOTEST'] != 'SecondTRE':
         gdaltest.post_reason( 'Did not get expected TRE contents' )
-        print md
+        print(md)
         return 'fail'
 
     ds = None
@@ -783,7 +783,7 @@ with a newline."""
     md = ds.GetMetadata('TEXT')
     if md['DATA_0'] != exp_text:
         gdaltest.post_reason( 'Did not get expected TEXT metadata.' )
-        print md
+        print(md)
         return 'fail'
 
     exp_text = """Also, a second text segment is created."""
@@ -791,7 +791,7 @@ with a newline."""
     md = ds.GetMetadata('TEXT')
     if md['DATA_1'] != exp_text:
         gdaltest.post_reason( 'Did not get expected TEXT metadata.' )
-        print md
+        print(md)
         return 'fail'
 
     ds = None
@@ -816,7 +816,7 @@ def nitf_36():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
     
     if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
-        print mean, stddev
+        print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
         return 'fail'
 
@@ -897,7 +897,7 @@ def nitf_39():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
     
     if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
-        print mean, stddev
+        print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
         return 'fail'
 
@@ -952,7 +952,7 @@ def nitf_40():
     try:
         os.SEEK_SET
     except AttributeError:
-        os.SEEK_SET, os.SEEK_CUR, os.SEEK_END = range(3)
+        os.SEEK_SET, os.SEEK_CUR, os.SEEK_END = list(range(3))
 
     fd = open('tmp/nitf40.ntf', 'rb')
     fd.seek(offset, os.SEEK_SET)
@@ -984,7 +984,7 @@ def nitf_41():
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
     if stats[2] < 2385 or stats[2] > 2386:
-        print stats
+        print(stats)
         return 'fail'
     ds = None
 
@@ -1011,7 +1011,7 @@ def nitf_42():
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
     if stats[2] < 2385 or stats[2] > 2386:
-        print stats
+        print(stats)
         return 'fail'
     ds = None
 
@@ -1084,7 +1084,7 @@ def nitf_online_2():
     ds = gdal.Open( 'tmp/cache/U_0001a.ntf' )
 
     md = ds.GetMetadata('SUBDATASETS')
-    if not md.has_key('SUBDATASET_1_NAME'):
+    if 'SUBDATASET_1_NAME' not in md:
         gdaltest.post_reason( 'missing SUBDATASET_1_NAME metadata' )
         return 'fail'
     ds = None
@@ -1378,7 +1378,7 @@ def nitf_online_14():
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
     if stats[2] < 2607 or stats[2] > 2608:
-        print stats
+        print(stats)
         return 'fail'
     ds = None
 
@@ -1411,7 +1411,7 @@ def nitf_online_15(driver_to_test):
     if ds.GetRasterBand(1).Checksum() == 1054:
         ret = 'success'
     else:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason( 'Did not get expected checksums' );
         ret = 'fail'
 
@@ -1463,13 +1463,13 @@ def nitf_online_16(driver_to_test):
     elif ds.RasterCount == 1 and \
        ds.GetRasterBand(1).Checksum() == 47664 and \
        ds.GetRasterBand(1).GetRasterColorTable() != None:
-        print 'strange, this driver does not do table color expansion... thats ok though'
+        print('strange, this driver does not do table color expansion... thats ok though')
         ret = 'success'
     else:
-        print ds.RasterCount
+        print(ds.RasterCount)
         for i in range(ds.RasterCount):
-            print ds.GetRasterBand(i+1).Checksum()
-        print ds.GetRasterBand(1).GetRasterColorTable()
+            print(ds.GetRasterBand(i+1).Checksum())
+        print(ds.GetRasterBand(1).GetRasterColorTable())
         gdaltest.post_reason( 'Did not get expected checksums' );
         ret = 'fail'
 
@@ -1518,10 +1518,10 @@ def nitf_online_17(driver_to_test):
        ds.GetRasterBand(1).GetRasterColorTable() != None:
         ret = 'success'
     else:
-        print ds.RasterCount
+        print(ds.RasterCount)
         for i in range(ds.RasterCount):
-            print ds.GetRasterBand(i+1).Checksum()
-        print ds.GetRasterBand(1).GetRasterColorTable()
+            print(ds.GetRasterBand(i+1).Checksum())
+        print(ds.GetRasterBand(1).GetRasterColorTable())
         gdaltest.post_reason( 'Did not get expected checksums' );
         ret = 'fail'
 

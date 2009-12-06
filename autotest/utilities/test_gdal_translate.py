@@ -44,7 +44,7 @@ def test_gdal_translate_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test1.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test1.tif')
 
     ds = gdal.Open('tmp/test1.tif')
     if ds is None:
@@ -66,7 +66,7 @@ def test_gdal_translate_2():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -of GTiff ../gcore/data/byte.tif tmp/test2.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of GTiff ../gcore/data/byte.tif tmp/test2.tif')
 
     ds = gdal.Open('tmp/test2.tif')
     if ds is None:
@@ -88,7 +88,7 @@ def test_gdal_translate_3():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/test3.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/test3.tif')
 
     ds = gdal.Open('tmp/test3.tif')
     if ds is None:
@@ -113,7 +113,7 @@ def test_gdal_translate_4():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -b 3 -b 2 -b 1 ../gcore/data/rgbsmall.tif tmp/test4.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -b 3 -b 2 -b 1 ../gcore/data/rgbsmall.tif tmp/test4.tif')
 
     ds = gdal.Open('tmp/test4.tif')
     if ds is None:
@@ -142,7 +142,7 @@ def test_gdal_translate_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -expand rgb ../gdrivers/data/bug407.gif tmp/test5.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgb ../gdrivers/data/bug407.gif tmp/test5.tif')
 
     ds = gdal.Open('tmp/test5.tif')
     if ds is None:
@@ -184,7 +184,7 @@ def test_gdal_translate_6():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -outsize 40 40 ../gcore/data/byte.tif tmp/test6.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 40 40 ../gcore/data/byte.tif tmp/test6.tif')
 
     ds = gdal.Open('tmp/test6.tif')
     if ds is None:
@@ -205,7 +205,7 @@ def test_gdal_translate_7():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -outsize 200% 200% ../gcore/data/byte.tif tmp/test7.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 200% 200% ../gcore/data/byte.tif tmp/test7.tif')
 
     ds = gdal.Open('tmp/test7.tif')
     if ds is None:
@@ -226,7 +226,7 @@ def test_gdal_translate_8():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/test8.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/test8.tif')
 
     ds = gdal.Open('tmp/test8.tif')
     if ds is None:
@@ -257,7 +257,7 @@ def test_gdal_translate_9():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata 1 ../gcore/data/byte.tif tmp/test9.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata 1 ../gcore/data/byte.tif tmp/test9.tif')
 
     ds = gdal.Open('tmp/test9.tif')
     if ds is None:
@@ -279,7 +279,7 @@ def test_gdal_translate_10():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -srcwin 0 0 1 1 ../gcore/data/byte.tif tmp/test10.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -srcwin 0 0 1 1 ../gcore/data/byte.tif tmp/test10.tif')
 
     ds = gdal.Open('tmp/test10.tif')
     if ds is None:
@@ -300,7 +300,7 @@ def test_gdal_translate_11():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -projwin 440720.000 3751320.000 441920.000 3750120.000 ../gcore/data/byte.tif tmp/test11.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -projwin 440720.000 3751320.000 441920.000 3750120.000 ../gcore/data/byte.tif tmp/test11.tif')
 
     ds = gdal.Open('tmp/test11.tif')
     if ds is None:
@@ -325,7 +325,7 @@ def test_gdal_translate_12():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -a_ullr 440720.000 3751320.000 441920.000 3750120.000 ../gcore/data/byte.tif tmp/test12.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_ullr 440720.000 3751320.000 441920.000 3750120.000 ../gcore/data/byte.tif tmp/test12.tif')
 
     ds = gdal.Open('tmp/test12.tif')
     if ds is None:
@@ -350,14 +350,14 @@ def test_gdal_translate_13():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -mo TIFFTAG_DOCUMENTNAME=test13 ../gcore/data/byte.tif tmp/test13.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -mo TIFFTAG_DOCUMENTNAME=test13 ../gcore/data/byte.tif tmp/test13.tif')
 
     ds = gdal.Open('tmp/test13.tif')
     if ds is None:
         return 'fail'
 
     md = ds.GetMetadata() 
-    if not md.has_key('TIFFTAG_DOCUMENTNAME'):
+    if 'TIFFTAG_DOCUMENTNAME' not in md:
         gdaltest.post_reason('Did not get TIFFTAG_DOCUMENTNAME')
         return 'fail'
 
@@ -372,14 +372,14 @@ def test_gdal_translate_14():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -co COMPRESS=LZW ../gcore/data/byte.tif tmp/test14.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -co COMPRESS=LZW ../gcore/data/byte.tif tmp/test14.tif')
 
     ds = gdal.Open('tmp/test14.tif')
     if ds is None:
         return 'fail'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE') 
-    if not md.has_key('COMPRESSION') or md['COMPRESSION'] != 'LZW':
+    if 'COMPRESSION' not in md or md['COMPRESSION'] != 'LZW':
         gdaltest.post_reason('Did not get COMPRESSION')
         return 'fail'
 
@@ -394,7 +394,7 @@ def test_gdal_translate_15():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/A.TOC tmp/test15.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/A.TOC tmp/test15.tif')
 
     ds = gdal.Open('tmp/test15.tif1')
     if ds is None:
@@ -411,7 +411,7 @@ def test_gdal_translate_16():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/test16.vrt').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/test16.vrt')
 
     ds = gdal.Open('tmp/test16.vrt')
     if ds is None:
@@ -432,7 +432,7 @@ def test_gdal_translate_17():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/bug407.gif tmp/test17.vrt').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/bug407.gif tmp/test17.vrt')
 
     ds = gdal.Open('tmp/test17.vrt')
     if ds is None:
@@ -467,7 +467,7 @@ def test_gdal_translate_17():
         return 'fail'
 
     if ds.GetRasterBand(4).Checksum() != 63052:
-        print ds.GetRasterBand(3).Checksum()
+        print(ds.GetRasterBand(3).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -483,15 +483,13 @@ def test_gdal_translate_18():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/8bit_pal.bmp -of VRT tmp/test18_1.vrt').read()
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_1.vrt -expand rgb -of VRT tmp/test18_2.vrt').read()
-    (ret_stdin, ret_stdout, ret_stderr) = os.popen3(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_2.vrt tmp/test18_2.tif')
-
-    ret_stdout.read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/8bit_pal.bmp -of VRT tmp/test18_1.vrt')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_1.vrt -expand rgb -of VRT tmp/test18_2.vrt')
+    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_2.vrt tmp/test18_2.tif')
 
     # Check that all datasets are closed
-    if ret_stderr.read().find('Open GDAL Datasets') != -1:
-        print ret
+    if ret_stderr.find('Open GDAL Datasets') != -1:
+        print(ret)
         return 'fail'
 
     ds = gdal.Open('tmp/test18_2.tif')

@@ -179,7 +179,7 @@ def osr_xml_1():
     expected = gdaltest.srs_wkt
 
     if got != expected:
-        print got
+        print(got)
         return 'fail'
 
     return 'success'
@@ -197,7 +197,7 @@ def osr_xml_2():
 
     got = srs.ExportToXML()
     if got != expected:
-        print got
+        print(got)
         return 'fail'
 
     return 'success'

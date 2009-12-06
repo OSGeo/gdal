@@ -65,7 +65,7 @@ def reproject_1():
     drv.Delete( 'tmp/byte.tif' )
 
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
@@ -103,7 +103,7 @@ def reproject_2():
     drv.Delete( 'tmp/byte_4326.tif' )
 
     if cs != cs_expected:
-        print 'Got: ', cs
+        print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:

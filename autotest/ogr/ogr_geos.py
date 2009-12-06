@@ -74,7 +74,7 @@ def ogr_geos_intersection():
     g2.Destroy()
 
     if ogrtest.check_feature_geometry( result, 'POLYGON ((0 0,5 5,10 0,0 0))'):
-        print 'Got: ', result.ExportToWkt()
+        print('Got: ', result.ExportToWkt())
         return 'fail'
 
     result.Destroy()
@@ -99,7 +99,7 @@ def ogr_geos_difference():
 
     if ogrtest.check_feature_geometry( result,
                                        'POLYGON ((5 5,10 10,10 0,5 5))'):
-        print 'Got: ', result.ExportToWkt()
+        print('Got: ', result.ExportToWkt())
         return 'fail'
 
     result.Destroy()
@@ -124,7 +124,7 @@ def ogr_geos_symmetric_difference():
 
     if ogrtest.check_feature_geometry( result,
            'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))'):
-        print 'Got: ', result.ExportToWkt()
+        print('Got: ', result.ExportToWkt())
         return 'fail'
 
     result.Destroy()
@@ -357,7 +357,7 @@ def ogr_geos_centroid():
 
     if ogrtest.check_feature_geometry( centroid,
                                        'POINT(6.666666667 3.333333333)') != 0:
-        print 'Got: ', centroid.ExportToWkt()
+        print('Got: ', centroid.ExportToWkt())
         return 'fail'
 
     centroid.Destroy()

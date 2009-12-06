@@ -54,8 +54,8 @@ init_list = [ \
 for item in init_list:
     ut = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2] )
     if ut is None:
-	print( 'HFA tests skipped' )
-	sys.exit()
+        print( 'HFA tests skipped' )
+        sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
 
 if __name__ == '__main__':

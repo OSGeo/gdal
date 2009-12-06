@@ -50,7 +50,7 @@ def osr_pci_1():
        or abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER)-45.0)>0.0000005 \
        or abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)-0.0)>0.0000005 \
        or abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING)-0.0)>0.0000005:
-	gdaltest.post_reason('Can not import Equidistant Conic projection.')
+        gdaltest.post_reason('Can not import Equidistant Conic projection.')
         return 'fail'
 
     return 'success'
@@ -82,7 +82,7 @@ def osr_pci_2():
        or abs(parms[3] - 33.76446203) > 0.0000005 \
        or abs(parms[4] - 33.90363403) > 0.0000005 \
        or abs(parms[5] - 33.62529003) > 0.0000005:
-	gdaltest.post_reason('Can not import Lambert Conformal Conic projection.')
+        gdaltest.post_reason('Can not import Lambert Conformal Conic projection.')
         return 'fail'
 
     return 'success'

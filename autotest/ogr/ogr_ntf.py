@@ -118,7 +118,7 @@ def ogr_ntf_1():
         if lyr.GetLayerDefn().GetGeomType() != l[1]:
             return 'fail'
         if lyr.GetFeatureCount() != l[2]:
-            print lyr.GetFeatureCount()
+            print(lyr.GetFeatureCount())
             return 'fail'
         if l[1] != ogr.wkbNone:
             if lyr.GetSpatialRef().ExportToWkt().find('OSGB 1936') == -1:
@@ -127,7 +127,7 @@ def ogr_ntf_1():
     lyr = ds.GetLayerByName('STRATEGI_POINT')
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (222904 127850)':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     ds.Destroy()
@@ -168,7 +168,7 @@ def ogr_ntf_2():
         if lyr.GetLayerDefn().GetGeomType() != l[1]:
             return 'fail'
         if lyr.GetFeatureCount() != l[2]:
-            print lyr.GetFeatureCount()
+            print(lyr.GetFeatureCount())
             return 'fail'
         if l[1] != ogr.wkbNone:
             if lyr.GetSpatialRef().ExportToWkt().find('OSGB 1936') == -1:
@@ -177,13 +177,13 @@ def ogr_ntf_2():
     lyr = ds.GetLayerByName('MERIDIAN2_POINT')
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (275324 189274)':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     lyr = ds.GetLayerByName('MERIDIAN2_LINE')
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (275324 189274,275233 189114,275153 189048)':
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     ds.Destroy()

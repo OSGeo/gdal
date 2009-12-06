@@ -366,39 +366,39 @@ def ogr_csv_check_testcsvt(lyr):
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('DATETIME') != '2008/12/25 11:22:33':
-        print feat.GetFieldAsString('DATETIME')
+        print(feat.GetFieldAsString('DATETIME'))
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('DATETIME') != '':
-        print feat.GetFieldAsString('DATETIME')
+        print(feat.GetFieldAsString('DATETIME'))
         return 'fail'
     feat.Destroy()
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('DATE') != '2008/12/25':
-        print feat.GetFieldAsString('DATE')
+        print(feat.GetFieldAsString('DATE'))
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('DATE') != '':
-        print feat.GetFieldAsString('DATE')
+        print(feat.GetFieldAsString('DATE'))
         return 'fail'
     feat.Destroy()
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('TIME') != '11:22:33':
-        print feat.GetFieldAsString('TIME')
+        print(feat.GetFieldAsString('TIME'))
         return 'fail'
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('TIME') != '':
-        print feat.GetFieldAsString('TIME')
+        print(feat.GetFieldAsString('TIME'))
         return 'fail'
     feat.Destroy()
 

@@ -121,7 +121,7 @@ def minixml_2():
     doc_got = gdal.SerializeXMLTree( tree )
     if doc_got != doc_target:
         gdaltest.post_reason( 'serialize xml tree failed.' )
-        print doc_got
+        print(doc_got)
         return 'fail'
     return 'success' 
 

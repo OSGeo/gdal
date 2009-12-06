@@ -70,7 +70,7 @@ def ogr_sde_1():
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base)
     if ds is None:
-        print "Couldn't open %s" % base
+        print("Couldn't open %s" % base)
         gdaltest.sde_dr = None
         return 'skip'
     ds.Destroy()
@@ -195,7 +195,7 @@ def ogr_sde_5():
     f2 = l2.GetFeature(1)
     
     f2.SetField("PRFEDEA",'SDE.DEFAULT')
-    f2.SetField("WHEN", 2008, 03, 19, 16, 15, 00, 0)
+    f2.SetField("WHEN", 2008, 3, 19, 16, 15, 00, 0)
 
     l2.SetFeature(f2)
     ds2.Destroy()

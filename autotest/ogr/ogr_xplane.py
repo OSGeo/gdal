@@ -75,9 +75,9 @@ def ogr_xplane_apt_dat():
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
             if feat_read.GetField(item[0]) != item[1]:
-                print layer[0]
-                print item[0]
-                print feat_read.GetField(item[0])
+                print(layer[0])
+                print(item[0])
+                print(feat_read.GetField(item[0]))
                 return 'fail'
 
     return 'success'
@@ -110,9 +110,9 @@ def ogr_xplane_nav_dat():
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
             if feat_read.GetField(item[0]) != item[1]:
-                print layer[0]
-                print item[0]
-                print feat_read.GetField(item[0])
+                print(layer[0])
+                print(item[0])
+                print(feat_read.GetField(item[0]))
                 return 'fail'
 
     xplane_nav_ds = None
@@ -142,9 +142,9 @@ def ogr_xplane_awy_dat():
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
             if feat_read.GetField(item[0]) != item[1]:
-                print layer[0]
-                print item[0]
-                print feat_read.GetField(item[0])
+                print(layer[0])
+                print(item[0])
+                print(feat_read.GetField(item[0]))
                 return 'fail'
 
     return 'success'
@@ -170,9 +170,9 @@ def ogr_xplane_fix_dat():
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
             if feat_read.GetField(item[0]) != item[1]:
-                print layer[0]
-                print item[0]
-                print feat_read.GetField(item[0])
+                print(layer[0])
+                print(item[0])
+                print(feat_read.GetField(item[0]))
                 return 'fail'
 
     return 'success'

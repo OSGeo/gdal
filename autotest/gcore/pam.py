@@ -69,7 +69,7 @@ def pam_1():
 
     if xml_md[0] != expected_xml:
         gdaltest.post_reason( 'xml does not match' )
-        print xml_md
+        print(xml_md)
         return 'fail'
     
     return 'success' 
@@ -127,7 +127,7 @@ def pam_3():
 
     if xml_md[0] != expected_xml:
         gdaltest.post_reason( 'xml does not match' )
-        print xml_md
+        print(xml_md)
         return 'fail'
 
     if band.GetNoDataValue() != 100:
@@ -152,7 +152,7 @@ def pam_4():
 
     if stats[0] != 0 or stats[1] != 4:
         gdaltest.post_reason( 'Got wrong min/max, likely nodata not working?' )
-        print stats
+        print(stats)
         return 'fail'
 
     return 'success'
@@ -174,7 +174,7 @@ def pam_5():
     ds = None
 
     if len(filelist) != 1:
-        print filelist
+        print(filelist)
 
         gdaltest.post_reason( 'did not get expected file list.' )
         return 'fail'
@@ -200,9 +200,9 @@ def pam_6():
 def pam_cleanup():
     gdaltest.clean_tmp()
     if gdaltest.pam_setting != 'NULL':
-	gdal.SetConfigOption( 'GDAL_PAM_ENABLED', gdaltest.pam_setting )
+        gdal.SetConfigOption( 'GDAL_PAM_ENABLED', gdaltest.pam_setting )
     else:
-	gdal.SetConfigOption( 'GDAL_PAM_ENABLED', None )
+        gdal.SetConfigOption( 'GDAL_PAM_ENABLED', None )
     return 'success'
 
 gdaltest_list = [

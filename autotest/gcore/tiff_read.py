@@ -90,17 +90,17 @@ def tiff_read_cmyk_rgba():
     ds = gdal.Open('data/rgbsmall_cmyk.tif')
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
-    if not md.has_key('SOURCE_COLOR_SPACE') or md['SOURCE_COLOR_SPACE'] != 'CMYK':
-        print 'bad value for IMAGE_STRUCTURE[SOURCE_COLOR_SPACE]'
+    if 'SOURCE_COLOR_SPACE' not in md or md['SOURCE_COLOR_SPACE'] != 'CMYK':
+        print('bad value for IMAGE_STRUCTURE[SOURCE_COLOR_SPACE]')
         return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_RedBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 23303:
-        print 'Expected checksum = %d. Got = %d' % (23303, ds.GetRasterBand(1).Checksum())
+        print('Expected checksum = %d. Got = %d' % (23303, ds.GetRasterBand(1).Checksum()))
         return 'fail'
 
     return 'success'
@@ -114,11 +114,11 @@ def tiff_read_cmyk_raw():
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 29430:
-        print 'Expected checksum = %d. Got = %d' % (29430, ds.GetRasterBand(1).Checksum())
+        print('Expected checksum = %d. Got = %d' % (29430, ds.GetRasterBand(1).Checksum()))
         return 'fail'
 
     return 'success'
@@ -132,7 +132,7 @@ def tiff_read_gzip():
     shutil.copy ('data/byte.tif.gz', 'tmp/byte.tif.gz')
     ds = gdal.Open('/vsigzip/./tmp/byte.tif.gz')
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
 
@@ -148,7 +148,7 @@ def tiff_read_zip_1():
 
     ds = gdal.Open('/vsizip/./data/byte.tif.zip/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
 
@@ -161,7 +161,7 @@ def tiff_read_zip_2():
 
     ds = gdal.Open('/vsizip/./data/byte.tif.zip')
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
 
@@ -175,8 +175,8 @@ def tiff_grads():
     ds = gdal.Open('data/test_gf.tif')
     srs = ds.GetProjectionRef()
 
-    if string.find(srs,'PARAMETER["latitude_of_origin",46.8]') == -1:
-        print srs
+    if srs.find('PARAMETER["latitude_of_origin",46.8]') == -1:
+        print(srs)
         gdaltest.post_reason( 'Did not get expected latitude of origin.' )
         return 'fail'
 
@@ -200,7 +200,7 @@ def tiff_g4_split():
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 3322:
-        print cs
+        print(cs)
         gdaltest.post_reason( 'Got wrong checksum' )
         return 'fail'
     
@@ -214,21 +214,21 @@ def tiff_multi_images():
     # Implicitely get the content of the first image (backward compatibility)
     ds = gdal.Open('data/twoimages.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
 
     # Explicitely get the content of the first image
     ds = gdal.Open('GTIFF_DIR:1:data/twoimages.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
 
     # Explicitely get the content of the second image
     ds = gdal.Open('GTIFF_DIR:2:data/twoimages.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
 
@@ -251,14 +251,14 @@ def tiff_vsimem():
 
     ds = gdal.Open('/vsimem/tiffinmem', gdal.GA_Update)
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds.GetRasterBand(1).Fill(0)
     ds = None
 
     ds = gdal.Open('/vsimem/tiffinmem')
     if ds.GetRasterBand(1).Checksum() != 0:
-            print 'Expected checksum = %d. Got = %d' % (0, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (0, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
 
@@ -284,7 +284,7 @@ def tiff_vsizip_and_mem():
 
     ds = gdal.Open('/vsizip/vsimem/tiffinmem.zip/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
-            print 'Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum())
+            print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
 
     # Release memory associated to the in-memory file
@@ -299,7 +299,7 @@ def tiff_ProjectedCSTypeGeoKey_only():
 
     ds = gdal.Open('data/ticket3019.tif')
     if ds.GetProjectionRef().find('WGS 84 / UTM zone 31N') == -1:
-        print ds.GetProjectionRef()
+        print(ds.GetProjectionRef())
         return 'fail'
     ds = None
 
@@ -329,7 +329,7 @@ def tiff_12bitjpeg():
     gdal.PopErrorHandler()
     gdal.SetConfigOption( 'CPL_ACCUM_ERROR_MSG', old_accum )
 
-    if string.find(gdal.GetLastErrorMsg(),
+    if gdal.GetLastErrorMsg().find(
                    'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
@@ -344,7 +344,7 @@ def tiff_12bitjpeg():
     
     if stats[2] < 2150 or stats[2] > 2180 or str(stats[2]) == 'nan':
         gdaltest.post_reason( 'did not get expected mean for band1.')
-        print stats
+        print(stats)
         return 'fail'
     ds = None
 
@@ -364,14 +364,14 @@ def tiff_read_stats_from_pam():
 
     ds = gdal.Open('data/byte.tif')
     md = ds.GetRasterBand(1).GetMetadata()
-    if md.has_key('STATISTICS_MINIMUM'):
+    if 'STATISTICS_MINIMUM' in md:
         gdaltest.post_reason('Unexpected presence of STATISTICS_MINIMUM')
         return 'fail'
 
     # Force statistics computation
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     if stats[0] != 74.0 or stats[1] != 255.0:
-        print stats
+        print(stats)
         return 'fail'
 
     ds = None
@@ -385,7 +385,7 @@ def tiff_read_stats_from_pam():
     # Just read statistics (from PAM) without forcing their computation
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
     if stats[0] != 74.0 or stats[1] != 255.0:
-        print stats
+        print(stats)
         return 'fail'
     ds = None
 
@@ -399,8 +399,8 @@ def tiff_read_stats_from_pam():
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
-	print( 'GTiff tests skipped' )
-	sys.exit()
+        print( 'GTiff tests skipped' )
+        sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
 gdaltest_list.append( (tiff_read_off) )
 gdaltest_list.append( (tiff_read_cmyk_rgba) )

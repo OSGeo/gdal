@@ -65,13 +65,13 @@ def hdf5_2():
     sds_list = ds.GetMetadata('SUBDATASETS')
 
     if len(sds_list) != 4:
-        print sds_list
+        print(sds_list)
         gdaltest.post_reason( 'Did not get expected subdataset count.' )
         return 'fail'
 
     if sds_list['SUBDATASET_1_NAME'] != 'HDF5:"data/groups.h5"://MyGroup/Group_A/dset2' \
        or sds_list['SUBDATASET_2_NAME'] != 'HDF5:"data/groups.h5"://MyGroup/dset1':
-        print sds_list
+        print(sds_list)
         gdaltest.post_reason( 'did not get expected subdatasets.' )
         return 'fail'
     

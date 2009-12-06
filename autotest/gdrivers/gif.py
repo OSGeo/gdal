@@ -96,8 +96,8 @@ def gif_4():
         return 'fail'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if not md.has_key('GIF_BACKGROUND') or md['GIF_BACKGROUND'] != '0':
-        print md
+    if 'GIF_BACKGROUND' not in md or md['GIF_BACKGROUND'] != '0':
+        print(md)
         gdaltest.post_reason( 'background metadata missing.' )
         return 'fail'
 

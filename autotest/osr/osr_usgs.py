@@ -57,7 +57,7 @@ def osr_usgs_1():
        or abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER)-45.0)>0.0000005 \
        or abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)-0.0)>0.0000005 \
        or abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING)-0.0)>0.0000005:
-	gdaltest.post_reason('Can not import Equidistant Conic projection.')
+        gdaltest.post_reason('Can not import Equidistant Conic projection.')
         return 'fail'
 
     return 'success'
@@ -89,7 +89,7 @@ def osr_usgs_2():
        or abs(gdal.PackedDMSToDec(parms[3]) - 33.62529003) > 0.0000005 \
        or abs(gdal.PackedDMSToDec(parms[4]) - -117.4745429) > 0.0000005 \
        or abs(gdal.PackedDMSToDec(parms[5]) - 33.76446203) > 0.0000005:
-	gdaltest.post_reason('Can not import Lambert Conformal Conic projection.')
+        gdaltest.post_reason('Can not import Lambert Conformal Conic projection.')
         return 'fail'
 
     return 'success'

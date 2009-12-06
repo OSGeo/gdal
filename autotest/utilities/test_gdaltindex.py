@@ -85,8 +85,8 @@ def test_gdaltindex_1():
     ds.SetGeoTransform( [ 48, 0.1, 0, 3, 0, -0.1 ] )
     ds = None
 
-    os.popen(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif').read()
-    os.popen(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
@@ -103,7 +103,7 @@ def test_gdaltindex_1():
     feat = ds.GetLayer(0).GetNextFeature()
     while feat is not None:
         if feat.GetGeometryRef().ExportToWkt() != expected_wkts[i]:
-            print 'i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt())
+            print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
             return 'fail'
         i = i + 1
         feat = ds.GetLayer(0).GetNextFeature()
@@ -118,17 +118,13 @@ def test_gdaltindex_2():
     if test_cli_utilities.get_gdaltindex_path() is None:
         return 'skip'
 
-    (ret_stdin,ret_stdout,ret_stderr) = os.popen3(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
+    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
 
-    got_err = ret_stderr.read()
-    expected_err = """File tmp/gdaltindex1.tif is already in tileindex. Skipping it.
-File tmp/gdaltindex2.tif is already in tileindex. Skipping it.
-File tmp/gdaltindex3.tif is already in tileindex. Skipping it.
-File tmp/gdaltindex4.tif is already in tileindex. Skipping it.
-"""
-
-    if got_err != expected_err:
-        print got_err
+    if ret_stderr.find('File tmp/gdaltindex1.tif is already in tileindex. Skipping it.') == -1 or \
+       ret_stderr.find('File tmp/gdaltindex2.tif is already in tileindex. Skipping it.') == -1 or \
+       ret_stderr.find('File tmp/gdaltindex3.tif is already in tileindex. Skipping it.') == -1 or \
+       ret_stderr.find('File tmp/gdaltindex4.tif is already in tileindex. Skipping it.') == -1:
+        print(ret_stderr)
         gdaltest.post_reason( 'got unexpected error messages.' )
         return 'fail'
 
@@ -155,14 +151,10 @@ def test_gdaltindex_3():
     ds.SetGeoTransform( [ 47, 0.1, 0, 2, 0, -0.1 ] )
     ds = None
 
-    (ret_stdin,ret_stdout,ret_stderr) = os.popen3(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif')
+    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif')
 
-    got_err = ret_stderr.read()
-    expected_err = """Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex. This may cause problems when using it in MapServer for example. Skipping it
-"""
-
-    if got_err != expected_err:
-        print got_err
+    if ret_stderr.find('Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex. This may cause problems when using it in MapServer for example. Skipping it') == -1:
+        print(ret_stderr)
         gdaltest.post_reason( 'got unexpected error messages.' )
         return 'fail'
 

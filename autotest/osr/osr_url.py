@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_proj4.py 11065 2007-03-24 09:35:32Z mloskot $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some URL specific translation issues.
@@ -35,25 +35,15 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import osr
-import urllib2
 import socket
 
 expected_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
 
 def osr_url_test(url, expected_wkt):
-    try:
-        timeout =  10
-        socket.setdefaulttimeout(timeout)
-        urllib2.urlopen(url)
-    except urllib2.HTTPError, e:
-        print 'HTTP service for %s is down (HTTP Error: %d)' % (url, e.code)
-        return 'skip'
-    except urllib2.URLError, e:
-        print 'HTTP service for %s is down (URL Error: %s)' % (url, e.reason)
-        return 'skip'
-    except:
-        print 'HTTP service for %s is down.' %(url)
+    timeout =  10
+    socket.setdefaulttimeout(timeout)
+    if gdaltest.gdalurlopen(url) is None:
         return 'skip'
 
     """Depend on the Accepts headers that ImportFromUrl sets to request SRS from sr.org"""
@@ -64,13 +54,13 @@ def osr_url_test(url, expected_wkt):
         srs.ImportFromUrl( url )
     except AttributeError: # old-gen bindings don't have this method yet
         return 'skip'
-    except Exception, msg:
+    except Exception:
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg() == "GDAL/OGR not compiled with libcurl support, remote requests not supported." or \
            gdal.GetLastErrorMsg().find("timed out") != -1:
             return 'skip'
         else:
-            gdaltest.post_reason( 'exception: ' + str(msg) )
+            gdaltest.post_reason( 'exception: ' + gdal.GetLastErrorMsg() )
             return 'fail'
 
     gdal.PopErrorHandler()

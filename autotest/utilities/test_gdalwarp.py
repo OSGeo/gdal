@@ -44,7 +44,7 @@ def test_gdalwarp_1():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif')
 
     ds = gdal.Open('tmp/testgdalwarp1.tif')
     if ds is None:
@@ -66,7 +66,7 @@ def test_gdalwarp_2():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -of GTiff ../gcore/data/byte.tif tmp/testgdalwarp2.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -of GTiff ../gcore/data/byte.tif tmp/testgdalwarp2.tif')
 
     ds = gdal.Open('tmp/testgdalwarp2.tif')
     if ds is None:
@@ -88,7 +88,7 @@ def test_gdalwarp_3():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/testgdalwarp3.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/testgdalwarp3.tif')
 
     ds = gdal.Open('tmp/testgdalwarp3.tif')
     if ds is None:
@@ -113,7 +113,7 @@ def test_gdalwarp_4():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32611 ../gcore/data/byte.tif tmp/testgdalwarp4.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32611 ../gcore/data/byte.tif tmp/testgdalwarp4.tif')
 
     ds = gdal.Open('tmp/testgdalwarp4.tif')
     if ds is None:
@@ -137,9 +137,9 @@ def test_gdalwarp_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/testgdalwarp_gcp.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/testgdalwarp_gcp.tif')
     
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' tmp/testgdalwarp_gcp.tif tmp/testgdalwarp5.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/testgdalwarp_gcp.tif tmp/testgdalwarp5.tif')
 
     ds = gdal.Open('tmp/testgdalwarp5.tif')
     if ds is None:
@@ -165,7 +165,7 @@ def test_gdalwarp_6():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -tps tmp/testgdalwarp_gcp.tif tmp/testgdalwarp6.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tps tmp/testgdalwarp_gcp.tif tmp/testgdalwarp6.tif')
 
     ds = gdal.Open('tmp/testgdalwarp6.tif')
     if ds is None:
@@ -191,7 +191,7 @@ def test_gdalwarp_7():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -tr 120 120 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp7.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tr 120 120 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp7.tif')
 
     ds = gdal.Open('tmp/testgdalwarp7.tif')
     if ds is None:
@@ -213,7 +213,7 @@ def test_gdalwarp_8():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 10 10 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp8.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 10 10 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp8.tif')
 
     ds = gdal.Open('tmp/testgdalwarp8.tif')
     if ds is None:
@@ -235,7 +235,7 @@ def test_gdalwarp_9():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -te 440720.000 3750120.000 441920.000 3751320.000 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp9.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -te 440720.000 3750120.000 441920.000 3751320.000 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp9.tif')
 
     ds = gdal.Open('tmp/testgdalwarp9.tif')
     if ds is None:
@@ -256,14 +256,14 @@ def test_gdalwarp_10():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rn tmp/testgdalwarp_gcp.tif tmp/testgdalwarp10.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rn tmp/testgdalwarp_gcp.tif tmp/testgdalwarp10.tif')
 
     ds = gdal.Open('tmp/testgdalwarp10.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 18784:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -278,7 +278,7 @@ def test_gdalwarp_11():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rb tmp/testgdalwarp_gcp.tif tmp/testgdalwarp11.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rb tmp/testgdalwarp_gcp.tif tmp/testgdalwarp11.tif')
 
     ds = gdal.Open('tmp/testgdalwarp11.tif')
     if ds is None:
@@ -305,7 +305,7 @@ def test_gdalwarp_12():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rc tmp/testgdalwarp_gcp.tif tmp/testgdalwarp12.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rc tmp/testgdalwarp_gcp.tif tmp/testgdalwarp12.tif')
 
     ds = gdal.Open('tmp/testgdalwarp12.tif')
     if ds is None:
@@ -332,7 +332,7 @@ def test_gdalwarp_13():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rcs tmp/testgdalwarp_gcp.tif tmp/testgdalwarp13.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rcs tmp/testgdalwarp_gcp.tif tmp/testgdalwarp13.tif')
 
     ds = gdal.Open('tmp/testgdalwarp13.tif')
     if ds is None:
@@ -358,7 +358,7 @@ def test_gdalwarp_14():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -r lanczos tmp/testgdalwarp_gcp.tif tmp/testgdalwarp14.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -r lanczos tmp/testgdalwarp_gcp.tif tmp/testgdalwarp14.tif')
 
     ds = gdal.Open('tmp/testgdalwarp14.tif')
     if ds is None:
@@ -383,19 +383,19 @@ def test_gdalwarp_15():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -dstnodata 1 -t_srs EPSG:32610 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp15.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -dstnodata 1 -t_srs EPSG:32610 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp15.tif')
 
     ds = gdal.Open('tmp/testgdalwarp15.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).GetNoDataValue() != 1:
-        print ds.GetRasterBand(1).GetNoDataValue()
+        print(ds.GetRasterBand(1).GetNoDataValue())
         gdaltest.post_reason('Bad nodata value')
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 4523:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -410,14 +410,14 @@ def test_gdalwarp_16():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -of VRT tmp/testgdalwarp_gcp.tif tmp/testgdalwarp16.vrt').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -of VRT tmp/testgdalwarp_gcp.tif tmp/testgdalwarp16.vrt')
 
     ds = gdal.Open('tmp/testgdalwarp16.vrt')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 4672:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -432,7 +432,7 @@ def test_gdalwarp_17():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -dstalpha ../gcore/data/rgbsmall.tif tmp/testgdalwarp17.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -dstalpha ../gcore/data/rgbsmall.tif tmp/testgdalwarp17.tif')
 
     ds = gdal.Open('tmp/testgdalwarp17.tif')
     if ds is None:
@@ -453,12 +453,11 @@ def test_gdalwarp_18():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    (ret_stdin, ret_stdout, ret_stderr) = os.popen3(test_cli_utilities.get_gdalwarp_path() + ' -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif')
+    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif')
 
-    ret_stdout.read()
     # This error will be returned if GDAL is not compiled with thread support
-    if ret_stderr.read().find('CPLCreateThread() failed in ChunkAndWarpMulti()') != -1:
-        print 'GDAL not compiled with thread support'
+    if ret_stderr.find('CPLCreateThread() failed in ChunkAndWarpMulti()') != -1:
+        print('GDAL not compiled with thread support')
         return 'skip'
 
     ds = gdal.Open('tmp/testgdalwarp18.tif')
@@ -480,14 +479,14 @@ def test_gdalwarp_19():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp19.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp19.tif')
 
     ds = gdal.Open('tmp/testgdalwarp19.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 4672:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -502,14 +501,14 @@ def test_gdalwarp_20():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -of VRT -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp20.vrt').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -of VRT -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp20.vrt')
 
     ds = gdal.Open('tmp/testgdalwarp20.vrt')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 4672:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -525,14 +524,14 @@ def test_gdalwarp_21():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/testgdalwarp21.tif -cutline data/cutline.vrt -cl cutline').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/testgdalwarp21.tif -cutline data/cutline.vrt -cl cutline')
 
     ds = gdal.Open('tmp/testgdalwarp21.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 19139:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -548,14 +547,14 @@ def test_gdalwarp_22():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/testgdalwarp22.tif -cutline data/cutline.vrt -cl cutline -tr 30 30').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/testgdalwarp22.tif -cutline data/cutline.vrt -cl cutline -tr 30 30')
 
     ds = gdal.Open('tmp/testgdalwarp22.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 14047:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -571,14 +570,14 @@ def test_gdalwarp_23():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -wo CUTLINE_ALL_TOUCHED=TRUE ../gcore/data/utmsmall.tif tmp/testgdalwarp23.tif -cutline data/cutline.vrt -cl cutline').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -wo CUTLINE_ALL_TOUCHED=TRUE ../gcore/data/utmsmall.tif tmp/testgdalwarp23.tif -cutline data/cutline.vrt -cl cutline')
 
     ds = gdal.Open('tmp/testgdalwarp23.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 20123:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -599,14 +598,14 @@ def test_gdalwarp_24():
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32660 tmp/testgdalwarp24src.tif tmp/testgdalwarp24dst.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32660 tmp/testgdalwarp24src.tif tmp/testgdalwarp24dst.tif')
 
     ds = gdal.Open('tmp/testgdalwarp24dst.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 50634:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -621,14 +620,14 @@ def test_gdalwarp_25():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=sinu" data/w_jpeg.tiff tmp/testgdalwarp25.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=sinu" data/w_jpeg.tiff tmp/testgdalwarp25.tif')
 
     ds = gdal.Open('tmp/testgdalwarp25.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 8016:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -636,7 +635,7 @@ def test_gdalwarp_25():
     expected_gt = [-20037508.342789248, 78245.302611923355, 0.0, 10001965.729313632, 0.0, -77939.656898595524]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1:
-            print gt
+            print(gt)
             gdaltest.post_reason('Bad gt')
             return 'fail'
 
@@ -651,14 +650,14 @@ def test_gdalwarp_26():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=eck4" data/w_jpeg.tiff tmp/testgdalwarp26.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=eck4" data/w_jpeg.tiff tmp/testgdalwarp26.tif')
 
     ds = gdal.Open('tmp/testgdalwarp26.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 8582:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -666,7 +665,7 @@ def test_gdalwarp_26():
     expected_gt = [-16921202.922943164, 41752.719393322564, 0.0, 8460601.4614715818, 0.0, -41701.109109770863]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1:
-            print gt
+            print(gt)
             gdaltest.post_reason('Bad gt')
             return 'fail'
 
@@ -681,14 +680,14 @@ def test_gdalwarp_27():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=vandg" data/w_jpeg.tiff tmp/testgdalwarp27.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=vandg" data/w_jpeg.tiff tmp/testgdalwarp27.tif')
 
     ds = gdal.Open('tmp/testgdalwarp27.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 22006:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -696,7 +695,7 @@ def test_gdalwarp_27():
     expected_gt = [-20015109.356056381, 98651.645855415176, 0.0, 20015109.356056374, 0.0, -98651.645855415176]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1:
-            print gt
+            print(gt)
             gdaltest.post_reason('Bad gt')
             return 'fail'
 
@@ -711,7 +710,7 @@ def test_gdalwarp_28():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=aeqd +lat_0=45 +lon_0=90" data/w_jpeg.tiff tmp/testgdalwarp28.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=aeqd +lat_0=45 +lon_0=90" data/w_jpeg.tiff tmp/testgdalwarp28.tif')
 
     ds = gdal.Open('tmp/testgdalwarp28.tif')
     if ds is None:
@@ -720,7 +719,7 @@ def test_gdalwarp_28():
     # First is GCC; Second is MSVC 6.0
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 47506 and cs != 46728:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -730,7 +729,7 @@ def test_gdalwarp_28():
     expected_gt2 = [-10009026.853177125, 43691.280523668691, 0.0, 5022121.8610583926, 0.0, -43691.280523668691]
     for i in range(6):
         if abs(gt[i] - expected_gt1[i]) > 1 and abs(gt[i] - expected_gt2[i]) > 1:
-            print gt
+            print(gt)
             gdaltest.post_reason('Bad gt')
             return 'fail'
 
@@ -745,14 +744,14 @@ def test_gdalwarp_29():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:3785 data/w_jpeg.tiff tmp/testgdalwarp29.tif').read()
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:3785 data/w_jpeg.tiff tmp/testgdalwarp29.tif')
 
     ds = gdal.Open('tmp/testgdalwarp29.tif')
     if ds is None:
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 55149:
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -760,7 +759,7 @@ def test_gdalwarp_29():
     expected_gt = [ -20037508.342789248, 90054.726863985939, 0.0, 16213801.067583967, 0.0, -90056.750611190684 ]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1:
-            print gt
+            print(gt)
             gdaltest.post_reason('Bad gt')
             return 'fail'
 

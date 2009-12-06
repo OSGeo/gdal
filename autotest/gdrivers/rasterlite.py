@@ -121,8 +121,8 @@ def rasterlite_2():
     expected_gt = ( -180.0, 360. / ds.RasterXSize, 0.0, 90.0, 0.0, -180. / ds.RasterYSize)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
-            print gt
-            print expected_gt
+            print(gt)
+            print(expected_gt)
             return 'fail'
         
     ds = None
@@ -184,8 +184,8 @@ def rasterlite_4():
         return 'fail'
         
     if ds.RasterXSize != 169 or ds.RasterYSize != 85:
-        print ds.RasterXSize
-        print ds.RasterYSize
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
         return 'fail'
         
     ct = ds.GetRasterBand(1).GetRasterColorTable()
@@ -274,7 +274,7 @@ def rasterlite_6():
         
     if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
         gdaltest.post_reason('Wrong checksum')
-        print ds.GetRasterBand(1).Checksum()
+        print(ds.GetRasterBand(1).Checksum())
         return 'fail'
     
     gt = ds.GetGeoTransform()
@@ -311,12 +311,12 @@ def rasterlite_7():
     
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
         gdaltest.post_reason('Wrong checksum for overview 0')
-        print ds.GetRasterBand(1).GetOverview(0).Checksum()
+        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
         return 'fail'
         
     if ds.GetRasterBand(1).GetOverview(1).Checksum() != 233:
         gdaltest.post_reason('Wrong checksum for overview 1')
-        print ds.GetRasterBand(1).GetOverview(1).Checksum()
+        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
         return 'fail'
         
     # Reopen and test
@@ -325,12 +325,12 @@ def rasterlite_7():
     
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
         gdaltest.post_reason('Wrong checksum for overview 0')
-        print ds.GetRasterBand(1).GetOverview(0).Checksum()
+        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
         return 'fail'
         
     if ds.GetRasterBand(1).GetOverview(1).Checksum() != 233:
         gdaltest.post_reason('Wrong checksum for overview 1')
-        print ds.GetRasterBand(1).GetOverview(1).Checksum()
+        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
         return 'fail'
         
     return 'success'

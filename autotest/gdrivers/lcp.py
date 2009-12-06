@@ -61,9 +61,9 @@ def lcp_1():
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i]-check_gt[i]) > 1e-5:
-            print
-            print 'old = ', check_gt
-            print 'new = ', new_gt
+            print('')
+            print('old = ', check_gt)
+            print('new = ', new_gt)
             gdaltest.post_reason( 'Geotransform differs.' )
             return 'fail'
 
@@ -156,9 +156,9 @@ def lcp_2():
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i]-check_gt[i]) > 1e-5:
-            print
-            print 'old = ', check_gt
-            print 'new = ', new_gt
+            print('')
+            print('old = ', check_gt)
+            print('new = ', new_gt)
             gdaltest.post_reason( 'Geotransform differs.' )
             return 'fail'
 

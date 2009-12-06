@@ -313,7 +313,7 @@ def hfa_pe_read():
     expected = 'PROJCS["World_Cube",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Cube"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Option",1.0],UNIT["Meter",1.0]]'
 
     if wkt != expected:
-        print wkt
+        print(wkt)
         gdaltest.post_reason( 'failed to read pe string as expected.' )
         return 'fail'
 
@@ -335,9 +335,9 @@ def hfa_pe_write():
     wkt = ds.GetProjectionRef()
 
     if wkt != expected:
-        print
-        print expected
-        print wkt
+        print('')
+        print(expected)
+        print(wkt)
         gdaltest.post_reason( 'failed to write pe string as expected.' )
         return 'fail'
 
@@ -361,8 +361,8 @@ def hfa_metadata_1():
     ds = gdal.Open( 'tmp/md_1.img' )
     md = ds.GetRasterBand(1).GetMetadata()
     if md['test'] != md_val:
-        print md['test']
-        print md_val
+        print(md['test'])
+        print(md_val)
         gdaltest.post_reason( 'got wrong metadata back' )
         return 'fail'
     ds = None
@@ -384,12 +384,12 @@ def hfa_metadata_2():
 
     ds = gdal.Open( 'tmp/md_1.img' )
     md = ds.GetRasterBand(1).GetMetadata()
-    if not md.has_key('xxx'):
+    if 'xxx' not in md:
         gdaltest.post_reason('metadata rewrite seems not to have worked')
         return 'fail'
 
     if md['xxx'] != '123' or md['test'] != '0123456789':
-        print md
+        print(md)
         gdaltest.post_reason('got wrong metadata back')
         return 'fail'
 
@@ -422,7 +422,7 @@ def hfa_grow_rrdlist():
     ds = gdal.Open( 'tmp/bug_1109.img' )
     if ds.GetRasterBand(1).GetOverviewCount() != 3:
         gdaltest.post_reason( 'Overview count wrong.' )
-        print ds.GetRasterBand(1).GetOverviewCount()
+        print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
 
     ds = None
@@ -481,7 +481,7 @@ def hfa_corrupt_aux():
         return 'fail'
     
     if gdal.GetLastErrorType() != 2 \
-       or string.find(gdal.GetLastErrorMsg(),'Corrupt (looping)') == -1:
+       or gdal.GetLastErrorMsg().find('Corrupt (looping)') == -1:
         gdaltest.post_reason( 'Did not get expected warning.' )
         return 'fail'
 
@@ -602,9 +602,9 @@ def hfa_rotated_read():
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
-            print
-            print 'old = ', check_gt
-            print 'new = ', new_gt
+            print('')
+            print('old = ', check_gt)
+            print('new = ', new_gt)
             gdaltest.post_reason( 'Geotransform differs.' )
             return 'fail'
 
@@ -665,9 +665,9 @@ def hfa_rotated_write():
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
-            print
-            print 'old = ', check_gt
-            print 'new = ', new_gt
+            print('')
+            print('old = ', check_gt)
+            print('new = ', new_gt)
             gdaltest.post_reason( 'Geotransform differs.' )
             return 'fail'
 
@@ -715,7 +715,7 @@ def hfa_proName():
     srs = ds.GetProjectionRef()
     if srs[:55] != 'PROJCS["NAD_1983_StatePlane_Ohio_South_FIPS_3402_Feet",':
         gdaltest.post_reason( 'did not get expected PROJCS name.' )
-        print srs
+        print(srs)
         result = 'fail'
     else:
         result = 'success'
@@ -758,7 +758,7 @@ def hfa_unique_values_color_table():
     ct = ds.GetRasterBand(1).GetRasterColorTable()
 
     if ct.GetCount() != 256:
-        print ct.GetCount()
+        print(ct.GetCount())
         gdaltest.post_reason( 'got wrong color count' )
         return 'fail'
 
@@ -766,9 +766,9 @@ def hfa_unique_values_color_table():
        or ct.GetColorEntry(254) != (255,255,170,255) \
        or ct.GetColorEntry(255) != (255,255,255,255):
 
-        print ct.GetColorEntry(253)
-        print ct.GetColorEntry(254)
-        print ct.GetColorEntry(255)
+        print(ct.GetColorEntry(253))
+        print(ct.GetColorEntry(254))
+        print(ct.GetColorEntry(255))
     
         gdaltest.post_reason( 'Got wrong colors' )
         return 'fail'
@@ -794,13 +794,13 @@ def hfa_unique_values_hist():
 
     expected = '12603|1|0|0|45|1|0|0|0|0|656|177|0|0|5026|1062|0|0|2|0|0|0|0|0|0|0|0|0|0|0|0|0|75|1|0|0|207|158|0|0|8|34|0|0|0|0|538|57|0|10|214|20|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|1|31|0|0|9|625|67|0|0|118|738|117|3004|1499|491|187|1272|513|1|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|16|3|0|0|283|123|5|1931|835|357|332|944|451|80|40|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|12|5|0|0|535|1029|118|0|33|246|342|0|0|10|8|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|169|439|0|0|6|990|329|0|0|120|295|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|164|42|0|0|570|966|0|0|18|152|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|45|106|0|0|16|16517|'
     if md['STATISTICS_HISTOBINVALUES'] != expected:
-        print md['STATISTICS_HISTOBINVALUES']
+        print(md['STATISTICS_HISTOBINVALUES'])
         gdaltest.post_reason( 'Unexpected HISTOBINVALUES.' )
         return 'fail'
 
     if md['STATISTICS_HISTOMIN'] != '0' \
        or md['STATISTICS_HISTOMAX'] != '255':
-        print md
+        print(md)
         gdaltest.post_reason( "unexpected histomin/histomax value." )
         return 'fail'
 
@@ -811,14 +811,14 @@ def hfa_unique_values_hist():
     if rat.GetColumnCount() != 6 \
        or rat.GetTypeOfCol(0) != gdal.GFT_Integer \
        or rat.GetUsageOfCol(0) != gdal.GFU_MinMax:
-        print rat.GetColumnCount()
-        print rat.GetTypeOfCol(0)
-        print rat.GetUsageOfCol(0)
+        print(rat.GetColumnCount())
+        print(rat.GetTypeOfCol(0))
+        print(rat.GetUsageOfCol(0))
         gdaltest.post_reason( 'BinValues column wrong.')
         return 'fail'
 
     if rat.GetValueAsInt( 2, 0 ) != 4:
-        print rat.GetValueAsInt( 2, 0 )
+        print(rat.GetValueAsInt( 2, 0 ))
         gdaltest.post_reason( 'BinValues value wrong.' )
         return 'fail'
 
@@ -868,7 +868,7 @@ def hfa_xforms_3rd():
        or gcps[0].GCPLine != 0.5 \
        or abs(gcps[0].GCPX - 1667635.007) > 0.001 \
        or abs(gcps[0].GCPY - 2620003.171) > 0.001:
-        print gcps[0].GCPPixel, gcps[0].GCPLine, gcps[0].GCPX, gcps[0].GCPY
+        print(gcps[0].GCPPixel, gcps[0].GCPLine, gcps[0].GCPX, gcps[0].GCPY)
         gdaltest.post_reason( 'GCP 0 value wrong.' )
         return 'fail'
     
@@ -876,7 +876,7 @@ def hfa_xforms_3rd():
        or abs(gcps[14].GCPLine  - 2124.9) > 0.1 \
        or abs(gcps[14].GCPX - 1665221.064) > 0.001 \
        or abs(gcps[14].GCPY - 2632414.379) > 0.001:
-        print gcps[14].GCPPixel, gcps[14].GCPLine, gcps[14].GCPX, gcps[14].GCPY
+        print(gcps[14].GCPPixel, gcps[14].GCPLine, gcps[14].GCPX, gcps[14].GCPY)
         gdaltest.post_reason( 'GCP 14 value wrong.' )
         return 'fail'
     

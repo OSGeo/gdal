@@ -49,7 +49,7 @@ def ogr_oci_1():
     except:
         return 'skip'
     
-    if not os.environ.has_key('OCI_DSNAME'):
+    if 'OCI_DSNAME' not in os.environ:
         return 'skip'
 
     gdaltest.oci_ds = ogr.Open( os.environ['OCI_DSNAME'] )
@@ -140,21 +140,21 @@ def ogr_oci_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.oci_lyr.GetNextFeature()
 
-	reverse_rings(orig_feat.GetGeometryRef())
+        reverse_rings(orig_feat.GetGeometryRef())
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
                                           max_error = 0.000000001 ) != 0:
-            print 'expected:', orig_feat.GetGeometryRef().ExportToWkt()
-            print 'got:', read_feat.GetGeometryRef().ExportToWkt()
+            print('expected:', orig_feat.GetGeometryRef().ExportToWkt())
+            print('got:', read_feat.GetGeometryRef().ExportToWkt())
             return 'fail'
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
-                print 'expected:'
-                print orig_feat.DumpReadable()
-                print 'got:'
-                print read_feat.DumpReadable()
+                print('expected:')
+                print(orig_feat.DumpReadable())
+                print('got:')
+                print(read_feat.DumpReadable())
                 return 'fail'
 
         read_feat.Destroy()
@@ -299,13 +299,13 @@ def ogr_oci_8():
     # Prepare an SRS with an ORACLE authority code.
     srs = osr.SpatialReference()
     srs.SetGeogCS( "gcs_dummy", "datum_dummy", "ellipse_dummy", 
-	           osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING )
+                osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING )
     srs.SetAuthority( 'GEOGCS', 'Oracle', 8241 )
-		
+
     #######################################################
     # Create Oracle Layer
     oci_lyr2 = gdaltest.oci_ds.CreateLayer( 'testsrs', srs = srs,
-		options = [ 'INDEX=FALSE' ] )
+                                        options = [ 'INDEX=FALSE' ] )
 
     #######################################################
     # Now check that the srs for the layer is really the built-in
@@ -313,15 +313,15 @@ def ogr_oci_8():
     srs2 = oci_lyr2.GetSpatialRef()
 
     if srs2.GetAuthorityCode( 'GEOGCS' ) != '8241':
-	gdaltest.post_reason( 'Did not get expected authority code' )
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected authority code' )
+        return 'fail'
 
     if srs2.GetAuthorityName( 'GEOGCS' ) != 'Oracle':
-	gdaltest.post_reason( 'Did not get expected authority name' )
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected authority name' )
+        return 'fail'
 
     if srs2.GetAttrValue( 'GEOGCS|DATUM' ) != 'Kertau 1948':
-	gdaltest.post_reason( 'Did not get expected datum name' )
+        gdaltest.post_reason( 'Did not get expected datum name' )
         return 'fail'
 
     return 'success'
@@ -346,11 +346,11 @@ def ogr_oci_9():
     # Prepare an SRS with an EPSG authority code.
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS( 'WGS84' )
-		
+
     #######################################################
     # Create Oracle Layer
     oci_lyr2 = gdaltest.oci_ds.CreateLayer( 'testsrs2', srs = srs,
-		options = [ 'INDEX=FALSE' ] )
+                                            options = [ 'INDEX=FALSE' ] )
 
     #######################################################
     # Now check that the srs for the layer is really the built-in
@@ -358,15 +358,15 @@ def ogr_oci_9():
     srs2 = oci_lyr2.GetSpatialRef()
 
     if srs2.GetAuthorityCode( 'GEOGCS' ) != '4326':
-	gdaltest.post_reason( 'Did not get expected authority code' )
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected authority code' )
+        return 'fail'
 
     if srs2.GetAuthorityName( 'GEOGCS' ) != 'EPSG':
-	gdaltest.post_reason( 'Did not get expected authority name' )
-	return 'fail'
+        gdaltest.post_reason( 'Did not get expected authority name' )
+        return 'fail'
 
     if srs2.GetAttrValue( 'GEOGCS|DATUM' ) != 'WGS 84':
-	gdaltest.post_reason( 'Did not get expected datum name' )
+        gdaltest.post_reason( 'Did not get expected datum name' )
         return 'fail'
 
     return 'success'
@@ -411,7 +411,7 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
     tr = 1
     if ogrtest.check_feature_geometry( feat_read, expected_wkt ) != 0:
         tr = 0
-	print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
 
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet( sql_lyr )
@@ -452,7 +452,7 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
     tr = 1
     if ogrtest.check_feature_geometry( feat_read, expected_wkt ) != 0:
         tr = 0
-	print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
 
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet( sql_lyr )
@@ -492,7 +492,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     tr = 1
     if ogrtest.check_feature_geometry( feat_read, expected_wkt ) != 0:
         tr = 0
-	print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
 
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet( sql_lyr )
@@ -532,7 +532,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     tr = 1
     if ogrtest.check_feature_geometry( feat_read, expected_wkt ) != 0:
         tr = 0
-	print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
 
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet( sql_lyr )
@@ -573,7 +573,7 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
     tr = 1
     if ogrtest.check_feature_geometry( feat_read, expected_wkt ) != 0:
         tr = 0
-	print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
 
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet( sql_lyr )
@@ -614,7 +614,7 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
     tr = 1
     if ogrtest.check_feature_geometry( feat_read, expected_wkt ) != 0:
         tr = 0
-	print feat_read.GetGeometryRef().ExportToWkt()
+        print(feat_read.GetGeometryRef().ExportToWkt())
 
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet( sql_lyr )
@@ -662,9 +662,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    if not os.environ.has_key('OCI_DSNAME'):
-        print 'Enter ORACLE DataSource (eg. OCI:scott/tiger):'
-        oci_dsname = string.strip(sys.stdin.readline())
+    if 'OCI_DSNAME' not in os.environ:
+        print('Enter ORACLE DataSource (eg. OCI:scott/tiger):')
+        oci_dsname = sys.stdin.readline().strip()
         os.environ['OCI_DSNAME'] = oci_dsname
 
     gdaltest.setup_run( 'ogr_oci' )

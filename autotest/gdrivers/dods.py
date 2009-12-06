@@ -113,7 +113,7 @@ def dods_6():
     nd = gdaltest.dods_grid_ds.GetRasterBand(1).GetNoDataValue()
     if nd != -9999.0:
         gdaltest.post_reason( 'nodata value wrong or missing.' )
-        print nd
+        print(nd)
         return 'fail'
     else:
         return 'success'
