@@ -23688,7 +23688,12 @@ fi
 
                         oracle_include_dir2="$oracle_home_dir/rdbms/demo"
 
+                        oracle_include_dir3="$oracle_home_dir/sdk/include"
+
                         oracle_lib_dir="$oracle_home_dir/lib"
+
+                        oracle_lib_dir2="$oracle_home_dir"
+
         elif test "$oracle_home_dir" = "yes"; then
             want_oracle_but_no_path="yes"
         fi
@@ -23717,7 +23722,7 @@ Please, locate Oracle directories using --with-oci or \
 --with-oci-include and --with-oci-lib options." >&2;}
     fi
 
-                if test -n "$oracle_include_dir" -a -n "$oracle_lib_dir"; then
+                if test -n "$oracle_include_dir" -a -n "$oracle_lib_dir" -o -n "$oracle_lib_dir2"; then
 
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$oracle_include_dir"
@@ -23726,12 +23731,25 @@ Please, locate Oracle directories using --with-oci or \
             CPPFLAGS="$CPPFLAGS -I$oracle_include_dir2"
         fi
 
+                if test -n "$oracle_include_dir3"; then
+            CPPFLAGS="$CPPFLAGS -I$oracle_include_dir3"
+        fi
+
                         saved_LDFLAGS="$LDFLAGS"
-        oci_ldflags="-L$oracle_lib_dir -lclntsh"
+        oci_ldflags="-L$oracle_lib_dir -L$oracle_lib_dir2 -lclntsh"
         LDFLAGS="$LDFLAGS $oci_ldflags"
 
-                                { echo "$as_me:$LINENO: checking for Oracle OCI headers in $oracle_include_dir" >&5
-echo $ECHO_N "checking for Oracle OCI headers in $oracle_include_dir... $ECHO_C" >&6; }
+                                if test -f "$oracle_include_dir/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir"
+        fi
+        if test -f "$oracle_include_dir2/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir2"
+        fi
+        if test -f "$oracle_include_dir3/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
+        fi
+        { echo "$as_me:$LINENO: checking for Oracle OCI headers in $ACTIVE_INCLUDE_DIR" >&5
+echo $ECHO_N "checking for Oracle OCI headers in $ACTIVE_INCLUDE_DIR... $ECHO_C" >&6; }
 
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -23791,6 +23809,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
                 ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir2"
             fi
 
+            if test -n "$oracle_include_dir3"; then
+                ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir3"
+            fi
+
             oci_header_found="yes"
             { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
@@ -23801,8 +23823,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 
             oci_header_found="no"
-            { echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6; }
+            { echo "$as_me:$LINENO: result:  header not found" >&5
+echo "${ECHO_T} header not found" >&6; }
 
 
 fi
@@ -23877,8 +23899,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 
                 oci_lib_found="no"
-                { echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6; }
+                { echo "$as_me:$LINENO: result: library not found" >&5
+echo "${ECHO_T}library not found" >&6; }
 
 
 fi
@@ -23902,18 +23924,27 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     if test "$oci_header_found" = "yes" -a "$oci_lib_found" = "yes" -a \
         -n "$oracle_version_req"; then
 
-        oracle_version_major=`cat $oracle_include_dir/oci.h \
+        if test -f "$oracle_include_dir/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir"
+        fi
+        if test -f "$oracle_include_dir2/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir2"
+        fi
+        if test -f "$oracle_include_dir3/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
+        fi
+        oracle_version_major=`cat $ACTIVE_INCLUDE_DIR/oci.h \
                              | grep '#define.*OCI_MAJOR_VERSION.*' \
                              | sed -e 's/#define OCI_MAJOR_VERSION  *//' \
                              | sed -e 's/  *\/\*.*\*\///'`
 
-        oracle_version_minor=`cat $oracle_include_dir/oci.h \
+        oracle_version_minor=`cat $ACTIVE_INCLUDE_DIR/oci.h \
                              | grep '#define.*OCI_MINOR_VERSION.*' \
                              | sed -e 's/#define OCI_MINOR_VERSION  *//' \
                              | sed -e 's/  *\/\*.*\*\///'`
 
-        { echo "$as_me:$LINENO: checking if Oracle OCI version is >= $oracle_version_req" >&5
-echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req... $ECHO_C" >&6; }
+        { echo "$as_me:$LINENO: checking if Oracle OCI version is >= $oracle_version_req " >&5
+echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req ... $ECHO_C" >&6; }
 
         if test -n "$oracle_version_major" -a -n $"oracle_version_minor"; then
 
@@ -23935,10 +23966,10 @@ echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req... $ECHO_
                 { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
 
-                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz$oracle_version_major flag" >&5
-echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz$oracle_version_major flag... $ECHO_C" >&6; }
-                oracle_nnz_check=`expr $oracle_version_number \>\= 10 \* 1000000`
-                if test "$oracle_nnz_check" = "1"; then
+                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz10 flag" >&5
+echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz10 flag... $ECHO_C" >&6; }
+                oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
+                if test "$oracle_nnz10_check" = "1"; then
                     ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
                     { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
@@ -25115,7 +25146,12 @@ fi
 
                         oracle_include_dir2="$oracle_home_dir/rdbms/demo"
 
+                        oracle_include_dir3="$oracle_home_dir/sdk/include"
+
                         oracle_lib_dir="$oracle_home_dir/lib"
+
+                        oracle_lib_dir2="$oracle_home_dir"
+
         elif test "$oracle_home_dir" = "yes"; then
             want_oracle_but_no_path="yes"
         fi
@@ -25144,7 +25180,7 @@ Please, locate Oracle directories using --with-oci or \
 --with-oci-include and --with-oci-lib options." >&2;}
     fi
 
-                if test -n "$oracle_include_dir" -a -n "$oracle_lib_dir"; then
+                if test -n "$oracle_include_dir" -a -n "$oracle_lib_dir" -o -n "$oracle_lib_dir2"; then
 
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$oracle_include_dir"
@@ -25153,12 +25189,25 @@ Please, locate Oracle directories using --with-oci or \
             CPPFLAGS="$CPPFLAGS -I$oracle_include_dir2"
         fi
 
+                if test -n "$oracle_include_dir3"; then
+            CPPFLAGS="$CPPFLAGS -I$oracle_include_dir3"
+        fi
+
                         saved_LDFLAGS="$LDFLAGS"
-        oci_ldflags="-L$oracle_lib_dir -lclntsh"
+        oci_ldflags="-L$oracle_lib_dir -L$oracle_lib_dir2 -lclntsh"
         LDFLAGS="$LDFLAGS $oci_ldflags"
 
-                                { echo "$as_me:$LINENO: checking for Oracle OCI headers in $oracle_include_dir" >&5
-echo $ECHO_N "checking for Oracle OCI headers in $oracle_include_dir... $ECHO_C" >&6; }
+                                if test -f "$oracle_include_dir/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir"
+        fi
+        if test -f "$oracle_include_dir2/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir2"
+        fi
+        if test -f "$oracle_include_dir3/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
+        fi
+        { echo "$as_me:$LINENO: checking for Oracle OCI headers in $ACTIVE_INCLUDE_DIR" >&5
+echo $ECHO_N "checking for Oracle OCI headers in $ACTIVE_INCLUDE_DIR... $ECHO_C" >&6; }
 
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -25218,6 +25267,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
                 ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir2"
             fi
 
+            if test -n "$oracle_include_dir3"; then
+                ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir3"
+            fi
+
             oci_header_found="yes"
             { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
@@ -25228,8 +25281,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 
             oci_header_found="no"
-            { echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6; }
+            { echo "$as_me:$LINENO: result:  header not found" >&5
+echo "${ECHO_T} header not found" >&6; }
 
 
 fi
@@ -25304,8 +25357,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 
                 oci_lib_found="no"
-                { echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6; }
+                { echo "$as_me:$LINENO: result: library not found" >&5
+echo "${ECHO_T}library not found" >&6; }
 
 
 fi
@@ -25329,18 +25382,27 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     if test "$oci_header_found" = "yes" -a "$oci_lib_found" = "yes" -a \
         -n "$oracle_version_req"; then
 
-        oracle_version_major=`cat $oracle_include_dir/oci.h \
+        if test -f "$oracle_include_dir/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir"
+        fi
+        if test -f "$oracle_include_dir2/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir2"
+        fi
+        if test -f "$oracle_include_dir3/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
+        fi
+        oracle_version_major=`cat $ACTIVE_INCLUDE_DIR/oci.h \
                              | grep '#define.*OCI_MAJOR_VERSION.*' \
                              | sed -e 's/#define OCI_MAJOR_VERSION  *//' \
                              | sed -e 's/  *\/\*.*\*\///'`
 
-        oracle_version_minor=`cat $oracle_include_dir/oci.h \
+        oracle_version_minor=`cat $ACTIVE_INCLUDE_DIR/oci.h \
                              | grep '#define.*OCI_MINOR_VERSION.*' \
                              | sed -e 's/#define OCI_MINOR_VERSION  *//' \
                              | sed -e 's/  *\/\*.*\*\///'`
 
-        { echo "$as_me:$LINENO: checking if Oracle OCI version is >= $oracle_version_req" >&5
-echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req... $ECHO_C" >&6; }
+        { echo "$as_me:$LINENO: checking if Oracle OCI version is >= $oracle_version_req " >&5
+echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req ... $ECHO_C" >&6; }
 
         if test -n "$oracle_version_major" -a -n $"oracle_version_minor"; then
 
@@ -25362,10 +25424,10 @@ echo $ECHO_N "checking if Oracle OCI version is >= $oracle_version_req... $ECHO_
                 { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
 
-                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz$oracle_version_major flag" >&5
-echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz$oracle_version_major flag... $ECHO_C" >&6; }
-                oracle_nnz_check=`expr $oracle_version_number \>\= 10 \* 1000000`
-                if test "$oracle_nnz_check" = "1"; then
+                                { echo "$as_me:$LINENO: checking for Oracle version >= 10.x to use -lnnz10 flag" >&5
+echo $ECHO_N "checking for Oracle version >= 10.x to use -lnnz10 flag... $ECHO_C" >&6; }
+                oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
+                if test "$oracle_nnz10_check" = "1"; then
                     ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
                     { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }

@@ -1,23 +1,26 @@
-dnl $Id$
-dnl
 dnl @synopsis AX_LIB_ORACLE_OCI([MINIMUM-VERSION])
 dnl
-dnl This macro provides tests of availability of Oracle OCI API
-dnl of particular version or newer.
-dnl This macros checks for Oracle OCI headers and libraries 
-dnl and defines compilation flags
-dnl 
-dnl Macro supports following options and their values:
-dnl 1) Single-option usage:
-dnl --with-oci - path to ORACLE_HOME directory
-dnl 2) Two-options usage (both options are required):
-dnl --with-oci-include - path to directory with OCI headers
-dnl --with-oci-lib - path to directory with OCI libraries 
+dnl @summary Find Oracle OCI API.
 dnl
-dnl NOTE: These options described above does not take yes|no values.
-dnl If 'yes' value is passed, then WARNING message will be displayed,
-dnl 'no' value, as well as the --without-oci-* variations will cause
-dnl the macro won't check enything.
+dnl This macro provides tests of availability of Oracle OCI API of
+dnl particular version or newer. This macros checks for Oracle OCI
+dnl headers and libraries and defines compilation flags.
+dnl
+dnl Macro supports following options and their values:
+dnl
+dnl 1) Single-option usage:
+dnl
+dnl     --with-oci         -- path to ORACLE_HOME directory
+dnl
+dnl 2) Two-options usage (both options are required):
+dnl
+dnl     --with-oci-include -- path to directory with OCI headers
+dnl     --with-oci-lib     -- path to directory with OCI libraries
+dnl
+dnl NOTE: These options described above do not take yes|no values. If
+dnl 'yes' value is passed, then WARNING message will be displayed, 'no'
+dnl value, as well as the --without-oci-* variations will cause the
+dnl macro to not check enything.
 dnl
 dnl This macro calls:
 dnl
@@ -32,12 +35,9 @@ dnl
 dnl @category InstalledPackages
 dnl @category Cxx
 dnl @author Mateusz Loskot <mateusz@loskot.net>
-dnl @version $Date$
+dnl @version 2007-11-30
 dnl @license AllPermissive
-dnl          Copying and distribution of this file, with or without modification,
-dnl          are permitted in any medium without royalty provided the copyright notice and
-dnl          this notice are preserved.
-dnl
+
 AC_DEFUN([AX_LIB_ORACLE_OCI],
 [
     AC_ARG_WITH([oci],
@@ -50,7 +50,7 @@ AC_DEFUN([AX_LIB_ORACLE_OCI],
                 oracle_home_dir="$ORACLE_HOME"
             else
                 oracle_home_dir=""
-            fi 
+            fi
         elif test -d "$withval"; then
             oracle_home_dir="$withval"
         else
@@ -62,7 +62,7 @@ AC_DEFUN([AX_LIB_ORACLE_OCI],
             oracle_home_dir="$ORACLE_HOME"
         else
             oracle_home_dir=""
-        fi 
+        fi
         ]
     )
 
@@ -87,22 +87,29 @@ AC_DEFUN([AX_LIB_ORACLE_OCI],
 
     dnl
     dnl Collect include/lib paths
-    dnl 
+    dnl
     want_oracle_but_no_path="no"
 
     if test -n "$oracle_home_dir"; then
 
         if test "$oracle_home_dir" != "no" -a "$oracle_home_dir" != "yes"; then
             dnl ORACLE_HOME path provided
-            
+
             dnl Primary path to OCI headers, available in Oracle>=10
             oracle_include_dir="$oracle_home_dir/rdbms/public"
-            
+
             dnl Secondary path to OCI headers used by older versions
             oracle_include_dir2="$oracle_home_dir/rdbms/demo"
 
+            dnl Another path to OCI headers used by instant client
+            oracle_include_dir3="$oracle_home_dir/sdk/include"
+
             dnl Library path
             oracle_lib_dir="$oracle_home_dir/lib"
+
+            dnl Library path for instant client
+            oracle_lib_dir2="$oracle_home_dir"            
+            
         elif test "$oracle_home_dir" = "yes"; then
             want_oracle_but_no_path="yes"
         fi
@@ -131,26 +138,40 @@ Please, locate Oracle directories using --with-oci or \
     dnl
     dnl Check OCI files
     dnl
-    if test -n "$oracle_include_dir" -a -n "$oracle_lib_dir"; then
+    if test -n "$oracle_include_dir" -a -n "$oracle_lib_dir" -o -n "$oracle_lib_dir2"; then
 
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$oracle_include_dir"
 
-        dnl Additional path for older Oracle installations 
+        dnl Additional path for older Oracle installations
         if test -n "$oracle_include_dir2"; then
             CPPFLAGS="$CPPFLAGS -I$oracle_include_dir2"
         fi
 
+        dnl Additional path for instant client
+        if test -n "$oracle_include_dir3"; then
+            CPPFLAGS="$CPPFLAGS -I$oracle_include_dir3"
+        fi
+
         dnl Depending on later Oracle version detection,
-        dnl -lnnzXY flag might be removed for older Oracle < 10.x
+        dnl -lnnz10 flag might be removed for older Oracle < 10.x
         saved_LDFLAGS="$LDFLAGS"
-        oci_ldflags="-L$oracle_lib_dir -lclntsh"
+        oci_ldflags="-L$oracle_lib_dir -L$oracle_lib_dir2 -lclntsh"
         LDFLAGS="$LDFLAGS $oci_ldflags"
 
         dnl
         dnl Check OCI headers
         dnl
-        AC_MSG_CHECKING([for Oracle OCI headers in $oracle_include_dir])
+        if test -f "$oracle_include_dir/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir"
+        fi
+        if test -f "$oracle_include_dir2/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir2"
+        fi
+        if test -f "$oracle_include_dir3/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
+        fi  
+        AC_MSG_CHECKING([for Oracle OCI headers in $ACTIVE_INCLUDE_DIR])
 
         AC_LANG_PUSH(C++)
         AC_COMPILE_IFELSE([
@@ -162,7 +183,7 @@ Please, locate Oracle directories using --with-oci or \
 #endif
 #elif defined(OCI_V7_SYNTAX)
 // OK, older Oracle detected
-// TODO - mloskot: find better macro to check for older versions; 
+// TODO - mloskot: find better macro to check for older versions;
 #else
 #  error Oracle oci.h header not found
 #endif
@@ -175,16 +196,20 @@ Please, locate Oracle directories using --with-oci or \
                 ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir2"
             fi
 
+            if test -n "$oracle_include_dir3"; then
+                ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir3"
+            fi
+
             oci_header_found="yes"
             AC_MSG_RESULT([yes])
             ],
             [
             oci_header_found="no"
-            AC_MSG_RESULT([not found])
+            AC_MSG_RESULT([ header not found])
             ]
         )
         AC_LANG_POP([C++])
-        
+
         dnl
         dnl Check OCI libraries
         dnl
@@ -208,7 +233,7 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
                 ],
                 [
                 oci_lib_found="no"
-                AC_MSG_RESULT([not found])
+                AC_MSG_RESULT([library not found])
                 ]
             )
             AC_LANG_POP([C++])
@@ -226,17 +251,26 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
     if test "$oci_header_found" = "yes" -a "$oci_lib_found" = "yes" -a \
         -n "$oracle_version_req"; then
 
-        oracle_version_major=`cat $oracle_include_dir/oci.h \
+        if test -f "$oracle_include_dir/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir"
+        fi
+        if test -f "$oracle_include_dir2/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir2"
+        fi
+        if test -f "$oracle_include_dir3/oci.h"; then
+            ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
+        fi        
+        oracle_version_major=`cat $ACTIVE_INCLUDE_DIR/oci.h \
                              | grep '#define.*OCI_MAJOR_VERSION.*' \
                              | sed -e 's/#define OCI_MAJOR_VERSION  *//' \
                              | sed -e 's/  *\/\*.*\*\///'`
 
-        oracle_version_minor=`cat $oracle_include_dir/oci.h \
+        oracle_version_minor=`cat $ACTIVE_INCLUDE_DIR/oci.h \
                              | grep '#define.*OCI_MINOR_VERSION.*' \
                              | sed -e 's/#define OCI_MINOR_VERSION  *//' \
                              | sed -e 's/  *\/\*.*\*\///'`
 
-        AC_MSG_CHECKING([if Oracle OCI version is >= $oracle_version_req])
+        AC_MSG_CHECKING([if Oracle OCI version is >= $oracle_version_req ])
 
         if test -n "$oracle_version_major" -a -n $"oracle_version_minor"; then
 
@@ -250,7 +284,7 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
             oracle_version_req_number=`expr $oracle_version_req_major \* 1000000 \
                                        \+ $oracle_version_req_minor \* 1000`
 
-            dnl Calculate its number representation 
+            dnl Calculate its number representation
             oracle_version_number=`expr $oracle_version_major \* 1000000 \
                                   \+ $oracle_version_minor \* 1000`
 
@@ -260,10 +294,10 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
                 oracle_version_checked="yes"
                 AC_MSG_RESULT([yes])
 
-                dnl Add libnnz flag to Oracle >= 10.x
-                AC_MSG_CHECKING([for Oracle version >= 10.x to use -lnnz$oracle_version_major flag])
-                oracle_nnz_check=`expr $oracle_version_number \>\= 10 \* 1000000`
-                if test "$oracle_nnz_check" = "1"; then
+                dnl Add -lnnz10 flag to Oracle >= 10.x
+                AC_MSG_CHECKING([for Oracle version >= 10.x to use -lnnz10 flag])
+                oracle_nnz10_check=`expr $oracle_version_number \>\= 10 \* 1000000`
+                if test "$oracle_nnz10_check" = "1"; then
                     ORACLE_OCI_LDFLAGS="$ORACLE_OCI_LDFLAGS -lnnz$oracle_version_major"
                     AC_MSG_RESULT([yes])
                 else
@@ -293,6 +327,6 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
     else
         HAVE_ORACLE_OCI="no"
     fi
-    
+
     AC_MSG_RESULT([$HAVE_ORACLE_OCI])
 ])
