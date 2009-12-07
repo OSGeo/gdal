@@ -373,10 +373,10 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     {
         strcpy( szName, poRAT->GetNameOfCol( iCol ) );
 
-		if( EQUAL( szName, "histogram" ) )
-		{
-			return CE_None;
-		}
+    if( EQUAL( szName, "histogram" ) )
+    {
+        return CE_None;
+    }
 
         strcpy( szDescription, CPLSPrintf( "%s, %s",
             szDescription, szName ) );
@@ -407,9 +407,9 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     {
         pszVATName = CPLStrdup( CPLSPrintf(
             "RAT_%s_%d_%d", 
-			poGeoRaster->pszDataTable, 
-			poGeoRaster->nRasterId,
-			nBand ) );
+            poGeoRaster->pszDataTable, 
+            poGeoRaster->nRasterId,
+            nBand ) );
     }
 
     // ----------------------------------------------------------
@@ -479,11 +479,11 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
             }
         }
 
-		strcat( szInsert, ");\n" );
-		osInserts += szInsert;
+        strcat( szInsert, ");\n" );
+        osInserts += szInsert;
     }
 
-	osInserts += CPLSPrintf(
+    osInserts += CPLSPrintf(
         "  SELECT %s INTO GR1 FROM %s T WHERE\n"
         "    T.%s.RasterDataTable = '%s' AND\n"
         "    T.%s.RasterId = %d FOR UPDATE;\n"
@@ -494,15 +494,15 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         "END;",
         poGeoRaster->pszColumn, poGeoRaster->pszTable,
         poGeoRaster->pszColumn, poGeoRaster->pszDataTable,
-		poGeoRaster->pszColumn, poGeoRaster->nRasterId,
+        poGeoRaster->pszColumn, poGeoRaster->nRasterId,
         nBand, pszVATName,
         poGeoRaster->pszTable,  poGeoRaster->pszColumn,
         poGeoRaster->pszColumn, poGeoRaster->pszDataTable,
-		poGeoRaster->pszColumn, poGeoRaster->nRasterId  );
+        poGeoRaster->pszColumn, poGeoRaster->nRasterId  );
 
     poStmt = poGeoRaster->poConnection->CreateStatement( osInserts.c_str() );
 
-	if( ! poStmt->Execute() )
+    if( ! poStmt->Execute() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Insert/registering VAT Error!" );
         return CE_Failure;
@@ -689,7 +689,7 @@ GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
 
 CPLErr GeoRasterRasterBand::CreateMaskBand( int nFlags )
 {
-	(void) nFlags;
+    (void) nFlags;
 
     if( ! poGeoRaster->bHasBitmapMask )
     {
