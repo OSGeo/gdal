@@ -69,11 +69,58 @@ def saga_3():
     except:
         pass
     return ret
-    
+
+###############################################################################
+# Test CreateCopy() for various data types
+
+def saga_4():
+
+    src_files = [ 'byte.tif',
+                  'int16.tif',
+                  '../../gcore/data/uint16.tif',
+                  '../../gcore/data/int32.tif',
+                  '../../gcore/data/uint32.tif',
+                  '../../gcore/data/float32.tif',
+                  '../../gcore/data/float64.tif' ]
+
+    for src_file in src_files:
+        tst = gdaltest.GDALTest( 'SAGA', src_file, 1, 4672 )
+        ret = tst.testCreateCopy( new_filename = 'tmp/test4.sdat' )
+        try:
+            os.remove('tmp/test4.sgrd')
+        except:
+            pass
+        return ret
+
+###############################################################################
+# Test Create() for various data types
+
+def saga_5():
+
+    src_files = [ 'byte.tif',
+                  'int16.tif',
+                  '../../gcore/data/uint16.tif',
+                  '../../gcore/data/int32.tif',
+                  '../../gcore/data/uint32.tif',
+                  '../../gcore/data/float32.tif',
+                  '../../gcore/data/float64.tif' ]
+
+    for src_file in src_files:
+        tst = gdaltest.GDALTest( 'SAGA', src_file, 1, 4672 )
+        ret = tst.testCreate( new_filename = 'tmp/test5.sdat', out_bands = 1 )
+        try:
+            os.remove('tmp/test5.sgrd')
+        except:
+            pass
+        return ret
+        
+
 gdaltest_list = [
     saga_1,
     saga_2,
-    saga_3 ]
+    saga_3,
+    saga_4,
+    saga_5 ]
 
 if __name__ == '__main__':
 
