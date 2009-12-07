@@ -47,6 +47,10 @@ def lcp_1():
     if ds.RasterCount != 8:
         gdaltest.post_reason('wrong number of bands')
         return 'fail'
+        
+    if ds.GetProjectionRef().find('NAD_1983_UTM_Zone_12N') == -1:
+        gdaltest.post_reason("didn't get expect projection. Got : %s" % (ds.GetProjectionRef()))
+        return 'fail'
 
     metadata = [ ('LATITUDE', '49'),
                  ('LINEAR_UNIT', 'Meters'),
