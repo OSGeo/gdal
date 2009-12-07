@@ -563,6 +563,29 @@ void OWStatement::Bind( double* pnData )
         hError );
 }
 
+void OWStatement::Bind( char* pData, long nData )
+{
+    OCIBind* hBind = NULL;
+
+    nNextBnd++;
+
+    CheckError( OCIBindByPos( 
+        hStmt,
+        &hBind,
+        hError,
+        (ub4) nNextBnd,
+        (dvoid*) pData,
+        (sb4) nData,
+        (ub2) SQLT_LBI,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) NULL,
+        (ub4) NULL,
+        (ub4) OCI_DEFAULT ),
+        hError );
+}
+
 void OWStatement::Define( double* pfdData )
 {
     OCIDefine* hDefine = NULL;
