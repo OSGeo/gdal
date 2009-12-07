@@ -270,6 +270,7 @@ public:
     void                Define( int* pnData );
     void                Bind( int* pnData );
     void                Bind( double* pnData );
+    void                Bind( char* pData, long nData);    
     void                Define( double* pnData );
     void                Define( char* pszData, int nSize = OWNAME );
     void                Bind( char* pszData, int nSize = OWNAME );
