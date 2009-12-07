@@ -122,7 +122,7 @@ class SAGARasterBand : public GDALPamRasterBand
     int				m_nBits;
 
 	void			SetDataType( GDALDataType eType );
-
+    void            SwapBuffer(void* pImage);
   public:
 
 		SAGARasterBand( SAGADataset *, int );
@@ -171,6 +171,49 @@ void SAGARasterBand::SetDataType( GDALDataType eType )
 }
 
 /************************************************************************/
+/*                             SwapBuffer()                             */
+/************************************************************************/
+
+void SAGARasterBand::SwapBuffer(void* pImage)
+{
+
+#ifdef CPL_LSB
+    int bSwap = ( m_ByteOrder == 1);
+#else
+    int bSwap = ( m_ByteOrder == 0);
+#endif
+
+    if (bSwap)
+    {
+        if ( m_nBits == 16 )
+        {
+            short* pImage16 = (short*) pImage;
+            for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
+            {
+                CPL_SWAP16PTR( pImage16 + iPixel );
+            }
+        }
+        else if ( m_nBits == 32 )
+        {
+            int* pImage32 = (int*) pImage;
+            for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
+            {
+                CPL_SWAP32PTR( pImage32 + iPixel );
+            }
+        }
+        else if ( m_nBits == 64 )
+        {
+            double* pImage64 = (double*) pImage;
+            for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
+            {
+                CPL_SWAP64PTR( pImage64 + iPixel );
+            }
+        }
+    }
+    
+}
+
+/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
@@ -182,293 +225,22 @@ CPLErr SAGARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		return CE_Failure;
 
     SAGADataset *poGDS = dynamic_cast<SAGADataset *>(poDS);
-    
 
-	switch( eDataType )		/* GDT_Byte, GDT_UInt16, GDT_Int16, GDT_UInt32 */
-	{						/* GDT_Int32, GDT_Float32, GDT_Float64 */
-	default:
-		break;
+    if( VSIFSeekL( poGDS->fp, (m_nBits / 8) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+              "Unable to seek to beginning of grid row.\n" );
+        return CE_Failure;
+    }
+    if( VSIFReadL( pImage, m_nBits / 8, nBlockXSize,
+       poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+              "Unable to read block from grid file.\n" );
+        return CE_Failure;
+    }
 
-	case GDT_Byte:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GByte) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-		if( VSIFReadL( pImage, sizeof(GByte), nBlockXSize,
-		   poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to read block from grid file.\n" );
-			return CE_Failure;
-		}
-		GByte		*pfImage;
-		pfImage		= (GByte *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			switch( m_nBits )
-			{
-			default:
-				break;
-
-			case 16:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR16( pfImage+iPixel );	else	CPL_MSBPTR16( pfImage+iPixel );
-				break;
-
-			case 32:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR32( pfImage+iPixel );	else	CPL_MSBPTR32( pfImage+iPixel );
-				break;
-
-			case 64:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR64( pfImage+iPixel );	else	CPL_MSBPTR64( pfImage+iPixel );
-				break;
-			}
-		}
-		break;
-		}
-
-	case GDT_UInt16:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GUInt16) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-		if( VSIFReadL( pImage, sizeof(GUInt16), nBlockXSize,
-			   poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to read block from grid file.\n" );
-			return CE_Failure;
-		}
-		GUInt16		*pfImage;
-		pfImage		= (GUInt16 *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			switch( m_nBits )
-			{
-			default:
-				break;
-
-			case 16:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR16( pfImage+iPixel );	else	CPL_MSBPTR16( pfImage+iPixel );
-				break;
-
-			case 32:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR32( pfImage+iPixel );	else	CPL_MSBPTR32( pfImage+iPixel );
-				break;
-
-			case 64:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR64( pfImage+iPixel );	else	CPL_MSBPTR64( pfImage+iPixel );
-				break;
-			}
-		}
-		break;
-		}
-
-	case GDT_Int16:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GInt16) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-		if( VSIFReadL( pImage, sizeof(GInt16), nBlockXSize,
-			   poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to read block from grid file.\n" );
-			return CE_Failure;
-		}
-		GInt16		*pfImage;
-		pfImage		= (GInt16 *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			switch( m_nBits )
-			{
-			default:
-				break;
-
-			case 16:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR16( pfImage+iPixel );	else	CPL_MSBPTR16( pfImage+iPixel );
-				break;
-
-			case 32:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR32( pfImage+iPixel );	else	CPL_MSBPTR32( pfImage+iPixel );
-				break;
-
-			case 64:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR64( pfImage+iPixel );	else	CPL_MSBPTR64( pfImage+iPixel );
-				break;
-			}
-		}
-		break;
-		}
-
-	case GDT_UInt32:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GUInt32) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-		if( VSIFReadL( pImage, sizeof(GUInt32), nBlockXSize,
-			   poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to read block from grid file.\n" );
-			return CE_Failure;
-		}
-		GUInt32		*pfImage;
-		pfImage		= (GUInt32 *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			switch( m_nBits )
-			{
-			default:
-				break;
-
-			case 16:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR16( pfImage+iPixel );	else	CPL_MSBPTR16( pfImage+iPixel );
-				break;
-
-			case 32:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR32( pfImage+iPixel );	else	CPL_MSBPTR32( pfImage+iPixel );
-				break;
-
-			case 64:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR64( pfImage+iPixel );	else	CPL_MSBPTR64( pfImage+iPixel );
-				break;
-			}
-		}
-		break;
-		}
-
-	case GDT_Int32:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GInt32) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-		if( VSIFReadL( pImage, sizeof(GInt32), nBlockXSize,
-			   poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to read block from grid file.\n" );
-			return CE_Failure;
-		}
-		GInt32		*pfImage;
-		pfImage		= (GInt32 *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			switch( m_nBits )
-			{
-			default:
-				break;
-
-			case 16:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR16( pfImage+iPixel );	else	CPL_MSBPTR16( pfImage+iPixel );
-				break;
-
-			case 32:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR32( pfImage+iPixel );	else	CPL_MSBPTR32( pfImage+iPixel );
-				break;
-
-			case 64:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR64( pfImage+iPixel );	else	CPL_MSBPTR64( pfImage+iPixel );
-				break;
-			}
-		}
-		break;
-		}
-
-	case GDT_Float32:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(float) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-		if( VSIFReadL( pImage, sizeof(float), nBlockXSize,
-			   poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to read block from grid file.\n" );
-			return CE_Failure;
-		}
-		float		*pfImage;
-		pfImage		= (float *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			switch( m_nBits )
-			{
-			default:
-				break;
-
-			case 16:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR16( pfImage+iPixel );	else	CPL_MSBPTR16( pfImage+iPixel );
-				break;
-
-			case 32:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR32( pfImage+iPixel );	else	CPL_MSBPTR32( pfImage+iPixel );
-				break;
-
-			case 64:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR64( pfImage+iPixel );	else	CPL_MSBPTR64( pfImage+iPixel );
-				break;
-			}
-		}
-		break;
-		}
-
-	case GDT_Float64:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(double) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-		if( VSIFReadL( pImage, sizeof(double), nBlockXSize,
-			   poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to read block from grid file.\n" );
-			return CE_Failure;
-		}
-		double		*pfImage;
-		pfImage		= (double *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			switch( m_nBits )
-			{
-			default:
-				break;
-
-			case 16:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR16( pfImage+iPixel );	else	CPL_MSBPTR16( pfImage+iPixel );
-				break;
-
-			case 32:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR32( pfImage+iPixel );	else	CPL_MSBPTR32( pfImage+iPixel );
-				break;
-
-			case 64:
-				if( m_ByteOrder == 0 )	CPL_LSBPTR64( pfImage+iPixel );	else	CPL_MSBPTR64( pfImage+iPixel );
-				break;
-			}
-		}
-		break;
-		}
-	}
+    SwapBuffer(pImage);
 
     return CE_None;
 }
@@ -494,188 +266,26 @@ CPLErr SAGARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     SAGADataset *poGDS = dynamic_cast<SAGADataset *>(poDS);
     assert( poGDS != NULL );
 
+    if( VSIFSeekL( poGDS->fp, (m_nBits / 8) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+              "Unable to seek to beginning of grid row.\n" );
+        return CE_Failure;
+    }
+    
+    SwapBuffer(pImage);
+    
+    int bSuccess = ( VSIFWriteL( pImage, m_nBits / 8, nBlockXSize,
+                    poGDS->fp ) == static_cast<unsigned>(nBlockXSize) );
 
-	switch( eDataType )		/* GDT_Byte, GDT_UInt16, GDT_Int16, GDT_UInt32 */
-	{						/* GDT_Int32, GDT_Float32, GDT_Float64 */
-	default:
-		break;
-
-	case GDT_Byte:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GByte) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-
-		/*GByte *pfImage = (GByte *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			CPL_LSBPTR32( pfImage+iPixel );
-		}*/
-
-		if( VSIFWriteL( pImage, sizeof(GByte), nBlockXSize,
-				poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to write block to grid file.\n" );
-			return CE_Failure;
-		}
-		break;
-		}
-
-	case GDT_UInt16:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GUInt16) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-
-		GUInt16 *pfImage = (GUInt16 *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			CPL_LSBPTR16( pfImage+iPixel )
-		}
-
-		if( VSIFWriteL( pImage, sizeof(GUInt16), nBlockXSize,
-				poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to write block to grid file.\n" );
-			return CE_Failure;
-		}
-		break;
-		}
-
-	case GDT_Int16:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GInt16) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-
-		GInt16 *pfImage = (GInt16 *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			CPL_LSBPTR16( pfImage+iPixel );
-		}
-
-		if( VSIFWriteL( pImage, sizeof(GInt16), nBlockXSize,
-				poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to write block to grid file.\n" );
-			return CE_Failure;
-		}
-		break;
-		}
-
-	case GDT_UInt32:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GUInt32) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-
-		GUInt32 *pfImage = (GUInt32 *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			CPL_LSBPTR32( pfImage+iPixel );
-		}
-
-		if( VSIFWriteL( pImage, sizeof(GUInt32), nBlockXSize,
-				poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to write block to grid file.\n" );
-			return CE_Failure;
-		}
-		break;
-		}
-
-	case GDT_Int32:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(GInt32) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-
-		GInt32 *pfImage = (GInt32 *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			CPL_LSBPTR32( pfImage+iPixel );
-		}
-
-		if( VSIFWriteL( pImage, sizeof(GInt32), nBlockXSize,
-				poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to write block to grid file.\n" );
-			return CE_Failure;
-		}
-		break;
-		}
-
-	case GDT_Float32:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(float) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-
-		float *pfImage = (float *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			CPL_LSBPTR32( pfImage+iPixel );
-		}
-
-		if( VSIFWriteL( pImage, sizeof(float), nBlockXSize,
-				poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to write block to grid file.\n" );
-			return CE_Failure;
-		}
-		break;
-		}
-
-	case GDT_Float64:
-		{
-		if( VSIFSeekL( poGDS->fp, sizeof(double) * nRasterXSize * (nRasterYSize - nBlockYOff - 1), SEEK_SET ) != 0 )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to seek to beginning of grid row.\n" );
-			return CE_Failure;
-		}
-
-		double *pfImage = (double *)pImage;
-		for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
-		{
-			CPL_LSBPTR64( pfImage+iPixel );
-		}
-
-		if( VSIFWriteL( pImage, sizeof(double), nBlockXSize,
-				poGDS->fp ) != static_cast<unsigned>(nBlockXSize) )
-		{
-			CPLError( CE_Failure, CPLE_FileIO,
-				  "Unable to write block to grid file.\n" );
-			return CE_Failure;
-		}
-		break;
-		}
-	}
-
+    SwapBuffer(pImage);
+    
+    if (!bSuccess)
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+              "Unable to write block to grid file.\n" );
+        return CE_Failure;
+    }
 
     return CE_None;
 }
@@ -744,7 +354,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 	/*      searching for something starting with nrows or ncols.           */
 	/* -------------------------------------------------------------------- */
     const char		*pszLine;
-    int				nRows = -1, nCols = -1, nBands = 1;
+    int				nRows = -1, nCols = -1;
 	double			dXmin, dYmin, dCellsize, dNoData, dZFactor;
     int				nLineCount			= 0;
     char			szDataFormat[20]	= "DOUBLE";
@@ -1147,8 +757,8 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
         return NULL;
     }
 
-	char *pszHdrFilename = CPLStrdup( CPLResetExtension( pszFilename, "sgrd" ) );
-	CPLErr eErr = WriteHeader( pszHdrFilename, eType,
+	CPLString osHdrFilename = CPLResetExtension( pszFilename, "sgrd" );
+	CPLErr eErr = WriteHeader( osHdrFilename, eType,
 								nXSize, nYSize,
 								0.0, 0.0, 1.0,
 								(float)SAGADataset::dNODATA_VALUE_DEFAULT, 1.0, false );
@@ -1346,9 +956,9 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
     double dfMinX = adfGeoTransform[0] + adfGeoTransform[1] / 2;
-    double dfMaxX = adfGeoTransform[1] * (nXSize - 0.5) + adfGeoTransform[0];
+    //double dfMaxX = adfGeoTransform[1] * (nXSize - 0.5) + adfGeoTransform[0];
     double dfMinY = adfGeoTransform[5] * (nYSize - 0.5) + adfGeoTransform[3];
-    double dfMaxY = adfGeoTransform[3] + adfGeoTransform[5] / 2;
+    //double dfMaxY = adfGeoTransform[3] + adfGeoTransform[5] / 2;
 
 	/* -------------------------------------------------------------------- */
 	/*      Copy band data.	                                                */
