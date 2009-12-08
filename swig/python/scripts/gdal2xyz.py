@@ -45,7 +45,7 @@ except ImportError:
 def Usage():
     print('Usage: gdal2xyz.py [-skip factor] [-srcwin xoff yoff width height]')
     print('                   [-band b] srcfile [dstfile]')
-    print()
+    print('')
     sys.exit( 1 )
 
 # =============================================================================
