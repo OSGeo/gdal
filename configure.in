@@ -111,7 +111,7 @@ AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the
 dnl Check the native cpu bit order (also libtiff stuff).
 AC_MSG_CHECKING([native cpu bit order])
 case "$host_cpu" in
-    i*86*)
+    i*86*|x86_64*)
         HOST_FILLORDER=FILLORDER_LSB2MSB
 	AC_MSG_RESULT([lsb2msb])
 	;;
