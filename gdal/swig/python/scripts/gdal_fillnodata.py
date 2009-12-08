@@ -130,10 +130,10 @@ if src_filename is None:
 try:
     gdal.FillNodata
 except:
-    print()
+    print('')
     print('gdal.FillNodata() not available.  You are likely using "old gen"')
     print('bindings or an older version of the next gen bindings.')
-    print()
+    print('')
     sys.exit(1)
 
 # =============================================================================
