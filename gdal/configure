@@ -7370,7 +7370,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_header_stdc=no
 fi
-rm -f -r conftest*
+rm -f conftest*
 
 fi
 
@@ -7391,7 +7391,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_header_stdc=no
 fi
-rm -f -r conftest*
+rm -f conftest*
 
 fi
 
@@ -15619,7 +15619,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_header_stdc=no
 fi
-rm -f -r conftest*
+rm -f conftest*
 
 fi
 
@@ -15640,7 +15640,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_header_stdc=no
 fi
-rm -f -r conftest*
+rm -f conftest*
 
 fi
 
@@ -17861,7 +17861,7 @@ _ACEOF
 { echo "$as_me:$LINENO: checking native cpu bit order" >&5
 echo $ECHO_N "checking native cpu bit order... $ECHO_C" >&6; }
 case "$host_cpu" in
-    i*86*)
+    i*86*|x86_64*)
         HOST_FILLORDER=FILLORDER_LSB2MSB
 	{ echo "$as_me:$LINENO: result: lsb2msb" >&5
 echo "${ECHO_T}lsb2msb" >&6; }
