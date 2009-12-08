@@ -278,7 +278,7 @@ sub ogr_tests {
 			   StringList Binary/);
 	
 	if ($name eq 'ESRI Shapefile') {
-	    @field_types = (qw/Integer Real String Integer/);
+	    @field_types = (qw/Integer Real String/);
 	} elsif ($name eq 'MapInfo File') {
 	    @field_types = (qw/Integer Real String/);
 	}
