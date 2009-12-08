@@ -676,7 +676,6 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    UNREFERENCED_PARAM( bApproxOK );
     CPLAssert( NULL != poField );
 
     int         iNewField;
@@ -694,13 +693,29 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 /* -------------------------------------------------------------------- */
         
     char * pszNewFieldName = NULL;
+    char * pszTmp = NULL;
+    int nRenameNum = 1;
 
     size_t nNameSize = strlen( poField->GetNameRef() );
     pszNewFieldName = CPLScanString( poField->GetNameRef(),
-                                     nNameSize, TRUE, TRUE);
+                                     MIN( nNameSize, 10) , TRUE, TRUE);
+
+    if( !bApproxOK &&
+        ( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 ||
+          !EQUAL(poField->GetNameRef(),pszNewFieldName) ) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Failed to add field named '%s'",
+                  poField->GetNameRef() );
+    }
+
+    pszTmp = CPLStrdup( pszNewFieldName );
+    while( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 )
+        sprintf( pszNewFieldName, "%.7s_%.2d", pszTmp, nRenameNum++ );
 
     if( !EQUAL(poField->GetNameRef(),pszNewFieldName) )
-        CPLDebug( "Shape", "Normalized field name: '%s' to '%s'", 
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Normalized/laundered field name: '%s' to '%s'", 
                   poField->GetNameRef(),
                   pszNewFieldName );
 
@@ -708,6 +723,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     poField->SetName( pszNewFieldName );
 
     CPLFree( pszNewFieldName );
+    CPLFree( pszTmp );
 
 /* -------------------------------------------------------------------- */
 /*      Add field to layer                                              */
