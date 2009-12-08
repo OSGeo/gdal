@@ -45,7 +45,7 @@ def saga_1():
     return tst.testOpen()
 
 ###############################################################################
-# Test CreateCopy()
+# Test copying a reference sample with CreateCopy()
 
 def saga_2():
 
@@ -58,7 +58,7 @@ def saga_2():
     return ret
 
 ###############################################################################
-# Test Copy()
+# Test copying a reference sample with Create()
 
 def saga_3():
 
@@ -85,12 +85,19 @@ def saga_4():
 
     for src_file in src_files:
         tst = gdaltest.GDALTest( 'SAGA', src_file, 1, 4672 )
-        ret = tst.testCreateCopy( new_filename = 'tmp/test4.sdat' )
+        if src_file == 'byte.tif':
+            check_minmax = 0
+        else:
+            check_minmax = 1
+        ret = tst.testCreateCopy( new_filename = 'tmp/test4.sdat', check_minmax = check_minmax )
         try:
             os.remove('tmp/test4.sgrd')
         except:
             pass
-        return ret
+        if ret != 'success':
+            return ret
+            
+    return 'success'
 
 ###############################################################################
 # Test Create() for various data types
@@ -107,20 +114,75 @@ def saga_5():
 
     for src_file in src_files:
         tst = gdaltest.GDALTest( 'SAGA', src_file, 1, 4672 )
-        ret = tst.testCreate( new_filename = 'tmp/test5.sdat', out_bands = 1 )
+        if src_file == 'byte.tif':
+            check_minmax = 0
+        else:
+            check_minmax = 1
+        ret = tst.testCreate( new_filename = 'tmp/test5.sdat', out_bands = 1, check_minmax = check_minmax )
         try:
             os.remove('tmp/test5.sgrd')
         except:
             pass
-        return ret
+        if ret != 'success':
+            return ret
+            
+    return 'success'
         
+###############################################################################
+# Test creating empty datasets and check that nodata values are properly written
+
+def saga_6():
+
+    gdal_types = [gdal.GDT_Byte,
+                  gdal.GDT_Int16,
+                  gdal.GDT_UInt16,
+                  gdal.GDT_Int32,
+                  gdal.GDT_UInt32,
+                  gdal.GDT_Float32,
+                  gdal.GDT_Float64 ]
+              
+    expected_nodata = [ 255, -32767, 65535, -2147483647, 4294967295, -99999.0, -99999.0 ]
+                  
+    for i in range(len(gdal_types)):
+    
+        ds = gdal.GetDriverByName('SAGA').Create('tmp/test6.sdat', 2, 2, 1, gdal_types[i])
+        ds = None
+        
+        ds = gdal.Open('tmp/test6.sdat')
+        
+        data = ds.GetRasterBand(1).ReadRaster(1, 1, 1, 1, buf_type = gdal.GDT_Float64)
+
+        # Read raw data into tuple of float numbers
+        import struct
+        value = struct.unpack('d' * 1, data)[0]
+        if value != expected_nodata[i]:
+            print (value)
+            gdaltest.post_reason('did not get expected pixel value')
+            return 'fail'
+            
+        nodata = ds.GetRasterBand(1).GetNoDataValue()
+        if nodata != expected_nodata[i]:
+            print (nodata)
+            gdaltest.post_reason('did not get expected nodata value')
+            return 'fail'
+        
+        ds = None
+
+    try:
+        os.remove('tmp/test6.sgrd')
+        os.remove('tmp/test6.sdat')
+    except:
+        pass
+        
+    return 'success'
 
 gdaltest_list = [
     saga_1,
     saga_2,
     saga_3,
     saga_4,
-    saga_5 ]
+    saga_5,
+    saga_6 ]
 
 if __name__ == '__main__':
 
