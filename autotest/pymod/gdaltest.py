@@ -536,7 +536,7 @@ class GDALTest:
                 post_reason( 'Did not get expected checksum on reopened file.' )
                 return 'fail'
             
-            if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax:
+            if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax and check_minmax:
                 post_reason( 'Did not get expected min/max values on reopened file.' )
                 return 'fail'
         
