@@ -130,10 +130,10 @@ class CreateData {
 			System.Environment.Exit(-1);
 		}
 
-		fdefn = new FieldDefn( "DoubleField", FieldType.OFTReal );
+		fdefn = new FieldDefn( "DbleField", FieldType.OFTReal );
 		if( layer.CreateField( fdefn, 1 ) != 0 )
 		{
-			Console.WriteLine("Creating DoubleField field failed.");
+			Console.WriteLine("Creating DbleField field failed.");
 			System.Environment.Exit(-1);
 		}
 
@@ -151,7 +151,7 @@ class CreateData {
         Feature feature = new Feature( layer.GetLayerDefn() );
         feature.SetField( "Name", "value" );
 		feature.SetField( "IntField", (int)123 );
-		feature.SetField( "DoubleField", (double)12.345 );
+		feature.SetField( "DbleField", (double)12.345 );
 		feature.SetField( "DateField", 2007, 3, 15, 18, 24, 30, 0 );
 
         Geometry geom = Geometry.CreateFromWkt("POINT(47.0 19.2)");
