@@ -120,10 +120,10 @@ if src_filename is None:
 try:
     gdal.SieveFilter
 except:
-    print()
+    print('')
     print('gdal.SieveFilter() not available.  You are likely using "old gen"')
     print('bindings or an older version of the next gen bindings.')
-    print()
+    print('')
     sys.exit(1)
 
 # =============================================================================
