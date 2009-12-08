@@ -27,6 +27,7 @@
 
 try:
     from osgeo import gdal
+    gdal.TermProgress = gdal.TermProgress_nocb
 except ImportError:
     import gdal
 
@@ -34,6 +35,7 @@ import sys
 import glob
 
 verbose = 0
+quiet = 0
 
 
 # =============================================================================
@@ -231,11 +233,11 @@ class file_info:
 # =============================================================================
 def Usage():
     print('Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*')
-    print('                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]')
+    print('                     [-ps pixelsize_x pixelsize_y] [-separate] [-q] [-v] [-pct]')
     print('                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]')
     print('                     [-ot datatype] [-createonly] input_files')
     print('                     [--help-general]')
-    print()
+    print('')
 
 # =============================================================================
 #
@@ -257,7 +259,7 @@ if __name__ == '__main__':
     pre_init = None
     band_type = None
     createonly = 0
-
+    
     gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
     if argv is None:
@@ -274,6 +276,9 @@ if __name__ == '__main__':
 
         elif arg == '-v':
             verbose = 1
+
+        elif arg == '-q':
+            quiet = 1
 
         elif arg == '-createonly':
             createonly = 1
@@ -421,12 +426,20 @@ if __name__ == '__main__':
 
     # Copy data from source files into output file.
     t_band = 1
+
+    if quiet == 0 and verbose == 0:
+        gdal.TermProgress( 0.0 )
+    fi_processed = 0
+    
     for fi in file_infos:
         if createonly != 0:
             continue
         
         if verbose != 0:
-            print()
+            print("")
+            print("Processing file %d of %d, %d%% completed." \
+                  % (fi_processed+1,len(file_infos),
+                     fi_processed * 100 / len(file_infos)) )
             fi.report()
 
         if separate == 0 :
@@ -436,5 +449,9 @@ if __name__ == '__main__':
             fi.copy_into( t_fh, 1, t_band, nodata )
             t_band = t_band+1
             
+        fi_processed = fi_processed+1
+        if quiet == 0 and verbose == 0:
+            gdal.TermProgress( fi_processed / float(len(file_infos))  )
+    
     # Force file to be closed.
     t_fh = None
