@@ -125,8 +125,6 @@ class JPGDataset : public GDALPamDataset
     int    nQLevel;
     void   LoadDefaultTables(int);
 
-    static void ErrorExit(j_common_ptr cinfo);
-
     void   CheckForMask();
     void   DecompressMask();
 
@@ -163,6 +161,8 @@ class JPGDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+
+    static void ErrorExit(j_common_ptr cinfo);
 };
 
 /************************************************************************/
@@ -1640,7 +1640,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->sDInfo.err = jpeg_std_error( &(poDS->sJErr) );
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
-    poDS->sDInfo.client_data = (void *) poDS;
+    poDS->sDInfo.client_data = (void *) &(poDS->setjmp_buffer);
 
     jpeg_create_decompress( &(poDS->sDInfo) );
 
@@ -1940,7 +1940,7 @@ void JPGDataset::DecompressMask()
 
 void JPGDataset::ErrorExit(j_common_ptr cinfo)
 {
-    JPGDataset *poDS = (JPGDataset *) cinfo->client_data;
+    jmp_buf *setjmp_buffer = (jmp_buf *) cinfo->client_data;
     char buffer[JMSG_LENGTH_MAX];
 
     /* Create the message */
@@ -1956,7 +1956,7 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
               "libjpeg: %s", buffer );
 
     /* Return control to the setjmp point */
-    longjmp(poDS->setjmp_buffer, 1);
+    longjmp(*setjmp_buffer, 1);
 }
 
 /************************************************************************/
@@ -2091,7 +2091,6 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
-    int  anBandList[3] = {1,2,3};
     int  nQuality = 75;
     int  bProgressive = FALSE;
     int  nCloneFlags = GCIF_PAM_DEFAULT;
@@ -2102,11 +2101,11 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
-    if( nBands != 1 && nBands != 3 )
+    if( nBands != 1 && nBands != 3 && nBands != 4 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "JPEG driver doesn't support %d bands.  Must be 1 (grey) "
-                  "or 3 (RGB) bands.\n", nBands );
+                  "JPEG driver doesn't support %d bands.  Must be 1 (grey), "
+                  "3 (RGB) or 4 bands.\n", nBands );
 
         return NULL;
     }
@@ -2202,8 +2201,15 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
+    jmp_buf setjmp_buffer;
     
+    if (setjmp(setjmp_buffer)) 
+        return NULL;
+
     sCInfo.err = jpeg_std_error( &sJErr );
+    sJErr.error_exit = JPGDataset::ErrorExit;
+    sCInfo.client_data = (void *) &(setjmp_buffer);
+
     jpeg_create_compress( &sCInfo );
     
     jpeg_vsiio_dest( &sCInfo, fpImage );
@@ -2212,14 +2218,12 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     sCInfo.image_height = nYSize;
     sCInfo.input_components = nBands;
 
-    if( nBands == 1 )
-    {
-        sCInfo.in_color_space = JCS_GRAYSCALE;
-    }
-    else
-    {
+    if( nBands == 3 )
         sCInfo.in_color_space = JCS_RGB;
-    }
+    else if( nBands == 1 )
+        sCInfo.in_color_space = JCS_GRAYSCALE;
+    else
+        sCInfo.in_color_space = JCS_UNKNOWN;
 
     jpeg_set_defaults( &sCInfo );
     
@@ -2262,9 +2266,10 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         JSAMPLE      *ppSamples;
 
         eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                pabyScanline, nXSize, 1, eWorkDT,
-                                nBands, anBandList, 
-                                nBands*nWorkDTSize, nBands * nXSize * nWorkDTSize, nWorkDTSize );
+                                  pabyScanline, nXSize, 1, eWorkDT,
+                                  nBands, NULL,
+                                  nBands*nWorkDTSize, 
+                                  nBands * nXSize * nWorkDTSize, nWorkDTSize );
 
         // clamp 16bit values to 12bit.
         if( nWorkDTSize == 2 )
