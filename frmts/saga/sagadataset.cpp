@@ -43,11 +43,11 @@ CPL_CVSID("$Id$");
 
 /* NODATA Values */
 //#define	SG_NODATA_GDT_Bit	0.0
-#define SG_NODATA_GDT_Byte		255.0
-#define	SG_NODATA_GDT_UInt16	65535.0
-#define	SG_NODATA_GDT_Int16		-32767.0
-#define	SG_NODATA_GDT_UInt32	4294967295.0
-#define	SG_NODATA_GDT_Int32		-2147483647.0
+#define SG_NODATA_GDT_Byte		255
+#define	SG_NODATA_GDT_UInt16	65535
+#define	SG_NODATA_GDT_Int16		-32767
+#define	SG_NODATA_GDT_UInt32	4294967295U
+#define	SG_NODATA_GDT_Int32		-2147483647
 #define	SG_NODATA_GDT_Float32	-99999.0
 #define	SG_NODATA_GDT_Float64	-99999.0
 
@@ -68,8 +68,6 @@ class SAGARasterBand;
 class SAGADataset : public GDALPamDataset
 {
     friend class		SAGARasterBand;
-
-    static const double	dNODATA_VALUE_DEFAULT;
 
 	static CPLErr		WriteHeader( CPLString osHDRFilename, GDALDataType eType,
 									GInt16 nXSize, GInt16 nYSize,
@@ -96,10 +94,6 @@ class SAGADataset : public GDALPamDataset
 		CPLErr					GetGeoTransform( double *padfGeoTransform );
 		CPLErr					SetGeoTransform( double *padfGeoTransform );
 };
-
-
-const double SAGADataset::dNODATA_VALUE_DEFAULT = -99999.0;
-
 
 
 /************************************************************************/
@@ -433,6 +427,11 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     {
         return NULL;
     }
+
+    if (!GDALCheckDatasetDimensions(nCols, nRows))
+    {
+        return NULL;
+    }
 	
 	
 	/* -------------------------------------------------------------------- */
@@ -725,13 +724,11 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
 
 		return NULL;
     }
-	else if( nXSize > INT_MAX || nYSize > INT_MAX )
+    
+    if( nBands != 1 )
     {
 		CPLError( CE_Failure, CPLE_IllegalArg,
-			  "Unable to create grid, SAGA Binary Grid format "
-			  "only supports sizes up to %dx%d.  %dx%d not supported.\n",
-			  INT_MAX, INT_MAX, nXSize, nYSize );
-
+                  "SAGA Binary Grid only supports 1 band" );
 		return NULL;
     }
 
@@ -756,12 +753,69 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
                   pszFilename );
         return NULL;
     }
+    
+    char abyNoData[8];
+    double dfNoDataVal = 0.0;
 
+    switch (eType)	/* GDT_Byte, GDT_UInt16, GDT_Int16, GDT_UInt32  */
+    {				/* GDT_Int32, GDT_Float32, GDT_Float64 */
+        case (GDT_Byte):
+        {
+            GByte nodata = SG_NODATA_GDT_Byte;
+            dfNoDataVal = nodata;
+            memcpy(abyNoData, &nodata, 1);
+            break;
+        }
+        case (GDT_UInt16):
+        {
+            GUInt16 nodata = SG_NODATA_GDT_UInt16;
+            dfNoDataVal = nodata;
+            memcpy(abyNoData, &nodata, 2);
+            break;
+        }
+        case (GDT_Int16):
+        {
+            GInt16 nodata = SG_NODATA_GDT_Int16;
+            dfNoDataVal = nodata;
+            memcpy(abyNoData, &nodata, 2);
+            break;
+        }
+        case (GDT_UInt32):
+        {
+            GUInt32 nodata = SG_NODATA_GDT_UInt32;
+            dfNoDataVal = nodata;
+            memcpy(abyNoData, &nodata, 4);
+            break;
+        }
+        case (GDT_Int32):
+        {
+            GInt32 nodata = SG_NODATA_GDT_Int32;
+            dfNoDataVal = nodata;
+            memcpy(abyNoData, &nodata, 4);
+            break;
+        }
+        default:
+        case (GDT_Float32):
+        {
+            float nodata = SG_NODATA_GDT_Float32;
+            dfNoDataVal = nodata;
+            memcpy(abyNoData, &nodata, 4);
+            break;
+        }
+        case (GDT_Float64):
+        {
+            double nodata = SG_NODATA_GDT_Float64;
+            dfNoDataVal = nodata;
+            memcpy(abyNoData, &nodata, 8);
+            break;
+        }
+    }
+    
 	CPLString osHdrFilename = CPLResetExtension( pszFilename, "sgrd" );
 	CPLErr eErr = WriteHeader( osHdrFilename, eType,
 								nXSize, nYSize,
 								0.0, 0.0, 1.0,
-								(float)SAGADataset::dNODATA_VALUE_DEFAULT, 1.0, false );
+                                dfNoDataVal, 1.0, false );
 
     if( eErr != CE_None )
     {
@@ -769,116 +823,34 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
 		return NULL;
     }
 
-	double	fVal;
-
-	switch (eType)	/* GDT_Byte, GDT_UInt16, GDT_Int16, GDT_UInt32  */
-	{				/* GDT_Int32, GDT_Float32, GDT_Float64 */
-
-	case (GDT_Byte):
-		fVal = SG_NODATA_GDT_Byte;
-		break;
-	case (GDT_UInt16):
-		fVal = SG_NODATA_GDT_UInt16;
-		CPL_LSBPTR16( &fVal );
-		break;
-	case (GDT_Int16):
-		fVal = SG_NODATA_GDT_Int16;
-		CPL_LSBPTR16( &fVal );
-		break;
-	case (GDT_UInt32):
-		fVal = SG_NODATA_GDT_UInt32;
-		CPL_LSBPTR32( &fVal );
-		break;
-	case (GDT_Int32):
-		fVal = SG_NODATA_GDT_Int32;
-		CPL_LSBPTR32( &fVal );
-		break;
-	default:
-	case (GDT_Float32):
-		fVal = SG_NODATA_GDT_Float32;
-		CPL_LSBPTR32( &fVal );
-		break;
-	case (GDT_Float64):
-		fVal = SG_NODATA_GDT_Float64;
-		CPL_LSBPTR64( &fVal );
-		break;
-	}
-
-	for( int iRow = 0; iRow < nYSize; iRow++ )
+    if (CSLFetchBoolean( papszParmList , "FILL_NODATA", TRUE ))
     {
-		for( int iCol=0; iCol<nXSize; iCol++ )
-		{
-			switch (eType)	/* GDT_Byte, GDT_UInt16, GDT_Int16, GDT_UInt32  */
-			{				/* GDT_Int32, GDT_Float32, GDT_Float64 */
+        int nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
+        GByte* pabyNoDataBuf = (GByte*) VSIMalloc2(nDataTypeSize, nXSize);
+        if (pabyNoDataBuf == NULL)
+        {
+            VSIFCloseL( fp );
+            return NULL;
+        }
+        
+        for( int iCol = 0; iCol < nXSize; iCol++)
+        {
+            memcpy(pabyNoDataBuf + iCol * nDataTypeSize, abyNoData, nDataTypeSize);
+        }
 
-			default:
-				break;
-
-			case (GDT_Byte):
-				if( VSIFWriteL( (GByte *)&fVal, sizeof(GByte), 1, fp ) != 1 )
-				{
-					VSIFCloseL( fp );
-					CPLError( CE_Failure, CPLE_FileIO,
-						  "Unable to write grid cell.  Disk full?\n" );
-					return NULL;
-				}
-				break;
-			case (GDT_UInt16):
-				if( VSIFWriteL( (GUInt16 *)&fVal, sizeof(GUInt16), 1, fp ) != 1 )
-				{
-					VSIFCloseL( fp );
-					CPLError( CE_Failure, CPLE_FileIO,
-						  "Unable to write grid cell.  Disk full?\n" );
-					return NULL;
-				}
-				break;
-			case (GDT_Int16):
-				if( VSIFWriteL( (GInt16 *)&fVal, sizeof(GInt16), 1, fp ) != 1 )
-				{
-					VSIFCloseL( fp );
-					CPLError( CE_Failure, CPLE_FileIO,
-						  "Unable to write grid cell.  Disk full?\n" );
-					return NULL;
-				}
-				break;
-			case (GDT_UInt32):
-				if( VSIFWriteL( (GUInt32 *)&fVal, sizeof(GUInt32), 1, fp ) != 1 )
-				{
-					VSIFCloseL( fp );
-					CPLError( CE_Failure, CPLE_FileIO,
-						  "Unable to write grid cell.  Disk full?\n" );
-					return NULL;
-				}
-				break;
-			case (GDT_Int32):
-				if( VSIFWriteL( (GInt32 *)&fVal, sizeof(GInt32), 1, fp ) != 1 )
-				{
-					VSIFCloseL( fp );
-					CPLError( CE_Failure, CPLE_FileIO,
-						  "Unable to write grid cell.  Disk full?\n" );
-					return NULL;
-				}
-				break;
-			case (GDT_Float32):
-				if( VSIFWriteL( (float *)&fVal, sizeof(float), 1, fp ) != 1 )
-				{
-					VSIFCloseL( fp );
-					CPLError( CE_Failure, CPLE_FileIO,
-						  "Unable to write grid cell.  Disk full?\n" );
-					return NULL;
-				}
-				break;
-			case (GDT_Float64):
-				if( VSIFWriteL( (double *)&fVal, sizeof(double), 1, fp ) != 1 )
-				{
-					VSIFCloseL( fp );
-					CPLError( CE_Failure, CPLE_FileIO,
-						  "Unable to write grid cell.  Disk full?\n" );
-					return NULL;
-				}
-				break;
-			}
-		}
+        for( int iRow = 0; iRow < nYSize; iRow++ )
+        {
+            if( VSIFWriteL( pabyNoDataBuf, nDataTypeSize, nXSize, fp ) != (unsigned)nXSize )
+            {
+                VSIFCloseL( fp );
+                VSIFree(pabyNoDataBuf);
+                CPLError( CE_Failure, CPLE_FileIO,
+                      "Unable to write grid cell.  Disk full?\n" );
+                return NULL;
+            }
+        }
+        
+        VSIFree(pabyNoDataBuf);
     }
 
     VSIFCloseL( fp );
@@ -922,507 +894,38 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
-    if( poSrcBand->GetXSize() > INT_MAX || poSrcBand->GetYSize() > INT_MAX )
-    {
-		CPLError( CE_Failure, CPLE_IllegalArg,
-			  "Unable to create grid, SAGA Binary Grid format "
-			  "only supports sizes up to %dx%d.  %dx%d not supported.\n",
-			  INT_MAX, INT_MAX,
-			  poSrcBand->GetXSize(), poSrcBand->GetYSize() );
-
-		return NULL;
-    }
-
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated\n" );
+    
+    char** papszCreateOptions = NULL;
+    papszCreateOptions = CSLSetNameValue(papszCreateOptions, "FILL_NODATA", "NO");
+    GDALDataset* poDstDS =
+            Create(pszFilename, poSrcBand->GetXSize(), poSrcBand->GetYSize(),
+                     1, poSrcBand->GetRasterDataType(), papszCreateOptions);
+    CSLDestroy(papszCreateOptions);
+    
+    if (poDstDS == NULL)
         return NULL;
-    }
-
-    FILE    *fp = VSIFOpenL( pszFilename, "w+b" );
-
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file '%s' failed.\n",
-                  pszFilename );
-        return NULL;
-    }
-
-    GInt16  nXSize = poSrcBand->GetXSize();
-    GInt16  nYSize = poSrcBand->GetYSize();
-    double  adfGeoTransform[6];
-
-    poSrcDS->GetGeoTransform( adfGeoTransform );
-
-    double dfMinX = adfGeoTransform[0] + adfGeoTransform[1] / 2;
-    //double dfMaxX = adfGeoTransform[1] * (nXSize - 0.5) + adfGeoTransform[0];
-    double dfMinY = adfGeoTransform[5] * (nYSize - 0.5) + adfGeoTransform[3];
-    //double dfMaxY = adfGeoTransform[3] + adfGeoTransform[5] / 2;
 
 	/* -------------------------------------------------------------------- */
 	/*      Copy band data.	                                                */
 	/* -------------------------------------------------------------------- */
 
 	CPLErr	eErr;
-
-	switch (poSrcBand->GetRasterDataType())	/* GDT_Byte, GDT_UInt16  */
-	{		/* GDT_Int16, GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64 */
-
-	default:
-		break;
-
-	case (GDT_Byte):
-		{
-		GByte	*pfData = (GByte *)VSIMalloc2( nXSize, sizeof( GByte ) );
-		if( pfData == NULL )
-		{
-			VSIFCloseL( fp );
-			CPLError( CE_Failure, CPLE_OutOfMemory,
-				  "Unable to create copy, unable to allocate line buffer.\n" );
-			return NULL;
-		}
-
-		int		bSrcHasNDValue;
-		GByte	fSrcNoDataValue = (GByte)poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-
-		for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
-		{
-			eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
-							nXSize, 1, pfData,
-							nXSize, 1, GDT_Byte, 0, 0 );
-
-			if( eErr != CE_None )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				return NULL;
-			}
-
-			for( int iCol=0; iCol<nXSize; iCol++ )
-			{
-				if( bSrcHasNDValue && pfData[iCol] == fSrcNoDataValue )
-					pfData[iCol] = fSrcNoDataValue;
-
-				//CPL_LSBPTR32( pfData+iCol );
-			}
-
-			if( VSIFWriteL( (void *)pfData, sizeof(GByte), nXSize,
-					fp ) != static_cast<unsigned>(nXSize) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_FileIO,
-					  "Unable to write grid row. Disk full?\n" );
-				return NULL;
-			}
-
-			if( !pfnProgress( static_cast<double>(iRow)/nYSize,
-					  NULL, pProgressData ) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-				return NULL;
-			}
-		}
-		VSIFree( pfData );
-		break;
-		}
-
-		case (GDT_UInt16):
-		{
-		GUInt16	*pfData = (GUInt16 *)VSIMalloc2( nXSize, sizeof( GUInt16 ) );
-		if( pfData == NULL )
-		{
-			VSIFCloseL( fp );
-			CPLError( CE_Failure, CPLE_OutOfMemory,
-				  "Unable to create copy, unable to allocate line buffer.\n" );
-			return NULL;
-		}
-
-		int		bSrcHasNDValue;
-		GUInt16	fSrcNoDataValue = (GUInt16)poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-
-		for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
-		{
-			eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
-							nXSize, 1, pfData,
-							nXSize, 1, GDT_UInt16, 0, 0 );
-
-			if( eErr != CE_None )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				return NULL;
-			}
-
-			for( int iCol=0; iCol<nXSize; iCol++ )
-			{
-				if( bSrcHasNDValue && pfData[iCol] == fSrcNoDataValue )
-					pfData[iCol] = fSrcNoDataValue;
-
-				CPL_LSBPTR16( pfData+iCol );
-			}
-
-			if( VSIFWriteL( (void *)pfData, sizeof(GUInt16), nXSize,
-					fp ) != static_cast<unsigned>(nXSize) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_FileIO,
-					  "Unable to write grid row. Disk full?\n" );
-				return NULL;
-			}
-
-			if( !pfnProgress( static_cast<double>(iRow)/nYSize,
-					  NULL, pProgressData ) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-				return NULL;
-			}
-		}
-		VSIFree( pfData );
-		break;
-		}
-
-	case (GDT_Int16):
-		{
-		GInt16	*pfData = (GInt16 *)VSIMalloc2( nXSize, sizeof( GInt16 ) );
-		if( pfData == NULL )
-		{
-			VSIFCloseL( fp );
-			CPLError( CE_Failure, CPLE_OutOfMemory,
-				  "Unable to create copy, unable to allocate line buffer.\n" );
-			return NULL;
-		}
-
-		int		bSrcHasNDValue;
-		GInt16	fSrcNoDataValue = (GInt16)poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-
-		for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
-		{
-			eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
-							nXSize, 1, pfData,
-							nXSize, 1, GDT_Int16, 0, 0 );
-
-			if( eErr != CE_None )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				return NULL;
-			}
-
-			for( int iCol=0; iCol<nXSize; iCol++ )
-			{
-				if( bSrcHasNDValue && pfData[iCol] == fSrcNoDataValue )
-					pfData[iCol] = fSrcNoDataValue;
-
-				CPL_LSBPTR16( pfData+iCol );
-			}
-
-			if( VSIFWriteL( (void *)pfData, sizeof(GInt16), nXSize,
-					fp ) != static_cast<unsigned>(nXSize) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_FileIO,
-					  "Unable to write grid row. Disk full?\n" );
-				return NULL;
-			}
-
-			if( !pfnProgress( static_cast<double>(iRow)/nYSize,
-					  NULL, pProgressData ) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-				return NULL;
-			}
-		}
-		VSIFree( pfData );
-		break;
-		}
-
-	case (GDT_UInt32):
-		{
-		GUInt32	*pfData = (GUInt32 *)VSIMalloc2( nXSize, sizeof( GUInt32 ) );
-		if( pfData == NULL )
-		{
-			VSIFCloseL( fp );
-			CPLError( CE_Failure, CPLE_OutOfMemory,
-				  "Unable to create copy, unable to allocate line buffer.\n" );
-			return NULL;
-		}
-
-		int		bSrcHasNDValue;
-		GUInt32	fSrcNoDataValue = (GUInt32)poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-
-		for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
-		{
-			eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
-							nXSize, 1, pfData,
-							nXSize, 1, GDT_UInt32, 0, 0 );
-
-			if( eErr != CE_None )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				return NULL;
-			}
-
-			for( int iCol=0; iCol<nXSize; iCol++ )
-			{
-				if( bSrcHasNDValue && pfData[iCol] == fSrcNoDataValue )
-					pfData[iCol] = fSrcNoDataValue;
-
-				CPL_LSBPTR32( pfData+iCol );
-			}
-
-			if( VSIFWriteL( (void *)pfData, sizeof(GUInt32), nXSize,
-					fp ) != static_cast<unsigned>(nXSize) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_FileIO,
-					  "Unable to write grid row. Disk full?\n" );
-				return NULL;
-			}
-
-			if( !pfnProgress( static_cast<double>(iRow)/nYSize,
-					  NULL, pProgressData ) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-				return NULL;
-			}
-		}
-		VSIFree( pfData );
-		break;
-		}
-
-	case (GDT_Int32):
-		{
-		GInt32	*pfData = (GInt32 *)VSIMalloc2( nXSize, sizeof( GInt32 ) );
-		if( pfData == NULL )
-		{
-			VSIFCloseL( fp );
-			CPLError( CE_Failure, CPLE_OutOfMemory,
-				  "Unable to create copy, unable to allocate line buffer.\n" );
-			return NULL;
-		}
-
-		int     bSrcHasNDValue;
-		GInt32   fSrcNoDataValue = (GInt32)poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-
-		for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
-		{
-			eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
-							nXSize, 1, pfData,
-							nXSize, 1, GDT_Int32, 0, 0 );
-
-			if( eErr != CE_None )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				return NULL;
-			}
-
-			for( int iCol=0; iCol<nXSize; iCol++ )
-			{
-				if( bSrcHasNDValue && pfData[iCol] == fSrcNoDataValue )
-					pfData[iCol] = fSrcNoDataValue;
-
-				CPL_LSBPTR32( pfData+iCol );
-			}
-
-			if( VSIFWriteL( (void *)pfData, sizeof(GInt32), nXSize,
-					fp ) != static_cast<unsigned>(nXSize) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_FileIO,
-					  "Unable to write grid row. Disk full?\n" );
-				return NULL;
-			}
-
-			if( !pfnProgress( static_cast<double>(iRow)/nYSize,
-					  NULL, pProgressData ) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-				return NULL;
-			}
-		}
-		VSIFree( pfData );
-		break;
-		}
-
-	case GDT_Float32:
-		{
-		float *pfData = (float *)VSIMalloc2( nXSize, sizeof( float ) );
-		if( pfData == NULL )
-		{
-			VSIFCloseL( fp );
-			CPLError( CE_Failure, CPLE_OutOfMemory,
-				  "Unable to create copy, unable to allocate line buffer.\n" );
-			return NULL;
-		}
-
-		int     bSrcHasNDValue;
-		float   fSrcNoDataValue = (float)poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-
-		for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
-		{
-			eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
-							nXSize, 1, pfData,
-							nXSize, 1, GDT_Float32, 0, 0 );
-
-			if( eErr != CE_None )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				return NULL;
-			}
-
-			for( int iCol=0; iCol<nXSize; iCol++ )
-			{
-				if( bSrcHasNDValue && pfData[iCol] == fSrcNoDataValue )
-					pfData[iCol] = fSrcNoDataValue;
-
-				CPL_LSBPTR32( pfData+iCol );
-			}
-
-			if( VSIFWriteL( (void *)pfData, sizeof(float), nXSize,
-					fp ) != static_cast<unsigned>(nXSize) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_FileIO,
-					  "Unable to write grid row. Disk full?\n" );
-				return NULL;
-			}
-
-			if( !pfnProgress( static_cast<double>(iRow)/nYSize,
-					  NULL, pProgressData ) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-				return NULL;
-			}
-		}
-		VSIFree( pfData );
-		break;
-		}
-
-		case GDT_Float64:
-		{
-		double *pfData = (double *)VSIMalloc2( nXSize, sizeof( double ) );
-		if( pfData == NULL )
-		{
-			VSIFCloseL( fp );
-			CPLError( CE_Failure, CPLE_OutOfMemory,
-				  "Unable to create copy, unable to allocate line buffer.\n" );
-			return NULL;
-		}
-
-		int     bSrcHasNDValue;
-		double  fSrcNoDataValue = (double)poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-
-		for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
-		{
-			eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
-							nXSize, 1, pfData,
-							nXSize, 1, GDT_Float64, 0, 0 );
-
-			if( eErr != CE_None )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				return NULL;
-			}
-
-			for( int iCol=0; iCol<nXSize; iCol++ )
-			{
-				if( bSrcHasNDValue && pfData[iCol] == fSrcNoDataValue )
-					pfData[iCol] = fSrcNoDataValue;
-
-				CPL_LSBPTR64( pfData+iCol );
-			}
-
-			if( VSIFWriteL( (void *)pfData, sizeof(double), nXSize,
-					fp ) != static_cast<unsigned>(nXSize) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_FileIO,
-					  "Unable to write grid row. Disk full?\n" );
-				return NULL;
-			}
-
-			if( !pfnProgress( static_cast<double>(iRow)/nYSize,
-					  NULL, pProgressData ) )
-			{
-				VSIFCloseL( fp );
-				VSIFree( pfData );
-				CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-				return NULL;
-			}
-		}
-		VSIFree( pfData );
-		break;
-		}
-	}
-
-	char *pszHdrFilename = CPLStrdup( CPLResetExtension( pszFilename, "sgrd" ) );
-
-	eErr = WriteHeader( pszHdrFilename, poSrcBand->GetRasterDataType(),
-						nXSize, nYSize,
-						dfMinX, dfMinY, adfGeoTransform[1],
-						poSrcBand->GetNoDataValue(), 1.0, false );
-
-	VSIFCloseL( fp );
-    CPLFree( pszHdrFilename );
-
-	if( eErr != CE_None )
+    
+    eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+                                       (GDALDatasetH) poDstDS,
+                                       NULL,
+                                       pfnProgress, pProgressData );
+                                       
+    if (eErr == CE_Failure)
+    {
+        delete poDstDS;
         return NULL;
-
-
-    GDALPamDataset *poDstDS = (GDALPamDataset *)GDALOpen( pszFilename,
-							  GA_Update );
-    if( poDstDS == NULL )
-    {
-		VSIUnlink( pszFilename );
-		CPLError( CE_Failure, CPLE_FileIO,
-			  "Unable to open copy of dataset.\n" );
-		return NULL;
-    }
-    else if( dynamic_cast<SAGADataset *>(poDstDS) == NULL )
-    {
-		VSIUnlink( pszFilename );
-		delete poDstDS;
-		CPLError( CE_Failure, CPLE_FileIO,
-			  "Copy dataset not opened as SAGA Binary Grid!?\n" );
-		return NULL;
     }
 
-    GDALRasterBand *poDstBand = poSrcDS->GetRasterBand(1);
-    if( poDstBand == NULL )
-    {
-		VSIUnlink( pszFilename );
-		delete poDstDS;
-		CPLError( CE_Failure, CPLE_FileIO,
-			  "Unable to open copy of raster band?\n" );
-		return NULL;
-    }
+    double  adfGeoTransform[6];
 
-	if( !bStrict )
-		CPLPopErrorHandler();
+    poSrcDS->GetGeoTransform( adfGeoTransform );
+    poDstDS->SetGeoTransform( adfGeoTransform );
 
     return poDstDS;
 }
