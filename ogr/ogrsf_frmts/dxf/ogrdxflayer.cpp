@@ -585,7 +585,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     if( dfHeight != 0.0 )
         osStyle += CPLString().Printf(",s:%.3gg", dfHeight);
 
-    if( nAttachmentPoint != -1 )
+    if( nAttachmentPoint >= 0 && nAttachmentPoint <= 9 )
     {
         const static int anAttachmentMap[10] = 
             { -1, 7, 8, 9, 4, 5, 6, 1, 2, 3 };
