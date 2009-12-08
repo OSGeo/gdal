@@ -710,8 +710,17 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     }
 
     pszTmp = CPLStrdup( pszNewFieldName );
-    while( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 )
-        sprintf( pszNewFieldName, "%.7s_%.2d", pszTmp, nRenameNum++ );
+    while( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 && nRenameNum < 10 )
+        sprintf( pszNewFieldName, "%.8s_%.1d", pszTmp, nRenameNum++ );
+    while( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 && nRenameNum < 100 )
+        sprintf( pszNewFieldName, "%.8s%.2d", pszTmp, nRenameNum++ );
+    if( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Too many field names like '%s' when truncated to 10 letters "
+                  "for Shapefile format.",
+                  poField->GetNameRef() );//One hundred similar field names!!?
+    }
 
     if( !EQUAL(poField->GetNameRef(),pszNewFieldName) )
         CPLError( CE_Warning, CPLE_NotSupported,
