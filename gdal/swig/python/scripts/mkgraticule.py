@@ -65,7 +65,7 @@ def float_range(*args):
 def Usage():
     print ('Usage: mkgraticule [-connected] [-s stepsize] [-substep substepsize]')
     print ('         [-t_srs srs] [-range xmin ymin xmax ymax] outfile')
-    print ()
+    print('')
     sys.exit(1)
 
 #############################################################################
