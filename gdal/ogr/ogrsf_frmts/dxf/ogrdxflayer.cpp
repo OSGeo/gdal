@@ -497,11 +497,12 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 /*      Format the style string.                                        */
 /* -------------------------------------------------------------------- */
     CPLString osStyle;
+    const unsigned char *pabyDXFColors = OGRDXFDriver::GetDXFColorTable();
 
     osStyle.Printf( "PEN(c:#%02x%02x%02x", 
-                    MAX(0,MIN(255,(int) (dxfColors[nColor][0] * 255))), 
-                    MAX(0,MIN(255,(int) (dxfColors[nColor][1] * 255))), 
-                    MAX(0,MIN(255,(int) (dxfColors[nColor][2] * 255))) );
+                    pabyDXFColors[nColor*3+0],
+                    pabyDXFColors[nColor*3+1],
+                    pabyDXFColors[nColor*3+2] );
 
     if( dfWeight > 0.0 )
         osStyle += CPLString().Printf( ",w:%.2gmm", dfWeight );

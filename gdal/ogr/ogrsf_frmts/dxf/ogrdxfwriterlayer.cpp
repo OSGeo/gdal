@@ -31,6 +31,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_featurestyle.h"
 
 CPL_CVSID("$Id$");
 
@@ -42,6 +43,8 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( FILE *fp )
 
 {
     this->fp = fp;
+
+    nNextFID = 80;
 
     poFeatureDefn = new OGRFeatureDefn( "entities" );
     poFeatureDefn->Reference();
@@ -72,6 +75,8 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( FILE *fp )
 OGRDXFWriterLayer::~OGRDXFWriterLayer()
 
 {
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -168,6 +173,24 @@ int OGRDXFWriterLayer::WriteValue( int nCode, double dfValue )
 OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Write out an entity id.  I'm not sure why this is critical,     */
+/*      but it seems that VoloView will just quietly fail to open       */
+/*      dxf files without entity ids set on most/all entities.          */
+/*      Also, for reasons I don't understand these ids seem to have     */
+/*      to start somewhere around 0x50 hex (80 decimal).                */
+/* -------------------------------------------------------------------- */
+    char szEntityID[16];
+
+    sprintf( szEntityID, "%X", nNextFID++ );
+    WriteValue( 5, szEntityID );
+
+/* -------------------------------------------------------------------- */
+/*      For now we assign everything to the default layer - layer       */
+/*      "0".                                                            */
+/* -------------------------------------------------------------------- */
+    WriteValue( 8, "0" ); // layer 
+
     return OGRERR_NONE;
 }
 
@@ -197,17 +220,114 @@ OGRErr OGRDXFWriterLayer::WritePOINT( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                          WriteLWPOLYLINE()                           */
+/*                           WritePOLYLINE()                            */
 /************************************************************************/
 
-OGRErr OGRDXFWriterLayer::WriteLWPOLYLINE( OGRFeature *poFeature )
+OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
+                                         OGRGeometry *poGeom )
 
 {
+/* -------------------------------------------------------------------- */
+/*      For now we handle multilinestrings by writing a series of       */
+/*      entities.                                                       */
+/* -------------------------------------------------------------------- */
+    if( poGeom == NULL )
+        poGeom = poFeature->GetGeometryRef();
+
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon 
+        || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
+    {
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+        int iGeom;
+        OGRErr eErr = OGRERR_NONE;
+
+        for( iGeom = 0; 
+             eErr == OGRERR_NONE && iGeom < poGC->getNumGeometries(); 
+             iGeom++ )
+        {
+            eErr = WritePOLYLINE( poFeature, poGC->getGeometryRef( iGeom ) );
+        }
+
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygons are written with on entity per ring.                   */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+    {
+        OGRPolygon *poPoly = (OGRPolygon *) poGeom;
+        int iGeom;
+        OGRErr eErr;
+
+        eErr = WritePOLYLINE( poFeature, poPoly->getExteriorRing() );
+        for( iGeom = 0; 
+             eErr == OGRERR_NONE && iGeom < poPoly->getNumInteriorRings(); 
+             iGeom++ )
+        {
+            eErr = WritePOLYLINE( poFeature, poPoly->getInteriorRing(iGeom) );
+        }
+
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we now have a geometry we can work with?                     */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString 
+        && wkbFlatten(poGeom->getGeometryType()) != wkbLinearRing )
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+    OGRLineString *poLS = (OGRLineString *) poGeom;
+
+/* -------------------------------------------------------------------- */
+/*      Write as a lightweight polygon.                                 */
+/* -------------------------------------------------------------------- */
     WriteValue( 0, "LWPOLYLINE" );
     WriteCore( poFeature );
+    WriteValue( 100, "AcDbEntity" );
+    WriteValue( 100, "AcDbPolyline" );
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing )
+        WriteValue( 70, 1 );
+    else
+        WriteValue( 70, 0 );
+    WriteValue( 90, poLS->getNumPoints() );
 
-    OGRLineString *poLS = (OGRLineString *) poFeature->GetGeometryRef();
+/* -------------------------------------------------------------------- */
+/*      Do we have styling information?                                 */
+/* -------------------------------------------------------------------- */
+    OGRStyleTool *poTool = NULL;
+    OGRStyleMgr oSM;
 
+    if( poFeature->GetStyleString() != NULL )
+    {
+        oSM.InitFromFeature( poFeature );
+
+        if( oSM.GetPartCount() > 0 )
+            poTool = oSM.GetPart(0);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle a PEN tool to control drawing color and width.           */
+/*      Perhaps one day also dottedness, etc.                           */
+/* -------------------------------------------------------------------- */
+    if( poTool && poTool->GetType() == OGRSTCPen )
+    {
+        OGRStylePen *poPen = (OGRStylePen *) poTool;
+        GBool  bDefault;
+
+        if( poPen->Color(bDefault) != NULL && !bDefault )
+            WriteValue( 62, ColorStringToDXFColor( poPen->Color(bDefault) ) );
+        
+        double dfWidthInMM = poPen->Width(bDefault);
+
+        if( !bDefault )
+            WriteValue( 370, (int) floor(dfWidthInMM * 100 + 0.5) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the vertices                                              */
+/* -------------------------------------------------------------------- */
     int iVert;
 
     for( iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
@@ -216,16 +336,51 @@ OGRErr OGRDXFWriterLayer::WriteLWPOLYLINE( OGRFeature *poFeature )
         if( !WriteValue( 20, poLS->getY(iVert) ) ) 
             return OGRERR_FAILURE;
 
-#ifdef notdef
         if( poLS->getGeometryType() == wkbLineString25D )
         {
             if( !WriteValue( 30, poLS->getZ(iVert) ) )
                 return OGRERR_FAILURE;
         }
-#endif
     }
     
     return OGRERR_NONE;
+
+#ifdef notdef
+/* -------------------------------------------------------------------- */
+/*      Alternate unmaintained implmenentation as a polyline entity.    */
+/* -------------------------------------------------------------------- */
+    WriteValue( 0, "POLYLINE" );
+    WriteCore( poFeature );
+    WriteValue( 100, "AcDbEntity" );
+    WriteValue( 100, "AcDbPolyline" );
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing )
+        WriteValue( 70, 1 );
+    else
+        WriteValue( 70, 0 );
+    WriteValue( 66, "1" );
+
+    int iVert;
+
+    for( iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
+    {
+        WriteValue( 0, "VERTEX" );
+        WriteValue( 8, "0" );
+        WriteValue( 10, poLS->getX(iVert) );
+        if( !WriteValue( 20, poLS->getY(iVert) ) ) 
+            return OGRERR_FAILURE;
+
+        if( poLS->getGeometryType() == wkbLineString25D )
+        {
+            if( !WriteValue( 30, poLS->getZ(iVert) ) )
+                return OGRERR_FAILURE;
+        }
+    }
+
+    WriteValue( 0, "SEQEND" );
+    WriteValue( 8, "0" );
+    
+    return OGRERR_NONE;
+#endif
 }
 
 /************************************************************************/
@@ -243,8 +398,11 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
 
     if( eGType == wkbPoint )
         return WritePOINT( poFeature );
-    else if( eGType == wkbLineString )
-        return WriteLWPOLYLINE( poFeature );
+    else if( eGType == wkbLineString 
+             || eGType == wkbMultiLineString 
+             || eGType == wkbPolygon 
+             || eGType == wkbMultiPolygon )
+        return WritePOLYLINE( poFeature );
     else 
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -256,3 +414,47 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                       ColorStringToDXFColor()                        */
+/************************************************************************/
+
+int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Parse the RGB string.                                           */
+/* -------------------------------------------------------------------- */
+    if( pszRGB == NULL )
+        return -1;
+
+    int nRed, nGreen, nBlue, nTransparency = 255;
+
+    int nCount  = sscanf(pszRGB,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue, 
+                         &nTransparency);
+   
+    if (nCount < 3 )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Find near color in DXF palette.                                 */
+/* -------------------------------------------------------------------- */
+    const unsigned char *pabyDXFColors = OGRDXFDriver::GetDXFColorTable();
+    int i;
+    int nMinDist = 768;
+    int nBestColor = -1;
+
+    for( i = 1; i < 256; i++ )
+    {
+        int nDist = ABS(nRed - pabyDXFColors[i*3+0])
+            + ABS(nGreen - pabyDXFColors[i*3+1])
+            + ABS(nBlue  - pabyDXFColors[i*3+2]);
+
+        if( nDist < nMinDist )
+        {
+            nBestColor = i;
+            nMinDist = nDist;
+        }
+    }
+    
+    return nBestColor;
+}

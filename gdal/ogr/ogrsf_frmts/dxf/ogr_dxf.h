@@ -181,6 +181,7 @@ class OGRDXFWriterLayer : public OGRLayer
 {
     FILE               *fp;
     OGRFeatureDefn     *poFeatureDefn;
+    int                 nNextFID;
 
     int                 WriteValue( int nCode, const char *pszValue );
     int                 WriteValue( int nCode, int nValue );
@@ -188,7 +189,9 @@ class OGRDXFWriterLayer : public OGRLayer
 
     OGRErr              WriteCore( OGRFeature* );
     OGRErr              WritePOINT( OGRFeature* );
-    OGRErr              WriteLWPOLYLINE( OGRFeature* );
+    OGRErr              WritePOLYLINE( OGRFeature*, OGRGeometry* = NULL );
+
+    int                 ColorStringToDXFColor( const char * );
 
   public:
     OGRDXFWriterLayer( FILE *fp );
@@ -245,7 +248,9 @@ class OGRDXFDriver : public OGRSFDriver
 {
   public:
                 ~OGRDXFDriver();
-                
+
+    static const unsigned char *GetDXFColorTable();
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
     int         TestCapability( const char * );
