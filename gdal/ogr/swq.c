@@ -23,6 +23,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "cpl_conv.h"
 #include "cpl_multiproc.h"
 #include "swq.h"
 
@@ -113,7 +114,7 @@ char *swq_get_errbuf()
     char *pszStaticResult = (char *) CPLGetTLS( CTLS_SWQ_ERRBUF );
     if( pszStaticResult == NULL )
     {
-        pszStaticResult = (char *) swq_malloc(SWQ_SIZEOF_ERRBUF);
+        pszStaticResult = (char *) CPLMalloc(SWQ_SIZEOF_ERRBUF);
         CPLSetTLS( CTLS_SWQ_ERRBUF, pszStaticResult, TRUE );
     }
 
