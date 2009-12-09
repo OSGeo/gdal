@@ -271,6 +271,7 @@ class CPL_DLL OGRFeature
     void                DumpReadable( FILE *, char** papszOptions = NULL );
 
     OGRErr              SetFrom( OGRFeature *, int = TRUE);
+    OGRErr              SetFrom( OGRFeature *, int *, int = TRUE );
 
     OGRErr              RemapFields( OGRFeatureDefn *poNewDefn, 
                                      int *panRemapSource );

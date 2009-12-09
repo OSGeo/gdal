@@ -1150,7 +1150,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /*      the selected fields, and in the order that they were            */
 /*      selected.                                                       */
 /* -------------------------------------------------------------------- */
-    int         iField;
+    int         iField = poFDefn->GetFieldCount(), *panMap;
+
+    // Initialize the index-to-index map to -1's
+    panMap = (int *) VSIMalloc( sizeof(int) * iField++ );
+    do{
+        panMap[--iField] = -1;
+    }while( iField );
 
     if (papszSelFields && !bAppend )
     {
@@ -1170,6 +1176,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 }
                 else
                     poDstLayer->CreateField( poFDefn->GetFieldDefn(iSrcField) );
+
+                panMap[iSrcField] = iField;
             }
             else
             {
@@ -1195,6 +1203,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             }
             else
                 poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
+
+            panMap[iField] = iField;
         }
     }
     
@@ -1238,7 +1248,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         CPLErrorReset();
         poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
 
-        if( poDstFeature->SetFrom( poFeature, TRUE ) != OGRERR_NONE )
+        if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
         {
             if( nGroupTransactions )
                 poDstLayer->CommitTransaction();
