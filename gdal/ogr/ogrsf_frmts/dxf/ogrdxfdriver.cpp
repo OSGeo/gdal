@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrcsvdriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Implements OGRDXFDriver.
@@ -30,7 +30,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrcsvdriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ~OGRDXFDriver()                          */
@@ -70,17 +70,39 @@ OGRDataSource *OGRDXFDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRDXFDriver::CreateDataSource( const char * pszName,
+                                               char **papszOptions )
+
+{
+    OGRDXFWriterDS *poDS = new OGRDXFWriterDS();
+
+    if( poDS->Open( pszName, papszOptions ) )
+        return poDS;
+    else
+    {
+        delete poDS;
+        return NULL;
+    }
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRDXFDriver::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
-/*                         RegisterOGRDXF()                          */
+/*                           RegisterOGRDXF()                           */
 /************************************************************************/
 
 void RegisterOGRDXF()
