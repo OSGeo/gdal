@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrcsvdatasource.cpp 17806 2009-10-13 17:27:54Z rouault $
+ * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Implements OGRDXFDataSource class
@@ -30,9 +30,8 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "cpl_csv.h"
 
-CPL_CVSID("$Id: ogrcsvdatasource.cpp 17806 2009-10-13 17:27:54Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          OGRDXFDataSource()                          */

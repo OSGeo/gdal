@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrmemlayer.cpp 17807 2009-10-13 18:18:09Z rouault $
+ * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Implements OGRDXFLayer class.
@@ -30,7 +30,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrmemlayer.cpp 17807 2009-10-13 18:18:09Z rouault $");
+CPL_CVSID("$Id$");
 
 #ifndef PI
 #define PI  3.14159265358979323846
