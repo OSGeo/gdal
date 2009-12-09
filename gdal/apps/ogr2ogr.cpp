@@ -1150,13 +1150,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /*      the selected fields, and in the order that they were            */
 /*      selected.                                                       */
 /* -------------------------------------------------------------------- */
-    int         iField = poFDefn->GetFieldCount(), *panMap;
+    int         nSrcFieldCount = poFDefn->GetFieldCount();
+    int         iField, *panMap;
 
     // Initialize the index-to-index map to -1's
-    panMap = (int *) VSIMalloc( sizeof(int) * iField++ );
-    do{
-        panMap[--iField] = -1;
-    }while( iField );
+    panMap = (int *) VSIMalloc( sizeof(int) * nSrcFieldCount );
+    for( iField=0; iField < nSrcFieldCount; iField++)
+        panMap[iField] = -1;
 
     if (papszSelFields && !bAppend )
     {
@@ -1184,7 +1184,10 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 fprintf( stderr, "Field '%s' not found in source layer.\n", 
                         papszSelFields[iField] );
                 if( !bSkipFailures )
+                {
+                    VSIFree(panMap);
                     return FALSE;
+                }
             }
         }
     }
@@ -1259,6 +1262,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             
             OGRFeature::DestroyFeature( poFeature );
             OGRFeature::DestroyFeature( poDstFeature );
+            VSIFree(panMap);
             return FALSE;
         }
 
@@ -1298,6 +1302,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     {
                         OGRFeature::DestroyFeature( poFeature );
                         OGRFeature::DestroyFeature( poDstFeature );
+                        VSIFree(panMap);
                         return FALSE;
                     }
                 }
@@ -1347,6 +1352,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
             OGRFeature::DestroyFeature( poFeature );
             OGRFeature::DestroyFeature( poDstFeature );
+            VSIFree(panMap);
             return FALSE;
         }
 
@@ -1367,6 +1373,8 @@ end_loop:
 /*      Cleaning                                                        */
 /* -------------------------------------------------------------------- */
     OGRCoordinateTransformation::DestroyCT(poCT);
+    
+    VSIFree(panMap);
 
     return TRUE;
 }
