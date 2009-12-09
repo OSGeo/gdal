@@ -1,5 +1,6 @@
 OBJ     =       ogrdxfdriver.obj ogrdxfdatasource.obj ogrdxflayer.obj \
-		ogrdxf_diskio.obj ogrdxf_blockmap.obj ogrdxf_dimension.obj
+		ogrdxf_diskio.obj ogrdxf_blockmap.obj ogrdxf_dimension.obj \
+		ogrdxfwriterds.obj ogrdxfwriterlayer.obj
         
 EXTRAFLAGS =	-I.. -I..\..
 
