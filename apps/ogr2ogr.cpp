@@ -1163,7 +1163,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
     if (papszSelFields && !bAppend )
     {
-        int         nDstFieldCount = 0;
+        int         nDstFieldCount = poDstFDefn->GetFieldCount();
         for( iField=0; papszSelFields[iField] != NULL; iField++)
         {
             int iSrcField = poSrcFDefn->GetFieldIndex(papszSelFields[iField]);
@@ -1179,8 +1179,14 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 {
                     oFieldDefn.SetType(OFTString);
                 }
-
-                if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
+                
+                /* The field may have been already created at layer creation */
+                int iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
+                if (iDstField >= 0)
+                {
+                    panMap[iSrcField] = iDstField;
+                }
+                else if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
                 {
                     /* Sanity check : if it fails, the driver is buggy */
                     if (poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
@@ -1210,7 +1216,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     }
     else if( !bAppend )
     {
-        int         nDstFieldCount = 0;
+        int         nDstFieldCount = poDstFDefn->GetFieldCount();
         for( iField = 0; iField < nSrcFieldCount; iField++ )
         {
             OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
@@ -1224,7 +1230,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 oFieldDefn.SetType(OFTString);
             }
 
-            if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
+            /* The field may have been already created at layer creation */
+            int iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
+            if (iDstField >= 0)
+            {
+                panMap[iField] = iDstField;
+            }
+            else if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
             {
                 /* Sanity check : if it fails, the driver is buggy */
                 if (poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
