@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_csv.h 17495 2009-08-02 11:44:13Z rouault $
+ * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Definition of classes for OGR .dxf driver.
@@ -172,6 +172,72 @@ class OGRDXFDataSource : public OGRDataSource
 };
 
 /************************************************************************/
+/*                          OGRDXFWriterLayer                           */
+/************************************************************************/
+
+class OGRDXFWriterDS;
+
+class OGRDXFWriterLayer : public OGRLayer
+{
+    FILE               *fp;
+    OGRFeatureDefn     *poFeatureDefn;
+
+    int                 WriteValue( int nCode, const char *pszValue );
+    int                 WriteValue( int nCode, int nValue );
+    int                 WriteValue( int nCode, double dfValue );
+
+    OGRErr              WriteCore( OGRFeature* );
+    OGRErr              WritePOINT( OGRFeature* );
+    OGRErr              WriteLWPOLYLINE( OGRFeature* );
+
+  public:
+    OGRDXFWriterLayer( FILE *fp );
+    ~OGRDXFWriterLayer();
+
+    void                ResetReading() {}
+    OGRFeature         *GetNextFeature() { return NULL; }
+
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+
+    int                 TestCapability( const char * );
+    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+};
+
+/************************************************************************/
+/*                           OGRDXFWriterDS                             */
+/************************************************************************/
+
+class OGRDXFWriterDS : public OGRDataSource
+{
+    CPLString           osName;
+    OGRDXFWriterLayer  *poLayer;
+    FILE               *fp;
+    CPLString           osTrailerFile;
+
+  public:
+                        OGRDXFWriterDS();
+                        ~OGRDXFWriterDS();
+
+    int                 Open( const char * pszFilename, 
+                              char **papszOptions );
+    
+    const char          *GetName() { return osName; }
+
+    int                 GetLayerCount();
+    OGRLayer            *GetLayer( int );
+
+    int                 TestCapability( const char * );
+
+    OGRLayer           *CreateLayer( const char *pszName, 
+                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRwkbGeometryType eGType = wkbUnknown,
+                                     char ** papszOptions = NULL );
+
+};
+
+/************************************************************************/
 /*                             OGRDXFDriver                             */
 /************************************************************************/
 
@@ -183,6 +249,9 @@ class OGRDXFDriver : public OGRSFDriver
     const char *GetName();
     OGRDataSource *Open( const char *, int );
     int         TestCapability( const char * );
+
+    OGRDataSource      *CreateDataSource( const char *pszName,
+                                          char ** = NULL );
 };
 
 #endif /* ndef _OGR_DXF_H_INCLUDED */
