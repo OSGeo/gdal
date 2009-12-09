@@ -1113,7 +1113,7 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
 /*      Do we need to switch the axes around?                           */
 /* -------------------------------------------------------------------- */
-    if( atoi(papszAxis2[iAxisOrderField]) < atoi(papszAxis2[iAxisOrderField]) )
+    if( atoi(papszAxis2[iAxisOrderField]) < atoi(papszAxis1[iAxisOrderField]) )
     {
         papszRecord = papszAxis1;
         papszAxis1 = papszAxis2;
