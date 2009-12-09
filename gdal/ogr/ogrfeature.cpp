@@ -2707,6 +2707,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 /*      Retrieve the field ids by name.                                 */
 /* -------------------------------------------------------------------- */
     int         iField, *panMap;
+    OGRErr      eErr;
 
     panMap = (int *) VSIMalloc( sizeof(int) * poSrcFeature->GetFieldCount() );
     for( iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
@@ -2719,11 +2720,18 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
             if( bForgiving )
                 continue;
             else
+            {
+                VSIFree(panMap);
                 return OGRERR_FAILURE;
+            }
         }
     }
 
-    return SetFrom( poSrcFeature, panMap, bForgiving );
+    eErr = SetFrom( poSrcFeature, panMap, bForgiving );
+    
+    VSIFree(panMap);
+    
+    return eErr;
 }
 
 /************************************************************************/
