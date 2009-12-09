@@ -437,9 +437,9 @@ if __name__ == '__main__':
         
         if verbose != 0:
             print("")
-            print("Processing file %d of %d, %d%% completed." \
+            print("Processing file %5d of %5d, %6.3f%% completed." \
                   % (fi_processed+1,len(file_infos),
-                     fi_processed * 100 / len(file_infos)) )
+                     fi_processed * 100.0 / len(file_infos)) )
             fi.report()
 
         if separate == 0 :
