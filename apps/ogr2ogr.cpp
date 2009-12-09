@@ -989,7 +989,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
 {
     OGRLayer    *poDstLayer;
-    OGRFeatureDefn *poFDefn;
+    OGRFeatureDefn *poSrcFDefn;
+    OGRFeatureDefn *poDstFDefn = NULL;
     int         bForceToPolygon = FALSE;
     int         bForceToMultiPolygon = FALSE;
     
@@ -1058,7 +1059,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Get other info.                                                 */
 /* -------------------------------------------------------------------- */
-    poFDefn = poSrcLayer->GetLayerDefn();
+    poSrcFDefn = poSrcLayer->GetLayerDefn();
     
     if( poOutputSRS == NULL )
         poOutputSRS = poSrcLayer->GetSpatialRef();
@@ -1103,7 +1104,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     if( poDstLayer == NULL )
     {
         if( eGType == -2 )
-            eGType = poFDefn->GetGeomType();
+            eGType = poSrcFDefn->GetGeomType();
 
         if( !poDstDS->TestCapability( ODsCCreateLayer ) )
         {
@@ -1150,34 +1151,50 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /*      the selected fields, and in the order that they were            */
 /*      selected.                                                       */
 /* -------------------------------------------------------------------- */
-    int         nSrcFieldCount = poFDefn->GetFieldCount();
+    int         nSrcFieldCount = poSrcFDefn->GetFieldCount();
     int         iField, *panMap;
 
     // Initialize the index-to-index map to -1's
     panMap = (int *) VSIMalloc( sizeof(int) * nSrcFieldCount );
     for( iField=0; iField < nSrcFieldCount; iField++)
         panMap[iField] = -1;
+        
+    poDstFDefn = poDstLayer->GetLayerDefn();
 
     if (papszSelFields && !bAppend )
     {
+        int         nDstFieldCount = 0;
         for( iField=0; papszSelFields[iField] != NULL; iField++)
         {
-            int iSrcField = poFDefn->GetFieldIndex(papszSelFields[iField]);
+            int iSrcField = poSrcFDefn->GetFieldIndex(papszSelFields[iField]);
             if (iSrcField >= 0)
             {
+                OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iSrcField);
+                OGRFieldDefn oFieldDefn( poSrcFieldDefn );
+
                 if (papszFieldTypesToString != NULL &&
                     (CSLFindString(papszFieldTypesToString, "All") != -1 ||
                      CSLFindString(papszFieldTypesToString,
-                                   OGRFieldDefn::GetFieldTypeName(poFDefn->GetFieldDefn(iSrcField)->GetType())) != -1))
+                                   OGRFieldDefn::GetFieldTypeName(poSrcFieldDefn->GetType())) != -1))
                 {
-                    OGRFieldDefn oFieldDefn( poFDefn->GetFieldDefn(iSrcField) );
                     oFieldDefn.SetType(OFTString);
-                    poDstLayer->CreateField( &oFieldDefn );
                 }
-                else
-                    poDstLayer->CreateField( poFDefn->GetFieldDefn(iSrcField) );
 
-                panMap[iSrcField] = iField;
+                if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
+                {
+                    /* Sanity check : if it fails, the driver is buggy */
+                    if (poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "The output driver has claimed to have added the %s field, but it did not!",
+                                 oFieldDefn.GetNameRef() );
+                    }
+                    else
+                    {
+                        panMap[iSrcField] = nDstFieldCount;
+                        nDstFieldCount ++;
+                    }
+                }
             }
             else
             {
@@ -1193,21 +1210,47 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     }
     else if( !bAppend )
     {
-        for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
+        int         nDstFieldCount = 0;
+        for( iField = 0; iField < nSrcFieldCount; iField++ )
         {
+            OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
+            OGRFieldDefn oFieldDefn( poSrcFieldDefn );
+
             if (papszFieldTypesToString != NULL &&
                 (CSLFindString(papszFieldTypesToString, "All") != -1 ||
                  CSLFindString(papszFieldTypesToString,
-                               OGRFieldDefn::GetFieldTypeName(poFDefn->GetFieldDefn(iField)->GetType())) != -1))
+                               OGRFieldDefn::GetFieldTypeName(poSrcFieldDefn->GetType())) != -1))
             {
-                OGRFieldDefn oFieldDefn( poFDefn->GetFieldDefn(iField) );
                 oFieldDefn.SetType(OFTString);
-                poDstLayer->CreateField( &oFieldDefn );
             }
-            else
-                poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
 
-            panMap[iField] = iField;
+            if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
+            {
+                /* Sanity check : if it fails, the driver is buggy */
+                if (poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "The output driver has claimed to have added the %s field, but it did not!",
+                             oFieldDefn.GetNameRef() );
+                }
+                else
+                {
+                    panMap[iField] = nDstFieldCount;
+                    nDstFieldCount ++;
+                }
+            }
+        }
+    }
+    else
+    {
+        /* For an existing layer, build the map by fetching the index in the destination */
+        /* layer for each source field */
+        for( iField = 0; iField < nSrcFieldCount; iField++ )
+        {
+            OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
+            int iDstField = poDstFDefn->GetFieldIndex(poSrcFieldDefn->GetNameRef());
+            if (iDstField >= 0)
+                panMap[iField] = iDstField;
         }
     }
     
@@ -1258,7 +1301,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to translate feature %ld from layer %s.\n",
-                      poFeature->GetFID(), poFDefn->GetName() );
+                      poFeature->GetFID(), poSrcFDefn->GetName() );
             
             OGRFeature::DestroyFeature( poFeature );
             OGRFeature::DestroyFeature( poDstFeature );
