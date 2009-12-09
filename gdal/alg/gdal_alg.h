@@ -284,23 +284,6 @@ GDALContourGenerate( GDALRasterBandH hBand,
 /*      Rasterizer API - geometries burned into GDAL raster.            */
 /************************************************************************/
 
-/** Source of the burn value */
-typedef enum {
-    /*! Use value from padfBurnValue */    GBV_UserBurnValue = 0,
-    /*! Use value from the Z coordinate */    GBV_Z = 1,
-    /*! Use value form the M value */    GBV_M = 2
-} GDALBurnValueSrc;
-
-typedef struct {
-    unsigned char * pabyChunkBuf;
-    int nXSize;
-    int nYSize;
-    int nBands;
-    GDALDataType eType;
-    double *padfBurnValue;
-    GDALBurnValueSrc eBurnValueSource;
-} GDALRasterizeInfo;
-
 CPLErr CPL_DLL 
 GDALRasterizeGeometries( GDALDatasetH hDS, 
                          int nBandCount, int *panBandList, 
