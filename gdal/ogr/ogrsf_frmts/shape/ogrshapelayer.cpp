@@ -673,11 +673,11 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
 {
-    CPLAssert( NULL != poField );
-
+    CPLAssert( NULL != poFieldDefn );
+    
     int         iNewField;
 
     if( !bUpdateAccess )
@@ -692,119 +692,123 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 /*      Normalize field name                                            */
 /* -------------------------------------------------------------------- */
         
-    char * pszNewFieldName = NULL;
+    char szNewFieldName[10 + 1];
     char * pszTmp = NULL;
     int nRenameNum = 1;
 
-    size_t nNameSize = strlen( poField->GetNameRef() );
-    pszNewFieldName = CPLScanString( poField->GetNameRef(),
+    size_t nNameSize = strlen( poFieldDefn->GetNameRef() );
+    pszTmp = CPLScanString( poFieldDefn->GetNameRef(),
                                      MIN( nNameSize, 10) , TRUE, TRUE);
+    strncpy(szNewFieldName, pszTmp, 10);
+    szNewFieldName[10] = '\0';
 
     if( !bApproxOK &&
-        ( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 ||
-          !EQUAL(poField->GetNameRef(),pszNewFieldName) ) )
+        ( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 ||
+          !EQUAL(poFieldDefn->GetNameRef(),szNewFieldName) ) )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Failed to add field named '%s'",
-                  poField->GetNameRef() );
+                  poFieldDefn->GetNameRef() );
+                  
+        CPLFree( pszTmp );
+        return OGRERR_FAILURE;
     }
 
-    pszTmp = CPLStrdup( pszNewFieldName );
-    while( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 && nRenameNum < 10 )
-        sprintf( pszNewFieldName, "%.8s_%.1d", pszTmp, nRenameNum++ );
-    while( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 && nRenameNum < 100 )
-        sprintf( pszNewFieldName, "%.8s%.2d", pszTmp, nRenameNum++ );
-    if( DBFGetFieldIndex( hDBF, pszNewFieldName ) >= 0 )
+    while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 10 )
+        sprintf( szNewFieldName, "%.8s_%.1d", pszTmp, nRenameNum++ );
+    while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 100 )
+        sprintf( szNewFieldName, "%.8s%.2d", pszTmp, nRenameNum++ );
+
+    CPLFree( pszTmp );
+    pszTmp = NULL;
+    
+    if( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Too many field names like '%s' when truncated to 10 letters "
                   "for Shapefile format.",
-                  poField->GetNameRef() );//One hundred similar field names!!?
+                  poFieldDefn->GetNameRef() );//One hundred similar field names!!?
     }
 
-    if( !EQUAL(poField->GetNameRef(),pszNewFieldName) )
+    if( !EQUAL(poFieldDefn->GetNameRef(),szNewFieldName) )
         CPLError( CE_Warning, CPLE_NotSupported,
                   "Normalized/laundered field name: '%s' to '%s'", 
-                  poField->GetNameRef(),
-                  pszNewFieldName );
-
+                  poFieldDefn->GetNameRef(),
+                  szNewFieldName );
+                  
     // Set field name with normalized value
-    poField->SetName( pszNewFieldName );
-
-    CPLFree( pszNewFieldName );
-    CPLFree( pszTmp );
+    OGRFieldDefn oModFieldDefn(poFieldDefn);
+    oModFieldDefn.SetName(szNewFieldName);
 
 /* -------------------------------------------------------------------- */
 /*      Add field to layer                                              */
 /* -------------------------------------------------------------------- */
 
-    if( poField->GetType() == OFTInteger )
+    if( oModFieldDefn.GetType() == OFTInteger )
     {
-        if( poField->GetWidth() == 0 )
+        if( oModFieldDefn.GetWidth() == 0 )
             iNewField =
-                DBFAddField( hDBF, poField->GetNameRef(), FTInteger, 11, 0 );
+                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTInteger, 11, 0 );
         else
-            iNewField = DBFAddField( hDBF, poField->GetNameRef(), FTInteger,
-                                     poField->GetWidth(), 0 );
+            iNewField = DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTInteger,
+                                     oModFieldDefn.GetWidth(), 0 );
 
         if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( poField );
+            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
     }
-    else if( poField->GetType() == OFTReal )
+    else if( oModFieldDefn.GetType() == OFTReal )
     {
-        if( poField->GetWidth() == 0 )
+        if( oModFieldDefn.GetWidth() == 0 )
             iNewField =
-                DBFAddField( hDBF, poField->GetNameRef(), FTDouble, 24, 15 );
+                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTDouble, 24, 15 );
         else
             iNewField =
-                DBFAddField( hDBF, poField->GetNameRef(), FTDouble,
-                             poField->GetWidth(), poField->GetPrecision() );
+                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTDouble,
+                             oModFieldDefn.GetWidth(), oModFieldDefn.GetPrecision() );
 
         if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( poField );
+            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
     }
-    else if( poField->GetType() == OFTString )
+    else if( oModFieldDefn.GetType() == OFTString )
     {
-        if( poField->GetWidth() < 1 )
+        if( oModFieldDefn.GetWidth() < 1 )
             iNewField =
-                DBFAddField( hDBF, poField->GetNameRef(), FTString, 80, 0 );
+                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTString, 80, 0 );
         else
-            iNewField = DBFAddField( hDBF, poField->GetNameRef(), FTString, 
-                                     poField->GetWidth(), 0 );
+            iNewField = DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTString, 
+                                     oModFieldDefn.GetWidth(), 0 );
 
         if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( poField );
+            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
     }
-    else if( poField->GetType() == OFTDate )
+    else if( oModFieldDefn.GetType() == OFTDate )
     {
         iNewField =
-            DBFAddNativeFieldType( hDBF, poField->GetNameRef(), 'D', 8, 0 );
+            DBFAddNativeFieldType( hDBF, oModFieldDefn.GetNameRef(), 'D', 8, 0 );
 
         if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( poField );
+            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
     }
-    else if( poField->GetType() == OFTDateTime )
+    else if( oModFieldDefn.GetType() == OFTDateTime )
     {
         CPLError( CE_Warning, CPLE_NotSupported,
                   "Field %s create as date field, though DateTime requested.\n",
-                  poField->GetNameRef() );
+                  oModFieldDefn.GetNameRef() );
 
         iNewField =
-            DBFAddNativeFieldType( hDBF, poField->GetNameRef(), 'D', 8, 0 );
+            DBFAddNativeFieldType( hDBF, oModFieldDefn.GetNameRef(), 'D', 8, 0 );
 
         if( iNewField != -1 )
         {
-            OGRFieldDefn oModDefn( poField );
-            
-            oModDefn.SetType( OFTDate );
-            poFeatureDefn->AddFieldDefn( &oModDefn );
+            oModFieldDefn.SetType( OFTDate );
+            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
         }
     }
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Can't create fields of type %s on shapefile layers.\n",
-                  OGRFieldDefn::GetFieldTypeName(poField->GetType()) );
+                  OGRFieldDefn::GetFieldTypeName(oModFieldDefn.GetType()) );
 
         return OGRERR_FAILURE;
     }
@@ -817,7 +821,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't create field %s in Shape DBF file, reason unknown.\n",
-                  poField->GetNameRef() );
+                  oModFieldDefn.GetNameRef() );
 
         return OGRERR_FAILURE;
     }
