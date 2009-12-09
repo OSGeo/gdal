@@ -59,8 +59,19 @@ def test_ogr2ogr_1():
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
-    ds.Destroy()
 
+    feat0 = ds.GetLayer(0).GetFeature(0)
+    if feat0.GetFieldAsDouble('AREA') != 215229.266:
+        print(feat0.GetFieldAsDouble('AREA'))
+        gdaltest.post_reason('Did not get expected value for field AREA')
+        return 'fail'
+    if feat0.GetFieldAsString('PRFEDEA') != '35043411':
+        print(feat0.GetFieldAsString('PRFEDEA'))
+        gdaltest.post_reason('Did not get expected value for field PRFEDEA')
+        return 'fail'
+        
+    ds.Destroy()
+    
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
     return 'success'
@@ -160,6 +171,17 @@ def test_ogr2ogr_5():
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
         return 'fail'
+        
+    feat10 = ds.GetLayer(0).GetFeature(10)
+    if feat10.GetFieldAsDouble('AREA') != 215229.266:
+        print(feat10.GetFieldAsDouble('AREA'))
+        gdaltest.post_reason('Did not get expected value for field AREA')
+        return 'fail'
+    if feat10.GetFieldAsString('PRFEDEA') != '35043411':
+        print(feat10.GetFieldAsString('PRFEDEA'))
+        gdaltest.post_reason('Did not get expected value for field PRFEDEA')
+        return 'fail'
+        
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
