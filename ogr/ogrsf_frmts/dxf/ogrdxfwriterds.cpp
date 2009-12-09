@@ -162,7 +162,11 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
     if( CSLFetchNameValue(papszOptions,"HEADER") != NULL )
         osHeaderFile = CSLFetchNameValue(papszOptions,"HEADER");
     else
-        osHeaderFile = CPLFindFile( "gdal", "header.dxf" );
+    {
+        const char *pszValue = CPLFindFile( "gdal", "header.dxf" );
+        if( pszValue != NULL )
+            osHeaderFile = pszValue;
+    }
 
     FILE *fpSrc = VSIFOpenL( osHeaderFile, "r" );
     if( fpSrc == NULL )
@@ -192,7 +196,11 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
     if( CSLFetchNameValue(papszOptions,"TRAILER") != NULL )
         osTrailerFile = CSLFetchNameValue(papszOptions,"TRAILER");
     else
-        osTrailerFile = CPLFindFile( "gdal", "trailer.dxf" );
+    {
+        const char *pszValue = CPLFindFile( "gdal", "trailer.dxf" );
+        if( pszValue != NULL )
+            osTrailerFile = pszValue;
+    }
 
     return TRUE;
 }
