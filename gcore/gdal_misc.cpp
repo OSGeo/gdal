@@ -2247,7 +2247,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
-                const char *pszRWFlag;
+                const char *pszRWFlag, *pszVirtualIO;
                 
                 if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) )
                     pszRWFlag = "rw+";
@@ -2257,9 +2257,14 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 else
                     pszRWFlag = "ro";
                 
-                printf( "  %s (%s): %s\n",
+                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL) )
+                    pszVirtualIO = "v";
+                else
+                    pszVirtualIO = "";
+
+                printf( "  %s (%s%s): %s\n",
                         GDALGetDriverShortName( hDriver ),
-                        pszRWFlag,
+                        pszRWFlag, pszVirtualIO,
                         GDALGetDriverLongName( hDriver ) );
             }
 
