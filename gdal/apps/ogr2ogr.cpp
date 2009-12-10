@@ -172,6 +172,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszSelect;
     char        **papszSelFields = NULL;
     const char  *pszSQLStatement = NULL;
+    const char  *pszDialect = NULL;
     int         eGType = -2;
     double       dfMaxSegmentLength = 0;
     char        **papszFieldTypesToString = NULL;
@@ -257,6 +258,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-sql") && papszArgv[iArg+1] != NULL )
         {
             pszSQLStatement = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-dialect") && papszArgv[iArg+1] != NULL )
+        {
+            pszDialect = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-nln") && iArg < nArgc-1 )
         {
@@ -694,7 +699,7 @@ int main( int nArgc, char ** papszArgv )
             fprintf( stderr,  "layer names ignored in combination with -sql.\n" );
         
         poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
-                                        NULL );
+                                        pszDialect );
 
         if( poResultSet != NULL )
         {
@@ -901,8 +906,9 @@ static void Usage()
 
     printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]\n"
             "               [-select field_list] [-where restricted_where] \n"
-            "               [-progress] [-sql <sql statement>] [-wrapdateline]\n" 
-            "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
+            "               [-progress] [-sql <sql statement>] [-dialect dialect]\n" 
+            "               [-preserve_fid] [-fid FID]\n"
+            "               [-spat xmin ymin xmax ymax] [-wrapdateline]\n"
             "               [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent] \n"
             "               [-clipsrcsql sql_statement] [-clipsrclayer layer] \n"
             "               [-clipsrcwhere expression]\n"
@@ -936,6 +942,7 @@ static void Usage()
             " -wrapdateline: split geometries crossing the dateline meridian\n"
             "                (long. = +/- 180deg)\n" 
             " -sql statement: Execute given SQL statement and save result.\n"
+            " -dialect value: select a dialect, usually OGRSQL to avoid native sql.\n"
             " -skipfailures: skip features or layers that fail to convert\n"
             " -gt n: group n features per transaction (default 200)\n"
             " -spat xmin ymin xmax ymax: spatial query extents\n"
