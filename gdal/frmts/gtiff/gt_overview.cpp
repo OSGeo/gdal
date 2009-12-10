@@ -263,6 +263,11 @@ GTIFFBuildOverviews( const char * pszFilename,
             nBandFormat = SAMPLEFORMAT_COMPLEXINT;
             break;
 
+          case GDT_CInt32:
+            nBandBits = 64;
+            nBandFormat = SAMPLEFORMAT_COMPLEXINT;
+            break;
+
           case GDT_CFloat32:
             nBandBits = 64;
             nBandFormat = SAMPLEFORMAT_COMPLEXIEEEFP;
@@ -451,9 +456,9 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the file, if it does not already exist.                  */
 /* -------------------------------------------------------------------- */
-    VSIStatBuf  sStatBuf;
+    VSIStatBufL  sStatBuf;
 
-    if( VSIStat( pszFilename, &sStatBuf ) != 0 )
+    if( VSIStatL( pszFilename, &sStatBuf ) != 0 )
     {
     /* -------------------------------------------------------------------- */
     /*      Compute the uncompressed size.                                  */
