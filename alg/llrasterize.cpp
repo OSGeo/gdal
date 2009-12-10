@@ -443,6 +443,10 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                 int iX = (int) floor(dfX);
                 int iY = (int) floor(dfY);
                 int iYEnd = (int) floor(dfYEnd);
+
+                if( iX >= nRasterXSize )
+                    continue;
+
                 double dfDeltaVariant = 0;
                 if(( dfYEnd - dfY ) > 0)
                     dfDeltaVariant = ( dfVariantEnd - dfVariant )
@@ -481,6 +485,9 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                 int iY = (int) floor(dfY);
                 int iXEnd = (int) floor(dfXEnd);
                 
+                if( iY >= nRasterYSize )
+                    continue;
+
                 // Clip to the borders of the target region
                 if( iX < 0 )
                     iX = 0;
