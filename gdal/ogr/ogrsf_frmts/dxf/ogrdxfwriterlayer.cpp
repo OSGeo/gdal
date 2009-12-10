@@ -353,6 +353,11 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     if( poGeom == NULL )
         poGeom = poFeature->GetGeometryRef();
 
+    if ( poGeom->IsEmpty() )
+    {
+        return OGRERR_NONE;
+    }
+            
     if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon 
         || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
     {

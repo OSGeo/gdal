@@ -688,7 +688,7 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
             else
                 poGeom = (OGRGeometry*) OGR_G_CreateFromGML(pszSubElementValue);
 
-            if (poGeom != NULL)
+            if (poGeom != NULL && !poGeom->IsEmpty() )
             {
                 int bSwapCoordinates = FALSE;
                 if (pszGMLSRSName)
@@ -1515,7 +1515,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
 
     OGRGeoRSSGeomDialect eGeomDialect = poDS->GetGeomDialect();
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
-    if (poGeom != NULL)
+    if ( poGeom != NULL && !poGeom->IsEmpty() )
     {
         char* pszURN = NULL;
         int bSwapCoordinates = FALSE;
