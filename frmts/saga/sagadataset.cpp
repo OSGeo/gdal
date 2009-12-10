@@ -89,7 +89,8 @@ class SAGADataset : public GDALPamDataset
 										int bStrict, char **papszOptions,
 										GDALProgressFunc pfnProgress,
 										void *pProgressData );
-		static CPLErr			Delete( const char *pszFilename );
+		
+        virtual char          **GetFileList();
 
 		CPLErr					GetGeoTransform( double *padfGeoTransform );
 		CPLErr					SetGeoTransform( double *padfGeoTransform );
@@ -311,6 +312,29 @@ SAGADataset::~SAGADataset()
         VSIFCloseL( fp );
 }
 
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char** SAGADataset::GetFileList()
+{
+    CPLString osPath = CPLGetPath( GetDescription() );
+    CPLString osName = CPLGetBasename( GetDescription() );
+    CPLString osHDRFilename;
+
+    char **papszFileList = NULL;
+
+    // Main data file, etc. 
+    papszFileList = GDALPamDataset::GetFileList();
+
+    // Header file.
+    osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+    papszFileList = CSLAddString( papszFileList, osHDRFilename );
+    
+    return papszFileList;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -402,21 +426,6 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     CSLDestroy( papszHDR );
 
-    if( EQUALN(szTopToBottom,"TRUE",strlen("TRUE")) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Currently the SAGA Binary Grid driver does not support\n"
-                  "SAGA grids written TOPTOBOTTOM.\n");
-        return NULL;
-    }
-    if( dZFactor != 1.0)
-    {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Currently the SAGA Binary Grid driver does not support\n"
-                  "ZFACTORs other than 1.\n");
-    }
-	
-
     /* -------------------------------------------------------------------- */
     /*      Did we get the required keywords?  If not we return with        */
     /*      this never having been considered to be a match. This isn't     */
@@ -431,6 +440,21 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     {
         return NULL;
     }
+    
+    if( EQUALN(szTopToBottom,"TRUE",strlen("TRUE")) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Currently the SAGA Binary Grid driver does not support\n"
+                  "SAGA grids written TOPTOBOTTOM.\n");
+        return NULL;
+    }
+    if( dZFactor != 1.0)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Currently the SAGA Binary Grid driver does not support\n"
+                  "ZFACTORs other than 1.\n");
+    }
+	
 	
 	
     /* -------------------------------------------------------------------- */
@@ -929,39 +953,6 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
 }
 
 /************************************************************************/
-/*                               Delete()                               */
-/************************************************************************/
-
-CPLErr SAGADataset::Delete( const char *pszFilename )
-
-{
-    VSIStatBufL sStat;
-    
-    if( VSIStatL( pszFilename, &sStat ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to stat() %s.\n", pszFilename );
-        return CE_Failure;
-    }
-    
-    if( !VSI_ISREG( sStat.st_mode ) )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "%s is not a regular file, not removed.\n", pszFilename );
-        return CE_Failure;
-    }
-
-    if( VSIUnlink( pszFilename ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Error unlinking %s.\n", pszFilename );
-        return CE_Failure;
-    }
-
-    return CE_None;
-}
-
-/************************************************************************/
 /*                          GDALRegister_SAGA()                         */
 /************************************************************************/
 
@@ -983,10 +974,11 @@ void GDALRegister_SAGA()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
 				   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
 
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = SAGADataset::Open;
         poDriver->pfnCreate = SAGADataset::Create;
         poDriver->pfnCreateCopy = SAGADataset::CreateCopy;
-        poDriver->pfnDelete = SAGADataset::Delete;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
