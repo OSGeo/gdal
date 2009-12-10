@@ -190,6 +190,17 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 /* -------------------------------------------------------------------- */
     if( nNewLength > nAllocLength )
     {
+        /* If we don't own the buffer, we cannot reallocate it because */
+        /* the return address might be different from the one passed by */
+        /* the caller. Hence, the caller would not be able to free */
+        /* the buffer... */
+        if( !bOwnData )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Cannot extended in-memory file whose ownership was not transfered");
+            return false;
+        }
+        
         GByte *pabyNewData;
         vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
 
