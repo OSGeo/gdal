@@ -3652,7 +3652,8 @@ NITFDataset::NITFCreateCopy(
         NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount, "C8" );
         NITFWriteTextSegments( pszFilename, papszTextMD );
 
-        poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
+        GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
+        poDstDS = (NITFDataset *) Open( &oOpenInfo );
 
         if( poDstDS == NULL )
             return NULL;
@@ -3690,7 +3691,8 @@ NITFDataset::NITFCreateCopy(
                               nPixelCount, pszIC );
         NITFWriteTextSegments( pszFilename, papszTextMD );
         
-        poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
+        GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
+        poDstDS = (NITFDataset *) Open( &oOpenInfo );
 
         if( poDstDS == NULL )
             return NULL;
@@ -3704,11 +3706,21 @@ NITFDataset::NITFCreateCopy(
     {
         NITFWriteTextSegments( pszFilename, papszTextMD );
 
-        poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
+        GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
+        poDstDS = (NITFDataset *) Open( &oOpenInfo );
         if( poDstDS == NULL )
             return NULL;
         
-        for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+        void  *pData = VSIMalloc2(nXSize, (GDALGetDataTypeSize(eType) / 8));
+        if (pData == NULL)
+        {
+            delete poDstDS;
+            return NULL;
+        }
+        
+        CPLErr eErr = CE_None;
+
+        for( int iBand = 0; eErr == CE_None && iBand < poSrcDS->GetRasterCount(); iBand++ )
         {
             GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
             GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
@@ -3725,39 +3737,36 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Copy image data.                                                */
 /* -------------------------------------------------------------------- */
-            void           *pData;
-            CPLErr         eErr;
-
-            pData = CPLMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
-
             for( int iLine = 0; iLine < nYSize; iLine++ )
             {
                 eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                             pData, nXSize, 1, eType, 0, 0 );
                 if( eErr != CE_None )
-                {
-                    return NULL;
-                }
-            
+                    break;   
+                    
                 eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
                                             pData, nXSize, 1, eType, 0, 0 );
 
                 if( eErr != CE_None )
-                {
-                    return NULL;
-                }
+                    break;   
 
                 if( !pfnProgress( (iBand + (iLine+1) / (double) nYSize)
                                   / (double) poSrcDS->GetRasterCount(), 
                                   NULL, pProgressData ) )
                 {
                     CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                    delete poDstDS;
-                    return NULL;
+                    eErr = CE_Failure;
+                    break;
                 }
             }
+        }
 
-            CPLFree( pData );
+        CPLFree( pData );
+        
+        if ( eErr != CE_None )
+        {
+            delete poDstDS;
+            return NULL;
         }
     }
 
