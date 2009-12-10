@@ -193,9 +193,12 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
         GByte *pabyNewData;
         vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
 
-        pabyNewData = (GByte *) CPLRealloc(pabyData, (size_t)nNewAlloc);
+        pabyNewData = (GByte *) VSIRealloc(pabyData, (size_t)nNewAlloc);
         if( pabyNewData == NULL )
             return false;
+            
+        /* Clear the new allocated part of the buffer */
+        memset(pabyNewData + nAllocLength, 0, nNewAlloc - nAllocLength);
 
         pabyData = pabyNewData;
         nAllocLength = nNewAlloc;
