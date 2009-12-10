@@ -33,6 +33,7 @@ CPL_CVSID("$Id$");
 
 CPL_C_START
 void    GDALRegister_PCIDSK(void);
+void    GDALRegister_PCIDSK2(void);
 CPL_C_END
 
 const int       nSegBlocks = 64;    // Number of blocks of Segment Pointers
@@ -1610,6 +1611,8 @@ void GDALRegister_PCIDSK()
 
 {
     GDALDriver  *poDriver;
+
+    GDALRegister_PCIDSK2();
 
     if( GDALGetDriverByName( "PCIDSK" ) == NULL )
     {
