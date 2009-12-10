@@ -886,6 +886,34 @@ NOTE: Implemented as <tt>gdal/frmts/ceos2/sar_ceosdataset.cpp</tt>.<p>
 
 <!-- --------------------------------------------------------------------- -->
 
+<h2><a name="SAGA">SDAT -- SAGA GIS Binary Grid File Format</a></h2>
+
+(starting with GDAL 1.7.0)
+
+The driver supports both reading and writing (including create, delete, 
+and copy) SAGA GIS binary grids. SAGA binary grid datasets are made of 
+an ASCII header (.SGRD) and a binary data (.SDAT) file with a common 
+basename.  The .SDAT file should be selected to access the dataset.<p>
+
+The driver supports reading the following SAGA datatypes 
+(in brackets the corresponding GDAL types): BIT (GDT_Byte),
+BYTE_UNSIGNED (GDT_Byte), BYTE (GDT_Byte), SHORTINT_UNSIGNED (GDT_UInt16), 
+SHORTINT (GDT_Int16), INTEGER_UNSIGNED (GDT_UInt32), INTEGER (GDT_Int32), 
+FLOAT (GDT_Float32) and DOUBLE (GDT_Float64).<p>
+
+The driver supports writing the following SAGA datatypes: BYTE_UNSIGNED 
+(GDT_Byte), SHORTINT_UNSIGNED (GDT_UInt16), SHORTINT (GDT_Int16), 
+INTEGER_UNSIGNED (GDT_UInt32), INTEGER (GDT_Int32), FLOAT (GDT_Float32) 
+and DOUBLE (GDT_Float64).<p>
+
+Currently the driver does not support zFactors other than 1 and reading 
+SAGA grids which are written TOPTOBOTTOM.<p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/saga/sagadataset.cpp</tt>.<p>
+
+
+<!-- --------------------------------------------------------------------- -->
+
 <h2><a name="SDTS">SDTS -- USGS SDTS DEM</a></h2>
 
 GDAL includes support for reading USGS SDTS formatted DEMs.  USGS DEMs are
