@@ -189,6 +189,7 @@ class OGRDXFWriterLayer : public OGRLayer
 
     OGRErr              WriteCore( OGRFeature* );
     OGRErr              WritePOINT( OGRFeature* );
+    OGRErr              WriteTEXT( OGRFeature* );
     OGRErr              WritePOLYLINE( OGRFeature*, OGRGeometry* = NULL );
 
     int                 ColorStringToDXFColor( const char * );

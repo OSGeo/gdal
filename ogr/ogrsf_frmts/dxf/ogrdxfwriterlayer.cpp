@@ -35,6 +35,10 @@
 
 CPL_CVSID("$Id$");
 
+#ifndef PI
+#define PI  3.14159265358979323846
+#endif 
+
 /************************************************************************/
 /*                         OGRDXFWriterLayer()                          */
 /************************************************************************/
@@ -220,6 +224,121 @@ OGRErr OGRDXFWriterLayer::WritePOINT( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                             WriteTEXT()                              */
+/************************************************************************/
+
+OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
+
+{
+    WriteValue( 0, "MTEXT" );
+    WriteCore( poFeature );
+    WriteValue( 100, "AcDbEntity" );
+    WriteValue( 100, "AcDbMText" );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have styling information?                                 */
+/* -------------------------------------------------------------------- */
+    OGRStyleTool *poTool = NULL;
+    OGRStyleMgr oSM;
+
+    if( poFeature->GetStyleString() != NULL )
+    {
+        oSM.InitFromFeature( poFeature );
+
+        if( oSM.GetPartCount() > 0 )
+            poTool = oSM.GetPart(0);
+    }
+
+/* ==================================================================== */
+/*      Process the LABEL tool.                                         */
+/* ==================================================================== */
+    if( poTool && poTool->GetType() == OGRSTCLabel )
+    {
+        OGRStyleLabel *poLabel = (OGRStyleLabel *) poTool;
+        GBool  bDefault;
+
+/* -------------------------------------------------------------------- */
+/*      Color                                                           */
+/* -------------------------------------------------------------------- */
+        if( poLabel->ForeColor(bDefault) != NULL && !bDefault )
+            WriteValue( 62, ColorStringToDXFColor( 
+                            poLabel->ForeColor(bDefault) ) );
+
+/* -------------------------------------------------------------------- */
+/*      Angle                                                           */
+/* -------------------------------------------------------------------- */
+        double dfAngle = poLabel->Angle(bDefault);
+
+        if( !bDefault )
+            WriteValue( 50, dfAngle * (PI/180.0) );
+
+/* -------------------------------------------------------------------- */
+/*      Height - We need to fetch this in georeferenced units - I'm     */
+/*      doubt the default translation mechanism will be much good.      */
+/* -------------------------------------------------------------------- */
+        poTool->SetUnit( OGRSTUGround );
+        double dfHeight = poLabel->Size(bDefault);
+
+        if( !bDefault )
+            WriteValue( 40, dfHeight );
+
+/* -------------------------------------------------------------------- */
+/*      Anchor / Attachment Point                                       */
+/* -------------------------------------------------------------------- */
+        int nAnchor = poLabel->Anchor(bDefault);
+        
+        if( !bDefault )
+        {
+            const static int anAnchorMap[] = 
+                { -1, 7, 8, 9, 4, 5, 6, 1, 2, 3, 7, 8, 9 };
+
+            if( nAnchor > 0 && nAnchor < 13 )
+                WriteValue( 71, anAnchorMap[nAnchor] );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Text - split into distinct lines.                               */
+/* -------------------------------------------------------------------- */
+        const char *pszText = poLabel->TextString( bDefault );
+
+        if( pszText != NULL && !bDefault )
+        {
+            int iLine;
+            char **papszLines = CSLTokenizeStringComplex(
+                pszText, "\n", FALSE, TRUE );
+
+            for( iLine = 0; 
+                 papszLines != NULL && papszLines[iLine] != NULL;
+                 iLine++ )
+            {
+                if( iLine == 0 )
+                    WriteValue( 1, papszLines[iLine] );
+                else
+                    WriteValue( 3, papszLines[iLine] );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the location.                                             */
+/* -------------------------------------------------------------------- */
+    OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+
+    WriteValue( 10, poPoint->getX() );
+    if( !WriteValue( 20, poPoint->getY() ) ) 
+        return OGRERR_FAILURE;
+
+    if( poPoint->getGeometryType() == wkbPoint25D )
+    {
+        if( !WriteValue( 30, poPoint->getZ() ) )
+            return OGRERR_FAILURE;
+    }
+    
+    return OGRERR_NONE;
+
+}
+
+/************************************************************************/
 /*                           WritePOLYLINE()                            */
 /************************************************************************/
 
@@ -347,7 +466,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 
 #ifdef notdef
 /* -------------------------------------------------------------------- */
-/*      Alternate unmaintained implmenentation as a polyline entity.    */
+/*      Alternate unmaintained implementation as a polyline entity.     */
 /* -------------------------------------------------------------------- */
     WriteValue( 0, "POLYLINE" );
     WriteCore( poFeature );
@@ -397,7 +516,13 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
         eGType = wkbFlatten(poGeom->getGeometryType());
 
     if( eGType == wkbPoint )
-        return WritePOINT( poFeature );
+    {
+        if( poFeature->GetStyleString() != NULL
+            && EQUALN(poFeature->GetStyleString(),"LABEL",5) )
+            return WriteTEXT( poFeature );
+        else
+            return WritePOINT( poFeature );
+    }
     else if( eGType == wkbLineString 
              || eGType == wkbMultiLineString 
              || eGType == wkbPolygon 
