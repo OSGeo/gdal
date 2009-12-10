@@ -41,6 +41,8 @@ CPL_C_START
 void    GDALRegister_PCIDSK2(void);
 CPL_C_END
 
+const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
+
 /************************************************************************/
 /*                              PCIDSK2Dataset                           */
 /************************************************************************/
@@ -322,12 +324,22 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
         return GDALPamDataset::GetGeoTransform( padfTransform );
     else
     {
-        poGeoref->GetTransform( padfTransform[0], 
-                                padfTransform[1],
-                                padfTransform[2],
-                                padfTransform[3],
-                                padfTransform[4],
-                                padfTransform[5] );
+        try
+        {
+            poGeoref->GetTransform( padfTransform[0], 
+                                    padfTransform[1],
+                                    padfTransform[2],
+                                    padfTransform[3],
+                                    padfTransform[4],
+                                    padfTransform[5] );
+        }
+        catch( PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+            return CE_Failure;
+        }
+
         return CE_None;
     }
 }
@@ -342,6 +354,7 @@ const char *PCIDSK2Dataset::GetProjectionRef()
         return osSRS.c_str();
 
     PCIDSKGeoref *poGeoref = NULL;
+
     try
     {
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
@@ -358,10 +371,22 @@ const char *PCIDSK2Dataset::GetProjectionRef()
     }
     else
     {
+        CPLString osGeosys;
         OGRSpatialReference oSRS;
         char *pszWKT = NULL;
 
-        if( oSRS.importFromPCI( poGeoref->GetGeosys().c_str() ) == OGRERR_NONE )
+        try
+        {
+            if( poGeoref )
+                osGeosys = poGeoref->GetGeosys();
+        }
+        catch( PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+        }
+        
+        if( oSRS.importFromPCI( osGeosys ) == OGRERR_NONE )
         {
             oSRS.exportToWkt( &pszWKT );
             osSRS = pszWKT;
@@ -561,12 +586,10 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the file.                                           */
 /* -------------------------------------------------------------------- */
     try {
-
         PCIDSKFile *poFile = 
             PCIDSK::Open( poOpenInfo->pszFilename, 
                           poOpenInfo->eAccess == GA_ReadOnly ? "r" : "r+",
-                          NULL /* &oIOInterfaces */ );
-
+                          PCIDSK2GetInterfaces() );
         if( poFile == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -586,6 +609,19 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->eAccess = poOpenInfo->eAccess;
         poDS->nRasterXSize = poFile->GetWidth();
         poDS->nRasterYSize = poFile->GetHeight();
+
+/* -------------------------------------------------------------------- */
+/*      Are we specifically PIXEL or BAND interleaving?                 */
+/*                                                                      */
+/*      We don't set anything for FILE since it is harder to know if    */
+/*      this is tiled or what the on disk interleaving is.              */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(poFile->GetInterleaving().c_str(),"PIXEL") )
+            poDS->SetMetadataItem( "IMAGE_STRUCTURE", "PIXEL", 
+                                   "IMAGE_STRUCTURE" );
+        else if( EQUAL(poFile->GetInterleaving().c_str(),"BAND") )
+            poDS->SetMetadataItem( "IMAGE_STRUCTURE", "BAND", 
+                                   "IMAGE_STRUCTURE" );
 
 /* -------------------------------------------------------------------- */
 /*      Create band objects.                                            */
@@ -686,7 +722,8 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     try {
         poFile = PCIDSK::Create( pszFilename, nXSize, nYSize, nBands, 
-                                 &(aeChanTypes[0]), osOptions, NULL );
+                                 &(aeChanTypes[0]), osOptions, 
+                                 PCIDSK2GetInterfaces() );
         delete poFile;
 
         // TODO: should we ensure this driver gets used?
