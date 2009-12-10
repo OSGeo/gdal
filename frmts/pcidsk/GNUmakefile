@@ -1,11 +1,9 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	pcidskdataset.o pcidsktiledrasterband.o \
-		\
-		pcidskdataset2.o vsi_pcidsk_io.o
+OBJ	=	pcidskdataset.o pcidsktiledrasterband.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS) $(PCIDSK_INC) 
+CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
