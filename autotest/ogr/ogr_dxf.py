@@ -189,7 +189,8 @@ def ogr_dxf_6():
     if ogrtest.check_feature_geometry( feat, 'POINT (84 126 0)' ):
         return 'fail'
 
-    if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7)':
+    if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#ffffff)':
+        print feat.GetStyleString()
         gdaltest.post_reason( 'got wrong style string' )
         return 'fail'
 
