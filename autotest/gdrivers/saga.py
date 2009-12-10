@@ -50,12 +50,7 @@ def saga_1():
 def saga_2():
 
     tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
-    ret = tst.testCreateCopy( new_filename = 'tmp/createcopy.sdat' )
-    try:
-        os.remove('tmp/createcopy.sgrd')
-    except:
-        pass
-    return ret
+    return tst.testCreateCopy( new_filename = 'tmp/createcopy.sdat' )
 
 ###############################################################################
 # Test copying a reference sample with Create()
@@ -63,12 +58,7 @@ def saga_2():
 def saga_3():
 
     tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
-    ret = tst.testCreate( new_filename = 'tmp/copy.sdat', out_bands = 1 )
-    try:
-        os.remove('tmp/copy.sgrd')
-    except:
-        pass
-    return ret
+    return tst.testCreate( new_filename = 'tmp/copy.sdat', out_bands = 1 )
 
 ###############################################################################
 # Test CreateCopy() for various data types
@@ -90,10 +80,6 @@ def saga_4():
         else:
             check_minmax = 1
         ret = tst.testCreateCopy( new_filename = 'tmp/test4.sdat', check_minmax = check_minmax )
-        try:
-            os.remove('tmp/test4.sgrd')
-        except:
-            pass
         if ret != 'success':
             return ret
             
@@ -119,10 +105,6 @@ def saga_5():
         else:
             check_minmax = 1
         ret = tst.testCreate( new_filename = 'tmp/test5.sdat', out_bands = 1, check_minmax = check_minmax )
-        try:
-            os.remove('tmp/test5.sgrd')
-        except:
-            pass
         if ret != 'success':
             return ret
             
@@ -175,14 +157,23 @@ def saga_6():
         pass
         
     return 'success'
+    
+###############################################################################
+# Test /vsimem
 
+def saga_7():
+
+    tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
+    return tst.testCreateCopy( new_filename = '/vsimem/createcopy.sdat' )
+    
 gdaltest_list = [
     saga_1,
     saga_2,
     saga_3,
     saga_4,
     saga_5,
-    saga_6 ]
+    saga_6,
+    saga_7 ]
 
 if __name__ == '__main__':
 
