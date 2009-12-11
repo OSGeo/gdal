@@ -12,7 +12,7 @@ $(O_OBJ):	../raw/rawdataset.h gdal_pcidsk.h
 else
 OBJ	=	pcidskdataset2.o vsi_pcidsk_io.o $(SDKOBJ)
 ifeq ($(PCIDSK_SETTING),internal)
-CPPFLAGS	:=	-DHAVE_JPEG $(JPEG_INCLUDE) -DPCIDSK_INTERNAL \
+CPPFLAGS	:=	-DHAVE_LIBJPEG $(JPEG_INCLUDE) -DPCIDSK_INTERNAL \
 	-Isdk $(GDAL_INCLUDE) $(CPPFLAGS)
 
 SDKOBJ 	=	\

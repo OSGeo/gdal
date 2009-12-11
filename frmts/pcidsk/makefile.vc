@@ -14,8 +14,8 @@ OBJ		=	pcidskdataset2.obj vsi_pcidsk_io.obj
 !ENDIF
 
 !IF "$(PCIDSK_SETTING)" == "INTERNAL"
-PCIDSKFLAGS	=	-Isdk -DPCIDSK_INTERNAL \
-			-DHAVE_JPEG -I$(JPEGDIR) -I..\jpeg\libjpeg
+PCIDSKFLAGS	=	-Isdk -DPCIDSK_INTERNAL -DHAVE_LIBJPEG 
+
 OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj \
 	sdk\channel\cbandinterleavedchannel.obj \
 	sdk\channel\cpcidskchannel.obj \
@@ -41,9 +41,15 @@ OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj \
 	sdk\segment\sysblockmap.obj
 	
 !ENDIF
+            
+!IFDEF JPEG_EXTERNAL_LIB
+JPEGFLAGS = -I$(JPEGDIR)
+!ELSE
+JPEGFLAGS = -I..\jpeg\libjpeg
+!ENDIF
 
 .cpp.obj:	
-	$(CC) $(PCIDSKFLAGS) $(CFLAGS) /c $*.cpp /Fo$*.obj
+	$(CC) $(CFLAGS) $(PCIDSKFLAGS) $(JPEGFLAGS) /c $*.cpp /Fo$*.obj
 	xcopy /D /Y $*.obj ..\o
 
 default:	$(OBJ)
