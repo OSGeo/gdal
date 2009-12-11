@@ -41,6 +41,8 @@ CPL_C_START
 void    GDALRegister_PCIDSK2(void);
 CPL_C_END
 
+const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
+
 /************************************************************************/
 /*                              PCIDSK2Dataset                           */
 /************************************************************************/
@@ -67,7 +69,9 @@ class PCIDSK2Dataset : public GDALPamDataset
                                  char **papszParmList );
 
     CPLErr              GetGeoTransform( double * padfTransform );
-    const char          *GetProjectionRef();
+    CPLErr              SetGeoTransform( double * );
+    const char         *GetProjectionRef();
+    CPLErr              SetProjection( const char * );
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
@@ -302,6 +306,48 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
 }
 
 /************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr PCIDSK2Dataset::SetGeoTransform( double * padfTransform )
+{
+    PCIDSKGeoref *poGeoref = NULL;
+    try
+    {
+        PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
+        poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
+    }
+    catch( PCIDSKException ex )
+    {
+        // I should really check whether this is an expected issue.
+    }
+        
+    if( poGeoref == NULL )
+        return GDALPamDataset::SetGeoTransform( padfTransform );
+    else
+    {
+        try
+        {
+            poGeoref->WriteSimple( poGeoref->GetGeosys(), 
+                                   padfTransform[0], 
+                                   padfTransform[1],
+                                   padfTransform[2],
+                                   padfTransform[3],
+                                   padfTransform[4],
+                                   padfTransform[5] );
+        }
+        catch( PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+            return CE_Failure;
+        }
+
+        return CE_None;
+    }
+}
+
+/************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
@@ -322,13 +368,91 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
         return GDALPamDataset::GetGeoTransform( padfTransform );
     else
     {
-        poGeoref->GetTransform( padfTransform[0], 
-                                padfTransform[1],
-                                padfTransform[2],
-                                padfTransform[3],
-                                padfTransform[4],
-                                padfTransform[5] );
+        try
+        {
+            poGeoref->GetTransform( padfTransform[0], 
+                                    padfTransform[1],
+                                    padfTransform[2],
+                                    padfTransform[3],
+                                    padfTransform[4],
+                                    padfTransform[5] );
+        }
+        catch( PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+            return CE_Failure;
+        }
+
         return CE_None;
+    }
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
+
+{
+    osSRS = "";
+
+    PCIDSKGeoref *poGeoref = NULL;
+
+    try
+    {
+        PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
+        poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
+    }
+    catch( PCIDSKException ex )
+    {
+        // I should really check whether this is an expected issue.
+    }
+        
+    if( poGeoref == NULL )
+    {
+        return GDALPamDataset::SetProjection( pszWKT );
+    }
+    else
+    {
+        char *pszGeosys = NULL;
+        char *pszUnits = NULL;
+        double *padfPrjParams = NULL;
+
+        OGRSpatialReference oSRS;
+        char *pszWKTWork = (char *) pszWKT;
+
+        if( oSRS.importFromWkt( &pszWKTWork ) == OGRERR_NONE
+            && oSRS.exportToPCI( &pszGeosys, &pszUnits, 
+                                 &padfPrjParams ) == OGRERR_NONE )
+        {
+            try
+            {
+                double adfGT[6];
+                poGeoref->GetTransform( adfGT[0], adfGT[1], adfGT[2],
+                                        adfGT[3], adfGT[4], adfGT[5] );
+
+                poGeoref->WriteSimple( pszGeosys, 
+                                       adfGT[0], adfGT[1], adfGT[2],
+                                       adfGT[3], adfGT[4], adfGT[5] );
+
+                // parameters?
+            }
+            catch( PCIDSKException ex )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "%s", ex.what() );
+                return CE_Failure;
+            }
+
+            CPLFree( pszGeosys );
+            CPLFree( pszUnits );
+            CPLFree( padfPrjParams );
+
+            return CE_None;
+        }
+        else
+            return GDALPamDataset::SetProjection( pszWKT );
     }
 }
 
@@ -342,6 +466,7 @@ const char *PCIDSK2Dataset::GetProjectionRef()
         return osSRS.c_str();
 
     PCIDSKGeoref *poGeoref = NULL;
+
     try
     {
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
@@ -358,10 +483,22 @@ const char *PCIDSK2Dataset::GetProjectionRef()
     }
     else
     {
+        CPLString osGeosys;
         OGRSpatialReference oSRS;
         char *pszWKT = NULL;
 
-        if( oSRS.importFromPCI( poGeoref->GetGeosys().c_str() ) == OGRERR_NONE )
+        try
+        {
+            if( poGeoref )
+                osGeosys = poGeoref->GetGeosys();
+        }
+        catch( PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+        }
+        
+        if( oSRS.importFromPCI( osGeosys ) == OGRERR_NONE )
         {
             oSRS.exportToWkt( &pszWKT );
             osSRS = pszWKT;
@@ -561,12 +698,10 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the file.                                           */
 /* -------------------------------------------------------------------- */
     try {
-
         PCIDSKFile *poFile = 
             PCIDSK::Open( poOpenInfo->pszFilename, 
                           poOpenInfo->eAccess == GA_ReadOnly ? "r" : "r+",
-                          NULL /* &oIOInterfaces */ );
-
+                          PCIDSK2GetInterfaces() );
         if( poFile == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -588,6 +723,19 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nRasterYSize = poFile->GetHeight();
 
 /* -------------------------------------------------------------------- */
+/*      Are we specifically PIXEL or BAND interleaving?                 */
+/*                                                                      */
+/*      We don't set anything for FILE since it is harder to know if    */
+/*      this is tiled or what the on disk interleaving is.              */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(poFile->GetInterleaving().c_str(),"PIXEL") )
+            poDS->SetMetadataItem( "IMAGE_STRUCTURE", "PIXEL", 
+                                   "IMAGE_STRUCTURE" );
+        else if( EQUAL(poFile->GetInterleaving().c_str(),"BAND") )
+            poDS->SetMetadataItem( "IMAGE_STRUCTURE", "BAND", 
+                                   "IMAGE_STRUCTURE" );
+
+/* -------------------------------------------------------------------- */
 /*      Create band objects.                                            */
 /* -------------------------------------------------------------------- */
         int iBand;
@@ -596,6 +744,25 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->SetBand( iBand+1, new PCIDSK2Band( poDS, poFile, iBand+1 ));
         }
+
+/* -------------------------------------------------------------------- */
+/*      Copy metadata.                                                  */
+/* -------------------------------------------------------------------- */
+        std::vector<std::string> aosKeys = poFile->GetMetadataKeys();
+        char **papszMD = NULL;
+        unsigned int i;
+
+        for( i = 0; i < aosKeys.size(); i++ )
+        {
+            if( aosKeys[i].c_str()[0] == '_' )
+                continue;
+
+            papszMD = CSLSetNameValue( papszMD, 
+                                       aosKeys[i].c_str(), 
+                                       poFile->GetMetadataValue(aosKeys[i]).c_str() );
+        }
+        poDS->SetMetadata( papszMD );
+        CSLDestroy( papszMD );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -686,7 +853,8 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     try {
         poFile = PCIDSK::Create( pszFilename, nXSize, nYSize, nBands, 
-                                 &(aeChanTypes[0]), osOptions, NULL );
+                                 &(aeChanTypes[0]), osOptions, 
+                                 PCIDSK2GetInterfaces() );
         delete poFile;
 
         // TODO: should we ensure this driver gets used?
@@ -714,20 +882,21 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /*                        GDALRegister_PCIDSK()                         */
 /************************************************************************/
 
-void GDALRegister_PCIDSK2()
+void GDALRegister_PCIDSK()
 
 {
     GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "PCIDSK2" ) == NULL )
+    if( GDALGetDriverByName( "PCIDSK" ) == NULL )
     {
         poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "PCIDSK2" );
+        poDriver->SetDescription( "PCIDSK" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "PCIDSK Database File" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_pcidsk.html" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pix" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16 Int16 Float32" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

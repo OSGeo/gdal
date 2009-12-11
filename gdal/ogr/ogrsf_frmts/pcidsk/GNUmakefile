@@ -4,7 +4,11 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrpcidskdriver.o ogrpcidskdatasource.o ogrpcidsklayer.o
 
-CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(PCIDSK_INC) $(CPPFLAGS)
+ifeq ($(PCIDSK_SETTING),internal)
+PCIDSK_INCLUDE = -I../../../frmts/pcidsk/pcidsk/src
+endif
+
+CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(PCIDSK_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
