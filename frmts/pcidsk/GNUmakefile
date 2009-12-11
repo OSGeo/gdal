@@ -13,7 +13,7 @@ else
 OBJ	=	pcidskdataset2.o vsi_pcidsk_io.o $(SDKOBJ)
 ifeq ($(PCIDSK_SETTING),internal)
 CPPFLAGS	:=	-DHAVE_JPEG $(JPEG_INCLUDE) -DPCIDSK_INTERNAL \
-	-Ipcidsk/src $(GDAL_INCLUDE) $(CPPFLAGS)
+	-Isdk $(GDAL_INCLUDE) $(CPPFLAGS)
 
 SDKOBJ 	=	\
 	cbandinterleavedchannel.o \
@@ -49,34 +49,34 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 
-../o/%.$(OBJ_EXT):	pcidsk/src/%.cpp
+../o/%.$(OBJ_EXT):	sdk/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-../o/%.$(OBJ_EXT):	pcidsk/src/channel/%.cpp
+../o/%.$(OBJ_EXT):	sdk/channel/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-../o/%.$(OBJ_EXT):	pcidsk/src/core/%.cpp
+../o/%.$(OBJ_EXT):	sdk/core/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-../o/%.$(OBJ_EXT):	pcidsk/src/port/%.cpp
+../o/%.$(OBJ_EXT):	sdk/port/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-../o/%.$(OBJ_EXT):	pcidsk/src/segment/%.cpp
+../o/%.$(OBJ_EXT):	sdk/segment/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	pcidsk/src/%.cpp
+%.$(OBJ_EXT):	sdk/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	pcidsk/src/channel/%.cpp
+%.$(OBJ_EXT):	sdk/channel/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	pcidsk/src/core/%.cpp
+%.$(OBJ_EXT):	sdk/core/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	pcidsk/src/port/%.cpp
+%.$(OBJ_EXT):	sdk/port/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	pcidsk/src/segment/%.cpp
+%.$(OBJ_EXT):	sdk/segment/%.cpp
 	$(CC) -c $(CPPFLAGS) $(CXXFLAGS ) $< -o $@
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))

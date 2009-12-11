@@ -689,14 +689,7 @@ if test "$with_pcidsk" = "old" -o "$with_pcidsk" = "no" ; then
 
   echo "pcidsk support using pre-PCIDSK SDK (old) implementation."
 
-elif test "$with_pcidsk" = "" ; then
-
-  dnl -- this is just temporary until the PCIDSK SDK is in the tree --
-  PCIDSK_SETTING=old
-
-  echo "using old pcidsk driver."
-
-elif test "$with_pcidsk" = "yes" -o "$with_pcidsk" = "internal" ; then
+elif test "$with_pcidsk" = "" -o "$with_pcidsk" = "yes" -o "$with_pcidsk" = "internal" ; then
 
   PCIDSK_SETTING=internal
 
