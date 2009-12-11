@@ -400,13 +400,20 @@ C++ the following could be used:
   GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
   GDALDataset *poSrcDS, *poVRTDS;
 
-  poSrcDS = (GDALDataset *) GDALOpen( "utm.tif", GA_ReadOnly );
+  poSrcDS = (GDALDataset *) GDALOpenShared( "utm.tif", GA_ReadOnly );
 
   poVRTDS = poDriver->CreateCopy( "wrk.vrt", poSrcDS, FALSE, NULL, NULL, NULL );
 
   GDALClose((GDALDatasetH) poVRTDS);
   GDALClose((GDALDatasetH) poSrcDS);
 \endcode
+
+Note the use of GDALOpenShared() when opening the source dataset. It is advised
+to use GDALOpenShared() in this situation so that you are able to release
+the explicit reference to it before closing the VRT dataset itself. In other
+words, in the previous example, you could also invert the 2 last lines, whereas
+if you open the source dataset with GDALOpen(), you'd need to close the VRT dataset
+before closing the source dataset.
 
 To create a virtual copy of a dataset with some attributes added or changed
 such as metadata or coordinate system that are often hard to change on other
@@ -470,7 +477,7 @@ changing is the data source for each band.
   GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
   GDALDataset *poSrcDS, *poVRTDS;
 
-  poSrcDS = (GDALDataset *) GDALOpen( pszSourceFilename, GA_ReadOnly );
+  poSrcDS = (GDALDataset *) GDALOpenShared( pszSourceFilename, GA_ReadOnly );
 
   poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
 
