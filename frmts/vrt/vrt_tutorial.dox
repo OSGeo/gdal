@@ -400,12 +400,12 @@ C++ the following could be used:
   GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
   GDALDataset *poSrcDS, *poVRTDS;
 
-  poSrcDS = (GDALDataset *) GDALOpenShared( "utm.tif", GA_ReadOnly );
+  poSrcDS = (GDALDataset *) GDALOpen( "utm.tif", GA_ReadOnly );
 
   poVRTDS = poDriver->CreateCopy( "wrk.vrt", poSrcDS, FALSE, NULL, NULL, NULL );
 
-  delete poVRTDS;
-  delete poSrcDS;
+  GDALClose((GDALDatasetH) poVRTDS);
+  GDALClose((GDALDatasetH) poSrcDS);
 \endcode
 
 To create a virtual copy of a dataset with some attributes added or changed
@@ -428,7 +428,7 @@ format.
 
   poTiffDS = poTIFFDriver->CreateCopy( "wrk.tif", poVRTDS, FALSE, NULL, NULL, NULL );
 
-  delete poTiffDS;
+  GDALClose((GDALDatasetH) poTiffDS);
 \endcode
 
 In this example a virtual dataset is created with the Create() method, and 
@@ -470,7 +470,7 @@ changing is the data source for each band.
   GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
   GDALDataset *poSrcDS, *poVRTDS;
 
-  poSrcDS = (GDALDataset *) GDALOpenShared( pszSourceFilename, GA_ReadOnly );
+  poSrcDS = (GDALDataset *) GDALOpen( pszSourceFilename, GA_ReadOnly );
 
   poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
 
