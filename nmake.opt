@@ -237,6 +237,15 @@ JPEG12_SUPPORTED = 1
 # Enable the following if you prefer to build MrSID support as a plugin.
 #MRSID_PLUGIN = YES
 
+# PCIDSK Libraries - default configuration uses internal implementation
+PCIDSK_SETTING=INTERNAL
+# Replace with these to use an external build.
+#PCIDSK_SETTING=EXTERNAL
+#PCIDSK_INCLUDE=-I\warmerda\pcidsk\src
+#PCIDSK_LIB=\warmerda\pcidsk\src\pcidsk.lib
+# Use the following alternative to use the old PCIDSK implementation
+#PCIDSK_SETTING=OLD
+
 # PostGIS Libraries
 #PG_INC_DIR = n:\pkg\libpq_win32\include
 #PG_LIB = n:\pkg\libpq_win32\lib\libpqdll.lib wsock32.lib
@@ -431,12 +440,13 @@ HDF5_LIB_LINK =
 SYM_PREFIX=_
 !ENDIF
 
-EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
-		$(ECW_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(JASPER_LIB) $(MRSID_LIB_LINK) \
-		$(FITS_LIB_LINK) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
-		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
-		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(DWG_LIB) \
-		$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(ADD_LIBS) 
+EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
+	$(ECW_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
+	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
+	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
+	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(DWG_LIB) \
+	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
+	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) 
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
