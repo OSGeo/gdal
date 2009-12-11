@@ -1,7 +1,7 @@
 
 OBJ	=	ogrpcidskdriver.obj ogrpcidskdatasource.obj ogrpcidsklayer.obj
 
-EXTRAFLAGS =	-I.. -I..\..
+EXTRAFLAGS =	-I.. -I..\.. $(PCIDSK_INC) -I..\..\..\frmts\pcidsk\sdk
 
 GDAL_ROOT	=	..\..\..
 
