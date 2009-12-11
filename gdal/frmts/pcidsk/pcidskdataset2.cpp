@@ -591,7 +591,8 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
     }
 
 
-    for( int iBand = 0; iBand < nListBands; iBand++ )
+    int iBand;
+    for( iBand = 0; iBand < nListBands; iBand++ )
     {
         poBand = GetRasterBand( panBandList[iBand] );
         ((PCIDSK2Band *) poBand)->RefreshOverviewList();
@@ -606,7 +607,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
     papoOverviewBands = (GDALRasterBand **) 
         CPLCalloc(sizeof(void*),nOverviews);
 
-    for( int iBand = 0; iBand < nListBands && eErr == CE_None; iBand++ )
+    for( iBand = 0; iBand < nListBands && eErr == CE_None; iBand++ )
     {
         nNewOverviews = 0;
 
