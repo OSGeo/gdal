@@ -55,10 +55,12 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn )
         
         if( osLayerType == "WHOLE_POLYGONS" )
             poFeatureDefn->SetGeomType( wkbPolygon25D );
-        else if( osLayerType == "ARCS" )
+        else if( osLayerType == "ARCS" || osLayerType == "TOPO_ARCS" )
             poFeatureDefn->SetGeomType( wkbLineString25D );
-        else if( osLayerType == "POINTS" )
+        else if( osLayerType == "POINTS" || osLayerType == "TOPO_NODES" )
             poFeatureDefn->SetGeomType( wkbPoint25D );
+        else if( osLayerType == "TABLE" )
+            poFeatureDefn->SetGeomType( wkbNone );
     } catch(...) {}
 
 /* -------------------------------------------------------------------- */
@@ -213,7 +215,9 @@ OGRFeature * OGRPCIDSKLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Point                                                           */
 /* -------------------------------------------------------------------- */
-    if( poFeatureDefn->GetGeomType() == wkbPoint25D )
+    if( poFeatureDefn->GetGeomType() == wkbPoint25D 
+        || (wkbFlatten(poFeatureDefn->GetGeomType()) == wkbUnknown 
+            && aoVertices.size() == 1) )
     {
         if( aoVertices.size() == 1 )
         {
@@ -231,8 +235,12 @@ OGRFeature * OGRPCIDSKLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      LineString                                                      */
 /* -------------------------------------------------------------------- */
-    if( poFeatureDefn->GetGeomType() == wkbLineString25D )
+    else if( poFeatureDefn->GetGeomType() == wkbLineString25D 
+             || (wkbFlatten(poFeatureDefn->GetGeomType()) == wkbUnknown 
+                 && aoVertices.size() > 1) )
     {
+        // We should likely be applying ringstart to break things into 
+        // a multilinestring in some cases.
         if( aoVertices.size() > 1 )
         {
             OGRLineString *poLS = new OGRLineString();
@@ -254,9 +262,13 @@ OGRFeature * OGRPCIDSKLayer::GetNextUnfilteredFeature()
     }    
 
 /* -------------------------------------------------------------------- */
-/*      Polygon                                                         */
+/*      Polygon - Currently we have no way to recognise if we are       */
+/*      dealing with a multipolygon when we have more than one          */
+/*      ring.  Also, PCIDSK allows the rings to be in arbitrary         */
+/*      order, not necessarily outside first which we are not yet       */
+/*      ready to address in the following code.                         */
 /* -------------------------------------------------------------------- */
-    if( poFeatureDefn->GetGeomType() == wkbPolygon25D )
+    else if( poFeatureDefn->GetGeomType() == wkbPolygon25D )
     {
         std::vector<PCIDSK::int32> anRingStart;
         OGRPolygon *poPoly = new OGRPolygon();
