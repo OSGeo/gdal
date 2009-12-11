@@ -21,7 +21,13 @@ SUBDIRS-$(HAVE_OGR_PG)	+= pg
 SUBDIRS-$(HAVE_SQLITE)	+= sqlite
 SUBDIRS-$(HAVE_SDE)     += sde
 SUBDIRS-$(HAVE_INGRES)  += ingres
-SUBDIRS-$(HAVE_PCIDSK)  += pcidsk
+
+ifeq ($(PCIDSK_SETTING),internal)
+SUBDIRS-yes  += pcidsk
+endif
+ifeq ($(PCIDSK_SETTING),external)
+SUBDIRS-yes  += pcidsk
+endif
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
 

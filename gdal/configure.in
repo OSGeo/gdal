@@ -627,6 +627,8 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH([png], [  --with-png[=ARG]        Include PNG support (ARG=internal, no or path)],,)
 
+AC_MSG_CHECKING([for libpng])
+
 if test "$with_png" = "no" ; then
 
   PNG_SETTING=no
@@ -671,10 +673,56 @@ if test "$PNG_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Select PCIDSK options.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([pcidsk], [  --with-pcidsk[=ARG]     Path to external PCIDSK SDK, or internal (default), or old],,)
+
+AC_MSG_CHECKING([for PCIDSK])
+
+PCIDSK_LIB=
+PCIDSK_INCLUDE=
+
+if test "$with_pcidsk" = "old" -o "$with_pcidsk" = "no" ; then
+
+  PCIDSK_SETTING=old
+
+  echo "pcidsk support using pre-PCIDSK SDK (old) implementation."
+
+elif test "$with_pcidsk" = "" ; then
+
+  dnl -- this is just temporary until the PCIDSK SDK is in the tree --
+  PCIDSK_SETTING=old
+
+  echo "using old pcidsk driver."
+
+elif test "$with_pcidsk" = "yes" -o "$with_pcidsk" = "internal" ; then
+
+  PCIDSK_SETTING=internal
+
+  echo "using internal libpcidsk."
+
+else
+
+  PCIDSK_SETTING=external
+  PCIDSK_LIB="-L$with_pcidsk/lib -lpcidsk"
+  PCIDSK_INCLUDE="-I$with_pcidsk/include -I$with_pcidsk/include/pcidsk"
+
+  echo "using libpcidsk from $with_pcidsk."
+
+fi
+
+AC_SUBST([PCIDSK_SETTING], [$PCIDSK_SETTING])
+AC_SUBST([PCIDSK_LIB], [$PCIDSK_LIB])
+AC_SUBST([PCIDSK_INCLUDE], [$PCIDSK_INCLUDE])
+
+dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(libtiff,[  --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)],,)
+
+AC_MSG_CHECKING([for libtiff])
 
 if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
 
@@ -2473,6 +2521,7 @@ LOC_MSG([  NAS support:               ${HAVE_NAS}])
 LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGeo support:              ${ODBC_SETTING}])
+LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
 LOC_MSG([  SDE support:               ${SDE_ENABLED}])
