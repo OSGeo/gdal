@@ -1,15 +1,82 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	pcidskdataset.o pcidsktiledrasterband.o
+ifeq ($(JPEG_SETTING),internal)
+JPEG_INCLUDE	=	-I../jpeg/libjpeg
+endif
 
+ifeq ($(PCIDSK_SETTING),old)
+OBJ	=	pcidskdataset.o pcidsktiledrasterband.o
 CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS)
+$(O_OBJ):	../raw/rawdataset.h gdal_pcidsk.h
+else
+OBJ	=	pcidskdataset2.o vsi_pcidsk_io.o $(SDKOBJ)
+ifeq ($(PCIDSK_SETTING),internal)
+CPPFLAGS	:=	-DHAVE_JPEG $(JPEG_INCLUDE) -DPCIDSK_INTERNAL \
+	-Ipcidsk/src $(GDAL_INCLUDE) $(CPPFLAGS)
+
+SDKOBJ 	=	\
+	cbandinterleavedchannel.o \
+	cpcidskchannel.o \
+	cpixelinterleavedchannel.o \
+	ctiledchannel.o \
+	cpcidskfile.o \
+	libjpeg_io.o \
+	metadataset_p.o \
+	pcidskbuffer.o \
+	pcidskcreate.o \
+	pcidskexception.o \
+	pcidskinterfaces.o \
+	pcidskopen.o \
+	pcidsk_pubutils.o \
+	pcidsk_utils.o \
+	sysvirtualfile.o \
+	cpcidskgeoref.o \
+	cpcidsksegment.o \
+	cpcidskvectorsegment.o \
+	metadatasegment_p.o \
+	segmentfactory.o \
+	segment_loader.o \
+	sysblockmap.o
+
+else
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(PCIDSK_INCLUDE) $(CPPFLAGS)
+endif
+endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
-$(O_OBJ):	../raw/rawdataset.h gdal_pcidsk.h
-
 clean:
 	rm -f *.o $(O_OBJ)
+
+../o/%.$(OBJ_EXT):	pcidsk/src/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+../o/%.$(OBJ_EXT):	pcidsk/src/channel/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+../o/%.$(OBJ_EXT):	pcidsk/src/core/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+../o/%.$(OBJ_EXT):	pcidsk/src/port/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+../o/%.$(OBJ_EXT):	pcidsk/src/segment/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+%.$(OBJ_EXT):	pcidsk/src/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+%.$(OBJ_EXT):	pcidsk/src/channel/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+%.$(OBJ_EXT):	pcidsk/src/core/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+%.$(OBJ_EXT):	pcidsk/src/port/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+%.$(OBJ_EXT):	pcidsk/src/segment/%.cpp
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS ) $< -o $@
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
