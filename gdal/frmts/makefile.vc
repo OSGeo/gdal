@@ -133,16 +133,18 @@ list:
 	echo $(PLUGINDIRLIST)
 
 subdirs:
-	-for %d in ( $(DIRLIST) ) do \
+	for %d in ( $(DIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc \
-		&& cd ..
+		&& cd .. \
+		|| exit 1
 
 plugindirs:
 	-for %d in ( $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc plugin \
-		&& cd ..
+		&& cd .. \
+		|| exit 1
 
 o\gdalallregister.obj:	gdalallregister.cpp ..\nmake.opt
 	$(CC) $(CFLAGS) $(MOREEXTRA) /c gdalallregister.cpp
@@ -153,11 +155,13 @@ clean:
 	-for %d in ( $(DIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc clean \
-		&& cd ..
+		&& cd .. \
+		|| exit 1
 	-for %d in ( $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc clean \
-		&& cd ..
+		&& cd .. \
+		|| exit 1
 	cd iso8211
 	$(MAKE) /f makefile.vc clean
 
@@ -165,7 +169,8 @@ plugins-install:
 	-for %d in ( $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc plugin-install \
-		&& cd ..
+		&& cd .. \
+		|| exit 1
 
 html-install:
 	copy *.html $(HTMLDIR)
