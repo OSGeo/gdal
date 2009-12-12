@@ -613,6 +613,27 @@ void GDALDestroyWarpOperation( GDALWarpOperationH hOperation )
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
+ 
+ struct WarpChunk { 
+    int dx, dy, dsx, dsy; 
+    int sx, sy, ssx, ssy; 
+}; 
+ 
+static int OrderWarpChunk(const void* _a, const void *_b)
+{ 
+    const WarpChunk* a = (const WarpChunk* )_a;
+    const WarpChunk* b = (const WarpChunk* )_b;
+    if (a->dy < b->dy)
+        return -1; 
+    else if (a->dy > b->dy)
+        return 1; 
+    else if (a->dx < b->dx)
+        return -1; 
+    else if (a->dx > b->dx)
+        return 1; 
+    else
+        return 0; 
+} 
 
 CPLErr GDALWarpOperation::ChunkAndWarpImage( 
     int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
@@ -623,6 +644,9 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
 /* -------------------------------------------------------------------- */
     WipeChunkList();
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
+    
+    /* Sort chucks from top to bottom, and for equal y, from left to right */
+    qsort(panChunkList, nChunkListCount, sizeof(WarpChunk), OrderWarpChunk); 
 
 /* -------------------------------------------------------------------- */
 /*      Total up output pixels to process.                              */
@@ -768,6 +792,9 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 /* -------------------------------------------------------------------- */
     WipeChunkList();
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
+
+    /* Sort chucks from top to bottom, and for equal y, from left to right */
+    qsort(panChunkList, nChunkListCount, sizeof(WarpChunk), OrderWarpChunk); 
 
 /* -------------------------------------------------------------------- */
 /*      Process them one at a time, updating the progress               */
@@ -961,13 +988,30 @@ CPLErr GDALWarpOperation::CollectChunkList(
     dfTotalMemoryUse =
         (((double) nSrcPixelCostInBits) * nSrcXSize * nSrcYSize
          + ((double) nDstPixelCostInBits) * nDstXSize * nDstYSize) / 8.0;
+         
+        
+    int nBlockXSize = 1, nBlockYSize = 1;
+    if (psOptions->hDstDS)
+    {
+        GDALGetBlockSize(GDALGetRasterBand(psOptions->hDstDS, 1),
+                         &nBlockXSize, &nBlockYSize);
+    }
 
     if( dfTotalMemoryUse > psOptions->dfWarpMemoryLimit 
         && (nDstXSize > 2 || nDstYSize > 2) )
     {
-        if( nDstXSize > nDstYSize )
+        /* If the region width is greater than the region height, */
+        /* cut in half in the width. Do this only if each half part */
+        /* is at least as wide as the block width */
+        if( nDstXSize > nDstYSize &&
+            (nDstXSize / 2 >= nBlockXSize || nDstYSize == 1) )
         {
             int nChunk1 = nDstXSize / 2;
+            
+            /* Try to stick on target block boundaries */
+            if (nChunk1 > nBlockXSize)
+                nChunk1 = (nChunk1 / nBlockXSize) * nBlockXSize;
+            
             int nChunk2 = nDstXSize - nChunk1;
 
             eErr = CollectChunkList( nDstXOff, nDstYOff, 
@@ -983,6 +1027,10 @@ CPLErr GDALWarpOperation::CollectChunkList(
         {
             int nChunk1 = nDstYSize / 2;
             int nChunk2 = nDstYSize - nChunk1;
+
+            /* Try to stick on target block boundaries */
+            if (nChunk1 > nBlockYSize)
+                nChunk1 = (nChunk1 / nBlockYSize) * nBlockYSize;
 
             eErr = CollectChunkList( nDstXOff, nDstYOff, 
                                      nDstXSize, nChunk1 );
