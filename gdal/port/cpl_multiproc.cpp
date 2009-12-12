@@ -583,6 +583,8 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
     psInfo->pfnMain( psInfo->pAppData );
 
     CPLFree( psInfo );
+    
+    CPLCleanupTLS();
 
     return 0;
 }
@@ -894,7 +896,7 @@ static void *CPLStdCallThreadJacket( void *pData )
     psInfo->pfnMain( psInfo->pAppData );
 
     CPLFree( psInfo );
-
+    
     return NULL;
 }
 
