@@ -194,7 +194,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
 {
     CPLString osSQL;
     
-    const char* pszOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
+    CPLString osOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
     CPLString osDBName = OGR_DS_GetName(hDS);
     
     CPLString osRasterLayer;
@@ -256,7 +256,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
         
         CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
         hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
-        CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", pszOldVal);
+        CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
     }
     else
     {
@@ -290,7 +290,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
                     
                     CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
                     hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
-                    CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", pszOldVal);
+                    CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
                 }
                 else
                 {
@@ -459,21 +459,21 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     
     OGRDataSourceH hDS;
     
-    const char* pszOldVal =
+    CPLString osOldVal =
         CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
     CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
     if (!bExists)
     {
-        char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
+        char** papszOGROptions = CSLAddString(NULL, "SPATIALITE=YES");
         hDS = OGR_Dr_CreateDataSource(hSQLiteDriver,
-                                      osDBName.c_str(), papszOptions);
-        CSLDestroy(papszOptions);
+                                      osDBName.c_str(), papszOGROptions);
+        CSLDestroy(papszOGROptions);
     }
     else
     {
         hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
     }
-    CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", pszOldVal);
+    CPLSetConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
     
     if (hDS == NULL)
     {
@@ -618,12 +618,12 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             int iBand;
             for(iBand = 0; iBand < nBands; iBand ++)
             {
-                char** papszOptions = NULL;
+                char** papszMEMDSOptions = NULL;
                 char szTmp[128];
                 sprintf(szTmp, CPL_FRMT_GUIB, (GUIntBig)(pabyMEMDSBuffer + iBand * nDataTypeSize * nReqXSize * nReqYSize));
-                papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szTmp);
-                GDALAddBand(hMemDS, eDataType, papszOptions);
-                CSLDestroy(papszOptions);
+                papszMEMDSOptions = CSLSetNameValue(papszMEMDSOptions, "DATAPOINTER", szTmp);
+                GDALAddBand(hMemDS, eDataType, papszMEMDSOptions);
+                CSLDestroy(papszMEMDSOptions);
             }
             
             GDALDatasetH hOutDS = GDALCreateCopy(hTileDriver,
