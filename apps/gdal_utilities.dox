@@ -1031,11 +1031,10 @@ The algorithm processes the image one scanline at a time.  A scan "in" is done
 from either end setting pixels to black (white) until at least 
 "non_black_pixels" pixels that are more than "dist" gray levels away from 
 black (white) have been encountered at which point the scan stops.  The nearly
-black (white) pixels are set to black (white). 
+black (white) pixels are set to black (white). The algorithm also scans from
+top to bottom and from bottom to top to identify indentations in the top or bottom.
 
-Note that this algorithm is only applied to horizontal scanlines, so a photo
-with an indentation in the top or bottom will not have that indentation
-identified.  The processing is all done in 8bit (Bytes).
+The processing is all done in 8bit (Bytes).
 
 If the output file is omitted, the processed results will be written back
 to the input file - which must support update. 
