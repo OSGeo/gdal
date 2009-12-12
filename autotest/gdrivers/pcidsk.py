@@ -82,9 +82,87 @@ def pcidsk_4():
     return 'success'
 
 ###############################################################################
+# Test writing metadata to a newly created file.
+
+def pcidsk_5():
+
+    # Are we using the new PCIDSK SDK based driver?
+    driver = gdal.GetDriverByName( 'PCIDSK' )
+    col = driver.GetMetadataItem( 'DMD_CREATIONOPTIONLIST' )
+    if col.find('COMPRESSION') == -1:
+        gdaltest.pcidsk_new = 0
+        return 'skip'
+    else:
+        gdaltest.pcidsk_new = 1
+
+    # Create testing file.
+
+    gdaltest.pcidsk_ds = driver.Create( 'tmp/pcidsk_5.pix', 400, 600, 1,
+                                        gdal.GDT_UInt16 )
+
+    # Write out some metadata to the default and non-default domain and
+    # using the set and single methods.
+    
+    gdaltest.pcidsk_ds.SetMetadata( [ 'ABC=DEF', 'GHI=JKL' ] )
+    gdaltest.pcidsk_ds.SetMetadataItem( 'XXX',  'YYY' )
+    gdaltest.pcidsk_ds.SetMetadataItem( 'XYZ',  '123', 'AltDomain' )
+
+    # Close and reopen.
+    gdaltest.pcidsk_ds = None
+    gdaltest.pcidsk_ds = gdal.Open( 'tmp/pcidsk_5.pix', gdal.GA_Update )
+
+    # Check metadata.
+    mddef = gdaltest.pcidsk_ds.GetMetadata()
+    if mddef['GHI'] != 'JKL' or mddef['XXX'] != 'YYY':
+        print mddef
+        gdaltest.post_reason( 'file default domain metadata broken. ')
+
+    mdalt = gdaltest.pcidsk_ds.GetMetadata('AltDomain')
+    if mdalt['XYZ'] != '123':
+        print mdalt
+        gdaltest.post_reason( 'file alt domain metadata broken. ')
+
+    return 'success'
+
+###############################################################################
+# Test writing metadata to a newly created file.
+
+def pcidsk_6():
+
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    # Write out some metadata to the default and non-default domain and
+    # using the set and single methods.
+    band = gdaltest.pcidsk_ds.GetRasterBand(1)
+    
+    band.SetMetadata( [ 'ABC=DEF', 'GHI=JKL' ] )
+    band.SetMetadataItem( 'XXX',  'YYY' )
+    band.SetMetadataItem( 'XYZ',  '123', 'AltDomain' )
+
+    # Close and reopen.
+    gdaltest.pcidsk_ds = None
+    gdaltest.pcidsk_ds = gdal.Open( 'tmp/pcidsk_5.pix', gdal.GA_Update )
+
+    # Check metadata.
+    band = gdaltest.pcidsk_ds.GetRasterBand(1)
+    mddef = band.GetMetadata()
+    if mddef['GHI'] != 'JKL' or mddef['XXX'] != 'YYY':
+        print mddef
+        gdaltest.post_reason( 'channel default domain metadata broken. ')
+
+    mdalt = band.GetMetadata('AltDomain')
+    if mdalt['XYZ'] != '123':
+        print mdalt
+        gdaltest.post_reason( 'channel alt domain metadata broken. ')
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def pcidsk_cleanup():
+    gdaltest.pcidsk_ds = None
     gdaltest.clean_tmp()
     return 'success'
 
@@ -93,6 +171,8 @@ gdaltest_list = [
     pcidsk_2,
     pcidsk_3,
     pcidsk_4,
+    pcidsk_5,
+    pcidsk_6,
     pcidsk_cleanup ]
 
 if __name__ == '__main__':

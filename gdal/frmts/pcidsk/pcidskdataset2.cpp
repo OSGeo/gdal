@@ -37,10 +37,6 @@ CPL_CVSID("$Id: pcidskdataset.cpp 17097 2009-05-21 19:59:35Z warmerdam $");
 
 using namespace PCIDSK;
 
-CPL_C_START
-void    GDALRegister_PCIDSK2(void);
-CPL_C_END
-
 const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
 
 /************************************************************************/
@@ -52,6 +48,8 @@ class PCIDSK2Dataset : public GDALPamDataset
     friend class PCIDSK2Band;
 
     CPLString   osSRS;
+    CPLString   osLastMDValue;
+    char      **papszLastMDListValue;
 
     PCIDSKFile  *poFile;
 
@@ -73,6 +71,11 @@ class PCIDSK2Dataset : public GDALPamDataset
     const char         *GetProjectionRef();
     CPLErr              SetProjection( const char * );
 
+    CPLErr              SetMetadata( char **, const char * );
+    char              **GetMetadata( const char* );
+    CPLErr              SetMetadataItem(const char*,const char*,const char*);
+    const char         *GetMetadataItem( const char*, const char*);
+
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
 };
@@ -90,6 +93,9 @@ class PCIDSK2Band : public GDALPamRasterBand
     void        RefreshOverviewList();
     std::vector<PCIDSK2Band*> apoOverviews;
     
+    CPLString   osLastMDValue;
+    char      **papszLastMDListValue;
+
   public:
                 PCIDSK2Band( PCIDSK2Dataset *, PCIDSKFile *, int );
                 PCIDSK2Band( PCIDSKChannel * );
@@ -100,6 +106,12 @@ class PCIDSK2Band : public GDALPamRasterBand
 
     virtual int        GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
+
+    CPLErr              SetMetadata( char **, const char * );
+    char              **GetMetadata( const char* );
+    CPLErr              SetMetadataItem(const char*,const char*,const char*);
+    const char         *GetMetadataItem( const char*, const char*);
+
 };
 
 /************************************************************************/
@@ -117,6 +129,8 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
                           int nBand )                        
 
 {
+    papszLastMDListValue = NULL;
+
     this->poDS = poDS;
 
     this->nBand = nBand;
@@ -141,6 +155,8 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
 PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )                        
 
 {
+    papszLastMDListValue = NULL;
+
     this->poChannel = poChannel;
     poDS = NULL;
     nBand = 1;
@@ -166,6 +182,7 @@ PCIDSK2Band::~PCIDSK2Band()
         delete apoOverviews[apoOverviews.size()-1];
         apoOverviews.pop_back();
     }
+    CSLDestroy( papszLastMDListValue );
 }
 
 /************************************************************************/
@@ -263,6 +280,165 @@ GDALRasterBand *PCIDSK2Band::GetOverview(int iOverview)
 }
 
 /************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr PCIDSK2Band::SetMetadata( char **papszMD, 
+                                 const char *pszDomain )
+
+{
+/* -------------------------------------------------------------------- */
+/*      PCIDSK only supports metadata in the default domain.            */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        return GDALPamRasterBand::SetMetadata( papszMD, pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      Set each item individually.                                     */
+/* -------------------------------------------------------------------- */
+    CSLDestroy( papszLastMDListValue );
+    papszLastMDListValue = NULL;
+
+    try
+    {
+        int iItem;
+
+        for( iItem = 0; papszMD && papszMD[iItem]; iItem++ )
+        {
+            const char *pszItemValue;
+            char *pszItemName = NULL;
+
+            pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName);
+            poChannel->SetMetadataValue( pszItemName, pszItemValue );
+            CPLFree( pszItemName );
+        }
+        return CE_None;
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName, 
+                                     const char *pszValue, 
+                                     const char *pszDomain )
+
+{
+/* -------------------------------------------------------------------- */
+/*      PCIDSK only supports metadata in the default domain.            */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        return GDALPamRasterBand::SetMetadataItem(pszName,pszValue,pszDomain);
+
+/* -------------------------------------------------------------------- */
+/*      Set on the file.                                                */
+/* -------------------------------------------------------------------- */
+    CSLDestroy( papszLastMDListValue );
+    papszLastMDListValue = NULL;
+
+    try
+    {
+        poChannel->SetMetadataValue( pszName, pszValue );
+        return CE_None;
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *PCIDSK2Band::GetMetadataItem( const char *pszName, 
+                                          const char *pszDomain )
+
+{
+/* -------------------------------------------------------------------- */
+/*      PCIDSK only supports metadata in the default domain.            */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        return GDALPamRasterBand::GetMetadataItem( pszName, pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      Try and fetch.                                                  */
+/* -------------------------------------------------------------------- */
+    try
+    {
+        osLastMDValue = poChannel->GetMetadataValue( pszName );
+
+        if( osLastMDValue == "" )
+            return NULL;
+        else
+            return osLastMDValue.c_str();
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **PCIDSK2Band::GetMetadata( const char *pszDomain )
+
+{
+/* -------------------------------------------------------------------- */
+/*      PCIDSK only supports metadata in the default domain.            */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        return GDALPamRasterBand::GetMetadata( pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      If we have a cached result, just use that.                      */
+/* -------------------------------------------------------------------- */
+    if( papszLastMDListValue != NULL )
+        return papszLastMDListValue;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch and build the list.                                       */
+/* -------------------------------------------------------------------- */
+    try
+    {
+        std::vector<std::string> aosKeys = poChannel->GetMetadataKeys();
+        unsigned int i;
+    
+        for( i = 0; i < aosKeys.size(); i++ )
+        {
+            if( aosKeys[i].c_str()[0] == '_' )
+                continue;
+
+            papszLastMDListValue =
+                CSLSetNameValue( papszLastMDListValue,
+                                 aosKeys[i].c_str(), 
+                                 poChannel->GetMetadataValue(aosKeys[i]).c_str() );
+        }
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return NULL;
+    }
+
+    return papszLastMDListValue;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                            PCIDSK2Dataset                            */
 /* ==================================================================== */
@@ -275,6 +451,7 @@ GDALRasterBand *PCIDSK2Band::GetOverview(int iOverview)
 PCIDSK2Dataset::PCIDSK2Dataset()
 {
     poFile = NULL;
+    papszLastMDListValue = NULL;
 }
 
 /************************************************************************/
@@ -303,6 +480,167 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "PCIDSK SDK Failure in Close(), unexpected exception." );
     }
+
+    CSLDestroy( papszLastMDListValue );
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD, 
+                                    const char *pszDomain )
+
+{
+/* -------------------------------------------------------------------- */
+/*      PCIDSK only supports metadata in the default domain.            */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        return GDALPamDataset::SetMetadata( papszMD, pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      Set each item individually.                                     */
+/* -------------------------------------------------------------------- */
+    CSLDestroy( papszLastMDListValue );
+    papszLastMDListValue = NULL;
+
+    try
+    {
+        int iItem;
+
+        for( iItem = 0; papszMD && papszMD[iItem]; iItem++ )
+        {
+            const char *pszItemValue;
+            char *pszItemName = NULL;
+
+            pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName);
+            poFile->SetMetadataValue( pszItemName, pszItemValue );
+            CPLFree( pszItemName );
+        }
+        return CE_None;
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName, 
+                                        const char *pszValue, 
+                                        const char *pszDomain )
+
+{
+/* -------------------------------------------------------------------- */
+/*      PCIDSK only supports metadata in the default domain.            */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        return GDALPamDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      Set on the file.                                                */
+/* -------------------------------------------------------------------- */
+    CSLDestroy( papszLastMDListValue );
+    papszLastMDListValue = NULL;
+
+    try
+    {
+        poFile->SetMetadataValue( pszName, pszValue );
+        return CE_None;
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *PCIDSK2Dataset::GetMetadataItem( const char *pszName, 
+                                             const char *pszDomain )
+
+{
+/* -------------------------------------------------------------------- */
+/*      PCIDSK only supports metadata in the default domain.            */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      Try and fetch.                                                  */
+/* -------------------------------------------------------------------- */
+    try
+    {
+        osLastMDValue = poFile->GetMetadataValue( pszName );
+
+        if( osLastMDValue == "" )
+            return NULL;
+        else
+            return osLastMDValue.c_str();
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **PCIDSK2Dataset::GetMetadata( const char *pszDomain )
+
+{
+/* -------------------------------------------------------------------- */
+/*      PCIDSK only supports metadata in the default domain.            */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        return GDALPamDataset::GetMetadata( pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      If we have a cached result, just use that.                      */
+/* -------------------------------------------------------------------- */
+    if( papszLastMDListValue != NULL )
+        return papszLastMDListValue;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch and build the list.                                       */
+/* -------------------------------------------------------------------- */
+    try
+    {
+        std::vector<std::string> aosKeys = poFile->GetMetadataKeys();
+        unsigned int i;
+    
+        for( i = 0; i < aosKeys.size(); i++ )
+        {
+            if( aosKeys[i].c_str()[0] == '_' )
+                continue;
+
+            papszLastMDListValue =
+                CSLSetNameValue( papszLastMDListValue,
+                                 aosKeys[i].c_str(), 
+                                 poFile->GetMetadataValue(aosKeys[i]).c_str() );
+        }
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return NULL;
+    }
+
+    return papszLastMDListValue;
 }
 
 /************************************************************************/
@@ -745,25 +1083,6 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->SetBand( iBand+1, new PCIDSK2Band( poDS, poFile, iBand+1 ));
         }
-
-/* -------------------------------------------------------------------- */
-/*      Copy metadata.                                                  */
-/* -------------------------------------------------------------------- */
-        std::vector<std::string> aosKeys = poFile->GetMetadataKeys();
-        char **papszMD = NULL;
-        unsigned int i;
-
-        for( i = 0; i < aosKeys.size(); i++ )
-        {
-            if( aosKeys[i].c_str()[0] == '_' )
-                continue;
-
-            papszMD = CSLSetNameValue( papszMD, 
-                                       aosKeys[i].c_str(), 
-                                       poFile->GetMetadataValue(aosKeys[i]).c_str() );
-        }
-        poDS->SetMetadata( papszMD );
-        CSLDestroy( papszMD );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
