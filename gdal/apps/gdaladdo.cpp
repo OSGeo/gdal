@@ -40,12 +40,13 @@ static void Usage()
 
 {
     printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]\n"
-            "                [-ro] [-clean] [--help-general] filename levels\n"
+            "                [-ro] [-clean] [-quiet] [--help-general] filename levels\n"
             "\n"
             "  -r : choice of resampling method (default: nearest)\n"
             "  -ro : open the dataset in read-only mode, in order to generate\n"
             "        external overview (for GeoTIFF datasets especially)\n"
             "  -clean : remove all overviews\n"
+            "  -quiet : turn off progress display\n" 
             "  filename: The file to build overviews for (or whose overviews must be removed).\n"
             "  levels: A list of integral overview levels to build. Ignored with -clean option.\n"
             "\n"
@@ -72,14 +73,15 @@ static void Usage()
 int main( int nArgc, char ** papszArgv )
 
 {
-    GDALDatasetH hDataset;
-    const char * pszResampling = "nearest";
-    const char * pszFilename = NULL;
-    int          anLevels[1024];
-    int          nLevelCount = 0;
-    int          nResultStatus = 0;
-    int          bReadOnly = FALSE;
-    int          bClean = FALSE;
+    GDALDatasetH     hDataset;
+    const char      *pszResampling = "nearest";
+    const char      *pszFilename = NULL;
+    int              anLevels[1024];
+    int              nLevelCount = 0;
+    int              nResultStatus = 0;
+    int              bReadOnly = FALSE;
+    int              bClean = FALSE;
+    GDALProgressFunc pfnProgress = GDALTermProgress; 
 
     /* Check that we are running against at least GDAL 1.7 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -113,6 +115,8 @@ int main( int nArgc, char ** papszArgv )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-clean"))
             bClean = TRUE;
+        else if( EQUAL(papszArgv[iArg],"-quiet") ) 
+            pfnProgress = GDALDummyProgress; 
         else if( pszFilename == NULL )
             pszFilename = papszArgv[iArg];
         else if( atoi(papszArgv[iArg]) > 0 )
@@ -147,7 +151,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if ( bClean &&
         GDALBuildOverviews( hDataset,pszResampling, 0, 0, 
-                             0, NULL, GDALTermProgress, NULL ) != CE_None )
+                             0, NULL, pfnProgress, NULL ) != CE_None )
     {
         printf( "Cleaning overviews failed.\n" );
         nResultStatus = 200;
@@ -158,7 +162,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if (nLevelCount > 0 && nResultStatus == 0 &&
         GDALBuildOverviews( hDataset,pszResampling, nLevelCount, anLevels,
-                             0, NULL, GDALTermProgress, NULL ) != CE_None )
+                             0, NULL, pfnProgress, NULL ) != CE_None )
     {
         printf( "Overview building failed.\n" );
         nResultStatus = 100;
