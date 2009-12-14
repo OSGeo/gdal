@@ -33,6 +33,7 @@ OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj \
 	sdk\core\pcidsk_utils.obj \
 	sdk\core\sysvirtualfile.obj \
 	sdk\segment\cpcidskgeoref.obj \
+	sdk\segment\cpcidskpct.obj \
 	sdk\segment\cpcidsksegment.obj \
 	sdk\segment\cpcidskvectorsegment.obj \
 	sdk\segment\metadatasegment_p.obj \
