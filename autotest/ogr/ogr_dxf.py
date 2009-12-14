@@ -190,7 +190,7 @@ def ogr_dxf_6():
         return 'fail'
 
     if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#ffffff)':
-        print feat.GetStyleString()
+        print(feat.GetStyleString())
         gdaltest.post_reason( 'got wrong style string' )
         return 'fail'
 
