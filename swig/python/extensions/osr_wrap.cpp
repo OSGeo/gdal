@@ -2881,6 +2881,70 @@ void DontUseExceptions() {
 }
 
 
+
+/* Return a PyObject* from a NULL terminated C String */
+static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
+{
+#if PY_VERSION_HEX >= 0x03000000
+  const unsigned char* pszIter = (const unsigned char*) pszStr;
+  while(*pszIter != 0)
+  {
+    if (*pszIter > 127)
+        return PyBytes_FromString( pszStr );
+    pszIter ++;
+  }
+  return PyUnicode_FromString(pszStr); 
+#else
+  return PyString_FromString(pszStr);
+#endif
+}
+
+/* Return a NULL terminated c String from a PyObject */
+/* Result must be freed with GDALPythonFreeCStr */
+static char* GDALPythonObjectToCStr(PyObject* pyObject)
+{
+#if PY_VERSION_HEX >= 0x03000000
+  if (PyUnicode_Check(pyObject))
+  {
+      char *pszStr;
+      char *pszNewStr;
+      int nLen;
+      PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
+      PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+      pszNewStr = (char *) malloc(nLen+1);
+      memcpy(pszNewStr, pszStr, nLen+1);
+      Py_XDECREF(pyUTF8Str);
+      return pszNewStr;
+  }
+  else if (PyBytes_Check(pyObject))
+  {
+      char *pszStr;
+      char *pszNewStr;
+      int nLen;
+      PyBytes_AsStringAndSize(pyObject, &pszStr, &nLen);
+      pszNewStr = (char *) malloc(nLen+1);
+      memcpy(pszNewStr, pszStr, nLen+1);
+      return pszNewStr;
+  }
+  else
+  {
+      char *pszStr = (char *) malloc(1);
+      pszStr[0] = '\0';
+      return pszStr;
+  }
+#else
+  return PyString_AsString(pyObject);
+#endif
+}
+
+#if PY_VERSION_HEX >= 0x03000000
+#define GDALPythonFreeCStr(x) free( (void*) (x) )
+#else
+#define GDALPythonFreeCStr(x) 
+#endif
+
+
+
 static PyObject *
 py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
 
@@ -3759,7 +3823,7 @@ SWIGINTERN PyObject *_wrap_GetWellKnownGeogCSAsWKT(PyObject *SWIGUNUSEDPARM(self
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg2 != NULL && *arg2 != NULL) {
-      o = PyString_FromString( *arg2 );
+      o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
       o = Py_None;
@@ -3841,7 +3905,7 @@ SWIGINTERN PyObject *_wrap_GetUserInputAsWKT(PyObject *SWIGUNUSEDPARM(self), PyO
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg2 != NULL && *arg2 != NULL) {
-      o = PyString_FromString( *arg2 );
+      o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
       o = Py_None;
@@ -10166,7 +10230,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToWkt(PyObject *SWIGUNUSEDPARM
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg2 != NULL && *arg2 != NULL) {
-      o = PyString_FromString( *arg2 );
+      o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
       o = Py_None;
@@ -10251,7 +10315,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPrettyWkt(PyObject *SWIGUNUS
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg2 != NULL && *arg2 != NULL) {
-      o = PyString_FromString( *arg2 );
+      o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
       o = Py_None;
@@ -10325,7 +10389,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToProj4(PyObject *SWIGUNUSEDPA
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg2 != NULL && *arg2 != NULL) {
-      o = PyString_FromString( *arg2 );
+      o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
       o = Py_None;
@@ -10411,7 +10475,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg2 != NULL && *arg2 != NULL) {
-      o = PyString_FromString( *arg2 );
+      o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
       o = Py_None;
@@ -10423,7 +10487,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg3 != NULL && *arg3 != NULL) {
-      o = PyString_FromString( *arg3 );
+      o = GDALPythonObjectFromCStr( *arg3 );
     }
     else {
       o = Py_None;
@@ -10627,7 +10691,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToXML(PyObject *SWIGUNUSEDPARM
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg2 != NULL && *arg2 != NULL) {
-      o = PyString_FromString( *arg2 );
+      o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
       o = Py_None;
@@ -10703,7 +10767,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToMICoordSys(PyObject *SWIGUNU
     /* %typemap(argout) (char **argout) */
     PyObject *o;
     if ( arg2 != NULL && *arg2 != NULL) {
-      o = PyString_FromString( *arg2 );
+      o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
       o = Py_None;
