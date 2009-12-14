@@ -53,7 +53,7 @@ try:
         print("numpy version must be > 1.0.0")
         HAVE_NUMPY = False
     else:
-        print ('numpy include', get_numpy_include())
+#        print ('numpy include', get_numpy_include())
         if get_numpy_include() =='.':
             print("numpy headers were not found!  Array support will not be enabled")
             HAVE_NUMPY=False
@@ -75,20 +75,23 @@ from distutils.ccompiler import get_default_compiler
 from distutils.sysconfig import get_python_inc
 
 def get_gdal_config(option, gdal_config='gdal-config'):
-
+    
     command = gdal_config + " --%s" % option
     try:
+        import subprocess
+        command, args = command.split()[0], command.split()[1]
+        p = subprocess.Popen([command, args], stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+        (child_stdout, child_stdin) = (p.stdout, p.stdin)
+        r = child_stdout.read().strip()
+
+    except ImportError:
+        
         import popen2
+        
         p = popen2.popen3(command)
         r = p[0].readline().strip()
         if not r:
             raise Warning(p[2].readline())
-    except:
-        import subprocess
-        p = subprocess.Popen([gdal_config, " --%s" % option], stdout=subprocess.PIPE)
-        r = p.stdout.readline().decode('ascii').strip()
-        p.stdout.close()
-        p.wait()
 
     return r
     
