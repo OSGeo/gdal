@@ -2857,6 +2857,70 @@ void DontUseExceptions() {
 
 
 
+/* Return a PyObject* from a NULL terminated C String */
+static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
+{
+#if PY_VERSION_HEX >= 0x03000000
+  const unsigned char* pszIter = (const unsigned char*) pszStr;
+  while(*pszIter != 0)
+  {
+    if (*pszIter > 127)
+        return PyBytes_FromString( pszStr );
+    pszIter ++;
+  }
+  return PyUnicode_FromString(pszStr); 
+#else
+  return PyString_FromString(pszStr);
+#endif
+}
+
+/* Return a NULL terminated c String from a PyObject */
+/* Result must be freed with GDALPythonFreeCStr */
+static char* GDALPythonObjectToCStr(PyObject* pyObject)
+{
+#if PY_VERSION_HEX >= 0x03000000
+  if (PyUnicode_Check(pyObject))
+  {
+      char *pszStr;
+      char *pszNewStr;
+      int nLen;
+      PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
+      PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+      pszNewStr = (char *) malloc(nLen+1);
+      memcpy(pszNewStr, pszStr, nLen+1);
+      Py_XDECREF(pyUTF8Str);
+      return pszNewStr;
+  }
+  else if (PyBytes_Check(pyObject))
+  {
+      char *pszStr;
+      char *pszNewStr;
+      int nLen;
+      PyBytes_AsStringAndSize(pyObject, &pszStr, &nLen);
+      pszNewStr = (char *) malloc(nLen+1);
+      memcpy(pszNewStr, pszStr, nLen+1);
+      return pszNewStr;
+  }
+  else
+  {
+      char *pszStr = (char *) malloc(1);
+      pszStr[0] = '\0';
+      return pszStr;
+  }
+#else
+  return PyString_AsString(pyObject);
+#endif
+}
+
+#if PY_VERSION_HEX >= 0x03000000
+#define GDALPythonFreeCStr(x) free( (void*) (x) )
+#else
+#define GDALPythonFreeCStr(x) 
+#endif
+
+
+
+
 typedef struct {
     PyObject *psPyCallback;
     PyObject *psPyCallbackData;
@@ -4900,6 +4964,7 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   int arg1 ;
   char *arg2 = (char *) 0 ;
   int arg3 = (int) CPLES_SQL ;
+  int alloc1 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
@@ -4911,15 +4976,30 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:EscapeString",kwnames,&obj0,&obj1)) SWIG_fail;
   {
-    Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    if (!PyString_Check(obj0))
+#if PY_VERSION_HEX>=0x03000000
+    if (PyUnicode_Check(obj0))
     {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
+      size_t safeLen;
+      int ret = SWIG_AsCharPtrAndSize(obj0, (char**) &arg2, &safeLen, &alloc1);
+      if (!SWIG_IsOK(ret)) {
+        SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      }
+      
+      if (safeLen) safeLen--;
+      arg1 = (int) safeLen;
     }
-    PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen );
+    else
+    {
+      Py_ssize_t safeLen;
+      PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      arg1 = (int) safeLen;
+    }
+#else
+    Py_ssize_t safeLen;
+    PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
     arg1 = (int) safeLen;
+#endif
   }
   if (obj1) {
     ecode3 = SWIG_AsVal_int(obj1, &val3);
@@ -4938,8 +5018,20 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
     }
   }
   resultobj = SWIG_FromCharPtr((const char *)result);
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc1 == SWIG_NEWOBJ ) {
+      delete[] arg2;
+    }
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc1 == SWIG_NEWOBJ ) {
+      delete[] arg2;
+    }
+  }
   return NULL;
 }
 
@@ -5169,7 +5261,7 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
       for ( int i = 0; i < len; ++i ) {
-        PyObject *o = PyString_FromString( stringarray[i] );
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
@@ -5373,6 +5465,7 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   int res1 ;
   char *buf1 = 0 ;
   int alloc1 = 0 ;
+  int alloc2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
@@ -5383,15 +5476,30 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   arg1 = reinterpret_cast< char * >(buf1);
   {
-    Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    if (!PyString_Check(obj1))
+#if PY_VERSION_HEX>=0x03000000
+    if (PyUnicode_Check(obj1))
     {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
+      size_t safeLen;
+      int ret = SWIG_AsCharPtrAndSize(obj1, (char**) &arg3, &safeLen, &alloc2);
+      if (!SWIG_IsOK(ret)) {
+        SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      }
+      
+      if (safeLen) safeLen--;
+      arg2 = (int) safeLen;
     }
-    PyString_AsStringAndSize(obj1, (char**) &arg3, &safeLen );
+    else
+    {
+      Py_ssize_t safeLen;
+      PyBytes_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
+      arg2 = (int) safeLen;
+    }
+#else
+    Py_ssize_t safeLen;
+    PyString_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
     arg2 = (int) safeLen;
+#endif
   }
   {
     if (!arg1) {
@@ -5409,9 +5517,21 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   resultobj = SWIG_Py_Void();
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc2 == SWIG_NEWOBJ ) {
+      delete[] arg3;
+    }
+  }
   return resultobj;
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc2 == SWIG_NEWOBJ ) {
+      delete[] arg3;
+    }
+  }
   return NULL;
 }
 
@@ -5601,8 +5721,8 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict(PyObject *SWIGUNUSEDPARM
           keyptr = CPLStrdup(*stringarray);
           keyptr[pszSep - *stringarray] = '\0';
           valptr = pszSep + 1;
-          PyObject *nm = PyString_FromString( keyptr );
-          PyObject *val = PyString_FromString( valptr );
+          PyObject *nm = GDALPythonObjectFromCStr( keyptr );
+          PyObject *val = GDALPythonObjectFromCStr( valptr );
           PyDict_SetItem(resultobj, nm, val );
           Py_DECREF(nm);
           Py_DECREF(val);
@@ -5666,7 +5786,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *SWIGUNUSEDPARM
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
       for ( int i = 0; i < len; ++i ) {
-        PyObject *o = PyString_FromString( stringarray[i] );
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
@@ -9802,7 +9922,7 @@ SWIGINTERN PyObject *_wrap_Dataset_GetFileList(PyObject *SWIGUNUSEDPARM(self), P
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
       for ( int i = 0; i < len; ++i ) {
-        PyObject *o = PyString_FromString( stringarray[i] );
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
@@ -9841,6 +9961,7 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   int ecode4 = 0 ;
   int val5 ;
   int ecode5 = 0 ;
+  int alloc6 = 0 ;
   int val8 ;
   int val9 ;
   int val10 ;
@@ -9892,15 +10013,30 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   } 
   arg5 = static_cast< int >(val5);
   {
-    Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    if (!PyString_Check(obj5))
+#if PY_VERSION_HEX>=0x03000000
+    if (PyUnicode_Check(obj5))
     {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
+      size_t safeLen;
+      int ret = SWIG_AsCharPtrAndSize(obj5, (char**) &arg7, &safeLen, &alloc6);
+      if (!SWIG_IsOK(ret)) {
+        SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      }
+      
+      if (safeLen) safeLen--;
+      arg6 = (int) safeLen;
     }
-    PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen );
+    else
+    {
+      Py_ssize_t safeLen;
+      PyBytes_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
+      arg6 = (int) safeLen;
+    }
+#else
+    Py_ssize_t safeLen;
+    PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
     arg6 = (int) safeLen;
+#endif
   }
   if (obj6) {
     {
@@ -10024,6 +10160,12 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc6 == SWIG_NEWOBJ ) {
+      delete[] arg7;
+    }
+  }
+  {
     /* %typemap(freearg) (int nList, int* pList) */
     if (arg12) {
       free((void*) arg12);
@@ -10041,6 +10183,12 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc6 == SWIG_NEWOBJ ) {
+      delete[] arg7;
+    }
+  }
   {
     /* %typemap(freearg) (int nList, int* pList) */
     if (arg12) {
@@ -10258,7 +10406,11 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster(PyObject *SWIGUNUSEDPARM(self), Py
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
+#if PY_VERSION_HEX >= 0x03000000
+    resultobj = PyBytes_FromStringAndSize( *arg7, *arg6 );
+#else
     resultobj = PyString_FromStringAndSize( *arg7, *arg6 );
+#endif
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
@@ -10798,7 +10950,7 @@ SWIGINTERN PyObject *_wrap_Band_GetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
       for ( int i = 0; i < len; ++i ) {
-        PyObject *o = PyString_FromString( stringarray[i] );
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
@@ -11866,7 +12018,11 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster(PyObject *SWIGUNUSEDPARM(self), PyObj
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
+#if PY_VERSION_HEX >= 0x03000000
+    resultobj = PyBytes_FromStringAndSize( *arg7, *arg6 );
+#else
     resultobj = PyString_FromStringAndSize( *arg7, *arg6 );
+#endif
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
@@ -11910,6 +12066,7 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   int ecode4 = 0 ;
   int val5 ;
   int ecode5 = 0 ;
+  int alloc6 = 0 ;
   int val8 ;
   int val9 ;
   int val10 ;
@@ -11958,15 +12115,30 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   } 
   arg5 = static_cast< int >(val5);
   {
-    Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    if (!PyString_Check(obj5))
+#if PY_VERSION_HEX>=0x03000000
+    if (PyUnicode_Check(obj5))
     {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
+      size_t safeLen;
+      int ret = SWIG_AsCharPtrAndSize(obj5, (char**) &arg7, &safeLen, &alloc6);
+      if (!SWIG_IsOK(ret)) {
+        SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      }
+      
+      if (safeLen) safeLen--;
+      arg6 = (int) safeLen;
     }
-    PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen );
+    else
+    {
+      Py_ssize_t safeLen;
+      PyBytes_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
+      arg6 = (int) safeLen;
+    }
+#else
+    Py_ssize_t safeLen;
+    PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
     arg6 = (int) safeLen;
+#endif
   }
   if (obj6) {
     {
@@ -12053,8 +12225,20 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc6 == SWIG_NEWOBJ ) {
+      delete[] arg7;
+    }
+  }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    if( alloc6 == SWIG_NEWOBJ ) {
+      delete[] arg7;
+    }
+  }
   return NULL;
 }
 
@@ -13777,7 +13961,7 @@ SWIGINTERN PyObject *_wrap_RasterAttributeTable_SetValueAsString(PyObject *SWIGU
       SWIG_fail;
     }
     
-    arg4 = PyString_AsString(str4); 
+    arg4 = GDALPythonObjectToCStr(str4); 
   }
   {
     GDALRasterAttributeTableShadow_SetValueAsString(arg1,arg2,arg3,(char const *)arg4);
@@ -13795,6 +13979,7 @@ SWIGINTERN PyObject *_wrap_RasterAttributeTable_SetValueAsString(PyObject *SWIGU
     {
       Py_DECREF(str4);
     }
+    GDALPythonFreeCStr(arg4);
   }
   return resultobj;
 fail:
@@ -13804,6 +13989,7 @@ fail:
     {
       Py_DECREF(str4);
     }
+    GDALPythonFreeCStr(arg4);
   }
   return NULL;
 }
@@ -17331,7 +17517,7 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
       for ( int i = 0; i < len; ++i ) {
-        PyObject *o = PyString_FromString( stringarray[i] );
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
