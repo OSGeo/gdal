@@ -118,6 +118,11 @@ def misc_4():
 # Test Create() with various band numbers (including 0) and datatype
 
 def misc_5_internal(drv, datatype, nBands):
+
+    if drv.ShortName == 'PCIDSK':
+        print('skip drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+        return
+
     dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
     print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
     try:
