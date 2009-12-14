@@ -131,7 +131,7 @@ def flip_code(code):
 
 def NumericTypeCodeToGDALTypeCode(numeric_type):
     if not isinstance(numeric_type, type):
-        raise TypeError, "Input must be a type"
+        raise TypeError("Input must be a type")
     return flip_code(numeric_type)
 
 def GDALTypeCodeToNumericTypeCode(gdal_code):
@@ -140,14 +140,14 @@ def GDALTypeCodeToNumericTypeCode(gdal_code):
 def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None ):
     ds = gdal.Open( filename )
     if ds is None:
-        raise ValueError, "Can't open "+filename+"\n\n"+gdal.GetLastErrorMsg()
+        raise ValueError("Can't open "+filename+"\n\n"+gdal.GetLastErrorMsg())
 
     return DatasetReadAsArray( ds, xoff, yoff, xsize, ysize )
 
 def SaveArray( src_array, filename, format = "GTiff", prototype = None ):
     driver = gdal.GetDriverByName( format )
     if driver is None:
-        raise ValueError, "Can't find driver "+format
+        raise ValueError("Can't find driver "+format)
 
     return driver.CreateCopy( filename, OpenArray(src_array,prototype) )
 
@@ -245,7 +245,7 @@ def BandWriteArray( band, array, xoff=0, yoff=0 ):
     ysize = array.shape[0]
 
     if xsize + xoff > band.XSize or ysize + yoff > band.YSize:
-        raise ValueError, "array larger than output file, or offset off edge"
+        raise ValueError("array larger than output file, or offset off edge")
 
     datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
 
@@ -257,7 +257,7 @@ def BandWriteArray( band, array, xoff=0, yoff=0 ):
         datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
         
     if not datatype:
-        raise ValueError, "array does not have corresponding GDAL data type"
+        raise ValueError("array does not have corresponding GDAL data type")
 
     result = band.WriteRaster( xoff, yoff, xsize, ysize,
                                array.tostring(), xsize, ysize, datatype )
@@ -317,7 +317,7 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
             try:
                 dst.SetGCPs( new_gcps , src.GetGCPProjection() )
             except:
-                print "Failed to set GCPs"
+                print ("Failed to set GCPs")
                 return
 
     return
