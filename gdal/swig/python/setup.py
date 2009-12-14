@@ -80,9 +80,10 @@ def get_gdal_config(option, gdal_config='gdal-config'):
     try:
         import subprocess
         command, args = command.split()[0], command.split()[1]
-        p = subprocess.Popen([command, args], stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-        (child_stdout, child_stdin) = (p.stdout, p.stdin)
-        r = child_stdout.read().strip()
+        p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
+        r = p.stdout.readline().decode('ascii').strip()
+        p.stdout.close()
+        p.wait()
 
     except ImportError:
         
@@ -92,7 +93,7 @@ def get_gdal_config(option, gdal_config='gdal-config'):
         r = p[0].readline().strip()
         if not r:
             raise Warning(p[2].readline())
-
+    
     return r
     
 class gdal_ext(build_ext):
