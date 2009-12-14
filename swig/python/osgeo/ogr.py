@@ -583,7 +583,7 @@ class DataSource(_object):
     aname'] would return the layer named "aname".
     :4] would return a list of the first four layers."""
         import types
-        if isinstance(value, types.SliceType):
+        if isinstance(value, slice):
             output = []
             for i in xrange(value.start,value.stop,value.step):
                 try:
@@ -591,38 +591,38 @@ class DataSource(_object):
                 except OGRError: #we're done because we're off the end
                     return output
             return output
-        if isinstance(value, types.IntType):
+        if isinstance(value, int):
             if value > len(self)-1:
                 raise IndexError
             return self.GetLayer(value)
-        elif isinstance(value,types.StringType):
+        elif isinstance(value, str):
             return self.GetLayer(value)
         else:
-            raise TypeError, 'Input %s is not of String or Int type' % type(value)
+            raise TypeError('Input %s is not of String or Int type' % type(value))
 
     def GetLayer(self,iLayer=0):
         """Return the layer given an index or a name"""
         import types
-        if isinstance(iLayer, types.StringTypes):
+        if isinstance(iLayer, str):
             return self.GetLayerByName(str(iLayer))
-        elif isinstance(iLayer, types.IntType):
+        elif isinstance(iLayer, int):
             return self.GetLayerByIndex(iLayer)
         else:
-            raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
+            raise TypeError("Input %s is not of String or Int type" % type(iLayer))
 
     def DeleteLayer(self, value):
         """Deletes the layer given an index or layer name"""
         import types
-        if isinstance(value, types.StringTypes):
+        if isinstance(value, str):
             for i in range(self.GetLayerCount()):
                 name = self.GetLayer(i).GetName()
                 if name == value:
                     return _ogr.DataSource_DeleteLayer(self, i)
-            raise ValueError, "Layer %s not found to delete" % value
-        elif isinstance(value, types.IntType):
+            raise ValueError("Layer %s not found to delete" % value)
+        elif isinstance(value, int):
             return _ogr.DataSource_DeleteLayer(self, value)
         else:
-            raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
+            raise TypeError("Input %s is not of String or Int type" % type(iLayer))
 
 DataSource_swigregister = _ogr.DataSource_swigregister
 DataSource_swigregister(DataSource)
@@ -1312,7 +1312,7 @@ class Layer(_object):
     r[0] would return the first feature on the layer.
     r[0:4] would return a list of the first four features."""
         import types
-        if isinstance(value, types.SliceType):
+        if isinstance(value, slice):
             output = []
             if value.stop == sys.maxint:
                 
@@ -1328,12 +1328,12 @@ class Layer(_object):
                 else:
                     return output
             return output
-        if isinstance(value, types.IntType):
+        if isinstance(value, int):
             if value > len(self)-1:
                 raise IndexError
             return self.GetFeature(value)
         else:
-            raise TypeError,"Input %s is not of IntType or SliceType" % type(value)
+            raise TypeError("Input %s is not of IntType or SliceType" % type(value))
 
     def CreateFields(fields):
         """Create a list of fields on the Layer"""
@@ -2137,14 +2137,14 @@ class Feature(_object):
         try:
             return self.GetField(name)
         except:
-            raise AttributeError, name
+            raise AttributeError(name)
 
     def GetField(self, fld_index):
         import types
-        if isinstance(fld_index, types.StringType):
+        if isinstance(fld_index, str):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
-            raise ValueError, "Illegal field requested in GetField()"
+            raise ValueError("Illegal field requested in GetField()")
         if not (self.IsFieldSet(fld_index)):
             return None
         fld_type = self.GetFieldType(fld_index)
@@ -2192,8 +2192,8 @@ class Feature(_object):
         if not as_object:
             try:
                 import simplejson
-            except ImportError, error:
-                raise ImportError("Unable to import simplejson, needed for ExportToJson. (%s)" % error)
+            except ImportError:
+                raise ImportError("Unable to import simplejson, needed for ExportToJson.")
             output = simplejson.dumps(output)
         
         return output
