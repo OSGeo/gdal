@@ -119,7 +119,7 @@ def misc_4():
 
 def misc_5_internal(drv, datatype, nBands):
 
-    if drv.ShortName == 'PCIDSK':
+    if drv.ShortName == 'PCIDSK' and nBands == 0:
         print('skip drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
         return
 
