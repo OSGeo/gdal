@@ -23,11 +23,11 @@ raster for which the raster pixel value is in the set of target pixel values.
 <dl>
 <dt> <i>srcfile</i></dt><dd> The source raster file used to identify target pixels.</dd>
 
-<dt> <i>dstfile</i></dt><dd> The destination raster file to which the proximity map will be written.</dd>
+<dt> <i>dstfile</i></dt><dd> The destination raster file to which the proximity map will be written.  It may be a pre-existing file of the same size as srcfile.  If it does not exist it will be created.</dd>
 
 <dt> <b>-srcband</b> <i>n</i></dt><dd> Identifies the band in the source file to use (default is 1).</dd>
 
-<dt> <b>-srcband</b> <i>n</i></dt><dd> Identifies the band in the destination file to use (default is 1).</dd>
+<dt> <b>-dstband</b> <i>n</i></dt><dd> Identifies the band in the destination file to use (default is 1).</dd>
 
 <dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. The default is GeoTIFF (GTiff). Use the short format name. </dd>
 
