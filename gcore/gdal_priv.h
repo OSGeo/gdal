@@ -782,7 +782,10 @@ GDALDefaultBuildOverviews( GDALDataset *hSrcDS, const char * pszBasename,
                            int nBands, int * panBandList,
                            GDALProgressFunc pfnProgress, void * pProgressData);
                            
-
+int CPL_DLL GDALBandGetBestOverviewLevel(GDALRasterBand* poBand,
+                                         int &nXOff, int &nYOff,
+                                         int &nXSize, int &nYSize,
+                                         int nBufXSize, int nBufYSize);
 
 int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize );
 
