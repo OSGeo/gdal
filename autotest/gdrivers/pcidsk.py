@@ -114,12 +114,12 @@ def pcidsk_5():
     # Check metadata.
     mddef = gdaltest.pcidsk_ds.GetMetadata()
     if mddef['GHI'] != 'JKL' or mddef['XXX'] != 'YYY':
-        print mddef
+        print(mddef)
         gdaltest.post_reason( 'file default domain metadata broken. ')
 
     mdalt = gdaltest.pcidsk_ds.GetMetadata('AltDomain')
     if mdalt['XYZ'] != '123':
-        print mdalt
+        print(mdalt)
         gdaltest.post_reason( 'file alt domain metadata broken. ')
 
     return 'success'
@@ -148,12 +148,12 @@ def pcidsk_6():
     band = gdaltest.pcidsk_ds.GetRasterBand(1)
     mddef = band.GetMetadata()
     if mddef['GHI'] != 'JKL' or mddef['XXX'] != 'YYY':
-        print mddef
+        print(mddef)
         gdaltest.post_reason( 'channel default domain metadata broken. ')
 
     mdalt = band.GetMetadata('AltDomain')
     if mdalt['XYZ'] != '123':
-        print mdalt
+        print(mdalt)
         gdaltest.post_reason( 'channel alt domain metadata broken. ')
 
     return 'success'
