@@ -138,7 +138,7 @@ class gdal_ext(build_ext):
         except:
             print ('Could not run gdal-config!!!!')
 
-gdal_version = '1.6.0'
+gdal_version = '1.7.0b1'
 
 extra_link_args = []
 extra_compile_args = []
