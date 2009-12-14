@@ -119,7 +119,7 @@ def misc_4():
 
 def misc_5_internal(drv, datatype, nBands):
     dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-    #print 'drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+    print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
     try:
         os.mkdir(dirname)
     except:
@@ -207,7 +207,7 @@ def misc_6_internal(datatype, nBands):
             drv = gdal.GetDriver(i)
             md = drv.GetMetadata()
             if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md:
-                # print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+                print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
 
                 skip = False
                 # FIXME: A few cases that crashes and should be investigated
