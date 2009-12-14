@@ -47,6 +47,10 @@
 /* DEBUG_VSIMALLOC must also be defined */
 //#define DEBUG_VSIMALLOC_STATS
 
+/* Uncomment to print every memory allocation or deallocation. */
+/* DEBUG_VSIMALLOC must also be defined */
+//#define DEBUG_VSIMALLOC_VERBOSE
+
 CPL_CVSID("$Id$");
 
 /* for stat() */
@@ -290,6 +294,9 @@ int VSIFPutc( int nChar, FILE * fp )
 
 
 #ifdef DEBUG_VSIMALLOC_STATS
+#include "cpl_multiproc.h"
+
+static void* hMemStatMutex = 0;
 static size_t nCurrentTotalAllocs = 0;
 static size_t nMaxTotalAllocs = 0;
 static GUIntBig nVSIMallocs = 0;
@@ -331,8 +338,11 @@ void *VSICalloc( size_t nCount, size_t nSize )
     void* ptr = VSIMalloc(nCount * nSize);
     memset(ptr, 0, nCount * nSize);
 #ifdef DEBUG_VSIMALLOC_STATS
-    nVSICallocs ++;
-    nVSIMallocs --;
+    {
+        CPLMutexHolderD(&hMemStatMutex);
+        nVSICallocs ++;
+        nVSIMallocs --;
+    }
 #endif
     return ptr;
 #else
@@ -354,13 +364,22 @@ void *VSIMalloc( size_t nSize )
     ptr[2] = 'I';
     ptr[3] = 'M';
     memcpy(ptr + 4, &nSize, sizeof(size_t));
+#if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
+    {
+        CPLMutexHolderD(&hMemStatMutex);
+#ifdef DEBUG_VSIMALLOC_VERBOSE
+        fprintf(stderr, "Thread[%p] VSIMalloc(%d) = %p\n",
+                (void*)CPLGetPID(), (int)nSize, ptr + 4 + sizeof(size_t));
+#endif
 #ifdef DEBUG_VSIMALLOC_STATS
-    nVSIMallocs ++;
-    if (nMaxTotalAllocs == 0)
-        atexit(VSIShowMemStats);
-    nCurrentTotalAllocs += nSize;
-    if (nCurrentTotalAllocs > nMaxTotalAllocs)
-        nMaxTotalAllocs = nCurrentTotalAllocs;
+        nVSIMallocs ++;
+        if (nMaxTotalAllocs == 0)
+            atexit(VSIShowMemStats);
+        nCurrentTotalAllocs += nSize;
+        if (nCurrentTotalAllocs > nMaxTotalAllocs)
+            nMaxTotalAllocs = nCurrentTotalAllocs;
+#endif
+    }
 #endif
     return ptr + 4 + sizeof(size_t);
 #else
@@ -395,16 +414,29 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     char* ptr = ((char*)pData) - 4 - sizeof(size_t);
     VSICheckMarker(ptr);
 #ifdef DEBUG_VSIMALLOC_STATS
-    nVSIReallocs ++;
     size_t nOldSize;
     memcpy(&nOldSize, ptr + 4, sizeof(size_t));
-    nCurrentTotalAllocs -= nOldSize;
-    nCurrentTotalAllocs += nNewSize;
-    if (nCurrentTotalAllocs > nMaxTotalAllocs)
-        nMaxTotalAllocs = nCurrentTotalAllocs;
 #endif
+
     ptr = (char*) realloc(ptr, nNewSize + 4 + sizeof(size_t));
     memcpy(ptr + 4, &nNewSize, sizeof(size_t));
+
+#if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
+    {
+        CPLMutexHolderD(&hMemStatMutex);
+#ifdef DEBUG_VSIMALLOC_VERBOSE
+        fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p\n",
+                (void*)CPLGetPID(), pData, (int)nNewSize, ptr + 4 + sizeof(size_t));
+#endif
+#ifdef DEBUG_VSIMALLOC_STATS
+        nVSIReallocs ++;
+        nCurrentTotalAllocs -= nOldSize;
+        nCurrentTotalAllocs += nNewSize;
+        if (nCurrentTotalAllocs > nMaxTotalAllocs)
+            nMaxTotalAllocs = nCurrentTotalAllocs;
+#endif
+    }
+#endif
     return ptr + 4 + sizeof(size_t);
 #else
     return( realloc( pData, nNewSize ) );
@@ -428,11 +460,20 @@ void VSIFree( void * pData )
     ptr[1] = 'I';
     ptr[2] = 'S';
     ptr[3] = 'V';
-#ifdef DEBUG_VSIMALLOC_STATS
-    nVSIFrees ++;
+#if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
     size_t nOldSize;
     memcpy(&nOldSize, ptr + 4, sizeof(size_t));
-    nCurrentTotalAllocs -= nOldSize;
+    {
+        CPLMutexHolderD(&hMemStatMutex);
+#ifdef DEBUG_VSIMALLOC_VERBOSE
+        fprintf(stderr, "Thread[%p] VSIFree(%p, (%d bytes))\n",
+                (void*)CPLGetPID(), pData, (int)nOldSize);
+#endif
+#ifdef DEBUG_VSIMALLOC_STATS
+        nVSIFrees ++;
+        nCurrentTotalAllocs -= nOldSize;
+#endif
+    }
 #endif
     free(ptr);
 #else
