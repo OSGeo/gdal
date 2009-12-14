@@ -178,6 +178,10 @@ class JP2KAKRasterBand : public GDALPamRasterBand
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
+
+    int            HasExternalOverviews() 
+                   { return GDALPamRasterBand::GetOverviewCount() != 0; }
+
   public:
 
     		JP2KAKRasterBand( int, int, kdu_codestream, int, kdu_client *,
@@ -1861,6 +1865,28 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
         for( j = i+1; j < nBandCount; j++ )
             if( panBandList[j] == panBandList[i] )
                 return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have external overviews built, and they could be used     */
+/*      to satisfy this request, we will avoid DirectRasterIO()         */
+/*      which would ignore them.                                        */
+/* -------------------------------------------------------------------- */
+    if( GetRasterCount() == 0 )
+        return TRUE;
+
+    JP2KAKRasterBand *poWrkBand = (JP2KAKRasterBand*) GetRasterBand(1);
+    if( poWrkBand->HasExternalOverviews() ) 
+    {
+        int    nOverview;
+        int    nXOff2=nXOff, nYOff2=nYOff, nXSize2=nXSize, nYSize2=nYSize;
+
+        nOverview =
+            GDALBandGetBestOverviewLevel( poWrkBand, 
+                                          nXOff2, nYOff2, nXSize2, nYSize2,
+                                          nBufXSize, nBufYSize);
+        if (nOverview >= 0 )
+            return TRUE;
     }
 
 /* -------------------------------------------------------------------- */

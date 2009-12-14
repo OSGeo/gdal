@@ -1444,7 +1444,6 @@ void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
 /* overview level                                                       */
 /************************************************************************/
 
-static
 int GDALBandGetBestOverviewLevel(GDALRasterBand* poBand,
                                  int &nXOff, int &nYOff,
                                  int &nXSize, int &nYSize,
