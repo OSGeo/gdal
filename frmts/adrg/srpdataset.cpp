@@ -477,9 +477,6 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         
     double PSP = record->GetFloatSubfield( "GEN", 0, "PSP", 0, &bSuccess );
     CPLDebug("SRP", "PSP=%f", PSP);
-
-    if (PSP != 100)
-        return FALSE;
         
     ARV = record->GetIntSubfield( "GEN", 0, "ARV", 0, &bSuccess );
     CPLDebug("SRP", "ARV=%d", ARV);
