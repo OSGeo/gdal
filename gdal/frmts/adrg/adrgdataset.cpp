@@ -800,10 +800,6 @@ ADRGDataset* ADRGDataset::GetFromRecord(const char* pszFileName, DDFRecord * rec
         
         PSP = subfieldDefn->ExtractFloatData(field->GetSubfieldData(subfieldDefn), 5, NULL);
         CPLDebug("ADRG", "PSP=%f", PSP);
-        if (PSP != 100)
-        {
-            return NULL;
-        }
         
         subfieldDefn = fieldDefn->GetSubfield(16);
         if (!(strcmp(subfieldDefn->GetName(), "ARV") == 0 &&
