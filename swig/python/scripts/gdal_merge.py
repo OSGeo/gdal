@@ -277,7 +277,7 @@ if __name__ == '__main__':
         elif arg == '-v':
             verbose = 1
 
-        elif arg == '-q':
+        elif arg == '-q' or arg == '-quiet':
             quiet = 1
 
         elif arg == '-createonly':

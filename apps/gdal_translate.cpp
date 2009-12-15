@@ -58,7 +58,7 @@ static void Usage()
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-gcp pixel line easting northing [elevation]]*\n" 
-            "       [-mo \"META-TAG=VALUE\"]* [-quiet] [-sds]\n"
+            "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
             "       [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
 
@@ -151,7 +151,7 @@ static int ProxyMain( int argc, char ** argv )
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
             pszFormat = argv[++i];
 
-        else if( EQUAL(argv[i],"-quiet") )
+        else if( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
             bQuiet = TRUE;
             pfnProgress = GDALDummyProgress;

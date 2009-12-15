@@ -43,7 +43,7 @@ gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
                   [-ot Byte/Int16/Int32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
-                  [-maxdist n] [-nodata n] [-fixed-buf-val n]""")
+                  [-maxdist n] [-nodata n] [-fixed-buf-val n] [-q] """)
     sys.exit(1)
 
 # =============================================================================
@@ -109,6 +109,9 @@ while i < len(argv):
         i = i + 1
         dst_band_n = int(argv[i])
 
+    elif arg == '-q' or arg == '-quiet':
+        quiet_flag = 1
+
     elif src_filename is None:
         src_filename = argv[i]
 
@@ -167,8 +170,13 @@ if dst_ds is None:
 #    Invoke algorithm.
 # =============================================================================
 
+if quiet_flag:
+    prog_func = None
+else:
+    prog_func = gdal.TermProgress
+    
 gdal.ComputeProximity( srcband, dstband, options,
-                       callback = gdal.TermProgress )
+                       callback = prog_func )
     
 srcband = None
 dstband = None

@@ -108,36 +108,36 @@ static void Usage()
             "     gdaldem hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
             "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generates a slope map from any GDAL-supported elevation raster :\n\n"
             "     gdaldem slope input_dem output_slope_map \n"
             "                 [-p use percent slope (default=degrees)] [-s scale* (default=1)]\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate an aspect map from any GDAL-supported elevation raster\n"
             "   Outputs a 32-bit float tiff with pixel values from 0-360 indicating azimuth :\n\n"
             "     gdaldem aspect input_dem output_aspect_map \n"
             "                 [-trigonometric] [-zero_for_flat]\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate a color relief map from any GDAL-supported elevation raster\n"
             "     gdaldem color-relief input_dem color_text_file output_color_relief_map\n"
             "                 [-alpha] [-exact_color_entry | -nearest_color_entry]\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "     where color_text_file contains lines of the format \"elevation_value red green blue\"\n"
             "\n"
             " - To generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation raster\n"
             "     gdaldem TRI input_dem output_TRI_map\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate a Topographic Position Index (TPI) map from any GDAL-supported elevation raster\n"
             "     gdaldem TPI input_dem output_TPI_map\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generate a roughness map from any GDAL-supported elevation raster\n"
             "     gdaldem roughness input_dem output_roughness_map\n"
-            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-quiet]\n"
+            "                 [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " Notes : \n"
             "   Scale is the ratio of vertical units to horizontal\n"
@@ -1732,7 +1732,7 @@ int main( int argc, char ** argv )
         {
             nBand = atoi(argv[++i]);
         }
-        else if ( EQUAL(argv[i], "-quiet") )
+        else if ( EQUAL(argv[i], "-q") || EQUAL(argv[i], "-quiet") )
         {
             pfnProgress = GDALDummyProgress;
         }
