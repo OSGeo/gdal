@@ -322,7 +322,7 @@ int main( int argc, char ** argv )
         {
             bMulti = TRUE;
         }   
-        else if( EQUAL(argv[i],"-q") )
+        else if( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet"))
         {
             bQuiet = TRUE;
         }   

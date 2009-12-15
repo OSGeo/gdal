@@ -87,7 +87,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( EQUAL(papszArgv[iArg],"-ro") )
             bReadOnly = TRUE;
-        else if( EQUAL(papszArgv[iArg],"-q") )
+        else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet"))
             bVerbose = FALSE;
         else if( EQUAL(papszArgv[iArg],"-fid") && iArg < nArgc-1 )
             nFetchFID = atoi(papszArgv[++iArg]);
