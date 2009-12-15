@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: adrgdataset.cpp
+ * $Id$
  *
  * Purpose:  ADRG reader
  * Author:   Even Rouault, even.rouault at mines-paris.org
@@ -30,6 +30,8 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "iso8211.h"
+
+CPL_CVSID("$Id$");
 
 #define N_ELEMENTS(x)  (sizeof(x)/sizeof(x[0]))
 

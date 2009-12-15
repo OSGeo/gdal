@@ -1,5 +1,5 @@
 /******************************************************************************
- *
+ * $Id$
  * Purpose:  ASRP/USRP Reader
  * Author:   Frank Warmerdam (warmerdam@pobox.com)
  *
@@ -33,7 +33,7 @@
 #include "cpl_string.h"
 #include "iso8211.h"
 
-CPL_CVSID("$Id: geotiff.cpp 16147 2009-01-20 21:18:58Z warmerdam $");
+CPL_CVSID("$Id$");
 
 class SRPDataset : public GDALPamDataset
 {
