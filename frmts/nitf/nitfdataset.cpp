@@ -2850,10 +2850,10 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
                                              nListBands, panBandList,
                                              pfnProgress, pProgressData );
     else
-        return GDALPamDataset::BuildOverviews( pszResampling, 
-                                               nOverviews, panOverviewList,
-                                               nListBands, panBandList,
-                                               pfnProgress, pProgressData );
+        return GDALPamDataset::IBuildOverviews( pszResampling, 
+                                                nOverviews, panOverviewList,
+                                                nListBands, panBandList,
+                                                pfnProgress, pProgressData );
 }
 
 /************************************************************************/
