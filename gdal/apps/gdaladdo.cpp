@@ -40,13 +40,13 @@ static void Usage()
 
 {
     printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]\n"
-            "                [-ro] [-clean] [-quiet] [--help-general] filename levels\n"
+            "                [-ro] [-clean] [-q] [--help-general] filename levels\n"
             "\n"
             "  -r : choice of resampling method (default: nearest)\n"
             "  -ro : open the dataset in read-only mode, in order to generate\n"
             "        external overview (for GeoTIFF datasets especially)\n"
             "  -clean : remove all overviews\n"
-            "  -quiet : turn off progress display\n" 
+            "  -q : turn off progress display\n" 
             "  filename: The file to build overviews for (or whose overviews must be removed).\n"
             "  levels: A list of integral overview levels to build. Ignored with -clean option.\n"
             "\n"
@@ -115,7 +115,7 @@ int main( int nArgc, char ** papszArgv )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-clean"))
             bClean = TRUE;
-        else if( EQUAL(papszArgv[iArg],"-quiet") ) 
+        else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") ) 
             pfnProgress = GDALDummyProgress; 
         else if( pszFilename == NULL )
             pszFilename = papszArgv[iArg];

@@ -83,7 +83,7 @@ static void Usage()
 {
     fprintf(stdout, "%s", 
             "Usage: gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]\n"
-            "                    [-tr xres yres] [-separate] [-allow_projection_difference] [-quiet]\n"
+            "                    [-tr xres yres] [-separate] [-allow_projection_difference] [-q]\n"
             "                    [-te xmin ymin xmax ymax] [-addalpha] \n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
             "                    [-input_file_list my_liste.txt] output.vrt [gdalfile]*\n"
@@ -908,7 +908,7 @@ int main( int nArgc, char ** papszArgv )
         {
             pszOutputFilename = papszArgv[++iArg];
         }
-        else if ( EQUAL(papszArgv[iArg],"-quiet") )
+        else if ( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") )
         {
             bQuiet = TRUE;
         }

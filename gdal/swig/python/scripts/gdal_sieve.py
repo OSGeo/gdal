@@ -79,7 +79,7 @@ while i < len(argv):
     elif arg == '-8':
         connectedness = 8
         
-    elif arg == '-q':
+    elif arg == '-q' or arg == '-quiet':
         quiet_flag = 1
         
     elif arg == '-st':
