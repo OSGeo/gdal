@@ -1788,28 +1788,31 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, real_filename );
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
-                           poDS->adfGeoTransform )
-        || GDALReadWorldFile( poOpenInfo->pszFilename, ".jpw", 
-                              poDS->adfGeoTransform )
-        || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                              poDS->adfGeoTransform );
-
-    if( !poDS->bGeoTransformValid )
+    if( !bIsSubfile )
     {
-        int bTabFileOK =
-            GDALReadTabFile( poOpenInfo->pszFilename, poDS->adfGeoTransform,
-                             &poDS->pszProjection,
-                             &poDS->nGCPCount, &poDS->pasGCPList );
+        poDS->bGeoTransformValid = 
+            GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
+                               poDS->adfGeoTransform )
+            || GDALReadWorldFile( poOpenInfo->pszFilename, ".jpw", 
+                                  poDS->adfGeoTransform )
+            || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                                  poDS->adfGeoTransform );
 
-        if( bTabFileOK && poDS->nGCPCount == 0 )
-            poDS->bGeoTransformValid = TRUE;
+        if( !poDS->bGeoTransformValid )
+        {
+            int bTabFileOK =
+                GDALReadTabFile( poOpenInfo->pszFilename, poDS->adfGeoTransform,
+                                 &poDS->pszProjection,
+                                 &poDS->nGCPCount, &poDS->pasGCPList );
+            
+            if( bTabFileOK && poDS->nGCPCount == 0 )
+                poDS->bGeoTransformValid = TRUE;
+        }
     }
 
     return poDS;
