@@ -29,6 +29,7 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -61,7 +62,7 @@ int main( int nArgc, char ** papszArgv )
     {
         if( EQUAL(papszArgv[iArg],"-ro") )
             bReadOnly = TRUE;
-        else if( EQUAL(papszArgv[iArg],"-q") )
+        else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet"))
             bVerbose = FALSE;
         else if( EQUAL(papszArgv[iArg],"-sql") && iArg + 1 < nArgc)
             pszSQLStatement = papszArgv[++iArg];
@@ -193,6 +194,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     OGRDataSource::DestroyDataSource(poDS);
 
+    OGRCleanupAll();
+    
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif

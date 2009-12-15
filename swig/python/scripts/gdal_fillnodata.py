@@ -81,7 +81,7 @@ while i < len(argv):
         i = i + 1
         format = argv[i]
 
-    elif arg == '-q':
+    elif arg == '-q' or arg == '-quiet':
         quiet_flag = 1
         
     elif arg == '-si':

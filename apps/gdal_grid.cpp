@@ -69,7 +69,7 @@ static void Usage()
         "    [-l layername]* [-where expression] [-sql select_statement]\n"
         "    [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]\n"
         "    [-a algorithm[:parameter1=value1]*]"
-        "    [-quiet]\n"
+        "    [-q]\n"
         "    <src_datasource> <dst_filename>\n"
         "\n"
         "Available algorithms and parameters with their's defaults:\n"
@@ -734,7 +734,7 @@ int main( int argc, char ** argv )
             pszFormat = argv[++i];
         }
 
-        else if( EQUAL(argv[i],"-quiet") )
+        else if( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
             bQuiet = TRUE;
             pfnProgress = GDALDummyProgress;
