@@ -1133,13 +1133,13 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
     std::vector<eChanType> aeChanTypes;
 
     if( eType == GDT_Float32 )
-        aeChanTypes.resize( nBands, CHN_32R ); 
+        aeChanTypes.resize( MAX(1,nBands), CHN_32R ); 
     else if( eType == GDT_Int16 )
-        aeChanTypes.resize( nBands, CHN_16S ); 
+        aeChanTypes.resize( MAX(1,nBands), CHN_16S ); 
     else if( eType == GDT_UInt16 )
-        aeChanTypes.resize( nBands, CHN_16U ); 
+        aeChanTypes.resize( MAX(1,nBands), CHN_16U ); 
     else 
-        aeChanTypes.resize( nBands, CHN_8U ); 
+        aeChanTypes.resize( MAX(1,nBands), CHN_8U ); 
 
 /* -------------------------------------------------------------------- */
 /*      Reformat options.  Currently no support for jpeg compression    */
