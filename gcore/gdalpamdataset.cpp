@@ -964,10 +964,10 @@ char **GDALPamDataset::GetFileList()
     char **papszFileList = GDALDataset::GetFileList();
 
     if( psPam && psPam->osPhysicalFilename.size() > 0 
-        && CSLCount( papszFileList ) == 0 )
+        && CSLFindString( papszFileList, psPam->osPhysicalFilename ) == -1 )
     {
-        papszFileList = CSLAddString( papszFileList, 
-                                      psPam->osPhysicalFilename );
+        papszFileList = CSLInsertString( papszFileList, 0, 
+                                         psPam->osPhysicalFilename );
     }
 
     if( psPam && psPam->pszPamFilename 

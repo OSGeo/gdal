@@ -1954,18 +1954,21 @@ char **GDALDataset::GetFileList()
 
 {
     CPLString osMainFilename = GetDescription();
+    int bMainFileReal;
     VSIStatBufL  sStat;
 
 /* -------------------------------------------------------------------- */
 /*      Is the main filename even a real filesystem object?             */
 /* -------------------------------------------------------------------- */
-    if( VSIStatL( osMainFilename, &sStat ) != 0 )
-        return NULL;
+    bMainFileReal = VSIStatL( osMainFilename, &sStat ) == 0;
 
 /* -------------------------------------------------------------------- */
 /*      Form new list.                                                  */
 /* -------------------------------------------------------------------- */
-    char **papszList = CSLAddString( NULL, osMainFilename );
+    char **papszList = NULL;
+
+    if( bMainFileReal )
+        papszList = CSLAddString( papszList, osMainFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a known overview file?                               */
@@ -1990,21 +1993,23 @@ char **GDALDataset::GetFileList()
 /* -------------------------------------------------------------------- */
 /*      Do we have a world file?                                        */
 /* -------------------------------------------------------------------- */
-    const char* pszExtension = CPLGetExtension( osMainFilename );
-    if( strlen(pszExtension) > 2 )
+    if( bMainFileReal )
     {
-        // first + last + 'w'
-        char szDerivedExtension[4];
-        szDerivedExtension[0] = pszExtension[0];
-        szDerivedExtension[1] = pszExtension[strlen(pszExtension)-1];
-        szDerivedExtension[2] = 'w';
-        szDerivedExtension[3] = '\0';
-        CPLString osWorldFilename = CPLResetExtension( osMainFilename, szDerivedExtension );
-
-        if( VSIStatL( osWorldFilename, &sStat ) == 0 )
-            papszList = CSLAddString( papszList, osWorldFilename );
+        const char* pszExtension = CPLGetExtension( osMainFilename );
+        if( strlen(pszExtension) > 2 )
+        {
+            // first + last + 'w'
+            char szDerivedExtension[4];
+            szDerivedExtension[0] = pszExtension[0];
+            szDerivedExtension[1] = pszExtension[strlen(pszExtension)-1];
+            szDerivedExtension[2] = 'w';
+            szDerivedExtension[3] = '\0';
+            CPLString osWorldFilename = CPLResetExtension( osMainFilename, szDerivedExtension );
+            
+            if( VSIStatL( osWorldFilename, &sStat ) == 0 )
+                papszList = CSLAddString( papszList, osWorldFilename );
+        }
     }
-
 
     return papszList;
 }
