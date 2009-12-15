@@ -316,8 +316,11 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
                 else
                     WriteValue( 3, papszLines[iLine] );
             }
+            CSLDestroy( papszLines );
         }
     }
+
+    delete poTool;
 
 /* -------------------------------------------------------------------- */
 /*      Write the location.                                             */
@@ -448,6 +451,8 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         if( !bDefault )
             WriteValue( 370, (int) floor(dfWidthInMM * 100 + 0.5) );
     }
+
+    delete poTool;
 
 /* -------------------------------------------------------------------- */
 /*      Write the vertices                                              */
