@@ -14,7 +14,7 @@ cl.exe %CLARGS% extensions\gdal_wrap.cpp
 cl.exe %CLARGS% extensions\osr_wrap.cpp
 cl.exe %CLARGS% extensions\ogr_wrap.cpp
 cl.exe %CLARGS% extensions\gdalconst_wrap.c
-cl.exe %CLARGS% extensions\_gdal_array.cpp
+cl.exe %CLARGS% extensions\gdal_array_wrap.cpp
 
 set LINKOPTS=/DLL /nologo /INCREMENTAL:NO /LIBPATH:../../ /LIBPATH:%PYTHONHOME%\libs /LIBPATH:%PYTHONHOME%\PCBuild gdal_i.lib
 
@@ -22,6 +22,6 @@ link.exe %LINKOPTS% /EXPORT:init_gdal gdal_wrap.obj /OUT:%OUTDIR%\_gdal.pyd
 link.exe %LINKOPTS% /EXPORT:init_osr  osr_wrap.obj /OUT:%OUTDIR%\_osr.pyd 
 link.exe %LINKOPTS% /EXPORT:init_ogr  ogr_wrap.obj /OUT:%OUTDIR%\_ogr.pyd 
 link.exe %LINKOPTS% /EXPORT:init_gdalconst gdalconst_wrap.obj /OUT:%OUTDIR%\_gdalconst.pyd 
-link.exe %LINKOPTS% /EXPORT:init_gdal_array _gdal_array.obj /OUT:%OUTDIR%\_gdal_array.pyd
+link.exe %LINKOPTS% /EXPORT:init_gdal_array gdal_array_wrap.obj /OUT:%OUTDIR%\_gdal_array.pyd
 
 
