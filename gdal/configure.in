@@ -2409,6 +2409,7 @@ AC_ARG_WITH(python,[  --with-python       Enable python bindings],,)
 AC_MSG_CHECKING([for python bindings])
 if test "$with_python" = "yes" ; then
   BINDINGS="python $BINDINGS"
+  AM_PATH_PYTHON
   AC_MSG_RESULT([enabled])
 
   AC_MSG_CHECKING([for python setuptools])
@@ -2430,32 +2431,7 @@ fi
 AC_SUBST([PY_HAVE_SETUPTOOLS])
 AC_SUBST([BINDINGS])
 
-dnl ---------------------------------------------------------------------------
-dnl Old-gen Python Checks
-dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(ogpython,[  --with-ogpython         Enable Old-gen traditional (deprecated) Python bindings],,[with_ogpython=no])
-
-AC_MSG_CHECKING([for old-gen python bindings])
-HAVE_OGPYTHON=no
-
-if test "x$with_ogpython" != "xno" ; then
-  AM_PATH_PYTHON
-  AM_INIT_PYEXEC_MOD
-  AM_CHECK_NUMPY
-  AC_COMPILER_LOCALHACK
-  HAVE_OGPYTHON=yes
-
-  if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
-    AC_MSG_ERROR("--with-hide-internal-symbols and --with-ogpython cannot be used at the same time")
-  fi
-else
-  HAVE_OGPYTHON=no
-  AC_MSG_RESULT([disabled])
-fi
-rm -f conftest*
-
-AC_SUBST([HAVE_OGPYTHON])
 
 
 AC_OUTPUT(GDALmake.opt)
@@ -2463,14 +2439,6 @@ AC_OUTPUT(GDALmake.opt)
 dnl ---------------------------------------------------------------------------
 dnl Display configuration status
 dnl ---------------------------------------------------------------------------
-
-dnl HAVE_OGPYTHON=no
-dnl if test "$PYTHON" != "no" -a "$PYTHON_DEV" != "no" ; then
-dnl   HAVE_OGPYTHON=yes
-dnl  else
-dnl   HAVE_OGPYTHON=no
-dnl fi
-dnl AC_SUBST([HAVE_OGPYTHON])
 
 LOC_MSG()
 LOC_MSG([GDAL is now configured for ${host}])
@@ -2534,7 +2502,6 @@ if test -z "$BINDINGS"; then
 else
     WHAT_BINDINGS="$BINDINGS"
 fi
-LOC_MSG([  Old-gen python          ${HAVE_OGPYTHON}])
 LOC_MSG([  SWIG Bindings:          ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])

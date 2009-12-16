@@ -61,7 +61,7 @@ LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) $(VB6_OBJ)
 DISTDIR	=	gdal_$(VERSION)
 
 default:	port_dir ogr_dir core_dir frmts_dir $(VB6_TARGET) $(GDAL_DLL) \
-		plugin_dir apps_dir pymod_dir
+		plugin_dir apps_dir 
 
 staticlib:
 	if exist gdal.lib del gdal.lib
@@ -89,9 +89,6 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd swig
-	$(MAKE) /f makefile.vc clean
-	cd ..
-	cd pymod
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd vb6
@@ -136,11 +133,6 @@ apps_dir:
 	$(MAKE) /f makefile.vc
 	cd ..
 
-pymod_dir:
-	cd pymod
-	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc
-	cd ..
-
 vb6_dir:
 	cd vb6
 	$(MAKE) /f makefile.vc
@@ -173,7 +165,7 @@ $(GDAL_DLL): staticlib
 
 dll:	$(GDAL_DLL)
 
-install: $(GDAL_DLL) plugin_dir apps_dir pymod_dir
+install: $(GDAL_DLL) plugin_dir apps_dir 
 	-mkdir $(BINDIR)
 	-mkdir $(DATADIR)
 	$(INSTALL) $(GDAL_DLL) $(BINDIR)
@@ -181,9 +173,6 @@ install: $(GDAL_DLL) plugin_dir apps_dir pymod_dir
 	$(MAKE) /f makefile.vc plugins-install
 	cd ..\apps
 	$(MAKE) /f makefile.vc install
-	cd ..\pymod
-	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc install
-	cd ..
 	$(INSTALL) data\*.* $(DATADIR)
 	$(INSTALL) LICENSE.TXT $(DATADIR)
 !IFDEF HTMLDIR
