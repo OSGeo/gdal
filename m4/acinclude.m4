@@ -420,15 +420,15 @@ AC_DEFUN([AM_PATH_PYTHON],
     dnl
     AC_CHECK_PROGS([PYTHON], [python python1.5 python1.4 python1.3], [no])
 
-    if test "$with_ogpython" = no ; then
-        echo "Old-gen Python support disabled"
-        PYTHON=no
-    fi
+dnl    if test "$with_ogpython" = no ; then
+dnl        echo "Old-gen Python support disabled"
+dnl        PYTHON=no
+dnl    fi
 
-    if test "x$with_python" != xno -a "x$with_python" != "x" ; then
-        echo "Old-gen Python support disabled since python enabled."
-        PYTHON=no
-    fi
+dnl    if test "x$with_python" != xno -a "x$with_python" != "x" ; then
+dnl        echo "Old-gen Python support disabled since python enabled."
+dnl        PYTHON=no
+dnl    fi
 
     ARCH=`uname -i 2>/dev/null`
     PYLIB=lib

@@ -1,4 +1,0 @@
-LIBRARY		_gdal
-VERSION		1.0
-EXPORTS
-	init_gdal	@1
