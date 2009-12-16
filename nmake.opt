@@ -43,7 +43,6 @@ GDAL_HOME = "C:\warmerda\bld"
 !ENDIF
 BINDIR = $(GDAL_HOME)\bin
 PLUGINDIR = $(BINDIR)\gdalplugins
-PY_INST_DIR = $(GDAL_HOME)\pymod
 LIBDIR = $(GDAL_HOME)\lib
 INCDIR = $(GDAL_HOME)\include
 DATADIR = $(GDAL_HOME)\data
