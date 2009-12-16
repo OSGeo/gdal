@@ -173,6 +173,7 @@ install: $(GDAL_DLL) plugin_dir apps_dir
 	$(MAKE) /f makefile.vc plugins-install
 	cd ..\apps
 	$(MAKE) /f makefile.vc install
+	cd ..
 	$(INSTALL) data\*.* $(DATADIR)
 	$(INSTALL) LICENSE.TXT $(DATADIR)
 !IFDEF HTMLDIR
