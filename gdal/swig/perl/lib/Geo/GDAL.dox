@@ -691,7 +691,7 @@
 # @return the size of a preferred i/o raster blocks as a list (width,
 # height).
 
-## @method ColorInterpretation($color_interpretation)
+## @method $ColorInterpretation($color_interpretation)
 # Color interpretation is currently one of Undefined GrayIndex
 # PaletteIndex RedBand GreenBand BlueBand AlphaBand HueBand
 # SaturationBand LightnessBand CyanBand MagentaBand YellowBand
@@ -845,7 +845,7 @@
 
 ## @method CreateMaskBand()
 
-## @method $GetMaskBand()
+## @method Geo::GDAL::Band GetMaskBand()
 
 ## @method $GetMaskFlags()
 
