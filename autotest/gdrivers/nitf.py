@@ -34,6 +34,7 @@ import gdal
 import array
 import string
 import struct
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -859,13 +860,17 @@ def nitf_38():
     nXSize = ds.RasterXSize
     nYSize = ds.RasterYSize
     data =  ds.GetRasterBand(1).ReadRaster(0, 0, nXSize, nYSize)
-    cs = ds.GetRasterBand(1).Checksum()
+    expected_cs = ds.GetRasterBand(1).Checksum()
 
     ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf38.ntf', nXSize, nYSize, 1, options = [ 'NUMI=999' ])
     ds = None
 
     ds = gdal.Open('NITF_IM:998:tmp/nitf38.ntf', gdal.GA_Update)
     ds.GetRasterBand(1).WriteRaster(0, 0, nXSize, nYSize, data)
+    
+    # Create overviews
+    ds.BuildOverviews( overviewlist = [2] )
+    
     ds = None
 
     ds = gdal.Open( 'NITF_IM:0:tmp/nitf38.ntf' )
@@ -874,7 +879,17 @@ def nitf_38():
     ds = None
 
     ds = gdal.Open( 'NITF_IM:998:tmp/nitf38.ntf' )
-    if cs != ds.GetRasterBand(1).Checksum():
+    cs = ds.GetRasterBand(1).Checksum();
+    if cs != expected_cs:
+        print(cs)
+        gdaltest.post_reason( 'bad checksum for image of 998th subdataset' )
+        return 'fail'
+        
+    # Check the overview
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 1087:
+        print(cs)
+        gdaltest.post_reason( 'bad checksum for overview of image of 998th subdataset' )
         return 'fail'
     ds = None
 
@@ -1077,6 +1092,99 @@ def nitf_44():
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Check overviews on a JPEG compressed subdataset
+
+def nitf_45():
+
+    try:
+        os.remove('tmp/nitf45.ntf.aux.xml')
+    except:
+        pass
+
+    shutil.copyfile( 'data/two_images_jpeg.ntf', 'tmp/nitf45.ntf' )
+    
+    ds = gdal.Open( 'NITF_IM:1:tmp/nitf45.ntf', gdal.GA_Update )
+    ds.BuildOverviews( overviewlist = [2] )
+    # FIXME ? ds.GetRasterBand(1).GetOverview(0) is None until we reopen
+    ds = None
+    
+    ds = gdal.Open( 'NITF_IM:1:tmp/nitf45.ntf' )
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 1086:
+        print(cs)
+        gdaltest.post_reason('did not get expected checksum for overview of subdataset')
+        return 'fail'
+    
+    ds = None
+    
+    return 'success'
+    
+###############################################################################
+# Check overviews on a JPEG2000 compressed subdataset
+
+def nitf_46(driver_to_test):
+
+    try:
+        jp2_drv = gdal.GetDriverByName( driver_to_test )
+    except:
+        jp2_drv = None
+
+    if jp2_drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
+    
+    try:
+        os.remove('tmp/nitf46.ntf.aux.xml')
+    except:
+        pass
+    
+    try:
+        os.remove('tmp/nitf46.ntf_0.ovr')
+    except:
+        pass
+        
+    shutil.copyfile( 'data/two_images_jp2.ntf', 'tmp/nitf46.ntf' )
+    
+    ds = gdal.Open( 'NITF_IM:1:tmp/nitf46.ntf', gdal.GA_Update )
+    ds.BuildOverviews( overviewlist = [2] )
+    # FIXME ? ds.GetRasterBand(1).GetOverview(0) is None until we reopen
+    ds = None
+    
+    ds = gdal.Open( 'NITF_IM:1:tmp/nitf46.ntf' )
+    if ds.GetRasterBand(1).GetOverview(0) is None:
+        gdaltest.post_reason('no overview of subdataset')
+        ret = 'fail'
+    else:
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        if cs != 1086:
+            print(cs)
+            gdaltest.post_reason('did not get expected checksum for overview of subdataset')
+            ret = 'fail'
+        else:
+            ret = 'success'
+    
+    ds = None
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+    
+    return ret
+    
+def nitf_46_jp2ecw():
+    return nitf_46('JP2ECW')
+
+def nitf_46_jp2mrsid():
+    return nitf_46('JP2MrSID')
+
+# untested yet
+def nitf_46_jp2kak():
+    return nitf_46('JP2KAK')
+
+def nitf_46_jasper():
+    return nitf_46('JPEG2000')
     
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
@@ -1444,7 +1552,6 @@ def nitf_online_15(driver_to_test):
 def nitf_online_15_jp2ecw():
     return nitf_online_15('JP2ECW')
 
-# untested yet
 def nitf_online_15_jp2mrsid():
     return nitf_online_15('JP2MrSID')
 
@@ -1499,11 +1606,9 @@ def nitf_online_16(driver_to_test):
 
     return ret
 
-# untested yet
 def nitf_online_16_jp2ecw():
     return nitf_online_16('JP2ECW')
 
-# untested yet
 def nitf_online_16_jp2mrsid():
     return nitf_online_16('JP2MrSID')
 
@@ -1551,11 +1656,9 @@ def nitf_online_17(driver_to_test):
 
     return ret
 
-# untested yet
 def nitf_online_17_jp2ecw():
     return nitf_online_17('JP2ECW')
 
-# untested yet
 def nitf_online_17_jp2mrsid():
     return nitf_online_17('JP2MrSID')
 
@@ -1607,6 +1710,7 @@ def nitf_cleanup():
 
     try:
         gdal.GetDriverByName('NITF').Delete( 'tmp/nitf38.ntf' )
+        os.unlink( 'tmp/nitf38.ntf_0.ovr' )
     except:
         pass
 
@@ -1628,6 +1732,18 @@ def nitf_cleanup():
 
     try:
         gdal.GetDriverByName('NITF').Delete( 'tmp/nitf44.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf45.ntf' )
+        os.unlink( 'tmp/nitf45.ntf_0.ovr' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf46.ntf' )
+        os.unlink( 'tmp/nitf46.ntf_0.ovr' )
     except:
         pass
         
@@ -1681,6 +1797,11 @@ gdaltest_list = [
     nitf_43_jasper,
     nitf_43_jp2ecw,
     nitf_44,
+    nitf_45,
+    #nitf_46_jp2ecw,
+    #nitf_46_jp2mrsid,
+    #nitf_46_jp2kak,
+    nitf_46_jasper,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
