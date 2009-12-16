@@ -1,0 +1,79 @@
+<html>
+<head>
+<title>AutoCAD DXF</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>AutoCAD DXF</h1>
+
+OGR supports reading most versions of AutoCAD DXF and writing AutoCAD 2000
+version files.  The entire contents of the file is represented as a single
+layer named "entities".  DXF is an ASCII format used for interchanging 
+AutoCAD drawings between different software packages.<p>
+
+
+DXF files are considered to have no georeferencing information through OGR. 
+Features will all have the following generic attributes:
+
+<ul>
+<li> Layer: The name of the DXF layer.  The default layer is "0".
+<li> SubClasses: Where available, a list of classes to which an element belongs.
+<li> ExtendedEntity: Where available, extended entity attributes all appended to form a single text attribute.
+<li> Linetype: Where available, the line type used for this entity.
+<li> EntityHandle: The hexadecimal entity handle.  A sort of feature id.
+<li> Text: The text of labels. 
+</ul>
+
+<h2>Supported Elements</h2>
+
+The following element types are supported:<p>
+
+<ul>
+<li> POINT: Produces a simple point geometry feature.
+<li> MTEXT, TEXT: Produces a point feature with LABEL style information.
+<li> LINE, POLYLINE, LWPOLYLINE: translated as a LINESTRING or POLYGON 
+depending on whether it is closed.
+<li> CIRCLE, ELLIPSE, ARC:  Translated as a LINESTRING, interpolating the 
+arc into line segments. 
+<li> INSERT: An attempt is made to insert the block definition as defined
+in the insert.  Linework blocks are aggregated into a single feature with
+a geometry collection for the geometry.  Text blocks are returned as one or
+more text features. 
+<li> DIMENSION: This element is exploded into a feature with arrows and
+leaders, and a feature with the dimensio label.
+</ul>
+
+A reasonable attempt is made to preserve line color, line width, text size
+and orientation via OGR feature styling information when translating elements.
+Currently no effort is made to preserve fill styles or complex line style
+attributes.<p>
+
+<h2>Creation Issues</h2>
+
+DXF files are written in AutoCAD 2000 format.  A standard header (everything
+up to the ENTITIES keyword) is written from the $GDAL_DATA/header.dxf file,
+and the $GDAL_DATA/trailer.dxf file is added after the entities.  Only one
+layer can be created on the output file.<p>
+
+Point features with LABEL styling are written as MTEXT entities based
+on the styling information.<p>
+
+Point features without LABEL styling are written as POINT entities.<p>
+
+LineString, MultiLineString, Polygon and MultiPolygons are written as one or
+more LWPOLYLINE entities, closed in the case of polygon rings.  An effort is
+made to preserve line width and color.<p>
+
+The dataset creation supports the following dataset creation options:<p>
+
+<ul>
+
+<li> <b>HEADER=</b><i>filename</i>: Override the header file used - in place of header.dxf. <p>
+
+<li> <b>TRAILER=</b><i>filename</i>: Override the trailer file used - in place of trailer.dxf.<p>
+
+</ul>
+
+</body>
+</html>
