@@ -1,12 +1,15 @@
 %extend OGRDataSourceShadow {
 // File: ogrdatasource_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrdatasource.cpp
-14432 2008-05-10 18:47:46Z warmerdam $\") ";
+16933 2009-05-03 19:49:41Z rouault $\") ";
 
 %feature("docstring")  Destroy "void OGR_DS_Destroy(OGRDataSourceH
 hDS)
 
 Closes opened datasource and releases allocated resources.
+
+This method is the same as the C++ method
+OGRDataSource::DestroyDataSource().
 
 Parameters:
 -----------
@@ -31,10 +34,11 @@ OGRSpatialReferenceH hSpatialRef, OGRwkbGeometryType eType, char
 **papszOptions)
 
 This function attempts to create a new layer on the data source with
-the indicated name, coordinate system, geometry type. The papszOptions
-argument can be used to control driver specific creation options.
-These options are normally documented in the format specific
-documentation.
+the indicated name, coordinate system, geometry type.
+
+The papszOptions argument can be used to control driver specific
+creation options. These options are normally documented in the format
+specific documentation.
 
 This function is the same as the C++ method
 OGRDataSource::CreateLayer().
@@ -62,16 +66,61 @@ Example: ";
 
 %feature("docstring")  CopyLayer "OGRLayerH
 OGR_DS_CopyLayer(OGRDataSourceH hDS, OGRLayerH hSrcLayer, const char
-*pszNewName, char **papszOptions) ";
+*pszNewName, char **papszOptions)
+
+Duplicate an existing layer.
+
+This function creates a new layer, duplicate the field definitions of
+the source layer and then duplicate each features of the source layer.
+The papszOptions argument can be used to control driver specific
+creation options. These options are normally documented in the format
+specific documentation. The source layer may come from another
+dataset.
+
+This function is the same as the C++ method OGRDataSource::CopyLayer
+
+Parameters:
+-----------
+
+hDS:  handle to the data source where to create the new layer
+
+hSrcLayer:  handle to the source layer.
+
+pszNewName:  the name of the layer to create.
+
+papszOptions:  a StringList of name=value options. Options are driver
+specific.
+
+an handle to the layer, or NULL if an error occurs. ";
 
 %feature("docstring")  DeleteLayer "OGRErr
-OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer) ";
+OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)
+
+Delete the indicated layer from the datasource.
+
+If this method is supported the ODsCDeleteLayer capability will test
+TRUE on the OGRDataSource.
+
+This method is the same as the C++ method
+OGRDataSource::DeleteLayer().
+
+Parameters:
+-----------
+
+hDS:  handle to the datasource
+
+iLayer:  the index of the layer to delete.
+
+OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+layers is not supported for this datasource. ";
 
 %feature("docstring")  GetLayerByName "OGRLayerH
 OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszName)
 
-Fetch a layer by name. The returned layer remains owned by the
-OGRDataSource and should not be deleted by the application.
+Fetch a layer by name.
+
+The returned layer remains owned by the OGRDataSource and should not
+be deleted by the application.
 
 This function is the same as the C++ method
 OGRDataSource::GetLayerByName().
@@ -188,8 +237,10 @@ layer count. ";
 %feature("docstring")  GetLayer "OGRLayerH
 OGR_DS_GetLayer(OGRDataSourceH hDS, int iLayer)
 
-Fetch a layer by index. The returned layer remains owned by the
-OGRDataSource and should not be deleted by the application.
+Fetch a layer by index.
+
+The returned layer remains owned by the OGRDataSource and should not
+be deleted by the application.
 
 This function is the same as the C++ method OGRDataSource::GetLayer().
 
@@ -206,11 +257,12 @@ occurs. ";
 %feature("docstring")  GetName "const char*
 OGR_DS_GetName(OGRDataSourceH hDS)
 
-Returns the name of the data source. This string should be sufficient
-to open the data source if passed to the same OGRSFDriver that this
-data source was opened with, but it need not be exactly the same
-string that was used to open the data source. Normally this is a
-filename.
+Returns the name of the data source.
+
+This string should be sufficient to open the data source if passed to
+the same OGRSFDriver that this data source was opened with, but it
+need not be exactly the same string that was used to open the data
+source. Normally this is a filename.
 
 This function is the same as the C++ method OGRDataSource::GetName().
 
@@ -223,9 +275,60 @@ pointer to an internal name string which should not be modified or
 freed by the caller. ";
 
 %feature("docstring")  SyncToDisk "OGRErr
-OGR_DS_SyncToDisk(OGRDataSourceH hDS) ";
+OGR_DS_SyncToDisk(OGRDataSourceH hDS)
+
+Flush pending changes to disk.
+
+This call is intended to force the datasource to flush any pending
+writes to disk, and leave the disk file in a consistent state. It
+would not normally have any effect on read-only datasources.
+
+Some data sources do not implement this method, and will still return
+OGRERR_NONE. An error is only returned if an error occurs while
+attempting to flush to disk.
+
+The default implementation of this method just calls the SyncToDisk()
+method on each of the layers. Conceptionally, calling SyncToDisk() on
+a datasource should include any work that might be accomplished by
+calling SyncToDisk() on layers in that data source.
+
+In any event, you should always close any opened datasource with
+OGR_DS_Destroy() that will ensure all data is correctly flushed.
+
+This method is the same as the C++ method OGRDataSource::SyncToDisk()
+
+Parameters:
+-----------
+
+hDS:  handle to the data source
+
+OGRERR_NONE if no error occurs (even if nothing is done) or an error
+code. ";
 
 %feature("docstring")  GetDriver "OGRSFDriverH
-OGR_DS_GetDriver(OGRDataSourceH hDS) ";
+OGR_DS_GetDriver(OGRDataSourceH hDS)
+
+Returns the driver that the dataset was opened with.
+
+This method is the same as the C++ method OGRDataSource::GetDriver()
+
+Parameters:
+-----------
+
+hDS:  handle to the datasource
+
+NULL if driver info is not available, or pointer to a driver owned by
+the OGRSFDriverManager. ";
+
+%feature("docstring")  GetStyleTable "OGRStyleTableH
+OGR_DS_GetStyleTable(OGRDataSourceH hDS) ";
+
+%feature("docstring")  SetStyleTableDirectly "void
+OGR_DS_SetStyleTableDirectly(OGRDataSourceH hDS, OGRStyleTableH
+hStyleTable) ";
+
+%feature("docstring")  SetStyleTable "void
+OGR_DS_SetStyleTable(OGRDataSourceH hDS, OGRStyleTableH hStyleTable)
+";
 
 }

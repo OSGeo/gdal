@@ -1,7 +1,7 @@
 %extend OGRFeatureShadow {
 // File: ogrfeature_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeature.cpp
-15749 2008-11-17 19:36:50Z rouault $\") ";
+18231 2009-12-09 17:33:09Z rouault $\") ";
 
 %feature("docstring")  Create "OGRFeatureH
 OGR_F_Create(OGRFeatureDefnH hDefn)
@@ -26,7 +26,7 @@ an handle to the new feature object with null fields and no geometry.
 
 %feature("docstring")  Destroy "void OGR_F_Destroy(OGRFeatureH hFeat)
 
-Destroy feature
+Destroy feature.
 
 The feature is deleted, but within the context of the GDAL/OGR heap.
 This is necessary when higher level applications use GDAL/OGR from a
@@ -138,8 +138,8 @@ an handle to the new feature, exactly matching this feature. ";
 %feature("docstring")  GetFieldCount "int
 OGR_F_GetFieldCount(OGRFeatureH hFeat)
 
-Fetch number of fields on this feature. This will always be the same
-as the field count for the OGRFeatureDefn.
+Fetch number of fields on this feature This will always be the same as
+the field count for the OGRFeatureDefn.
 
 This function is the same as the C++ method
 OGRFeature::GetFieldCount().
@@ -413,19 +413,19 @@ hFeat:  handle to the feature that owned the field.
 
 iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
-int:  pnYear (including century)
+pnYear:  (including century)
 
-int:  pnMonth (1-12)
+pnMonth:  (1-12)
 
-int:  pnDay (1-31)
+pnDay:  (1-31)
 
-int:  pnHour (0-23)
+pnHour:  (0-23)
 
-int:  pnMinute (0-59)
+pnMinute:  (0-59)
 
-int:  pnSecond (0-59)
+pnSecond:  (0-59)
 
-int:  pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for
+pnTZFlag:  (0=unknown, 1=localtime, 100=GMT, see data model for
 details)
 
 TRUE on success or FALSE on failure. ";
@@ -728,6 +728,43 @@ output fields matching some of the source fields.
 OGRERR_NONE if the operation succeeds, even if some values are not
 transferred, otherwise an error code. ";
 
+%feature("docstring")  SetFromWithMap "OGRErr
+OGR_F_SetFromWithMap(OGRFeatureH hFeat, OGRFeatureH hOtherFeat, int
+bForgiving, int *panMap)
+
+Set one feature from another.
+
+Overwrite the contents of this feature from the geometry and
+attributes of another. The hOtherFeature does not need to have the
+same OGRFeatureDefn. Field values are copied according to the provided
+indices map. Field types do not have to exactly match.
+OGR_F_SetField*() function conversion rules will be applied as needed.
+This is more efficient than OGR_F_SetFrom() in that this doesn't
+lookup the fields by their names. Particularly useful when the field
+names don't match.
+
+This function is the same as the C++ method OGRFeature::SetFrom().
+
+Parameters:
+-----------
+
+hFeat:  handle to the feature to set to.
+
+hOtherFeat:  handle to the feature from which geometry, and field
+values will be copied.
+
+panMap:  Array of the indices of the destination feature's fields
+stored at the corresponding index of the source feature's fields. A
+value of -1 should be used to ignore the source's field. The array
+should not be NULL and be as long as the number of fields in the
+source feature.
+
+bForgiving:  TRUE if the operation should continue despite lacking
+output fields matching some of the source fields.
+
+OGRERR_NONE if the operation succeeds, even if some values are not
+transferred, otherwise an error code. ";
+
 %feature("docstring")  GetStyleString "const char*
 OGR_F_GetStyleString(OGRFeatureH hFeat)
 
@@ -783,5 +820,15 @@ hFeat:  handle to the feature to set style to.
 
 pszStyle:  the style string to apply to this feature, cannot be NULL.
 ";
+
+%feature("docstring")  GetStyleTable "OGRStyleTableH
+OGR_F_GetStyleTable(OGRFeatureH hFeat) ";
+
+%feature("docstring")  SetStyleTableDirectly "void
+OGR_F_SetStyleTableDirectly(OGRFeatureH hFeat, OGRStyleTableH
+hStyleTable) ";
+
+%feature("docstring")  SetStyleTable "void
+OGR_F_SetStyleTable(OGRFeatureH hFeat, OGRStyleTableH hStyleTable) ";
 
 }

@@ -1,7 +1,7 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrgeometry.cpp
-15346 2008-09-08 18:28:46Z rouault $\") ";
+17010 2009-05-13 20:33:01Z warmerdam $\") ";
 
 %feature("docstring")  DumpReadable "void
 OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char
@@ -24,12 +24,13 @@ pszPrefix:  the prefix to put on each line of output. ";
 OGR_G_AssignSpatialReference(OGRGeometryH hGeom, OGRSpatialReferenceH
 hSRS)
 
-Assign spatial reference to this object. Any existing spatial
-reference is replaced, but under no circumstances does this result in
-the object being reprojected. It is just changing the interpretation
-of the existing geometry. Note that assigning a spatial reference
-increments the reference count on the OGRSpatialReference, but does
-not copy it.
+Assign spatial reference to this object.
+
+Any existing spatial reference is replaced, but under no circumstances
+does this result in the object being reprojected. It is just changing
+the interpretation of the existing geometry. Note that assigning a
+spatial reference increments the reference count on the
+OGRSpatialReference, but does not copy it.
 
 This is similar to the SFCOM IGeometry::put_SpatialReference() method.
 
@@ -132,8 +133,10 @@ OGRERR_NONE on success or an error code. ";
 hGeom, double dfMaxLength)
 
 Modify the geometry such it has no segment longer then the given
-distance. Interpolated points will have Z and M values (if needed) set
-to 0. Distance computation is performed in 2d only
+distance.
+
+Interpolated points will have Z and M values (if needed) set to 0.
+Distance computation is performed in 2d only
 
 This function is the same as the CPP method OGRGeometry::segmentize().
 
@@ -191,7 +194,7 @@ OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension) ";
 %feature("docstring")  Equals "int OGR_G_Equals(OGRGeometryH hGeom,
 OGRGeometryH hOther)
 
-Returns two if two geometries are equivalent.
+Returns TRUE if two geometries are equivalent.
 
 This function is the same as the CPP method OGRGeometry::Equals()
 method.
@@ -427,14 +430,33 @@ hGeom:  handle on the geometry to empty. ";
 
 %feature("docstring")  IsEmpty "int OGR_G_IsEmpty(OGRGeometryH hGeom)
 
-Test if the geometry is empty
+Test if the geometry is empty.
 
 This method is the same as the CPP method OGRGeometry::IsEmpty().
+
+Parameters:
+-----------
+
+hGeom:  The Geometry to test.
 
 TRUE if the geometry has no points, otherwise FALSE. ";
 
 %feature("docstring")  IsValid "int OGR_G_IsValid(OGRGeometryH hGeom)
-";
+
+Test if the geometry is valid.
+
+This function is the same as the C++ method OGRGeometry::IsValid().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always return FALSE.
+
+Parameters:
+-----------
+
+hGeom:  The Geometry to test.
+
+TRUE if the geometry has no points, otherwise FALSE. ";
 
 %feature("docstring")  IsSimple "int OGR_G_IsSimple(OGRGeometryH
 hGeom)
@@ -446,14 +468,35 @@ as self intersection or self tangency. The description of each
 instantiable geometric class will include the specific conditions that
 cause an instance of that class to be classified as not simple.
 
-This method relates to the SFCOM IGeometry::IsSimple() method.
+This function is the same as the c++ method OGRGeometry::IsSimple()
+method.
 
-NOTE: This method is hardcoded to return TRUE at this time.
+If OGR is built without the GEOS library, this function will always
+return FALSE.
+
+Parameters:
+-----------
+
+hGeom:  The Geometry to test.
 
 TRUE if object is simple, otherwise FALSE. ";
 
 %feature("docstring")  IsRing "int OGR_G_IsRing(OGRGeometryH hGeom)
-";
+
+Test if the geometry is a ring.
+
+This function is the same as the C++ method OGRGeometry::IsRing().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always return FALSE.
+
+Parameters:
+-----------
+
+hGeom:  The Geometry to test.
+
+TRUE if the geometry has no points, otherwise FALSE. ";
 
 %feature("docstring")  OGRGeometryTypeToName "const char*
 OGRGeometryTypeToName(OGRwkbGeometryType eType)
@@ -511,52 +554,362 @@ Parameters:
 hGeom:  handle on the geometry to convert. ";
 
 %feature("docstring")  OGRSetGenerate_DB2_V72_BYTE_ORDER "OGRErr
-OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER) ";
+OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER)
+
+Special entry point to enable the hack for generating DB2 V7.2 style
+WKB.
+
+DB2 seems to have placed (and require) an extra 0x30 or'ed with the
+byte order in WKB. This entry point is used to turn on or off the
+generation of such WKB. ";
 
 %feature("docstring")  OGRGetGenerate_DB2_V72_BYTE_ORDER "int
 OGRGetGenerate_DB2_V72_BYTE_ORDER() ";
 
 %feature("docstring")  Distance "double OGR_G_Distance(OGRGeometryH
-hFirst, OGRGeometryH hOther) ";
+hFirst, OGRGeometryH hOther)
+
+Compute distance between two geometries.
+
+Returns the shortest distance between the two geometries.
+
+This function is the same as the C++ method OGRGeometry::Distance().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hFirst:  the first geometry to compare against.
+
+hOther:  the other geometry to compare against.
+
+the distance between the geometries or -1 if an error occurs. ";
 
 %feature("docstring")  ConvexHull "OGRGeometryH
-OGR_G_ConvexHull(OGRGeometryH hTarget) ";
+OGR_G_ConvexHull(OGRGeometryH hTarget)
+
+Compute convex hull.
+
+A new geometry object is created and returned containing the convex
+hull of the geometry on which the method is invoked.
+
+This function is the same as the C++ method OGRGeometry::ConvexHull().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hTarget:  The Geometry to calculate the convex hull of.
+
+a handle to a newly allocated geometry now owned by the caller, or
+NULL on failure. ";
 
 %feature("docstring")  GetBoundary "OGRGeometryH
-OGR_G_GetBoundary(OGRGeometryH hTarget) ";
+OGR_G_GetBoundary(OGRGeometryH hTarget)
+
+Compute boundary.
+
+A new geometry object is created and returned containing the boundary
+of the geometry on which the method is invoked.
+
+This function is the same as the C++ method OGR_G_GetBoundary().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hTarget:  The Geometry to calculate the boundary of.
+
+a handle to a newly allocated geometry now owned by the caller, or
+NULL on failure. ";
 
 %feature("docstring")  Buffer "OGRGeometryH OGR_G_Buffer(OGRGeometryH
-hTarget, double dfDist, int nQuadSegs) ";
+hTarget, double dfDist, int nQuadSegs)
+
+Compute buffer of geometry.
+
+Builds a new geometry containing the buffer region around the geometry
+on which it is invoked. The buffer is a polygon containing the region
+within the buffer distance of the original geometry.
+
+Some buffer sections are properly described as curves, but are
+converted to approximate polygons. The nQuadSegs parameter can be used
+to control how many segements should be used to define a 90 degree
+curve - a quadrant of a circle. A value of 30 is a reasonable default.
+Large values result in large numbers of vertices in the resulting
+buffer geometry while small numbers reduce the accuracy of the result.
+
+This function is the same as the C++ method OGRGeometry::Buffer().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hTarget:  the geometry.
+
+dfDist:  the buffer distance to be applied.
+
+nQuadSegs:  the number of segments used to approximate a 90 degree
+(quadrant) of curvature.
+
+the newly created geometry, or NULL if an error occurs. ";
 
 %feature("docstring")  Intersection "OGRGeometryH
-OGR_G_Intersection(OGRGeometryH hThis, OGRGeometryH hOther) ";
+OGR_G_Intersection(OGRGeometryH hThis, OGRGeometryH hOther)
+
+Compute intersection.
+
+Generates a new geometry which is the region of intersection of the
+two geometries operated on. The OGR_G_Intersects() function can be
+used to test if two geometries intersect.
+
+This function is the same as the C++ method
+OGRGeometry::Intersection().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry.
+
+hOther:  the other geometry.
+
+a new geometry representing the intersection or NULL if there is no
+intersection or an error occurs. ";
 
 %feature("docstring")  Union "OGRGeometryH OGR_G_Union(OGRGeometryH
-hThis, OGRGeometryH hOther) ";
+hThis, OGRGeometryH hOther)
+
+Compute union.
+
+Generates a new geometry which is the region of union of the two
+geometries operated on.
+
+This function is the same as the C++ method OGRGeometry::Union().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry.
+
+hOther:  the other geometry.
+
+a new geometry representing the union or NULL if an error occurs. ";
 
 %feature("docstring")  Difference "OGRGeometryH
-OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther) ";
+OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
+
+Compute difference.
+
+Generates a new geometry which is the region of this geometry with the
+region of the other geometry removed.
+
+This function is the same as the C++ method OGRGeometry::Difference().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry.
+
+hOther:  the other geometry.
+
+a new geometry representing the difference or NULL if the difference
+is empty or an error occurs. ";
 
 %feature("docstring")  SymmetricDifference "OGRGeometryH
-OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther) ";
+OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)
+
+Compute symmetric difference.
+
+Generates a new geometry which is the symmetric difference of this
+geometry and the other geometry.
+
+This function is the same as the C++ method
+OGRGeometry::SymmetricDifference().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry.
+
+hOther:  the other geometry.
+
+a new geometry representing the symmetric difference or NULL if the
+difference is empty or an error occurs. ";
 
 %feature("docstring")  Disjoint "int OGR_G_Disjoint(OGRGeometryH
-hThis, OGRGeometryH hOther) ";
+hThis, OGRGeometryH hOther)
+
+Test for disjointness.
+
+Tests if this geometry and the other geometry are disjoint.
+
+This function is the same as the C++ method OGRGeometry::Disjoint().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry to compare.
+
+hOther:  the other geometry to compare.
+
+TRUE if they are disjoint, otherwise FALSE. ";
 
 %feature("docstring")  Touches "int OGR_G_Touches(OGRGeometryH hThis,
-OGRGeometryH hOther) ";
+OGRGeometryH hOther)
+
+Test for touching.
+
+Tests if this geometry and the other geometry are touching.
+
+This function is the same as the C++ method OGRGeometry::Touches().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry to compare.
+
+hOther:  the other geometry to compare.
+
+TRUE if they are touching, otherwise FALSE. ";
 
 %feature("docstring")  Crosses "int OGR_G_Crosses(OGRGeometryH hThis,
-OGRGeometryH hOther) ";
+OGRGeometryH hOther)
+
+Test for crossing.
+
+Tests if this geometry and the other geometry are crossing.
+
+This function is the same as the C++ method OGRGeometry::Crosses().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry to compare.
+
+hOther:  the other geometry to compare.
+
+TRUE if they are crossing, otherwise FALSE. ";
 
 %feature("docstring")  Within "int OGR_G_Within(OGRGeometryH hThis,
-OGRGeometryH hOther) ";
+OGRGeometryH hOther)
+
+Test for containment.
+
+Tests if this geometry is within the other geometry.
+
+This function is the same as the C++ method OGRGeometry::Within().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry to compare.
+
+hOther:  the other geometry to compare.
+
+TRUE if hThis is within hOther, otherwise FALSE. ";
 
 %feature("docstring")  Contains "int OGR_G_Contains(OGRGeometryH
-hThis, OGRGeometryH hOther) ";
+hThis, OGRGeometryH hOther)
+
+Test for containment.
+
+Tests if this geometry contains the other geometry.
+
+This function is the same as the C++ method OGRGeometry::Contains().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry to compare.
+
+hOther:  the other geometry to compare.
+
+TRUE if hThis contains hOther geometry, otherwise FALSE. ";
 
 %feature("docstring")  Overlaps "int OGR_G_Overlaps(OGRGeometryH
-hThis, OGRGeometryH hOther) ";
+hThis, OGRGeometryH hOther)
+
+Test for overlap.
+
+Tests if this geometry and the other geometry overlap, that is their
+intersection has a non-zero area.
+
+This function is the same as the C++ method OGRGeometry::Overlaps().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry to compare.
+
+hOther:  the other geometry to compare.
+
+TRUE if they are overlapping, otherwise FALSE. ";
 
 %feature("docstring")  CloseRings "void OGR_G_CloseRings(OGRGeometryH
 hGeom) ";
