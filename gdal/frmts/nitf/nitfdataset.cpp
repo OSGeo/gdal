@@ -1998,7 +1998,6 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->SetPhysicalFilename( pszFilename );
     
     if( nSubDSCount > 1 || nIMIndex != -1 )
     {
@@ -2006,9 +2005,28 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
             nIMIndex = 0;
 
         poDS->SetSubdatasetName( CPLString().Printf("%d",nIMIndex) );
+        poDS->SetPhysicalFilename( pszFilename );
     }
 
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      If we have jpeg or jpeg2000 bands we may need to set the        */
+/*      overview file on their dataset. (#3276)                         */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poSubDS = poDS->poJ2KDataset;
+    if( poDS->poJPEGDataset )
+        poSubDS = poDS->poJPEGDataset;
+
+    const char *pszOverviewFile = 
+        poDS->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" );
+
+    if( poSubDS && pszOverviewFile != NULL )
+    {
+        poSubDS->SetMetadataItem( "OVERVIEW_FILE", 
+                                  pszOverviewFile,
+                                  "OVERVIEWS" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we have jpeg, or jpeg2000 bands we may need to clear         */
@@ -2844,16 +2862,45 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
                                      void * pProgressData )
     
 {
-    if( poJ2KDataset != NULL )
-        return poJ2KDataset->BuildOverviews( pszResampling, 
-                                             nOverviews, panOverviewList,
-                                             nListBands, panBandList,
-                                             pfnProgress, pProgressData );
-    else
-        return GDALPamDataset::IBuildOverviews( pszResampling, 
-                                                nOverviews, panOverviewList,
-                                                nListBands, panBandList,
-                                                pfnProgress, pProgressData );
+/* -------------------------------------------------------------------- */
+/*      If we have an underlying JPEG2000 dataset (hopefully via        */
+/*      JP2KAK) we will try and build zero overviews as a way of        */
+/*      tricking it into clearing existing overviews-from-jpeg2000.     */
+/* -------------------------------------------------------------------- */
+    if( poJ2KDataset != NULL 
+        && !poJ2KDataset->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" ) )
+        poJ2KDataset->IBuildOverviews( pszResampling, 0, NULL, 
+                                       nListBands, panBandList, 
+                                       GDALDummyProgress, NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Use the overview manager to build requested overviews.          */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = GDALPamDataset::IBuildOverviews( pszResampling, 
+                                                   nOverviews, panOverviewList,
+                                                   nListBands, panBandList,
+                                                   pfnProgress, pProgressData );
+
+/* -------------------------------------------------------------------- */
+/*      If we are working with jpeg or jpeg2000, let the underlying     */
+/*      dataset know about the overview file.                           */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poSubDS = poJ2KDataset;
+    if( poJPEGDataset )
+        poSubDS = poJPEGDataset;
+
+    const char *pszOverviewFile = 
+        GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" );
+
+    if( poSubDS && pszOverviewFile != NULL && eErr == CE_None
+        && poSubDS->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS") == NULL )
+    {
+        poSubDS->SetMetadataItem( "OVERVIEW_FILE", 
+                                  pszOverviewFile,
+                                  "OVERVIEWS" );
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
