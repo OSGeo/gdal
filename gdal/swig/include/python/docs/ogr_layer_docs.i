@@ -1,7 +1,7 @@
 %extend OGRLayerShadow {
 // File: ogrlayer_8cpp.xml
-%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrlayer.cpp 14828
-2008-07-05 17:51:09Z rouault $\") ";
+%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrlayer.cpp 17223
+2009-06-07 19:41:08Z rouault $\") ";
 
 %feature("docstring")  Reference "int OGR_L_Reference(OGRLayerH
 hLayer) ";
@@ -108,14 +108,14 @@ expression is in error, or some other failure occurs. ";
 %feature("docstring")  GetFeature "OGRFeatureH
 OGR_L_GetFeature(OGRLayerH hLayer, long nFeatureId)
 
-Fetch a feature by it's identifier.
+Fetch a feature by its identifier.
 
 This function will attempt to read the identified feature. The nFID
 value cannot be OGRNullFID. Success or failure of this operation is
 unaffected by the spatial or attribute filters.
 
-If this function returns a non-NULL feature, it is guaranteed that
-it's feature id ( OGR_F_GetFID()) will be the same as nFID.
+If this function returns a non-NULL feature, it is guaranteed that its
+feature id ( OGR_F_GetFID()) will be the same as nFID.
 
 Use OGR_L_TestCapability(OLCRandomRead) to establish if this layer
 supports efficient random access reading via OGR_L_GetFeature();
@@ -125,6 +125,8 @@ looking for the desired feature.
 
 Sequential reads are generally considered interrupted by a
 OGR_L_GetFeature() call.
+
+The returned feature should be free with OGR_F_Destroy().
 
 This function is the same as the C++ method OGRLayer::GetFeature( ).
 
@@ -138,15 +140,45 @@ nFeatureId:  the feature id of the feature to read.
 an handle to a feature now owned by the caller, or NULL on failure. ";
 
 %feature("docstring")  SetNextByIndex "OGRErr
-OGR_L_SetNextByIndex(OGRLayerH hLayer, long nIndex) ";
+OGR_L_SetNextByIndex(OGRLayerH hLayer, long nIndex)
+
+Move read cursor to the nIndex'th feature in the current resultset.
+
+This method allows positioning of a layer such that the
+GetNextFeature() call will read the requested feature, where nIndex is
+an absolute index into the current result set. So, setting it to 3
+would mean the next feature read with GetNextFeature() would have been
+the 4th feature to have been read if sequential reading took place
+from the beginning of the layer, including accounting for spatial and
+attribute filters.
+
+Only in rare circumstances is SetNextByIndex() efficiently
+implemented. In all other cases the default implementation which calls
+ResetReading() and then calls GetNextFeature() nIndex times is used.
+To determine if fast seeking is available on the current layer use the
+TestCapability() method with a value of OLCFastSetNextByIndex.
+
+This method is the same as the C++ method OGRLayer::SetNextByIndex()
+
+Parameters:
+-----------
+
+hLayer:  handle to the layer
+
+nIndex:  the index indicating how many steps into the result set to
+seek.
+
+OGRERR_NONE on success or an error code. ";
 
 %feature("docstring")  GetNextFeature "OGRFeatureH
 OGR_L_GetNextFeature(OGRLayerH hLayer)
 
-Fetch the next available feature from this layer. The returned feature
-becomes the responsiblity of the caller to delete. It is critical that
-all features associated with an OGRLayer (more specifically an
-OGRFeatureDefn) be deleted before that layer/datasource is deleted.
+Fetch the next available feature from this layer.
+
+The returned feature becomes the responsiblity of the caller to delete
+with OGR_F_Destroy(). It is critical that all features associated with
+an OGRLayer (more specifically an OGRFeatureDefn) be deleted before
+that layer/datasource is deleted.
 
 Only features matching the current spatial filter (set with
 SetSpatialFilter()) will be returned.
@@ -216,10 +248,12 @@ OGRERR_NONE on success. ";
 OGR_L_CreateField(OGRLayerH hLayer, OGRFieldDefnH hField, int
 bApproxOK)
 
-Create a new field on a layer. You must use this to create new fields
-on a real layer. Internally the OGRFeatureDefn for the layer will be
-updated to reflect the new field. Applications should never modify the
-OGRFeatureDefn used by a layer directly.
+Create a new field on a layer.
+
+You must use this to create new fields on a real layer. Internally the
+OGRFeatureDefn for the layer will be updated to reflect the new field.
+Applications should never modify the OGRFeatureDefn used by a layer
+directly.
 
 This function is the same as the C++ method OGRLayer::CreateField().
 
@@ -239,9 +273,11 @@ OGRERR_NONE on success. ";
 OGR_L_StartTransaction(OGRLayerH hLayer)
 
 For datasources which support transactions, StartTransaction creates a
-transaction. If starting the transaction fails, will return
-OGRERR_FAILURE. Datasources which do not support transactions will
-always return OGRERR_NONE.
+transaction.
+
+If starting the transaction fails, will return OGRERR_FAILURE.
+Datasources which do not support transactions will always return
+OGRERR_NONE.
 
 This function is the same as the C++ method
 OGRLayer::StartTransaction().
@@ -257,9 +293,11 @@ OGRERR_NONE on success. ";
 OGR_L_CommitTransaction(OGRLayerH hLayer)
 
 For datasources which support transactions, CommitTransaction commits
-a transaction. If no transaction is active, or the commit fails, will
-return OGRERR_FAILURE. Datasources which do not support transactions
-will always return OGRERR_NONE.
+a transaction.
+
+If no transaction is active, or the commit fails, will return
+OGRERR_FAILURE. Datasources which do not support transactions will
+always return OGRERR_NONE.
 
 This function is the same as the C++ method
 OGRLayer::CommitTransaction().
@@ -335,25 +373,26 @@ but #defined constants exists to ensure correct spelling. Specific
 layer types may implement class specific capabilities, but this can't
 generally be discovered by the caller.
 
-OLCRandomRead / \"RandomRead\": TRUE if the OGR_L_GetFeature()
-function works for this layer.
+OLCRandomRead / \"RandomRead\": TRUE if the GetFeature() method is
+implemented in an optimized way for this layer, as opposed to the
+default implementation using ResetReading() and GetNextFeature() to
+find the requested feature id.
 
-OLCSequentialWrite / \"SequentialWrite\": TRUE if the
-OGR_L_CreateFeature() function works for this layer. Note this means
-that this particular layer is writable. The same OGRLayer class may
-returned FALSE for other layer instances that are effectively read-
-only.
+OLCSequentialWrite / \"SequentialWrite\": TRUE if the CreateFeature()
+method works for this layer. Note this means that this particular
+layer is writable. The same OGRLayer class may returned FALSE for
+other layer instances that are effectively read-only.
 
-OLCRandomWrite / \"RandomWrite\": TRUE if the OGR_L_SetFeature()
-function is operational on this layer. Note this means that this
-particular layer is writable. The same OGRLayer class may returned
-FALSE for other layer instances that are effectively read-only.
+OLCRandomWrite / \"RandomWrite\": TRUE if the SetFeature() method is
+operational on this layer. Note this means that this particular layer
+is writable. The same OGRLayer class may returned FALSE for other
+layer instances that are effectively read-only.
 
 OLCFastSpatialFilter / \"FastSpatialFilter\": TRUE if this layer
 implements spatial filtering efficiently. Layers that effectively read
 all features, and test them with the OGRFeature intersection methods
 should return FALSE. This can be used as a clue by the application
-whether it should build and maintain it's own spatial index for
+whether it should build and maintain its own spatial index for
 features in this layer.
 
 OLCFastFeatureCount / \"FastFeatureCount\": TRUE if this layer can
@@ -365,6 +404,23 @@ OLCFastGetExtent / \"FastGetExtent\": TRUE if this layer can return
 its data extent (via OGR_L_GetExtent()) efficiently ... ie. without
 scanning all the features. In some cases this will return TRUE until a
 spatial filter is installed after which it will return FALSE.
+
+OLCFastSetNextByIndex / \"FastSetNextByIndex\": TRUE if this layer can
+perform the SetNextByIndex() call efficiently, otherwise FALSE.
+
+OLCCreateField / \"CreateField\": TRUE if this layer can create new
+fields on the current layer using CreateField(), otherwise FALSE.
+
+OLCDeleteFeature / \"DeleteFeature\": TRUE if the DeleteFeature()
+method is supported on this layer, otherwise FALSE.
+
+OLCStringsAsUTF8 / \"StringsAsUTF8\": TRUE if values of OFTString
+fields are assured to be in UTF-8 format. If FALSE the encoding of
+fields is uncertain, though it might still be UTF-8.
+
+OLCTransactions / \"Transactions\": TRUE if the StartTransaction(),
+CommitTransaction() and RollbackTransaction() methods work in a
+meaningful way, otherwise FALSE.
 
 This function is the same as the C++ method
 OGRLayer::TestCapability().
@@ -440,7 +496,7 @@ dfMinY, double dfMaxX, double dfMaxY)
 Set a new rectangular spatial filter.
 
 This method set rectangle to be used as a spatial filter when fetching
-features via the GetNextFeature() method. Only features that
+features via the OGR_L_GetNextFeature() method. Only features that
 geometrically intersect the given rectangle will be returned.
 
 The x/y values should be in the same coordinate system as the layer as
@@ -471,8 +527,9 @@ dfMaxY:  the maximum Y coordinate for the rectangular region. ";
 %feature("docstring")  ResetReading "void
 OGR_L_ResetReading(OGRLayerH hLayer)
 
-Reset feature reading to start on the first feature. This affects
-GetNextFeature().
+Reset feature reading to start on the first feature.
+
+This affects GetNextFeature().
 
 This function is the same as the C++ method OGRLayer::ResetReading().
 
@@ -482,7 +539,31 @@ Parameters:
 hLayer:  handle to the layer on which features are read. ";
 
 %feature("docstring")  SyncToDisk "OGRErr OGR_L_SyncToDisk(OGRLayerH
-hDS) ";
+hDS)
+
+Flush pending changes to disk.
+
+This call is intended to force the layer to flush any pending writes
+to disk, and leave the disk file in a consistent state. It would not
+normally have any effect on read-only datasources.
+
+Some layers do not implement this method, and will still return
+OGRERR_NONE. The default implementation just returns OGRERR_NONE. An
+error is only returned if an error occurs while attempting to flush to
+disk.
+
+In any event, you should always close any opened datasource with
+OGR_DS_Destroy() that will ensure all data is correctly flushed.
+
+This method is the same as the C++ method OGRLayer::SyncToDisk()
+
+Parameters:
+-----------
+
+hLayer:  handle to the layer
+
+OGRERR_NONE if no error occurs (even if nothing is done) or an error
+code. ";
 
 %feature("docstring")  DeleteFeature "OGRErr
 OGR_L_DeleteFeature(OGRLayerH hDS, long nFID)
@@ -510,9 +591,44 @@ OGRERR_NONE on success. ";
 OGR_L_GetFeaturesRead(OGRLayerH hLayer) ";
 
 %feature("docstring")  GetFIDColumn "const char*
-OGR_L_GetFIDColumn(OGRLayerH hLayer) ";
+OGR_L_GetFIDColumn(OGRLayerH hLayer)
+
+This method returns the name of the underlying database column being
+used as the FID column, or \"\" if not supported.
+
+This method is the same as the C++ method OGRLayer::GetFIDColumn()
+
+Parameters:
+-----------
+
+hLayer:  handle to the layer
+
+fid column name. ";
 
 %feature("docstring")  GetGeometryColumn "const char*
-OGR_L_GetGeometryColumn(OGRLayerH hLayer) ";
+OGR_L_GetGeometryColumn(OGRLayerH hLayer)
+
+This method returns the name of the underlying database column being
+used as the geometry column, or \"\" if not supported.
+
+This method is the same as the C++ method
+OGRLayer::GetGeometryColumn()
+
+Parameters:
+-----------
+
+hLayer:  handle to the layer
+
+geometry column name. ";
+
+%feature("docstring")  GetStyleTable "OGRStyleTableH
+OGR_L_GetStyleTable(OGRLayerH hLayer) ";
+
+%feature("docstring")  SetStyleTableDirectly "void
+OGR_L_SetStyleTableDirectly(OGRLayerH hLayer, OGRStyleTableH
+hStyleTable) ";
+
+%feature("docstring")  SetStyleTable "void
+OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable) ";
 
 }

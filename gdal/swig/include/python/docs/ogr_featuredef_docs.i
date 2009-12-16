@@ -1,12 +1,12 @@
 %extend OGRFeatureDefnShadow {
 // File: ogrfeaturedefn_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeaturedefn.cpp
-14442 2008-05-10 22:09:37Z warmerdam $\") ";
+17587 2009-08-27 17:56:01Z warmerdam $\") ";
 
 %feature("docstring")  Create "OGRFeatureDefnH OGR_FD_Create(const
 char *pszName)
 
-Create a new feature definition object to held the field definitions.
+Create a new feature definition object to hold the field definitions.
 
 The OGRFeatureDefn maintains a reference count, but this starts at
 zero, and should normally be incremented by the owner.
@@ -85,6 +85,9 @@ Fetch field definition of the passed feature definition.
 This function is the same as the C++ method
 OGRFeatureDefn::GetFieldDefn().
 
+Starting with GDAL 1.7.0, this method will also issue an error if the
+index is not valid.
+
 Parameters:
 -----------
 
@@ -93,8 +96,9 @@ from.
 
 iField:  the field to fetch, between 0 and GetFieldCount()-1.
 
-an handle to an internal field definition object. This object should
-not be modified or freed by the application. ";
+an handle to an internal field definition object or NULL if invalid
+index. This object should not be modified or freed by the application.
+";
 
 %feature("docstring")  AddFieldDefn "void
 OGR_FD_AddFieldDefn(OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField)
