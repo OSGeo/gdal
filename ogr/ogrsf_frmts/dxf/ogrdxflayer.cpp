@@ -772,7 +772,7 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
                                                   dfRadius, dfRadius, 0.0,
                                                   0.0, 360.0, 
-                                                  6.0 ) );
+                                                  0.0 ) );
 
     PrepareLineStyle( poFeature );
 
@@ -872,7 +872,7 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
                                                   dfSecondaryRadius,
                                                   dfRotation, 
                                                   dfStartAngle, dfEndAngle,
-                                                  6.0 ) );
+                                                  0.0 ) );
 
     PrepareLineStyle( poFeature );
 
@@ -942,7 +942,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
                                                   dfRadius, dfRadius, 0.0,
                                                   dfStartAngle, dfEndAngle,
-                                                  6.0 ) );
+                                                  0.0 ) );
 
     PrepareLineStyle( poFeature );
 
