@@ -424,7 +424,6 @@ GDALDefaultOverviews::BuildOverviewsSubDataset(
 
                 if( poDS->GetMOFlags() & GMO_PAM_CLASS )
                 {
-                    osAdjustedOvrFilename = ":::BASE:::";
                     osAdjustedOvrFilename.Printf( ":::BASE:::%s_%d.ovr",
                                                   CPLGetFilename(pszPhysicalFile),
                                                   iSequence );
