@@ -336,6 +336,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
     if (ds != NULL) {
         int sx = ds->GetRasterXSize();
         int sy = ds->GetRasterYSize();
+        bool accepted_as_no_alpha = false;  // if the request is for 4 bands but the wms returns 3  
         /* Allow bigger than expected so pre-tiled constant size images work on corners */
         if ((sx > nBlockXSize) || (sy > nBlockYSize) || (sx < esx) || (sy < esy)) {
             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect size %d x %d of downloaded block, expected %d x %d, max %d x %d.",
@@ -380,9 +381,16 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                     /* metacarta TMS service sometimes return a 4 band PNG instead of the expected 3 band... */
                 }
                 else if (!accepted_as_ct) {
-                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect bands count %d in downloaded block, expected %d.",
-                        nDSRasterCount, m_parent_dataset->nBands);
-                    ret = CE_Failure;
+                   if (ds->GetRasterCount()==3 && m_parent_dataset->nBands == 4 && (eDataType == GDT_Byte))
+                   { // WMS returned a file with no alpha so we will fill the alpha band with "opaque" 
+                      accepted_as_no_alpha = true;
+                   }
+                   else
+                   {
+                      CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect bands count %d in downloaded block, expected %d.",
+                         nDSRasterCount, m_parent_dataset->nBands);
+                      ret = CE_Failure;
+                   }
                 }
             }
         }
@@ -415,9 +423,31 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                         int pixel_space = GDALGetDataTypeSize(eDataType) / 8;
                         int line_space = pixel_space * nBlockXSize;
                         if (color_table == NULL) {
-                            if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, &ib, pixel_space, line_space, 0) != CE_None) {
-                                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
-                                ret = CE_Failure;
+                            if( ib <= ds->GetRasterCount()) {
+                               if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, &ib, pixel_space, line_space, 0) != CE_None) {
+                                   CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
+                                   ret = CE_Failure;
+                               }
+                            }
+                            else
+                            {  // parent expects 4 bands but file only has 3 so generate a all "opaque" 4th band
+                               if (accepted_as_no_alpha)
+                               {
+                                  // the file had 3 bands and we are reading band 4 (Alpha) so fill with 255 (no alpha)
+                                  GByte *byte_buffer = reinterpret_cast<GByte *>(p);
+                                  for (int y = 0; y < sy; ++y) {
+                                     for (int x = 0; x < sx; ++x) {
+                                        const int offset = x + y * line_space;
+                                        byte_buffer[offset] = 255;  // fill with opaque
+                                     }
+                                  }
+                               }
+                               else
+                               {  // we should never get here because this case was caught above
+                                  CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect bands count %d in downloaded block, expected %d.",
+                                     ds->GetRasterCount(), m_parent_dataset->nBands);
+                                  ret = CE_Failure;
+                               }     
                             }
                         } else if (ib <= 4) {
                             if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, NULL, pixel_space, line_space, 0) != CE_None) {

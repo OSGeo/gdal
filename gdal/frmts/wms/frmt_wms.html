@@ -52,6 +52,10 @@
 			<td class="xml">        &lt;ImageFormat&gt;<span class="value">image/jpeg</span>&lt;/ImageFormat&gt;</td>
 			<td class="desc">Format in which to request data. Paletted formats like image/gif will be converted to RGB. (optional, defaults to image/jpeg)</td>
 		</tr>
+        <tr>
+            <td class="xml">        &lt;Transparent&gt;<span class="value">FALSE</span>&lt;/Transparent&gt;</td>
+            <td class="desc">Set to TRUE to include "transparent=TRUE" in the WMS GetMap request (optional defaults to FALSE).&nbsp; The request format and BandsCount need to support alpha.</td>
+        </tr>
 		<tr>
 			<td class="xml">        &lt;Layers&gt;<span class="value">modis,global_mosaic</span>&lt;/Layers&gt;</td>
 			<td class="desc">Comma separated list of layers. (required)</td>
@@ -235,6 +239,7 @@
 </p>
 <p>
  Supported variables (name is case sensitive) are :
+</p>
   <ul>
     <li>${x} -- x position of the tile</li>
     <li>${y} -- y position of the tile. This can be either from the top or the bottom of the tileset, based on whether the YOrigin parameter is set to true or false.</li>
@@ -243,7 +248,6 @@
     <li>${format} -- format parameter, set in the config file. Defaults to 'jpg'.</li>
     <li>${layer} -- layer parameter, set in the config file. Defaults to nothing.</li>
   </ul>
-</p>
 <p>
   A typical ServerURL might look like:<br />
   <tt>http://labs.metacarta.com/wms-c/Basic.py/${version}/${layer}/${z}/${x}/${y}.${format}</tt><br />
