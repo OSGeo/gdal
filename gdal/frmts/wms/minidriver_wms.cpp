@@ -110,6 +110,10 @@ CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config) {
         m_image_format = CPLGetXMLValue(config, "ImageFormat", "image/jpeg");
         m_layers = CPLGetXMLValue(config, "Layers", "");
         m_styles = CPLGetXMLValue(config, "Styles", "");
+        m_transparent = CPLGetXMLValue(config, "Transparent","");
+        // the transparent flag needs to be "TRUE" or "FALSE" in upper case according to the WMS spec so force upper case
+        int i=0; 
+        while ((m_transparent[i++] = toupper(m_transparent[i])) != '\0') {}
     }
 
     if (ret == CE_None) {
@@ -151,6 +155,7 @@ void GDALWMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageReque
     URLAppendF(url, "&styles=%s", m_styles.c_str());
     if (m_srs.size()) URLAppendF(url, "&srs=%s", m_srs.c_str());
     if (m_crs.size()) URLAppendF(url, "&crs=%s", m_crs.c_str());
+    if (m_transparent.size()) URLAppendF(url, "&transparent=%s", m_transparent.c_str());
     URLAppendF(url, "&format=%s", m_image_format.c_str());
     URLAppendF(url, "&width=%d", iri.m_sx);
     URLAppendF(url, "&height=%d", iri.m_sy);

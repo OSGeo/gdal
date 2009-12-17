@@ -56,4 +56,5 @@ protected:
     CPLString m_image_format;
     CPLString m_projection_wkt;
     CPLString m_bbox_order;
+    CPLString m_transparent;
 };
