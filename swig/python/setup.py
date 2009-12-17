@@ -5,6 +5,9 @@
 # http://www.initd.org/tracker/psycopg/browser/psycopg2/trunk/setup.py
 # Howard Butler hobu.inc@gmail.com
 
+
+gdal_version = '1.7.0b1'
+
 import sys
 import os
 import string
@@ -59,8 +62,6 @@ try:
             HAVE_NUMPY=False
 except ImportError:
     pass
-
-
 
 try:
     from setuptools import setup
@@ -142,12 +143,8 @@ class gdal_ext(build_ext):
         except:
             print ('Could not run gdal-config!!!!')
 
-gdal_version = '1.7.0b1'
-
 extra_link_args = []
 extra_compile_args = []
-# might need to tweak for Python 2.4 on OSX to be these
-#extra_compile_args = ['-g', '-arch', 'i386', '-isysroot','/']
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
@@ -204,7 +201,7 @@ license = "MIT"
 url="http://www.gdal.org"
 
 classifiers = [
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
@@ -243,7 +240,6 @@ if HAVE_SETUPTOOLS:
            data_files = data_files,
            zip_safe = False,
            exclude_package_data = exclude_package_data,
-#           install_requires =['numpy>=1.0.0'],
            cmdclass={'build_ext':gdal_ext},
            ext_modules = ext_modules )
 else:
