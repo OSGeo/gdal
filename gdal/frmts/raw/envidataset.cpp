@@ -1409,6 +1409,14 @@ void ENVIDataset::ProcessStatsFile()
     double * dStats, dMin, dMax, dMean, dStd;
         
     nb=byteSwapLong(lTestHeader[3]);
+    
+    if (nb > (unsigned long)nBands)
+    {
+        CPLDebug("ENVI", ".sta file has statistics for %ld bands, "
+                         "whereas the dataset has only %d bands", nb, nBands);
+        nb = nBands;
+    }
+    
     VSIFSeekL(fpStaFile,40+(nb+1)*4,SEEK_SET);
 
     if (VSIFReadL(&lOffset,sizeof(long),1,fpStaFile) == 1)
