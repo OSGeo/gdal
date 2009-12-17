@@ -1202,19 +1202,61 @@ const char *GDALPamDataset::GetMetadataItem( const char *pszName,
                                              const char *pszDomain )
 
 {
-    if( pszDomain == NULL || !EQUAL(pszDomain,"ProxyOverviewRequest") )
+/* -------------------------------------------------------------------- */
+/*      A request against the ProxyOverviewRequest is a special         */
+/*      mechanism to request an overview filename be allocated in       */
+/*      the proxy pool location.  The allocated name is saved as        */
+/*      metadata as well as being returned.                             */
+/* -------------------------------------------------------------------- */
+    if( pszDomain != NULL && EQUAL(pszDomain,"ProxyOverviewRequest") )
+    {
+        CPLString osPrelimOvr = GetDescription();
+        osPrelimOvr += ":::OVR";
+        
+        const char *pszProxyOvrFilename = PamAllocateProxy( osPrelimOvr );
+        if( pszProxyOvrFilename == NULL )
+            return NULL;
+        
+        SetMetadataItem( "OVERVIEW_FILE", pszProxyOvrFilename, "OVERVIEWS" );
+        
+        return pszProxyOvrFilename;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the OVERVIEW_FILE metadata is requested, we intercept the    */
+/*      request in order to replace ":::BASE:::" with the path to       */
+/*      the physical file - if available.  This is primarily for the    */
+/*      purpose of managing subdataset overview filenames as being      */
+/*      relative to the physical file the subdataset comes              */
+/*      from. (#3287).                                                  */
+/* -------------------------------------------------------------------- */
+    else if( pszDomain != NULL 
+             && EQUAL(pszDomain,"OVERVIEWS") 
+             && EQUAL(pszName,"OVERVIEW_FILE") )
+    {
+        const char *pszOverviewFile = 
+            GDALDataset::GetMetadataItem( pszName, pszDomain );
+
+        if( pszOverviewFile == NULL 
+            || !EQUALN(pszOverviewFile,":::BASE:::",10) )
+            return pszOverviewFile;
+        
+        CPLString osPath;
+
+        if( strlen(GetPhysicalFilename()) > 0 )
+            osPath = CPLGetPath(GetPhysicalFilename());
+        else
+            osPath = CPLGetPath(GetDescription());
+
+        return CPLFormFilename( osPath, pszOverviewFile + 10, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Everything else is a pass through.                              */
+/* -------------------------------------------------------------------- */
+    else
         return GDALDataset::GetMetadataItem( pszName, pszDomain );
 
-    CPLString osPrelimOvr = GetDescription();
-    osPrelimOvr += ":::OVR";
-
-    const char *pszProxyOvrFilename = PamAllocateProxy( osPrelimOvr );
-    if( pszProxyOvrFilename == NULL )
-        return NULL;
-
-    SetMetadataItem( "OVERVIEW_FILE", pszProxyOvrFilename, "OVERVIEWS" );
-
-    return pszProxyOvrFilename;
 }
 
 /************************************************************************/
