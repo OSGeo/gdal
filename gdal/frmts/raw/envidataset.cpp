@@ -1795,14 +1795,14 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                 This is a bit of a big hammer as it may remove functionality from some
                 direct GDAL users, but this data is extremely problematic from an ArcGIS
                 standpoint.   */
-          case 6:
+/*        case 6:
             eType = GDT_CFloat32;
             break;
 
           case 9:
             eType = GDT_CFloat64;
             break;
-
+*/
           case 12:
             eType = GDT_UInt16;
             break;
