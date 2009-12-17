@@ -186,13 +186,13 @@ GBool TableHasGISTIndex(PGconn * hPGconn, const char * pszTable,
             "SELECT relhasindex	\
             FROM pg_class, pg_attribute, pg_type, pg_namespace \
             WHERE \
-                pg_class.oid = pg_attribute.attrelid and \
-                pg_class.relname = '%s' and \
-                pg_class.relowner = pg_namespace.nspowner and \
-                pg_namespace.nspname = '%s' and \
-                pg_attribute.atttypid = pg_type.oid and \
-                pg_type.typname = 'raster'",
-            pszTable, pszSchema);
+		pg_namespace.nspname = '%s' and \
+		pg_namespace.oid = pg_class.relnamespace and \
+		pg_class.relname = '%s' and \
+		pg_class.oid = pg_attribute.attrelid and \
+		pg_attribute.atttypid = pg_type.oid and \
+		pg_type.typname = 'raster'",
+           pszTable, pszSchema);
 
     hPGresult = PQexec(hPGconn, osCommand.c_str());
     if (
@@ -416,13 +416,13 @@ char * GetWKTRasterColumnName(PGconn * hPGconn, const char * pszSchemaName,
             "SELECT attname \
             FROM pg_class, pg_attribute, pg_type, pg_namespace \
             WHERE \
-		pg_class.oid = pg_attribute.attrelid and \
+		pg_namespace.nspname = '%s' and \
+		pg_namespace.oid = pg_class.relnamespace and \
 		pg_class.relname = '%s' and \
-                pg_class.relowner = pg_namespace.nspowner and \
-                pg_namespace.nspname = '%s' and \
+		pg_class.oid = pg_attribute.attrelid and \
 		pg_attribute.atttypid = pg_type.oid and \
 		pg_type.typname = 'raster'",
-            pszTable, pszSchemaName);
+            pszSchemaName, pszTable);
 
     hPGresult = PQexec(hPGconn, osCommand.c_str());
     if (
@@ -1012,7 +1012,7 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
             pszTableName);
     if (pszRasterColumnName == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined,
-                "Can't find a WKT raster column in %s table\n",
+                "Can't find a WKT Raster column in %s table\n",
                 pszTableName);
         PQfinish(hPGconn);
         CPLFree(pszTableName);
@@ -1087,7 +1087,13 @@ GDALDataset * WKTRasterDataset::Open(GDALOpenInfo * poOpenInfo) {
     /********************************************
      *  Populate georeference related fields
      ********************************************/
-    poDS->SetRasterProperties();
+    if (poDS->SetRasterProperties() == CE_Failure) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Sorry, but couldn't create the structure to read the \
+            raster on memory, aborting.");
+        delete poDS;
+        return NULL;
+    } 
 
     /****************************************************************
      * Get pixel_types and nodata string representations (PQ arrays)
