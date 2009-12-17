@@ -2011,6 +2011,12 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
  * Stroke an arc of a circle to a linestring based on a center
  * point, radius, start angle and end angle, all angles in degrees.
  *
+ * If the dfMaxAngleStepSizeDegrees is zero, then a default value will be
+ * used.  This is currently 4 degrees unless the user has overridden the
+ * value with the OGR_ARC_STEPSIZE configuration variable. 
+ *
+ * @see CPLSetConfigOption()
+ *
  * @param dfCenterX center X
  * @param dfCenterY center Y
  * @param dfZ center Z
@@ -2019,7 +2025,8 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
  * @param dfRotation rotation of the ellipse clockwise.
  * @param dfStartAngle angle to first point on arc (clockwise of X-positive) 
  * @param dfEndAngle angle to last point on arc (clockwise of X-positive) 
- * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the arc.
+ * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the
+ * arc, zero to use the default setting.
  * 
  * @return OGRLineString geometry representing an approximation of the arc.
  */
@@ -2035,7 +2042,14 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
     int                iPoint, nVertexCount;
     OGRLineString     *poLine = new OGRLineString();
     double             dfRotationRadians = dfRotation * PI / 180.0;
-    
+
+    // support default arc step setting.
+    if( dfMaxAngleStepSizeDegrees == 0 )
+    {
+        dfMaxAngleStepSizeDegrees = 
+            atof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4"));
+    }
+
     // switch direction 
     dfStartAngle *= -1;
     dfEndAngle *= -1;

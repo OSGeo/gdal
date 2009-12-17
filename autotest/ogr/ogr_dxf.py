@@ -110,7 +110,7 @@ def ogr_dxf_2():
 
     envelope = geom.GetEnvelope()
     area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
-    exp_area = 1594.98
+    exp_area = 1596.12
 
     if area < exp_area - 0.5 or area > exp_area + 0.5:
         gdaltest.post_reason( 'envelope area not as expected, got %g.' % area )
