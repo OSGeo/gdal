@@ -149,6 +149,19 @@ def hdf5_6():
         return 'fail'
     ds = None
 
+    # confirm that it works with a different path. (#3290)
+    
+    ds = gdal.Open( 'HDF5:"data/../tmp/groups.h5"://MyGroup/dset1' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason( 'failed to find overview with alternate path' )
+        return 'fail'
+    ovfile = ds.GetMetadataItem('OVERVIEW_FILE','OVERVIEWS')
+    if ovfile != 'data/../tmp/groups.h5_0.ovr':
+        gdaltest.post_reason( 'did not get expected OVERVIEW_FILE.' )
+        return 'fail'
+    ds = None
+
+
     gdaltest.clean_tmp()
     
     return 'success'
