@@ -226,15 +226,26 @@ void GDALDefaultOverviews::OverviewScan()
 
 /* -------------------------------------------------------------------- */
 /*      If we still don't have an overview, check to see if we have     */
-/*      overview metadata referencing a remote (ie. proxy) dataset.     */
+/*      overview metadata referencing a remote (ie. proxy) or local     */
+/*      subdataset overview dataset.                                    */
 /* -------------------------------------------------------------------- */
     if( poODS == NULL )
     {
         const char *pszProxyOvrFilename = 
             poDS->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" );
+
         if( pszProxyOvrFilename != NULL )
         {
-            osOvrFilename = pszProxyOvrFilename;
+            if( EQUALN(pszProxyOvrFilename,":::BASE:::",10) )
+            {
+                CPLString osPath = CPLGetPath(poDS->GetDescription());
+
+                osOvrFilename =
+                    CPLFormFilename( osPath, pszProxyOvrFilename+10, NULL );
+            }
+            else
+                osOvrFilename = pszProxyOvrFilename;
+
             poODS = (GDALDataset *) GDALOpen(osOvrFilename,GA_Update);
         }
     }
@@ -409,8 +420,20 @@ GDALDefaultOverviews::BuildOverviewsSubDataset(
             osOvrFilename.Printf( "%s_%d.ovr", pszPhysicalFile, iSequence );
             if( VSIStatL( osOvrFilename, &sStatBuf ) != 0 )
             {
+                CPLString osAdjustedOvrFilename;
+
+                if( poDS->GetMOFlags() & GMO_PAM_CLASS )
+                {
+                    osAdjustedOvrFilename = ":::BASE:::";
+                    osAdjustedOvrFilename.Printf( ":::BASE:::%s_%d.ovr",
+                                                  CPLGetFilename(pszPhysicalFile),
+                                                  iSequence );
+                }
+                else
+                    osAdjustedOvrFilename = osOvrFilename;
+
                 poDS->SetMetadataItem( "OVERVIEW_FILE", 
-                                       osOvrFilename, 
+                                       osAdjustedOvrFilename, 
                                        "OVERVIEWS" );
                 break;
             }
