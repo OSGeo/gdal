@@ -154,13 +154,22 @@ def envi_6():
 
     return gdaltest.envi_tst.testSetProjection( prj = prj )
 
+###############################################################################
+# Verify VSIF*L capacity
+
+def envi_7():
+
+    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
+    return tst.testCreateCopy( check_gt = 1, vsimem = 1 )
+    
 gdaltest_list = [
     envi_1,
     envi_2,
     envi_3,
     envi_4,
     envi_5,
-    envi_6
+    envi_6,
+    envi_7
     ]
   
 
