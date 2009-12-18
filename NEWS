@@ -233,7 +233,7 @@ GenBin driver:
 
 GeoRaster driver:
  * Fix compression problems
- * Add MackBand support
+ * Add MaskBand support
  * Support UNICODE metadata
  * Support cross database schema/user access
 
