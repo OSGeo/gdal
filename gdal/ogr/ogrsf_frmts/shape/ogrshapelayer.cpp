@@ -942,7 +942,14 @@ OGRErr OGRShapeLayer::Repack()
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-            "The REPACK operation not permitted on a read-only shapefile." );
+            "The REPACK operation is not permitted on a read-only shapefile." );
+        return OGRERR_FAILURE;
+    }
+    
+    if( hDBF == NULL )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Attempt to repack a shapefile with no .dbf file not supported.");
         return OGRERR_FAILURE;
     }
     
@@ -967,8 +974,46 @@ OGRErr OGRShapeLayer::Repack()
 /*      action.                                                         */
 /* -------------------------------------------------------------------- */
     if( nDeleteCount == 0 )
+    {
+        CPLFree( panRecordsToDelete );
         return OGRERR_NONE;
+    }
 
+/* -------------------------------------------------------------------- */
+/*      Find existing filenames with exact case (see #3293).            */
+/* -------------------------------------------------------------------- */
+    CPLString osDirname(CPLGetPath(pszFullName));
+    CPLString osBasename(CPLGetBasename(pszFullName));
+    
+    CPLString osDBFName, osSHPName, osSHXName;
+    char **papszCandidates = CPLReadDir( osDirname );
+    int i = 0;
+    while(papszCandidates != NULL && papszCandidates[i] != NULL)
+    {
+        CPLString osCandidateBasename = CPLGetBasename(papszCandidates[i]);
+        CPLString osCandidateExtension = CPLGetExtension(papszCandidates[i]);
+        if (osCandidateBasename.compare(osBasename) == 0)
+        {
+            if (EQUAL(osCandidateExtension, "dbf"))
+                osDBFName = CPLFormFilename(osDirname, papszCandidates[i], NULL);
+            else if (EQUAL(osCandidateExtension, "shp"))
+                osSHPName = CPLFormFilename(osDirname, papszCandidates[i], NULL);
+            else if (EQUAL(osCandidateExtension, "shx"))
+                osSHXName = CPLFormFilename(osDirname, papszCandidates[i], NULL);
+        }
+        
+        i++;
+    }
+    CSLDestroy(papszCandidates);
+    papszCandidates = NULL;
+    
+    if (osDBFName.size() == 0)
+    {
+        /* Should not happen, really */
+        CPLFree( panRecordsToDelete );
+        return OGRERR_FAILURE;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Cleanup any existing spatial index.  It will become             */
 /*      meaningless when the fids change.                               */
@@ -981,9 +1026,9 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
     DBFHandle hNewDBF = NULL;
     
-    CPLString oTempFile(CPLGetPath(pszFullName));
+    CPLString oTempFile(osDirname);
     oTempFile += '\\';
-    oTempFile += CPLGetBasename(pszFullName);
+    oTempFile += osBasename;
     oTempFile += "_packed.dbf";
 
     hNewDBF = DBFCloneEmpty( hDBF, oTempFile );
@@ -1032,11 +1077,13 @@ OGRErr OGRShapeLayer::Repack()
     DBFClose( hDBF );
     DBFClose( hNewDBF );
     hDBF = hNewDBF = NULL;
-
-    VSIUnlink( CPLResetExtension( pszFullName, "dbf" ) );
-    if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "dbf" ) ) != 0 )
+    
+    VSIUnlink( osDBFName );
+        
+    if( VSIRename( oTempFile, osDBFName ) != 0 )
     {
         CPLDebug( "Shape", "Can not rename DBF file: %s", VSIStrerror( errno ) );
+        CPLFree( panRecordsToDelete );
         return OGRERR_FAILURE;
     }
     
@@ -1046,15 +1093,25 @@ OGRErr OGRShapeLayer::Repack()
     if( hSHP != NULL )
     {
         SHPHandle hNewSHP = NULL;
+        
+        if (osSHPName.size() == 0 || osSHXName.size() == 0)
+        {
+            /* Should not happen, really */
+            CPLFree( panRecordsToDelete );
+            return OGRERR_FAILURE;
+        }
 
-        oTempFile = CPLGetPath(pszFullName);
+        oTempFile = osDirname;
         oTempFile += '\\';
-        oTempFile += CPLGetBasename(pszFullName);
+        oTempFile += osBasename;
         oTempFile += "_packed.shp";
 
         hNewSHP = SHPCreate( oTempFile, hSHP->nShapeType );
         if( hNewSHP == NULL )
+        {
+            CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Copy over all records that are not deleted.                     */
@@ -1097,22 +1154,28 @@ OGRErr OGRShapeLayer::Repack()
         SHPClose( hNewSHP );
         hSHP = hNewSHP = NULL;
 
-        VSIUnlink( CPLResetExtension( pszFullName, "shp" ) );
-        VSIUnlink( CPLResetExtension( pszFullName, "shx" ) );
+        VSIUnlink( osSHPName );
+        VSIUnlink( osSHXName );
 
-        if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "shp" ) ) != 0 )
+        oTempFile = CPLResetExtension( oTempFile, "shp" );
+        if( VSIRename( oTempFile, osSHPName ) != 0 )
         {
             CPLDebug( "Shape", "Can not rename SHP file: %s", VSIStrerror( errno ) );
+            CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
         }
     
         oTempFile = CPLResetExtension( oTempFile, "shx" );
-        if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "shx" ) ) != 0 )
+        if( VSIRename( oTempFile, osSHXName ) != 0 )
         {
             CPLDebug( "Shape", "Can not rename SHX file: %s", VSIStrerror( errno ) );
+            CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
         }
     }
+    
+    CPLFree( panRecordsToDelete );
+    panRecordsToDelete = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Reopen the shapefile                                            */
@@ -1150,8 +1213,6 @@ OGRErr OGRShapeLayer::Repack()
 /*      Update total shape count.                                       */
 /* -------------------------------------------------------------------- */
     nTotalShapeCount = hDBF->nRecords;
-
-    CPLFree( panRecordsToDelete );
 
     return OGRERR_NONE;
 }
