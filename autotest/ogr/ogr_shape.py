@@ -26,6 +26,7 @@
 ###############################################################################
 
 import os
+import shutil
 import sys
 import string
 
@@ -1241,7 +1242,65 @@ def ogr_shape_28():
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Test that REPACK doesn't change extension case (#3293)
 
+def ogr_shape_29():
+
+    os.mkdir('tmp/UPPERCASE')
+    shutil.copy('data/poly.shp', 'tmp/UPPERCASE/UPPERCASE.SHP')
+    shutil.copy('data/poly.shx', 'tmp/UPPERCASE/UPPERCASE.SHX')
+    shutil.copy('data/poly.dbf', 'tmp/UPPERCASE/UPPERCASE.DBF')
+
+    ds = ogr.Open('tmp/UPPERCASE', update = 1)
+    lyr = ds.GetLayer(0)
+    lyr.DeleteFeature(0)
+    ds.ExecuteSQL( 'REPACK UPPERCASE' )
+    ds.Destroy()
+    
+    list = gdal.ReadDir('tmp/UPPERCASE')
+
+    if len(list) != 5:
+        print(list)
+        return 'fail'
+        
+    for filename in list:
+        if filename not in ['.', '..', 'UPPERCASE.SHP', 'UPPERCASE.SHX', 'UPPERCASE.DBF']:
+            print(list)
+            return 'fail'
+
+    return 'success'
+    
+###############################################################################
+# Test that REPACK doesn't change extension case (#3293)
+
+def ogr_shape_30():
+
+    os.mkdir('tmp/lowercase')
+    shutil.copy('data/poly.shp', 'tmp/lowercase/lowercase.shp')
+    shutil.copy('data/poly.shx', 'tmp/lowercase/lowercase.shx')
+    shutil.copy('data/poly.dbf', 'tmp/lowercase/lowercase.dbf')
+
+    ds = ogr.Open('tmp/lowercase', update = 1)
+    lyr = ds.GetLayer(0)
+    lyr.DeleteFeature(0)
+    ds.ExecuteSQL( 'REPACK lowercase' )
+    ds.Destroy()
+    
+    list = gdal.ReadDir('tmp/lowercase')
+
+    if len(list) != 5:
+        print(list)
+        return 'fail'
+        
+    for filename in list:
+        if filename not in ['.', '..', 'lowercase.shp', 'lowercase.shx', 'lowercase.dbf']:
+            print(list)
+            return 'fail'
+
+    return 'success'
+    
 ###############################################################################
 # 
 
@@ -1255,6 +1314,8 @@ def ogr_shape_cleanup():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     shape_drv.DeleteDataSource( 'tmp' )
+    shape_drv.DeleteDataSource( 'tmp/UPPERCASE' )
+    shape_drv.DeleteDataSource( 'tmp/lowercase' )
     
     return 'success'
 
@@ -1288,6 +1349,8 @@ gdaltest_list = [
     ogr_shape_26,
     ogr_shape_27,
     ogr_shape_28,
+    ogr_shape_29,
+    ogr_shape_30,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
