@@ -79,7 +79,7 @@ typedef struct _CPLXMLNode
     }
 #endif
     
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
     retStringAndCPLFree *SerializeXMLTree( )
 #else
     char *SerializeXMLTree( )
@@ -89,7 +89,7 @@ typedef struct _CPLXMLNode
     }
 
     /* Interface method added for GDAL 1.7.0 */
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
     retStringAndCPLFree * toString()
     {
         return CPLSerializeXMLTree( self );
