@@ -101,6 +101,24 @@ OGRErrMessages( int rc ) {
 
 OPTIONAL_POD(int, int);
 
+
+/***************************************************
+ * Typemaps for  (retStringAndCPLFree*)
+ ***************************************************/
+%inline %{
+    typedef char retStringAndCPLFree;
+%}
+ 
+%typemap(out) (retStringAndCPLFree*)
+%{ 
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if($1)
+    {
+        $result = SWIG_csharp_string_callback((const char *)$1);
+        CPLFree($1);
+    }
+%}
+
 /*
  * Typemap for GIntBig (int64)
  */

@@ -147,15 +147,23 @@ retStringAndCPLFree* EscapeString(const char* str, int scheme) {
 %}
 %clear (int len, unsigned char *bin_string);
 #else
-#ifndef SWIGCSHARP
+#ifdef SWIGCSHARP
+%inline %{
+retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme) {
+    return CPLEscapeString((const char*)bin_string, len, scheme);
+} 
+%}
+
+retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
+    return CPLEscapeString(bin_string, len, scheme);
+}
+#else
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
-#endif
 %inline %{
 char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
 } 
 %}
-#ifndef SWIGCSHARP
 %clear (int len, char *bin_string);
 #endif
 #endif
@@ -200,8 +208,12 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 %clear ( int nBytes, const GByte *pabyData );
 #else
+#ifdef SWIGCSHARP
+retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
+#else
 /* FIXME : wrong typemap. The string should be freed */
 char * CPLBinaryToHex( int nBytes, const GByte *pabyData );
+#endif
 #endif
 
 #ifdef SWIGJAVA
