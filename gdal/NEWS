@@ -1,4 +1,4 @@
-= GDAL/OGR 1.7.0 (*** This is preliminary news established from r15874 (GDAL 1.6.0) to r18306 (15 dec 2009) *** = 
+= GDAL/OGR 1.7.0 (*** This is preliminary news established from r15874 (GDAL 1.6.0) to r18336 (18 dec 2009) *** = 
 
 (Some of the bugfixes mentionned below might also have gone into 1.6.X maintenance releases.)
 
@@ -10,6 +10,7 @@
 * New OGR driver : DXF, GeoRSS, GTM, PCIDSK
 * New utility : gdaldem, gdalbuildvrt now compiled by default
 * Add support for Python 3.X. Compatibility with Python 2.X preserved (#3265)
+* Remove old-generation Python bindings.
 * Significantly improved GDAL drivers: GeoRaster, GeoTIFF, HFA, JPEG2000 Jasper, JPEG2000 Kakadu, NITF
 * Significantly improved OGR drivers: CSV, KML, SQLite (SpatiaLite support), VRT
 
@@ -92,6 +93,7 @@ Algorithms:
 
 Core : 
  * Added mechanism to clear overviews if zero overviews requested. Implemented by GTiff and HFA drivers (#2915)
+ * Support for overviews in subdatasets
  * Support for overviews in proxydb directory (#2432)
  * SetColorTable(NULL) is permitted and means delete (#2421)
  * Preserve NBITS and SIGNEDBYTE in CreateCopy() for supporting drivers (#2902)
@@ -210,6 +212,7 @@ EHDR driver:
  
 ENVI driver:
  * Move RPC info into the RPC domain (#3063)
+ * Converted to using VSI Large File API (#3274)
 
 EPSILON driver:
  * New for GDAL/OGR 1.7.0
@@ -229,25 +232,10 @@ GenBin driver:
  * Look for LSB, assuming MSB if not found (#2730)
 
 GeoRaster driver:
- * fix casting float value for math function (#2720)
- * generateSpatialExtent() should not use 3D paramter or should not
-   be called for non georeferenced images (#2754)
- * fix issue #2781
- * Solve #2813, general problem with compression
- * Fix ticket #2892 - Endianness
- * fix tickets #2917 #2923
- * fix #2924 compressing DEFLATE
- * Fix #2946 -Pyramid + NBITS and general blocking issues
- * fix #2967: identifying non georeferenced images
- * fix #2990
- * Type error on variable and function name
- * fix #3008
- * fix #3066 and implement MaskBand support
- * fix partially #3068, the VAT issue
- * supports UTF16 charset on metadata reading/writing #3066 #3068
- * allow cross schema access #3098
- * allow update and insert across different schema/users
- * Support modelCoordinateLocation as CENTER #3266
+ * Fix compression problems
+ * Add MackBand support
+ * Support UNICODE metadata
+ * Support cross database schema/user access
 
 GeoTIFF driver :
  * Add 8/12bit jpeg in tiff support
@@ -463,7 +451,7 @@ WKT Raster driver:
 
 WMS driver:
  * Support TMS/formatted URLs in WMS minidriver (#2878)
- * Be tolerant if we have required 3 bands and got 4
+ * Be tolerant if we have required 3 bands and got 4, or the other way round
  * Declare a user agent string
 
 == OGR 1.7.0 - Overview of Changes ==
@@ -694,6 +682,7 @@ Perl bindings :
 
 Python bindings :
  * Add support for Python 3.X. Compatibility with Python 2.X preserved (#3265)
+ * Remove old-generation Python bindings.
  * Add Python binding's version description capabilities (#3137)
  * NUMPY : Make Band|Dataset.ReadAsArray() take into account preallocated array (#2658, #3028)
  * Various memory leaks fixed
