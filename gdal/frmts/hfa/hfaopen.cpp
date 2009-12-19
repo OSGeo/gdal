@@ -2684,7 +2684,10 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 }
             }
             if ( poEntry == NULL )
+            {
+                CPLFree( pszKey );
                 continue;
+            }
 
             const char *pszFieldName = pszAuxMetaData[i+1] + 1;
             switch( pszAuxMetaData[i+1][0] )
