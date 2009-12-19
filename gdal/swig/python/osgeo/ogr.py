@@ -146,9 +146,14 @@ class Driver(_object):
         char **papszOptions)
 
         This function attempts to create a new data source based on the passed
-        driver. The papszOptions argument can be used to control driver
-        specific creation options. These options are normally documented in
-        the format specific documentation.
+        driver.
+
+        The papszOptions argument can be used to control driver specific
+        creation options. These options are normally documented in the format
+        specific documentation.
+
+        It is important to call OGR_DS_Destroy() when the datasource is no
+        longer used to ensure that all data has been properly flushed to disk.
 
         This function is the same as the C++ method
         OGRSFDriver::CreateDataSource().
@@ -175,7 +180,32 @@ class Driver(_object):
 
         OGRDataSourceH
         OGR_Dr_CopyDataSource(OGRSFDriverH hDriver, OGRDataSourceH hSrcDS,
-        const char *pszNewName, char **papszOptions) 
+        const char *pszNewName, char **papszOptions)
+
+        This function creates a new datasource by copying all the layers from
+        the source datasource.
+
+        It is important to call OGR_DS_Destroy() when the datasource is no
+        longer used to ensure that all data has been properly flushed to disk.
+
+        This function is the same as the C++ method
+        OGRSFDriver::CopyDataSource().
+
+        Parameters:
+        -----------
+
+        hDriver:  handle to the driver on which data source creation is based.
+
+        hSrcDS:  source datasource
+
+        pszNewName:  the name for the new data source.
+
+        papszOptions:  a StringList of name=value options. Options are driver
+        specific, and driver information can be found at the following
+        url:http://www.gdal.org/ogr/ogr_formats.html
+
+        NULL is returned on failure, or a new OGRDataSource handle on success.
+
         """
         return _ogr.Driver_CopyDataSource(self, *args, **kwargs)
 
@@ -212,7 +242,29 @@ class Driver(_object):
 
         OGRErr
         OGR_Dr_DeleteDataSource(OGRSFDriverH hDriver, const char
-        *pszDataSource) 
+        *pszDataSource)
+
+        Delete a datasource.
+
+        Delete (from the disk, in the database, ...) the named datasource.
+        Normally it would be safest if the datasource was not open at the
+        time.
+
+        Whether this is a supported operation on this driver case be tested
+        using TestCapability() on ODrCDeleteDataSource.
+
+        This method is the same as the C++ method
+        OGRSFDriver::DeleteDataSource().
+
+        Parameters:
+        -----------
+
+        hDriver:  handle to the driver on which data source deletion is based.
+
+        pszDataSource:  the name of the datasource to delete.
+
+        OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this is
+        not supported by this driver. 
         """
         return _ogr.Driver_DeleteDataSource(self, *args)
 
@@ -335,7 +387,19 @@ class DataSource(_object):
         GetDriver(self) -> Driver
 
         OGRSFDriverH
-        OGR_DS_GetDriver(OGRDataSourceH hDS) 
+        OGR_DS_GetDriver(OGRDataSourceH hDS)
+
+        Returns the driver that the dataset was opened with.
+
+        This method is the same as the C++ method OGRDataSource::GetDriver()
+
+        Parameters:
+        -----------
+
+        hDS:  handle to the datasource
+
+        NULL if driver info is not available, or pointer to a driver owned by
+        the OGRSFDriverManager. 
         """
         return _ogr.DataSource_GetDriver(self, *args)
 
@@ -346,11 +410,12 @@ class DataSource(_object):
         const char*
         OGR_DS_GetName(OGRDataSourceH hDS)
 
-        Returns the name of the data source. This string should be sufficient
-        to open the data source if passed to the same OGRSFDriver that this
-        data source was opened with, but it need not be exactly the same
-        string that was used to open the data source. Normally this is a
-        filename.
+        Returns the name of the data source.
+
+        This string should be sufficient to open the data source if passed to
+        the same OGRSFDriver that this data source was opened with, but it
+        need not be exactly the same string that was used to open the data
+        source. Normally this is a filename.
 
         This function is the same as the C++ method OGRDataSource::GetName().
 
@@ -369,7 +434,25 @@ class DataSource(_object):
         DeleteLayer(self, int index) -> OGRErr
 
         OGRErr
-        OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer) 
+        OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)
+
+        Delete the indicated layer from the datasource.
+
+        If this method is supported the ODsCDeleteLayer capability will test
+        TRUE on the OGRDataSource.
+
+        This method is the same as the C++ method
+        OGRDataSource::DeleteLayer().
+
+        Parameters:
+        -----------
+
+        hDS:  handle to the datasource
+
+        iLayer:  the index of the layer to delete.
+
+        OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+        layers is not supported for this datasource. 
         """
         return _ogr.DataSource_DeleteLayer(self, *args)
 
@@ -384,10 +467,11 @@ class DataSource(_object):
         **papszOptions)
 
         This function attempts to create a new layer on the data source with
-        the indicated name, coordinate system, geometry type. The papszOptions
-        argument can be used to control driver specific creation options.
-        These options are normally documented in the format specific
-        documentation.
+        the indicated name, coordinate system, geometry type.
+
+        The papszOptions argument can be used to control driver specific
+        creation options. These options are normally documented in the format
+        specific documentation.
 
         This function is the same as the C++ method
         OGRDataSource::CreateLayer().
@@ -421,7 +505,32 @@ class DataSource(_object):
 
         OGRLayerH
         OGR_DS_CopyLayer(OGRDataSourceH hDS, OGRLayerH hSrcLayer, const char
-        *pszNewName, char **papszOptions) 
+        *pszNewName, char **papszOptions)
+
+        Duplicate an existing layer.
+
+        This function creates a new layer, duplicate the field definitions of
+        the source layer and then duplicate each features of the source layer.
+        The papszOptions argument can be used to control driver specific
+        creation options. These options are normally documented in the format
+        specific documentation. The source layer may come from another
+        dataset.
+
+        This function is the same as the C++ method OGRDataSource::CopyLayer
+
+        Parameters:
+        -----------
+
+        hDS:  handle to the data source where to create the new layer
+
+        hSrcLayer:  handle to the source layer.
+
+        pszNewName:  the name of the layer to create.
+
+        papszOptions:  a StringList of name=value options. Options are driver
+        specific.
+
+        an handle to the layer, or NULL if an error occurs. 
         """
         return _ogr.DataSource_CopyLayer(self, *args, **kwargs)
 
@@ -436,8 +545,10 @@ class DataSource(_object):
         OGRLayerH
         OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszName)
 
-        Fetch a layer by name. The returned layer remains owned by the
-        OGRDataSource and should not be deleted by the application.
+        Fetch a layer by name.
+
+        The returned layer remains owned by the OGRDataSource and should not
+        be deleted by the application.
 
         This function is the same as the C++ method
         OGRDataSource::GetLayerByName().
@@ -697,7 +808,7 @@ class Layer(_object):
         Set a new rectangular spatial filter.
 
         This method set rectangle to be used as a spatial filter when fetching
-        features via the GetNextFeature() method. Only features that
+        features via the OGR_L_GetNextFeature() method. Only features that
         geometrically intersect the given rectangle will be returned.
 
         The x/y values should be in the same coordinate system as the layer as
@@ -799,8 +910,9 @@ class Layer(_object):
         void
         OGR_L_ResetReading(OGRLayerH hLayer)
 
-        Reset feature reading to start on the first feature. This affects
-        GetNextFeature().
+        Reset feature reading to start on the first feature.
+
+        This affects GetNextFeature().
 
         This function is the same as the C++ method OGRLayer::ResetReading().
 
@@ -820,7 +932,20 @@ class Layer(_object):
         GetGeometryColumn(self) -> char
 
         const char*
-        OGR_L_GetGeometryColumn(OGRLayerH hLayer) 
+        OGR_L_GetGeometryColumn(OGRLayerH hLayer)
+
+        This method returns the name of the underlying database column being
+        used as the geometry column, or "" if not supported.
+
+        This method is the same as the C++ method
+        OGRLayer::GetGeometryColumn()
+
+        Parameters:
+        -----------
+
+        hLayer:  handle to the layer
+
+        geometry column name. 
         """
         return _ogr.Layer_GetGeometryColumn(self, *args)
 
@@ -829,7 +954,19 @@ class Layer(_object):
         GetFIDColumn(self) -> char
 
         const char*
-        OGR_L_GetFIDColumn(OGRLayerH hLayer) 
+        OGR_L_GetFIDColumn(OGRLayerH hLayer)
+
+        This method returns the name of the underlying database column being
+        used as the FID column, or "" if not supported.
+
+        This method is the same as the C++ method OGRLayer::GetFIDColumn()
+
+        Parameters:
+        -----------
+
+        hLayer:  handle to the layer
+
+        fid column name. 
         """
         return _ogr.Layer_GetFIDColumn(self, *args)
 
@@ -840,14 +977,14 @@ class Layer(_object):
         OGRFeatureH
         OGR_L_GetFeature(OGRLayerH hLayer, long nFeatureId)
 
-        Fetch a feature by it's identifier.
+        Fetch a feature by its identifier.
 
         This function will attempt to read the identified feature. The nFID
         value cannot be OGRNullFID. Success or failure of this operation is
         unaffected by the spatial or attribute filters.
 
-        If this function returns a non-NULL feature, it is guaranteed that
-        it's feature id ( OGR_F_GetFID()) will be the same as nFID.
+        If this function returns a non-NULL feature, it is guaranteed that its
+        feature id ( OGR_F_GetFID()) will be the same as nFID.
 
         Use OGR_L_TestCapability(OLCRandomRead) to establish if this layer
         supports efficient random access reading via OGR_L_GetFeature();
@@ -857,6 +994,8 @@ class Layer(_object):
 
         Sequential reads are generally considered interrupted by a
         OGR_L_GetFeature() call.
+
+        The returned feature should be free with OGR_F_Destroy().
 
         This function is the same as the C++ method OGRLayer::GetFeature( ).
 
@@ -878,10 +1017,12 @@ class Layer(_object):
         OGRFeatureH
         OGR_L_GetNextFeature(OGRLayerH hLayer)
 
-        Fetch the next available feature from this layer. The returned feature
-        becomes the responsiblity of the caller to delete. It is critical that
-        all features associated with an OGRLayer (more specifically an
-        OGRFeatureDefn) be deleted before that layer/datasource is deleted.
+        Fetch the next available feature from this layer.
+
+        The returned feature becomes the responsiblity of the caller to delete
+        with OGR_F_Destroy(). It is critical that all features associated with
+        an OGRLayer (more specifically an OGRFeatureDefn) be deleted before
+        that layer/datasource is deleted.
 
         Only features matching the current spatial filter (set with
         SetSpatialFilter()) will be returned.
@@ -908,7 +1049,35 @@ class Layer(_object):
         SetNextByIndex(self, long new_index) -> OGRErr
 
         OGRErr
-        OGR_L_SetNextByIndex(OGRLayerH hLayer, long nIndex) 
+        OGR_L_SetNextByIndex(OGRLayerH hLayer, long nIndex)
+
+        Move read cursor to the nIndex'th feature in the current resultset.
+
+        This method allows positioning of a layer such that the
+        GetNextFeature() call will read the requested feature, where nIndex is
+        an absolute index into the current result set. So, setting it to 3
+        would mean the next feature read with GetNextFeature() would have been
+        the 4th feature to have been read if sequential reading took place
+        from the beginning of the layer, including accounting for spatial and
+        attribute filters.
+
+        Only in rare circumstances is SetNextByIndex() efficiently
+        implemented. In all other cases the default implementation which calls
+        ResetReading() and then calls GetNextFeature() nIndex times is used.
+        To determine if fast seeking is available on the current layer use the
+        TestCapability() method with a value of OLCFastSetNextByIndex.
+
+        This method is the same as the C++ method OGRLayer::SetNextByIndex()
+
+        Parameters:
+        -----------
+
+        hLayer:  handle to the layer
+
+        nIndex:  the index indicating how many steps into the result set to
+        seek.
+
+        OGRERR_NONE on success or an error code. 
         """
         return _ogr.Layer_SetNextByIndex(self, *args)
 
@@ -1003,7 +1172,31 @@ class Layer(_object):
         SyncToDisk(self) -> OGRErr
 
         OGRErr OGR_L_SyncToDisk(OGRLayerH
-        hDS) 
+        hDS)
+
+        Flush pending changes to disk.
+
+        This call is intended to force the layer to flush any pending writes
+        to disk, and leave the disk file in a consistent state. It would not
+        normally have any effect on read-only datasources.
+
+        Some layers do not implement this method, and will still return
+        OGRERR_NONE. The default implementation just returns OGRERR_NONE. An
+        error is only returned if an error occurs while attempting to flush to
+        disk.
+
+        In any event, you should always close any opened datasource with
+        OGR_DS_Destroy() that will ensure all data is correctly flushed.
+
+        This method is the same as the C++ method OGRLayer::SyncToDisk()
+
+        Parameters:
+        -----------
+
+        hLayer:  handle to the layer
+
+        OGRERR_NONE if no error occurs (even if nothing is done) or an error
+        code. 
         """
         return _ogr.Layer_SyncToDisk(self, *args)
 
@@ -1115,25 +1308,26 @@ class Layer(_object):
         layer types may implement class specific capabilities, but this can't
         generally be discovered by the caller.
 
-        OLCRandomRead / "RandomRead": TRUE if the OGR_L_GetFeature()
-        function works for this layer.
+        OLCRandomRead / "RandomRead": TRUE if the GetFeature() method is
+        implemented in an optimized way for this layer, as opposed to the
+        default implementation using ResetReading() and GetNextFeature() to
+        find the requested feature id.
 
-        OLCSequentialWrite / "SequentialWrite": TRUE if the
-        OGR_L_CreateFeature() function works for this layer. Note this means
-        that this particular layer is writable. The same OGRLayer class may
-        returned FALSE for other layer instances that are effectively read-
-        only.
+        OLCSequentialWrite / "SequentialWrite": TRUE if the CreateFeature()
+        method works for this layer. Note this means that this particular
+        layer is writable. The same OGRLayer class may returned FALSE for
+        other layer instances that are effectively read-only.
 
-        OLCRandomWrite / "RandomWrite": TRUE if the OGR_L_SetFeature()
-        function is operational on this layer. Note this means that this
-        particular layer is writable. The same OGRLayer class may returned
-        FALSE for other layer instances that are effectively read-only.
+        OLCRandomWrite / "RandomWrite": TRUE if the SetFeature() method is
+        operational on this layer. Note this means that this particular layer
+        is writable. The same OGRLayer class may returned FALSE for other
+        layer instances that are effectively read-only.
 
         OLCFastSpatialFilter / "FastSpatialFilter": TRUE if this layer
         implements spatial filtering efficiently. Layers that effectively read
         all features, and test them with the OGRFeature intersection methods
         should return FALSE. This can be used as a clue by the application
-        whether it should build and maintain it's own spatial index for
+        whether it should build and maintain its own spatial index for
         features in this layer.
 
         OLCFastFeatureCount / "FastFeatureCount": TRUE if this layer can
@@ -1145,6 +1339,23 @@ class Layer(_object):
         its data extent (via OGR_L_GetExtent()) efficiently ... ie. without
         scanning all the features. In some cases this will return TRUE until a
         spatial filter is installed after which it will return FALSE.
+
+        OLCFastSetNextByIndex / "FastSetNextByIndex": TRUE if this layer can
+        perform the SetNextByIndex() call efficiently, otherwise FALSE.
+
+        OLCCreateField / "CreateField": TRUE if this layer can create new
+        fields on the current layer using CreateField(), otherwise FALSE.
+
+        OLCDeleteFeature / "DeleteFeature": TRUE if the DeleteFeature()
+        method is supported on this layer, otherwise FALSE.
+
+        OLCStringsAsUTF8 / "StringsAsUTF8": TRUE if values of OFTString
+        fields are assured to be in UTF-8 format. If FALSE the encoding of
+        fields is uncertain, though it might still be UTF-8.
+
+        OLCTransactions / "Transactions": TRUE if the StartTransaction(),
+        CommitTransaction() and RollbackTransaction() methods work in a
+        meaningful way, otherwise FALSE.
 
         This function is the same as the C++ method
         OGRLayer::TestCapability().
@@ -1169,10 +1380,12 @@ class Layer(_object):
         OGR_L_CreateField(OGRLayerH hLayer, OGRFieldDefnH hField, int
         bApproxOK)
 
-        Create a new field on a layer. You must use this to create new fields
-        on a real layer. Internally the OGRFeatureDefn for the layer will be
-        updated to reflect the new field. Applications should never modify the
-        OGRFeatureDefn used by a layer directly.
+        Create a new field on a layer.
+
+        You must use this to create new fields on a real layer. Internally the
+        OGRFeatureDefn for the layer will be updated to reflect the new field.
+        Applications should never modify the OGRFeatureDefn used by a layer
+        directly.
 
         This function is the same as the C++ method OGRLayer::CreateField().
 
@@ -1198,9 +1411,11 @@ class Layer(_object):
         OGR_L_StartTransaction(OGRLayerH hLayer)
 
         For datasources which support transactions, StartTransaction creates a
-        transaction. If starting the transaction fails, will return
-        OGRERR_FAILURE. Datasources which do not support transactions will
-        always return OGRERR_NONE.
+        transaction.
+
+        If starting the transaction fails, will return OGRERR_FAILURE.
+        Datasources which do not support transactions will always return
+        OGRERR_NONE.
 
         This function is the same as the C++ method
         OGRLayer::StartTransaction().
@@ -1222,9 +1437,11 @@ class Layer(_object):
         OGR_L_CommitTransaction(OGRLayerH hLayer)
 
         For datasources which support transactions, CommitTransaction commits
-        a transaction. If no transaction is active, or the commit fails, will
-        return OGRERR_FAILURE. Datasources which do not support transactions
-        will always return OGRERR_NONE.
+        a transaction.
+
+        If no transaction is active, or the commit fails, will return
+        OGRERR_FAILURE. Datasources which do not support transactions will
+        always return OGRERR_NONE.
 
         This function is the same as the C++ method
         OGRLayer::CommitTransaction().
@@ -1532,8 +1749,8 @@ class Feature(_object):
         int
         OGR_F_GetFieldCount(OGRFeatureH hFeat)
 
-        Fetch number of fields on this feature. This will always be the same
-        as the field count for the OGRFeatureDefn.
+        Fetch number of fields on this feature This will always be the same as
+        the field count for the OGRFeatureDefn.
 
         This function is the same as the C++ method
         OGRFeature::GetFieldCount().
@@ -1681,19 +1898,19 @@ class Feature(_object):
 
         iField:  the field to fetch, from 0 to GetFieldCount()-1.
 
-        int:  pnYear (including century)
+        pnYear:  (including century)
 
-        int:  pnMonth (1-12)
+        pnMonth:  (1-12)
 
-        int:  pnDay (1-31)
+        pnDay:  (1-31)
 
-        int:  pnHour (0-23)
+        pnHour:  (0-23)
 
-        int:  pnMinute (0-59)
+        pnMinute:  (0-59)
 
-        int:  pnSecond (0-59)
+        pnSecond:  (0-59)
 
-        int:  pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for
+        pnTZFlag:  (0=unknown, 1=localtime, 100=GMT, see data model for
         details)
 
         TRUE on success or FALSE on failure. 
@@ -2270,6 +2487,9 @@ class FeatureDefn(_object):
         This function is the same as the C++ method
         OGRFeatureDefn::GetFieldDefn().
 
+        Starting with GDAL 1.7.0, this method will also issue an error if the
+        index is not valid.
+
         Parameters:
         -----------
 
@@ -2278,8 +2498,9 @@ class FeatureDefn(_object):
 
         iField:  the field to fetch, between 0 and GetFieldCount()-1.
 
-        an handle to an internal field definition object. This object should
-        not be modified or freed by the application. 
+        an handle to an internal field definition object or NULL if invalid
+        index. This object should not be modified or freed by the application.
+
         """
         return _ogr.FeatureDefn_GetFieldDefn(self, *args)
 
@@ -2919,7 +3140,27 @@ class Geometry(_object):
         GetBoundary(self) -> Geometry
 
         OGRGeometryH
-        OGR_G_GetBoundary(OGRGeometryH hTarget) 
+        OGR_G_GetBoundary(OGRGeometryH hTarget)
+
+        Compute boundary.
+
+        A new geometry object is created and returned containing the boundary
+        of the geometry on which the method is invoked.
+
+        This function is the same as the C++ method OGR_G_GetBoundary().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hTarget:  The Geometry to calculate the boundary of.
+
+        a handle to a newly allocated geometry now owned by the caller, or
+        NULL on failure. 
         """
         return _ogr.Geometry_GetBoundary(self, *args)
 
@@ -2928,7 +3169,27 @@ class Geometry(_object):
         ConvexHull(self) -> Geometry
 
         OGRGeometryH
-        OGR_G_ConvexHull(OGRGeometryH hTarget) 
+        OGR_G_ConvexHull(OGRGeometryH hTarget)
+
+        Compute convex hull.
+
+        A new geometry object is created and returned containing the convex
+        hull of the geometry on which the method is invoked.
+
+        This function is the same as the C++ method OGRGeometry::ConvexHull().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hTarget:  The Geometry to calculate the convex hull of.
+
+        a handle to a newly allocated geometry now owned by the caller, or
+        NULL on failure. 
         """
         return _ogr.Geometry_ConvexHull(self, *args)
 
@@ -2937,7 +3198,39 @@ class Geometry(_object):
         Buffer(self, double distance, int quadsecs = 30) -> Geometry
 
         OGRGeometryH OGR_G_Buffer(OGRGeometryH
-        hTarget, double dfDist, int nQuadSegs) 
+        hTarget, double dfDist, int nQuadSegs)
+
+        Compute buffer of geometry.
+
+        Builds a new geometry containing the buffer region around the geometry
+        on which it is invoked. The buffer is a polygon containing the region
+        within the buffer distance of the original geometry.
+
+        Some buffer sections are properly described as curves, but are
+        converted to approximate polygons. The nQuadSegs parameter can be used
+        to control how many segements should be used to define a 90 degree
+        curve - a quadrant of a circle. A value of 30 is a reasonable default.
+        Large values result in large numbers of vertices in the resulting
+        buffer geometry while small numbers reduce the accuracy of the result.
+
+        This function is the same as the C++ method OGRGeometry::Buffer().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hTarget:  the geometry.
+
+        dfDist:  the buffer distance to be applied.
+
+        nQuadSegs:  the number of segments used to approximate a 90 degree
+        (quadrant) of curvature.
+
+        the newly created geometry, or NULL if an error occurs. 
         """
         return _ogr.Geometry_Buffer(self, *args, **kwargs)
 
@@ -2946,7 +3239,31 @@ class Geometry(_object):
         Intersection(self, Geometry other) -> Geometry
 
         OGRGeometryH
-        OGR_G_Intersection(OGRGeometryH hThis, OGRGeometryH hOther) 
+        OGR_G_Intersection(OGRGeometryH hThis, OGRGeometryH hOther)
+
+        Compute intersection.
+
+        Generates a new geometry which is the region of intersection of the
+        two geometries operated on. The OGR_G_Intersects() function can be
+        used to test if two geometries intersect.
+
+        This function is the same as the C++ method
+        OGRGeometry::Intersection().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry.
+
+        hOther:  the other geometry.
+
+        a new geometry representing the intersection or NULL if there is no
+        intersection or an error occurs. 
         """
         return _ogr.Geometry_Intersection(self, *args)
 
@@ -2955,7 +3272,28 @@ class Geometry(_object):
         Union(self, Geometry other) -> Geometry
 
         OGRGeometryH OGR_G_Union(OGRGeometryH
-        hThis, OGRGeometryH hOther) 
+        hThis, OGRGeometryH hOther)
+
+        Compute union.
+
+        Generates a new geometry which is the region of union of the two
+        geometries operated on.
+
+        This function is the same as the C++ method OGRGeometry::Union().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry.
+
+        hOther:  the other geometry.
+
+        a new geometry representing the union or NULL if an error occurs. 
         """
         return _ogr.Geometry_Union(self, *args)
 
@@ -2964,7 +3302,29 @@ class Geometry(_object):
         Difference(self, Geometry other) -> Geometry
 
         OGRGeometryH
-        OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther) 
+        OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
+
+        Compute difference.
+
+        Generates a new geometry which is the region of this geometry with the
+        region of the other geometry removed.
+
+        This function is the same as the C++ method OGRGeometry::Difference().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry.
+
+        hOther:  the other geometry.
+
+        a new geometry representing the difference or NULL if the difference
+        is empty or an error occurs. 
         """
         return _ogr.Geometry_Difference(self, *args)
 
@@ -2973,7 +3333,30 @@ class Geometry(_object):
         SymmetricDifference(self, Geometry other) -> Geometry
 
         OGRGeometryH
-        OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther) 
+        OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)
+
+        Compute symmetric difference.
+
+        Generates a new geometry which is the symmetric difference of this
+        geometry and the other geometry.
+
+        This function is the same as the C++ method
+        OGRGeometry::SymmetricDifference().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry.
+
+        hOther:  the other geometry.
+
+        a new geometry representing the symmetric difference or NULL if the
+        difference is empty or an error occurs. 
         """
         return _ogr.Geometry_SymmetricDifference(self, *args)
 
@@ -2982,7 +3365,27 @@ class Geometry(_object):
         Distance(self, Geometry other) -> double
 
         double OGR_G_Distance(OGRGeometryH
-        hFirst, OGRGeometryH hOther) 
+        hFirst, OGRGeometryH hOther)
+
+        Compute distance between two geometries.
+
+        Returns the shortest distance between the two geometries.
+
+        This function is the same as the C++ method OGRGeometry::Distance().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hFirst:  the first geometry to compare against.
+
+        hOther:  the other geometry to compare against.
+
+        the distance between the geometries or -1 if an error occurs. 
         """
         return _ogr.Geometry_Distance(self, *args)
 
@@ -3012,9 +3415,14 @@ class Geometry(_object):
 
         int OGR_G_IsEmpty(OGRGeometryH hGeom)
 
-        Test if the geometry is empty
+        Test if the geometry is empty.
 
         This method is the same as the CPP method OGRGeometry::IsEmpty().
+
+        Parameters:
+        -----------
+
+        hGeom:  The Geometry to test.
 
         TRUE if the geometry has no points, otherwise FALSE. 
         """
@@ -3026,6 +3434,20 @@ class Geometry(_object):
 
         int OGR_G_IsValid(OGRGeometryH hGeom)
 
+        Test if the geometry is valid.
+
+        This function is the same as the C++ method OGRGeometry::IsValid().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always return FALSE.
+
+        Parameters:
+        -----------
+
+        hGeom:  The Geometry to test.
+
+        TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsValid(self, *args)
 
@@ -3043,9 +3465,16 @@ class Geometry(_object):
         instantiable geometric class will include the specific conditions that
         cause an instance of that class to be classified as not simple.
 
-        This method relates to the SFCOM IGeometry::IsSimple() method.
+        This function is the same as the c++ method OGRGeometry::IsSimple()
+        method.
 
-        NOTE: This method is hardcoded to return TRUE at this time.
+        If OGR is built without the GEOS library, this function will always
+        return FALSE.
+
+        Parameters:
+        -----------
+
+        hGeom:  The Geometry to test.
 
         TRUE if object is simple, otherwise FALSE. 
         """
@@ -3057,6 +3486,20 @@ class Geometry(_object):
 
         int OGR_G_IsRing(OGRGeometryH hGeom)
 
+        Test if the geometry is a ring.
+
+        This function is the same as the C++ method OGRGeometry::IsRing().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always return FALSE.
+
+        Parameters:
+        -----------
+
+        hGeom:  The Geometry to test.
+
+        TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsRing(self, *args)
 
@@ -3083,7 +3526,27 @@ class Geometry(_object):
         Disjoint(self, Geometry other) -> bool
 
         int OGR_G_Disjoint(OGRGeometryH
-        hThis, OGRGeometryH hOther) 
+        hThis, OGRGeometryH hOther)
+
+        Test for disjointness.
+
+        Tests if this geometry and the other geometry are disjoint.
+
+        This function is the same as the C++ method OGRGeometry::Disjoint().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry to compare.
+
+        hOther:  the other geometry to compare.
+
+        TRUE if they are disjoint, otherwise FALSE. 
         """
         return _ogr.Geometry_Disjoint(self, *args)
 
@@ -3092,7 +3555,27 @@ class Geometry(_object):
         Touches(self, Geometry other) -> bool
 
         int OGR_G_Touches(OGRGeometryH hThis,
-        OGRGeometryH hOther) 
+        OGRGeometryH hOther)
+
+        Test for touching.
+
+        Tests if this geometry and the other geometry are touching.
+
+        This function is the same as the C++ method OGRGeometry::Touches().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry to compare.
+
+        hOther:  the other geometry to compare.
+
+        TRUE if they are touching, otherwise FALSE. 
         """
         return _ogr.Geometry_Touches(self, *args)
 
@@ -3101,7 +3584,27 @@ class Geometry(_object):
         Crosses(self, Geometry other) -> bool
 
         int OGR_G_Crosses(OGRGeometryH hThis,
-        OGRGeometryH hOther) 
+        OGRGeometryH hOther)
+
+        Test for crossing.
+
+        Tests if this geometry and the other geometry are crossing.
+
+        This function is the same as the C++ method OGRGeometry::Crosses().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry to compare.
+
+        hOther:  the other geometry to compare.
+
+        TRUE if they are crossing, otherwise FALSE. 
         """
         return _ogr.Geometry_Crosses(self, *args)
 
@@ -3110,7 +3613,27 @@ class Geometry(_object):
         Within(self, Geometry other) -> bool
 
         int OGR_G_Within(OGRGeometryH hThis,
-        OGRGeometryH hOther) 
+        OGRGeometryH hOther)
+
+        Test for containment.
+
+        Tests if this geometry is within the other geometry.
+
+        This function is the same as the C++ method OGRGeometry::Within().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry to compare.
+
+        hOther:  the other geometry to compare.
+
+        TRUE if hThis is within hOther, otherwise FALSE. 
         """
         return _ogr.Geometry_Within(self, *args)
 
@@ -3119,7 +3642,27 @@ class Geometry(_object):
         Contains(self, Geometry other) -> bool
 
         int OGR_G_Contains(OGRGeometryH
-        hThis, OGRGeometryH hOther) 
+        hThis, OGRGeometryH hOther)
+
+        Test for containment.
+
+        Tests if this geometry contains the other geometry.
+
+        This function is the same as the C++ method OGRGeometry::Contains().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry to compare.
+
+        hOther:  the other geometry to compare.
+
+        TRUE if hThis contains hOther geometry, otherwise FALSE. 
         """
         return _ogr.Geometry_Contains(self, *args)
 
@@ -3128,7 +3671,28 @@ class Geometry(_object):
         Overlaps(self, Geometry other) -> bool
 
         int OGR_G_Overlaps(OGRGeometryH
-        hThis, OGRGeometryH hOther) 
+        hThis, OGRGeometryH hOther)
+
+        Test for overlap.
+
+        Tests if this geometry and the other geometry overlap, that is their
+        intersection has a non-zero area.
+
+        This function is the same as the C++ method OGRGeometry::Overlaps().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry to compare.
+
+        hOther:  the other geometry to compare.
+
+        TRUE if they are overlapping, otherwise FALSE. 
         """
         return _ogr.Geometry_Overlaps(self, *args)
 
@@ -3237,12 +3801,13 @@ class Geometry(_object):
         OGR_G_AssignSpatialReference(OGRGeometryH hGeom, OGRSpatialReferenceH
         hSRS)
 
-        Assign spatial reference to this object. Any existing spatial
-        reference is replaced, but under no circumstances does this result in
-        the object being reprojected. It is just changing the interpretation
-        of the existing geometry. Note that assigning a spatial reference
-        increments the reference count on the OGRSpatialReference, but does
-        not copy it.
+        Assign spatial reference to this object.
+
+        Any existing spatial reference is replaced, but under no circumstances
+        does this result in the object being reprojected. It is just changing
+        the interpretation of the existing geometry. Note that assigning a
+        spatial reference increments the reference count on the
+        OGRSpatialReference, but does not copy it.
 
         This is similar to the SFCOM IGeometry::put_SpatialReference() method.
 
@@ -3296,8 +3861,10 @@ class Geometry(_object):
         hGeom, double dfMaxLength)
 
         Modify the geometry such it has no segment longer then the given
-        distance. Interpolated points will have Z and M values (if needed) set
-        to 0. Distance computation is performed in 2d only
+        distance.
+
+        Interpolated points will have Z and M values (if needed) set to 0.
+        Distance computation is performed in 2d only
 
         This function is the same as the CPP method OGRGeometry::segmentize().
 
