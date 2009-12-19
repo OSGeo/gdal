@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     const char *tile_index = "location";
     int		i_arg, ti_field;
     OGRDataSourceH hTileIndexDS;
-    OGRLayerH hLayer;
+    OGRLayerH hLayer = NULL;
     OGRFeatureDefnH hFDefn;
     int write_absolute_path = FALSE;
     char* current_path = NULL;
