@@ -117,6 +117,10 @@ OPTIONAL_POD(int, int);
         $result = SWIG_csharp_string_callback((const char *)$1);
         CPLFree($1);
     }
+    else
+    {
+        $result = NULL;
+    }
 %}
 
 /*
