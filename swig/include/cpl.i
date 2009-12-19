@@ -146,8 +146,7 @@ retStringAndCPLFree* EscapeString(const char* str, int scheme) {
 } 
 %}
 %clear (int len, unsigned char *bin_string);
-#else
-#ifdef SWIGCSHARP
+#elif defined(SWIGCSHARP)
 %inline %{
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme) {
     return CPLEscapeString((const char*)bin_string, len, scheme);
@@ -157,6 +156,17 @@ retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme) {
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
 }
+#elif defined(SWIGPYTHON)
+%{
+typedef char retStringAndCPLFree;
+%}
+%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
+%inline %{
+retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
+    return CPLEscapeString(bin_string, len, scheme);
+} 
+%}
+%clear (int len, char *bin_string);
 #else
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 %inline %{
@@ -165,7 +175,6 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 } 
 %}
 %clear (int len, char *bin_string);
-#endif
 #endif
 
 int CPLGetLastErrorNo();

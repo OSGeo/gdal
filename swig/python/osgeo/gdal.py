@@ -155,7 +155,7 @@ def ErrorReset(*args):
   return _gdal.ErrorReset(*args)
 
 def EscapeString(*args, **kwargs):
-  """EscapeString(int len, int scheme = CPLES_SQL) -> char"""
+  """EscapeString(int len, int scheme = CPLES_SQL) -> retStringAndCPLFree"""
   return _gdal.EscapeString(*args, **kwargs)
 
 def GetLastErrorNo(*args):
@@ -1269,7 +1269,7 @@ def ParseXMLString(*args):
 ParseXMLString = _gdal.ParseXMLString
 
 def SerializeXMLTree(*args):
-  """SerializeXMLTree(CPLXMLNode xmlnode) -> char"""
+  """SerializeXMLTree(CPLXMLNode xmlnode) -> retStringAndCPLFree"""
   return _gdal.SerializeXMLTree(*args)
 SerializeXMLTree = _gdal.SerializeXMLTree
 

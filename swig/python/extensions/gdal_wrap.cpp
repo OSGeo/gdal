@@ -3257,7 +3257,10 @@ SWIG_AsVal_int (PyObject * obj, int *val)
 }
 
 
-char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
+typedef char retStringAndCPLFree;
+
+
+retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
 } 
 
@@ -4972,7 +4975,7 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   char *  kwnames[] = {
     (char *) "len",(char *) "scheme", NULL 
   };
-  char *result = 0 ;
+  retStringAndCPLFree *result = 0 ;
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:EscapeString",kwnames,&obj0,&obj1)) SWIG_fail;
   {
@@ -5009,7 +5012,7 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
     arg3 = static_cast< int >(val3);
   }
   {
-    result = (char *)EscapeString(arg1,arg2,arg3);
+    result = (retStringAndCPLFree *)EscapeString(arg1,arg2,arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -5017,7 +5020,14 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
       }
     }
   }
-  resultobj = SWIG_FromCharPtr((const char *)result);
+  {
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if(result)
+    {
+      resultobj = GDALPythonObjectFromCStr( (const char *)result);
+      CPLFree(result);
+    }
+  }
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
     if( alloc1 == SWIG_NEWOBJ ) {
@@ -17173,7 +17183,7 @@ SWIGINTERN PyObject *_wrap_SerializeXMLTree(PyObject *SWIGUNUSEDPARM(self), PyOb
   PyObject *resultobj = 0;
   CPLXMLNode *arg1 = (CPLXMLNode *) 0 ;
   PyObject * obj0 = 0 ;
-  char *result = 0 ;
+  retStringAndCPLFree *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:SerializeXMLTree",&obj0)) SWIG_fail;
   {
@@ -17182,7 +17192,7 @@ SWIGINTERN PyObject *_wrap_SerializeXMLTree(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( !arg1 ) SWIG_fail;
   }
   {
-    result = (char *)CPLSerializeXMLTree(arg1);
+    result = (retStringAndCPLFree *)CPLSerializeXMLTree(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -17190,7 +17200,14 @@ SWIGINTERN PyObject *_wrap_SerializeXMLTree(PyObject *SWIGUNUSEDPARM(self), PyOb
       }
     }
   }
-  resultobj = SWIG_FromCharPtr((const char *)result);
+  {
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if(result)
+    {
+      resultobj = GDALPythonObjectFromCStr( (const char *)result);
+      CPLFree(result);
+    }
+  }
   {
     /* %typemap(freearg) (CPLXMLNode *xmlnode) */
     if ( arg1 ) CPLDestroyXMLNode( arg1 );
@@ -17549,7 +17566,7 @@ static PyMethodDef SwigMethods[] = {
 		""},
 	 { (char *)"PopErrorHandler", _wrap_PopErrorHandler, METH_VARARGS, (char *)"PopErrorHandler()"},
 	 { (char *)"ErrorReset", _wrap_ErrorReset, METH_VARARGS, (char *)"ErrorReset()"},
-	 { (char *)"EscapeString", (PyCFunction) _wrap_EscapeString, METH_VARARGS | METH_KEYWORDS, (char *)"EscapeString(int len, int scheme = CPLES_SQL) -> char"},
+	 { (char *)"EscapeString", (PyCFunction) _wrap_EscapeString, METH_VARARGS | METH_KEYWORDS, (char *)"EscapeString(int len, int scheme = CPLES_SQL) -> retStringAndCPLFree"},
 	 { (char *)"GetLastErrorNo", _wrap_GetLastErrorNo, METH_VARARGS, (char *)"GetLastErrorNo() -> int"},
 	 { (char *)"GetLastErrorType", _wrap_GetLastErrorType, METH_VARARGS, (char *)"GetLastErrorType() -> CPLErr"},
 	 { (char *)"GetLastErrorMsg", _wrap_GetLastErrorMsg, METH_VARARGS, (char *)"GetLastErrorMsg() -> char"},
@@ -17885,7 +17902,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"PackedDMSToDec", _wrap_PackedDMSToDec, METH_VARARGS, (char *)"PackedDMSToDec(double dfPacked) -> double"},
 	 { (char *)"DecToPackedDMS", _wrap_DecToPackedDMS, METH_VARARGS, (char *)"DecToPackedDMS(double dfDec) -> double"},
 	 { (char *)"ParseXMLString", _wrap_ParseXMLString, METH_VARARGS, (char *)"ParseXMLString(char pszXMLString) -> CPLXMLNode"},
-	 { (char *)"SerializeXMLTree", _wrap_SerializeXMLTree, METH_VARARGS, (char *)"SerializeXMLTree(CPLXMLNode xmlnode) -> char"},
+	 { (char *)"SerializeXMLTree", _wrap_SerializeXMLTree, METH_VARARGS, (char *)"SerializeXMLTree(CPLXMLNode xmlnode) -> retStringAndCPLFree"},
 	 { (char *)"GetDriverCount", _wrap_GetDriverCount, METH_VARARGS, (char *)"GetDriverCount() -> int"},
 	 { (char *)"GetDriverByName", _wrap_GetDriverByName, METH_VARARGS, (char *)"GetDriverByName(char name) -> Driver"},
 	 { (char *)"GetDriver", _wrap_GetDriver, METH_VARARGS, (char *)"GetDriver(int i) -> Driver"},
