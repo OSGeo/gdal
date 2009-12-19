@@ -40,6 +40,7 @@
 #include "kdu_compressed.h"
 #include "kdu_sample_processing.h"
 #include "kdu_stripe_decompressor.h"
+#include "kdu_arch.h"
 
 #include "subfile_source.h"
 #include "vsil_target.h"
@@ -108,6 +109,7 @@ class JP2KAKDataset : public GDALPamDataset
     kdu_dims dims; 
     int            nResCount;
     bool           bPreferNPReads;
+    kdu_thread_env *poThreadEnv;
 
     char	   *pszProjection;
     double	   adfGeoTransform[6];
@@ -981,6 +983,13 @@ JP2KAKDataset::~JP2KAKDataset()
         }
 #endif
     }
+
+    if( poThreadEnv != NULL )
+    {
+        poThreadEnv->terminate(NULL,true);
+        poThreadEnv->destroy();
+        delete poThreadEnv;
+    }
 }
 
 
@@ -1416,6 +1425,30 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
 /* -------------------------------------------------------------------- */
+/*      Setup the thread environment.                                   */
+/* -------------------------------------------------------------------- */
+        int nNumThreads = atoi(CPLGetConfigOption("JP2KAK_THREADS","-1"));
+        if( nNumThreads == -1 )
+            nNumThreads = kdu_get_num_processors()-1;
+
+        if( nNumThreads > 0 )
+        {
+            int iThread;
+
+            poDS->poThreadEnv = new kdu_thread_env;
+            poDS->poThreadEnv->create();
+
+            for( iThread=0; iThread < nNumThreads; iThread++ )
+            {
+                if( !poDS->poThreadEnv->add_thread() )
+                    break;
+            }
+            CPLDebug( "JP2KAK", "Using %d threads.", nNumThreads );
+        }
+        else
+            CPLDebug( "JP2KAK", "Operating in singlethreaded mode." );
+
+/* -------------------------------------------------------------------- */
 /*      Is this a file with poor internal navigation that will end      */
 /*      up using a great deal of memory if we use keep persistent       */
 /*      parsed information around?  (#3295)                             */
@@ -1733,7 +1766,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
         if( nBufXSize == dims.size.x && nBufYSize == dims.size.y )
         {
             kdu_stripe_decompressor decompressor;
-            decompressor.start(*poCodeStream);
+            decompressor.start(*poCodeStream,false,false,poThreadEnv);
         
             CPLDebug( "JP2KAK", "DirectRasterIO() for %d,%d,%d,%d -> %dx%d (no intermediate) %s",
                       nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
@@ -1803,7 +1836,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                       pszPersistency );
 
             kdu_stripe_decompressor decompressor;
-            decompressor.start(*poCodeStream);
+            decompressor.start(*poCodeStream,false,false,poThreadEnv);
         
             for( i = 0; i < nBandCount; i++ )
             {
