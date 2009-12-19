@@ -414,6 +414,8 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     poDstDS = Create( pszFilename, nXSize, nYSize, 
                       nBands, eType, papszCreateOptions );
+                      
+    CSLDestroy(papszCreateOptions);
 
     if( poDstDS == NULL )
         return NULL;
