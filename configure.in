@@ -197,7 +197,7 @@ else
     HAVE_GCC_ATOMIC_BUILTINS=no
     AC_MSG_RESULT([no])
 fi
-rm -f atomicbuiltins.* atomicbuildins
+rm -f atomicbuiltins.* atomicbuiltins
 
 AC_SUBST(HAVE_GCC_ATOMIC_BUILTINS,$HAVE_GCC_ATOMIC_BUILTINS)
 
