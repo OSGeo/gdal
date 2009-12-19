@@ -17,7 +17,7 @@ if version_info >= (2,6,0):
                 _mod = imp.load_module('_gdal', fp, pathname, description)
             finally:
                 fp.close()
-                return _mod
+            return _mod
     _gdal = swig_import_helper()
     del swig_import_helper
 else:
