@@ -574,7 +574,11 @@ double GDALDecToPackedDMS( double dfDec );
 #endif
 CPLXMLNode *CPLParseXMLString( char * pszXMLString );
 
+#if defined(SWIGJAVA) || defined(SWIGCSHARP) || defined(SWIGPYTHON)
+retStringAndCPLFree *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
+#else
 char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
+#endif
 
 //************************************************************************
 //
