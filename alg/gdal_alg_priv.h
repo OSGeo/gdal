@@ -56,7 +56,7 @@ typedef struct {
 /*      Low level rasterizer API.                                       */
 /************************************************************************/
 
-typedef void (*llScanlineFunc)( void *, int, int, int );
+typedef void (*llScanlineFunc)( void *, int, int, int, double );
 typedef void (*llPointFunc)( void *, int, int, double );
 
 void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,

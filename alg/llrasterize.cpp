@@ -87,7 +87,7 @@ static void llSwapDouble(double *a, double *b)
 void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize, 
                                int nPartCount, int *panPartSize,
                                double *padfX, double *padfY,
-                               double *padfVariant,
+                               double *dfVariant,
                                llScanlineFunc pfnScanlineFunc, void *pCBData )
 {
 /*************************************************************************
@@ -209,7 +209,7 @@ No known bug
                         continue;
 
 		    /*fill the horizontal segment (separately from the rest)*/
-		    pfnScanlineFunc( pCBData, y, horizontal_x1, horizontal_x2 - 1 );
+		    pfnScanlineFunc( pCBData, y, horizontal_x1, horizontal_x2 - 1, (dfVariant == NULL)?0:dfVariant[0] );
 		    continue;
 		}
 		else /*skip top horizontal segments (they are already filled in the regular loop)*/
@@ -236,13 +236,12 @@ No known bug
         qsort(polyInts, ints, sizeof(int), llCompareInt);
 
 
-        for (i=0; (i < (ints)); i+=2) {
-
+        for (i=0; (i < (ints)); i+=2)
+        {
             if( polyInts[i] <= maxx && polyInts[i+1] > minx )
             {
-                pfnScanlineFunc( pCBData, y, polyInts[i], polyInts[i+1] - 1 );
-	    }
-            
+                pfnScanlineFunc( pCBData, y, polyInts[i], polyInts[i+1] - 1, (dfVariant == NULL)?0:dfVariant[0] );
+            }
         }
     }
 
