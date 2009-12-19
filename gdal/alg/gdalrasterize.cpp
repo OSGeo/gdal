@@ -44,7 +44,8 @@
 /*                           gvBurnScanline()                           */
 /************************************************************************/
 
-void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd )
+void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
+                        double dfVariant )
 
 {
     GDALRasterizeInfo *psInfo = (GDALRasterizeInfo *) pCBData;
@@ -69,7 +70,9 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd )
         {
             unsigned char *pabyInsert;
             unsigned char nBurnValue = (unsigned char) 
-                psInfo->padfBurnValue[iBand];
+                ( psInfo->padfBurnValue[iBand] +
+                  ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
+                             0 : dfVariant ) );
             
             pabyInsert = psInfo->pabyChunkBuf 
                 + iBand * psInfo->nXSize * psInfo->nYSize
@@ -84,7 +87,10 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd )
         {
             int	nPixels = nXEnd - nXStart + 1;
             float   *pafInsert;
-            float   fBurnValue = (float) psInfo->padfBurnValue[iBand];
+            float   fBurnValue = (float)
+                ( psInfo->padfBurnValue[iBand] +
+                  ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
+                             0 : dfVariant ) );
             
             pafInsert = ((float *) psInfo->pabyChunkBuf) 
                 + iBand * psInfo->nXSize * psInfo->nYSize
@@ -109,56 +115,30 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
     CPLAssert( nY >= 0 && nY < psInfo->nYSize );
     CPLAssert( nX >= 0 && nX < psInfo->nXSize );
 
-    if( psInfo->eBurnValueSource == GBV_UserBurnValue )
+    if( psInfo->eType == GDT_Byte )
     {
-        if( psInfo->eType == GDT_Byte )
+        for( iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
-            for( iBand = 0; iBand < psInfo->nBands; iBand++ )
-            {
-                unsigned char *pbyInsert = psInfo->pabyChunkBuf 
-                    + iBand * psInfo->nXSize * psInfo->nYSize
-                    + nY * psInfo->nXSize + nX;
+            unsigned char *pbyInsert = psInfo->pabyChunkBuf 
+                                      + iBand * psInfo->nXSize * psInfo->nYSize
+                                      + nY * psInfo->nXSize + nX;
 
-                *pbyInsert = (unsigned char)psInfo->padfBurnValue[iBand];
-            }
-        }
-        else
-        {
-            for( iBand = 0; iBand < psInfo->nBands; iBand++ )
-            {
-                float   *pfInsert = ((float *) psInfo->pabyChunkBuf) 
-                    + iBand * psInfo->nXSize * psInfo->nYSize
-                    + nY * psInfo->nXSize + nX;
-
-                *pfInsert = (float) psInfo->padfBurnValue[iBand];
-            }
+            *pbyInsert = (unsigned char)( psInfo->padfBurnValue[iBand] +
+                          ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
+                             0 : dfVariant ) );
         }
     }
     else
     {
-        if( psInfo->eType == GDT_Byte )
+        for( iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
-            for( iBand = 0; iBand < psInfo->nBands; iBand++ )
-            {
-                unsigned char *pbyInsert = psInfo->pabyChunkBuf 
-                    + iBand * psInfo->nXSize * psInfo->nYSize
-                    + nY * psInfo->nXSize + nX;
+            float   *pfInsert = ((float *) psInfo->pabyChunkBuf) 
+                                + iBand * psInfo->nXSize * psInfo->nYSize
+                                + nY * psInfo->nXSize + nX;
 
-                *pbyInsert = (unsigned char)psInfo->padfBurnValue[iBand]
-                                + (unsigned char) dfVariant;
-            }
-        }
-        else
-        {
-            for( iBand = 0; iBand < psInfo->nBands; iBand++ )
-            {
-                float   *pfInsert = ((float *) psInfo->pabyChunkBuf) 
-                    + iBand * psInfo->nXSize * psInfo->nYSize
-                    + nY * psInfo->nXSize + nX;
-
-                *pfInsert =  (float) psInfo->padfBurnValue[iBand]
-                                + (float) dfVariant;
-            }
+            *pfInsert = (float)( psInfo->padfBurnValue[iBand] +
+                         ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
+                            0 : dfVariant ) );
         }
     }
 }
@@ -353,6 +333,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
 /*      According to the C++ Standard/23.2.4, elements of a vector are  */
 /*      stored in continuous memory block.                              */
 /* -------------------------------------------------------------------- */
+    unsigned int j,n;
 
     // TODO - mloskot: Check if vectors are empty, otherwise it may
     // lead to undefined behavior by returning non-referencable pointer.
@@ -400,12 +381,32 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
                                            NULL : &(aPointVariant[0]),
                                        gvBurnScanline, &sInfo );
             if( bAllTouched )
+            {
+                /* Reverting the variants to the first value because the
+                   polygon is filled using the variant from the first point of
+                   the first segment. Should be removed when the code to full
+                   polygons more appropriately is added. */
+                if(eBurnValueSrc == GBV_UserBurnValue)
+                {
                 GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
                                             aPartSize.size(), &(aPartSize[0]), 
                                             &(aPointX[0]), &(aPointY[0]), 
-                                            (eBurnValueSrc == GBV_UserBurnValue)?
-                                                NULL : &(aPointVariant[0]),
+                                            NULL,
                                             gvBurnPoint, &sInfo );
+                }
+                else
+                {
+                for( i = 0, n = 0; i < aPartSize.size(); i++ )
+                    for( j = 0; j < aPartSize[i]; j++ )
+                        aPointVariant[n++] = aPointVariant[0];
+                   
+                GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
+                                            aPartSize.size(), &(aPartSize[0]), 
+                                            &(aPointX[0]), &(aPointY[0]), 
+                                            &(aPointVariant[0]),
+                                            gvBurnPoint, &sInfo );
+                }
+            }
         }
         break;
     }
@@ -451,8 +452,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
  * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched 
  * by the line or polygons, not just those whose center is within the polygon
  * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
- * <dt>"BURN_VALUE_FROM":</dt> <dd>May be set to GDALBurnValueSrc.GBV_Z to use
- * the Z values of the geometries. dfBurnValue is added to this before burning.
+ * <dt>"BURN_VALUE_FROM":</dt> <dd>May be set to "Z" to use the Z values of the
+ * geometries. dfBurnValue is added to this before burning.
  * Defaults to GDALBurnValueSrc.GBV_UserBurnValue in which case just the
  * dfBurnValue is burned. This is implemented only for points and lines for
  * now. The M value may be supported in the future.</dd>
@@ -660,12 +661,12 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * <dt>"ALL_TOUCHED":</dt> <dd>May be set to TRUE to set all pixels touched 
  * by the line or polygons, not just those whose center is within the polygon
  * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</dd>
- * <dt>"BURN_VALUE_FROM":</dt> <dd>May be set to GDALBurnValueSrc.GBV_Z to use
- * the Z values of the geometries. dfBurnValue or the attribute field value is
- * added to this before burning. Defaults to GDALBurnValueSrc.GBV_UserBurnValue
- * in which case just the dfBurnValue is burned. This is implemented only for
- * points and lines for now. The M value may be supported in the future.</dd>
- * </dl>
+ * <dt>"BURN_VALUE_FROM":</dt> <dd>May be set to "Z" to use the Z values of the
+ * geometries. The value from padfLayerBurnValues or the attribute field value
+ * is added to this before burning. In default case dfBurnValue is burned as it
+ * is. This is implemented properly only for points and lines for now. Polygons
+ * will be burned using the Z value from the first point. The M value may be
+ * supported in the future.</dd>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
  *
@@ -1014,9 +1015,10 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  * </dl>
  * <dt>"BURN_VALUE_FROM":</dt> <dd>May be set to "Z" to use
  * the Z values of the geometries. dfBurnValue or the attribute field value is
- * added to this before burning. Defaults to GDALBurnValueSrc.GBV_UserBurnValue
- * in which case just the dfBurnValue is burned. This is implemented only for
- * points and lines for now. The M value may be supported in the future.</dd>
+ * added to this before burning. In default case dfBurnValue is burned as it
+ * is. This is implemented properly only for points and lines for now. Polygons
+ * will be burned using the Z value from the first point. The M value may
+ * be supported in the future.</dd>
  * </dl>
  *
  * @param pfnProgress the progress function to report completion.
