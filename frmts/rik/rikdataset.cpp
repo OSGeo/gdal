@@ -605,6 +605,7 @@ RIKDataset::~RIKDataset()
     CPLFree( pOffsets );
     if( fp != NULL )
         VSIFClose( fp );
+    delete poColorTable;
 }
 
 /************************************************************************/
