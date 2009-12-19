@@ -2717,8 +2717,13 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         pData =
             CPLMalloc(GDALGetDataTypeSize(eDataType)/8 * nXReduced * nYReduced);
 
-        IRasterIO( GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
+        CPLErr eErr = IRasterIO( GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
                    nXReduced, nYReduced, eDataType, 0, 0 );
+        if ( eErr != CE_None )
+        {
+            CPLFree(pData);
+            return eErr;
+        }
         
         /* this isn't the fastest way to do this, but is easier for now */
         for( int iY = 0; iY < nYReduced; iY++ )
@@ -3451,8 +3456,13 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         pData =
             CPLMalloc(GDALGetDataTypeSize(eDataType)/8 * nXReduced * nYReduced);
 
-        IRasterIO( GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
+        CPLErr eErr = IRasterIO( GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
                    nXReduced, nYReduced, eDataType, 0, 0 );
+        if ( eErr != CE_None )
+        {
+            CPLFree(pData);
+            return eErr;
+        }
 
         /* this isn't the fastest way to do this, but is easier for now */
         for( int iY = 0; iY < nYReduced; iY++ )
@@ -3919,9 +3929,14 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         pData =
             CPLMalloc(GDALGetDataTypeSize(eDataType)/8 * nXReduced * nYReduced);
 
-        IRasterIO( GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
+        CPLErr eErr = IRasterIO( GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
                    nXReduced, nYReduced, eDataType, 0, 0 );
-
+        if ( eErr != CE_None )
+        {
+            CPLFree(pData);
+            return eErr;
+        }
+        
         /* this isn't the fastest way to do this, but is easier for now */
         for( int iY = 0; iY < nYReduced; iY++ )
         {
