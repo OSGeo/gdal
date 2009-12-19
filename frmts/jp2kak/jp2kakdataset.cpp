@@ -107,6 +107,7 @@ class JP2KAKDataset : public GDALPamDataset
     kdu_client      *jpip_client;
     kdu_dims dims; 
     int            nResCount;
+    bool           bPreferNPReads;
 
     char	   *pszProjection;
     double	   adfGeoTransform[6];
@@ -303,7 +304,6 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 
     this->nRasterXSize = band_dims.size.x;
     this->nRasterYSize = band_dims.size.y;
-
     if( oCodeStream.get_bit_depth(nBand-1) % 8 != 0 )
     {
         
@@ -405,7 +405,6 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 /* -------------------------------------------------------------------- */
     nOverviewCount = 0;
     papoOverviewBand = 0;
-
     if( nDiscardLevels == 0 && GDALPamRasterBand::GetOverviewCount() == 0 )
     {
         int  nXSize = nRasterXSize, nYSize = nRasterYSize;
@@ -932,6 +931,8 @@ JP2KAKDataset::JP2KAKDataset()
     pasGCPList = NULL;
     family = NULL;
 
+    bPreferNPReads = false;
+
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -939,7 +940,7 @@ JP2KAKDataset::JP2KAKDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    
+
     poDriver = (GDALDriver*) GDALGetDriverByName( "JP2KAK" );
 }
 
@@ -1415,6 +1416,31 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
 /* -------------------------------------------------------------------- */
+/*      Is this a file with poor internal navigation that will end      */
+/*      up using a great deal of memory if we use keep persistent       */
+/*      parsed information around?  (#3295)                             */
+/* -------------------------------------------------------------------- */
+        siz_params *siz = poDS->oCodeStream.access_siz();
+        kdu_params *cod = siz->access_cluster(COD_params);
+        bool use_precincts; 
+        
+        cod->get(Cuse_precincts,0,0,use_precincts);
+
+        const char *pszPersist = CPLGetConfigOption( "JP2KAK_PERSIST", "AUTO");
+        if( EQUAL(pszPersist,"AUTO") )
+        {
+            if( !use_precincts && !bIsJPIP
+                && (poDS->nRasterXSize * (double) poDS->nRasterYSize) 
+                > 100000000.0 )
+                poDS->bPreferNPReads = true;
+        }
+        else 
+            poDS->bPreferNPReads = !CSLTestBoolean(pszPersist);
+
+        CPLDebug( "JP2KAK", "Cuse_precincts=%d, PreferNonPersistentReads=%d", 
+                  (int) use_precincts, poDS->bPreferNPReads );
+
+/* -------------------------------------------------------------------- */
 /*      find out how many resolutions levels are available.             */
 /* -------------------------------------------------------------------- */
         kdu_dims tile_indices; 
@@ -1604,9 +1630,45 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                                int nPixelSpace,int nLineSpace,int nBandSpace)
     
 {
+    kdu_codestream *poCodeStream = &oCodeStream;
+    const char *pszPersistency = "";
+
     CPLAssert( eBufType == GDT_Byte 
                || eBufType == GDT_Int16
                || eBufType == GDT_UInt16 );
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to do this non-persistently?  If so, we need to      */
+/*      open the file, and establish a local codestream.                */
+/* -------------------------------------------------------------------- */
+    subfile_source subfile_src;
+    jp2_source wrk_jp2_src;
+    jp2_family_src wrk_family;
+    kdu_codestream oWCodeStream;
+
+    if( bPreferNPReads )
+    {
+        subfile_src.open( GetDescription() );
+        
+        if( family != NULL )
+        {
+            wrk_family.open( &subfile_src );
+            wrk_jp2_src.open( &wrk_family );
+            wrk_jp2_src.read_header();
+
+            oWCodeStream.create( &wrk_jp2_src );
+        }
+        else
+        {
+            oWCodeStream.create( &subfile_src );
+        }
+
+        oWCodeStream.set_fussy();
+
+        poCodeStream= &oWCodeStream;
+        
+        pszPersistency = "(non-persistent)";
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Select optimal resolution level.                                */
@@ -1649,8 +1711,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
     try
     {
         kdu_dims dims;
-        oCodeStream.apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
-        oCodeStream.get_dims( 0, dims );
+        poCodeStream->apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
+        poCodeStream->get_dims( 0, dims );
 
         dims.pos.x = dims.pos.x + nXOff/nResMult;
         dims.pos.y = dims.pos.y + nYOff/nResMult;
@@ -1659,8 +1721,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
     
         kdu_dims dims_roi;
 
-        oCodeStream.map_region( 0, dims, dims_roi );
-        oCodeStream.apply_input_restrictions( nBandCount, component_indices, 
+        poCodeStream->map_region( 0, dims, dims_roi );
+        poCodeStream->apply_input_restrictions( nBandCount, component_indices, 
                                               nDiscardLevels, 0, &dims_roi,
                                               KDU_WANT_OUTPUT_COMPONENTS);
 
@@ -1671,10 +1733,11 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
         if( nBufXSize == dims.size.x && nBufYSize == dims.size.y )
         {
             kdu_stripe_decompressor decompressor;
-            decompressor.start(oCodeStream);
+            decompressor.start(*poCodeStream);
         
-            CPLDebug( "JP2KAK", "DirectRasterIO() for %d,%d,%d,%d -> %dx%d (no intermediate)",
-                      nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+            CPLDebug( "JP2KAK", "DirectRasterIO() for %d,%d,%d,%d -> %dx%d (no intermediate) %s",
+                      nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+                      pszPersistency );
 
             for( i = 0; i < nBandCount; i++ )
             {
@@ -1689,7 +1752,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                 }
                 else if( eBufType == GDT_Int16 )
                 {
-                    precisions[i] = oCodeStream.get_bit_depth(i);
+                    precisions[i] = poCodeStream->get_bit_depth(i);
                     is_signed[i] = true;
                     sample_offsets[i] = i * nBandSpace / 2;
                     sample_gaps[i] = nPixelSpace / 2;
@@ -1697,7 +1760,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                 }
                 else if( eBufType == GDT_UInt16 )
                 {
-                    precisions[i] = oCodeStream.get_bit_depth(i);
+                    precisions[i] = poCodeStream->get_bit_depth(i);
                     is_signed[i] = false;
                     sample_offsets[i] = i * nBandSpace / 2;
                     sample_gaps[i] = nPixelSpace / 2;
@@ -1733,13 +1796,14 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
             }
 
             CPLDebug( "JP2KAK", 
-                      "DirectRasterIO() for %d,%d,%d,%d -> %dx%d -> %dx%d",
+                      "DirectRasterIO() for %d,%d,%d,%d -> %dx%d -> %dx%d %s",
                       nXOff, nYOff, nXSize, nYSize, 
                       dims.size.x, dims.size.y, 
-                      nBufXSize, nBufYSize );
+                      nBufXSize, nBufYSize, 
+                      pszPersistency );
 
             kdu_stripe_decompressor decompressor;
-            decompressor.start(oCodeStream);
+            decompressor.start(*poCodeStream);
         
             for( i = 0; i < nBandCount; i++ )
             {
@@ -1747,7 +1811,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 
                 if( eBufType == GDT_Int16 || eBufType == GDT_UInt16 )
                 {
-                    precisions[i] = oCodeStream.get_bit_depth(i);
+                    precisions[i] = poCodeStream->get_bit_depth(i);
                     
                     if( eBufType == GDT_Int16 )
                         is_signed[i] = true;
@@ -1823,6 +1887,14 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
+    if( poCodeStream == &oWCodeStream )
+    {
+        oWCodeStream.destroy();
+        wrk_jp2_src.close();
+        wrk_family.close();
+        subfile_src.close();
+    }
+
     CPLFree( component_indices );
     CPLFree( stripe_heights );
     CPLFree( sample_offsets );
