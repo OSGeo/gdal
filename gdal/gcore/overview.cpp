@@ -1512,9 +1512,14 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
             return CE_Failure;
         }
 
-        poSrcBand->RasterIO( GF_Read, 0, iLine, nWidth, 1,
+        CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nWidth, 1,
                              pafData, nWidth, 1, eWrkType,
                              0, 0 );
+        if ( eErr != CE_None )
+        {
+            CPLFree( pafData );
+            return eErr;
+        }
 
         for( iPixel = 0; iPixel < nWidth; iPixel++ )
         {
