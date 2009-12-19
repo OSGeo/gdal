@@ -259,6 +259,9 @@ int main( int argc, char ** argv )
     OGR_DS_Destroy( hDS );
     GDALClose( hSrcDS );
 
+    if (hSRS)
+        OSRDestroySpatialReference( hSRS );
+
     CSLDestroy( argv );
     GDALDestroyDriverManager();
     OGRCleanupAll();
