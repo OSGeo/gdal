@@ -51,39 +51,56 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
     memcpy( (void *) &pGrd->fVersion, (void *) &nwtHeader[5],
               sizeof(pGrd->fVersion) );
+    CPL_LSBPTR32(&pGrd->fVersion);
 
     memcpy( (void *) &usTmp, (void *) &nwtHeader[9], 2 );
+    CPL_LSBPTR16(&usTmp);
     pGrd->nXSide = (unsigned int) usTmp;
     if( pGrd->nXSide == 0 )
+    {
         memcpy( (void *) &pGrd->nXSide, (void *) &nwtHeader[128],
                 sizeof(pGrd->nXSide) );
+        CPL_LSBPTR32(&pGrd->nXSide);
+    }
 
     memcpy( (void *) &usTmp, (void *) &nwtHeader[11], 2 );
+    CPL_LSBPTR16(&usTmp);
     pGrd->nYSide = (unsigned int) usTmp;
     if( pGrd->nYSide == 0 )
+    {
         memcpy( (void *) &pGrd->nYSide, (void *) &nwtHeader[132],
                 sizeof(pGrd->nYSide) );
+        CPL_LSBPTR32(&pGrd->nYSide);
+    }
 
     memcpy( (void *) &pGrd->dfMinX, (void *) &nwtHeader[13],
             sizeof(pGrd->dfMinX) );
+    CPL_LSBPTR64(&pGrd->dfMinX);
     memcpy( (void *) &pGrd->dfMaxX, (void *) &nwtHeader[21],
             sizeof(pGrd->dfMaxX) );
+    CPL_LSBPTR64(&pGrd->dfMaxX);
     memcpy( (void *) &pGrd->dfMinY, (void *) &nwtHeader[29],
             sizeof(pGrd->dfMinY) );
+    CPL_LSBPTR64(&pGrd->dfMinY);
     memcpy( (void *) &pGrd->dfMaxY, (void *) &nwtHeader[37],
             sizeof(pGrd->dfMaxY) );
+    CPL_LSBPTR64(&pGrd->dfMaxY);
 
     pGrd->dfStepSize = (pGrd->dfMaxX - pGrd->dfMinX) / (pGrd->nXSide - 1);
     dfTmp = (pGrd->dfMaxY - pGrd->dfMinY) / (pGrd->nYSide - 1);
 
     memcpy( (void *) &pGrd->fZMin, (void *) &nwtHeader[45],
             sizeof(pGrd->fZMin) );
+    CPL_LSBPTR32(&pGrd->fZMin);
     memcpy( (void *) &pGrd->fZMax, (void *) &nwtHeader[49],
             sizeof(pGrd->fZMax) );
+    CPL_LSBPTR32(&pGrd->fZMax);
     memcpy( (void *) &pGrd->fZMinScale, (void *) &nwtHeader[53],
             sizeof(pGrd->fZMinScale) );
+    CPL_LSBPTR32(&pGrd->fZMinScale);
     memcpy( (void *) &pGrd->fZMaxScale, (void *) &nwtHeader[57],
             sizeof(pGrd->fZMaxScale) );
+    CPL_LSBPTR32(&pGrd->fZMaxScale);
 
     memcpy( (void *) &pGrd->cDescription, (void *) &nwtHeader[61],
             sizeof(pGrd->cDescription) );
@@ -91,6 +108,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
             sizeof(pGrd->cZUnits) );
 
     memcpy( (void *) &i, (void *) &nwtHeader[136], 4 );
+    CPL_LSBPTR32(&i);
 
     if( i == 1129336130 )
     {                            //BMPC
@@ -117,7 +135,8 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
         pGrd->bHillShadeExists = true;
 
     memcpy( (void *) &pGrd->iNumColorInflections, (void *) &nwtHeader[516],
-            sizeof(2) );
+            2 );
+    CPL_LSBPTR16(&pGrd->iNumColorInflections);
 
     if (pGrd->iNumColorInflections > 32)
     {
@@ -131,6 +150,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
         
         memcpy( (void *) &pGrd->stInflection[i].zVal,
                 (void *) &nwtHeader[518 + (7 * i)], 4 );
+        CPL_LSBPTR32(&pGrd->stInflection[i].zVal);
         memcpy( (void *) &pGrd->stInflection[i].r,
                 (void *) &nwtHeader[522 + (7 * i)], 1 );
         memcpy( (void *) &pGrd->stInflection[i].g,
@@ -141,8 +161,10 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
     memcpy( (void *) &pGrd->fHillShadeAzimuth, (void *) &nwtHeader[966],
             sizeof(pGrd->fHillShadeAzimuth) );
+    CPL_LSBPTR32(&pGrd->fHillShadeAzimuth);
     memcpy( (void *) &pGrd->fHillShadeAngle, (void *) &nwtHeader[970],
             sizeof(pGrd->fHillShadeAngle) );
+    CPL_LSBPTR32(&pGrd->fHillShadeAngle);
 
     pGrd->cFormat += nwtHeader[1023];    // the msb for grd/grc was already set
 
@@ -167,6 +189,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
         if( !fread( &usTmp, 2, 1, pGrd->fp) )
             return FALSE;
+        CPL_LSBPTR16(&usTmp);
         pGrd->stClassDict =
             (NWT_CLASSIFIED_DICT *) calloc( sizeof(NWT_CLASSIFIED_DICT), 1 );
 
@@ -187,6 +210,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                 return FALSE;
             memcpy( (void *) &pGrd->stClassDict->
                     stClassifedItem[usTmp]->usPixVal, (void *) &cTmp[0], 2 );
+            CPL_LSBPTR16(&pGrd->stClassDict->stClassifedItem[usTmp]->usPixVal);
             memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->res1,
                     (void *) &cTmp[2], 1 );
             memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->r,
@@ -199,6 +223,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                     (void *) &cTmp[6], 1 );
             memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->usLen,
                     (void *) &cTmp[7], 2 );
+            CPL_LSBPTR16(&pGrd->stClassDict->stClassifedItem[usTmp]->usLen);
                     
             if ( pGrd->stClassDict->stClassifedItem[usTmp]->usLen > 256)
                 return FALSE;
