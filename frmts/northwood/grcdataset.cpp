@@ -428,7 +428,7 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
 /************************************************************************/
-/*                          GDALRegister_GRD()                          */
+/*                          GDALRegister_GRC()                          */
 /************************************************************************/
 
 void
