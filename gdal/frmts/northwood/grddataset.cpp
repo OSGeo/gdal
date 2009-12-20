@@ -177,6 +177,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pIma
         for( i = 0; i < nBlockXSize; i++ )
         {
             memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
+            CPL_LSBPTR16(&raw1);
             if( raw1 == 0 )
             {
                 ((float *)pImage)[i] = -1.e37;    // null value
@@ -192,6 +193,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pIma
         for( i = 0; i < nBlockXSize; i++ )
         {
             memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
+            CPL_LSBPTR16(&raw1);
             ((char *)pImage)[i] = poGDS->ColorMap[raw1 / 16].r;
         }
     }
@@ -200,6 +202,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pIma
         for( i = 0; i < nBlockXSize; i++ )
         {
             memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
+            CPL_LSBPTR16(&raw1);
             ((char *) pImage)[i] = poGDS->ColorMap[raw1 / 16].g;
         }
     }
@@ -208,6 +211,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pIma
         for( i = 0; i < nBlockXSize; i++ )
         {
             memcpy( (void *) &raw1, (void *) (pszRecord + 2 * i), 2 );
+            CPL_LSBPTR16(&raw1);
             ((char *) pImage)[i] = poGDS->ColorMap[raw1 / 16].b;
         }
     }
