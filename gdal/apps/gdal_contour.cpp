@@ -47,7 +47,7 @@ static void Usage()
         "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
         "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
         "                    [-off <offset>] [-fl <level> <level>...]\n" 
-        "                    [-nln <outlayername>]\n"
+        "                    [-nln <outlayername>] [-q]\n"
         "                    <src_filename> <dst_filename>\n" );
     exit( 1 );
 }
@@ -70,6 +70,8 @@ int main( int argc, char ** argv )
     double adfFixedLevels[1000];
     int    nFixedLevelCount = 0;
     const char *pszNewLayerName = "contour";
+    int bQuiet = FALSE;
+    GDALProgressFunc pfnProgress = NULL;
 
     /* Check that we are running against at least GDAL 1.4 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -142,6 +144,10 @@ int main( int argc, char ** argv )
         {
             bIgnoreNoData = TRUE;
         }
+        else if ( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
+        {
+            bQuiet = TRUE;
+        }
         else if( pszSrcFilename == NULL )
         {
             pszSrcFilename = argv[i];
@@ -170,6 +176,9 @@ int main( int argc, char ** argv )
         fprintf(stderr, "Missing destination filename.\n");
         Usage();
     }
+    
+    if (!bQuiet)
+        pfnProgress = GDALTermProgress;
 
 /* -------------------------------------------------------------------- */
 /*      Open source raster file.                                        */
@@ -254,7 +263,7 @@ int main( int argc, char ** argv )
                          (pszElevAttrib == NULL) ? -1 :
                                  OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), 
                                                        pszElevAttrib ), 
-                         GDALTermProgress, NULL );
+                         pfnProgress, NULL );
 
     OGR_DS_Destroy( hDS );
     GDALClose( hSrcDS );
