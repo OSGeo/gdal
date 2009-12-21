@@ -204,10 +204,11 @@ def ogr_mysql_4():
 
         dst_feat.Destroy()
 
-    # FIXME : we should test '4' and '6' but the source wkt polygons are not closed
-    # and mySQL return them as closed, so the check_feature_geometry returns FALSE
+    # FIXME : The source wkt polygons of '4' and '6' are not closed and
+    # mySQL return them as closed, so the check_feature_geometry returns FALSE
+    # Checking them after closing the rings again returns TRUE.
 
-    wkt_list = [ '10', '2', '1', '5' ]
+    wkt_list = [ '10', '2', '1', '5', '4', '6' ]
 
     for item in wkt_list:
         wkt = open( 'data/wkb_wkt/'+item+'.wkt' ).read()
@@ -221,7 +222,12 @@ def ogr_mysql_4():
         geom_read = feat_read.GetGeometryRef()
 
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
-            return 'fail'
+            print 'Geometry changed. Closing rings before trying again for wkt #',item
+            print '(before):',geom.ExportToWkt()
+            geom.CloseRings()
+            print '(after) :',geom.ExportToWkt()
+            if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
+                return 'fail'
 
         feat_read.Destroy()
 
@@ -256,9 +262,6 @@ def ogr_mysql_5():
     
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
-# FIXME:
-# E. Rouault : this test is broken as the prfedea column type returned by the SQL request
-# is 'Binary' instead of 'String'.
 
 def ogr_mysql_6():
 
@@ -267,8 +270,7 @@ def ogr_mysql_6():
 
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL( "select * from tpoly where prfedea = '2'" )
 
-    # FIXME. Should be '2' instead of '32'
-    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '32' ] )
+    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '2' ] )
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
@@ -683,7 +685,6 @@ gdaltest_list = [
     ogr_mysql_3,
     ogr_mysql_4,
     ogr_mysql_5,
-# Broken : see comment in ogr_mysql_6 header
     ogr_mysql_6,
     ogr_mysql_7,
     ogr_mysql_8,
