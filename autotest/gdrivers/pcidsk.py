@@ -199,7 +199,23 @@ def pcidsk_7():
     if ct.GetColorEntry(1) != (255,0,255,255):
         gdaltest.post_reason( 'Got wrong color table entry after reopen.' )
         return 'fail'
+
+    if band.GetColorInterpretation() != gdal.GCI_PaletteIndex:
+        gdaltest.post_reason( 'Not a palette?' )
+        return 'fail'
+
+    if band.SetColorTable( None ) != 0:
+        gdaltest.post_reason( 'SetColorTable failed.' )
+        return 'fail'
+
+    if band.GetColorTable() is not None:
+        gdaltest.post_reason( 'color table still exists!' )
+        return 'fail'
     
+    if band.GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason( 'Paletted?' )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
