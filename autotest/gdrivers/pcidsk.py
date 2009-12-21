@@ -98,7 +98,7 @@ def pcidsk_5():
     # Create testing file.
 
     gdaltest.pcidsk_ds = driver.Create( 'tmp/pcidsk_5.pix', 400, 600, 1,
-                                        gdal.GDT_UInt16 )
+                                        gdal.GDT_Byte )
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -125,7 +125,7 @@ def pcidsk_5():
     return 'success'
 
 ###############################################################################
-# Test writing metadata to a newly created file.
+# Test writing metadata to a band.
 
 def pcidsk_6():
 
@@ -159,11 +159,55 @@ def pcidsk_6():
     return 'success'
 
 ###############################################################################
+# Test creating a color table and reading it back.
+
+def pcidsk_7():
+
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    # Write out some metadata to the default and non-default domain and
+    # using the set and single methods.
+    band = gdaltest.pcidsk_ds.GetRasterBand(1)
+
+    ct = band.GetColorTable()
+
+    if ct is not None:
+        gdaltest.post_reason( 'Got color table unexpectedly.' )
+        return 'fail'
+
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (0,255,0,255) )
+    ct.SetColorEntry( 1, (255,0,255,255) )
+    ct.SetColorEntry( 2, (0,0,255,255) )
+    band.SetColorTable( ct )
+
+    ct = band.GetColorTable()
+
+    if ct.GetColorEntry(1) != (255,0,255,255):
+        gdaltest.post_reason( 'Got wrong color table entry immediately.' )
+        return 'fail'
+    
+    # Close and reopen.
+    gdaltest.pcidsk_ds = None
+    gdaltest.pcidsk_ds = gdal.Open( 'tmp/pcidsk_5.pix', gdal.GA_Update )
+
+    band = gdaltest.pcidsk_ds.GetRasterBand(1)
+    
+    ct = band.GetColorTable()
+
+    if ct.GetColorEntry(1) != (255,0,255,255):
+        gdaltest.post_reason( 'Got wrong color table entry after reopen.' )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def pcidsk_cleanup():
     gdaltest.pcidsk_ds = None
-    gdaltest.clean_tmp()
+    #gdaltest.clean_tmp()
     return 'success'
 
 gdaltest_list = [
@@ -173,6 +217,7 @@ gdaltest_list = [
     pcidsk_4,
     pcidsk_5,
     pcidsk_6,
+    pcidsk_7,
     pcidsk_cleanup ]
 
 if __name__ == '__main__':
