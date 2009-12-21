@@ -87,7 +87,8 @@ GeoRasterWrapper::GeoRasterWrapper()
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
     bHasBitmapMask      = false;
-    eModelCoordLocation    = MCL_DEFAULT;
+    eModelCoordLocation = MCL_DEFAULT;
+    eForceCoordLocation = MCL_DEFAULT;
 }
 
 //  ---------------------------------------------------------------------------
@@ -897,7 +898,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
     bHasBitmapMask      = false;
-    eModelCoordLocation    = MCL_DEFAULT;
+    eModelCoordLocation = MCL_DEFAULT;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1245,12 +1246,12 @@ bool GeoRasterWrapper::GetImageExtent( double *padfTransform )
     }
 
     padfTransform[0] = dfULx;
-    padfTransform[1] = ( dfLRx - dfULx ) / nRasterColumns;
+    padfTransform[1] = ( dfLRx - dfULx ) / (double) nRasterColumns;
     padfTransform[2] = dfRotation;
 
     padfTransform[3] = dfULy;
     padfTransform[4] = -dfRotation;
-    padfTransform[5] = ( dfLRy - dfULy ) / nRasterRows;
+    padfTransform[5] = ( dfLRy - dfULy ) / (double) nRasterRows;
 
     dfXCoefficient[0] = padfTransform[1];
     dfXCoefficient[1] = padfTransform[2];
@@ -2196,19 +2197,26 @@ bool GeoRasterWrapper::FlushMetadata()
     //  --------------------------------------------------------------------
 
     double dfXCoef[3], dfYCoef[3];
-    int eModel = MCL_CENTER;
 
-    dfXCoef[0] = dfXCoefficient[0]; // scale
-    dfXCoef[1] = dfXCoefficient[1]; // rotation
-    dfXCoef[2] = dfXCoefficient[2] + ( dfXCoef[0] / 2 ); // offset
+    int eModel = eForceCoordLocation;
 
-    dfYCoef[0] = dfYCoefficient[0]; // rotation
-    dfYCoef[1] = dfYCoefficient[1]; // scale
-    dfYCoef[2] = dfYCoefficient[2] + ( dfYCoef[1] / 2 ); // offset
+    dfXCoef[0] = dfXCoefficient[0];
+    dfXCoef[1] = dfXCoefficient[1];
+    dfXCoef[2] = dfXCoefficient[2];
 
-    char* pszXML = CPLSerializeXMLTree( phMetadata );
+    dfYCoef[0] = dfYCoefficient[0];
+    dfYCoef[1] = dfYCoefficient[1];
+    dfYCoef[2] = dfYCoefficient[2];
 
-    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
+    if( eModel == MCL_CENTER )
+    {
+        dfXCoef[2] += ( dfXCoef[0] / 2.0 );
+        dfYCoef[2] += ( dfYCoef[1] / 2.0 );
+    }
+
+    CPLString osStatemtn = "";
+
+    osStatemtn.Printf(
         "DECLARE\n"
         "  GR1  sdo_georaster;\n"
         "  SRID number;\n"
@@ -2237,10 +2245,12 @@ bool GeoRasterWrapper::FlushMetadata()
         "  COMMIT;\n"
         "END;",
         pszColumn, pszSchema, pszTable, pszWhere,
-        pszXML,
+        CPLSerializeXMLTree( phMetadata ),
         UNKNOWN_CRS,
         UNKNOWN_CRS,
-        pszSchema, pszTable, pszColumn, pszWhere ) );
+        pszSchema, pszTable, pszColumn, pszWhere );
+
+    OWStatement* poStmt = poConnection->CreateStatement( osStatemtn.c_str() );
 
     poStmt->Bind( &nSRID );
     poStmt->Bind( &eModel );
@@ -2253,12 +2263,9 @@ bool GeoRasterWrapper::FlushMetadata()
 
     if( ! poStmt->Execute() )
     {
-        CPLFree( pszXML );
         delete poStmt;
         return false;
     }
-
-    CPLFree( pszXML );
 
     delete poStmt;
 
