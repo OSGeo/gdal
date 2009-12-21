@@ -819,7 +819,7 @@ int OWStatement::GetInteger( OCINumber* ppoData )
 
 double OWStatement::GetDouble( OCINumber* ppoData )
 {
-    double dfRetVal;
+    double dfRetVal = 0.0;
 
     CheckError( OCINumberToReal(
         hError,
