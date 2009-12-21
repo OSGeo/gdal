@@ -481,3 +481,12 @@ OPTIONAL_POD(int, int);
     }
 %}
 
+/******************************************************************************
+ * ErrorHandler callback support                                              *
+ *****************************************************************************/
+%pragma(csharp) modulecode="public delegate void GDALErrorHandlerDelegate(int eclass, int code, IntPtr msg);"
+%typemap(imtype) (CPLErrorHandler)  "$module.GDALErrorHandlerDelegate"
+%typemap(cstype) (CPLErrorHandler) "$module.GDALErrorHandlerDelegate"
+%typemap(csin) (CPLErrorHandler)  "$csinput"
+%typemap(in) (CPLErrorHandler) %{ $1 = ($1_ltype)$input; %}
+
