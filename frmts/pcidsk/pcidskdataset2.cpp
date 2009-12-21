@@ -325,6 +325,22 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
     try 
     {
 /* -------------------------------------------------------------------- */
+/*      Are we trying to delete the color table?                        */
+/* -------------------------------------------------------------------- */
+        if( poCT == NULL )
+        {
+            delete poColorTable;
+            poColorTable = NULL;
+
+            if( nPCTSegNumber != -1 )
+                poFile->DeleteSegment( nPCTSegNumber );
+            poChannel->SetMetadataValue( "DEFAULT_PCT_REF", "" );
+            nPCTSegNumber = NULL;
+
+            return CE_None;
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Do we need to create the segment?  If so, also set the          */
 /*      default pct metadata.                                           */
 /* -------------------------------------------------------------------- */
@@ -344,7 +360,7 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
 /*      Write out the PCT.                                              */
 /* -------------------------------------------------------------------- */
         unsigned char abyPCT[768];
-        int i, nColorCount = poCT->GetColorEntryCount();
+        int i, nColorCount = MIN(256,poCT->GetColorEntryCount());
 
         memset( abyPCT, 0, 768 );
 
