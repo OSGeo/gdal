@@ -174,7 +174,10 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
           case FIELD_TYPE_MEDIUM_BLOB:
           case FIELD_TYPE_LONG_BLOB:
           case FIELD_TYPE_BLOB:
-            oField.SetType( OFTBinary );
+            if( psMSField->charsetnr == 63 )
+                oField.SetType( OFTBinary );
+            else
+                oField.SetType( OFTString );
             oField.SetWidth((int)psMSField->max_length);
             poDefn->AddFieldDefn( &oField );
             break;
