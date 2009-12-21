@@ -660,6 +660,25 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->SetCompression( pszCompress, nQuality );
     }
 
+    pszFetched = CSLFetchNameValue( papszOptions, "COORDLOCATION" );
+
+    if( pszFetched )
+    {
+        if( EQUAL( pszFetched, "CENTER" ) )
+        {
+            poGRD->poGeoRaster->eForceCoordLocation = MCL_CENTER;
+        }
+        else if( EQUAL( pszFetched, "UPPERLEFT" ) )
+        {
+            poGRD->poGeoRaster->eForceCoordLocation = MCL_UPPERLEFT;
+        }
+        else 
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                "Incorrect COORDLOCATION (%s)", pszFetched );
+        }
+    }
+
     //  -------------------------------------------------------------------
     //  Return a new Dataset
     //  -------------------------------------------------------------------
@@ -1013,11 +1032,6 @@ void GeoRasterDataset::FlushCache()
 CPLErr GeoRasterDataset::SetGeoTransform( double *padfTransform )
 {
     memcpy( adfGeoTransform, padfTransform, sizeof( double ) * 6 );
-
-#ifdef OW_DEFAULT_CENTER
-    padfTransform[0] -= padfTransform[1] / 2;
-    padfTransform[3] -= padfTransform[5] / 2;
-#endif
 
     poGeoRaster->dfXCoefficient[0] = adfGeoTransform[1];
     poGeoRaster->dfXCoefficient[1] = adfGeoTransform[2];
@@ -1536,6 +1550,10 @@ void CPL_DLL GDALRegister_GEOR()
 "       <Value>JPEG-B</Value>"
 "       <Value>JPEG-F</Value>"
 "       <Value>DEFLATE</Value>"
+"  </Option>"
+"  <Option name='COORDLOCATION'    type='string-select' default='CENTER'>"
+"       <Value>CENTER</Value>"
+"       <Value>UPPERLEFT</Value>"
 "  </Option>"
 "  <Option name='QUALITY'     type='int'    description='JPEG quality 0..100' "
                                            "default='75'/>"
