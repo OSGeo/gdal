@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "pcidsk.h"
+#include "pcidsk_pct.h"
 #include "gdal_pam.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
@@ -89,12 +90,20 @@ class PCIDSK2Band : public GDALPamRasterBand
     friend class PCIDSK2Dataset;
 
     PCIDSKChannel *poChannel;
+    PCIDSKFile    *poFile;
 
     void        RefreshOverviewList();
     std::vector<PCIDSK2Band*> apoOverviews;
     
     CPLString   osLastMDValue;
     char      **papszLastMDListValue;
+
+    bool        CheckForColorTable();
+    GDALColorTable *poColorTable;
+    bool        bCheckedForColorTable;
+    int         nPCTSegNumber;
+
+    void        Initialize();
 
   public:
                 PCIDSK2Band( PCIDSK2Dataset *, PCIDSKFile *, int );
@@ -106,6 +115,10 @@ class PCIDSK2Band : public GDALPamRasterBand
 
     virtual int        GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
+
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr SetColorTable( GDALColorTable * ); 
 
     CPLErr              SetMetadata( char **, const char * );
     char              **GetMetadata( const char* );
@@ -122,6 +135,8 @@ class PCIDSK2Band : public GDALPamRasterBand
 
 /************************************************************************/
 /*                            PCIDSK2Band()                             */
+/*                                                                      */
+/*      This constructor is used for main file channels.                */
 /************************************************************************/
 
 PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS, 
@@ -129,10 +144,10 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
                           int nBand )                        
 
 {
-    papszLastMDListValue = NULL;
+    Initialize();
 
     this->poDS = poDS;
-
+    this->poFile = poFile;
     this->nBand = nBand;
 
     poChannel = poFile->GetChannel( nBand );
@@ -150,15 +165,17 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
 
 /************************************************************************/
 /*                            PCIDSK2Band()                             */
+/*                                                                      */
+/*      This constructor is used for overviews.                         */
 /************************************************************************/
 
-PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )                        
+PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )
 
 {
-    papszLastMDListValue = NULL;
+    Initialize();
 
     this->poChannel = poChannel;
-    poDS = NULL;
+
     nBand = 1;
 
     nBlockXSize = (int) poChannel->GetBlockWidth();
@@ -168,6 +185,24 @@ PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )
     nRasterYSize = (int) poChannel->GetHeight();
 
     eDataType = PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() );
+}
+
+/************************************************************************/
+/*                             Initialize()                             */
+/************************************************************************/
+
+void PCIDSK2Band::Initialize()
+
+{
+    papszLastMDListValue = NULL;
+
+    poChannel = NULL;
+    poFile = NULL;
+    poDS = NULL;
+
+    bCheckedForColorTable = false;
+    poColorTable = NULL;
+    nPCTSegNumber = -1;
 }
 
 /************************************************************************/
@@ -183,6 +218,181 @@ PCIDSK2Band::~PCIDSK2Band()
         apoOverviews.pop_back();
     }
     CSLDestroy( papszLastMDListValue );
+
+    delete poColorTable;
+}
+
+/************************************************************************/
+/*                         CheckForColorTable()                         */
+/************************************************************************/
+
+bool PCIDSK2Band::CheckForColorTable()
+
+{
+    if( bCheckedForColorTable || poFile == NULL )
+        return true;
+
+    bCheckedForColorTable = true;
+
+    try 
+    {
+        std::string osDefaultPCT = poChannel->GetMetadataValue("DEFAULT_PCT_REF");
+        PCIDSKSegment *poPCTSeg = NULL;
+
+        // If there is no metadata, assume a single PCT in a file with only
+        // one raster band must be intended for it.
+        if( osDefaultPCT.size() == 0 
+            && poDS != NULL 
+            && poDS->GetRasterCount() == 1 )
+        {
+            poPCTSeg = poFile->GetSegment( SEG_PCT, "" );
+            if( poPCTSeg != NULL 
+                && poFile->GetSegment( SEG_PCT, "", 
+                                       poPCTSeg->GetSegmentNumber() ) != NULL )
+                poPCTSeg = NULL;
+        }
+        // Parse default PCT ref assuming an in file reference.
+        else if( osDefaultPCT.size() != 0 
+                 && strstr(osDefaultPCT.c_str(),"PCT:") != NULL )
+        {
+            poPCTSeg = poFile->GetSegment( 
+                atoi(strstr(osDefaultPCT.c_str(),"PCT:") + 4) );
+        }
+
+        if( poPCTSeg != NULL )
+        {
+            PCIDSK_PCT *poPCT = dynamic_cast<PCIDSK_PCT*>( poPCTSeg );
+            poColorTable = new GDALColorTable();
+            int i;
+            unsigned char abyPCT[768];
+
+            nPCTSegNumber = poPCTSeg->GetSegmentNumber();
+            
+            poPCT->ReadPCT( abyPCT );
+            
+            for( i = 0; i < 256; i++ )
+            {
+                GDALColorEntry sEntry;
+                
+                sEntry.c1 = abyPCT[256 * 0 + i];
+                sEntry.c2 = abyPCT[256 * 1 + i];
+                sEntry.c3 = abyPCT[256 * 2 + i];
+                sEntry.c4 = 255;
+                poColorTable->SetColorEntry( i, &sEntry );
+            }
+        }
+    }
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *PCIDSK2Band::GetColorTable()
+
+{
+    CheckForColorTable();
+
+    if( poColorTable )
+        return poColorTable;
+    else
+        return GDALPamRasterBand::GetColorTable();
+            
+}
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
+
+{
+    if( !CheckForColorTable() )
+        return CE_Failure;
+
+    // no color tables on overviews.
+    if( poFile == NULL )
+        return CE_Failure;
+
+    try 
+    {
+/* -------------------------------------------------------------------- */
+/*      Do we need to create the segment?  If so, also set the          */
+/*      default pct metadata.                                           */
+/* -------------------------------------------------------------------- */
+        if( nPCTSegNumber == -1 )
+        {
+            nPCTSegNumber = poFile->CreateSegment( "PCTTable", 
+                                                   "Default Pseudo-Color Table", 
+                                                   SEG_PCT, 0 );
+            
+            CPLString osRef;
+            
+            osRef.Printf( "gdb:/{PCT:%d}", nPCTSegNumber );
+            poChannel->SetMetadataValue( "DEFAULT_PCT_REF", osRef );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Write out the PCT.                                              */
+/* -------------------------------------------------------------------- */
+        unsigned char abyPCT[768];
+        int i, nColorCount = poCT->GetColorEntryCount();
+
+        memset( abyPCT, 0, 768 );
+
+        for( i = 0; i < nColorCount; i++ )
+        {
+            GDALColorEntry sEntry;
+
+            poCT->GetColorEntryAsRGB( i, &sEntry );
+            abyPCT[256 * 0 + i] = sEntry.c1;
+            abyPCT[256 * 1 + i] = sEntry.c2;
+            abyPCT[256 * 2 + i] = sEntry.c3;
+        }
+
+        PCIDSK_PCT *poPCT = dynamic_cast<PCIDSK_PCT*>( 
+            poFile->GetSegment( nPCTSegNumber ) );
+
+        poPCT->WritePCT( abyPCT );
+
+        delete poColorTable;
+        poColorTable = poCT->Clone();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Trap exceptions.                                                */
+/* -------------------------------------------------------------------- */
+    catch( PCIDSKException ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", ex.what() );
+        return CE_Failure;
+    }
+    
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp PCIDSK2Band::GetColorInterpretation()
+
+{
+    CheckForColorTable();
+
+    if( poColorTable != NULL )
+        return GCI_PaletteIndex;
+    else
+        return GDALPamRasterBand::GetColorInterpretation();
 }
 
 /************************************************************************/
