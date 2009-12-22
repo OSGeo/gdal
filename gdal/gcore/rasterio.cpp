@@ -611,12 +611,12 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
             return;
         }
 
-        // Moving single bytes, avoid any possible memcpy() overhead.
+        GByte *pabySrc = (GByte *) pSrcData;
+        GByte *pabyDst = (GByte *) pDstData;
+
+        // Moving single bytes.
         if( nWordSize == 1 )
         {
-            GByte *pabySrc = (GByte *) pSrcData;
-            GByte *pabyDst = (GByte *) pDstData;
-
             if (nWordCount > 100)
             {
 /* ==================================================================== */
@@ -682,15 +682,50 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                 pabyDst += nDstPixelOffset;
                 pabySrc += nSrcPixelOffset;
             }
-            return;
         }
-
-        // source or destination is not contiguous
-        for( i = 0; i < nWordCount; i++ )
+        else if (nWordSize == 2)
         {
-            memcpy( ((GByte *)pDstData) + i * nDstPixelOffset,
-                    ((GByte *)pSrcData) + i * nSrcPixelOffset,
-                    nWordSize );
+            for( i = nWordCount; i != 0; i-- )
+            {
+                *(short*)pabyDst = *(short*)pabySrc;
+                pabyDst += nDstPixelOffset;
+                pabySrc += nSrcPixelOffset;
+            }
+        }
+        else if (nWordSize == 4)
+        {
+            for( i = nWordCount; i != 0; i-- )
+            {
+                *(int*)pabyDst = *(int*)pabySrc;
+                pabyDst += nDstPixelOffset;
+                pabySrc += nSrcPixelOffset;
+            }
+        }
+        else if (nWordSize == 8)
+        {
+            for( i = nWordCount; i != 0; i-- )
+            {
+                ((int*)pabyDst)[0] = ((int*)pabySrc)[0];
+                ((int*)pabyDst)[1] = ((int*)pabySrc)[1];
+                pabyDst += nDstPixelOffset;
+                pabySrc += nSrcPixelOffset;
+            }
+        }
+        else if (nWordSize == 16)
+        {
+            for( i = nWordCount; i != 0; i-- )
+            {
+                ((int*)pabyDst)[0] = ((int*)pabySrc)[0];
+                ((int*)pabyDst)[1] = ((int*)pabySrc)[1];
+                ((int*)pabyDst)[2] = ((int*)pabySrc)[2];
+                ((int*)pabyDst)[3] = ((int*)pabySrc)[3];
+                pabyDst += nDstPixelOffset;
+                pabySrc += nSrcPixelOffset;
+            }
+        }
+        else
+        {
+            CPLAssert(FALSE);
         }
 
         return;
