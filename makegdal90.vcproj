@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject            
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="9.00"
 	Name="makegdal"
 	ProjectGUID="{769DD10E-E284-46BE-9172-A35184250A3A}"
 	Keyword="MakeFileProj">
@@ -16,9 +16,9 @@
 			ConfigurationType="0">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 install"
-				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 install"
-				CleanCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 clean"
+				BuildCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1 &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1 install"
+				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1 &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1 install"
+				CleanCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 DEBUG=1 clean"
 				Output="gdal17.dll"/>
 		</Configuration>
 		<Configuration
@@ -28,9 +28,9 @@
 			ConfigurationType="0">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 install"
-				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 install"
-				CleanCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 clean"
+				BuildCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 install"
+				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 install"
+				CleanCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1500 clean"
 				Output="gdal17.dll"/>
 		</Configuration>
 	</Configurations>
