@@ -30,6 +30,14 @@
 
 #include "gdal_priv.h"
 
+#include <stdexcept>
+#include <limits>
+
+// Disable the new GDALCopyWords implementation for the time being, until
+// it's more ready for prime time.
+// #define USE_NEW_COPYWORDS 1
+
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -90,9 +98,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( poBlock == NULL )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-			"GetBlockRef failed at X block offset %d, "
+            "GetBlockRef failed at X block offset %d, "
                         "Y block offset %d", 0, nLBlockY );
-		    return( CE_Failure );
+            return( CE_Failure );
                 }
 
                 if( eRWFlag == GF_Write )
@@ -218,7 +226,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( !poBlock )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-			"GetBlockRef failed at X block offset %d, "
+            "GetBlockRef failed at X block offset %d, "
                         "Y block offset %d", nLBlockX, nLBlockY );
                     return( CE_Failure );
                 }
@@ -562,6 +570,583 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
     }
 }
 
+
+/************************************************************************/
+/*                            ClampValue()                                */
+/************************************************************************/
+/**
+ * Clamp values of type T to a specified range
+ *
+ * @param tValue the value
+ * @param tMax the max value
+ * @param tMin the min value
+ */
+template <class T>
+inline T ClampValue(T tValue, T tMax, T tMin)
+{
+    return tValue > tMax ? tMax :
+           tValue < tMin ? tMin : tValue;
+}
+
+
+/************************************************************************/
+/*                           GDALCopyWordsT()                            */
+/************************************************************************/
+/**
+ * Template function, used to copy data from pSrcData into buffer
+ * pDstData, with stride nSrcPixelOffset in the source data and
+ * stride nDstPixelOffset in the destination data. This template can
+ * deal with the case where the input data type is real and
+ * the output is real.
+ *
+ * @param pSrcData the source data buffer
+ * @param nSrcPixelOffset the stride, in the buffer pSrcData for pixels
+ *                      of interest.
+ * @param pDstData the destination buffer.
+ * @param nDstPixelOffset the stride in the buffer pDstData for pixels of
+ *                      interest.
+ * @param nWordCount the total number of pixel words to copy
+ *
+ * @code
+ * // Assume an input buffer of type GUInt16 named pBufferIn 
+ * GByte *pBufferOut = new GByte[numBytesOut];
+ * GDALCopyWordsT<GUInt16, GByte>(pSrcData, 2, pDstData, 1, numBytesOut);
+ * @code
+ * @note
+ * This is a private function, and should not be exposed outside of rasterio.cpp.
+ * External users should call the GDALCopyWords driver function.
+ * @note
+ */
+template <class Tin, class Tout>
+static void GDALCopyWordsT(Tin *pSrcData, int nSrcPixelOffset,
+                           Tout *pDstData, int nDstPixelOffset,
+                           int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+
+    Tin toOutMax = std::numeric_limits<Tin>::max();
+    Tin toOutMin = 0;
+
+    // Compute the actual minimum value of Tout in terms of Tin.
+    if (std::numeric_limits<Tout>::is_signed)
+    {
+        // the minimum value is less than zero
+        if (std::numeric_limits<Tout>::digits < std::numeric_limits<Tin>::digits)
+        {
+            // Tout is smaller than Tin, so we need to clamp values in input
+            // to the range of Tout's min/max values
+            if (std::numeric_limits<Tin>::is_signed)
+            {
+                toOutMin = static_cast<Tin>(std::numeric_limits<Tout>::min());
+            }
+            toOutMax = static_cast<Tin>(std::numeric_limits<Tout>::max());
+        }
+    }
+    else
+    {
+        // the output is unsigned, so we just need to determine the max
+        if (std::numeric_limits<Tout>::digits < std::numeric_limits<Tin>::digits)
+        {
+            // Tout is smaller than Tin, so we need to clamp the input values
+            // to the range of Tout's max
+            toOutMax = static_cast<Tin>(std::numeric_limits<Tout>::max());
+        }
+    }
+
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        Tin tValue = *reinterpret_cast<Tin *>(pSrcDataPtr + (n * nSrcPixelOffset));
+
+        Tout *pOutPixel = reinterpret_cast<Tout *>(pDstDataPtr + nDstOffset);
+        *pOutPixel = static_cast<Tout>(ClampValue<Tin>(tValue, toOutMax, toOutMin));
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+
+// Partial template specialization: float input, integer output
+template <class Tout>
+static void GDALCopyWordsT(float *pSrcData, int nSrcPixelOffset,
+                           Tout *pDstData, int nDstPixelOffset,
+                           int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        float fValue = *reinterpret_cast<float *>(pSrcDataPtr + (n * nSrcPixelOffset));
+
+        Tout tOutValue = static_cast<Tout>(::floor(fValue + 0.5f));
+
+        Tout *pOutPixel = reinterpret_cast<Tout *>(pDstDataPtr + nDstOffset);
+        *pOutPixel = tOutValue;
+
+        // Perform range/saturation checks
+        if (fValue > static_cast<float>(std::numeric_limits<Tout>::max()))
+        {
+            *pOutPixel = std::numeric_limits<Tout>::max();
+        }
+        else if (fValue < static_cast<float>(std::numeric_limits<Tout>::min()))
+        {
+            *pOutPixel = std::numeric_limits<Tout>::min();
+        }
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+
+// Partial template specialization: double input, integer output
+template <class Tout>
+static void GDALCopyWordsT(double *pSrcData, int nSrcPixelOffset,
+                           Tout *pDstData, int nDstPixelOffset,
+                           int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        double dfValue = *reinterpret_cast<double *>(pSrcDataPtr + (n * nSrcPixelOffset));
+
+        Tout tOutValue = static_cast<Tout>(::floor(dfValue + 0.5));
+
+        Tout *pOutPixel = reinterpret_cast<Tout *>(pDstDataPtr + nDstOffset);
+        *pOutPixel = tOutValue;
+
+        // Perform range/saturation checks
+        if (dfValue > static_cast<double>(std::numeric_limits<Tout>::max()))
+        {
+            *pOutPixel = std::numeric_limits<Tout>::max();
+        }
+        else if (dfValue < static_cast<double>(std::numeric_limits<Tout>::min()))
+        {
+            *pOutPixel = std::numeric_limits<Tout>::min();
+        }
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+
+// Template spezialization: float input, float output
+void GDALCopyWordsT(float *pSrcData, int nSrcPixelOffset,
+                    float *pDstData, int nDstPixelOffset,
+                    int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        float fValue = *reinterpret_cast<float *>(pSrcDataPtr + (n * nSrcPixelOffset));
+
+        float fOutValue = fValue;
+        float *pOutPixel = reinterpret_cast<float *>(pDstDataPtr + nDstOffset);
+        *pOutPixel = fOutValue;
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+
+// Template specialization: float input, double output
+void GDALCopyWordsT(float *pSrcData, int nSrcPixelOffset,
+					double *pDstData, int nDstPixelOffset,
+					int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        float fValue = *reinterpret_cast<float *>(pSrcDataPtr + (n * nSrcPixelOffset));
+        double *pOutPixel = reinterpret_cast<double *>(pDstDataPtr + nDstOffset);
+        *pOutPixel = static_cast<double>(fValue);
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+
+// Template specialization: double input, float output
+void GDALCopyWordsT(double *pSrcData, int nSrcPixelOffset,
+                    float *pDstData, int nDstPixelOffset,
+                    int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        double dfValue = *reinterpret_cast<double *>(pSrcDataPtr + (n * nSrcPixelOffset));
+        float *pOutPixel = reinterpret_cast<float *>(pDstDataPtr + nDstOffset);
+        *pOutPixel = static_cast<float>(dfValue);
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+
+// Template specialization: double input, double output
+void GDALCopyWordsT(double *pSrcData, int nSrcPixelOffset,
+                    double *pDstData, int nDstPixelOffset,
+                    int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        double dfValue = *reinterpret_cast<double *>(pSrcDataPtr + (n * nSrcPixelOffset));
+        double *pOutPixel = reinterpret_cast<double *>(pDstDataPtr + nDstOffset);
+        *pOutPixel = dfValue;
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+/************************************************************************/
+/*                   GDALCopyWordsComplexT()                            */
+/************************************************************************/
+/**
+ * Template function, used to copy data from pSrcData into buffer
+ * pDstData, with stride nSrcPixelOffset in the source data and
+ * stride nDstPixelOffset in the destination data. Deals with the 
+ * complex case, where input is complex and output is complex.
+ *
+ * @param pSrcData the source data buffer
+ * @param nSrcPixelOffset the stride, in the buffer pSrcData for pixels
+ *                      of interest.
+ * @param pDstData the destination buffer.
+ * @param nDstPixelOffset the stride in the buffer pDstData for pixels of
+ *                      interest.
+ * @param nWordCount the total number of pixel words to copy
+ *
+ * @code
+ * // Assume an input buffer of type GUInt16 named pBufferIn 
+ * GByte *pBufferOut = new GByte[numBytesOut];
+ * GDALCopyWordsT<GUInt16, GByte>(pSrcData, 2, pDstData, 1, numBytesOut);
+ * @code
+ * @note
+ * This is a private function, and should not be exposed outside of rasterio.cpp.
+ * External users should call the GDALCopyWords driver function.
+ * @note
+ */
+template <class Tin, class Tout>
+static void GDALCopyWordsComplexT(Tin *pSrcData, int nSrcPixelOffset,
+                                  Tout *pDstData, int nDstPixelOffset,
+                                  int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        Tin *pPixelIn = reinterpret_cast<Tin *>(pSrcDataPtr + n * nSrcPixelOffset);
+        Tin tValueRe = pPixelIn[0];
+        Tin tValueIm = pPixelIn[1];
+
+        Tout nValueRe = static_cast<Tout>(tValueRe);
+        Tout nValueIm = static_cast<Tout>(tValueIm);
+
+        Tout *pPixelOut = reinterpret_cast<Tout *>(pDstDataPtr + nDstOffset);
+        pPixelOut[0] = nValueRe;
+        pPixelOut[1] = nValueIm;
+
+        // Perform range/saturation checks
+        if (tValueRe > static_cast<Tin>(std::numeric_limits<Tout>::max()))
+        {
+            pPixelOut[0] = std::numeric_limits<Tout>::max();
+        }
+        else if (tValueRe < static_cast<Tin>(std::numeric_limits<Tout>::min()))
+        {
+            pPixelOut[0] = std::numeric_limits<Tout>::min();
+        }
+
+        if (tValueIm > static_cast<Tin>(std::numeric_limits<Tout>::max()))
+        {
+            pPixelOut[1] = std::numeric_limits<Tout>::max();
+        }
+        else if (tValueIm < static_cast<Tin>(std::numeric_limits<Tout>::min()))
+        {
+            pPixelOut[1] = std::numeric_limits<Tout>::min();
+        }
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+
+/************************************************************************/
+/*                   GDALCopyWordsComplexOutT()                         */
+/************************************************************************/
+/**
+ * Template function, used to copy data from pSrcData into buffer
+ * pDstData, with stride nSrcPixelOffset in the source data and
+ * stride nDstPixelOffset in the destination data. Deals with the 
+ * case where the value is real coming in, but complex going out.
+ *
+ * @param pSrcData the source data buffer
+ * @param nSrcPixelOffset the stride, in the buffer pSrcData for pixels
+ *                      of interest, in bytes.
+ * @param pDstData the destination buffer.
+ * @param nDstPixelOffset the stride in the buffer pDstData for pixels of
+ *                      interest, in bytes.
+ * @param nWordCount the total number of pixel words to copy
+ *
+ * @code
+ * // Assume an input buffer of type GUInt16 named pBufferIn 
+ * GByte *pBufferOut = new GByte[numBytesOut];
+ * GDALCopyWordsT<GUInt16, GByte>(pSrcData, 2, pDstData, 1, numBytesOut);
+ * @code
+ * @note
+ * This is a private function, and should not be exposed outside of rasterio.cpp.
+ * External users should call the GDALCopyWords driver function.
+ * @note
+ */
+template <class Tin, class Tout>
+static void GDALCopyWordsComplexOutT(Tin *pSrcData, int nSrcPixelOffset,
+                                     Tout *pDstData, int nDstPixelOffset,
+                                     int nWordCount)
+{
+    unsigned int nDstOffset = 0;
+    Tout tOutZero = static_cast<Tout>(0);
+    GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
+    GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
+
+    for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
+    {
+        Tin tValue = *reinterpret_cast<Tin *>(pSrcDataPtr + n * nSrcPixelOffset);
+
+        Tout nValue = static_cast<Tout>(tValue);
+        Tout *pPixOut = reinterpret_cast<Tout *>(pDstDataPtr + nDstOffset);
+        pPixOut[0] = nValue;
+        pPixOut[1] = tOutZero;
+
+        // Perform range/saturation checks
+        if (tValue > static_cast<Tin>(std::numeric_limits<Tout>::max()))
+        {
+            pPixOut[0] = std::numeric_limits<Tout>::max();
+        }
+        else if (tValue < static_cast<Tin>(std::numeric_limits<Tout>::min()))
+        {
+            pPixOut[0] = std::numeric_limits<Tout>::min();
+        }
+
+        nDstOffset += nDstPixelOffset;
+    }
+}
+
+
+/************************************************************************/
+/*                           GDALCopyWordsFromT()                       */
+/************************************************************************/
+/**
+ * Template driver function. Given the input type T, call the appropriate
+ * GDALCopyWordsT function template for the desired output type. You should
+ * never call this function directly (call GDALCopyWords instead).
+ *
+ * @param pSrcData source data buffer
+ * @param nSrcPixelOffset pixel stride in input buffer, in pixel words
+ * @param bInComplex input is complex
+ * @param pDstData destination data buffer
+ * @param eDstType destination data type
+ * @param nDstPixelOffset pixel stride in output buffer, in pixel words
+ * @param nWordCount number of pixel words to be copied
+ */
+template <class T>
+static void GDALCopyWordsFromT(T *pSrcData, int nSrcPixelOffset, bool bInComplex,
+                               void *pDstData, GDALDataType eDstType, int nDstPixelOffset,
+                               int nWordCount)
+{
+    switch (eDstType)
+    {
+    case GDT_Byte:
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
+                       static_cast<GByte *>(pDstData), nDstPixelOffset,
+                       nWordCount);
+        break;
+    case GDT_UInt16:
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
+                       static_cast<unsigned short *>(pDstData), nDstPixelOffset,
+                       nWordCount);
+        break;
+    case GDT_Int16:
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
+                       static_cast<short *>(pDstData), nDstPixelOffset,
+                       nWordCount);
+        break;
+    case GDT_UInt32:
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
+                       static_cast<unsigned int *>(pDstData), nDstPixelOffset,
+                       nWordCount);
+        break;
+    case GDT_Int32:
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
+                       static_cast<int *>(pDstData), nDstPixelOffset,
+                       nWordCount);
+        break;
+    case GDT_Float32:
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
+                       static_cast<float *>(pDstData), nDstPixelOffset,
+                       nWordCount);
+        break;
+    case GDT_Float64:
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
+                       static_cast<double *>(pDstData), nDstPixelOffset,
+                       nWordCount);
+        break;
+    case GDT_CInt16:
+        if (bInComplex)
+        {
+            GDALCopyWordsComplexT<T, short>(pSrcData, nSrcPixelOffset,
+                                            static_cast<short *>(pDstData), nDstPixelOffset,
+                                            nWordCount);
+        }
+        else // input is not complex, so we need to promote to a complex buffer
+        {
+            GDALCopyWordsComplexOutT<T, short>(pSrcData, nSrcPixelOffset,
+                                               static_cast<short *>(pDstData), nDstPixelOffset,
+                                               nWordCount);
+        }
+        break;
+    case GDT_CInt32:
+        if (bInComplex)
+        {
+            GDALCopyWordsComplexT<T, int>(pSrcData, nSrcPixelOffset,
+                                          static_cast<int *>(pDstData), nDstPixelOffset,
+                                          nWordCount);
+        }
+        else // input is not complex, so we need to promote to a complex buffer
+        {
+            GDALCopyWordsComplexOutT<T, int>(pSrcData, nSrcPixelOffset,
+                                             static_cast<int *>(pDstData), nDstPixelOffset,
+                                             nWordCount);
+        }
+        break;
+    case GDT_CFloat32:
+        if (bInComplex)
+        {
+            GDALCopyWordsComplexT<T, float>(pSrcData, nSrcPixelOffset,
+                                            static_cast<float *>(pDstData), nDstPixelOffset,
+                                            nWordCount);
+        }
+        else // input is not complex, so we need to promote to a complex buffer
+        {
+            GDALCopyWordsComplexOutT<T, float>(pSrcData, nSrcPixelOffset,
+                                               static_cast<float *>(pDstData), nDstPixelOffset,
+                                               nWordCount);
+        }
+        break;
+    case GDT_CFloat64:
+        if (bInComplex)
+        {
+            GDALCopyWordsComplexT<T, double>(pSrcData, nSrcPixelOffset,
+                                             static_cast<double *>(pDstData), nDstPixelOffset,
+                                             nWordCount);
+        }
+        else // input is not complex, so we need to promote to a complex buffer
+        {
+            GDALCopyWordsComplexOutT<T, double>(pSrcData, nSrcPixelOffset,
+                                                static_cast<double *>(pDstData), nDstPixelOffset,
+                                                nWordCount);
+        }
+        break;
+    case GDT_Unknown:
+    default:
+        CPLAssert(FALSE);
+        throw std::runtime_error("Unknown or invalid data type provided "
+            "to GDALCopyWords.");
+    }
+}
+
+/************************************************************************/
+/*                          GDALReplicateWord()                         */
+/************************************************************************/
+
+void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
+                       void *pDstData, GDALDataType eDstType, int nDstPixelOffset,
+                       int nWordCount)
+{
+/* ----------------------------------------------------------------------- */
+/* Special case when the source data is always the same value              */
+/* (for VRTSourcedRasterBand::IRasterIO and VRTDerivedRasterBand::IRasterIO*/
+/*  for example)                                                           */
+/* ----------------------------------------------------------------------- */
+    /* Let the general translation case do the necessary conversions */
+    /* on the first destination element */
+    GDALCopyWords(pSrcData, eSrcType, 0,
+                  pDstData, eDstType, nDstPixelOffset,
+                  1 );
+
+    /* Now copy the first element to the nWordCount - 1 following destination */
+    /* elements */
+    nWordCount--;
+    GByte *pabyDstWord = ((GByte *)pDstData) + nDstPixelOffset;
+
+    switch (eDstType)
+    {
+        case GDT_Byte:
+        {
+            if (nDstPixelOffset == 1)
+            {
+                memset(pabyDstWord, *(GByte*)pDstData, nWordCount - 1);
+            }
+            else
+            {
+                GByte valSet = *(GByte*)pDstData;
+                while(nWordCount--)
+                {
+                    *pabyDstWord = valSet;
+                    pabyDstWord += nDstPixelOffset;
+                }
+            }
+            break;
+        }
+
+#define CASE_DUPLICATE_SIMPLE(enum_type, c_type) \
+        case enum_type:\
+        { \
+            c_type valSet = *(c_type*)pDstData; \
+            while(nWordCount--) \
+            { \
+                *(c_type*)pabyDstWord = valSet; \
+                pabyDstWord += nDstPixelOffset; \
+            } \
+            break; \
+        }
+
+        CASE_DUPLICATE_SIMPLE(GDT_UInt16, GUInt16)
+        CASE_DUPLICATE_SIMPLE(GDT_Int16,  GInt16)
+        CASE_DUPLICATE_SIMPLE(GDT_UInt32, GUInt32)
+        CASE_DUPLICATE_SIMPLE(GDT_Int32,  GInt32)
+        CASE_DUPLICATE_SIMPLE(GDT_Float32,float)
+        CASE_DUPLICATE_SIMPLE(GDT_Float64,double)
+
+#define CASE_DUPLICATE_COMPLEX(enum_type, c_type) \
+        case enum_type:\
+        { \
+            c_type valSet1 = ((c_type*)pDstData)[0]; \
+            c_type valSet2 = ((c_type*)pDstData)[1]; \
+            while(nWordCount--) \
+            { \
+                ((c_type*)pabyDstWord)[0] = valSet1; \
+                ((c_type*)pabyDstWord)[1] = valSet2; \
+                pabyDstWord += nDstPixelOffset; \
+            } \
+            break; \
+        }
+
+        CASE_DUPLICATE_COMPLEX(GDT_CInt16, GInt16)
+        CASE_DUPLICATE_COMPLEX(GDT_CInt32, GInt32)
+        CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
+        CASE_DUPLICATE_COMPLEX(GDT_CFloat64, double)
+
+        default:
+            CPLAssert( FALSE );
+    }
+}
+
 /************************************************************************/
 /*                           GDALCopyWords()                            */
 /************************************************************************/
@@ -585,17 +1170,121 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
  * on word boundaries.  It is assumed that all values are in native machine
  * byte order. 
  *
- * @param pSrcData 
+ * @param pSrcData Pointer to source data to be converted.
+ * @param eSrcType the source data type (see GDALDataType enum)
+ * @param nSrcPixelOffset Source pixel offset, in bytes
+ * @param pDstData Pointer to buffer where destination data should go
+ * @param eDstType the destination data type (see GDALDataType enum)
+ * @param nDstPixelOffset Destination pixel offset, in bytes
+ * @param nWordCount number of words to be copied
  *
  * 
- */ 
+ * @note 
+ * When adding a new data type to GDAL, you must do the following to
+ * support it properly within the GDALCopyWords function:
+ * 1. Add the data type to the switch on eSrcType in GDALCopyWords.
+ *    This should invoke the appropriate GDALCopyWordsFromT wrapper.
+ * 2. Add the data type to the switch on eDstType in GDALCopyWordsFromT.
+ *    This should call the appropriate GDALCopyWordsT template.
+ * 3. Specialize the GDALCopyWordsT template if appropriate for a given
+ *    data type. At this time, it is not done.
+ */
 
-void CPL_STDCALL 
+void CPL_STDCALL
 GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                int nWordCount )
 
 {
+#ifdef USE_NEW_COPYWORDS
+
+    // Deal with the case where we're replicating a single word into the
+    // provided buffer
+    if (nSrcPixelOffset == 0 && nWordCount > 1)
+    {
+        GDALReplicateWord(pSrcData, eSrcType, pDstData, eDstType, nDstPixelOffset, nWordCount);
+        return;
+    }
+
+
+    int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
+    // Let memcpy() handle the case where we're copying a packed buffer
+    // of pixels.
+    if (eSrcType == eDstType && nSrcPixelOffset == nDstPixelOffset &&
+        nSrcPixelOffset == nSrcDataTypeSize)
+    {
+        memcpy(pDstData, pSrcData, nWordCount * nSrcDataTypeSize);
+        return;
+    }
+
+    // Handle the more general case -- deals with conversion of data types
+    // directly.
+    switch (eSrcType)
+    {
+    case GDT_Byte:
+        GDALCopyWordsFromT<unsigned char>(static_cast<unsigned char *>(pSrcData), nSrcPixelOffset, false,
+                                 pDstData, eDstType, nDstPixelOffset,
+                                 nWordCount);
+        break;
+    case GDT_UInt16:
+        GDALCopyWordsFromT<unsigned short>(static_cast<unsigned short *>(pSrcData), nSrcPixelOffset, false,
+                                           pDstData, eDstType, nDstPixelOffset,
+                                           nWordCount);
+        break;
+    case GDT_Int16:
+        GDALCopyWordsFromT<short>(static_cast<short *>(pSrcData), nSrcPixelOffset, false,
+                                  pDstData, eDstType, nDstPixelOffset,
+                                  nWordCount);
+        break;
+    case GDT_UInt32:
+        GDALCopyWordsFromT<unsigned int>(static_cast<unsigned int *>(pSrcData), nSrcPixelOffset, false,
+                                         pDstData, eDstType, nDstPixelOffset,
+                                         nWordCount);
+        break;
+    case GDT_Int32:
+        GDALCopyWordsFromT<int>(static_cast<int *>(pSrcData), nSrcPixelOffset, false,
+                                pDstData, eDstType, nDstPixelOffset,
+                                nWordCount);
+        break;
+    case GDT_Float32:
+        GDALCopyWordsFromT<float>(static_cast<float *>(pSrcData), nSrcPixelOffset, false,
+                                  pDstData, eDstType, nDstPixelOffset,
+                                  nWordCount);
+        break;
+    case GDT_Float64:
+        GDALCopyWordsFromT<double>(static_cast<double *>(pSrcData), nSrcPixelOffset, false,
+                                   pDstData, eDstType, nDstPixelOffset,
+                                   nWordCount);
+        break;
+    case GDT_CInt16:
+        GDALCopyWordsFromT<short>(static_cast<short *>(pSrcData), nSrcPixelOffset, true,
+                                 pDstData, eDstType, nDstPixelOffset,
+                                 nWordCount);
+        break;
+    case GDT_CInt32:
+        GDALCopyWordsFromT<int>(static_cast<int *>(pSrcData), nSrcPixelOffset, true,
+                                 pDstData, eDstType, nDstPixelOffset,
+                                 nWordCount);
+        break;
+    case GDT_CFloat32:
+        GDALCopyWordsFromT<float>(static_cast<float *>(pSrcData), nSrcPixelOffset, true,
+                                 pDstData, eDstType, nDstPixelOffset,
+                                 nWordCount);
+        break;
+    case GDT_CFloat64:
+        GDALCopyWordsFromT<double>(static_cast<double *>(pSrcData), nSrcPixelOffset, true,
+                                 pDstData, eDstType, nDstPixelOffset,
+                                 nWordCount);
+        break;
+    case GDT_Unknown:
+    default:
+        CPLAssert(FALSE);
+        throw std::runtime_error("Unknown or invalid data type provided "
+            "to GDALCopyWords.");
+    }
+
+#else // undefined USE_NEW_COPYWORDS
+    #warning "Using legacy GDALCopyWords implementation"
 /* -------------------------------------------------------------------- */
 /*      Special case when no data type translation is required.         */
 /* -------------------------------------------------------------------- */
@@ -1404,6 +2093,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
             CPLAssert( FALSE );
         }
     } /* next iWord */
+#endif // defined USE_NEW_COPYWORDS
 }
 
 /************************************************************************/
