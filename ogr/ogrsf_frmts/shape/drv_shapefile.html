@@ -109,6 +109,14 @@ attributes suffer a number of limitations:<P>
 be silently truncated.  This may result in non-unique column names, which 
 will definitely cause problems later. <p>
 
+<li> Starting with version 1.7, the OGR Shapefile driver tries to generate
+unique field names. Successive duplicate field names, including those created
+by truncation to 10 characters, will be truncated to 8 characters and appended
+with a serial number from 1 to 99. <br>For example:
+<ul><li>a &rarr; a, a &rarr; a_1, A &rarr; A_2;
+<li>abcdefghijk &rarr; abcdefghij, abcdefghijkl &rarr; abcdefgh_1</ul>
+<p>
+
 <li> Only Integer, Real, String and Date (not DateTime, just year/month/day)
 field types are supported.  The various list, and binary field types cannot
 be created.<p>
