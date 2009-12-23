@@ -616,12 +616,12 @@ inline void CopyWord(float fValueIn, float &fValueOut)
 
 inline void CopyWord(float fValueIn, double &dfValueOut)
 {
-	dfValueOut = fValueIn;
+    dfValueOut = fValueIn;
 }
 
 inline void CopyWord(double dfValueIn, float &fValueOut)
 {
-	fValueOut = static_cast<float>(dfValueIn);
+    fValueOut = static_cast<float>(dfValueIn);
 }
 
 template <class Tout>
@@ -903,8 +903,8 @@ static void GDALCopyWordsComplexT(Tin *pSrcData, int nSrcPixelOffset,
     GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
     GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
 
-	// Determine the minimum and maximum value we can have based
-	// on the constraints of Tin and Tout.
+    // Determine the minimum and maximum value we can have based
+    // on the constraints of Tin and Tout.
     Tin tMaxValue, tMinValue;
     GetDataLimits<Tin, Tout>(tMaxValue, tMinValue);
 
@@ -965,19 +965,18 @@ static void GDALCopyWordsComplexOutT(Tin *pSrcData, int nSrcPixelOffset,
     GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
     GByte *pDstDataPtr = reinterpret_cast<GByte *>(pDstData);
 
-	// Determine the minimum and maximum value we can have based
-	// on the constraints of Tin and Tout.
+    // Determine the minimum and maximum value we can have based
+    // on the constraints of Tin and Tout.
     Tin tMaxValue, tMinValue;
     GetDataLimits<Tin, Tout>(tMaxValue, tMinValue);
 
     for (unsigned int n = 0; n < (unsigned int)(nWordCount); n++)
     {
         Tin tValue = *reinterpret_cast<Tin *>(pSrcDataPtr + n * nSrcPixelOffset);
-
-		ClampValue(tValue, tMaxValue, tMinValue);
-
+		Tin tTemp;
         Tout nValue;
-        CopyWord(tValue, nValue);
+        tTemp = ClampValue(tValue, tMaxValue, tMinValue);
+        CopyWord(tTemp, nValue);
 
         Tout *pPixOut = reinterpret_cast<Tout *>(pDstDataPtr + nDstOffset);
         pPixOut[0] = nValue;
@@ -1009,48 +1008,40 @@ static void GDALCopyWordsFromT(T *pSrcData, int nSrcPixelOffset, bool bInComplex
                                void *pDstData, GDALDataType eDstType, int nDstPixelOffset,
                                int nWordCount)
 {
-	// If the input is complex, and the output is real, we need a fudge
-	// factor in the input that is the size of the input data type.
-	unsigned int nOffset = 0;
-	if (bInComplex)
-	{
-		nOffset = sizeof(T);
-	}
-
     switch (eDstType)
     {
     case GDT_Byte:
-        GDALCopyWordsT(pSrcData, nSrcPixelOffset + nOffset,
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
                        static_cast<GByte *>(pDstData), nDstPixelOffset,
                        nWordCount);
         break;
     case GDT_UInt16:
-        GDALCopyWordsT(pSrcData, nSrcPixelOffset + nOffset,
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
                        static_cast<unsigned short *>(pDstData), nDstPixelOffset,
                        nWordCount);
         break;
     case GDT_Int16:
-        GDALCopyWordsT(pSrcData, nSrcPixelOffset + nOffset,
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
                        static_cast<short *>(pDstData), nDstPixelOffset,
                        nWordCount);
         break;
     case GDT_UInt32:
-        GDALCopyWordsT(pSrcData, nSrcPixelOffset + nOffset,
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
                        static_cast<unsigned int *>(pDstData), nDstPixelOffset,
                        nWordCount);
         break;
     case GDT_Int32:
-        GDALCopyWordsT(pSrcData, nSrcPixelOffset + nOffset,
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
                        static_cast<int *>(pDstData), nDstPixelOffset,
                        nWordCount);
         break;
     case GDT_Float32:
-        GDALCopyWordsT(pSrcData, nSrcPixelOffset + nOffset,
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
                        static_cast<float *>(pDstData), nDstPixelOffset,
                        nWordCount);
         break;
     case GDT_Float64:
-        GDALCopyWordsT(pSrcData, nSrcPixelOffset + nOffset,
+        GDALCopyWordsT(pSrcData, nSrcPixelOffset,
                        static_cast<double *>(pDstData), nDstPixelOffset,
                        nWordCount);
         break;
