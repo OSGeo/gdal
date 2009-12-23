@@ -33,9 +33,11 @@
 #include <stdexcept>
 #include <limits>
 
-// Disable the new GDALCopyWords implementation for the time being, until
-// it's more ready for prime time.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+/* Use old GDALCopyWords for VC++ <= 6.0 (broken template support) */
+#else
 #define USE_NEW_COPYWORDS 1
+#endif
 
 
 CPL_CVSID("$Id$");
@@ -570,7 +572,7 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
     }
 }
 
-
+#ifdef USE_NEW_COPYWORDS
 /************************************************************************/
 /*                            ClampValue()                                */
 /************************************************************************/
@@ -1108,6 +1110,7 @@ static void GDALCopyWordsFromT(T *pSrcData, int nSrcPixelOffset, bool bInComplex
             "to GDALCopyWords.");
     }
 }
+#endif
 
 /************************************************************************/
 /*                          GDALReplicateWord()                         */
@@ -1332,7 +1335,6 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
     }
 
 #else // undefined USE_NEW_COPYWORDS
-    #warning "Using legacy GDALCopyWords implementation"
 /* -------------------------------------------------------------------- */
 /*      Special case when no data type translation is required.         */
 /* -------------------------------------------------------------------- */
@@ -1664,8 +1666,6 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                     GByte byVal;
                     if( nVal > 255 )
                         byVal = 255;
-                    else if (nVal < 0)
-                        byVal = 0;
                     else
                         byVal = static_cast<GByte>(nVal);
                     *static_cast<GByte *>(pDstWord) = byVal;
@@ -1776,8 +1776,6 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                     GByte byVal;
                     if( nVal > 255 )
                         byVal = 255;
-                    else if (nVal < 0)
-                        byVal = 0;
                     else
                         byVal = nVal;
                     *static_cast<GByte *>(pDstWord) = byVal;
@@ -2046,8 +2044,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               
               dfPixelValue += 0.5;
 
-              if( dfPixelValue < -2147483647.0 )
-                  nVal = -2147483647;
+              if( dfPixelValue < -2147483648.0 )
+                  nVal = INT_MIN;
               else if( dfPixelValue > 2147483647 )
                   nVal = 2147483647;
               else
@@ -2101,8 +2099,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               dfPixelValue += 0.5;
               dfPixelValueI += 0.5;
 
-              if( dfPixelValue < -2147483647.0 )
-                  nVal = -2147483647;
+              if( dfPixelValue < -2147483648.0 )
+                  nVal = INT_MIN;
               else if( dfPixelValue > 2147483647 )
                   nVal = 2147483647;
               else
@@ -2110,8 +2108,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 
               panDstWord[0] = nVal;
 
-              if( dfPixelValueI < -2147483647.0 )
-                  nVal = -2147483647;
+              if( dfPixelValueI < -2147483648.0 )
+                  nVal = INT_MIN;
               else if( dfPixelValueI > 2147483647 )
                   nVal = 2147483647;
               else
