@@ -35,7 +35,7 @@
 
 // Disable the new GDALCopyWords implementation for the time being, until
 // it's more ready for prime time.
-// #define USE_NEW_COPYWORDS 1
+#define USE_NEW_COPYWORDS 1
 
 
 CPL_CVSID("$Id$");
@@ -625,10 +625,10 @@ static void GDALCopyWordsT(Tin *pSrcData, int nSrcPixelOffset,
     unsigned int nDstOffset = 0;
 
     Tin toOutMax = std::numeric_limits<Tin>::max();
-    Tin toOutMin = 0;
+    Tin toOutMin = std::numeric_limits<Tin>::min();
 
     // Compute the actual minimum value of Tout in terms of Tin.
-    if (std::numeric_limits<Tout>::is_signed)
+    if (std::numeric_limits<Tout>::is_signed && std::numeric_limits<Tout>::is_integer)
     {
         // the minimum value is less than zero
         if (std::numeric_limits<Tout>::digits < std::numeric_limits<Tin>::digits)
@@ -642,7 +642,7 @@ static void GDALCopyWordsT(Tin *pSrcData, int nSrcPixelOffset,
             toOutMax = static_cast<Tin>(std::numeric_limits<Tout>::max());
         }
     }
-    else
+    else if (std::numeric_limits<Tout>::is_integer)
     {
         // the output is unsigned, so we just need to determine the max
         if (std::numeric_limits<Tout>::digits < std::numeric_limits<Tin>::digits)
@@ -651,6 +651,7 @@ static void GDALCopyWordsT(Tin *pSrcData, int nSrcPixelOffset,
             // to the range of Tout's max
             toOutMax = static_cast<Tin>(std::numeric_limits<Tout>::max());
         }
+		toOutMin = 0;
     }
 
     GByte *pSrcDataPtr = reinterpret_cast<GByte *>(pSrcData);
