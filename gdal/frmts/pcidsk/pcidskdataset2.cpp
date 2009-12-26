@@ -335,7 +335,7 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
             if( nPCTSegNumber != -1 )
                 poFile->DeleteSegment( nPCTSegNumber );
             poChannel->SetMetadataValue( "DEFAULT_PCT_REF", "" );
-            nPCTSegNumber = NULL;
+            nPCTSegNumber = -1;
 
             return CE_None;
         }
@@ -993,6 +993,9 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
             try
             {
                 double adfGT[6];
+                std::vector<double> adfPCIParameters;
+                unsigned int i;
+
                 poGeoref->GetTransform( adfGT[0], adfGT[1], adfGT[2],
                                         adfGT[3], adfGT[4], adfGT[5] );
 
@@ -1000,7 +1003,23 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
                                        adfGT[0], adfGT[1], adfGT[2],
                                        adfGT[3], adfGT[4], adfGT[5] );
 
-                // parameters?
+                for( i = 0; i < 17; i++ )
+                    adfPCIParameters.push_back( padfPrjParams[i] );
+
+                if( EQUALN(pszUnits,"FOOT",4) )
+                    adfPCIParameters.push_back( 
+                        (double)(int) PCIDSK::UNIT_US_FOOT );
+                else if( EQUALN(pszUnits,"INTL FOOT",9) )
+                    adfPCIParameters.push_back( 
+                        (double)(int) PCIDSK::UNIT_INTL_FOOT );
+                else if( EQUALN(pszUnits,"DEGREE",6) )
+                    adfPCIParameters.push_back( 
+                        (double)(int) PCIDSK::UNIT_DEGREE );
+                else 
+                    adfPCIParameters.push_back( 
+                        (double)(int) PCIDSK::UNIT_METER );
+
+                poGeoref->WriteParameters( adfPCIParameters );
             }
             catch( PCIDSKException ex )
             {
@@ -1048,13 +1067,31 @@ const char *PCIDSK2Dataset::GetProjectionRef()
     else
     {
         CPLString osGeosys;
+        const char *pszUnits = NULL;
         OGRSpatialReference oSRS;
         char *pszWKT = NULL;
+        std::vector<double> adfParameters;
 
+        adfParameters.resize(18);
         try
         {
             if( poGeoref )
+            {
                 osGeosys = poGeoref->GetGeosys();
+                adfParameters = poGeoref->GetParameters();
+                if( ((UnitCode)(int)adfParameters[16]) 
+                    == PCIDSK::UNIT_DEGREE )
+                    pszUnits = "DEGREE";
+                else if( ((UnitCode)(int)adfParameters[16]) 
+                         == PCIDSK::UNIT_METER )
+                    pszUnits = "METER";
+                else if( ((UnitCode)(int)adfParameters[16]) 
+                         == PCIDSK::UNIT_US_FOOT )
+                    pszUnits = "FOOT";
+                else if( ((UnitCode)(int)adfParameters[16]) 
+                         == PCIDSK::UNIT_INTL_FOOT )
+                    pszUnits = "INTL FOOT";
+            }
         }
         catch( PCIDSKException ex )
         {
@@ -1062,7 +1099,8 @@ const char *PCIDSK2Dataset::GetProjectionRef()
                       "%s", ex.what() );
         }
         
-        if( oSRS.importFromPCI( osGeosys ) == OGRERR_NONE )
+        if( oSRS.importFromPCI( osGeosys, pszUnits, 
+                                &(adfParameters[0]) ) == OGRERR_NONE )
         {
             oSRS.exportToWkt( &pszWKT );
             osSRS = pszWKT;
