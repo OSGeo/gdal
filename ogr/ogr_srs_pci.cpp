@@ -229,6 +229,41 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Extract and "normalize" the earthmodel to look like E001,       */
+/*      D-02 or D109.                                                   */
+/* -------------------------------------------------------------------- */
+    char szEarthModel[5];
+    const char *pszEM;
+    int bIsNAD27 = FALSE;
+
+    strcpy( szEarthModel, "" );
+    pszEM = pszProj + strlen(pszProj) - 1;
+    while( pszEM != pszProj )
+    {
+        if( *pszEM == 'e' || *pszEM == 'E' || *pszEM == 'd' || *pszEM == 'D' )
+        {
+            int nCode = atoi(pszEM+1);
+
+            if( nCode >= -99 && nCode <= 999 )
+                sprintf( szEarthModel, "%c%03d", toupper(*pszEM), nCode );
+
+            break;
+        }
+
+        pszEM--;
+    }
+
+    if( EQUAL(pszEM,"E000") 
+        || EQUAL(pszEM,"D-01")
+        || EQUAL(pszEM,"D-03")
+        || EQUAL(pszEM,"D-07")
+        || EQUAL(pszEM,"D-09")
+        || EQUAL(pszEM,"D-11")
+        || EQUAL(pszEM,"D-13")
+        || EQUAL(pszEM,"D-17") )
+        bIsNAD27 = TRUE;
+    
+/* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
     if( EQUALN( pszProj, "LONG/LAT", 8 ) )
@@ -307,7 +342,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "MER", 3 ) )
     {
         SetMercator( padfPrjParams[3], padfPrjParams[2],
-                     padfPrjParams[8],
+                     (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
                      padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -328,7 +363,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "PS", 2 ) )
     {
         SetPS( padfPrjParams[3], padfPrjParams[2],
-               padfPrjParams[8],
+               (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -341,7 +376,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     else if( EQUALN( pszProj, "SG", 2 ) )
     {
         SetStereographic( padfPrjParams[3], padfPrjParams[2],
-                          padfPrjParams[8],
+                          (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
                           padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -355,22 +390,39 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     else if( EQUALN( pszProj, "SPCS", 4 ) )
     {
-        int     iZone, bNAD83 = TRUE;
+        int     iZone;
 
         iZone = CPLScanLong( (char *)pszProj + 5, 4 );
 
-        if ( !EQUALN( pszProj + 12, "E008", 4 ) )
-            bNAD83 = FALSE;
-        
-        SetStatePlane( iZone, bNAD83 );
+        SetStatePlane( iZone, !bIsNAD27 );
     }
 
-    // FIXME: Add SPIF and SPAF?  (state plane international or american feet)
+    else if( EQUALN( pszProj, "SPIF", 4 ) )
+    {
+        int     iZone;
+
+        iZone = CPLScanLong( (char *)pszProj + 5, 4 );
+
+        SetStatePlane( iZone, !bIsNAD27 );
+        SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT,
+                                           atof(SRS_UL_FOOT_CONV) );
+    }
+
+    else if( EQUALN( pszProj, "SPAF", 4 ) )
+    {
+        int     iZone;
+
+        iZone = CPLScanLong( (char *)pszProj + 5, 4 );
+
+        SetStatePlane( iZone, !bIsNAD27 );
+        SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT,
+                                           atof(SRS_UL_US_FOOT_CONV) );
+    }
 
     else if( EQUALN( pszProj, "TM", 2 ) )
     {
         SetTM( padfPrjParams[3], padfPrjParams[2],
-               padfPrjParams[8],
+               (padfPrjParams[8] != 0.0) ? padfPrjParams[9] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
@@ -445,30 +497,6 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /*      Translate the datum/spheroid.                                   */
 /* ==================================================================== */
 
-/* -------------------------------------------------------------------- */
-/*      Extract and "normalize" the earthmodel to look like E001,       */
-/*      D-02 or D109.                                                   */
-/* -------------------------------------------------------------------- */
-    char szEarthModel[5];
-    const char *pszEM;
-
-    strcpy( szEarthModel, "" );
-    pszEM = pszProj + strlen(pszProj) - 1;
-    while( pszEM != pszProj )
-    {
-        if( *pszEM == 'e' || *pszEM == 'E' || *pszEM == 'd' || *pszEM == 'D' )
-        {
-            int nCode = atoi(pszEM+1);
-
-            if( nCode >= -99 && nCode <= 999 )
-                sprintf( szEarthModel, "%c%03d", toupper(*pszEM), nCode );
-
-            break;
-        }
-
-        pszEM--;
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      We have an earthmodel string, look it up in the datum list.     */
 /* -------------------------------------------------------------------- */
@@ -563,7 +591,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                       "Cannot found matching ellipsoid definition." );
 #endif
 
-            if( EQUALN( pszProj + 12, "E999", 4 ) )
+            if( EQUALN( pszProj + 12, "E999", 4 ) 
+                || padfPrjParams[0] != 0.0 )
             {
                 double      dfInvFlattening;
 
