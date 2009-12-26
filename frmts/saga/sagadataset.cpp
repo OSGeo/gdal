@@ -372,7 +372,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     const char		*pszLine;
     int				nRows = -1, nCols = -1;
-    double			dXmin, dYmin, dCellsize, dNoData, dZFactor;
+    double			dXmin = 0.0, dYmin = 0.0, dCellsize = 0.0, dNoData = 0.0, dZFactor = 0.0;
     int				nLineCount			= 0;
     char			szDataFormat[20]	= "DOUBLE";
     char            szByteOrderBig[10]	= "FALSE";
