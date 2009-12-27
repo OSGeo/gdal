@@ -603,13 +603,6 @@ def test_ogr2ogr_20():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
-    if not ogrtest.have_geos():
-        return 'skip'
-
-    gml_drv = ogr.GetDriverByName('GML')
-    if gml_drv is None:
-        return 'skip'
-
     expected_fields = [ 'a',
                         'A_1',
                         'a_1_2',
@@ -624,20 +617,19 @@ def test_ogr2ogr_20():
                         'aaaaaAAA_7',
                         'aaaaaAAA_8',
                         'aaaaaAAA_9',
-                        'aaaaaAAA10',
-                        '' ]
+                        'aaaaaAAA10' ]
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp data/flds.gml')
-
-    ds = ogr.Open('tmp/Fields.shp')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp data/Fields.csv')
+    
+    ds = ogr.Open('tmp/Fields.dbf')
 
     if ds is None:
         return 'fail'
     layer_defn = ds.GetLayer(0).GetLayerDefn()
-    if layer_defn.GetFieldCount() != 16:
+    if layer_defn.GetFieldCount() != 15:
         gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()) )
         ds.Destroy()
-        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
         return 'fail'
 
     error_occured = False
@@ -647,7 +639,7 @@ def test_ogr2ogr_20():
             error_occured = True
 
     ds.Destroy()
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
 
     if error_occured:
         return 'fail'
