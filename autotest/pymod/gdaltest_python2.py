@@ -28,6 +28,7 @@
 ###############################################################################
 
 import urllib2
+import socket
 import os
 
 def run_func(func):
@@ -49,17 +50,24 @@ def run_func(func):
         return result
         
 def gdalurlopen(url):
+    timeout = 10
+    old_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(timeout)
     try:
         handle = urllib2.urlopen(url)
+        socket.setdefaulttimeout(old_timeout)
         return handle
     except urllib2.HTTPError, e:
         print('HTTP service for %s is down (HTTP Error: %d)' % (url, e.code))
+        socket.setdefaulttimeout(old_timeout)
         return None
     except urllib2.URLError, e:
         print('HTTP service for %s is down (HTTP Error: %s)' % (url, e.reason))
+        socket.setdefaulttimeout(old_timeout)
         return None
     except:
         print('HTTP service for %s is down.' %(url))
+        socket.setdefaulttimeout(old_timeout)
         return None
 
 def runexternal(cmd, strin = None):
