@@ -662,6 +662,18 @@ inline void CopyWord(const Tin tValueIn, Tout &tValueOut)
     tValueOut = static_cast<Tout>(ClampValue(tValueIn, tMaxVal, tMinVal));
 }
 
+template <class Tin>
+inline void CopyWord(const Tin tValueIn, float &fValueOut)
+{
+    fValueOut = tValueIn;
+}
+
+template <class Tin>
+inline void CopyWord(const Tin tValueIn, double &dfValueOut)
+{
+    dfValueOut = tValueIn;
+}
+
 inline void CopyWord(const double dfValueIn, double &dfValueOut)
 {
     dfValueOut = dfValueIn;
@@ -700,6 +712,36 @@ inline void CopyWord(const double dfValueIn, Tout &tValueOut)
         ClampValue(dfValueIn + 0.5, dfMaxVal, dfMinVal));
 }
 
+inline void CopyWord(const double dfValueIn, int &nValueOut)
+{
+    double dfMaxVal, dfMinVal;
+    GetDataLimits<double, int>(dfMaxVal, dfMinVal);
+    double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 :
+        std::floor(dfValueIn + 0.5);
+    nValueOut = static_cast<int>(
+        ClampValue(dfValue, dfMaxVal, dfMinVal));
+}
+
+inline void CopyWord(const float fValueIn, short &nValueOut)
+{
+    float fMaxVal, fMinVal;
+    GetDataLimits<float, short>(fMaxVal, fMinVal);
+    float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f :
+        std::floor(fValueIn + 0.5f);
+    nValueOut = static_cast<short>(
+        ClampValue(fValue, fMaxVal, fMinVal));
+}
+
+inline void CopyWord(const double dfValueIn, short &nValueOut)
+{
+    double dfMaxVal, dfMinVal;
+    GetDataLimits<double, short>(dfMaxVal, dfMinVal);
+    double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 :
+        std::floor(dfValueIn + 0.5);
+    nValueOut = static_cast<short>(
+        ClampValue(dfValue, dfMaxVal, dfMinVal));
+}
+
 // Roundoff occurs for Float32 -> int32 for max/min. Overload CopyWord
 // specifically for this case.
 inline void CopyWord(const float fValueIn, int &nValueOut)
@@ -714,7 +756,7 @@ inline void CopyWord(const float fValueIn, int &nValueOut)
     }
     else
     {
-        nValueOut = static_cast<int>(fValueIn + 0.5f);
+        nValueOut = static_cast<int>(std::floor(fValueIn + 0.5f));
     }
 }
 
