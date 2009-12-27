@@ -1302,6 +1302,78 @@ def ogr_shape_30():
     return 'success'
     
 ###############################################################################
+# Test truncation of long and duplicate field names.
+# FIXME: Empty field names are allowed now!
+
+def ogr_shape_31():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    fields = [ ('a', ogr.OFTReal),
+               ('A', ogr.OFTInteger),
+               ('A_1', ogr.OFTInteger),
+               ('A_1', ogr.OFTInteger),
+               ('a_1_2', ogr.OFTInteger),
+               ('aaaaaAAAAAb', ogr.OFTInteger),
+               ('aAaaaAAAAAc', ogr.OFTInteger),
+               ('aaaaaAAAABa', ogr.OFTInteger),
+               ('aaaaaAAAABb', ogr.OFTInteger),
+               ('aaaaaAAA_1', ogr.OFTInteger),
+               ('aaaaaAAAABc', ogr.OFTInteger),
+               ('aaaaaAAAABd', ogr.OFTInteger),
+               ('aaaaaAAAABe', ogr.OFTInteger),
+               ('aaaaaAAAABf', ogr.OFTInteger),
+               ('aaaaaAAAABg', ogr.OFTInteger),
+               ('aaaaaAAAABh', ogr.OFTInteger),
+               ('aaaaaAAAABi', ogr.OFTInteger),
+               ('aaaaaAAA10', ogr.OFTString),
+               ('', ogr.OFTInteger),
+               ('', ogr.OFTInteger) ]
+
+    expected_fields = [ 'a',
+                        'A_1',
+                        'A_1_1',
+                        'A_1_2',
+                        'a_1_2_1',
+                        'aaaaaAAAAA',
+                        'aAaaaAAA_1',
+                        'aaaaaAAAAB',
+                        'aaaaaAAA_2',
+                        'aaaaaAAA_3',
+                        'aaaaaAAA_4',
+                        'aaaaaAAA_5',
+                        'aaaaaAAA_6',
+                        'aaaaaAAA_7',
+                        'aaaaaAAA_8',
+                        'aaaaaAAA_9',
+                        'aaaaaAAA10',
+                        'aaaaaAAA11',
+                        '',
+                        '_1' ]
+
+    #######################################################
+    # Create Layer
+    gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer( 'Fields' )
+
+    #######################################################
+    # Setup Schema with weird field names
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ogrtest.quick_create_layer_def( gdaltest.shape_lyr, fields )
+    gdal.PopErrorHandler()
+
+    layer_defn = gdaltest.shape_lyr.GetLayerDefn()
+    error_occured = False
+    for i in range( layer_defn.GetFieldCount() ):
+        if layer_defn.GetFieldDefn( i ).GetNameRef() != expected_fields[i]:
+            print 'Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn( i ).GetNameRef()
+            error_occured = True
+
+    if error_occured:
+        return 'fail'
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1351,6 +1423,7 @@ gdaltest_list = [
     ogr_shape_28,
     ogr_shape_29,
     ogr_shape_30,
+    ogr_shape_31,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

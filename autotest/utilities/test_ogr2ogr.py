@@ -595,6 +595,65 @@ def test_ogr2ogr_19():
 
     return 'success'
     
+###############################################################################
+# Test correct remap of fields when laundering to Shapefile format
+# FIXME: Any field is skipped if a subsequent field with same name is found.
+
+def test_ogr2ogr_20():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    gml_drv = ogr.GetDriverByName('GML')
+    if gml_drv is None:
+        return 'skip'
+
+    expected_fields = [ 'a',
+                        'A_1',
+                        'a_1_2',
+                        'aaaaaAAAAA',
+                        'aAaaaAAA_1',
+                        'aaaaaAAAAB',
+                        'aaaaaAAA_2',
+                        'aaaaaAAA_3',
+                        'aaaaaAAA_4',
+                        'aaaaaAAA_5',
+                        'aaaaaAAA_6',
+                        'aaaaaAAA_7',
+                        'aaaaaAAA_8',
+                        'aaaaaAAA_9',
+                        'aaaaaAAA10',
+                        '' ]
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp data/flds.gml')
+
+    ds = ogr.Open('tmp/Fields.shp')
+
+    if ds is None:
+        return 'fail'
+    layer_defn = ds.GetLayer(0).GetLayerDefn()
+    if layer_defn.GetFieldCount() != 16:
+        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()) )
+        ds.Destroy()
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.shp')
+        return 'fail'
+
+    error_occured = False
+    for i in range( layer_defn.GetFieldCount() ):
+        if layer_defn.GetFieldDefn( i ).GetNameRef() != expected_fields[i]:
+            print 'Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn( i ).GetNameRef()
+            error_occured = True
+
+    ds.Destroy()
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.shp')
+
+    if error_occured:
+        return 'fail'
+
+    return 'success'
+    
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -614,7 +673,8 @@ gdaltest_list = [
     test_ogr2ogr_16,
     test_ogr2ogr_17,
     test_ogr2ogr_18,
-    test_ogr2ogr_19 ]
+    test_ogr2ogr_19,
+    test_ogr2ogr_20 ]
     
 if __name__ == '__main__':
 

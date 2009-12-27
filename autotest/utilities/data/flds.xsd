@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml" elementFormDefault="qualified" version="1.0">
+<xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengeospatial.net/gml/2.1.2/feature.xsd"/><xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:_FeatureCollection"/>
+<xs:complexType name="FeatureCollectionType">
+  <xs:complexContent>
+    <xs:extension base="gml:AbstractFeatureCollectionType">
+      <xs:attribute name="lockId" type="xs:string" use="optional"/>
+      <xs:attribute name="scope" type="xs:string" use="optional"/>
+    </xs:extension>
+  </xs:complexContent>
+</xs:complexType>
+<xs:element name="Fields" type="ogr:Fields_Type" substitutionGroup="gml:_Feature"/>
+<xs:complexType name="Fields_Type">
+ <xs:complexContent>
+  <xs:extension base="gml:AbstractFeatureType">
+   <xs:sequence>
+    <xs:element name="geometryProperty" type="gml:GeometryPropertyType" nillable="true" minOccurs="1" maxOccurs="1"/>
+    <xs:element name="a" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="24"/>
+      <xs:fractionDigits value="15"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="A" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="A_1" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="A_1" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="a_1_2" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAAAb" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aAaaaAAAAAc" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABa" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABb" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAA_1" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABc" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABd" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABe" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABf" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABg" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABh" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAAABi" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="aaaaaAAA10" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:string">
+      <xs:maxLength value="80"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+    <xs:element name="" nillable="true" minOccurs="0" maxOccurs="1"><xs:simpleType><xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="0"/>
+    </xs:restriction></xs:simpleType></xs:element>
+   </xs:sequence>
+  </xs:extension>
+ </xs:complexContent>
+</xs:complexType>
+</xs:schema>
