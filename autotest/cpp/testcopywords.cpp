@@ -305,11 +305,19 @@ void check_GDT_Float32and64()
         for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
         {
             if (IS_FLOAT(outtype))
+            {
                 FROM_R(intype, 127.1, outtype, 127.1);
+                FROM_R(intype, -127.1, outtype, -127.1);
+            }
             else
             {
                 FROM_R(intype, 127.1, outtype, 127);
                 FROM_R(intype, 127.9, outtype, 128);
+                if (!IS_UNSIGNED(outtype))
+                {
+                    FROM_R(intype, -125.9, outtype, -126);
+                    FROM_R(intype, -127.1, outtype, -127);
+                }
             }
         }
         FROM_R(intype, -1, GDT_Byte, 0);
@@ -410,11 +418,18 @@ void check_GDT_CFloat32and64()
         for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
         {
             if (IS_FLOAT(outtype))
+            {
                 FROM_C(intype, 127.1, 127.9, outtype, 127.1, 127.9);
+                FROM_C(intype, -127.1, -127.9, outtype, -127.1, -127.9);
+            }
             else
             {
                 FROM_C(intype, 127.1, 150.9, outtype, 127, 151);
                 FROM_C(intype, 127.9, 150.1, outtype, 128, 150);
+                if (!IS_UNSIGNED(outtype))
+                {
+                    FROM_C(intype, -125.9, -127.1, outtype, -126, -127);
+                }
             }
         }
         FROM_C(intype, -1, 256, GDT_Byte, 0, 0);
