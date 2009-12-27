@@ -48,15 +48,6 @@ def wms_1():
     except:
         gdaltest.wms_drv = None
 
-
-    # NOTE - mloskot:
-    # This is a dirty hack checking if remote WMS service is online.
-    # Nothing genuine but helps to keep the buildbot waterfall green.
-    
-    srv = 'http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?'
-    if gdaltest.gdalurlopen(srv) is None:
-        gdaltest.wms_drv = None
-
     if gdaltest.wms_drv is None:
         return 'skip'
     else:
@@ -69,7 +60,18 @@ def wms_2():
 
     if gdaltest.wms_drv is None:
         return 'skip'
-
+        
+    # NOTE - mloskot:
+    # This is a dirty hack checking if remote WMS service is online.
+    # Nothing genuine but helps to keep the buildbot waterfall green.
+    
+    srv = 'http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?'
+    gdaltest.wms_srv1_ok = gdaltest.gdalurlopen(srv) is not None
+    gdaltest.wms_ds = None
+    
+    if not gdaltest.wms_srv1_ok:
+        return 'skip'
+    
     gdaltest.wms_ds = gdal.Open( 'data/pop_wms.xml' )
 
     if gdaltest.wms_ds is not None:
@@ -84,6 +86,9 @@ def wms_2():
 def wms_3():
 
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
+        return 'skip'
+
+    if not gdaltest.wms_srv1_ok:
         return 'skip'
 
     if gdaltest.wms_ds.RasterXSize != 36000 \
@@ -126,6 +131,9 @@ def wms_4():
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
         return 'skip'
 
+    if not gdaltest.wms_srv1_ok:
+        return 'skip'
+        
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -154,6 +162,9 @@ def wms_5():
     if gdaltest.wms_drv is None:
         return 'skip'
 
+    # We don't need to check if the remote service is online as we
+    # don't need a connection for this test
+    
     fn = '<GDAL_WMS><Service name="WMS"><Version>1.1.1</Version><ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl><SRS>EPSG:4326</SRS><ImageFormat>image/jpeg</ImageFormat><Layers>modis,global_mosaic</Layers><Styles></Styles></Service><DataWindow><UpperLeftX>-180.0</UpperLeftX><UpperLeftY>90.0</UpperLeftY><LowerRightX>180.0</LowerRightX><LowerRightY>-90.0</LowerRightY><SizeX>2666666</SizeX><SizeY>1333333</SizeY></DataWindow><Projection>EPSG:4326</Projection><BandsCount>3</BandsCount></GDAL_WMS>'
 
     ds = gdal.Open( fn )
@@ -179,16 +190,9 @@ def wms_6():
 
     if gdaltest.wms_drv is None:
         return 'skip'
-
-    # NOTE - mloskot:
-    # This is a dirty hack checking if remote WMS service is online.
-    # Nothing genuine but helps to keep the buildbot waterfall green.
-    srv = 'http://s0.tileservice.worldwindcentral.com/getTile?'
-    if gdaltest.gdalurlopen(srv) is None:
-        gdaltest.wms_drv = None
-
-    if gdaltest.wms_drv is None:
-        return 'skip'
+    
+    # We don't need to check if the remote service is online as we
+    # don't need a connection for this test
     
     fn = '<GDAL_WMS><Service name="TileService"><Version>1</Version><ServerUrl>http://s0.tileservice.worldwindcentral.com/getTile?</ServerUrl><Dataset>za.johannesburg_2006_20cm</Dataset></Service><DataWindow><UpperLeftX>-180.0</UpperLeftX><UpperLeftY>90.0</UpperLeftY><LowerRightX>180.0</LowerRightX><LowerRightY>-90.0</LowerRightY><SizeX>268435456</SizeX><SizeY>134217728</SizeY><TileLevel>19</TileLevel></DataWindow><Projection>EPSG:4326</Projection><OverviewCount>16</OverviewCount><BlockSizeX>512</BlockSizeX><BlockSizeY>512</BlockSizeY><BandsCount>3</BandsCount></GDAL_WMS>'
 
@@ -214,6 +218,10 @@ def wms_6():
 def wms_7():
 
     if gdaltest.wms_drv is None:
+        return 'skip'
+
+    srv = 'http://labs.metacarta.com/wms-c/Basic.py'
+    if gdaltest.gdalurlopen(srv) is None:
         return 'skip'
 
     tms = """<GDAL_WMS>
@@ -272,6 +280,10 @@ def wms_8():
     if gdaltest.wms_drv is None:
         return 'skip'
 
+    srv = 'http://labs.metacarta.com/wms-c/Basic.py'
+    if gdaltest.gdalurlopen(srv) is None:
+        return 'skip'
+        
     tms = """<GDAL_WMS>
     <Service name="TMS">
         <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py</ServerUrl>
