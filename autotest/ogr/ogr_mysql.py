@@ -222,10 +222,10 @@ def ogr_mysql_4():
         geom_read = feat_read.GetGeometryRef()
 
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
-            print 'Geometry changed. Closing rings before trying again for wkt #',item
-            print '(before):',geom.ExportToWkt()
+            print('Geometry changed. Closing rings before trying again for wkt #',item)
+            print('(before):',geom.ExportToWkt())
             geom.CloseRings()
-            print '(after) :',geom.ExportToWkt()
+            print('(after) :',geom.ExportToWkt())
             if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
                 return 'fail'
 
