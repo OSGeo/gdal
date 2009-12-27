@@ -1926,6 +1926,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                     GByte byVal;
                     if( nVal > 255 )
                         byVal = 255;
+                    else if (nVal < 0)
+                        byVal = 0;
                     else
                         byVal = static_cast<GByte>(nVal);
                     *static_cast<GByte *>(pDstWord) = byVal;
