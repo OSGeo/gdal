@@ -646,6 +646,37 @@ def test_ogr2ogr_20():
 
     return 'success'
     
+###############################################################################
+# Test ogr2ogr when the output driver has already created the fields
+# at dataset creation (#3247)
+
+def test_ogr2ogr_21():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
+        ' -f GPSTrackMaker tmp/testogr2ogr21.gtm data/dataforogr2ogr21.csv ' +
+        '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
+    ds = ogr.Open('tmp/testogr2ogr21.gtm')
+
+    if ds is None:
+        return 'fail'
+    layer_defn = ds.GetLayer(0).GetLayerDefn()
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('name') != 'NAME' or \
+       feat.GetFieldAsString('comment') != 'COMMENT':
+        print(feat.GetFieldAsString('name'))
+        print(feat.GetFieldAsString('comment'))
+        ds.Destroy()
+        os.remove('tmp/testogr2ogr21.gtm')
+        return 'fail'
+
+    ds.Destroy()
+    os.remove('tmp/testogr2ogr21.gtm')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -666,7 +697,8 @@ gdaltest_list = [
     test_ogr2ogr_17,
     test_ogr2ogr_18,
     test_ogr2ogr_19,
-    test_ogr2ogr_20 ]
+    test_ogr2ogr_20,
+    test_ogr2ogr_21 ]
     
 if __name__ == '__main__':
 
