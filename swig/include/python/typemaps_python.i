@@ -1104,8 +1104,6 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
    int buckets_val;
    int *panHistogram;
 
-  /* frankwdebug */
-
    $1 = &min_val;
    $2 = &max_val;
    $3 = &buckets_val;
@@ -1117,16 +1115,24 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
   int i;
   PyObject *psList = NULL;
 
-  /* frankwdebug */
+  Py_XDECREF($result);
+  
+  if (panHistogram)
+  {
+      psList = PyList_New(buckets_val);
+      for( i = 0; i < buckets_val; i++ )
+        PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
 
-  psList = PyList_New(buckets_val);
-  for( i = 0; i < buckets_val; i++ )
-    PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+      CPLFree( panHistogram );
 
-  CPLFree( panHistogram );
-
-  $result = Py_BuildValue( "(ddiO)", min_val, max_val, buckets_val, psList );
-  Py_XDECREF(psList);
+      $result = Py_BuildValue( "(ddiO)", min_val, max_val, buckets_val, psList );
+      Py_XDECREF(psList);
+  }
+  else
+  {
+      $result = Py_None;
+      Py_INCREF($result);
+  }
 }
 
 /***************************************************
