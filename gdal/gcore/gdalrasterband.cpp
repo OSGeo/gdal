@@ -3010,10 +3010,13 @@ CPLErr
                                          void *pProgressData )
 
 {
+    *pnBuckets = 0;
+    *ppanHistogram = NULL;
+
     if( !bForce )
         return CE_Warning;
 
-    *pnBuckets = 256;
+    int nBuckets = 256;
     
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
@@ -3029,7 +3032,7 @@ CPLErr
         double dfHalfBucket;
 
         eErr = GetStatistics( TRUE, TRUE, pdfMin, pdfMax, NULL, NULL );
-        dfHalfBucket = (*pdfMax - *pdfMin) / (2 * *pnBuckets);
+        dfHalfBucket = (*pdfMax - *pdfMin) / (2 * nBuckets);
         *pdfMin -= dfHalfBucket;
         *pdfMax += dfHalfBucket;
 
@@ -3037,7 +3040,7 @@ CPLErr
             return eErr;
     }
 
-    *ppanHistogram = (int *) VSICalloc(sizeof(int),*pnBuckets);
+    *ppanHistogram = (int *) VSICalloc(sizeof(int), nBuckets);
     if( *ppanHistogram == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -3045,6 +3048,7 @@ CPLErr
         return CE_Failure;
     }
 
+    *pnBuckets = nBuckets;
     return GetHistogram( *pdfMin, *pdfMax, *pnBuckets, *ppanHistogram, 
                          TRUE, FALSE, pfnProgress, pProgressData );
 }
