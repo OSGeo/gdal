@@ -12808,8 +12808,6 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
   int buckets_val;
   int *panHistogram;
   
-  /* frankwdebug */
-  
   arg2 = &min_val;
   arg3 = &max_val;
   arg4 = &buckets_val;
@@ -12911,16 +12909,24 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
     int i;
     PyObject *psList = NULL;
     
-    /* frankwdebug */
+    Py_XDECREF(resultobj);
     
-    psList = PyList_New(buckets_val);
-    for( i = 0; i < buckets_val; i++ )
-    PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
-    
-    CPLFree( panHistogram );
-    
-    resultobj = Py_BuildValue( "(ddiO)", min_val, max_val, buckets_val, psList );
-    Py_XDECREF(psList);
+    if (panHistogram)
+    {
+      psList = PyList_New(buckets_val);
+      for( i = 0; i < buckets_val; i++ )
+      PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+      
+      CPLFree( panHistogram );
+      
+      resultobj = Py_BuildValue( "(ddiO)", min_val, max_val, buckets_val, psList );
+      Py_XDECREF(psList);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
   }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
