@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -39,15 +40,31 @@ import gdaltest
 ###############################################################################
 # Read test of simple byte reference data.
 
-def adrg_1():
+def adrg_read_gen():
 
     tst = gdaltest.GDALTest( 'ADRG', 'SMALL_ADRG/ABCDEF01.GEN', 1, 62833 )
     return tst.testOpen()
 
 ###############################################################################
+# Read test of simple byte reference data by the TRANSH01.THF file .
+
+def adrg_read_transh():
+
+    tst = gdaltest.GDALTest( 'ADRG', 'SMALL_ADRG/TRANSH01.THF', 1, 62833 )
+    return tst.testOpen()
+
+###############################################################################
+# Read test of simple byte reference data by a subdataset file
+
+def adrg_read_subdataset_img():
+
+    tst = gdaltest.GDALTest( 'ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute = 1 )
+    return tst.testOpen()
+    
+###############################################################################
 # Test copying.
 
-def adrg_2():
+def adrg_copy():
 
     drv = gdal.GetDriverByName( 'ADRG' )
     srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
@@ -66,11 +83,53 @@ def adrg_2():
 
     return 'success'
     
+###############################################################################
+# Test creating a fake 2 subdataset image and reading it.
 
+def adrg_2subdatasets():
+
+    drv = gdal.GetDriverByName( 'ADRG' )
+    srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
+    
+    gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'ON')
+    dstds = drv.CreateCopy( 'tmp/XXXXXX01.GEN', srcds )
+    dstds = None
+    gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'OFF')
+    
+    shutil.copy('tmp/XXXXXX01.IMG', 'tmp/XXXXXX02.IMG')
+    
+    ds = gdal.Open('tmp/TRANSH01.THF')
+    if ds.RasterCount != 0:
+        gdaltest.post_reason('did not expected non 0 RasterCount')
+        return 'fail'
+    ds = None
+    
+    ds = gdal.Open('ADRG:tmp/XXXXXX01.GEN,tmp/XXXXXX02.IMG')
+    chksum = ds.GetRasterBand(1).Checksum()
+
+    if chksum != 62833:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+        
+    md = ds.GetMetadata('')
+    if md['ADRG_NAM'] != 'XXXXXX02':
+        gdaltest.post_reason( 'metadata wrong.' )
+        return 'fail'
+
+    ds = None        
+        
+    os.remove('tmp/XXXXXX01.GEN')
+    os.remove('tmp/XXXXXX01.GEN.aux.xml')
+    os.remove('tmp/XXXXXX01.IMG')
+    os.remove('tmp/XXXXXX02.IMG')
+    os.remove('tmp/TRANSH01.THF')
+
+    return 'success'
+    
 ###############################################################################
 # Test creating an in memory copy.
 
-def adrg_3():
+def adrg_copy_vsimem():
 
     drv = gdal.GetDriverByName( 'ADRG' )
     srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
@@ -85,30 +144,29 @@ def adrg_3():
 
     dstds = None
     
+    # Reopen file
+    ds = gdal.Open( '/vsimem/ABCDEF01.GEN' )
+    
+    chksum = ds.GetRasterBand(1).Checksum()
+    if chksum != 62833:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    ds = None
+    
     drv.Delete( '/vsimem/ABCDEF01.GEN' )
 
     return 'success'
     
 
 ###############################################################################
-# Cleanup procedure
-
-def adrg_cleanup():
-
-    try:
-        os.remove('tmp/ABCDEF01.IMG')
-        os.remove('tmp/TRANSH01.THF')
-    except:
-        pass
-
-    return 'success'
-
-###############################################################################
 gdaltest_list = [
-    adrg_1,
-    adrg_2,
-    adrg_3,
-    adrg_cleanup ]
+    adrg_read_gen,
+    adrg_read_transh,
+    adrg_read_subdataset_img,
+    adrg_copy,
+    adrg_2subdatasets,
+    adrg_copy_vsimem ]
 
 if __name__ == '__main__':
 
