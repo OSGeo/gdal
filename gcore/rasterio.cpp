@@ -34,7 +34,6 @@
 #if !(defined(_MSC_VER) && _MSC_VER <= 1200)
 #include <stdexcept>
 #include <limits>
-#include <cmath>
 
 // For now, work around MSVC++ 6.0's broken template support. If this value
 // is not defined, the old GDALCopyWords implementation is used.
@@ -717,7 +716,7 @@ inline void CopyWord(const double dfValueIn, int &nValueOut)
     double dfMaxVal, dfMinVal;
     GetDataLimits<double, int>(dfMaxVal, dfMinVal);
     double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 :
-        std::floor(dfValueIn + 0.5);
+        dfValueIn - 0.5;
     nValueOut = static_cast<int>(
         ClampValue(dfValue, dfMaxVal, dfMinVal));
 }
@@ -727,7 +726,7 @@ inline void CopyWord(const float fValueIn, short &nValueOut)
     float fMaxVal, fMinVal;
     GetDataLimits<float, short>(fMaxVal, fMinVal);
     float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f :
-        std::floor(fValueIn + 0.5f);
+        fValueIn - 0.5f;
     nValueOut = static_cast<short>(
         ClampValue(fValue, fMaxVal, fMinVal));
 }
@@ -737,7 +736,7 @@ inline void CopyWord(const double dfValueIn, short &nValueOut)
     double dfMaxVal, dfMinVal;
     GetDataLimits<double, short>(dfMaxVal, dfMinVal);
     double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 :
-        std::floor(dfValueIn + 0.5);
+        dfValueIn - 0.5;
     nValueOut = static_cast<short>(
         ClampValue(dfValue, dfMaxVal, dfMinVal));
 }
@@ -756,7 +755,8 @@ inline void CopyWord(const float fValueIn, int &nValueOut)
     }
     else
     {
-        nValueOut = static_cast<int>(std::floor(fValueIn + 0.5f));
+        nValueOut = static_cast<int>(fValueIn > 0.0f ? 
+            fValueIn + 0.5f : fValueIn - 0.5f);
     }
 }
 
@@ -779,7 +779,7 @@ inline void CopyWord(const float fValueIn, unsigned int &nValueOut)
 }
 
 /************************************************************************/
-/*                           GDALCopyWordsT()                            */
+/*                           GDALCopyWordsT()                           */
 /************************************************************************/
 /**
  * Template function, used to copy data from pSrcData into buffer
