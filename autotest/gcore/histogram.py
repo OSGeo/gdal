@@ -30,6 +30,7 @@
 
 import os
 import sys
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -143,12 +144,30 @@ def histogram_5():
     
     return 'success' 
 
+###############################################################################
+# Test GetDefaultHistogram( force = 0 ) on a JPG file (#3304)
+
+def histogram_6():
+
+    shutil.copy( '../gdrivers/data/albania.jpg', 'tmp/albania.jpg' )
+    ds = gdal.Open( 'tmp/albania.jpg' )
+    hist = ds.GetRasterBand(1).GetDefaultHistogram( force = 0 )
+    if hist is not None:
+        gdaltest.post_reason( 'did not get expected histogram.' )
+        print(hist)
+        return 'fail'
+    ds = None
+    os.unlink( 'tmp/albania.jpg' )
+    
+    return 'success' 
+    
 gdaltest_list = [
     histogram_1,
     histogram_2,
     histogram_3,
     histogram_4,
-    histogram_5
+    histogram_5,
+    histogram_6
     ]
 
 if __name__ == '__main__':
