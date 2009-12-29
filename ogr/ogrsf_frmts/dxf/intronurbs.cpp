@@ -43,7 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdio.h>
-#include <assert.h>
+#include <vector>
 
 /************************************************************************/
 /*                               knotu()                                */
@@ -139,11 +139,11 @@ static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
     int i,k;
     double d,e;
     double sum;
-    double temp[36];
+    std::vector<double> temp;
 
     nplusc = npts + c;
 
-    assert( (sizeof(temp)/sizeof(double)) >= (unsigned int) nplusc+1 );
+    temp.resize( nplusc+1 );
 
 /* calculate the first order nonrational basis functions n[i]	*/
 
@@ -231,18 +231,18 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
 {
     int i,j,icount,jcount;
     int i1;
-    int x[30];		/* allows for 20 data points with basis function of order 5 */
     int nplusc;
 
     double step;
     double t;
-    double nbasis[20];
     double temp;
+    std::vector<double> nbasis;
+    std::vector<int> x;
 
     nplusc = npts + k;
 
-    assert( sizeof(x)/sizeof(int) >= (unsigned int) nplusc+1 );
-    assert( sizeof(nbasis)/sizeof(double) >= (unsigned int) npts+1 );
+    x.resize( nplusc+1 );
+    nbasis.resize( npts+1 );
 
 /*  zero and redimension the knot vector and the basis array */
 
@@ -256,7 +256,7 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
 
 /* generate the uniform open knot vector */
 
-    knot(npts,k,x);
+    knot(npts,k,&(x[0]));
 
 /*
   printf("The knot vector is ");
@@ -279,7 +279,8 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
             t = (double)x[nplusc];
         }
 
-        rbasis(k,t,npts,x,h,nbasis);      /* generate the basis function for this value of t */
+        /* generate the basis function for this value of t */
+        rbasis(k,t,npts,&(x[0]),h,&(nbasis[0])); 
         for (j = 1; j <= 3; j++){      /* generate a point on the curve */
             jcount = j;
             p[icount+j] = 0.;
