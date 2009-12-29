@@ -82,6 +82,7 @@ class OGRDXFLayer : public OGRLayer
     OGRFeature *        TranslateCIRCLE();
     OGRFeature *        TranslateELLIPSE();
     OGRFeature *        TranslateARC();
+    OGRFeature *        TranslateSPLINE();
     OGRFeature *        TranslateINSERT();
     OGRFeature *        TranslateMTEXT();
     OGRFeature *        TranslateTEXT();
