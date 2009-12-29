@@ -950,6 +950,109 @@ OGRFeature *OGRDXFLayer::TranslateARC()
 }
 
 /************************************************************************/
+/*                          TranslateSPLINE()                           */
+/************************************************************************/
+
+void rbspline(int npts,int k,int p1,double b[],double h[], double p[]);
+void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[]);
+
+OGRFeature *OGRDXFLayer::TranslateSPLINE()
+
+{
+    char szLineBuf[257];
+    int nCode, nDegree = -1, nFlags = -1, bClosed = FALSE, i;
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    std::vector<double> adfControlPoints;
+
+    adfControlPoints.push_back(0.0);
+
+/* -------------------------------------------------------------------- */
+/*      Process values.                                                 */
+/* -------------------------------------------------------------------- */
+    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+    {
+        switch( nCode )
+        {
+          case 10:
+            adfControlPoints.push_back( atof(szLineBuf) );
+            break;
+
+          case 20:
+            adfControlPoints.push_back( atof(szLineBuf) );
+            adfControlPoints.push_back( 0.0 );
+            break;
+
+          case 70:
+            nFlags = atoi(szLineBuf);
+            if( nFlags & 1 )
+                bClosed = TRUE;
+            break;
+
+          case 71:
+            nDegree = atoi(szLineBuf);
+            break;
+
+          default:
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+        }
+    }
+
+    if( nCode == 0 )
+        poDS->UnreadValue();
+
+    if( bClosed )
+    {
+        for( i = 0; i < nDegree; i++ )
+        {
+            adfControlPoints.push_back( adfControlPoints[i*3+1] );
+            adfControlPoints.push_back( adfControlPoints[i*3+2] );
+            adfControlPoints.push_back( adfControlPoints[i*3+3] );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Interpolate spline                                              */
+/* -------------------------------------------------------------------- */
+    int nControlPoints = adfControlPoints.size() / 3;
+    std::vector<double> h, p;
+
+    h.push_back(1.0);
+    for( i = 0; i < nControlPoints; i++ )
+        h.push_back( 1.0 );
+    
+    // resolution:
+    //int p1 = getGraphicVariableInt("$SPLINESEGS", 8) * npts;
+    int p1 = nControlPoints * 8;
+
+    p.push_back( 0.0 );
+    for( i = 0; i < 3*p1; i++ )
+        p.push_back( 0.0 );
+
+    if( bClosed )
+        rbsplinu( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]), 
+                  &(h[0]), &(p[0]) );
+    else
+        rbspline( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]), 
+                  &(h[0]), &(p[0]) );
+    
+/* -------------------------------------------------------------------- */
+/*      Turn into OGR geometry.                                         */
+/* -------------------------------------------------------------------- */
+    OGRLineString *poLS = new OGRLineString();
+
+    poLS->setNumPoints( p1 );
+    for( i = 0; i < p1; i++ )
+        poLS->setPoint( i, p[i*3+1], p[i*3+2] );
+
+    poFeature->SetGeometryDirectly( poLS );
+
+    PrepareLineStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                      GeometryInsertTransformer                       */
 /************************************************************************/
 
@@ -1217,6 +1320,10 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         else if( EQUAL(szLineBuf,"ARC") )
         {
             poFeature = TranslateARC();
+        }
+        else if( EQUAL(szLineBuf,"SPLINE") )
+        {
+            poFeature = TranslateSPLINE();
         }
         else if( EQUAL(szLineBuf,"INSERT") )
         {
