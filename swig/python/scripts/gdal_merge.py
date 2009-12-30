@@ -34,6 +34,7 @@ except ImportError:
 import sys
 import glob
 
+__version__ = '$id$'[5:-1]
 verbose = 0
 quiet = 0
 
@@ -244,7 +245,7 @@ def Usage():
 # Program mainline.
 #
 
-if __name__ == '__main__':
+def main( argv=None ):
 
     names = []
     format = 'GTiff'
@@ -261,7 +262,9 @@ if __name__ == '__main__':
     createonly = 0
     
     gdal.AllRegister()
-    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    if argv is None:
+        argv = sys.argv
+    argv = gdal.GeneralCmdLineProcessor( argv )
     if argv is None:
         sys.exit( 0 )
 
@@ -455,3 +458,6 @@ if __name__ == '__main__':
     
     # Force file to be closed.
     t_fh = None
+
+if __name__ == '__main__':
+    sys.exit(main())
