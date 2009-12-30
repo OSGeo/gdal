@@ -489,7 +489,7 @@ void FASTDataset::TryEuromap_IRS_1C_1D_ChannelNameConvention()
 /************************************************************************/
 
 static char *GetValue( const char *pszString, const char *pszName,
-                       int iValueSize, int iNormalize )
+                       int iValueSize, int bNormalize )
 {
     char    *pszTemp = strstr( (char *) pszString, pszName );
 
@@ -503,7 +503,7 @@ static char *GetValue( const char *pszString, const char *pszName,
         while ( *pszTemp == '=' )
             pszTemp++;
 
-        pszTemp = CPLScanString( pszTemp, iValueSize, TRUE, iNormalize );
+        pszTemp = CPLScanString( pszTemp, iValueSize, TRUE, bNormalize );
     }
 
     return pszTemp;
@@ -636,10 +636,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                         ACQUISITION_DATE_SIZE, TRUE );
     if (pszTemp == NULL)
     {
-        CPLDebug( "FAST", "Cannot get ACQUISITION_DATE" );
-        CPLFree(pszHeader);
-        delete poDS;
-        return NULL;
+        CPLDebug( "FAST", "Cannot get ACQUISITION_DATE, using empty value." );
+        pszTemp = CPLStrdup("");
     }
     poDS->SetMetadataItem( "ACQUISITION_DATE", pszTemp );
     CPLFree( pszTemp );
@@ -648,10 +646,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     pszTemp = GetValue( pszHeader, SATELLITE_NAME, SATELLITE_NAME_SIZE, TRUE );
     if (pszTemp == NULL)
     {
-        CPLDebug( "FAST", "Cannot get SATELLITE_NAME" );
-        CPLFree(pszHeader);
-        delete poDS;
-        return NULL;
+        CPLDebug( "FAST", "Cannot get SATELLITE_NAME, using empty value." );
+        pszTemp = CPLStrdup( "" );
     }
     poDS->SetMetadataItem( "SATELLITE", pszTemp );
     if ( EQUALN(pszTemp, "LANDSAT", 7) )
@@ -666,10 +662,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     pszTemp = GetValue( pszHeader, SENSOR_NAME, SENSOR_NAME_SIZE, TRUE );
     if (pszTemp == NULL)
     {
-        CPLDebug( "FAST", "Cannot get SENSOR_NAME" );
-        CPLFree(pszHeader);
-        delete poDS;
-        return NULL;
+        CPLDebug( "FAST", "Cannot get SENSOR_NAME, using empty value." );
+        pszTemp = CPLStrdup("");
     }
     poDS->SetMetadataItem( "SENSOR", pszTemp );
     CPLFree( pszTemp );
