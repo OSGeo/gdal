@@ -29,6 +29,7 @@ import os
 import shutil
 import sys
 import string
+from decimal import *
 
 sys.path.append( '../pymod' )
 
@@ -1374,6 +1375,71 @@ def ogr_shape_31():
     return 'success'
 
 ###############################################################################
+# Test creating a nearly 4GB (2^32 Bytes) .shp (#3236)
+# Check for proper error report.
+# Assuming 2^32 is the max value for unsigned int.
+
+def ogr_shape_32():
+# This test takes a few minutes and disk space. Hence, skipped by default.
+# To run this test, make sure that the directory BigFilePath points to has
+# 4.5 GB space available or give a new directory that does and delete the
+# directory afterwards.
+
+    return 'skip'
+
+    BigFilePath = 'tmp'
+
+    #######################################################
+    # Create a layer
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    gdaltest.shape_ds_big = shape_drv.CreateDataSource( BigFilePath )
+    gdaltest.shape_lyr = gdaltest.shape_ds_big.CreateLayer( "bigLayer", geom_type = ogr.wkbPolygon )
+
+    #######################################################
+    # Write a geometry repeatedly.
+    # File size is pre-calculated according to the geometry's size.
+    wkt = 'POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))';
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    geom.AddGeometry(ogr.Geometry( type = ogr.wkbPolygon ))
+
+    ret = 0
+    n = 0
+    print
+#    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    for n in range( 0, 22845571 ):
+        dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
+        dst_feat.SetGeometry(geom)
+        ret = gdaltest.shape_lyr.CreateFeature( dst_feat )
+        if ret != 0 and n < 22845570:
+            print 'File limit reached before 4GB!'
+            return 'fail'
+        dst_feat.Destroy()
+        if (n % 22846) == 0:
+            print '\b\b\b\b\b\b\b\b\b\b\b\b\b\b',(n/Decimal('228460.0')),'%  ',
+            sys.stdout.flush()
+#    gdal.PopErrorHandler()
+
+    #######################################################
+    # Check some features
+
+    gdaltest.shape_ds_big.Destroy()
+    gdaltest.shape_ds_big = ogr.GetDriverByName('ESRI Shapefile').Open( BigFilePath, update = 0 )
+
+    read_lyr = gdaltest.shape_ds_big.GetLayerByName( 'bigLayer' )
+
+    for i in [0, 1, read_lyr.GetFeatureCount()-1]:
+      feat_read = read_lyr.GetFeature(i)
+      if feat_read is None:
+        print 'Couldn\' retrieve geometry at FID',i
+        return 'fail'
+      if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'),
+                                max_error = 0.000000001 ) != 0:
+        print 'Wrong geometry encountered at FID',i,':', (feat_read.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1424,6 +1490,7 @@ gdaltest_list = [
     ogr_shape_29,
     ogr_shape_30,
     ogr_shape_31,
+    ogr_shape_32,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

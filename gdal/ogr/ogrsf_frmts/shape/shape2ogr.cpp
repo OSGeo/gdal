@@ -315,6 +315,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
 
 {
+    int nReturnedShapeID;
 /* ==================================================================== */
 /*      Write "shape" with no geometry or with empty geometry           */
 /* ==================================================================== */
@@ -323,8 +324,13 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         SHPObject       *psShape;
 
         psShape = SHPCreateSimpleObject( SHPT_NULL, 0, NULL, NULL, NULL );
-        SHPWriteObject( hSHP, iShape, psShape );
+        nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
+        if( nReturnedShapeID == -1 )
+        {
+            //Assuming error is reported by SHPWriteObject()
+            return OGRERR_FAILURE;
+        }
     }
 
 /* ==================================================================== */
@@ -355,8 +361,10 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         
         psShape = SHPCreateSimpleObject( hSHP->nShapeType, 1,
                                          &dfX, &dfY, &dfZ );
-        SHPWriteObject( hSHP, iShape, psShape );
+        nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
+        if( nReturnedShapeID == -1 )
+            return OGRERR_FAILURE;
     }
 /* ==================================================================== */
 /*      MultiPoint.                                                     */
@@ -405,12 +413,14 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         psShape = SHPCreateSimpleObject( hSHP->nShapeType,
                                          iDstPoints,
                                          padfX, padfY, padfZ );
-        SHPWriteObject( hSHP, iShape, psShape );
+        nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         
         CPLFree( padfX );
         CPLFree( padfY );
         CPLFree( padfZ );
+        if( nReturnedShapeID == -1 )
+            return OGRERR_FAILURE;
     }
 
 /* ==================================================================== */
@@ -440,12 +450,14 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         psShape = SHPCreateSimpleObject( hSHP->nShapeType,
                                          poArc->getNumPoints(),
                                          padfX, padfY, padfZ );
-        SHPWriteObject( hSHP, iShape, psShape );
+        nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         
         CPLFree( padfX );
         CPLFree( padfY );
         CPLFree( padfZ );
+        if( nReturnedShapeID == -1 )
+            return OGRERR_FAILURE;
     }
 /* ==================================================================== */
 /*      Arcs - Try to treat as MultiLineString.                         */
@@ -516,7 +528,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                                     nParts, 
                                     panRingStart, NULL,
                                     nPointCount, padfX, padfY, padfZ, NULL);
-        SHPWriteObject( hSHP, iShape, psShape );
+        nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
         CPLFree( panRingStart );
@@ -525,6 +537,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         CPLFree( padfZ );
 
         delete poML;
+        if( nReturnedShapeID == -1 )
+            return OGRERR_FAILURE;
     }
 
 /* ==================================================================== */
@@ -646,8 +660,12 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
             SHPObject       *psShape;
             
             psShape = SHPCreateSimpleObject( SHPT_NULL, 0, NULL, NULL, NULL );
-            SHPWriteObject( hSHP, iShape, psShape );
+            nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
             SHPDestroyObject( psShape );
+
+            if( nReturnedShapeID == -1 )
+                return OGRERR_FAILURE;
+
             return OGRERR_NONE;
         }
         
@@ -681,7 +699,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                                    panRingStart, NULL,
                                    nVertex, padfX, padfY, padfZ, NULL );
         SHPRewindObject( hSHP, psShape );
-        SHPWriteObject( hSHP, iShape, psShape );
+        nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         
         CPLFree( papoRings );
@@ -689,6 +707,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         CPLFree( padfX );
         CPLFree( padfY );
         CPLFree( padfZ );
+        if( nReturnedShapeID == -1 )
+            return OGRERR_FAILURE;
     }
     else
     {

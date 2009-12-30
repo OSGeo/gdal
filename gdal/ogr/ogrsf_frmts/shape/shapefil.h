@@ -261,12 +261,12 @@ typedef	struct
 
     int		nShapeType;				/* SHPT_* */
     
-    int		nFileSize;				/* SHP file */
+    unsigned int 	nFileSize;				/* SHP file */
 
     int         nRecords;
     int		nMaxRecords;
-    int		*panRecOffset;
-    int		*panRecSize;
+    unsigned int		*panRecOffset;
+    unsigned int		*panRecSize;
 
     double	adBoundsMin[4];
     double	adBoundsMax[4];
