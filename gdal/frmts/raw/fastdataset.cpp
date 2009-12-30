@@ -111,8 +111,8 @@ class FASTDataset : public GDALPamDataset
     char        *pszProjection;
 
     FILE	*fpHeader;
-    CPLString apoChannelFilenames[6];
-    FILE	*fpChannels[6];
+    CPLString apoChannelFilenames[7];
+    FILE	*fpChannels[7];
     const char	*pszFilename;
     char	*pszDirname;
     GDALDataType eDataType;
@@ -728,7 +728,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     /* the usual patterns like bandX.dat, etc... */
     if ( !poDS->nBands )
     {
-        for ( i = 0; i < 6; i++ )
+        for ( i = 0; i < 7; i++ )
         {
             char *pszFilename = NULL ;
     
