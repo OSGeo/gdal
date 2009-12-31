@@ -54,7 +54,7 @@ static void Usage()
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
             "       [-of format] [-b band] [-expand {gray|rgb|rgba}]\n"
             "       [-outsize xsize[%%] ysize[%%]]\n"
-            "       [-scale [src_min src_max [dst_min dst_max]]]\n"
+            "       [-unscale] [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-gcp pixel line easting northing [elevation]]*\n" 
@@ -99,7 +99,7 @@ static int ProxyMain( int argc, char ** argv )
     char                **papszCreateOptions = NULL;
     int                 anSrcWin[4], bStrict = FALSE;
     const char          *pszProjection;
-    int                 bScale = FALSE, bHaveScaleSrc = FALSE;
+    int                 bScale = FALSE, bHaveScaleSrc = FALSE, bUnscale=FALSE;
     double	        dfScaleSrcMin=0.0, dfScaleSrcMax=255.0;
     double              dfScaleDstMin=0.0, dfScaleDstMax=255.0;
     double              dfULX, dfULY, dfLRX, dfLRY;
@@ -279,6 +279,11 @@ static int ProxyMain( int argc, char ** argv )
                 dfScaleDstMax = 255.999;
             }
         }   
+
+        else if( EQUAL(argv[i], "-unscale") )
+        {
+            bUnscale = TRUE;
+        }
 
         else if( EQUAL(argv[i],"-mo") && i < argc-1 )
         {
@@ -609,7 +614,8 @@ static int ProxyMain( int argc, char ** argv )
 /*      virtual input source to copy from.                              */
 /* -------------------------------------------------------------------- */
     if( eOutputType == GDT_Unknown 
-        && !bScale && CSLCount(papszMetadataOptions) == 0 && bDefBands 
+        && !bScale && !bUnscale
+        && CSLCount(papszMetadataOptions) == 0 && bDefBands 
         && anSrcWin[0] == 0 && anSrcWin[1] == 0 
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
@@ -857,11 +863,17 @@ static int ProxyMain( int argc, char ** argv )
             dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin;
         }
 
+        if( bUnscale )
+        {
+            dfScale = poSrcBand->GetScale();
+            dfOffset = poSrcBand->GetOffset();
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Create a simple or complex data source depending on the         */
 /*      translation type required.                                      */
 /* -------------------------------------------------------------------- */
-        if( bScale || (nRGBExpand != 0 && i < nRGBExpand) )
+        if( bUnscale || bScale || (nRGBExpand != 0 && i < nRGBExpand) )
         {
             poVRTBand->AddComplexSource( poSrcBand,
                                          anSrcWin[0], anSrcWin[1], 
@@ -877,8 +889,11 @@ static int ProxyMain( int argc, char ** argv )
                                         anSrcWin[2], anSrcWin[3], 
                                         0, 0, nOXSize, nOYSize );
 
-        /* In case of color table translate, we only set the color interpretation */
-        /* other info copied by CopyCommonInfoFrom are not relevant in RGB expansion */
+/* -------------------------------------------------------------------- */
+/*      In case of color table translate, we only set the color         */
+/*      interpretation other info copied by CopyCommonInfoFrom are      */
+/*      not relevant in RGB expansion.                                  */
+/* -------------------------------------------------------------------- */
         if (nRGBExpand == 1)
         {
             poVRTBand->SetColorInterpretation( GCI_GrayIndex );
@@ -887,12 +902,19 @@ static int ProxyMain( int argc, char ** argv )
         {
             poVRTBand->SetColorInterpretation( (GDALColorInterp) (GCI_RedBand + i) );
         }
-        else
-        {
+
 /* -------------------------------------------------------------------- */
 /*      copy over some other information of interest.                   */
 /* -------------------------------------------------------------------- */
+        else
+        {
             poVRTBand->CopyCommonInfoFrom( poSrcBand );
+
+            if( bUnscale )
+            {
+                poVRTBand->SetOffset( 0.0 );
+                poVRTBand->SetScale( 1.0 );
+            }
         }
 
 /* -------------------------------------------------------------------- */
