@@ -264,6 +264,25 @@ def fast_8():
     return tst.testOpen( check_gt = gt, check_prj = proj )
 
 ###############################################################################
+# Check some metadata and opening for a RevB L7 file (#3306, #3307).
+
+def fast_9():
+
+    if gdaltest.fast_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/HEADER.DAT' )
+    if ds.GetMetadataItem( 'SENSOR' ) != '':
+        gdaltest.post_reason( 'Did not get expected SENSOR value.' )
+        return 'fail'
+
+    if ds.RasterCount != 7:
+        gdaltest.post_reason( 'Did not get expected band count.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -274,7 +293,8 @@ gdaltest_list = [
     fast_5,
     fast_6,
     fast_7,
-    fast_8 ]
+    fast_8,
+    fast_9 ]
 
 if __name__ == '__main__':
 
