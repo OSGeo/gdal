@@ -1289,25 +1289,22 @@ void GDALContourItem::PrepareEjection()
     /* If left side is the high side, then reverse to get curve normal
     ** pointing downwards
     */
-    if( this->bLeftIsHigh )
+    if( bLeftIsHigh )
     {
-        double* padfTmpX = (double *) CPLCalloc(sizeof(double), this->nPoints);
-        double* padfTmpY = (double *) CPLCalloc(sizeof(double), this->nPoints);
-
         int i;
 
         // Reverse the arrays
-        for( i = 0; i < this->nPoints; i++ )
+        for( i = 0; i < nPoints / 2; i++ )
         {
-            padfTmpX[i] = this->padfX[ this->nPoints - i - 1];
-            padfTmpY[i] = this->padfY[ this->nPoints - i - 1];
+            double dfTemp;
+            dfTemp = padfX[i];
+            padfX[i] = padfX[ nPoints - i - 1];
+            padfX[ nPoints - i - 1] = dfTemp;
+            
+            dfTemp = padfY[i];
+            padfY[i] = padfY[ nPoints - i - 1];
+            padfY[ nPoints - i - 1] = dfTemp;
         }
-
-        // Copy back and release memory
-        memmove( this->padfX, padfTmpX, sizeof(double) * this->nPoints );
-        memmove( this->padfY, padfTmpY, sizeof(double) * this->nPoints );
-        CPLFree( padfTmpX );
-        CPLFree( padfTmpY );
     }
 }
 
