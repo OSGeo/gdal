@@ -672,6 +672,10 @@ Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
 This program generates a vector contour file from the input raster elevation
 model (DEM). 
 
+Starting from version 1.7 the contour line-strings will be oriented
+consistently. The high side will be on the right, i.e. a line string goes
+clockwise around a top.
+
 <dl>
 
 <dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
