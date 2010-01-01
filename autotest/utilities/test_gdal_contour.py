@@ -36,6 +36,7 @@ sys.path.append( '../pymod' )
 import gdal
 import ogr
 import gdaltest
+import ogrtest
 import test_cli_utilities
 import array
 
@@ -239,6 +240,111 @@ def test_gdal_contour_3():
     return 'success'
 
 ###############################################################################
+# Test contour orientation
+
+def test_gdal_contour_4():
+    if test_cli_utilities.get_gdal_contour_path() is None:
+        return 'skip'
+
+    try:
+        os.remove('tmp/contour_orientation.shp')
+    except:
+        pass
+    try:
+        os.remove('tmp/contour_orientation.dbf')
+    except:
+        pass
+    try:
+        os.remove('tmp/contour_orientation.shx')
+    except:
+        pass
+
+    drv = gdal.GetDriverByName('GTiff')
+    wkt = 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]'
+
+    size = 160
+    precision = 1. / size
+
+    ds = drv.Create('tmp/gdal_contour_orientation.tif', size, size, 1)
+    ds.SetProjection( wkt )
+    ds.SetGeoTransform( [ 1, precision, 0, 50, 0, -precision ] )
+
+# Make the elevation 15 for the whole image
+    raw_data = array.array('h',[15 for i in range(int(size))]).tostring()
+    for i in range(int(size)):
+        ds.WriteRaster( 0, i, int(size), 1, raw_data,
+                        buf_type = gdal.GDT_Int16,
+                        band_list = [1] )
+
+# Create a hill with elevation 25
+    raw_data = array.array('h',[25 for i in range(2)]).tostring()
+    for i in range(2):
+        ds.WriteRaster( int(size/4)+int(size/8)-1, i+int(size/2)-1, 2, 1, raw_data,
+                        buf_type = gdal.GDT_Int16,
+                        band_list = [1] )
+
+# Create a depression with elevation 5
+    raw_data = array.array('h',[5 for i in range(2)]).tostring()
+    for i in range(2):
+        ds.WriteRaster( int(size/2)+int(size/8)-1, i+int(size/2)-1, 2, 1, raw_data,
+                        buf_type = gdal.GDT_Int16,
+                        band_list = [1] )
+
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' -a elev -i 10 tmp/gdal_contour_orientation.tif tmp/contour_orientation.shp')
+
+    ds = ogr.Open('tmp/contour_orientation.shp')
+
+    expected_contours = [ 'LINESTRING (1.621875 49.493749999999999,'+
+                                      '1.628125 49.493749999999999,'+
+                                      '1.63125 49.496875000000003,'+
+                                      '1.63125 49.503124999999997,'+
+                                      '1.628125 49.50625,'+
+                                      '1.621875 49.50625,'+
+                                      '1.61875 49.503124999999997,'+
+                                      '1.61875 49.496875000000003,'+
+                                      '1.621875 49.493749999999999)',
+                          'LINESTRING (1.371875 49.493749999999999,'+
+                                      '1.36875 49.496875000000003,'+
+                                      '1.36875 49.503124999999997,'+
+                                      '1.371875 49.50625,'+
+                                      '1.378125 49.50625,'+
+                                      '1.38125 49.503124999999997,'+
+                                      '1.38125 49.496875000000003,'+
+                                      '1.378125 49.493749999999999,'+
+                                      '1.371875 49.493749999999999)' ]
+    expected_elev = [ 10, 20 ]
+
+    lyr = ds.ExecuteSQL("select * from contour_orientation order by elev asc")
+
+    if lyr.GetFeatureCount() != len(expected_contours):
+        print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_envelopes)))
+        return 'fail'
+
+    i = 0
+    test_failed = False
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        expected_geom = ogr.CreateGeometryFromWkt(expected_contours[i])
+        if feat.GetField('elev') != expected_elev[i]:
+            print('Got %f. Expected %f' % (feat.GetField('elev'), expected_elev[i]))
+            return 'fail'
+        if ogrtest.check_feature_geometry(feat, expected_geom) != 0:
+            print('Got      %s.\nExpected %s' % (feat.GetGeometryRef().ExportToWkt(),expected_contours[i]))
+            test_failed = True
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+    ds.ReleaseResultSet(lyr)
+    ds.Destroy()
+
+    if test_failed:
+        return 'fail'
+    else:
+        return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_contour_cleanup():
@@ -246,8 +352,10 @@ def test_gdal_contour_cleanup():
         return 'skip'
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour_orientation.shp')
     try:
         os.remove('tmp/gdal_contour.tif')
+        os.remove('tmp/gdal_contour_orientation.tif')
     except:
         pass
 
@@ -258,6 +366,7 @@ gdaltest_list = [
     test_gdal_contour_1,
     test_gdal_contour_2,
     test_gdal_contour_3,
+    test_gdal_contour_4,
     test_gdal_contour_cleanup
     ]
 
