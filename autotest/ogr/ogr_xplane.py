@@ -48,9 +48,9 @@ def ogr_xplane_apt_dat():
     if xplane_apt_ds is None:
         return 'fail'
 
-    layers = [ ( 'APT'                  , 7,   [ ('apt_icao', 'E46') ] ),
-               ( 'RunwayPolygon'        , 15,  [ ('apt_icao', 'E46') ] ),
-               ( 'RunwayThreshold'      , 34,  [ ('apt_icao', 'E46') ] ),
+    layers = [ ( 'APT'                  , 8,   [ ('apt_icao', 'E46') ] ),
+               ( 'RunwayPolygon'        , 19,  [ ('apt_icao', 'E46') ] ),
+               ( 'RunwayThreshold'      , 44,  [ ('apt_icao', 'E46') ] ),
                ( 'WaterRunwayPolygon'   , 1,   [ ('apt_icao', 'I38') ] ),
                ( 'WaterRunwayThreshold' , 2,   [ ('apt_icao', 'I38') ] ),
                ( 'Helipad'              , 2,   [ ('apt_icao', 'CYXX') ] ), 
@@ -64,7 +64,8 @@ def ogr_xplane_apt_dat():
                ( 'APTLightBeacon'       , 3,   [ ('apt_icao', 'CYXX') ] ),
                ( 'APTWindsock'          , 25,  [ ('apt_icao', 'E46') ] ),
                ( 'TaxiwaySign'          , 17,  [ ('apt_icao', 'CYXX') ] ),
-               ( 'VASI_PAPI_WIGWAG'     , 30,  [ ('apt_icao', 'CYXX') ] )
+               ( 'VASI_PAPI_WIGWAG'     , 30,  [ ('apt_icao', 'CYXX') ] ),
+               ( 'Stopway'              , 6,   [ ('apt_icao', 'LFPM') ] ), 
              ]
 
     for layer in layers:
