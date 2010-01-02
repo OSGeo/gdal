@@ -1,4 +1,4 @@
-= GDAL/OGR 1.7.0 (*** This is preliminary news established from r15874 (GDAL 1.6.0) to r18336 (18 dec 2009) *** = 
+= GDAL/OGR 1.7.0 (*** This is preliminary news established from r15874 (GDAL 1.6.0) to r18425 (02 jan 2010) *** = 
 
 (Some of the bugfixes mentionned below might also have gone into 1.6.X maintenance releases.)
 
@@ -85,6 +85,7 @@ Algorithms:
  * warp: fix panDstValid generation, and avoid using it improperly (#3222)
  * warp: Restore support of reprojection of a lat-long image crossing 180E/180W longitude (#3206)
  * contour: Fix name of GDAL_CG_Create in contour.cpp (#2795)
+ * contour: Generate contours with correct orientation (#3129)
  * gdalgeoloc: Improve geoloc backmap interpolation (#2501)
  * overview: added support for cubic convolution overviews
  * gdal_grid: 3 new metrics: data point count, average distance between data points
@@ -97,6 +98,7 @@ Core :
  * Support for overviews in proxydb directory (#2432)
  * SetColorTable(NULL) is permitted and means delete (#2421)
  * Preserve NBITS and SIGNEDBYTE in CreateCopy() for supporting drivers (#2902)
+ * GDALCopyWords() : performance optimizations
  * Add GDALCheckDatasetDimensions() and GDALCheckBandCount()
  * Add GDALGetColorInterpretationByName()
  * Use tiff .ovr for overviews if .aux is just metadata (#2854)
@@ -141,6 +143,7 @@ Utilities :
  * gdal_grid: Add support for spatial filtering with -clipsrc option
  * gdal_translate: support translation of a dataset with subdatasets if the parent has bands
  * gdal_translate: Add 'gray' as a value of -expand rgb option
+ * gdal_translate: Add -unscale commandline option
  * gdal_merge.py: Add progress report
  * gdal_vrtmerge.py: Fix -separate case (#2836)
  * gdal_vrtmerge.py: Write the <SourceProperties> element (#1985)
@@ -222,6 +225,9 @@ ERS driver:
  * Added PIXELTYPE support to report/create SIGNEDBYTE (#2902)
  * Give precidence to PAM SRS, and even check for .aux file.  (ESRI Merge)
 
+FAST driver:
+ * Support 7 bands (#3307)
+ 
 Fujibas driver:
  * Fix to work on big-endian hosts
 
@@ -236,6 +242,7 @@ GeoRaster driver:
  * Add MaskBand support
  * Support UNICODE metadata
  * Support cross database schema/user access
+ * add COORDLOCATOR create option
 
 GeoTIFF driver :
  * Add 8/12bit jpeg in tiff support
@@ -334,7 +341,7 @@ JPEG2000 (JasPer) Driver:
  * Add proper reading of YCbCr images as RGB
  * fix decoding of bit depth for BPCC and PCLR boxes
  
-JPEG2000 (Kakadu) Driver :
+JP2KAK (Kakadu) Driver :
  * Fix band selection from ycbcr to rgb converted images in DirectRasterIO (#2732)
  * Support jpc vsisubfile streams
  * add handling of reversibly compressed data with 9 to 16 bits precision (#2964)
@@ -347,6 +354,8 @@ JPEG2000 (Kakadu) Driver :
  * Support external overviews as an override to internal overviews
  * Rework jp2kak support to use natural kakadu builds (Windows build)
  * ensure external overviews get used if available (#3276)
+ * add preliminary multi-threading read support via DirectRasterIO()
+
 
 LAN driver:
  * Give preference to PAM coordinate system since built-in info is very 
@@ -473,6 +482,8 @@ Utilities:
     - Skip layers whose schema does not match instead of terminating (#3141)
     - Add a -accept_different_schemas option for non-MapServer use cases (#3141)
     - Set SRS to tileindex when one is found in the tiles
+  * ogr2vrt.py : new script that will create a VRT corresponding to a
+    source datasource (sample script for the moment, not promoted officially)
  
 Core :
  * Improved OGR feature style (#2875, #2808)
@@ -636,7 +647,7 @@ VRT driver:
  * Allow fast spatial filtering in the VGS_Direct case
  * Add support for CreateFeature(), SetFeature() and DeleteFeature() operations
  * Added field definition and style control
- * Added new vrt/schema creation capability
+ * Added new vrt/schema creation capability (@dummy@ datasource, ogr2vrt.py script)
  * Implement 'SrcRegion' element
  * Add a 'reportSrcColumn' attribute to the 'GeometryField' to avoid reporting
    the x,y,wkt or wkb source fields in the VRT layer field definition
@@ -646,6 +657,7 @@ XPlane/Flightgear driver:
  * Improve handling of Bezier curves (#3030)
  * Support new file names used by XPlane 9.00 & later
  * Cut into 2 pieces airway segments that cross the antemeridian
+ * Add new layer 'Stopway' that contains the shape of the stopway/blastpad/over-run of a runway 
 
 == SWIG Language Bindings ==
 
@@ -676,6 +688,7 @@ CSharp bindings :
  * Support MSVC2008 builds with the csharp interface (#2862)
  * Change the dll mapping rules to support the recent MONO versions
  * Use GC pinned arrays instead of the double copy in the RasterIO functions (#3073)
+ * Add typemaps to support custom CPLErrorHandler via C# swig bindings
 
 Perl bindings :
  * in Polygonize make a local copy of the parameters as they are potentionally edited
