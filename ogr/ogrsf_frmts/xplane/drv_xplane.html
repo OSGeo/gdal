@@ -64,6 +64,7 @@ The following layers are reported :<p>
 <li><a href="#RunwayPolygon">RunwayPolygon</a> (Polygon)</li>
 <li><a href="#WaterRunwayThreshold">WaterRunwayThreshold</a> (Point)</li>
 <li><a href="#WaterRunwayPolygon">WaterRunwayPolygon</a> (Polygon)</li>
+<li><a href="#Stopway">Stopway</a> (Polygon)</li>
 <li><a href="#Helipad">Helipad</a> (Point)</li>
 <li><a href="#HelipadPolygon">HelipadPolygon</a> (Polygon)</li>
 <li><a href="#TaxiwayRectangle">TaxiwayRectangle</a> (Polygon)</li>
@@ -229,6 +230,24 @@ Fields:
 <li>has_buoys: Integer (1.0)
 <li>length_m: Real (5.0)
 <li>true_heading_deg: Real (6.2)
+</ul>
+
+<h3><a name="Stopway">Stopway</a> layer (Polygon)</h3>
+
+(Starting with GDAL 1.7.0)
+
+This layer contains the rectangular shape of a stopway/blastpad/over-run that may be found at the beginning of
+a runway. It is part of the tarmac but not intended to be used for normal operations.
+It is computed from the runway stopway/blastpad/over-run length information and only present when
+this length is non zero.
+When not specified, the meaning of the fields is the same as the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
+
+Fields:
+<ul>
+<li>apt_icao: String (4.0)
+<li>rwy_num: String (3.0).
+<li>width_m: Real (3.0)
+<li>length_m: Real (5.0) : Length of stopway/blastpad/over-run at the approach end of runway in meters.
 </ul>
 
 <h3><a name="Helipad">Helipad</a> (Point)</h3>
