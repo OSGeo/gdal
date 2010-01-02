@@ -842,9 +842,30 @@ is on the edge of the external ring, or other topological anomalies.
 OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
 {
     OGRLinearRing* poExternalRing = polygon.getExteriorRing();
+    if (poExternalRing->getNumPoints() < 4)
+    {
+        CPLDebug("XPLANE", "Discarded degenerated polygon at line %d", nLineNumber);
+        return NULL;
+    }
+        
     for(int i=0;i<polygon.getNumInteriorRings();i++)
     {
         OGRLinearRing* poInternalRing = polygon.getInteriorRing(i);
+        if (poInternalRing->getNumPoints() < 4)
+        {
+            CPLDebug("XPLANE", "Discarded degenerated interior ring (%d) at line %d", i, nLineNumber);
+            OGRPolygon polygon2;
+            polygon2.addRing(poExternalRing);
+            for(int j=0;j<polygon.getNumInteriorRings();j++)
+            {
+                if (i != j)
+                    polygon2.addRing(polygon.getInteriorRing(j));
+            }
+            polygon = * (OGRPolygon*) (polygon2.clone());
+            i --;
+            continue;
+        }
+        
         int nOutside = 0;
         int jOutside = -1;
         for(int j=0;j<poInternalRing->getNumPoints();j++)
@@ -1167,10 +1188,15 @@ void OGRXPlaneAptReader::ParsePavement()
             OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*)poGeom;
             for(int i=0;i<poGeomCollection->getNumGeometries();i++)
             {
-                poPavementLayer->AddFeature(osAptICAO, osPavementName,
-                                            RunwaySurfaceEnumeration.GetText(eSurfaceCode),
-                                            dfSmoothness, dfTextureHeading,
-                                            (OGRPolygon*)poGeomCollection->getGeometryRef(i));
+                OGRGeometry* poSubGeom = poGeomCollection->getGeometryRef(i);
+                if (poSubGeom->getGeometryType() == wkbPolygon &&
+                    ((OGRPolygon*)poSubGeom)->getExteriorRing()->getNumPoints() >= 4)
+                {
+                    poPavementLayer->AddFeature(osAptICAO, osPavementName,
+                                                RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                                                dfSmoothness, dfTextureHeading,
+                                                (OGRPolygon*)poSubGeom);
+                }
             }
         }
     }
@@ -1210,8 +1236,13 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
             OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*)poGeom;
             for(int i=0;i<poGeomCollection->getNumGeometries();i++)
             {
-                 poAPTBoundaryLayer->AddFeature(osAptICAO, osBoundaryName,
-                                            (OGRPolygon*)poGeomCollection->getGeometryRef(i));
+                OGRGeometry* poSubGeom = poGeomCollection->getGeometryRef(i);
+                if (poSubGeom->getGeometryType() == wkbPolygon &&
+                    ((OGRPolygon*)poSubGeom)->getExteriorRing()->getNumPoints() >= 4)
+                {
+                    poAPTBoundaryLayer->AddFeature(osAptICAO, osBoundaryName,
+                                            (OGRPolygon*)poSubGeom);
+                }
             }
         }
     }
