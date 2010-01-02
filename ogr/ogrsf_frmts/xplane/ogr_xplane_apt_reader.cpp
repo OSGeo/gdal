@@ -60,6 +60,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSource )
     poAPTLayer = new OGRXPlaneAPTLayer();
     poRunwayLayer = new OGRXPlaneRunwayLayer();
     poRunwayThresholdLayer = new OGRXPlaneRunwayThresholdLayer();
+    poStopwayLayer = new OGRXPlaneStopwayLayer();
     poWaterRunwayLayer = new OGRXPlaneWaterRunwayLayer();
     poWaterRunwayThresholdLayer = new OGRXPlaneWaterRunwayThresholdLayer();
     poHelipadLayer = new OGRXPlaneHelipadLayer();
@@ -78,6 +79,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSource )
     poDataSource->RegisterLayer(poAPTLayer);
     poDataSource->RegisterLayer(poRunwayLayer);
     poDataSource->RegisterLayer(poRunwayThresholdLayer);
+    poDataSource->RegisterLayer(poStopwayLayer);
     poDataSource->RegisterLayer(poWaterRunwayLayer);
     poDataSource->RegisterLayer(poWaterRunwayThresholdLayer);
     poDataSource->RegisterLayer(poHelipadLayer);
@@ -106,6 +108,7 @@ OGRXPlaneReader* OGRXPlaneAptReader::CloneForLayer(OGRXPlaneLayer* poLayer)
     SET_IF_INTEREST_LAYER(poAPTLayer);
     SET_IF_INTEREST_LAYER(poRunwayLayer);
     SET_IF_INTEREST_LAYER(poRunwayThresholdLayer);
+    SET_IF_INTEREST_LAYER(poStopwayLayer);
     SET_IF_INTEREST_LAYER(poWaterRunwayLayer);
     SET_IF_INTEREST_LAYER(poWaterRunwayThresholdLayer);
     SET_IF_INTEREST_LAYER(poHelipadLayer);
@@ -234,6 +237,7 @@ void OGRXPlaneAptReader::Read()
                 case APT_RUNWAY_TAXIWAY_V_810:
                     if (poAPTLayer ||
                         poRunwayLayer || poRunwayThresholdLayer ||
+                        poStopwayLayer ||
                         poHelipadLayer || poHelipadPolygonLayer ||
                         poVASI_PAPI_WIGWAG_Layer || poTaxiwayRectangleLayer)
                     {
@@ -283,7 +287,7 @@ void OGRXPlaneAptReader::Read()
                     break;
 
                 case APT_RUNWAY:
-                    if (poAPTLayer || poRunwayLayer || poRunwayThresholdLayer)
+                    if (poAPTLayer || poRunwayLayer || poRunwayThresholdLayer || poStopwayLayer)
                         ParseRunwayRecord();
                     break;
 
@@ -486,6 +490,20 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
                                     (aeRunwayLightingCode[0] >= 2 && aeRunwayLightingCode[0] <= 5) ? "Yes" : "None" /* pszEdgeLighting */,
                                     bHasDistanceRemainingSigns);
         }
+        
+        if (poStopwayLayer)
+        {
+            for(int i=0;i<2;i++)
+            {
+                if (adfStopwayLength[i] != 0)
+                {
+                    double dfHeading = OGRXPlane_Track(adfLat[i], adfLon[i],
+                                                       adfLat[1-i], adfLon[1-i]);
+                    poStopwayLayer->AddFeature(osAptICAO, aosRwyNum[i],
+                        adfLat[i], adfLon[i], dfHeading, dfWidth, adfStopwayLength[i]);
+                }
+            }
+        }
 
         if (poVASI_PAPI_WIGWAG_Layer)
         {
@@ -555,6 +573,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
     double dfLength;
     CPLString aosRunwayId[2];
     double adfDisplacedThresholdLength[2];
+    double adfStopwayLength[2];
 
     RET_IF_FAIL(assertMinCol(8 + 9 + 9));
 
@@ -568,7 +587,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
 
     for( nRwy=0, nCurToken = 8 ; nRwy<=1 ; nRwy++, nCurToken += 9 )
     {
-        double dfLat, dfLon, dfStopwayLength;
+        double dfLat, dfLon;
         int eMarkings, eApproachLightingCode, eREIL;
         int bHasTouchdownLights;
 
@@ -577,7 +596,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
         adfLat[nRwy] = dfLat; 
         adfLon[nRwy] = dfLon;
         RET_IF_FAIL(readDouble(&adfDisplacedThresholdLength[nRwy], nCurToken + 3, "displaced threshold length"));
-        RET_IF_FAIL(readDouble(&dfStopwayLength, nCurToken + 4, "stopway/blastpad/over-run length"));
+        RET_IF_FAIL(readDouble(&adfStopwayLength[nRwy], nCurToken + 4, "stopway/blastpad/over-run length"));
         eMarkings = atoi(papszTokens[nCurToken + 5]);
         eApproachLightingCode = atoi(papszTokens[nCurToken + 6]);
         bHasTouchdownLights = atoi(papszTokens[nCurToken + 7]);
@@ -600,7 +619,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
                     RunwayShoulderEnumeration.GetText(eShoulderCode),
                     dfSmoothness, bHasCenterLineLights,
                     RunwayEdgeLightingEnumeration.GetText(eEdgeLighting), bHasDistanceRemainingSigns,
-                    adfDisplacedThresholdLength[nRwy], dfStopwayLength,
+                    adfDisplacedThresholdLength[nRwy], adfStopwayLength[nRwy],
                     RunwayMarkingEnumeration.GetText(eMarkings),
                     RunwayApproachLightingEnumeration.GetText(eApproachLightingCode),
                     bHasTouchdownLights,
@@ -631,6 +650,20 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
                                     dfSmoothness, bHasCenterLineLights,
                                     RunwayEdgeLightingEnumeration.GetText(eEdgeLighting),
                                     bHasDistanceRemainingSigns);
+    }
+            
+    if (poStopwayLayer)
+    {
+        for(int i=0;i<2;i++)
+        {
+            if (adfStopwayLength[i] != 0)
+            {
+                double dfHeading = OGRXPlane_Track(adfLat[i], adfLon[i],
+                                                   adfLat[1-i], adfLon[1-i]);
+                poStopwayLayer->AddFeature(osAptICAO, aosRunwayId[i],
+                    adfLat[i], adfLon[i], dfHeading, dfWidth, adfStopwayLength[i]);
+            }
+        }
     }
 }
 
@@ -1980,6 +2013,81 @@ OGRFeature*
     poFeature->SetField( nCount++, bHasDistanceRemainingSigns );
     poFeature->SetField( nCount++, dfLength );
     poFeature->SetField( nCount++, dfTrack12 );
+
+    RegisterFeature(poFeature);
+
+    return poFeature;
+}
+
+
+/************************************************************************/
+/*                      OGRXPlaneStopwayLayer()                         */
+/************************************************************************/
+
+
+
+OGRXPlaneStopwayLayer::OGRXPlaneStopwayLayer() : OGRXPlaneLayer("Stopway")
+{
+    poFeatureDefn->SetGeomType( wkbPolygon );
+
+    OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
+    oFieldAptICAO.SetWidth( 4 );
+    poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
+
+    OGRFieldDefn oFieldRwyNum1("rwy_num", OFTString );
+    oFieldRwyNum1.SetWidth( 3 );
+    poFeatureDefn->AddFieldDefn( &oFieldRwyNum1 );
+
+    OGRFieldDefn oFieldWidth("width_m", OFTReal );
+    oFieldWidth.SetWidth( 3 );
+    poFeatureDefn->AddFieldDefn( &oFieldWidth );
+
+    OGRFieldDefn oFieldLength("length_m", OFTReal );
+    oFieldLength.SetWidth( 5 );
+    poFeatureDefn->AddFieldDefn( &oFieldLength );
+}
+
+/************************************************************************/
+/*                           AddFeature()                               */
+/************************************************************************/
+
+
+OGRFeature*
+     OGRXPlaneStopwayLayer::AddFeature(const char* pszAptICAO,
+                                       const char* pszRwyNum,
+                                       double dfLatThreshold,
+                                       double dfLonThreshold,
+                                       double dfRunwayHeading,
+                                       double dfWidth,
+                                       double dfStopwayLength)
+{
+    int nCount = 0;
+    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+
+    double dfLat2, dfLon2;
+    double adfLat[4], adfLon[4];
+    
+    OGRXPlane_ExtendPosition(dfLatThreshold, dfLonThreshold, dfStopwayLength, 180 + dfRunwayHeading, &dfLat2, &dfLon2);
+    
+    OGRXPlane_ExtendPosition(dfLatThreshold, dfLonThreshold, dfWidth / 2, dfRunwayHeading - 90, &adfLat[0], &adfLon[0]);
+    OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfRunwayHeading - 90, &adfLat[1], &adfLon[1]);
+    OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfRunwayHeading + 90, &adfLat[2], &adfLon[2]);
+    OGRXPlane_ExtendPosition(dfLatThreshold, dfLonThreshold, dfWidth / 2, dfRunwayHeading + 90, &adfLat[3], &adfLon[3]);
+    
+    OGRLinearRing* linearRing = new OGRLinearRing();
+    linearRing->setNumPoints(5);
+    int i;
+    for(i=0;i<4;i++)
+        linearRing->setPoint(i, adfLon[i], adfLat[i]);
+    linearRing->setPoint(4, adfLon[0], adfLat[0]);
+    OGRPolygon* polygon = new OGRPolygon();
+     polygon->addRingDirectly( linearRing );
+    poFeature->SetGeometryDirectly( polygon );
+
+    poFeature->SetField( nCount++, pszAptICAO );
+    poFeature->SetField( nCount++, pszRwyNum );
+    poFeature->SetField( nCount++, dfWidth );
+    poFeature->SetField( nCount++, dfStopwayLength );
 
     RegisterFeature(poFeature);
 

@@ -217,6 +217,25 @@ class OGRXPlaneRunwayLayer : public OGRXPlaneLayer
 
 
 /************************************************************************/
+/*                        OGRXPlaneStopwayLayer                         */
+/************************************************************************/
+
+
+class OGRXPlaneStopwayLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneStopwayLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszRwyNum,
+                                   double dfLatThreshold,
+                                   double dfLonThreshold,
+                                   double dfRunwayHeading,
+                                   double dfWidth,
+                                   double dfStopwayLength);
+};
+
+/************************************************************************/
 /*                   OGRXPlaneWaterRunwayThresholdLayer                 */
 /************************************************************************/
 
@@ -561,6 +580,7 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
     private:
         OGRXPlaneAPTLayer*                  poAPTLayer;
         OGRXPlaneRunwayLayer*               poRunwayLayer;
+        OGRXPlaneStopwayLayer*              poStopwayLayer;
         OGRXPlaneRunwayThresholdLayer*      poRunwayThresholdLayer;
         OGRXPlaneWaterRunwayLayer*          poWaterRunwayLayer;
         OGRXPlaneWaterRunwayThresholdLayer* poWaterRunwayThresholdLayer;
