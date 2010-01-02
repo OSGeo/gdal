@@ -840,7 +840,7 @@ OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
                     newPt.setY(pt.getY() + l * 1e-7);
                     if (poExternalRing->isPointInRing(&newPt))
                     {
-                        poInternalRing->setPoint(j, &newPt);
+                        poInternalRing->setPoint(j, newPt.getX(), newPt.getY());
                         bSuccess = TRUE;
                     }
                 }
