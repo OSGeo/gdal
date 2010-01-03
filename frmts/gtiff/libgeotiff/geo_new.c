@@ -250,7 +250,10 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
             _GTIFmemcpy (keyptr->gk_data,
                          tempData->tk_asciiParams + offset, count);
             if( keyptr->gk_data[MAX(0,count-1)] == '|' )
+            {
                 keyptr->gk_data[MAX(0,count-1)] = '\0';
+                keyptr->gk_count = count; 
+            }
             else
                 keyptr->gk_data[MAX(0,count)] = '\0';
             break;
