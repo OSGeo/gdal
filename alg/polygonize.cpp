@@ -175,7 +175,8 @@ void RPolygon::Merge( int iBaseString, int iSrcString, int iDirection )
     if( iSrcString < ((int) aanXY.size())-1 )
         aanXY[iSrcString] = aanXY[aanXY.size()-1];
 
-    aanXY.resize(aanXY.size()-1);
+    size_t nSize = aanXY.size(); 
+    aanXY.resize(nSize-1);
 }
 
 /************************************************************************/
@@ -239,8 +240,9 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
 /* -------------------------------------------------------------------- */
 /*      Create a new string.                                            */
 /* -------------------------------------------------------------------- */
-    aanXY.resize(aanXY.size() + 1);
-    std::vector<int> &anString = aanXY[aanXY.size()-1];
+    size_t nSize = aanXY.size();
+    aanXY.resize(nSize + 1);
+    std::vector<int> &anString = aanXY[nSize];
 
     anString.push_back( x1 );
     anString.push_back( y1 );
