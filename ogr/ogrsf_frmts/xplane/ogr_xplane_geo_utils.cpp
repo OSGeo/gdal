@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "ogr_xplane_geo_utils.h"
 #include <math.h>
 #include "cpl_port.h"
 
