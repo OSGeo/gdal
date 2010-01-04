@@ -136,3 +136,9 @@ def get_gdal_contour_path():
 # 
 def get_gdaldem_path():
     return get_cli_utility_path('gdaldem')
+
+###############################################################################
+# 
+def get_gdal_rasterize_path():
+    return get_cli_utility_path('gdal_rasterize')
+
