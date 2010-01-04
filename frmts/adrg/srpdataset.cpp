@@ -39,6 +39,8 @@ class SRPDataset : public GDALPamDataset
 {
     friend class SRPRasterBand;
 
+    static CPLString ResetTo01( const char* str );
+
     FILE*        fdIMG;
     int*         TILEINDEX;
     int          offsetInIMG;
@@ -341,6 +343,21 @@ SRPDataset::~SRPDataset()
     {
         delete [] TILEINDEX;
     }
+}
+
+/************************************************************************/
+/*                          ResetTo01()                                 */
+/* Replace the DD in ZZZZZZDD.XXX with 01.                              */
+/************************************************************************/
+
+CPLString SRPDataset::ResetTo01( const char* str )
+{
+    CPLString osResult = str;
+
+    osResult[6] = '0';
+    osResult[7] = '1';
+
+    return osResult;
 }
 
 /************************************************************************/
@@ -805,6 +822,13 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
+    CPLString basename = CPLGetBasename( osFileName );
+    int zoneNumber = CPLScanLong( basename + 6, 2 );
+
+    CPLString path = CPLGetDirname( osFileName );
+    CPLString basename01 = ResetTo01( basename );
+    osFileName = CPLFormFilename( path, basename01, ".IMG" );
+
     osFileName = CPLResetExtension( osFileName, "GEN" );
     if( VSIStatL( osFileName, &sStatBuf ) != 0 )
     {
@@ -828,6 +852,7 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Loop processing records - we are basically looking for the      */
 /*      GIN record which is normally first in the .GEN file.            */
 /* -------------------------------------------------------------------- */
+    int recordIndex = 0;
     while (TRUE)
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -836,6 +861,8 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLErrorReset();
         if (record == NULL)
           break;
+        if ( ++recordIndex < zoneNumber )
+          continue;
 
         const char* RTY = record->GetStringSubfield( "001", 0, "RTY", 0 );
         if( RTY == NULL || !EQUAL(RTY,"GIN") )
