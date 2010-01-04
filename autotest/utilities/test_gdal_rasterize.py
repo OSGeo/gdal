@@ -161,6 +161,9 @@ def test_gdal_rasterize_2():
 ###########################################
 def test_gdal_rasterize_cleanup():
 
+    if test_cli_utilities.get_gdal_rasterize_path() is None:
+        return 'skip'
+
     gdal.GetDriverByName('GTiff').Delete( 'tmp/rast1.tif' )
     ogr.GetDriverByName('MapInfo File').DeleteDataSource( 'tmp/rast1.tab' )
 
