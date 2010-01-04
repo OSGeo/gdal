@@ -211,6 +211,12 @@ static void ProcessLayer(
     {
         OGRGeometryH hGeom;
 
+        if( OGR_F_GetGeometryRef( hFeat ) == NULL )
+        {
+            OGR_F_Destroy( hFeat );
+            continue;
+        }
+
         hGeom = OGR_G_Clone( OGR_F_GetGeometryRef( hFeat ) );
         ahGeometries.push_back( hGeom );
 
