@@ -111,11 +111,38 @@ def pds_4():
     tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 4028 )
     return tst.testOpen()
 
+###############################################################################
+# Read an image via the PDS label.  This is a distinct mode of the PDS
+# driver mostly intended to support jpeg2000 files with PDS labels. 
+
+def pds_5():
+
+    tst = gdaltest.GDALTest( 'PDS', 'ESP_013951_1955_RED.LBL', 1, 4672 )
+    if tst.testOpen( ) != 'success':
+        return 'fail'
+
+    ds = gdal.Open('data/ESP_013951_1955_RED.LBL')
+
+    if len(ds.GetFileList()) != 2:
+        gdaltest.post_reason( 'failed to get expected file list.' )
+        return 'fail'
+
+    expected_wkt = 'PROJCS["EQUIRECTANGULAR MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID["MARS_localRadius",3394839.8133163,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",180],PARAMETER["standard_parallel_1",15],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
+    wkt = ds.GetProjection()
+    if expected_wkt != wkt:
+        print 'Got: ', wkt
+        print 'Exp: ', expected_wkt
+        gdaltest.post_reason( 'did not get expected coordinate system.' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     pds_1,
     pds_2,
     pds_3,
-    pds_4 ]
+    pds_4,
+    pds_5 ]
 
 if __name__ == '__main__':
 
