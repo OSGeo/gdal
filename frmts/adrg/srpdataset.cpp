@@ -823,6 +823,12 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIStatBufL sStatBuf;
 
     CPLString basename = CPLGetBasename( osFileName );
+    if( basename.size() != 8 )
+    {
+        CPLDebug("SRP", "Invalid basename file");
+        return NULL;
+    }
+
     int zoneNumber = CPLScanLong( basename + 6, 2 );
 
     CPLString path = CPLGetDirname( osFileName );
