@@ -81,3 +81,6 @@ gdal_lut.py             Read a LUT from a text file, and apply it to an image.
 
 magphase.py             Example script computing magnitude and phase images
                         from a complex image.
+
+hsv_merge.py            Merge greyscale image into rgb image as intensity
+                        in HSV space. 
