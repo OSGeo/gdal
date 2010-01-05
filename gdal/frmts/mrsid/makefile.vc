@@ -3,11 +3,15 @@ OBJ		=	mrsiddataset.obj mrsidstream.obj
 
 PLUGIN_DLL 	=	gdal_MrSID.dll
 
-EXTRAFLAGS 	= 	$(MRSID_INCLUDE) -I..\gtiff\libgeotiff $(MRSID_FLAGS)
+EXTRAFLAGS 	= 	$(MRSID_INCLUDE) $(GEOTIFF_INC) $(MRSID_FLAGS)
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFNDEF GEOTIFF_INC
+GEOTIFF_INC   =	-I..\gtiff\libgeotiff
+!ENDIF
 
 default:	$(OBJ)
 	$(INSTALL) *.obj ..\o
