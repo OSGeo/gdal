@@ -383,6 +383,11 @@ int OGR_SRSNode::NeedsQuoting() const
         && this != poParent->GetChild(0) )
         return FALSE;
 
+    // Strings starting with e or E are not valid numeric values, so they
+    // need quoting, like in AXIS["E",EAST] 
+    if( (pszValue[0] == 'e' || pszValue[0] == 'E') )
+        return TRUE;
+
     // Non-numeric tokens are generally quoted while clean numeric values
     // are generally not. 
     for( int i = 0; pszValue[i] != '\0'; i++ )
