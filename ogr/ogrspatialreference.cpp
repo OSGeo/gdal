@@ -1717,6 +1717,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /* -------------------------------------------------------------------- */
     if( EQUALN(pszDefinition,"PROJCS",6)
         || EQUALN(pszDefinition,"GEOGCS",6)
+        || EQUALN(pszDefinition,"COMPD_CS",6)
         || EQUALN(pszDefinition,"LOCAL_CS",8) )
     {
         err = importFromWkt( (char **) &pszDefinition );
@@ -5093,10 +5094,12 @@ int OGRSpatialReference::IsProjected() const
     if( poRoot == NULL )
         return FALSE;
 
-    // If we eventually support composite coordinate systems this will
-    // need to improve. 
-
-    return EQUAL(poRoot->GetValue(),"PROJCS");
+    if( EQUAL(poRoot->GetValue(),"PROJCS") )
+        return TRUE;
+    else if( EQUAL(poRoot->GetValue(),"COMPD_CS") )
+        return GetAttrNode( "PROJCS" ) != NULL;
+    else 
+        return FALSE;
 }
 
 /************************************************************************/
@@ -5135,6 +5138,13 @@ int OGRSpatialReference::IsGeographic() const
         return FALSE;
 
     return EQUAL(GetRoot()->GetValue(),"GEOGCS");
+    if( EQUAL(poRoot->GetValue(),"GEOGCS") )
+        return TRUE;
+    else if( EQUAL(poRoot->GetValue(),"COMPD_CS") )
+        return GetAttrNode( "GEOGCS" ) != NULL 
+            && GetAttrNode( "PROJCS" ) == NULL;
+    else 
+        return FALSE;
 }
 
 /************************************************************************/
