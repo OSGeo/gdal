@@ -980,31 +980,15 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
     if( psImage->chICORDS != ' ' )
     {
-        double minx = 0.5;
-        double miny = 0.5;
-        double maxx = psImage->nCols - 0.5;
-        double maxy = psImage->nRows - 0.5;
-        if (psIGEOLOGCPs[0].dfGCPX > psIGEOLOGCPs[1].dfGCPX)
-        {
-          minx = maxx;
-          maxx = 0.5;
-        }
-
-        if (psIGEOLOGCPs[0].dfGCPY < psIGEOLOGCPs[2].dfGCPY)
-        {
-          miny = maxy;
-          maxy = 0.5;
-        }
-
-        psIGEOLOGCPs[0].dfGCPPixel = minx;
-        psIGEOLOGCPs[0].dfGCPLine  = miny;
-        psIGEOLOGCPs[1].dfGCPPixel = maxx;
-        psIGEOLOGCPs[1].dfGCPLine  = miny;
-        psIGEOLOGCPs[2].dfGCPPixel = maxx;
-        psIGEOLOGCPs[2].dfGCPLine  = maxy;
-        psIGEOLOGCPs[3].dfGCPPixel = minx;
-        psIGEOLOGCPs[3].dfGCPLine  = maxy;
-
+        psIGEOLOGCPs[0].dfGCPPixel = 0.5; 
+        psIGEOLOGCPs[0].dfGCPLine = 0.5; 
+        psIGEOLOGCPs[1].dfGCPPixel = psImage->nCols - 0.5; 
+        psIGEOLOGCPs[1].dfGCPLine = 0.5; 
+        psIGEOLOGCPs[2].dfGCPPixel = psImage->nCols - 0.5; 
+        psIGEOLOGCPs[2].dfGCPLine = psImage->nRows - 0.5; 
+        psIGEOLOGCPs[3].dfGCPPixel = 0.5; 
+        psIGEOLOGCPs[3].dfGCPLine = psImage->nRows - 0.5; 
+        
 /* -------------------------------------------------------------------- */
 /*      Convert the GCPs into a geotransform definition, if possible.	*/
 /* -------------------------------------------------------------------- */
