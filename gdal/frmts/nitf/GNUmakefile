@@ -6,7 +6,11 @@ GDAL_OBJ	=	nitfdataset.o rpftocdataset.o nitfwritejpeg.o nitfwritejpeg_12.o
 NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o nitfaridpcm.o \
 			nitfbilevel.o rpftocfile.o
 
-CPPFLAGS	:=	-I../gtiff/libtiff -I../vrt $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../vrt $(GDAL_INCLUDE) $(CPPFLAGS)
+
+ifeq ($(TIFF_SETTING),internal)
+CPPFLAGS	:=	$(CPPFLAGS) -I../gtiff/libtiff
+endif
 
 ifneq ($(JPEG_SETTING),no)
 CPPFLAGS	:=	$(CPPFLAGS) -DJPEG_SUPPORTED
