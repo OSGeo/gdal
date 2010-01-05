@@ -592,9 +592,11 @@ If not specified, the extent of the VRT is the minimum bounding box of the set o
 </dd>
 
 <dt> <b>-addalpha</b>:</dt><dd> (starting with GDAL 1.7.0)
-Adds an alpha mask band to the VRT. Mainly useful for RGB sources. This
-option is not compatible with -separate.
-</dd>
+Adds an alpha mask band to the VRT when the source raster have none. Mainly useful for RGB sources (or grey-level sources).
+The alpha band is filled on-the-fly with the value 0 in areas without any source raster, and with value
+255 in areas with source raster. The effect is that a RGBA viewer will render
+the areas without source rasters as transparent and areas with source rasters as opaque.
+This option is not compatible with -separate.</dd>
 
 <dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> (starting with GDAL 1.7.0)
 Set nodata values for input bands (different values can be supplied for each band). If 
