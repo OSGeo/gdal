@@ -49,8 +49,6 @@ for developers.<p>
 Virtual files stored on disk are kept in an XML format with the following
 elements.<p>
 
-<ul>
-<li> 
 <b>VRTDataset</b>: This is the root element for the whole GDAL dataset. 
 It must have the attributes rasterXSize and rasterYSize describing the width 
 and height of the dataset in pixels.  It may have SRS, GeoTransform, 
@@ -59,6 +57,10 @@ GCPList, Metadata, and VRTRasterBand subelements.
 \code
 <VRTDataset rasterXSize="512" rasterYSize="512">
 \endcode
+
+The allowed subelements for VRTDataset are :
+
+<ul>
 
 <li> <b>SRS</b>: This element contains the spatial reference system (coordinate 
 system) in OGC WKT format.  Note that this must be appropriately escaped for
@@ -69,6 +71,7 @@ known GEOGCS names, and PROJ.4 format) is also allowed in the SRS element.
 \code
   <SRS>PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]</SRS>
 \endcode
+</li>
 
 <li> <b>GeoTransform</b>: This element contains a six value affine 
 geotransformation for the dataset, mapping between pixel/line coordinates 
@@ -77,6 +80,7 @@ and georeferenced coordinates.<P>
 \code
   <GeoTransform>440720.0,  60,  0.0,  3751320.0,  0.0, -60.0</GeoTransform>
 \endcode
+</li>
 
 <li> <b>Metadata</b>: This element contains a list of metadata name/value 
 pairs associated with the VRTDataset as a whole, or a VRTRasterBand.   It has
@@ -88,6 +92,7 @@ as the data of the element.
     <MDI key="md_key">Metadata value</MDI>
   </Metadata>
 \endcode
+</li>
 
 <li> <b>VRTRasterBand</b>: This represents one band of a dataset.  It will
 have a ataType attribute with the type of the pixel data associated with
@@ -97,7 +102,11 @@ CInt16, CInt32, CFloat32 or CFloat64) and the band this element represents
 ColorTable, and Description subelements as well as the various kinds of 
 source elements such as SimpleSource.  A raster band may have many "sources"
 indicating where the actual raster data should be fetched from, and how it
-should be mapped into the raster bands pixel space. 
+should be mapped into the raster bands pixel space.<p>
+
+The allowed subelements for VRTRasterBand are :
+
+<ul>
 
 <li> <b>ColorInterp</b>: The data of this element should be the name of
 a color interpretation type.  One of Gray, Palette, Red, Green, Blue, Alpha,
@@ -106,6 +115,7 @@ Hue, Saturation, Lightness, Cyan, Magenta, Yellow, Black, or Unknown.<p>
 \code
   <ColorInterp>Gray</ColorInterp>: 
 \endcode
+</li>
 
 <li> <b>NoDataValue</b>: If this element exists a raster band has a 
 nodata value associated with, of the value given as data in the element.
@@ -113,6 +123,7 @@ nodata value associated with, of the value given as data in the element.
 \code
   <NoDataValue>-100.0</NoDataValue>
 \endcode
+</li>
 
 <li> <b>ColorTable</b>: This element is parent to a set of Entry 
 elements defining the entries in a color table.  Currently only RGBA
@@ -126,6 +137,7 @@ to start from color table entry 0.
       <Entry c1="145" c2="78" c3="224" c4="255"/>
     </ColorTable>
 \endcode
+</li>
 
 <li> <b>Description</b>: This element contains the optional description
 of a raster band as it's text value.
@@ -133,6 +145,7 @@ of a raster band as it's text value.
 \code
   <Description>Crop Classification Layer</Description>
 \endcode
+</li>
 
 <li> <b>UnitType</b>: This optional element contains the vertical units for
 elevation band data.  One of "m" for meters or "ft" for feet. Default 
@@ -141,6 +154,7 @@ assumption is meters.<p>
 \code
   <UnitType>ft</UnitType>
 \endcode
+</li>
 
 <li> <b>Offset</b>: This optional element contains the offset that should be
 applied when computing "real" pixel values from scaled pixel values on 
@@ -149,6 +163,7 @@ a raster band.   The default is 0.0.<p>
 \code
   <Offset>0.0</Offset>
 \endcode
+</li>
 
 <li> <b>Scale</b>: This optional element contains the scale that should be
 applied when computing "real" pixel values from scaled pixel values on a
@@ -157,6 +172,7 @@ raster band.   The default is 1.0.<p>
 \code
   <Scale>0.0</Scale>
 \endcode
+</li>
 
 <li> <b>CategoryNames</b>: This optional element contains a list of Category
 subelements with the names of the categories for classified raster band. <p>
@@ -170,6 +186,7 @@ subelements with the names of the categories for classified raster band. <p>
     <Category>Soybeans</Category>
   </CategoryNames>
 \endcode
+</li>
 
 <li> <b>SimpleSource</b>: The SimpleSource indicates that raster data
 should be read from a separate dataset, indicating the dataset, and band to be
@@ -199,6 +216,7 @@ tag is not present, the source dataset will be opened at the same time as the VR
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </SimpleSource>
 \endcode
+</li>
 
 <li> <b>AveragedSource</b>: The AveragedSource is derived from the
 SimpleSource and shares the same properties except that it uses an averaging
@@ -252,6 +270,7 @@ in the following order:
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </ComplexSource>
 \endcode
+</li>
 
 <li> <b>KernelFilteredSource</b>: This is a pixel source derived from the
 Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and 
@@ -271,6 +290,9 @@ and the Coefs must have Size * Size entries separated by spaces.
       </Kernel>
     </KernelFilteredSource>
 \endcode
+</li>
+
+</ul>
 
 </ul>
 
