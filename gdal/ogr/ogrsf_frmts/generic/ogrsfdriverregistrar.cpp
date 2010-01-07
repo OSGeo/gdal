@@ -206,8 +206,6 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
 
         CPLReleaseMutex( hDRMutex );
 
-        CPLDebug( "OGR", "OGROpen() trying with %s.", 
-                      poDriver->GetName() );
         poDS = poDriver->Open( pszName, bUpdate );
         if( poDS != NULL )
         {
