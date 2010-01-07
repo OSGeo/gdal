@@ -357,7 +357,7 @@ void VFKReader::AddInfo(const char *pszLine)
 	poChar++;
     }
     pszValue = (char *) CPLMalloc(iValueLength + 1);
-    strncpy(pszValue, poValue, iKeyLength);
+    strncpy(pszValue, poValue, iValueLength);
     pszValue[iValueLength] = '\0';
 
     poInfo[pszKey] = pszValue;
