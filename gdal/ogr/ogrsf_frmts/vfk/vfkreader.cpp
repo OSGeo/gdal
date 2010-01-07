@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2010, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -223,8 +223,11 @@ int VFKReader::LoadDataBlocks()
 		pszBlockName = (char*) GetDataBlockName(pszLine);
 		poNewDataBlock = GetDataBlock(pszBlockName);
 		if (poNewDataBlock == NULL) {
-		    CPLError(CE_Warning, CPLE_AppDefined, 
-			     "Data block '%s' not found.\n", pszBlockName);
+		    if (!EQUAL(pszBlockName, "KATUZE")) {
+			/* ignore KATUZE block */
+			CPLError(CE_Warning, CPLE_AppDefined, 
+				 "Data block '%s' not found.\n", pszBlockName);
+		    }
 		}
 		else {
 		    poNewDataBlock->AddFeature(pszLine);
