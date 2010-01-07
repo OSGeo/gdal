@@ -1,5 +1,5 @@
-OBJ        = vfkreader.o vfkdatablock.o vfkpropertydefn.o vfkfeature.o vfkproperty.o \
-	       ogrvfkdriver.o ogrvfkdatasource.o ogrvfklayer.o
+OBJ        = vfkreader.obj vfkdatablock.obj vfkpropertydefn.obj vfkfeature.obj vfkproperty.obj \
+	       ogrvfkdriver.obj ogrvfkdatasource.obj ogrvfklayer.obj
 
 EXTRAFLAGS = -I.. -I..\..
 
