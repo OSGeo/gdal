@@ -67,6 +67,9 @@ VFKFeature::~VFKFeature()
 
     CPLFree(m_papszProperty);
 
+    if (m_paGeom)
+	delete m_paGeom;
+    
     m_poDataBlock = NULL;
 }
 
@@ -167,8 +170,7 @@ void VFKFeature::SetGeometry(OGRGeometry *poGeom)
 	return;
 
     m_paGeom = (OGRGeometry *) poGeom->clone(); /* make copy */
-
-
+    
     if (m_nGeometryType == wkbNone && m_paGeom->IsEmpty()) {
 	CPLError(CE_Warning, CPLE_AppDefined, 
 		 "Empty geometry FID %ld.\n",

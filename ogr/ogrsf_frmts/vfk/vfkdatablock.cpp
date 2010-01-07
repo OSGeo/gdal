@@ -863,6 +863,13 @@ long VFKDataBlock::LoadGeometry()
 	    poFeature->SetGeometry(&ogrPolygon);
 	    nfeatures++;
 	}
+
+	/* free ring list */
+	for (PointListArray::iterator iRing = poRingList.begin(), eRing = poRingList.end();
+	     iRing != eRing; ++iRing) {
+	    delete (*iRing);
+	    *iRing = NULL;
+	}
 	poDataBlockLines1->ResetReading();
 	poDataBlockLines2->ResetReading();
     }

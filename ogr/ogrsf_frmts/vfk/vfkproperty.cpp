@@ -41,6 +41,7 @@
 VFKProperty::VFKProperty()
 {
     b_isNull = TRUE;
+    s = NULL;
 }
 
 /*!
@@ -50,6 +51,7 @@ VFKProperty::VFKProperty(int iValue)
 {
     b_isNull = FALSE;
     i = iValue;
+    s = NULL;
 }
 
 /*!
@@ -59,6 +61,7 @@ VFKProperty::VFKProperty(double dValue)
 {
     b_isNull = FALSE;
     d = dValue;
+    s = NULL;
 }
 
 /*!
@@ -68,4 +71,13 @@ VFKProperty::VFKProperty(const char *pszValue)
 {
     b_isNull = FALSE;
     s = CPLStrdup(pszValue);
+}
+
+/*!
+  \brief VFK property destructor
+*/
+VFKProperty::~VFKProperty()
+{
+    if (s)
+	CPLFree(s);
 }
