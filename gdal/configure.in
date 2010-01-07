@@ -2129,9 +2129,9 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING([for VFK support])
 
-AC_ARG_WITH(vfk,[  --with-vfk[=ARG]      Include VFK support],,)
+AC_ARG_WITH(vfk,[  --without-vfk         Disable VFK support],,)
 
-if test "$with_vfk" = "no" -o "$with_vfk" = ""; then
+if test "$with_vfk" = "no"; then
   AC_MSG_RESULT([no])
   HAVE_VFK=no
 else

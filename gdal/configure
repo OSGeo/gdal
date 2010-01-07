@@ -1611,7 +1611,7 @@ Optional Packages:
   --with-idb=DIR        Include Informix DataBlade support (DIR points to Informix root)
   --with-sde=DIR        Include ESRI SDE support (DIR is SDE's install dir).
   --with-sde-version=VERSION NUMBER  Set ESRI SDE version number (Default is 80).
-  --with-vfk=ARG      Include VFK support
+  --without-vfk         Disable VFK support
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
   --without-pam         Disable PAM (.aux.xml) support
@@ -26624,7 +26624,7 @@ if test "${with_vfk+set}" = set; then
 fi
 
 
-if test "$with_vfk" = "no" -o "$with_vfk" = ""; then
+if test "$with_vfk" = "no"; then
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
   HAVE_VFK=no
