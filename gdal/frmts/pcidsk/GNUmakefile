@@ -35,8 +35,6 @@ SDKOBJ 	=	\
 	cpcidsksegment.o \
 	cpcidskvectorsegment.o \
 	metadatasegment_p.o \
-	segmentfactory.o \
-	segment_loader.o \
 	sysblockmap.o \
 	cpcidskpct.o
 
