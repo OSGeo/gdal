@@ -36,7 +36,8 @@ SDKOBJ 	=	\
 	cpcidskvectorsegment.o \
 	metadatasegment_p.o \
 	sysblockmap.o \
-	cpcidskpct.o
+	cpcidskpct.o \
+	cpcidskrpcmodel.o
 
 else
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(PCIDSK_INCLUDE) $(CPPFLAGS)
