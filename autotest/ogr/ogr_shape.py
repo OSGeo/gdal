@@ -595,7 +595,11 @@ def ogr_shape_17():
     if gdaltest.shape_ds is None:
         return 'skip'
 
-    shp_ds = ogr.Open( 'data/can_caps.shp' )
+    shutil.copy( 'data/can_caps.shp', 'tmp/can_caps.shp' )
+    shutil.copy( 'data/can_caps.shx', 'tmp/can_caps.shx' )
+
+   
+    shp_ds = ogr.Open( 'tmp/can_caps.shp', update = 1 )
     shp_lyr = shp_ds.GetLayer(0)
 
     if shp_lyr.GetLayerDefn().GetFieldCount() != 0:
@@ -608,6 +612,10 @@ def ogr_shape_17():
         if feat is None:
             break
 
+        # Re-write feature to test that we can use SetFeature() without
+        # a DBF
+        shp_lyr.SetFeature(feat)
+
         count = count + 1
         feat.Destroy()
 
@@ -615,9 +623,20 @@ def ogr_shape_17():
         gdaltest.post_reason( 'Got wrong number of features.' )
         return 'fail'
 
+    # Create new feature without a DBF
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    shp_lyr.CreateFeature(feat)
+    if feat.GetFID() != 13:
+        print(feat.GetFID())
+        gdaltest.post_reason( 'Got wrong FID.' )
+        return 'fail'
+
     shp_lyr = None
     shp_ds.Destroy()
     shp_ds = None
+
+    os.remove( 'tmp/can_caps.shp' )
+    os.remove( 'tmp/can_caps.shx' )
 
     return 'success'
 
@@ -1492,7 +1511,7 @@ gdaltest_list = [
     ogr_shape_31,
     ogr_shape_32,
     ogr_shape_cleanup ]
-
+ 
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'ogr_shape' )
