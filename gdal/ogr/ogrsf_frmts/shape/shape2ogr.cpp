@@ -977,6 +977,20 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     }
     
 /* -------------------------------------------------------------------- */
+/*      If there is no DBF, the job is done now.                        */
+/* -------------------------------------------------------------------- */
+    if( hDBF == NULL )
+    {
+/* -------------------------------------------------------------------- */
+/*      If this is a new feature, establish it's feature id.            */
+/* -------------------------------------------------------------------- */
+        if( hSHP != NULL && poFeature->GetFID() == OGRNullFID )
+            poFeature->SetFID( hSHP->nRecords - 1 );
+
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If this is a new feature, establish it's feature id.            */
 /* -------------------------------------------------------------------- */
     if( poFeature->GetFID() == OGRNullFID )
