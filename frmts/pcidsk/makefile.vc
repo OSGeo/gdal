@@ -37,7 +37,8 @@ OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj \
 	sdk\segment\cpcidsksegment.obj \
 	sdk\segment\cpcidskvectorsegment.obj \
 	sdk\segment\metadatasegment_p.obj \
-	sdk\segment\sysblockmap.obj
+	sdk\segment\sysblockmap.obj \
+	sdk\segment\cpcidskrpcmodel.obj
 	
 !ENDIF
             
