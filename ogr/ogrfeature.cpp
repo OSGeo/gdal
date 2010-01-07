@@ -2639,7 +2639,13 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
 
     //notdef: add testing of attributes at a later date.
 
-    if( GetGeometryRef() != NULL
+    if( GetGeometryRef() == NULL && poFeature->GetGeometryRef() != NULL )
+        return FALSE;
+
+    if( GetGeometryRef() != NULL && poFeature->GetGeometryRef() == NULL )
+        return FALSE;
+
+    if( GetGeometryRef() != NULL && poFeature->GetGeometryRef() != NULL 
         && (!GetGeometryRef()->Equals( poFeature->GetGeometryRef() ) ) )
         return FALSE;
 
