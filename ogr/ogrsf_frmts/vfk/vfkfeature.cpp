@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  VFK Reader - Feature definition
  * Purpose:  Implements VFKFeature class.
