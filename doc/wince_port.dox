@@ -14,6 +14,7 @@
 \ref wince_building_geos<br/>
 \ref wince_help<br/>
 
+\warning *** Currently, GDAL port for Windows CE platform is not actively maintained. If you are interested in providing patches or taking over this project, please write to <a href="http://lists.osgeo.org/mailman/listinfo/gdal-dev/">gdal-dev@lists.maptools.org</a> mailing list. ***
 
 \section wince_overview Overview
 
@@ -328,7 +329,7 @@ Here is a list of what you can do as a contribution to the project:
 
 <p>There is also <em>wince\\TODO</em> file where you can find list of things we are going to do.</p>
 
-<p>If you have any comments or questions, please sent them to the gdal-dev@lists.maptools.org mailing list or directly to me on mateusz@loskot.net </p>
+<p>If you have any comments or questions, please sent them to <a href="http://lists.osgeo.org/mailman/listinfo/gdal-dev/">gdal-dev@lists.maptools.org</a> mailing list.</p>
 
 \htmlonly
 <p>
