@@ -62,7 +62,7 @@ VFKFeature::~VFKFeature()
 {
     for (int i = 0; i < m_poDataBlock->GetPropertyCount(); i++) {
 	if (m_papszProperty[i])
-	    CPLFree(m_papszProperty[i]);
+	    delete m_papszProperty[i];
     }
 
     CPLFree(m_papszProperty);
