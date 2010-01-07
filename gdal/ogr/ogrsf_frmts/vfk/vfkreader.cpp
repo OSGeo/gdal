@@ -78,6 +78,8 @@ VFKReader::~VFKReader()
 {
     CPLFree(m_pszFilename);
 
+    VSIFree(m_pszWholeText);
+    
     /* clear data blocks */
     for (int i = 0; i < m_nDataBlockCount; i++)
         delete m_papoDataBlock[i];
