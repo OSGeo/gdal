@@ -2124,6 +2124,24 @@ AC_SUBST(SDE_INC,    $SDE_INC)
 AC_SUBST(SDE_LIB,    $SDE_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if we should build with VFK support.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for VFK support])
+
+AC_ARG_WITH(vfk,[  --with-vfk[=ARG]      Include VFK support],,)
+
+if test "$with_vfk" = "no" -o "$with_vfk" = ""; then
+  AC_MSG_RESULT([no])
+  HAVE_VFK=no
+else
+  AC_MSG_RESULT([yes])
+  HAVE_VFK=yes
+fi
+
+AC_SUBST(HAVE_VFK)
+
+dnl ---------------------------------------------------------------------------
 dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -2492,6 +2510,7 @@ LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
+LOC_MSG([  VFK support:               ${HAVE_VFK}])
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])

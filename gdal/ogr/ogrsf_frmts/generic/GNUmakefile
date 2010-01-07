@@ -109,6 +109,11 @@ ifeq ($(HAVE_PANORAMA),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DPANORAMA_ENABLED
 endif
 
+ifeq ($(HAVE_VFK),yes)
+CFLAGS   :=	$(CFLAGS) -DVFK_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DVFK_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))

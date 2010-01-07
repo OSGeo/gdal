@@ -222,6 +222,11 @@ HAVE_SDE = @SDE_ENABLED@
 SDE_LIB	= @SDE_LIB@
 SDE_INC = @SDE_INC@
 
+# 
+# VFK
+#
+HAVE_VFK = @HAVE_VFK@
+
 #
 # Curl
 #
