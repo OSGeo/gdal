@@ -43,6 +43,15 @@ import ogr
 # check number of fields and features
 
 def ogr_vfk_1():
+
+    try:
+       gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
+    except:
+       gdaltest.vfk_drv = None
+
+    if gdaltest.vfk_drv is None:
+       return 'skip'
+
     gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
     
     if gdaltest.vfk_ds is None:
@@ -78,6 +87,10 @@ def ogr_vfk_1():
 # Read the first feature from layer 'PAR', check envelope
 
 def ogr_vfk_2():
+
+    if gdaltest.vfk_drv is None:
+       return 'skip'
+
     gdaltest.vfk_layer_par.ResetReading()
     
     feat = gdaltest.vfk_layer_par.GetNextFeature()
@@ -107,6 +120,10 @@ def ogr_vfk_2():
 # Read features from layer 'SOBR', test attribute query
 
 def ogr_vfk_3():
+
+    if gdaltest.vfk_drv is None:
+       return 'skip'
+
     gdaltest.vfk_layer_sobr = gdaltest.vfk_ds.GetLayer(43)
     
     if gdaltest.vfk_layer_sobr.GetName() != 'SOBR':
@@ -133,6 +150,10 @@ def ogr_vfk_3():
 # cleanup
 
 def ogr_vfk_cleanup():
+
+    if gdaltest.vfk_drv is None:
+       return 'skip'
+
     gdaltest.vfk_layer_par = None
     gdaltest.vfk_layer_sobr = None
     gdaltest.vfk_ds.Destroy()
