@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  VFK Reader
  * Purpose:  Implements VFKReader class.
