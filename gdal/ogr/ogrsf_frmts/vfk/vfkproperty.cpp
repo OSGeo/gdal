@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  VFK Reader - Property definition
  * Purpose:  Implements VFKProperty class.

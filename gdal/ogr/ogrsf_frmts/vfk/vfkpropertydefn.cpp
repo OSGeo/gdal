@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id$
  *
  * Project:  VFK Reader - Data block property definition
  * Purpose:  Implements VFKPropertyDefn class.
