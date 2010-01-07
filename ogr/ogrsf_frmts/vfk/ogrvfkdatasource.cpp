@@ -42,6 +42,8 @@ OGRVFKDataSource::OGRVFKDataSource()
 {
     pszName    = NULL;
     
+    poReader   = NULL;
+    
     papoLayers = NULL;
     nLayers    = 0;
 }
@@ -52,7 +54,10 @@ OGRVFKDataSource::OGRVFKDataSource()
 OGRVFKDataSource::~OGRVFKDataSource()
 {
     CPLFree(pszName);
-
+    
+    if (poReader)
+	delete poReader;
+    
     for(int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     
