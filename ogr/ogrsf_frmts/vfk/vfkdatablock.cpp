@@ -71,12 +71,14 @@ VFKDataBlock::~VFKDataBlock()
     CPLFree(m_pszName);
 
     for (int i = 0; i < m_nPropertyCount; i++) {
-	CPLFree(m_papoProperty[i]);
+	if (m_papoProperty[i])
+	    delete m_papoProperty[i];
     }
     CPLFree(m_papoProperty);
 
     for (int i = 0; i < m_nFeatureCount; i++) {
-	CPLFree(m_papoFeature[i]);
+	if (m_papoFeature[i])
+	    delete m_papoFeature[i];
     }
     CPLFree(m_papoFeature);
 }
