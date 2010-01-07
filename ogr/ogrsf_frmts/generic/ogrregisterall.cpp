@@ -161,6 +161,9 @@ void OGRRegisterAll()
 #ifdef GTM_ENABLED
     RegisterOGRGTM();
 #endif
+#ifdef VFK_ENABLED
+    RegisterOGRVFK();
+#endif
 
 } /* OGRRegisterAll */
 
