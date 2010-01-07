@@ -61,18 +61,13 @@ VFKFeature::VFKFeature(VFKDataBlock *poDataBlock)
 VFKFeature::~VFKFeature()
 {
     for (int i = 0; i < m_poDataBlock->GetPropertyCount(); i++) {
-	CPLFree(m_papszProperty[i]);
+	if (m_papszProperty[i])
+	    CPLFree(m_papszProperty[i]);
     }
 
     CPLFree(m_papszProperty);
 
     m_poDataBlock = NULL;
-
-    /*
-    OGRGeometry::Destroy(m_paGeom);
-    m_paGeom = NULL;
-    */
-    CPLDebug("OGR_VFK", "~VFKFeature(): fid=%ld", m_FID);
 }
 
 /*!
