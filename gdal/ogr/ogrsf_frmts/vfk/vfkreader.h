@@ -62,6 +62,7 @@ public:
     VFKProperty(int);
     VFKProperty(double);
     VFKProperty(const char *);
+    ~VFKProperty();
     
     bool                    IsNull() const    { return b_isNull; }
     
