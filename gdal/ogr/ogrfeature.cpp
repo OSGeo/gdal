@@ -2637,7 +2637,129 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
     if( GetDefnRef() != poFeature->GetDefnRef() )
         return FALSE;
 
-    //notdef: add testing of attributes at a later date.
+    int i;
+    int nFields = GetDefnRef()->GetFieldCount();
+    for(i=0; i<nFields; i++)
+    {
+        if( IsFieldSet(i) != poFeature->IsFieldSet(i) )
+            return FALSE;
+
+        if( !IsFieldSet(i) )
+            continue;
+
+        switch (GetDefnRef()->GetFieldDefn(i)->GetType() )
+        {
+            case OFTInteger:
+                if( GetFieldAsInteger(i) !=
+                       poFeature->GetFieldAsInteger(i) )
+                    return FALSE;
+                break;
+
+            case OFTReal:
+                if( GetFieldAsDouble(i) !=
+                       poFeature->GetFieldAsDouble(i) )
+                    return FALSE;
+                break;
+
+            case OFTString:
+                if ( strcmp(GetFieldAsString(i), 
+                            poFeature->GetFieldAsString(i)) != 0 )
+                    return FALSE;
+                break;
+
+            case OFTIntegerList:
+            {
+                int nCount1, nCount2;
+                const int* pnList1 = GetFieldAsIntegerList(i, &nCount1);
+                const int* pnList2 =
+                          poFeature->GetFieldAsIntegerList(i, &nCount2);
+                if( nCount1 != nCount2 )
+                    return FALSE;
+                int j;
+                for(j=0;j<nCount1;j++)
+                {
+                    if( pnList1[j] != pnList2[j] )
+                        return FALSE;
+                }
+                break;
+            }
+
+            case OFTRealList:
+            {
+                int nCount1, nCount2;
+                const double* padfList1 =
+                                   GetFieldAsDoubleList(i, &nCount1);
+                const double* padfList2 =
+                        poFeature->GetFieldAsDoubleList(i, &nCount2);
+                if( nCount1 != nCount2 )
+                    return FALSE;
+                int j;
+                for(j=0;j<nCount1;j++)
+                {
+                    if( padfList1[j] != padfList2[j] )
+                        return FALSE;
+                }
+                break;
+            }
+
+            case OFTStringList:
+            {
+                int nCount1, nCount2;
+                char** papszList1 = GetFieldAsStringList(i);
+                char** papszList2 = poFeature->GetFieldAsStringList(i);
+                nCount1 = CSLCount(papszList1);
+                nCount2 = CSLCount(papszList2);
+                if( nCount1 != nCount2 )
+                    return FALSE;
+                int j;
+                for(j=0;j<nCount1;j++)
+                {
+                    if( strcmp(papszList1[j], papszList2[j]) != 0 )
+                        return FALSE;
+                }
+                break;
+            }
+
+            case OFTTime:
+            case OFTDate:
+            case OFTDateTime:
+            {
+                int nYear1, nMonth1, nDay1, nHour1,
+                    nMinute1, nSecond1, nTZFlag1;
+                int nYear2, nMonth2, nDay2, nHour2,
+                    nMinute2, nSecond2, nTZFlag2;
+                GetFieldAsDateTime(i, &nYear1, &nMonth1, &nDay1,
+                              &nHour1, &nMinute1, &nSecond1, &nTZFlag1);
+                poFeature->GetFieldAsDateTime(i, &nYear2, &nMonth2, &nDay2,
+                              &nHour2, &nMinute2, &nSecond2, &nTZFlag2);
+
+                if( !(nYear1 == nYear2 && nMonth1 == nMonth2 &&
+                      nDay1 == nDay2 && nHour1 == nHour2 &&
+                      nMinute1 == nMinute2 && nSecond1 == nSecond2 &&
+                      nTZFlag1 == nTZFlag2) )
+                    return FALSE;
+                break;
+            }
+
+            case OFTBinary:
+            {
+                int nCount1, nCount2;
+                GByte* pabyData1 = GetFieldAsBinary(i, &nCount1);
+                GByte* pabyData2 = poFeature->GetFieldAsBinary(i, &nCount2);
+                if( nCount1 != nCount2 )
+                    return FALSE;
+                if( memcmp(pabyData1, pabyData2, nCount1) != 0 )
+                    return FALSE;
+                break;
+            }
+
+            default:
+                if( strcmp(GetFieldAsString(i), 
+                           poFeature->GetFieldAsString(i)) != 0 )
+                    return FALSE;
+                break;
+        }
+    }
 
     if( GetGeometryRef() == NULL && poFeature->GetGeometryRef() != NULL )
         return FALSE;
