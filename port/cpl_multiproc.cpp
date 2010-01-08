@@ -795,7 +795,7 @@ void CPLDestroyMutex( void *hMutexIn )
 
 {
     pthread_mutex_destroy( (pthread_mutex_t *) hMutexIn );
-    CPLFree( hMutexIn );
+    free( hMutexIn );
 }
 
 /************************************************************************/
