@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <cstdlib>
 #include <vector>
 #include <algorithm>
 
@@ -831,7 +832,7 @@ int main( int argc, char ** argv )
         {
             bClipSrc = TRUE;
             errno = 0;
-            strtod( argv[i + 1], NULL );    // XXX: is it a number or not?
+            const double unused = strtod( argv[i + 1], NULL );    // XXX: is it a number or not?
             if ( errno != 0
                  && argv[i + 2] != NULL
                  && argv[i + 3] != NULL
@@ -848,6 +849,8 @@ int main( int argc, char ** argv )
                 poClipSrc = new OGRPolygon();
                 ((OGRPolygon *) poClipSrc)->addRing( &oRing );
                 i += 4;
+
+                (void)unused;
             }
             else if (EQUALN(argv[i + 1], "POLYGON", 7)
                      || EQUALN(argv[i + 1], "MULTIPOLYGON", 12))
