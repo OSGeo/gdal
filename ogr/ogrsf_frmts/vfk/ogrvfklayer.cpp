@@ -166,7 +166,10 @@ int OGRVFKLayer::GetFeatureCount(int bForce)
     if(!bForce)
 	return -1;
     
-    nfeatures = poDataBlock->GetMaxFID();
+    if (m_poFilterGeom || m_poAttrQuery)
+	nfeatures = OGRLayer::GetFeatureCount(bForce);
+    else
+	nfeatures = poDataBlock->GetMaxFID();
     
     CPLDebug("OGR_VFK", "OGRVFKLayer::GetFeatureCount(): n=%d", nfeatures);
     
@@ -251,11 +254,9 @@ OGRFeature *OGRVFKLayer::GetFeature(VFKFeature *poVFKFeature)
     
     /* get features geometry */
     poGeom = CreateGeometry(poVFKFeature);
-    /* skip features without geometry
-    if (poGeom == NULL)
-	return NULL;
-    */
-
+    if (poGeom != NULL)
+	poGeom->assignSpatialReference(poSRS);
+    
     /* does it satisfy the spatial query, if there is one? */
     if (m_poFilterGeom != NULL && poGeom && !FilterGeometry(poGeom)) {
 	return NULL;
