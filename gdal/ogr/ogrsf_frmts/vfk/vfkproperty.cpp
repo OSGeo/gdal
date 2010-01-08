@@ -39,38 +39,32 @@
   \brief Set VFK property (null)
 */
 VFKProperty::VFKProperty()
+  : m_bIsNull(TRUE), s(NULL)
 {
-    b_isNull = TRUE;
-    s = NULL;
 }
 
 /*!
   \brief Set VFK property (integer)
 */
-VFKProperty::VFKProperty(int iValue)
+VFKProperty::VFKProperty(int iValue) 
+    : m_bIsNull(FALSE), i(iValue), s(NULL)
 {
-    b_isNull = FALSE;
-    i = iValue;
-    s = NULL;
 }
 
 /*!
   \brief Set VFK property (double)
 */
 VFKProperty::VFKProperty(double dValue)
+    : m_bIsNull(FALSE), d(dValue), s(NULL)
 {
-    b_isNull = FALSE;
-    d = dValue;
-    s = NULL;
 }
 
 /*!
   \brief Set VFK property (string)
 */
 VFKProperty::VFKProperty(const char *pszValue)
+    : m_bIsNull(FALSE), s(CPLStrdup(pszValue))
 {
-    b_isNull = FALSE;
-    s = CPLStrdup(pszValue);
 }
 
 /*!
@@ -78,6 +72,5 @@ VFKProperty::VFKProperty(const char *pszValue)
 */
 VFKProperty::~VFKProperty()
 {
-    if (s)
-	CPLFree(s);
+    CPLFree(s);
 }
