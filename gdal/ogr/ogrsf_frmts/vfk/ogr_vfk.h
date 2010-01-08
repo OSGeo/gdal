@@ -29,8 +29,8 @@
  * SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRVFK_H_INCLUDED
-#define _OGRVFK_H_INCLUDED
+#ifndef GDAL_OGR_VFK_H_INCLUDED
+#define GDAL_OGR_VFK_H_INCLUDED
 
 #include <map>
 #include <string>
@@ -66,9 +66,9 @@ private:
     OGRGeometry         *CreateGeometry(VFKFeature *);
     OGRFeature          *GetFeature(VFKFeature *);
     
-    public:
+public:
     OGRVFKLayer(const char *, OGRSpatialReference *,
-		OGRwkbGeometryType, OGRVFKDataSource *);
+                OGRwkbGeometryType, OGRVFKDataSource *);
     ~OGRVFKLayer();
 
     OGRFeature          *GetNextFeature();
@@ -129,10 +129,10 @@ class OGRVFKDriver:public OGRSFDriver
 public:
     ~OGRVFKDriver();
                 
-    const char 		  *GetName();
-    OGRDataSource 	  *Open(const char *, int);
+    const char    *GetName();
+    OGRDataSource *Open(const char *, int);
     
-    int                    TestCapability(const char *);
+    int            TestCapability(const char *);
 };
 
-#endif /* _OGRVFK_H_INCLUDED */
+#endif // GDAL_OGR_VFK_H_INCLUDED

@@ -29,10 +29,11 @@
  * SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_VFKREADERP_H_INCLUDED
-#define _CPL_VFKREADERP_H_INCLUDED
+#ifndef GDAL_OGR_VFK_VFKREADERP_H_INCLUDED
+#define GDAL_OGR_VFK_VFKREADERP_H_INCLUDED
 
 #include <map>
+#include <string>
 
 #include "vfkreader.h"
 #include "ogr_api.h"
@@ -77,4 +78,4 @@ public:
     const char   *GetInfo(const char *);
 };
 
-#endif /* _CPL_VFKREADERP_H_INCLUDED */
+#endif // GDAL_OGR_VFK_VFKREADERP_H_INCLUDED
