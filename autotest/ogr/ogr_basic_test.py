@@ -183,6 +183,170 @@ def ogr_basic_6():
     return 'success'
 
 ###############################################################################
+# Test ogr.Feature.Equal()
+
+def ogr_basic_7():
+
+    feat_defn = ogr.FeatureDefn()
+    feat = ogr.Feature(feat_defn)
+    if not feat.Equal(feat):
+        return 'fail'
+
+    feat_clone = feat.Clone()
+    if not feat.Equal(feat_clone):
+        return 'fail'
+
+    # We MUST delete now as we are changing the feature defn afterwards !
+    # Crash guaranteed otherwise
+    feat.Destroy()
+    feat_clone.Destroy()
+
+    field_defn = ogr.FieldDefn('field1', ogr.OFTInteger)
+    feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field2', ogr.OFTReal)
+    feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field3', ogr.OFTString)
+    feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field4', ogr.OFTIntegerList)
+    feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field5', ogr.OFTRealList)
+    feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field6', ogr.OFTStringList)
+    feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field7', ogr.OFTDate)
+    feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field8', ogr.OFTTime)
+    feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field9', ogr.OFTDateTime)
+    feat_defn.AddFieldDefn(field_defn)
+    # Cannot test : no binding yet for Binary content
+    #field_defn = ogr.FieldDefn('field10', ogr.OFTBinary)
+    #feat_defn.AddFieldDefn(field_defn)
+
+    feat = ogr.Feature(feat_defn)
+    feat.SetFID(100)
+    feat.SetField(0, 1)
+    feat.SetField(1, 1.2)
+    feat.SetField(2, "A")
+    feat.SetFieldIntegerList(3, [1, 2])
+    feat.SetFieldDoubleList(4, [1.2, 3.4])
+    feat.SetFieldStringList(5, ["A", "B"])
+    feat.SetField(6, 2010, 1, 8, 22, 48, 15, 4)
+    feat.SetField(7, 2010, 1, 8, 22, 48, 15, 4)
+    feat.SetField(8, 2010, 1, 8, 22, 48, 15, 4)
+
+    feat_clone = feat.Clone()
+    if not feat.Equal(feat_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+    feat_almost_clone.SetGeometry(geom)
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+    feat.SetGeometry(geom)
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_clone = feat.Clone()
+    if not feat.Equal(feat_clone):
+        feat.DumpReadable()
+        feat_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFID(99)
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetField(0, 2)
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetField(1, 2.2)
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetField(2, "B")
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFieldIntegerList(3, [1, 2, 3])
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFieldIntegerList(3, [1, 3])
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.4, 5.6])
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.5])
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFieldStringList(5, ["A", "B", "C"])
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFieldStringList(5, ["A", "D"])
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
+
+    for num_field in [6, 7, 8]:
+        for i in range(7):
+            feat_almost_clone = feat.Clone()
+            feat_almost_clone.SetField(num_field, 2010+(i==0), 1+(i==1), 
+                                       8+(i==2), 22+(i==3), 48+(i==4),
+                                       15+(i==5), 4+(i==6))
+            if feat.Equal(feat_almost_clone):
+                feat.DumpReadable()
+                feat_almost_clone.DumpReadable()
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -199,6 +363,7 @@ gdaltest_list = [
     ogr_basic_4,
     ogr_basic_5,
     ogr_basic_6,
+    ogr_basic_7,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':
