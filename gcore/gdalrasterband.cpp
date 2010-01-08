@@ -113,7 +113,7 @@ GDALRasterBand::~GDALRasterBand()
  * \brief Read/write a region of image data for this band.
  *
  * This method allows reading a region of a GDALRasterBand into a buffer,
- * or writing data from a buffer into a region of a GDALRasterBand.  It
+ * or writing data from a buffer into a region of a GDALRasterBand. It
  * automatically takes care of data type translation if the data type
  * (eBufType) of the buffer is different than that of the GDALRasterBand.
  * The method also takes care of image decimation / replication if the
@@ -121,7 +121,7 @@ GDALRasterBand::~GDALRasterBand()
  * region being accessed (nXSize x nYSize).
  *
  * The nPixelSpace and nLineSpace parameters allow reading into or
- * writing from unusually organized buffers.  This is primarily used
+ * writing from unusually organized buffers. This is primarily used
  * for buffers containing more than one bands raster data in interleaved
  * format. 
  *
@@ -138,19 +138,19 @@ GDALRasterBand::~GDALRasterBand()
  * write a region of data.
  *
  * @param nXOff The pixel offset to the top left corner of the region
- * of the band to be accessed.  This would be zero to start from the left side.
+ * of the band to be accessed. This would be zero to start from the left side.
  *
  * @param nYOff The line offset to the top left corner of the region
- * of the band to be accessed.  This would be zero to start from the top.
+ * of the band to be accessed. This would be zero to start from the top.
  *
  * @param nXSize The width of the region of the band to be accessed in pixels.
  *
  * @param nYSize The height of the region of the band to be accessed in lines.
  *
  * @param pData The buffer into which the data should be read, or from which
- * it should be written.  This buffer must contain at least nBufXSize *
- * nBufYSize words of type eBufType.  It is organized in left to right,
- * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+ * it should be written. This buffer must contain at least nBufXSize *
+ * nBufYSize words of type eBufType. It is organized in left to right,
+ * top to bottom pixel order. Spacing is controlled by the nPixelSpace,
  * and nLineSpace parameters.
  *
  * @param nBufXSize the width of the buffer image into which the desired region is
@@ -159,16 +159,16 @@ GDALRasterBand::~GDALRasterBand()
  * @param nBufYSize the height of the buffer image into which the desired region is
  * to be read, or from which it is to be written.
  *
- * @param eBufType the type of the pixel values in the pData data buffer.  The
+ * @param eBufType the type of the pixel values in the pData data buffer. The
  * pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
- * pData to the start of the next pixel value within a scanline.  If defaulted
+ * pData to the start of the next pixel value within a scanline. If defaulted
  * (0) the size of the datatype eBufType is used.
  *
  * @param nLineSpace The byte offset from the start of one scanline in
- * pData to the start of the next.  If defaulted the size of the datatype
+ * pData to the start of the next. If defaulted (0) the size of the datatype
  * eBufType * nBufXSize is used.
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
