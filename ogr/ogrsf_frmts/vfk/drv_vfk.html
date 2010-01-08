@@ -1,24 +1,24 @@
 <html>
 <head>
-<title>VFK</title>
+<title>VFK - Czech cadastral exchange data format</title>
 </head>
 
 <body bgcolor="#ffffff">
 
-<h1>VFK</h1>
+<h1>VFK - Czech cadastral exchange data format</h1>
 
-VFK driver can read data in the Czech cadastral exchange data format.
-Each VFK file is represented as one datasource. A VFK file may have 0,
-1 or more layers.
+VFK driver can read data in the <em>Czech cadastral exchange data
+format</em>.  The VFK file is recognized as an OGR datasource with
+zero or more OGR layers.
 
 <p>
-Points are represented as wkbPoint, lines and boundaries as
-wkbLineString and areas as wkbPolygon. wkbMulti* and are not used.
-Feature types cannot be mixed in one layer.
+Points are represented as wkbPoints, lines and boundaries as
+wkbLineStrings and areas as wkbPolygons. wkbMulti* primitives are not
+used. Feature types cannot be mixed in one layer.
 
 <h2>Datasource name</h2>
 
-Datasource name is full path to VFK file.
+Datasource name is a full path to the VFK file.
 
 <h2>Layer names</h2>
 
@@ -31,19 +31,17 @@ is done once when the attribute filter is set.
 
 <h2>Spatial filter</h2>
 
-Bounding boxes of features stored in topology structure are used 
-to evaluate if a features matches current spatial filter.
-
-<p>
-Evaluation is done once when the spatial filter is set.
-
-<h2>Known problem</h2>
+Bounding boxes of features stored in topology structure are used to
+evaluate if a features matches current spatial filter. Evaluation is
+done once when the spatial filter is set.
 
 <h2>References</h2>
 
 <ul>
+<li> <a href="http://josef.fsv.cvut.cz/svn/landa/publications/2010/gis-ostrava-2010/paper/landa-ogr-vfk.pdf">OGR
+VFK Driver Implementation Issues</a></li>
 <li> <a href="http://www.cuzk.cz/Dokument.aspx?PRARESKOD=998&MENUID=0&AKCE=DOC:10-VF_ISKNTEXT">Czech
-cadastral exchange data format documentation</a><p>
+cadastral exchange data format documentation</a> (in Czech)</li>
 </ul>
 
 </body>
