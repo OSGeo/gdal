@@ -29,8 +29,8 @@
  * SOFTWARE.
  ****************************************************************************/
 
-#ifndef _VFKREADER_H_INCLUDED
-#define _VFKREADER_H_INCLUDED
+#ifndef GDAL_OGR_VFK_VFKREADER_H_INCLUDED
+#define GDAL_OGR_VFK_VFKREADER_H_INCLUDED
 
 #include <vector>
 
@@ -51,7 +51,7 @@ typedef std::vector<VFKFeature *> VFKFeatureList;
 class CPL_DLL VFKProperty
 {
 private:
-    bool                    b_isNull;
+    bool                    m_bIsNull;
     
     int                     i;
     double                  d;
@@ -64,7 +64,7 @@ public:
     VFKProperty(const char *);
     ~VFKProperty();
     
-    bool                    IsNull() const    { return b_isNull; }
+    bool                    IsNull() const    { return m_bIsNull; }
     
     int                     GetValueI() const { return i; }
     double                  GetValueD() const { return d; }
@@ -79,7 +79,7 @@ class CPL_DLL VFKFeature
 private:
     VFKDataBlock             *m_poDataBlock;
     
-    long                      m_FID;
+    long                      m_nFID;
     VFKProperty             **m_papszProperty;
     
     bool                      m_bAlive;
@@ -92,7 +92,7 @@ public:
     VFKFeature(VFKDataBlock *);
     ~VFKFeature();
     
-    long                 GetFID() const { return m_FID; }
+    long                 GetFID() const { return m_nFID; }
     void                 SetFID(long);
 
     VFKDataBlock        *GetDataBlock() const { return m_poDataBlock; }
@@ -229,4 +229,4 @@ public:
 
 IVFKReader *CreateVFKReader();
 
-#endif /* _VFKREADER_H_INCLUDED */
+#endif // GDAL_OGR_VFK_VFKREADER_H_INCLUDED
