@@ -1536,26 +1536,26 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
  * @param nBufYSize the height of the buffer image into which the desired
  * region is to be read, or from which it is to be written.
  *
- * @param eBufType the type of the pixel values in the pData data buffer.  The
+ * @param eBufType the type of the pixel values in the pData data buffer. The
  * pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
  * @param nBandCount the number of bands being read or written. 
  *
  * @param panBandMap the list of nBandCount band numbers being read/written.
- * Note band numbers are 1 based.   This may be NULL to select the first 
+ * Note band numbers are 1 based. This may be NULL to select the first 
  * nBandCount bands.
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
- * pData to the start of the next pixel value within a scanline.  If defaulted
+ * pData to the start of the next pixel value within a scanline. If defaulted
  * (0) the size of the datatype eBufType is used.
  *
  * @param nLineSpace The byte offset from the start of one scanline in
- * pData to the start of the next.  If defaulted the size of the datatype
+ * pData to the start of the next. If defaulted (0) the size of the datatype
  * eBufType * nBufXSize is used.
  *
  * @param nBandSpace the byte offset from the start of one bands data to the
- * start of the next.  If defaulted (zero) the value will be 
+ * start of the next. If defaulted (0) the value will be 
  * nLineSpace * nBufYSize implying band sequential organization
  * of the data buffer. 
  *
