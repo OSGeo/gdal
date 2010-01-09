@@ -119,28 +119,8 @@ void OGROGDILayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     if( !InstallFilter( poGeomIn ) )
         return;
 
-    if( m_poFilterGeom != NULL )
-    {
-        OGREnvelope     oEnv;
-        ecs_Result     *psResult;
+    ResetReading();
 
-        m_poFilterGeom->getEnvelope(&oEnv);
-
-        m_sFilterBounds.north = oEnv.MaxY;
-        m_sFilterBounds.south = oEnv.MinY;
-        m_sFilterBounds.east  = oEnv.MinX;
-        m_sFilterBounds.west  = oEnv.MaxX;
-
-        psResult = cln_SelectRegion( m_nClientID, &m_sFilterBounds);
-        if( ECSERROR(psResult) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", psResult->message );
-            return;
-        }
-    }
-
-    m_iNextShapeId = 0;
     m_nTotalShapeCount = -1;
 }
 
@@ -164,6 +144,38 @@ void OGROGDILayer::ResetReading()
                   "Access to layer '%s' Failed: %s\n",
                   m_pszOGDILayerName, psResult->message );
         return;
+    }
+
+    /* Reset spatial filter */
+    if( m_poFilterGeom != NULL )
+    {
+        OGREnvelope     oEnv;
+
+        m_poFilterGeom->getEnvelope(&oEnv);
+
+        m_sFilterBounds.north = oEnv.MaxY;
+        m_sFilterBounds.south = oEnv.MinY;
+        m_sFilterBounds.east  = oEnv.MinX;
+        m_sFilterBounds.west  = oEnv.MaxX;
+
+        psResult = cln_SelectRegion( m_nClientID, &m_sFilterBounds);
+        if( ECSERROR(psResult) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", psResult->message );
+            return;
+        }
+    }
+    else
+    {
+        /* Reset to global bounds */
+        psResult = cln_SelectRegion( m_nClientID, m_poODS->GetGlobalBounds() );
+        if( ECSERROR(psResult) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", psResult->message );
+            return;
+        }
     }
 
     m_iNextShapeId = 0;
