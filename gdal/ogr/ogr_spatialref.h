@@ -194,6 +194,7 @@ class CPL_DLL OGRSpatialReference
 
     OGRErr      Validate();
     OGRErr      StripCTParms( OGR_SRSNode * = NULL );
+    OGRErr      StripVertical();
     OGRErr      FixupOrdering();
     OGRErr      Fixup();
 
