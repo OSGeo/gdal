@@ -2302,12 +2302,14 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     
 {
     GByte      **papabySrcBlock = NULL;
-    GDALRasterBlock *poBlock;
-    GDALRasterBlock **papoBlocks;
+    GDALRasterBlock *poBlock = NULL;
+    GDALRasterBlock **papoBlocks = NULL;
     int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY, iBand;
     int         nBlockXSize=1, nBlockYSize=1;
     CPLErr      eErr = CE_None;
     GDALDataType eDataType = GDT_Byte;
+
+    CPLAssert( NULL != pData );
 
 /* -------------------------------------------------------------------- */
 /*      Ensure that all bands share a common block size and data type.  */
