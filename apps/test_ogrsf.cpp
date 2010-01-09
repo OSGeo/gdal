@@ -573,11 +573,29 @@ static void TestOGRLayerRandomWrite( OGRLayer *poLayer )
     {
         printf( "INFO: Random write test passed.\n" );
     }
+    OGRFeature::DestroyFeature(poFeature);
+
+/* -------------------------------------------------------------------- */
+/*      Re-invert the features to restore to original state             */
+/* -------------------------------------------------------------------- */
+
+    papoFeatures[1]->SetFID( nFID2 );
+    papoFeatures[4]->SetFID( nFID5 );
+
+    if( poLayer->SetFeature( papoFeatures[1] ) != OGRERR_NONE )
+    {
+        printf( "ERROR: Attempt to restore SetFeature(1) failed.\n" );
+        return;
+    }
+    if( poLayer->SetFeature( papoFeatures[4] ) != OGRERR_NONE )
+    {
+        printf( "ERROR: Attempt to restore SetFeature(4) failed.\n" );
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
-    OGRFeature::DestroyFeature(poFeature);
 
     for( iFeature = 0; iFeature < 5; iFeature++ )
         OGRFeature::DestroyFeature(papoFeatures[iFeature]);
