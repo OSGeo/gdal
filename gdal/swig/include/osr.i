@@ -77,6 +77,8 @@ typedef void OSRSpatialReferenceShadow;
 typedef void OSRCoordinateTransformationShadow;
 #endif
 
+typedef char retStringAndCPLFree;
+
 %}
 
 typedef int OGRErr;
@@ -200,14 +202,23 @@ public:
     }
   }
 
-
+/* FIXME : all bindings should avoid using the #else case */
+/* as the deallocator for the char* is delete[] where as */
+/* OSRExportToPrettyWkt uses CPL/VSIMalloc() */
+#if defined(SWIGPYTHON)||defined(SWIGJAVA)
+  retStringAndCPLFree *__str__() {
+    char *buf = 0;
+    OSRExportToPrettyWkt( self, &buf, 0 );
+    return buf;
+  }
+#else
 %newobject __str__;
   char *__str__() {
     char *buf = 0;
     OSRExportToPrettyWkt( self, &buf, 0 );
     return buf;
   }
-
+#endif
 %apply Pointer NONNULL {OSRSpatialReferenceShadow* rhs};
   int IsSame( OSRSpatialReferenceShadow *rhs ) {
     return OSRIsSame( self, rhs );
