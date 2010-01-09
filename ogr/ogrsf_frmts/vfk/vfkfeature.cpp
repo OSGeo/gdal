@@ -42,13 +42,14 @@
 */
 VFKFeature::VFKFeature(VFKDataBlock *poDataBlock)
 {
+    CPLAssert(NULL != poDataBlock);
     m_poDataBlock   = poDataBlock;
-    
+
     m_nFID           = -1;
     m_papszProperty = (VFKProperty **) CPLMalloc(sizeof(VFKProperty *) * poDataBlock->GetPropertyCount());
 
     for (int i = 0; i < poDataBlock->GetPropertyCount(); i++)
-	m_papszProperty[i] = NULL;
+        m_papszProperty[i] = NULL;
 
     m_nGeometryType = poDataBlock->GetGeometryType();
     m_bGeometry     = FALSE;
