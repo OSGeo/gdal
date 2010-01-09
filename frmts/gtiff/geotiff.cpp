@@ -39,6 +39,7 @@
 #include "cpl_csv.h"
 #include "cpl_minixml.h"
 #include "gt_overview.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -4445,6 +4446,22 @@ void GTiffDataset::LookForProjection()
         if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
         {
             pszProjection = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
+            
+            // Should we simplify away vertical CS stuff?
+            if( EQUALN(pszProjection,"COMPD_CS",8)
+                && !CSLTestBoolean( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
+                                                       "NO") ) )
+            {
+                OGRSpatialReference oSRS;
+
+                CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
+                char *pszWKT = pszProjection;
+                oSRS.importFromWkt( &pszWKT );
+                CPLFree( pszProjection );
+
+                oSRS.StripVertical();
+                oSRS.exportToWkt( &pszProjection );
+            }
         }
 
         // Is this a pixel-is-point dataset?

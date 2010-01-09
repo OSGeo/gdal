@@ -641,10 +641,178 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
           GTIFFreeMemory( pszUnitsName );
        }
     }
+
+/* ==================================================================== */
+/*      Handle vertical coordinate system information if we have it.    */
+/* ==================================================================== */
+    short verticalCSType = -1;
+    short verticalDatum = -1;
+    short verticalUnits = -1;
+    const char *pszFilename = NULL;
+    const char *pszValue;
+    char szSearchKey[128];
+
+    // Don't do anything if there is no apparent vertical information.
+    GTIFKeyGet( hGTIF, VerticalCSTypeGeoKey, &verticalCSType, 0, 1 );
+    GTIFKeyGet( hGTIF, VerticalDatumGeoKey, &verticalDatum, 0, 1 );
+    GTIFKeyGet( hGTIF, VerticalUnitsGeoKey, &verticalUnits, 0, 1 );
+
+    if( (verticalCSType != -1 || verticalDatum != -1 || verticalUnits != -1)
+        && (oSRS.IsGeographic() || oSRS.IsProjected() || oSRS.IsLocal()) )
+    {
+        char citation[2048];
+        
+        if( !GTIFKeyGet( hGTIF, VerticalCitationGeoKey, &citation, 
+                         0, sizeof(citation) ) )
+            strcpy( citation, "unknown" );
+
+/* -------------------------------------------------------------------- */
+/*      Promote to being a compound coordinate system.                  */
+/* -------------------------------------------------------------------- */
+        OGR_SRSNode *poOldRoot = oSRS.GetRoot()->Clone();
+
+        oSRS.Clear();
+        oSRS.SetNode( "COMPD_CS", "unknown" );
+        oSRS.GetRoot()->AddChild( poOldRoot );
+        
+/* -------------------------------------------------------------------- */
+/*      Collect some information from the VerticalCS if not provided    */
+/*      via geokeys.                                                    */
+/* -------------------------------------------------------------------- */
+        if( verticalCSType > 0 && verticalCSType != KvUserDefined )
+        {
+            pszFilename = CSVFilename( "coordinate_reference_system.csv" );
+            sprintf( szSearchKey, "%d", verticalCSType );
+
+            if( verticalDatum < 1 || verticalDatum == KvUserDefined )
+            {
+                pszValue = CSVGetField( pszFilename, 
+                                        "coord_ref_sys_code", 
+                                        szSearchKey, CC_Integer, 
+                                        "datum_code" );
+                if( pszValue != NULL )
+                    verticalDatum = atoi(pszValue);
+            }
+
+            if( EQUAL(citation,"unknown") )
+            {
+                pszValue = CSVGetField( pszFilename, 
+                                        "coord_ref_sys_code", 
+                                        szSearchKey, CC_Integer, 
+                                        "coord_ref_sys_name" );
+                if( pszValue != NULL )
+                    strncpy( citation, pszValue, sizeof(citation) );
+            }
+
+            if( verticalUnits < 1 || verticalUnits == KvUserDefined )
+            {
+                pszValue = CSVGetField( pszFilename, 
+                                        "coord_ref_sys_code", 
+                                        szSearchKey, CC_Integer, 
+                                        "coord_sys_code" );
+                if( pszValue != NULL )
+                {
+                    pszFilename = CSVFilename( "coordinate_axis.csv" );
+                    pszValue = CSVGetField( pszFilename, 
+                                            "coord_sys_code", 
+                                            pszValue, CC_Integer, 
+                                            "uom_code" );
+                    if( pszValue != NULL )
+                        verticalUnits = atoi(pszValue);
+                }                
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Setup VERT_CS with citation if present.                         */
+/* -------------------------------------------------------------------- */
+        oSRS.SetNode( "COMPD_CS|VERT_CS", citation );
+
+/* -------------------------------------------------------------------- */
+/*      Setup the vertical datum.                                       */
+/* -------------------------------------------------------------------- */
+        const char *pszVDatumName = "unknown";
+
+        if( verticalDatum > 0 && verticalDatum != KvUserDefined )
+        {
+            pszFilename = CSVFilename( "gdal_datum.csv" );
+            sprintf( szSearchKey, "%d", verticalDatum );
+
+            pszValue = CSVGetField( pszFilename,
+                                    "DATUM_CODE", szSearchKey, CC_Integer,
+                                    "DATUM_NAME" );
+            if( pszValue != NULL )
+                pszVDatumName = pszValue;
+        }
+
+        oSRS.SetNode( "COMPD_CS|VERT_CS|VERT_DATUM", pszVDatumName );
+        oSRS.GetAttrNode( "COMPD_CS|VERT_CS|VERT_DATUM" )
+            ->AddChild( new OGR_SRSNode( "2005" ) );
+        if( verticalDatum > 0 && verticalDatum != KvUserDefined )
+            oSRS.SetAuthority( "COMPD_CS|VERT_CS|VERT_DATUM", "EPSG", 
+                                  verticalDatum );
     
 /* -------------------------------------------------------------------- */
-/*      Return the WKT serialization of the object.                     */
+/*      Set the vertical units.                                         */
 /* -------------------------------------------------------------------- */
+        if( verticalUnits > 0 && verticalUnits != KvUserDefined 
+            && verticalUnits != 9001 )
+        {
+            char szInMeters[128];
+
+            pszFilename = CSVFilename("unit_of_measure.csv");
+            
+            // Name
+            sprintf( szSearchKey, "%d", verticalUnits );
+            pszValue = CSVGetField( pszFilename,
+                                    "uom_code", szSearchKey, CC_Integer,
+                                    "unit_of_meas_name" );
+            if( pszValue == NULL )
+                pszValue = "unknown";
+
+            oSRS.SetNode( "COMPD_CS|VERT_CS|UNIT", pszValue );
+
+            // Value
+            double dfFactorB, dfFactorC;
+            dfFactorB = atof(CSVGetField( pszFilename, 
+                                          "uom_code", szSearchKey, CC_Integer,
+                                          "factor_b" ));
+            dfFactorC = atof(CSVGetField( pszFilename, 
+                                          "uom_code", szSearchKey, CC_Integer,
+                                          "factor_b" ));
+            if( dfFactorB != 0.0 && dfFactorC != 0.0 )
+                sprintf( szInMeters, "%.16g", dfFactorB / dfFactorC );
+            else
+                strcpy( szInMeters, "1" );
+
+
+            oSRS.GetAttrNode( "COMPD_CS|VERT_CS|UNIT" )
+                ->AddChild( new OGR_SRSNode( szInMeters ) );
+
+            oSRS.SetAuthority( "COMPD_CS|VERT_CS|UNIT", "EPSG", verticalUnits);
+        }
+        else
+        {
+            oSRS.SetNode( "COMPD_CS|VERT_CS|UNIT", "metre" );
+            oSRS.GetAttrNode( "COMPD_CS|VERT_CS|UNIT" )
+                ->AddChild( new OGR_SRSNode( "1.0" ) );
+            oSRS.SetAuthority( "COMPD_CS|VERT_CS|UNIT", "EPSG", 9001 );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Set the axis and VERT_CS authority.                             */
+/* -------------------------------------------------------------------- */
+        oSRS.SetNode( "COMPD_CS|VERT_CS|AXIS", "Up" );
+        oSRS.GetAttrNode( "COMPD_CS|VERT_CS|AXIS" )
+            ->AddChild( new OGR_SRSNode( "UP" ) );
+        
+        if( verticalCSType > 0 && verticalCSType != KvUserDefined )
+            oSRS.SetAuthority( "COMPD_CS|VERT_CS", "EPSG", verticalCSType );
+    }
+    
+/* ==================================================================== */
+/*      Return the WKT serialization of the object.                     */
+/* ==================================================================== */
     char	*pszWKT;
 
     oSRS.FixupOrdering();
@@ -1730,7 +1898,33 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         if( nGCS == KvUserDefined )
             SetGeogCSCitation(psGTIF, poSRS, angUnitName, nDatum, nSpheroid);
     }
- 
+
+/* -------------------------------------------------------------------- */
+/*      Do we have vertical datum information to set?                   */
+/* -------------------------------------------------------------------- */
+    if( poSRS->GetAttrValue( "COMPD_CS|VERT_CS" ) != NULL )
+    {
+        const char *pszValue;
+
+        GTIFKeySet( psGTIF, VerticalCitationGeoKey, TYPE_ASCII, 0, 
+                    poSRS->GetAttrValue( "COMPD_CS|VERT_CS" ) );
+
+        pszValue = poSRS->GetAuthorityCode( "COMPD_CS|VERT_CS" );
+        if( pszValue && atoi(pszValue) )
+            GTIFKeySet( psGTIF, VerticalCSTypeGeoKey, TYPE_SHORT, 1,
+                        atoi(pszValue) );
+        
+        pszValue = poSRS->GetAuthorityCode( "COMPD_CS|VERT_CS|VERT_DATUM" );
+        if( pszValue && atoi(pszValue) )
+            GTIFKeySet( psGTIF, VerticalDatumGeoKey, TYPE_SHORT, 1,
+                        atoi(pszValue) );
+        
+        pszValue = poSRS->GetAuthorityCode( "COMPD_CS|VERT_CS|UNIT" );
+        if( pszValue && atoi(pszValue) )
+            GTIFKeySet( psGTIF, VerticalUnitsGeoKey, TYPE_SHORT, 1,
+                        atoi(pszValue) );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
