@@ -95,7 +95,7 @@ def ogr_ntf_1():
         os.stat('tmp/cache/SS.ntf')
     except:
         try:
-            os.system('unzip -d tmp/cache tmp/cache/stratntf.exe')
+            gdaltest.unzip('tmp/cache', 'tmp/cache/stratntf.exe')
             try:
                 os.stat('tmp/cache/SS.ntf')
             except:
@@ -145,7 +145,7 @@ def ogr_ntf_2():
         os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
     except:
         try:
-            os.system('unzip -d tmp/cache tmp/cache/meridian2ntf.exe')
+            gdaltest.unzip('tmp/cache', 'tmp/cache/meridian2ntf.exe')
             try:
                 os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
             except:
