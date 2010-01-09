@@ -71,7 +71,7 @@ VFKProperty::VFKProperty(const char *pszValue)
   \brief Set VFK property (string)
 */
 VFKProperty::VFKProperty(std::string const& strValue)
-    : m_bIsNull(FALSE) //s(strValue)
+    : m_bIsNull(FALSE), s(strValue)
 {
 }
 
