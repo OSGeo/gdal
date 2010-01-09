@@ -59,9 +59,9 @@ private:
 
 public:
     VFKProperty();
-    VFKProperty(int);
-    VFKProperty(double);
-    VFKProperty(const char *);
+    explicit VFKProperty(int);
+    explicit VFKProperty(double);
+    explicit VFKProperty(const char *);
     ~VFKProperty();
     
     bool                    IsNull() const    { return m_bIsNull; }
