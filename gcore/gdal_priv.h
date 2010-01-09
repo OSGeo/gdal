@@ -355,6 +355,8 @@ class CPL_DLL GDALRasterBlock
 
     void        *GetDataRef( void ) { return pData; }
 
+    /// @brief Accessor to source GDALRasterBand object.
+    /// @return source raster band of the raster block.
     GDALRasterBand *GetBand() { return poBand; }
 
     static int  FlushCacheBlock();

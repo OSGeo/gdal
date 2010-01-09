@@ -227,15 +227,26 @@ int GDALRasterBlock::FlushCacheBlock()
 /************************************************************************/
 
 /**
- * \brief GDALRasterBlock Constructor 
+ * @brief GDALRasterBlock Constructor 
  *
  * Normally only called from GDALRasterBand::GetLockedBlockRef().
+ *
+ * @param poBandIn the raster band used as source of raster block
+ * being constructed.
+ *
+ * @param nXOffIn the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth. 
+ *
+ * @param nYOffIn the vertical block offset, with zero indicating
+ * the top most block, 1 the next block and so forth.
  */
 
 GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn, 
                                   int nXOffIn, int nYOffIn )
 
 {
+    CPLAssert( NULL != poBandIn );
+
     poBand = poBandIn;
 
     poBand->GetBlockSize( &nXSize, &nYSize );
@@ -556,6 +567,8 @@ void GDALRasterBlock::MarkClean()
 int GDALRasterBlock::SafeLockBlock( GDALRasterBlock ** ppBlock )
 
 {
+    CPLAssert( NULL != ppBlock );
+
     CPLMutexHolderD( &hRBMutex );
 
     if( *ppBlock != NULL )
