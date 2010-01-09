@@ -1423,19 +1423,18 @@ def ogr_shape_32():
 
     ret = 0
     n = 0
-    print
+    print('')
 #    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     for n in range( 0, 22845571 ):
         dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
         dst_feat.SetGeometry(geom)
         ret = gdaltest.shape_lyr.CreateFeature( dst_feat )
         if ret != 0 and n < 22845570:
-            print 'File limit reached before 4GB!'
+            print('File limit reached before 4GB!')
             return 'fail'
         dst_feat.Destroy()
         if (n % 22846) == 0:
-            print '\b\b\b\b\b\b\b\b\b\b\b\b\b\b',(n/Decimal('228460.0')),'%  ',
-            sys.stdout.flush()
+            print('\b\b\b\b\b\b\b\b\b\b\b\b\b\b',(n/Decimal('228460.0')),'%  ', sys.stdout.flush())
 #    gdal.PopErrorHandler()
 
     #######################################################
@@ -1449,11 +1448,11 @@ def ogr_shape_32():
     for i in [0, 1, read_lyr.GetFeatureCount()-1]:
       feat_read = read_lyr.GetFeature(i)
       if feat_read is None:
-        print 'Couldn\' retrieve geometry at FID',i
+        print('Couldn\' retrieve geometry at FID',i)
         return 'fail'
       if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'),
                                 max_error = 0.000000001 ) != 0:
-        print 'Wrong geometry encountered at FID',i,':', (feat_read.GetGeometryRef().ExportToWkt())
+        print('Wrong geometry encountered at FID',i,':', (feat_read.GetGeometryRef().ExportToWkt()))
         return 'fail'
 
     return 'success'
