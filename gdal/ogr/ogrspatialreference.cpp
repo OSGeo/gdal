@@ -5137,7 +5137,6 @@ int OGRSpatialReference::IsGeographic() const
     if( GetRoot() == NULL )
         return FALSE;
 
-    return EQUAL(GetRoot()->GetValue(),"GEOGCS");
     if( EQUAL(poRoot->GetValue(),"GEOGCS") )
         return TRUE;
     else if( EQUAL(poRoot->GetValue(),"COMPD_CS") )
