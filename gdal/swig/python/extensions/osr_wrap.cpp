@@ -2854,6 +2854,8 @@ typedef void OSRSpatialReferenceShadow;
 typedef void OSRCoordinateTransformationShadow;
 #endif
 
+typedef char retStringAndCPLFree;
+
 
 
 int bUseExceptions=0;
@@ -3143,7 +3145,7 @@ SWIGINTERN void delete_OSRSpatialReferenceShadow(OSRSpatialReferenceShadow *self
       OSRDestroySpatialReference( self );
     }
   }
-SWIGINTERN char *OSRSpatialReferenceShadow___str__(OSRSpatialReferenceShadow *self){
+SWIGINTERN retStringAndCPLFree *OSRSpatialReferenceShadow___str__(OSRSpatialReferenceShadow *self){
     char *buf = 0;
     OSRExportToPrettyWkt( self, &buf, 0 );
     return buf;
@@ -4014,7 +4016,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference___str__(PyObject *SWIGUNUSEDPARM(sel
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
-  char *result = 0 ;
+  retStringAndCPLFree *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference___str__",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
@@ -4023,7 +4025,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference___str__(PyObject *SWIGUNUSEDPARM(sel
   }
   arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
   {
-    result = (char *)OSRSpatialReferenceShadow___str__(arg1);
+    result = (retStringAndCPLFree *)OSRSpatialReferenceShadow___str__(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -4031,8 +4033,14 @@ SWIGINTERN PyObject *_wrap_SpatialReference___str__(PyObject *SWIGUNUSEDPARM(sel
       }
     }
   }
-  resultobj = SWIG_FromCharPtr((const char *)result);
-  delete[] result;
+  {
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if(result)
+    {
+      resultobj = GDALPythonObjectFromCStr( (const char *)result);
+      CPLFree(result);
+    }
+  }
   return resultobj;
 fail:
   return NULL;
@@ -11502,7 +11510,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetUserInputAsWKT", _wrap_GetUserInputAsWKT, METH_VARARGS, (char *)"GetUserInputAsWKT(char name) -> OGRErr"},
 	 { (char *)"new_SpatialReference", (PyCFunction) _wrap_new_SpatialReference, METH_VARARGS | METH_KEYWORDS, (char *)"new_SpatialReference(char wkt = \"\") -> SpatialReference"},
 	 { (char *)"delete_SpatialReference", _wrap_delete_SpatialReference, METH_VARARGS, (char *)"delete_SpatialReference(SpatialReference self)"},
-	 { (char *)"SpatialReference___str__", _wrap_SpatialReference___str__, METH_VARARGS, (char *)"SpatialReference___str__(SpatialReference self) -> char"},
+	 { (char *)"SpatialReference___str__", _wrap_SpatialReference___str__, METH_VARARGS, (char *)"SpatialReference___str__(SpatialReference self) -> retStringAndCPLFree"},
 	 { (char *)"SpatialReference_IsSame", _wrap_SpatialReference_IsSame, METH_VARARGS, (char *)"SpatialReference_IsSame(SpatialReference self, SpatialReference rhs) -> int"},
 	 { (char *)"SpatialReference_IsSameGeogCS", _wrap_SpatialReference_IsSameGeogCS, METH_VARARGS, (char *)"SpatialReference_IsSameGeogCS(SpatialReference self, SpatialReference rhs) -> int"},
 	 { (char *)"SpatialReference_IsGeographic", _wrap_SpatialReference_IsGeographic, METH_VARARGS, (char *)"SpatialReference_IsGeographic(SpatialReference self) -> int"},

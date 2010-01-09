@@ -207,7 +207,7 @@ class SpatialReference(_object):
     __swig_destroy__ = _osr.delete_SpatialReference
     __del__ = lambda self : None;
     def __str__(self, *args):
-        """__str__(self) -> char"""
+        """__str__(self) -> retStringAndCPLFree"""
         return _osr.SpatialReference___str__(self, *args)
 
     def IsSame(self, *args):
