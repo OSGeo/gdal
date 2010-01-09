@@ -19286,7 +19286,9 @@ fi
 
 if test "$LIBZ_SETTING" = "external" ; then
   LIBS="-lz $LIBS"
-  EXTRA_INCLUDES="-I$with_libz -I$with_libz/include $EXTRA_INCLUDES"
+  if test "$with_libz" != "" -a "$with_libz" != "yes" -a "$with_libz" != "external" ; then
+    EXTRA_INCLUDES="-I$with_libz -I$with_libz/include $EXTRA_INCLUDES"
+  fi
 elif test "$with_libz" = "no" ; then
   LIBZ_SETTING=no
   { echo "$as_me:$LINENO: result: not using libz at all." >&5
@@ -19995,6 +19997,10 @@ fi
     echo "libcfitsio not found - FITS support disabled"
   fi
 
+  if test "$FITS_SETTING" = "external" -a -d /usr/include/cfitsio ; then
+    EXTRA_INCLUDES="-I/usr/include/cfitsio $EXTRA_INCLUDES"
+  fi
+
 else
 
   FITS_SETTING=external
@@ -20358,6 +20364,10 @@ fi
     echo "using pre-installed libnetcdf."
   else
     echo "libnetcdf not found - netCDF support disabled"
+  fi
+
+  if test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf ; then
+    EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
   fi
 
 else
@@ -22281,7 +22291,11 @@ if test x"$with_hdf4" = x"no" ; then
 else
 
   if test x"$with_hdf4" = x"yes" -o x"$with_hdf4" = x"" ; then
-    HDF_LIB_DIR=""
+    if test -d /usr/lib/hdf; then
+      HDF_LIB_DIR="/usr/lib/hdf"
+    else
+      HDF_LIB_DIR=""
+    fi
   else
     if test -d $with_hdf4/lib ; then
       HDF_LIB_DIR="$with_hdf4/lib"
