@@ -33,6 +33,7 @@
 #define GDAL_OGR_VFK_VFKREADER_H_INCLUDED
 
 #include <vector>
+#include <string>
 
 #include "ogrsf_frmts.h"
 
@@ -55,20 +56,20 @@ private:
     
     int                     i;
     double                  d;
-    char                   *s;
+    std::string             s;
 
 public:
     VFKProperty();
     explicit VFKProperty(int);
     explicit VFKProperty(double);
-    explicit VFKProperty(const char *);
+    explicit VFKProperty(const char*);
+    explicit VFKProperty(std::string const&);
     ~VFKProperty();
     
     bool                    IsNull() const    { return m_bIsNull; }
-    
     int                     GetValueI() const { return i; }
     double                  GetValueD() const { return d; }
-    const char             *GetValueS() const { return s; }
+    const char             *GetValueS() const { return s.c_str(); }
 };
 
 /************************************************************************/
