@@ -28,7 +28,7 @@
 import sys
 sys.path.append( 'pymod' )
 import gdaltest
-import gdal
+from osgeo import gdal
 
 test_list = []
 for i in range(1,len(gdaltest.argv)):
@@ -44,4 +44,3 @@ gdaltest.run_all( test_list, [] )
 errors = gdaltest.summarize()
 
 sys.exit( errors )
-
