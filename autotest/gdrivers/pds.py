@@ -130,8 +130,8 @@ def pds_5():
     expected_wkt = 'PROJCS["EQUIRECTANGULAR MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID["MARS_localRadius",3394839.8133163,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",180],PARAMETER["standard_parallel_1",15],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
     wkt = ds.GetProjection()
     if expected_wkt != wkt:
-        print 'Got: ', wkt
-        print 'Exp: ', expected_wkt
+        print('Got: ', wkt)
+        print('Exp: ', expected_wkt)
         gdaltest.post_reason( 'did not get expected coordinate system.' )
         return 'fail'
 
