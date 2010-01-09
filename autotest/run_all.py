@@ -34,15 +34,15 @@ all_test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'warp', 'alg', 'utilities'
 
 if len(sys.argv) == 2:
     if sys.argv[1] == '-l':
-        print 'List of GDAL Autotest modules'
+        print('List of GDAL Autotest modules')
         for test in all_test_list:
-            print '*',test
+            print('* ' + test)
         sys.exit(0)
     elif sys.argv[1] == '-h' or sys.argv[1][0] == '-':
-        print 'Usage:', sys.argv[0], ' [OPTION]'
-        print '\t<tests> - list of test modules to run, run all if none specified'
-        print '\t-l      - list available test modules'
-        print '\t-h      - print this usage message'
+        print('Usage: ' + sys.argv[0] + ' [OPTION]')
+        print('\t<tests> - list of test modules to run, run all if none specified')
+        print('\t-l      - list available test modules')
+        print('\t-h      - print this usage message')
         sys.exit(0)
 
 test_list = []
