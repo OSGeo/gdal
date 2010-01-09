@@ -30,12 +30,27 @@ sys.path.append( 'pymod' )
 import gdaltest
 from osgeo import gdal
 
+all_test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'warp', 'alg', 'utilities' ]
+
+if len(sys.argv) == 2:
+    if sys.argv[1] == '-l':
+        print 'List of GDAL Autotest modules'
+        for test in all_test_list:
+            print '*',test
+        sys.exit(0)
+    elif sys.argv[1] == '-h' or sys.argv[1][0] == '-':
+        print 'Usage:', sys.argv[0], ' [OPTION]'
+        print '\t<tests> - list of test modules to run, run all if none specified'
+        print '\t-l      - list available test modules'
+        print '\t-h      - print this usage message'
+        sys.exit(0)
+
 test_list = []
 for i in range(1,len(gdaltest.argv)):
     test_list.append( gdaltest.argv[i] )
 
 if len(test_list) == 0:
-    test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'warp', 'alg', 'utilities' ]
+    test_list = all_test_list
 
 gdaltest.setup_run( 'gdalautotest_all' )
 
@@ -44,3 +59,4 @@ gdaltest.run_all( test_list, [] )
 errors = gdaltest.summarize()
 
 sys.exit( errors )
+
