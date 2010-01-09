@@ -5012,6 +5012,35 @@ const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                           StripVertical()                            */
+/************************************************************************/
+
+/**
+ * \brief Convert a compound cs into a horizontal CS.
+ *
+ * If this SRS is of type COMPD_CS[] then the vertical CS and the root COMPD_CS 
+ * nodes are stripped resulting and only the horizontal coordinate system
+ * portion remains (normally PROJCS, GEOGCS or LOCAL_CS). 
+ *
+ * If this is not a compound coordinate system then nothing is changed.
+ */
+
+OGRErr OGRSpatialReference::StripVertical()
+
+{
+    if( GetRoot() == NULL 
+        || !EQUAL(GetRoot()->GetValue(),"COMPD_CS") )
+        return OGRERR_NONE;
+
+    OGR_SRSNode *poHorizontalCS = GetRoot()->GetChild( 1 );
+    if( poHorizontalCS != NULL )
+        poHorizontalCS = poHorizontalCS->Clone();
+    SetRoot( poHorizontalCS );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                            StripCTParms()                            */
 /************************************************************************/
 
@@ -5034,7 +5063,10 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
 
 {
     if( poCurrent == NULL )
+    {
+        StripVertical();
         poCurrent = GetRoot();
+    }
 
     if( poCurrent == NULL )
         return OGRERR_NONE;
