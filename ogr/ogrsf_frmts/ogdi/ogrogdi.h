@@ -118,6 +118,9 @@ class OGROGDIDataSource : public OGRDataSource
     ecs_Region         *GetGlobalBounds() { return &m_sGlobalBounds; }
     OGRSpatialReference*GetSpatialRef() { return m_poSpatialRef; }
     int                 GetClientID() { return m_nClientID; }
+
+    OGROGDILayer       *GetCurrentLayer() { return m_poCurrentLayer; }
+    void                SetCurrentLayer(OGROGDILayer* poLayer) { m_poCurrentLayer = poLayer ; }
 };
 
 /************************************************************************/
