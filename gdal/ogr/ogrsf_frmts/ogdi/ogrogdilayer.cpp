@@ -192,6 +192,14 @@ OGRFeature *OGROGDILayer::GetNextFeature()
     ecs_Result  *psResult;
     int         i;
 
+    /* Reset reading if we are not the current layer */
+    /* WARNING : this does not allow interleaved reading of layers */ 
+    if( m_poODS->GetCurrentLayer() != this )
+    {
+        m_poODS->SetCurrentLayer(this);
+        ResetReading();
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Retrieve object from OGDI server and create new feature         */
 /* -------------------------------------------------------------------- */
