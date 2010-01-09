@@ -182,6 +182,14 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
                                  int nLineSpace )
 
 {
+
+    if( NULL == pData )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The buffer into which the data should be read is null" );
+            return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If pixel and line spaceing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */

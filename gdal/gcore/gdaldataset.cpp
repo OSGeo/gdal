@@ -1456,8 +1456,10 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 {
     int iBandIndex; 
     CPLErr eErr = CE_None;
+    const char* pszInterleave = NULL;
 
-    const char* pszInterleave;
+    CPLAssert( NULL != pData );
+
     if (nXSize == nBufXSize && nYSize == nBufYSize &&
         (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) != NULL &&
         EQUAL(pszInterleave, "PIXEL"))
@@ -1570,9 +1572,16 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace, int nBandSpace )
 
 {
-    int i;
+    int i = 0;
     int bNeedToFreeBandMap = FALSE;
     CPLErr eErr = CE_None;
+
+    if( NULL == pData )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The buffer into which the data should be read is null" );
+            return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Some size values are "noop".  Lets just return to avoid         */
