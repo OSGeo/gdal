@@ -54,9 +54,9 @@ class CPL_DLL VFKProperty
 private:
     bool                    m_bIsNull;
     
-    int                     i;
-    double                  d;
-    std::string             s;
+    int                     m_nValue;
+    double                  m_dValue;
+    std::string             m_strValue;
 
 public:
     VFKProperty();
@@ -67,9 +67,9 @@ public:
     ~VFKProperty();
     
     bool                    IsNull() const    { return m_bIsNull; }
-    int                     GetValueI() const { return i; }
-    double                  GetValueD() const { return d; }
-    const char             *GetValueS() const { return s.c_str(); }
+    int                     GetValueI() const { return m_nValue; }
+    double                  GetValueD() const { return m_dValue; }
+    const char             *GetValueS() const { return m_strValue.c_str(); }
 };
 
 /************************************************************************/
