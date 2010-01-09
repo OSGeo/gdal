@@ -32,6 +32,7 @@ import os
 import sys
 import ogr
 import osr
+import zipfile
 
 sys.path.append( '../pymod' )
 
@@ -41,10 +42,6 @@ import ogrtest
 ###############################################################################
 def ogr_ogdi_1():
 
-    # Skip for Win32 for the moment.
-    if os.name == 'nt':
-        return 'skip'
-
     try:
         drv = ogr.GetDriverByName('OGDI')
     except:
@@ -53,17 +50,25 @@ def ogr_ogdi_1():
     if drv is None:
         return 'skip'
 
-    if not gdaltest.download_file('http://freefr.dl.sourceforge.net/project/ogdi/OGDI_Test_Suite/3.1/ogdits-3.1.0.tar.gz', 'ogdits-3.1.0.tar.gz'):
+    if not gdaltest.download_file('http://freefr.dl.sourceforge.net/project/ogdi/OGDI_Test_Suite/3.1/ogdits-3.1.0.zip', 'ogdits-3.1.0.zip'):
         return 'skip'
 
     try:
         os.stat('tmp/cache/ogdits-3.1')
     except:
         try:
-            wd = os.getcwd()
-            os.chdir( 'tmp/cache' )
-            os.system('tar xvzf ogdits-3.1.0.tar.gz')
-            os.chdir(wd)
+            zf = zipfile.ZipFile('tmp/cache/ogdits-3.1.0.zip')
+            target_path = 'tmp/cache'
+            for filename in zf.namelist():
+                print(filename)
+                outfilename = os.path.join(target_path, filename)
+                if filename.endswith('/'):
+                    os.mkdir(outfilename)
+                else:
+                    outfile = open(outfilename,'wb')
+                    outfile.write(zf.read(filename))
+                    outfile.close()
+
             try:
                 os.stat('tmp/cache/ogdits-3.1')
             except:
