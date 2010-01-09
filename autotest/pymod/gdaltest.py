@@ -1113,3 +1113,33 @@ def filesystem_supports_sparse_files(path):
         return False
 
     return True
+
+###############################################################################
+# Unzip a file
+
+def unzip(target_dir, zipfilename):
+
+    try:
+        import zipfile
+        zf = zipfile.ZipFile(zipfilename)
+    except:
+        os.system('unzip -d ' + target_dir + ' ' + zipfilename)
+        return
+
+    for filename in zf.namelist():
+        print(filename)
+        outfilename = os.path.join(target_dir, filename)
+        if filename.endswith('/'):
+            if not os.path.exists(outfilename):
+               os.makedirs(outfilename)
+        else:
+            outdirname = os.path.dirname(outfilename)
+            if not os.path.exists(outdirname):
+               os.makedirs(outdirname)
+
+            outfile = open(outfilename,'wb')
+            outfile.write(zf.read(filename))
+            outfile.close()
+
+    return
+

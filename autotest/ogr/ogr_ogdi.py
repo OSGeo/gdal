@@ -32,7 +32,6 @@ import os
 import sys
 import ogr
 import osr
-import zipfile
 
 sys.path.append( '../pymod' )
 
@@ -57,18 +56,7 @@ def ogr_ogdi_1():
         os.stat('tmp/cache/ogdits-3.1')
     except:
         try:
-            zf = zipfile.ZipFile('tmp/cache/ogdits-3.1.0.zip')
-            target_path = 'tmp/cache'
-            for filename in zf.namelist():
-                print(filename)
-                outfilename = os.path.join(target_path, filename)
-                if filename.endswith('/'):
-                    os.mkdir(outfilename)
-                else:
-                    outfile = open(outfilename,'wb')
-                    outfile.write(zf.read(filename))
-                    outfile.close()
-
+            gdaltest.unzip( 'tmp/cache', 'tmp/cache/ogdits-3.1.0.zip')
             try:
                 os.stat('tmp/cache/ogdits-3.1')
             except:
