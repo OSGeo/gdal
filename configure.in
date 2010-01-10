@@ -1865,6 +1865,24 @@ else
     DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
     DODS_BIN=$with_dods_root/bin
 
+dnl Test if we have libdap < 3.9
+dnl Before libdap < 3.9, DAS derived from AttrTable class
+dnl I wish they had defines with version numbers instead of this test !
+rm -f islibdappre39.*
+echo '#include "DAS.h"' > islibdappre39.cpp
+echo '#include "AttrTable.h"' >> islibdappre39.cpp
+echo 'using namespace libdap;' >> islibdappre39.cpp
+echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
+if test -z "`${CXX} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
+dnl yes, libdap < 3.9
+    AC_MSG_RESULT([libdap < 3.9])
+else
+    DODS_INC="$DODS_INC -DLIBDAP_39"
+    AC_MSG_RESULT([libdap >= 3.9])
+fi
+rm -f islibdappre39.*
+
+
     dnl Add the DODS libraries to LIBS
     if test -x $DODS_BIN/opendap-config ; then 
       dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.

@@ -193,12 +193,18 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
     AttrTable::Attr_iter dv_i;
 
-    for( dv_i = oDAS.attr_begin(); dv_i != oDAS.attr_end(); dv_i++ )
+#ifdef LIBDAP_39
+    AttrTable* poTable = oDAS.container();
+#else
+    AttrTable* poTable = &oDAS;
+#endif
+
+    for( dv_i = poTable->attr_begin(); dv_i != poTable->attr_end(); dv_i++ )
     {
-        if( EQUALN(oDAS.get_name(dv_i).c_str(),"ogr_layer_info",14) 
-            && oDAS.is_container( dv_i ) )
+        if( EQUALN(poTable->get_name(dv_i).c_str(),"ogr_layer_info",14) 
+            && poTable->is_container( dv_i ) )
         {
-            AttrTable *poAttr = oDAS.get_attr_table( dv_i );
+            AttrTable *poAttr = poTable->get_attr_table( dv_i );
             string target_container = poAttr->get_attr( "target_container" );
             BaseType *poVar = poDDS->var( target_container.c_str() );
             

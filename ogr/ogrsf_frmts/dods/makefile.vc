@@ -3,7 +3,7 @@ OBJ	=	ogrdodsdriver.obj ogrdodsdatasource.obj ogrdodslayer.obj ogrdodssequencela
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS = -I.. -I$(DODS_DIR) -I$(DODS_DIR)\include -I$(DODS_DIR)\include\gnu -I$(DODS_DIR)\include\pthreads -I$(DODS_DIR)\include\xdr /DWIN32 /DWIN32_LEAN_AND_MEAN -DFRMT_dods /GR
+EXTRAFLAGS = -I.. -I$(DODS_DIR) -I$(DODS_DIR)\include -I$(DODS_DIR)\include\gnu -I$(DODS_DIR)\include\pthreads -I$(DODS_DIR)\include\xdr /DWIN32 /DWIN32_LEAN_AND_MEAN -DFRMT_dods $(DODS_FLAGS) /GR
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
