@@ -695,6 +695,25 @@ void DODSDataset::HarvestDAS()
 /* -------------------------------------------------------------------- */
 /*      Try and fetch the corresponding DAS subtree if it exists.       */
 /* -------------------------------------------------------------------- */
+#ifdef LIBDAP_39
+    AttrTable *poFileInfo = oDAS.get_table( "GLOBAL" );
+
+    if( poFileInfo == NULL )
+    {
+        poFileInfo = oDAS.get_table( "NC_GLOBAL" );
+
+	if( poFileInfo == NULL )
+	{
+	    poFileInfo = oDAS.get_table( "HDF_GLOBAL" );
+
+	    if( poFileInfo == NULL )
+	    {
+	        CPLDebug( "DODS", "No GLOBAL DAS info." );
+	        return;
+	    }
+	}
+    }
+#else
     AttrTable *poFileInfo = oDAS.find_container( "GLOBAL" );
 
     if( poFileInfo == NULL )
@@ -712,6 +731,7 @@ void DODSDataset::HarvestDAS()
 	    }
 	}
     }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Try and fetch the bounds                                        */
@@ -1292,7 +1312,11 @@ void DODSRasterBand::HarvestDAS()
 /* -------------------------------------------------------------------- */
 /*      Try and fetch the corresponding DAS subtree if it exists.       */
 /* -------------------------------------------------------------------- */
+#ifdef LIBDAP_39
+    AttrTable *poBandInfo = poDODS->GetDAS().get_table( oVarName );
+#else
     AttrTable *poBandInfo = poDODS->GetDAS().find_container( oVarName );
+#endif
 
     if( poBandInfo == NULL )
     {
