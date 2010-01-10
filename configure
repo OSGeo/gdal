@@ -1612,6 +1612,7 @@ Optional Packages:
   --with-sde=DIR        Include ESRI SDE support (DIR is SDE's install dir).
   --with-sde-version=VERSION NUMBER  Set ESRI SDE version number (Default is 80).
   --without-vfk         Disable VFK support
+  --with-epsilon=ARG    Include EPSILON support (ARG=no, yes or libepsilon install root path)
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
   --without-pam         Disable PAM (.aux.xml) support
@@ -5777,13 +5778,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5780: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5781: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5783: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5784: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5786: output\"" >&5)
+  (eval echo "\"\$as_me:5787: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6880,7 +6881,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6883 "configure"' > conftest.$ac_ext
+  echo '#line 6884 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8571,11 +8572,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8574: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8575: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8578: \$? = $ac_status" >&5
+   echo "$as_me:8579: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8893,11 +8894,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8896: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8897: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8900: \$? = $ac_status" >&5
+   echo "$as_me:8901: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8998,11 +8999,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9001: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9002: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9005: \$? = $ac_status" >&5
+   echo "$as_me:9006: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9053,11 +9054,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9056: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9057: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9060: \$? = $ac_status" >&5
+   echo "$as_me:9061: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11813,7 +11814,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11816 "configure"
+#line 11817 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11913,7 +11914,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11916 "configure"
+#line 11917 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13941,11 +13942,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13944: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13945: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13948: \$? = $ac_status" >&5
+   echo "$as_me:13949: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14040,11 +14041,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14043: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14044: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14047: \$? = $ac_status" >&5
+   echo "$as_me:14048: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14092,11 +14093,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14095: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14096: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14099: \$? = $ac_status" >&5
+   echo "$as_me:14100: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -25855,8 +25856,8 @@ echo $ECHO_N "checking for SQLite3 library >= $sqlite3_version_req... $ECHO_C" >
                 if test -f "$ac_sqlite3_path_tmp/include/$ac_sqlite3_header" \
                     && test -r "$ac_sqlite3_path_tmp/include/$ac_sqlite3_header"; then
                     ac_sqlite3_path=$ac_sqlite3_path_tmp
-                    ac_sqlite3_ldflags="-I$ac_sqlite3_path_tmp/include"
-                    ac_sqlite3_cppflags="-L$ac_sqlite3_path_tmp/lib"
+                    ac_sqlite3_ldflags="-L$ac_sqlite3_path_tmp/lib"
+                    ac_sqlite3_cppflags="-I$ac_sqlite3_path_tmp/include"
                     break;
                 fi
             done
@@ -26665,6 +26666,175 @@ echo "${ECHO_T}yes" >&6; }
 fi
 
 
+
+
+
+# Check whether --with-epsilon was given.
+if test "${with_epsilon+set}" = set; then
+  withval=$with_epsilon;
+fi
+
+
+EPSILON_SETTING=no
+
+if test "$with_epsilon" = "yes" ; then
+
+  { echo "$as_me:$LINENO: checking for eps_read_block_header in -lepsilon" >&5
+echo $ECHO_N "checking for eps_read_block_header in -lepsilon... $ECHO_C" >&6; }
+if test "${ac_cv_lib_epsilon_eps_read_block_header+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lepsilon  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char eps_read_block_header ();
+int
+main ()
+{
+return eps_read_block_header ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_epsilon_eps_read_block_header=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_epsilon_eps_read_block_header=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_epsilon_eps_read_block_header" >&5
+echo "${ECHO_T}$ac_cv_lib_epsilon_eps_read_block_header" >&6; }
+if test $ac_cv_lib_epsilon_eps_read_block_header = yes; then
+  EPSILON_SETTING=yes
+else
+  EPSILON_SETTING=no
+fi
+
+
+  if test "$EPSILON_SETTING" = "yes" ; then
+    LIBS="-lepsilon $LIBS"
+  else
+    echo "libepsilon not found - EPSILON support disabled"
+  fi
+
+elif test "$with_epsilon" != "no" -a "$with_epsilon" != ""; then
+
+  { echo "$as_me:$LINENO: checking for eps_read_block_header in -lepsilon" >&5
+echo $ECHO_N "checking for eps_read_block_header in -lepsilon... $ECHO_C" >&6; }
+if test "${ac_cv_lib_epsilon_eps_read_block_header+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lepsilon -L$with_epsilon/lib -lepsilon $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char eps_read_block_header ();
+int
+main ()
+{
+return eps_read_block_header ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_epsilon_eps_read_block_header=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_epsilon_eps_read_block_header=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_epsilon_eps_read_block_header" >&5
+echo "${ECHO_T}$ac_cv_lib_epsilon_eps_read_block_header" >&6; }
+if test $ac_cv_lib_epsilon_eps_read_block_header = yes; then
+  EPSILON_SETTING=yes
+else
+  EPSILON_SETTING=no
+fi
+
+
+  if test "$EPSILON_SETTING" = "yes" ; then
+    LIBS="-L$with_epsilon/lib -lepsilon $LIBS"
+    EXTRA_INCLUDES="-I$with_epsilon/include $EXTRA_INCLUDES"
+  else
+    echo "libepsilon not found - EPSILON support disabled"
+  fi
+
+fi
+
+if test "$EPSILON_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="epsilon $OPT_GDAL_FORMATS"
+fi
 
 
 
@@ -30179,6 +30349,9 @@ echo "  MSG support:               ${HAVE_MSG}"
 
 
 echo "  GRIB support:              ${HAVE_GRIB}"
+
+
+echo "  EPSILON support:           ${EPSILON_SETTING}"
 
 
 echo "  cURL support (wms/wcs/...):${CURL_SETTING}"
