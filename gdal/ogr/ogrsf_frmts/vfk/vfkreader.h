@@ -66,6 +66,9 @@ public:
     explicit VFKProperty(std::string const&);
     ~VFKProperty();
     
+    VFKProperty(VFKProperty const& other);
+    VFKProperty& operator=(VFKProperty const& other);
+
     bool                    IsNull() const    { return m_bIsNull; }
     int                     GetValueI() const { return m_nValue; }
     double                  GetValueD() const { return m_dValue; }
@@ -78,10 +81,13 @@ public:
 class CPL_DLL VFKFeature
 {
 private:
+    typedef std::vector<VFKProperty> VFKPropertyList;
+    
     VFKDataBlock             *m_poDataBlock;
+ 
+    VFKPropertyList           m_propertyList;
     
     long                      m_nFID;
-    VFKProperty             **m_papszProperty;
     
     bool                      m_bAlive;
     
