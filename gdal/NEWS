@@ -1,4 +1,4 @@
-= GDAL/OGR 1.7.0 (*** This is preliminary news established from r15874 (GDAL 1.6.0) to r18425 (02 jan 2010) *** = 
+= GDAL/OGR 1.7.0 (*** This is preliminary news established from r15874 (GDAL 1.6.0) to r18510 (10 jan 2010) *** = 
 
 (Some of the bugfixes mentionned below might also have gone into 1.6.X maintenance releases.)
 
@@ -7,7 +7,7 @@
 * New GDAL drivers : BAG, EPSILON, Northwood/VerticalMapper, R, Rasterlite,
                      SAGA GIS Binary, SRP (USRP/ASRP), EarthWatch .TIL, WKT Raster
 * GDAL PCIDSK driver using the nw PCIDSK SDK by default
-* New OGR driver : DXF, GeoRSS, GTM, PCIDSK
+* New OGR drivers : DXF, GeoRSS, GTM, PCIDSK and VFK
 * New utility : gdaldem, gdalbuildvrt now compiled by default
 * Add support for Python 3.X. Compatibility with Python 2.X preserved (#3265)
 * Remove old-generation Python bindings.
@@ -154,6 +154,8 @@ Utilities :
  * rgb2pct.py: Added ability to use a preexisting color table from a file (#2958)
  * pct2rgb.py and rgb2pct.py : Copy the GCPs and their projection to the target dataset.
  * classify.py: Fix order of args to numpy.ones() and numpy.zeros() (#3089)
+ * hsv_merge.py: New sample script to greyscale as intensity into an RGB image,
+                 for instance to apply hillshading to a dem colour relief.
  * support filename globbing for various Python scripts (#2783)
  * --formats will add 'v' in report on drivers that support virtual io
  * all utilities and scripts : consistently advertize -q as the official quiet
@@ -252,6 +254,7 @@ GeoTIFF driver :
  * Add support for deleting a color table (#2421)
  * Add logic for Imagine citation parsing
  * Add logic for encoding and reading ESRI PE string from citation.
+ * Add support for reading and writing vertical datum info from geotiff
  * Changes to units handling.  (#2755)
  * Optimize opening speed by defering fetching the coordinate system till GetProjectionRef (#2957)
  * Optimize GTiffRasterBand::IReadBlock() for multi-band interleaved case.
@@ -418,6 +421,7 @@ PDS driver:
  * Transfer various keywords to metadata
  * Made keyword handler more in complaint with ODL (#2956)
  * Support detached files with an offset (#3177)
+ * Support .LBL labelled compressed files
 
 PNG driver :
  * Upgrade internal libpng to 1.2.35
@@ -432,6 +436,9 @@ Rasterlite driver
 
 RIK driver:
  * Improved error checking
+ 
+SAGA GIS Binary driver:
+ * New for GDAL/OGR 1.7.0
 
 SDE driver :
  * Fix exporting ArcSDE raster results in a displaced image (#2063)
@@ -500,6 +507,7 @@ Core :
 
 OGRSpatialReference :
  * Upgrade EPSG derived files to EPSG 7.1
+ * Added support to operate on COMPD_CS coordinate systems
  * Added support for importing spatial reference definitions from the OziExplorer .MAP files.
  * Introduce static methods to destroy OGRSpatialReference and OGRCoordinateTransformation objects
  * Expose more of the axis orientation API to C
@@ -591,6 +599,10 @@ ODBC driver :
  * make it slightly less likely that the srs_tablename parsing will interfere with complex DSNs.
  * support for schemas (#1969)
 
+OGDI driver :
+  * fix to avoid applying old spatial filter to unrelated layer
+  * fix to force ResetReading() when changing current layer
+
 PGEO driver :
  * Recognize more ESRI shape type constants. (#2991, #3100)
  * implement GetFIDColumn() and GetGeometryColumn() methods (#2694)
@@ -628,9 +640,6 @@ Shape driver :
 S57 driver :
  * Fix incorrect return value of GetFeatureCount() on S57 SOUNDG layer when SPLIT_MULTIPOINT=ON;
    also avoid warning on that layer when ADD_SOUNDG_DEPTH=OFF (#3163)
- 
-SAGA GIS Binary driver:
- * New for GDAL/OGR 1.7.0
   
 SQLite driver:
  * Add creation and write support in SpatiaLite-compatible databases
@@ -643,7 +652,10 @@ SQLite driver:
    tables into a SQLite DB even if there are spatial tables
  * Avoid reporting the primary key column as a regular column.
  * Better precision for double values in CreateFeature()
- 
+
+VFK driver:
+  * New for GDAL/OGR 1.7.0
+
 VRT driver:
  * Allow fast spatial filtering in the VGS_Direct case
  * Add support for CreateFeature(), SetFeature() and DeleteFeature() operations
