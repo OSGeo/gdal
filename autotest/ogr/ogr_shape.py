@@ -29,7 +29,6 @@ import os
 import shutil
 import sys
 import string
-from decimal import *
 
 sys.path.append( '../pymod' )
 
@@ -1405,6 +1404,8 @@ def ogr_shape_32():
 # directory afterwards.
 
     return 'skip'
+    
+    from decimal import Decimal
 
     BigFilePath = 'tmp'
 

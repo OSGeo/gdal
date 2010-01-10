@@ -191,6 +191,11 @@ def ogr_basic_7():
     feat = ogr.Feature(feat_defn)
     if not feat.Equal(feat):
         return 'fail'
+        
+    try:
+        feat.SetFieldIntegerList
+    except:
+        return 'skip'
 
     feat_clone = feat.Clone()
     if not feat.Equal(feat_clone):
