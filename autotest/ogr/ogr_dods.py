@@ -43,16 +43,22 @@ import gdal
 def ogr_dods_1():
     gdaltest.dods_ds = None
     try:
-        dods_dr = ogr.GetDriverByName( 'DODS' )
+        ogrtest.dods_drv = ogr.GetDriverByName( 'DODS' )
     except:
+        ogrtest.dods_drv = None
         return 'skip'
 
-    if dods_dr is None:
+    if ogrtest.dods_drv is None:
         return 'skip'
 
     gdal.SetConfigOption( 'DODS_AIS_FILE', 'data/ais.xml' )
-    
-    gdaltest.dods_ds = ogr.Open( 'DODS:http://www.epic.noaa.gov:10100/dods/wod2001/natl_prof_bot.cdp?&_id=1' )
+
+    srv = 'http://www.epic.noaa.gov:10100/dods/wod2001/natl_prof_bot.cdp?&_id=1'
+    if gdaltest.gdalurlopen(srv) is None:
+        gdaltest.dods_ds = None
+        return 'skip'
+
+    gdaltest.dods_ds = ogr.Open( 'DODS:' + srv )
 
     if gdaltest.dods_ds is None:
         return 'fail'
@@ -194,10 +200,16 @@ def ogr_dods_4():
 
 def ogr_dods_5():
 
-    if gdaltest.dods_ds is None:
+    if ogrtest.dods_drv is None:
         return 'skip'
     
-    grid_ds = ogr.Open( 'DODS:http://uhslc1.soest.hawaii.edu/cgi-bin/nph-nc/fast/m004.nc.dds' )
+    srv = 'http://uhslc1.soest.hawaii.edu/cgi-bin/nph-nc/fast/m004.nc.dds'
+    if gdaltest.gdalurlopen(srv) is None:
+        return 'skip'
+
+    grid_ds = ogr.Open( 'DODS:' + srv )
+    if grid_ds is None:
+	return 'fail'
 
     lat_lyr = grid_ds.GetLayerByName( 'latitude' )
 
