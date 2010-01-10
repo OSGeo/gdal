@@ -25559,6 +25559,22 @@ else
     DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
     DODS_BIN=$with_dods_root/bin
 
+rm -f islibdappre39.*
+echo '#include "DAS.h"' > islibdappre39.cpp
+echo '#include "AttrTable.h"' >> islibdappre39.cpp
+echo 'using namespace libdap;' >> islibdappre39.cpp
+echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
+if test -z "`${CXX} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
+    { echo "$as_me:$LINENO: result: libdap < 3.9" >&5
+echo "${ECHO_T}libdap < 3.9" >&6; }
+else
+    DODS_INC="$DODS_INC -DLIBDAP_39"
+    { echo "$as_me:$LINENO: result: libdap >= 3.9" >&5
+echo "${ECHO_T}libdap >= 3.9" >&6; }
+fi
+rm -f islibdappre39.*
+
+
         if test -x $DODS_BIN/opendap-config ; then
             LIBS="$LIBS `$DODS_BIN/opendap-config --libs`"
     elif test -x $DODS_BIN/dap-config ; then
