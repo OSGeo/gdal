@@ -222,6 +222,42 @@ def test_gdaldem_color_relief():
     
 
 ###############################################################################
+# Test gdaldem color relief to VRT
+
+def test_gdaldem_color_relief_vrt():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of VRT ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.vrt')
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.Open('tmp/n43_colorrelief.vrt')
+    if ds is None:
+        return 'fail'
+
+    ds_ref = gdal.Open('tmp/n43_colorrelief.tif')
+    if gdaltest.compare_ds(ds, ds_ref, verbose = 0) > 1:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+    ds_ref = None
+
+    src_gt = src_ds.GetGeoTransform()
+    dst_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
+            gdaltest.post_reason('Bad geotransform')
+            return 'fail'
+
+    dst_wkt = ds.GetProjectionRef()
+    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
+        gdaltest.post_reason('Bad projection')
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Test gdaldem color relief from a Float32 dataset
 
 def test_gdaldem_color_relief_from_float32():
@@ -349,6 +385,38 @@ def test_gdaldem_color_relief_nearest_color_entry():
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Test gdaldem color relief with -nearest_color_entry and -of VRT
+
+def test_gdaldem_color_relief_nearest_color_entry_vrt():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of VRT -nearest_color_entry ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief_nearest.vrt')
+    ds = gdal.Open('tmp/n43_colorrelief_nearest.vrt')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 57296:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 42926:
+        print(ds.GetRasterBand(2).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 47181:
+        print(ds.GetRasterBand(3).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -375,6 +443,10 @@ def test_gdaldem_cleanup():
     except:
         pass
     try:
+        os.remove('tmp/n43_colorrelief.vrt')
+    except:
+        pass
+    try:
         os.remove('tmp/n43_float32.tif')
         os.remove('tmp/n43_colorrelief_from_float32.tif')
     except:
@@ -393,6 +465,10 @@ def test_gdaldem_cleanup():
         os.remove('tmp/n43_colorrelief_nearest.tif')
     except:
         pass
+    try:
+        os.remove('tmp/n43_colorrelief_nearest.vrt')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -401,10 +477,12 @@ gdaltest_list = [
     test_gdaldem_slope,
     test_gdaldem_aspect,
     test_gdaldem_color_relief,
+    test_gdaldem_color_relief_vrt,
     test_gdaldem_color_relief_from_float32,
     test_gdaldem_color_relief_png,
     test_gdaldem_color_relief_from_float32_to_png,
     test_gdaldem_color_relief_nearest_color_entry,
+    test_gdaldem_color_relief_nearest_color_entry_vrt,
     test_gdaldem_cleanup
     ]
 
