@@ -44,16 +44,14 @@ VFKFeature::VFKFeature(VFKDataBlock *poDataBlock)
 {
     CPLAssert(NULL != poDataBlock);
     m_poDataBlock   = poDataBlock;
-
+    
     m_nFID           = -1;
-    m_papszProperty = (VFKProperty **) CPLMalloc(sizeof(VFKProperty *) * poDataBlock->GetPropertyCount());
-
-    for (int i = 0; i < poDataBlock->GetPropertyCount(); i++)
-        m_papszProperty[i] = NULL;
-
     m_nGeometryType = poDataBlock->GetGeometryType();
     m_bGeometry     = FALSE;
     m_paGeom        = NULL;
+
+    m_propertyList.assign(poDataBlock->GetPropertyCount(), VFKProperty());
+    CPLAssert(size_t (poDataBlock->GetPropertyCount()) == m_propertyList.size());
 }
 
 /*!
@@ -61,13 +59,6 @@ VFKFeature::VFKFeature(VFKDataBlock *poDataBlock)
 */
 VFKFeature::~VFKFeature()
 {
-    for (int i = 0; i < m_poDataBlock->GetPropertyCount(); i++) {
-	if (m_papszProperty[i])
-	    delete m_papszProperty[i];
-    }
-
-    CPLFree(m_papszProperty);
-
     if (m_paGeom)
 	delete m_paGeom;
     
@@ -82,25 +73,25 @@ VFKFeature::~VFKFeature()
 */
 void VFKFeature::SetProperty(int iIndex, const char *pszValue)
 {
-    if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount()) {
+    if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount() || size_t(iIndex) >= m_propertyList.size()) {
         CPLAssert(FALSE);
         return;
     }
 
     if (strlen(pszValue) < 1)
-	m_papszProperty[iIndex] = new VFKProperty();
+	m_propertyList[iIndex] = VFKProperty();
     else {
 	OGRFieldType fType;
 	fType = m_poDataBlock->GetProperty(iIndex)->GetType();
 	switch (fType) {
 	case OFTInteger:
-	    m_papszProperty[iIndex] = new VFKProperty(atoi(pszValue));
+	    m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
 	    break;
 	case OFTReal:
-	    m_papszProperty[iIndex] = new VFKProperty(atof(pszValue));
+	    m_propertyList[iIndex] = VFKProperty(atof(pszValue));
 	    break;
 	default:
-	    m_papszProperty[iIndex] = new VFKProperty(pszValue);
+	    m_propertyList[iIndex] = VFKProperty(pszValue);
 	    break;
 	}
     }
@@ -116,10 +107,11 @@ void VFKFeature::SetProperty(int iIndex, const char *pszValue)
 */
 const VFKProperty *VFKFeature::GetProperty(int iIndex) const
 {
-    if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount())
+    if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount() || size_t(iIndex) >= m_propertyList.size())
         return NULL;
-
-    return m_papszProperty[iIndex];
+    
+    const VFKProperty* poProperty = &m_propertyList[iIndex];
+    return poProperty;
 }
 
 /*!
