@@ -727,7 +727,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                                                 const char* pszColorFilename,
                                                 int* pnColors)
 {
-    FILE* fpColorFile = VSIFOpen(pszColorFilename, "rt");
+    FILE* fpColorFile = VSIFOpenL(pszColorFilename, "rt");
     if (fpColorFile == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", pszColorFilename);
@@ -742,7 +742,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
     double dfSrcNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
 
     const char* pszLine;
-    while ((pszLine = CPLReadLine(fpColorFile)) != NULL)
+    while ((pszLine = CPLReadLineL(fpColorFile)) != NULL)
     {
         char** papszFields = CSLTokenizeStringComplex(pszLine, " ,\t:", 
                                                       FALSE, FALSE );
@@ -765,7 +765,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Wrong value for a percentage : %s", papszFields[0]);
                     CSLDestroy(papszFields);
-                    VSIFClose(fpColorFile);
+                    VSIFCloseL(fpColorFile);
                     CPLFree(pasColorAssociation);
                     *pnColors = 0;
                     return NULL;
@@ -792,7 +792,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Unknown color : %s", papszFields[1]);
                     CSLDestroy(papszFields);
-                    VSIFClose(fpColorFile);
+                    VSIFCloseL(fpColorFile);
                     CPLFree(pasColorAssociation);
                     *pnColors = 0;
                     return NULL;
@@ -808,7 +808,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
         }
         CSLDestroy(papszFields);
     }
-    VSIFClose(fpColorFile);
+    VSIFCloseL(fpColorFile);
 
     if (nColorAssociation == 0)
     {
