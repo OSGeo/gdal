@@ -1232,7 +1232,7 @@ end:
 }
 
 /************************************************************************/
-/*                         GDALTRI()                                  */
+/*                         GDALTRIAlg()                                 */
 /************************************************************************/
 
 float GDALTRIAlg (float* afWin, float fDstNoDataValue, void* pData)
@@ -1248,18 +1248,9 @@ float GDALTRIAlg (float* afWin, float fDstNoDataValue, void* pData)
             fabs(afWin[8]-afWin[4]))/8;
 }
 
-CPLErr GDALTRI  ( GDALRasterBandH hSrcBand,
-                  GDALRasterBandH hDstBand,
-                  GDALProgressFunc pfnProgress,
-                  void * pProgressData)
-{
-    return GDALGeneric3x3Processing(hSrcBand, hDstBand,
-                                    GDALTRIAlg, NULL,
-                                    pfnProgress, pProgressData);
-}
 
 /************************************************************************/
-/*                         GDALTPI()                                  */
+/*                         GDALTPIAlg()                                 */
 /************************************************************************/
 
 float GDALTPIAlg (float* afWin, float fDstNoDataValue, void* pData)
@@ -1278,7 +1269,7 @@ float GDALTPIAlg (float* afWin, float fDstNoDataValue, void* pData)
 }
 
 /************************************************************************/
-/*                      GDALRoughness()                                */
+/*                     GDALRoughnessAlg()                               */
 /************************************************************************/
 
 float GDALRoughnessAlg (float* afWin, float fDstNoDataValue, void* pData)
