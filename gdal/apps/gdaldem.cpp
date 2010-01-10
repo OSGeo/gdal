@@ -1232,6 +1232,152 @@ end:
 }
 
 /************************************************************************/
+/*                     GDALGenerateVRTColorRelief()                     */
+/************************************************************************/
+
+CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
+                               GDALDatasetH hSrcDataset,
+                               GDALRasterBandH hSrcBand,
+                               const char* pszColorFilename,
+                               ColorSelectionMode eColorSelectionMode,
+                               int bAddAlpha)
+{
+
+    int nColorAssociation = 0;
+    ColorAssociation* pasColorAssociation =
+            GDALColorReliefParseColorFile(hSrcBand, pszColorFilename,
+                                          &nColorAssociation);
+    if (pasColorAssociation == NULL)
+        return CE_Failure;
+
+    int nXSize = GDALGetRasterBandXSize(hSrcBand);
+    int nYSize = GDALGetRasterBandYSize(hSrcBand);
+
+    FILE* fp = VSIFOpenL(pszDstFilename, "wt");
+    if (fp == NULL)
+    {
+        CPLFree(pasColorAssociation);
+        return CE_Failure;
+    }
+
+    VSIFPrintfL(fp, "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n", nXSize, nYSize);
+    const char* pszProjectionRef = GDALGetProjectionRef(hSrcDataset);
+    if (pszProjectionRef && pszProjectionRef[0] != '\0')
+    {
+        char* pszEscapedString = CPLEscapeString(pszProjectionRef, -1, CPLES_XML);
+        VSIFPrintfL(fp, "  <SRS>%s</SRS>\n", pszEscapedString);
+        VSIFree(pszEscapedString);
+    }
+    double adfGT[6];
+    if (GDALGetGeoTransform(hSrcDataset, adfGT) == CE_None)
+    {
+        VSIFPrintfL(fp, "  <GeoTransform> %.16g, %.16g, %.16g, "
+                        "%.16g, %.16g, %.16g</GeoTransform>\n",
+                        adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4], adfGT[5]);
+    }
+    int nBands = 3 + (bAddAlpha ? 1 : 0);
+    int iBand;
+
+    int nBlockXSize, nBlockYSize;
+    GDALGetBlockSize(hSrcBand, &nBlockXSize, &nBlockYSize);
+    
+    int bRelativeToVRT;
+    char* pszSourceFilename = CPLStrdup(
+        CPLExtractRelativePath( pszDstFilename, GDALGetDescription(hSrcDataset), 
+                                &bRelativeToVRT ));
+
+    for(iBand = 0; iBand < nBands; iBand++)
+    {
+        VSIFPrintfL(fp, "  <VRTRasterBand dataType=\"Byte\" band=\"%d\">\n", iBand + 1);
+        VSIFPrintfL(fp, "    <ComplexSource>\n");
+        VSIFPrintfL(fp, "      <SourceFilename relativeToVRT=\"%d\">%s</SourceFilename>\n",
+                        bRelativeToVRT, pszSourceFilename);
+        VSIFPrintfL(fp, "      <SourceBand>%d</SourceBand>\n", GDALGetBandNumber(hSrcBand));
+        VSIFPrintfL(fp, "      <SourceProperties RasterXSize=\"%d\" "
+                        "RasterYSize=\"%d\" DataType=\"%s\" "
+                        "BlockXSize=\"%d\" BlockYSize=\"%d\"/>\n",
+                        nXSize, nYSize,
+                        GDALGetDataTypeName(GDALGetRasterDataType(hSrcBand)),
+                        nBlockXSize, nBlockYSize);
+        VSIFPrintfL(fp, "      <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
+                        nXSize, nYSize);
+        VSIFPrintfL(fp, "      <DstRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
+                        nXSize, nYSize);
+
+        VSIFPrintfL(fp, "      <LUT>");
+        int iColor;
+#define EPSILON 1e-8
+        for(iColor=0;iColor<nColorAssociation;iColor++)
+        {
+            if (eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY)
+            {
+                if (iColor > 1)
+                    VSIFPrintfL(fp, ",");
+            }
+            else if (iColor > 0)
+                VSIFPrintfL(fp, ",");
+
+            double dfVal = pasColorAssociation[iColor].dfVal;
+
+            if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
+            {
+                VSIFPrintfL(fp, "%.12g:0,", dfVal - EPSILON);
+            }
+            else if (iColor > 0 &&
+                     eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY)
+            {
+                double dfMidVal = (dfVal + pasColorAssociation[iColor-1].dfVal) / 2;
+                VSIFPrintfL(fp, "%.12g:%d", dfMidVal - EPSILON,
+                        (iBand == 0) ? pasColorAssociation[iColor-1].nR :
+                        (iBand == 1) ? pasColorAssociation[iColor-1].nG :
+                        (iBand == 2) ? pasColorAssociation[iColor-1].nB :
+                                       pasColorAssociation[iColor-1].nA);
+                VSIFPrintfL(fp, ",%.12g:%d", dfMidVal ,
+                        (iBand == 0) ? pasColorAssociation[iColor].nR :
+                        (iBand == 1) ? pasColorAssociation[iColor].nG :
+                        (iBand == 2) ? pasColorAssociation[iColor].nB :
+                                       pasColorAssociation[iColor].nA);
+
+            }
+
+            if (eColorSelectionMode != COLOR_SELECTION_NEAREST_ENTRY)
+            {
+                if (dfVal != (double)(int)dfVal)
+                    VSIFPrintfL(fp, "%.12g", dfVal);
+                else
+                    VSIFPrintfL(fp, "%d", (int)dfVal);
+                VSIFPrintfL(fp, ":%d",
+                            (iBand == 0) ? pasColorAssociation[iColor].nR :
+                            (iBand == 1) ? pasColorAssociation[iColor].nG :
+                            (iBand == 2) ? pasColorAssociation[iColor].nB :
+                                           pasColorAssociation[iColor].nA);
+            }
+
+            if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
+            {
+                VSIFPrintfL(fp, ",%.12g:0", dfVal + EPSILON);
+            }
+
+        }
+        VSIFPrintfL(fp, "</LUT>\n");
+
+        VSIFPrintfL(fp, "    </ComplexSource>\n");
+        VSIFPrintfL(fp, "  </VRTRasterBand>\n");
+    }
+
+    CPLFree(pszSourceFilename);
+
+    VSIFPrintfL(fp, "</VRTDataset>\n");
+
+    VSIFCloseL(fp);
+
+    CPLFree(pasColorAssociation);
+
+    return CE_None;
+}
+
+
+/************************************************************************/
 /*                         GDALTRIAlg()                                 */
 /************************************************************************/
 
@@ -1889,6 +2035,35 @@ int main( int argc, char ** argv )
     GDALDataType eDstDataType = (eUtilityMode == HILL_SHADE ||
                                  eUtilityMode == COLOR_RELIEF) ? GDT_Byte :
                                                                GDT_Float32;
+
+    if( EQUAL(pszFormat, "VRT") )
+    {
+        if (eUtilityMode == COLOR_RELIEF)
+        {
+            GDALGenerateVRTColorRelief(pszDstFilename,
+                                       hSrcDataset,
+                                       hSrcBand,
+                                       pszColorFilename,
+                                       eColorSelectionMode,
+                                       bAddAlpha);
+            GDALClose(hSrcDataset);
+        
+            CPLFree(pData);
+
+            GDALDestroyDriverManager();
+            CSLDestroy( argv );
+            CSLDestroy( papszCreateOptions );
+        
+            return 0;
+        }
+        else
+        {
+            fprintf(stderr, "VRT driver can only be used with color-relief utility\n");
+            GDALDestroyDriverManager();
+
+            exit(1);
+        }
+    }
     
     if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL &&
         GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL)

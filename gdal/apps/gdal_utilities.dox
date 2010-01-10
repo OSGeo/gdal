@@ -1778,6 +1778,8 @@ The following specifics options are available :
 <dt> <b>-nearest_color_entry</b> :</dt><dd></dd>use the RGBA quadruplet corresponding to the closest entry in the color configuration file.</dd>
 </dl>
 
+The color-relief mode is the only mode that supports VRT as output format. In that case, it will translate the color configuration file into appropriate <LUT> elements. Note that elevations specified as percentage will be translated as absolute values, which must be taken into account when the statistics of the source raster differ from the one that was used when building the VRT.
+
 The text-based color configuration file generally contains 4 columns per line : the elevation value and the
 corresponding Red, Green, Blue component (between 0 and 255).
 The elevation value can be any floating point value, or the <i>nv</i> keyword for the nodata value..
