@@ -38,6 +38,9 @@
 
 class RawRasterBand;
 
+/**
+ * \brief Abstract Base Class dedicated to define new raw dataset types.
+ */
 class CPL_DLL RawDataset : public GDALPamDataset
 {
     friend class RawRasterBand;
@@ -48,7 +51,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
                                    int, int *, int, int, int );
   public:
                  RawDataset();
-                 ~RawDataset();
+                 ~RawDataset() = 0;
 
 };
 
@@ -58,6 +61,11 @@ class CPL_DLL RawDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
+/**
+ * \brief Abstract Base Class dedicated to define raw datasets.
+ * \note It is not defined an Abstract Base Class, but it's advised to
+ * consider it as such and not use it directly in client's code.
+ */
 class CPL_DLL RawRasterBand : public GDALPamRasterBand
 {
 protected:

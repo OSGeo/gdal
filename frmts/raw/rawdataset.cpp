@@ -1038,6 +1038,7 @@ RawDataset::RawDataset()
 RawDataset::~RawDataset()
 
 {
+    // MUST BE EMPTY
 }
 
 /************************************************************************/
