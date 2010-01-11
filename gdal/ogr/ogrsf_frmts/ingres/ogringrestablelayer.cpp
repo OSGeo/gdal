@@ -30,6 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_ingres.h"
+#include <geos_c.h> 
 
 CPL_CVSID("$Id$");
 
@@ -154,6 +155,10 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
                 || EQUAL(osInternalType,"IPOLYGON")
                 || EQUAL(osInternalType,"LONG POLYGON")
                 || EQUAL(osInternalType,"CIRCLE")
+                || EQUAL(osInternalType,"LINESTRING")
+				|| EQUAL(osInternalType,"MULTIPOINT")
+				|| EQUAL(osInternalType,"MULTIPOLYGON")
+				|| EQUAL(osInternalType,"MULTILINESTRING")
                 || EQUAL(osInternalType,"ICIRCLE")) )
         {
             osGeomColumn = osFieldName;
@@ -162,8 +167,15 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
             if( strstr(osInternalType,"POINT") )
                 poDefn->SetGeomType( wkbPoint );
             else if( strstr(osInternalType,"LINE")
-                     || strstr(osInternalType,"SEG") )
+                     || strstr(osInternalType,"SEG")
+                     || strstr(osInternalType, "LINESTRING"))
                 poDefn->SetGeomType( wkbLineString );
+            else if( strstr(osInternalType,"MULTIPOINT"))
+            	poDefn->SetGeomType(wkbMultiPoint);
+            else if( strstr(osInternalType,"MULTIPOLYGON"))
+            	poDefn->SetGeomType(wkbMultiPolygon);
+            else if( strstr(osInternalType,"MULTILINESTRING"))
+            	poDefn->SetGeomType(wkbMultiLineString);
             else
                 poDefn->SetGeomType( wkbPolygon );
             continue;
@@ -361,8 +373,16 @@ char *OGRIngresTableLayer::BuildFields()
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
 
-        sprintf( pszFieldList+strlen(pszFieldList), 
-                 "%s %s", osGeomColumn.c_str(), osGeomColumn.c_str() );
+        if( poDS->IsNewIngres() )
+        {
+			sprintf( pszFieldList+strlen(pszFieldList),
+					 "ASBINARY(%s) %s", osGeomColumn.c_str(), osGeomColumn.c_str() );
+        }
+        else
+        {
+			sprintf( pszFieldList+strlen(pszFieldList),
+					 "%s %s", osGeomColumn.c_str(), osGeomColumn.c_str() );
+        }
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -694,6 +714,74 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
 }
 
 /************************************************************************/
+/*                      PrepareNewStyleGeometry()                       */
+/*                                                                      */
+/*      Prepare an ASCII representation of a new style geometry in      */
+/*      a form suitable to include in an INSERT command.                */
+/*      This pretty much just uses the geometry's export to WKT function*/
+/************************************************************************/
+
+OGRErr OGRIngresTableLayer::PrepareNewStyleGeometry(
+    OGRGeometry *poGeom, CPLString &osRetGeomText )
+
+{
+	OGRErr eErr = OGRERR_NONE;
+    osRetGeomText = "";
+
+    if( poGeom == NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Point                                                           */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+    {
+        osRetGeomText.Printf( "POINTFROMWKB( ~V )");
+    }
+/* -------------------------------------------------------------------- */
+/*      Linestring                                                      */
+/* -------------------------------------------------------------------- */
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+    {
+        osRetGeomText.Printf("LINEFROMWKB( ~V )");
+    }
+/* -------------------------------------------------------------------- */
+/*      Polygon                                                         */
+/* -------------------------------------------------------------------- */
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+    {
+        osRetGeomText.Printf("POLYFROMWKB( ~V )");
+    }
+/* -------------------------------------------------------------------- */
+/*      Multipoint                                                      */
+/* -------------------------------------------------------------------- */
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
+    {
+        osRetGeomText.Printf("MPOINTFROMWKB( ~V )");
+    }
+/* -------------------------------------------------------------------- */
+/*      Multilinestring                                                 */
+/* -------------------------------------------------------------------- */
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
+    {
+    	osRetGeomText.Printf("MLINEFROMWKB( ~V )");
+    }
+/* -------------------------------------------------------------------- */
+/*      Multipolygon                                                    */
+/* -------------------------------------------------------------------- */
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+    {
+    	osRetGeomText.Printf("MPOLYFROMWKB( ~V )");
+    }
+    else
+    {
+        eErr = OGRERR_FAILURE;
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -753,21 +841,34 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
     if( poFeature->GetGeometryRef() != NULL && osGeomColumn.size() )
     {
         bNeedComma = TRUE;
+        OGRErr localErr;
 
-        if( PrepareOldStyleGeometry( poFeature->GetGeometryRef(), 
-                                     osGeomText ) == OGRERR_NONE )
+        if( poDS->IsNewIngres() )
+        {
+        	localErr = PrepareNewStyleGeometry( poFeature->GetGeometryRef(), osGeomText );
+        }
+        else
+        {
+        	localErr = PrepareOldStyleGeometry( poFeature->GetGeometryRef(), osGeomText );
+        }
+        if( localErr == OGRERR_NONE )
         {
             if( CSLTestBoolean( 
                      CPLGetConfigOption( "INGRES_INSERT_SUB", "NO") ) )
             {
                 osCommand += " ~V";
             }
-            else
+            else if( poDS->IsNewIngres() == FALSE )
             {
                 osCommand += "'";
                 osCommand += osGeomText;
                 osCommand += "'";
                 osGeomText = "";
+            }
+            else
+            {
+            	osCommand += osGeomText;
+            	//osGeomText = "";
             }
         }
         else
@@ -865,9 +966,25 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 
     oStmt.bDebug = FALSE; 
 
-    if( osGeomText.size() > 0 )
-        oStmt.addInputParameter( IIAPI_LVCH_TYPE, osGeomText.size(), 
+    if( osGeomText.size() > 0  && poDS->IsNewIngres() == FALSE )
+        oStmt.addInputParameter( IIAPI_LVCH_TYPE, osGeomText.size(),
                                  (GByte *) osGeomText.c_str() );
+    if( osGeomText.size() > 0 && poDS->IsNewIngres() == TRUE )
+    {
+    	GByte * pabyWKB;
+    	int nSize = poFeature->GetGeometryRef()->WkbSize();
+    	pabyWKB = (GByte *) CPLMalloc(nSize);
+
+    	poFeature->GetGeometryRef()->exportToWkb(wkbNDR, pabyWKB);
+
+    	oStmt.addInputParameter( IIAPI_LBYTE_TYPE, nSize, pabyWKB );
+    	CPLFree(pabyWKB);
+/*
+ * Test code
+     	char * pszWKT;
+    	poFeature->GetGeometryRef()->exportToWkt(&pszWKT);
+    	oStmt.addInputParameter(IIAPI_LVCH_TYPE, strlen(pszWKT), (GByte *) pszWKT);*/
+    }
 
     if( !oStmt.ExecuteSQL( osCommand ) )
         return OGRERR_FAILURE;
