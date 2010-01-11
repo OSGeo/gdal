@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  GDAL
  * Purpose:  Raster to Polygon Converter
