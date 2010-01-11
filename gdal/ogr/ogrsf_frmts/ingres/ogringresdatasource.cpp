@@ -164,6 +164,28 @@ int OGRIngresDataSource::Open( const char *pszFullName,
     
     bDSUpdate = bUpdate;
 
+    // Check for new or old Ingres spatial library
+    {
+    	OGRIngresStatement oStmt( hConn );
+
+    	if( oStmt.ExecuteSQL("SELECT COUNT(*) FROM iicolumns WHERE table_name = 'iiattribute' AND column_name = 'attgeomtype'" ) )
+    	{
+    		char **papszFields;
+    		while( (papszFields = oStmt.GetRow()) )
+    		{
+    			CPLString osCount = papszFields[0];
+    			if( osCount[0] == '0' )
+    			{
+    				bNewIngres = FALSE;
+    			}
+    			else
+    			{
+    				bNewIngres = TRUE;
+    			}
+    		}
+    	}
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Get a list of available tables.                                 */
 /* -------------------------------------------------------------------- */
@@ -171,7 +193,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
     {
         OGRIngresStatement oStmt( hConn );
         
-        if( oStmt.ExecuteSQL( "select table_name from iitables where system_use = 'U'" ) )
+        if( oStmt.ExecuteSQL( "select table_name from iitables where system_use = 'U' and table_name not like 'iietab_%'" ) )
         {
             char **papszFields;
             while( (papszFields = oStmt.GetRow()) )
@@ -736,10 +758,28 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
         pszGeometryType = "POINT";
 
     else if( wkbFlatten(eType) == wkbLineString)
-        pszGeometryType = "LONG LINE";
+    {
+    	if( IsNewIngres() )
+    	{
+    		pszGeometryType = "LINESTRING";
+    	}
+    	else
+    	{
+            pszGeometryType = "LONG LINE";
+    	}
+    }
 
     else if( wkbFlatten(eType) == wkbPolygon )
-        pszGeometryType = "LONG POLYGON";
+    {
+    	if( IsNewIngres() )
+    	{
+    		pszGeometryType = "POLYGON";
+    	}
+    	else
+    	{
+            pszGeometryType = "LONG POLYGON";
+    	}
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Form table creation command.                                    */
@@ -951,4 +991,11 @@ void OGRIngresDataSource::EstablishActiveLayer( OGRIngresLayer *poNewLayer )
     poActiveLayer = poNewLayer;
 }
 
+/************************************************************************/
+/*                        IsNewIngres()                                 */
+/************************************************************************/
 
+int OGRIngresDataSource::IsNewIngres()
+{
+	return bNewIngres;
+}
