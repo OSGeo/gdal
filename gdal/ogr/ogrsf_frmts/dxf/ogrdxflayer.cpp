@@ -262,6 +262,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
     double dfAngle = 0.0;
     double dfHeight = 0.0;
+    double dfXDirection = 0.0, dfYDirection = 0.0;
     int nAttachmentPoint = -1;
     CPLString osText;
 
@@ -287,6 +288,15 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
           case 71:
             nAttachmentPoint = atoi(szLineBuf);
+            break;
+
+          case 11:
+            dfXDirection = atof(szLineBuf);
+            break;
+
+          case 21:
+            dfYDirection = atof(szLineBuf);
+            dfAngle = atan2( dfXDirection, dfYDirection );
             break;
 
           case 1:
