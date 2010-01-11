@@ -626,7 +626,8 @@ void OGRIngresStatement::addInputParameter(
 
 {
     CPLAssert( !bHaveParm );
-    CPLAssert( eDType == IIAPI_LVCH_TYPE ); // support only long varchar now
+    CPLAssert( eDType == IIAPI_LVCH_TYPE || eDType == IIAPI_LBYTE_TYPE ); 
+    // support long varchar and long byte
 
     bHaveParm = TRUE;
     nParmLen = nLength;
