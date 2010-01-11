@@ -69,7 +69,7 @@ static void         (*pfn_pj_dalloc)(void *) = NULL;
 
 #if (defined(WIN32) || defined(WIN32CE)) && !defined(__MINGW32__)
 #  define LIBNAME      "proj.dll"
-#elif defined(__CYGWIN__) || defined(__MINGW32__)
+#elif defined(__MINGW32__)
 // XXX: If PROJ.4 library was properly built using libtool in Cygwin or MinGW
 // environments it has the interface version number embedded in the file name
 // (it is CURRENT-AGE number). If DLL came somewhere else (e.g. from MSVC
@@ -77,6 +77,8 @@ static void         (*pfn_pj_dalloc)(void *) = NULL;
 // specify the right library name. By default assume that in Cygwin/MinGW all
 // components were buit in the same way.
 #  define LIBNAME      "libproj-0.dll"
+#elif defined(__CYGWIN__)
+#  define LIBNAME      "cygproj-0.dll"
 #elif defined(__APPLE__)
 #  define LIBNAME      "libproj.dylib"
 #else
