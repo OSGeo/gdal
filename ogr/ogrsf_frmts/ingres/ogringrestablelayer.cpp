@@ -564,8 +564,8 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
         CPLString osLastPoint;
         int i;
 
-        if( EQUAL(osIngresGeomType,"LSEG") 
-            || EQUAL(osIngresGeomType,"ILSEG") 
+        if( (EQUAL(osIngresGeomType,"LSEG") 
+             || EQUAL(osIngresGeomType,"ILSEG")) 
             && poLS->getNumPoints() != 2 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
