@@ -153,6 +153,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
     int                 bPreservePrecision;
 
     OGRErr              PrepareOldStyleGeometry( OGRGeometry*, CPLString& );
+    OGRErr              PrepareNewStyleGeometry( OGRGeometry*, CPLString& );
     
   public:
                         OGRIngresTableLayer( OGRIngresDataSource *,
@@ -239,6 +240,8 @@ class OGRIngresDataSource : public OGRDataSource
 
     OGRIngresLayer     *poActiveLayer; /* this layer has active transaction */
 
+    int					bNewIngres; /* TRUE if new spatial library */
+
   public:
                         OGRIngresDataSource();
                         ~OGRIngresDataSource();
@@ -278,6 +281,7 @@ class OGRIngresDataSource : public OGRDataSource
     char               *LaunderName( const char * );
 
     void                EstablishActiveLayer( OGRIngresLayer * );
+    int					IsNewIngres();
 };
 
 /************************************************************************/
