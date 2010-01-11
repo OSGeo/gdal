@@ -1038,7 +1038,7 @@ RawDataset::RawDataset()
 RawDataset::~RawDataset()
 
 {
-    // MUST BE EMPTY
+    /* It's pure virtual function but must be defined, even if empty. */
 }
 
 /************************************************************************/
