@@ -296,7 +296,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
           case 21:
             dfYDirection = atof(szLineBuf);
-            dfAngle = atan2( dfXDirection, dfYDirection );
+            dfAngle = atan2( dfYDirection, dfXDirection );
             break;
 
           case 1:
