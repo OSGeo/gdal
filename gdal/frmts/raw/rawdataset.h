@@ -121,7 +121,7 @@ public:
                                 GDALDataType eDataType, int bNativeOrder,
                                 int nXSize, int nYSize, int bIsVSIL = FALSE, int bOwnsFP = FALSE );
 
-                 ~RawRasterBand();
+                 ~RawRasterBand() /* = 0 */ ;
 
     // should override RasterIO eventually.
     
