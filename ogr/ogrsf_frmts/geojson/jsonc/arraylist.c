@@ -16,81 +16,79 @@
 # include <string.h>
 #endif /* STDC_HEADERS */
 
-#if HAVE_STRINGS_H
+#if defined HAVE_STRINGS_H && !defined _STRING_H && !defined __USE_BSD
 # include <strings.h>
 #endif /* HAVE_STRINGS_H */
 
 #include "bits.h"
 #include "arraylist.h"
 
-#include <cpl_port.h> /* MIN and MAX macros */
-
 struct array_list*
 array_list_new(array_list_free_fn *free_fn)
 {
-  struct array_list *this;
+  struct array_list *arr;
 
-  if((this = calloc(1, sizeof(struct array_list))) == NULL) return NULL;
-
-  this->size = ARRAY_LIST_DEFAULT_SIZE;
-  this->length = 0;
-  this->free_fn = free_fn;
-  if((this->array = calloc(sizeof(void*), this->size)) == NULL) {
-    free(this);
+  arr = (struct array_list*)calloc(1, sizeof(struct array_list));
+  if(!arr) return NULL;
+  arr->size = ARRAY_LIST_DEFAULT_SIZE;
+  arr->length = 0;
+  arr->free_fn = free_fn;
+  if(!(arr->array = (void**)calloc(sizeof(void*), arr->size))) {
+    free(arr);
     return NULL;
   }
-  return this;
+  return arr;
 }
 
 extern void
-array_list_free(struct array_list *this)
+array_list_free(struct array_list *arr)
 {
   int i;
-  for(i = 0; i < this->length; i++)
-    if(this->array[i]) this->free_fn(this->array[i]);
-  free(this->array);
-  free(this);
+  for(i = 0; i < arr->length; i++)
+    if(arr->array[i]) arr->free_fn(arr->array[i]);
+  free(arr->array);
+  free(arr);
 }
 
 void*
-array_list_get_idx(struct array_list *this, int i)
+array_list_get_idx(struct array_list *arr, int i)
 {
-  if(i >= this->length) return NULL;
-  return this->array[i];
+  if(i >= arr->length) return NULL;
+  return arr->array[i];
 }
 
-static int array_list_expand_internal(struct array_list *this, int max)
+static int array_list_expand_internal(struct array_list *arr, int max)
 {
   void *t;
   int new_size;
 
-  if(max < this->size) return 0;
-  new_size = MAX(this->size << 1, max);
-  if((t = realloc(this->array, new_size*sizeof(void*))) == NULL) return -1;
-  this->array = t;
-  (void)memset(this->array + this->size, 0, (new_size-this->size)*sizeof(void*));
-  this->size = new_size;
+  if(max < arr->size) return 0;
+  new_size = json_max(arr->size << 1, max);
+  if(!(t = realloc(arr->array, new_size*sizeof(void*)))) return -1;
+  arr->array = (void**)t;
+  (void)memset(arr->array + arr->size, 0, (new_size-arr->size)*sizeof(void*));
+  arr->size = new_size;
   return 0;
 }
 
 int
-array_list_put_idx(struct array_list *this, int idx, void *data)
+array_list_put_idx(struct array_list *arr, int idx, void *data)
 {
-  if(array_list_expand_internal(this, idx)) return -1;
-  if(this->array[idx]) this->free_fn(this->array[idx]);
-  this->array[idx] = data;
-  if(this->length <= idx) this->length = idx + 1;
+  if(array_list_expand_internal(arr, idx)) return -1;
+  if(arr->array[idx]) arr->free_fn(arr->array[idx]);
+  arr->array[idx] = data;
+  if(arr->length <= idx) arr->length = idx + 1;
   return 0;
 }
 
 int
-array_list_add(struct array_list *this, void *data)
+array_list_add(struct array_list *arr, void *data)
 {
-  return array_list_put_idx(this, this->length, data);
+  return array_list_put_idx(arr, arr->length, data);
 }
 
 int
-array_list_length(struct array_list *this)
+array_list_length(struct array_list *arr)
 {
-  return this->length;
+  return arr->length;
 }
