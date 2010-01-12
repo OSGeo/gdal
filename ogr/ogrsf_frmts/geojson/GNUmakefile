@@ -14,7 +14,7 @@ OBJ = \
 	ogrgeojsonreader.o \
 	ogrgeojsonwriter.o
 
-CPPFLAGS	:= -I. -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:= -I. -Ijsonc -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:        $(foreach d,$(SUBDIRS-yes),$(d)-target) $(O_OBJ:.o=.$(OBJ_EXT))
 

@@ -12,6 +12,10 @@
 #ifndef _arraylist_h_
 #define _arraylist_h_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ARRAY_LIST_DEFAULT_SIZE 32
 
 typedef void (array_list_free_fn) (void *data);
@@ -41,5 +45,9 @@ array_list_add(struct array_list *al, void *data);
 
 extern int
 array_list_length(struct array_list *al);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
