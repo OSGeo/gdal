@@ -116,7 +116,7 @@ const unsigned char *OGRDXFDriver::GetDXFColorTable()
           0,255,255, // 4 
           0,  0,255, // 5 
         255,  0,255, // 6 
-        255,255,255, // 7 
+          0,  0,  0, // 7 - it should be white, but that plots poorly
         127,127,127, // 8 
         191,191,191, // 9 
         255,  0,  0, // 10 
