@@ -113,6 +113,10 @@
 #ifndef HAVE_STRNCASECMP
 #define HAVE_STRNCASECMP 1
 #endif
+#if defined(_MSC_VER) && !defined(strncasecmp)
+   /* MSC has the version as _strnicmp */
+#define strncasecmp _strnicmp
+#endif
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
