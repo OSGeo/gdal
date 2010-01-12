@@ -31,7 +31,9 @@
 #include "ogrgeojsonreader.h"
 #include <cpl_http.h>
 #include <jsonc/json.h> // JSON-C
+#include <cstddef>
 #include <cstdlib>
+using namespace std;
 
 /************************************************************************/
 /*                           OGRGeoJSONDataSource()                     */
