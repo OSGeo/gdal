@@ -946,8 +946,8 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     projinfo = G_get_projinfo();
     projunits = G_get_projunits();
     poDS->pszProjection = GPJ_grass_to_wkt ( projinfo, projunits, 0, 0);
-    G_free_key_value(projinfo);
-    G_free_key_value(projunits);
+    if (projinfo) G_free_key_value(projinfo);
+    if (projunits) G_free_key_value(projunits);
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
