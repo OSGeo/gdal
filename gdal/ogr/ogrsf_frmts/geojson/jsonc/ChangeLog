@@ -1,3 +1,45 @@
+0.9
+  * Add README.html README-WIN32.html config.h.win32 to Makefile.am
+    Michael Clark, <michael@metaparadigm.com>
+  * Add const qualifier to the json_tokener_parse functions
+    Eric Haszlakiewicz, EHASZLA at transunion dot com
+  * Rename min and max so we can never clash with C or C++ std library
+    Ian Atha, thatha at yahoo dash inc dot com
+  * Fix any noticeable spelling or grammar errors.
+  * Make sure every va_start has a va_end.
+  * Check all pointers for validity.
+    Erik Hovland, erik at hovland dot org
+  * Fix json_object_get_boolean to return false for empty string
+    Spotted by Vitaly Kruglikov, Vitaly dot Kruglikov at palm dot com
+  * optimizations to json_tokener_parse_ex(), printbuf_memappend()
+    Brent Miller, bdmiller at yahoo dash inc dot com
+  * Disable REFCOUNT_DEBUG by default in json_object.c
+  * Don't use this as a variable, so we can compile with a C++ compiler
+  * Add casts from void* to type of assignment when using malloc 
+  * Add #ifdef __cplusplus guards to all of the headers
+  * Add typedefs for json_object, json_tokener, array_list, printbuf, lh_table
+    Michael Clark, <michael@metaparadigm.com>
+  * Null pointer dereference fix. Fix json_object_get_boolean strlen test
+    to not return TRUE for zero length string. Remove redundant includes.
+    Erik Hovland, erik at hovland dot org
+  * Fixed warning reported by adding -Wstrict-prototypes
+    -Wold-style-definition to the compilatin flags.
+    Dotan Barak, dotanba at gmail dot com
+  * Add const correctness to public interfaces
+    Gerard Krol, g dot c dot krol at student dot tudelft dot nl
+
+0.8
+  * Add va_end for every va_start
+    Dotan Barak, dotanba at gmail dot com
+  * Add macros to enable compiling out debug code
+    Geoffrey Young, geoff at modperlcookbook dot org
+  * Fix bug with use of capital E in numbers with exponents
+    Mateusz Loskot, mateusz at loskot dot net
+  * Add stddef.h include
+  * Patch allows for json-c compile with -Werror and not fail due to
+    -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations
+    Geoffrey Young, geoff at modperlcookbook dot org
+
 0.7
   * Add escaping of backslash to json output
   * Add escaping of foward slash on tokenizing and output
