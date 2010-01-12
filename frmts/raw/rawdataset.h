@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef GDAL_FRMTS_RAW_RAWDATASET_H_INCLUDED
+#define GDAL_FRMTS_RAW_RAWDATASET_H_INCLUDED
+
 #include "gdal_pam.h"
 
 /************************************************************************/
@@ -104,7 +107,7 @@ protected:
                               void *, int, int, GDALDataType,
                               int, int );
 
-  public:
+public:
 
                  RawRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
                                 vsi_l_offset nImgOffset, int nPixelOffset,
@@ -152,3 +155,4 @@ protected:
     int          GetOwnsFP() { return bOwnsFP; }
 };
 
+#endif // GDAL_FRMTS_RAW_RAWDATASET_H_INCLUDED
