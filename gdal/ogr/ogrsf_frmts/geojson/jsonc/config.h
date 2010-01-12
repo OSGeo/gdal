@@ -101,7 +101,7 @@
 #endif
 
 /* Define to 1 if you have the `vasprintf' function. */
-#define HAVE_VASPRINTF
+#define HAVE_VASPRINTF 1
 #ifdef _MSC_VER
 #undef HAVE_VASPRINTF
 #endif
@@ -110,7 +110,9 @@
 #undef HAVE_VSYSLOG
 
 /* Define to 1 if you have the `strncasecmp' function. */
-#undef HAVE_STRNCASECMP
+#ifndef HAVE_STRNCASECMP
+#define HAVE_STRNCASECMP 1
+#endif
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
