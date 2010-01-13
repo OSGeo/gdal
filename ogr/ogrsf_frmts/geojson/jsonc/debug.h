@@ -37,8 +37,8 @@ extern void mc_info(const char *msg, ...);
 #define MC_SET_DEBUG(x) if (0) mc_set_debug(x)
 #define MC_GET_DEBUG() (0)
 #define MC_SET_SYSLOG(x) if (0) mc_set_syslog(x)
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-/* VC++6 doesn't like macros with ... */
+#if defined(_MSC_VER) && _MSC_VER <= 1310
+/* VC++ 7.1 and earlier don't like macros with ... */
 #define MC_ABORT
 #define MC_DEBUG
 #define MC_ERROR
