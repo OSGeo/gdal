@@ -99,7 +99,8 @@ def ogr_dxf_2():
         gdaltest.post_reason( 'did not get expected EntityHandle' )
         return 'fail'
 
-    if feat.GetStyleString() != 'PEN(c:#ffffff)':
+    if feat.GetStyleString() != 'PEN(c:#000000)':
+        print( '%s' % feat.GetStyleString())
         gdaltest.post_reason( 'did not get expected style string on feat 0.' )
         return 'fail'
 
@@ -189,7 +190,7 @@ def ogr_dxf_6():
     if ogrtest.check_feature_geometry( feat, 'POINT (84 126 0)' ):
         return 'fail'
 
-    if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#ffffff)':
+    if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#000000)':
         print(feat.GetStyleString())
         gdaltest.post_reason( 'got wrong style string' )
         return 'fail'
