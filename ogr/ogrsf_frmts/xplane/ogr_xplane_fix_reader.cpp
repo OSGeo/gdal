@@ -47,6 +47,7 @@ OGRXPlaneReader* OGRXPlaneCreateFixFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 OGRXPlaneFixReader::OGRXPlaneFixReader()
 {
+    poFIXLayer = NULL;
 }
 
 /************************************************************************/
@@ -55,8 +56,6 @@ OGRXPlaneFixReader::OGRXPlaneFixReader()
 
 OGRXPlaneFixReader::OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource )
 {
-    poInterestLayer = NULL;
-
     poFIXLayer = new OGRXPlaneFIXLayer();
 
     poDataSource->RegisterLayer(poFIXLayer);
