@@ -42,6 +42,8 @@ OGRXPlaneReader::OGRXPlaneReader()
     pszFilename = NULL;
     bEOF = FALSE;
     nLineNumber = 0;
+    poInterestLayer = NULL;
+    nTokens = 0;
 }
 
 /***********************************************************************/

@@ -47,6 +47,8 @@ OGRXPlaneReader* OGRXPlaneCreateAwyFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 OGRXPlaneAwyReader::OGRXPlaneAwyReader()
 {
+    poAirwaySegmentLayer = NULL;
+    poAirwayIntersectionLayer = NULL;
 }
 
 /************************************************************************/
@@ -55,8 +57,6 @@ OGRXPlaneAwyReader::OGRXPlaneAwyReader()
 
 OGRXPlaneAwyReader::OGRXPlaneAwyReader( OGRXPlaneDataSource* poDataSource )
 {
-    poInterestLayer = NULL;
-
     poAirwaySegmentLayer = new OGRXPlaneAirwaySegmentLayer();
     poAirwayIntersectionLayer = new OGRXPlaneAirwayIntersectionLayer();
 

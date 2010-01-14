@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 
 class OGRXPlaneReader;
+class OGRXPlaneDataSource;
 
 /************************************************************************/
 /*                             OGRXPlaneLayer                           */
@@ -48,6 +49,8 @@ class OGRXPlaneLayer : public OGRLayer
     
     OGRFeature**       papoFeatures;
     OGRSpatialReference *poSRS;
+    
+    OGRXPlaneDataSource* poDS;
 
   protected:
     OGRXPlaneReader*   poReader;
@@ -58,6 +61,8 @@ class OGRXPlaneLayer : public OGRLayer
 
   public:
     virtual                   ~OGRXPlaneLayer();
+    
+    void                      SetDataSource(OGRXPlaneDataSource* poDS);
 
     void                      SetReader(OGRXPlaneReader* poReader);
     int                       IsEmpty() { return nFeatureArraySize == 0; }
@@ -66,10 +71,11 @@ class OGRXPlaneLayer : public OGRLayer
     virtual void              ResetReading();
     virtual OGRFeature *      GetNextFeature();
     virtual OGRFeature *      GetFeature( long nFID );
+    virtual OGRErr            SetNextByIndex( long nIndex );
     virtual int               GetFeatureCount( int bForce = TRUE );
     virtual OGRSpatialReference * GetSpatialRef() { return poSRS; }
 
-    virtual OGRFeatureDefn *  GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *  GetLayerDefn();
     virtual int               TestCapability( const char * pszCap );
 };
 
@@ -87,6 +93,7 @@ class OGRXPlaneDataSource : public OGRDataSource
 
     OGRXPlaneReader*    poReader;
     int                 bReadWholeFile;
+    int                 bWholeFiledReadingDone;
 
     void                Reset();
 
@@ -103,6 +110,8 @@ class OGRXPlaneDataSource : public OGRDataSource
     virtual const char* GetName() { return pszName; }
 
     virtual int         TestCapability( const char * pszCap );
+    
+    void                ReadWholeFileIfNecessary();
 };
 
 /************************************************************************/
