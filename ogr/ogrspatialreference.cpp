@@ -1740,6 +1740,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     if( EQUALN(pszDefinition,"AUTO:",5) )
         return importFromWMSAUTO( pszDefinition );
 
+    if( EQUALN(pszDefinition,"OGC:",4) )  // WMS/WCS OGC codes like OGC:CRS84
+        return SetWellKnownGeogCS( pszDefinition+4 );
+
     if( EQUALN(pszDefinition,"DICT:",5) 
         && strstr(pszDefinition,",") )
     {
