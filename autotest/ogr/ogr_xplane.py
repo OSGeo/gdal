@@ -85,6 +85,51 @@ def ogr_xplane_apt_dat():
 
 
 ###############################################################################
+# Test apt.dat v810 reading
+
+def ogr_xplane_apt_v810_dat():
+
+    xplane_apt_ds = ogr.Open( 'data/apt810/apt.dat' )
+
+    if xplane_apt_ds is None:
+        return 'fail'
+
+    layers = [ ( 'APT'                  , 6,   [ ('apt_icao', 'UHP1') ] ),
+               ( 'RunwayPolygon'        , 6,   [ ('apt_icao', 'UHP1') ] ),
+               ( 'RunwayThreshold'      , 13,   [ ('apt_icao', 'UHP1') ] ),
+               ( 'WaterRunwayPolygon'   , 2,   [ ('apt_icao', '6MA8') ] ),
+               ( 'WaterRunwayThreshold' , 4,   [ ('apt_icao', '6MA8') ] ),
+               ( 'Helipad'              , 1,   [ ('apt_icao', '9FD6') ] ), 
+               ( 'HelipadPolygon'       , 1,   [ ('apt_icao', '9FD6') ] ),
+               ( 'TaxiwayRectangle'     , 54,  [ ('apt_icao', 'UHP1') ] ),
+               ( 'Pavement'             , 0,   [ ] ),
+               ( 'APTBoundary'          , 0,   [ ] ),
+               ( 'APTLinearFeature'     , 0,   [ ] ),
+               ( 'ATCFreq'              , 10,  [ ('apt_icao', 'EHVB') ] ),
+               ( 'StartupLocation'      , 0,   [ ] ),
+               ( 'APTLightBeacon'       , 2,   [ ('apt_icao', '7I6') ] ),
+               ( 'APTWindsock'          , 9,   [ ('apt_icao', 'UHP1') ] ),
+               ( 'TaxiwaySign'          , 0,   [ ] ),
+               ( 'VASI_PAPI_WIGWAG'     , 12,  [ ('apt_icao', 'UHP1') ] ),
+               ( 'Stopway'              , 4,   [ ('apt_icao', 'EKYT' ) ] ), 
+             ]
+
+    for layer in layers:
+        lyr = xplane_apt_ds.GetLayerByName( layer[0] )
+        if lyr.GetFeatureCount() != layer[1] :
+            gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
+            return 'fail'
+        feat_read = lyr.GetNextFeature()
+        for item in layer[2]:
+            if feat_read.GetField(item[0]) != item[1]:
+                print(layer[0])
+                print(item[0])
+                print(feat_read.GetField(item[0]))
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test nav.dat reading
 
 def ogr_xplane_nav_dat():
@@ -183,6 +228,7 @@ def ogr_xplane_fix_dat():
 
 gdaltest_list = [ 
     ogr_xplane_apt_dat,
+    ogr_xplane_apt_v810_dat,
     ogr_xplane_nav_dat,
     ogr_xplane_awy_dat,
     ogr_xplane_fix_dat ]
