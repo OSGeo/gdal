@@ -44,6 +44,7 @@ OGRXPlaneDataSource::OGRXPlaneDataSource()
     nLayers = 0;
     poReader = NULL;
     bReadWholeFile = TRUE;
+    bWholeFiledReadingDone = FALSE;
 }
 
 /************************************************************************/
@@ -97,6 +98,8 @@ OGRLayer *OGRXPlaneDataSource::GetLayer( int iLayer )
 
 void OGRXPlaneDataSource::RegisterLayer(OGRXPlaneLayer* poLayer)
 {
+    poLayer->SetDataSource(this);
+
     papoLayers = (OGRXPlaneLayer**) CPLRealloc(papoLayers,
                                     (nLayers + 1) * sizeof(OGRXPlaneLayer*));
     papoLayers[nLayers++] = poLayer;
@@ -144,13 +147,7 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
     {
         pszName = CPLStrdup(pszFilename);
 
-        if (bReadWholeFile)
-        {
-            poReader->ReadWholeFile();
-            for( int i = 0; i < nLayers; i++ )
-                papoLayers[i]->AutoAdjustColumnsWidth();
-        }
-        else
+        if ( !bReadWholeFile )
         {
             for( int i = 0; i < nLayers; i++ )
                 papoLayers[i]->SetReader(poReader->CloneForLayer(papoLayers[i]));
@@ -171,4 +168,19 @@ int OGRXPlaneDataSource::TestCapability( const char * pszCap )
 
 {
     return FALSE;
+}
+
+/************************************************************************/
+/*                     ReadWholeFileIfNecessary()                       */
+/************************************************************************/
+
+void OGRXPlaneDataSource::ReadWholeFileIfNecessary()
+{
+    if (bReadWholeFile && !bWholeFiledReadingDone)
+    {
+        poReader->ReadWholeFile();
+        for( int i = 0; i < nLayers; i++ )
+            papoLayers[i]->AutoAdjustColumnsWidth();
+        bWholeFiledReadingDone = TRUE;
+    }
 }

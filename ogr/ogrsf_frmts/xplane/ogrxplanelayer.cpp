@@ -45,6 +45,7 @@ OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName )
     nFeatureArrayMaxSize = 0;
     nFeatureArrayIndex = 0;
     papoFeatures = NULL;
+    poDS = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     poFeatureDefn->Reference();
@@ -198,6 +199,8 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
             } while(nFeatureArrayIndex < nFeatureArraySize);
         }
     }
+    else
+        poDS->ReadWholeFileIfNecessary();
 
     while(nFeatureArrayIndex < nFeatureArraySize)
     {
@@ -224,6 +227,8 @@ OGRFeature *  OGRXPlaneLayer::GetFeature( long nFID )
 {
     if (poReader)
         return OGRLayer::GetFeature(nFID);
+    else
+        poDS->ReadWholeFileIfNecessary();
 
     if (nFID >= 0 && nFID < nFeatureArraySize)
     {
@@ -242,9 +247,32 @@ OGRFeature *  OGRXPlaneLayer::GetFeature( long nFID )
 int  OGRXPlaneLayer::GetFeatureCount( int bForce )
 {
     if (poReader == NULL && m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    {
+        poDS->ReadWholeFileIfNecessary();
         return nFeatureArraySize;
+    }
     else
         return OGRLayer::GetFeatureCount( bForce ) ;
+}
+
+
+/************************************************************************/
+/*                           SetNextByIndex()                           */
+/************************************************************************/
+
+OGRErr OGRXPlaneLayer::SetNextByIndex( long nIndex )
+{
+    if (poReader == NULL && m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    {
+        poDS->ReadWholeFileIfNecessary();
+        if (nIndex < 0 || nIndex >= nFeatureArraySize)
+            return OGRERR_FAILURE;
+
+        nFeatureArrayIndex = (int)nIndex;
+        return OGRERR_NONE;
+    }
+    else
+        return OGRLayer::SetNextByIndex(nIndex);
 }
 
 /************************************************************************/
@@ -254,7 +282,8 @@ int  OGRXPlaneLayer::GetFeatureCount( int bForce )
 int  OGRXPlaneLayer::TestCapability( const char * pszCap )
 {
     if (EQUAL(pszCap,OLCFastFeatureCount) ||
-        EQUAL(pszCap,OLCRandomRead))
+        EQUAL(pszCap,OLCRandomRead) ||
+        EQUAL(pszCap,OLCFastSetNextByIndex))
     {
         if (poReader == NULL && m_poFilterGeom == NULL && m_poAttrQuery == NULL)
             return TRUE;
@@ -288,3 +317,21 @@ void OGRXPlaneLayer::RegisterFeature( OGRFeature* poFeature )
     nFeatureArraySize ++;
 }
 
+/************************************************************************/
+/*                         GetLayerDefn()                               */
+/************************************************************************/
+
+OGRFeatureDefn * OGRXPlaneLayer::GetLayerDefn()
+{
+    poDS->ReadWholeFileIfNecessary();
+    return poFeatureDefn;
+}
+
+/************************************************************************/
+/*                        SetDataSource()                               */
+/************************************************************************/
+
+void OGRXPlaneLayer::SetDataSource(OGRXPlaneDataSource* poDS)
+{
+    this->poDS = poDS;
+}
