@@ -649,11 +649,11 @@ static void TestSpatialFilter( OGRLayer *poLayer )
 /*      Construct inclusive filter.                                     */
 /* -------------------------------------------------------------------- */
     
-    oRing.setPoint( 0, sEnvelope.MinX - 10.0, sEnvelope.MinY - 10.0 );
-    oRing.setPoint( 1, sEnvelope.MinX - 10.0, sEnvelope.MaxY + 10.0 );
+    oRing.setPoint( 0, sEnvelope.MinX - 20.0, sEnvelope.MinY - 20.0 );
+    oRing.setPoint( 1, sEnvelope.MinX - 20.0, sEnvelope.MaxY + 10.0 );
     oRing.setPoint( 2, sEnvelope.MaxX + 10.0, sEnvelope.MaxY + 10.0 );
-    oRing.setPoint( 3, sEnvelope.MaxX + 10.0, sEnvelope.MinY - 10.0 );
-    oRing.setPoint( 4, sEnvelope.MinX - 10.0, sEnvelope.MinY - 10.0 );
+    oRing.setPoint( 3, sEnvelope.MaxX + 10.0, sEnvelope.MinY - 20.0 );
+    oRing.setPoint( 4, sEnvelope.MinX - 20.0, sEnvelope.MinY - 20.0 );
     
     oInclusiveFilter.addRing( &oRing );
 
