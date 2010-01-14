@@ -47,6 +47,13 @@ OGRXPlaneReader* OGRXPlaneCreateNavFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 OGRXPlaneNavReader::OGRXPlaneNavReader()
 {
+    poILSLayer = NULL;
+    poVORLayer = NULL;
+    poNDBLayer = NULL;
+    poGSLayer = NULL;
+    poMarkerLayer = NULL;
+    poDMELayer = NULL;
+    poDMEILSLayer = NULL;
 }
 
 /************************************************************************/
@@ -55,8 +62,6 @@ OGRXPlaneNavReader::OGRXPlaneNavReader()
 
 OGRXPlaneNavReader::OGRXPlaneNavReader( OGRXPlaneDataSource* poDataSource )
 {
-    poInterestLayer = NULL;
-
     poILSLayer = new OGRXPlaneILSLayer();
     poVORLayer = new OGRXPlaneVORLayer();
     poNDBLayer = new OGRXPlaneNDBLayer();

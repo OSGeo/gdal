@@ -30,6 +30,9 @@ are sometimes expressed in feet or nautical miles.<p>
 Data is reported as being expressed in WGS84 datum (latitude, longitude), altough the specificiation
 is not very clear on that subject.</p>
 
+The OGR_XPLANE_READ_WHOLE_FILE configuration option can be set to FALSE when reading a big file 
+in regards with the available RAM (especially true for apt.dat). This option forces the driver not to cache features in RAM,
+but just to fetch the features of the current layer. Of course, this will have a negative impact on performance.
 
 <h2>Examples</h2>
 
@@ -92,6 +95,7 @@ Fields:
 <ul>
 <li>apt_icao: String (4.0). ICAO code for the airport.
 <li>apt_name: String (0.0). Full name of the airport.
+<li>type: Integer (1.0). Airport type : 0 for regular airport, 1 for seaplane/floatplane base, 2 for heliport (added in GDAL 1.7.0)
 <li>elevation_m: Real (8.2). Elevation of the airport (in meters).
 <li>has_tower: Integer (1.0). Set to 1 if the airport has a tower view point.
 <li>hgt_tower_m: Real (8.2). Height of the tower view point if present.

@@ -47,6 +47,7 @@ class OGRXPlaneAPTLayer : public OGRXPlaneLayer
     /* If it has no tower, then we pick up the coordinates of the threshold of its first found runway */
     OGRFeature*         AddFeature(const char* pszAptICAO,
                                    const char* pszAptName,
+                                   int nAPTType,
                                    double dfElevation,
                                    int bHasCoordinates = FALSE,
                                    double dfLat = 0,
@@ -544,6 +545,8 @@ enum
     APT_RUNWAY_TAXIWAY_V_810   = 10,
     APT_TOWER                  = 14,
     APT_STARTUP_LOCATION       = 15,
+    APT_SEAPLANE_HEADER        = 16,
+    APT_HELIPORT_HEADER        = 17,
     APT_LIGHT_BEACONS          = 18,
     APT_WINDSOCKS              = 19,
     APT_TAXIWAY_SIGNS          = 20,
@@ -602,6 +605,7 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         int       bControlTower;
         CPLString osAptICAO;
         CPLString osAptName;
+        int       nAPTType;
 
         int       bTowerFound;
         double    dfLatTower, dfLonTower;
