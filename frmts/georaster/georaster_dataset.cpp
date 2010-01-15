@@ -947,37 +947,145 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     OGRSpatialReference oSRS;
 
     // --------------------------------------------------------------------
+    // Check if the SRID is a valid EPSG code
+    // --------------------------------------------------------------------
+
+    if( oSRS.importFromEPSG( poGeoRaster->nSRID ) == OGRERR_NONE )
+    {
+        /*
+         * Ignores the WKT from Oracle and use the one from GDAL's
+         * EPSG tables. That would ensure that other drivers/software
+         * will recognizize the parameters.
+         */
+
+        if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
+        {
+            return pszProjection;
+        }
+
+        return "";
+    }
+
+    // --------------------------------------------------------------------
     // Get the WKT from the server
     // --------------------------------------------------------------------
 
     char* pszWKText = CPLStrdup(
         poGeoRaster->GetWKText( poGeoRaster->nSRID ) );
 
-    // --------------------------------------------------------------------
-    // Try to interpreter the WKT text
-    // --------------------------------------------------------------------
-
-    if( oSRS.importFromWkt( &pszWKText ) == OGRERR_NONE && oSRS.GetRoot() )
+    if( ! ( oSRS.importFromWkt( &pszWKText ) == OGRERR_NONE && oSRS.GetRoot() ) )
     {
-        oSRS.SetAuthority( oSRS.GetRoot()->GetValue(), "EPSG",
-            poGeoRaster->nSRID );
+        return "";
+    }
+
+    // ----------------------------------------------------------------
+    // Decorate with EPSG Authority codes
+    // ----------------------------------------------------------------
+
+    oSRS.SetAuthority( oSRS.GetRoot()->GetValue(), "EPSG", poGeoRaster->nSRID );
+
+    int nSpher = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM|SPHEROID") );
+
+    if( nSpher > 0 )
+    {
+        oSRS.SetAuthority( "GEOGCS|DATUM|SPHEROID", "EPSG", nSpher );
+    }
+
+    int nDatum = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM") );
+
+    if( nDatum > 0 )
+    {
+        oSRS.SetAuthority( "GEOGCS|DATUM", "EPSG", nDatum );
+    }
+
+    // ----------------------------------------------------------------
+    // Checks for Projection info
+    // ----------------------------------------------------------------
+
+    const char *pszProjName = oSRS.GetAttrValue( "PROJECTION" );
+
+    if( pszProjName )
+    {
+        int nProj = OWParseEPSG( pszProjName );
 
         // ----------------------------------------------------------------
-        // Decorate EPSG Autority if they are present
+        // Decorate with EPSG Authority
         // ----------------------------------------------------------------
 
-        int nSpher = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM|SPHEROID") );
-
-        if( nSpher > 0 )
+        if( nProj > 0 )
         {
-            oSRS.SetAuthority( "GEOGCS|DATUM|SPHEROID", "EPSG", nSpher );
+            oSRS.SetAuthority( "PROJECTION", "EPSG", nProj );
         }
 
-        int nDatum = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM") );
+        // ----------------------------------------------------------------
+        // Translate projection names to GDAL's standards
+        // ----------------------------------------------------------------
 
-        if( nDatum > 0 )
+        if ( EQUAL( pszProjName, "Transverse Mercator" ) )
         {
-            oSRS.SetAuthority( "GEOGCS|DATUM", "EPSG", nDatum );
+            oSRS.SetProjection( SRS_PT_TRANSVERSE_MERCATOR );
+        }
+        else if ( EQUAL( pszProjName, "Albers Conical Equal Area" ) )
+        {
+            oSRS.SetProjection( SRS_PT_ALBERS_CONIC_EQUAL_AREA );
+        }
+        else if ( EQUAL( pszProjName, "Azimuthal Equidistant" ) )
+        {
+            oSRS.SetProjection( SRS_PT_AZIMUTHAL_EQUIDISTANT );
+        }
+        else if ( EQUAL( pszProjName, "Miller Cylindrical" ) )
+        {
+            oSRS.SetProjection( SRS_PT_MILLER_CYLINDRICAL );
+        }
+        else if ( EQUAL( pszProjName, "Hotine Oblique Mercator" ) )
+        {
+            oSRS.SetProjection( SRS_PT_HOTINE_OBLIQUE_MERCATOR );
+        }
+        else if ( EQUAL( pszProjName, "Wagner IV" ) )
+        {
+            oSRS.SetProjection( SRS_PT_WAGNER_IV );
+        }
+        else if ( EQUAL( pszProjName, "Wagner VII" ) )
+        {
+            oSRS.SetProjection( SRS_PT_WAGNER_VII );
+        }
+        else if ( EQUAL( pszProjName, "Eckert IV" ) )
+        {
+            oSRS.SetProjection( SRS_PT_ECKERT_IV );
+        }
+        else if ( EQUAL( pszProjName, "Eckert VI" ) )
+        {
+            oSRS.SetProjection( SRS_PT_ECKERT_VI );
+        }
+        else if ( EQUAL( pszProjName, "New Zealand Map Grid" ) )
+        {
+            oSRS.SetProjection( SRS_PT_NEW_ZEALAND_MAP_GRID );
+        }
+        else if ( EQUAL( pszProjName, "Lambert Conformal Conic" ) )
+        {
+            oSRS.SetProjection( SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
+            //?? One ot two parameters?
+        }
+        else if ( EQUAL( pszProjName, "Lambert Azimuthal Equal Area" ) )
+        {
+            oSRS.SetProjection( SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA );
+        }
+        else if ( EQUAL( pszProjName, "Van der Grinten" ) )
+        {
+            oSRS.SetProjection( SRS_PT_VANDERGRINTEN );
+        }
+        else if ( EQUAL(
+            pszProjName, "Lambert Conformal Conic (Belgium 1972)" ) )
+        {
+            oSRS.SetProjection( SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM );
+        }
+        else if ( EQUAL( pszProjName, "Cylindrical Equal Area" ) )
+        {
+            oSRS.SetProjection( SRS_PT_CYLINDRICAL_EQUAL_AREA );
+        }
+        else if ( EQUAL( pszProjName, "Interrupted Goode Homolosine" ) )
+        {
+            oSRS.SetProjection( SRS_PT_GOODE_HOMOLOSINE );
         }
     }
 
