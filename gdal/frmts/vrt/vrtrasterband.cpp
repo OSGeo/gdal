@@ -68,6 +68,7 @@ void VRTRasterBand::Initialize( int nXSize, int nYSize )
     nBlockYSize = MIN(128,nYSize);
 
     bNoDataValueSet = FALSE;
+    bHideNoDataValue = FALSE;
     dfNoDataValue = -10000.0;
     poColorTable = NULL;
     eColorInterp = GCI_Undefined;
@@ -152,7 +153,13 @@ CPLErr VRTRasterBand::SetMetadataItem( const char *pszName,
 {
     ((VRTDataset *) poDS)->SetNeedsFlush();
 
-    return GDALRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
+    if( EQUAL(pszName,"HideNoDataValue") )
+    {
+        bHideNoDataValue = CSLTestBoolean( pszValue );
+        return CE_None;
+    }
+    else
+        return GDALRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/
@@ -303,6 +310,9 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     if( CPLGetXMLValue( psTree, "NoDataValue", NULL ) != NULL )
         SetNoDataValue( atof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
 
+    if( CPLGetXMLValue( psTree, "HideNoDataValue", NULL ) != NULL )
+        bHideNoDataValue = CSLTestBoolean( CPLGetXMLValue( psTree, "HideNoDataValue", "0" ) );
+
     SetUnitType( CPLGetXMLValue( psTree, "UnitType", NULL ) );
 
     SetOffset( atof(CPLGetXMLValue( psTree, "Offset", "0.0" )) );
@@ -411,6 +421,10 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
         CPLSetXMLValue( psTree, "NoDataValue", 
                         CPLSPrintf( "%.14E", dfNoDataValue ) );
 
+    if( bHideNoDataValue )
+        CPLSetXMLValue( psTree, "HideNoDataValue", 
+                        CPLSPrintf( "%d", bHideNoDataValue ) );
+
     if( pszUnitType != NULL )
         CPLSetXMLValue( psTree, "UnitType", pszUnitType );
 
@@ -497,7 +511,7 @@ double VRTRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
     if( pbSuccess )
-        *pbSuccess = bNoDataValueSet;
+        *pbSuccess = bNoDataValueSet && !bHideNoDataValue;
 
     return dfNoDataValue;
 }

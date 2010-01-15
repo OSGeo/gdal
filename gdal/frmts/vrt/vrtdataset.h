@@ -177,6 +177,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 {
   protected:
     int            bNoDataValueSet;
+    int            bHideNoDataValue; // If set to true, will not report the existance of nodata
     double         dfNoDataValue;
 
     GDALColorTable *poColorTable;

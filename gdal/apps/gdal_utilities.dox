@@ -534,7 +534,7 @@ Builds a VRT from a list of datasets. (compiled by default since GDAL 1.6.1)
 \verbatim
 gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]
              [-tr xres yres] [-separate] [-allow_projection_difference] [-q]
-             [-te xmin ymin xmax ymax] [-addalpha]
+             [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata]
              [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
              [-input_file_list my_liste.txt] output.vrt [gdalfile]*
 \endverbatim
@@ -597,6 +597,13 @@ The alpha band is filled on-the-fly with the value 0 in areas without any source
 255 in areas with source raster. The effect is that a RGBA viewer will render
 the areas without source rasters as transparent and areas with source rasters as opaque.
 This option is not compatible with -separate.</dd>
+
+<dt> <b>-hidenodata</b>:</dt><dd> (starting with GDAL 1.7.0)
+Even if any band contains nodata value, giving this option makes the VRT band
+not report the NoData. Useful when you want to control the background color of
+the dataset. By using along with the -addalpha option, you can prepare a
+dataset which doesn't report nodata value but is transparent in areas with no
+data.</dd>
 
 <dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> (starting with GDAL 1.7.0)
 Set nodata values for input bands (different values can be supplied for each band). If 
