@@ -84,7 +84,7 @@ static void Usage()
     fprintf(stdout, "%s", 
             "Usage: gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]\n"
             "                    [-tr xres yres] [-separate] [-allow_projection_difference] [-q]\n"
-            "                    [-te xmin ymin xmax ymax] [-addalpha] \n"
+            "                    [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata] \n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
             "                    [-input_file_list my_liste.txt] output.vrt [gdalfile]*\n"
             "\n"
@@ -174,7 +174,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                      double we_res, double ns_res,
                      double minX, double minY, double maxX, double maxY,
                      int bSeparate, int bAllowProjectionDifference,
-                     int bAddAlpha,
+                     int bAddAlpha, int bHideNoData,
                      const char* pszSrcNoData, const char* pszVRTNoData,
                      GDALProgressFunc pfnProgress, void * pProgressData)
 {
@@ -604,6 +604,10 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
 
             VRTSourcedRasterBandH hVRTBand =
                     (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, iBand);
+
+            if (bHideNoData)
+                GDALSetMetadataItem(hVRTBand,"HideNoDataValue","1",NULL);
+
             if (bAllowSrcNoData && psDatasetProperties[i].panHasNoData[0])
             {
                 GDALSetRasterNoDataValue(hVRTBand, psDatasetProperties[i].padfNoDataValues[0]);
@@ -638,6 +642,8 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
             }
             if (bAllowVRTNoData && bandProperties[j].bHasNoData)
                 GDALSetRasterNoDataValue(hBand, bandProperties[j].noDataValue);
+            if ( bHideNoData )
+                GDALSetMetadataItem(hBand,"HideNoDataValue","1",NULL);
         }
         
         if (bAddAlpha)
@@ -846,6 +852,7 @@ int main( int nArgc, char ** papszArgv )
     double xmin = 0, ymin = 0, xmax = 0, ymax = 0;
     int bAddAlpha = FALSE;
     int bForceOverwrite = FALSE;
+    int bHideNoData = FALSE;
     const char* pszSrcNoData = NULL;
     const char* pszVRTNoData = NULL;
 
@@ -927,6 +934,10 @@ int main( int nArgc, char ** papszArgv )
         else if ( EQUAL(papszArgv[iArg],"-addalpha") )
         {
             bAddAlpha = TRUE;
+        }
+        else if ( EQUAL(papszArgv[iArg],"-hidenodata") )
+        {
+            bHideNoData = TRUE;
         }
         else if ( EQUAL(papszArgv[iArg],"-overwrite") )
         {
@@ -1026,7 +1037,7 @@ int main( int nArgc, char ** papszArgv )
 
     GDALBuildVRT(pszOutputFilename, &nInputFiles, &ppszInputFilenames,
                  eStrategy, we_res, ns_res, xmin, ymin, xmax, ymax,
-                 bSeparate, bAllowProjectionDifference, bAddAlpha,
+                 bSeparate, bAllowProjectionDifference, bAddAlpha, bHideNoData,
                  pszSrcNoData, pszVRTNoData, pfnProgress, NULL);
     
     for(i=0;i<nInputFiles;i++)

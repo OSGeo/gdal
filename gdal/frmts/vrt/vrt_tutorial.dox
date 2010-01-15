@@ -98,7 +98,7 @@ as the data of the element.
 have a ataType attribute with the type of the pixel data associated with
 this band (use names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
 CInt16, CInt32, CFloat32 or CFloat64) and the band this element represents
-(1 based).  This element may have Metadata, ColorInterp, NoDataValue, 
+(1 based).  This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue,
 ColorTable, and Description subelements as well as the various kinds of 
 source elements such as SimpleSource.  A raster band may have many "sources"
 indicating where the actual raster data should be fetched from, and how it
@@ -122,6 +122,16 @@ nodata value associated with, of the value given as data in the element.
 
 \code
   <NoDataValue>-100.0</NoDataValue>
+\endcode
+</li>
+
+<li> <b>HideNoDataValue</b>: If this value is 1, the nodata value to be not be
+reported. This is useful when you want to specify a fixed background value for
+the dataset. The background will be the value specified by the NoDataValue
+element. Default value is 0.
+
+\code
+  <HideNoDataValue>1</HideNoDataValue>
 \endcode
 </li>
 
