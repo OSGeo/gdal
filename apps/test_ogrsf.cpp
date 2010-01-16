@@ -170,14 +170,15 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Or process layers specified by the user                         */
 /* -------------------------------------------------------------------- */
-        while (*papszLayers)
+        char** papszLayerIter = papszLayers;
+        while (*papszLayerIter)
         {
-            OGRLayer        *poLayer = poDS->GetLayerByName(*papszLayers);
+            OGRLayer        *poLayer = poDS->GetLayerByName(*papszLayerIter);
 
             if( poLayer == NULL )
             {
                 printf( "FAILURE: Couldn't fetch requested layer %s!\n",
-                        *papszLayers );
+                        *papszLayerIter );
                 exit( 1 );
             }
             
@@ -185,7 +186,7 @@ int main( int nArgc, char ** papszArgv )
                     poLayer->GetLayerDefn()->GetName() );
             TestOGRLayer( poDS, poLayer, FALSE );
             
-            papszLayers ++;
+            papszLayerIter ++;
         }
     }
 
@@ -195,6 +196,8 @@ int main( int nArgc, char ** papszArgv )
     OGRDataSource::DestroyDataSource(poDS);
 
     OGRCleanupAll();
+
+    CSLDestroy(papszLayers);
     
 #ifdef DBMALLOC
     malloc_dump(1);
@@ -347,7 +350,7 @@ static void TestOGRLayerRandomRead( OGRLayer *poLayer )
                 "       reading indicates should have happened.\n",
                 papoFeatures[1]->GetFID() );
 
-        return;
+        goto end;
     }
 
     OGRFeature::DestroyFeature(poFeature);
@@ -363,9 +366,13 @@ static void TestOGRLayerRandomRead( OGRLayer *poLayer )
                 "       reading indicates should have happened.\n",
                 papoFeatures[4]->GetFID() );
 
-        return;
+        goto end;
     }
 
+    if( bVerbose )
+        printf( "INFO: Random read test passed.\n" );
+
+end:
     OGRFeature::DestroyFeature(poFeature);
 
 /* -------------------------------------------------------------------- */
@@ -373,9 +380,6 @@ static void TestOGRLayerRandomRead( OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
     for( iFeature = 0; iFeature < 5; iFeature++ )
         OGRFeature::DestroyFeature(papoFeatures[iFeature]);
-
-    if( bVerbose )
-        printf( "INFO: Random read test passed.\n" );
 }
 
 
@@ -387,7 +391,7 @@ static void TestOGRLayerRandomRead( OGRLayer *poLayer )
 static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
 
 {
-    OGRFeature  *papoFeatures[5], *poFeature;
+    OGRFeature  *papoFeatures[5], *poFeature = NULL;
     int         iFeature;
 
     poLayer->SetSpatialFilter( NULL );
@@ -419,7 +423,7 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     if (poLayer->SetNextByIndex(1) != OGRERR_NONE)
     {
         printf( "ERROR: SetNextByIndex(%d) failed.\n", 1 );
-        return;
+        goto end;
     }
     
     poFeature = poLayer->GetNextFeature();
@@ -430,7 +434,7 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
                 "       reading indicates should have happened.\n",
                 1 );
 
-        return;
+        goto end;
     }
 
     OGRFeature::DestroyFeature(poFeature);
@@ -443,10 +447,11 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
                 "       reading indicates should have happened.\n",
                 1 );
 
-        return;
+        goto end;
     }
 
     OGRFeature::DestroyFeature(poFeature);
+    poFeature = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Test feature at index 3.                                        */
@@ -454,7 +459,7 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     if (poLayer->SetNextByIndex(3) != OGRERR_NONE)
     {
         printf( "ERROR: SetNextByIndex(%d) failed.\n", 3 );
-        return;
+        goto end;
     }
     
     poFeature = poLayer->GetNextFeature();
@@ -465,7 +470,7 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
                 "       reading indicates should have happened.\n",
                 3 );
 
-        return;
+        goto end;
     }
 
     OGRFeature::DestroyFeature(poFeature);
@@ -478,9 +483,14 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
                 "       reading indicates should have happened.\n",
                 3 );
 
-        return;
+        goto end;
     }
 
+
+    if( bVerbose )
+        printf( "INFO: SetNextByIndex() read test passed.\n" );
+
+end:
     OGRFeature::DestroyFeature(poFeature);
 
 /* -------------------------------------------------------------------- */
@@ -488,9 +498,6 @@ static void TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
     for( iFeature = 0; iFeature < 5; iFeature++ )
         OGRFeature::DestroyFeature(papoFeatures[iFeature]);
-
-    if( bVerbose )
-        printf( "INFO: SetNextByIndex() read test passed.\n" );
 }
 
 /************************************************************************/
@@ -553,12 +560,12 @@ static void TestOGRLayerRandomWrite( OGRLayer *poLayer )
     if( poLayer->SetFeature( papoFeatures[1] ) != OGRERR_NONE )
     {
         printf( "ERROR: Attempt to SetFeature(1) failed.\n" );
-        return;
+        goto end;
     }
     if( poLayer->SetFeature( papoFeatures[4] ) != OGRERR_NONE )
     {
         printf( "ERROR: Attempt to SetFeature(4) failed.\n" );
-        return;
+        goto end;
     }
 
 /* -------------------------------------------------------------------- */
@@ -585,14 +592,13 @@ static void TestOGRLayerRandomWrite( OGRLayer *poLayer )
     if( poLayer->SetFeature( papoFeatures[1] ) != OGRERR_NONE )
     {
         printf( "ERROR: Attempt to restore SetFeature(1) failed.\n" );
-        return;
     }
     if( poLayer->SetFeature( papoFeatures[4] ) != OGRERR_NONE )
     {
         printf( "ERROR: Attempt to restore SetFeature(4) failed.\n" );
-        return;
     }
 
+end:
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
