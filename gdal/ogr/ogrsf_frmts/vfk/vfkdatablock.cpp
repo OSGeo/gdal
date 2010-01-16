@@ -115,14 +115,17 @@ int VFKDataBlock::SetProperties(char *poLine)
     pszName = pszType = NULL;
     
     /* skip data block name */
-    for (poChar = poLine; *poChar != ';'; poChar++)
+    for (poChar = poLine; *poChar != '0' && *poChar != ';'; poChar++)
 	;
+    if (*poChar == '\0')
+        return 0;
+
     poChar++;
 
     /* read property name/type */
     poProp  = poChar;
     nLength = 0;
-    while(*poChar != '\r' && *(poChar+1) != '\n') {
+    while(*poChar != '\0' && !(*poChar == '\r' && *(poChar+1) == '\n')) {
 	if (*poChar == ' ') {
 	    pszName = (char *) CPLRealloc(pszName, nLength + 1);
 	    strncpy(pszName, poProp, nLength);
@@ -137,7 +140,9 @@ int VFKDataBlock::SetProperties(char *poLine)
 	    pszType[nLength] = '\0';
 	    
 	    /* add property */
-	    AddProperty(pszName, pszType);
+            if (pszName && *pszName != '\0' &&
+                pszType && *pszType != '\0')
+	        AddProperty(pszName, pszType);
 	    
 	    poProp = ++poChar;
 	    nLength = 0;
@@ -145,12 +150,15 @@ int VFKDataBlock::SetProperties(char *poLine)
 	poChar++;
 	nLength++;
     }
+
     pszType = (char *) CPLRealloc(pszType, nLength + 1);
     strncpy(pszType, poProp, nLength);
     pszType[nLength] = '\0';
     
     /* add property */
-    AddProperty(pszName, pszType);
+    if (pszName && *pszName != '\0' &&
+        pszType && *pszType != '\0')
+        AddProperty(pszName, pszType);
     
     CPLFree(pszName);
     CPLFree(pszType);
@@ -203,7 +211,8 @@ void VFKDataBlock::SetFeatureCount(int nNewCount, int bIncrement)
 int VFKDataBlock::AddFeature(const char *poLine)
 {
     int iIndex, nLength;
-    char *poChar, *pszProp, *poProp;
+    const char *poChar, *poProp;
+    char* pszProp;
     bool inString;
     
     VFKFeature *poNewFeature;
@@ -212,16 +221,19 @@ int VFKDataBlock::AddFeature(const char *poLine)
     pszProp = NULL;
     
     /* set feature properties */
-    for (poChar = (char *) poLine; *poChar != ';'; poChar++)
+    for (poChar = poLine; *poChar != '\0' && *poChar != ';'; poChar++)
 	/* skip data block name */
 	;
+    if (poChar == '\0')
+        return m_nFeatureCount;
+
     poChar++;
     
     poProp = poChar;
     iIndex = 0;
     nLength = 0;
     inString = FALSE;
-    while(*poChar != '\r' && *(poChar+1) != '\n') {
+    while(*poChar != '\0' && !(*poChar == '\r' && *(poChar+1) == '\n')) {
 	if (*poChar == '"' && 
 	    (*(poChar-1) == ';' || *(poChar+1) == ';' || *(poChar+1) == '\r')) {
 	    poChar++; /* skip '"' */
@@ -683,9 +695,9 @@ long VFKDataBlock::LoadGeometry()
 	int id, idxId, idxBp_Id, idxPCB, ipcb;
 
 	VFKDataBlock *poDataBlockPoints;
-	VFKFeature   *poPoint, *poLine;
+	VFKFeature   *poPoint, *poLine = NULL;
 
-	OGRLineString OGRLine;
+	OGRLineString oOGRLine;
 	
 	poDataBlockPoints = m_poReader->GetDataBlock("SOBR");
 	if (!poDataBlockPoints)
@@ -704,10 +716,10 @@ long VFKDataBlock::LoadGeometry()
 	    id   = poFeature->GetProperty(idxBp_Id)->GetValueI();
 	    ipcb = poFeature->GetProperty(idxPCB)->GetValueI();
 	    if (ipcb == 1) {
-		if (!OGRLine.IsEmpty()) {
-		    OGRLine.setCoordinateDimension(2); /* force 2D */
-		    poLine->SetGeometry(&OGRLine);
-		    OGRLine.empty(); /* restore line */
+		if (!oOGRLine.IsEmpty()) {
+		    oOGRLine.setCoordinateDimension(2); /* force 2D */
+		    poLine->SetGeometry(&oOGRLine);
+		    oOGRLine.empty(); /* restore line */
 		}
 		poLine = poFeature;
 	    }
@@ -715,12 +727,13 @@ long VFKDataBlock::LoadGeometry()
 	    if (!poPoint)
 		continue;
 	    OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
-	    OGRLine.addPoint(pt);
+	    oOGRLine.addPoint(pt);
 	    nfeatures++;
 	}
 	/* add last line */
-	OGRLine.setCoordinateDimension(2); /* force 2D */
-	poLine->SetGeometry(&OGRLine);
+	oOGRLine.setCoordinateDimension(2); /* force 2D */
+        if (poLine)
+  	    poLine->SetGeometry(&oOGRLine);
 	
 	poDataBlockPoints->ResetReading();
     }
