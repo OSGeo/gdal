@@ -89,8 +89,6 @@ private:
     
     long                      m_nFID;
     
-    bool                      m_bAlive;
-    
     OGRwkbGeometryType        m_nGeometryType;
     bool                      m_bGeometry;
     OGRGeometry              *m_paGeom;
