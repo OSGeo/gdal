@@ -359,6 +359,8 @@ void *VSIMalloc( size_t nSize )
 {
 #ifdef DEBUG_VSIMALLOC
     char* ptr = (char*) malloc(4 + sizeof(size_t) + nSize);
+    if (ptr == NULL)
+        return NULL;
     ptr[0] = 'V';
     ptr[1] = 'S';
     ptr[2] = 'I';
@@ -419,6 +421,8 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #endif
 
     ptr = (char*) realloc(ptr, nNewSize + 4 + sizeof(size_t));
+    if (ptr == NULL)
+        return NULL;
     memcpy(ptr + 4, &nNewSize, sizeof(size_t));
 
 #if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
