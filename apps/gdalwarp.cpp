@@ -547,6 +547,15 @@ int main( int argc, char ** argv )
 
     if( pszDstFilename == NULL )
         Usage();
+        
+    if( bVRT && CSLCount(papszSrcFiles) > 1 )
+    {
+        fprintf(stderr, "Warning: gdalwarp -of VRT just takes into account "
+                        "the first source dataset.\nIf all source datasets "
+                        "are in the same projection, try making a mosaic of\n"
+                        "them with gdalbuildvrt, and use the resulting "
+                        "VRT file as the input of\ngdalwarp -of VRT.\n");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Does the output dataset already exist?                          */
