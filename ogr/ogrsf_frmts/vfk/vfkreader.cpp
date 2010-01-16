@@ -143,6 +143,7 @@ int VFKReader::LoadData()
     
     if (VSIFRead(m_pszWholeText, nLength, 1, fp) != 1) {
         VSIFree(m_pszWholeText);
+        m_pszWholeText = NULL;
         VSIFClose(fp);
         CPLError(CE_Failure, CPLE_AppDefined, 
 		 "Read failed on %s.", m_pszFilename);
@@ -156,7 +157,7 @@ int VFKReader::LoadData()
     /* split lines */
     /* TODO: reduce chars */
     for (char *poChar = m_pszWholeText; *poChar != '\0'; poChar++) {
-	if (*poChar == '\244') { 
+	if (*poChar == '\244' && *(poChar+1) != '\0' && *(poChar+2) != '\0') { 
 	    *(poChar++) = ' '; // \r
 	    *(poChar++) = ' '; // \n
 	    *poChar = ' ';
@@ -168,14 +169,18 @@ int VFKReader::LoadData()
     return TRUE;
 }
 
-static const char *GetDataBlockName(const char *pszLine)
+static char *GetDataBlockName(const char *pszLine)
 {
     int         n;
     const char *pszLineChar;
     char       *pszBlockName;
 
-    for (pszLineChar = pszLine + 2, n = 0; *pszLineChar != ';'; pszLineChar++, n++)
+    for (pszLineChar = pszLine + 2, n = 0; *pszLineChar != '\0' && *pszLineChar != ';'; pszLineChar++, n++)
 	;
+
+    if (*pszLineChar == '\0')
+        return NULL;
+
     pszBlockName = (char *) CPLMalloc(n+1);
     strncpy(pszBlockName, pszLine + 2, n);
     pszBlockName[n] = '\0';
@@ -200,6 +205,9 @@ int VFKReader::LoadDataBlocks()
     
     VFKDataBlock *poNewDataBlock;
 
+    if (m_pszWholeText == NULL)
+        return FALSE;
+
     poNewDataBlock = NULL;
     pszBlockName = NULL;
     nRow = 0;
@@ -207,12 +215,15 @@ int VFKReader::LoadDataBlocks()
     /* read lines */
     pszChar = m_pszWholeText;
     pszLine = m_pszWholeText;
-    while (pszLine) {
+    while (*pszChar != '\0') {
 	if (*pszChar == '\r' && *(pszChar+1) == '\n') {
 	    nRow++;
 	    if (*pszLine == '&' && *(pszLine+1) == 'B') {
 		/* add data block */
-		pszBlockName = (char *) GetDataBlockName(pszLine);
+		pszBlockName = GetDataBlockName(pszLine);
+                if (pszBlockName == NULL)
+                    break;
+
 		poNewDataBlock = new VFKDataBlock(pszBlockName, this);
 		CPLFree(pszBlockName);
 		pszBlockName = NULL;
@@ -222,7 +233,10 @@ int VFKReader::LoadDataBlocks()
 	    }
 	    else if (*pszLine == '&' && *(pszLine+1) == 'D') {
 		/* data row */
-		pszBlockName = (char*) GetDataBlockName(pszLine);
+		pszBlockName = GetDataBlockName(pszLine);
+                if (pszBlockName == NULL)
+                    break;
+
 		poNewDataBlock = GetDataBlock(pszBlockName);
 		if (poNewDataBlock == NULL) {
 		    if (!EQUAL(pszBlockName, "KATUZE")) {
@@ -231,11 +245,11 @@ int VFKReader::LoadDataBlocks()
 				 "Data block '%s' not found.\n", pszBlockName);
 		    }
 		}
-		else {
+		else 
 		    poNewDataBlock->AddFeature(pszLine);
-		    CPLFree(pszBlockName);
-		    pszBlockName = NULL;
-		}
+
+		CPLFree(pszBlockName);
+		pszBlockName = NULL;
 	    }
 	    else if (*pszLine == '&' && *(pszLine+1) == 'H') {
 		/* header - metadata */
@@ -250,9 +264,6 @@ int VFKReader::LoadDataBlocks()
 	}
 	pszChar++;
     }
-
-    if (pszBlockName)
-	CPLFree(pszBlockName);
 
     return TRUE;
 }
@@ -344,18 +355,30 @@ void VFKReader::AddInfo(const char *pszLine)
     
     poChar = poKey = pszLine + 2; /* &H */
     iKeyLength = 0;
-    while (*(poChar++) != ';')
+    while (*poChar != '\0' && *poChar != ';')
+    {
 	iKeyLength++;
+        poChar ++;
+    }
+    if( *poChar == '\0' )
+        return;
+
     pszKey = (char *) CPLMalloc(iKeyLength + 1);
     strncpy(pszKey, poKey, iKeyLength);
     pszKey[iKeyLength] = '\0';
 
     poValue = poChar;
     iValueLength = 0;
-    while(*poChar != '\r' && *(poChar+1) != '\n') {
+    while(*poChar != '\0' && !(*poChar == '\r' && *(poChar+1) == '\n')) {
 	iValueLength++;
 	poChar++;
     }
+    if( *poChar == '\0' )
+    {
+        CPLFree(pszKey);
+        return;
+    }
+
     pszValue = (char *) CPLMalloc(iValueLength + 1);
     strncpy(pszValue, poValue, iValueLength);
     pszValue[iValueLength] = '\0';

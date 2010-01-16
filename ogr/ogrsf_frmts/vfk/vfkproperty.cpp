@@ -39,7 +39,7 @@
   \brief Set VFK property (null)
 */
 VFKProperty::VFKProperty()
-    : m_bIsNull(TRUE)
+    : m_bIsNull(TRUE), m_nValue(0), m_dValue(0.0)
 {
 }
 
@@ -47,7 +47,7 @@ VFKProperty::VFKProperty()
   \brief Set VFK property (integer)
 */
 VFKProperty::VFKProperty(int iValue) 
-    : m_bIsNull(FALSE), m_nValue(iValue)
+    : m_bIsNull(FALSE), m_nValue(iValue), m_dValue(0.0)
 {
 }
 
@@ -55,7 +55,7 @@ VFKProperty::VFKProperty(int iValue)
   \brief Set VFK property (double)
 */
 VFKProperty::VFKProperty(double dValue)
-    : m_bIsNull(FALSE), m_dValue(dValue)
+    : m_bIsNull(FALSE), m_nValue(0), m_dValue(dValue)
 {
 }
 
@@ -63,7 +63,7 @@ VFKProperty::VFKProperty(double dValue)
   \brief Set VFK property (string)
 */
 VFKProperty::VFKProperty(const char *pszValue)
-    : m_bIsNull(FALSE), m_strValue(0 != pszValue ? pszValue : "")
+    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(0 != pszValue ? pszValue : "")
 {
 }
 
@@ -71,7 +71,7 @@ VFKProperty::VFKProperty(const char *pszValue)
   \brief Set VFK property (string)
 */
 VFKProperty::VFKProperty(std::string const& strValue)
-    : m_bIsNull(FALSE), m_strValue(strValue)
+    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(strValue)
 {
 }
 
