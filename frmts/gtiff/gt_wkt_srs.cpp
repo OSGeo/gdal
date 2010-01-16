@@ -667,6 +667,22 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             strcpy( citation, "unknown" );
 
 /* -------------------------------------------------------------------- */
+/*      The original geotiff specification appears to have              */
+/*      misconstrued the EPSG codes 5101 to 5106 to be vertical         */
+/*      coordinate system codes, when in fact they are vertical         */
+/*      datum codes.  So if these are found in the                      */
+/*      VerticalCSTypeGeoKey move them to the VerticalDatumGeoKey       */
+/*      and insert the "normal" corresponding VerticalCSTypeGeoKey      */
+/*      value.                                                          */
+/* -------------------------------------------------------------------- */
+        if( (verticalCSType >= 5101 && verticalCSType <= 5112)
+            && verticalDatum == -1 )
+        {
+            verticalDatum = verticalCSType;
+            verticalCSType = verticalDatum + 600;
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Promote to being a compound coordinate system.                  */
 /* -------------------------------------------------------------------- */
         OGR_SRSNode *poOldRoot = oSRS.GetRoot()->Clone();
