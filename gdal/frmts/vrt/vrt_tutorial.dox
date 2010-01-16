@@ -125,10 +125,14 @@ nodata value associated with, of the value given as data in the element.
 \endcode
 </li>
 
-<li> <b>HideNoDataValue</b>: If this value is 1, the nodata value to be not be
-reported. This is useful when you want to specify a fixed background value for
-the dataset. The background will be the value specified by the NoDataValue
-element. Default value is 0.
+<li> <b>HideNoDataValue</b>: If this value is 1, the nodata value will not be
+reported.  Essentially, the caller will not be aware of a nodata pixel when it
+reads one.  Any datasets copied/translated from this will not have a nodata
+value.  This is useful when you want to specify a fixed background value for
+the dataset.  The background will be the value specified by the NoDataValue
+element.
+
+Default value is 0 when this element is absent.
 
 \code
   <HideNoDataValue>1</HideNoDataValue>
@@ -470,6 +474,14 @@ format.
   GDALClose((GDALDatasetH) poTiffDS);
 \endcode
 
+In the above example the nodata value is set as -999. You can set the
+HideNoDataValue element in the VRT dataset's band using SetMetadataItem() on
+that band.
+
+\code
+  poVRTDS->GetRasterBand( 1 )->SetMetadataItem( "HideNoDataValue" , "1" );
+\endcode
+
 In this example a virtual dataset is created with the Create() method, and 
 adding bands and sources programmatically, but still via the "generic" API. 
 A special attribute of VRT datasets is that sources can be added to the VRTRasterBand
@@ -492,7 +504,7 @@ instead of using the simple source.
 
   // Create the virtual dataset. 
   poVRTDS = poDriver->Create( "", 512, 512, 1, GDT_Byte, NULL );
-  poVRTDS->GetRasterBand(1)->SetMetadataItem("source_0",pszFilterSourceXML",
+  poVRTDS->GetRasterBand(1)->SetMetadataItem("source_0",pszFilterSourceXML,
                                              "new_vrt_sources");
 \endcode
 
