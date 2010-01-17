@@ -456,6 +456,12 @@ OGRGeoJSONLayer* OGRGeoJSONDataSource::LoadLayer()
         return NULL;
     }
 
+    if ( !GeoJSONIsObject( pszGeoData_) )
+    {
+        CPLDebug( "GeoJSON", "No valid GeoJSON data found in source '%s'", pszName_ );
+        return NULL;
+    }
+
     OGRErr err = OGRERR_NONE;
     OGRGeoJSONLayer* poLayer = NULL;    
     
@@ -488,4 +494,3 @@ OGRGeoJSONLayer* OGRGeoJSONDataSource::LoadLayer()
 
     return poLayer;
 }
-
