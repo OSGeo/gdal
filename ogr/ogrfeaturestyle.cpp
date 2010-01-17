@@ -2376,7 +2376,7 @@ void OGR_ST_SetParamNum( OGRStyleToolH hST, int eParam, int nValue )
  *
  */
 
-void OGR_ST_SetParamDbl( OGRStyleToolH hST, int eParam, int dfValue )
+void OGR_ST_SetParamDbl( OGRStyleToolH hST, int eParam, double dfValue )
 {
     VALIDATE_POINTER0( hST, "OGR_ST_SetParamDbl" );
 
