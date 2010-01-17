@@ -164,6 +164,22 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( psCEOS == NULL )
         return( NULL );
 
+    if( psCEOS->nBitsPerPixel != 8 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The CEOS driver cannot handle nBitsPerPixel = %d",
+                  psCEOS->nBitsPerPixel );
+        CEOSClose(psCEOS);
+        return NULL;
+    }
+
+    if( !GDALCheckDatasetDimensions(psCEOS->nPixels, psCEOS->nBands) ||
+        !GDALCheckBandCount(psCEOS->nBands, FALSE) )
+    {
+        CEOSClose( psCEOS );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
