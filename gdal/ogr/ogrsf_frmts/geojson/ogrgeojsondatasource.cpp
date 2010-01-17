@@ -60,7 +60,7 @@ OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
     {
         if ( fpOut_ != stdout )
         {
-            VSIFClose( fpOut_ );
+            VSIFCloseL( fpOut_ );
             fpOut_ = NULL;
         }
     }
@@ -212,7 +212,7 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
 
     if( NULL != fpOut_ )
     {
-        VSIFPrintf( fpOut_, "{\n\"type\": \"FeatureCollection\",\n\"features\": [\n" );
+        VSIFPrintfL( fpOut_, "{\n\"type\": \"FeatureCollection\",\n\"features\": [\n" );
     }
 
     return poLayer;
@@ -255,7 +255,7 @@ int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
     if( EQUAL( pszName, "stdout" ) )
         fpOut_ = stdout;
     else
-        fpOut_ = VSIFOpen( pszName, "w" );
+        fpOut_ = VSIFOpenL( pszName, "w" );
 
     if( NULL == fpOut_)
     {
@@ -313,7 +313,7 @@ void OGRGeoJSONDataSource::Clear()
 
     if( NULL != fpOut_ && stdout != fpOut_ )
     {
-        VSIFClose( fpOut_ );
+        VSIFCloseL( fpOut_ );
     }
     fpOut_ = NULL;
 }
@@ -333,29 +333,31 @@ int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource )
     }
 
     FILE* fp = NULL;
-
-    fp = VSIFOpen( pszSource, "rb" );
+    fp = VSIFOpenL( pszSource, "rb" );
     if( NULL == fp )
+    {
+        CPLDebug( "GeoJSON", "Failed to open input file '%s'", pszSource );
         return FALSE;
+    }
 
     size_t nDataLen = 0;
 
-    VSIFSeek( fp, 0, SEEK_END );
-    nDataLen = VSIFTell( fp );
-    VSIFSeek( fp, 0, SEEK_SET );
+    VSIFSeekL( fp, 0, SEEK_END );
+    nDataLen = VSIFTellL( fp );
+    VSIFSeekL( fp, 0, SEEK_SET );
 
     pszGeoData_ = (char*)CPLMalloc(nDataLen + 1);
     if( NULL == pszGeoData_ )
         return FALSE;
 
     pszGeoData_[nDataLen] = '\0';
-    if( ( nDataLen != VSIFRead( pszGeoData_, 1, nDataLen, fp ) ) )
+    if( ( nDataLen != VSIFReadL( pszGeoData_, 1, nDataLen, fp ) ) )
     {
         Clear();
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return FALSE;
     }
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     pszName_ = CPLStrdup( pszSource );
 
