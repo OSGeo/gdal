@@ -133,6 +133,7 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
                   "Out of memory allocated %d bytes for CEOS record data.\n"
                   "Are you sure you aren't leaking CEOSRecords?\n",
                   psRecord->nLength );
+        CPLFree( psRecord );
         return NULL;
     }
 
@@ -225,7 +226,10 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     psRecord = CEOSReadRecord( psImage );
     if( psRecord == NULL )
+    {
+        CEOSClose( psImage );
         return NULL;
+    }
 
     if( psRecord->nRecordType != CRT_IMAGE_FDR )
     {
@@ -235,6 +239,7 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
                   psRecord->nRecordType, pszFilename );
 
         CEOSDestroyRecord( psRecord );
+        CEOSClose( psImage );
         return NULL;
     }
 
@@ -265,12 +270,29 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
     psImage->nPrefixBytes = CEOSScanInt( psRecord->pachData+276, 4 );
     psImage->nSuffixBytes = CEOSScanInt( psRecord->pachData+288, 4 );
 
+
+    if( psImage->nImageRecLength <= 0 ||
+        psImage->nPrefixBytes < 0 ||
+        psImage->nBands > INT_MAX / psImage->nImageRecLength ||
+        psImage->nBands > INT_MAX / sizeof(int))
+    {
+        CEOSDestroyRecord( psRecord );
+        CEOSClose( psImage );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try to establish the layout of the imagery data.                */
 /* -------------------------------------------------------------------- */
     psImage->nLineOffset = psImage->nBands * psImage->nImageRecLength;
-    
-    psImage->panDataStart = (int *) CPLMalloc(sizeof(int) * psImage->nBands);
+
+    psImage->panDataStart = (int *) VSIMalloc(sizeof(int) * psImage->nBands);
+    if( psImage->panDataStart == NULL )
+    {
+        CEOSDestroyRecord( psRecord );
+        CEOSClose( psImage );
+        return NULL;
+    }
 
     for( i = 0; i < psImage->nBands; i++ )
     {
