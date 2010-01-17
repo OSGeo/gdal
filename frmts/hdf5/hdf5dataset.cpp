@@ -106,7 +106,7 @@ HDF5Dataset::~HDF5Dataset()
 	CPLFree( poH5RootGroup->pszPath );
 	CPLFree( poH5RootGroup->pszUnderscorePath );
 	CPLFree( poH5RootGroup->poHchild );
-	delete poH5RootGroup;
+	CPLFree( poH5RootGroup );
     }
 }
 
@@ -312,26 +312,23 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 /* -------------------------------------------------------------------- */
 /*      Erase some data                                                 */
 /* -------------------------------------------------------------------- */
-    if( poH5Object->paDims != NULL ) {
-	CPLFree( poH5Object->paDims );
-    }
+    CPLFree( poH5Object->paDims );
+    poH5Object->paDims = NULL; 
 
-    if( poH5Object->pszPath != NULL ) {
-    	CPLFree( poH5Object->pszPath );
-    }
+    CPLFree( poH5Object->pszPath );
+    poH5Object->pszPath = NULL;
 
-    if( poH5Object->pszName != NULL ) {
-	CPLFree( poH5Object->pszName );
-    }
+    CPLFree( poH5Object->pszName );
+    poH5Object->pszName = NULL;
 
-    if( poH5Object->pszUnderscorePath != NULL ) {
-	CPLFree( poH5Object->pszUnderscorePath );
-    }
+    CPLFree( poH5Object->pszUnderscorePath );
+    poH5Object->pszUnderscorePath = NULL;
 /* -------------------------------------------------------------------- */
 /*      All Children are visited and can be deleted.                    */
 /* -------------------------------------------------------------------- */
     if( ( i==poH5Object->nbObjs ) && ( poH5Object->nbObjs!=0 ) ) {
 	CPLFree( poH5Object->poHchild );
+        poH5Object->poHchild = NULL;
     }
 
 }
@@ -731,7 +728,7 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
     poH5CurrentObject = poH5Object;
     nbAttrs = poH5Object->nbAttrs;
 
-    if( EQUAL(poH5Object->pszPath, "" ) )
+    if( poH5Object->pszPath == NULL || EQUAL(poH5Object->pszPath, "" ) )
 	return CE_None;
 
     switch( nType ) {
@@ -927,13 +924,14 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     
     HDF5GroupObjects *poRootGroup;
     
-    poRootGroup = new HDF5GroupObjects;
+    poRootGroup = (HDF5GroupObjects*) CPLCalloc(sizeof(HDF5GroupObjects), 1);
     
     poH5RootGroup=poRootGroup;
     poRootGroup->pszName   = CPLStrdup( "/" );
     poRootGroup->nType     = H5G_GROUP;
     poRootGroup->poHparent = NULL;
     poRootGroup->pszPath = NULL;
+    poRootGroup->pszUnderscorePath = NULL;
 
     if( hHDF5 < 0 )  {
 	printf( "hHDF5 <0!!\n" );
