@@ -178,6 +178,17 @@ def jpeg2000_8():
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
     
+    # This test will cause a crash with an unpatched version of Jasper, such as the one of Ubuntu 8.04 LTS
+    # --> "jpc_dec.c:1072: jpc_dec_tiledecode: Assertion `dec->numcomps == 3' failed."
+    # Recent Debian/Ubuntu have the appropriate patch.
+    # So we try to run in a subprocess first
+    import test_cli_utilities
+    if test_cli_utilities.get_gdalinfo_path() is not None:
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --config GDAL_SKIP "JP2ECW JP2MRSID JP2KAK" data/3_13bit_and_1bit.jp2')
+        if ret.find('Band 1') == -1:
+            gdaltest.post_reason('Jasper library would need patches')
+            return 'fail'
+    
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
     
     expected_checksums = [ 64570, 57277, 56048, 61292]
