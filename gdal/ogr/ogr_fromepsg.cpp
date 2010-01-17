@@ -1629,6 +1629,12 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 /*                         OSRImportFromEPSG()                          */
 /************************************************************************/
 
+/**
+ * \brief  Initialize SRS based on EPSG GCS or PCS code.
+ *
+ * This function is the same as OGRSpatialReference::importFromEPSG().
+ */
+
 OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 
 {
@@ -1767,6 +1773,12 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 /************************************************************************/
 /*                         OSRImportFromEPSGA()                         */
 /************************************************************************/
+
+/**
+ * \brief  Initialize SRS based on EPSG GCS or PCS code.
+ *
+ * This function is the same as OGRSpatialReference::importFromEPSGA().
+ */
 
 OGRErr CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH hSRS, int nCode )
 
