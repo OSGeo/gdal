@@ -335,7 +335,17 @@ void *VSICalloc( size_t nCount, size_t nSize )
 
 {
 #ifdef DEBUG_VSIMALLOC
+    size_t nMul = nCount * nSize;
+    if (nCount != 0 && nMul / nCount != nSize)
+    {
+        fprintf(stderr, "Overflow in VSICalloc(%d, %d)\n",
+                (int)nCount, (int)nSize);
+        return NULL;
+    }
     void* ptr = VSIMalloc(nCount * nSize);
+    if (ptr == NULL)
+        return NULL;
+
     memset(ptr, 0, nCount * nSize);
 #ifdef DEBUG_VSIMALLOC_STATS
     {
