@@ -149,12 +149,21 @@ def verify_geojson_copy(name, fids, names):
     return True
 
 
-def copy_shape_to_geojson(gjname):
+def copy_shape_to_geojson(gjname, compress = None):
 
     if gdaltest.geojson_drv is None:
         return False
 
-    dst_name = os.path.join('tmp', gjname + '.geojson')
+    if compress is not None:
+        if compress[0:5] == '/vsig':
+            dst_name = os.path.join('/vsigzip/', 'tmp', gjname + '.geojson' + '.gz')
+        elif compress[0:4] == '/vsiz':
+            dst_name = os.path.join('/vsizip/', 'tmp', gjname + '.geojson' + '.zip')
+        else:
+            return False
+    else:
+        dst_name = os.path.join('tmp', gjname + '.geojson')
+
     ds = gdaltest.geojson_drv.CreateDataSource(dst_name)
     if ds is None:
         return False
@@ -485,9 +494,41 @@ def ogr_geojson_9():
 
     return 'success'
 
-###############################################################################
+##############################################################################
+# Test translation of data/gjpoint.shp to GZip compressed GeoJSON file
 
 def ogr_geojson_10():
+    
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    gdaltest.tests = [ 
+        ['gjpoint', [ 1 ], [ 'Point 1' ] ],
+        ['gjline',  [ 1 ], [ 'Line 1' ] ],
+        ['gjpoly',  [ 1 ], [ 'Polygon 1' ] ],
+        ['gjmultipoint', [ 1 ], [ 'MultiPoint 1' ] ],
+        ['gjmultiline', [ 2 ], [ 'MultiLine 1' ] ],
+        ['gjmultipoly', [ 2 ], [ 'MultiPoly 1' ] ]
+    ]
+
+    for i in range(len(gdaltest.tests)):
+        test = gdaltest.tests[i]
+
+        rc = copy_shape_to_geojson(test[0], '/vsigzip/')
+        if rc is False:
+            gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+            return 'fail'
+
+        rc = verify_geojson_copy(test[0], test[1], test[2])
+        if rc is False:
+            gdaltest.post_reason('Verification of copy of ' + test[0] + '.shp failed')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geojson_11():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -538,15 +579,25 @@ def ogr_geojson_10():
     ds.Destroy()
 
     return 'success'
-    
+
+###############################################################################
+
 def ogr_geojson_cleanup():
 
     try:
         if gdaltest.tests is not None:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             for i in range(len(gdaltest.tests)):
+
                 fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson')
                 ogr.GetDriverByName('GeoJSON').DeleteDataSource( fname )
+
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz')
+                gdal.Unlink(fname)
+
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz.properties')
+                gdal.Unlink(fname)
+
             gdal.PopErrorHandler()
 
         gdaltest.tests = None
@@ -566,6 +617,7 @@ gdaltest_list = [
     ogr_geojson_8,
     ogr_geojson_9,
     ogr_geojson_10,
+    ogr_geojson_11,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
