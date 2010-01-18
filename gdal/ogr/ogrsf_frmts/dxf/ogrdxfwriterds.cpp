@@ -60,28 +60,32 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 /* -------------------------------------------------------------------- */
 /*      Write trailer.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fpSrc = VSIFOpenL( osTrailerFile, "r" );
-    if( fpSrc == NULL )
+    if( osTrailerFile != "" )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open template trailer file '%s' for reading.", 
-                  osTrailerFile.c_str() );
-    }
+        FILE *fpSrc = VSIFOpenL( osTrailerFile, "r" );
+        
+        if( fpSrc == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to open template trailer file '%s' for reading.", 
+                      osTrailerFile.c_str() );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Copy into our DXF file.                                         */
 /* -------------------------------------------------------------------- */
-    else
-    {
-        const char *pszLine;
-        
-        while( (pszLine = CPLReadLineL(fpSrc)) != NULL )
+        else
         {
-            VSIFWriteL( pszLine, 1, strlen(pszLine), fp );
-            VSIFWriteL( "\n", 1, 1, fp );
+            const char *pszLine;
+            
+            while( (pszLine = CPLReadLineL(fpSrc)) != NULL )
+            {
+                VSIFWriteL( pszLine, 1, strlen(pszLine), fp );
+                VSIFWriteL( "\n", 1, 1, fp );
+            }
+            
+            VSIFCloseL( fpSrc );
         }
-        
-        VSIFCloseL( fpSrc );
     }
         
 /* -------------------------------------------------------------------- */
@@ -142,6 +146,25 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
+/*      Open the standard header, or a user provided header.            */
+/* -------------------------------------------------------------------- */
+    CPLString osHeaderFile;
+
+    if( CSLFetchNameValue(papszOptions,"HEADER") != NULL )
+        osHeaderFile = CSLFetchNameValue(papszOptions,"HEADER");
+    else
+    {
+        const char *pszValue = CPLFindFile( "gdal", "header.dxf" );
+        if( pszValue == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to find template header file header.dxf for reading,\nis GDAL_DATA set properly?" );
+            return FALSE;
+        }
+        osHeaderFile = pszValue;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     fp = VSIFOpenL( pszFilename, "w" );
@@ -155,19 +178,8 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open the standard header, or a user provided header.            */
+/*      Open the template file.                                         */
 /* -------------------------------------------------------------------- */
-    CPLString osHeaderFile;
-
-    if( CSLFetchNameValue(papszOptions,"HEADER") != NULL )
-        osHeaderFile = CSLFetchNameValue(papszOptions,"HEADER");
-    else
-    {
-        const char *pszValue = CPLFindFile( "gdal", "header.dxf" );
-        if( pszValue != NULL )
-            osHeaderFile = pszValue;
-    }
-
     FILE *fpSrc = VSIFOpenL( osHeaderFile, "r" );
     if( fpSrc == NULL )
     {
