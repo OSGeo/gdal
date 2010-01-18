@@ -20369,8 +20369,9 @@ fi
 
   if test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf ; then
     EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
+  elif test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf-3 ; then
+    EXTRA_INCLUDES="-I/usr/include/netcdf-3 $EXTRA_INCLUDES"
   fi
-
 else
 
   NETCDF_SETTING=yes

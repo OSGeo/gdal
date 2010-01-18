@@ -616,8 +616,10 @@ elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
 dnl Fedora has netcdf headers in /usr/include/netcdf
   if test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf ; then
     EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
+dnl RHEL 5 has netcdf headers in /usr/include/netcdf-3
+  elif test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf-3 ; then
+    EXTRA_INCLUDES="-I/usr/include/netcdf-3 $EXTRA_INCLUDES"
   fi
-
 else
 
   NETCDF_SETTING=yes
