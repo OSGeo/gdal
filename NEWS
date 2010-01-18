@@ -1,4 +1,4 @@
-= GDAL/OGR 1.7.0 (*** This is preliminary news established from r15874 (GDAL 1.6.0) to r18510 (10 jan 2010) *** = 
+= GDAL/OGR 1.7.0 =
 
 (Some of the bugfixes mentionned below might also have gone into 1.6.X maintenance releases.)
 
@@ -23,6 +23,7 @@ Build (All) :
  * Add Expat read support for GML driver when Xerces is unavailable (#2999)
  * Fix GML and ILI reading problems with Xerces 3.x (#3156)
  * Add 8/12bit JPEG-in-TIFF support
+ * Fix trunk compilation against libdap 3.9.X (#3105)
  
 Build (Windows) :
  * Check for CURL_LIB instead of CURL_DIR
@@ -137,6 +138,7 @@ Utilities :
  * gdalbuildvrt:
     - Add -separate, -allow_projection_difference, -te, -tr, -q, -addalpha options
     - Add -srcnodata and -vrtnodata options (#3254)
+    - Add -hidenodata option (#3327)
     - Avoid accidental overwriting of a non VRT dataset due to revered filename order
     - Fix -resolution lowest/highest (#3198)
  * gdaladdo: add -clean option (#2915)
@@ -219,6 +221,7 @@ EHDR driver:
 ENVI driver:
  * Move RPC info into the RPC domain (#3063)
  * Converted to using VSI Large File API (#3274)
+ * re-enabled complex support (#3174)
 
 EPSILON driver:
  * New for GDAL/OGR 1.7.0
@@ -534,6 +537,7 @@ OGRSpatialReference :
  * Improve recognition of WKT text strings when translating into proj4 hard-coded datum names, in particular nzgd49
    (also add ggrs87, carthage, hermannskogel, ire65); Fix ellipsoid parameters for modified airy (#3104)
  * OSRGetEllipsoidInfo() available for various OGR SRS modules
+ * added support for OGC:CRS84 and similar srses from wms/wcs spec in SetFromUserInput (#3090)
  
 BNA driver :
  * Fix output of BNA driver with polygons with inner ring (#2985)
@@ -549,8 +553,12 @@ DXF driver :
  * New for GDAL/OGR 1.7.0
  
 Geoconcept driver:
-  * Fix 'private Class and SubClass headers are inverted' (#2919)
-  * Fix error in writing 2.5D/3D export file (#2921)
+ * Fix 'private Class and SubClass headers are inverted' (#2919)
+ * Fix error in writing 2.5D/3D export file (#2921)
+
+GeoJSON driver:
+ * updated JSON-C library to version 0.9
+ * use VSIF*L API
 
 GML driver :
  * Speed-up considerably parsing of GML coordinates in big geometries, in particular on Windows
@@ -579,6 +587,9 @@ ILI driver :
  * Improved curve segmentation algorithm
  * ILI1: Support for multiple point geomtries
  * ILI1: Support Real and Integer column types
+
+Ingres driver:
+ * Utilize the new OGC based ingres capabilities (#3159)
 
 KML driver:
  * Support reading MultiGeometry and layers with mixed geometry type.
@@ -671,6 +682,7 @@ XPlane/Flightgear driver:
  * Support new file names used by XPlane 9.00 & later
  * Cut into 2 pieces airway segments that cross the antemeridian
  * Add new layer 'Stopway' that contains the shape of the stopway/blastpad/over-run of a runway 
+ * Recognize code 16 and 17 for seaplane bases and heliports and add a new field to APT layer
 
 == SWIG Language Bindings ==
 
