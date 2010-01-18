@@ -6,6 +6,7 @@
 #  Purpose:  Script to merge greyscale as intensity into an RGB image, for
 #            instance to apply hillshading to a dem colour relief.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
+#            Trent Hare (USGS)
 # 
 #******************************************************************************
 #  Copyright (c) 2009, Frank Warmerdam
@@ -30,21 +31,22 @@
 #******************************************************************************
 
 from osgeo import gdal, gdal_array
+from osgeo.gdalconst import *
 import numpy
 import sys
 
 # =============================================================================
-# hsv_to_rgb()
+# rgb_to_hsv()
 #									
 # rgb comes in as [r,g,b] with values in the range [0,255].  The returned
 # hsv values will be with hue and saturation in the range [0,1] and value
 # in the range [0,255]
 #
-def rgb_to_hsv( rgb ):
+def rgb_to_hsv( r,g,b ):
 
-    r = rgb[0]
-    g = rgb[1]
-    b = rgb[2]
+    ## r = rgb[0]
+    ## g = rgb[1]
+    ## b = rgb[2]
 
     maxc = numpy.maximum(r,numpy.maximum(g,b))
     minc = numpy.minimum(r,numpy.minimum(g,b))
@@ -55,7 +57,7 @@ def rgb_to_hsv( rgb ):
 
     # compute the difference, but reset zeros to ones to avoid divide by zeros later.
     ones = numpy.ones((r.shape[0],r.shape[1]))
-    maxc_minus_minc = numpy.choose( minc_eq_maxc, (ones, maxc-minc) )
+    maxc_minus_minc = numpy.choose( minc_eq_maxc, (maxc-minc,ones) )
 
     s = (maxc-minc) / numpy.maximum(ones,maxc)
     rc = (maxc-r) / maxc_minus_minc
@@ -88,7 +90,6 @@ def hsv_to_rgb( hsv ):
     h = hsv[0]
     s = hsv[1]
     v = hsv[2]
-    
 
     #if s == 0.0: return v, v, v
     i = (h*6.0).astype(int)
@@ -101,7 +102,7 @@ def hsv_to_rgb( hsv ):
     g = i.choose( t, v, v, q, p, p )
     b = i.choose( p, p, t, v, v, q )
 
-    rgb = numpy.asarray([r,g,b]).astype(numpy.byte)
+    rgb = numpy.asarray([r,g,b]).astype(numpy.uint8)
     
     return rgb
 
@@ -110,7 +111,7 @@ def hsv_to_rgb( hsv ):
 
 def Usage():
     print("""
-hsv_merge.py src_rgb src_greyscale dst_rgb
+hsv_merge.py src_rgb src_greyscale dst_rgb.tif
 """)
     sys.exit(1)
     
@@ -128,29 +129,37 @@ if len(argv) != 4:
 src_rgb_filename = argv[1]
 src_greyscale_filename = argv[2]
 dst_rgb_filename = argv[3]
+format = 'GTiff'
+type = GDT_Byte
 
-print( 'Read Source RGB: %s' % src_rgb_filename )
+hilldataset = gdal.Open( src_greyscale_filename, GA_ReadOnly )
+colordataset = gdal.Open( src_rgb_filename, GA_ReadOnly )
 
-src_rgb_ds = gdal.Open( src_rgb_filename )
-src_rgb = src_rgb_ds.ReadAsArray()
+out_driver = gdal.GetDriverByName(format)
+outdataset = out_driver.Create(dst_rgb_filename, colordataset.RasterXSize, colordataset.RasterYSize, colordataset.RasterCount, type)
 
-if src_rgb.ndim != 3 or src_rgb.shape[0] != 3:
-    print 'Source image does not appear to have three bands as required.'
-    sys.exit(1)
+outdataset.SetProjection(hilldataset.GetProjection())
+outdataset.SetGeoTransform(hilldataset.GetGeoTransform())
+                         
+hillband = hilldataset.GetRasterBand(1)
+rBand = colordataset.GetRasterBand(1)
+gBand = colordataset.GetRasterBand(2)
+bBand = colordataset.GetRasterBand(3)
 
-print( 'Read Source Greyscale: %s' % src_greyscale_filename )
-gs_ds = gdal.Open( src_greyscale_filename )
-src_greyscale = gs_ds.GetRasterBand(1).ReadAsArray()
-gs_ds = None
+#blend by line to help with memory issues
+for i in range(hillband.YSize - 1, -1, -1):
+    rScanline = rBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
+    gScanline = gBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
+    bScanline = bBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
+    hillScanline = hillband.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
 
-print( 'Converting to HSV.' )
-hsv = rgb_to_hsv( src_rgb )
+    hsv = rgb_to_hsv( rScanline, gScanline, bScanline )
+    hsv_adjusted = numpy.asarray( [hsv[0], hsv[1], hillScanline] )
+    dst_rgb = hsv_to_rgb( hsv_adjusted )
 
-print( 'Substitute Greyscale for V.' )
-hsv_adjusted = numpy.asarray( [hsv[0], hsv[1], src_greyscale] )
-
-print( 'Converting back to RGB.' )
-dst_rgb = hsv_to_rgb( hsv_adjusted )
-
-print( 'Saving result: %s' % dst_rgb_filename )
-gdal_array.SaveArray( dst_rgb, dst_rgb_filename, 'GTiff', src_rgb_ds )
+    outband = outdataset.GetRasterBand(1)
+    outband.WriteArray(dst_rgb[0], 0, i)
+    outband = outdataset.GetRasterBand(2)
+    outband.WriteArray(dst_rgb[1], 0, i)
+    outband = outdataset.GetRasterBand(3)
+    outband.WriteArray(dst_rgb[2], 0, i)
