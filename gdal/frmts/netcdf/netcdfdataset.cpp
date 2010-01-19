@@ -1864,6 +1864,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
     int  bProgressive = FALSE;
+    int  iBand;
 
     int  anBandDims[ NC_MAX_DIMS ];
     int  anBandMap[  NC_MAX_DIMS ];
@@ -1876,6 +1877,18 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "NetCDF driver does not support source dataset with zero band.\n");
         return NULL;
+    }
+
+    for( iBand=1; iBand <= nBands; iBand++ )
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand );
+        GDALDataType eDT = poSrcBand->GetRasterDataType();
+        if (eDT == GDT_Unknown || GDALDataTypeIsComplex(eDT))
+        {
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                  "NetCDF driver does not support source dataset with band of complex type.");
+            return NULL;
+        }
     }
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
