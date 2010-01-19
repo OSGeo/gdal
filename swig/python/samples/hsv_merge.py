@@ -32,21 +32,18 @@
 
 from osgeo import gdal, gdal_array
 from osgeo.gdalconst import *
+gdal.TermProgress = gdal.TermProgress_nocb
 import numpy
 import sys
 
 # =============================================================================
 # rgb_to_hsv()
-#									
+#
 # rgb comes in as [r,g,b] with values in the range [0,255].  The returned
 # hsv values will be with hue and saturation in the range [0,1] and value
 # in the range [0,255]
 #
 def rgb_to_hsv( r,g,b ):
-
-    ## r = rgb[0]
-    ## g = rgb[1]
-    ## b = rgb[2]
 
     maxc = numpy.maximum(r,numpy.maximum(g,b))
     minc = numpy.minimum(r,numpy.minimum(g,b))
@@ -81,7 +78,7 @@ def rgb_to_hsv( r,g,b ):
 
 # =============================================================================
 # hsv_to_rgb()
-#									
+#
 # hsv comes in as [h,s,v] with hue and saturation in the range [0,1],
 # but value in the range [0,255].
 
@@ -135,31 +132,56 @@ type = GDT_Byte
 hilldataset = gdal.Open( src_greyscale_filename, GA_ReadOnly )
 colordataset = gdal.Open( src_rgb_filename, GA_ReadOnly )
 
-out_driver = gdal.GetDriverByName(format)
-outdataset = out_driver.Create(dst_rgb_filename, colordataset.RasterXSize, colordataset.RasterYSize, colordataset.RasterCount, type)
+#check for 3 bands in the color file
+if (colordataset.RasterCount != 3):
+    print 'Source image does not appear to have three bands as required.'
+    sys.exit(1)
 
+#define output format, name, size, type and set projection
+out_driver = gdal.GetDriverByName(format)
+outdataset = out_driver.Create(dst_rgb_filename, colordataset.RasterXSize, \
+                   colordataset.RasterYSize, colordataset.RasterCount, type)
 outdataset.SetProjection(hilldataset.GetProjection())
 outdataset.SetGeoTransform(hilldataset.GetGeoTransform())
-                         
-hillband = hilldataset.GetRasterBand(1)
+
+#assign RGB and hillshade bands
 rBand = colordataset.GetRasterBand(1)
 gBand = colordataset.GetRasterBand(2)
 bBand = colordataset.GetRasterBand(3)
+hillband = hilldataset.GetRasterBand(1)
 
-#blend by line to help with memory issues
+#check for same file size
+if ((rBand.YSize != hillband.YSize) or (rBand.XSize != hillband.XSize)):
+    print 'Color and hilshade must be the same size in pixels.'
+    sys.exit(1)
+
+#set progress bar to 0
+#gdal.TermProgress( 0.0 )
+
+#loop over lines to apply hillshade
 for i in range(hillband.YSize - 1, -1, -1):
+    #load RGB and Hillshade arrays
     rScanline = rBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
     gScanline = gBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
     bScanline = bBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
     hillScanline = hillband.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
 
+    #convert to HSV
     hsv = rgb_to_hsv( rScanline, gScanline, bScanline )
+    
+    #replace v with hillshade
     hsv_adjusted = numpy.asarray( [hsv[0], hsv[1], hillScanline] )
+    
+    #convert back to RGB
     dst_rgb = hsv_to_rgb( hsv_adjusted )
 
+    #write out new RGB bands to output one band at a time
     outband = outdataset.GetRasterBand(1)
     outband.WriteArray(dst_rgb[0], 0, i)
     outband = outdataset.GetRasterBand(2)
     outband.WriteArray(dst_rgb[1], 0, i)
     outband = outdataset.GetRasterBand(3)
     outband.WriteArray(dst_rgb[2], 0, i)
+    
+    #update progress line
+    gdal.TermProgress( 1.0 - (float(i) / hillband.YSize) )
