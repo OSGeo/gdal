@@ -108,6 +108,11 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
         header->hdr_rev_minor = GvCurrentMinorRev;
         gt->gt_nshorts=sizeof(KeyHeader)/sizeof(pinfo_t);
     }
+    else
+    {
+        /* resize data array so it can be extended if needed */
+        data = (pinfo_t*) _GTIFrealloc(data,(4+MAX_VALUES)*sizeof(pinfo_t));
+    }
     gt->gt_short = data;
     header = (KeyHeader *)data;
 	
@@ -133,6 +138,12 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     {
         gt->gt_double=(double*)_GTIFcalloc(MAX_VALUES*sizeof(double));
         if (!gt->gt_double) goto failure;	
+    }
+    else
+    {
+        /* resize data array so it can be extended if needed */
+        gt->gt_double = (double*) _GTIFrealloc(gt->gt_double,
+                                               (MAX_VALUES)*sizeof(double));
     }
     if ( tif == NULL
          || !(gt->gt_methods.get)(tif, GTIFF_ASCIIPARAMS,
@@ -252,7 +263,7 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
             if( keyptr->gk_data[MAX(0,count-1)] == '|' )
             {
                 keyptr->gk_data[MAX(0,count-1)] = '\0';
-                keyptr->gk_count = count; 
+                keyptr->gk_count = count;
             }
             else
                 keyptr->gk_data[MAX(0,count)] = '\0';
