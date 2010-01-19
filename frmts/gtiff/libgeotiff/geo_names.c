@@ -81,6 +81,7 @@ char *GTIFValueName(geokey_t key, int value)
 	case ProjLinearUnitsGeoKey: 
 	case GeogAngularUnitsGeoKey: 
 	case GeogAzimuthUnitsGeoKey: 
+        case VerticalUnitsGeoKey:
 		                      info=_geounitsValue; break;
 
    	/* put other key-dependent lists here */
