@@ -77,6 +77,8 @@ class PCIDSK2Dataset : public GDALPamDataset
     CPLErr              SetMetadataItem(const char*,const char*,const char*);
     const char         *GetMetadataItem( const char*, const char*);
 
+    virtual void FlushCache(void);
+
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
 };
@@ -709,6 +711,29 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
 
     CSLDestroy( papszLastMDListValue );
 }
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void PCIDSK2Dataset::FlushCache()
+
+{
+    GDALPamDataset::FlushCache();
+
+    if( poFile )
+    {
+        try {
+            poFile->Synchronize();
+        }
+        catch( PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+        }
+    }
+}
+
 
 /************************************************************************/
 /*                            SetMetadata()                             */
