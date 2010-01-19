@@ -4,10 +4,10 @@
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
  *           and other similar services.
- * Author:   Adam Nowacki, nowak@xpam.de
+ * Author:   Chris Schmidt
  *
  ******************************************************************************
- * Copyright (c) 2007, Adam Nowacki
+ * Copyright (c) 2007, Chris Schmidt
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
