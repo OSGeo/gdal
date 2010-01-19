@@ -430,13 +430,13 @@ int CPLODBCStatement::CollectResultsInfo()
 /* -------------------------------------------------------------------- */
     m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColValueLengths = (_SQLLEN *) CPLCalloc(sizeof(int),(m_nColCount+1));
+    m_panColValueLengths = (_SQLLEN *) CPLCalloc(sizeof(_SQLLEN),(m_nColCount+1));
 
-    m_panColType = (short *) CPLCalloc(sizeof(short),m_nColCount);
+    m_panColType = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
-    m_panColPrecision = (short *) CPLCalloc(sizeof(short),m_nColCount);
-    m_panColNullable = (short *) CPLCalloc(sizeof(short),m_nColCount);
+    m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
+    m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
 
 /* -------------------------------------------------------------------- */
 /*      Fetch column descriptions.                                      */
@@ -1238,11 +1238,11 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
 
-    m_panColType = (short *) CPLCalloc(sizeof(short),m_nColCount);
+    m_panColType = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
-    m_panColPrecision = (short *) CPLCalloc(sizeof(short),m_nColCount);
-    m_panColNullable = (short *) CPLCalloc(sizeof(short),m_nColCount);
+    m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
+    m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
 
 /* -------------------------------------------------------------------- */
 /*      Establish columns to use for key information.                   */
