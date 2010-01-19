@@ -172,22 +172,28 @@ static int WriteKey(GTIF* gt, TempKeyData* tempData,
 
 static int SortKeys(GTIF* gt,int *sortkeys)
 {
-    int loc;
-    int nkeys=0;
-    geokey_t key,kmin,kmax;
-    int *index = gt->gt_keyindex;
-	
-    kmin = (geokey_t) gt->gt_keymin;
-    kmax = (geokey_t) gt->gt_keymax;
-    for (key=kmin; key<=kmax; key++)
-    {
-        if ( (loc=index[key]) != 0 )
+    int i, did_work;
+
+    for( i = 0; i < gt->gt_num_keys; i++ )
+        sortkeys[i] = i+1;
+
+    do {  /* simple bubble sort */
+        did_work = 0;
+        for( i = 0; i < gt->gt_num_keys-1; i++ )
         {
-            sortkeys[nkeys] = loc;
-            nkeys++;
+            if( gt->gt_keys[sortkeys[i]].gk_key 
+                > gt->gt_keys[sortkeys[i+1]].gk_key )
+            {
+                /* swap keys in sort list */
+                int j = sortkeys[i];
+                sortkeys[i] = sortkeys[i+1];
+                sortkeys[i+1] = j;
+                
+                did_work = 1;
+            }
         }
-    }
-	
-    return nkeys==gt->gt_num_keys;
+    } while( did_work );
+
+    return 1;
 }
 
