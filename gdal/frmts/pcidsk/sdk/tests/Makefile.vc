@@ -1,0 +1,46 @@
+
+CXXFLAGS = -I../src /nologo /MD /GR /EHsc /Zi /W3 \
+	-I..\cppunit-1.12.1\include \
+	/D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+
+OBJ =   test_main.obj testpcidskexception.obj testpcidskfile.obj \
+    testprojections.obj testsegments.obj
+
+LIBS =	../src/pcidsk.lib ..\cppunit-1.12.1\src\cppunit\Release\cppunit.lib
+
+default:	lib pcidsk_read.exe pcidsk2pcidsk.exe
+
+lib:
+	cd ..\src
+	$(MAKE) /f makefile.vc 
+	cd ..\tests
+
+test_main.exe:	$(OBJ) ../src/pcidsk.lib
+	cl $(OBJ) $(LIBS)
+
+pcidsk_read.exe:	pcidsk_read.obj ../src/pcidsk.lib
+	cl $(CXXFLAGS) pcidsk_read.obj $(LIBS)
+
+pcidsk2pcidsk.exe:	pcidsk2pcidsk.obj ../src/pcidsk.lib
+	cl $(CXXFLAGS) pcidsk2pcidsk.obj $(LIBS)
+
+mttest.exe:	mttest.obj ../src/pcidsk.lib
+	cl $(CXXFLAGS) mttest.obj $(LIBS)
+
+../src/pcidsk.lib:
+	(cd ../src ; $(MAKE))
+
+check:  test_main.exe
+	./test_main.exe
+
+clean:
+	-del *.obj
+	-del *.exe
+	-del *.lib
+	-del *.pdb
+	-del *.manifest
+	-del *.ilk
+	-del *.exp
+
+.cpp.obj:	
+	$(CC) $(CXXFLAGS) /c $*.cpp
