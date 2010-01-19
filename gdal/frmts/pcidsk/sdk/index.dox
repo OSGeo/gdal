@@ -1,0 +1,32 @@
+/*! \mainpage PCIDSK SDK - Read/Write Library for the PCI PCIDSK (.pix) File Format
+
+The PCIDSK SDK is a C++ Library for reading and writing the PCIDSK (.pix) 
+geospatial file format used as the primary format of the Geomatica 
+and related software from <a href="http://wwww.pcigeomatics.com/">PCI Geomatics</a>.
+The library is available under an <a href="http://www.opensource.org/">Open 
+Source</a> license, and it's development is funded by PCI Geomatics.  The
+primary author of the library is Frank Warmerdam (warmerdam@pobox.com).<p>
+
+As of November 2009 the library is still under development, but preliminary 
+versions are now available.  
+
+\section index_devdocs Developer Oriented Documentation
+
+<ul>
+<li> <a href="namespacePCIDSK.html">PCIDSK Namespace</a>
+<li> <a href="building.html">Building the PCIDSK SDK on Windows and Unix</a>
+<li> <a href="tutorial.html">PCIDSK API Tutorial</a>
+</ul>
+
+\section index_download Download
+
+The current development version of the software is available from 
+the <a href="http://subversion.tigris.org">Subversion</a> source
+repository at:
+
+  http://svn.osgeo.org/gdal/sandbox/warmerdam/pcidsk
+
+Packaged source distributions should be available in the <a href="download">downloads</a>
+area.
+
+*/
