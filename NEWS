@@ -6,7 +6,7 @@
 
 * New GDAL drivers : BAG, EPSILON, Northwood/VerticalMapper, R, Rasterlite,
                      SAGA GIS Binary, SRP (USRP/ASRP), EarthWatch .TIL, WKT Raster
-* GDAL PCIDSK driver using the nw PCIDSK SDK by default
+* GDAL PCIDSK driver using the new PCIDSK SDK by default
 * New OGR drivers : DXF, GeoRSS, GTM, PCIDSK and VFK
 * New utility : gdaldem, gdalbuildvrt now compiled by default
 * Add support for Python 3.X. Compatibility with Python 2.X preserved (#3265)
