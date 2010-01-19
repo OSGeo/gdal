@@ -5328,7 +5328,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     char           *latArr;	/* Latitude data array */
     char            dimlist[256];	/* Dimension list (geolocation
 					 * fields) */
-    char            latName[16];/* Latitude field name */
+    char            latName[17];/* Latitude field name */
     
 
     /* Check for valid swath ID */
@@ -5948,7 +5948,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     char           *latArr;	/* Latitude data array */
     char            dimlist[256];	/* Dimension list (geolocation
 					 * fields) */
-    char            latName[16];/* Latitude field name */
+    char            latName[17];/* Latitude field name */
 
 
     /* Check for valid swath ID */
