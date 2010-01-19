@@ -619,8 +619,11 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             for(iBand = 0; iBand < nBands; iBand ++)
             {
                 char** papszMEMDSOptions = NULL;
-                char szTmp[128];
-                sprintf(szTmp, CPL_FRMT_GUIB, (GUIntBig)(pabyMEMDSBuffer + iBand * nDataTypeSize * nReqXSize * nReqYSize));
+                char szTmp[64];
+                memset(szTmp, 0, sizeof(szTmp));
+                CPLPrintPointer(szTmp,
+                                pabyMEMDSBuffer + iBand * nDataTypeSize *
+                                nReqXSize * nReqYSize, sizeof(szTmp));
                 papszMEMDSOptions = CSLSetNameValue(papszMEMDSOptions, "DATAPOINTER", szTmp);
                 GDALAddBand(hMemDS, eDataType, papszMEMDSOptions);
                 CSLDestroy(papszMEMDSOptions);
