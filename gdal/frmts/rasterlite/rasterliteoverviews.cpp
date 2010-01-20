@@ -433,8 +433,11 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
             for(iBand = 0; iBand < nBands; iBand ++)
             {
                 char** papszOptions = NULL;
-                char szTmp[128];
-                sprintf(szTmp, CPL_FRMT_GUIB, (GUIntBig)(pabyMEMDSBuffer + iBand * nDataTypeSize * nReqXSize * nReqYSize));
+                char szTmp[64];
+                memset(szTmp, 0, sizeof(szTmp));
+                CPLPrintPointer(szTmp,
+                                pabyMEMDSBuffer + iBand * nDataTypeSize *
+                                nReqXSize * nReqYSize, sizeof(szTmp));
                 papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szTmp);
                 GDALAddBand(hMemDS, eDataType, papszOptions);
                 CSLDestroy(papszOptions);
