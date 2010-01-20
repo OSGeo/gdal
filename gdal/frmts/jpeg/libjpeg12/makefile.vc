@@ -23,57 +23,54 @@ jcapimin12.c:	../libjpeg/jcapimin.c
 	xcopy /Y ..\libjpeg\*.h
 	xcopy /Y jmorecfg.h.12 jmorecfg.h
 	xcopy /Y ..\libjpeg\*.c
-	rename jcapimin.c jcapimin12.c
-	rename jcapistd.c jcapistd12.c
-	rename jccoefct.c jccoefct12.c
-	rename jccolor.c jccolor12.c
-	rename jcdctmgr.c jcdctmgr12.c
-	rename jchuff.c jchuff12.c
-	rename jcinit.c jcinit12.c
-	rename jcmainct.c jcmainct12.c
-	rename jcmarker.c jcmarker12.c
-	rename jcmaster.c jcmaster12.c
-	rename jcomapi.c jcomapi12.c
-	rename jcparam.c jcparam12.c
-	rename jcphuff.c jcphuff12.c
-	rename jcprepct.c jcprepct12.c
-	rename jcsample.c jcsample12.c
-	rename jctrans.c jctrans12.c
-	rename jdapimin.c jdapimin12.c
-	rename jdapistd.c jdapistd12.c
-	rename jdatadst.c jdatadst12.c
-	rename jdatasrc.c jdatasrc12.c
-	rename jdcoefct.c jdcoefct12.c
-	rename jdcolor.c jdcolor12.c
-	rename jddctmgr.c jddctmgr12.c
-	rename jdhuff.c jdhuff12.c
-	rename jdinput.c jdinput12.c
-	rename jdmainct.c jdmainct12.c
-	rename jdmarker.c jdmarker12.c
-	rename jdmaster.c jdmaster12.c
-	rename jdmerge.c jdmerge12.c
-	rename jdphuff.c jdphuff12.c
-	rename jdpostct.c jdpostct12.c
-	rename jdsample.c jdsample12.c
-	rename jdtrans.c jdtrans12.c
-	rename jerror.c jerror12.c
-	rename jfdctflt.c jfdctflt12.c
-	rename jfdctfst.c jfdctfst12.c
-	rename jfdctint.c jfdctint12.c
-	rename jidctflt.c jidctflt12.c
-	rename jidctfst.c jidctfst12.c
-	rename jidctint.c jidctint12.c
-	rename jidctred.c jidctred12.c
-	rename jmemansi.c jmemansi12.c
-	rename jmemmgr.c jmemmgr12.c
-	rename jquant1.c jquant112.c
-	rename jquant2.c jquant212.c
-	rename jutils.c jutils12.c
-	
+	ren jcapimin.c jcapimin12.c
+	ren jcapistd.c jcapistd12.c
+	ren jccoefct.c jccoefct12.c
+	ren jccolor.c jccolor12.c
+	ren jcdctmgr.c jcdctmgr12.c
+	ren jchuff.c jchuff12.c
+	ren jcinit.c jcinit12.c
+	ren jcmainct.c jcmainct12.c
+	ren jcmarker.c jcmarker12.c
+	ren jcmaster.c jcmaster12.c
+	ren jcomapi.c jcomapi12.c
+	ren jcparam.c jcparam12.c
+	ren jcphuff.c jcphuff12.c
+	ren jcprepct.c jcprepct12.c
+	ren jcsample.c jcsample12.c
+	ren jctrans.c jctrans12.c
+	ren jdapimin.c jdapimin12.c
+	ren jdapistd.c jdapistd12.c
+	ren jdatadst.c jdatadst12.c
+	ren jdatasrc.c jdatasrc12.c
+	ren jdcoefct.c jdcoefct12.c
+	ren jdcolor.c jdcolor12.c
+	ren jddctmgr.c jddctmgr12.c
+	ren jdhuff.c jdhuff12.c
+	ren jdinput.c jdinput12.c
+	ren jdmainct.c jdmainct12.c
+	ren jdmarker.c jdmarker12.c
+	ren jdmaster.c jdmaster12.c
+	ren jdmerge.c jdmerge12.c
+	ren jdphuff.c jdphuff12.c
+	ren jdpostct.c jdpostct12.c
+	ren jdsample.c jdsample12.c
+	ren jdtrans.c jdtrans12.c
+	ren jerror.c jerror12.c
+	ren jfdctflt.c jfdctflt12.c
+	ren jfdctfst.c jfdctfst12.c
+	ren jfdctint.c jfdctint12.c
+	ren jidctflt.c jidctflt12.c
+	ren jidctfst.c jidctfst12.c
+	ren jidctint.c jidctint12.c
+	ren jidctred.c jidctred12.c
+	ren jmemansi.c jmemansi12.c
+	ren jmemmgr.c jmemmgr12.c
+	ren jquant1.c jquant112.c
+	ren jquant2.c jquant212.c
+	ren jutils.c jutils12.c
 
 clean:
 	-del *.obj
 	-del *.c
 	-del *.h
-
-
