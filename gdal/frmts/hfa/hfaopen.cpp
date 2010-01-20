@@ -901,11 +901,26 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
         return( (Eprj_MapInfo *) hHFA->pMapInfo );
 
 /* -------------------------------------------------------------------- */
-/*      Get the HFA node.                                               */
+/*      Get the HFA node.  If we don't find it under the usual name     */
+/*      we search for any node of the right type (#3338).               */
 /* -------------------------------------------------------------------- */
     poMIEntry = hHFA->papoBand[0]->poNode->GetNamedChild( "Map_Info" );
     if( poMIEntry == NULL )
+    {
+        HFAEntry *poChild;
+        for( poChild = hHFA->papoBand[0]->poNode->GetChild();
+             poChild != NULL && poMIEntry == NULL;
+             poChild = poChild->GetNext() )
+        {
+            if( EQUAL(poChild->GetType(),"Eprj_MapInfo") )
+                poMIEntry = poChild;
+        }
+    }
+
+    if( poMIEntry == NULL )
+    {
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate the structure.                                         */
