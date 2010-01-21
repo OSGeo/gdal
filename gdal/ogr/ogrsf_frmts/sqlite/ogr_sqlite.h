@@ -32,7 +32,14 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
+
+/* When used with Spatialite amalgation, there might be no sqlite3 headers */
+/* in other places than /include/spatialite/ subdir */
+#ifdef HAVE_SPATIALITE
+#include <spatialite/sqlite3.h>
+#else
 #include "sqlite3.h"
+#endif
 
 /************************************************************************/
 /*      Format used to store geometry data in the database.             */
