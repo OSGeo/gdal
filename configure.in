@@ -1984,7 +1984,10 @@ else
         HAVE_SPATIALITE=yes
 
         # SpatiaLite availability implies SQLite availability
-        SQLITE3_CFLAGS="-I$with_spatialite/include -I$with_spatialite/include/spatialite"
+        # Caution : don't include the include/spatialite subdir in the include dir
+        # as there's a spatialite.h file in it, which we don't want to include.
+        # We want to include include/spatialite.h instead !
+        SQLITE3_CFLAGS="-I$with_spatialite/include"
         LIBS="$LIBS -L$with_spatialite/lib -lspatialite"
         HAVE_SQLITE3=yes
     else
