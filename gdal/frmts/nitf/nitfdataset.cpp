@@ -4087,6 +4087,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                     int nBlockXOff, int nBlockYOff,
                     int nBlockXSize, int nBlockYSize,
                     int bProgressive, int nQuality,
+                    const GByte* pabyAPP6,
                     GDALProgressFunc pfnProgress, void * pProgressData );
 
 static int 
@@ -4194,6 +4195,88 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset,
     int nNBPR = (nXSize + nNPPBH - 1) / nNPPBH;
     int nNBPC = (nYSize + nNPPBV - 1) / nNPPBV;
 
+/* -------------------------------------------------------------------- */
+/*  Creates APP6 NITF application segment (required by MIL-STD-188-198) */
+/*  see #3345                                                           */
+/* -------------------------------------------------------------------- */
+    GByte abyAPP6[23];
+    GUInt16 nUInt16;
+    int nOffset = 0;
+
+    memcpy(abyAPP6, "NITF", 4);
+    abyAPP6[4] = 0;
+    nOffset += 5;
+
+    /* Version : 2.0 */
+    nUInt16 = 2;
+    CPL_MSBPTR16(&nUInt16);
+    memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
+    nOffset += sizeof(nUInt16);
+
+    /* IMODE */
+    abyAPP6[nOffset] = (nBands == 1) ? 'B' : 'P';
+    nOffset ++;
+
+    /* Number of image blocks per row */
+    nUInt16 = nNBPR;
+    CPL_MSBPTR16(&nUInt16);
+    memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
+    nOffset += sizeof(nUInt16);
+
+    /* Number of image blocks per column */
+    nUInt16 = nNBPC;
+    CPL_MSBPTR16(&nUInt16);
+    memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
+    nOffset += sizeof(nUInt16);
+
+    /* Image color */
+    abyAPP6[nOffset] = (nBands == 1) ? 0 : 1;
+    nOffset ++;
+
+    /* Original sample precision */
+    abyAPP6[nOffset] = (eDT == GDT_UInt16) ? 12 : 8;
+    nOffset ++;
+
+    /* Image class */
+    abyAPP6[nOffset] = 0;
+    nOffset ++;
+
+    /* JPEG coding process */
+    abyAPP6[nOffset] = (eDT == GDT_UInt16) ? 4 : 1;
+    nOffset ++;
+
+    /* Quality */
+    abyAPP6[nOffset] = 0;
+    nOffset ++;
+
+    /* Stream color */
+    abyAPP6[nOffset] = (nBands == 1) ? 0 /* Monochrome */ : 2 /* YCbCr*/ ;
+    nOffset ++;
+
+    /* Stream bits */
+    abyAPP6[nOffset] = (eDT == GDT_UInt16) ? 12 : 8;
+    nOffset ++;
+
+    /* Horizontal filtering */
+    abyAPP6[nOffset] = 1;
+    nOffset ++;
+
+    /* Vertical filtering */
+    abyAPP6[nOffset] = 1;
+    nOffset ++;
+
+    /* Reserved */
+    abyAPP6[nOffset] = 0;
+    nOffset ++;
+    abyAPP6[nOffset] = 0;
+    nOffset ++;
+
+    CPLAssert(nOffset == sizeof(abyAPP6));
+
+/* -------------------------------------------------------------------- */
+/*      Prepare block map if necessary                                  */
+/* -------------------------------------------------------------------- */
+
     VSIFSeekL( fp, nStartOffset, SEEK_SET );
 
     const char* pszIC = CSLFetchNameValue( papszOptions, "IC" );
@@ -4268,6 +4351,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset,
                                     nBlockXOff, nBlockYOff,
                                     nNPPBH, nNPPBV,
                                     bProgressive, nQuality,
+                                    (nBlockXOff == 0 && nBlockYOff == 0) ? abyAPP6 : NULL,
                                     pfnProgress, pProgressData))
             {
                 return FALSE;
