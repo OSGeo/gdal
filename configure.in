@@ -1399,7 +1399,7 @@ else
     LIBS="-L$with_ecw/lib -lNCSEcw -lNCSCNet -lNCSUtil $LIBS"
     AC_MSG_RESULT([found in $with_ecw/lib.])
   elif test -r $with_ecw/bin/libNCSEcw.so -o -r $with_ecw/bin/libNCSEcw.dylib ; then
-    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSEcw -lNCSCnet $LIBS"
+    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSNet -lNCSUtil $LIBS"
     AC_MSG_RESULT([found in $with_ecw/bin.])
   elif test -r $with_ecw/lib/libecwj2.dylib ; then
     LIBS="-L$with_ecw/lib -lecwj2 $CARBON_FRAMEWORK $LIBS"
