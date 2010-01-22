@@ -59,6 +59,7 @@ NITFWriteJPEGBlock_12( GDALDataset *poSrcDS, FILE *fp,
                      int nBlockXOff, int nBlockYOff,
                      int nBlockXSize, int nBlockYSize,
                      int bProgressive, int nQuality,
+                     const GByte* pabyAPP6,
                      GDALProgressFunc pfnProgress, void * pProgressData );
 #endif
 
@@ -74,6 +75,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                     int nBlockXOff, int nBlockYOff,
                     int nBlockXSize, int nBlockYSize,
                     int bProgressive, int nQuality,
+                    const GByte* pabyAPP6,
                     GDALProgressFunc pfnProgress, void * pProgressData )
 {
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -84,6 +86,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                                      nBlockXOff, nBlockYOff,
                                      nBlockXSize, nBlockYSize,
                                      bProgressive, nQuality,
+                                     pabyAPP6,
                                      pfnProgress, pProgressData );
     }
 #endif
@@ -145,6 +148,15 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
         jpeg_simple_progression( &sCInfo );
 
     jpeg_start_compress( &sCInfo, TRUE );
+
+/* -------------------------------------------------------------------- */
+/*    Emits APP6 NITF application segment (required by MIL-STD-188-198) */
+/* -------------------------------------------------------------------- */
+    if (pabyAPP6)
+    {
+        /* 0xe6 = APP6 marker */
+        jpeg_write_marker( &sCInfo, 0xe6, (const JOCTET*) pabyAPP6, 23);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */

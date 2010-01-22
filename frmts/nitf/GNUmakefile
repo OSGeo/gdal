@@ -31,7 +31,7 @@ OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
 default:	$(PREDEPEND) $(OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ) $(O_OBJ):	../../gcore/gdal_proxy.h nitflib.h
+$(OBJ) $(O_OBJ):	../../gcore/gdal_proxy.h nitflib.h nitfwritejpeg.cpp
 
 clean:
 	rm -f *.o $(O_OBJ) nitfdump$(EXE)
