@@ -46,7 +46,11 @@ def rasterlite_1():
         gdaltest.rasterlite_drv = gdal.GetDriverByName( 'RASTERLITE' )
     except:
         gdaltest.rasterlite_drv = None
-        return 'skip'
+
+    try:
+        gdaltest.epsilon_drv = gdal.GetDriverByName( 'EPSILON' )
+    except:
+        gdaltest.epsilon_drv = None
 
     return 'success'
 
@@ -360,10 +364,11 @@ def rasterlite_8():
 
 def rasterlite_9():
 
-    try:
-        gdaltest.epsilon_drv = gdal.GetDriverByName( 'EPSILON' )
-    except:
-        gdaltest.epsilon_drv = None
+    if gdaltest.rasterlite_drv is None:
+        return 'skip'
+
+    if gdaltest.has_spatialite is False:
+        return 'skip'
 
     if gdaltest.epsilon_drv is None:
         return 'skip'
@@ -376,6 +381,12 @@ def rasterlite_9():
 # Create a rasterlite dataset with EPSILON tiles
 
 def rasterlite_10():
+
+    if gdaltest.rasterlite_drv is None:
+        return 'skip'
+
+    if gdaltest.has_spatialite is False:
+        return 'skip'
 
     if gdaltest.epsilon_drv is None:
         return 'skip'
