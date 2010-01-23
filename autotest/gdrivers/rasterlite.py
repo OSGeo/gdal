@@ -354,6 +354,35 @@ def rasterlite_8():
         return 'fail'
         
     return 'success'
+
+###############################################################################
+# Create a rasterlite dataset with EPSILON tiles
+
+def rasterlite_9():
+
+    try:
+        gdaltest.epsilon_drv = gdal.GetDriverByName( 'EPSILON' )
+    except:
+        gdaltest.epsilon_drv = None
+
+    if gdaltest.epsilon_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'RASTERLITE', 'byte.tif', 1, 4866, options = ['DRIVER=EPSILON'] )
+
+    return tst.testCreateCopy( check_gt = 1, check_srs = 1, check_minmax = 0 )
+
+###############################################################################
+# Create a rasterlite dataset with EPSILON tiles
+
+def rasterlite_10():
+
+    if gdaltest.epsilon_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'RASTERLITE', 'rgbsmall.tif', 1, 23189, options = ['DRIVER=EPSILON'] )
+
+    return tst.testCreateCopy( check_gt = 1, check_srs = 1, check_minmax = 0 )
     
 ###############################################################################
 # Cleanup
@@ -372,7 +401,17 @@ def rasterlite_cleanup():
         os.remove( 'tmp/byte.sqlite' )
     except:
         pass
-        
+
+    try:
+        os.remove( 'tmp/byte.tif.tst' )
+    except:
+        pass
+
+    try:
+        os.remove( 'tmp/rgbsmall.tif.tst' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [
@@ -384,6 +423,8 @@ gdaltest_list = [
     rasterlite_6,
     rasterlite_7,
     rasterlite_8,
+    rasterlite_9,
+    rasterlite_10,
     rasterlite_cleanup ]
 
 if __name__ == '__main__':
