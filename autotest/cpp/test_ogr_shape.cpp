@@ -133,7 +133,9 @@ namespace tut
         OGRFeatureH featDst = OGR_F_Create(featDefn);
         ensure("Can't create empty feature", NULL != featDst);
 
-        std::string source(data_ + "\\poly.shp");
+        std::string source(data_);
+        source += SEP;
+        source += "poly.shp";
         OGRDataSourceH dsSrc = OGR_Dr_Open(drv_, source.c_str(), false);
         ensure("Can't open source layer", NULL != dsSrc);
 
@@ -167,7 +169,9 @@ namespace tut
         const int size = 5; 
         const int expect[size] = { 168, 169, 166, 158, 165 };
 
-        std::string source(data_tmp_ + "\\tpoly.shp");
+        std::string source(data_tmp_);
+        source += SEP;
+        source += "tpoly.shp";
         OGRDataSourceH ds = OGR_Dr_Open(drv_, source.c_str(), false);
         ensure("Can't open layer", NULL != ds);
 
@@ -192,7 +196,9 @@ namespace tut
     void object::test<5>()
     {
         // Original shapefile
-        std::string orig(data_ + "\\poly.shp");
+        std::string orig(data_);
+        orig += SEP;
+        orig += "poly.shp";
         OGRDataSourceH dsOrig = OGR_Dr_Open(drv_, orig.c_str(), false);
         ensure("Can't open layer", NULL != dsOrig);
 
@@ -200,7 +206,9 @@ namespace tut
         ensure("Can't get layer", NULL != lyrOrig);
 
         // Copied shapefile
-        std::string tmp(data_tmp_ + "\\tpoly.shp");
+        std::string tmp(data_tmp_);
+        tmp += SEP;
+        tmp += "tpoly.shp";
         OGRDataSourceH dsTmp = OGR_Dr_Open(drv_, tmp.c_str(), false);
         ensure("Can't open layer", NULL != dsTmp);
 
@@ -238,7 +246,9 @@ namespace tut
     void object::test<6>()
     {
         // Create feature without geometry
-        std::string tmp(data_tmp_ + "\\tpoly.shp");
+        std::string tmp(data_tmp_);
+        tmp += SEP;
+        tmp += "tpoly.shp";
         OGRDataSourceH ds = OGR_Dr_Open(drv_, tmp.c_str(), true);
         ensure("Can't open layer", NULL != ds);
 
@@ -271,7 +281,9 @@ namespace tut
         OGRErr err = OGRERR_NONE;
 
         // Read feature without geometry
-        std::string tmp(data_tmp_ + "\\tpoly.shp");
+        std::string tmp(data_tmp_);
+        tmp += SEP;
+        tmp += "tpoly.shp";
         OGRDataSourceH ds = OGR_Dr_Open(drv_, tmp.c_str(), false);
         ensure("Can't open layer", NULL != ds);
 
@@ -340,12 +352,12 @@ namespace tut
         ensure_equal_attributes(lyr, "prfedea", list);
 
         // Test geometry
-        char* wkt = "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,"
+        const char* wkt = "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,"
             "479640.094 4764721.000,479735.906 4764752.000,"
             "479750.688 4764702.000))";
 
         OGRGeometryH testGeom = NULL;
-        OGRErr err = OGR_G_CreateFromWkt(&wkt, NULL, &testGeom);
+        OGRErr err = OGR_G_CreateFromWkt((char**) &wkt, NULL, &testGeom);
         ensure_equals("Can't create geometry from WKT", OGRERR_NONE, err);
 
         OGR_L_ResetReading(lyr);
@@ -368,7 +380,9 @@ namespace tut
         OGRErr err = OGRERR_NONE;
 
         // Read feature without geometry
-        std::string tmp(data_tmp_ + "\\tpoly.shp");
+        std::string tmp(data_tmp_);
+        tmp += SEP;
+        tmp += "tpoly.shp";
         OGRDataSourceH ds = OGR_Dr_Open(drv_, tmp.c_str(), false);
         ensure("Can't open layer", NULL != ds);
 
@@ -380,9 +394,9 @@ namespace tut
         ensure_equals("Can't set attribute filter", OGRERR_NONE, err);
 
         // Set spatial filter
-        char* wkt = "LINESTRING(479505 4763195,480526 4762819)";
+        const char* wkt = "LINESTRING(479505 4763195,480526 4762819)";
         OGRGeometryH filterGeom = NULL;
-        err = OGR_G_CreateFromWkt(&wkt, NULL, &filterGeom);
+        err = OGR_G_CreateFromWkt((char**) &wkt, NULL, &filterGeom);
         ensure_equals("Can't create geometry from WKT", OGRERR_NONE, err);
 
         OGR_L_SetSpatialFilter(lyr, filterGeom);

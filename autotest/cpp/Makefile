@@ -1,23 +1,33 @@
 CXX = g++
-CXXFLAGS = -g -Wall -Wno-long-long -pedantic
+CXXFLAGS =`gdal-config --cflags` -Wall -I. -Itut $(CPPFLAGS)
 LDFLAGS = `gdal-config --libs`
-CFLAGS = `gdal-config --cflags` -I. -Itut $(CPPFLAGS)
 
 PROGS = gdal_unit_test testperfcopywords testcopywords
 
 all: $(PROGS)
 
-test_cpl.o: test_cpl.cpp
-	$(CXX) $(CFLAGS) -c $<
+OBJ = \
+    gdal_unit_test.o \
+    test_cpl.o \
+    test_gdal_aaigrid.o \
+    test_gdal_dted.o \
+    test_gdal_gtiff.o \
+    test_ogr_geos.o \
+    test_ogr_shape.o \
+    test_osr.o \
+    test_osr_ct.o \
+    test_osr_pci.o \
+    test_osr_proj4.o \
+    tut/tut_gdal.o
 
-gdal_unit_test: gdal_unit_test.cpp test_cpl.o
-	$(CXX) $(CFLAGS) $< $(LDFLAGS) -o $@
+gdal_unit_test: $(OBJ)
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 testperfcopywords: testperfcopywords.cpp
-	$(CXX) $(CFLAGS) $< $(LDFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
 	
 testcopywords: testcopywords.cpp
-	$(CXX) -O2 $(CFLAGS) $< $(LDFLAGS) -o $@
+	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 clean:
 	$(RM) $(PROGS)

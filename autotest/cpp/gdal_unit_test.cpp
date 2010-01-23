@@ -45,6 +45,8 @@
 #include <gdal.h>
 #include <ogrsf_frmts.h>
 #include <cpl_conv.h>
+#include <cpl_multiproc.h>
+#include <ogr_api.h>
 // STD
 #include <iostream>
 #include <string>
@@ -101,6 +103,12 @@ int main(int argc, const char* argv[])
     {
         std::cerr << "TUT raised ex: " << ex.what() << std::endl;
     }
+
+    GDALDestroyDriverManager();
+    OGRCleanupAll();
+
+    CPLDumpSharedList( NULL );
+    CPLCleanupTLS();
 
 #ifdef _WIN32_WCE
     std::cout << "Press enter to quit\n";

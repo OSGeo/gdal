@@ -41,6 +41,7 @@
 #include <ogr_srs_api.h> // OSR
 #include <ogr_api.h> // OGR
 #include <cpl_error.h> // CPL
+#include <cpl_string.h>
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -127,7 +128,7 @@ namespace tut
     {
         ensure("SRS handle is NULL", NULL != srs_);
         
-        char* wkt = "\"\"PROJCS[\"unnamed\",GEOGCS[\"NAD27\","
+        const char* wkt = "\"\"PROJCS[\"unnamed\",GEOGCS[\"NAD27\","
             "DATUM[\"North_American_Datum_1927\","
             "SPHEROID[\"Clarke 1866\",6378206.4,294.9786982139006,"
             "AUTHORITY[\"EPSG\",\"7008\"]],AUTHORITY[\"EPSG\",\"6267\"]],"
@@ -140,7 +141,7 @@ namespace tut
             "PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],"
             "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]]]\"\"";
 
-        err_ = OSRImportFromWkt(srs_, &wkt);
+        err_ = OSRImportFromWkt(srs_, (char**) &wkt);
         ensure_equals("Can't import Lambert Conformal Conic projection",
             err_, OGRERR_NONE);
 
@@ -171,6 +172,10 @@ namespace tut
 
         ensure("Invalid 5th projection parameter",
             std::fabs(params[5] - 33.62529003) <= maxError);
+
+        CPLFree(proj);
+        CPLFree(units);
+        CPLFree(params);
     }
 
 } // namespace tut

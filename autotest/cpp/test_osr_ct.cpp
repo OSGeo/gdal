@@ -155,9 +155,9 @@ namespace tut
         ct_ = OCTNewCoordinateTransformation(srs_ll_, srs_utm_);
         ensure("PROJ.4 missing, transforms not available", NULL != ct_);
 
-        char* wkt = "POINT(-117.5 32.0)";
+        const char* wkt = "POINT(-117.5 32.0)";
         OGRGeometryH geom = NULL;
-        err_ = OGR_G_CreateFromWkt(&wkt, NULL, &geom);
+        err_ = OGR_G_CreateFromWkt((char**) &wkt, NULL, &geom);
         ensure_equals("Can't import geometry from WKT", OGRERR_NONE, err_);
         ensure("Can't create geometry", NULL != geom);
 

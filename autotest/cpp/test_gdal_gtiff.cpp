@@ -111,7 +111,7 @@ namespace tut
         rasters_t::const_iterator it;
         for (it = rasters_.begin(); it != rasters_.end(); ++it)
         {
-            std::string file(data_ + '\\');
+            std::string file(data_ + SEP);
             file += it->file_;
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
             ensure("Can't open dataset: " + file, NULL != ds);
@@ -127,7 +127,7 @@ namespace tut
         rasters_t::const_iterator it;
         for (it = rasters_.begin(); it != rasters_.end(); ++it)
         {
-            std::string file(data_ + '\\');
+            std::string file(data_ + SEP);
             file += it->file_;
 
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
@@ -168,7 +168,7 @@ namespace tut
         // Index of test file being copied
         const std::size_t fileIdx = 10;
 
-        std::string src(data_ + '\\');
+        std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
         ensure("Can't open source dataset: " + src, NULL != dsSrc);
@@ -205,7 +205,7 @@ namespace tut
     {
         // Index of test file being copied
         const std::size_t fileIdx = 11;
-        std::string src(data_ + '\\');
+        std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
         ensure("Can't open source dataset: " + src, NULL != dsSrc);
@@ -250,7 +250,7 @@ namespace tut
                 // Index of test file being copied
         const std::size_t fileIdx = 10;
 
-        std::string src(data_ + '\\');
+        std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH ds = GDALOpen(src.c_str(), GA_ReadOnly);
         ensure("Can't open dataset: " + src, NULL != ds);
@@ -264,6 +264,8 @@ namespace tut
 
         ensure_equals("Computed wrong min", expect[0], minmax[0]);
         ensure_equals("Computed wrong max", expect[1], minmax[1]);
+
+        GDALClose(ds);
     }
 
  } // namespace tut

@@ -106,7 +106,7 @@ namespace tut
         rasters_t::const_iterator it;
         for (it = grids_.begin(); it != grids_.end(); ++it)
         {
-            std::string file(data_ + '\\');
+            std::string file(data_ + SEP);
             file += it->file_;
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
             ensure("Can't open dataset: " + file, NULL != ds);
@@ -122,7 +122,7 @@ namespace tut
         rasters_t::const_iterator it;
         for (it = grids_.begin(); it != grids_.end(); ++it)
         {
-            std::string file(data_ + '\\');
+            std::string file(data_ + SEP);
             file += it->file_;
 
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
@@ -137,7 +137,7 @@ namespace tut
 
             std::stringstream os;
             os << "Checksums for '" << file << "' not equal";
-            ensure_equals(os.str().c_str(), it->checksum_, checksum);
+            ensure_equals(os.str().c_str(), checksum, it->checksum_);
 
             GDALClose(ds);
         }
@@ -151,7 +151,7 @@ namespace tut
         // Index of test file being tested
         const std::size_t fileIdx = 1;
 
-        std::string file(data_ + '\\');
+        std::string file(data_ + SEP);
         file += grids_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
@@ -159,7 +159,7 @@ namespace tut
 
         double geoTransform[6] = { 0 };
         CPLErr err = GDALGetGeoTransform(ds, geoTransform);
-        ensure_equals("Can't fetch affine transformation coefficients", CE_None, err);
+        ensure_equals("Can't fetch affine transformation coefficients", err, CE_None);
 
         // Test affine transformation coefficients
         const double maxError = 0.000001;
@@ -170,7 +170,9 @@ namespace tut
         ensure_distance(msg.c_str(), expect[2], geoTransform[2], maxError);
         ensure_distance(msg.c_str(), expect[3], geoTransform[3], maxError);
         ensure_distance(msg.c_str(), expect[4], geoTransform[4], maxError);
-        ensure_distance(msg.c_str(), expect[5], geoTransform[5], maxError);          
+        ensure_distance(msg.c_str(), expect[5], geoTransform[5], maxError);
+
+        GDALClose(ds);
     }
 
     // Test projection definition
@@ -181,26 +183,28 @@ namespace tut
         // Index of test file being tested
         const std::size_t fileIdx = 1;
 
-        std::string file(data_ + '\\');
+        std::string file(data_ + SEP);
         file += grids_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
         ensure("Can't open dataset: " + file, NULL != ds);
 
         std::string proj(GDALGetProjectionRef(ds));
-        ensure_equals("Projection definition is not available", false, proj.empty());
+        ensure_equals("Projection definition is not available", proj.empty(), false);
 
         std::string expect("PROJCS[\"unnamed\",GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\""
             ",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],"
             "TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0,"
             "AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,"
-            "AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],"
+            "AUTHORITY[\"EPSG\",\"9108\"]],"
             "AUTHORITY[\"EPSG\",\"4269\"]],PROJECTION[\"Albers_Conic_Equal_Area\"],"
             "PARAMETER[\"standard_parallel_1\",61.66666666666666],PARAMETER[\"standard_parallel_2\",68],"
             "PARAMETER[\"latitude_of_center\",59],PARAMETER[\"longitude_of_center\",-132.5],"
             "PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",500000],UNIT[\"METERS\",1]]");
 
-        ensure_equals("Projection does not match expected", expect, proj);
+        ensure_equals("Projection does not match expected", proj, expect);
+
+        GDALClose(ds);
     }
 
     // Test band data type and NODATA value
@@ -211,7 +215,7 @@ namespace tut
         // Index of test file being tested
         const std::size_t fileIdx = 1;
 
-        std::string file(data_ + '\\');
+        std::string file(data_ + SEP);
         file += grids_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
@@ -221,9 +225,11 @@ namespace tut
         ensure("Can't get raster band", NULL != band);
 
         const double noData = GDALGetRasterNoDataValue(band, NULL);
-        ensure_equals("Grid NODATA value wrong or missing", -99999, noData);
+        ensure_equals("Grid NODATA value wrong or missing", noData, -99999);
 
-        ensure_equals("Data type is not GDT_Float32", GDT_Float32, GDALGetRasterDataType(band));
+        ensure_equals("Data type is not GDT_Float32", GDALGetRasterDataType(band), GDT_Float32);
+
+        GDALClose(ds);
     }
 
     // Create simple copy and check
@@ -234,13 +240,13 @@ namespace tut
         // Index of test file being tested
         const std::size_t fileIdx = 0;
 
-        std::string src(data_ + '\\');
+        std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
 
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
         ensure("Can't open source dataset: " + src, NULL != dsSrc);
 
-        std::string dst(data_tmp_ + '\\');
+        std::string dst(data_tmp_ + SEP);
         dst += rasters_.at(fileIdx).file_;
         dst += ".grd";
 
@@ -250,16 +256,16 @@ namespace tut
         ensure("Can't copy dataset", NULL != dsDst);
 
         std::string proj(GDALGetProjectionRef(dsDst));
-        ensure_equals("Projection definition is not available", false, proj.empty());
+        ensure_equals("Projection definition is not available", proj.empty(), false);
 
         std::string expect("PROJCS[\"NAD_1927_UTM_Zone_11N\",GEOGCS[\"GCS_North_American_1927\","
-            "DATUM[\"North_American_Datum_1927\",SPHEROID[\"Clarke_1866\",6378206.4,294.9786982139006]],"
+            "DATUM[\"North_American_Datum_1927\",SPHEROID[\"Clarke_1866\",6378206.4,294.9786982]],"
             "PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]],"
             "PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],"
             "PARAMETER[\"central_meridian\",-117],PARAMETER[\"scale_factor\",0.9996],"
             "PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1]]");
 
-        ensure_equals("Projection does not match expected", expect, proj);
+        ensure_equals("Projection does not match expected", proj, expect);
 
         GDALRasterBandH band = GDALGetRasterBand(dsDst, rasters_.at(fileIdx).band_);
         ensure("Can't get raster band", NULL != band);
@@ -270,7 +276,7 @@ namespace tut
 
         std::stringstream os;
         os << "Checksums for '" << dst << "' not equal";
-        ensure_equals(os.str().c_str(), rasters_.at(fileIdx).checksum_, checksum);
+        ensure_equals(os.str().c_str(), checksum, rasters_.at(fileIdx).checksum_);
 
         GDALClose(dsDst);
 
@@ -284,7 +290,7 @@ namespace tut
         // Index of test file being tested
         const std::size_t fileIdx = 1;
         
-        std::string file(data_ + '\\');
+        std::string file(data_ + SEP);
         file += grids_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
@@ -301,7 +307,7 @@ namespace tut
 
         std::stringstream os;
         os << "Checksums for '" << file << "' not equal";
-        ensure_equals(os.str().c_str(), winChecksum, checksum);
+        ensure_equals(os.str().c_str(), checksum, winChecksum);
 
         GDALClose(ds);
     }

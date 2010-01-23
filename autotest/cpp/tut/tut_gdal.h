@@ -41,6 +41,12 @@
 namespace tut
 {
 
+#if defined(WIN32) || defined(_WIN32_WCE)
+#define SEP '\\'
+#else
+#define SEP '/'
+#endif
+
 //
 // Template of attribute reading function and its specializations
 //
@@ -123,7 +129,7 @@ void ensure_approx_equals(T const& a, T const& b)
 {
     std::ostringstream os;
     os << "Approx. equality failed: " << a << " != " << b;
-    ensure(os.str(), std::abs(b / a - 1.0) <= .00000000001);
+    ensure(os.str(), fabs(1.0 * b / a - 1.0) <= .00000000001);
 }
 
 } // namespace tut
