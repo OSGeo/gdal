@@ -41,6 +41,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <cpl_string.h>
 
 namespace tut
 {
@@ -261,6 +262,7 @@ namespace tut
             std::equal(coeff, coeff + coeffSize, expect));
 
         OSRDestroySpatialReference(srs2);
+        CPLFree(proj4);
     }
 
     // Test URN support for OGC:CRS84
@@ -288,6 +290,8 @@ namespace tut
 
         ensure_equals("CRS84 lookup not as expected",
             std::string(wkt1), std::string(wkt2));
+        CPLFree(wkt1);
+        CPLFree(wkt2);
     }
 
     // Test URN support for EPSG
@@ -305,7 +309,7 @@ namespace tut
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
         ensure("OSRExportToWkt returned NULL", NULL != wkt1); 
 
-        err_ = OSRSetFromUserInput(srs_, "EPSG:4326");
+        err_ = OSRSetFromUserInput(srs_, "EPSGA:4326");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
 
         char* wkt2 = NULL;
@@ -315,6 +319,8 @@ namespace tut
 
         ensure_equals("EPSG:4326 urn lookup not as expected",
             std::string(wkt1), std::string(wkt2));
+        CPLFree(wkt1);
+        CPLFree(wkt2);
     }
 
     // Test URN support for auto projection
@@ -338,7 +344,7 @@ namespace tut
                            "AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],"
                            "AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,"
                            "AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,"
-                           "AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],"
+                           "AUTHORITY[\"EPSG\",\"9108\"]],"
                            "AUTHORITY[\"EPSG\",\"4326\"]],"
                            "PROJECTION[\"Transverse_Mercator\"],"
                            "PARAMETER[\"latitude_of_origin\",0],"
@@ -349,6 +355,7 @@ namespace tut
                            "UNIT[\"Meter\",1,AUTHORITY[\"EPSG\",\"9001\"]]]");
 
         ensure_equals("AUTO42001 urn lookup not as expected", std::string(wkt1), expect);
+        CPLFree(wkt1);
     }
 
 
