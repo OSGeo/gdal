@@ -1040,6 +1040,7 @@ def ogr_pg_23():
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_real real' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_char char' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchar character varying' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchar10 character varying(10)' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_text text' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_bytea bytea' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_time time' )
@@ -1060,14 +1061,30 @@ def ogr_pg_23():
         geom_str = "GeomFromEWKT('POINT(10 20)')"
     else:
         geom_str = "'\\\\001\\\\001\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000$@\\\\000\\\\000\\\\000\\\\000\\\\000\\\\0004@'"
-    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 0.876, 'a', 'ab', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', " + geom_str + " )" )
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, my_varchar10, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', " + geom_str + " )" )
 
 
     return 'success'
 
 ###############################################################################
 
-def test_val_test_23(feat):
+def test_val_test_23(layer_defn, feat):
+
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_numeric5"))
+    if field_defn.GetWidth() != 5 or field_defn.GetPrecision() != 0 or field_defn.GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('Wrong field defn for my_numeric5 : %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType()))
+        return 'fail'
+
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_numeric5_3"))
+    if field_defn.GetWidth() != 5 or field_defn.GetPrecision() != 3 or field_defn.GetType() != ogr.OFTReal:
+        gdaltest.post_reason('Wrong field defn for my_numeric5_3 : %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType()))
+        return 'fail'
+
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_varchar10"))
+    if field_defn.GetWidth() != 10 or field_defn.GetPrecision() != 0:
+        gdaltest.post_reason('Wrong field defn for my_varchar10 : %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType()))
+        return 'fail'
+
     if feat.my_numeric5 != 12345 or \
     feat.my_numeric5_3 != 0.123 or \
     feat.my_bool != 1 or \
@@ -1078,6 +1095,7 @@ def test_val_test_23(feat):
     abs(feat.my_real - 0.876) > 1e-6 or \
     feat.my_char != 'a' or \
     feat.my_varchar != 'ab' or \
+    feat.my_varchar10 != 'varchar10 ' or \
     feat.my_text != 'abc' or \
     feat.GetFieldAsString('my_bytea') != '78797A' or \
     feat.GetFieldAsString('my_time') != '12:34:56' or \
@@ -1122,7 +1140,7 @@ def ogr_pg_24():
     lyr = ds.GetLayerByName( 'datatypetest' )
 
     feat = lyr.GetNextFeature()
-    if test_val_test_23(feat) != 'success':
+    if test_val_test_23(lyr.GetLayerDefn(), feat) != 'success':
         return 'fail'
 
     feat = None
@@ -1146,7 +1164,7 @@ def ogr_pg_25():
     sql_lyr = ds.ExecuteSQL( 'select * from datatypetest' )
 
     feat = sql_lyr.GetNextFeature()
-    if test_val_test_23(feat) != 'success':
+    if test_val_test_23(sql_lyr.GetLayerDefn(), feat) != 'success':
         return 'fail'
 
     ds.ReleaseResultSet( sql_lyr )
@@ -1172,7 +1190,7 @@ def ogr_pg_26():
     lyr = ds.GetLayerByName( 'datatypetest' )
 
     feat = lyr.GetNextFeature()
-    if test_val_test_23(feat) != 'success':
+    if test_val_test_23(lyr.GetLayerDefn(), feat) != 'success':
         return 'fail'
 
     feat = None
@@ -1196,7 +1214,7 @@ def ogr_pg_27():
     sql_lyr = ds.ExecuteSQL( 'select * from datatypetest' )
 
     feat = sql_lyr.GetNextFeature()
-    if test_val_test_23(feat) != 'success':
+    if test_val_test_23(sql_lyr.GetLayerDefn(), feat) != 'success':
         return 'fail'
 
     ds.ReleaseResultSet( sql_lyr )
@@ -1269,7 +1287,7 @@ def ogr_pg_29():
 
     # my_timestamp has now a time zone...
     feat = lyr.GetNextFeature()
-    if test_val_test_23(feat) != 'success':
+    if test_val_test_23(lyr.GetLayerDefn(), feat) != 'success':
         return 'fail'
 
     geom = feat.GetGeometryRef()
