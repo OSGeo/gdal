@@ -22,3 +22,4 @@ clean:
 hfatest.exe:	hfatest.cpp $(GDALLIB) 
 	$(CC) $(CFLAGS) hfatest.cpp $(OBJ) $(GDALLIB) 
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	del hfatest.obj
