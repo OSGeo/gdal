@@ -930,6 +930,8 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
 /* -------------------------------------------------------------------- */
 /*      Fetch the fields.                                               */
 /* -------------------------------------------------------------------- */
+    CPLErr eErr;
+
     psMapInfo->proName = CPLStrdup(poMIEntry->GetStringField("proName"));
 
     psMapInfo->upperLeftCenter.x =
@@ -943,9 +945,19 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
         poMIEntry->GetDoubleField("lowerRightCenter.y");
 
    psMapInfo->pixelSize.width =
-        poMIEntry->GetDoubleField("pixelSize.width");
+       poMIEntry->GetDoubleField("pixelSize.width",&eErr);
    psMapInfo->pixelSize.height =
-        poMIEntry->GetDoubleField("pixelSize.height");
+       poMIEntry->GetDoubleField("pixelSize.height",&eErr);
+
+   // The following is basically a hack to get files with 
+   // non-standard MapInfo's that misname the pixelSize fields. (#3338)
+   if( eErr != CE_None )
+   {
+       psMapInfo->pixelSize.width =
+           poMIEntry->GetDoubleField("pixelSize.x");
+       psMapInfo->pixelSize.height =
+           poMIEntry->GetDoubleField("pixelSize.y");
+   }
 
    psMapInfo->units = CPLStrdup(poMIEntry->GetStringField("units"));
 
