@@ -1668,6 +1668,53 @@ def nitf_online_17_jp2kak():
 
 def nitf_online_17_jasper():
     return nitf_online_17('JPEG2000')
+
+###############################################################################
+# Test polar stereographic CADRG tile.  
+def nitf_online_18():
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/bugs/bug3337.ntf', 'bug3337.ntf'):
+        return 'skip'
+
+    ds = gdal.Open('tmp/cache/bug3337.ntf')
+
+    gt = ds.GetGeoTransform()
+    prj = ds.GetProjection()
+
+    # If we have functioning coordinate transformer.
+    if prj[:6] == 'PROJCS':
+        if prj.find('Azimuthal_Equidistant') == -1:
+            gdaltest.post_reason( 'wrong projection?' )
+            return 'fail'
+        expected_gt=(-1669792.3618991028, 724.73626818537502, 0.0, -556597.45396636717, 0.0, -724.73626818537434)
+        if not gdaltest.geotransform_equals( gt, expected_gt, 1.0 ):
+            gdaltest.post_reason( 'did not get expected geotransform.' )
+            return 'fail'
+
+    # If we do not have a functioning coordinate transformer.
+    else:
+        if prj != '' \
+             or not gdaltest.geotransform_equals(gt,(0,1,0,0,0,1),0.00000001):
+            print gt
+            print prj
+            gdaltest.post_reason( 'did not get expected empty gt/projection' )
+            return 'fail'
+
+        prj = ds.GetGCPProjection()
+        if prj[:6] != 'GEOGCS':
+            gdaltest.post_reason( 'did not get expected geographic srs' )
+            return 'fail'
+
+        gcps = ds.GetGCPs()
+        gcp3 = gcps[3]
+        if gcp3.GCPPixel != 0 or gcp3.GCPLine != 1536 \
+                or abs(gcp3.GCPX+45) > 0.0000000001 \
+                or abs(gcp3.GCPY-68.78679656) > 0.00000001:
+            gdaltest.post_reason( 'did not get expected gcp.')
+            return 'fail'
+
+    ds = None
+
+    return 'success'
     
 ###############################################################################
 # Cleanup.
@@ -1828,6 +1875,7 @@ gdaltest_list = [
     nitf_online_17_jp2mrsid,
     nitf_online_17_jp2kak,
     nitf_online_17_jasper,
+    nitf_online_18,
     nitf_cleanup ]
 
 if __name__ == '__main__':
