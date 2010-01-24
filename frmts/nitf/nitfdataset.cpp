@@ -4295,7 +4295,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset,
     VSIFSeekL( fp, nStartOffset, SEEK_SET );
 
     const char* pszIC = CSLFetchNameValue( papszOptions, "IC" );
-    GUInt32  nIMDATOFF;
+    GUInt32  nIMDATOFF = 0;
     if (EQUAL(pszIC, "M3"))
     {
         GUInt32  nIMDATOFF_MSB;
