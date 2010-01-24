@@ -975,6 +975,47 @@ def hfa_excluded_values():
     return 'success'
     
 ###############################################################################
+# verify that we propogate nodata to overviews in .img/.rrd format.
+
+def hfa_ov_nodata():
+
+    drv = gdal.GetDriverByName( 'HFA' )
+    src_ds = gdal.Open('data/nodata_int.asc')
+    wrk_ds = drv.CreateCopy( '/vsimem/ov_nodata.img', src_ds )
+    src_ds = None
+
+    wrk_ds.BuildOverviews( overviewlist = [2] )
+    wrk_ds = None
+
+    wrk2_ds = gdal.Open( '/vsimem/ov_nodata.img' )
+    ovb = wrk2_ds.GetRasterBand(1).GetOverview(0)
+
+    if ovb.GetNoDataValue() != -99999:
+        gdaltest.post_reason( 'nodata not propagated to .img overview.' )
+        return 'fail'
+
+    if ovb.GetMaskFlags() != gdal.GMF_NODATA:
+        gdaltest.post_reason( 'mask flag not as expected.' )
+        return 'fail'
+    
+    # Confirm that a .ovr file was *not* produced.
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    try:
+        wrk3_ds = gdal.Open('/vsimem/ov_nodata.img.ovr')
+    except:
+        wrk3_ds = None
+    gdal.PopErrorHandler()
+    
+    if wrk3_ds is not None:
+        gdaltest.post_reason( 'this test result is invalid since .ovr file was created, why?' )
+        return 'fail'
+
+    wrk2_ds = None
+    drv.Delete( '/vsimem/ov_nodata.img' )
+    
+    return 'success'
+ 
+###############################################################################
 #
 
 gdaltest_list = [
@@ -1006,7 +1047,8 @@ gdaltest_list = [
     hfa_xforms_3rd,
     hfa_delete_colortable,
     hfa_delete_colortable2,
-    hfa_excluded_values ]
+    hfa_excluded_values,
+    hfa_ov_nodata ]
 
 if __name__ == '__main__':
 
