@@ -1504,7 +1504,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
         pszITITLE != NULL && strlen(pszITITLE) >= 12 && pszITITLE[strlen(pszITITLE) - 1] == '9' )
     {
         /* To get a perfect rectangle in Azimuthal Equidistant projection, we must use */
-        /* the sphere and not WGS84 ellipsoid. That's a big strange... */
+        /* the sphere and not WGS84 ellipsoid. That's a bit strange... */
         const char* pszNorthPolarProjection = "+proj=aeqd +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs";
         const char* pszSouthPolarProjection = "+proj=aeqd +lat_0=-90 +lon_0=0 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs";
 
@@ -1555,6 +1555,18 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
                 }
             }
             OCTDestroyCoordinateTransformation(hCT);
+        }
+        else
+        {
+            // if we cannot instantiate the transformer, then we
+            // will at least attempt to record what we believe the
+            // natural coordinate system of the image is.  This is 
+            // primarily used by ArcGIS (#3337)
+
+            char *pszAEQD = NULL;
+            oSRS_AEQD.exportToWkt( &(pszAEQD) );
+            poDS->SetMetadataItem( "GCPPROJECTIONX", pszAEQD, "IMAGE_STRUCTURE" );
+            CPLFree( pszAEQD );
         }
     }
 
