@@ -282,6 +282,24 @@ if test "$with_threads" = "yes" ; then
   if test -n "$THREAD_FLAG" ; then
       THREAD_LIB="-lpthread"
   fi
+
+  AC_MSG_CHECKING([for PTHREAD_MUTEX_RECURSIVE])
+
+  AC_TRY_COMPILE(
+  [
+#define _GNU_SOURCE
+#include <pthread.h>
+  ], [
+    return (PTHREAD_MUTEX_RECURSIVE);
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_PTHREAD_MUTEX_RECURSIVE, 1,
+          [Define to 1 if you have the `PTHREAD_MUTEX_RECURSIVE' constant.])
+  ], [
+    AC_MSG_RESULT([no])
+  ])
+
   PTHREAD_ENABLED="yes"
 
 elif test -n "$with_threads" -a "$with_threads" != "no" ; then
