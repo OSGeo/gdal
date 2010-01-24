@@ -157,6 +157,7 @@ typedef struct {
     double     dfLRY;
     double     dfLLX;
     double     dfLLY;
+    int        bIsBoxCenterOfPixel;
 
     char       *pszComments;
     char       szIC[3];
