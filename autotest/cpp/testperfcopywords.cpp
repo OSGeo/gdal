@@ -29,7 +29,7 @@
  
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include "gdal.h"
 
@@ -41,25 +41,23 @@ int main(int argc, char* argv[])
     int i;
     int intype, outtype;
 
-    struct timeval tv1;
-    struct timeval tv2;
+    clock_t start, end;
     
     for(intype=GDT_Byte;intype<=GDT_CFloat64;intype++)
     {
         for(outtype=GDT_Byte;outtype<=GDT_CFloat64;outtype++)
         {
-            gettimeofday(&tv1, NULL);
+            start = clock();
             
             for(i=0;i<1000;i++)
                 GDALCopyWords(in, (GDALDataType)intype, 16, out, (GDALDataType)outtype, 16, 256 * 256);
                 
-            gettimeofday(&tv2, NULL);
+            end = clock();
             
-            double diff = tv2.tv_sec - tv1.tv_sec + 1e-6 * (tv2.tv_usec - tv1.tv_usec);
             printf("%s -> %s : %.2f s\n",
                    GDALGetDataTypeName((GDALDataType)intype),
                    GDALGetDataTypeName((GDALDataType)outtype),
-                   diff);
+                   (end - start) * 1.0 / CLOCKS_PER_SEC);
         }
     }
 
