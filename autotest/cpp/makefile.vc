@@ -9,7 +9,7 @@
 #############################################################################
 # CONFIGURATION
 
-GDAL_VERSION = 14
+GDAL_VERSION = 17
 
 # GDAL library
 !IFNDEF GDAL_ROOT
@@ -19,12 +19,12 @@ GDAL_ROOT = ..\..\gdal
 GDAL_LIB = $(GDAL_ROOT)\gdal_i.lib
 
 # GEOS sources location, DLL and Import library
-GEOS_ROOT = D:\dev\geos\_svn\geos
+GEOS_ROOT = e:\geos-3.2.0
 GEOS_LIB = $(GEOS_ROOT)\source\geos_c_i.lib
 GEOS_DLL = geos_c.dll
 
 # PROJ.4 sources location, DLL and Import library
-PROJ4_ROOT = D:\dev\proj\_cvs\proj
+PROJ4_ROOT = e:\proj-4.7.0
 PROJ4_LIB = $(PROJ4_ROOT)\src\proj_i.lib
 PROJ4_DLL = proj.dll
 
@@ -48,9 +48,11 @@ INCLUDE_DIR = \
     -I$(GDAL_ROOT)\ogr \
     -I$(GDAL_ROOT)\ogr/ogrsf_frmts \
     -I$(GEOS_ROOT)\capi \
+    -I$(GEOS_ROOT)\source\headers \
     -I$(PROJ4_ROOT)\src
 
 OBJ = \
+    test_cpl.obj \
     test_gdal.obj \
     test_gdal_aaigrid.obj \
     test_gdal_dted.obj \
@@ -80,12 +82,20 @@ CFLAGS = $(OPTFLAGS) $(CPPFLAGS) $(INCLUDE_DIR)
 GDAL_DLL = gdal$(GDAL_VERSION).dll
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE)
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe
 
 $(GDAL_TEST_EXE): gdal_unit_test.cpp copy-gdal-dll copy-geos-dll copy-proj4-dll $(OBJ)
 	$(CC) gdal_unit_test.cpp $(CFLAGS) $(OBJ) $(GDAL_LIB) $(GEOS_LIB) $(PROJ4_LIB)
     if exist $(GDAL_TEST_EXE).manifest mt -manifest $(GDAL_TEST_EXE).manifest -outputresource:$(GDAL_TEST_EXE);1
 
+testcopywords.exe: testcopywords.cpp
+	$(CC) testcopywords.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testcopywords.exe.manifest mt -manifest testcopywords.exe.manifest -outputresource:testcopywords.exe;1
+
+testperfcopywords.exe: testperfcopywords.cpp
+	$(CC) testperfcopywords.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testperfcopywords.exe.manifest mt -manifest testperfcopywords.exe.manifest -outputresource:testperfcopywords.exe;1
+	
 copy-gdal-dll:
     copy $(GDAL_ROOT)\$(GDAL_DLL) .
 
