@@ -13,20 +13,25 @@ default:	$(OBJ)
 clean:
 	-del *.obj
 	-del *.exe
-	-del libiso8211.lib
+	-del *.dll
+	-del *.lib
+	-del *.manifest
+	-del *.exp
 
 all:	default 8211view.exe 8211dump.exe
 
-iso8211.dll:
-	link /dll $(LDEBUG) $(OBJ) $(GDAL_ROOT)\port\cpl.lib \
+iso8211.dll: $(OBJ) $(CPLLIB) 
+	link /dll $(LDEBUG) $(OBJ) $(CPLLIB)  ../zlib/*.obj \
 		/out:iso8211.dll /implib:iso8211_i.lib
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
 
-8211view.exe:	8211view.obj $(OBJ)
-	$(CC) $(CFLAGS) 8211view.obj $(OBJ) $(CPLLIB) /link $(LINKER_FLAGS)
+8211view.exe:	8211view.obj $(OBJ) $(CPLLIB) 
+	$(CC) $(CFLAGS) 8211view.obj $(OBJ) $(CPLLIB) ../zlib/*.obj /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
+	del 8211view.obj
 
-8211dump.exe:	8211dump.obj $(OBJ)
-	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) $(CPLLIB) /link $(LINKER_FLAGS)
+8211dump.exe:	8211dump.obj $(OBJ) $(CPLLIB) 
+	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) $(CPLLIB) ../zlib/*.obj  /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
+	del 8211dump.obj
 
