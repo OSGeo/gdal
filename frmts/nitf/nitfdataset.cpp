@@ -1516,8 +1516,10 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
 
         oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
 
+        CPLPushErrorHandler( CPLQuietErrorHandler );
         OGRCoordinateTransformationH hCT =
             (OGRCoordinateTransformationH)OGRCreateCoordinateTransformation(&oSRS_WGS84, &oSRS_AEQD);
+        CPLPopErrorHandler();
         if (hCT)
         {
             double dfULX_AEQD = psImage->dfULX;
@@ -1563,6 +1565,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
             // will at least attempt to record what we believe the
             // natural coordinate system of the image is.  This is 
             // primarily used by ArcGIS (#3337)
+
+            CPLErrorReset();
+
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Failed to instantiate coordinate system transformer, likely PROJ.DLL/libproj.so is not available.  Returning image corners as lat/long GCPs as a fallback." );
 
             char *pszAEQD = NULL;
             oSRS_AEQD.exportToWkt( &(pszAEQD) );
