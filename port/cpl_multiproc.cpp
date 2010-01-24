@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "cpl_multiproc.h"
 #include "cpl_conv.h"
 
@@ -723,7 +727,7 @@ void *CPLCreateMutex()
 
     hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
 
-#if defined(PTHREAD_MUTEX_RECURSIVE)
+#if defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE)
     {
         pthread_mutexattr_t  attr;
         pthread_mutexattr_init( &attr );
