@@ -18943,6 +18943,68 @@ fi
   if test -n "$THREAD_FLAG" ; then
       THREAD_LIB="-lpthread"
   fi
+
+  { echo "$as_me:$LINENO: checking for PTHREAD_MUTEX_RECURSIVE" >&5
+echo $ECHO_N "checking for PTHREAD_MUTEX_RECURSIVE... $ECHO_C" >&6; }
+
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#define _GNU_SOURCE
+#include <pthread.h>
+
+int
+main ()
+{
+
+    return (PTHREAD_MUTEX_RECURSIVE);
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+
+    { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PTHREAD_MUTEX_RECURSIVE 1
+_ACEOF
+
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+    { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
   PTHREAD_ENABLED="yes"
 
 elif test -n "$with_threads" -a "$with_threads" != "no" ; then
@@ -23412,7 +23474,7 @@ echo "${ECHO_T}found in $with_ecw/lib." >&6; }
     { echo "$as_me:$LINENO: result: found in $with_ecw/lib." >&5
 echo "${ECHO_T}found in $with_ecw/lib." >&6; }
   elif test -r $with_ecw/bin/libNCSEcw.so -o -r $with_ecw/bin/libNCSEcw.dylib ; then
-    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSEcw -lNCSCnet $LIBS"
+    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSCnet -lNCSUtil $LIBS"
     { echo "$as_me:$LINENO: result: found in $with_ecw/bin." >&5
 echo "${ECHO_T}found in $with_ecw/bin." >&6; }
   elif test -r $with_ecw/lib/libecwj2.dylib ; then
