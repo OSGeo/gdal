@@ -175,7 +175,15 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultI
                  nTypeOID == VARCHAROID )
         {
             oField.SetType( OFTString );
-            oField.SetWidth( PQfsize(hResult, iRawField) );
+
+            /* See http://www.mail-archive.com/pgsql-hackers@postgresql.org/msg57726.html */
+            /* nTypmod = width + 4 */
+            int nTypmod = PQfmod(hResult, iRawField);
+            if (nTypmod >= 4 && (nTypeOID == BPCHAROID ||
+                               nTypeOID == VARCHAROID ) )
+            {
+                oField.SetWidth( nTypmod - 4);
+            }
         }
         else if( nTypeOID == BOOLOID )
         {
@@ -197,10 +205,33 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultI
             oField.SetType( OFTInteger );
         }
         else if( nTypeOID == FLOAT4OID ||
-                 nTypeOID == FLOAT8OID ||
-                 nTypeOID == NUMERICOID )
+                 nTypeOID == FLOAT8OID )
         {
             oField.SetType( OFTReal );
+        }
+        else if( nTypeOID == NUMERICOID )
+        {
+            /* See http://www.mail-archive.com/pgsql-hackers@postgresql.org/msg57726.html */
+            /* typmod = (width << 16) + precision + 4 */
+            int nTypmod = PQfmod(hResult, iRawField);
+            if (nTypmod >= 4)
+            {
+                int nWidth = (nTypmod - 4) >> 16;
+                int nPrecision = (nTypmod - 4) & 0xFFFF;
+                if (nWidth <= 10 && nPrecision == 0)
+                {
+                    oField.SetType( OFTInteger );
+                    oField.SetWidth( nWidth );
+                }
+                else
+                {
+                    oField.SetType( OFTReal );
+                    oField.SetWidth( nWidth );
+                    oField.SetPrecision( nPrecision );
+                }
+            }
+            else
+                oField.SetType( OFTReal );
         }
         else if ( nTypeOID == INT4ARRAYOID )
         {
