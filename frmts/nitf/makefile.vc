@@ -31,4 +31,5 @@ clean:
 
 nitfdump.exe:	nitfdump.obj $(NITFLIB_OBJ)
 	cl nitfdump.obj $(NITFLIB_OBJ) ..\gtiff\tifvsi.obj ..\..\gdal.lib $(TIFF_LIB) $(GEOTIFF_LIB)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	del nitfdump.obj
