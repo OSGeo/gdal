@@ -8,7 +8,7 @@ GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
-	xcopy /D  /Y $(OBJ) ..\o
+        for %I in ($(OBJ)) do xcopy /D  /Y %I ..\o
 
 clean:
 	-del *.obj
