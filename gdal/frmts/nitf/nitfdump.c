@@ -157,9 +157,10 @@ int main( int nArgc, char ** papszArgv )
                     psImage->chICORDS );
             if( psImage->chICORDS != ' ' )
             {
-                printf( "  UL=(%.15g,%.15g), UR=(%.15g,%.15g)\n  LL=(%.15g,%.15g), LR=(%.15g,%.15g)\n", 
+                printf( "  UL=(%.15g,%.15g), UR=(%.15g,%.15g) Center=%d\n  LL=(%.15g,%.15g), LR=(%.15g,%.15g)\n", 
                         psImage->dfULX, psImage->dfULY,
                         psImage->dfURX, psImage->dfURY,
+                        psImage->bIsBoxCenterOfPixel,
                         psImage->dfLLX, psImage->dfLLY,
                         psImage->dfLRX, psImage->dfLRY );
             }
