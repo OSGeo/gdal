@@ -1552,10 +1552,10 @@ void HFABand::SetBandName(const char *pszName)
 
 CPLErr HFABand::SetNoDataValue( double dfValue ) 
 { 
- 	CPLErr eErr = CE_Failure; 
- 	
- 	if ( psInfo->eAccess == HFA_Update ) 
- 	{ 
+    CPLErr eErr = CE_Failure; 
+    
+    if ( psInfo->eAccess == HFA_Update ) 
+    { 
         HFAEntry *poNDNode = poNode->GetNamedChild( "Eimg_NonInitializedValue" ); 
         
         if ( poNDNode == NULL ) 
@@ -1579,7 +1579,7 @@ CPLErr HFABand::SetNoDataValue( double dfValue )
             eErr = CE_None; 
         } 
     } 
-
+    
     return eErr;     
 }
 
@@ -2014,6 +2014,12 @@ int HFABand::CreateOverview( int nOverviewLevel )
     papoOverviews = (HFABand **) 
         CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
     papoOverviews[nOverviews-1] = new HFABand( psRRDInfo, poOverLayer );
+
+/* -------------------------------------------------------------------- */
+/*      If there is a nodata value, copy it to the overview band.       */
+/* -------------------------------------------------------------------- */
+    if( bNoDataSet )
+        papoOverviews[nOverviews-1]->SetNoDataValue( dfNoData );
 
     return nOverviews-1;
 }
