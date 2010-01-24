@@ -1573,23 +1573,38 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
         psGCPs = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nGCPCount);
         GDALInitGCPs( nGCPCount, psGCPs );
 
-        psGCPs[0].dfGCPPixel	= 0.0;
-        psGCPs[0].dfGCPLine		= 0.0;
+        if( psImage->bIsBoxCenterOfPixel ) 
+        {
+            psGCPs[0].dfGCPPixel	= 0.5;
+            psGCPs[0].dfGCPLine		= 0.5;
+            psGCPs[1].dfGCPPixel = poDS->nRasterXSize-0.5;
+            psGCPs[1].dfGCPLine = 0.5;
+            psGCPs[2].dfGCPPixel = poDS->nRasterXSize-0.5;
+            psGCPs[2].dfGCPLine = poDS->nRasterYSize-0.5;
+            psGCPs[3].dfGCPPixel = 0.5;
+            psGCPs[3].dfGCPLine = poDS->nRasterYSize-0.5;
+        }
+        else
+        {
+            psGCPs[0].dfGCPPixel	= 0.0;
+            psGCPs[0].dfGCPLine		= 0.0;
+            psGCPs[1].dfGCPPixel = poDS->nRasterXSize;
+            psGCPs[1].dfGCPLine = 0.0;
+            psGCPs[2].dfGCPPixel = poDS->nRasterXSize;
+            psGCPs[2].dfGCPLine = poDS->nRasterYSize;
+            psGCPs[3].dfGCPPixel = 0.0;
+            psGCPs[3].dfGCPLine = poDS->nRasterYSize;
+        }
+
         psGCPs[0].dfGCPX		= psImage->dfULX;
         psGCPs[0].dfGCPY		= psImage->dfULY;
 
-        psGCPs[1].dfGCPPixel = poDS->nRasterXSize;
-        psGCPs[1].dfGCPLine = 0.0;
         psGCPs[1].dfGCPX		= psImage->dfURX;
         psGCPs[1].dfGCPY		= psImage->dfURY;
 
-        psGCPs[2].dfGCPPixel = poDS->nRasterXSize;
-        psGCPs[2].dfGCPLine = poDS->nRasterYSize;
         psGCPs[2].dfGCPX		= psImage->dfLRX;
         psGCPs[2].dfGCPY		= psImage->dfLRY;
 
-        psGCPs[3].dfGCPPixel = 0.0;
-        psGCPs[3].dfGCPLine = poDS->nRasterYSize;
         psGCPs[3].dfGCPX		= psImage->dfLLX;
         psGCPs[3].dfGCPY		= psImage->dfLLY;
     }
@@ -1604,7 +1619,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
     else if( poDS->bGotGeoTransform == FALSE 
              && nGCPCount > 0 
              && GDALGCPsToGeoTransform( nGCPCount, psGCPs, 
-                                        poDS->adfGeoTransform, TRUE ) )
+                                        poDS->adfGeoTransform, FALSE ) )
     {	
         poDS->bGotGeoTransform = TRUE;
     } 
@@ -1615,50 +1630,37 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
     else if( (psImage->dfULX != 0 || psImage->dfURX != 0 
               || psImage->dfLRX != 0 || psImage->dfLLX != 0)
              && psImage->chICORDS != ' ' && 
-             ( poDS->bGotGeoTransform == FALSE ) )
+             ( poDS->bGotGeoTransform == FALSE ) &&
+             nGCPCount == 4 )
     {
         CPLDebug( "GDAL", 
                   "NITFDataset::Open() wasn't able to derive a first order\n"
                   "geotransform.  It will be returned as GCPs.");
 
-        poDS->nGCPCount = 4;
-        poDS->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),
-                                                  poDS->nGCPCount);
-        GDALInitGCPs( 4, poDS->pasGCPList );
+        poDS->nGCPCount = nGCPCount;
+        poDS->pasGCPList = psGCPs;
 
-        poDS->pasGCPList[0].dfGCPX = psImage->dfULX;
-        poDS->pasGCPList[0].dfGCPY = psImage->dfULY;
-        poDS->pasGCPList[0].dfGCPPixel = 0;
-        poDS->pasGCPList[0].dfGCPLine = 0;
+        psGCPs = NULL;
+        nGCPCount = 0;
+
         CPLFree( poDS->pasGCPList[0].pszId );
         poDS->pasGCPList[0].pszId = CPLStrdup( "UpperLeft" );
 
-        poDS->pasGCPList[1].dfGCPX = psImage->dfURX;
-        poDS->pasGCPList[1].dfGCPY = psImage->dfURY;
-        poDS->pasGCPList[1].dfGCPPixel = poDS->nRasterXSize;
-        poDS->pasGCPList[1].dfGCPLine = 0;
         CPLFree( poDS->pasGCPList[1].pszId );
         poDS->pasGCPList[1].pszId = CPLStrdup( "UpperRight" );
 
-        poDS->pasGCPList[2].dfGCPX = psImage->dfLLX;
-        poDS->pasGCPList[2].dfGCPY = psImage->dfLLY;
-        poDS->pasGCPList[2].dfGCPPixel = 0;
-        poDS->pasGCPList[2].dfGCPLine = poDS->nRasterYSize;
         CPLFree( poDS->pasGCPList[2].pszId );
-        poDS->pasGCPList[2].pszId = CPLStrdup( "LowerLeft" );
+        poDS->pasGCPList[2].pszId = CPLStrdup( "LowerRight" );
 
-        poDS->pasGCPList[3].dfGCPX = psImage->dfLRX;
-        poDS->pasGCPList[3].dfGCPY = psImage->dfLRY;
-        poDS->pasGCPList[3].dfGCPPixel = poDS->nRasterXSize;
-        poDS->pasGCPList[3].dfGCPLine = poDS->nRasterYSize;
         CPLFree( poDS->pasGCPList[3].pszId );
-        poDS->pasGCPList[3].pszId = CPLStrdup( "LowerRight" );
+        poDS->pasGCPList[3].pszId = CPLStrdup( "LowerLeft" );
 
         poDS->pszGCPProjection = CPLStrdup( poDS->pszProjection );
     }
 
     // This cleans up the original copy of the GCPs used to test if 
-    // this IGEOLO could be used for a geotransform.
+    // this IGEOLO could be used for a geotransform if we did not
+    // steal the to use as primary gcps.
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, psGCPs );
