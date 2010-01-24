@@ -45,7 +45,7 @@ static void Usage()
 /* Stub for HFAPCSStructToWKT, defined in hfadataset.cpp but used by    */
 /* hfaopen.cpp                                                          */
 /************************************************************************/
-
+#ifndef WIN32
 char *
 HFAPCSStructToWKT( const Eprj_Datum *psDatum,
                    const Eprj_ProParameters *psPro,
@@ -54,6 +54,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 {
     return NULL;
 }
+#endif
 
 /************************************************************************/
 /*                                main()                                */
