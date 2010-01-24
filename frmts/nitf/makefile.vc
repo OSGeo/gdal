@@ -30,8 +30,5 @@ clean:
 	-del *.obj
 
 nitfdump.exe:	nitfdump.obj $(NITFLIB_OBJ)
-	cl nitfdump.obj $(NITFLIB_OBJ) ..\gtiff\tifvsi.obj ..\..\gdal_i.lib $(TIFF_LIB) $(GEOTIFF_LIB)
-
-
-
-
+	cl nitfdump.obj $(NITFLIB_OBJ) ..\gtiff\tifvsi.obj ..\..\gdal.lib $(TIFF_LIB) $(GEOTIFF_LIB)
+	del nitfdump.obj
