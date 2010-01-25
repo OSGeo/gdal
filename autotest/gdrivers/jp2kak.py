@@ -58,7 +58,7 @@ def jp2kak_2():
     if gdaltest.jp2kak_drv is None:
         return 'skip'
     
-    tst = gdaltest.GDALTest( 'JP2KAK', 'int16.jp2', 1, 4598 )
+    tst = gdaltest.GDALTest( 'JP2KAK', 'int16.jp2', 1, 4587 )
     return tst.testOpen()
 
 ###############################################################################
@@ -240,7 +240,7 @@ def jp2kak_11():
     if gdaltest.jp2kak_drv is None:
         return 'skip'
     
-    tst = gdaltest.GDALTest( 'JP2KAK', 'gtsmall_11_int16.jp2', 1, 60576 )
+    tst = gdaltest.GDALTest( 'JP2KAK', 'gtsmall_11_int16.jp2', 1, 63475 )
     return tst.testOpen()
     
 ###############################################################################
@@ -252,7 +252,7 @@ def jp2kak_12():
     if gdaltest.jp2kak_drv is None:
         return 'skip'
     
-    tst = gdaltest.GDALTest( 'JP2KAK', 'gtsmall_10_uint16.jp2', 1, 60874 )
+    tst = gdaltest.GDALTest( 'JP2KAK', 'gtsmall_10_uint16.jp2', 1, 63360 )
     return tst.testOpen()
     
 ###############################################################################
