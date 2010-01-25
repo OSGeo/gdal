@@ -2575,10 +2575,10 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         dfQuality = atof(CSLFetchNameValue(papszOptions,"QUALITY"));
     }
 
-    if( dfQuality < 1.0 || dfQuality > 100.0 )
+    if( dfQuality < 0.01 || dfQuality > 100.0 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
-                  "QUALITY=%s is not a legal value in the range 1-100.",
+                  "QUALITY=%s is not a legal value in the range 0.01-100.",
                   CSLFetchNameValue(papszOptions,"QUALITY") );
         return NULL;
     }
@@ -3096,7 +3096,7 @@ void GDALRegister_JP2KAK()
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
-"   <Option name='QUALITY' type='integer' description='1-100, 100 is lossless'/>"
+"   <Option name='QUALITY' type='integer' description='0.01-100, 100 is lossless'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
 "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
