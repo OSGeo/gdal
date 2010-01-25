@@ -111,6 +111,8 @@ class JP2KAKDataset : public GDALPamDataset
     bool           bPreferNPReads;
     kdu_thread_env *poThreadEnv;
 
+    bool           bUseYCC;
+
     char	   *pszProjection;
     double	   adfGeoTransform[6];
     int            bGeoTransformValid;
@@ -501,14 +503,129 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLDebug( "JP2KAK", "IReadBlock(%d,%d) on band %d.", 
               nBlockXOff, nBlockYOff, nBand );
 
-    return poBaseDS->DirectRasterIO( GF_Read, 
-                                     nBlockXOff * nBlockXSize * nOvMult,
-                                     nBlockYOff * nBlockYSize * nOvMult,
-                                     nBlockXSize * nOvMult,
-                                     nBlockYSize * nOvMult,
-                                     pImage, nBlockXSize, nBlockYSize,
-                                     eDataType, 1, &nBand, 
-                                     nWordSize, nWordSize*nBlockXSize, 0 );
+/* -------------------------------------------------------------------- */
+/*      Compute the normal window, and buffer size.                     */
+/* -------------------------------------------------------------------- */
+    int  nWXOff, nWYOff, nWXSize, nWYSize, nXSize, nYSize;
+
+    nWXOff = nBlockXOff * nBlockXSize * nOvMult;
+    nWYOff = nBlockYOff * nBlockYSize * nOvMult;
+    nWXSize = nBlockXSize * nOvMult;
+    nWYSize = nBlockYSize * nOvMult;
+
+    nXSize = nBlockXSize;
+    nYSize = nBlockYSize;
+
+/* -------------------------------------------------------------------- */
+/*      Adjust if we have a partial block on the right or bottom of     */
+/*      the image.  Unfortunately despite some care I can't seem to     */
+/*      always get partial tiles to come from the desired overview      */
+/*      level depending on how various things round - hopefully not     */
+/*      a big deal.                                                     */
+/* -------------------------------------------------------------------- */
+    if( nWXOff + nWXSize > poBaseDS->GetRasterXSize() )
+    {
+        nWXSize = poBaseDS->GetRasterXSize() - nWXOff;
+        nXSize = nRasterXSize - nBlockXSize * nBlockXOff;
+    }
+
+    if( nWYOff + nWYSize > poBaseDS->GetRasterYSize() )
+    {
+        nWYSize = poBaseDS->GetRasterYSize() - nWYOff;
+        nYSize = nRasterYSize - nBlockYSize * nBlockYOff;
+    }
+
+    if( nXSize != nBlockXSize || nYSize != nBlockYSize )
+        memset( pImage, 0, nBlockXSize * nBlockYSize * nWordSize );
+
+/* -------------------------------------------------------------------- */
+/*      By default we invoke just for the requested band, directly      */
+/*      into the target buffer.                                         */
+/* -------------------------------------------------------------------- */
+    if( !poBaseDS->bUseYCC )
+        return poBaseDS->DirectRasterIO( GF_Read, 
+                                         nWXOff, nWYOff, nWXSize, nWYSize,
+                                         pImage, nXSize, nYSize,
+                                         eDataType, 1, &nBand, 
+                                         nWordSize, nWordSize*nBlockXSize, 0 );
+
+/* -------------------------------------------------------------------- */
+/*      But for YCC or possible other effectively pixel interleaved     */
+/*      products, we read all bands into a single buffer, fetch out     */
+/*      what we want, and push the rest into the block cache.           */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
+    std::vector<int> anBands;
+    int iBand;
+
+    for( iBand = 0; iBand < poBaseDS->GetRasterCount(); iBand++ )
+        anBands.push_back(iBand+1);
+
+    GByte *pabyWrkBuffer = (GByte *) 
+        VSIMalloc3( nWordSize * anBands.size(), nBlockXSize, nBlockYSize );
+    if( pabyWrkBuffer == NULL )
+        return CE_Failure;
+
+    eErr = poBaseDS->DirectRasterIO( GF_Read, 
+                                     nWXOff, nWYOff, nWXSize, nWYSize,
+                                     pabyWrkBuffer, nXSize, nYSize,
+                                     eDataType, anBands.size(), &anBands[0],
+                                     nWordSize, nWordSize*nBlockXSize, 
+                                     nWordSize*nBlockXSize*nBlockYSize );
+
+    if( eErr == CE_None )
+    {
+        int nBandStart = 0;
+        for( iBand = 0; iBand < anBands.size(); iBand++ )
+        {
+            if( iBand+1 == nBand )
+            {
+                memcpy( pImage, pabyWrkBuffer + nBandStart, 
+                        nWordSize * nBlockXSize * nBlockYSize );
+            }
+            else
+            {
+                GDALRasterBand *poBaseBand = poBaseDS->GetRasterBand(iBand+1);
+                JP2KAKRasterBand *poBand = NULL;
+
+                if( nDiscardLevels == 0 )
+                    poBand = (JP2KAKRasterBand *) poBaseBand;
+                else
+                {
+                    int iOver;
+
+                    for( iOver = 0; iOver < poBaseBand->GetOverviewCount(); iOver++ )
+                    {
+                        poBand = (JP2KAKRasterBand *) 
+                            poBaseBand->GetOverview( iOver );
+                        if( poBand->nDiscardLevels == nDiscardLevels )
+                            break;
+                    }
+                    if( iOver == poBaseBand->GetOverviewCount() )
+                    {
+                        CPLAssert( FALSE );
+                    }
+                }
+
+                GDALRasterBlock *poBlock = NULL;
+
+                if( poBand != NULL )
+                    poBlock = poBand->GetLockedBlockRef( nBlockXOff, nBlockYOff, TRUE );
+
+                if( poBlock )
+                {
+                    memcpy( poBlock->GetDataRef(), pabyWrkBuffer + nBandStart, 
+                            nWordSize * nBlockXSize * nBlockYSize );
+                    poBlock->DropLock();
+                }
+            }
+            
+            nBandStart += nWordSize * nBlockXSize * nBlockYSize;
+        }
+    }
+
+    VSIFree( pabyWrkBuffer );
+    return eErr;
 }
 
 /************************************************************************/
@@ -1191,6 +1308,31 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPLDebug( "JP2KAK", "Cuse_precincts=%d, PreferNonPersistentReads=%d", 
                   (int) use_precincts, poDS->bPreferNPReads );
+
+/* -------------------------------------------------------------------- */
+/*      Deduce some other info about the dataset.                       */
+/* -------------------------------------------------------------------- */
+        int order; 
+        
+        cod->get(Corder,0,0,order);
+        
+        if( order == Corder_LRCP )
+            CPLDebug( "JP2KAK", "order=LRCP" );
+        else if( order == Corder_RLCP )
+            CPLDebug( "JP2KAK", "order=RLCP" );
+        else if( order == Corder_RPCL )
+            CPLDebug( "JP2KAK", "order=RPCL" );
+        else if( order == Corder_PCRL )
+            CPLDebug( "JP2KAK", "order=PCRL" );
+        else if( order == Corder_CPRL )
+            CPLDebug( "JP2KAK", "order=CPRL" );
+        else
+            CPLDebug( "JP2KAK", "order=%d, not recognized.", order );
+
+        poDS->bUseYCC = false;
+        cod->get(Cycc,0,0,poDS->bUseYCC);
+        if( poDS->bUseYCC )
+            CPLDebug( "JP2KAK", "ycc=true" );
 
 /* -------------------------------------------------------------------- */
 /*      find out how many resolutions levels are available.             */
@@ -2149,7 +2291,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     bool bComseg;
 
-    bComseg = CSLFetchBoolean( papszOptions, "COMSEG", TRUE );
+    bComseg = (bool) CSLFetchBoolean( papszOptions, "COMSEG", TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Work out the precision.                                         */
