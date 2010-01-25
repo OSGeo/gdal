@@ -59,7 +59,7 @@ NITFWriteJPEGBlock_12( GDALDataset *poSrcDS, FILE *fp,
                      int nBlockXOff, int nBlockYOff,
                      int nBlockXSize, int nBlockYSize,
                      int bProgressive, int nQuality,
-                     const GByte* pabyAPP6,
+                     const GByte* pabyAPP6, int nRestartInterval,
                      GDALProgressFunc pfnProgress, void * pProgressData );
 #endif
 
@@ -75,7 +75,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                     int nBlockXOff, int nBlockYOff,
                     int nBlockXSize, int nBlockYSize,
                     int bProgressive, int nQuality,
-                    const GByte* pabyAPP6,
+                    const GByte* pabyAPP6, int nRestartInterval,
                     GDALProgressFunc pfnProgress, void * pProgressData )
 {
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -86,7 +86,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                                      nBlockXOff, nBlockYOff,
                                      nBlockXSize, nBlockYSize,
                                      bProgressive, nQuality,
-                                     pabyAPP6,
+                                     pabyAPP6, nRestartInterval,
                                      pfnProgress, pProgressData );
     }
 #endif
@@ -142,6 +142,19 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
 #endif
 
     sCInfo.write_JFIF_header = FALSE;
+
+    /* Set the restart interval */
+    if (nRestartInterval < 0)
+    {
+        /* nRestartInterval < 0 means that we will guess the value */
+        /* so we set it at the maximum allowed by MIL-STD-188-198 */
+        /* that is to say the number of MCU per row-block */
+        nRestartInterval = nBlockXSize / 8;
+    }
+
+    if (nRestartInterval > 0)
+        sCInfo.restart_interval = nRestartInterval;
+
     jpeg_set_quality( &sCInfo, nQuality, TRUE );
 
     if( bProgressive )
