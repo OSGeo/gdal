@@ -4230,7 +4230,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset,
     nOffset += 5;
 
     /* Version : 2.0 */
-    nUInt16 = 2;
+    nUInt16 = 0x0200;
     CPL_MSBPTR16(&nUInt16);
     memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
     nOffset += sizeof(nUInt16);
