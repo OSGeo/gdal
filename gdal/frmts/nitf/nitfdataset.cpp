@@ -4109,7 +4109,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, FILE *fp,
                     int nBlockXOff, int nBlockYOff,
                     int nBlockXSize, int nBlockYSize,
                     int bProgressive, int nQuality,
-                    const GByte* pabyAPP6,
+                    const GByte* pabyAPP6, int nRestartInterval,
                     GDALProgressFunc pfnProgress, void * pProgressData );
 
 static int 
@@ -4122,6 +4122,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset,
     int  nYSize = poSrcDS->GetRasterYSize();
     int  nQuality = 75;
     int  bProgressive = FALSE;
+    int  nRestartInterval = -1;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return FALSE;
@@ -4185,6 +4186,11 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset,
                       CSLFetchNameValue(papszOptions,"QUALITY") );
             return FALSE;
         }
+    }
+
+    if( CSLFetchNameValue(papszOptions,"RESTART_INTERVAL") != NULL )
+    {
+        nRestartInterval = atoi(CSLFetchNameValue(papszOptions,"RESTART_INTERVAL"));
     }
 
     bProgressive = CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE );
@@ -4374,6 +4380,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, vsi_l_offset nStartOffset,
                                     nNPPBH, nNPPBV,
                                     bProgressive, nQuality,
                                     (nBlockXOff == 0 && nBlockYOff == 0) ? abyAPP6 : NULL,
+                                    nRestartInterval,
                                     pfnProgress, pProgressData))
             {
                 return FALSE;
@@ -4490,6 +4497,7 @@ void GDALRegister_NITF()
 #ifdef JPEG_SUPPORTED
 "   <Option name='QUALITY' type='int' description='JPEG quality 10-100' default='75'/>"
 "   <Option name='PROGRESSIVE' type='boolean' description='JPEG progressive mode'/>"
+"   <Option name='RESTART_INTERVAL' type='int' description='Restart interval (in MCUs). -1 for auto, 0 for none, > 0 for user specified' default='-1'/>"
 #endif
 "   <Option name='NUMI' type='int' default='1' description='Number of images to create (1-999). Only works with IC=NC'/>"
 "   <Option name='TARGET' type='float' description='For JP2 only. Compression Percentage'/>"
