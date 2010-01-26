@@ -16,8 +16,8 @@ Geospatial Foundation</a>.  As a library, it presents a
 to the calling application for all supported formats.  It also comes with a variety
 of useful \link gdal_utilities.html commandline utilities\endlink
 for data translation and processing.  The 
-<a href="http://trac.osgeo.org/gdal/wiki/Release/1.6.3-News">NEWS</a> 
-page describes the November 2009 GDAL/OGR 1.6.3 release.
+<a href="http://trac.osgeo.org/gdal/wiki/Release/1.7.0-News">NEWS</a> 
+page describes the January 2010 GDAL/OGR 1.7.0 release.
 
 The related <a href="ogr/index.html">OGR</a> library (which lives within the GDAL source tree) 
 provides a similar capability for simple features vector data.
@@ -59,24 +59,6 @@ Download:
 <li> <a href="wince.html">GDAL for Windows CE</a>
 </ul>
 
-
-\section foss4g Conference
-
-\htmlonly
-<table border="0" cellspacing="4" cellpadding="4">
-
-<tr><td><a href="http://www.foss4g2009.org/">
-<img src="foss4g09.png" alt="" border="0" width="183" height="101">
-</a></td>
-
-<td><a href="http://www.foss4g2009.org">FOSS4G 2009</a> is the leading annual 
-conference for free and open source geospatial software.  It will include 
-workshops and presentations related to GDAL/OGR, and some of the GDAL/OGR 
-development community will be attending.  It is <i>the</i> event for those 
-interested in GDAL/OGR, other FOSS geospatial technologies and the community 
-around them.</td>
-</table>
-\endhtmlonly
 
 \section index_maillist Mailing List
 
