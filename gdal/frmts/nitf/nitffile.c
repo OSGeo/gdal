@@ -824,7 +824,16 @@ int NITFCreate( const char *pszFilename,
 /*      Remainder of image header info.                                 */
 /* -------------------------------------------------------------------- */
     PLACE(nCur+nOffset+  0, ISYNC , "0"                            );
-    PLACE(nCur+nOffset+  1, IMODE , "B"                            );
+
+    /* RGB JPEG compressed NITF requires IMODE=P (see #3345) */
+    if (nBands >= 3 && (EQUAL(pszIC, "C3") || EQUAL(pszIC, "M3")))
+    {
+        PLACE(nCur+nOffset+  1, IMODE , "P"                            );
+    }
+    else
+    {
+        PLACE(nCur+nOffset+  1, IMODE , "B"                            );
+    }
     PLACE(nCur+nOffset+  2, NBPR  , CPLSPrintf("%04d",nNBPR)       );
     PLACE(nCur+nOffset+  6, NBPC  , CPLSPrintf("%04d",nNBPC)       );
     PLACE(nCur+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nNPPBH)      );
