@@ -1071,7 +1071,7 @@ mosaics a set of images
 \verbatim
 gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
                      [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]
-                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]
+                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init "value [value...]"]
                      [-ot datatype] [-createonly] input_files
 \endverbatim
 
@@ -1114,8 +1114,9 @@ color table.
 Ignore pixels from files being merged in with this pixel value. 
 </dd>
 <dt> <b>-init</b> <i>value</i>:</dt><dd> 
-Pre-initialize the output file with this value.  However, it is not marked
-as the nodata value in the output file. 
+Pre-initialize the output image bands with these values.  However, it is not
+marked as the nodata value in the output file.  If only one value is given, the
+same value is used in all the bands. 
 </dd>
 <dt> <b>-createonly</b>:</dt><dd> 
 The output file is created (and potentially pre-initialized) but no input

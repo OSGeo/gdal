@@ -235,7 +235,7 @@ class file_info:
 def Usage():
     print('Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*')
     print('                     [-ps pixelsize_x pixelsize_y] [-separate] [-q] [-v] [-pct]')
-    print('                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]')
+    print('                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init "value [value...]"]')
     print('                     [-ot datatype] [-createonly] input_files')
     print('                     [--help-general]')
     print('')
@@ -247,6 +247,9 @@ def Usage():
 
 def main( argv=None ):
 
+    global verbose, quiet
+    verbose = 0
+    quiet = 0
     names = []
     format = 'GTiff'
     out_file = 'out.tif'
@@ -257,7 +260,7 @@ def main( argv=None ):
     copy_pct = 0
     nodata = None
     create_options = []
-    pre_init = None
+    pre_init = []
     band_type = None
     createonly = 0
     
@@ -304,7 +307,9 @@ def main( argv=None ):
 
         elif arg == '-init':
             i = i + 1
-            pre_init = float(argv[i])
+            str_pre_init = argv[i].split()
+            for x in str_pre_init:
+                pre_init.append(float(x))
 
         elif arg == '-n':
             i = i + 1
@@ -424,8 +429,12 @@ def main( argv=None ):
 
     # Do we need to pre-initialize the whole mosaic file to some value?
     if pre_init is not None:
-        for i in range(t_fh.RasterCount):
-            t_fh.GetRasterBand(i+1).Fill( pre_init )
+        if t_fh.RasterCount <= len(pre_init):
+            for i in range(t_fh.RasterCount):
+                t_fh.GetRasterBand(i+1).Fill( pre_init[i] )
+        elif len(pre_init) == 1:
+            for i in range(t_fh.RasterCount):
+                t_fh.GetRasterBand(i+1).Fill( pre_init[0] )
 
     # Copy data from source files into output file.
     t_band = 1
