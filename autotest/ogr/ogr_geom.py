@@ -76,6 +76,31 @@ def ogr_geom_area_linearring():
     
     return 'success'
 
+
+###############################################################################
+# Test Area calculation for a LinearRing whose coordinates are shifted by a huge value
+# With algorithm prior to #3556, this would return 0.
+
+def ogr_geom_area_linearring_big_offset():
+
+    geom = ogr.Geometry( type = ogr.wkbLinearRing )
+    BIGOFFSET = 100000000000;
+    geom.AddPoint_2D( BIGOFFSET + 0, BIGOFFSET + 0)
+    geom.AddPoint_2D( BIGOFFSET + 10, BIGOFFSET + 0)
+    geom.AddPoint_2D( BIGOFFSET + 10, BIGOFFSET + 10)
+    geom.AddPoint_2D( BIGOFFSET + 0, BIGOFFSET + 10)
+    geom.AddPoint_2D( BIGOFFSET + 0, BIGOFFSET + 0)
+
+    area = geom.GetArea()
+    if abs(area - 100.0) > 0.00000000001:
+        gdaltest.post_reason( 'Area result wrong, got %g.' % area )
+        return 'fail'
+
+    geom.Destroy()
+    
+    return 'success'
+
+
 def ogr_geom_empty():
     try:
         ogr.Geometry.IsEmpty
@@ -476,6 +501,7 @@ def ogr_geom_cleanup():
 gdaltest_list = [ 
     ogr_geom_area,
     ogr_geom_area_linearring,
+    ogr_geom_area_linearring_big_offset,
     ogr_geom_empty,
     ogr_geom_pickle,
     ogr_geom_boundary_point,

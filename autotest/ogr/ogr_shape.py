@@ -1459,6 +1459,56 @@ def ogr_shape_32():
     return 'success'
 
 ###############################################################################
+# Check that we can detect correct winding order even with polygons with big
+# coordinate offset (#3356)
+def ogr_shape_33():
+
+    ds = ogr.Open('data/bigoffset.shp')
+    lyr = ds.GetLayer(0)
+    feat_read = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON( ((0 0,0 1,1 1,1 0,0 0)),((100000000000 100000000000,100000000000 100000000001,100000000001 100000000001,100000000001 100000000000,100000000000 100000000000)) )'),
+                                max_error = 0.000000001 ) != 0:
+        print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+
+###############################################################################
+# Check that we can write correct winding order even with polygons with big
+# coordinate offset (#33XX)
+
+def ogr_shape_34():
+    
+    # FIXME! Skip for now until #33XX is fixed
+    return 'skip'
+    
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource( 'tmp/bigoffset.shp' )
+    lyr = ds.CreateLayer( 'bigoffset' )
+    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    geom_wkt = 'MULTIPOLYGON( ((0 0,0 1,1 1,1 0,0 0)),((100000000000 100000000000,100000000000 100000000001,100000000001 100000000001,100000000001 100000000000,100000000000 100000000000)) )'
+    geom = ogr.CreateGeometryFromWkt( geom_wkt )
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+    ds.Destroy()
+
+    ds = ogr.Open('tmp/bigoffset.shp')
+    lyr = ds.GetLayer(0)
+    feat_read = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON( ((0 0,0 1,1 1,1 0,0 0)),((100000000000 100000000000,100000000000 100000000001,100000000001 100000000001,100000000001 100000000000,100000000000 100000000000)) )'),
+                                max_error = 0.000000001 ) != 0:
+        print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -1510,6 +1560,8 @@ gdaltest_list = [
     ogr_shape_30,
     ogr_shape_31,
     ogr_shape_32,
+    ogr_shape_33,
+    ogr_shape_34,
     ogr_shape_cleanup ]
  
 if __name__ == '__main__':
