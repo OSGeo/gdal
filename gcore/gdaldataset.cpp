@@ -1185,8 +1185,9 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
  * This method is the same as the C function GDALGetGCPProjection(). 
  *
  * The projection string follows the normal rules from GetProjectionRef().
- * 
+ *
  * @return internal projection string or "" if there are no GCPs. 
+ *  It should not be altered, freed or expected to last for long.
  */
 
 const char *GDALDataset::GetGCPProjection()
