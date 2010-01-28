@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.63 2010-01-28 04:04:40 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.64 2010-01-28 11:34:34 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.64  2010-01-28 11:34:34  fwarmerdam
+ * handle the shape file length limits more gracefully (#3236)
+ *
  * Revision 1.63  2010-01-28 04:04:40  fwarmerdam
  * improve numerical accuracy of SHPRewind() algs (gdal #3363)
  *
@@ -243,14 +246,14 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.63 2010-01-28 04:04:40 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.64 2010-01-28 11:34:34 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
 #if UINT_MAX == 65535
-typedef long	      int32;
+typedef unsigned long	      int32;
 #else
-typedef int	      int32;
+typedef unsigned int	      int32;
 #endif
 
 #ifndef FALSE
@@ -568,10 +571,10 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     pabyBuf = (uchar *) malloc(100);
     psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
 
-    psSHP->nFileSize = (pabyBuf[24] * 256 * 256 * 256
-			+ pabyBuf[25] * 256 * 256
-			+ pabyBuf[26] * 256
-			+ pabyBuf[27]) * 2;
+    psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
+			+ (unsigned int)pabyBuf[25] * 256 * 256
+			+ (unsigned int)pabyBuf[26] * 256
+			+ (unsigned int)pabyBuf[27]) * 2;
 
 /* -------------------------------------------------------------------- */
 /*  Read SHX file Header info                                           */
@@ -656,10 +659,10 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
     psSHP->nMaxRecords = psSHP->nRecords;
 
-    psSHP->panRecOffset =
-        (int *) malloc(sizeof(int) * MAX(1,psSHP->nMaxRecords) );
-    psSHP->panRecSize =
-        (int *) malloc(sizeof(int) * MAX(1,psSHP->nMaxRecords) );
+    psSHP->panRecOffset = (unsigned int *)
+        malloc(sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
+    psSHP->panRecSize = (unsigned int *)
+        malloc(sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
     pabyBuf = (uchar *) malloc(8 * MAX(1,psSHP->nRecords) );
 
     if (psSHP->panRecOffset == NULL ||
@@ -1142,7 +1145,8 @@ int SHPAPI_CALL
 SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 		      
 {
-    int	       	nRecordOffset, i, nRecordSize=0;
+    unsigned int	       	nRecordOffset, nRecordSize=0;
+    int i;
     uchar	*pabyRec;
     int32	i32;
 
@@ -1173,10 +1177,10 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     {
 	psSHP->nMaxRecords =(int) ( psSHP->nMaxRecords * 1.3 + 100);
 
-	psSHP->panRecOffset = (int *) 
-            SfRealloc(psSHP->panRecOffset,sizeof(int) * psSHP->nMaxRecords );
-	psSHP->panRecSize = (int *) 
-            SfRealloc(psSHP->panRecSize,sizeof(int) * psSHP->nMaxRecords );
+	psSHP->panRecOffset = (unsigned int *) 
+            SfRealloc(psSHP->panRecOffset,sizeof(unsigned int) * psSHP->nMaxRecords );
+	psSHP->panRecSize = (unsigned int *) 
+            SfRealloc(psSHP->panRecSize,sizeof(unsigned int) * psSHP->nMaxRecords );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1426,6 +1430,18 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
     if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
     {
+        unsigned int nExpectedSize = psSHP->nFileSize + nRecordSize;
+        if( nExpectedSize < psSHP->nFileSize ) // due to unsigned int overflow
+        {
+            char str[128];
+            sprintf( str, "Failed to write shape object. "
+                          "File size cannot reach %u + %u.",
+                          psSHP->nFileSize, nRecordSize );
+            psSHP->sHooks.Error( str );
+            free( pabyRec );
+            return -1;
+        }
+
         if( nShapeId == -1 )
             nShapeId = psSHP->nRecords++;
 
@@ -1457,10 +1473,15 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Write out record.                                               */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0
-        || psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
+    if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
     {
-        psSHP->sHooks.Error( "Error in psSHP->sHooks.FSeek() or fwrite() writing object to .shp file." );
+        psSHP->sHooks.Error( "Error in psSHP->sHooks.FSeek() while writing object to .shp file." );
+        free( pabyRec );
+        return -1;
+    }
+    if( psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
+    {
+        psSHP->sHooks.Error( "Error in psSHP->sHooks.Fwrite() while writing object to .shp file." );
         free( pabyRec );
         return -1;
     }
@@ -1561,16 +1582,33 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      Read the record.                                                */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 ) != 0 
-        || psSHP->sHooks.FRead( psSHP->pabyRec, nEntitySize, 1, 
-                  psSHP->fpSHP ) != 1 )
+    if( psSHP->sHooks.FSeek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 ) != 0 )
     {
         /*
          * TODO - mloskot: Consider detailed diagnostics of shape file,
          * for example to detect if file is truncated.
          */
+        char str[128];
+        sprintf( str,
+                 "Error in fseek() reading object from .shp file at offset %u",
+                 psSHP->panRecOffset[hEntity]);
 
-        psSHP->sHooks.Error( "Error in fseek() or fread() reading object from .shp file." );
+        psSHP->sHooks.Error( str );
+        return NULL;
+    }
+
+    if( psSHP->sHooks.FRead( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP ) != 1 )
+    {
+        /*
+         * TODO - mloskot: Consider detailed diagnostics of shape file,
+         * for example to detect if file is truncated.
+         */
+        char str[128];
+        sprintf( str,
+                 "Error in fread() reading object of size %u from .shp file",
+                 nEntitySize);
+
+        psSHP->sHooks.Error( str );
         return NULL;
     }
 

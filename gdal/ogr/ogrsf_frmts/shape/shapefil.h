@@ -37,7 +37,10 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
- * Revision 1.46  2008/11/12 14:28:15  fwarmerdam
+ * Revision 1.47  2010-01-28 11:34:34  fwarmerdam
+ * handle the shape file length limits more gracefully (#3236)
+ *
+ * Revision 1.46  2008-11-12 14:28:15  fwarmerdam
  * DBFCreateField() now works on files with records
  *
  * Revision 1.45  2008/11/11 17:47:10  fwarmerdam
