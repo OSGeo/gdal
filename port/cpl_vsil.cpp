@@ -579,7 +579,7 @@ VSIFileManager::~VSIFileManager()
 
     for( iter = oHandlers.begin();
          iter != oHandlers.end();
-         iter++ )
+         ++iter )
     {
         delete iter->second;
     }
@@ -626,7 +626,7 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
 
     for( iter = poThis->oHandlers.begin();
          iter != poThis->oHandlers.end();
-         iter++ )
+         ++iter )
     {
         const char* pszIterKey = iter->first.c_str();
         int nIterKeyLen = iter->first.size();
