@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.60 2009-09-17 20:50:02 bram Exp $
+ * $Id: shpopen.c,v 1.63 2010-01-28 04:04:40 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,15 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.63  2010-01-28 04:04:40  fwarmerdam
+ * improve numerical accuracy of SHPRewind() algs (gdal #3363)
+ *
+ * Revision 1.62  2010-01-17 05:34:13  fwarmerdam
+ * Remove asserts on x/y being null (#2148).
+ *
+ * Revision 1.61  2010-01-16 05:07:42  fwarmerdam
+ * allow 0/nulls in shpcreateobject (#2148)
+ *
  * Revision 1.60  2009-09-17 20:50:02  bram
  * on Win32, define snprintf as alias to _snprintf
  *
@@ -234,14 +243,14 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.60 2009-09-17 20:50:02 bram Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.63 2010-01-28 04:04:40 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
 #if UINT_MAX == 65535
-typedef unsigned long	      int32;
+typedef long	      int32;
 #else
-typedef unsigned int	      int32;
+typedef int	      int32;
 #endif
 
 #ifndef FALSE
@@ -559,10 +568,10 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     pabyBuf = (uchar *) malloc(100);
     psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
 
-    psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
-			+ (unsigned int)pabyBuf[25] * 256 * 256
-			+ (unsigned int)pabyBuf[26] * 256
-			+ (unsigned int)pabyBuf[27]) * 2;
+    psSHP->nFileSize = (pabyBuf[24] * 256 * 256 * 256
+			+ pabyBuf[25] * 256 * 256
+			+ pabyBuf[26] * 256
+			+ pabyBuf[27]) * 2;
 
 /* -------------------------------------------------------------------- */
 /*  Read SHX file Header info                                           */
@@ -647,10 +656,10 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
     psSHP->nMaxRecords = psSHP->nRecords;
 
-    psSHP->panRecOffset = (unsigned int *)
-        malloc(sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
-    psSHP->panRecSize = (unsigned int *)
-        malloc(sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
+    psSHP->panRecOffset =
+        (int *) malloc(sizeof(int) * MAX(1,psSHP->nMaxRecords) );
+    psSHP->panRecSize =
+        (int *) malloc(sizeof(int) * MAX(1,psSHP->nMaxRecords) );
     pabyBuf = (uchar *) malloc(8 * MAX(1,psSHP->nRecords) );
 
     if (psSHP->panRecOffset == NULL ||
@@ -1049,7 +1058,7 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
         psObject->nParts = MAX(1,nParts);
 
         psObject->panPartStart = (int *)
-            malloc(sizeof(int) * psObject->nParts);
+            calloc(sizeof(int), psObject->nParts);
         psObject->panPartType = (int *)
             malloc(sizeof(int) * psObject->nParts);
 
@@ -1058,7 +1067,8 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
         
         for( i = 0; i < nParts; i++ )
         {
-            psObject->panPartStart[i] = panPartStart[i];
+            if( psObject->panPartStart != NULL )
+                psObject->panPartStart[i] = panPartStart[i];
 
             if( panPartType != NULL )
                 psObject->panPartType[i] = panPartType[i];
@@ -1071,8 +1081,7 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Capture vertices.  Note that Z and M are optional, but X and    */
-/*      Y are not.                                                      */
+/*      Capture vertices.  Note that X, Y, Z and M are optional.        */
 /* -------------------------------------------------------------------- */
     if( nVertices > 0 )
     {
@@ -1081,13 +1090,12 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
         psObject->padfZ = (double *) calloc(sizeof(double),nVertices);
         psObject->padfM = (double *) calloc(sizeof(double),nVertices);
 
-        assert( padfX != NULL );
-        assert( padfY != NULL );
-    
         for( i = 0; i < nVertices; i++ )
         {
-            psObject->padfX[i] = padfX[i];
-            psObject->padfY[i] = padfY[i];
+            if( padfX != NULL )
+                psObject->padfX[i] = padfX[i];
+            if( padfY != NULL )
+                psObject->padfY[i] = padfY[i];
             if( padfZ != NULL && bHasZ )
                 psObject->padfZ[i] = padfZ[i];
             if( padfM != NULL && bHasM )
@@ -1134,8 +1142,7 @@ int SHPAPI_CALL
 SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 		      
 {
-    unsigned int	       	nRecordOffset, nRecordSize=0;
-    int i;
+    int	       	nRecordOffset, i, nRecordSize=0;
     uchar	*pabyRec;
     int32	i32;
 
@@ -1166,10 +1173,10 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     {
 	psSHP->nMaxRecords =(int) ( psSHP->nMaxRecords * 1.3 + 100);
 
-	psSHP->panRecOffset = (unsigned int *) 
-            SfRealloc(psSHP->panRecOffset,sizeof(unsigned int) * psSHP->nMaxRecords );
-	psSHP->panRecSize = (unsigned int *) 
-            SfRealloc(psSHP->panRecSize,sizeof(unsigned int) * psSHP->nMaxRecords );
+	psSHP->panRecOffset = (int *) 
+            SfRealloc(psSHP->panRecOffset,sizeof(int) * psSHP->nMaxRecords );
+	psSHP->panRecSize = (int *) 
+            SfRealloc(psSHP->panRecSize,sizeof(int) * psSHP->nMaxRecords );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1419,18 +1426,6 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
     if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
     {
-        unsigned int nExpectedSize = psSHP->nFileSize + nRecordSize;
-        if( nExpectedSize < psSHP->nFileSize ) // due to unsigned int overflow
-        {
-            char str[128];
-            sprintf( str, "Failed to write shape object. "
-                          "File size cannot reach %u + %u.",
-                          psSHP->nFileSize, nRecordSize );
-            psSHP->sHooks.Error( str );
-            free( pabyRec );
-            return -1;
-        }
-
         if( nShapeId == -1 )
             nShapeId = psSHP->nRecords++;
 
@@ -1462,15 +1457,10 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Write out record.                                               */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
+    if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0
+        || psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
     {
-        psSHP->sHooks.Error( "Error in psSHP->sHooks.FSeek() while writing object to .shp file." );
-        free( pabyRec );
-        return -1;
-    }
-    if( psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
-    {
-        psSHP->sHooks.Error( "Error in psSHP->sHooks.Fwrite() while writing object to .shp file." );
+        psSHP->sHooks.Error( "Error in psSHP->sHooks.FSeek() or fwrite() writing object to .shp file." );
         free( pabyRec );
         return -1;
     }
@@ -1571,33 +1561,16 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      Read the record.                                                */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 ) != 0 )
+    if( psSHP->sHooks.FSeek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 ) != 0 
+        || psSHP->sHooks.FRead( psSHP->pabyRec, nEntitySize, 1, 
+                  psSHP->fpSHP ) != 1 )
     {
         /*
          * TODO - mloskot: Consider detailed diagnostics of shape file,
          * for example to detect if file is truncated.
          */
-        char str[128];
-        sprintf( str,
-                 "Error in fseek() reading object from .shp file at offset %u",
-                 psSHP->panRecOffset[hEntity]);
 
-        psSHP->sHooks.Error( str );
-        return NULL;
-    }
-
-    if( psSHP->sHooks.FRead( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP ) != 1 )
-    {
-        /*
-         * TODO - mloskot: Consider detailed diagnostics of shape file,
-         * for example to detect if file is truncated.
-         */
-        char str[128];
-        sprintf( str,
-                 "Error in fread() reading object of size %u from .shp file",
-                 nEntitySize);
-
-        psSHP->sHooks.Error( str );
+        psSHP->sHooks.Error( "Error in fseek() or fread() reading object from .shp file." );
         return NULL;
     }
 
@@ -2269,15 +2242,16 @@ SHPRewindObject( SHPHandle hSHP, SHPObject * psObject )
             nVertCount = psObject->panPartStart[iOpRing+1] 
                 - psObject->panPartStart[iOpRing];
 
-        dfSum = 0.0;
-        for( iVert = nVertStart; iVert < nVertStart+nVertCount-1; iVert++ )
+        if (nVertCount < 2)
+            continue;
+
+        dfSum = psObject->padfX[nVertStart] * (psObject->padfY[nVertStart+1] - psObject->padfY[nVertStart+nVertCount-1]);
+        for( iVert = nVertStart + 1; iVert < nVertStart+nVertCount-1; iVert++ )
         {
-            dfSum += psObject->padfX[iVert] * psObject->padfY[iVert+1]
-                - psObject->padfY[iVert] * psObject->padfX[iVert+1];
+            dfSum += psObject->padfX[iVert] * (psObject->padfY[iVert+1] - psObject->padfY[iVert-1]);
         }
 
-        dfSum += psObject->padfX[iVert] * psObject->padfY[nVertStart]
-               - psObject->padfY[iVert] * psObject->padfX[nVertStart];
+        dfSum += psObject->padfX[iVert] * (psObject->padfY[nVertStart] - psObject->padfY[iVert-1]);
 
 /* -------------------------------------------------------------------- */
 /*      Reverse if necessary.                                           */
