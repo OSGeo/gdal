@@ -262,6 +262,13 @@ def tiff_vsimem():
             return 'fail'
     ds = None
 
+    # Also test with anti-slash
+    ds = gdal.Open('/vsimem\\tiffinmem')
+    if ds.GetRasterBand(1).Checksum() != 0:
+            print('Expected checksum = %d. Got = %d' % (0, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+    ds = None
+
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/tiffinmem')
 
