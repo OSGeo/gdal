@@ -1505,7 +1505,7 @@ VSIZipFilesystemHandler::~VSIZipFilesystemHandler()
 {
     std::map<CPLString,ZIPContent*>::const_iterator iter;
 
-    for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
+    for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
     {
         ZIPContent* content = iter->second;
         int i;
