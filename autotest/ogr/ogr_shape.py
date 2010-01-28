@@ -1483,9 +1483,6 @@ def ogr_shape_33():
 
 def ogr_shape_34():
     
-    # FIXME! Skip for now until #33XX is fixed
-    return 'skip'
-    
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource( 'tmp/bigoffset.shp' )
     lyr = ds.CreateLayer( 'bigoffset' )
     feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
