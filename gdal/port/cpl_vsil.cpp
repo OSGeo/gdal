@@ -579,7 +579,7 @@ VSIFileManager::~VSIFileManager()
 
     for( iter = oHandlers.begin();
          iter != oHandlers.end();
-         iter++ )
+         ++iter )
     {
         delete iter->second;
     }
@@ -620,25 +620,27 @@ VSIFileManager *VSIFileManager::Get()
 VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
 
 {
+    CPLAssert( NULL !=  pszPath);
+
+    const std::string strPath(pszPath);
     VSIFileManager *poThis = Get();
     std::map<std::string,VSIFilesystemHandler*>::const_iterator iter;
-    int nPathLen = strlen(pszPath);
 
     for( iter = poThis->oHandlers.begin();
          iter != poThis->oHandlers.end();
-         iter++ )
+         ++iter )
     {
-        const char* pszIterKey = iter->first.c_str();
-        int nIterKeyLen = iter->first.size();
-        if( strncmp(pszPath,pszIterKey,nIterKeyLen) == 0 )
+        const std::string& strKey = iter->first;
+        if ( strPath == strKey )
             return iter->second;
-
+    
         /* "/vsimem\foo" should be handled as "/vsimem/foo" */
-        if (nIterKeyLen && nPathLen > nIterKeyLen &&
-            pszIterKey[nIterKeyLen-1] == '/' &&
-            pszPath[nIterKeyLen-1] == '\\' &&
-            strncmp(pszPath,pszIterKey,nIterKeyLen-1) == 0 )
+        if ( !strKey.empty() && strPath.size() > strKey.size()
+             && strKey[strKey.size() - 1] == '/'
+             && strPath.compare(strKey.size(), 1, "\\") == 0 )
+        {
             return iter->second;
+        }
     }
     
     return poThis->poDefaultHandler;
