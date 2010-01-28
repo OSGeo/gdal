@@ -385,7 +385,7 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 {
     std::map<CPLString,VSIMemFile*>::const_iterator iter;
 
-    for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
+    for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
     {
         iter->second->nRefCount--;
         delete iter->second;
@@ -600,7 +600,7 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
     int nItems=0;
     int nAllocatedItems=0;
 
-    for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
+    for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
     {
         const char *pszFilePath = iter->second->osFilename.c_str();
         if( EQUALN(osPath,pszFilePath,nPathLen)
