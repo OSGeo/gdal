@@ -139,6 +139,8 @@ public:
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
+    virtual int      Rename( const char *oldpath, const char *newpath );
+
     static  void     NormalizePath( CPLString & );
 };
 
@@ -627,6 +629,45 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
     }
 
     return papszDir;
+}
+
+/************************************************************************/
+/*                               Rename()                               */
+/************************************************************************/
+
+int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
+                                     const char *pszNewPath )
+
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    CPLString osOldPath = pszOldPath;
+    CPLString osNewPath = pszNewPath;
+
+    NormalizePath( osOldPath );
+    NormalizePath( osNewPath );
+
+    if ( osOldPath.compare(osNewPath) == 0 )
+        return 0;
+
+    if( oFileList.find(osOldPath) == oFileList.end() )
+    {
+        errno = ENOENT;
+        return -1;
+    }
+    else
+    {
+        VSIMemFile* poFile = oFileList[osOldPath];
+
+        oFileList.erase( oFileList.find(osOldPath) );
+
+        Unlink(osNewPath);
+
+        oFileList[osNewPath] = poFile;
+        poFile->osFilename = osNewPath;
+
+        return 0;
+    }
 }
 
 /************************************************************************/
