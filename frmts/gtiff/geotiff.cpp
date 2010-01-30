@@ -3802,6 +3802,10 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                     TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, atof(pszItemValue) );
                 else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") )
                     TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, atoi(pszItemValue) );
+                else
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "%s metadata item is unhandled and will not be written",
+                             pszItemName);
             }
             else if( nBand == 0 && EQUAL(pszItemName,GDALMD_AREA_OR_POINT) )
                 /* do nothing, handled elsewhere */;
@@ -6774,7 +6778,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if (!bHasWrittenMDInGeotiffTAG)
         GTiffDataset::WriteMetadata( poDS, hTIFF, TRUE, pszProfile,
-                                     pszFilename, papszOptions, TRUE /* don't write RPC and IMG file again */);
+                                     pszFilename, papszOptions, TRUE /* don't write RPC and IMD file again */);
 
     /* To avoid unnecessary directory rewriting */
     poDS->bMetadataChanged = FALSE;

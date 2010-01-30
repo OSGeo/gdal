@@ -40,7 +40,13 @@ If no georeferencing
 information is available in the TIFF file itself, GDAL will also check for,
 and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
 extention .tfw, .tifw/.tiffw or .wld, as well as a MapInfo .tab file (only control
-points used, Coordsys ignored).<P>
+points used, Coordsys ignored).<p>
+
+GDAL can read and write the <i>RPCCoefficientTag</i> as described in the <a href="http://geotiff.maptools.org/rpc_prop.html">
+RPCs in GeoTIFF</a> proposed extension. The tag is written only for
+files created with the default profile GDALGeoTIFF. For other profiles, a .RPB file
+is created. In GDAL data model, the RPC coefficients are stored into the RPC metadata domain.
+For more details, see the <a href="http://trac.osgeo.org/gdal/wiki/rfc22_rpc">RPC Georeferencing RFC</a>.
 
 <h2>Internal nodata masks</h2> (from GDAL 1.6.0)<p>
 
@@ -74,6 +80,37 @@ environment variable is set to YES and the GeoTIFF file is opened in update mode
 BuildOverviews() will automatically create overviews for the internal transparency mask.
 These overviews will be refreshed by further calls to BuildOverviews() even if
 GDAL_TIFF_INTERNAL_MASK is not set to YES.<p>
+
+<h2>Metadata</h2>
+
+GDAL can deal with the following baseline TIFF tags as dataset-level metadata :
+<ul>
+<li>TIFFTAG_DOCUMENTNAME</li>
+<li>TIFFTAG_IMAGEDESCRIPTION</li>
+<li>TIFFTAG_SOFTWARE</li>
+<li>TIFFTAG_DATETIME</li>
+<li>TIFFTAG_ARTIST</li>
+<li>TIFFTAG_HOSTCOMPUTER</li>
+<li>TIFFTAG_COPYRIGHT</li>
+<li>TIFFTAG_XRESOLUTION</li>
+<li>TIFFTAG_YRESOLUTION</li>
+<li>TIFFTAG_RESOLUTIONUNIT</li>
+<li>TIFFTAG_MINSAMPLEVALUE (read only)</li>
+<li>TIFFTAG_MAXSAMPLEVALUE (read only)</li>
+</ul>
+
+The name of the metadata item to use is one of the above names ("TIFFTAG_DOCUMENTNAME", ...).<p>
+
+Other non standard metadata items can be stored in a TIFF file created with the profile GDALGeoTIFF
+(the default, see below in the Creation issues section). Those metadata items are grouped together
+into a XML string stored in the non standard TIFFTAG_GDAL_METADATA ASCII tag (code 42112). When BASELINE
+or GeoTIFF profile are used, those non standard metadata items are stored into a PAM .aux.xml file.<p>
+
+<h2>Nodata value</h2>
+
+GDAL stores band nodata value in the non standard TIFFTAG_GDAL_NODATA ASCII tag (code 42113) for
+files created with the default profile GDALGeoTIFF. Note that all bands must use the same nodata value.
+When BASELINE or GeoTIFF profile are used, the nodata value is stored into a PAM .aux.xml file.<p>
 
 <h2>Creation Issues</h2>
 
