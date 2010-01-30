@@ -106,6 +106,9 @@ Other non standard metadata items can be stored in a TIFF file created with the 
 into a XML string stored in the non standard TIFFTAG_GDAL_METADATA ASCII tag (code 42112). When BASELINE
 or GeoTIFF profile are used, those non standard metadata items are stored into a PAM .aux.xml file.<p>
 
+The value of GDALMD_AREA_OR_POINT ("AREA_OR_POINT") metadata item is stored in the GeoTIFF key
+RasterPixelIsPoint for GDALGeoTIFF or GeoTIFF profiles.<p>
+
 <h2>Nodata value</h2>
 
 GDAL stores band nodata value in the non standard TIFFTAG_GDAL_NODATA ASCII tag (code 42113) for
