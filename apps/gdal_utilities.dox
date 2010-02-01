@@ -850,7 +850,8 @@ maximize output image visual quality.
 color table.  Defaults to 256.  Must be between 2 and 256. </dd>
 <dt> <b>-pct</b> <i>palette_file</i>:</dt><dd> Extract the color table from
 <i>palette_file</i> instead of computing it. Can be used to have a consistant
-color table for multiple files. </dd>
+color table for multiple files.  The <i>palette_file</i> must be a raster file
+in a GDAL supported format with a palette.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).  Same
 semantics as the <b>-of</b> flag for gdal_translate.  Only output formats
 supporting pseudocolor tables should be used. </dd>
@@ -861,6 +862,29 @@ created.</dd>
 
 NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
 with Python support.  
+
+\section example EXAMPLE
+
+If it is desired to hand create the palette, likely the simpliest text format
+is the GDAL VRT format.  In the following example a VRT was created in a 
+text editor with a small 4 color palette with the RGBA colors 238/238/238/255, 
+237/237/237/255, 236/236/236/255 and 229/229/229/255.
+
+\verbatim
+% rgb2pct.py -pct palette.vrt rgb.tif pseudo-colored.tif
+% more < palette.vrt
+<VRTDataset rasterXSize="226" rasterYSize="271">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Palette</ColorInterp>
+    <ColorTable>
+      <Entry c1="238" c2="238" c3="238" c4="255"/>
+      <Entry c1="237" c2="237" c3="237" c4="255"/>
+      <Entry c1="236" c2="236" c3="236" c4="255"/>
+      <Entry c1="229" c2="229" c3="229" c4="255"/>
+    </ColorTable>
+  </VRTRasterBand>
+</VRTDataset> 
+\endverbatim
 
 \if man
 \section iauthor AUTHOR
