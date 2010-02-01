@@ -3,12 +3,12 @@ RECORD_TYPE    = FIXED_LENGTH
 RECORD_BYTES   = 15
 FILE_RECORDS   = 20
 LABEL_RECORDS  = 1
-^IMAGE         = ("small.raw", 3 <BYTES>)
+^IMAGE         = ("small.raw", 1)
 
 /* This file was manually modified substantially from the original to produce a small file demonstrating bug 3177's detached file with an offset */
 OBJECT = IMAGE
  LINES  = 20
- LINE_SAMPLES = 15
+ LINE_SAMPLES = 12
  BANDS = 1
  CENTER_FILTER_WAVELENGTH = 1.000
  BAND_STORAGE_TYPE = BAND_SEQUENTIAL
@@ -16,6 +16,7 @@ OBJECT = IMAGE
  SCALING_FACTOR = 1.0
  SAMPLE_BITS = 8
  SAMPLE_TYPE = UNSIGNED_INTEGER
+ LINE_PREFIX_BYTES = 3
 END_OBJECT
 
 /* Identification Information */

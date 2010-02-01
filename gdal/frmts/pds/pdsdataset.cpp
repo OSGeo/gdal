@@ -575,8 +575,11 @@ int PDSDataset::ParseUncompressedImage()
 /* ------------------------------------------------------------------- */
     // IMAGE can be inline or detached and point to an image name
     // ^IMAGE = 3
-    // ^IMAGE                         = "GLOBAL_ALBEDO_8PPD.IMG"
-    // ^IMAGE                         = "MEGT90N000CB.IMG"
+    // ^IMAGE             = "GLOBAL_ALBEDO_8PPD.IMG"
+    // ^IMAGE             = "MEGT90N000CB.IMG"
+    // ^IMAGE		  = ("BLAH.IMG",1)	 -- start at record 1 (1 based)
+    // ^IMAGE		  = ("BLAH.IMG")	 -- still start at record 1 (equiv of "BLAH.IMG")
+    // ^IMAGE		  = ("BLAH.IMG", 5 <BYTES>) -- start at byte 5 (the fifth byte in the file)
     // ^SPECTRAL_QUBE = 5  for multi-band images
 
     CPLString osImageKeyword = "^IMAGE";
@@ -590,11 +593,19 @@ int PDSDataset::ParseUncompressedImage()
 
     int nQube = atoi(osQube);
     int nDetachedOffset = 0;
+    int bDetachedOffsetInBytes = FALSE;
 
     if( osQube[0] == '(' )
     {
-        osQube = GetKeywordSub( osImageKeyword, 1 ); 
-        nDetachedOffset = atoi(GetKeywordSub( osImageKeyword, 2 ));
+        osQube = "\"";
+        osQube += GetKeywordSub( osImageKeyword, 1 );
+        osQube +=  "\"";
+        nDetachedOffset = atoi(GetKeywordSub( osImageKeyword, 2, "1")) - 1;
+
+        // If this is not explicitly in bytes, then it is assumed to be in
+        // records, and we need to translate to bytes.
+        if (strstr(GetKeywordSub(osImageKeyword,2),"<BYTES>") != NULL)
+            bDetachedOffsetInBytes = TRUE;
     }
 
     if( osQube[0] == '"' )
@@ -681,11 +692,18 @@ int PDSDataset::ParseUncompressedImage()
         record_bytes = atoi(GetKeyword("RECORD_BYTES"));
 
     if (nQube > 0)
-        nSkipBytes = (nQube - 1) * record_bytes;     
+        nSkipBytes = (nQube - 1) * record_bytes;
     else if( nDetachedOffset > 0 )
-        nSkipBytes = nDetachedOffset;
+    {
+        if (bDetachedOffsetInBytes)
+            nSkipBytes = nDetachedOffset;
+        else
+            nSkipBytes = nDetachedOffset * record_bytes;
+    }
     else
         nSkipBytes = 0;     
+
+    nSkipBytes += atoi(GetKeyword("IMAGE.LINE_PREFIX_BYTES",""));
     
     /**** Grab format type - pds supports 1,2,4,8,16,32,64 (in theory) **/
     /**** I have only seen 8, 16, 32 (float) in released datasets      **/
@@ -774,24 +792,22 @@ int PDSDataset::ParseUncompressedImage()
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     int     nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int		nLineOffset, nPixelOffset, nBandOffset;
-    
+    int     nLineOffset = record_bytes;
+    int	    nPixelOffset, nBandOffset;
+
     if( EQUAL(szLayout,"BIP") )
     {
         nPixelOffset = nItemSize * nBands;
-        nLineOffset = nPixelOffset * nCols;
         nBandOffset = nItemSize;
     }
     else if( EQUAL(szLayout,"BSQ") )
     {
         nPixelOffset = nItemSize;
-        nLineOffset = nPixelOffset * nCols;
         nBandOffset = nLineOffset * nRows;
     }
     else /* assume BIL */
     {
         nPixelOffset = nItemSize;
-        nLineOffset = nItemSize * nBands * nCols;
         nBandOffset = nItemSize * nCols;
     }
     
