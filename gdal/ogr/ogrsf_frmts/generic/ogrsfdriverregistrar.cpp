@@ -753,8 +753,12 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
 #endif 
 
 #ifdef MACOSX_FRAMEWORK
+#define num2str(x) str(x)
+#define str(x) #x 
         papszSearchPath = CSLAddString( papszSearchPath, 
-                                        "/Library/Application Support/GDAL/PlugIns" );
+                                        "/Library/Application Support/GDAL/"
+                                        num2str(GDAL_VERSION_MAJOR) "."
+                                        num2str(GDAL_VERSION_MINOR) "PlugIns" );
 #endif
 
     }
