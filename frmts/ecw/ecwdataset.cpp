@@ -704,7 +704,7 @@ int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag,
     {
         for( i = 0; i < nWinBandCount; i++ )
         {
-            if( panWinBandList[iBand] == panBandList[iBand] )
+            if( panWinBandList[i] == panBandList[iBand] )
                 break;
         }
 
