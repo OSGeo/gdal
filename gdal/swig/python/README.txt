@@ -16,7 +16,7 @@ reference documentation, but the `GDAL API Tutorial`_ includes Python examples.
 Dependencies
 ------------
  
- * libgdal (1.5.0 or greater) and header files (gdal-devel)
+ * libgdal (1.7.0 or greater) and header files (gdal-devel)
  * numpy (1.0.0 or greater) and header files (numpy-devel) (not explicitly 
    required, but many examples and utilities will not work without it)
 
@@ -109,7 +109,7 @@ do this, read the `Microsoft KnowledgeBase doc`_
 
    ::
   
-     C:\gdalwin32-1.5\bin
+     C:\gdalwin32-1.7\bin
 
 2. Create a new user or system variable with the data folder from 
    your installation.
@@ -117,7 +117,7 @@ do this, read the `Microsoft KnowledgeBase doc`_
    ::
   
      Name : GDAL_DATA
-     Path : C:\gdalwin32-1.5\data
+     Path : C:\gdalwin32-1.7\data
 
 Skip down to the `Usage`_ section to test your install. Note, a reboot 
 may be required.
@@ -126,8 +126,8 @@ SWIG
 ----
 
 The GDAL Python package is built using SWIG_. The earliest version of SWIG_ 
-that is supported to generate the wrapper code is 1.3.31.  It is possible 
-that usable bindings will build with a version earlier than 1.3.31, but no 
+that is supported to generate the wrapper code is 1.3.39.  It is possible 
+that usable bindings will build with a version earlier than 1.3.39, but no 
 development efforts are targeted at versions below it.  You should not have 
 to run SWIG in your development tree to generate the binding code, as it 
 is usually included with the source.  However, if you do need to regenerate, 
@@ -157,7 +157,7 @@ There are five major modules that are included with the GDAL_ Python bindings.::
 
 Additionally, there are five compatibility modules that are included but 
 provide notices to state that they are deprecated and will be going away.  
-If you are using GDAL 1.5 bindings, you should update your imports to utilize 
+If you are using GDAL 1.7 bindings, you should update your imports to utilize 
 the usage above, but the following will work until at least GDAL 2.0. ::
 
   >>> import gdal
@@ -196,21 +196,8 @@ With GDAL 1.4.0 the various bindings became fairly mature, and for GDAL 1.5.0,
 the "next-generation" bindings become the default bindings.  The previous, 
 "old-generation," bindings will continue to be available, but they will not 
 be widely supported and no new development will be targeted at them.  From 
-the viewpoint of a user, with GDAL 1.5.0 and above, you should not have to 
+the viewpoint of a user, with GDAL 1.7.0 and above, you should not have to 
 worry very much about the distinction between these two development efforts.
-
-Usage of Old-Generation Python Bindings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For certain legacy applications (most notably OpenEV 1.x), it may be necessary 
-to continue to use the old-generation Python bindings.  These can be built 
-and installed as part of a source build from ./configure::
-  
-  $ ./configure --with-ogpython=/usr/bin/python
-
-As noted earlier, these bindings are not widely supported and no new 
-development is expected to take place with them (including serious bug 
-fixes).  
 
 Numpy/Numeric
 -------------
