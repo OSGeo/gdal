@@ -104,18 +104,26 @@ def pds_3():
     return 'success'
 
 ###############################################################################
-# Read a hacked example of reading a detached file with an offset per #3177.
+# Read a hacked example of reading a detached file with an offset #3177.
 
 def pds_4():
 
-    tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 4028 )
+    tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 3418 )
+    return tst.testOpen()
+
+###############################################################################
+# Read a hacked example of reading a detached file with an offset #3355.
+
+def pds_5():
+
+    tst = gdaltest.GDALTest( 'PDS', 'pds_3355.lbl', 1, 2748 )
     return tst.testOpen()
 
 ###############################################################################
 # Read an image via the PDS label.  This is a distinct mode of the PDS
 # driver mostly intended to support jpeg2000 files with PDS labels. 
 
-def pds_5():
+def pds_6():
 
     tst = gdaltest.GDALTest( 'PDS', 'ESP_013951_1955_RED.LBL', 1, 4672 )
     if tst.testOpen( ) != 'success':
@@ -142,7 +150,8 @@ gdaltest_list = [
     pds_2,
     pds_3,
     pds_4,
-    pds_5 ]
+    pds_5,
+    pds_6 ]
 
 if __name__ == '__main__':
 
