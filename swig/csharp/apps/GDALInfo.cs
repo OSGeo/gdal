@@ -31,6 +31,7 @@
 using System;
 
 using OSGeo.GDAL;
+using OSGeo.OSR;
 
 
 /**
@@ -165,6 +166,27 @@ class GDALInfo {
             Console.WriteLine("  Lower Right (" + GDALInfoGetPosition( ds, ds.RasterXSize, ds.RasterYSize) + ")");
             Console.WriteLine("  Center (" + GDALInfoGetPosition( ds, ds.RasterXSize / 2, ds.RasterYSize / 2) + ")");
             Console.WriteLine("");
+
+            /* -------------------------------------------------------------------- */
+            /*      Report projection.                                              */
+            /* -------------------------------------------------------------------- */
+            string projection = ds.GetProjectionRef();
+            if (projection != null)
+            {
+                SpatialReference srs = new SpatialReference(null);
+                if (srs.ImportFromWkt(ref projection) == 0)
+                {
+                    string wkt;
+                    srs.ExportToPrettyWkt(out wkt, 0);
+                    Console.WriteLine("Coordinate System is:");
+                    Console.WriteLine(wkt);
+                }
+                else
+                {
+                    Console.WriteLine("Coordinate System is:");
+                    Console.WriteLine(projection);
+                }
+            }
 
             /* -------------------------------------------------------------------- */
             /*      Report GCPs.                                                    */
