@@ -105,3 +105,12 @@ Process :
 
 16) Update doc/index.dox to advertize the new release and link to the release notes
 
+17) Create a News page in Trac for the release (like 
+http://trac.osgeo.org/gdal/wiki/Release/1.7.0-News) and reference it from
+http://trac.osgeo.org/gdal/ (Releases) and 
+http://trac.osgeo.org/gdal/wiki/NewsAndStatus .
+
+18) Add pointers to the source releases at:
+  
+  http://trac.osgeo.org/gdal/wiki/DownloadSource
+
