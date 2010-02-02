@@ -81,7 +81,7 @@ samples:
 	$(CSC) /r:ogr_csharp.dll /out:WKT2WKB.exe apps/WKT2WKB.cs
 	$(CSC) /r:ogr_csharp.dll /out:OGRGEOS.exe apps/OGRGEOS.cs
 	$(CSC) /r:gdal_csharp.dll /out:ReadXML.exe apps/ReadXML.cs
-	$(CSC) /r:gdal_csharp.dll /out:GDALInfo.exe apps/GDALInfo.cs
+	$(CSC) /r:gdal_csharp.dll /r:osr_csharp.dll /out:GDALInfo.exe apps/GDALInfo.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALOverviews.exe apps/GDALOverviews.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALCreateCopy.exe apps/GDALCreateCopy.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALGetHistogram.exe apps/GDALGetHistogram.cs
