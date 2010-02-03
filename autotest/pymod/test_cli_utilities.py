@@ -142,3 +142,8 @@ def get_gdaldem_path():
 def get_gdal_rasterize_path():
     return get_cli_utility_path('gdal_rasterize')
 
+###############################################################################
+# 
+def get_nearblack_path():
+    return get_cli_utility_path('nearblack')
+
