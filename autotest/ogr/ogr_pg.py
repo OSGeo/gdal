@@ -1441,6 +1441,13 @@ def ogr_pg_34():
         os.environ['PGCLIENTENCODING'] = 'LATIN1' 
         ogr_pg_1()
         del os.environ['PGCLIENTENCODING']
+
+        # For some unknown reasons, some servers don't like forcing LATIN1
+        # but prefer LATIN9 instead...
+        if gdaltest.pg_ds is None:
+            os.environ['PGCLIENTENCODING'] = 'LATIN9' 
+            ogr_pg_1()
+            del os.environ['PGCLIENTENCODING']
     else:
         gdaltest.pg_ds.ExecuteSQL('SET client_encoding = LATIN1')
 
@@ -2178,6 +2185,106 @@ def ogr_pg_47():
     return 'success'
 
 ###############################################################################
+# Test that we can read a table without any primary key (#2082)
+# Test also the effect of PG_LIST_ALL_TABLES with a non spatial table in a
+# PostGIS DB.
+
+def ogr_pg_48():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdaltest.pg_ds.ExecuteSQL("CREATE TABLE no_pk_table (gid serial NOT NULL, other_id INTEGER)")
+    gdaltest.pg_ds.ExecuteSQL("INSERT INTO no_pk_table (gid, other_id) VALUES (1, 10)")
+
+    gdaltest.pg_ds.Destroy()
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+
+    found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, 'no_pk_table')
+    if gdaltest.pg_has_postgis:
+        # Non spatial table in a PostGIS db -> not listed ...
+        if found:
+            gdaltest.post_reason( 'layer no_pk_table unexpectedly listed' )
+            return 'fail'
+
+        # ... but should be found on explicit request
+        lyr = gdaltest.pg_ds.GetLayer('no_pk_table')
+        if lyr is None:
+            gdaltest.post_reason( 'could not get no_pk_table' )
+            return 'fail'
+
+        # Try again by setting PG_LIST_ALL_TABLES=YES
+        gdal.SetConfigOption('PG_LIST_ALL_TABLES', 'YES')
+        gdaltest.pg_ds.Destroy()
+        gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+        gdal.SetConfigOption('PG_LIST_ALL_TABLES', None)
+        found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, 'no_pk_table')
+
+    if found is False:
+        gdaltest.post_reason( 'layer no_pk_table not listed' )
+        return 'fail'
+
+    lyr = gdaltest.pg_ds.GetLayer('no_pk_table')
+    if lyr is None:
+        gdaltest.post_reason( 'could not get no_pk_table' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason( 'did not get feature' )
+        return 'fail'
+
+    if lyr.GetFIDColumn() != '':
+        gdaltest.post_reason( 'got a non NULL FID column' )
+        print(lyr.GetFIDColumn())
+        return 'fail'
+
+    if feat.GetFID() != 0:
+        gdaltest.post_reason( 'did not get expected FID' )
+        feat.DumpReadable()
+        return 'fail'
+
+    if feat.GetFieldAsInteger('gid') != 1:
+        gdaltest.post_reason( 'did not get expected gid' )
+        feat.DumpReadable()
+        return 'fail'
+
+    if feat.GetFieldAsInteger('other_id') != 10:
+        gdaltest.post_reason( 'did not get expected other_id' )
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Go on with previous test but set PGSQL_OGR_FID this time
+
+def ogr_pg_49():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdal.SetConfigOption('PGSQL_OGR_FID', 'other_id')
+    gdaltest.pg_ds.Destroy()
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayer('no_pk_table')
+    gdal.SetConfigOption('PGSQL_OGR_FID', None)
+
+    feat = lyr.GetNextFeature()
+
+    if lyr.GetFIDColumn() != 'other_id':
+        print(lyr.GetFIDColumn())
+        gdaltest.post_reason( 'did not get expected FID column' )
+        return 'fail'
+
+    if feat.GetFID() != 10:
+        gdaltest.post_reason( 'did not get expected FID' )
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2205,6 +2312,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:select' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:bigtable' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_geog' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:no_pk_table' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -2281,6 +2389,8 @@ gdaltest_list_internal = [
     ogr_pg_45,
     ogr_pg_46,
     ogr_pg_47,
+    ogr_pg_48,
+    ogr_pg_49,
     ogr_pg_cleanup ]
 
 ###############################################################################
