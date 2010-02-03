@@ -1037,8 +1037,8 @@ convert nearly black/white borders to black
 \section msynopsis SYNOPSIS
 
 \verbatim
-nearblack [-white] [-near dist] [-nb non_black_pixels]
-          [-o outfile] infile
+nearblack [-of format] [-white] [-near dist] [-nb non_black_pixels]
+          [-setalpha] [-o outfile] [-q]  [-co "NAME=VALUE"]* infile
 \endverbatim
 
 \section mdescription DESCRIPTION
@@ -1050,8 +1050,13 @@ can be treated as transparent when mosaicing.
 
 <dl>
 <dt> <b>-o</b> <i>outfile</i>:</dt><dd> The name of the output file to be
-created.  Newly created files are currently always created with the HFA driver
+created.  Newly created files are created with the HFA driver by default
 (Erdas Imagine - .img)</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL 1.8.0 or later) Select the output format.
+Use the short format name (GTiff for GeoTIFF for examle).</dd>
+<dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL 1.8.0 or later) Passes a creation option to the
+output format driver.  Multiple <b>-co</b> options may be listed.  See format 
+specific documentation for legal creation options for each format. Only valid when creating a new file</dd>
 <dt> <b>-white</b>:</dt><dd> 
 Search for nearly white (255) pixels instead of nearly black pixels.
 </dd>
@@ -1061,6 +1066,14 @@ Select how far from black (or white) the pixel values can be and still considere
 <dt> <b>-nb</b> <i>non_black_pixels</i>:</dt><dd> 
 number of non-black pixels that can be encountered before the giving up search inwards. Defaults to 2. 
 </dd>
+<dt> <b>-setalpha</b>:</dt><dd> (GDAL 1.8.0 or later) 
+Adds an alpha band if the output file is specified and the input file has 3 bands,
+or sets the alpha band of the output file if it is specified and the input file has 4 bands,
+or sets the alpha band of the input file if it has 4 bands and no output file is specified.
+The alpha band is set to 0 in the image collar and to 255 elsewhere.
+</dd>
+<dt> <b>-q</b>:</dt><dd> (GDAL 1.8.0 or later) Suppress progress monitor and other non-error
+output.</dd>
 <dt> <i>infile</i>:</dt><dd> 
 The input file.  Any GDAL supported format, any number of bands, normally 8bit 
 Byte bands.
