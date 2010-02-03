@@ -29,10 +29,11 @@
 
 #include "gdal.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
-static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
+static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nSrcBands, int nDstBands,
                          int nNearDist, int nMaxNonBlack, int bNearWhite,
                          int *panLastLineCounts, 
                          int bDoHorizontalCheck, 
@@ -44,8 +45,8 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
 
 void Usage()
 {
-    printf( "nearblack [-white] [-near dist] [-nb non_black_pixels]\n"
-            "          [-o outfile] infile\n" );
+    printf( "nearblack [-of format] [-white] [-near dist] [-nb non_black_pixels]\n"
+            "          [-setalpha] [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n" );
     exit( 1 );
 }
 
@@ -83,6 +84,10 @@ int main( int argc, char ** argv )
     int nMaxNonBlack = 2;
     int nNearDist = 15;
     int bNearWhite = FALSE;
+    int bSetAlpha = FALSE;
+    const char* pszDriverName = "HFA";
+    char** papszCreationOptions = NULL;
+    int bQuiet = FALSE;
     
     for( i = 1; i < argc; i++ )
     {
@@ -94,12 +99,20 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i], "-o") && i < argc-1 )
             pszOutFile = argv[++i];
+        else if( EQUAL(argv[i], "-of") && i < argc-1 )
+            pszDriverName = argv[++i];
         else if( EQUAL(argv[i], "-white") )
             bNearWhite = TRUE;
         else if( EQUAL(argv[i], "-nb") && i < argc-1 )
             nMaxNonBlack = atoi(argv[++i]);
         else if( EQUAL(argv[i], "-near") && i < argc-1 )
             nNearDist = atoi(argv[++i]);
+        else if( EQUAL(argv[i], "-setalpha") )
+            bSetAlpha = TRUE;
+        else if( EQUAL(argv[i], "-q") || EQUAL(argv[i], "-quiet") )
+            bQuiet = TRUE;
+        else if( EQUAL(argv[i], "-co") && i < argc-1 )
+            papszCreationOptions = CSLAddString(papszCreationOptions, argv[++i]);
         else if( argv[i][0] == '-' )
             Usage();
         else if( pszInFile == NULL )
@@ -131,17 +144,41 @@ int main( int argc, char ** argv )
     nXSize = GDALGetRasterXSize( hInDS );
     nYSize = GDALGetRasterYSize( hInDS );
     nBands = GDALGetRasterCount( hInDS );
+    int nDstBands = nBands;
+
+    if( hOutDS != NULL && papszCreationOptions != NULL)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                  "Warning: creation options are ignored when writing to an existing file.");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to create output file?                               */
 /* -------------------------------------------------------------------- */
     if( hOutDS == NULL )
     {
-        GDALDriverH hDriver = GDALGetDriverByName( "HFA" );
-        
+        GDALDriverH hDriver = GDALGetDriverByName( pszDriverName );
+        if (hDriver == NULL)
+            exit(1);
+
+        if (bSetAlpha)
+        {
+            if (nBands == 3)
+                nDstBands ++;
+            else if (nBands == 4)
+                nBands --;
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Number of bands of file = %d. Expected 3 or 4.",
+                         nBands);
+                exit(1);
+            }
+        }
+
         hOutDS = GDALCreate( hDriver, pszOutFile, 
-                             nXSize, nYSize, nBands, GDT_Byte, 
-                             NULL );
+                             nXSize, nYSize, nDstBands, GDT_Byte, 
+                             papszCreationOptions );
         if( hOutDS == NULL )
             exit( 1 );
 
@@ -153,6 +190,31 @@ int main( int argc, char ** argv )
             GDALSetProjection( hOutDS, GDALGetProjectionRef( hInDS ) );
         }
     }
+    else
+    {
+        if (bSetAlpha)
+        {
+            if (nBands != 4)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Number of bands of output file = %d. Expected 4.",
+                        nBands);
+                exit(1);
+            }
+
+            nBands --;
+        }
+    }
+
+    if (GDALGetRasterXSize(hOutDS) != nXSize ||
+        GDALGetRasterYSize(hOutDS) != nYSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The dimensions of the output dataset don't match "
+                 "the dimensions of the input dataset.");
+        exit(1);
+    }
+
 
     int iBand;
     for( iBand = 0; iBand < nBands; iBand++ )
@@ -177,7 +239,7 @@ int main( int argc, char ** argv )
     GByte *pabyLine;
     int   *panLastLineCounts;
 
-    pabyLine = (GByte *) CPLMalloc(nXSize * nBands);
+    pabyLine = (GByte *) CPLMalloc(nXSize * nDstBands);
 
     panLastLineCounts = (int *) CPLCalloc(sizeof(int),nXSize);
 
@@ -192,22 +254,32 @@ int main( int argc, char ** argv )
 
         eErr = GDALDatasetRasterIO( hInDS, GF_Read, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
-                                    nBands, NULL, nBands, nXSize * nBands, 1 );
+                                    nBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
             break;
         
-        ProcessLine( pabyLine, 0, nXSize-1, nBands, nNearDist, nMaxNonBlack,
+        if (bSetAlpha)
+        {
+            int iCol;
+            for(iCol = 0; iCol < nXSize; iCol ++)
+            {
+                pabyLine[iCol * nDstBands + nDstBands - 1] = 255;
+            }
+        }
+        
+        ProcessLine( pabyLine, 0, nXSize-1, nBands, nDstBands, nNearDist, nMaxNonBlack,
                      bNearWhite, panLastLineCounts, TRUE, TRUE );
-        ProcessLine( pabyLine, nXSize-1, 0, nBands, nNearDist, nMaxNonBlack,
+        ProcessLine( pabyLine, nXSize-1, 0, nBands, nDstBands, nNearDist, nMaxNonBlack,
                      bNearWhite, NULL, TRUE, FALSE );
         
         eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
-                                    nBands, NULL, nBands, nXSize * nBands, 1 );
+                                    nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
             break;
         
-        GDALTermProgress( 0.5 * ((iLine+1) / (double) nYSize), NULL, NULL );
+        if (!bQuiet)
+            GDALTermProgress( 0.5 * ((iLine+1) / (double) nYSize), NULL, NULL );
     }
 
 /* -------------------------------------------------------------------- */
@@ -221,21 +293,22 @@ int main( int argc, char ** argv )
 
         eErr = GDALDatasetRasterIO( hOutDS, GF_Read, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
-                                    nBands, NULL, nBands, nXSize * nBands, 1 );
+                                    nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
             break;
         
-        ProcessLine( pabyLine, 0, nXSize-1, nBands, nNearDist, nMaxNonBlack,
+        ProcessLine( pabyLine, 0, nXSize-1, nBands, nDstBands, nNearDist, nMaxNonBlack,
                      bNearWhite, panLastLineCounts, FALSE, TRUE );
         
         eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
-                                    nBands, NULL, nBands, nXSize * nBands, 1 );
+                                    nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
             break;
         
-        GDALTermProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, 
-                          NULL, NULL );
+        if (!bQuiet)
+            GDALTermProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, 
+                            NULL, NULL );
     }
 
     CPLFree(pabyLine);
@@ -245,6 +318,8 @@ int main( int argc, char ** argv )
     if( hInDS != hOutDS )
         GDALClose( hInDS );
     GDALDumpOpenDatasets( stderr );
+    CSLDestroy( argv );
+    CSLDestroy( papszCreationOptions );
     GDALDestroyDriverManager();
     
     return 0;
@@ -256,7 +331,8 @@ int main( int argc, char ** argv )
 /*      Process a single scanline of image data.                        */
 /************************************************************************/
 
-static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
+static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nSrcBands,
+                         int nDstBands,
                          int nNearDist, int nMaxNonBlack, int bNearWhite,
                          int *panLastLineCounts, 
                          int bDoHorizontalCheck, 
@@ -281,12 +357,12 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
             if( panLastLineCounts[i] > nMaxNonBlack )
                 continue;
 
-            for( iBand = 0; iBand < nBands; iBand++ )
+            for( iBand = 0; iBand < nSrcBands; iBand++ )
             {
 
                 if( bNearWhite )
                 {
-                    if( (255 - pabyLine[i * nBands + iBand]) > nNearDist )
+                    if( (255 - pabyLine[i * nDstBands + iBand]) > nNearDist )
                     {
                         bIsNonBlack = TRUE;
                         break;
@@ -294,7 +370,7 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
                 }
                 else
                 {
-                    if( pabyLine[i * nBands + iBand] > nNearDist )
+                    if( pabyLine[i * nDstBands + iBand] > nNearDist )
                     {
                         bIsNonBlack = TRUE;
                         break;
@@ -312,13 +388,15 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
             else
                 panLastLineCounts[i] = 0;
 
-            for( iBand = 0; iBand < nBands; iBand++ )
+            for( iBand = 0; iBand < nSrcBands; iBand++ )
             {
                 if( bNearWhite )
-                    pabyLine[i * nBands + iBand] = 255;
+                    pabyLine[i * nDstBands + iBand] = 255;
                 else
-                    pabyLine[i * nBands + iBand] = 0;
+                    pabyLine[i * nDstBands + iBand] = 0;
             }
+            if( nSrcBands != nDstBands )
+                pabyLine[i * nDstBands + nDstBands - 1] = 0;
         }
     }
 
@@ -339,11 +417,11 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
             int iBand;
             int bIsNonBlack = FALSE;
 
-            for( iBand = 0; iBand < nBands; iBand++ )
+            for( iBand = 0; iBand < nSrcBands; iBand++ )
             {
                 if( bNearWhite )
                 {
-                    if( (255 - pabyLine[i * nBands + iBand]) > nNearDist )
+                    if( (255 - pabyLine[i * nDstBands + iBand]) > nNearDist )
                     {
                         bIsNonBlack = TRUE;
                         break;
@@ -351,7 +429,7 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
                 }
                 else
                 {
-                    if( pabyLine[i * nBands + iBand] > nNearDist )
+                    if( pabyLine[i * nDstBands + iBand] > nNearDist )
                     {
                         bIsNonBlack = TRUE;
                         break;
@@ -369,13 +447,15 @@ static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
             else
                 nNonBlackPixels = 0;
 
-            for( iBand = 0; iBand < nBands; iBand++ )
+            for( iBand = 0; iBand < nSrcBands; iBand++ )
             {
                 if( bNearWhite )
-                    pabyLine[i * nBands + iBand] = 255;
+                    pabyLine[i * nDstBands + iBand] = 255;
                 else
-                    pabyLine[i * nBands + iBand] = 0;
+                    pabyLine[i * nDstBands + iBand] = 0;
             }
+            if( nSrcBands != nDstBands )
+                pabyLine[i * nDstBands + nDstBands - 1] = 0;
         }
     }
 
