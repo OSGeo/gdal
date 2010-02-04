@@ -583,11 +583,15 @@ def ogr_geojson_11():
     return 'success'
 
 ###############################################################################
-# Test DS passed as name with standalone "Point" feature object.
+# Test DS passed as name with standalone "Point" feature object (#3377)
 
 def ogr_geojson_12():
 
     if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    import os
+    if os.name == 'nt':
         return 'skip'
 
     import test_cli_utilities
