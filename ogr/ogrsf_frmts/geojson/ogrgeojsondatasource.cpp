@@ -58,11 +58,8 @@ OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
     
     if( NULL != fpOut_ )
     {
-        if ( fpOut_ != stdout )
-        {
-            VSIFCloseL( fpOut_ );
-            fpOut_ = NULL;
-        }
+        VSIFCloseL( fpOut_ );
+        fpOut_ = NULL;
     }
 }
 
@@ -253,7 +250,7 @@ int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     if( EQUAL( pszName, "stdout" ) )
-        fpOut_ = stdout;
+        fpOut_ = VSIFOpenL( "/vsistdout/", "w" );
     else
         fpOut_ = VSIFOpenL( pszName, "w" );
 
@@ -311,7 +308,7 @@ void OGRGeoJSONDataSource::Clear()
     CPLFree( pszGeoData_ );
     pszGeoData_ = NULL;
 
-    if( NULL != fpOut_ && stdout != fpOut_ )
+    if( NULL != fpOut_ )
     {
         VSIFCloseL( fpOut_ );
     }
