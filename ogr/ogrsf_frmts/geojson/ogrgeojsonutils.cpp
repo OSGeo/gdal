@@ -70,10 +70,9 @@ GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource )
     }
     else if( EQUAL( CPLGetExtension( pszSource ), "geojson" )
              || EQUAL( CPLGetExtension( pszSource ), "json" )
-             || (EQUALN( pszSource, "/vsigzip/", 9)
-                 && EQUAL( CPLGetExtension( pszSource ), "gz" ))
-             || (EQUALN( pszSource, "/vsizip/", 8)
-                 && EQUAL( CPLGetExtension( pszSource ), "zip" )))
+             || ((EQUALN( pszSource, "/vsigzip/", 9) || EQUALN( pszSource, "/vsizip/", 8)) &&
+                 (strstr( pszSource, ".json") || strstr( pszSource, ".JSON") ||
+                  strstr( pszSource, ".geojson") || strstr( pszSource, ".GEOJSON")) ))
     {
         srcType = eGeoJSONSourceFile;
     }
