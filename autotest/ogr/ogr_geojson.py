@@ -581,6 +581,27 @@ def ogr_geojson_11():
     return 'success'
 
 ###############################################################################
+# Test DS passed as name with standalone "Point" feature object.
+
+def ogr_geojson_12():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro -al \'{"type": "Point","coordinates": [100.0, 0.0]}\'')
+    if ret.find(' POINT (100 0)') == -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -618,6 +639,7 @@ gdaltest_list = [
     ogr_geojson_9,
     ogr_geojson_10,
     ogr_geojson_11,
+    ogr_geojson_12,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
