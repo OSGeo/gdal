@@ -154,7 +154,7 @@ int OGRGeoJSONDataSource::Open( const char* pszName )
 
 const char* OGRGeoJSONDataSource::GetName()
 {
-    return pszName_;
+    return pszName_ ? pszName_ : "";
 }
 
 /************************************************************************/
