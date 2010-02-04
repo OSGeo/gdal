@@ -68,7 +68,7 @@ GDALMajorObject::~GDALMajorObject()
  *
  * This method is the same as the C function GDALGetDescription().
  * 
- * @return pointer to internal description string.
+ * @return non-null pointer to internal description string.
  */
 
 const char *GDALMajorObject::GetDescription() const
