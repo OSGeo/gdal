@@ -1114,7 +1114,8 @@ const char * HFARasterBand::GetDescription() const
 /************************************************************************/
 void HFARasterBand::SetDescription( const char *pszName )
 {
-    HFASetBandName( hHFA, nBand, pszName );
+    if( strlen(pszName) > 0 )
+        HFASetBandName( hHFA, nBand, pszName );
 }
 
 /************************************************************************/
@@ -3759,8 +3760,11 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         GDALRasterBand *poDstBand = poDS->GetRasterBand(iBand+1);
 
-        poDstBand->SetMetadata( poSrcBand->GetMetadata() );
-        poDstBand->SetDescription( poSrcBand->GetDescription() );
+        if( poSrcBand->GetMetadata() != NULL )
+            poDstBand->SetMetadata( poSrcBand->GetMetadata() );
+
+        if( strlen(poSrcBand->GetDescription()) > 0 )
+            poDstBand->SetDescription( poSrcBand->GetDescription() );
 
         double dfNoDataValue = poSrcBand->GetNoDataValue( &bSuccess );
         if( bSuccess )
