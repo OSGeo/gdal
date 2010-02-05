@@ -440,29 +440,12 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         // Check for a zone letter. PCI uses, accidentally, MGRS
         // type row lettering in its UTM projection
         char byZoneID = 0;
-        int nZoneOffset = 0;
 
-        // Iterate through the remaining characters in the projection
-        // string. We should see something like "UTM    55 G D000"
-        for (int i = 9; i < 16; i++)
-        {
-            if (pszProj[i] == ' ' && nZoneOffset == 0)
-            {
-                nZoneOffset = i + 1;
-            }
-            else if (pszProj[i] == ' ' && i - nZoneOffset == 1)
-            {
-                byZoneID = pszProj[nZoneOffset];
-                break;
-            }
-            else if (i - nZoneOffset > 1)
-            {
-                break;
-            }
-        }
+        if( strlen(pszProj) > 10 && pszProj[10] != ' ' )
+            byZoneID = pszProj[10];
 
         // Determine if the MGRS zone falls above or below the equator
-        if (byZoneID != 0)
+        if (byZoneID != 0 )
         {
 #ifdef DEBUG
             CPLDebug("OSR_PCI", "Found MGRS zone in UTM projection string: %c",
