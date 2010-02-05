@@ -812,7 +812,7 @@ static void GDALCopyWordsT(const Tin* const pSrcData, int nSrcPixelOffset,
                            Tout* const pDstData, int nDstPixelOffset,
                            int nWordCount)
 {
-    unsigned int nDstOffset = 0;
+    int nDstOffset = 0;
 
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
@@ -850,7 +850,7 @@ inline void GDALCopyWordsComplexT(const Tin* const pSrcData, int nSrcPixelOffset
                                   Tout* const pDstData, int nDstPixelOffset,
                                   int nWordCount)
 {
-    unsigned int nDstOffset = 0;
+    int nDstOffset = 0;
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
 
@@ -894,7 +894,7 @@ inline void GDALCopyWordsComplexOutT(const Tin* const pSrcData, int nSrcPixelOff
                                      Tout* const pDstData, int nDstPixelOffset,
                                      int nWordCount)
 {
-    unsigned int nDstOffset = 0;
+    int nDstOffset = 0;
     
     const Tout tOutZero = static_cast<Tout>(0);
 
