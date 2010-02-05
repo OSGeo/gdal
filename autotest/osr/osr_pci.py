@@ -87,9 +87,46 @@ def osr_pci_2():
 
     return 'success'
 
+###############################################################################
+# Test MGRS interpretation. (#3379)
+#
+
+def osr_pci_3():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromPCI('UTM    13   D000', 'METRE', \
+		      (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
+		       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+
+    wkt = srs.ExportToWkt()
+    if wkt.find('13, Northern Hemi') == -1:
+        gdaltest.post_reason( 'did not default to northern hemisphere!' )
+
+        
+    srs = osr.SpatialReference()
+    srs.ImportFromPCI('UTM    13 G D000', 'METRE', \
+		      (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
+		       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+
+    wkt = srs.ExportToWkt()
+    if wkt.find('13, Southern Hemi') == -1:
+        gdaltest.post_reason( 'did get southern  hemisphere!' )
+
+    srs = osr.SpatialReference()
+    srs.ImportFromPCI('UTM    13 X D000', 'METRE', \
+		      (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
+		       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+
+    wkt = srs.ExportToWkt()
+    if wkt.find('13, Northern Hemi') == -1:
+        gdaltest.post_reason( 'did get southern  hemisphere!' )
+        
+    return 'success'
+
 gdaltest_list = [ 
     osr_pci_1,
     osr_pci_2,
+    osr_pci_3,
     None ]
 
 if __name__ == '__main__':
