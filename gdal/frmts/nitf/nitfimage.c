@@ -65,6 +65,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     char       szTemp[128];
     int        nOffset, iBand, i;
     int        nNICOM;
+    const char* pszIID1;
     
 /* -------------------------------------------------------------------- */
 /*      Verify segment, and return existing image accessor if there     */
@@ -996,13 +997,17 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         }
     }
 
-    /* Bug #1750 */
-    /* Fix for cjnc/cjncz01/000k1023.jn1 (and similar) from NIMA GNCJNCN CDROM: */
-    /* this product is crossing meridian 180deg and the upper and lower right longitudes are negative (<-170) */
-    /* while the upper and lower left longitudes are positive (> 170) which causes problems in OpenEV, etc... */
+    /* Bug #1750, #2135 and #3383 */
+    /* Fix CADRG products like cjnc/cjncz01/000k1023.jn1 (and similar) from NIMA GNCJNCN CDROM: */
+    /* this product is crossing meridian 180deg and the upper and lower right longitudes are negative  */
+    /* while the upper and lower left longitudes are positive which causes problems in OpenEV, etc... */
     /* So we are adjusting the upper and lower right longitudes by setting them above +180 */
+    /* Make this test only CADRG specific are there are other NITF profiles where non north-up imagery */
+    /* is valid */
+    pszIID1 = CSLFetchNameValue(psImage->papszMetadata, "NITF_IID1");
     if( (psImage->chICORDS == 'G' || psImage->chICORDS == 'D') &&
-        (psImage->dfULX > 170 && psImage->dfLLX > 170 && psImage->dfURX < -170 && psImage->dfLRX < -170 &&
+         pszIID1 != NULL && EQUAL(pszIID1, "CADRG") &&
+        (psImage->dfULX > psImage->dfURX && psImage->dfLLX > psImage->dfLRX &&
          psImage->dfULY > psImage->dfLLY && psImage->dfURY > psImage->dfLRY) )
     {
         psImage->dfURX += 360;

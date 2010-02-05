@@ -1717,6 +1717,20 @@ def nitf_online_18():
     return 'success'
     
 ###############################################################################
+# Test CADRG tile crossing dateline (#3383)
+
+def nitf_online_19():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/0000M033.GN3', '0000M033.GN3'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/0000M033.GN3', 1, 38928,
+                             filename_absolute = 1 )
+
+    return tst.testOpen( check_gt = (174.375000000000000,0.010986328125000,0,
+                                     51.923076923076927,0,-0.006760817307692) )
+                         
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -1876,6 +1890,7 @@ gdaltest_list = [
     nitf_online_17_jp2kak,
     nitf_online_17_jasper,
     nitf_online_18,
+    nitf_online_19,
     nitf_cleanup ]
 
 if __name__ == '__main__':
