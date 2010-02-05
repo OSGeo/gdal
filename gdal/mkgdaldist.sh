@@ -125,6 +125,18 @@ tar cf ../gdal-${GDAL_VERSION}.tar gdal-${GDAL_VERSION}
 gzip -9 ../gdal-${GDAL_VERSION}.tar
 zip -r ../gdal${COMPRESSED_VERSION}.zip gdal-${GDAL_VERSION}
 
+echo "* Generating MD5 sums ..."
+
+OSTYPE=`uname -s`
+if test "$OSTYPE" = "Darwin" ; then
+MD5=md5
+else
+MD5=md5sum
+fi
+
+$MD5 ../gdal-${GDAL_VERSION}.tar.gz > ../gdal-${GDAL_VERSION}.tar.gz.md5
+$MD5 ../gdal${COMPRESSED_VERSION}.zip > ../gdal${COMPRESSED_VERSION}.zip.md5
+
 echo "* Cleaning..."
 cd ..
 rm -rf dist_wrk
