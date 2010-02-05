@@ -447,17 +447,21 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         // Determine if the MGRS zone falls above or below the equator
         if (byZoneID != 0 )
         {
-#ifdef DEBUG
             CPLDebug("OSR_PCI", "Found MGRS zone in UTM projection string: %c",
                 byZoneID);
-#endif
+
             if (byZoneID >= 'N' && byZoneID <= 'X')
             {
                 bNorth = TRUE;
             }
-            else
+            else if (byZoneID >= 'C' && byZoneID <= 'M')
             {
                 bNorth = FALSE;
+            }
+            else
+            {
+                // yikes, most likely we got something that was not really
+                // an MGRS zone code so we ignore it.
             }
         }
         
