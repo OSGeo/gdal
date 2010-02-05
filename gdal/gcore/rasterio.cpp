@@ -812,15 +812,15 @@ static void GDALCopyWordsT(const Tin* const pSrcData, int nSrcPixelOffset,
                            Tout* const pDstData, int nDstPixelOffset,
                            int nWordCount)
 {
-    int nDstOffset = 0;
+    std::ptrdiff_t nDstOffset = 0;
 
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
-    for (unsigned int n = 0; n < static_cast<unsigned int>(nWordCount); n++)
+    for (std::ptrdiff_t n = 0; n < nWordCount; n++)
     {
         const Tin tValue = *reinterpret_cast<const Tin*>(pSrcDataPtr + (n * nSrcPixelOffset));
         Tout* const pOutPixel = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
-        
+
         CopyWord(tValue, *pOutPixel);
 
         nDstOffset += nDstPixelOffset;
@@ -850,7 +850,7 @@ inline void GDALCopyWordsComplexT(const Tin* const pSrcData, int nSrcPixelOffset
                                   Tout* const pDstData, int nDstPixelOffset,
                                   int nWordCount)
 {
-    int nDstOffset = 0;
+    std::ptrdiff_t nDstOffset = 0;
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
 
@@ -859,7 +859,7 @@ inline void GDALCopyWordsComplexT(const Tin* const pSrcData, int nSrcPixelOffset
     Tin tMaxValue, tMinValue;
     GetDataLimits<Tin, Tout>(tMaxValue, tMinValue);
 
-    for (unsigned int n = 0; n < static_cast<unsigned int>(nWordCount); n++)
+    for (std::ptrdiff_t n = 0; n < nWordCount; n++)
     {
         const Tin* const pPixelIn = reinterpret_cast<const Tin*>(pSrcDataPtr + n * nSrcPixelOffset);
         Tout* const pPixelOut = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
@@ -894,14 +894,14 @@ inline void GDALCopyWordsComplexOutT(const Tin* const pSrcData, int nSrcPixelOff
                                      Tout* const pDstData, int nDstPixelOffset,
                                      int nWordCount)
 {
-    int nDstOffset = 0;
-    
+    std::ptrdiff_t nDstOffset = 0;
+
     const Tout tOutZero = static_cast<Tout>(0);
 
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
 
-    for (unsigned int n = 0; n < static_cast<unsigned int>(nWordCount); n++)
+    for (std::ptrdiff_t n = 0; n < nWordCount; n++)
     {
         const Tin tValue = *reinterpret_cast<const Tin* const>(pSrcDataPtr + n * nSrcPixelOffset);
         Tout* const pPixelOut = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
