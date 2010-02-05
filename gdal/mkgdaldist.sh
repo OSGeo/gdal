@@ -125,6 +125,9 @@ tar cf ../gdal-${GDAL_VERSION}.tar gdal-${GDAL_VERSION}
 gzip -9 ../gdal-${GDAL_VERSION}.tar
 zip -r ../gdal${COMPRESSED_VERSION}.zip gdal-${GDAL_VERSION}
 
+echo "* Generating MD5 sums ..."
+md5 ../gdal-${GDAL_VERSION}.tar.gz > ../gdal-${GDAL_VERSION}.tar.gz.md5
+md5 ../gdal${COMPRESSED_VERSION}.zip > ../gdal${COMPRESSED_VERSION}.zip.md5
 echo "* Cleaning..."
 cd ..
 rm -rf dist_wrk
