@@ -1166,11 +1166,15 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     for( iField=0; iField < nSrcFieldCount; iField++)
         panMap[iField] = -1;
         
+    /* Caution : at the time of writing, the MapInfo driver */
+    /* returns NULL until a field has been added */
     poDstFDefn = poDstLayer->GetLayerDefn();
 
     if (papszSelFields && !bAppend )
     {
-        int         nDstFieldCount = poDstFDefn->GetFieldCount();
+        int  nDstFieldCount = 0;
+        if (poDstFDefn)
+            nDstFieldCount = poDstFDefn->GetFieldCount();
         for( iField=0; papszSelFields[iField] != NULL; iField++)
         {
             int iSrcField = poSrcFDefn->GetFieldIndex(papszSelFields[iField]);
@@ -1188,15 +1192,22 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 }
                 
                 /* The field may have been already created at layer creation */
-                int iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
+                int iDstField = -1;
+                if (poDstFDefn)
+                    iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
                 if (iDstField >= 0)
                 {
                     panMap[iSrcField] = iDstField;
                 }
                 else if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
                 {
+                    /* now that we've created a field, GetLayerDefn() won't return NULL */
+                    if (poDstFDefn == NULL)
+                        poDstFDefn = poDstLayer->GetLayerDefn();
+
                     /* Sanity check : if it fails, the driver is buggy */
-                    if (poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
+                    if (poDstFDefn != NULL &&
+                        poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "The output driver has claimed to have added the %s field, but it did not!",
@@ -1223,7 +1234,9 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     }
     else if( !bAppend )
     {
-        int         nDstFieldCount = poDstFDefn->GetFieldCount();
+        int nDstFieldCount = 0;
+        if (poDstFDefn)
+            nDstFieldCount = poDstFDefn->GetFieldCount();
         for( iField = 0; iField < nSrcFieldCount; iField++ )
         {
             OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
@@ -1238,15 +1251,22 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             }
 
             /* The field may have been already created at layer creation */
-            int iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
+            int iDstField = -1;
+            if (poDstFDefn)
+                 iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
             if (iDstField >= 0)
             {
                 panMap[iField] = iDstField;
             }
             else if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
             {
+                /* now that we've created a field, GetLayerDefn() won't return NULL */
+                if (poDstFDefn == NULL)
+                    poDstFDefn = poDstLayer->GetLayerDefn();
+
                 /* Sanity check : if it fails, the driver is buggy */
-                if (poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
+                if (poDstFDefn != NULL &&
+                    poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "The output driver has claimed to have added the %s field, but it did not!",
@@ -1264,6 +1284,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     {
         /* For an existing layer, build the map by fetching the index in the destination */
         /* layer for each source field */
+        if (poDstFDefn == NULL)
+        {
+            fprintf( stderr, "poDstFDefn == NULL.\n" );
+            VSIFree(panMap);
+            return FALSE;
+        }
+        
         for( iField = 0; iField < nSrcFieldCount; iField++ )
         {
             OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
