@@ -697,6 +697,67 @@ def test_ogr2ogr_21():
 
     return 'success'
 
+    
+###############################################################################
+# Test ogr2ogr when the output driver delays the destination layer defn creation (#3384)
+
+def test_ogr2ogr_22():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
+        ' -f "MapInfo File" tmp/testogr2ogr22.mif data/dataforogr2ogr21.csv ' +
+        '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
+    ds = ogr.Open('tmp/testogr2ogr22.mif')
+
+    if ds is None:
+        return 'fail'
+    layer_defn = ds.GetLayer(0).GetLayerDefn()
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('name') != 'NAME' or \
+       feat.GetFieldAsString('comment') != 'COMMENT':
+        print(feat.GetFieldAsString('name'))
+        print(feat.GetFieldAsString('comment'))
+        ds.Destroy()
+        ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr22.mif')
+        return 'fail'
+
+    ds.Destroy()
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr22.mif')
+
+    return 'success'
+
+###############################################################################
+# Same as previous but with -select
+
+def test_ogr2ogr_23():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+        
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
+        ' -f "MapInfo File" tmp/testogr2ogr23.mif data/dataforogr2ogr21.csv ' +
+        '-sql "SELECT comment, name FROM dataforogr2ogr21" -select comment,name -nlt POINT')
+    ds = ogr.Open('tmp/testogr2ogr23.mif')
+
+    if ds is None:
+        return 'fail'
+    layer_defn = ds.GetLayer(0).GetLayerDefn()
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('name') != 'NAME' or \
+       feat.GetFieldAsString('comment') != 'COMMENT':
+        print(feat.GetFieldAsString('name'))
+        print(feat.GetFieldAsString('comment'))
+        ds.Destroy()
+        ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr23.mif')
+        return 'fail'
+
+    ds.Destroy()
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr23.mif')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -718,7 +779,9 @@ gdaltest_list = [
     test_ogr2ogr_18,
     test_ogr2ogr_19,
     test_ogr2ogr_20,
-    test_ogr2ogr_21 ]
+    test_ogr2ogr_21,
+    test_ogr2ogr_22,
+    test_ogr2ogr_23 ]
     
 if __name__ == '__main__':
 
