@@ -162,8 +162,8 @@ class VSIIOStream : public CNCSJPCIOStream
         if( VSIFReadL( buffer, count, 1, fpVSIL ) != 1 )
         {
             CPLDebug( "VSIIOSTREAM",
-                      "Read(%d) failed @ %d, ignoring failure.",
-                      count, (int) (VSIFTellL( fpVSIL ) - startOfJPData) );
+                      "Read(%d) failed @ " CPL_FRMT_GIB ", ignoring failure.",
+                      count, (VSIFTellL( fpVSIL ) - startOfJPData) );
         }
         
         return true;
