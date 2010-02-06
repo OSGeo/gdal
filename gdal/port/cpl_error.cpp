@@ -380,7 +380,8 @@ void CPL_STDCALL CPLErrorReset()
 /**
  * Fetch the last error number.
  *
- * This is the error number, not the error class.
+ * Fetches the last error number posted with CPLError(), that hasn't
+ * been cleared by CPLErrorReset().  This is the error number, not the error class.
  *
  * @return the error number of the last error to occur, or CPLE_None (0)
  * if there are no posted errors.
@@ -400,9 +401,10 @@ int CPL_STDCALL CPLGetLastErrorNo()
 /**
  * Fetch the last error type.
  *
- * This is the error class, not the error number.
+ * Fetches the last error type posted with CPLError(), that hasn't
+ * been cleared by CPLErrorReset().  This is the error class, not the error number.
  *
- * @return the error number of the last error to occur, or CE_None (0)
+ * @return the error type of the last error to occur, or CE_None (0)
  * if there are no posted errors.
  */
 
