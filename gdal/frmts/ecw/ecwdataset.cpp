@@ -1025,10 +1025,10 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
     {
-        int            subfile_offset=-1, subfile_size=-1;
+        GIntBig     subfile_offset=-1, subfile_size=-1;
         char *real_filename = NULL;
 
-        if( sscanf( poOpenInfo->pszFilename, "J2K_SUBFILE:%d,%d", 
+        if( sscanf( poOpenInfo->pszFilename, "J2K_SUBFILE:" CPL_FRMT_GIB "," CPL_FRMT_GIB, 
                     &subfile_offset, &subfile_size ) != 2 )
           {
               CPLError( CE_Failure, CPLE_OpenFailed, 

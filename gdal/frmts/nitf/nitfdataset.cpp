@@ -921,9 +921,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLString osDSName;
 
-        osDSName.Printf( "J2K_SUBFILE:%d,%d,%s", 
-                         (int) psFile->pasSegmentInfo[iSegment].nSegmentStart,
-                         (int) psFile->pasSegmentInfo[iSegment].nSegmentSize,
+        osDSName.Printf( "J2K_SUBFILE:" CPL_FRMT_GIB "," CPL_FRMT_GIB ",%s", 
+                         (GIntBig)psFile->pasSegmentInfo[iSegment].nSegmentStart,
+                         (GIntBig)psFile->pasSegmentInfo[iSegment].nSegmentSize,
                          pszFilename );
     
         if( poWritableJ2KDataset != NULL )
