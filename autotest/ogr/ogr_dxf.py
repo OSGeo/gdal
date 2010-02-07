@@ -266,6 +266,42 @@ def ogr_dxf_8():
     return 'success'
 
 ###############################################################################
+# LWPOLYLINE in an Object Coordinate System.
+
+def ogr_dxf_9():
+
+    ocs_ds = ogr.Open('data/LWPOLYLINE-OCS.dxf')
+    ocs_lyr = ocs_ds.GetLayer(0)
+    
+    # Skip boring line.
+    feat = ocs_lyr.GetNextFeature()
+    feat.Destroy()
+
+    # Skip boring line.
+    feat = ocs_lyr.GetNextFeature()
+    feat.Destroy()
+
+    # LWPOLYLINE in OCS
+    feat = ocs_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+
+    if geom.GetGeometryType() != ogr.wkbLineString25D:
+        print geom.GetGeometryType()
+        gdaltest.post_reason( 'did not get expected geometry type.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING (603822.814999999944121 3153052.202000000048429 511.38900000000001,603786.523000000044703 3152273.680000000167638 494.800000000000011,600256.197000000043772 3151972.969000000040978 536.727999999999952,600326.545999999972992 3153021.262000000104308 562.501999999999953)' ):
+        return 'fail'
+
+    feat.Destroy()
+
+    ocs_lyr = None
+    ocs_ds.Destroy()
+    ocs_ds = None
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -287,6 +323,7 @@ gdaltest_list = [
     ogr_dxf_6,
     ogr_dxf_7,
     ogr_dxf_8,
+    ogr_dxf_9,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
