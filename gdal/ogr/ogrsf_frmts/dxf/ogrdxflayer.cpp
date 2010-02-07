@@ -178,6 +178,19 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       }
       break;
 
+      // OCS vector.
+      case 210:
+        oStyleProperties["210_N.dX"] = pszValue;
+        break;
+        
+      case 220:
+        oStyleProperties["220_N.dY"] = pszValue;
+        break;
+        
+      case 230:
+        oStyleProperties["230_N.dZ"] = pszValue;
+        break;
+
       default:
         break;
     }
@@ -247,6 +260,112 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
     osStyle += ")";
     
     poFeature->SetStyleString( osStyle );
+}
+
+/************************************************************************/
+/*                            OCSTransformer                            */
+/************************************************************************/
+
+class OCSTransformer : public OGRCoordinateTransformation
+{
+    double adfN[3];
+    double adfAX[3];
+    double adfAY[3];
+    
+public:
+    OCSTransformer( double adfN[3] ) {
+        static const double dSmall = 1.0 / 64.0;
+        static const double adfWZ[3] = {0, 0, 1};
+        static const double adfWY[3] = {0, 1, 0};
+
+        memcpy( this->adfN, adfN, sizeof(double)*3 );
+
+	if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
+            CrossProduct(adfWY, adfN, adfAX);
+	else
+            CrossProduct(adfWZ, adfN, adfAX);
+
+	Scale2Unit( adfAX );
+	CrossProduct(adfN, adfAX, adfAY);
+	Scale2Unit( adfAY );
+    }
+
+    double dfXOffset;
+    double dfYOffset;
+    double dfZOffset;
+    double dfXScale;
+    double dfYScale;
+    double dfZScale;
+    double dfAngle;
+
+    void CrossProduct(const double *a, const double *b, double *vResult) {
+        vResult[0] = a[1] * b[2] - a[2] * b[1];
+        vResult[1] = a[2] * b[0] - a[0] * b[2];
+        vResult[3] = a[0] * b[1] - a[1] * b[0];
+    }
+
+    void Scale2Unit(double* adfV) {
+	double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
+	if (dfLen != 0)
+	{
+            adfV[0] /= dfLen;
+            adfV[1] /= dfLen;
+            adfV[2] /= dfLen;
+	}
+    }
+    OGRSpatialReference *GetSourceCS() { return NULL; }
+    OGRSpatialReference *GetTargetCS() { return NULL; }
+    int Transform( int nCount, 
+                   double *x, double *y, double *z )
+        { return TransformEx( nCount, x, y, z, NULL ); }
+    
+    int TransformEx( int nCount, 
+                     double *adfX, double *adfY, double *adfZ = NULL,
+                     int *pabSuccess = NULL )
+        {
+            int i;
+            for( i = 0; i < nCount; i++ )
+            {
+                double x = adfX[i], y = adfY[i], z = adfZ[i];
+                
+                adfX[i] = x * adfAX[0] + y * adfAY[0] + z * adfN[0];
+                adfY[i] = x * adfAX[1] + y * adfAY[1] + z * adfN[1];
+                adfZ[i] = x * adfAX[2] + y * adfAY[2] + z * adfN[2];
+
+                if( pabSuccess )
+                    pabSuccess[i] = TRUE;
+            }
+            return TRUE;
+        }
+};
+
+/************************************************************************/
+/*                        ApplyOCSTransformer()                         */
+/*                                                                      */
+/*      Apply a transformation from OCS to world coordinates if an      */
+/*      OCS vector was found in the object.                             */
+/************************************************************************/
+
+void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
+
+{
+    if( oStyleProperties.count("210_N.dX") == 0
+        || oStyleProperties.count("220_N.dY") == 0
+        || oStyleProperties.count("230_N.dZ") == 0 )
+        return;
+
+    if( poGeometry == NULL )
+        return;
+
+    double adfN[3];
+
+    adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
+    adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
+    adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
+
+    OCSTransformer oTransformer( adfN );
+
+    poGeometry->transform( &oTransformer );
 }
 
 /************************************************************************/
@@ -609,7 +728,7 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
             bHaveY = TRUE;
             break;
 
-          case 30:
+          case 38:
             dfZ = atof(szLineBuf);
             break;
 
@@ -634,6 +753,8 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     {
         poLS->addPoint( poLS->getX(0), poLS->getY(0), poLS->getZ(0) );
     }
+
+    ApplyOCSTransformer( poLS );
 
     poFeature->SetGeometryDirectly( poLS );
 
