@@ -74,6 +74,7 @@ class OGRDXFLayer : public OGRLayer
     void                TranslateGenericProperty( OGRFeature *poFeature, 
                                                   int nCode, char *pszValue );
     void                PrepareLineStyle( OGRFeature *poFeature );
+    void                ApplyOCSTransformer( OGRGeometry * );
 
     OGRFeature *        TranslatePOINT();
     OGRFeature *        TranslateLINE();
