@@ -277,10 +277,6 @@ def ogr_dxf_9():
     feat = ocs_lyr.GetNextFeature()
     feat.Destroy()
 
-    # Skip boring line.
-    feat = ocs_lyr.GetNextFeature()
-    feat.Destroy()
-
     # LWPOLYLINE in OCS
     feat = ocs_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -290,7 +286,7 @@ def ogr_dxf_9():
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'LINESTRING (603822.814999999944121 3153052.202000000048429 511.38900000000001,603786.523000000044703 3152273.680000000167638 494.800000000000011,600256.197000000043772 3151972.969000000040978 536.727999999999952,600326.545999999972992 3153021.262000000104308 562.501999999999953)' ):
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING (599488.936051554745063 3153915.916796975769103 -67502.145760724219144,599418.901299780467525 3152868.31054325401783 -67502.145760724219144,597036.805060450453311 3153142.816845016088337 -67502.145760724219144)' ):
         return 'fail'
 
     feat.Destroy()
