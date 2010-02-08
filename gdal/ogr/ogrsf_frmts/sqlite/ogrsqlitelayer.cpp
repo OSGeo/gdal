@@ -1066,7 +1066,7 @@ int OGRSQLiteLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCTransactions) )
-        return FALSE;
+        return TRUE;
 
     else 
         return FALSE;
