@@ -1,3 +1,44 @@
+= GDAL/OGR 1.7.1 = 
+
+The 1.7.1 release was prepared and issued primarily to deal with ticket #3382,
+relating to the fact that GDAL 1.7 has had a significant regression in that
+all Erdas Imagine (HFA/.img) files produced are unreadable by non-GDAL software
+including released versions of ArcGIS and Erdas Imagine.  Following is a list
+of all bug fixes since the 1.7.0 release.
+
+== General ==
+
+* MacOS X: Support versioning for framework builds (#2661)
+* FreeBSD: fix --with-threads configuring (#3348)
+
+== GDAL / Raster ==
+
+* HFA/Imagine: Fix very serious 1.7 bug with blank layer names which was
+  producing .img files unreadable in non-GDAL software (#3382)
+* HFA: Ensure nodata values carried into overviews (#2855)
+* HFA: Fix support for files with nonstandard mapunits (#3338)
+* NITF: Improve NITF spec compliance when generating JPEG compression (#3345)
+* NITF: Improve dateline handling for CADRG products (#3383)
+* NITF: Return GCPPROJECTIONX metadata when we can't transform polar (#3337)
+* GeoRaster: Avoid error messages when looking up epsg codes (#3326)
+* DODS / GDALCopyWords(): Fix bug with negative offsets/flipping (#3388)
+* PCIDSK: Fix new bug with UTM MGRS zone handling (#3379)
+* PDS: Fix up offset support for detached labels (#3355)
+* gdal_merge.py: support per band init values (#3354)
+* ECW: Fix one broken case in configure logic (#3343)
+* RasterLite: Fix crash on 32bit platforms (#3339)
+* NetCDF: Prevent CreateCopy() of complex bands (r18602)
+* HDF4: Fix buffer overflow with GeodeticLatitude (r18601)
+
+== OGR / Vector ==
+
+* SQLite: TestCapability() returns TRUE for transation support (#3394)
+* DXF: Support polylines in Object Coordinate System (#3372)
+* MIF/ogr2ogr: Fix new problem translating to MIF format (#3384)
+* GeoJSON: Support stdout output via new /vsistdout/ name (#3381)
+* Shapefile: Fixes for winding calculations on read and write (#3363, #3356)
+* Postgres: Get field width and precision from SQL queries (#3349)
+
 = GDAL/OGR 1.7.0 =
 
 (Some of the bugfixes mentionned below might also have gone into 1.6.X maintenance releases.)
