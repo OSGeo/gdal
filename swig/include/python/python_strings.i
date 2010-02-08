@@ -55,7 +55,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject)
   {
       char *pszStr;
       char *pszNewStr;
-      int nLen;
+      Py_ssize_t nLen;
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
       pszNewStr = (char *) malloc(nLen+1);
@@ -67,7 +67,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject)
   {
       char *pszStr;
       char *pszNewStr;
-      int nLen;
+      Py_ssize_t nLen;
       PyBytes_AsStringAndSize(pyObject, &pszStr, &nLen);
       pszNewStr = (char *) malloc(nLen+1);
       memcpy(pszNewStr, pszStr, nLen+1);
