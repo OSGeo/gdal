@@ -268,6 +268,7 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 
 class OCSTransformer : public OGRCoordinateTransformation
 {
+private:
     double adfN[3];
     double adfAX[3];
     double adfAY[3];
@@ -290,18 +291,10 @@ public:
 	Scale2Unit( adfAY );
     }
 
-    double dfXOffset;
-    double dfYOffset;
-    double dfZOffset;
-    double dfXScale;
-    double dfYScale;
-    double dfZScale;
-    double dfAngle;
-
     void CrossProduct(const double *a, const double *b, double *vResult) {
         vResult[0] = a[1] * b[2] - a[2] * b[1];
         vResult[1] = a[2] * b[0] - a[0] * b[2];
-        vResult[3] = a[0] * b[1] - a[1] * b[0];
+        vResult[2] = a[0] * b[1] - a[1] * b[0];
     }
 
     void Scale2Unit(double* adfV) {
