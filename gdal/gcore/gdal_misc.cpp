@@ -421,7 +421,8 @@ const char *GDALGetPaletteInterpretationName( GDALPaletteInterp eInterp )
  * or freed by the application.
  *
  * @param eInterp color interpretation to get name of.
- * @return string corresponding to color interpretation.
+ * @return string corresponding to color interpretation
+ *         or NULL pointer if invalid enumerator given.
  */
 
 const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
