@@ -30,6 +30,7 @@
 import urllib.request, urllib.error, urllib.parse
 import socket
 import subprocess
+import shlex
 
 def run_func(func):
     try:
@@ -71,10 +72,11 @@ def gdalurlopen(url):
         return None
 
 def runexternal(cmd, strin = None):
+    command = shlex.split(cmd)
     if strin is None:
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        p = subprocess.Popen(command, stdout=subprocess.PIPE)
     else:
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         p.stdin.write(bytes(strin, 'ascii'))
         p.stdin.close()
 
@@ -89,7 +91,8 @@ def runexternal(cmd, strin = None):
     return ret
 
 def runexternal_out_and_err(cmd):
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    command = shlex.split(cmd)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if p.stdout is not None:
         ret_stdout = p.stdout.read().decode('ascii')

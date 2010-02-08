@@ -652,10 +652,10 @@ def test_ogr2ogr_20():
     feat = ds.GetLayer(0).GetNextFeature()    
     for i in range( layer_defn.GetFieldCount() ):
         if layer_defn.GetFieldDefn( i ).GetNameRef() != expected_fields[i]:
-            print 'Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn( i ).GetNameRef()
+            print('Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn( i ).GetNameRef())
             error_occured = True
         if feat.GetFieldAsString(i) != expected_data[i]:
-            print 'Expected the value ', expected_data[i],',but got',feat.GetFieldAsString(i)
+            print('Expected the value ', expected_data[i],',but got',feat.GetFieldAsString(i))
             error_occured = True
 
     ds.Destroy()
