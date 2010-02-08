@@ -782,7 +782,7 @@ SWIG_Python_str_AsChar(PyObject *str)
 #if PY_VERSION_HEX >= 0x03000000
   char *cstr;
   char *newstr;
-  int len;
+  Py_ssize_t len;
   str = PyUnicode_AsUTF8String(str);
   PyBytes_AsStringAndSize(str, &cstr, &len);
   newstr = (char *) malloc(len+1);
@@ -2883,7 +2883,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject)
   {
       char *pszStr;
       char *pszNewStr;
-      int nLen;
+      Py_ssize_t nLen;
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
       pszNewStr = (char *) malloc(nLen+1);
@@ -2895,7 +2895,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject)
   {
       char *pszStr;
       char *pszNewStr;
-      int nLen;
+      Py_ssize_t nLen;
       PyBytes_AsStringAndSize(pyObject, &pszStr, &nLen);
       pszNewStr = (char *) malloc(nLen+1);
       memcpy(pszNewStr, pszStr, nLen+1);
