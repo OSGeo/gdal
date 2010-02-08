@@ -82,7 +82,11 @@ def get_gdal_config(option, gdal_config='gdal-config'):
         import subprocess
         command, args = command.split()[0], command.split()[1]
         p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
-        r = p.stdout.readline().decode('ascii').strip()
+        from sys import version_info
+        if version_info >= (3,0,0):
+            r = p.stdout.readline().decode('ascii').strip()
+        else:
+            r = p.stdout.readline().strip()
         p.stdout.close()
         p.wait()
 
