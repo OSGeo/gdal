@@ -285,7 +285,8 @@ int CPL_STDCALL GDALDataTypeIsComplex( GDALDataType eDataType )
  * datatypes in debug statements, errors and other user output. 
  *
  * @param eDataType type to get name of.
- * @return string corresponding to type.
+ * @return string corresponding to existing data type
+ *         or NULL pointer if invalid type given.
  */
 
 const char * CPL_STDCALL GDALGetDataTypeName( GDALDataType eDataType )
