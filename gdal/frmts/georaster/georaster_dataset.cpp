@@ -950,8 +950,12 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     // Check if the SRID is a valid EPSG code
     // --------------------------------------------------------------------
 
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+
     if( oSRS.importFromEPSG( poGeoRaster->nSRID ) == OGRERR_NONE )
     {
+        CPLPopErrorHandler();
+
         /*
          * Ignores the WKT from Oracle and use the one from GDAL's
          * EPSG tables. That would ensure that other drivers/software
@@ -962,9 +966,9 @@ const char* GeoRasterDataset::GetProjectionRef( void )
         {
             return pszProjection;
         }
-
-        return "";
     }
+
+    CPLPopErrorHandler();
 
     // --------------------------------------------------------------------
     // Get the WKT from the server
@@ -981,8 +985,6 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     // ----------------------------------------------------------------
     // Decorate with EPSG Authority codes
     // ----------------------------------------------------------------
-
-    oSRS.SetAuthority( oSRS.GetRoot()->GetValue(), "EPSG", poGeoRaster->nSRID );
 
     int nSpher = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM|SPHEROID") );
 
