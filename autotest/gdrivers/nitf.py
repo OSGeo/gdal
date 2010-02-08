@@ -1694,8 +1694,8 @@ def nitf_online_18():
     else:
         if prj != '' \
              or not gdaltest.geotransform_equals(gt,(0,1,0,0,0,1),0.00000001):
-            print gt
-            print prj
+            print(gt)
+            print(prj)
             gdaltest.post_reason( 'did not get expected empty gt/projection' )
             return 'fail'
 
