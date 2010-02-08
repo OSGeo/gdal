@@ -157,7 +157,7 @@ def hdf5_6():
         return 'fail'
     ovfile = ds.GetMetadataItem('OVERVIEW_FILE','OVERVIEWS')
     if ovfile[:11] != 'data/../tmp':
-	print ovfile
+        print(ovfile)
         gdaltest.post_reason( 'did not get expected OVERVIEW_FILE.' )
         return 'fail'
     ds = None

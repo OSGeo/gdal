@@ -282,7 +282,7 @@ def ogr_dxf_9():
     geom = feat.GetGeometryRef()
 
     if geom.GetGeometryType() != ogr.wkbLineString25D:
-        print geom.GetGeometryType()
+        print(geom.GetGeometryType())
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
