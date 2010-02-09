@@ -758,7 +758,7 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
         papszSearchPath = CSLAddString( papszSearchPath, 
                                         "/Library/Application Support/GDAL/"
                                         num2str(GDAL_VERSION_MAJOR) "."
-                                        num2str(GDAL_VERSION_MINOR) "PlugIns" );
+                                        num2str(GDAL_VERSION_MINOR) "/PlugIns" );
 #endif
 
     }
