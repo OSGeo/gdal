@@ -48,7 +48,7 @@ SVNMODULE="gdal"
 echo "Generating package '${GDAL_VERSION}' from '${SVNBRANCH}' branch"
 echo
  
-svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE}
+svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE} --config-option config:miscellany:use-commit-times=yes
 
 if [ \! -d gdal ] ; then
 	echo "svn checkout reported an error ... abandoning mkgdaldist"
