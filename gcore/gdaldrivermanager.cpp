@@ -592,7 +592,7 @@ void GDALDriverManager::AutoLoadDrivers()
      papszSearchPath = CSLAddString( papszSearchPath, 
                                      "/Library/Application Support/GDAL/"
                                      num2str(GDAL_VERSION_MAJOR) "."  
-                                     num2str(GDAL_VERSION_MINOR) "PlugIns" );
+                                     num2str(GDAL_VERSION_MINOR) "/PlugIns" );
    #endif
 
 
@@ -603,7 +603,7 @@ void GDALDriverManager::AutoLoadDrivers()
     #ifdef MACOSX_FRAMEWORK 
                                      "/Library/Application Support/GDAL/"
                                      num2str(GDAL_VERSION_MAJOR) "."  
-                                     num2str(GDAL_VERSION_MINOR) "PlugIns" ) );
+                                     num2str(GDAL_VERSION_MINOR) "/PlugIns", NULL ) );
     #else
                                                     "lib/gdalplugins", NULL ) );
     #endif                                           
