@@ -33,6 +33,9 @@
 #include "cpl_error.h"
 #include "cpl_conv.h"
 
+
+#define EPSILON 1e-8
+
 /************************************************************************/
 /*                        MakeKMLCoordinate()                           */
 /************************************************************************/
@@ -43,31 +46,53 @@ static void MakeKMLCoordinate( char *pszTarget,
 {
     if (y < -90 || y > 90)
     {
-        static int bFirstWarning = TRUE;
-        if (bFirstWarning)
+        if (y > 90 && y < 90 + EPSILON)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Latitude %f is invalid. Valid range is [-90,90]. This warning will not be issued any more",
-                     y);
-            bFirstWarning = FALSE;
+            y = 90;
+        }
+        else if (y > -90 - EPSILON  && y < -90)
+        {
+            y = -90;
+        }
+        else
+        {
+            static int bFirstWarning = TRUE;
+            if (bFirstWarning)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Latitude %f is invalid. Valid range is [-90,90]. This warning will not be issued any more",
+                        y);
+                bFirstWarning = FALSE;
+            }
         }
     }
 
     if (x < -180 || x > 180)
     {
-        static int bFirstWarning = TRUE;
-        if (bFirstWarning)
+        if (x > 180 && x < 180 + EPSILON)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Longitude %f has been modified to fit into range [-180,180]. This warning will not be issued any more",
-                     x);
-            bFirstWarning = FALSE;
+            x = 180;
         }
-
-        if (x > 180)
-            x -= ((int) ((x+180)/360)*360);
-        else if (x < -180)
-            x += ((int) (180 - x)/360)*360;
+        else if (x > -180 - EPSILON  && x < -180)
+        {
+            x = -180;
+        }
+        else
+        {
+            static int bFirstWarning = TRUE;
+            if (bFirstWarning)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Longitude %f has been modified to fit into range [-180,180]. This warning will not be issued any more",
+                        x);
+                bFirstWarning = FALSE;
+            }
+    
+            if (x > 180)
+                x -= ((int) ((x+180)/360)*360);
+            else if (x < -180)
+                x += ((int) (180 - x)/360)*360;
+        }
     }
 
     OGRMakeWktCoordinate( pszTarget, x, y, z, b3D ? 3 : 2 );
