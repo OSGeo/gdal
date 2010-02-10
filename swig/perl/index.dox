@@ -14,6 +14,9 @@ documentation for the version 1.5 API.</a>
 <a href="http://map.hut.fi/doc/Geo-GDAL-1.6/html/index.html">The
 documentation for the version 1.6 API.</a>
 
+<a href="http://map.hut.fi/doc/Geo-GDAL-1.7/html/index.html">The
+documentation for the version 1.7 API.</a>
+
 \section index_intro Introduction
 
 The Geo::GDAL modules are the Perl bindings to the GDAL/OGR
