@@ -123,51 +123,59 @@ int OGRDXFDataSource::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     char szLineBuf[257];
     int  nCode;
+    int  bEntitiesOnly = FALSE;
 
     if( ReadValue( szLineBuf ) != 0 || !EQUAL(szLineBuf,"SECTION") )
         return FALSE;
 
-    if( ReadValue( szLineBuf ) != 2 || !EQUAL(szLineBuf,"HEADER") )
+    if( ReadValue( szLineBuf ) != 2 
+        || (!EQUAL(szLineBuf,"HEADER") && !EQUAL(szLineBuf,"ENTITIES")) )
         return FALSE;
+
+    if( EQUAL(szLineBuf,"ENTITIES") )
+        bEntitiesOnly = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Process the header, picking up a few useful pieces of           */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    ReadHeaderSection();
-    ReadValue(szLineBuf);
+    if( !bEntitiesOnly )
+    {
+        ReadHeaderSection();
+        ReadValue(szLineBuf);
 
 /* -------------------------------------------------------------------- */
 /*      Process the CLASSES section, if present.                        */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(szLineBuf,"ENDSEC") )
-        ReadValue(szLineBuf);
+        if( EQUAL(szLineBuf,"ENDSEC") )
+            ReadValue(szLineBuf);
 
-    if( EQUAL(szLineBuf,"SECTION") )
-        ReadValue(szLineBuf);
-
-    if( EQUAL(szLineBuf,"CLASSES") )
-    {
-        while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1 
-               && !EQUAL(szLineBuf,"ENDSEC") )
+        if( EQUAL(szLineBuf,"SECTION") )
+            ReadValue(szLineBuf);
+        
+        if( EQUAL(szLineBuf,"CLASSES") )
         {
-            //printf("C:%d/%s\n", nCode, szLineBuf );
+            while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1 
+                   && !EQUAL(szLineBuf,"ENDSEC") )
+            {
+                //printf("C:%d/%s\n", nCode, szLineBuf );
+            }
         }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Process the TABLES section, if present.                         */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(szLineBuf,"ENDSEC") )
-        ReadValue(szLineBuf);
-
-    if( EQUAL(szLineBuf,"SECTION") )
-        ReadValue(szLineBuf);
-
-    if( EQUAL(szLineBuf,"TABLES") )
-    {
-        ReadTablesSection();
-        ReadValue(szLineBuf);
+        if( EQUAL(szLineBuf,"ENDSEC") )
+            ReadValue(szLineBuf);
+        
+        if( EQUAL(szLineBuf,"SECTION") )
+            ReadValue(szLineBuf);
+        
+        if( EQUAL(szLineBuf,"TABLES") )
+        {
+            ReadTablesSection();
+            ReadValue(szLineBuf);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -179,16 +187,19 @@ int OGRDXFDataSource::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Process the BLOCKS section if present.                          */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(szLineBuf,"ENDSEC") )
-        ReadValue(szLineBuf);
-
-    if( EQUAL(szLineBuf,"SECTION") )
-        ReadValue(szLineBuf);
-
-    if( EQUAL(szLineBuf,"BLOCKS") )
+    if( !bEntitiesOnly )
     {
-        ReadBlocksSection();
-        ReadValue(szLineBuf);
+        if( EQUAL(szLineBuf,"ENDSEC") )
+            ReadValue(szLineBuf);
+        
+        if( EQUAL(szLineBuf,"SECTION") )
+            ReadValue(szLineBuf);
+        
+        if( EQUAL(szLineBuf,"BLOCKS") )
+        {
+            ReadBlocksSection();
+            ReadValue(szLineBuf);
+        }
     }
 
 /* -------------------------------------------------------------------- */
