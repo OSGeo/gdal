@@ -298,6 +298,38 @@ def ogr_dxf_9():
     return 'success'
 
 ###############################################################################
+# Test reading from an entities-only dxf file (#3412)
+
+def ogr_dxf_10():
+
+    eo_ds = ogr.Open('data/entities_only.dxf')
+    eo_lyr = eo_ds.GetLayer(0)
+    
+    # Check first point.
+    feat = eo_lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat,
+                                       'POINT (672500.0 242000.0 539.986)' ):
+        return 'fail'
+
+    feat.Destroy()
+
+    # Check second point.
+    feat = eo_lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat,
+                                       'POINT (672750.0 242000.0 558.974)' ):
+        return 'fail'
+
+    feat.Destroy()
+
+    eo_lyr = None
+    eo_ds.Destroy()
+    eo_ds = None
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -320,6 +352,7 @@ gdaltest_list = [
     ogr_dxf_7,
     ogr_dxf_8,
     ogr_dxf_9,
+    ogr_dxf_10,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
