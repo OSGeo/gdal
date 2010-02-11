@@ -1217,7 +1217,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->poInput = poInput;
         poDS->poRawInput = poRawInput;
         poDS->oCodeStream.create( poInput );
-        poDS->oCodeStream.set_fussy();
+//        poDS->oCodeStream.set_fussy();
 //        poDS->oCodeStream.set_resilient();
         poDS->oCodeStream.set_persistent();
 
@@ -1557,7 +1557,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
             oWCodeStream.create( &subfile_src );
         }
 
-        oWCodeStream.set_fussy();
+//        oWCodeStream.set_fussy();
 
         poCodeStream= &oWCodeStream;
         
