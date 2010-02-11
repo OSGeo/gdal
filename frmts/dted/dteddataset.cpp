@@ -431,6 +431,14 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "DTED_RelVerticalAccuracy", pszValue );
     free( pszValue );
     
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_ORIGINLAT );
+    poDS->SetMetadataItem( "DTED_OriginLatitude", pszValue );
+    free( pszValue );
+    
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_ORIGINLONG );
+    poDS->SetMetadataItem( "DTED_OriginLongitude", pszValue );
+    free( pszValue );
+    
     poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
 /* -------------------------------------------------------------------- */
