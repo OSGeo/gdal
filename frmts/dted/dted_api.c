@@ -551,6 +551,16 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
 {
     switch( eCode )
     {
+      case DTEDMD_ORIGINLONG:
+        *ppszLocation = psDInfo->pachUHLRecord + 4;
+        *pnLength = 8;
+        break;
+
+      case DTEDMD_ORIGINLAT:
+        *ppszLocation = psDInfo->pachUHLRecord + 12;
+        *pnLength = 8;
+        break;
+
       case DTEDMD_VERTACCURACY_UHL:
         *ppszLocation = psDInfo->pachUHLRecord + 28;
         *pnLength = 4;

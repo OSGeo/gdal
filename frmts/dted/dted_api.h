@@ -170,8 +170,8 @@ typedef enum {
     DTEDMD_DATA_EDITION = 7,            /* DSI 88+2 */
     DTEDMD_MATCHMERGE_VERSION = 8,      /* DSI 90+1 */
     DTEDMD_MAINT_DATE = 9,              /* DSI 91+4 */
-    DTEDMD_MATCHMERGE_DATE = 10,         /* DSI 95+4 */
-    DTEDMD_MAINT_DESCRIPTION = 11,       /* DSI 99+4 */
+    DTEDMD_MATCHMERGE_DATE = 10,        /* DSI 95+4 */
+    DTEDMD_MAINT_DESCRIPTION = 11,      /* DSI 99+4 */
     DTEDMD_PRODUCER = 12,               /* DSI 103+8 */
     DTEDMD_VERTDATUM = 13,              /* DSI 142+3 */
     DTEDMD_DIGITIZING_SYS = 14,         /* DSI 150+10 */
@@ -180,7 +180,9 @@ typedef enum {
     DTEDMD_REL_HORIZACCURACY = 17,      /* ACC 12+4 */
     DTEDMD_REL_VERTACCURACY = 18,       /* ACC 16+4 */
     DTEDMD_HORIZDATUM = 19,             /* DSI 145+5 */ 
-    DTEDMD_MAX = 19
+    DTEDMD_ORIGINLONG = 20,             /* UHL 5+7 */
+    DTEDMD_ORIGINLAT = 21,              /* UHL 13+7 */
+    DTEDMD_MAX = 21
 } DTEDMetaDataCode;
 
     
