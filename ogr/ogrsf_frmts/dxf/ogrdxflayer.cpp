@@ -375,6 +375,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     double dfAngle = 0.0;
     double dfHeight = 0.0;
     double dfXDirection = 0.0, dfYDirection = 0.0;
+    int bHaveZ = FALSE;
     int nAttachmentPoint = -1;
     CPLString osText;
 
@@ -392,6 +393,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
           case 30:
             dfZ = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           case 40:
@@ -430,7 +432,11 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
         poDS->UnreadValue();
 
     poFeature->SetField( "Text", osText );
-    poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+
+    if( bHaveZ )
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+    else
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
 
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
@@ -502,6 +508,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     double dfAngle = 0.0;
     double dfHeight = 0.0;
     CPLString osText;
+    int bHaveZ = FALSE;
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -517,6 +524,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
           case 30:
             dfZ = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           case 40:
@@ -542,7 +550,11 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
         poDS->UnreadValue();
 
     poFeature->SetField( "Text", osText );
-    poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+    
+    if( bHaveZ )
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+    else
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare style string.                                           */
@@ -577,6 +589,7 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
     int nCode;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    int bHaveZ = FALSE;
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -592,6 +605,7 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
 
           case 30:
             dfZ = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           default:
@@ -600,7 +614,10 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
         }
     }
 
-    poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+    if( bHaveZ )
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+    else
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
 
     if( nCode == 0 )
         poDS->UnreadValue();
@@ -620,6 +637,7 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     double dfX1 = 0.0, dfY1 = 0.0, dfZ1 = 0.0;
     double dfX2 = 0.0, dfY2 = 0.0, dfZ2 = 0.0;
+    int bHaveZ = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -646,10 +664,12 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
 
           case 30:
             dfZ1 = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           case 31:
             dfZ2 = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           default:
@@ -665,9 +685,17 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
     OGRLineString *poLS = new OGRLineString();
-    poLS->addPoint( dfX1, dfY1, dfZ1 );
-    poLS->addPoint( dfX2, dfY2, dfZ2 );
-
+    if( bHaveZ )
+    {
+        poLS->addPoint( dfX1, dfY1, dfZ1 );
+        poLS->addPoint( dfX2, dfY2, dfZ2 );
+    }
+    else
+    {
+        poLS->addPoint( dfX1, dfY1 );
+        poLS->addPoint( dfX2, dfY2 );
+    }
+        
     poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
@@ -688,7 +716,7 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     OGRLineString *poLS = new OGRLineString();
     double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
-    int    bHaveX = FALSE, bHaveY = FALSE;
+    int    bHaveX = FALSE, bHaveY = FALSE, bHaveZ = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Collect information from the LWPOLYLINE object itself.          */
@@ -704,7 +732,10 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
           case 10:
             if( bHaveX && bHaveY )
             {
-                poLS->addPoint( dfX, dfY, dfZ );
+                if( bHaveZ )
+                    poLS->addPoint( dfX, dfY, dfZ );
+                else
+                    poLS->addPoint( dfX, dfY );
                 bHaveY = FALSE;
             }
             dfX = atof(szLineBuf);
@@ -714,7 +745,10 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
           case 20:
             if( bHaveX && bHaveY )
             {
-                poLS->addPoint( dfX, dfY, dfZ );
+                if( bHaveZ )
+                    poLS->addPoint( dfX, dfY, dfZ );
+                else
+                    poLS->addPoint( dfX, dfY );
                 bHaveX = FALSE;
             }
             dfY = atof(szLineBuf);
@@ -723,6 +757,7 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
           case 38:
             dfZ = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           default:
@@ -734,7 +769,12 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     poDS->UnreadValue();
 
     if( bHaveX && bHaveY )
-        poLS->addPoint( dfX, dfY, dfZ );
+    {
+        if( bHaveZ )
+            poLS->addPoint( dfX, dfY, dfZ );
+        else
+            poLS->addPoint( dfX, dfY );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Close polyline as polygon if necessary.                         */
@@ -744,11 +784,13 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
         && (poLS->getX(poLS->getNumPoints()-1) != poLS->getX(0)
             || poLS->getY(poLS->getNumPoints()-1) != poLS->getY(0)) )
     {
-        poLS->addPoint( poLS->getX(0), poLS->getY(0), poLS->getZ(0) );
+        if( bHaveZ )
+            poLS->addPoint( poLS->getX(0), poLS->getY(0), poLS->getZ(0) );
+        else
+            poLS->addPoint( poLS->getX(0), poLS->getY(0) );
     }
 
     ApplyOCSTransformer( poLS );
-
 
     if( (nPolylineFlag & 0x01) )
     {
@@ -782,7 +824,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
 {
     char szLineBuf[257];
     int nCode;
-    int nPolylineFlag = 0;
+    int nPolylineFlag = 0, bHaveZ = FALSE;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
 /* -------------------------------------------------------------------- */
@@ -831,6 +873,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 break;
                 
               case 30:
+                bHaveZ = TRUE;
                 dfZ = atof(szLineBuf);
                 break;
 
@@ -839,7 +882,10 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             }
         }
 
-        poLS->addPoint( dfX, dfY, dfZ );
+        if( bHaveZ )
+            poLS->addPoint( dfX, dfY, dfZ );
+        else
+            poLS->addPoint( dfX, dfY );
     }
 
 /* -------------------------------------------------------------------- */
@@ -850,10 +896,27 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         && (poLS->getX(poLS->getNumPoints()-1) != poLS->getX(0)
             || poLS->getY(poLS->getNumPoints()-1) != poLS->getY(0)) )
     {
-        poLS->addPoint( poLS->getX(0), poLS->getY(0), poLS->getZ(0) );
+        if( bHaveZ )
+            poLS->addPoint( poLS->getX(0), poLS->getY(0), poLS->getZ(0) );
+        else
+            poLS->addPoint( poLS->getX(0), poLS->getY(0) );
     }
 
-    poFeature->SetGeometryDirectly( poLS );
+    if( (nPolylineFlag & 0x01) )
+    {
+        // convert to linear ring
+        OGRLinearRing *poLR = new OGRLinearRing();
+        poLR->addSubLineString( poLS, 0 );
+        delete poLS;
+
+        // wrap as polygon.
+        OGRPolygon *poPoly = new OGRPolygon();
+        poPoly->addRingDirectly( poLR );
+
+        poFeature->SetGeometryDirectly( poPoly );
+    }
+    else
+        poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
 
@@ -871,6 +934,7 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
     int nCode;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     double dfX1 = 0.0, dfY1 = 0.0, dfZ1 = 0.0, dfRadius = 0.0;
+    int bHaveZ = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -889,6 +953,7 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
 
           case 30:
             dfZ1 = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           case 40:
@@ -907,11 +972,16 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
-    poFeature->SetGeometryDirectly( 
+    OGRGeometry *poCircle = 
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
                                                   dfRadius, dfRadius, 0.0,
                                                   0.0, 360.0, 
-                                                  0.0 ) );
+                                                  0.0 );
+
+    if( !bHaveZ )
+        poCircle->flattenTo2D();
+
+    poFeature->SetGeometryDirectly( poCircle );
 
     PrepareLineStyle( poFeature );
 
@@ -931,6 +1001,7 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     double dfX1 = 0.0, dfY1 = 0.0, dfZ1 = 0.0, dfRatio = 0.0;
     double dfStartAngle = 0.0, dfEndAngle = 360.0;
     double dfAxisX=0.0, dfAxisY=0.0, dfAxisZ=0.0;
+    int bHaveZ = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -949,6 +1020,7 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 
           case 30:
             dfZ1 = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           case 11:
@@ -1005,13 +1077,18 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
-    poFeature->SetGeometryDirectly( 
+    OGRGeometry *poEllipse = 
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
                                                   dfPrimaryRadius, 
                                                   dfSecondaryRadius,
                                                   dfRotation, 
                                                   dfStartAngle, dfEndAngle,
-                                                  0.0 ) );
+                                                  0.0 );
+
+    if( !bHaveZ )
+        poEllipse->flattenTo2D();
+
+    poFeature->SetGeometryDirectly( poEllipse );
 
     PrepareLineStyle( poFeature );
 
@@ -1030,6 +1107,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     double dfX1 = 0.0, dfY1 = 0.0, dfZ1 = 0.0, dfRadius = 0.0;
     double dfStartAngle = 0.0, dfEndAngle = 360.0;
+    int bHaveZ = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -1048,6 +1126,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
 
           case 30:
             dfZ1 = atof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           case 40:
@@ -1077,11 +1156,15 @@ OGRFeature *OGRDXFLayer::TranslateARC()
     if( dfStartAngle > dfEndAngle )
         dfEndAngle += 360.0;
 
-    poFeature->SetGeometryDirectly( 
+    OGRGeometry *poArc = 
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
                                                   dfRadius, dfRadius, 0.0,
                                                   dfStartAngle, dfEndAngle,
-                                                  0.0 ) );
+                                                  0.0 );
+    if( !bHaveZ )
+        poArc->flattenTo2D();
+
+    poFeature->SetGeometryDirectly( poArc );
 
     PrepareLineStyle( poFeature );
 
