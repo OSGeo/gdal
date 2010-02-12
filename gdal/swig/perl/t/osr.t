@@ -15,7 +15,7 @@ ok(($src and $dst), "create Geo::OSR::SpatialReference");
 
 SKIP: {
     skip "PROJSO not set", 1 if (!$ENV{PROJSO} and $^O eq 'MSWin32');
-    my $t1, $t2;
+    my ($t1, $t2);
     eval {
 	$t1 = Geo::OSR::CoordinateTransformation->new($src, $dst);
 	$t2 = Geo::OSR::CoordinateTransformation->new($dst, $src);
