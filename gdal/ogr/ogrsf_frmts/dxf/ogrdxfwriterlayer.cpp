@@ -401,8 +401,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Do we now have a geometry we can work with?                     */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString 
-        && wkbFlatten(poGeom->getGeometryType()) != wkbLinearRing )
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     OGRLineString *poLS = (OGRLineString *) poGeom;
@@ -414,7 +413,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     WriteCore( poFeature );
     WriteValue( 100, "AcDbEntity" );
     WriteValue( 100, "AcDbPolyline" );
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing )
+    if( EQUAL( poGeom->getGeometryName(), "LINEARRING" ) )
         WriteValue( 70, 1 );
     else
         WriteValue( 70, 0 );
@@ -467,7 +466,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 
         if( poLS->getGeometryType() == wkbLineString25D )
         {
-            if( !WriteValue( 30, poLS->getZ(iVert) ) )
+            if( !WriteValue( 38, poLS->getZ(iVert) ) )
                 return OGRERR_FAILURE;
         }
     }
@@ -482,7 +481,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     WriteCore( poFeature );
     WriteValue( 100, "AcDbEntity" );
     WriteValue( 100, "AcDbPolyline" );
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbLinearRing )
+    if( EQUAL( poGeom->getGeometryName(), "LINEARRING" ) )
         WriteValue( 70, 1 );
     else
         WriteValue( 70, 0 );
