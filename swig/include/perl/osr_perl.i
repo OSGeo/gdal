@@ -1,6 +1,8 @@
 %include cpl_exceptions.i
 %import typemaps_perl.i
 
+%rename (_TransformPoints) TransformPoints;
+
 %perlcode %{
     sub RELEASE_PARENTS {
     }
@@ -30,4 +32,13 @@
 	bless $self, $pkg if defined $self;
     }
     *AsText = *ExportToWkt;
+    package Geo::OSR::CoordinateTransformation;
+    use strict;
+    sub TransformPoints {
+	my($self, $points) = @_;
+	_TransformPoints($self, $points), return unless ref($points->[0]->[0]);
+	for my $p (@$points) {
+	    TransformPoints($self, $p);
+	}
+    }
 %}
