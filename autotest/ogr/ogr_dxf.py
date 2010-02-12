@@ -330,6 +330,61 @@ def ogr_dxf_10():
     return 'success'
 
 ###############################################################################
+# Write a simple file with a polygon and a line, and read back.
+
+def ogr_dxf_11():
+
+    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_11.dxf' )
+
+    lyr = ds.CreateLayer( 'entities' )
+
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'LINESTRING(10 12, 60 65)' ) )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+                                  
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POLYGON((0 0,100 0,100 100,0 0))' ) )
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    lyr = None
+    ds = None
+
+    # Read back.
+    ds = ogr.Open('tmp/dxf_11.dxf')
+    lyr = ds.GetLayer(0)
+    
+    # Check first feature
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat,
+                                       'LINESTRING(10 12, 60 65)' ):
+        print feat.GetGeometryRef().ExportToWkt()
+        return 'fail'
+
+    feat.Destroy()
+
+    # Check second point.
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat,
+                                       'POLYGON((0 0,100 0,100 100,0 0))' ):
+        print feat.GetGeometryRef().ExportToWkt()
+        return 'fail'
+
+    feat.Destroy()
+
+    lyr = None
+    ds.Destroy()
+    ds = None
+    
+    os.unlink( 'tmp/dxf_11.dxf' )
+        
+    return 'success'
+    
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -353,6 +408,7 @@ gdaltest_list = [
     ogr_dxf_8,
     ogr_dxf_9,
     ogr_dxf_10,
+    ogr_dxf_11,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

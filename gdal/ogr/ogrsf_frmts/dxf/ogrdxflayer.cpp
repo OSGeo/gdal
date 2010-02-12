@@ -749,7 +749,22 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
     ApplyOCSTransformer( poLS );
 
-    poFeature->SetGeometryDirectly( poLS );
+
+    if( (nPolylineFlag & 0x01) )
+    {
+        // convert to linear ring
+        OGRLinearRing *poLR = new OGRLinearRing();
+        poLR->addSubLineString( poLS, 0 );
+        delete poLS;
+
+        // wrap as polygon.
+        OGRPolygon *poPoly = new OGRPolygon();
+        poPoly->addRingDirectly( poLR );
+
+        poFeature->SetGeometryDirectly( poPoly );
+    }
+    else
+        poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
 
