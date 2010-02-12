@@ -176,6 +176,10 @@ def ogr_dxf_5():
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (97.0 159.5 0,108.5 132.25 0)' ):
         return 'fail'
 
+    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbLineString:
+        gdaltest.post_reason( 'not keeping 3D linestring as 3D' )
+        return 'fail'
+        
     feat.Destroy()
 
     return 'success'
@@ -187,9 +191,13 @@ def ogr_dxf_6():
     
     feat = gdaltest.dxf_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry( feat, 'POINT (84 126 0)' ):
+    if ogrtest.check_feature_geometry( feat, 'POINT (84 126)' ):
         return 'fail'
 
+    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbPoint25D:
+        gdaltest.post_reason( 'not keeping 2D text as 2D' )
+        return 'fail'
+        
     if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#000000)':
         print(feat.GetStyleString())
         gdaltest.post_reason( 'got wrong style string' )
@@ -363,6 +371,10 @@ def ogr_dxf_11():
         print feat.GetGeometryRef().ExportToWkt()
         return 'fail'
 
+    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbLineString25D:
+        gdaltest.post_reason( 'not linestring 2D' )
+        return 'fail'
+        
     feat.Destroy()
 
     # Check second point.
@@ -373,6 +385,10 @@ def ogr_dxf_11():
         print feat.GetGeometryRef().ExportToWkt()
         return 'fail'
 
+    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon25D:
+        gdaltest.post_reason( 'not keeping polygon 2D' )
+        return 'fail'
+        
     feat.Destroy()
 
     lyr = None
