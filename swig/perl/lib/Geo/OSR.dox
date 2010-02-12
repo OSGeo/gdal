@@ -551,6 +551,7 @@
 # @return arrayref = [$x, $y, $z]
 
 ## @method TransformPoints(\@points)
-# @param points [in/out] a reference to a list of points that is
-# modified in-place. A list of points is: ([x, y, z], [x, y, z], ...),
-# where z is optional.
+# @param points [in/out] a reference to a list of points (line string
+# or ring) that is modified in-place. A list of points is: ([x, y, z],
+# [x, y, z], ...), where z is optional. Supports also lists of line
+# strings and polygons.
