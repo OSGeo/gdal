@@ -47,6 +47,7 @@ static void NITFLoadColormapSubSection( NITFImage *psImage );
 static void NITFLoadSubframeMaskTable( NITFImage *psImage );
 static int NITFLoadVQTables( NITFImage *psImage );
 static int NITFReadGEOLOB( NITFImage *psImage );
+static void NITFLoadAttributeSection( NITFImage *psImage );
 
 void NITFGetGCP ( const char* pachCoord, double *pdfXYs, int iCoord );
 int NITFReadBLOCKA_GCPs ( NITFImage *psImage );
@@ -1013,6 +1014,11 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         psImage->dfURX += 360;
         psImage->dfLRX += 360;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Load RPF attribute metadata if we have it.                      */
+/* -------------------------------------------------------------------- */
+    NITFLoadAttributeSection( psImage );
 
 /* -------------------------------------------------------------------- */
 /*      Are the VQ tables to load up?                                   */
@@ -2631,6 +2637,127 @@ static int NITFReadGEOLOB( NITFImage *psImage )
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                         NITFFetchAttribute()                         */
+/*                                                                      */
+/*      Load one attribute given the attribute id, and the parameter    */
+/*      id and the number of bytes to fetch.                            */
+/************************************************************************/
+
+static int NITFFetchAttribute( GByte *pabyAttributeSubsection, 
+                               int nASSSize, int nAttrCount,
+                               int nAttrID, int nParamID, int nBytesToFetch,
+                               GByte *pabyBuffer )
+
+{
+    int i;
+    GUInt32 nAttrOffset = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Scan the attribute offset table                                 */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nAttrCount; i++ )
+    {
+        GByte *pabyOffsetRec = i*8 + pabyAttributeSubsection;
+
+        if( (pabyOffsetRec[0] * 256 + pabyOffsetRec[1]) == nAttrID
+            && pabyOffsetRec[2] == nParamID )
+        {
+            memcpy( &nAttrOffset, pabyOffsetRec+4, 4 );
+            CPL_MSBPTR32( &nAttrOffset );
+            break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract the attribute value.                                    */
+/* -------------------------------------------------------------------- */
+    if( nAttrOffset == 0 )
+        return FALSE;
+
+    if( nAttrOffset + nBytesToFetch > nASSSize )
+        return FALSE;
+
+    memcpy( pabyBuffer, pabyAttributeSubsection + nAttrOffset, nBytesToFetch );
+    return TRUE;
+}
+
+/************************************************************************/
+/*                      NITFLoadAttributeSection()                      */
+/*                                                                      */
+/*      Load metadata items from selected attributes in the RPF         */
+/*      attributes subsection.  The items are defined in                */
+/*      MIL-STD-2411-1 section 5.3.2.                                   */
+/************************************************************************/
+
+static void NITFLoadAttributeSection( NITFImage *psImage )
+
+{
+    int i;
+    int nASHOffset=0, nASHSize=0, nASSOffset=0, nASSSize=0;
+    GInt16 nAttrCount;
+    GByte *pabyAttributeSubsection;
+    GByte abyBuffer[128];
+
+    for( i = 0; (int)i < psImage->nLocCount; i++ )
+    {
+        if( psImage->pasLocations[i].nLocId == LID_AttributeSectionSubheader )
+        {
+            nASHOffset = psImage->pasLocations[i].nLocOffset;
+            nASHSize = psImage->pasLocations[i].nLocSize;
+        }
+        else if( psImage->pasLocations[i].nLocId == LID_AttributeSubsection )
+        {
+            nASSOffset = psImage->pasLocations[i].nLocOffset;
+            nASSSize = psImage->pasLocations[i].nLocSize;
+        }
+    }
+
+    if( nASSOffset == 0 || nASHOffset == 0 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      How many attribute records do we have?                          */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( psImage->psFile->fp, nASHOffset, SEEK_SET );
+    VSIFReadL( &nAttrCount, 2, 1, psImage->psFile->fp );
+
+    CPL_MSBPTR16( &nAttrCount );
+
+/* -------------------------------------------------------------------- */
+/*      Load the attribute table.                                       */
+/* -------------------------------------------------------------------- */
+    pabyAttributeSubsection = (GByte *) VSIMalloc(nASSSize);
+    if( pabyAttributeSubsection == NULL )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Out of memory failure reading %d bytes of attribute subsection. ",
+                  nASSSize );
+        return;
+    }
+
+    VSIFSeekL( psImage->psFile->fp, nASSOffset, SEEK_SET );
+    VSIFReadL( pabyAttributeSubsection, nASSSize, 1, psImage->psFile->fp );
+
+/* -------------------------------------------------------------------- */
+/*      Scan for some particular attributes we would like.              */
+/* -------------------------------------------------------------------- */
+    if( NITFFetchAttribute( pabyAttributeSubsection, nASSSize, nAttrCount,
+                            1, 1, 8, abyBuffer ) )
+        NITFExtractMetadata( &(psImage->papszMetadata), (char*)abyBuffer, 0, 8, 
+                             "NITF_RPF_CurrencyDate" );
+    if( NITFFetchAttribute( pabyAttributeSubsection, nASSSize, nAttrCount,
+                            2, 1, 8, abyBuffer ) )
+        NITFExtractMetadata( &(psImage->papszMetadata), (char*)abyBuffer, 0, 8, 
+                             "NITF_RPF_ProductionDate" );
+    if( NITFFetchAttribute( pabyAttributeSubsection, nASSSize, nAttrCount,
+                            3, 1, 8, abyBuffer ) )
+        NITFExtractMetadata( &(psImage->papszMetadata), (char*)abyBuffer, 0, 8, 
+                             "NITF_RPF_SignificantDate" );
+
+    CPLFree( pabyAttributeSubsection );
 }
 
 /************************************************************************/

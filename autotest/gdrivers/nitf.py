@@ -1241,6 +1241,17 @@ def nitf_online_4():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/cadrg/001zc013.on1', '001zc013.on1'):
         return 'skip'
 
+    # check that the RPF attribute metadata was carried through.
+    ds = gdal.Open( 'tmp/cache/001zc013.on1' )
+    md = ds.GetMetadata()
+    if md['NITF_RPF_CurrencyDate'] != '19950720' \
+       or md['NITF_RPF_ProductionDate'] != '19950720' \
+       or md['NITF_RPF_SignificantDate'] != '19890629':
+        gdaltest.post_reason( 'RPF attribute metadata not captured (#3413)')
+        return 'fail'
+
+    ds = None
+
     tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/001zc013.on1', 1, 53960, filename_absolute = 1 )
 
     return tst.testOpen()
