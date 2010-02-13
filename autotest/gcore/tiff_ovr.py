@@ -35,6 +35,7 @@ import gdal
 import shutil
 import string
 import array
+import stat
 
 sys.path.append( '../pymod' )
 
@@ -1310,6 +1311,70 @@ def tiff_ovr_36():
     return ret
 
 ###############################################################################
+# Test PREDICTOR_OVERVIEW=2 option. (#3414)
+
+def tiff_ovr_37():
+
+    shutil.copy( '../gdrivers/data/n43.dt0', 'tmp/ovr37.dt0')
+
+    ds = gdal.Open( 'tmp/ovr37.dt0' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    gdal.SetConfigOption('PREDICTOR_OVERVIEW', '2')
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'LZW')
+    err = ds.BuildOverviews( 'NEAR', overviewlist = [2] )
+    gdal.SetConfigOption('PREDICTOR_OVERVIEW', None)
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/ovr37.dt0' )
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 45378:
+        print(cs)
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        return 'fail'
+    ds = None
+
+    predictor2_size = os.stat('tmp/ovr37.dt0.ovr')[stat.ST_SIZE]
+    if predictor2_size != 3963:
+        print(predictor2_size)
+        gdaltest.post_reason( 'did not get expected file size.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that the predictor flag gets well propagated to internal overviews
+
+def tiff_ovr_38():
+
+    # Skip with old libtiff (crash with 3.8.2)
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr38.tif', src_ds, options = ['COMPRESS=LZW', 'PREDICTOR=2'])
+    ds.BuildOverviews( overviewlist = [2, 4])
+    ds = None
+
+    file_size = os.stat('tmp/ovr38.tif')[stat.ST_SIZE]
+
+    # The file size is not the same whether the file is created with native
+    # endianness or inversed endianness. A bit strange.
+    if file_size != 17847 and file_size != 17879:
+        print(file_size)
+        gdaltest.post_reason( 'did not get expected file size.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1340,6 +1405,9 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr27.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr30.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr31.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr37.dt0' )
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') != -1:
+        gdaltest.tiff_drv.Delete( 'tmp/ovr38.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -1382,6 +1450,8 @@ gdaltest_list_internal = [
     tiff_ovr_34,
     tiff_ovr_35,
     tiff_ovr_36,
+    tiff_ovr_37,
+    tiff_ovr_38,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
