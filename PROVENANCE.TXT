@@ -45,12 +45,12 @@ Historical and Current:
  collinsb - Benjamin Collins (MITRE) - swig/java
  jimg - James Gallager (OPeNDAP)
  kruland - Kevin Ruland
- vgough - ? - 1999 - configure stuff. 
+ vgough - ? (vgough@remotesensing.org) - 1999 - configure stuff. 
  silke - Silke Reimer (Intevation)
  ilucena - Ivan Lucena (Idrisi)
  shalasz - Steve Halasz (Debian)
  srioux - Sylvain Rioux (Softmap)
- ldjohn (? - rawdataset.cpp - one commit - 2001)
+ ldjohn - Lowell D. Johnson - 2001 - rawdataset.cpp - one commit
  pvachon - Phil Vachon
  klokan - Petr Pridal
  condit - Chris Condit (SDSC)
