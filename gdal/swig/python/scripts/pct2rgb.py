@@ -31,9 +31,13 @@
 
 try:
     from osgeo import gdal
-    gdal.TermProgress = gdal.TermProgress_nocb
 except ImportError:
     import gdal
+
+try:
+    gdal.TermProgress = gdal.TermProgress_nocb
+except:
+    pass
 
 try:
     import numpy as Numeric
