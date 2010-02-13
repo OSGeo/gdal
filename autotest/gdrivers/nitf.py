@@ -1740,7 +1740,30 @@ def nitf_online_19():
 
     return tst.testOpen( check_gt = (174.375000000000000,0.010986328125000,0,
                                      51.923076923076927,0,-0.006760817307692) )
-                         
+    
+###############################################################################
+# Check that the RPF attribute metadata was carried through.
+# Special case where the reported size of the attribute subsection is
+# smaller than really available
+
+def nitf_online_20():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/0000M033.GN3', '0000M033.GN3'):
+        return 'skip'
+
+    # check that the RPF attribute metadata was carried through.
+    # Special case where the reported size of the attribute subsection is
+    # smaller than really available
+    ds = gdal.Open( 'tmp/cache/0000M033.GN3' )
+    md = ds.GetMetadata()
+    if md['NITF_RPF_CurrencyDate'] != '19941201' \
+       or md['NITF_RPF_ProductionDate'] != '19980511' \
+       or md['NITF_RPF_SignificantDate'] != '19850305':
+        gdaltest.post_reason( 'RPF attribute metadata not captured (#3413)')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup.
 
@@ -1902,6 +1925,7 @@ gdaltest_list = [
     nitf_online_17_jasper,
     nitf_online_18,
     nitf_online_19,
+    nitf_online_20,
     nitf_cleanup ]
 
 if __name__ == '__main__':
