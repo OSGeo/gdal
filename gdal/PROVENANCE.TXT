@@ -11,7 +11,7 @@ Historical and Current:
  danmo & daniel & dmorissette - Daniel Morissette (MapGears)
  dnadeau & denad21 - Denis Nadeau
  kdejong & kor - Kor de Jong (geog.uu.nl / PCRaster)
- aubin - Mark(?) Aubin - Keyhole
+ aubin - Mark Aubin - Keyhole
  svillene & stephane - Stephane Villeneuve 
  kmelero - Ken Melero (SANZ)
  nemec - Philip Nemec (Keyhole)
