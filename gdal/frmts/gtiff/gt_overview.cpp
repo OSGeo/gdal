@@ -59,6 +59,7 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
                            int nBlockXSize, int nBlockYSize,
                            int bTiled, int nCompressFlag, int nPhotometric,
                            int nSampleFormat, 
+                           int nPredictor,
                            unsigned short *panRed,
                            unsigned short *panGreen,
                            unsigned short *panBlue,
@@ -108,7 +109,11 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
     {
         TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples, panExtraSampleValues );
     }
-    
+
+    if ( nCompressFlag == COMPRESSION_LZW ||
+         nCompressFlag == COMPRESSION_ADOBE_DEFLATE )
+        TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
+
 /* -------------------------------------------------------------------- */
 /*	Write color table if one is present.				*/
 /* -------------------------------------------------------------------- */
@@ -454,6 +459,20 @@ GTIFFBuildOverviews( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Figure out the predictor value to use.                          */
+/* -------------------------------------------------------------------- */
+    int nPredictor = PREDICTOR_NONE;
+    if ( nCompression == COMPRESSION_LZW ||
+         nCompression == COMPRESSION_ADOBE_DEFLATE )
+    {
+        const char* pszPredictor = CPLGetConfigOption( "PREDICTOR_OVERVIEW", NULL );
+        if( pszPredictor  != NULL )
+        {
+            nPredictor =  atoi( pszPredictor );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the file, if it does not already exist.                  */
 /* -------------------------------------------------------------------- */
     VSIStatBufL  sStatBuf;
@@ -632,7 +651,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                             nOXSize, nOYSize, nBitsPerPixel, 
                             nPlanarConfig, nBands,
                             128, 128, TRUE, nCompression,
-                            nPhotometric, nSampleFormat, 
+                            nPhotometric, nSampleFormat, nPredictor,
                             panRed, panGreen, panBlue,
                             0, NULL, /* FIXME? how can we fetch extrasamples */
                             osMetadata );
