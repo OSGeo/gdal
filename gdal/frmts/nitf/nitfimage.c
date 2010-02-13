@@ -236,6 +236,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 1)
         goto header_too_small;
+
+    GetMD( psImage, pachHeader, nOffset, 1, ICORDS );
+
     psImage->chICORDS = pachHeader[nOffset++];
     psImage->bHaveIGEOLO = FALSE;
 
@@ -254,6 +257,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         psImage->bHaveIGEOLO = TRUE;
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 4 * 15)
             goto header_too_small;
+
+        GetMD( psImage, pachHeader, nOffset, 60, IGEOLO );
 
         psImage->bIsBoxCenterOfPixel = TRUE;
         for( iCoord = 0; iCoord < 4; iCoord++ )
