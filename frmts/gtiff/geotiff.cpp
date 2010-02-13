@@ -3221,6 +3221,14 @@ CPLErr GTiffDataset::IBuildOverviews(
     }
 
 /* -------------------------------------------------------------------- */
+/*      Fetch predictor tag                                             */
+/* -------------------------------------------------------------------- */
+    uint16 nPredictor = PREDICTOR_NONE;
+    if ( nCompression == COMPRESSION_LZW ||
+         nCompression == COMPRESSION_ADOBE_DEFLATE )
+        TIFFGetField( hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
+
+/* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
 /*      which are new.  We assume that band 1 of the file is            */
 /*      representative.                                                 */
@@ -3260,6 +3268,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                     nOvBitsPerSample, nPlanarConfig,
                                     nSamplesPerPixel, 128, 128, TRUE,
                                     nCompression, nPhotometric, nSampleFormat, 
+                                    nPredictor,
                                     panRed, panGreen, panBlue,
                                     nExtraSamples, panExtraSampleValues,
                                     osMetadata );
@@ -3313,7 +3322,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                         papoOverviewDS[i]->nRasterXSize, papoOverviewDS[i]->nRasterYSize, 
                                         1, PLANARCONFIG_CONTIG,
                                         1, 128, 128, TRUE,
-                                        COMPRESSION_NONE, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, 
+                                        COMPRESSION_NONE, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, PREDICTOR_NONE,
                                         NULL, NULL, NULL, 0, NULL,
                                         "" );
 
@@ -5596,7 +5605,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
     uint16              nCompression = COMPRESSION_NONE;
-    int                 nPredictor = 1, nJpegQuality = -1, nZLevel = -1;
+    int                 nPredictor = PREDICTOR_NONE, nJpegQuality = -1, nZLevel = -1;
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
@@ -7228,7 +7237,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
                                        nRasterXSize, nRasterYSize,
                                        1, PLANARCONFIG_CONTIG, 1,
                                        nBlockXSize, nBlockYSize,
-                                       bIsTiled, COMPRESSION_NONE, PHOTOMETRIC_MASK,
+                                       bIsTiled, COMPRESSION_NONE, PHOTOMETRIC_MASK, PREDICTOR_NONE,
                                        SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "");
         if (nOffset == 0)
             return CE_Failure;
