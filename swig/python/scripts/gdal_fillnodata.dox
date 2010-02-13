@@ -6,14 +6,14 @@ fill raster regions by interpolation from edges
 \section synopsis SYNOPSIS
 
 \verbatim
-gdal_nodatafill.py [-q] [-md max_distance] [-si smooth_iterations]
+gdal_fillnodata.py [-q] [-md max_distance] [-si smooth_iterations]
                 [-o name=value] [-b band]
                 srcfile [-nomask] [-mask filename] [-of format] [dstfile]
 \endverbatim
 
 \section description DESCRIPTION
 
-The gdal_nodatafill.py script fills selection regions (usually nodata areas)
+The gdal_fillnodata.py script fills selection regions (usually nodata areas)
 by interpolating from valid pixels around the edges of the area.  
 
 Additional details on the algorithm are available in the GDALFillNodata() 
