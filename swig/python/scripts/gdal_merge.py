@@ -27,9 +27,13 @@
 
 try:
     from osgeo import gdal
-    gdal.TermProgress = gdal.TermProgress_nocb
 except ImportError:
     import gdal
+
+try:
+    gdal.TermProgress = gdal.TermProgress_nocb
+except:
+    pass
 
 import sys
 import glob
