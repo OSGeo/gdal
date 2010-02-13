@@ -2696,7 +2696,7 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
 
 {
     int i;
-    int nASHOffset=0, nASHSize=0, nASSOffset=0, nASSSize=0;
+    int nASHOffset=0, nASHSize=0, nASSOffset=0, nASSSize=0, nNextOffset=0;
     GInt16 nAttrCount;
     GByte *pabyAttributeSubsection;
     GByte abyBuffer[128];
@@ -2712,6 +2712,8 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
         {
             nASSOffset = psImage->pasLocations[i].nLocOffset;
             nASSSize = psImage->pasLocations[i].nLocSize;
+            if (i + 1 < psImage->nLocCount)
+                nNextOffset = psImage->pasLocations[i + 1].nLocOffset;
         }
     }
 
@@ -2725,6 +2727,36 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
     VSIFReadL( &nAttrCount, 2, 1, psImage->psFile->fp );
 
     CPL_MSBPTR16( &nAttrCount );
+
+    
+    /* OK, now, as often with RPF/CADRG, here is the necessary dirty hack */
+    /* -- Begin of lengthy explanation -- */
+    /* A lot of CADRG files have a nASSSize value that reports a size */
+    /* smaller than the genuine size of the attribute subsection in the */
+    /* file, so if we trust the nASSSize value, we'll reject existing */
+    /* attributes. This is for example the case for */
+    /* http://download.osgeo.org/gdal/data/nitf/0000M033.GN3 */
+    /* where nASSSize is reported to be 302 bytes for 52 attributes (which */
+    /* is odd since 52 * 8 < 302), but a binary inspection of the attribute */
+    /* subsection shows that the actual size is 608 bytes, which is also confirmed*/
+    /* by the fact that the next subsection (quite often LID_ExplicitArealCoverageTable but not always) */
+    /* begins right after. So if this next subsection is found and that the */
+    /* difference in offset is larger than the original nASSSize, use it. */
+    /* I have observed that nowhere in the NITF driver we make use of the .nLocSize field */
+    /* -- End of lengthy explanation -- */
+
+    if (nNextOffset > 0 && nNextOffset - nASSOffset > nASSSize)
+        nASSSize = nNextOffset - nASSOffset;
+
+    /* Be sure that the attribute subsection is large enough to hold the */
+    /* offset table (otherwise NITFFetchAttribute coud read out of the buffer) */
+    if (nASSSize < 8 * nAttrCount)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Attribute subsection not large enough (%d bytes) to contain %d attributes.",
+                  nASSSize, nAttrCount );
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Load the attribute table.                                       */
