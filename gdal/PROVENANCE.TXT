@@ -24,7 +24,7 @@ Historical and Current:
  mbp - Mark Phillips (Tiger writer)
  gpotts - Garrett Potts (OSSIM)
  gwalter - Gillian Walter (Atlantis)
- aamici - Alessandro Amici
+ aamici & andrea - Alessandro Amici
  kintel - Marius Kintel - dgnlib only
  lichun - Lichun Wang at ITC. 
  hobu - Howard Butler (Hobu Inc)
