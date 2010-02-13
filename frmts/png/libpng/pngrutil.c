@@ -2243,7 +2243,7 @@ png_handle_unknown(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
 #endif
         )
 #endif
-          png_chunk_error(png_ptr, "unknown critical chunk");
+          png_chunk_warning(png_ptr, "unknown critical chunk");
    }
 
 #if defined(PNG_READ_UNKNOWN_CHUNKS_SUPPORTED)
@@ -2321,7 +2321,7 @@ png_check_chunk_name(png_structp png_ptr, png_bytep chunk_name)
    if (isnonalpha(chunk_name[0]) || isnonalpha(chunk_name[1]) ||
        isnonalpha(chunk_name[2]) || isnonalpha(chunk_name[3]))
    {
-      png_chunk_error(png_ptr, "invalid chunk type");
+       png_chunk_warning(png_ptr, "invalid chunk type");
    }
 }
 
