@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: test_cli_utilities.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Helper functions for testing CLI utilities
@@ -41,6 +41,17 @@ def get_cli_utility_path_internal(cli_utility_name):
     # This is the case for the buildbot directory tree
     try:
         cli_utility_path = os.path.join(os.getcwd(), '..', '..', 'gdal', 'apps', cli_utility_name)
+        ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
+
+        if ret.find('GDAL') != -1:
+            #print ret
+            return cli_utility_path
+    except:
+        pass
+
+    # Second try : the autotest directory is a subdirectory of gdal/ (FrankW's layout)
+    try:
+        cli_utility_path = os.path.join(os.getcwd(), '..', '..', 'apps', cli_utility_name)
         ret = gdaltest.runexternal(cli_utility_path + ' --utility_version')
 
         if ret.find('GDAL') != -1:
@@ -146,4 +157,3 @@ def get_gdal_rasterize_path():
 # 
 def get_nearblack_path():
     return get_cli_utility_path('nearblack')
-
