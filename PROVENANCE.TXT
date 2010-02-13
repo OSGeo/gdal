@@ -45,7 +45,7 @@ Historical and Current:
  collinsb - Benjamin Collins (MITRE) - swig/java
  jimg - James Gallager (OPeNDAP)
  kruland - Kevin Ruland
- vgough - ? (vgough@remotesensing.org) - 1999 - configure stuff. 
+ vgough - Valient Gough - 1999 - configure stuff. 
  silke - Silke Reimer (Intevation)
  ilucena - Ivan Lucena (Idrisi)
  shalasz - Steve Halasz (Debian)
