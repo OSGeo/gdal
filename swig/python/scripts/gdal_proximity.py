@@ -58,6 +58,7 @@ src_band_n = 1
 dst_filename = None
 dst_band_n = 1
 creation_type = 'Float32'
+quiet_flag = 0
 
 gdal.AllRegister()
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
