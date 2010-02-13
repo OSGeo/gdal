@@ -186,7 +186,12 @@ if dst_layer is None:
     fd = ogr.FieldDefn( dst_fieldname, ogr.OFTInteger )
     dst_layer.CreateField( fd )
     dst_field = 0
-    
+else:
+    if dst_fieldname is not None:
+        dst_field = dst_layer.GetLayerDefn().GetFieldIndex(dst_fieldname)
+        if dst_field < 0:
+            print("Warning: cannot find field '%s' in layer '%s'" % (dst_fieldname, dst_layername))
+
 # =============================================================================
 #	Invoke algorithm.
 # =============================================================================
