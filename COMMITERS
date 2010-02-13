@@ -1,3 +1,6 @@
+===========================================================
+List of GDAL/OGR committers
+===========================================================
 
 Folks who have agreed to RFC 3 terms:
 
@@ -37,7 +40,7 @@ ajolma        Ari Jolma                    perl bindings
 shalasz       Steve Halasz                 DebianGIS Packaging
               debian at adkgis.org
 
-mloskot	      Mateusz Loskot		   wince
+mloskot	      Mateusz Loskot		   wince, geojson
               mateusz at loskot.net
 
 ilucena       Ivan Lucena                  idrisi, ingr, georaster
