@@ -410,11 +410,24 @@ store overviews in a secondary file with the extension .ovr that is actually
 in TIFF format.  By default, the GeoTIFF driver stores overviews internally to the file 
 operated on (if it is writable), unless the -ro flag is specified.
 
+Most drivers also support an alternate overview format using Erdas Imagine 
+format.  To trigger this use the USE_RRD=YES configuration option.  This will 
+place the overviews in an associated .aux file suitable for direct use with 
+Imagine or ArcGIS as well as GDAL applications.  (eg --config USE_RRD YES)
+
+\section externalgtiffoverviews External overviews in GeoTIFF format
+
 External overviews created in TIFF format may be compressed using the COMPRESS_OVERVIEW 
 configuration option.  All compression methods, supported by the GeoTIFF 
-driver, available here. (eg --config COMPRESS_OVERVIEW DEFLATE).
+driver, are available here. (eg --config COMPRESS_OVERVIEW DEFLATE).
 The photometric interpretation can be set with --config PHOTOMETRIC_OVERVIEW {RGB,YCBCR,...},
 and the interleaving with --config INTERLEAVE_OVERVIEW {PIXEL|BAND}.
+
+For JPEG compressed external overviews, the JPEG quality can be set with
+"--config JPEG_QUALITY_OVERVIEW value" (GDAL 1.7.0 or later).
+
+For LZW or DEFLATE compressed external overviews, the predictor value can be set
+with "--config PREDICTOR_OVERVIEW 1|2|3" (GDAL 1.8.0 or later).
 
 To produce the smallest possible JPEG-In-TIFF overviews, you should use :
 \verbatim
@@ -433,10 +446,7 @@ documented in the GeoTIFF driver documentation.
 </ul>
 <br>
 
-Most drivers also support an alternate overview format using Erdas Imagine 
-format.  To trigger this use the USE_RRD=YES configuration option.  This will 
-place the overviews in an associated .aux file suitable for direct use with 
-Imagine or ArcGIS as well as GDAL applications.  (eg --config USE_RRD YES)
+See the documentation of the GeoTIFF driver for further explanations on all those options.
 
 \section aexample EXAMPLE
 
