@@ -19454,15 +19454,13 @@ echo "$as_me: error: --with-pg argument is a not an executable file.  It should 
   { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
 
-  ax_save_LIBS="${LIBS}"
-  LIBS=-L`$PG_CONFIG --libdir`" -lpq"
   { echo "$as_me:$LINENO: checking for PQconnectdb in -lpq" >&5
 echo $ECHO_N "checking for PQconnectdb in -lpq... $ECHO_C" >&6; }
 if test "${ac_cv_lib_pq_PQconnectdb+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpq  $LIBS"
+LIBS="-lpq -L`$PG_CONFIG --libdir` $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -19523,13 +19521,13 @@ else
   HAVE_PG=no
 fi
 
-  LIBS="${ax_save_LIBS}"
 
   if test "${HAVE_PG}" = "yes" ; then
     LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
     PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
 
     PG_EXTRA_DEC=""
+    saved_LIBS="$LIBS"
 
 { echo "$as_me:$LINENO: checking for PQputCopyData in -lpq" >&5
 echo $ECHO_N "checking for PQputCopyData in -lpq... $ECHO_C" >&6; }
@@ -19603,10 +19601,12 @@ else
   DEFINE_PG_PRE74=-DPG_PRE74
 fi
 
+    LIBS="$saved_LIBS"
     if test "$DEFINE_PG_PRE74" != "" ; then
       echo "The PostgreSQL client version is before 7.4. You will not be able to use binary cursors."
     fi
 
+    saved_LIBS="$LIBS"
     { echo "$as_me:$LINENO: checking for PQescapeStringConn in -lpq" >&5
 echo $ECHO_N "checking for PQescapeStringConn in -lpq... $ECHO_C" >&6; }
 if test "${ac_cv_lib_pq_PQescapeStringConn+set}" = set; then
@@ -19672,6 +19672,7 @@ if test $ac_cv_lib_pq_PQescapeStringConn = yes; then
   DEFINE_PG_HAS_PQESCAPESTRINGCONN=-DPG_HAS_PQESCAPESTRINGCONN
 fi
 
+    LIBS="$saved_LIBS"
     if test "$DEFINE_PG_HAS_PQESCAPESTRINGCONN" = "" ; then
       echo "falling back to using PQescapeString. You should upgrade at least to security releases 8.1.4, 8.0.8, 7.4.13, 7.3.15."
     fi
