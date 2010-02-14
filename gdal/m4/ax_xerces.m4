@@ -97,7 +97,11 @@ AC_DEFUN([AX_LIB_XERCES],
     if test -n "$xerces_prefix"; then
         xerces_include_dir="$xerces_prefix/include"
         xerces_include_dir2="$xerces_prefix/include/xercesc"
-        xerces_lib_flags="-L$xerces_prefix/lib -lxerces-c -lpthread"
+        if test "$xerces_prefix" = "/usr"; then
+            xerces_lib_flags="-lxerces-c -lpthread"
+        else
+            xerces_lib_flags="-L$xerces_prefix/lib -lxerces-c -lpthread"
+        fi
         run_xerces_test="yes"
     elif test "$xerces_requested" = "yes"; then
         if test -n "$xerces_include_dir" -a -n "$xerces_lib_flags"; then
