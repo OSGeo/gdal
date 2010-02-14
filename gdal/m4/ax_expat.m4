@@ -67,6 +67,7 @@ AC_DEFUN([AX_LIB_EXPAT],
         else
             expat_prefix="" 
         fi
+
         ]
     )
 
@@ -96,7 +97,6 @@ AC_DEFUN([AX_LIB_EXPAT],
 
     if test -n "$expat_prefix"; then
         expat_include_dir="$expat_prefix/include"
-        expat_lib_flags="-L$expat_prefix/lib -lexpat"
         run_expat_test="yes"
     elif test "$expat_requested" = "yes"; then
         if test -n "$expat_include_dir" -a -n "$expat_lib_flags"; then
@@ -106,19 +106,37 @@ AC_DEFUN([AX_LIB_EXPAT],
         run_expat_test="no"
     fi
 
+    if test "$run_expat_test" = "yes"; then
+        unset ac_cv_lib_expat_XML_ParserCreate
+        saved_LIBS="$LIBS"
+        LIBS=""
+        if test -n "$expat_lib_flags"; then
+            AC_CHECK_LIB(expat,XML_ParserCreate,run_expat_test="yes",run_expat_test="no",$expat_lib_flags)
+        else
+            if test "$expat_prefix" = "/usr"; then
+                AC_CHECK_LIB(expat,XML_ParserCreate,run_expat_test="yes",run_expat_test="no",)
+                if test "$run_expat_test" = "yes"; then
+                    expat_lib_flags="-lexpat"
+                fi
+            else
+                AC_CHECK_LIB(expat,XML_ParserCreate,run_expat_test="yes",run_expat_test="no",-L$expat_prefix/lib)
+                if test "$run_expat_test" = "yes"; then
+                    expat_lib_flags="-L$expat_prefix/lib -lexpat"
+                fi
+            fi
+        fi
+        LIBS="$saved_LIBS"
+    fi
+
     dnl
     dnl Check Expat XML Parser files
     dnl
     if test "$run_expat_test" = "yes"; then
 
+        EXPAT_LDFLAGS="$expat_lib_flags"
+
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$expat_include_dir"
-
-        saved_LDFLAGS="$LDFLAGS"
-        LDFLAGS="$LDFLAGS $expat_lib_flags"
-
-        saved_LIBS="$LIBS"
-        LIBS="$LIBS -lexpat"
         
         dnl
         dnl Check Expat headers
@@ -144,48 +162,14 @@ AC_DEFUN([AX_LIB_EXPAT],
             ]
         )
         AC_LANG_POP([C++])
-        
-        dnl
-        dnl Check Expat libraries
-        dnl
-        if test "$expat_header_found" = "yes"; then
-
-            AC_MSG_CHECKING([for Expat XML Parser libraries])
-
-            AC_LANG_PUSH([C++])
-            AC_LINK_IFELSE([
-                AC_LANG_PROGRAM(
-                    [[
-@%:@include <expat.h>
-                    ]],
-                    [[
-XML_Parser p = XML_ParserCreate(NULL);
-XML_ParserFree(p);
-p = NULL;
-                    ]]
-                )],
-                [
-                EXPAT_LDFLAGS="$expat_lib_flags"
-                expat_lib_found="yes"
-                AC_MSG_RESULT([found])
-                ],
-                [
-                expat_lib_found="no"
-                AC_MSG_RESULT([not found])
-                ]
-            )
-            AC_LANG_POP([C++])
-        fi
 
         CPPFLAGS="$saved_CPPFLAGS"
-        LDFLAGS="$saved_LDFLAGS"
-        LIBS="$saved_LIBS"
     fi
 
     AC_MSG_CHECKING([for Expat XML Parser])
 
     if test "$run_expat_test" = "yes"; then
-        if test "$expat_header_found" = "yes" -a "$expat_lib_found" = "yes"; then
+        if test "$expat_header_found" = "yes"; then
 
             AC_SUBST([EXPAT_CFLAGS])
             AC_SUBST([EXPAT_LDFLAGS])
