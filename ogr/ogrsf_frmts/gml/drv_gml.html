@@ -42,6 +42,29 @@ option <b>GML_FIELDTYPES</b> to the value <b>ALWAYS_STRING</b>.  Configuration
 options can be set via the CPLSetConfigOption() function or as environment
 variables.<p>
 
+<h2>Encoding issues</h2>
+
+Expat library supports reading the following built-in encodings :
+<ul>
+<li>US-ASCII</li>
+<li>UTF-8</li>
+<li>UTF-16</li>
+<li>ISO-8859-1</li>
+</ul>
+
+OGR 1.8.0 adds supports for Windows-1252 encoding (for previous versions, altering the encoding
+mentionned in the XML header to ISO-8859-1 might work in some cases).<p>
+
+The content returned by OGR will be encoded in UTF-8, after the conversion from the
+encoding mentionned in the file header is.<p>
+
+If your GML file is not encoded in one of the previous encodings, it will not be parsed by the
+GML driver. You may convert it into one of the supported encoding with the <i>iconv</i> utility
+for example and change accordingly the <i>encoding</i> parameter value in the XML header.<br>
+<p>
+
+When writing a GML file, the driver expects UTF-8 content to be passed in.<p>
+
 <h2>Creation Issues</h2>
 
 On export all layers are written to a single GML file all in a single

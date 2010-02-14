@@ -29,7 +29,7 @@ Features are retrieved from the content of &lt;item&gt; (RSS document) or &lt;en
 
 <h2>Encoding issues</h2>
 
-Expat library supports the following built-in encodings :
+Expat library supports reading the following built-in encodings :
 <ul>
 <li>US-ASCII</li>
 <li>UTF-8</li>
@@ -37,11 +37,18 @@ Expat library supports the following built-in encodings :
 <li>ISO-8859-1</li>
 </ul>
 
+OGR 1.8.0 adds supports for Windows-1252 encoding (for previous versions, altering the encoding
+mentionned in the XML header to ISO-8859-1 might work in some cases).<p>
+
+The content returned by OGR will be encoded in UTF-8, after the conversion from the
+encoding mentionned in the file header is.<p>
+
 If your GeoRSS file is not encoded in one of the previous encodings, it will not be parsed by the
 GeoRSS driver. You may convert it into one of the supported encoding with the <i>iconv</i> utility
 for example and change accordingly the <i>encoding</i> parameter value in the XML header.<br>
-Note : Windows-1252 differs only on a small range of characters with ISO-8859-1.
-Patching the  <i>encoding</i> parameter value to ISO-8859-1 may be enough to make it work...<p>
+<p>
+
+When writing a GeoRSS file, the driver expects UTF-8 content to be passed in.<p>
 
 <h2>Field definitions</h2>
 
