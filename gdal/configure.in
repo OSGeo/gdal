@@ -417,22 +417,23 @@ else
 
   AC_MSG_RESULT([yes])
 
-  ax_save_LIBS="${LIBS}"
-  LIBS=-L`$PG_CONFIG --libdir`" -lpq"
-  AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no,)
-  LIBS="${ax_save_LIBS}"
+  AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no,-L`$PG_CONFIG --libdir`)
   
   if test "${HAVE_PG}" = "yes" ; then
     LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
     PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
 
     PG_EXTRA_DEC=""
+    saved_LIBS="$LIBS"
     AC_CHECK_LIB(pq,PQputCopyData,,DEFINE_PG_PRE74=-DPG_PRE74,)
+    LIBS="$saved_LIBS"
     if test "$DEFINE_PG_PRE74" != "" ; then
       echo "The PostgreSQL client version is before 7.4. You will not be able to use binary cursors."
     fi
 
+    saved_LIBS="$LIBS"
     AC_CHECK_LIB(pq,PQescapeStringConn,DEFINE_PG_HAS_PQESCAPESTRINGCONN=-DPG_HAS_PQESCAPESTRINGCONN,,)
+    LIBS="$saved_LIBS"
     if test "$DEFINE_PG_HAS_PQESCAPESTRINGCONN" = "" ; then
       echo "falling back to using PQescapeString. You should upgrade at least to security releases 8.1.4, 8.0.8, 7.4.13, 7.3.15."
     fi
