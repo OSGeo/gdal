@@ -1,0 +1,29 @@
+<VSISparseFile>
+  <Length>87629264</Length>
+  <SubfileRegion>  Stuff at start of file.
+    <Filename relative="1">251_head.dat</Filename>
+    <DestinationOffset>0</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>2768</RegionLength>
+  </SubfileRegion>
+
+  <SubfileRegion>  RasterDMS node.
+    <Filename relative="1">251_rasterdms.dat</Filename>
+    <DestinationOffset>87313104</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>160</RegionLength>
+  </SubfileRegion>
+
+  <SubfileRegion>  Stuff at end of file.
+    <Filename relative="1">251_tail.dat</Filename>
+    <DestinationOffset>87611924</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>17340</RegionLength>
+  </SubfileRegion>
+
+  <ConstantRegion>  Default for the rest of the file.
+    <DestinationOffset>0</DestinationOffset>
+    <RegionLength>87629264</RegionLength>
+    <Value>0</Value>
+  </ConstantRegion>
+</VSISparseFile>
