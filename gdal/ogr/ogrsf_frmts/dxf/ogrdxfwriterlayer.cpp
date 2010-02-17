@@ -207,6 +207,8 @@ OGRErr OGRDXFWriterLayer::WritePOINT( OGRFeature *poFeature )
 {
     WriteValue( 0, "POINT" );
     WriteCore( poFeature );
+    WriteValue( 100, "AcDbEntity" );
+    WriteValue( 100, "AcDbPoint" );
 
     OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
 
