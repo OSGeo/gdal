@@ -335,6 +335,8 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
 
     if( ! poGRW->sWhere.empty() )
       strcpy( szWhere, poGRW->sWhere.c_str() );
+    else
+      szWhere[0] = '\0';
 
     OWStatement* poStmt = poGRW->poConnection->CreateStatement(
       "DECLARE\n"
