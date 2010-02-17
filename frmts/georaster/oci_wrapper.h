@@ -179,9 +179,9 @@ class OWConnection
 public:
 
                         OWConnection(
-                            const char* pszUserIn,
-                            const char* pszPasswordIn,
-                            const char* pszServerIn );
+                            const char* pszUser,
+                            const char* pszPassword,
+                            const char* pszServer );
     virtual            ~OWConnection();
 
 private:
@@ -196,9 +196,9 @@ private:
 
     bool                bSuceeeded;
 
-    char*               pszUser;
-    char*               pszPassword;
-    char*               pszServer;
+    CPLString           sUser;
+    CPLString           sPassword;
+    CPLString           sServer;
 
     OCIType*            hNumArrayTDO;
     OCIType*            hGeometryTDO;
@@ -206,7 +206,7 @@ private:
 
 public:
 
-    OWStatement*        CreateStatement( const char* pszStatementIn );
+    OWStatement*        CreateStatement( const char* pszStatement );
     OCIParam*           GetDescription( char* pszTable );
     bool                GetNextField(
                             OCIParam* phTable,
@@ -223,9 +223,9 @@ public:
 
     bool                Succeeded() { return bSuceeeded; };
 
-    char*               GetUser() { return pszUser; };
-    char*               GetPassword() { return pszPassword; };
-    char*               GetServer() { return pszServer; };
+    const char*         GetUser() { return sUser.c_str(); };
+    const char*         GetPassword() { return sPassword.c_str(); };
+    const char*         GetServer() { return sServer.c_str(); };
     int                 GetVersion () { return nVersion; };
     sb4                 GetCharSize () { return nCharSize; };
 
@@ -240,13 +240,13 @@ class OWStatement
 
 public:
 
-                        OWStatement( OWConnection* pConnection,
-                            const char* pszStatementIn );
+                        OWStatement( OWConnection* poConnect, 
+                            const char* pszStatement );
     virtual            ~OWStatement();
 
 private:
 
-    OWConnection*       poConnect;
+    OWConnection*       poConnection;
     OCIStmt*            hStmt;
     OCIError*           hError;
 
@@ -254,8 +254,6 @@ private:
     int                 nNextBnd;
 
     ub4                 nStmtMode;
-
-    char*               pszStatement;
 
 public:
 
@@ -279,12 +277,12 @@ public:
     void                Define( OCIArray** pphData );
     void                Define( sdo_georaster** pphData );
     void                Define( sdo_geometry** pphData );
-    void                Define( OCILobLocator** pphLocator,
-                            int nIterations );
-    void                BindName( char* pszName, int* pnData );
-    void                BindName( char* pszName, char* pszData,
+    void                Define( OCILobLocator** pphLocator, long nIterations );
+    void                BindName( const char* pszName, int* pnData );
+    void                BindName( const char* pszName, double* pnData );
+    void                BindName( const char* pszName, char* pszData,
                             int nSize = OWNAME );
-    void                BindName( char* pszName,
+    void                BindName( const char* pszName,
                             OCILobLocator** pphLocator );
     static void         Free( OCILobLocator** ppphLocator,
                             int nCount );
