@@ -609,6 +609,7 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallZipFileHandler();
 #endif
         VSIInstallStdoutHandler();
+        VSIInstallSparseFileHandler();
     }
     
     return poManager;
