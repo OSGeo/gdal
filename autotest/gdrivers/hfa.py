@@ -1016,7 +1016,7 @@ def hfa_ov_nodata():
     return 'success'
  
 ###############################################################################
-# Verify handling of camera model metadata (#Verify reading of 3rd order XFORM polynomials.
+# Verify handling of camera model metadata (#2675)
 
 def hfa_camera_md():
 
