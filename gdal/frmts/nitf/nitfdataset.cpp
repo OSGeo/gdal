@@ -1501,7 +1501,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
     if( psImage != NULL && !poDS->bGotGeoTransform &&
         (psImage->chICORDS == 'G' || psImage->chICORDS == 'D') &&
         pszIID1 != NULL && EQUAL(pszIID1, "CADRG") &&
-        pszITITLE != NULL && strlen(pszITITLE) >= 12 && pszITITLE[strlen(pszITITLE) - 1] == '9' )
+        pszITITLE != NULL && strlen(pszITITLE) >= 12 
+        && (pszITITLE[strlen(pszITITLE) - 1] == '9' 
+            || pszITITLE[strlen(pszITITLE) - 1] == 'J') )
     {
         /* To get a perfect rectangle in Azimuthal Equidistant projection, we must use */
         /* the sphere and not WGS84 ellipsoid. That's a bit strange... */
