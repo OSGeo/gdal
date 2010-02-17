@@ -1016,6 +1016,45 @@ def hfa_ov_nodata():
     return 'success'
  
 ###############################################################################
+# Verify handling of camera model metadata (#Verify reading of 3rd order XFORM polynomials.
+
+def hfa_camera_md():
+
+    ds = gdal.Open( '/vsisparse/data/251_sparse.xml' )
+
+    md = ds.GetMetadata( 'CAMERA_MODEL' )
+
+    check_list = [ ('direction','EMOD_FORWARD'),
+                   ('forSrcAffine[0]','0.025004093931786'),
+                   ('invDstAffine[0]','1'),
+                   ('coeffs[1]','-0.008'),
+                   ('elevationType','EPRJ_ELEVATION_TYPE_HEIGHT') ]
+    for check_item in check_list:
+        try:
+            value = md[check_item[0]]
+        except:
+            gdaltest.post_reason( 'metadata item %d missing' % check_item[0])
+            return 'fail'
+
+        if value != check_item[1]:
+            gdaltest.post_reason( 'metadata item %s has wrong value: %s' % \
+                                  (check_item[0], value) )
+            return 'fail'
+
+    # Check that the SRS is reasonable.
+
+    srs_wkt = md['outputProjection']
+    exp_wkt = 'PROJCS["UTM Zone 17, Northern Hemisphere",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],TOWGS84[-10,158,187,0,0,0,0],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-81],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1],AUTHORITY["EPSG","26717"]]'
+
+    if not gdaltest.equal_srs_from_wkt(srs_wkt,exp_wkt):
+        gdaltest.post_reason( 'wrong outputProjection' )
+        return 'fail'
+
+    ds = None
+    return 'success'
+   
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -1048,7 +1087,8 @@ gdaltest_list = [
     hfa_delete_colortable,
     hfa_delete_colortable2,
     hfa_excluded_values,
-    hfa_ov_nodata ]
+    hfa_ov_nodata,
+    hfa_camera_md ]
 
 if __name__ == '__main__':
 
