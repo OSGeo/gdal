@@ -31,6 +31,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_atomic_ops.obj \
 		cpl_time.obj \
 		cpl_vsil_stdout.obj \
+		cpl_vsil_sparse.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
