@@ -795,7 +795,7 @@ void netCDFDataset::SetProjection( int var )
 /*      Cylindrical Equal Area                                          */
 /* -------------------------------------------------------------------- */
 
-	    else if( EQUAL( pszValue, CEA ) ) {
+	    else if( EQUAL( pszValue, CEA ) || EQUAL( pszValue, LCEA ) ) {
 		dfStdP1 = 
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          STD_PARALLEL_1, 0.0 );
@@ -910,7 +910,69 @@ void netCDFDataset::SetProjection( int var )
 
 	    }
 /* -------------------------------------------------------------------- */
-/*      Is this Latitude/Longitude Grid                                 */
+/*      Is this Latitude/Longitude Grid explicitly                      */
+/* -------------------------------------------------------------------- */
+	    
+	    else if ( EQUAL ( pszValue, LATITUDE_LONGITUDE ) ) {
+	        oSRS.SetWellKnownGeogCS( "WGS84" );
+	    }
+/* -------------------------------------------------------------------- */
+/*      Mercator                                                        */
+/* -------------------------------------------------------------------- */
+		  
+	    else if ( EQUAL ( pszValue, MERCATOR ) ) {
+	        dfCenterLon = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+				     LON_PROJ_ORIGIN, 0.0 );
+	      
+		dfCenterLat = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfScale = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+					 SCALE_FACTOR_ORIGIN,
+					 0.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+		
+		oSRS.SetMercator( dfCenterLat, dfCenterLon, dfScale, 
+				  dfFalseEasting, dfFalseNorthing );
+	    }
+
+/* -------------------------------------------------------------------- */
+/*      Orthographic                                                    */
+/* -------------------------------------------------------------------- */
+		  
+	    else if ( EQUAL ( pszValue, ORTHOGRAPHIC ) ) {
+	        dfCenterLon = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+				     LON_PROJ_ORIGIN, 0.0 );
+	      
+		dfCenterLat = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+		
+		oSRS.SetOrthographic( dfCenterLat, dfCenterLon, 
+				      dfFalseEasting, dfFalseNorthing );
+	    }
+
+/* -------------------------------------------------------------------- */
+/*      Is this Latitude/Longitude Grid, default                        */
 /* -------------------------------------------------------------------- */
 	    
 	} else if( EQUAL( szDimNameX,"lon" ) ) {
@@ -2536,6 +2598,16 @@ void GDALRegister_netCDF()
 //    * latitude_of_projection_origin
 //    * false_easting
 //    * false_northing
+//Azimuthal equidistant
+//
+//grid_mapping_name = azimuthal_equidistant
+//
+//Map parameters:
+//
+//    * longitude_of_projection_origin
+//    * latitude_of_projection_origin
+//    * false_easting
+//    * false_northing
 //Lambert azimuthal equal area
 //
 //grid_mapping_name = lambert_azimuthal_equal_area
@@ -2554,6 +2626,43 @@ void GDALRegister_netCDF()
 //
 //    * standard_parallel - There may be 1 or 2 values.
 //    * longitude_of_central_meridian
+//    * latitude_of_projection_origin
+//    * false_easting
+//    * false_northing
+//Lambert Cylindrical Equal Area
+//
+//grid_mapping_name = lambert_cylindrical_equal_area
+//
+//Map parameters:
+//
+//    * longitude_of_central_meridian
+//    * either standard_parallel or scale_factor_at_projection_origin
+//    * false_easting
+//    * false_northing
+//Latitude-Longitude
+//
+//grid_mapping_name = latitude_longitude
+//
+//Map parameters:
+//
+//    * None
+//Mercator
+//
+//grid_mapping_name = mercator
+//
+//Map parameters:
+//
+//    * longitude_of_projection_origin
+//    * either standard_parallel or scale_factor_at_projection_origin
+//    * false_easting
+//    * false_northing
+//Orthographic
+//
+//grid_mapping_name = orthographic
+//
+//Map parameters:
+//
+//    * longitude_of_projection_origin
 //    * latitude_of_projection_origin
 //    * false_easting
 //    * false_northing
@@ -2599,22 +2708,38 @@ void GDALRegister_netCDF()
 //    * latitude_of_projection_origin
 //    * false_easting
 //    * false_northing
+//Vertical perspective
 //
+//grid_mapping_name = vertical_perspective
+//
+//Map parameters:
+//
+//    * latitude_of_projection_origin
+//    * longitude_of_projection_origin
+//    * perspective_point_height
+//    * false_easting
+//    * false_northing
 //
 //
 //Grid mapping attributes
 //
+//earth_radius
 //false_easting 	
 //false_northing 	
 //grid_mapping_name 	
 //grid_north_pole_latitude
 //grid_north_pole_longitude
+//inverse_flattening
 //latitude_of_projection_origin 
 //longitude_of_central_meridian 
+//longitude_of_prime_meridian
 //longitude_of_projection_origin
-//north_pole_grid_longitude 	
+//north_pole_grid_longitude 
+//perspective_point_height	
 //scale_factor_at_central_meridian 
 //scale_factor_at_projection_origin 
+//semi_major_axis
+//semi_minor_axis
 //standard_parallel 	
 //straight_vertical_longitude_from_pole 	
 
