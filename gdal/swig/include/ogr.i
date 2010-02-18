@@ -1572,7 +1572,35 @@ public:
 
   bool IsEmpty () {
     return (OGR_G_IsEmpty(self) > 0);
-  }  
+  }
+
+  double Length () {
+    /* get_Length is not exposed, redo simple euclidean length */
+    /* this is recursive if the geometry is not a simple list of points */
+    double l = 0;
+    int n = OGR_G_GetGeometryCount(self);
+    if (n > 0) {
+      int i;
+      for (i = 0; i < n; i++) {
+	OGRGeometryShadow *g = (OGRGeometryShadow*)OGR_G_GetGeometryRef(self, i);
+	l += OGRGeometryShadow_Length(g);
+      }
+    } else {
+      int i;
+      double x1 = OGR_G_GetX(self, 0);
+      double y1 = OGR_G_GetY(self, 0);
+      for (i = 1; i < OGR_G_GetPointCount(self); i++) {
+	double x2 = OGR_G_GetX(self, i);
+	double y2 = OGR_G_GetY(self, i);
+	double dx = x2 - x1;
+	double dy = y2 - y1;
+	l += sqrt(dx*dx + dy*dy);
+	x1 = x2;
+	y1 = y2;
+      }
+    }
+    return l;
+  }
   
   bool IsValid () {
     return (OGR_G_IsValid(self) > 0);
