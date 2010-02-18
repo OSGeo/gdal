@@ -137,11 +137,12 @@ may be kept together with double quotes.
 </dd>
 
 <dt> <b>--config</b> <i>key value</i></dt><dd>
-Sets the named configuration keyword to the given value, as opposed to 
+Sets the named <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">
+configuration keyword</a> to the given value, as opposed to 
 setting them as environment variables.  Some common configuration keywords
 are GDAL_CACHEMAX (memory used internally for caching in megabytes)
 and GDAL_DATA (path of the GDAL "data" directory).  Individual drivers may
-be influenced by other configuration options. 
+be influenced by other configuration options.  
 </dd>
 
 <dt> <b>--debug</b> <i>value</i></dt><dd>
