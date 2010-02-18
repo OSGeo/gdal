@@ -59,6 +59,15 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 }
 
 {
+    my $g = Geo::OGR::Geometry->create(wkt => "linestring(1 1, 1 2, 2 2)");
+    ok ($g->Length == 2, "Length 1");
+    $g = Geo::OGR::Geometry->create(wkt => "point(1 1)");
+    ok ($g->Length == 0, "Length 2");
+    $g = Geo::OGR::Geometry->create(wkt => "POLYGON((1 1,5 1,5 5,1 5,1 1),(2 2, 3 2, 3 3, 2 3,2 2))");
+    ok ($g->Length == 16+4, "Length 3");
+}
+
+{
     # test list valued fields
     my $d = Geo::OGR::FeatureDefn->new;
     $d->Schema(Fields=>[
