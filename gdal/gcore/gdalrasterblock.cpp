@@ -95,8 +95,8 @@ int CPL_STDCALL GDALGetCacheMax()
     {
         if( CPLGetConfigOption("GDAL_CACHEMAX",NULL) != NULL )
         {
-            nCacheMax = atoi(CPLGetConfigOption("GDAL_CACHEMAX","10"));
-            if( nCacheMax < 10000 )
+            nCacheMax = atoi(CPLGetConfigOption("GDAL_CACHEMAX",""));
+            if( nCacheMax < 100000 )
                 nCacheMax *= 1024 * 1024;
         }
         bCacheMaxInitialized = TRUE;
