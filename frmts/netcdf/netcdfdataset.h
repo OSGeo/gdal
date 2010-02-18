@@ -46,6 +46,7 @@
 /************************************************************************/
 #define MAX_STR_LEN            8192
 #define CEA                    "cylindrical_equal_area"
+#define LCEA                   "lambert_cylindrical_equal_area"
 #define L_C_CONIC              "lambert_conformal_conic"
 #define TM                     "transverse_mercator"
 #define LAEA                   "lambert_azimuthal_equal_area"
@@ -53,7 +54,11 @@
 #define GRD_MAPPING            "grid_mapping"
 #define COORDINATES            "coordinates"
 #define LONLAT                 "lon lat"
+#define LATITUDE_LONGITUDE     "latitude_longitude"
+#define MERCATOR               "mercator"
+#define ORTHOGRAPHIC           "orthographic"
 
+#define STD_PARALLEL           "standard_parallel"
 #define STD_PARALLEL_1         "standard_parallel_1"
 #define STD_PARALLEL_2         "standard_parallel_2"
 #define LONG_CENTRAL_MERIDIAN  "central_meridian"
@@ -67,6 +72,11 @@
 #define SCALE_FACTOR           "scale_factor_at_central_meridian"
 #define FALSE_EASTING          "false_easting"
 #define FALSE_NORTHING         "false_northing"
+#define EARTH_RADIUS           "earth_radius"
+#define INVERSE_FLATTENING     "inverse_flattening"
+#define LONG_PRIME_MERIDIAN    "longitude_of_prime_meridian"
+#define SEMI_MAJOR_AXIS        "semi_major_axis"
+#define SEMI_MINOR_AXIS        "semi_minor_axis"
 
 #define STD_NAME               "standard_name"
 #define LNG_NAME               "long_name"
