@@ -190,6 +190,7 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     if( iRegion == aoRegions.size() )
     {
         memset( pBuffer, 0, nSize * nCount );
+        nCurOffset += nSize * nSize;
         return nCount;
     }
 
@@ -206,9 +207,13 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     {
         size_t nExtraBytes = nCurOffset + nBytesRequested - nBytesAvailable;
         // Recurse to get the rest of the request.
+        
+        GUIntBig nCurOffsetSave = nCurOffset;
+        nCurOffset += nBytesRequested - nExtraBytes;
         size_t nBytesRead = 
             this->Read( ((char *) pBuffer) + nBytesRequested - nExtraBytes,
                         1, nExtraBytes );
+        nCurOffset = nCurOffsetSave;
 
         if( nBytesRead < nExtraBytes )
             nReturnCount -= (nExtraBytes-nBytesRead) / nSize;
