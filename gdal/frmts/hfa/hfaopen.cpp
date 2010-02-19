@@ -1372,7 +1372,7 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
 
     for( i = 0; i < 15; i++ )
     {
-        char	szFieldName[30];
+        char	szFieldName[40];
 
         sprintf( szFieldName, "proParams[%d]", i );
         psProParms->proParams[i] = poMIEntry->GetDoubleField(szFieldName);
