@@ -80,10 +80,6 @@ CPL_C_END
 
 static int kakadu_initialized = FALSE;
 
-static void
-transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
-               GDALDataType eOutType );
-
 static unsigned char jp2_header[] = 
 {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
 
@@ -111,6 +107,8 @@ class JP2KAKDataset : public GDALPamDataset
     bool           bPreferNPReads;
     kdu_thread_env *poThreadEnv;
 
+    int            bResilient;
+    int            bFussy;
     bool           bUseYCC;
 
     char	   *pszProjection;
@@ -576,7 +574,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( eErr == CE_None )
     {
         int nBandStart = 0;
-        for( iBand = 0; iBand < anBands.size(); iBand++ )
+        for( iBand = 0; iBand < (int) anBands.size(); iBand++ )
         {
             if( iBand+1 == nBand )
             {
@@ -1217,9 +1215,17 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->poInput = poInput;
         poDS->poRawInput = poRawInput;
         poDS->oCodeStream.create( poInput );
-//        poDS->oCodeStream.set_fussy();
-//        poDS->oCodeStream.set_resilient();
         poDS->oCodeStream.set_persistent();
+
+        poDS->bResilient = CSLTestBoolean(
+            CPLGetConfigOption( "JP2KAK_RESILIENT", "NO" ) );
+        poDS->bFussy = CSLTestBoolean(
+            CPLGetConfigOption( "JP2KAK_FUSSY", "NO" ) );
+
+        if( poDS->bFussy )
+            poDS->oCodeStream.set_fussy();
+        if( poDS->bResilient )
+            poDS->oCodeStream.set_resilient();
 
         poDS->jpip_client = jpip_client;
 
@@ -1557,7 +1563,10 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
             oWCodeStream.create( &subfile_src );
         }
 
-//        oWCodeStream.set_fussy();
+        if( bFussy )
+            oWCodeStream.set_fussy();
+        if( bResilient )
+            oWCodeStream.set_resilient();
 
         poCodeStream= &oWCodeStream;
         
@@ -2432,19 +2441,20 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Set some user-overridable parameters.                           */
 /* -------------------------------------------------------------------- */
     int iParm;
-    char *apszParms[] = { "Corder", "PCRL", 
-                          "Cprecincts", "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}",
-                          "ORGgen_plt", "yes", 
-                          "ORGgen_tlm", NULL,
-                          "Qguard", NULL, 
-                          "Cmodes", NULL, 
-                          "Clevels", NULL,
-                          "Cblk", NULL,
-                          "Rshift", NULL,
-                          "Rlevels", NULL,
-                          "Rweight", NULL,
-                          "Sprofile", NULL,
-                          NULL, NULL };
+    const char *apszParms[] = 
+        { "Corder", "PCRL", 
+          "Cprecincts", "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}",
+          "ORGgen_plt", "yes", 
+          "ORGgen_tlm", NULL,
+          "Qguard", NULL, 
+          "Cmodes", NULL, 
+          "Clevels", NULL,
+          "Cblk", NULL,
+          "Rshift", NULL,
+          "Rlevels", NULL,
+          "Rweight", NULL,
+          "Sprofile", NULL,
+          NULL, NULL };
 
     for( iParm = 0; apszParms[iParm] != NULL; iParm += 2 )
     {
