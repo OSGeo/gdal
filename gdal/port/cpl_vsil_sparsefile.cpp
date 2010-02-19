@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: cpl_vsil_subfile.cpp 18063 2009-11-21 21:11:49Z warmerdam $
+ * $Id$
  *
  * Project:  VSI Virtual File System
  * Purpose:  Implementation of sparse file virtual io driver.
@@ -37,7 +37,7 @@
 #  include <wce_errno.h>
 #endif
 
-CPL_CVSID("$Id: cpl_vsil_subfile.cpp 18063 2009-11-21 21:11:49Z warmerdam $");
+CPL_CVSID("$Id$");
 
 class SFRegion { 
 public:
