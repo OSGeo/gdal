@@ -3479,7 +3479,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 
     for( i = 0; i < 15; i++ )
     {
-        char	szFieldName[30];
+        char	szFieldName[40];
 
         sprintf( szFieldName, "projectionObject.proParams[%d]", i );
         sPro.proParams[i] = poProjInfo->GetDoubleField(szFieldName);
