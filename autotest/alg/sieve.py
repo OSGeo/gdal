@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: proximity.py 15577 2008-10-22 05:06:16Z warmerdam $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test SieveFilter() algorithm.

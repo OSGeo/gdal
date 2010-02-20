@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_basic_test.py 14347 2008-04-21 09:15:05Z rouault $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some geometry factory methods, like arc stroking.

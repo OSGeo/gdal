@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: minixml.py 11277 2007-04-18 00:36:48Z mloskot $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test RasterAttributeTables services from Python.

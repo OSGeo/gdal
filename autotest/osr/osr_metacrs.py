@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_ct_proj.py 17672 2009-09-23 20:56:18Z warmerdam $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test with MetaCRS TestSuite

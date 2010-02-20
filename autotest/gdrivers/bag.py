@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: hdf5.py 17082 2009-05-21 15:04:52Z warmerdam $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for BAG driver.
