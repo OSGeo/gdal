@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_basic.py 18193 2009-12-06 19:45:51Z rouault $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test COMPD_CS support.

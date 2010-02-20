@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: georaster.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  GeoRaster Testing.

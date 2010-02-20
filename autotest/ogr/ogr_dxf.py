@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_sdts.py 14973 2008-07-19 13:06:14Z rouault $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR DXF driver functionality.

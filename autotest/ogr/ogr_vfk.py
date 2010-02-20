@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR VFK driver functionality.
