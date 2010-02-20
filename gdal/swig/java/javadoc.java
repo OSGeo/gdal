@@ -8282,6 +8282,12 @@ public class Geometry:public boolean Within(Geometry other)
  */
 public class Geometry:public int WkbSize()
 
+/**
+ * Returns the length of the geometry
+ * @return length of the geometry
+ * @since Java bindings 1.8.0
+ */
+public class Geometry:public double Length()
 
 /* Class FeatureDefn */
 
@@ -8597,7 +8603,7 @@ public class ogr:public static void DontUseExceptions()
  *
  * @since Java bindings 1.7.0
  */
-public class ogr:public static Geometry ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, double dfStartAngle, double dfEndAngle, double dfMaxAngleStepSizeDegrees) 
+public class ogr:public static Geometry ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, double dfSecondaryRadius, double dfRotation, double dfStartAngle, double dfEndAngle, double dfMaxAngleStepSizeDegrees) 
 
 /**
  * Build a ring from a bunch of arcs.
