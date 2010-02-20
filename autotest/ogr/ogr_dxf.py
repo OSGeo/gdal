@@ -368,7 +368,7 @@ def ogr_dxf_11():
 
     if ogrtest.check_feature_geometry( feat,
                                        'LINESTRING(10 12, 60 65)' ):
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     if feat.GetGeometryRef().GetGeometryType() == ogr.wkbLineString25D:
@@ -382,7 +382,7 @@ def ogr_dxf_11():
 
     if ogrtest.check_feature_geometry( feat,
                                        'POLYGON((0 0,100 0,100 100,0 0))' ):
-        print feat.GetGeometryRef().ExportToWkt()
+        print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
     if feat.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon25D:
