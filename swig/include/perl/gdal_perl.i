@@ -322,14 +322,15 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my $h = $self->GetMetadata;
 	my @cap;
 	for my $cap (@CAPABILITIES) {
-	    push @cap, $cap if $h->{'DCAP_'.uc($cap)} eq 'YES';
+	    my $test = $h->{'DCAP_'.uc($cap)};
+	    push @cap, $cap if defined($test) and $test eq 'YES';
 	}
 	return @cap;
     }
     sub TestCapability {
 	my($self, $cap) = @_;
-	my $h = $self->GetMetadata;
-	return $h->{'DCAP_'.uc($cap)} eq 'YES' ? 1 : undef;
+	my $h = $self->GetMetadata->{'DCAP_'.uc($cap)};
+	return (defined($h) and $h eq 'YES') ? 1 : undef;
     }
     sub Extension {
 	my $self = shift;
