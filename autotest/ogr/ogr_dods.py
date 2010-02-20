@@ -209,7 +209,7 @@ def ogr_dods_5():
 
     grid_ds = ogr.Open( 'DODS:' + srv )
     if grid_ds is None:
-	return 'fail'
+        return 'fail'
 
     lat_lyr = grid_ds.GetLayerByName( 'latitude' )
 
