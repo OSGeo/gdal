@@ -435,6 +435,7 @@
 # @return A list of capabilities. The class method returns a list of
 # all potential capabilities a driver may have; the object method
 # returns a list of all capabilities the driver has.
+# Currently capabilities are 'Create' and 'CreateCopy'.
 # Examples.
 # \code
 # @all_capabilities = Geo::GDAL::Driver::Capabilities;
@@ -443,7 +444,7 @@
 
 ## @method $TestCapability($cap)
 # Test whether the driver has the specified capability.
-# @param cap A capability string.
+# @param cap A capability string (one of those returned by Capabilities).
 # @return a boolean value.
 
 ## @method $Extension()
