@@ -659,7 +659,7 @@ SQLite driver:
  * Implement OGRSQLiteTableLayer::TestCapability(OLCFastFeatureCount)
  * Implement OGRSQLiteLayer::GetFIDColumn() and GetGeometryColumn()
  * Implement TestCapability(OLCRandomRead)
- * Add a SQLITE_LIST_ALL_LAYERS configuration option to list all(non-spatial)
+ * Add a SQLITE_LIST_ALL_TABLES configuration option to list all(non-spatial)
    tables into a SQLite DB even if there are spatial tables
  * Avoid reporting the primary key column as a regular column.
  * Better precision for double values in CreateFeature()
