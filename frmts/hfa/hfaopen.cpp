@@ -2873,8 +2873,17 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     }
 
     if( psInfo->pszIGEFilename == NULL )
-        psInfo->pszIGEFilename = 
-            CPLStrdup( CPLResetExtension( psInfo->pszFilename, "ige" ) );
+    {
+        if( EQUAL(CPLGetExtension(psInfo->pszFilename),"rrd") )
+            psInfo->pszIGEFilename = 
+                CPLStrdup( CPLResetExtension( psInfo->pszFilename, "rde" ) );
+        else if( EQUAL(CPLGetExtension(psInfo->pszFilename),"aux") )
+            psInfo->pszIGEFilename = 
+                CPLStrdup( CPLResetExtension( psInfo->pszFilename, "axe" ) );
+        else								
+            psInfo->pszIGEFilename = 
+                CPLStrdup( CPLResetExtension( psInfo->pszFilename, "ige" ) );
+    }
 
     pszFullFilename = 
         CPLStrdup( CPLFormFilename( psInfo->pszPath, psInfo->pszIGEFilename, NULL ) );
