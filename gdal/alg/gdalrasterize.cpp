@@ -877,15 +877,16 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                     break;
             }
 
+            double *padfAttrValues = (double *) VSIMalloc(sizeof(double) * nBandCount);
             while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
                 OGRGeometry *poGeom = poFeat->GetGeometryRef();
-                int         iBand;
-                double      padfAttrValues[nBandCount];                   
-                double      dfAttrValue;
 
                 if ( pszBurnAttribute )
                 {
+                    int         iBand;
+                    double      dfAttrValue;
+
                     dfAttrValue = poFeat->GetFieldAsDouble( iBurnField );
                     for (iBand = 0 ; iBand < nBandCount ; iBand++)
                         padfAttrValues[iBand] = dfAttrValue;
@@ -902,6 +903,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
                 delete poFeat;
             }
+            VSIFree( padfAttrValues );
 
             // Only write image if not a single chunk is being rendered
             if ( nYChunkSize < poDS->GetRasterYSize() )
