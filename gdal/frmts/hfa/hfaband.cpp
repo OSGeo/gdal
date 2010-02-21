@@ -1908,39 +1908,13 @@ int HFABand::CreateOverview( int nOverviewLevel )
     nOYSize = (psInfo->nYSize + nOverviewLevel - 1) / nOverviewLevel;
 
 /* -------------------------------------------------------------------- */
-/*      Eventually we need to decide on the whether to use the spill    */
-/*      file, primarily on the basis of whether the new overview        */
-/*      will drive our .img file size near 4BG.  For now, just base     */
-/*      it on the config options.                                       */
-/* -------------------------------------------------------------------- */
-    int bCreateLargeRaster = CSLTestBoolean(
-        CPLGetConfigOption("USE_SPILL","NO") );
-    GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
-
-    if( (psInfo->nEndOfFile 
-         + (nOXSize * (double) nOYSize)
-         * (HFAGetDataTypeBits(nDataType) / 8)) > 2000000000.0 )
-        bCreateLargeRaster = TRUE;
-
-    if( bCreateLargeRaster )
-    {
-        if( !HFACreateSpillStack( psInfo, nOXSize, nOYSize, 1, 
-                                  64, nDataType, 
-                                  &nValidFlagsOffset, &nDataOffset ) )
-	{
-	    return -1;
-	}
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Do we want to use a dependent file (.rrd) for the overviews?    */
 /*      Or just create them directly in this file?                      */
 /* -------------------------------------------------------------------- */
     HFAInfo_t *psRRDInfo = psInfo;
     HFAEntry *poParent = poNode;
 
-    if( !bCreateLargeRaster 
-        && CSLTestBoolean( CPLGetConfigOption( "HFA_USE_RRD", "NO" ) ) )
+    if( CSLTestBoolean( CPLGetConfigOption( "HFA_USE_RRD", "NO" ) ) )
     {
         psRRDInfo = HFACreateDependent( psInfo );
 
@@ -1953,6 +1927,31 @@ int HFABand::CreateOverview( int nOverviewLevel )
                 new HFAEntry( psRRDInfo, poNode->GetName(), 
                               "Eimg_Layer", psRRDInfo->poRoot );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Eventually we need to decide on the whether to use the spill    */
+/*      file, primarily on the basis of whether the new overview        */
+/*      will drive our .img file size near 4BG.  For now, just base     */
+/*      it on the config options.                                       */
+/* -------------------------------------------------------------------- */
+    int bCreateLargeRaster = CSLTestBoolean(
+        CPLGetConfigOption("USE_SPILL","NO") );
+    GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
+
+    if( (psRRDInfo->nEndOfFile 
+         + (nOXSize * (double) nOYSize)
+         * (HFAGetDataTypeBits(nDataType) / 8)) > 2000000000.0 )
+        bCreateLargeRaster = TRUE;
+
+    if( bCreateLargeRaster )
+    {
+        if( !HFACreateSpillStack( psRRDInfo, nOXSize, nOYSize, 1, 
+                                  64, nDataType, 
+                                  &nValidFlagsOffset, &nDataOffset ) )
+	{
+	    return -1;
+	}
     }
 
 /* -------------------------------------------------------------------- */
