@@ -244,6 +244,9 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
 
     if( bIs3D )
     {
+        if ( nSize < 29 && nSize != -1 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
         memcpy( &z, pabyData + 5 + 16, 8 );
         if( OGR_SWAP( eByteOrder ) )
         {
