@@ -2134,6 +2134,14 @@ def ogr_pg_47():
     if found is False:
         gdaltest.post_reason( 'layer test_geog not listed' )
         return 'fail'
+    
+    # Check that the layer is recorder in geometry_columns table
+    geography_columns_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT * FROM geography_columns WHERE f_table_name = 'test_geog'")
+    feat = geography_columns_lyr.GetNextFeature()
+    if feat.GetFieldAsString('f_geography_column') != 'my_geog':
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.pg_ds.ReleaseResultSet(geography_columns_lyr)
         
     # Get the layer by name
     lyr = gdaltest.pg_ds.GetLayerByName('test_geog')
