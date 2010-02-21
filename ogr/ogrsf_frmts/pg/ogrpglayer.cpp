@@ -1430,47 +1430,16 @@ OGRErr OGRPGLayer::SetNextByIndex( long nIndex )
 OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
 
 {
-    GByte   *pabyWKB = NULL;
-    int     iSrc=0;
-    int     iDst=0;
-    OGRGeometry *poGeometry = NULL;
+    GByte   *pabyWKB;
+    int     nWKBLength=0;
+    OGRGeometry *poGeometry;
 
     if( pszBytea == NULL )
         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Convert hex to binary.                                          */
-/* -------------------------------------------------------------------- */
-    pabyWKB = (GByte *) CPLMalloc(strlen(pszBytea)+1);
-    while( pszBytea[iSrc] != '\0' )
-    {
-        if( pszBytea[iSrc] >= '0' && pszBytea[iSrc] <= '9' )
-            pabyWKB[iDst] = pszBytea[iSrc] - '0';
-        else if( pszBytea[iSrc] >= 'A' && pszBytea[iSrc] <= 'F' )
-            pabyWKB[iDst] = pszBytea[iSrc] - 'A' + 10;
-        else if( pszBytea[iSrc] >= 'a' && pszBytea[iSrc] <= 'f' )
-            pabyWKB[iDst] = pszBytea[iSrc] - 'a' + 10;
-        else
-            pabyWKB[iDst] = 0;
+    pabyWKB = CPLHexToBinary(pszBytea, &nWKBLength);
 
-        pabyWKB[iDst] *= 16;
-
-        iSrc++;
-
-        if( pszBytea[iSrc] >= '0' && pszBytea[iSrc] <= '9' )
-            pabyWKB[iDst] += pszBytea[iSrc] - '0';
-        else if( pszBytea[iSrc] >= 'A' && pszBytea[iSrc] <= 'F' )
-            pabyWKB[iDst] += pszBytea[iSrc] - 'A' + 10;
-        else if( pszBytea[iSrc] >= 'a' && pszBytea[iSrc] <= 'f' )
-            pabyWKB[iDst] += pszBytea[iSrc] - 'a' + 10;
-        else
-            pabyWKB[iDst] += 0;
-
-        iSrc++;
-        iDst++;
-    }
-
-    poGeometry = EWKBToGeometry(pabyWKB, iDst);
+    poGeometry = EWKBToGeometry(pabyWKB, nWKBLength);
 
     CPLFree(pabyWKB);
 
@@ -1487,6 +1456,13 @@ OGRGeometry *OGRPGLayer::EWKBToGeometry( GByte *pabyWKB, int nLength )
 {
     OGRGeometry *poGeometry = NULL;
     unsigned int ewkbFlags = 0;
+    
+    if (nLength < 5)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid EWKB content : %d bytes", nLength );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Detect XYZM variant of PostGIS EWKB                             */
@@ -1512,8 +1488,9 @@ OGRGeometry *OGRPGLayer::EWKBToGeometry( GByte *pabyWKB, int nLength )
 /*      understood by OGR, so if the SRID flag is set, we remove the    */
 /*      SRID (bytes at offset 5 to 8).                                  */
 /* -------------------------------------------------------------------- */
-    if( (pabyWKB[0] == 0 /* big endian */ && (pabyWKB[1] & 0x20) )
-        || (pabyWKB[0] != 0 /* little endian */ && (pabyWKB[4] & 0x20)) )
+    if( nLength > 9 &&
+        ((pabyWKB[0] == 0 /* big endian */ && (pabyWKB[1] & 0x20) )
+        || (pabyWKB[0] != 0 /* little endian */ && (pabyWKB[4] & 0x20))) )
     {
         memmove( pabyWKB+5, pabyWKB+9, nLength-9 );
         nLength -= 4;
@@ -1629,6 +1606,10 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
         {
             if( pszBytea[iSrc+1] >= '0' && pszBytea[iSrc+1] <= '9' )
             {
+                if (pszBytea[iSrc+2] == '\0' ||
+                    pszBytea[iSrc+3] == '\0')
+                    break;
+
                 pabyData[iDst++] =
                     (pszBytea[iSrc+1] - 48) * 64
                     + (pszBytea[iSrc+2] - 48) * 8
@@ -1637,6 +1618,9 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
             }
             else
             {
+                if (pszBytea[iSrc+1] == '\0')
+                    break;
+
                 pabyData[iDst++] = pszBytea[iSrc+1];
                 iSrc += 2;
             }
