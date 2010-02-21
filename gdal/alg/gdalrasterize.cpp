@@ -880,12 +880,17 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
                 OGRGeometry *poGeom = poFeat->GetGeometryRef();
-                double      dfBurnValue;
+                int         iBand;
+                double      padfAttrValues[nBandCount];                   
+                double      dfAttrValue;
 
                 if ( pszBurnAttribute )
                 {
-                    dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
-                    padfBurnValues = &dfBurnValue;
+                    dfAttrValue = poFeat->GetFieldAsDouble( iBurnField );
+                    for (iBand = 0 ; iBand < nBandCount ; iBand++)
+                        padfAttrValues[iBand] = dfAttrValue;
+
+                    padfBurnValues = padfAttrValues;
                 }
                 
                 gv_rasterize_one_shape( pabyChunkBuf, iY,
