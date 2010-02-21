@@ -189,7 +189,17 @@ GDALColorInterp GeoRasterRasterBand::GetColorInterpretation()
         }
         else
         {
-            return GCI_GrayIndex;
+            if( nBand == 4 && poGDS->nBands == 4 &&
+                poGeoRaster->iDefaultRedBand == 1 &&
+                poGeoRaster->iDefaultGreenBand == 2 &&
+                poGeoRaster->iDefaultBlueBand == 3 )
+            {
+                return GCI_AlphaBand;
+            }
+            else
+            {
+                return GCI_GrayIndex;
+            }
         }
     }
 
