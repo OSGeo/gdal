@@ -382,6 +382,43 @@ def test_gdalbuildvrt_10():
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Test that we can stack ungeoreference single band images with -separate (#3432)
+
+def test_gdalbuildvrt_11():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_11_1.tif', 10, 10, 1)
+    out_ds.GetRasterBand(1).Fill(255)
+    cs1 = out_ds.GetRasterBand(1).Checksum()
+    out_ds = None
+    
+    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_11_2.tif', 10, 10, 1)
+    out_ds.GetRasterBand(1).Fill(127)
+    cs2 = out_ds.GetRasterBand(1).Checksum()
+    out_ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -separate tmp/gdalbuildvrt11.vrt tmp/test_gdalbuildvrt_11_1.tif tmp/test_gdalbuildvrt_11_2.tif')
+
+    ds = gdal.Open('tmp/gdalbuildvrt11.vrt')
+
+    if ds.GetRasterBand(1).Checksum() != cs1:
+        print(ds.GetRasterBand(1).Checksum())
+        print(cs1)
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != cs2:
+        print(ds.GetRasterBand(2).Checksum())
+        print(cs2)
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -398,6 +435,7 @@ def test_gdalbuildvrt_cleanup():
     gdal.GetDriverByName('VRT').Delete('tmp/stacked.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt7.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt10.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt11.vrt')
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -410,6 +448,8 @@ def test_gdalbuildvrt_cleanup():
     drv.Delete('tmp/vrtnull2.tif')
     drv.Delete('tmp/test_gdalbuildvrt_10_1.tif')
     drv.Delete('tmp/test_gdalbuildvrt_10_2.tif')
+    drv.Delete('tmp/test_gdalbuildvrt_11_1.tif')
+    drv.Delete('tmp/test_gdalbuildvrt_11_2.tif')
     try:
         os.remove('tmp/filelist.txt')
     except:
@@ -429,6 +469,7 @@ gdaltest_list = [
     test_gdalbuildvrt_8,
     test_gdalbuildvrt_9,
     test_gdalbuildvrt_10,
+    test_gdalbuildvrt_11,
     test_gdalbuildvrt_cleanup
     ]
 
