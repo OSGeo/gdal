@@ -188,6 +188,7 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
     int bFirst = TRUE;
     VRTDatasetH hVRTDS = NULL;
     CPLErr eErr = CE_None;
+    int bHasGeoTransform = FALSE;
     
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
@@ -266,6 +267,8 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
         }
     }
 
+    int nRasterXSize = 0, nRasterYSize = 0;
+
     for(i=0;i<nInputFiles;i++)
     {
         const char* dsFileName = ppszInputFilenames[i];
@@ -308,26 +311,87 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
             }
 
             const char* proj = GDALGetProjectionRef(hDS);
-            GDALGetGeoTransform(hDS, psDatasetProperties[i].adfGeoTransform);
-            if (psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] != 0 ||
-                psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] != 0)
+            int bGotGeoTransform = GDALGetGeoTransform(hDS, psDatasetProperties[i].adfGeoTransform) == CE_None;
+            if (bSeparate)
             {
-                CPLError(CE_Warning, CPLE_NotSupported,
-                         "gdalbuildvrt does not support rotated geo transforms. Skipping %s",
-                          dsFileName);
-                GDALClose(hDS);
-                continue;
+                if (bFirst)
+                {
+                    bHasGeoTransform = bGotGeoTransform;
+                    if (!bHasGeoTransform)
+                    {
+                        if (bUserExtent)
+                        {
+                            CPLError(CE_Warning, CPLE_NotSupported,
+                                "User extent ignored by gdalbuildvrt -separate with ungeoreferenced images.");
+                        }
+                        if (resolutionStrategy == USER_RESOLUTION)
+                        {
+                            CPLError(CE_Warning, CPLE_NotSupported,
+                                "User resolution ignored by gdalbuildvrt -separate with ungeoreferenced images.");
+                        }
+                    }
+                }
+                else if (bHasGeoTransform != bGotGeoTransform)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "gdalbuildvrt -separate cannot stack ungeoreferenced and georeferenced images. Skipping %s",
+                            dsFileName);
+                    GDALClose(hDS);
+                    continue;
+                }
+                else if (!bHasGeoTransform &&
+                         (nRasterXSize != GDALGetRasterXSize(hDS) ||
+                          nRasterYSize != GDALGetRasterYSize(hDS)))
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "gdalbuildvrt -separate cannot stack ungeoreferenced images that have not the same dimensions. Skipping %s",
+                            dsFileName);
+                    GDALClose(hDS);
+                    continue;
+                }
             }
-            if (psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES] >= 0)
+            else
             {
-                CPLError(CE_Warning, CPLE_NotSupported,
-                         "gdalbuildvrt does not support positive NS resolution. Skipping %s",
-                         dsFileName);
-                GDALClose(hDS);
-                continue;
+                if (!bGotGeoTransform)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "gdalbuildvrt does not support ungeoreferenced image. Skipping %s",
+                            dsFileName);
+                    GDALClose(hDS);
+                    continue;
+                }
+                bHasGeoTransform = TRUE;
             }
+
+            if (bGotGeoTransform)
+            {
+                if (psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] != 0 ||
+                    psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] != 0)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "gdalbuildvrt does not support rotated geo transforms. Skipping %s",
+                            dsFileName);
+                    GDALClose(hDS);
+                    continue;
+                }
+                if (psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES] >= 0)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "gdalbuildvrt does not support positive NS resolution. Skipping %s",
+                            dsFileName);
+                    GDALClose(hDS);
+                    continue;
+                }
+            }
+
             psDatasetProperties[i].nRasterXSize = GDALGetRasterXSize(hDS);
             psDatasetProperties[i].nRasterYSize = GDALGetRasterYSize(hDS);
+            if (bFirst && bSeparate && !bGotGeoTransform)
+            {
+                nRasterXSize = GDALGetRasterXSize(hDS);
+                nRasterYSize = GDALGetRasterYSize(hDS);
+            }
+
             double product_minX = psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
             double product_maxY = psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
             double product_maxX = product_minX +
@@ -538,14 +602,22 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
     if (nCount == 0)
         goto end;
     
-    if (resolutionStrategy == AVERAGE_RESOLUTION)
+    if (!bHasGeoTransform)
     {
-        we_res /= nCount;
-        ns_res /= nCount;
+        rasterXSize = nRasterXSize;
+        rasterYSize = nRasterYSize;
     }
-    
-    rasterXSize = (int)(0.5 + (maxX - minX) / we_res);
-    rasterYSize = (int)(0.5 + (maxY - minY) / -ns_res);
+    else
+    {
+        if (resolutionStrategy == AVERAGE_RESOLUTION)
+        {
+            we_res /= nCount;
+            ns_res /= nCount;
+        }
+        
+        rasterXSize = (int)(0.5 + (maxX - minX) / we_res);
+        rasterYSize = (int)(0.5 + (maxY - minY) / -ns_res);
+    }
     
     if (rasterXSize == 0 || rasterYSize == 0)
     {
@@ -562,14 +634,17 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
         GDALSetProjection(hVRTDS, projectionRef);
     }
 
-    double adfGeoTransform[6];
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = minX;
-    adfGeoTransform[GEOTRSFRM_WE_RES] = we_res;
-    adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0;
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = maxY;
-    adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0;
-    adfGeoTransform[GEOTRSFRM_NS_RES] = ns_res;
-    GDALSetGeoTransform(hVRTDS, adfGeoTransform);
+    if (bHasGeoTransform)
+    {
+        double adfGeoTransform[6];
+        adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = minX;
+        adfGeoTransform[GEOTRSFRM_WE_RES] = we_res;
+        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0;
+        adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = maxY;
+        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0;
+        adfGeoTransform[GEOTRSFRM_NS_RES] = ns_res;
+        GDALSetGeoTransform(hVRTDS, adfGeoTransform);
+    }
     
     if (bSeparate)
     {
@@ -581,11 +656,20 @@ CPLErr GDALBuildVRT( const char* pszOutputFilename,
                 
             int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
                 nDstXOff, nDstYOff, nDstXSize, nDstYSize;
-            if ( ! GetSrcDstWin(&psDatasetProperties[i],
-                         we_res, ns_res, minX, minY, maxX, maxY,
-                         &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
-                         &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize) )
-                continue;
+            if (bHasGeoTransform)
+            {
+                if ( ! GetSrcDstWin(&psDatasetProperties[i],
+                            we_res, ns_res, minX, minY, maxX, maxY,
+                            &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
+                            &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize) )
+                    continue;
+            }
+            else
+            {
+                nSrcXOff = nSrcYOff = nDstXOff = nDstYOff = 0;
+                nSrcXSize = nDstXSize = nRasterXSize;
+                nSrcYSize = nDstYSize = nRasterYSize;
+            }
 
             const char* dsFileName = ppszInputFilenames[i];
 
