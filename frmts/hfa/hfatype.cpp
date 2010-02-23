@@ -122,6 +122,8 @@ const char *HFAType::Initialize( const char * pszInput )
     pszInput++; /* skip `}' */
 
     for( i = 0; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
+    if (pszInput[i] == '\0')
+        return NULL;
 
     pszTypeName = (char *) CPLMalloc(i+1);
     strncpy( pszTypeName, pszInput, i );
@@ -362,7 +364,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
 int
 HFAType::ExtractInstValue( const char * pszFieldPath,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                           char chReqType, void *pReqReturn )
+                           char chReqType, void *pReqReturn, int *pnRemainingDataSize )
 
 {
     int		nArrayIndex = 0, nNameLen, iField, nByteOffset;
@@ -439,7 +441,8 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
                               pabyData + nByteOffset,
                               nDataOffset + nByteOffset,
                               nDataSize - nByteOffset,
-                              chReqType, pReqReturn ) );
+                              chReqType, pReqReturn,
+                              pnRemainingDataSize) );
 }
 
 

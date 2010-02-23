@@ -225,10 +225,18 @@ class HFAEntry
 
     void	LoadData();
 
-    int 	GetFieldValue( const char *, char, void * );
+    int 	GetFieldValue( const char *, char, void *,
+                               int *pnRemainingDataSize );
     CPLErr      SetFieldValue( const char *, char, void * );
 
     int         bIsMIFObject;
+
+                HFAEntry( HFAEntry *poContainer,
+                          const char *pszMIFObjectPath,
+                          const char * pszDictionnary, 
+                          const char * pszTypeName,
+                          int nDataSizeIn,
+                          GByte* pabyDataIn );
 
 public:
     		HFAEntry( HFAInfo_t * psHFA, GUInt32 nPos,
@@ -239,9 +247,10 @@ public:
                           const char *pszTypeName,
                           HFAEntry *poParent );
 
-                HFAEntry( HFAEntry *poContainer, const char *pszMIFObjectPath );
                           
     virtual     ~HFAEntry();                
+    
+    static HFAEntry*  BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath );
 
     CPLErr      RemoveAndDestroy();
 
@@ -263,7 +272,7 @@ public:
 
     GInt32	GetIntField( const char *, CPLErr * = NULL );
     double	GetDoubleField( const char *, CPLErr * = NULL );
-    const char	*GetStringField( const char *, CPLErr * = NULL );
+    const char	*GetStringField( const char *, CPLErr * = NULL, int *pnRemainingDataSize = NULL );
     GIntBig     GetBigIntField( const char *, CPLErr * = NULL );
     int         GetFieldCount( const char *, CPLErr * = NULL );
 
@@ -302,7 +311,7 @@ class HFAField
 
     char	*pszFieldName;
 
-    char        szNumberString[28]; /* buffer used to return an int as a string */
+    char        szNumberString[36]; /* buffer used to return an int as a string */
 
     		HFAField();
                 ~HFAField();
@@ -315,7 +324,7 @@ class HFAField
 
     int 	ExtractInstValue( const char * pszField, int nIndexValue,
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                     char chReqType, void *pReqReturn );
+                     char chReqType, void *pReqReturn, int *pnRemainingDataSize = NULL );
 
     CPLErr      SetInstValue( const char * pszField, int nIndexValue,
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
@@ -360,7 +369,7 @@ class HFAType
                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize);
     int         ExtractInstValue( const char * pszField,
                                   GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                               char chReqType, void *pReqReturn );
+                               char chReqType, void *pReqReturn, int *pnRemainingDataSize );
     CPLErr      SetInstValue( const char * pszField,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            char chReqType, void * pValue );
