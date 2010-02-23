@@ -161,6 +161,8 @@ class netCDFDataset : public GDALPamDataset
     double       FetchCopyParm( const char *pszGridMappingValue, 
                                 const char *pszParm, double dfDefault );
 
+    char **      FetchStandardParallels( const char *pszGridMappingValue );
+
   public:
     int           cdfid;
     char         **papszMetadata;
