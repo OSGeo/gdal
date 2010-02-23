@@ -1398,7 +1398,7 @@ void CPLVerifyConfiguration()
   * @param pszDefault a default value if the key does not match existing defined options (may be NULL)
   * @return the value associated to the key, or the default value if not found
   *
-  * @see CPLSetConfigOption()
+  * @see CPLSetConfigOption(), http://trac.osgeo.org/gdal/wiki/ConfigOptions
   */
 const char * CPL_STDCALL
 CPLGetConfigOption( const char *pszKey, const char *pszDefault )
@@ -1451,6 +1451,8 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
   *
   * @param pszKey the key of the option
   * @param pszValue the value of the option
+  * 
+  * @see http://trac.osgeo.org/gdal/wiki/ConfigOptions
   */
 void CPL_STDCALL 
 CPLSetConfigOption( const char *pszKey, const char *pszValue )
