@@ -941,7 +941,9 @@ void netCDFDataset::SetProjection( int var )
 		dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          FALSE_NORTHING, 0.0 );
-		
+
+		oSRS.SetWellKnownGeogCS( "WGS84" );
+
 		oSRS.SetMercator( dfCenterLat, dfCenterLon, dfScale, 
 				  dfFalseEasting, dfFalseNorthing );
 	    }
@@ -966,7 +968,9 @@ void netCDFDataset::SetProjection( int var )
 		dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          FALSE_NORTHING, 0.0 );
-		
+
+		oSRS.SetWellKnownGeogCS( "WGS84" );
+
 		oSRS.SetOrthographic( dfCenterLat, dfCenterLon, 
 				      dfFalseEasting, dfFalseNorthing );
 	    }
