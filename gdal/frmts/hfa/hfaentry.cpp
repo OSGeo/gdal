@@ -136,8 +136,9 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
     nNextPos = nChildPos = 0;
 
     SetName( pszNodeName );
-    memset( szType, 0, 32 );
-    strncpy( szType, pszTypeName, 32 );
+    memset( szType, 0, sizeof(szType) );
+    strncpy( szType, pszTypeName, sizeof(szType) );
+    szType[sizeof(szType)-1] = '\0';
 
     pabyData = NULL;
     poType = NULL;
@@ -168,13 +169,90 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
 }
 
 /************************************************************************/
+/*                      BuildEntryFromMIFObject()                       */
+/*                                                                      */
+/*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
+/************************************************************************/
+
+HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath )
+{
+    const char* pszField;
+    CPLString osFieldName;
+
+    osFieldName.Printf("%s.%s", pszMIFObjectPath, "MIFDictionary" );
+    pszField = poContainer->GetStringField( osFieldName.c_str() );
+    if (pszField == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s entry",
+                 osFieldName.c_str());
+        return NULL;
+    }
+    CPLString osDictionnary = pszField;
+
+    osFieldName.Printf("%s.%s", pszMIFObjectPath, "type.string" );
+    pszField = poContainer->GetStringField( osFieldName.c_str() );
+    if (pszField == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s entry",
+                 osFieldName.c_str());
+        return NULL;
+    }
+    CPLString osType = pszField;
+
+    osFieldName.Printf("%s.%s", pszMIFObjectPath, "MIFObject" );
+    int nRemainingDataSize = 0;
+    pszField = poContainer->GetStringField( osFieldName.c_str(),
+                                            NULL, &nRemainingDataSize );
+    if (pszField == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s entry",
+                 osFieldName.c_str());
+        return NULL;
+    }
+
+    GInt32 nMIFObjectSize;
+    // we rudely look before the field data to get at the pointer/size info
+    memcpy( &nMIFObjectSize, pszField-8, 4 );
+    HFAStandard( 4, &nMIFObjectSize );
+    if (nMIFObjectSize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid MIF object size (%d)",
+                 nMIFObjectSize);
+        return NULL;
+    }
+
+    // check that we won't copy more bytes than available in the buffer
+    if (nMIFObjectSize > nRemainingDataSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid MIF object size (%d > %d)",
+                 nMIFObjectSize, nRemainingDataSize);
+        return NULL;
+    }
+
+    GByte* pabyData = (GByte *) VSIMalloc(nMIFObjectSize);
+    if (pabyData == NULL)
+        return NULL;
+
+    memcpy( pabyData, pszField, nMIFObjectSize );
+
+    return new HFAEntry(poContainer, pszMIFObjectPath,
+                        osDictionnary, osType,
+                        nMIFObjectSize, pabyData);
+
+}
+
+/************************************************************************/
 /*                              HFAEntry()                              */
 /*                                                                      */
 /*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
 /************************************************************************/
 
 HFAEntry::HFAEntry( HFAEntry * poContainer,
-                    const char *pszMIFObjectPath )
+                    const char *pszMIFObjectPath,
+                    const char * pszDictionnary, 
+                    const char * pszTypeName,
+                    int nDataSizeIn,
+                    GByte* pabyDataIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -189,10 +267,7 @@ HFAEntry::HFAEntry( HFAEntry * poContainer,
     nDataPos = nDataSize = 0;
     nNextPos = nChildPos = 0;
 
-    memset( szName, 0, 64 );
-
-    pabyData = NULL;
-    poType = NULL;
+    memset( szName, 0, sizeof(szName) );
 
 /* -------------------------------------------------------------------- */
 /*      Create a dummy HFAInfo_t.                                       */
@@ -203,37 +278,19 @@ HFAEntry::HFAEntry( HFAEntry * poContainer,
     psHFA->bTreeDirty = FALSE;
     psHFA->poRoot = this;
 
-    psHFA->poDictionary = new HFADictionary( 
-        poContainer->GetStringField( 
-            CPLString().Printf("%s.%s", pszMIFObjectPath, "MIFDictionary" ) ) );
+    psHFA->poDictionary = new HFADictionary( pszDictionnary );
 
 /* -------------------------------------------------------------------- */
 /*      Work out the type for this MIFObject.                           */
 /* -------------------------------------------------------------------- */
-    memset( szType, 0, 32 );
-    strncpy( szType, 
-             poContainer->GetStringField( 
-                 CPLString().Printf("%s.%s", pszMIFObjectPath, "type.string") ),
-             32 );
+    memset( szType, 0, sizeof(szType) );
+    strncpy( szType, pszTypeName, sizeof(szType) );
+    szType[sizeof(szType)-1] = '\0';
     
     poType = psHFA->poDictionary->FindType( szType );
 
-/* -------------------------------------------------------------------- */
-/*      Find the desired field.                                         */
-/* -------------------------------------------------------------------- */
-    GInt32 nMIFObjectSize;
-    const GByte *pabyRawData = (const GByte *) 
-        poContainer->GetStringField( 
-            CPLString().Printf("%s.%s", pszMIFObjectPath, "MIFObject" ) );
-
-    // we rudely look before the field data to get at the pointer/size info
-    memcpy( &nMIFObjectSize, pabyRawData-8, 4 );
-    HFAStandard( 4, &nMIFObjectSize );
-
-    nDataSize = nMIFObjectSize;
-    pabyData = (GByte *) VSIMalloc(nDataSize);
-
-    memcpy( pabyData, pabyRawData, nDataSize );
+    nDataSize = nDataSizeIn;
+    pabyData = pabyDataIn;
 }
 
 /************************************************************************/
@@ -314,8 +371,9 @@ CPLErr HFAEntry::RemoveAndDestroy()
 
 void HFAEntry::SetName( const char *pszNodeName )
 {
-  memset( szName, 0, 64 );
-  strncpy( szName, pszNodeName, 64 );
+  memset( szName, 0, sizeof(szName) );
+  strncpy( szName, pszNodeName, sizeof(szName) );
+  szName[sizeof(szName)-1] = '\0';
 
   MarkDirty();
 }
@@ -389,7 +447,7 @@ void HFAEntry::LoadData()
 /* -------------------------------------------------------------------- */
 /*      Allocate buffer, and read data.                                 */
 /* -------------------------------------------------------------------- */
-    pabyData = (GByte *) VSIMalloc(nDataSize);
+    pabyData = (GByte *) VSIMalloc(nDataSize + 1);
     if (pabyData == NULL)
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -410,6 +468,10 @@ void HFAEntry::LoadData()
                   "VSIFReadL() failed in HFAEntry::LoadData()." );
         return;
     }
+
+    /* Make sure the buffer is always null terminated to avoid */
+    /* issues when extracting strings from a corrupted file */
+    pabyData[nDataSize] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*      Get the type corresponding to this entry.                       */
@@ -553,7 +615,8 @@ HFAEntry *HFAEntry::GetNamedChild( const char * pszName )
 /************************************************************************/
         
 int HFAEntry::GetFieldValue( const char * pszFieldPath,
-                             char chReqType, void *pReqReturn )
+                             char chReqType, void *pReqReturn,
+                             int *pnRemainingDataSize)
 
 {
     HFAEntry	*poEntry = this;
@@ -588,7 +651,7 @@ int HFAEntry::GetFieldValue( const char * pszFieldPath,
 
     return( poType->ExtractInstValue( pszFieldPath,
                                       pabyData, nDataPos, nDataSize,
-                                      chReqType, pReqReturn ) );
+                                      chReqType, pReqReturn, pnRemainingDataSize ) );
 }
 
 /************************************************************************/
@@ -640,7 +703,7 @@ GInt32 HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
 {
     GInt32	nIntValue;
 
-    if( !GetFieldValue( pszFieldPath, 'i', &nIntValue ) )
+    if( !GetFieldValue( pszFieldPath, 'i', &nIntValue, NULL ) )
     {
         if( peErr != NULL )
             *peErr = CE_Failure;
@@ -693,7 +756,7 @@ double HFAEntry::GetDoubleField( const char * pszFieldPath, CPLErr *peErr )
 {
     double dfDoubleValue;
 
-    if( !GetFieldValue( pszFieldPath, 'd', &dfDoubleValue ) )
+    if( !GetFieldValue( pszFieldPath, 'd', &dfDoubleValue, NULL ) )
     {
         if( peErr != NULL )
             *peErr = CE_Failure;
@@ -713,12 +776,13 @@ double HFAEntry::GetDoubleField( const char * pszFieldPath, CPLErr *peErr )
 /*                           GetStringField()                           */
 /************************************************************************/
 
-const char *HFAEntry::GetStringField( const char * pszFieldPath, CPLErr *peErr)
+const char *HFAEntry::GetStringField( const char * pszFieldPath, CPLErr *peErr,
+                                      int *pnRemainingDataSize)
 
 {
     char *pszResult = NULL;
 
-    if( !GetFieldValue( pszFieldPath, 's', &pszResult ) )
+    if( !GetFieldValue( pszFieldPath, 's', &pszResult, pnRemainingDataSize ) )
     {
         if( peErr != NULL )
             *peErr = CE_Failure;

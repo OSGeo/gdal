@@ -690,6 +690,8 @@ void HFARasterBand::ReadHistogramMetadata()
         return;
 
     int nNumBins = poEntry->GetIntField( "numRows" );
+    if (nNumBins < 0)
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the histogram values.                                     */
@@ -702,8 +704,16 @@ void HFARasterBand::ReadHistogramMetadata()
     if( pszType != NULL && EQUALN( "real", pszType, 4 ) )
         nBinSize = 8;
 
-    int *panHistValues = (int *) CPLMalloc(sizeof(int) * nNumBins);
-    GByte  *pabyWorkBuf = (GByte *) CPLMalloc(nBinSize * nNumBins);
+    int *panHistValues = (int *) VSIMalloc2(sizeof(int), nNumBins);
+    GByte  *pabyWorkBuf = (GByte *) VSIMalloc2(nBinSize, nNumBins);
+    
+    if (panHistValues == NULL || pabyWorkBuf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory");
+        VSIFree(panHistValues);
+        VSIFree(pabyWorkBuf);
+        return;
+    }
 
     VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
 
@@ -2601,7 +2611,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         pszDatumName = psDatum->datumname;
 
         /* Imagine to WKT translation */
-        for( i = 0; apszDatumMap[i] != NULL; i += 2 )
+        for( i = 0; pszDatumName != NULL && apszDatumMap[i] != NULL; i += 2 )
         {
             if( EQUAL(pszDatumName,apszDatumMap[i]) )
             {
@@ -2894,7 +2904,10 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     if( oSRS.GetAttrNode("GEOGCS") == NULL
         && oSRS.GetAttrNode("LOCAL_CS") == NULL )
     {
-        if( EQUAL(pszDatumName,"WGS 84") 
+        if( pszDatumName == NULL)
+            oSRS.SetGeogCS( pszDatumName, pszDatumName, pszEllipsoidName,
+                            psPro->proSpheroid.a, dfInvFlattening );
+        else if( EQUAL(pszDatumName,"WGS 84") 
             ||  EQUAL(pszDatumName,"WGS_1984") )
             oSRS.SetWellKnownGeogCS( "WGS84" );
         else if( strstr(pszDatumName,"NAD27") != NULL 
