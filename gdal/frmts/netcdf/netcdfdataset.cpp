@@ -650,7 +650,48 @@ double netCDFDataset::FetchCopyParm( const char *pszGridMappingValue,
     else
         return dfDefault;
 }
+
+/************************************************************************/
+/*                           FetchStandardParallels()                   */
+/************************************************************************/
+
+char** netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
+{
+    char         szTemp[ MAX_NC_NAME ];
+    const char   *pszValue;
+    char         **papszValues = NULL;
+    //cf-1.0 tags
+    strcpy( szTemp,pszGridMappingValue );
+    strcat( szTemp, "#" );
+    strcat( szTemp, STD_PARALLEL );
+    pszValue = CSLFetchNameValue( papszMetadata, szTemp );
+    if( pszValue != NULL )
+      papszValues = CSLTokenizeString2( pszValue, ",", CSLT_STRIPLEADSPACES |
+					  CSLT_STRIPENDSPACES );
+    //try gdal tags
+    else
+      {
+	strcpy( szTemp, pszGridMappingValue );
+	strcat( szTemp, "#" );
+	strcat( szTemp, STD_PARALLEL_1 );
+
+	pszValue = CSLFetchNameValue( papszMetadata, szTemp );
+	
+	if ( pszValue != NULL )
+	    papszValues = CSLAddString( papszValues, pszValue );
+				    
+	strcpy( szTemp,pszGridMappingValue );
+	strcat( szTemp, "#" );
+	strcat( szTemp, STD_PARALLEL_2 );
+
+	pszValue = CSLFetchNameValue( papszMetadata, szTemp );
+	
+	if( pszValue != NULL )	
+	  papszValues = CSLAddString( papszValues, pszValue );
+      }
     
+    return papszValues;
+}
 
 /************************************************************************/
 /*                           SetProjection()                            */
@@ -880,14 +921,8 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 	    else if( EQUAL( pszValue, L_C_CONIC ) ) {
 		
-		dfStdP1 = 
-                    poDS->FetchCopyParm( szGridMappingValue, 
-                                         STD_PARALLEL_1, 0.0 );
-
-		dfStdP2 = 
-                    poDS->FetchCopyParm( szGridMappingValue, 
-                                         STD_PARALLEL_2, 0.0 );
-
+	        char **papszStdParallels = NULL;
+		
 		dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          LONG_CENTRAL_MERIDIAN, 0.0 );
@@ -895,6 +930,10 @@ void netCDFDataset::SetProjection( int var )
 		dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          LAT_PROJ_ORIGIN, 0.0 );
+
+		dfScale = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+					 SCALE_FACTOR, 1.0 );
 
 		dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
@@ -904,11 +943,44 @@ void netCDFDataset::SetProjection( int var )
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          FALSE_NORTHING, 0.0 );
 		
-		oSRS.SetWellKnownGeogCS( "WGS84" );
-		oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
-			     dfFalseEasting, dfFalseNorthing );
+		papszStdParallels = 
+		    FetchStandardParallels( szGridMappingValue );
 
+		if( papszStdParallels != NULL ) {
+		  
+		  if ( CSLCount( papszStdParallels ) == 1 ) {
+		      dfStdP1 = CPLAtofM( papszStdParallels[0] );
+		      dfStdP2 = dfStdP1;
+		      oSRS.SetLCC1SP( dfCenterLat, dfCenterLon, dfScale, 
+				      dfFalseEasting, dfFalseNorthing );
+		  }
+		
+		  else if( CSLCount( papszStdParallels ) == 2 ) {
+		      dfStdP1 = CPLAtofM( papszStdParallels[0] );
+		      dfStdP2 = CPLAtofM( papszStdParallels[1] );
+		      oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
+				   dfFalseEasting, dfFalseNorthing );
+		  }
+		}
+		//old default
+		else {
+		    dfStdP1 = 
+		        poDS->FetchCopyParm( szGridMappingValue, 
+                                         STD_PARALLEL_1, 0.0 );
+
+		    dfStdP2 = 
+		        poDS->FetchCopyParm( szGridMappingValue, 
+                                         STD_PARALLEL_2, 0.0 );
+
+		    oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
+				 dfFalseEasting, dfFalseNorthing );
+		}				
+
+		oSRS.SetWellKnownGeogCS( "WGS84" );
+		
+		CSLDestroy( papszStdParallels );
 	    }
+		
 /* -------------------------------------------------------------------- */
 /*      Is this Latitude/Longitude Grid explicitly                      */
 /* -------------------------------------------------------------------- */
