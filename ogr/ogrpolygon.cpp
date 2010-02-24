@@ -545,34 +545,78 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      The next character should be a ( indicating the start of the    */
-/*      list of rings.  We also need to support POLYGON EMPTY and       */
-/*      POLYGON(EMPTY).                                                 */
+/*      Check for EMPTY ...                                             */
 /* -------------------------------------------------------------------- */
-    pszInput = OGRWktReadToken( pszInput, szToken );
+    const char *pszPreScan;
+    int bHasZ = FALSE, bHasM = FALSE;
 
+    pszPreScan = OGRWktReadToken( pszInput, szToken );
     if( EQUAL(szToken,"EMPTY") )
     {
-        *ppszInput = (char *) pszInput;
+        *ppszInput = (char *) pszPreScan;
+        empty();
         return OGRERR_NONE;
     }
 
-    if( szToken[0] != '(' )
+/* -------------------------------------------------------------------- */
+/*      Check for Z, M or ZM. Will ignore the Measure                   */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(szToken,"Z") )
+    {
+        bHasZ = TRUE;
+    }
+    else if( EQUAL(szToken,"M") )
+    {
+        bHasM = TRUE;
+    }
+    else if( EQUAL(szToken,"ZM") )
+    {
+        bHasZ = TRUE;
+        bHasM = TRUE;
+    }
+
+    if (bHasZ || bHasM)
+    {
+        pszInput = pszPreScan;
+        pszPreScan = OGRWktReadToken( pszInput, szToken );
+        if( EQUAL(szToken,"EMPTY") )
+        {
+            *ppszInput = (char *) pszPreScan;
+            empty();
+            /* FIXME?: In theory we should store the dimension and M presence */
+            /* if we want to allow round-trip with ExportToWKT v1.2 */
+            return OGRERR_NONE;
+        }
+    }
+
+    if( !EQUAL(szToken,"(") )
         return OGRERR_CORRUPT_DATA;
 
-    OGRWktReadToken( pszInput, szToken );
-    if( EQUAL(szToken,"EMPTY") )
+    if ( !bHasZ && !bHasM )
     {
-        pszInput = OGRWktReadToken( pszInput, szToken );
-        pszInput = OGRWktReadToken( pszInput, szToken );
-        
-        *ppszInput = (char *) pszInput;
+        /* Test for old-style POLYGON(EMPTY) */
+        pszPreScan = OGRWktReadToken( pszPreScan, szToken );
+        if( EQUAL(szToken,"EMPTY") )
+        {
+            pszPreScan = OGRWktReadToken( pszPreScan, szToken );
 
-        if( !EQUAL(szToken,")") )
-            return OGRERR_CORRUPT_DATA;
-        else
-            return OGRERR_NONE;
+            if( EQUAL(szToken,",") )
+            {
+                /* This is OK according to SFSQL SPEC. */
+            }
+            else if( !EQUAL(szToken,")") )
+                return OGRERR_CORRUPT_DATA;
+            else
+            {
+                *ppszInput = (char *) pszPreScan;
+                empty();
+                return OGRERR_NONE;
+            }
+        }
     }
+
+    /* Skip first '(' */
+    pszInput = OGRWktReadToken( pszInput, szToken );
 
 /* ==================================================================== */
 /*      Read each ring in turn.  Note that we try to reuse the same     */
@@ -589,13 +633,35 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
     {
         int     nPoints = 0;
 
+        const char* pszNext = OGRWktReadToken( pszInput, szToken );
+        if (EQUAL(szToken,"EMPTY"))
+        {
+/* -------------------------------------------------------------------- */
+/*      Do we need to grow the ring array?                              */
+/* -------------------------------------------------------------------- */
+            if( nRingCount == nMaxRings )
+            {
+                nMaxRings = nMaxRings * 2 + 1;
+                papoRings = (OGRLinearRing **)
+                    CPLRealloc(papoRings, nMaxRings * sizeof(OGRLinearRing*));
+            }
+            papoRings[nRingCount] = new OGRLinearRing();
+            nRingCount++;
+
+            pszInput = OGRWktReadToken( pszNext, szToken );
+            if ( !EQUAL(szToken, ",") )
+                break;
+
+            continue;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Read points for one ring from input.                            */
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoints,
                                      &nPoints );
 
-        if( pszInput == NULL )
+        if( pszInput == NULL || nPoints == 0 )
         {
             CPLFree( paoPoints );
             return OGRERR_CORRUPT_DATA;
@@ -615,11 +681,15 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /*      Create the new ring, and assign to ring list.                   */
 /* -------------------------------------------------------------------- */
         papoRings[nRingCount] = new OGRLinearRing();
-        papoRings[nRingCount]->setPoints( nPoints, paoPoints, padfZ );
+        /* Ignore Z array when we have a POLYGON M */
+        if (bHasM && !bHasZ)
+            papoRings[nRingCount]->setPoints( nPoints, paoPoints, NULL );
+        else
+            papoRings[nRingCount]->setPoints( nPoints, paoPoints, padfZ );
 
         nRingCount++;
 
-        if( padfZ )
+        if( padfZ && !(bHasM && !bHasZ) )
             nCoordDimension = 3;
 
 /* -------------------------------------------------------------------- */
