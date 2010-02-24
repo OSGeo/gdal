@@ -532,47 +532,74 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         return NULL;
     }
 
-    if( EQUALN( poGRW->pszCompressionType, "JPEG", 4 ) )
+    /* Compression JPEG-B is deprecated. It should be able to read but to
+     * to create new GeoRaster on databases with that compression option.
+     *
+     * TODO: Remove that options on next release.
+     */
+    if( EQUAL( poGRW->pszCompressionType, "JPEG-B" ) )
     {
-        if( ! eType == GDT_Byte )
+        CPLError( CE_Failure, CPLE_IllegalArg,
+            "Option (COMPRESS=%s) is deprecated and cannot be used.",
+            poGRW->pszCompressionType );
+        delete poGRD;
+        return NULL;
+    }
+
+    if( EQUAL( poGRW->pszCompressionType, "JPEG-F" ) )
+    {
+        /* JPEG-F can only compress byte data type
+         */
+        if( eType != GDT_Byte )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
-                "For (COMPRESS=%s) data type must be Byte. ",
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                "Option (COMPRESS=%s) can only be used with Byte data type.",
                 poGRW->pszCompressionType );
             delete poGRD;
             return NULL;
         }
 
-        if( poGRW->nBandBlockSize != 1 && 
-          ( poGRW->nBandBlockSize != poGRW->nRasterBands ) )
+        /* JPEG-F can compress one band per block or 3 for RGB
+         * or 4 for RGBA.
+         */
+        if( ( poGRW->nBandBlockSize != 1 &&
+              poGRW->nBandBlockSize != 3 &&
+              poGRW->nBandBlockSize != 4 ) ||
+          ( ( poGRW->nBandBlockSize != 1 &&
+            ( poGRW->nBandBlockSize != poGRW->nRasterBands ) ) ) )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
-                "For (COMPRESS=%s) BLOCKBSIZE must be equal to 1 or to "
-                "the exact number of bands (%d).",
-                poGRW->pszCompressionType,
-                poGRW->nRasterBands );
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                "Option (COMPRESS=%s) requires BLOCKBSIZE to be 1 (for any "
+                "number of bands), 3 (for 3 bands RGB) and 4 (for 4 bands RGBA).",
+                poGRW->pszCompressionType );
             delete poGRD;
             return NULL;
         }
 
-        if( poGRW->nBandBlockSize != 1 && 
+        /* To compress interleaved blocks all the bands in the same block.
+         */
+        if( poGRW->nBandBlockSize != 1 &&
             EQUAL( poGRW->szInterleaving, "BIP" ) == false )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
-                "For (COMPRESS=%s) and (INTERLEAVE=%s) BLOCKBSIZE must be 1 ",
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                "Option (COMPRESS=%s) and (INTERLEAVE=%s) requires BLOCKBSIZE "
+                "equal be 1 (BLOCKBSIZE=%d)",
                 poGRW->pszCompressionType,
-                poGRW->szInterleaving );
+                poGRW->szInterleaving,
+                poGRW->nBandBlockSize );
             delete poGRD;
             return NULL;
         }
 
-        if( ( poGRW->nColumnBlockSize * 
+        /* There is a limite on how big a compressed block can be.
+         */
+        if( ( poGRW->nColumnBlockSize *
               poGRW->nRowBlockSize *
               poGRW->nBandBlockSize *
               ( GDALGetDataTypeSize( eType ) / 8 ) ) > ( 50 * 1024 * 1024 ) )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
-                "For (COMPRESS=%s) each data block must not exceed 50Mb. "
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                "Option (COMPRESS=%s) each data block must not exceed 50Mb. "
                 "Consider reducing BLOCK{X,Y,B}XSIZE.",
                 poGRW->pszCompressionType );
             delete poGRD;
