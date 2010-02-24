@@ -720,6 +720,13 @@ void netCDFDataset::SetProjection( int var )
     double       dfFalseEasting;
     double       dfFalseNorthing;
     double       dfCentralMeridian;
+    double       dfEarthRadius;
+    double       dfInverseFlattening;
+    double       dfLonPrimeMeridian;
+    double       dfSemiMajorAxis;
+    double       dfSemiMinorAxis;
+    
+    int          bGotGeogCS = FALSE;
 
     OGRSpatialReference oSRS;
     int          nVarDimXID = -1;
@@ -798,6 +805,84 @@ void netCDFDataset::SetProjection( int var )
 	pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
 
 	if( pszValue != NULL ) {
+
+/* -------------------------------------------------------------------- */
+/*      Check for datum/spheroid information                            */
+/* -------------------------------------------------------------------- */
+	    dfEarthRadius = 
+	        FetchCopyParm( szGridMappingValue, 
+			       EARTH_RADIUS, 
+			       -1.0 );
+
+	    dfLonPrimeMeridian = 
+	        FetchCopyParm( szGridMappingValue,
+			       LONG_PRIME_MERIDIAN, 
+			       0.0 );
+
+	    dfInverseFlattening = 
+	        FetchCopyParm( szGridMappingValue, 
+			       INVERSE_FLATTENING, 
+			       -1.0 );
+	    
+	    dfSemiMajorAxis = 
+	        FetchCopyParm( szGridMappingValue, 
+			       SEMI_MAJOR_AXIS, 
+			       -1.0 );
+	    
+	    dfSemiMinorAxis = 
+	        FetchCopyParm( szGridMappingValue, 
+			       SEMI_MINOR_AXIS, 
+			       -1.0 );
+
+	    //see if semi-major exists if radius doesn't
+	    if( dfEarthRadius < 0.0 )
+	        dfEarthRadius = dfSemiMajorAxis;
+	    
+	    //if still no radius, check old tag
+	    if( dfEarthRadius < 0.0 )
+	        dfEarthRadius = FetchCopyParm( szGridMappingValue, 
+					       "spherical_earth_radius_meters",
+					       -1.0 );
+
+	    //has radius value
+	    if( dfEarthRadius > 0.0 ) {
+	        //check for inv_flat tag
+	        if( dfInverseFlattening < 0.0 ) {
+		    //no inv_flat tag, check for semi_minor
+		    if( dfSemiMinorAxis < 0.0 ) {
+		        //no way to get inv_flat, use sphere
+		        oSRS.SetGeogCS( "Coord Sys imported from netcdf file", 
+					NULL, 
+					"Sphere", 
+					dfEarthRadius, 0.0 );
+			bGotGeogCS = TRUE;
+		  }
+		  else {
+		      //set inv_flat using semi
+		      dfInverseFlattening = 
+			  1.0 / ( dfSemiMajorAxis - dfSemiMinorAxis ) / dfSemiMajorAxis;
+		      oSRS.SetGeogCS( "Coord Sys imported from netcdf file", 
+				      NULL, 
+				      "Spheroid imported from netcdf file", 
+				      dfEarthRadius, dfInverseFlattening );
+		      bGotGeogCS = TRUE;
+		  }
+		}
+		else {
+		    oSRS.SetGeogCS( "Coord Sys imported from netcdf file", 
+				      NULL, 
+				      "Spheroid imported from netcdf file", 
+				      dfEarthRadius, dfInverseFlattening );
+		    bGotGeogCS = TRUE;
+		}
+	    }
+	    //no radius, set as wgs84 as default?
+	    else {
+	    // This would be too indiscrimant.  But we should set
+	    // it if we know the data is geographic.
+	    //oSRS.SetWellKnownGeogCS( "WGS84" );
+	    }
+	    		
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator                                             */
 /* -------------------------------------------------------------------- */
@@ -829,7 +914,9 @@ void netCDFDataset::SetProjection( int var )
 			    dfScale,
 			    dfFalseEasting,
 			    dfFalseNorthing );
-		oSRS.SetWellKnownGeogCS( "WGS84" );
+
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
 	    }
 
 /* -------------------------------------------------------------------- */
@@ -854,8 +941,10 @@ void netCDFDataset::SetProjection( int var )
 		
 		oSRS.SetCEA( dfStdP1, dfCentralMeridian,
 			     dfFalseEasting, dfFalseNorthing );
+
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
 		
-		oSRS.SetWellKnownGeogCS( "WGS84" );
 	    }
 /* -------------------------------------------------------------------- */
 /*      lambert_azimuthal_equal_area                                    */
@@ -907,12 +996,13 @@ void netCDFDataset::SetProjection( int var )
                                          FALSE_NORTHING, 0.0 );
 		*/
 		oSRS.SetProjCS( "LAEA (WGS84) " );
-		oSRS.SetWellKnownGeogCS( "WGS84" );
-
+		
 		oSRS.SetLAEA( dfCenterLat, dfCenterLon,
 			      dfFalseEasting, dfFalseNorthing );
-		
 
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
+		
 	    }
 
 
@@ -976,8 +1066,9 @@ void netCDFDataset::SetProjection( int var )
 				 dfFalseEasting, dfFalseNorthing );
 		}				
 
-		oSRS.SetWellKnownGeogCS( "WGS84" );
-		
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
+
 		CSLDestroy( papszStdParallels );
 	    }
 		
@@ -986,7 +1077,8 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 	    
 	    else if ( EQUAL ( pszValue, LATITUDE_LONGITUDE ) ) {
-	        oSRS.SetWellKnownGeogCS( "WGS84" );
+	        if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
 	    }
 /* -------------------------------------------------------------------- */
 /*      Mercator                                                        */
@@ -1014,10 +1106,11 @@ void netCDFDataset::SetProjection( int var )
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          FALSE_NORTHING, 0.0 );
 
-		oSRS.SetWellKnownGeogCS( "WGS84" );
-
 		oSRS.SetMercator( dfCenterLat, dfCenterLon, dfScale, 
 				  dfFalseEasting, dfFalseNorthing );
+
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
 	    }
 
 /* -------------------------------------------------------------------- */
@@ -1041,10 +1134,11 @@ void netCDFDataset::SetProjection( int var )
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          FALSE_NORTHING, 0.0 );
 
-		oSRS.SetWellKnownGeogCS( "WGS84" );
-
 		oSRS.SetOrthographic( dfCenterLat, dfCenterLon, 
 				      dfFalseEasting, dfFalseNorthing );
+
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
 	    }
 
 /* -------------------------------------------------------------------- */
