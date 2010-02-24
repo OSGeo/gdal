@@ -340,30 +340,66 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 /*      Check for EMPTY ... but treat like a point at 0,0.              */
 /* -------------------------------------------------------------------- */
     const char *pszPreScan;
+    int bHasZ = FALSE, bHasM = FALSE;
 
     pszPreScan = OGRWktReadToken( pszInput, szToken );
     if( EQUAL(szToken,"EMPTY") )
     {
-        *ppszInput = (char *) pszInput;
+        *ppszInput = (char *) pszPreScan;
         empty();
         return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for Z, M or ZM. Will ignore the Measure                   */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(szToken,"Z") )
+    {
+        bHasZ = TRUE;
+    }
+    else if( EQUAL(szToken,"M") )
+    {
+        bHasM = TRUE;
+    }
+    else if( EQUAL(szToken,"ZM") )
+    {
+        bHasZ = TRUE;
+        bHasM = TRUE;
+    }
+
+    if (bHasZ || bHasM)
+    {
+        pszInput = pszPreScan;
+        pszPreScan = OGRWktReadToken( pszInput, szToken );
+        if( EQUAL(szToken,"EMPTY") )
+        {
+            *ppszInput = (char *) pszPreScan;
+            empty();
+            /* FIXME?: In theory we should store the dimension and M presence */
+            /* if we want to allow round-trip with ExportToWKT v1.2 */
+            return OGRERR_NONE;
+        }
     }
 
     if( !EQUAL(szToken,"(") )
         return OGRERR_CORRUPT_DATA;
 
-    pszPreScan = OGRWktReadToken( pszPreScan, szToken );
-    if( EQUAL(szToken,"EMPTY") )
+    if ( !bHasZ && !bHasM )
     {
-        pszInput = OGRWktReadToken( pszPreScan, szToken );
-        
-        if( !EQUAL(szToken,")") )
-            return OGRERR_CORRUPT_DATA;
-        else
+        /* Test for old-style POINT(EMPTY) */
+        pszPreScan = OGRWktReadToken( pszPreScan, szToken );
+        if( EQUAL(szToken,"EMPTY") )
         {
-            *ppszInput = (char *) pszInput;
-            empty();
-            return OGRERR_NONE;
+            pszInput = OGRWktReadToken( pszPreScan, szToken );
+
+            if( !EQUAL(szToken,")") )
+                return OGRERR_CORRUPT_DATA;
+            else
+            {
+                *ppszInput = (char *) pszInput;
+                empty();
+                return OGRERR_NONE;
+            }
         }
     }
 
@@ -386,9 +422,22 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 
     if( padfZ != NULL )
     {
-        z = padfZ[0];						
-        nCoordDimension = 3;
+        /* If there's a 3rd value, and it is not a POINT M, */
+        /* then assume it is the Z */
+        if ((!(bHasM && !bHasZ)))
+        {
+            z = padfZ[0];
+            nCoordDimension = 3;
+        }
+        else
+            nCoordDimension = 2;
         CPLFree( padfZ );
+    }
+    else if ( bHasZ )
+    {
+        /* In theory we should have a z coordinate for POINT Z */
+        /* oh well, let be tolerant */
+        nCoordDimension = 3;
     }
     else
         nCoordDimension = 2;

@@ -125,37 +125,78 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      The next character should be a ( indicating the start of the    */
-/*      list of polygons.                                               */
+/*      Check for EMPTY ...                                             */
 /* -------------------------------------------------------------------- */
-    pszInput = OGRWktReadToken( pszInput, szToken );
+    const char *pszPreScan;
+    int bHasZ = FALSE, bHasM = FALSE;
 
+    pszPreScan = OGRWktReadToken( pszInput, szToken );
     if( EQUAL(szToken,"EMPTY") )
     {
-        *ppszInput = (char *) pszInput;
+        *ppszInput = (char *) pszPreScan;
+        empty();
         return OGRERR_NONE;
     }
 
-    if( szToken[0] != '(' )
+/* -------------------------------------------------------------------- */
+/*      Check for Z, M or ZM. Will ignore the Measure                   */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(szToken,"Z") )
+    {
+        bHasZ = TRUE;
+    }
+    else if( EQUAL(szToken,"M") )
+    {
+        bHasM = TRUE;
+    }
+    else if( EQUAL(szToken,"ZM") )
+    {
+        bHasZ = TRUE;
+        bHasM = TRUE;
+    }
+
+    if (bHasZ || bHasM)
+    {
+        pszInput = pszPreScan;
+        pszPreScan = OGRWktReadToken( pszInput, szToken );
+        if( EQUAL(szToken,"EMPTY") )
+        {
+            *ppszInput = (char *) pszPreScan;
+            empty();
+            /* FIXME?: In theory we should store the dimension and M presence */
+            /* if we want to allow round-trip with ExportToWKT v1.2 */
+            return OGRERR_NONE;
+        }
+    }
+
+    if( !EQUAL(szToken,"(") )
         return OGRERR_CORRUPT_DATA;
 
-/* -------------------------------------------------------------------- */
-/*      If the next token is EMPTY, then verify that we have proper     */
-/*      EMPTY format will a trailing closing bracket.                   */
-/* -------------------------------------------------------------------- */
-    OGRWktReadToken( pszInput, szToken );
-    if( EQUAL(szToken,"EMPTY") )
+    if ( !bHasZ && !bHasM )
     {
-        pszInput = OGRWktReadToken( pszInput, szToken );
-        pszInput = OGRWktReadToken( pszInput, szToken );
-        
-        *ppszInput = (char *) pszInput;
+        /* Test for old-style MULTIPOLYGON(EMPTY) */
+        pszPreScan = OGRWktReadToken( pszPreScan, szToken );
+        if( EQUAL(szToken,"EMPTY") )
+        {
+            pszPreScan = OGRWktReadToken( pszPreScan, szToken );
 
-        if( !EQUAL(szToken,")") )
-            return OGRERR_CORRUPT_DATA;
-        else
-            return OGRERR_NONE;
+            if( EQUAL(szToken,",") )
+            {
+                /* This is OK according to SFSQL SPEC. */
+            }
+            else if( !EQUAL(szToken,")") )
+                return OGRERR_CORRUPT_DATA;
+            else
+            {
+                *ppszInput = (char *) pszPreScan;
+                empty();
+                return OGRERR_NONE;
+            }
+        }
     }
+
+    /* Skip first '(' */
+    pszInput = OGRWktReadToken( pszInput, szToken );
 
 /* ==================================================================== */
 /*      Read each polygon in turn.  Note that we try to reuse the same  */
@@ -175,7 +216,19 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
 /*      list of polygons.                                               */
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadToken( pszInput, szToken );
-        if( szToken[0] != '(' )
+        if( EQUAL(szToken, "EMPTY") )
+        {
+            eErr = addGeometryDirectly( poPolygon );
+            if( eErr != OGRERR_NONE )
+                return eErr;
+
+            pszInput = OGRWktReadToken( pszInput, szToken );
+            if ( !EQUAL(szToken, ",") )
+                break;
+
+            continue;
+        }
+        else if( szToken[0] != '(' )
         {
             eErr = OGRERR_CORRUPT_DATA;
             delete poPolygon;
@@ -195,7 +248,7 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
             pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoints,
                                          &nPoints );
 
-            if( pszInput == NULL )
+            if( pszInput == NULL || nPoints == 0 )
             {
                 eErr = OGRERR_CORRUPT_DATA;
                 break;
@@ -207,7 +260,11 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
             OGRLinearRing       *poLine;
 
             poLine = new OGRLinearRing();
-            poLine->setPoints( nPoints, paoPoints, padfZ );
+            /* Ignore Z array when we have a MULTIPOLYGON M */
+            if (bHasM && !bHasZ)
+                poLine->setPoints( nPoints, paoPoints, NULL );
+            else
+                poLine->setPoints( nPoints, paoPoints, padfZ );
 
             poPolygon->addRingDirectly( poLine ); 
 

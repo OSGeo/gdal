@@ -889,9 +889,10 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      Check for EMPTY or (EMPTY).                                     */
+/*      Check for EMPTY                                                 */
 /* -------------------------------------------------------------------- */
     const char *pszPreScan;
+    int bHasZ = FALSE, bHasM = FALSE;
 
     pszPreScan = OGRWktReadToken( pszInput, szToken );
     if( EQUAL(szToken,"EMPTY") )
@@ -900,20 +901,57 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
         return OGRERR_NONE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Check for Z, M or ZM. Will ignore the Measure                   */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(szToken,"Z") )
+    {
+        bHasZ = TRUE;
+    }
+    else if( EQUAL(szToken,"M") )
+    {
+        bHasM = TRUE;
+    }
+    else if( EQUAL(szToken,"ZM") )
+    {
+        bHasZ = TRUE;
+        bHasM = TRUE;
+    }
+
+    if (bHasZ || bHasM)
+    {
+        pszInput = pszPreScan;
+        pszPreScan = OGRWktReadToken( pszInput, szToken );
+        if( EQUAL(szToken,"EMPTY") )
+        {
+            *ppszInput = (char *) pszPreScan;
+            empty();
+            /* FIXME?: In theory we should store the dimension and M presence */
+            /* if we want to allow round-trip with ExportToWKT v1.2 */
+            return OGRERR_NONE;
+        }
+    }
+
     if( !EQUAL(szToken,"(") )
         return OGRERR_CORRUPT_DATA;
-    
-    pszPreScan = OGRWktReadToken( pszPreScan, szToken );
-    if( EQUAL(szToken,"EMPTY") )
-    {
-        pszPreScan = OGRWktReadToken( pszPreScan, szToken );
 
-        *ppszInput = (char *) pszPreScan;
-        
-        if( !EQUAL(szToken,")") )
-            return OGRERR_CORRUPT_DATA;
-        else
-            return OGRERR_NONE;
+    if ( !bHasZ && !bHasM )
+    {
+        /* Test for old-style LINESTRING(EMPTY) */
+        pszPreScan = OGRWktReadToken( pszPreScan, szToken );
+        if( EQUAL(szToken,"EMPTY") )
+        {
+            pszInput = OGRWktReadToken( pszPreScan, szToken );
+
+            if( !EQUAL(szToken,")") )
+                return OGRERR_CORRUPT_DATA;
+            else
+            {
+                *ppszInput = (char *) pszInput;
+                empty();
+                return OGRERR_NONE;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -933,7 +971,17 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
     if( padfZ == NULL )
         nCoordDimension = 2;
     else
-        nCoordDimension = 3;
+    {
+        /* Ignore Z array when we have a LINESTRING M */
+        if (bHasM && !bHasZ)
+        {
+            nCoordDimension = 2;
+            CPLFree(padfZ);
+            padfZ = NULL;
+        }
+        else
+            nCoordDimension = 3;
+    }
     
     return OGRERR_NONE;
 }
