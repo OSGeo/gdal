@@ -553,7 +553,7 @@ class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
 class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 {
   private:
-    OGRErr  importFromWkt_Bracketed( char ** );
+    OGRErr  importFromWkt_Bracketed( char **, int bHasM, int bHasZ );
 
   public:
             OGRMultiPoint();
