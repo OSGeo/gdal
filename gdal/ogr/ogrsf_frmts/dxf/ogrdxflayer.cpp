@@ -29,7 +29,9 @@
 
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
+#include "ogrdxf_polyline_smooth.h"
 
+        
 CPL_CVSID("$Id$");
 
 #ifndef PI
@@ -191,6 +193,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         oStyleProperties["230_N.dZ"] = pszValue;
         break;
 
+
       default:
         break;
     }
@@ -281,14 +284,14 @@ public:
 
         memcpy( this->adfN, adfN, sizeof(double)*3 );
 
-	if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
+    if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
             CrossProduct(adfWY, adfN, adfAX);
-	else
+    else
             CrossProduct(adfWZ, adfN, adfAX);
 
-	Scale2Unit( adfAX );
-	CrossProduct(adfN, adfAX, adfAY);
-	Scale2Unit( adfAY );
+    Scale2Unit( adfAX );
+    CrossProduct(adfN, adfAX, adfAY);
+    Scale2Unit( adfAY );
     }
 
     void CrossProduct(const double *a, const double *b, double *vResult) {
@@ -298,13 +301,13 @@ public:
     }
 
     void Scale2Unit(double* adfV) {
-	double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
-	if (dfLen != 0)
-	{
+    double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
+    if (dfLen != 0)
+    {
             adfV[0] /= dfLen;
             adfV[1] /= dfLen;
             adfV[2] /= dfLen;
-	}
+    }
     }
     OGRSpatialReference *GetSourceCS() { return NULL; }
     OGRSpatialReference *GetTargetCS() { return NULL; }
@@ -550,7 +553,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
         poDS->UnreadValue();
 
     poFeature->SetField( "Text", osText );
-    
+
     if( bHaveZ )
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
     else
@@ -695,7 +698,7 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
         poLS->addPoint( dfX1, dfY1 );
         poLS->addPoint( dfX2, dfY2 );
     }
-        
+
     poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
@@ -706,112 +709,120 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
 /************************************************************************/
 /*                         TranslateLWPOLYLINE()                        */
 /************************************************************************/
-
 OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
 {
-    char szLineBuf[257];
-    int nCode;
-    int nPolylineFlag = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-    OGRLineString *poLS = new OGRLineString();
-    double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
-    int    bHaveX = FALSE, bHaveY = FALSE, bHaveZ = FALSE;
+    // Collect vertices and attributes into a smooth polyline.
+    // If there are no bulges, then we are a straight-line polyline.
+    // Single-vertex polylines become points.
+    // Group code 30 (vertex Z) is not part of this entity.
+
+    char                szLineBuf[257];
+    int                 nCode;
+    int                 nPolylineFlag = 0;
+
+
+    OGRFeature          *poFeature = new OGRFeature( poFeatureDefn );
+    double              dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    int                 bHaveX = FALSE;
+    int                 bHaveY = FALSE;
+
+    int                 nNumVertices = 1;   // use 1 based index
+    int                 npolyarcVertexCount = 1;
+    int                 bPLineGen = FALSE;
+    double              dfBulge = 0.0;
+    DXFSmoothPolyline   smoothPolyline;
 
 /* -------------------------------------------------------------------- */
 /*      Collect information from the LWPOLYLINE object itself.          */
 /* -------------------------------------------------------------------- */
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
+        if(npolyarcVertexCount > nNumVertices)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+              "Too many vertices found in LWPOLYLINE." );
+            delete poFeature;
+            return NULL;
+        }
+
         switch( nCode )
         {
-          case 70:
-            nPolylineFlag = atoi(szLineBuf);
-            break;
+            case 38:
+                // Constant elevation.
+                dfZ = atof(szLineBuf);
+                break;
 
-          case 10:
-            if( bHaveX && bHaveY )
-            {
-                if( bHaveZ )
-                    poLS->addPoint( dfX, dfY, dfZ );
-                else
-                    poLS->addPoint( dfX, dfY );
-                bHaveY = FALSE;
-            }
-            dfX = atof(szLineBuf);
-            bHaveX = TRUE;
-            break;
+            case 90:
+                nNumVertices = atoi(szLineBuf);
+                break;
 
-          case 20:
-            if( bHaveX && bHaveY )
-            {
-                if( bHaveZ )
-                    poLS->addPoint( dfX, dfY, dfZ );
-                else
-                    poLS->addPoint( dfX, dfY );
-                bHaveX = FALSE;
-            }
-            dfY = atof(szLineBuf);
-            bHaveY = TRUE;
-            break;
+            case 70:
+                nPolylineFlag = atoi(szLineBuf);
+                break;
 
-          case 38:
-            dfZ = atof(szLineBuf);
-            bHaveZ = TRUE;
-            break;
+            case 10:
+                if( bHaveX && bHaveY )
+                {
+                    smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
+                    npolyarcVertexCount++;
+                    dfBulge = 0.0;
+                    bHaveY = FALSE;
+                }
+                dfX = atof(szLineBuf);
+                bHaveX = TRUE;
+                break;
 
-          default:
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
-            break;
+            case 20:
+                if( bHaveX && bHaveY )
+                {
+                    smoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
+                    npolyarcVertexCount++;
+                    dfBulge = 0.0;
+                    bHaveX = FALSE;
+                }
+                dfY = atof(szLineBuf);
+                bHaveY = TRUE;
+                break;
+
+            case 42:
+                dfBulge = atof(szLineBuf);
+                break;
+
+
+            default:
+                TranslateGenericProperty( poFeature, nCode, szLineBuf );
+                break;
         }
     }
 
     poDS->UnreadValue();
 
     if( bHaveX && bHaveY )
+         smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
+
+    
+    if(smoothPolyline.IsEmpty())
     {
-        if( bHaveZ )
-            poLS->addPoint( dfX, dfY, dfZ );
-        else
-            poLS->addPoint( dfX, dfY );
+        delete poFeature;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Close polyline as polygon if necessary.                         */
+/*      Close polyline if necessary.                                    */
 /* -------------------------------------------------------------------- */
-    if( (nPolylineFlag & 0x01)
-        && poLS->getNumPoints() > 0 
-        && (poLS->getX(poLS->getNumPoints()-1) != poLS->getX(0)
-            || poLS->getY(poLS->getNumPoints()-1) != poLS->getY(0)) )
-    {
-        if( bHaveZ )
-            poLS->addPoint( poLS->getX(0), poLS->getY(0), poLS->getZ(0) );
-        else
-            poLS->addPoint( poLS->getX(0), poLS->getY(0) );
-    }
+    if(nPolylineFlag & 0x01)
+        smoothPolyline.Close();
 
-    ApplyOCSTransformer( poLS );
-
-    if( (nPolylineFlag & 0x01) )
-    {
-        // convert to linear ring
-        OGRLinearRing *poLR = new OGRLinearRing();
-        poLR->addSubLineString( poLS, 0 );
-        delete poLS;
-
-        // wrap as polygon.
-        OGRPolygon *poPoly = new OGRPolygon();
-        poPoly->addRingDirectly( poLR );
-
-        poFeature->SetGeometryDirectly( poPoly );
-    }
-    else
-        poFeature->SetGeometryDirectly( poLS );
+    OGRGeometry* poGeom = smoothPolyline.Tesselate();
+    ApplyOCSTransformer( poGeom );
+    poFeature->SetGeometryDirectly( poGeom );
 
     PrepareLineStyle( poFeature );
 
     return poFeature;
 }
+
 
 /************************************************************************/
 /*                         TranslatePOLYLINE()                          */
@@ -824,7 +835,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
 {
     char szLineBuf[257];
     int nCode;
-    int nPolylineFlag = 0, bHaveZ = FALSE;
+    int nPolylineFlag = 0;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
 /* -------------------------------------------------------------------- */
@@ -845,10 +856,11 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Collect VERTEXes as a linestring.                               */
+/*      Collect VERTEXes as a smooth polyline.                          */
 /* -------------------------------------------------------------------- */
-    OGRLineString *poLS = new OGRLineString();
-    double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    double              dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    double              dfBulge = 0.0;
+    DXFSmoothPolyline   smoothPolyline;
 
     while( nCode == 0 && !EQUAL(szLineBuf,"SEQEND") )
     {
@@ -873,8 +885,11 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 break;
                 
               case 30:
-                bHaveZ = TRUE;
                 dfZ = atof(szLineBuf);
+                break;
+
+              case 42:
+                dfBulge = atof(szLineBuf);
                 break;
 
               default:
@@ -882,41 +897,19 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             }
         }
 
-        if( bHaveZ )
-            poLS->addPoint( dfX, dfY, dfZ );
-        else
-            poLS->addPoint( dfX, dfY );
+        smoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
+        dfBulge = 0.0;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Close polyline as polygon if necessary.                         */
+/*      Close polyline if necessary.                                    */
 /* -------------------------------------------------------------------- */
-    if( (nPolylineFlag & 0x01)
-        && poLS->getNumPoints() > 0 
-        && (poLS->getX(poLS->getNumPoints()-1) != poLS->getX(0)
-            || poLS->getY(poLS->getNumPoints()-1) != poLS->getY(0)) )
-    {
-        if( bHaveZ )
-            poLS->addPoint( poLS->getX(0), poLS->getY(0), poLS->getZ(0) );
-        else
-            poLS->addPoint( poLS->getX(0), poLS->getY(0) );
-    }
+    if(nPolylineFlag & 0x01)
+        smoothPolyline.Close();
 
-    if( (nPolylineFlag & 0x01) )
-    {
-        // convert to linear ring
-        OGRLinearRing *poLR = new OGRLinearRing();
-        poLR->addSubLineString( poLS, 0 );
-        delete poLS;
-
-        // wrap as polygon.
-        OGRPolygon *poPoly = new OGRPolygon();
-        poPoly->addRingDirectly( poLR );
-
-        poFeature->SetGeometryDirectly( poPoly );
-    }
-    else
-        poFeature->SetGeometryDirectly( poLS );
+    OGRGeometry* poGeom = smoothPolyline.Tesselate();
+    ApplyOCSTransformer( poGeom );
+    poFeature->SetGeometryDirectly( poGeom );
 
     PrepareLineStyle( poFeature );
 
@@ -982,7 +975,6 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
         poCircle->flattenTo2D();
 
     poFeature->SetGeometryDirectly( poCircle );
-
     PrepareLineStyle( poFeature );
 
     return poFeature;
