@@ -151,7 +151,7 @@ try:
     else:
         dst_ds = None
 except:
-    dst_ts = None
+    dst_ds = None
 
 # =============================================================================
 #     Create output file.
