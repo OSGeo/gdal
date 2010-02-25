@@ -810,29 +810,29 @@ void netCDFDataset::SetProjection( int var )
 /*      Check for datum/spheroid information                            */
 /* -------------------------------------------------------------------- */
 	    dfEarthRadius = 
-	        FetchCopyParm( szGridMappingValue, 
-			       EARTH_RADIUS, 
-			       -1.0 );
+	        poDS->FetchCopyParm( szGridMappingValue, 
+				     EARTH_RADIUS, 
+				     -1.0 );
 
 	    dfLonPrimeMeridian = 
-	        FetchCopyParm( szGridMappingValue,
-			       LONG_PRIME_MERIDIAN, 
-			       0.0 );
+	        poDS->FetchCopyParm( szGridMappingValue,
+				     LONG_PRIME_MERIDIAN, 
+				     0.0 );
 
 	    dfInverseFlattening = 
-	        FetchCopyParm( szGridMappingValue, 
-			       INVERSE_FLATTENING, 
-			       -1.0 );
+	        poDS->FetchCopyParm( szGridMappingValue, 
+				     INVERSE_FLATTENING, 
+				     -1.0 );
 	    
 	    dfSemiMajorAxis = 
-	        FetchCopyParm( szGridMappingValue, 
-			       SEMI_MAJOR_AXIS, 
-			       -1.0 );
+	        poDS->FetchCopyParm( szGridMappingValue, 
+				     SEMI_MAJOR_AXIS, 
+				     -1.0 );
 	    
 	    dfSemiMinorAxis = 
-	        FetchCopyParm( szGridMappingValue, 
-			       SEMI_MINOR_AXIS, 
-			       -1.0 );
+	        poDS->FetchCopyParm( szGridMappingValue, 
+				     SEMI_MINOR_AXIS, 
+				     -1.0 );
 
 	    //see if semi-major exists if radius doesn't
 	    if( dfEarthRadius < 0.0 )
@@ -840,9 +840,9 @@ void netCDFDataset::SetProjection( int var )
 	    
 	    //if still no radius, check old tag
 	    if( dfEarthRadius < 0.0 )
-	        dfEarthRadius = FetchCopyParm( szGridMappingValue, 
-					       "spherical_earth_radius_meters",
-					       -1.0 );
+	        dfEarthRadius = poDS->FetchCopyParm( szGridMappingValue, 
+						     "spherical_earth_radius_meters",
+						     -1.0 );
 
 	    //has radius value
 	    if( dfEarthRadius > 0.0 ) {
@@ -893,7 +893,7 @@ void netCDFDataset::SetProjection( int var )
 
 		dfScale = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         SCALE_FACTOR, 1.0 );
+                                         SCALE_FACTOR_ORIGIN, 1.0 );
 
 		dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
@@ -919,6 +919,67 @@ void netCDFDataset::SetProjection( int var )
 
 		if( !bGotGeogCS )
 		    oSRS.SetWellKnownGeogCS( "WGS84" );
+	    }
+
+/* -------------------------------------------------------------------- */
+/*      Albers Equal Area                                               */
+/* -------------------------------------------------------------------- */
+
+	    if( EQUAL( pszValue, AEA ) ) {
+	        char **papszStdParallels = NULL;
+		
+		dfCenterLon = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LONG_CENTRAL_MERIDIAN, 0.0 );
+
+		dfCenterLat = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfScale = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+					 SCALE_FACTOR, 1.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+		
+		papszStdParallels = 
+		    FetchStandardParallels( szGridMappingValue );
+
+		if( papszStdParallels != NULL ) {
+		  
+		  if ( CSLCount( papszStdParallels ) == 1 ) {
+		      dfStdP1 = CPLAtofM( papszStdParallels[0] );
+		      dfStdP2 = dfStdP1;
+		  }
+		
+		  else if( CSLCount( papszStdParallels ) == 2 ) {
+		      dfStdP1 = CPLAtofM( papszStdParallels[0] );
+		      dfStdP2 = CPLAtofM( papszStdParallels[1] );
+		  }
+		}
+		//old default
+		else {
+		    dfStdP1 = 
+		        poDS->FetchCopyParm( szGridMappingValue, 
+                                         STD_PARALLEL_1, 0.0 );
+
+		    dfStdP2 = 
+		        poDS->FetchCopyParm( szGridMappingValue, 
+                                         STD_PARALLEL_2, 0.0 );
+		}
+		oSRS.SetACEA( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
+			      dfFalseEasting, dfFalseNorthing );
+
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
+
+		CSLDestroy( papszStdParallels );
 	    }
 
 /* -------------------------------------------------------------------- */
@@ -948,6 +1009,7 @@ void netCDFDataset::SetProjection( int var )
 		    oSRS.SetWellKnownGeogCS( "WGS84" );
 		
 	    }
+
 /* -------------------------------------------------------------------- */
 /*      lambert_azimuthal_equal_area                                    */
 /* -------------------------------------------------------------------- */
@@ -1007,6 +1069,33 @@ void netCDFDataset::SetProjection( int var )
 		
 	    }
 
+/* -------------------------------------------------------------------- */
+/*      Azimuthal Equidistant                                           */
+/* -------------------------------------------------------------------- */
+	    else if( EQUAL( pszValue, AE ) ) {
+		dfCenterLon = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LON_PROJ_ORIGIN, 0.0 );
+
+		dfCenterLat = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+
+		oSRS.SetAE( dfCenterLat, dfCenterLon,
+			      dfFalseEasting, dfFalseNorthing );
+
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
+		
+	    }
 
 /* -------------------------------------------------------------------- */
 /*      Lambert conformal conic                                         */
@@ -1098,7 +1187,7 @@ void netCDFDataset::SetProjection( int var )
 		dfScale = 
 		    poDS->FetchCopyParm( szGridMappingValue, 
 					 SCALE_FACTOR_ORIGIN,
-					 0.0 );
+					 1.0 );
 
 		dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
@@ -1143,6 +1232,74 @@ void netCDFDataset::SetProjection( int var )
 		    oSRS.SetWellKnownGeogCS( "WGS84" );
 	    }
 
+/* -------------------------------------------------------------------- */
+/*      Polar Stereographic                                             */
+/* -------------------------------------------------------------------- */
+		  
+	    else if ( EQUAL ( pszValue, POLAR_STEREO ) ) {
+
+	        dfCenterLon = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+					 LON_PROJ_ORIGIN, 0.0 );
+
+		dfCenterLat = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+		
+		dfScale = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+					 SCALE_FACTOR_ORIGIN, 
+					 1.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+
+		oSRS.SetPS( dfCenterLat, dfCenterLon, dfScale, 
+			    dfFalseEasting, dfFalseNorthing );
+
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
+	    }
+
+/* -------------------------------------------------------------------- */
+/*      Stereographic                                                   */
+/* -------------------------------------------------------------------- */
+		  
+	    else if ( EQUAL ( pszValue, STEREO ) ) {
+	        
+	        dfCenterLon = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+				     LON_PROJ_ORIGIN, 0.0 );
+	      
+		dfCenterLat = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfScale = 
+		    poDS->FetchCopyParm( szGridMappingValue, 
+					 SCALE_FACTOR_ORIGIN,
+					 1.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+
+		oSRS.SetStereographic( dfCenterLat, dfCenterLon, dfScale, 
+				  dfFalseEasting, dfFalseNorthing );
+
+		if( !bGotGeogCS )
+		    oSRS.SetWellKnownGeogCS( "WGS84" );
+	    }
+  
 /* -------------------------------------------------------------------- */
 /*      Is this Latitude/Longitude Grid, default                        */
 /* -------------------------------------------------------------------- */

@@ -45,6 +45,8 @@
 /* ==================================================================== */
 /************************************************************************/
 #define MAX_STR_LEN            8192
+#define AEA                    "albers_conical_equal_area"
+#define AE                     "azimuthal_equidistant"
 #define CEA                    "cylindrical_equal_area"
 #define LCEA                   "lambert_cylindrical_equal_area"
 #define L_C_CONIC              "lambert_conformal_conic"
@@ -57,11 +59,14 @@
 #define LATITUDE_LONGITUDE     "latitude_longitude"
 #define MERCATOR               "mercator"
 #define ORTHOGRAPHIC           "orthographic"
+#define POLAR_STEREO           "polar_stereographic"
+#define STEREO                 "stereographic"
 
 #define STD_PARALLEL           "standard_parallel"
 #define STD_PARALLEL_1         "standard_parallel_1"
 #define STD_PARALLEL_2         "standard_parallel_2"
-#define LONG_CENTRAL_MERIDIAN  "central_meridian"
+#define CENTRAL_MERIDIAN       "central_meridian"
+#define LONG_CENTRAL_MERIDIAN  "longitude_of_central_meridian"
 #define LON_PROJ_ORIGIN        "longitude_of_projection_origin"
 #define LAT_PROJ_ORIGIN        "latitude_of_projection_origin"
 #define SCALE_FACTOR_ORIGIN    "scale_factor_at_projection_origin"
