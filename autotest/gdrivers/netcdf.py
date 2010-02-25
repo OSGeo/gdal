@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import osr
 
 sys.path.append( '../pymod' )
 
@@ -163,15 +164,114 @@ def netcdf_5():
     gdal.PopErrorHandler()
 
     return result
+
+###############################################################################
+#ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
+#1 standard parallel.
+def netcdf_6():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/cf_lcc1sp.nc' )
+    prj = ds.GetProjection( )
+
+    sr = osr.SpatialReference( )
+    sr.ImportFromWkt( prj )
+    lat_origin = sr.GetProjParm( 'latitude_of_origin' )
+
+    if lat_origin != 25:
+        gdaltest.post_reason( 'Latitude of origin does not match expected:\n%f' 
+                              % lat_origin )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
     
 ###############################################################################
+#ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
+#2 standard parallels.
+def netcdf_7():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/cf_lcc2sp.nc' )
+    prj = ds.GetProjection( )
+
+    sr = osr.SpatialReference( )
+    sr.ImportFromWkt( prj )
+    std_p1 = sr.GetProjParm( 'standard_parallel_1' )
+    std_p2 = sr.GetProjParm( 'standard_parallel_2' )
+
+    if std_p1 != 33.0 or std_p2 != 45.0:
+        gdaltest.post_reason( 'Standard Parallels do not match expected:\n%f,%f' 
+                              % ( std_p1, std_p2 ) )
+        return 'fail'
+
+    ds = None
+    sr = None
+
+    return 'success'
+    
+###############################################################################
+#check for cf convention read of albers equal area
+def netcdf_8():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/cf_aea2sp_invf.nc' )
+    prj = ds.GetProjection( )
+
+    if prj != 'PROJCS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["Spheroid",6378140,298.257]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",29.8333],PARAMETER["standard_parallel_2",45.8333],PARAMETER["latitude_of_center",37.5],PARAMETER["longitude_of_center",-96],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]':
+
+        gdaltest.post_reason( 'Projection does not match expected:\n%s' % ( prj ) )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
+#check to see if projected systems default to wgs84 if no spheroid def
+def netcdf_9():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/cf_no_sphere.nc' )
+
+    prj = ds.GetProjection( )
+
+    sr = osr.SpatialReference( )
+    sr.ImportFromWkt( prj )
+    spheroid = sr.GetProjParm( 'SPHEROID' )
+    
+    if spheroid != 'WGS 84':
+        gdaltest.post_reason( 'Incorrect spheroid read from file\n%s' 
+                              % ( spheroid ) )
+        return 'fail'
+
+    ds = None
+    sr = None
+
+    return 'success'
+    
+###############################################################################
+
 
 gdaltest_list = [
     netcdf_1,
     netcdf_2,
     netcdf_3,
     netcdf_4,
-    netcdf_5 ]
+    netcdf_5,
+    netcdf_6,
+    netcdf_7,
+    netcdf_8,
+    netcdf_9 ]
 
 
 if __name__ == '__main__':
