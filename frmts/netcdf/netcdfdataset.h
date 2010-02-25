@@ -107,7 +107,7 @@ static const oNetcdfSRS poNetcdfSRS[] = {
     {"goode_homolosine", SRS_PT_GOODE_HOMOLOSINE },
     {"gnomonic", SRS_PT_GNOMONIC },
     {"hotine_oblique_mercator", SRS_PT_HOTINE_OBLIQUE_MERCATOR},
-    {"hotine_oblique_marcator_2P", 
+    {"hotine_oblique_mercator_2P", 
      SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN},
     {"laborde_oblique_mercator", SRS_PT_LABORDE_OBLIQUE_MERCATOR },
     {"lambert_conformal_conic1", SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP },
