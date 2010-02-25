@@ -1,6 +1,6 @@
 OBJ     =       ogrdxfdriver.obj ogrdxfdatasource.obj ogrdxflayer.obj \
 		ogrdxf_diskio.obj ogrdxf_blockmap.obj ogrdxf_dimension.obj \
-		ogrdxfwriterds.obj ogrdxfwriterlayer.obj intronurbs.obj
+		ogrdxfwriterds.obj ogrdxfwriterlayer.obj intronurbs.obj ogrdxf_polyline_smooth.obj
         
 EXTRAFLAGS =	-I.. -I..\..
 
