@@ -858,7 +858,9 @@ void netCDFDataset::SetProjection( int var )
 			bGotGeogCS = TRUE;
 		  }
 		  else {
-		      //set inv_flat using semi
+		      if( dfSemiMajorAxis < 0.0 )
+		          dfSemiMajorAxis = dfEarthRadius;
+		      //set inv_flat using semi_minor/major
 		      dfInverseFlattening = 
 			  1.0 / ( dfSemiMajorAxis - dfSemiMinorAxis ) / dfSemiMajorAxis;
 		      oSRS.SetGeogCS( "unknown", 
