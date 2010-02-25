@@ -851,7 +851,7 @@ void netCDFDataset::SetProjection( int var )
 		    //no inv_flat tag, check for semi_minor
 		    if( dfSemiMinorAxis < 0.0 ) {
 		        //no way to get inv_flat, use sphere
-		        oSRS.SetGeogCS( "Coord Sys imported from netcdf file", 
+		        oSRS.SetGeogCS( "unknown", 
 					NULL, 
 					"Sphere", 
 					dfEarthRadius, 0.0 );
@@ -861,17 +861,17 @@ void netCDFDataset::SetProjection( int var )
 		      //set inv_flat using semi
 		      dfInverseFlattening = 
 			  1.0 / ( dfSemiMajorAxis - dfSemiMinorAxis ) / dfSemiMajorAxis;
-		      oSRS.SetGeogCS( "Coord Sys imported from netcdf file", 
+		      oSRS.SetGeogCS( "unknown", 
 				      NULL, 
-				      "Spheroid imported from netcdf file", 
+				      "Spheroid", 
 				      dfEarthRadius, dfInverseFlattening );
 		      bGotGeogCS = TRUE;
 		  }
 		}
 		else {
-		    oSRS.SetGeogCS( "Coord Sys imported from netcdf file", 
+		    oSRS.SetGeogCS( "unknown", 
 				      NULL, 
-				      "Spheroid imported from netcdf file", 
+				      "Spheroid", 
 				      dfEarthRadius, dfInverseFlattening );
 		    bGotGeogCS = TRUE;
 		}
