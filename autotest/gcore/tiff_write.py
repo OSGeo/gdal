@@ -1029,7 +1029,7 @@ def tiff_write_30():
 
     fileobj = open( 'tmp/bigtiff.tif', mode='rb')
     binvalues = array.array('b')
-    binvalues.read(fileobj, 4)
+    binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     gdaltest.tiff_drv.Delete( 'tmp/bigtiff.tif' )
@@ -1061,7 +1061,7 @@ def tiff_write_31():
 
     fileobj = open( 'tmp/bigtiff.tif', mode='rb')
     binvalues = array.array('b')
-    binvalues.read(fileobj, 4)
+    binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     gdaltest.tiff_drv.Delete( 'tmp/bigtiff.tif' )
@@ -2019,7 +2019,7 @@ def tiff_write_61():
 
     fileobj = open( 'tmp/bigtiff.tif', mode='rb')
     binvalues = array.array('b')
-    binvalues.read(fileobj, 4)
+    binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     gdaltest.tiff_drv.Delete( 'tmp/bigtiff.tif' )
@@ -2051,7 +2051,7 @@ def tiff_write_62():
 
     fileobj = open( 'tmp/bigtiff.tif', mode='rb')
     binvalues = array.array('b')
-    binvalues.read(fileobj, 4)
+    binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     gdaltest.tiff_drv.Delete( 'tmp/bigtiff.tif' )
@@ -2336,7 +2336,7 @@ def tiff_write_72():
         binvalues = array.array('b')
         fileobj.seek(4)
         try:
-            binvalues.read(fileobj, 4)
+            binvalues.fromfile(fileobj, 4)
         except:
             binvalues.fromfile(fileobj, 4)
         fileobj.close()
@@ -2373,7 +2373,7 @@ def tiff_write_73():
     binvalues = array.array('b')
     fileobj.seek(4)
     try:
-        binvalues.read(fileobj, 4)
+        binvalues.fromfile(fileobj, 4)
     except:
         binvalues.fromfile(fileobj, 4)
     fileobj.close()
@@ -2391,7 +2391,7 @@ def tiff_write_73():
     binvalues = array.array('b')
     fileobj.seek(4)
     try:
-        binvalues.read(fileobj, 4)
+        binvalues.fromfile(fileobj, 4)
     except:
         binvalues.fromfile(fileobj, 4)
     fileobj.close()
