@@ -827,7 +827,7 @@ def tiff_ovr_20():
 
     fileobj = open( 'tmp/ovr20.tif.ovr', mode='rb')
     binvalues = array.array('b')
-    binvalues.read(fileobj, 4)
+    binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     # Check BigTIFF signature
@@ -865,7 +865,7 @@ def tiff_ovr_21():
 
     fileobj = open( 'tmp/ovr21.tif.ovr', mode='rb')
     binvalues = array.array('b')
-    binvalues.read(fileobj, 4)
+    binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     # Check BigTIFF signature
@@ -939,7 +939,7 @@ def tiff_ovr_23():
 
     fileobj = open( 'tmp/ovr23.tif.ovr', mode='rb')
     binvalues = array.array('b')
-    binvalues.read(fileobj, 4)
+    binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     # Check Classical TIFF signature
@@ -978,7 +978,7 @@ def tiff_ovr_24():
 
     fileobj = open( 'tmp/ovr24.tif.ovr', mode='rb')
     binvalues = array.array('b')
-    binvalues.read(fileobj, 4)
+    binvalues.fromfile(fileobj, 4)
     fileobj.close()
 
     # Check BigTIFF signature
