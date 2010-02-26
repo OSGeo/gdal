@@ -112,12 +112,14 @@ class DXFSmoothPolyline
         std::vector<DXFSmoothPolylineVertex>    m_vertices;
         mutable bool                            m_blinestringstarted;
         bool                                    m_bClosed;
+		int										m_dim;
 
        
     public:
         DXFSmoothPolyline()
         {
             m_bClosed = false;
+			m_dim = 2;
         }
 
         OGRGeometry* Tesselate() const;
@@ -134,6 +136,9 @@ class DXFSmoothPolyline
         bool IsEmpty() const { return m_vertices.empty(); }
 
         bool HasConstantZ(double&) const;
+
+	    void setCoordinateDimension(int n) { m_dim = n; }
+
 
 
     private:
