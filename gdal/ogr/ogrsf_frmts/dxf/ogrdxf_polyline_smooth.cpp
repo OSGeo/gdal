@@ -88,7 +88,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
     if(m_vertices.size() == 1)
     {
         OGRPoint* poPt = new OGRPoint(m_vertices[0].x, m_vertices[0].y, m_vertices[0].z);
-        if(m_vertices[0].z == 0)
+        if(m_vertices[0].z == 0 || m_dim == 2)
             poPt->flattenTo2D();
         return poPt;
     }
@@ -135,10 +135,10 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
 
 /* -------------------------------------------------------------------- */
-/*      Treat polyline having z=0 as 2D                                 */
+/*      Flatten to 2D if necessary                                      */
 /* -------------------------------------------------------------------- */
 
-    if(bConstantZ && dfZ == 0.0)
+    if(bConstantZ && dfZ == 0.0 && m_dim == 2)
         poLS->flattenTo2D();
 
 
