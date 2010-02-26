@@ -287,6 +287,9 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
 {
     GDALRasterizeInfo sInfo;
 
+    if (poShape == NULL)
+        return;
+
     sInfo.nXSize = nXSize;
     sInfo.nYSize = nYSize;
     sInfo.nBands = nBands;
