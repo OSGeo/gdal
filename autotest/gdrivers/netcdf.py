@@ -247,8 +247,8 @@ def netcdf_9():
 
     sr = osr.SpatialReference( )
     sr.ImportFromWkt( prj )
-    spheroid = sr.GetProjParm( 'SPHEROID' )
-    
+    spheroid = sr.GetAttrValue( 'SPHEROID' )
+
     if spheroid != 'WGS 84':
         gdaltest.post_reason( 'Incorrect spheroid read from file\n%s' 
                               % ( spheroid ) )
