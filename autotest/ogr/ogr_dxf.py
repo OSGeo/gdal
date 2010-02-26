@@ -401,6 +401,96 @@ def ogr_dxf_11():
     
 
 ###############################################################################
+# Check smoothed polygline.
+
+def ogr_dxf_12():
+
+    ds = ogr.Open( 'data/polyline_smooth.dxf' )
+    
+    layer = ds.GetLayer(0)
+
+    feat = layer.GetNextFeature()
+
+    if feat.Layer != '1':
+        gdaltest.post_reason( 'did not get expected layer for feature 0' )
+        return 'fail'
+
+    geom = feat.GetGeometryRef()
+    if geom.GetGeometryType() != ogr.wkbPolygon25D:
+        gdaltest.post_reason( 'did not get expected geometry type.' )
+        return 'fail'
+
+    envelope = geom.GetEnvelope()
+    area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
+    exp_area = 1350.43
+
+    if area < exp_area - 0.5 or area > exp_area + 0.5:
+        gdaltest.post_reason( 'envelope area not as expected, got %g.' % area )
+        return 'fail'
+
+    rgeom = geom.GetGeometryRef(0)
+    if rgeom.GetPointCount() != 146:
+        gdaltest.post_reason( 'did not get expected number of points, got %d' % (rgeom.GetPointCount()) )
+        return 'fail'
+    
+    if abs(rgeom.GetX(0)-251297.8179) > 0.001 \
+       or abs(rgeom.GetY(0)-412226.8286) > 0.001:
+        gdaltest.post_reason( 'first point (%g,%g) not expected location.' \
+                              % (rgeom.GetX(0),rgeom.GetY(0)) )
+        return 'fail'
+        
+    feat.Destroy()
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Read the first feature, an ellipse and see if it generally meets expectations.
+
+def ogr_dxf_13():
+
+    ds = ogr.Open( 'data/lwpolyline_smooth.dxf' )
+    
+    layer = ds.GetLayer(0)
+
+    feat = layer.GetNextFeature()
+
+    if feat.Layer != '1':
+        gdaltest.post_reason( 'did not get expected layer for feature 0' )
+        return 'fail'
+
+    geom = feat.GetGeometryRef()
+    if geom.GetGeometryType() != ogr.wkbPolygon:
+        gdaltest.post_reason( 'did not get expected geometry type.' )
+        return 'fail'
+
+    envelope = geom.GetEnvelope()
+    area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
+    exp_area = 1350.43
+
+    if area < exp_area - 0.5 or area > exp_area + 0.5:
+        gdaltest.post_reason( 'envelope area not as expected, got %g.' % area )
+        return 'fail'
+
+    rgeom = geom.GetGeometryRef(0)
+    if rgeom.GetPointCount() != 146:
+        gdaltest.post_reason( 'did not get expected number of points, got %d' % (rgeom.GetPointCount()) )
+        return 'fail'
+    
+    if abs(rgeom.GetX(0)-251297.8179) > 0.001 \
+       or abs(rgeom.GetY(0)-412226.8286) > 0.001:
+        gdaltest.post_reason( 'first point (%g,%g) not expected location.' \
+                              % (rgeom.GetX(0),rgeom.GetY(0)) )
+        return 'fail'
+        
+    feat.Destroy()
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -425,6 +515,8 @@ gdaltest_list = [
     ogr_dxf_9,
     ogr_dxf_10,
     ogr_dxf_11,
+    ogr_dxf_12,
+    ogr_dxf_13,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
