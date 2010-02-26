@@ -733,6 +733,8 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     double              dfBulge = 0.0;
     DXFSmoothPolyline   smoothPolyline;
 
+	smoothPolyline.setCoordinateDimension(2);
+
 /* -------------------------------------------------------------------- */
 /*      Collect information from the LWPOLYLINE object itself.          */
 /* -------------------------------------------------------------------- */
@@ -751,6 +753,7 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
             case 38:
                 // Constant elevation.
                 dfZ = atof(szLineBuf);
+				smoothPolyline.setCoordinateDimension(3);
                 break;
 
             case 90:
@@ -862,6 +865,8 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
     double              dfBulge = 0.0;
     DXFSmoothPolyline   smoothPolyline;
 
+	smoothPolyline.setCoordinateDimension(2);
+
     while( nCode == 0 && !EQUAL(szLineBuf,"SEQEND") )
     {
         // Eat non-vertex objects.
@@ -886,6 +891,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 
               case 30:
                 dfZ = atof(szLineBuf);
+				smoothPolyline.setCoordinateDimension(3);
                 break;
 
               case 42:
