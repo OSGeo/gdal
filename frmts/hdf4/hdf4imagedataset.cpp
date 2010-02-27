@@ -107,6 +107,8 @@ class HDF4ImageDataset : public HDF4Dataset
     GDAL_GCP    *pasGCPList;
     int         nGCPCount;
 
+    HDF4DatasetType iDatasetType;
+
     void                ToGeoref( double *, double * );
     void                GetImageDimensions( char * );
     void                GetSwatAttrs( int32 );
@@ -294,6 +296,10 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               aiStart[poGDS->iYDim] = nYOff;
               aiEdges[poGDS->iYDim] = nYSize;
                     
+              aiStart[poGDS->iXDim] = nBlockXOff;
+              aiEdges[poGDS->iXDim] = nBlockXSize;
+              break;
+            case 1: //1Dim:
               aiStart[poGDS->iXDim] = nBlockXOff;
               aiEdges[poGDS->iXDim] = nBlockXSize;
               break;
@@ -658,18 +664,29 @@ HDF4ImageDataset::HDF4ImageDataset()
 {
     pszFilename = NULL;
     hHDF4 = 0;
-    hSD = 0;
-    hGR = 0;
     iGR = 0;
+    iPal = 0;
+    iDataset = 0;
+    iRank = 0;
+    iNumType = 0;
+    nAttrs = 0;
+    iInterlaceMode = 0;
+    iPalInterlaceMode = 0;
+    iPalDataType = 0;
+    nComps = 0;
+    nPalEntries = 0;
+    memset(aiDimSizes, 0, sizeof(aiDimSizes));
+    iXDim = 0;
+    iYDim = 0;
     iBandDim = -1;
+    i4Dim = 0;
     nBandCount = 0;
-    iDatasetType = HDF4_UNKNOWN;
+    papszLocalMetadata = NULL;
+    memset(aiPaletteData, 0, sizeof(aiPaletteData));
+    memset(szName, 0, sizeof(szName));
     pszSubdatasetName = NULL;
     pszFieldName = NULL;
-    papszLocalMetadata = NULL;
     poColorTable = NULL;
-    pszProjection = CPLStrdup( "" );
-    pszGCPProjection = CPLStrdup( "" );
     bHasGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -677,10 +694,12 @@ HDF4ImageDataset::HDF4ImageDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    nGCPCount = 0;
+    pszProjection = CPLStrdup( "" );
+    pszGCPProjection = CPLStrdup( "" );
     pasGCPList = NULL;
+    nGCPCount = 0;
 
+    iDatasetType = HDF4_UNKNOWN;
 }
 
 /************************************************************************/
@@ -695,10 +714,12 @@ HDF4ImageDataset::~HDF4ImageDataset()
         CPLFree( pszFilename );
     if ( hSD > 0 )
         SDend( hSD );
+    hSD = 0;
     if ( iGR > 0 )
         GRendaccess( iGR );
     if ( hGR > 0 )
         GRend( hGR );
+    hGR = 0;
     if ( pszSubdatasetName )
         CPLFree( pszSubdatasetName );
     if ( pszFieldName )
@@ -1642,6 +1663,9 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
 
     // No point in assigning geolocation to the geolocation SDSes themselves.
     if( EQUAL(szName,"longitude") || EQUAL(szName,"latitude") )
+        return;
+
+    if (nRasterYSize == 1)
         return;
 
 /* -------------------------------------------------------------------- */
@@ -2693,6 +2717,22 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               return NULL;
           }
 
+          int32   nDatasets, nAttrs;
+
+          if ( SDfileinfo( poDS->hSD, &nDatasets, &nAttrs ) != 0 )
+          {
+              delete poDS;
+              return NULL;
+          }
+
+          if (poDS->iDataset < 0 || poDS->iDataset >= nDatasets)
+          {
+              CPLError(CE_Failure, CPLE_AppDefined,
+                       "Subdataset index should be between 0 and %d", nDatasets - 1);
+              delete poDS;
+              return NULL;
+          }
+
           memset( poDS->aiDimSizes, 0, sizeof(int32) * H4_MAX_VAR_DIMS );
           iSDS = SDselect( poDS->hSD, poDS->iDataset );
           SDgetinfo( iSDS, poDS->szName, &poDS->iRank, poDS->aiDimSizes,
@@ -2726,13 +2766,26 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
           switch( poDS->iRank )
           {
+            case 1:
+              poDS->nBandCount = 1;
+              poDS->iXDim = 0;
+              poDS->iYDim = -1;
+              break;
             case 2:
               poDS->nBandCount = 1;
               poDS->iXDim = 1;
               poDS->iYDim = 0;
               break;
             case 3:
-              if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] )
+              /* FIXME ? We should probably remove the following test as there are valid datasets */
+              /* where the height is lower than the band number : for example
+                 http://www.iapmw.unibe.ch/research/projects/FriOWL/data/otd/LISOTD_HRAC_V2.2.hdf */
+              /* which is a 720x360 x 365 bands */
+              /* Use a HACK for now */
+              if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] &&
+                  !(poDS->aiDimSizes[0] == 360 &&
+                    poDS->aiDimSizes[1] == 720 &&
+                    poDS->aiDimSizes[2] == 365) )
               {
                   poDS->iBandDim = 0;
                   poDS->iXDim = 2;
@@ -2766,7 +2819,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
           // We preset this because CaptureNRLGeoTransform needs it.
           poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
-          poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
+          if (poDS->iYDim >= 0)
+            poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
+          else
+            poDS->nRasterYSize = 1;
 
           // Special case projection info for NRL generated files. 
           const char *pszMapProjectionSystem =
@@ -2866,7 +2922,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     
     poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
-    poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
+    if (poDS->iYDim >= 0)
+        poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
+    else
+        poDS->nRasterYSize = 1;
 
     if ( poDS->iSubdatasetType == H4ST_HYPERION_L1 )
     {
