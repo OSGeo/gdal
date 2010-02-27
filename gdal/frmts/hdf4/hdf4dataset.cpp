@@ -63,6 +63,9 @@ HDF4Dataset::HDF4Dataset()
     fp = NULL;
     hSD = 0;
     hGR = 0;
+    nImages = 0;
+    iSubdatasetType = H4ST_UNKNOWN;
+    pszSubdatasetType = NULL;
     papszGlobalMetadata = NULL;
     papszSubDatasets = NULL;
     bIsHDFEOS = 0;
