@@ -98,8 +98,22 @@ typedef struct {
 static int GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
 
 {
-    int nXSize = GDALGetRasterXSize( psTransform->hDS_X );
-    int nYSize = GDALGetRasterYSize( psTransform->hDS_X );
+    int nXSize, nYSize;
+
+    int nXSize_XBand = GDALGetRasterXSize( psTransform->hDS_X );
+    int nYSize_XBand = GDALGetRasterYSize( psTransform->hDS_X );
+    int nXSize_YBand = GDALGetRasterXSize( psTransform->hDS_Y );
+    int nYSize_YBand = GDALGetRasterYSize( psTransform->hDS_Y );
+    if (nYSize_XBand == 1 && nYSize_YBand == 1)
+    {
+        nXSize = nXSize_XBand;
+        nYSize = nXSize_YBand;
+    }
+    else
+    {
+        nXSize = nXSize_XBand;
+        nYSize = nYSize_XBand;
+    }
 
     psTransform->nGeoLocXSize = nXSize;
     psTransform->nGeoLocYSize = nYSize;
@@ -117,15 +131,72 @@ static int GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
         return FALSE;
     }
 
-    if( GDALRasterIO( psTransform->hBand_X, GF_Read, 
-                      0, 0, nXSize, nYSize,
-                      psTransform->padfGeoLocX, nXSize, nYSize, 
-                      GDT_Float64, 0, 0 ) != CE_None 
-        || GDALRasterIO( psTransform->hBand_Y, GF_Read, 
-                         0, 0, nXSize, nYSize,
-                         psTransform->padfGeoLocY, nXSize, nYSize, 
-                         GDT_Float64, 0, 0 ) != CE_None )
-        return FALSE;
+    if (nYSize_XBand == 1 && nYSize_YBand == 1)
+    {
+        /* Case of regular grid */
+        /* The XBAND contains the x coordinates for all lines */
+        /* The YBAND contains the y coordinates for all columns */
+
+        double* padfTempX = (double*)VSIMalloc2(nXSize, sizeof(double));
+        double* padfTempY = (double*)VSIMalloc2(nYSize, sizeof(double));
+        if (padfTempX == NULL || padfTempY == NULL)
+        {
+            CPLFree(padfTempX);
+            CPLFree(padfTempY);
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "GeoLocLoadFullData : Out of memory");
+            return FALSE;
+        }
+
+        CPLErr eErr = CE_None;
+
+        eErr = GDALRasterIO( psTransform->hBand_X, GF_Read, 
+                             0, 0, nXSize, 1,
+                             padfTempX, nXSize, 1, 
+                             GDT_Float64, 0, 0 );
+
+        int i,j;
+        for(j=0;j<nYSize;j++)
+        {
+            memcpy( psTransform->padfGeoLocX + j * nXSize,
+                    padfTempX,
+                    nXSize * sizeof(double) );
+        }
+
+        if (eErr == CE_None)
+        {
+            eErr = GDALRasterIO( psTransform->hBand_Y, GF_Read, 
+                                0, 0, nYSize, 1,
+                                padfTempY, nYSize, 1, 
+                                GDT_Float64, 0, 0 );
+
+            for(j=0;j<nYSize;j++)
+            {
+                for(i=0;i<nXSize;i++)
+                {
+                    psTransform->padfGeoLocY[j * nXSize + i] = padfTempY[j];
+                }
+            }
+        }
+
+        CPLFree(padfTempX);
+        CPLFree(padfTempY);
+
+        if (eErr != CE_None)
+            return FALSE;
+    }
+    else
+    {
+        if( GDALRasterIO( psTransform->hBand_X, GF_Read, 
+                        0, 0, nXSize, nYSize,
+                        psTransform->padfGeoLocX, nXSize, nYSize, 
+                        GDT_Float64, 0, 0 ) != CE_None 
+            || GDALRasterIO( psTransform->hBand_Y, GF_Read, 
+                            0, 0, nXSize, nYSize,
+                            psTransform->padfGeoLocY, nXSize, nYSize, 
+                            GDT_Float64, 0, 0 ) != CE_None )
+            return FALSE;
+    }
 
     psTransform->dfNoDataX = GDALGetRasterNoDataValue( psTransform->hBand_X, 
                                                        NULL );
@@ -142,8 +213,8 @@ static int GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
 static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 
 {
-    int nXSize = GDALGetRasterXSize( psTransform->hDS_X );
-    int nYSize = GDALGetRasterYSize( psTransform->hDS_X );
+    int nXSize = psTransform->nGeoLocXSize;
+    int nYSize = psTransform->nGeoLocYSize;
     int nMaxIter = 3;
 
 /* -------------------------------------------------------------------- */
@@ -744,8 +815,18 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
     int nYSize_XBand = GDALGetRasterYSize( psTransform->hDS_X );
     int nXSize_YBand = GDALGetRasterXSize( psTransform->hDS_Y );
     int nYSize_YBand = GDALGetRasterYSize( psTransform->hDS_Y );
-    if (nXSize_XBand != nXSize_YBand ||
-        nYSize_XBand != nYSize_YBand )
+    if (nYSize_XBand == 1 || nYSize_YBand == 1)
+    {
+        if (nYSize_XBand != 1 || nYSize_YBand != 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                 "X_BAND and Y_BAND should have both nYSize == 1");
+            GDALDestroyGeoLocTransformer( psTransform );
+            return NULL;
+        }
+    }
+    else if (nXSize_XBand != nXSize_YBand ||
+             nYSize_XBand != nYSize_YBand )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "X_BAND and Y_BAND do not have the same dimensions");
