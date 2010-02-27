@@ -786,6 +786,10 @@ static int ProxyMain( int argc, char ** argv )
         papszMD = ((GDALDataset*)hDataset)->GetMetadata("RPC");
         if( papszMD != NULL )
             poVDS->SetMetadata( papszMD, "RPC" );
+
+        papszMD = ((GDALDataset*)hDataset)->GetMetadata("GEOLOCATION");
+        if( papszMD != NULL )
+            poVDS->SetMetadata( papszMD, "GEOLOCATION" );
     }
 
     if (nRGBExpand != 0)
