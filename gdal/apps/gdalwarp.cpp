@@ -669,6 +669,15 @@ int main( int argc, char ** argv )
         if( hSrcDS == NULL )
             exit( 2 );
 
+/* -------------------------------------------------------------------- */
+/*      Check that there's at least one raster band                     */
+/* -------------------------------------------------------------------- */
+        if ( GDALGetRasterCount(hSrcDS) == 0 )
+        {
+            fprintf(stderr, "Input file %s has no raster bands.\n", papszSrcFiles[iSrc] );
+            exit( 1 );
+        }
+
         if( !bQuiet )
             printf( "Processing input file %s.\n", papszSrcFiles[iSrc] );
 
