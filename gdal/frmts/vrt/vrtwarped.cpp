@@ -688,6 +688,13 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         return CE_Failure;
 
     this->eAccess = GA_Update;
+
+    if( psWO->hDstDS != NULL )
+    {
+        GDALClose( psWO->hDstDS );
+        psWO->hDstDS = NULL;
+    }
+
     psWO->hDstDS = this;
 
 /* -------------------------------------------------------------------- */
@@ -702,7 +709,16 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /*      We are responsible for cleaning up the transformer outselves.   */
 /* -------------------------------------------------------------------- */
         if( psWO->pTransformerArg != NULL )
+        {
             GDALDestroyTransformer( psWO->pTransformerArg );
+            psWO->pTransformerArg = NULL;
+        }
+
+        if( psWO->hSrcDS != NULL )
+        {
+            GDALClose( psWO->hSrcDS );
+            psWO->hSrcDS = NULL;
+        }
     }
 
     GDALDestroyWarpOptions( psWO );
@@ -971,7 +987,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 /* -------------------------------------------------------------------- */
 /*      Copy out into cache blocks for each band.                       */
 /* -------------------------------------------------------------------- */
-    for( iBand = 0; iBand < psWO->nBandCount; iBand++ )
+    for( iBand = 0; iBand < MIN(nBands, psWO->nBandCount); iBand++ )
     {
         GDALRasterBand *poBand;
         GDALRasterBlock *poBlock;
@@ -979,16 +995,20 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         poBand = GetRasterBand(iBand+1);
         poBlock = poBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
 
-        CPLAssert( poBlock != NULL && poBlock->GetDataRef() != NULL );
+        if( poBlock != NULL )
+        {
+            if ( poBlock->GetDataRef() != NULL )
+            {
+                GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
+                            psWO->eWorkingDataType, nWordSize, 
+                            poBlock->GetDataRef(), 
+                            poBlock->GetDataType(), 
+                            GDALGetDataTypeSize(poBlock->GetDataType())/8,
+                            nBlockXSize * nBlockYSize );
+            }
 
-        GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
-                       psWO->eWorkingDataType, nWordSize, 
-                       poBlock->GetDataRef(), 
-                       poBlock->GetDataType(), 
-                       GDALGetDataTypeSize(poBlock->GetDataType())/8,
-                       nBlockXSize * nBlockYSize );
-
-        poBlock->DropLock();
+            poBlock->DropLock();
+        }
     }
 
     VSIFree( pabyDstBuffer );
