@@ -76,7 +76,6 @@ class HDF4Dataset : public GDALPamDataset
     FILE	*fp;
     int32	hGR, hSD;
     int32	nImages;
-    HDF4DatasetType iDatasetType;
     HDF4SubdatasetType iSubdatasetType;
     const char	*pszSubdatasetType;
 
