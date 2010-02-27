@@ -341,6 +341,30 @@ int GDALWarpOperation::ValidateOptions()
         }
     }
 
+    if( psOptions->nSrcAlphaBand > 0)
+    {
+        if ( psOptions->hSrcDS == NULL ||
+             psOptions->nSrcAlphaBand > GDALGetRasterCount(psOptions->hSrcDS) )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "nSrcAlphaBand = %d ... out of range for dataset.",
+                      psOptions->nSrcAlphaBand );
+            return FALSE;
+        }
+    }
+
+    if( psOptions->nDstAlphaBand > 0)
+    {
+        if ( psOptions->hDstDS == NULL ||
+             psOptions->nDstAlphaBand > GDALGetRasterCount(psOptions->hDstDS) )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "nDstAlphaBand = %d ... out of range for dataset.",
+                      psOptions->nDstAlphaBand );
+            return FALSE;
+        }
+    }
+
     if( psOptions->nSrcAlphaBand > 0 
         && psOptions->pfnSrcDensityMaskFunc != NULL )
     {

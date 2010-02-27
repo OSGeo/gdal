@@ -1083,7 +1083,12 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
     psWO->nBandCount = 0;
     
-    for( psBand=psBandTree->psChild; psBand != NULL; psBand = psBand->psNext )
+    if (psBandTree)
+        psBand = psBandTree->psChild;
+    else
+        psBand = NULL;
+
+    for( ; psBand != NULL; psBand = psBand->psNext )
     {
         if( psBand->eType != CXT_Element 
             || !EQUAL(psBand->pszValue,"BandMapping") )
@@ -1097,7 +1102,12 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /* ==================================================================== */
     int iBand = 0;
 
-    for( psBand=psBandTree->psChild; psBand != NULL; psBand = psBand->psNext )
+    if (psBandTree)
+        psBand = psBandTree->psChild;
+    else
+        psBand = NULL;
+
+    for( ; psBand != NULL; psBand = psBand->psNext )
     {
         if( psBand->eType != CXT_Element 
             || !EQUAL(psBand->pszValue,"BandMapping") )
