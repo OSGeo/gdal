@@ -1913,6 +1913,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( EQUALN(pszInterleave, "bsq", 3) )
     {
         poDS->interleave = BSQ;
+        poDS->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
         if (nSamples > INT_MAX / nDataSize) bIntOverflow = TRUE;
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
@@ -1921,6 +1922,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( EQUALN(pszInterleave, "bil", 3) )
     {
         poDS->interleave = BIL;
+        poDS->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
         if (nSamples > INT_MAX / (nDataSize * nBands)) bIntOverflow = TRUE;
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize;
@@ -1929,7 +1931,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( EQUALN(pszInterleave, "bip", 3) )
     {
         poDS->interleave = BIP;
-        if (nSamples > INT_MAX / nBands) bIntOverflow = TRUE;
+        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+        if (nSamples > INT_MAX / (nDataSize * nBands)) bIntOverflow = TRUE;
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize * nBands;
         nBandOffset = nDataSize;
