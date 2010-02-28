@@ -282,6 +282,10 @@ class SpatialReference(_object):
         """SetUTM(self, int zone, int north = 1) -> OGRErr"""
         return _osr.SpatialReference_SetUTM(self, *args)
 
+    def GetUTMZone(self, *args):
+        """GetUTMZone(self) -> int"""
+        return _osr.SpatialReference_GetUTMZone(self, *args)
+
     def SetStatePlane(self, *args):
         """SetStatePlane(self, int zone, int is_nad83 = 1, char unitsname = "", double units = 0.0) -> OGRErr"""
         return _osr.SpatialReference_SetStatePlane(self, *args)

@@ -3921,6 +3921,33 @@ SWIGINTERN void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
 SWIGINTERN bool OGRGeometryShadow_IsEmpty(OGRGeometryShadow *self){
     return (OGR_G_IsEmpty(self) > 0);
   }
+SWIGINTERN double OGRGeometryShadow_Length(OGRGeometryShadow *self){
+    /* get_Length is not exposed, redo simple euclidean length */
+    /* this is recursive if the geometry is not a simple list of points */
+    double l = 0;
+    int n = OGR_G_GetGeometryCount(self);
+    if (n > 0) {
+      int i;
+      for (i = 0; i < n; i++) {
+	OGRGeometryShadow *g = (OGRGeometryShadow*)OGR_G_GetGeometryRef(self, i);
+	l += OGRGeometryShadow_Length(g);
+      }
+    } else {
+      int i;
+      double x1 = OGR_G_GetX(self, 0);
+      double y1 = OGR_G_GetY(self, 0);
+      for (i = 1; i < OGR_G_GetPointCount(self); i++) {
+	double x2 = OGR_G_GetX(self, i);
+	double y2 = OGR_G_GetY(self, i);
+	double dx = x2 - x1;
+	double dy = y2 - y1;
+	l += sqrt(dx*dx + dy*dy);
+	x1 = x2;
+	y1 = y2;
+      }
+    }
+    return l;
+  }
 SWIGINTERN bool OGRGeometryShadow_IsValid(OGRGeometryShadow *self){
     return (OGR_G_IsValid(self) > 0);
   }
@@ -12107,6 +12134,36 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_Length(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_Length",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Length" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (double)OGRGeometryShadow_Length(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_IsValid(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -16000,6 +16057,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"TRUE if the geometry has no points, otherwise FALSE. \n"
 		""},
+	 { (char *)"Geometry_Length", _wrap_Geometry_Length, METH_VARARGS, (char *)"Geometry_Length(Geometry self) -> double"},
 	 { (char *)"Geometry_IsValid", _wrap_Geometry_IsValid, METH_VARARGS, (char *)"\n"
 		"Geometry_IsValid(Geometry self) -> bool\n"
 		"\n"
