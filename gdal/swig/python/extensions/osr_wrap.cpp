@@ -3372,6 +3372,15 @@ SWIGINTERN char const *OSRSpatialReferenceShadow_GetAuthorityName(OSRSpatialRefe
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetUTM(OSRSpatialReferenceShadow *self,int zone,int north=1){
     return OSRSetUTM( self, zone, north );
   }
+SWIGINTERN int OSRSpatialReferenceShadow_GetUTMZone(OSRSpatialReferenceShadow *self){
+    // Note: we will return south zones as negative since it is 
+    // hard to return two values as the C API does. 
+    int bNorth = FALSE;
+    int nZone = OSRGetUTMZone( self, &bNorth );
+    if( !bNorth )
+        nZone = -1 * ABS(nZone);
+    return nZone;
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetStatePlane(OSRSpatialReferenceShadow *self,int zone,int is_nad83=1,char const *unitsname="",double units=0.0){
     return OSRSetStatePlaneWithUnits( self, zone, is_nad83, unitsname, units );
   }
@@ -4917,6 +4926,36 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetUTM(PyObject *SWIGUNUSEDPARM(self
       resultobj = PyInt_FromLong( result );
     }
   }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_GetUTMZone(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_GetUTMZone",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_GetUTMZone" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    result = (int)OSRSpatialReferenceShadow_GetUTMZone(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
   return NULL;
@@ -11532,6 +11571,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_GetAuthorityCode", _wrap_SpatialReference_GetAuthorityCode, METH_VARARGS, (char *)"SpatialReference_GetAuthorityCode(SpatialReference self, char target_key) -> char"},
 	 { (char *)"SpatialReference_GetAuthorityName", _wrap_SpatialReference_GetAuthorityName, METH_VARARGS, (char *)"SpatialReference_GetAuthorityName(SpatialReference self, char target_key) -> char"},
 	 { (char *)"SpatialReference_SetUTM", _wrap_SpatialReference_SetUTM, METH_VARARGS, (char *)"SpatialReference_SetUTM(SpatialReference self, int zone, int north = 1) -> OGRErr"},
+	 { (char *)"SpatialReference_GetUTMZone", _wrap_SpatialReference_GetUTMZone, METH_VARARGS, (char *)"SpatialReference_GetUTMZone(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_SetStatePlane", _wrap_SpatialReference_SetStatePlane, METH_VARARGS, (char *)"\n"
 		"SpatialReference_SetStatePlane(SpatialReference self, int zone, int is_nad83 = 1, \n"
 		"    char unitsname = \"\", double units = 0.0) -> OGRErr\n"
