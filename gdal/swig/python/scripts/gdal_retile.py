@@ -82,7 +82,7 @@ class DataSetCache:
             return self.dict[name]
         result = gdal.Open(name)
         if result is None:
-            print("Error openenig:",NameError)
+            print("Error openenig:%s" % NameError)
             sys.exit(1)
         if len(self.queue)==self.cacheSize:
             toRemove = self.queue.pop(0)
@@ -103,8 +103,8 @@ class tile_info:
     def __init__(self,xsize,ysize,tileWidth,tileHeight):
         self.tileWidth=tileWidth
         self.tileHeight=tileHeight
-        self.countTilesX= xsize / tileWidth
-        self.countTilesY= ysize / tileHeight
+        self.countTilesX= int(xsize / tileWidth)
+        self.countTilesY= int(ysize / tileHeight)
         self.lastTileWidth = xsize - self.countTilesX *  tileWidth
         self.lastTileHeight = ysize - self.countTilesY *  tileHeight
 
@@ -270,7 +270,11 @@ class mosaic_info:
 def getTileIndexFromFiles( inputTiles, driverTyp):
 
     if Verbose:
-        print("Building internal Index for %d tile(s) ..." % len(inputTiles), end=' ')
+        from sys import version_info
+        if version_info >= (3,0,0):
+            exec('print("Building internal Index for %d tile(s) ..." % len(inputTiles), end=" ")')
+        else:
+            exec('print "Building internal Index for %d tile(s) ..." % len(inputTiles), ')
 
     ogrTileIndexDS = createTileIndex("TileIndex",TileIndexFieldName,None,driverTyp);
     for inputTile in inputTiles:
@@ -708,7 +712,7 @@ def main(args):
             i+=1
             BandType = gdal.GetDataTypeByName( argv[i] )
             if BandType == gdal.GDT_Unknown:
-                print('Unknown GDAL data type: ', argv[i])
+                print('Unknown GDAL data type: %s' % argv[i])
                 return 1
         elif arg == '-co':
             i+=1
@@ -748,13 +752,13 @@ def main(args):
             elif ResamplingMethodString=="lanczos":
                 ResamplingMethod=GRA_Lanczos
             else:
-                print("Unknown resampling method:" ,ResamplingMethodString)
+                print("Unknown resampling method: %s" % ResamplingMethodString)
                 return 1
         elif arg == '-levels':
             i+=1
             Levels=int(argv[i])
             if Levels<1:
-                print("Invalid number of levels", Levels)
+                print("Invalid number of levels : %d" % Levels)
                 return 1
         elif arg == '-s_srs':
             i+=1
@@ -785,7 +789,7 @@ def main(args):
             i+=1
             CsvDelimiter=argv[i]
         elif arg[:1] == '-':
-            print('Unrecognised command option: ', arg)
+            print('Unrecognised command option: %s' % arg)
             Usage()
             return 1
 
@@ -814,10 +818,10 @@ def main(args):
                 continue
             os.mkdir(leveldir)
             if (os.path.exists(leveldir)==False):
-                print("Cannot create level dir:", leveldir)
+                print("Cannot create level dir: %s" % leveldir)
                 return 1
             if Verbose :
-                print("Created level dir: ",leveldir)
+                print("Created level dir: %s" % leveldir)
 
 
     Driver = gdal.GetDriverByName(Format)

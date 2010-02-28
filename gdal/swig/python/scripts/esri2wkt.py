@@ -51,7 +51,7 @@ for i in range(len(prj_lines)):
 prj_srs = osr.SpatialReference()
 err = prj_srs.ImportFromESRI( prj_lines )
 if err != 0:
-    print('Error = ', err)
+    print('Error = %d' % err)
 else:
     print(prj_srs.ExportToPrettyWkt())
 
