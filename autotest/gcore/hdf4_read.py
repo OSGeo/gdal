@@ -165,6 +165,26 @@ def hdf4_read_online_4():
 
     return 'success'
 
+###############################################################################
+# Test fix for #2208
+
+def hdf4_read_online_5():
+
+    if gdaltest.hdf4_drv is None:
+        return 'skip'
+
+    # 13 MB
+    if not gdaltest.download_file('ftp://data.nodc.noaa.gov/pub/data.nodc/pathfinder/Version5.0/Monthly/1991/199101.s04m1pfv50-sst-16b.hdf', '199101.s04m1pfv50-sst-16b.hdf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'HDF4Image', 'tmp/cache/199101.s04m1pfv50-sst-16b.hdf', 1, 41173, filename_absolute = 1 )
+
+    ret = tst.testOpen()
+    if ret != 'success':
+        return ret
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2] )
     if ut is None:
@@ -176,6 +196,7 @@ gdaltest_list.append( hdf4_read_online_1 )
 gdaltest_list.append( hdf4_read_online_2 )
 gdaltest_list.append( hdf4_read_online_3 )
 gdaltest_list.append( hdf4_read_online_4 )
+gdaltest_list.append( hdf4_read_online_5 )
 
 if __name__ == '__main__':
 
