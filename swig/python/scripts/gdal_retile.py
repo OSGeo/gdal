@@ -671,7 +671,7 @@ def Usage():
 # Program mainline.
 #
 
-def main(args):
+def main(args = None):
 
     global Verbose
     global CreateOptions
@@ -697,6 +697,8 @@ def main(args):
 
     gdal.AllRegister()
 
+    if args is None:
+        args = sys.argv
     argv = gdal.GeneralCmdLineProcessor( args )
     if argv is None:
         return 1
