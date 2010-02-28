@@ -302,7 +302,7 @@ def main( argv=None ):
             i = i + 1
             band_type = gdal.GetDataTypeByName( argv[i] )
             if band_type == gdal.GDT_Unknown:
-                print('Unknown GDAL data type: ', argv[i])
+                print('Unknown GDAL data type: %s' % argv[i])
                 sys.exit( 1 )
 
         elif arg == '-init':
@@ -341,7 +341,7 @@ def main( argv=None ):
             i = i + 4
 
         elif arg[:1] == '-':
-            print('Unrecognised command option: ', arg)
+            print('Unrecognised command option: %s' % arg)
             Usage()
             sys.exit( 1 )
 

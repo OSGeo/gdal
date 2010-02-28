@@ -82,7 +82,7 @@ if filename is None:
 
 ds = gdal.Open( filename )
 if ds is None:
-    print('Unable to open ', filename)
+    print('Unable to open %s' % filename)
     sys.exit(1)
 
 # Default values
