@@ -98,6 +98,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_SetGeometryDirectly) SetGeometryDirectly;
 %rename (_ExportToWkb) ExportToWkb;
 %rename (_GetDriver) GetDriver;
+%rename (_TestCapability) TestCapability;
 
 %perlcode %{
     use strict;
@@ -105,19 +106,24 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     {
 	package Geo::OGR::Driver;
 	use strict;
-	use vars qw /@CAPABILITIES/;
-	for my $s (qw/CreateDataSource DeleteDataSource/) {
+	use vars qw /@CAPABILITIES %CAPABILITIES/;
+        @CAPABILITIES = qw/CreateDataSource DeleteDataSource/; 
+	for my $s (@CAPABILITIES) {
 	    my $cap = eval "\$Geo::OGR::ODrC$s";
-	    push @CAPABILITIES, $cap;
+	    $CAPABILITIES{$s} = $cap;
 	}
 	sub Capabilities {
 	    return @CAPABILITIES if @_ == 0;
 	    my $self = shift;
 	    my @cap;
 	    for my $cap (@CAPABILITIES) {
-		push @cap, $cap if TestCapability($self, $cap);
+		push @cap, $cap if _TestCapability($self, $CAPABILITIES{$cap});
 	    }
 	    return @cap;
+	}
+        sub TestCapability {
+	    my($self, $cap) = @_;
+	    return _TestCapability($self, $CAPABILITIES{$cap});
 	}
 	*Create = *CreateDataSource;
 	*Copy = *CopyDataSource;
@@ -127,19 +133,24 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	package Geo::OGR::DataSource;
 	use Carp;
 	use strict;
-	use vars qw /@CAPABILITIES %LAYERS/;
-	for my $s (qw/CreateLayer DeleteLayer/) {
+	use vars qw /@CAPABILITIES %CAPABILITIES %LAYERS/;
+        @CAPABILITIES = qw/CreateLayer DeleteLayer/;
+	for my $s (@CAPABILITIES) {
 	    my $cap = eval "\$Geo::OGR::ODsC$s";
-	    push @CAPABILITIES, $cap;
+	    $CAPABILITIES{$s} = $cap;
 	}
 	sub Capabilities {
 	    return @CAPABILITIES if @_ == 0;
 	    my $self = shift;
 	    my @cap;
 	    for my $cap (@CAPABILITIES) {
-		push @cap, $cap if TestCapability($self, $cap);
+		push @cap, $cap if _TestCapability($self, $CAPABILITIES{$cap});
 	    }
 	    return @cap;
+	}
+	sub TestCapability {
+	    my($self, $cap) = @_;
+	    return _TestCapability($self, $CAPABILITIES{$cap});
 	}
 	*GetDriver = *_GetDriver;
 	sub new {
@@ -236,12 +247,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 	package Geo::OGR::Layer;
 	use strict;
-	use vars qw /@CAPABILITIES/;
-	for my $s (qw/RandomRead SequentialWrite RandomWrite 
+	use vars qw /@CAPABILITIES %CAPABILITIES/;
+        @CAPABILITIES = qw/RandomRead SequentialWrite RandomWrite 
 		   FastSpatialFilter FastFeatureCount FastGetExtent 
-		   CreateField Transactions DeleteFeature FastSetNextByIndex/) {
+		   CreateField Transactions DeleteFeature FastSetNextByIndex/;
+	for my $s (@CAPABILITIES) {
 	    my $cap = eval "\$Geo::OGR::OLC$s";
-	    push @CAPABILITIES, $cap;
+	    $CAPABILITIES{$s} = $cap;
 	}
 	sub DESTROY {
 	    my $self;
@@ -267,9 +279,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $self = shift;
 	    my @cap;
 	    for my $cap (@CAPABILITIES) {
-		push @cap, $cap if TestCapability($self, $cap);
+		push @cap, $cap if _TestCapability($self, $CAPABILITIES{$cap});
 	    }
 	    return @cap;
+	}
+	sub TestCapability {
+	    my($self, $cap) = @_;
+	    return _TestCapability($self, $CAPABILITIES{$cap});
 	}
 	sub Schema {
 	    my $self = shift;
@@ -672,16 +688,19 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	package Geo::OGR::FieldDefn;
 	use strict;
 	use vars qw /
+	    @FIELD_TYPES @JUSTIFY_TYPES
 	    %TYPE_STRING2INT %TYPE_INT2STRING
 	    %JUSTIFY_STRING2INT %JUSTIFY_INT2STRING
 	    /;
-	for my $string (qw/Integer IntegerList Real RealList String StringList 
-			WideString WideStringList Binary Date Time DateTime/) {
+	@FIELD_TYPES = qw/Integer IntegerList Real RealList String StringList 
+			WideString WideStringList Binary Date Time DateTime/;
+	@JUSTIFY_TYPES = qw/Undefined Left Right/;
+	for my $string (@FIELD_TYPES) {
 	    my $int = eval "\$Geo::OGR::OFT$string";
 	    $TYPE_STRING2INT{$string} = $int;
 	    $TYPE_INT2STRING{$int} = $string;
 	}
-	for my $string (qw/Undefined Left Right/) {
+	for my $string (@JUSTIFY_TYPES) {
 	    my $int = eval "\$Geo::OGR::OJ$string";
 	    $JUSTIFY_STRING2INT{$string} = $int;
 	    $JUSTIFY_INT2STRING{$int} = $string;
@@ -767,20 +786,23 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	use strict;
 	use Carp;
 	use vars qw /
+            @GEOMETRY_TYPES @BYTE_ORDER_TYPES
 	    %TYPE_STRING2INT %TYPE_INT2STRING
 	    %BYTE_ORDER_STRING2INT %BYTE_ORDER_INT2STRING
 	    /;
-	for my $string (qw/Unknown 
+        @GEOMETRY_TYPES = qw/Unknown 
 			Point LineString Polygon 
 			MultiPoint MultiLineString MultiPolygon GeometryCollection 
 			None LinearRing
 			Point25D LineString25D Polygon25D 
-			MultiPoint25D MultiLineString25D MultiPolygon25D GeometryCollection25D/) {
+			MultiPoint25D MultiLineString25D MultiPolygon25D GeometryCollection25D/;
+	for my $string (@GEOMETRY_TYPES) {
 	    my $int = eval "\$Geo::OGR::wkb$string";
 	    $TYPE_STRING2INT{$string} = $int;
 	    $TYPE_INT2STRING{$int} = $string;
 	}
-	for my $string (qw/XDR NDR/) {
+	@BYTE_ORDER_TYPES = qw/XDR NDR/;
+	for my $string (@BYTE_ORDER_TYPES) {
 	    my $int = eval "\$Geo::OGR::wkb$string";
 	    $BYTE_ORDER_STRING2INT{$string} = $int;
 	    $BYTE_ORDER_INT2STRING{$int} = $string;
