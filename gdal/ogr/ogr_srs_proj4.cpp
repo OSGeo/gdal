@@ -105,6 +105,31 @@ static const OGRProj4Datum ogr_pj_datums[] = {
     { "OSGB36", "OSGB_1936", 4277, 6277}
 };
 
+typedef struct
+{
+    const char* pszProj4PMName;
+    const char* pszWKTPMName;
+    const char* pszFromGreenwich;
+    int         nPMCode;
+} OGRProj4PM;
+
+/* Derived from pj_datums.c */
+static const OGRProj4PM ogr_pj_pms [] = {
+    { "greenwich", "Greenwich", "0dE",               8901 },
+    { "lisbon",    "Lisbon",    "9d07'54.862\"W",    8902 },
+    { "paris",     "Paris",     "2d20'14.025\"E",    8903 },
+    { "bogota",    "Bogota",    "74d04'51.3\"W",     8904 },
+    { "madrid",    "Madrid",    "3d41'16.58\"W",     8905 },
+    { "rome",      "Rome",      "12d27'8.4\"E",      8906 },
+    { "bern",      "Bern",      "7d26'22.5\"E",      8907 },
+    { "jakarta",   "Jakarta",   "106d48'27.79\"E",   8908 },
+    { "ferro",     "Ferro",     "17d40'W",           8909 },
+    { "brussels",  "Brussels",  "4d22'4.71\"E",      8910 },
+    { "stockholm", "Stockholm", "18d3'29.8\"E",      8911 },
+    { "athens",    "Athens",    "23d42'58.815\"E",   8912 },
+    { "oslo",      "Oslo",      "10d43'22.5\"E",     8913 }
+};
+
 static const char* OGRGetProj4Datum(const char* pszDatum,
                                     int nEPSGDatum)
 {
@@ -115,6 +140,45 @@ static const char* OGRGetProj4Datum(const char* pszDatum,
             EQUAL(pszDatum, ogr_pj_datums[i].pszOGR))
         {
             return ogr_pj_datums[i].pszPJ;
+        }
+    }
+    return NULL;
+}
+
+static const OGRProj4PM* OGRGetProj4PMFromProj4Name(const char* pszProj4PMName)
+{
+    unsigned int i;
+    for(i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
+    {
+        if (EQUAL(pszProj4PMName, ogr_pj_pms[i].pszProj4PMName))
+        {
+            return &ogr_pj_pms[i];
+        }
+    }
+    return NULL;
+}
+
+static const OGRProj4PM* OGRGetProj4PMFromCode(int nPMCode)
+{
+    unsigned int i;
+    for(i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
+    {
+        if (nPMCode == ogr_pj_pms[i].nPMCode)
+        {
+            return &ogr_pj_pms[i];
+        }
+    }
+    return NULL;
+}
+
+static const OGRProj4PM* OGRGetProj4PMFromVal(double dfVal)
+{
+    unsigned int i;
+    for(i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
+    {
+        if (fabs(dfVal - CPLDMSToDec(ogr_pj_pms[i].pszFromGreenwich)) < 1e-10)
+        {
+            return &ogr_pj_pms[i];
         }
     }
     return NULL;
@@ -360,65 +424,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     if( pszPM != NULL )
     {
-        if( EQUAL(pszPM,"lisbon") )
+        const OGRProj4PM* psProj4PM = OGRGetProj4PMFromProj4Name(pszPM);
+        if (psProj4PM)
         {
-            dfFromGreenwich = CPLDMSToDec( "9d07'54.862\"W" );
-            nPMCode = 8902;
-        }
-        else if( EQUAL(pszPM,"paris") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "2d20'14.025\"E" );
-            nPMCode = 8903;
-        }
-        else if( EQUAL(pszPM,"bogota") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "74d04'51.3\"W" );
-            nPMCode = 8904;
-        }
-        else if( EQUAL(pszPM,"madrid") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "3d41'16.48\"W" );
-            nPMCode = 8905;
-        }
-        else if( EQUAL(pszPM,"rome") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "12d27'8.4\"E" );
-            nPMCode = 8906;
-        }
-        else if( EQUAL(pszPM,"bern") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "7d26'22.5\"E" );
-            nPMCode = 8907;
-        }
-        else if( EQUAL(pszPM,"jakarta") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "106d48'27.79\"E" );
-            nPMCode = 8908;
-        }
-        else if( EQUAL(pszPM,"ferro") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "17d40'W" );
-            nPMCode = 8909;
-        }
-        else if( EQUAL(pszPM,"brussels") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "4d22'4.71\"E" );
-            nPMCode = 8910;
-        }
-        else if( EQUAL(pszPM,"stockholm") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "18d3'29.8\"E" );
-            nPMCode = 8911;
-        }
-        else if( EQUAL(pszPM,"athens") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "23d42'58.815\"E" );
-            nPMCode = 8912;
-        }
-        else if( EQUAL(pszPM,"oslo") )
-        {
-            dfFromGreenwich = CPLDMSToDec( "10d43'22.5\"E" );
-            nPMCode = 8913;
+            dfFromGreenwich = CPLDMSToDec(psProj4PM->pszFromGreenwich);
+            pszPM = psProj4PM->pszWKTPMName;
+            nPMCode = psProj4PM->nPMCode;
         }
         else
         {
@@ -1957,57 +1968,18 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
             nCode = atoi(GetAuthorityCode( "PRIMEM" ));
 
-        switch( nCode )
+        const OGRProj4PM* psProj4PM = NULL;
+        if (nCode > 0)
+            psProj4PM = OGRGetProj4PMFromCode(nCode);
+        if (psProj4PM == NULL)
+            psProj4PM = OGRGetProj4PMFromVal(dfFromGreenwich);
+
+        if (psProj4PM != NULL)
         {
-          case 8902:
-            strcpy( szPMValue, "lisbon" );
-            break;
-
-          case 8903:
-            strcpy( szPMValue, "paris" );
-            break;
-
-          case 8904:
-            strcpy( szPMValue, "bogota" );
-            break;
-
-          case 8905:
-            strcpy( szPMValue, "madrid" );
-            break;
-
-          case 8906:
-            strcpy( szPMValue, "rome" );
-            break;
-
-          case 8907:
-            strcpy( szPMValue, "bern" );
-            break;
-
-          case 8908:
-            strcpy( szPMValue, "jakarta" );
-            break;
-
-          case 8909:
-            strcpy( szPMValue, "ferro" );
-            break;
-
-          case 8910:
-            strcpy( szPMValue, "brussels" );
-            break;
-
-          case 8911:
-            strcpy( szPMValue, "stockholm" );
-            break;
-
-          case 8912:
-            strcpy( szPMValue, "athens" );
-            break;
-
-          case 8913:
-            strcpy( szPMValue, "oslo" );
-            break;
-
-          default:
+            strcpy( szPMValue, psProj4PM->pszProj4PMName );
+        }
+        else
+        {
             sprintf( szPMValue, "%.16g", dfFromGreenwich );
         }
 
