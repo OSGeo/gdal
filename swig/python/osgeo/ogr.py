@@ -3428,6 +3428,10 @@ class Geometry(_object):
         """
         return _ogr.Geometry_IsEmpty(self, *args)
 
+    def Length(self, *args):
+        """Length(self) -> double"""
+        return _ogr.Geometry_Length(self, *args)
+
     def IsValid(self, *args):
         """
         IsValid(self) -> bool
