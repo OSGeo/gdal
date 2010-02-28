@@ -228,7 +228,8 @@
 # allowed in approximating the transformation. Default is 0.0, i.e.,
 # exact calculations.
 # @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
+# be called with parameters (number progress, string msg, callback_data).
+# Reprojection is terminated if the progress function returns 0.
 # @param callback_data [optional]
 
 ## @fn Geo::GDAL::Dataset AutoCreateWarpedVRT(Geo::GDAL::Dataset src, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
@@ -685,6 +686,7 @@
 ## @method $DataType()
 # @return a data type string (Byte, UInt16, Int16, UInt32, Int32, Float32,
 # Float64, CInt16, CInt32, CFloat32, or CFloat64).
+
 ## @method @Size()
 # @return the size of the band as a list (width, height).
 
