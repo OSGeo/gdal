@@ -10407,6 +10407,16 @@ public class SpatialReference:public int SetUTM(int zone)
 public class SpatialReference:public int SetUTM(int zone, int north)
 
 /**
+ * Get UTM zone information.
+ *
+ * @return the UTM zone. As a positive value for the northern hemisphere
+ * and as a negative value for the southern hemisphere.
+ *
+ * @since Java bindings 1.8.0
+ */
+public class SpatialReference:public int GetUTMZone()
+
+/**
  * Set a GeogCS based on well known name.
  *
  * This may be called on an empty OGRSpatialReference to make a geographic
