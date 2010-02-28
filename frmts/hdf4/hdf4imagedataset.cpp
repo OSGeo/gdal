@@ -109,6 +109,8 @@ class HDF4ImageDataset : public HDF4Dataset
 
     HDF4DatasetType iDatasetType;
 
+    int32       iSDS;
+
     void                ToGeoref( double *, double * );
     void                GetImageDimensions( char * );
     void                GetSwatAttrs( int32 );
@@ -195,8 +197,9 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
 
     // Aim for a block of about 100000 pixels.  Chunking up substantially
     // improves performance in some situations.  For now we only chunk up for
-    // SDS based datasets since other variations haven't been tested. #2208  
-    if( poDS->iDatasetType == HDF4_SDS )
+    // SDS and EOS based datasets since other variations haven't been tested. #2208  
+    if( poDS->iDatasetType == HDF4_SDS ||
+        poDS->iDatasetType == HDF4_EOS)
     {
         int nChunkSize = 
             atoi( CPLGetConfigOption("HDF4_BLOCK_PIXELS", "100000") );
@@ -248,7 +251,12 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
       case HDF4_SDS:
       {
-          int32   iSDS = SDselect( poGDS->hSD, poGDS->iDataset );
+          /* We avoid doing SDselect() / SDendaccess() for each block access */
+          /* as this is very slow when zlib compression is used */
+
+          if (poGDS->iSDS == FAIL)
+              poGDS->iSDS = SDselect( poGDS->hSD, poGDS->iDataset );
+          
           /* HDF rank:
              A rank 2 dataset is an image read in scan-line order (2D). 
              A rank 3 dataset is a series of images which are read in
@@ -306,14 +314,14 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           }
                 
           // Read HDF SDS array
-          if( SDreaddata( iSDS, aiStart, NULL, aiEdges, pImage ) < 0 )
+          if( SDreaddata( poGDS->iSDS, aiStart, NULL, aiEdges, pImage ) < 0 )
           {
               CPLError( CE_Failure, CPLE_AppDefined, 
                         "SDreaddata() failed for block." );
               eErr = CE_Failure;
           }
                 
-          SDendaccess( iSDS );
+          //SDendaccess( iSDS );
       }
       break;
 
@@ -700,6 +708,7 @@ HDF4ImageDataset::HDF4ImageDataset()
     nGCPCount = 0;
 
     iDatasetType = HDF4_UNKNOWN;
+    iSDS = FAIL;
 }
 
 /************************************************************************/
@@ -712,6 +721,8 @@ HDF4ImageDataset::~HDF4ImageDataset()
     
     if ( pszFilename )
         CPLFree( pszFilename );
+    if ( iSDS != FAIL )
+        SDendaccess( iSDS );
     if ( hSD > 0 )
         SDend( hSD );
     hSD = 0;
@@ -1201,6 +1212,8 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
             oSRS.exportToWkt( &pszProjection );
             bGotGCTPProjection = TRUE;
         }
+
+        SDendaccess(iSDS);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1685,16 +1698,16 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
 	iSDS = SDselect( hSD, iDSIndex );
 
 	if( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, 
-                       &nAttrs) != 0 )
-            continue;
+                       &nAttrs) == 0 )
+        {
+            if( EQUAL(szName,"latitude") )
+                iYIndex = iDSIndex;
+    
+            if( EQUAL(szName,"longitude") )
+                iXIndex = iDSIndex;
+        }
 
-        if( EQUAL(szName,"latitude") )
-            iYIndex = iDSIndex;
-
-        if( EQUAL(szName,"longitude") )
-            iXIndex = iDSIndex;
-
-        
+        SDendaccess(iSDS);
     }
 
     if( iXIndex == -1 || iYIndex == -1 )
