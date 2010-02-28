@@ -141,9 +141,16 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 }
 {
     my $driver = Geo::OGR::Driver('Memory');
+    my @cap = $driver->Capabilities;
+    ok(is_deeply(\@cap, ['CreateDataSource']), "driver capabilities");
     my $datasource = $driver->CreateDataSource('test');
+    @cap = $datasource->Capabilities;
+    ok(is_deeply(\@cap, ['CreateLayer','DeleteLayer']), "data source capabilities");
     
-    $datasource->CreateLayer('a', undef, 'Point');
+    my $layer = $datasource->CreateLayer('a', undef, 'Point');
+    @cap = $layer->Capabilities;
+    ok(is_deeply(\@cap, [qw/RandomRead SequentialWrite RandomWrite 
+	  FastFeatureCount CreateField DeleteFeature FastSetNextByIndex/]), "layer capabilities");
     $datasource->CreateLayer('b', undef, 'Point');
     $datasource->CreateLayer('c', undef, 'Point');
     my @layers = $datasource->Layers;
@@ -154,7 +161,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 	ok(is_deeply(\@layers, ['a','c'], "delete layer"));
     }
     
-    my $layer = $datasource->CreateLayer('test', undef, 'Point');
+    $layer = $datasource->CreateLayer('test', undef, 'Point');
     $layer->Schema(Fields => 
 		   [{Name => 'test1', Type => 'Integer'},
 		    {Name => 'test2', Type => 'String'},
