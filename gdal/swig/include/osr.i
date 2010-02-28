@@ -319,6 +319,16 @@ public:
     return OSRSetUTM( self, zone, north );
   }
 
+  int GetUTMZone() {
+    // Note: we will return south zones as negative since it is 
+    // hard to return two values as the C API does. 
+    int bNorth = FALSE;
+    int nZone = OSRGetUTMZone( self, &bNorth );
+    if( !bNorth )
+        nZone = -1 * ABS(nZone);
+    return nZone;
+  }
+
   OGRErr SetStatePlane( int zone, int is_nad83 = 1, char const *unitsname = "", double units = 0.0 ) {
     return OSRSetStatePlaneWithUnits( self, zone, is_nad83, unitsname, units );
   }
