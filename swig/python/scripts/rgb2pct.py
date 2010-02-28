@@ -91,7 +91,7 @@ if dst_filename is None:
 
 src_ds = gdal.Open( src_filename )
 if src_ds is None:
-    print('Unable to open ', src_filename)
+    print('Unable to open %s' % src_filename)
     sys.exit(1)
 
 if src_ds.RasterCount < 3:
