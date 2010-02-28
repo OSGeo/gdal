@@ -1371,7 +1371,7 @@ The column delimter used in the csv file, default value is a semicolon ";"
 </dd>
 </dl>
 
-NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
+NOTE: gdal_retile.py is a Python script, and will only work if GDAL was built
 with Python support.
 
 \if man
