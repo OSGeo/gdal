@@ -4668,6 +4668,10 @@ OGRErr OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth )
  *
  * This is the same as the C function OSRGetUTMZone().
  *
+ * In SWIG bindings (Python, Java, etc) the GetUTMZone() method returns a 
+ * zone which is negative in the southern hemisphere instead of having the 
+ * pbNorth flag used in the C and C++ interface.
+ *
  * @param pbNorth pointer to in to set to TRUE if northern hemisphere, or
  * FALSE if southern. 
  * 
