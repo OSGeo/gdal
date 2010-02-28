@@ -146,7 +146,7 @@ else:
     src_ds = gdal.Open( src_filename, gdal.GA_ReadOnly )
     
 if src_ds is None:
-    print('Unable to open ', src_filename)
+    print('Unable to open %s' % src_filename)
     sys.exit(1)
 
 srcband = src_ds.GetRasterBand(src_band)
