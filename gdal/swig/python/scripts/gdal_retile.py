@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
+#  $Id$
 #
 # Purpose:  Module for retiling (merging) tiles and building tiled pyramids
 # Author:   Christian Meuller, christian.mueller@nvoe.at
@@ -105,8 +106,8 @@ class tile_info:
         self.tileHeight=tileHeight
         self.countTilesX= int(xsize / tileWidth)
         self.countTilesY= int(ysize / tileHeight)
-        self.lastTileWidth = xsize - self.countTilesX *  tileWidth
-        self.lastTileHeight = ysize - self.countTilesY *  tileHeight
+        self.lastTileWidth = int(xsize - self.countTilesX *  tileWidth)
+        self.lastTileHeight = int(ysize - self.countTilesY *  tileHeight)
 
         if (self.lastTileWidth > 0 ):
             self.countTilesX=self.countTilesX+1
