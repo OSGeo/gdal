@@ -730,7 +730,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
                 OSR_GDV( papszNV, "lonc", 0.0 ), 
                 OSR_GDV( papszNV, "alpha", 0.0 ), 
-                0.0, /* ??? */
+                OSR_GDV( papszNV, "gamma", 0.0 ), 
                 OSR_GDV( papszNV, "k", 1.0 ), 
                 OSR_GDV( papszNV, "x_0", 0.0 ), 
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -1587,6 +1587,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                      GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+
+            // RSO variant - http://trac.osgeo.org/proj/ticket/62
+            // Note that gamma is only supported by PROJ 4.8.0 and later.
+            if( GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,1000.0) != 1000.0 )
+            {
+                sprintf( szProj4+strlen(szProj4), "+gamma=%.16g ",
+                         GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,1000.0));
+            }
         }
     }
 
