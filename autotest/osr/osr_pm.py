@@ -68,10 +68,12 @@ def osr_pm_2():
     proj4_srs = srs.ExportToProj4()
 
     if proj4_srs.find('+pm=paris' ) == -1:
+        print(proj4_srs)
         gdaltest.post_reason( 'prime meridian wrong or missing.' )
         return 'fail'
     
     if proj4_srs.find('+lon_0=0' ) == -1:
+        print(proj4_srs)
         gdaltest.post_reason( '+lon_0 is wrong.' )
         return 'fail'
     
@@ -107,7 +109,7 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_proj4' )
+    gdaltest.setup_run( 'osr_pm' )
 
     gdaltest.run_tests( gdaltest_list )
 
