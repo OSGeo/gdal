@@ -943,6 +943,14 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         {
             dfSemiMinor = OSR_GDV( papszNV, "b", -1.0 );
             dfInvFlattening = OSR_GDV( papszNV, "rf", -1.0 );
+            if ( dfSemiMinor == -1.0 && dfInvFlattening == -1.0 )
+            {
+                double dfFlattening = OSR_GDV( papszNV, "f", -1.0 );
+                if ( dfFlattening == 0.0 )
+                    dfSemiMinor = dfSemiMajor;
+                else if ( dfFlattening != -1.0 )
+                    dfInvFlattening = 1.0 / dfFlattening;
+            }
         }
         
         if( dfSemiMinor == -1.0 && dfInvFlattening == -1.0 )
