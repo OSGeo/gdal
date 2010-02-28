@@ -296,6 +296,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		    if (ref($fd) eq 'HASH') {
 			$fd = Geo::OGR::FieldDefn->create(%$fd);
 		    }
+		    $schema{ApproxOK} = 1 unless defined $schema{ApproxOK};
 		    CreateField($self, $fd, $schema{ApproxOK});
 		}
 	    }
@@ -407,6 +408,25 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 	package Geo::OGR::FeatureDefn;
 	use strict;
+	sub create {
+	    my $pkg = shift;
+	    my %schema;
+	    if (@_ == 1) {
+	        %schema = %{$_[0]};
+	    } else {
+	        %schema = @_;
+	    }
+	    my $self = Geo::OGRc::new_FeatureDefn($schema{Name});
+	    bless $self, $pkg;
+	    $self->GeometryType($schema{GeometryType});
+	    for my $fd (@{$schema{Fields}}) {
+		if (ref($fd) eq 'HASH') {
+		    $fd = Geo::OGR::FieldDefn->create(%$fd);
+		}
+		AddFieldDefn($self, $fd);
+	    }
+	    return $self;
+	}
 	sub Schema {
 	    my $self = shift;
 	    my %schema;
@@ -466,6 +486,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		    if (ref($fd) eq 'HASH') {
 			$fd = Geo::OGR::FieldDefn->create(%$fd);
 		    }
+		    $schema{ApproxOK} = 1 unless defined $schema{ApproxOK};
 		    CreateField($self, $fd, $schema{ApproxOK});
 		}
 	    }
