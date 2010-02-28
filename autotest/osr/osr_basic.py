@@ -44,8 +44,18 @@ import osr
 def osr_basic_1():
 
     utm_srs = osr.SpatialReference()
-    utm_srs.SetUTM( 11 )
+    # Southern hemisphere
+    utm_srs.SetUTM( 11, 0 )
     utm_srs.SetWellKnownGeogCS( 'WGS84' )
+
+    if utm_srs.GetUTMZone() != -11:
+        return 'fail'
+
+    # Northern hemisphere
+    utm_srs.SetUTM( 11 )
+
+    if utm_srs.GetUTMZone() != 11:
+        return 'fail'
 
     parm_list = \
               [ (osr.SRS_PP_CENTRAL_MERIDIAN, -117.0),
