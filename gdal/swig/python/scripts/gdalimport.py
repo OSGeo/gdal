@@ -47,13 +47,13 @@ if len(argv) < 2:
     sys.exit(1)
 
 def progress_cb( complete, message, cb_data ):
-    print(cb_data, complete)
+    print('%s %d' % (cb_data, complete))
     
 
 filename = argv[1]
 dataset = gdal.Open( filename )
 if dataset is None:
-    print('Unable to open ', filename)
+    print('Unable to open %s' % filename)
     sys.exit(1)
 
 geotiff = gdal.GetDriverByName("GTiff")
@@ -71,7 +71,7 @@ if len(argv) < 3:
 else:
     newfile = argv[2]
 
-print('Importing to Tiled GeoTIFF file:', newfile)
+print('Importing to Tiled GeoTIFF file: %s' % newfile)
 new_dataset = geotiff.CreateCopy( newfile, dataset, 0,
                                   ['TILED=YES',],
                                   callback = progress_cb,

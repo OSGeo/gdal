@@ -47,7 +47,7 @@ if len(sys.argv) < 2:
 filename = sys.argv[1]
 dataset = gdal.Open( filename )
 if dataset is None:
-    print('Unable to open ', filename)
+    print('Unable to open %s' % filename)
     sys.exit(1)
 
 gcps = dataset.GetGCPs()
