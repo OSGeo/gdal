@@ -723,7 +723,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		    }
 		}
 	    }
-	    $param{Type} = $TYPE_STRING2INT{$param{Type}} if defined $param{Type} and exists $TYPE_STRING2INT{$param{Type}};
+	    $param{Type} = $TYPE_STRING2INT{$param{Type}} 
+	    if defined $param{Type} and exists $TYPE_STRING2INT{$param{Type}};
+	    $param{Justify} = $JUSTIFY_STRING2INT{$param{Justify}} 
+	    if defined $param{Justify} and exists $JUSTIFY_STRING2INT{$param{Justify}};
 	    my $self = Geo::OGRc::new_FieldDefn($param{Name}, $param{Type});
 	    if (defined($self)) {
 		bless $self, $pkg;
