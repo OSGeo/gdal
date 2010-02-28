@@ -56,12 +56,126 @@ init_list = [ \
     ('float64_2.hdf', 1, 4672, None),
     ('utmsmall_2.hdf', 1, 50054, None)]
 
+###############################################################################
+# Test HDF4_SDS with single subdataset
+
+def hdf4_read_online_1():
+
+    try:
+        gdaltest.hdf4_drv = gdal.GetDriverByName('HDF4')
+    except:
+        gdaltest.hdf4_drv = None
+
+    if gdaltest.hdf4_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/A2004259075000.L2_LAC_SST.hdf', 'A2004259075000.L2_LAC_SST.hdf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'HDF4Image', 'tmp/cache/A2004259075000.L2_LAC_SST.hdf', 1, 28189, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+###############################################################################
+# Test HDF4_SDS with GEOLOCATION info
+
+def hdf4_read_online_2():
+
+    if gdaltest.hdf4_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/A2006005182000.L2_LAC_SST.x.hdf', 'A2006005182000.L2_LAC_SST.x.hdf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'HDF4Image', 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":13', 1, 13209, filename_absolute = 1 )
+
+    ret = tst.testOpen()
+    if ret != 'success':
+        return ret
+
+    ds = gdal.Open('HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":13')
+    md = ds.GetMetadata('GEOLOCATION')
+    ds = None
+
+    if md['X_DATASET'] != 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":11':
+        gdaltest.post_reason('Did not get expected X_DATASET')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test HDF4_EOS:EOS_GRID
+
+def hdf4_read_online_3():
+
+    if gdaltest.hdf4_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf', 'MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'HDF4Image', 'tmp/cache/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf', 1, 34723, filename_absolute = 1 )
+
+    ret = tst.testOpen()
+    if ret != 'success':
+        return ret
+
+    ds = gdal.Open('tmp/cache/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf')
+    gt = ds.GetGeoTransform()
+    expected_gt = [-180.0, 0.3515625, 0.0, 90.0, 0.0, -0.3515625]
+    for i in range(6):
+        if (abs(gt[i] - expected_gt[i]) > 1e-8):
+            print(gt)
+            gdaltest.post_reason('did not get expected gt')
+            return 'fail'
+
+    srs = ds.GetProjectionRef()
+    if srs.find('Clarke') == -1:
+        gdaltest.post_reason('did not get expected projection')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test HDF4_SDS:SEAWIFS_L1A
+
+def hdf4_read_online_4():
+
+    if gdaltest.hdf4_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf', 'S2002196124536.L1A_HDUN.BartonBendish.extract.hdf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'HDF4Image', 'tmp/cache/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf', 1, 33112, filename_absolute = 1 )
+
+    ret = tst.testOpen()
+    if ret != 'success':
+        return ret
+
+    ds = gdal.Open('tmp/cache/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf')
+    if ds.RasterCount != 8:
+        gdaltest.post_reason('did not get expected band number')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2] )
     if ut is None:
         print( 'HDF4 tests skipped' )
         sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
+
+gdaltest_list.append( hdf4_read_online_1 )
+gdaltest_list.append( hdf4_read_online_2 )
+gdaltest_list.append( hdf4_read_online_3 )
+gdaltest_list.append( hdf4_read_online_4 )
 
 if __name__ == '__main__':
 
