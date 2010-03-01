@@ -200,7 +200,7 @@ class CPL_DLL OGRSpatialReference
 
     int         EPSGTreatsAsLatLong();
     const char *GetAxis( const char *pszTargetKey, int iAxis, 
-                         OGRAxisOrientation *peOrientation );
+                         OGRAxisOrientation *peOrientation ) const;
     OGRErr      SetAxes( const char *pszTargetKey, 
                          const char *pszXAxisName, 
                          OGRAxisOrientation eXAxisOrientation,
