@@ -1303,7 +1303,8 @@ static int _checkSchema_GCIO (
                 }
                 else
                 {
-                  if( (iYP!=-1 && iGr-iYP!=1) || (iGr-iY!=1) )
+                  if( !( ((iGr!=-1) && ( (iGr==iY+1) || (iGr==iYP+1) )) || (iGr==-1) ) )
+
                   {
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "Geoconcept geometry fields %s, %s must be consecutive for %s.%s!\n",
