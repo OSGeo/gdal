@@ -442,6 +442,8 @@ int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
 /*      Fetch the transformation parameters.                            */
 /* -------------------------------------------------------------------- */
     iDXField = CSVGetFileFieldId(pszFilename, "DX");
+    if (iDXField < 0)
+        return FALSE;
 
     for( iField = 0; iField < 7; iField++ )
         padfTransform[iField] = CPLAtof(papszLine[iDXField+iField]);
@@ -1101,6 +1103,23 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
         CSVGetFileFieldId( pszFilename, "coord_axis_order" );
     iAxisNameCodeField = 
         CSVGetFileFieldId( pszFilename, "coord_axis_name_code" );
+
+    /* Check that all fields are available and that the axis_order field */
+    /* is the one with highest index */
+    if ( !( iAxisOrientationField >= 0 &&
+            iAxisOrientationField < iAxisOrderField &&
+            iAxisAbbrevField >= 0 &&
+            iAxisAbbrevField < iAxisOrderField &&
+            iAxisOrderField >= 0 &&
+            iAxisNameCodeField >= 0 &&
+            iAxisNameCodeField < iAxisOrderField ) )
+    {
+        CSLDestroy( papszAxis1 );
+        CSLDestroy( papszAxis2 );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "coordinate_axis.csv corrupted" );
+        return OGRERR_FAILURE;
+    }
 
     if( CSLCount(papszAxis1) < iAxisOrderField+1 
         || CSLCount(papszAxis2) < iAxisOrderField+1 )
