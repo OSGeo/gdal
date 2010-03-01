@@ -1434,6 +1434,36 @@ void netCDFDataset::SetProjection( int var )
                     yMinMax[1] = dummy[1];
                 }
 
+		/* ----------------------------------------------------------*/
+                /*    Many netcdf files are weather files distributed        */
+		/*    in km for the x/y resolution.  This isn't perfect,     */
+		/*    but geotransforms can be terribly off if this isn't    */
+		/*    checked and accounted for.  Maybe one more level of    */
+		/*    checking (grid_mapping_value#GRIB_param_Dx, or         */
+		/*    x#grid_spacing), but those are not cf tags.            */
+		/* ----------------------------------------------------------*/
+                
+		//check units for x and y, expand to other values 
+		//and conversions.
+		if( oSRS.IsProjected( ) ) {
+		    strcpy( szTemp, "x" );
+		    strcat( szTemp, "#units" );
+		    pszValue = CSLFetchNameValue( poDS->papszMetadata, 
+						  szTemp );
+		    if( EQUAL( pszValue, "km" ) ) {
+			xMinMax[0] = xMinMax[0] * 1000;
+			xMinMax[1] = xMinMax[1] * 1000;
+		    }
+		    strcpy( szTemp, "y" );
+		    strcat( szTemp, "#units" );
+		    pszValue = CSLFetchNameValue( poDS->papszMetadata, 
+						  szTemp );
+		    if( EQUAL( pszValue, "km" ) ) {
+			yMinMax[0] = yMinMax[0] * 1000;
+			yMinMax[1] = yMinMax[1] * 1000;
+		    }
+		}
+
                 poDS->adfGeoTransform[0] = xMinMax[0];
                 poDS->adfGeoTransform[2] = 0;
                 poDS->adfGeoTransform[3] = yMinMax[1];
