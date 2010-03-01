@@ -111,6 +111,10 @@ class HDF4ImageDataset : public HDF4Dataset
 
     int32       iSDS;
 
+    int         nBlockPreferredXSize;
+    int         nBlockPreferredYSize;
+    bool        bReadTile;
+
     void                ToGeoref( double *, double * );
     void                GetImageDimensions( char * );
     void                GetSwatAttrs( int32 );
@@ -195,20 +199,31 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
 
     nBlockXSize = poDS->GetRasterXSize();
 
-    // Aim for a block of about 100000 pixels.  Chunking up substantially
+    // Aim for a block of about 1000000 pixels.  Chunking up substantially
     // improves performance in some situations.  For now we only chunk up for
     // SDS and EOS based datasets since other variations haven't been tested. #2208  
     if( poDS->iDatasetType == HDF4_SDS ||
         poDS->iDatasetType == HDF4_EOS)
     {
         int nChunkSize = 
-            atoi( CPLGetConfigOption("HDF4_BLOCK_PIXELS", "100000") );
+            atoi( CPLGetConfigOption("HDF4_BLOCK_PIXELS", "1000000") );
 
         nBlockYSize = nChunkSize / poDS->GetRasterXSize();
         nBlockYSize = MAX(1,MIN(nBlockYSize,poDS->GetRasterYSize()));
     }
     else
+    {
         nBlockYSize = 1;
+    }
+
+    /* HDF4_EOS:EOS_GRID case. We ensure that the block size matches */
+    /* the raster width, as the IReadBlock() code can only handle multiple */
+    /* blocks per row */
+    if ( poDS->nBlockPreferredXSize == nBlockXSize &&
+         poDS->nBlockPreferredYSize > 0 )
+    {
+        nBlockYSize = poDS->nBlockPreferredYSize;
+    }
 }
 
 /************************************************************************/
@@ -404,8 +419,22 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     aiEdges[poGDS->iXDim] = nBlockXSize;
                     break;
                 }
-                if( GDreadfield( hGD, poGDS->pszFieldName,
-                                 aiStart, NULL, aiEdges, pImage ) < 0 )
+
+                /* Ensure that we don't overlap the bottom or right edges */
+                /* of the dataset in order to use the GDreadtile() API */
+                if ( poGDS->bReadTile &&
+                     (nBlockXOff + 1) * nBlockXSize < nRasterXSize && 
+                     (nBlockYOff + 1) * nBlockYSize < nRasterYSize )
+                {
+                    int32 tilecoords[] = { nBlockYOff , nBlockXOff };
+                    if( GDreadtile( hGD, poGDS->pszFieldName , tilecoords , pImage ) != 0 )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined, "GDreadtile() failed for block." );
+                        eErr = CE_Failure;
+                    }
+                }
+                else if( GDreadfield( hGD, poGDS->pszFieldName,
+                                aiStart, NULL, aiEdges, pImage ) < 0 )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
                               "GDreadfield() failed for block." );
@@ -709,6 +738,11 @@ HDF4ImageDataset::HDF4ImageDataset()
 
     iDatasetType = HDF4_UNKNOWN;
     iSDS = FAIL;
+
+    nBlockPreferredXSize = -1;
+    nBlockPreferredYSize = -1;
+    bReadTile = false;
+
 }
 
 /************************************************************************/
@@ -2336,7 +2370,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     HDF4ImageDataset    *poDS;
 
     poDS = new HDF4ImageDataset( );
-
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
 
@@ -2591,6 +2624,51 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                           poDS->pszFieldName, szDimList);
 #endif
                 poDS->GetImageDimensions( szDimList );
+
+                int32 tilecode, tilerank;
+                if( GDtileinfo( hGD , poDS->pszFieldName , &tilecode, &tilerank, NULL ) == 0 )
+                {
+                    if ( tilecode == HDFE_TILE )
+                    {
+                        int32 *tiledims = NULL;
+                        tiledims = (int32 *) CPLCalloc( tilerank , sizeof( int32 ) );
+                        GDtileinfo( hGD , poDS->pszFieldName , &tilecode, &tilerank, tiledims );
+                        if ( ( tilerank == 2 ) && ( poDS->iRank == tilerank  ) )
+                        {
+                            poDS->nBlockPreferredXSize = tiledims[1];
+                            poDS->nBlockPreferredYSize = tiledims[0];
+                            poDS->bReadTile = true;
+#ifdef DEBUG
+                            CPLDebug( "HDF4_EOS:EOS_GRID:","tilerank in grid %s: %d",
+                                      poDS->pszFieldName , (int)tilerank );
+                            CPLDebug( "HDF4_EOS:EOS_GRID:","tiledimens in grid %s: %d,%d",
+                                      poDS->pszFieldName , (int)tiledims[0] , (int)tiledims[1] );
+#endif
+                        }
+#ifdef DEBUG
+                        else
+                        {
+                                CPLDebug( "HDF4_EOS:EOS_GRID:","tilerank in grid %s: %d not supported",
+                                          poDS->pszFieldName , (int)tilerank );
+                        }
+#endif
+                        CPLFree(tiledims);
+                    }
+                    else
+                    {
+#ifdef DEBUG
+                        CPLDebug( "HDF4_EOS:EOS_GRID:","tilecode == HDFE_NOTILE in grid %s: %d",
+                                poDS->pszFieldName ,
+                                (int)poDS->iRank );
+#endif
+                    }
+                }
+#ifdef DEBUG
+                else
+                {
+                    CPLDebug( "HDF4_EOS:EOS_GRID:","ERROR GDtileinfo %s", poDS->pszFieldName );
+                }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Fetch projection information                                    */
