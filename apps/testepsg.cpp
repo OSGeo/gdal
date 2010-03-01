@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_p.h"
+#include "cpl_multiproc.h"
 
 void Usage()
 
@@ -186,6 +187,7 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy( papszArgv );
     OSRCleanup();
     CPLFinderClean();
+    CPLCleanupTLS();
     
     return 0;
 }
