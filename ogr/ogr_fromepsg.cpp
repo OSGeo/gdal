@@ -1091,6 +1091,7 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
 /*      are which.                                                      */
 /* -------------------------------------------------------------------- */
     int   iAxisOrientationField, iAxisAbbrevField, iAxisOrderField;
+    int   iAxisNameCodeField;
 
     iAxisOrientationField = 
         CSVGetFileFieldId( pszFilename, "coord_axis_orientation" );
@@ -1098,6 +1099,8 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
         CSVGetFileFieldId( pszFilename, "coord_axis_abbreviation" );
     iAxisOrderField = 
         CSVGetFileFieldId( pszFilename, "coord_axis_order" );
+    iAxisNameCodeField = 
+        CSVGetFileFieldId( pszFilename, "coord_axis_name_code" );
 
     if( CSLCount(papszAxis1) < iAxisOrderField+1 
         || CSLCount(papszAxis2) < iAxisOrderField+1 )
@@ -1125,14 +1128,22 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
     OGRAxisOrientation eOAxis1 = OAO_Other, eOAxis2 = OAO_Other;
     int iAO;
+    static int anCodes[7] = { -1, 9907, 9909, 9906, 9908, -1, -1 };
 
-    for( iAO = 0; iAO <= 6; iAO++ )
+    for( iAO = 0; iAO < 7; iAO++ )
     {
         if( EQUAL(papszAxis1[iAxisOrientationField],
                   OSRAxisEnumToName((OGRAxisOrientation) iAO)) )
             eOAxis1 = (OGRAxisOrientation) iAO;
         if( EQUAL(papszAxis2[iAxisOrientationField],
                   OSRAxisEnumToName((OGRAxisOrientation) iAO)) )
+            eOAxis2 = (OGRAxisOrientation) iAO;
+
+        if( eOAxis1 == OAO_Other 
+            && anCodes[iAO] == atoi(papszAxis1[iAxisNameCodeField]) )
+            eOAxis1 = (OGRAxisOrientation) iAO;
+        if( eOAxis2 == OAO_Other 
+            && anCodes[iAO] == atoi(papszAxis2[iAxisNameCodeField]) )
             eOAxis2 = (OGRAxisOrientation) iAO;
     }
 
