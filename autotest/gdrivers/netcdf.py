@@ -260,7 +260,53 @@ def netcdf_9():
     return 'success'
     
 ###############################################################################
+#check if km pixel size makes it through to gt
+def netcdf_10():
 
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/cf_no_sphere.nc' )
+
+    prj = ds.GetProjection( )
+
+    gt = ds.GetGeoTransform( )
+
+    if gt != (-1897186.0290038721, 
+               5079.3608398440065, 
+               0.0, 
+               2674684.0244560046, 
+               0.0, 
+               -5079.4721679684635):
+
+        gdaltest.post_reason( 'Incorrect geotransform' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
+#check if ll gets caught in km pixel size check
+def netcdf_11():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'NETCDF:data/cf_geog.nc:tos' )
+
+    gt = ds.GetGeoTransform( )
+
+    if gt != (0.0, 2.0, 0.0, 90.0, 0.0, -1.0):
+
+        gdaltest.post_reason( 'Incorrect geotransform' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 
 gdaltest_list = [
     netcdf_1,
@@ -271,7 +317,9 @@ gdaltest_list = [
     netcdf_6,
     netcdf_7,
     netcdf_8,
-    netcdf_9 ]
+    netcdf_9,
+    netcdf_10, 
+    netcdf_11 ]
 
 
 if __name__ == '__main__':
