@@ -5987,7 +5987,7 @@ void OSRCleanup( void )
 
 const char *
 OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis, 
-                              OGRAxisOrientation *peOrientation )
+                              OGRAxisOrientation *peOrientation ) const
 
 {
     if( peOrientation != NULL )
