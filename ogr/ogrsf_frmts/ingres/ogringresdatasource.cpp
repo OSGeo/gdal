@@ -131,6 +131,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
     IIAPI_CONNPARM	connParm;
     IIAPI_WAITPARM	waitParm = { -1 };
     
+    memset( &connParm, 0, sizeof(connParm) );
     connParm.co_genParm.gp_callback = NULL;
     connParm.co_genParm.gp_closure = NULL;
     connParm.co_target = (II_CHAR *) pszDBName;
