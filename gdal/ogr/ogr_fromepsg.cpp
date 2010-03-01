@@ -442,7 +442,7 @@ int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
 /*      Fetch the transformation parameters.                            */
 /* -------------------------------------------------------------------- */
     iDXField = CSVGetFileFieldId(pszFilename, "DX");
-    if (iDXField < 0)
+    if (iDXField < 0 || CSLCount(papszLine) < iDXField + 7)
         return FALSE;
 
     for( iField = 0; iField < 7; iField++ )
