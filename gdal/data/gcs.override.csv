@@ -1,42 +1,7 @@
-"COORD_REF_SYS_CODE","COORD_REF_SYS_NAME","DATUM_CODE","DATUM_NAME","GREENWICH_DATUM","UOM_CODE","ELLIPSOID_CODE","PRIME_MERIDIAN_CODE","SHOW_CRS","DEPRECATED","COORD_SYS_CODE","COORD_OP_METHOD_CODE","DX","DY","DZ","RX","RY","RZ","DS"
+"COORD_REF_SYS_CODE","COORD_REF_SYS_NAME","DATUM_CODE","DATUM_NAME","GREENWICH_DATUM","UOM_CODE","ELLIPSOID_CODE","PRIME_MERIDIAN_CODE","SHOW_CRS","DEPRECATED","COORD_SYS_CODE","COORD_OP_CODE","COORD_OP_CODE_MULTI","COORD_OP_METHOD_CODE","DX","DY","DZ","RX","RY","RZ","DS"
 #
 # NOTICE: The master version of this file is in the libgeotiff subversion at:
 #
 # https://svn.osgeo.org/metacrs/geotiff/trunk/libgeotiff/csv/gcs.override.csv
 #
 # Do *not* change other copies without upstreaming the results to libgeotiff.
-#
-#
-#
-# See http://bugzilla.remotesensing.org/show_bug.cgi?id=339
-# Or http://www.linz.govt.nz/rcs/linz/pub/web/root/core/SurveySystem/GeodeticInfo/geodeticdatums/index.jsp
-#
-4272,NZGD49,6272,New Zealand Geodetic Datum 1949,6272,9122,7022,8901,1,0,6422,9606,59.47,-5.04,187.44,0.47,-0.1,1.024,-4.5993
-#
-#
-# Use the seven-parameter transformation from the BEV (1618) for MGI (bug 870)
-#
-4312,MGI,6312,Militar-Geographische Institut,6312,9108,7004,8901,1,0,6422,9606,577.326,90.129,463.919,5.137,1.474,5.297,2.4232
-#
-# Bart van den Eijnden and Jan Hartmann suggest this datum shift value:
-#
-#4289,Amersfoort,6289,Amersfoort,6289,9122,7004,8901,1,0,9606,565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812
-#
-# Per http://bugzilla.remotesensing.org/show_bug.cgi?id=1305
-# 
-4218,Bogota 1975,6218,Bogota 1975,6218,9122,7022,8901,1,0,6422,9603,307,304,-318,,,,
-#
-# Per http://bugzilla.remotesensing.org/show_bug.cgi?id=957
-#
-4149,CH1903,6149,CH1903,6149,9122,7004,8901,1,0,6422,9603,674.374,15.056,405.346,,,,
-#
-# From Jan: http://bugzilla.remotesensing.org/show_bug.cgi?id=1336
-#
-4313,Belge 1972,6313,Reseau National Belge 1972,6313,9122,7022,8901,1,0,6422,9606,106.868628,-52.297783,103.723893,-0.336570,0.456955,-1.842183,1.0000012747
-#
-# Seven-parameter transformation for Pulkovo 1942
-# as defined by the GOST P 51794-2001.
-# See http://trac.osgeo.org/gdal/ticket/3176 for details.
-#
-4284,Pulkovo 1942,6284,Pulkovo 1942,6284,9122,7024,8901,1,0,6422,9607,23.9,-141.3,-80.9,0,-0.37,-0.85,-0.12
-
