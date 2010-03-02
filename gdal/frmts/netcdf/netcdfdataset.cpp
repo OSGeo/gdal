@@ -1441,6 +1441,8 @@ void netCDFDataset::SetProjection( int var )
 		/*    checked and accounted for.  Maybe one more level of    */
 		/*    checking (grid_mapping_value#GRIB_param_Dx, or         */
 		/*    x#grid_spacing), but those are not cf tags.            */
+		/*    Have to change metadata value if change Create() to    */
+		/*    write cf tags                                          */
 		/* ----------------------------------------------------------*/
                 
 		//check units for x and y, expand to other values 
@@ -1450,17 +1452,21 @@ void netCDFDataset::SetProjection( int var )
 		    strcat( szTemp, "#units" );
 		    pszValue = CSLFetchNameValue( poDS->papszMetadata, 
 						  szTemp );
-		    if( EQUAL( pszValue, "km" ) ) {
-			xMinMax[0] = xMinMax[0] * 1000;
-			xMinMax[1] = xMinMax[1] * 1000;
+		    if( pszValue != NULL ) {
+			if( EQUAL( pszValue, "km" ) ) {
+			    xMinMax[0] = xMinMax[0] * 1000;
+			    xMinMax[1] = xMinMax[1] * 1000;
+			}
 		    }
 		    strcpy( szTemp, "y" );
 		    strcat( szTemp, "#units" );
 		    pszValue = CSLFetchNameValue( poDS->papszMetadata, 
 						  szTemp );
-		    if( EQUAL( pszValue, "km" ) ) {
-			yMinMax[0] = yMinMax[0] * 1000;
-			yMinMax[1] = yMinMax[1] * 1000;
+		    if( pszValue != NULL ) {
+			if( EQUAL( pszValue, "km" ) ) {
+			    yMinMax[0] = yMinMax[0] * 1000;
+			    yMinMax[1] = yMinMax[1] * 1000;
+			}
 		    }
 		}
 
