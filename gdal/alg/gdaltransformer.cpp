@@ -428,6 +428,10 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                 if( !abSuccess[i] )
                     nFailedCount++;
                 
+                dfRatio = 0.0 + floor(i/4)*(1.0/N_STEPS);
+                if (dfRatio>0.99)
+                    dfRatio = 1.0;
+
                 double dfExpectedX, dfExpectedY;
                 if ((i % 4) == 0)
                 {
@@ -450,8 +454,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                     dfExpectedY   = dfRatio * nInYSize;
                 }
                 
-                if (fabs(adfX[i] - dfExpectedX) > nInXSize / N_STEPS ||
-                    fabs(adfX[i] - dfExpectedX) > nInYSize / N_STEPS)
+                if (fabs(adfXRevert[i] - dfExpectedX) > nInXSize / N_STEPS ||
+                    fabs(adfYRevert[i] - dfExpectedY) > nInYSize / N_STEPS)
                     nFailedCount ++;
             }
         }
