@@ -359,6 +359,24 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
 /*                   OCTNewCoordinateTransformation()                   */
 /************************************************************************/
 
+/**
+ * Create transformation object.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation().
+ *
+ * Input spatial reference system objects are assigned 
+ * by copy (calling clone() method) and no ownership transfer occurs.
+ *
+ * OCTDestroyCoordinateTransformation() should
+ * be used to destroy transformation objects. 
+ *
+ * The PROJ.4 library must be available at run-time.
+ *
+ * @param hSourceSRS source spatial reference system. 
+ * @param hTargetSRS target spatial reference system. 
+ * @return NULL on failure or a ready to use transformation object.
+ */
+ 
 OGRCoordinateTransformationH CPL_STDCALL 
 OCTNewCoordinateTransformation(
     OGRSpatialReferenceH hSourceSRS, OGRSpatialReferenceH hTargetSRS )
