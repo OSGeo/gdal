@@ -33,8 +33,6 @@
 
 CPL_CVSID("$Id$");
 
-static OCIEnv *ghOracleEnvironment = NULL;
-
 /************************************************************************/
 /*                          OGRGetOCISession()                          */
 /************************************************************************/
@@ -66,6 +64,8 @@ OGROCISession::OGROCISession()
     hEnv = NULL;
     hError = NULL;
     hSvcCtx = NULL;
+    hServer = NULL;
+    hSession = NULL;
     hDescribe = NULL;
     hGeometryTDO = NULL;
     hOrdinatesTDO = NULL;
@@ -86,7 +86,24 @@ OGROCISession::~OGROCISession()
         OCIHandleFree((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE);
 
     if( hSvcCtx != NULL )
-        OCILogoff( hSvcCtx, hError );
+    {
+        OCISessionEnd(hSvcCtx, hError, hSession, (ub4) 0);
+
+        if( hSvcCtx && hError)
+            OCIServerDetach(hServer, hError, (ub4) OCI_DEFAULT);
+
+        if( hServer )
+            OCIHandleFree((dvoid *) hServer, (ub4) OCI_HTYPE_SERVER);
+
+        if( hSvcCtx )
+            OCIHandleFree((dvoid *) hSvcCtx, (ub4) OCI_HTYPE_SVCCTX);
+
+        if( hError )
+            OCIHandleFree((dvoid *) hError, (ub4) OCI_HTYPE_ERROR);
+
+        if( hSession )
+            OCIHandleFree((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION);
+    }
 
     CPLFree( pszUserid );
     CPLFree( pszPassword );
@@ -102,53 +119,121 @@ int OGROCISession::EstablishSession( const char *pszUserid,
                                      const char *pszDatabase )
 
 {
-    sword nStatus;
+/* -------------------------------------------------------------------- */
+/*      Operational Systems's authentication option                     */
+/* -------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------- */
-/*      Establish the environment.                                      */
-/* -------------------------------------------------------------------- */
-    if( ghOracleEnvironment == NULL )
+    ub4 eCred = OCI_CRED_RDBMS;
+
+    if( EQUAL(pszDatabase, "") &&
+        EQUAL(pszPassword, "") &&
+        EQUAL(pszUserid, "/") )
     {
-        nStatus = 
-            OCIEnvCreate( &ghOracleEnvironment, OCI_OBJECT, (dvoid *)0, 
-                          0, 0, 0, (size_t) 0, (dvoid **)0 );
-
-        if( nStatus == -1 || ghOracleEnvironment == NULL )
-        {
-            CPLDebug("OCI", 
-                     "OCIEnvCreate() failed with status %d.\n"
-                     "Presumably Oracle is not properly installed, skipping.",
-                     (int)nStatus);
-                      
-            return FALSE;
-        }
-        
+        eCred = OCI_CRED_EXT;
     }
 
-    hEnv = ghOracleEnvironment;
+/* -------------------------------------------------------------------- */
+/*      Initialize Environment handler                                  */
+/* -------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------- */
-/*      Create the error handle.                                        */
-/* -------------------------------------------------------------------- */
-    nStatus = OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hError, 
-                              (ub4) OCI_HTYPE_ERROR, (size_t) 0, 
-                              (dvoid **) NULL );
-
-/* -------------------------------------------------------------------- */
-/*      Attempt Logon.                                                  */
-/* -------------------------------------------------------------------- */
-    if( Failed( OCILogon( hEnv, hError, &hSvcCtx, 
-                          (text *) pszUserid, 
-                          strlen(pszUserid),
-                          (text *) pszPassword, 
-                          strlen(pszPassword),
-                          (text *) pszDatabase, 
-                          pszDatabase ? strlen(pszDatabase):0 ) ))
+    if( Failed( OCIInitialize((ub4) (OCI_DEFAULT | OCI_OBJECT), (dvoid *)0,
+                (dvoid * (*)(dvoid *, size_t)) 0,
+                (dvoid * (*)(dvoid *, dvoid *, size_t))0,
+                (void (*)(dvoid *, dvoid *)) 0 ) ) )
+    {
         return FALSE;
+    }
+
+    if( Failed( OCIEnvInit( (OCIEnv **) &hEnv, OCI_DEFAULT, (size_t) 0,
+                (dvoid **) 0 ) ) )
+    {
+        return FALSE;
+    }
+
+    if( Failed( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hError,
+                OCI_HTYPE_ERROR, (size_t) 0, (dvoid **) 0) ) )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize Server Context                                       */
+/* -------------------------------------------------------------------- */
+
+    if( Failed( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hServer,
+                OCI_HTYPE_SERVER, (size_t) 0, (dvoid **) 0) ) )
+    {
+        return FALSE;
+    }
+
+    if( Failed( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hSvcCtx,
+                OCI_HTYPE_SVCCTX, (size_t) 0, (dvoid **) 0) ) )
+    {
+        return FALSE;
+    }
+
+    if( Failed( OCIServerAttach( hServer, hError, (text*) pszDatabase,
+                strlen((char*) pszDatabase), 0) ) )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize Service Context                                      */
+/* -------------------------------------------------------------------- */
+
+    if( Failed( OCIAttrSet( (dvoid *) hSvcCtx, OCI_HTYPE_SVCCTX, (dvoid *)hServer,
+                (ub4) 0, OCI_ATTR_SERVER, (OCIError *) hError) ) )
+    {
+        return FALSE;
+    }
+
+    if( Failed( OCIHandleAlloc((dvoid *) hEnv, (dvoid **)&hSession,
+                (ub4) OCI_HTYPE_SESSION, (size_t) 0, (dvoid **) 0) ) )
+    {
+        return FALSE;
+    }
+
+    if( Failed( OCIAttrSet((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION,
+                (dvoid *) pszUserid, (ub4) strlen((char *) pszUserid),
+                (ub4) OCI_ATTR_USERNAME, hError) ) )
+    {
+        return FALSE;
+    }
+
+    if( Failed( OCIAttrSet((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION,
+                (dvoid *) pszPassword, (ub4) strlen((char *) pszPassword),
+                (ub4) OCI_ATTR_PASSWORD, hError) ) )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize Session                                              */
+/* -------------------------------------------------------------------- */
+
+    if( Failed( OCISessionBegin(hSvcCtx, hError, hSession, eCred,
+                (ub4) OCI_DEFAULT) ) )
+    {
+        CPLDebug("OCI", "OCISessionBegin() failed to intialize session");
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize Service                                              */
+/* -------------------------------------------------------------------- */
+
+    if( Failed( OCIAttrSet((dvoid *) hSvcCtx, (ub4) OCI_HTYPE_SVCCTX,
+                (dvoid *) hSession, (ub4) 0,
+                (ub4) OCI_ATTR_SESSION, hError) ) )
+    {
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a describe handle.                                       */
 /* -------------------------------------------------------------------- */
+
     if( Failed( 
         OCIHandleAlloc( hEnv, (dvoid **) &hDescribe, (ub4)OCI_HTYPE_DESCRIBE, 
                         (size_t)0, (dvoid **)0 ), 
@@ -163,7 +248,7 @@ int OGROCISession::EstablishSession( const char *pszUserid,
         See #2202 for more details (Tamas Szekeres)*/
     if (OCIDescribeAny(hSvcCtx, hError, 
                        (text *) SDO_GEOMETRY, (ub4) strlen(SDO_GEOMETRY), 
-                       OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, 
+                       OCI_OTYPE_NAME, (ub1) OCI_DEFAULT, (ub1)OCI_PTYPE_TYPE,
                        hDescribe ) != OCI_ERROR)
     {
         hGeometryTDO = PinTDO( SDO_GEOMETRY );
