@@ -166,7 +166,19 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     CPLDebug( "OCI", "Userid=%s, Password=%s, Database=%s", 
               pszUserid, pszPassword, pszDatabase );
 
-    poSession = OGRGetOCISession( pszUserid, pszPassword, pszDatabase );
+    if( EQUAL(pszDatabase, "") &&
+        EQUAL(pszPassword, "") &&
+        EQUAL(pszUserid, "") )
+    {
+        /* Use username/password OS Authentication and ORACLE_SID database */
+        
+        poSession = OGRGetOCISession( "/", "", "" );
+    }
+    else
+    {
+        poSession = OGRGetOCISession( pszUserid, pszPassword, pszDatabase );
+    }
+    
     if( poSession == NULL )
         return FALSE;
 
