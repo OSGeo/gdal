@@ -98,6 +98,8 @@ class CPL_DLL OGROCISession {
     OCIEnv     *hEnv;
     OCIError   *hError;
     OCISvcCtx  *hSvcCtx;
+    OCIServer  *hServer;
+    OCISession *hSession;
     OCIDescribe*hDescribe;
     OCIType    *hGeometryTDO;
     OCIType    *hOrdinatesTDO;
