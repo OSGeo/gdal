@@ -428,7 +428,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                 if( !abSuccess[i] )
                     nFailedCount++;
                 
-                dfRatio = 0.0 + floor(i/4)*(1.0/N_STEPS);
+                dfRatio = 0.0 + (i/4)*(1.0/N_STEPS);
                 if (dfRatio>0.99)
                     dfRatio = 1.0;
 
