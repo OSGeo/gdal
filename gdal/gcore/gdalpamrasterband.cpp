@@ -302,7 +302,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Collect various other items of metadata.                        */
 /* -------------------------------------------------------------------- */
-    SetDescription( CPLGetXMLValue( psTree, "Description", "" ) );
+    GDALMajorObject::SetDescription( CPLGetXMLValue( psTree, "Description", "" ) );
     
     if( CPLGetXMLValue( psTree, "NoDataValue", NULL ) != NULL )
     {
