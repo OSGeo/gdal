@@ -637,18 +637,34 @@ import java.awt.Color;
     byte[] greens = new byte[size];
     byte[] blues = new byte[size];
     byte[] alphas = new byte[size];
+    int noAlphas = 0;
+    int zeroAlphas = 0;
+    int lastAlphaIndex = -1;
 
     Color entry = null;
     for(int i = 0; i < size; i++) {
       entry = GetColorEntry(i);
-      reds[i] = (byte)entry.getRed();
-      greens[i] = (byte)entry.getGreen();
-      blues[i] = (byte)entry.getBlue();
-      byte alpha = (byte)entry.getAlpha();
+      reds[i] = (byte)(entry.getRed()&0xff);
+      greens[i] = (byte)(entry.getGreen()&0xff);
+      blues[i] = (byte)(entry.getBlue()&0xff);
+      byte alpha = (byte)(entry.getAlpha()&0xff);
+      if (alpha == 255) 
+          noAlphas ++;
+      else{
+        if (alpha == 0){
+           zeroAlphas++;
+           lastAlphaIndex = i;
+        }
+      }
       alphas[i] = alpha;
     }
-    return new IndexColorModel(bits, size, reds, greens, blues, alphas);
-  }
+    if (noAlphas == size)
+        return new IndexColorModel(bits, size, reds, greens, blues);
+    else if (noAlphas == (size - 1) && zeroAlphas == 1)
+        return new IndexColorModel(bits, size, reds, greens, blues, lastAlphaIndex);
+    else 
+        return new IndexColorModel(bits, size, reds, greens, blues, alphas);
+ }
 %}
 
 
