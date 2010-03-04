@@ -518,6 +518,15 @@ REFERENCED_BY_RELATION = YES
 
 REFERENCES_RELATION    = YES
 
+# If the REFERENCES_LINK_SOURCE tag is set to YES (the default) 
+# and SOURCE_BROWSER tag is set to YES, then the hyperlinks from 
+# functions in REFERENCES_RELATION and REFERENCED_BY_RELATION lists will 
+# link to the source code.  Otherwise they will link to the documentation. 
+#
+# http://trac.osgeo.org/gdal/ticket/2723
+
+REFERENCES_LINK_SOURCE = NO 
+
 # If the VERBATIM_HEADERS tag is set to YES (the default) then Doxygen 
 # will generate a verbatim copy of the header file for each class for 
 # which an include is specified. Set to NO to disable this.
