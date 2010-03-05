@@ -1026,11 +1026,12 @@ CPLErr GDALWarpOperation::CollectChunkList(
         else
         {
             int nChunk1 = nDstYSize / 2;
-            int nChunk2 = nDstYSize - nChunk1;
 
             /* Try to stick on target block boundaries */
             if (nChunk1 > nBlockYSize)
                 nChunk1 = (nChunk1 / nBlockYSize) * nBlockYSize;
+
+            int nChunk2 = nDstYSize - nChunk1;
 
             eErr = CollectChunkList( nDstXOff, nDstYOff, 
                                      nDstXSize, nChunk1 );
