@@ -39,6 +39,29 @@ int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
 
 /************************************************************************/
+/*                          VRTOverviewInfo()                           */
+/************************************************************************/
+class VRTOverviewInfo
+{
+public:
+    CPLString       osFilename;
+    int             nBand;
+    GDALRasterBand *poBand;
+    int             bTriedToOpen;
+    
+    VRTOverviewInfo() : poBand(NULL), bTriedToOpen(FALSE) {}
+    ~VRTOverviewInfo() {
+        if( poBand == NULL ) 
+            /* do nothing */;
+        else if( poBand->GetDataset()->GetShared() )
+            GDALClose( (GDALDatasetH) poBand->GetDataset() );
+        else
+            poBand->GetDataset()->Dereference();
+    }
+};
+
+
+/************************************************************************/
 /*                              VRTSource                               */
 /************************************************************************/
 
@@ -194,6 +217,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
     void           Initialize( int nXSize, int nYSize );
 
+    std::vector<VRTOverviewInfo> apoOverviews;
+
   public:
 
                     VRTRasterBand();
@@ -225,6 +250,9 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     CPLErr SetOffset( double );
     virtual double GetScale( int *pbSuccess = NULL );
     CPLErr SetScale( double );
+
+    virtual int GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int);
     
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,
                           int nBuckets, int * panHistogram,

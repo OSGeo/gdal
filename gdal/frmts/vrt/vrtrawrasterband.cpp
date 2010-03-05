@@ -453,4 +453,7 @@ void VRTRawRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
     CPLHashSetInsert(hSetFiles, (*ppapszFileList)[*pnSize]);
     
     (*pnSize) ++;
+
+    VRTRasterBand::GetFileList( ppapszFileList, pnSize,
+                                pnMaxSize, hSetFiles);
 }

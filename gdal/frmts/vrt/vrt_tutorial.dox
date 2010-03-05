@@ -188,6 +188,19 @@ raster band.   The default is 1.0.<p>
 \endcode
 </li>
 
+<li> <b>Overview</b>: This optional element describes one overview level for
+the band.  It should have a child SourceFilename and SourceBand element.  The
+SourceFilename may have a relativeToVRT boolean attribute.  Multiple elements
+may be used to describe multiple overviews. <p>
+
+\code
+    <Overview>
+      <SourceFilename relativeToVRT="1">yellowstone_2.1.ntf.r2</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </Overview>
+\endcode
+</li>
+
 <li> <b>CategoryNames</b>: This optional element contains a list of Category
 subelements with the names of the categories for classified raster band. <p>
 
