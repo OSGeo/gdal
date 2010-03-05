@@ -189,6 +189,8 @@ private:
     OCIEnv*             hEnv;
     OCIError*           hError;
     OCISvcCtx*          hSvcCtx;
+    OCIServer*          hServer;
+    OCISession*         hSession;
     OCIDescribe*        hDescribe;
 
     int                 nVersion;
