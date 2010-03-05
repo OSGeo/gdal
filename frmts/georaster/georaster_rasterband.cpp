@@ -699,6 +699,8 @@ GDALRasterBand* GeoRasterRasterBand::GetOverview( int nLevel )
 
 CPLErr GeoRasterRasterBand::CreateMaskBand( int nFlags )
 {
+    (void) nFlags;
+
     if( ! poGeoRaster->bHasBitmapMask )
     {
         return CE_Failure;
