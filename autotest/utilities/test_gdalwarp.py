@@ -30,6 +30,7 @@
 
 import sys
 import os
+import stat
 
 sys.path.append( '../pymod' )
 
@@ -766,6 +767,52 @@ def test_gdalwarp_29():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test the effect of the -wo OPTIMIZE_SIZE=TRUE option (#3459, #1866)
+
+def test_gdalwarp_30():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    # First run : no parameter
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_1.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES")
+
+    # Second run : with  -wo OPTIMIZE_SIZE=TRUE
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_2.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo OPTIMIZE_SIZE=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES")
+
+    file_size1 = os.stat('tmp/testgdalwarp30_1.tif')[stat.ST_SIZE]
+    file_size2 = os.stat('tmp/testgdalwarp30_2.tif')[stat.ST_SIZE]
+
+    ds = gdal.Open('tmp/testgdalwarp30_1.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 64629:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum on testgdalwarp30_1')
+        return 'fail'
+
+    ds = None
+
+    ds = gdal.Open('tmp/testgdalwarp30_2.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 64629:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum on testgdalwarp30_2')
+        return 'fail'
+
+    ds = None
+
+    if file_size1 <= file_size2:
+        print(file_size1)
+        print(file_size2)
+        gdaltest.post_reason('Size with -wo OPTIMIZE_SIZE=TRUE larger than without !')
+        return 'fail'
+
+    return 'success'
     
 ###############################################################################
 # Cleanup
@@ -801,7 +848,14 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/testgdalwarp24dst.tif')
     except:
         pass
-
+    try:
+        os.remove('tmp/testgdalwarp30_1.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/testgdalwarp30_2.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -835,6 +889,7 @@ gdaltest_list = [
     test_gdalwarp_27,
     test_gdalwarp_28,
     test_gdalwarp_29,
+    test_gdalwarp_30,
     test_gdalwarp_cleanup
     ]
 
