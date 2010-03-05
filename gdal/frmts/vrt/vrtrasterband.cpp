@@ -385,6 +385,53 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         psHist->psNext = psNext;
     }
 
+/* ==================================================================== */
+/*      Overviews                                                       */
+/* ==================================================================== */
+    CPLXMLNode *psNode;
+
+    for( psNode = psTree->psChild; psNode != NULL; psNode = psNode->psNext )
+    {
+        if( psNode->eType != CXT_Element
+            || !EQUAL(psNode->pszValue,"Overview") )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare filename.                                               */
+/* -------------------------------------------------------------------- */
+        char *pszSrcDSName = NULL;
+        CPLXMLNode* psFileNameNode=CPLGetXMLNode(psNode,"SourceFilename");
+        const char *pszFilename = 
+            psFileNameNode ? CPLGetXMLValue(psFileNameNode,NULL, NULL) : NULL;
+
+        if( pszFilename == NULL )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Missing <SourceFilename> element in Overview." );
+            return CE_Failure;
+        }
+    
+        if( pszVRTPath != NULL
+            && atoi(CPLGetXMLValue( psFileNameNode, "relativetoVRT", "0")) )
+        {
+            pszSrcDSName = CPLStrdup(
+                CPLProjectRelativeFilename( pszVRTPath, pszFilename ) );
+        }
+        else
+            pszSrcDSName = CPLStrdup( pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Get the raster band.                                            */
+/* -------------------------------------------------------------------- */
+        int nSrcBand = atoi(CPLGetXMLValue(psNode,"SourceBand","1"));
+    
+        apoOverviews.resize( apoOverviews.size() + 1 );
+        apoOverviews[apoOverviews.size()-1].osFilename = pszSrcDSName;
+        apoOverviews[apoOverviews.size()-1].nBand = nSrcBand;
+        
+        CPLFree( pszSrcDSName );
+    }
+
     return CE_None;
 }
 
@@ -736,4 +783,86 @@ VRTRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 void VRTRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
                                 int *pnMaxSize, CPLHashSet* hSetFiles)
 {
+    for( unsigned int iOver = 0; iOver < apoOverviews.size(); iOver++ )
+    {
+        CPLString &osFilename = apoOverviews[iOver].osFilename;
+
+/* -------------------------------------------------------------------- */
+/*      Is the filename even a real filesystem object?                  */
+/* -------------------------------------------------------------------- */
+        VSIStatBufL  sStat;
+        if( VSIStatL( osFilename, &sStat ) != 0 )
+            return;
+        
+/* -------------------------------------------------------------------- */
+/*      Is it already in the list ?                                     */
+/* -------------------------------------------------------------------- */
+        if( CPLHashSetLookup(hSetFiles, osFilename) != NULL )
+            return;
+        
+/* -------------------------------------------------------------------- */
+/*      Grow array if necessary                                         */
+/* -------------------------------------------------------------------- */
+        if (*pnSize + 1 >= *pnMaxSize)
+        {
+            *pnMaxSize = 2 + 2 * (*pnMaxSize);
+            *ppapszFileList = (char **) CPLRealloc(
+                *ppapszFileList, sizeof(char*)  * (*pnMaxSize) );
+        }
+            
+/* -------------------------------------------------------------------- */
+/*      Add the string to the list                                      */
+/* -------------------------------------------------------------------- */
+        (*ppapszFileList)[*pnSize] = CPLStrdup(osFilename);
+        (*ppapszFileList)[(*pnSize + 1)] = NULL;
+        CPLHashSetInsert(hSetFiles, (*ppapszFileList)[*pnSize]);
+        
+        (*pnSize) ++;
+    }
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int VRTRasterBand::GetOverviewCount()
+
+{
+    if( apoOverviews.size() > 0 )
+        return apoOverviews.size();
+    else
+        return GDALRasterBand::GetOverviewCount();
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
+
+{
+    if( apoOverviews.size() > 0 )
+    {
+        if( iOverview < 0 || iOverview >= (int) apoOverviews.size() )
+            return NULL;
+
+        if( apoOverviews[iOverview].poBand == NULL 
+            && !apoOverviews[iOverview].bTriedToOpen )
+        {
+            apoOverviews[iOverview].bTriedToOpen = TRUE;
+
+            GDALDataset *poSrcDS = (GDALDataset *)
+                GDALOpenShared( apoOverviews[iOverview].osFilename, GA_ReadOnly );
+            
+            if( poSrcDS == NULL )
+                return NULL;
+
+            apoOverviews[iOverview].poBand = poSrcDS->GetRasterBand( 
+                apoOverviews[iOverview].nBand );
+        }
+
+        return apoOverviews[iOverview].poBand;
+    }
+    else
+        return GDALRasterBand::GetOverview( iOverview );
 }
