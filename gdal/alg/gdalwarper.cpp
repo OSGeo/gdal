@@ -698,6 +698,14 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
  * useful to ensure that that all pixels overlapping the cutline polygon
  * will be selected, not just those whose center point falls within the 
  * polygon.
+ *
+ * - OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE when
+ * outputing typically to a compressed dataset (GeoTIFF with COMPRESSED creation
+ * option set for example) for achieving a smaller file size. This is achieved
+ * by writing at once data aligned on full blocks of the target dataset, which
+ * avoids partial writes of compressed blocks and lost space when they are rewritten
+ * at the end of the file. However sticking to target block size may cause major
+ * processing slowdown for some particular reprojections.
  */
 
 /************************************************************************/
