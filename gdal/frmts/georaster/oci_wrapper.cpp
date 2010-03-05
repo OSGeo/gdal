@@ -71,46 +71,106 @@ OWConnection::OWConnection( const char* pszUser,
     nCharSize       = 1;
 
     // ------------------------------------------------------
-    //  Create Environment
+    //  Operational Systems's authentication option
     // ------------------------------------------------------
 
-    ub4 nMode = ( OCI_DEFAULT | OCI_OBJECT );
+    const char* pszUserId = "/";
 
-    CheckError( OCIEnvCreate(
-        &hEnv,
-        nMode,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        (size_t) 0,
-        (dvoid**) NULL ), NULL );
+    ub4 eCred = OCI_CRED_RDBMS;
 
-    // ------------------------------------------------------
-    //  Create Error Handle
-    // ------------------------------------------------------
-
-    CheckError( OCIHandleAlloc(
-        (dvoid*) hEnv,
-        (dvoid**) (dvoid*) &hError,
-        (ub4) OCI_HTYPE_ERROR,
-        (size_t) 0,
-        (void**) NULL ), hError );
+    if( EQUAL(pszServer, "") &&
+        EQUAL(pszPassword, "") &&
+        EQUAL(pszUser, "") )
+    {
+        eCred = OCI_CRED_EXT;
+    }
+    else
+    {
+        pszUserId = pszUser;
+    }
 
     // ------------------------------------------------------
-    //  Logon to Oracle Server
+    //  Initialize Environment handler                                  */
     // ------------------------------------------------------
 
-    if( CheckError( OCILogon(
-        hEnv,
-        hError,
-        &hSvcCtx,
-        (text*) sUser.c_str(),
-        (ub4) sUser.size(),
-        (text*) sPassword.c_str(),
-        (ub4) sPassword.size(),
-        (text*) sServer.c_str(),
-        (ub4) sServer.size() ), hError ) )
+    if( CheckError( OCIInitialize((ub4) (OCI_DEFAULT | OCI_OBJECT), (dvoid *)0,
+        (dvoid * (*)(dvoid *, size_t)) 0,
+        (dvoid * (*)(dvoid *, dvoid *, size_t))0,
+        (void (*)(dvoid *, dvoid *)) 0 ), NULL ) )
+    {
+        return;
+    }
+
+    if( CheckError( OCIEnvInit( (OCIEnv **) &hEnv, OCI_DEFAULT, (size_t) 0,
+        (dvoid **) 0 ), NULL ) )
+    {
+        return;
+    }
+
+    if( CheckError( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hError,
+        OCI_HTYPE_ERROR, (size_t) 0, (dvoid **) 0), NULL ) )
+    {
+        return;
+    }
+
+    // ------------------------------------------------------
+    //  Initialize Server Context
+    // ------------------------------------------------------
+
+    if( CheckError( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hServer,
+        OCI_HTYPE_SERVER, (size_t) 0, (dvoid **) 0), hError ) )
+    {
+        return;
+    }
+
+    if( CheckError( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hSvcCtx,
+        OCI_HTYPE_SVCCTX, (size_t) 0, (dvoid **) 0), hError ) )
+    {
+        return;
+    }
+
+    if( CheckError( OCIServerAttach( hServer, hError, (text*) pszServer,
+        strlen((char*) pszServer), 0), hError ) )
+    {
+        return;
+    }
+
+    // ------------------------------------------------------
+    //  Initialize Service Context
+    // ------------------------------------------------------
+
+    if( CheckError( OCIAttrSet( (dvoid *) hSvcCtx, OCI_HTYPE_SVCCTX, (dvoid *)hServer,
+        (ub4) 0, OCI_ATTR_SERVER, (OCIError *) hError), hError ) )
+    {
+        return;
+    }
+
+    if( CheckError( OCIHandleAlloc((dvoid *) hEnv, (dvoid **)&hSession,
+        (ub4) OCI_HTYPE_SESSION, (size_t) 0, (dvoid **) 0), hError ) )
+    {
+        return;
+    }
+
+    if( CheckError( OCIAttrSet((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION,
+        (dvoid *) pszUserId, (ub4) strlen((char *) pszUserId),
+        (ub4) OCI_ATTR_USERNAME, hError), hError ) )
+    {
+        return;
+    }
+
+    if( CheckError( OCIAttrSet((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION,
+        (dvoid *) pszPassword, (ub4) strlen((char *) pszPassword),
+        (ub4) OCI_ATTR_PASSWORD, hError), hError ) )
+    {
+        return;
+    }
+
+    // ------------------------------------------------------
+    //  Initialize Session
+    // ------------------------------------------------------
+
+    if( CheckError( OCISessionBegin(hSvcCtx, hError, hSession, eCred,
+        (ub4) OCI_DEFAULT), hError ) )
     {
         bSuceeeded = false;
         return;
@@ -118,6 +178,17 @@ OWConnection::OWConnection( const char* pszUser,
     else
     {
         bSuceeeded = true;
+    }
+
+    // ------------------------------------------------------
+    //  Initialize Service
+    // ------------------------------------------------------
+
+    if( CheckError( OCIAttrSet((dvoid *) hSvcCtx, (ub4) OCI_HTYPE_SVCCTX,
+        (dvoid *) hSession, (ub4) 0,
+        (ub4) OCI_ATTR_SESSION, hError), hError ) )
+    {
+        return;
     }
 
     // ------------------------------------------------------
@@ -165,11 +236,23 @@ OWConnection::~OWConnection()
 {
     OCIHandleFree( (dvoid*) hDescribe, (ub4) OCI_HTYPE_DESCRIBE);
 
-    OCILogoff( hSvcCtx, hError );
+    if( hSvcCtx && hError && hSession )
+        OCISessionEnd( hSvcCtx, hError, hSession, (ub4) 0);
 
-    OCIHandleFree( (dvoid*) hSvcCtx, (ub4) OCI_HTYPE_SVCCTX);
-    OCIHandleFree( (dvoid*) hError, (ub4) OCI_HTYPE_ERROR);
-    OCIHandleFree( (dvoid*) hEnv, (ub4) OCI_HTYPE_ENV);
+    if( hSvcCtx && hError)
+        OCIServerDetach( hServer, hError, (ub4) OCI_DEFAULT);
+
+    if( hServer )
+        OCIHandleFree((dvoid *) hServer, (ub4) OCI_HTYPE_SERVER);
+
+    if( hSvcCtx )
+        OCIHandleFree((dvoid *) hSvcCtx, (ub4) OCI_HTYPE_SVCCTX);
+
+    if( hError )
+        OCIHandleFree((dvoid *) hError, (ub4) OCI_HTYPE_ERROR);
+
+    if( hSession )
+        OCIHandleFree((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION);
 }
 
 OCIType* OWConnection::DescribeType( char *pszTypeName )
