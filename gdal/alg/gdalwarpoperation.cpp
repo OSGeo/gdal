@@ -996,20 +996,25 @@ CPLErr GDALWarpOperation::CollectChunkList(
         GDALGetBlockSize(GDALGetRasterBand(psOptions->hDstDS, 1),
                          &nBlockXSize, &nBlockYSize);
     }
-
+    
     if( dfTotalMemoryUse > psOptions->dfWarpMemoryLimit 
         && (nDstXSize > 2 || nDstYSize > 2) )
     {
+        int bOptimizeSize =
+                CSLFetchBoolean( psOptions->papszWarpOptions, "OPTIMIZE_SIZE", FALSE );
+
         /* If the region width is greater than the region height, */
-        /* cut in half in the width. Do this only if each half part */
+        /* cut in half in the width. When we want to optimize the size */
+        /* of a compressed output dataset, do this only if each half part */
         /* is at least as wide as the block width */
         if( nDstXSize > nDstYSize &&
-            (nDstXSize / 2 >= nBlockXSize || nDstYSize == 1) )
+            (!bOptimizeSize ||
+             (bOptimizeSize && (nDstXSize / 2 >= nBlockXSize || nDstYSize == 1))) )
         {
             int nChunk1 = nDstXSize / 2;
             
-            /* Try to stick on target block boundaries */
-            if (nChunk1 > nBlockXSize)
+            /* In the optimize size case, try to stick on target block boundaries */
+            if (bOptimizeSize && nChunk1 > nBlockXSize)
                 nChunk1 = (nChunk1 / nBlockXSize) * nBlockXSize;
             
             int nChunk2 = nDstXSize - nChunk1;
@@ -1027,8 +1032,8 @@ CPLErr GDALWarpOperation::CollectChunkList(
         {
             int nChunk1 = nDstYSize / 2;
 
-            /* Try to stick on target block boundaries */
-            if (nChunk1 > nBlockYSize)
+            /* In the optimize size case, try to stick on target block boundaries */
+            if (bOptimizeSize && nChunk1 > nBlockYSize)
                 nChunk1 = (nChunk1 / nBlockYSize) * nBlockYSize;
 
             int nChunk2 = nDstYSize - nChunk1;
