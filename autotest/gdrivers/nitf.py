@@ -1187,6 +1187,72 @@ def nitf_46_jasper():
     return nitf_46('JPEG2000')
     
 ###############################################################################
+# Check reading of rsets.
+
+def nitf_47():
+
+    ds = gdal.Open( 'data/rset.ntf.r0' )
+
+    band = ds.GetRasterBand(2)
+    if band.GetOverviewCount() != 2:
+        gdaltest.post_reason( 'did not get the expected number of rset overviews.' )
+        return 'fail'
+
+    cs = band.GetOverview(1).Checksum()
+    if cs != 1297:
+        print(cs)
+        gdaltest.post_reason('did not get expected checksum for overview of subdataset')
+        return 'fail'
+    
+    ds = None
+    
+    return 'success'
+    
+###############################################################################
+# Check building of standard overviews in place of rset overviews.
+
+def nitf_48():
+
+    try:
+        os.remove('tmp/rset.ntf.r0')
+        os.remove('tmp/rset.ntf.r1')
+        os.remove('tmp/rset.ntf.r2')
+        os.remove('tmp/rset.ntf.r0.ovr')
+    except:
+        pass
+
+    shutil.copyfile( 'data/rset.ntf.r0', 'tmp/rset.ntf.r0' )
+    shutil.copyfile( 'data/rset.ntf.r1', 'tmp/rset.ntf.r1' )
+    shutil.copyfile( 'data/rset.ntf.r2', 'tmp/rset.ntf.r2' )
+    
+    ds = gdal.Open( 'tmp/rset.ntf.r0', gdal.GA_Update )
+    ds.BuildOverviews( overviewlist = [3] )
+    ds = None
+    
+    ds = gdal.Open( 'tmp/rset.ntf.r0' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason( 'did not get the expected number of rset overviews.' )
+        return 'fail'
+    
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 2328:
+        print(cs)
+        gdaltest.post_reason('did not get expected checksum for overview of subdataset')
+        return 'fail'
+    
+    ds = None
+    
+    try:
+        os.remove('tmp/rset.ntf.r0')
+        os.remove('tmp/rset.ntf.r1')
+        os.remove('tmp/rset.ntf.r2')
+        os.remove('tmp/rset.ntf.r0.ovr')
+    except:
+        pass
+
+    return 'success'
+    
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -1897,6 +1963,8 @@ gdaltest_list = [
     #nitf_46_jp2mrsid,
     #nitf_46_jp2kak,
     nitf_46_jasper,
+    nitf_47,
+    nitf_48,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
