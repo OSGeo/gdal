@@ -102,6 +102,9 @@ class NITFDataset : public GDALPamDataset
     int          nIMIndex;
     CPLString    osNITFFilename;
 
+    CPLString    osRSetVRT;
+    int          CheckForRSets( const char *pszFilename );
+
   public:
                  NITFDataset();
                  ~NITFDataset();
@@ -2035,15 +2038,25 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo, GDALDataset *poWritab
     poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a special overview file?  If not, do we have         */
+/*      RSets that should be treated as an overview file?               */
+/* -------------------------------------------------------------------- */
+    const char *pszOverviewFile = 
+        poDS->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" );
+
+    if( pszOverviewFile == NULL )
+    {
+        if( poDS->CheckForRSets(poOpenInfo->pszFilename) )
+            pszOverviewFile = poDS->osRSetVRT;
+    }        
+
+/* -------------------------------------------------------------------- */
 /*      If we have jpeg or jpeg2000 bands we may need to set the        */
 /*      overview file on their dataset. (#3276)                         */
 /* -------------------------------------------------------------------- */
     GDALDataset *poSubDS = poDS->poJ2KDataset;
     if( poDS->poJPEGDataset )
         poSubDS = poDS->poJPEGDataset;
-
-    const char *pszOverviewFile = 
-        poDS->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" );
 
     if( poSubDS && pszOverviewFile != NULL )
     {
@@ -2838,6 +2851,10 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
         return oSpecialMD.GetMetadataItem( pszName, pszDomain );
     }
 
+    if( pszDomain != NULL && EQUAL(pszDomain,"OVERVIEWS") 
+        && osRSetVRT.size() > 0 )
+        return osRSetVRT;
+
     return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
 }
 
@@ -2876,6 +2893,81 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 }
 
 /************************************************************************/
+/*                           CheckForRSets()                            */
+/*                                                                      */
+/*      Check for reduced resolution images in .r<n> files and if       */
+/*      found return filename for a virtual file wrapping them as an    */
+/*      overview file. (#3457)                                          */
+/************************************************************************/
+
+int NITFDataset::CheckForRSets( const char *pszNITFFilename )
+
+{
+    if( !EQUAL(CPLGetExtension(pszNITFFilename),"r0") )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Check to see if we have RSets.                                  */
+/* -------------------------------------------------------------------- */
+    std::vector<CPLString> aosRSetFilenames;
+    int i;
+
+    for( i = 1; i <= 5; i++ )
+    {
+        CPLString osTarget;
+        VSIStatBufL sStat;
+
+        osTarget = pszNITFFilename;
+        osTarget[osTarget.size()-1] = ('0' + i );
+
+        if( VSIStatL( osTarget, &sStat ) != 0 )
+            break;
+
+        aosRSetFilenames.push_back( osTarget );
+    }
+   
+    if( aosRSetFilenames.size() == 0 )
+        return FALSE;
+    
+/* -------------------------------------------------------------------- */
+/*      We do, so try to create a wrapping VRT file.                    */
+/* -------------------------------------------------------------------- */
+    CPLString osFragment;
+    int iBand;
+
+    osRSetVRT.Printf( "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n",
+                  GetRasterXSize()/2, GetRasterYSize()/2 );
+
+    for( iBand = 0; iBand < GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poBand = GetRasterBand(iBand+1);
+
+        osRSetVRT += osFragment.
+            Printf( "  <VRTRasterBand dataType=\"%s\" band=\"%d\">\n", 
+                    GDALGetDataTypeName( poBand->GetRasterDataType() ),
+                    iBand+1 );
+
+        for( i = 0; i < (int) aosRSetFilenames.size(); i++ )
+        {
+            if( i == 0 )
+                osRSetVRT += osFragment.Printf(
+                    "    <SimpleSource><SourceFilename>%s</SourceFilename><SourceBand>%d</SourceBand></SimpleSource>\n", 
+                    aosRSetFilenames[i].c_str(), iBand+1 );
+            else
+                osRSetVRT += osFragment.Printf(
+                    "    <Overview><SourceFilename>%s</SourceFilename><SourceBand>%d</SourceBand></Overview>\n", 
+                    aosRSetFilenames[i].c_str(), iBand+1 );
+        }
+        osRSetVRT += osFragment.
+            Printf( "  </VRTRasterBand>\n" );
+    }
+
+    osRSetVRT += "</VRTDataset>\n";
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
@@ -2886,6 +2978,15 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
                                      void * pProgressData )
     
 {
+/* -------------------------------------------------------------------- */
+/*      If we have been using RSets we will need to clear them first.   */
+/* -------------------------------------------------------------------- */
+    if( osRSetVRT.size() > 0 )
+    {
+        oOvManager.CleanOverviews();
+        osRSetVRT = "";
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If we have an underlying JPEG2000 dataset (hopefully via        */
 /*      JP2KAK) we will try and build zero overviews as a way of        */
