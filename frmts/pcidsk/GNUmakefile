@@ -38,7 +38,8 @@ SDKOBJ 	=	\
 	sysblockmap.o \
 	cpcidskpct.o \
 	cpcidskrpcmodel.o \
-	cpcidskgcp2segment.o
+	cpcidskgcp2segment.o \
+	cpcidskbitmap.o
 
 else
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(PCIDSK_INCLUDE) $(CPPFLAGS)
