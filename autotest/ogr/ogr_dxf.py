@@ -401,7 +401,7 @@ def ogr_dxf_11():
     
 
 ###############################################################################
-# Check smoothed polygline.
+# Check smoothed polyline.
 
 def ogr_dxf_12():
 
@@ -428,6 +428,15 @@ def ogr_dxf_12():
         gdaltest.post_reason( 'envelope area not as expected, got %g.' % area )
         return 'fail'
 
+    # Check for specific number of points from tesselated arc(s).
+    # Note that this number depends on the tesselation algorithm and
+    # possibly the default global arc_stepsize variable; therefore it is
+    # not guaranteed to remain constant even if the input DXF file is constant.
+    # If you retain this test, you may need to update the point count if
+    # changes are made to the aforementioned items. Ideally, one would test 
+    # only that more points are returned than in the original polyline, and 
+    # that the points lie along (or reasonably close to) said path.
+
     rgeom = geom.GetGeometryRef(0)
     if rgeom.GetPointCount() != 146:
         gdaltest.post_reason( 'did not get expected number of points, got %d' % (rgeom.GetPointCount()) )
@@ -438,6 +447,14 @@ def ogr_dxf_12():
         gdaltest.post_reason( 'first point (%g,%g) not expected location.' \
                               % (rgeom.GetX(0),rgeom.GetY(0)) )
         return 'fail'
+
+    # Other possible tests:
+    # Polylines with no explicit Z coordinates (e.g., no attribute 38 for
+    # LWPOLYLINE and no attribute 30 for POLYLINE) should always return
+    # geometry type ogr.wkbPolygon. Otherwise, ogr.wkbPolygon25D should be 
+    # returned even if the Z coordinate values are zero.
+    # If the arc_stepsize global is used, one could test that returned adjacent
+    # points do not slope-diverge greater than that value.
         
     feat.Destroy()
 
@@ -445,10 +462,15 @@ def ogr_dxf_12():
 
     return 'success'
 
+
 ###############################################################################
-# Read the first feature, an ellipse and see if it generally meets expectations.
+# Check smooth LWPOLYLINE entity.
 
 def ogr_dxf_13():
+
+    # This test is identical to the previous one except the
+    # newer lwpolyline entity is used. See the comments in the 
+    # previous test regarding caveats, etc.
 
     ds = ogr.Open( 'data/lwpolyline_smooth.dxf' )
     
