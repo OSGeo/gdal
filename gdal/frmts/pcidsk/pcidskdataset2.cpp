@@ -170,7 +170,8 @@ PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDS,
 /************************************************************************/
 /*                            PCIDSK2Band()                             */
 /*                                                                      */
-/*      This constructor is used for overviews.                         */
+/*      This constructor is used for overviews and bitmap segments      */
+/*      as bands.                                                       */
 /************************************************************************/
 
 PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )
@@ -189,6 +190,12 @@ PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannel )
     nRasterYSize = (int) poChannel->GetHeight();
 
     eDataType = PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() );
+
+    if( poChannel->GetType() == CHN_BIT )
+    {
+        SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
+        SetDescription( poChannel->GetDescription().c_str() );
+    }
 }
 
 /************************************************************************/
@@ -452,6 +459,21 @@ CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData )
     {
         poChannel->ReadBlock( iBlockX + iBlockY * nBlocksPerRow,
                               pData );
+
+        // Do we need to upsample 1bit to 8bit?
+        if( poChannel->GetType() == CHN_BIT )
+        {
+            GByte	*pabyData = (GByte *) pData;
+
+            for( int ii = nBlockXSize * nBlockYSize - 1; ii >= 0; ii-- )
+            {
+                if( (pabyData[ii>>3] & (0x80 >> (ii & 0x7))) )
+                    pabyData[ii] = 1;
+                else
+                    pabyData[ii] = 0;
+            }
+        }
+
         return CE_None;
     }
     catch( PCIDSKException ex )
@@ -1296,6 +1318,9 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL( eChanType eType )
         
       case CHN_32R:
         return GDT_Float32;
+
+      case CHN_BIT:
+        return GDT_Byte;
         
       default:
         return GDT_Unknown;
@@ -1373,6 +1398,24 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
         for( iBand = 0; iBand < poFile->GetChannels(); iBand++ )
         {
             poDS->SetBand( iBand+1, new PCIDSK2Band( poDS, poFile, iBand+1 ));
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Create band objects for bitmap segments.                        */
+/* -------------------------------------------------------------------- */
+        int nLastBitmapSegment = 0;
+        PCIDSKSegment *poBitSeg;
+        
+        while( (poBitSeg = poFile->GetSegment( SEG_BIT, "", 
+                                               nLastBitmapSegment)) != NULL )
+        {
+            PCIDSKChannel *poChannel = 
+                dynamic_cast<PCIDSKChannel*>( poBitSeg );
+
+            poDS->SetBand( poDS->GetRasterCount()+1, 
+                           new PCIDSK2Band( poChannel ) );
+
+            nLastBitmapSegment = poBitSeg->GetSegmentNumber();
         }
 
 /* -------------------------------------------------------------------- */
