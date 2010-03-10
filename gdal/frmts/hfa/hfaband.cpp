@@ -291,6 +291,23 @@ CPLErr HFABand::LoadOverviews()
                     papoOverviews[nOverviews-1] = NULL;
                     return CE_None;
                 }
+
+                int i1, i2; 
+
+                // bubble sort into biggest to smallest order.
+                for( i1 = 0; i1 < nOverviews; i1++ )
+                {
+                    for( i2 = 0; i2 < nOverviews-1; i2++ )
+                    {
+                        if( papoOverviews[i2]->nWidth < 
+                            papoOverviews[i2+1]->nWidth )
+                        {
+                            HFABand *poTemp = papoOverviews[i2+1];
+                            papoOverviews[i2+1] = papoOverviews[i2];
+                            papoOverviews[i2] = poTemp;
+                        }
+                    }
+                }
             }
         }
     }
