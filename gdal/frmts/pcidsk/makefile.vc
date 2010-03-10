@@ -40,7 +40,8 @@ OBJ	=	pcidskdataset2.obj vsi_pcidsk_io.obj \
 	sdk\segment\sysblockmap.obj \
 	sdk\segment\cpcidskrpcmodel.obj \
 	sdk\segment\cpcidskgcp2segment.obj \
-	sdk\segment\cpcidskbitmap.obj
+	sdk\segment\cpcidskbitmap.obj \
+	sdk\segment\cpcidsk_tex.obj
 	
 !ENDIF
             
