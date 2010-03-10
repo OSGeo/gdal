@@ -39,7 +39,8 @@ SDKOBJ 	=	\
 	cpcidskpct.o \
 	cpcidskrpcmodel.o \
 	cpcidskgcp2segment.o \
-	cpcidskbitmap.o
+	cpcidskbitmap.o \
+	cpcidsk_tex.o
 
 else
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(PCIDSK_INCLUDE) $(CPPFLAGS)
