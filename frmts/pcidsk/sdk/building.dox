@@ -1,0 +1,71 @@
+/*!
+\page building Building the PCIDSK SDK
+
+As of November 2009 the PCIDSK SDK uses a relatively simplistic 
+set of makefiles for building on linux/unix/macos systems and on 
+windows systems.  
+
+\section build_win32 Building on Windows with Microsoft Visual Studio
+
+On Windows system, building is accomplished using Microsoft Visual
+Studio, but via the commandline tools (NMAKE and CL).  For command 
+line builds you will normally have to have run the VCVAR32.BAT script 
+that comes with the compiler.  For Visual Studio 2003 this might be found at:
+
+\verbatim
+C:\Program Files\Microsoft Visual Studio .Net 2003\VC7\bin\VCVARS32.BAT
+\endverbatim
+
+Some Visual Studios also provide a "Visual Studio Command Prompt" to be 
+found in the start menu, which gives you a shell with the correct 
+environment. If you plan to compile for the 64bit platform be sure 
+to choose the correct bat / command prompt.
+
+Once the environment is setup, you can cd to the PCIDSK "src" 
+subdirectory and do the following:
+
+\verbatim
+C:\PCIDSK\SRC> nmake /f makefile.vc
+\endverbatim
+
+Before building as above, you may find you need to modify some 
+commandline switches in the Makefile.vc.  Generally the switches
+requiring adjustment are in the OPTFLAGS and CXXFLAGS macros:
+
+\verbatim
+OPTFLAGS = /Ox
+CXXFLAGS = /nologo /MD /GR /EHsc $(OPTFLAGS) /W3 /I. \
+	/D_CRT_SECURE_NO_DEPRECATE /DLIBPCIDSK_EXPORTS /D_CRT_NONSTDC_NO_DEPRECATE
+\endverbatim
+
+Adjust as required to match the needs of your application and visual 
+studio version.  The SDK should build with any version of Microsoft
+Visual Studio 2002 or later.  
+
+The result of a build should be a pcidsk.lib file in the 
+pcidsk\src directory.
+
+\section build_unix Building on Linux, Unix and MacOS X
+
+On unix and unix-like operating systems it should be possible
+to build using the Makefile in the top level PCIDSK directory. 
+Currently the SDK does not provide a configure or similar 
+environment.  Instead the src/Makefile, and tests/Makefile 
+can be edited to adjust the compiler switches.  Key switches
+are in the CXXFLAGS macro.  Also, in src/Makefile you can comment
+out, or adjust the JPEG_FLAGS switch to control whether libjpeg
+is used for JPEG compression support.
+
+\verbatim
+JPEG_FLAGS = -DHAVE_LIBJPEG
+CXXFLAGS = -O -Wall -fPIC -I. $(JPEG_FLAGS)
+\endverbatim
+
+Then "make" in the main pcidsk directory should build the SDK
+as well as the test programs.  The "make check" command may be
+used to run the test suite once the test suite data is available.
+
+By default the files src/pcidsk.a (a static library) and src/pcidsk.so
+(a shared library) are built. 
+
+*/

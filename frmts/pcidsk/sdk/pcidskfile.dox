@@ -1,0 +1,381 @@
+/******************************************************************************
+ *
+ * Purpose:  Documentation for the PCIDSKFile class.
+ * 
+ ******************************************************************************
+ * Copyright (c) 2009
+ * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+/** 
+
+\fn PCIDSKInterfaces *PCIDSK::PCIDSKFile::GetInterfaces();
+  
+\brief Fetch hookable interfaces in use with this file.
+
+
+******************************************************************************
+
+\fn PCIDSKChannel *PCIDSK::PCIDSKFile::GetChannel( int band );
+
+\brief Fetch channel interface object.
+
+The returned channel object remains owned by the PCIDSKFile and should
+not be deleted by the caller, and will become invalid after the PCIDSKFile is
+closed (deleted).
+
+@param band the band number to fetch (one based).
+
+@return pointer to internally managed channel object.
+
+******************************************************************************
+
+\fn PCIDSKSegment *PCIDSK::PCIDSKFile::GetSegment( int segment );
+
+\brief Fetch segment interface object.
+
+The returned segment object remains owned by the PCIDSKFile and should
+not be deleted by the caller, and will become invalid after the PCIDSKFile is
+closed (deleted).
+
+@param segment the segment number to fetch (one based).
+
+@return pointer to internally managed segment object.
+
+******************************************************************************
+
+\fn PCIDSKSegment *PCIDSK::PCIDSKFile::GetSegment( int type, std::string name, int previous = 0 );
+
+\brief Fetch segment interface object.
+
+If available, a segment of the specified type and name is returned.  The 
+search is started after segment "previous" if none-zero.   
+
+The returned segment object remains owned by the PCIDSKFile and should
+not be deleted by the caller, and will become invalid after the PCIDSKFile is
+closed (deleted).
+
+@param type the segment type desired, or SEG_UNKNOWN for any type.
+
+@param name the segment name or "" for any name.
+
+@param previous segment after which the search should start or 0 (default) to
+start from the start.
+
+@return pointer to internally managed segment object or NULL if none correspond
+to the request.
+
+******************************************************************************
+
+\fn int PCIDSK::PCIDSKFile::GetWidth() const 
+
+\brief Fetch image width.
+
+@return the width of the file in pixels.
+
+******************************************************************************
+
+\fn int PCIDSK::PCIDSKFile::GetHeight() const 
+
+\brief Fetch image height.
+
+@return the height of the file in pixels.
+
+******************************************************************************
+
+\fn int PCIDSK::PCIDSKFile::GetChannels() const 
+
+\brief Fetch channel (band) count.
+
+@return the number of channels on this file.
+
+******************************************************************************
+
+\fn const char *PCIDSK::PCIDSKFile::GetInterleaving() const 
+
+\brief Fetch file interleaving method.
+
+@return the interleaving name, one of "PIXEL", "BAND" or "FILE".  Note that 
+tiled files will be reported as "FILE" interleaving.
+
+******************************************************************************
+
+\fn bool PCIDSK::PCIDSKFile::GetUpdatable() const 
+
+\brief Check readonly/update status.
+
+@return true if the file is open for update, or false if it is read-only.
+
+******************************************************************************
+
+\fn uint64 PCIDSK::PCIDSKFile::GetFileSize() const 
+
+\brief Fetch file size.
+
+@return returns the size of the PCIDSK file in bytes, as recorded in the 
+file header.
+
+******************************************************************************
+
+\fn void PCIDSK::PCIDSKFile::WriteToFile( const void *buffer, uint64 offset, uint64 size);
+
+\brief Write data to file.
+
+This method is normally only used by the PCIDSK library itself, and provides
+a mechanism to write directly to the PCIDSK file.  Applications should normally
+use the PCIDSK::PCIDSKChannel::ReadBlock(), and 
+PCIDSK::PCIDSKChannel::WriteBlock() methods for imagery, or appropriate 
+PCIDSK::PCIDSKSegment methods for updating segment data.
+
+@param buffer pointer to the data to write to disk.
+@param offset the byte offset in the file (zero based) at which to write the data.
+@param size the number of bytes from buffer to write.
+
+******************************************************************************
+
+\fn void PCIDSK::PCIDSKFile::ReadFromFile( void *buffer, uint64 offset, uint64 size);
+
+\brief Read data from file.
+
+This method is normally only used by the PCIDSK library itself, and provides
+a mechanism to read directly from the PCIDSK file.  Applications should normally
+use the PCIDSK::PCIDSKChannel::ReadBlock() method for imagery, or appropriate 
+PCIDSK::PCIDSKSegment methods for reading segment data.
+
+@param buffer pointer to the buffer into which the data should be read.
+@param offset the byte offset in the file (zero based) at which to read the data.
+@param size the number of bytes from the file to read.
+
+******************************************************************************
+
+\fn void PCIDSK::PCIDSKFile::GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp, std::string filename = "" );
+
+\brief Fetch details for IO to named file. 
+
+This method is normally only used by the PCIDSK library itself to request 
+io accessors for a file.  If filename is empty, accessors for the PCIDSK file 
+are returned.  Otherwise accessors for a dependent file (ie. FILE linked 
+file) are returned. 
+
+@param io_handle_pp pointer to a pointer into which to load the IO handle.
+
+@param io_mutex_pp pointer to a pointer into which to load the associated mutex.
+
+@param filename the name of the file to access or an empty string for the PCIDSK
+file itself.
+
+******************************************************************************
+
+\fn int PCIDSK::PCIDSKFile::GetPixelGroupSize() const;
+
+\brief fetch number of bytes per pixel
+
+Returns the number of bytes for each pixel group.  Each pixel group
+consists of the values for all the channels in the file in order.  
+
+@note This method should only be called for GetInterleaving() == "PIXEL" files.
+
+@return the size of a pixel group in bytes.
+
+@see ReadAndLockBlock()
+
+******************************************************************************
+
+\fn uint8 *PCIDSK::PCIDSKFile::ReadAndLockBlock( int block_index, int win_xoff=-1, int win_xsize=-1 );
+
+\brief Read a block.
+
+Returnst the pointer to an internal buffer for the indicated  block.  The
+buffer is owned by the PCIDSKFile object, but will be considered locked
+and available for the application code to read and modify until the
+UnlockBlock() method is called.  The buffer will contain all the pixel values
+for the requested block in pixel interleaved form.  
+
+The win_xoff, and win_xsize parameters may be used to select a subregion of 
+the scanline block to read.  By default the whole scanline is read.
+
+@note This method should only be called for GetInterleaving() == "PIXEL" 
+files.  Normal imagery access should be via the PCIDSKChannel class.  This 
+method is provided on the PCIDSKFile for pixel interleaved files to allow 
+optimized access for this one case.
+
+@param block_index the zero based block(scanline) to be read.
+
+@param win_xoff the offset into the scanline to start reading values.
+
+@param win_xsize the number of pixels to read. 
+
+@return pointer to an internal buffer with pixel data in it.
+
+******************************************************************************
+
+\fn void PCIDSK::PCIDSKFile::UnlockBlock( bool mark_dirty=false);
+
+\brief Unlock block.
+
+This method should be called after use of the buffer from ReadAndLockBlock() 
+is complete.  If the buffer was modified and will need to be written to disk
+the argument "mark_dirty" should be passed in as true.
+
+@note This method should only be called for GetInterleaving() == "PIXEL" files.
+
+@param mark_dirty true if the block data was modified, else false.
+
+@see ReadAndLockBlock()
+
+******************************************************************************
+
+\fn void PCIDSK::PCIDSKFile::FlushBlock();
+
+\brief force write of dirty buffer
+
+This method may be used for force the flushing of any previously modified
+pixel data for the current pixel interleaved scanline to disk.  The imagery
+buffer is that returned by ReadAndLockBlock(), and the data would have had
+to have been marked dirty when UnlockBlock() was called. 
+
+Dirty data will be automatically flushed to disk on file close, or when 
+another block is read with ReadAndLockBlock().  This method is primarily used
+to force flushing to disk without closing the file. 
+
+@note This method should only be called for GetInterleaving() == "PIXEL" files.
+
+@see ReadAndLockBlock()
+
+******************************************************************************
+\fn std::vector<std::string> PCIDSK::PCIDSKFile::GetMetadataKeys();
+
+\brief Fetch metadata keys
+
+Returns a vector of metadata keys that occur on this object.  The values
+associated with each may be fetched with GetMetadataValue().
+
+@return list of keys
+
+@see GetMetadataValue()
+
+******************************************************************************
+\fn std::string PCIDSK::PCIDSKFile::GetMetadataValue( const std::string& key );
+
+\brief Fetch metadata value
+
+Fetch the metadata value associated with the passed key on this object.  If 
+there is no such item an empty string is returned.
+
+@param key the key to fetch the value for.
+
+@return the value of the indicated metadata item, or an empty string if it
+does not exist on the target object.
+
+@see GetMetadataKeys()
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKFile::SetMetadataValue( const std::string& key, const std::string& value );
+
+\brief Set metadata value
+
+Assign  the metadata value associated with the passed key on this object.  
+The file needs to be open for update.  Note that keys should be well formed
+tokens (no special characters, spaces, etc).
+
+@param key the key to fetch the value for.  
+
+@param value the value to assign to the key.  An empty string deletes the item.
+
+@see GetMetadataValue()
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKFile::CreateOverviews( int chan_count, int *chan_list, int factor, std::string resampling );
+
+\brief Create an overview level
+
+An overview is created on the indicated list of channels.  If chan_count is 
+zero, then it will be created for all channels on the file.  The overview will
+have a size determined by dividing the base image level by "factor".   The
+file needs to be open in update mode.
+
+If the requested overview level already exists an exception will be thrown.
+
+While this function creates the overview level, and records the resampling
+method in metadata, it does not actually compute and assign imagery to the
+overview.  This must be done externally by the application.  Overview 
+computation is not a function of the PCIDSK SDK.
+
+@param chan_count the number of channels listed in chan_list.
+
+@param chan_list the channels for which the overview level should be created.
+
+@param factor the overview decimation factor. 
+
+@param resampling the resampling to be used for this overview - one of "NEAREST", "AVERAGE" or "MODE".
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKFile::CreateSegment( std::string name, std::string description, eSegType seg_type, int data_blocks );
+
+\brief create a new auxiliary segment
+
+A new segment of the desired type is created and assigned the given name and 
+description.  The segment number is returned.  The segment is created with the
+requested number of data blocks.  If this is zero a default size may be 
+assigned for some types with fixed sizes.
+
+This method may fail if there are no unused segment pointers available in
+the file. 
+
+@param name segment name, at most eight characters.
+
+@param description segment description, at most 64 characters.
+
+@param seg_type the segment type.
+
+@param data_blocks the number of data blocks the segment should be initially assigned.  If zero a default value may be used for some fixed sized segments.
+
+@return the number of the segment created.
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKFile::DeleteSegment( int segment );
+
+\brief delete an existing segment
+
+Delete the indicated segment number.  The segment must currently exist.  The
+internal PCIDSKSegment object associated with this segment will also be
+destroyed, and any references to it from GetSegment() or other sources should
+not be used by the application after this call is made.   
+
+@param segment the number of the segment to delete from the file.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKFile::Synchronize();
+
+\brief Write pending information to disk.
+
+Some write and update operations on PCIDSK files are not written to disk 
+immediately after write calls.  This method will ensure that any pending
+writes are flushed through to disk.  This includes writing updates to 
+tiled layer indexes, flushing out metadata, and potential caching of other 
+information such as vector writes.
+
+NOTE: Currently this method does not invalidate read-cached information
+such as segment pointer lists, segment headers, or band metadata.  At some
+point in the future it might be extended to do this as well.
+
+*/
+
