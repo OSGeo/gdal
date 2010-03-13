@@ -222,7 +222,17 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
     if ( poDS->nBlockPreferredXSize == nBlockXSize &&
          poDS->nBlockPreferredYSize > 0 )
     {
-        nBlockYSize = poDS->nBlockPreferredYSize;
+        if (poDS->nBlockPreferredYSize == 1)
+        {
+            /* Avoid defaulting to tile reading when the preferred height is 1 */
+            /* as it leads to very poor performance with : */
+            /* ftp://e4ftl01u.ecs.nasa.gov/MODIS_Composites/MOLT/MOD13Q1.005/2006.06.10/MOD13Q1.A2006161.h21v13.005.2008234103220.hd */
+            poDS->bReadTile = FALSE;
+        }
+        else
+        {
+            nBlockYSize = poDS->nBlockPreferredYSize;
+        }
     }
 }
 
@@ -423,8 +433,8 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 /* Ensure that we don't overlap the bottom or right edges */
                 /* of the dataset in order to use the GDreadtile() API */
                 if ( poGDS->bReadTile &&
-                     (nBlockXOff + 1) * nBlockXSize < nRasterXSize && 
-                     (nBlockYOff + 1) * nBlockYSize < nRasterYSize )
+                     (nBlockXOff + 1) * nBlockXSize <= nRasterXSize && 
+                     (nBlockYOff + 1) * nBlockYSize <= nRasterYSize )
                 {
                     int32 tilecoords[] = { nBlockYOff , nBlockXOff };
                     if( GDreadtile( hGD, poGDS->pszFieldName , tilecoords , pImage ) != 0 )
