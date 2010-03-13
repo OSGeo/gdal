@@ -244,6 +244,37 @@ def hdf4_read_online_7():
     return 'success'
 
 
+###############################################################################
+# Test reading a HDF4_EOS:EOS_GRID where preferred block height reported would be 1
+# but that will lead to very poor performance (#3386)
+
+def hdf4_read_online_8():
+
+    if gdaltest.hdf4_drv is None:
+        return 'skip'
+
+    # 5 MB
+    if not gdaltest.download_file('ftp://e4ftl01u.ecs.nasa.gov/MODIS_Composites/MOLT/MOD13Q1.005/2006.06.10/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf', 'MOD13Q1.A2006161.h21v13.005.2008234103220.hdf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'HDF4Image', 'HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI', 1, 53837, filename_absolute = 1 )
+
+    ret = tst.testOpen()
+    if ret != 'success':
+        return ret
+
+    ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI')
+    if 'GetBlockSize' in dir(gdal.Band):
+        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        if blockx != 4800 or blocky == 1:
+            print('blockx=%d, blocky=%d' % (blockx, blocky))
+            gdaltest.post_reason("Did not get expected block size")
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2] )
@@ -259,6 +290,7 @@ gdaltest_list.append( hdf4_read_online_4 )
 gdaltest_list.append( hdf4_read_online_5 )
 gdaltest_list.append( hdf4_read_online_6 )
 gdaltest_list.append( hdf4_read_online_7 )
+gdaltest_list.append( hdf4_read_online_8 )
 
 if __name__ == '__main__':
 
