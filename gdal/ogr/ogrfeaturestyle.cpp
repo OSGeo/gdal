@@ -376,6 +376,15 @@ const char *OGRStyleMgr::GetStyleName(const char *pszStyleString)
 /*      const char *OGRStyleMgr::GetStyleByName(const char *pszStyleName)   */
 /*                                                                          */
 /****************************************************************************/
+
+/**
+ * \brief find a style in the current style table.
+ *
+ *
+ * @param pszStyleName the name of the style to add.
+ *
+ * @return the style string matching the name or NULL if not found or error.
+ */
 const char *OGRStyleMgr::GetStyleByName(const char *pszStyleName)
 {    
     if (m_poDataSetStyleTable)
@@ -390,6 +399,19 @@ const char *OGRStyleMgr::GetStyleByName(const char *pszStyleName)
 /*                                   char *pszStyleString)                  */
 /*                                                                          */
 /****************************************************************************/
+
+/**
+ * \brief Add a style to the current style table.
+ *
+ * This method is the same as the C function OGR_SM_AddStyle().
+ *
+ * @param pszStyleName the name of the style to add.
+ * @param pszStyleString the style string to use, or NULL to use the style 
+ *                       stored in the manager.
+ *
+ * @return TRUE on success, FALSE on errors. 
+ */
+
 GBool OGRStyleMgr::AddStyle(const char *pszStyleName, 
                             const char *pszStyleString)
 {
