@@ -505,10 +505,10 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         strcat( pszOldFieldList, osGeomColumn );
         strcat( pszNewFieldList, osGeomColumn );
 
-        if ( eGeomFormat == OSGF_WKB )
-            strcat( pszNewFieldList, " BLOB" );
-        else
+        if ( eGeomFormat == OSGF_WKT )
             strcat( pszNewFieldList, " VARCHAR" );
+        else
+            strcat( pszNewFieldList, " BLOB" );
 
         iNextOrdinal++;
     }
