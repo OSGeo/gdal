@@ -882,7 +882,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 
             CPLDebug( "GDAL", "Finished chunk %d.", iChunk-1 );
 
-            eErr = (CPLErr) (long) papThreadDataList[iThread*3+2];
+            eErr = (CPLErr) (long) (GIntBig) papThreadDataList[iThread*3+2];
 
             if( eErr != CE_None )
                 break;
