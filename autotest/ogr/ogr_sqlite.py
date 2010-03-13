@@ -486,6 +486,9 @@ def ogr_sqlite_11():
     gdaltest.sl_lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
 
+    # Test adding a column to see if geometry is preserved (#3471)
+    gdaltest.sl_lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
+
     ######################################################
     # Reopen DB
     gdaltest.sl_ds.Destroy()
@@ -510,7 +513,7 @@ def ogr_sqlite_12():
         return 'skip'
 
     ######################################################
-    # Create Layer with WKB geometry
+    # Create Layer with WKT geometry
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomwkt', options = [ 'FORMAT=WKT' ] )
 
     geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
@@ -518,6 +521,9 @@ def ogr_sqlite_12():
     dst_feat.SetGeometry( geom )
     gdaltest.sl_lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
+
+    # Test adding a column to see if geometry is preserved (#3471)
+    gdaltest.sl_lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
 
     ######################################################
     # Reopen DB
@@ -963,6 +969,30 @@ def ogr_spatialite_3():
         return 'fail'
 
 ###############################################################################
+# Test updating a spatialite DB (#3471)
+
+def ogr_spatialite_4():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1  )
+
+    lyr = ds.GetLayerByName('geomspatialite')
+    lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
+
+    lyr = ds.ExecuteSQL('SELECT * FROM geomspatialite')
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom is None or geom.ExportToWkt() != 'POINT (0 1)':
+        print(geom)
+        return 'fail'
+    feat.Destroy()
+    ds.ReleaseResultSet(lyr)
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -1015,6 +1045,7 @@ gdaltest_list = [
     ogr_spatialite_1,
     ogr_spatialite_2,
     ogr_spatialite_3,
+    ogr_spatialite_4,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
