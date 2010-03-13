@@ -95,7 +95,7 @@ static void GDALSharedDatasetFreeFunc(void* elt)
 static unsigned long GDALDatasetHashFunc(const void* elt)
 {
     DatasetCtxt* psStruct = (DatasetCtxt*) elt;
-    return (unsigned long)psStruct->poDS;
+    return (unsigned long)(GUIntBig) psStruct->poDS;
 }
 
 static int GDALDatasetEqualFunc(const void* elt1, const void* elt2)
