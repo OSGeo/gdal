@@ -740,6 +740,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     else
         nYChunkSize = GDALGetCacheMax() / nScanlineBytes;
 
+    if( nYChunkSize < 1 )
+        nYChunkSize = 1;
     if( nYChunkSize > poDS->GetRasterYSize() )
         nYChunkSize = poDS->GetRasterYSize();
 
