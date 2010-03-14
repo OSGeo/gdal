@@ -45,6 +45,10 @@ GDALWMSDataset::~GDALWMSDataset() {
 CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;
 
+    const char *pszUserAgent = CPLGetXMLValue(config, "UserAgent", "");
+    if (pszUserAgent[0] != '\0')
+        m_osUserAgent = pszUserAgent;
+
     if (ret == CE_None) {
         const char *max_conn = CPLGetXMLValue(config, "MaxConnections", "");
         if (max_conn[0] != '\0') {
