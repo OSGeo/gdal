@@ -2630,7 +2630,12 @@ def tiff_write_78():
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
+    if 0 == gdal.GetCacheMax():
+        gdal.SetCacheMax(oldCacheSize)
+
     return 'success'
+
+oldCacheSize = gdal.GetCacheMax()
 
 gdaltest_list = [
     tiff_write_1,
