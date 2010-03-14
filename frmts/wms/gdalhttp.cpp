@@ -81,14 +81,22 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
     }
 
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_USERAGENT, "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)");
+    /* Set User-Agent */
+    const char *pszUserAgent = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "USERAGENT");
+    if (pszUserAgent == NULL)
+        pszUserAgent = "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)";
+    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_USERAGENT, pszUserAgent);
+
+    /* Set URL */
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->pszURL);
 
+    /* Set timeout.*/
     const char *timeout = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "TIMEOUT");
     if (timeout != NULL) {
         curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_TIMEOUT, atoi(timeout));
     }
 
+    /* Set Headers (copied&pasted from cpl_http.cpp, but unused by callers of CPLHTTPInitializeRequest) .*/
     const char *headers = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "HEADERS");
     if (headers != NULL) {
         psRequest->m_headers = curl_slist_append(psRequest->m_headers, headers);

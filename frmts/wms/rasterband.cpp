@@ -74,6 +74,14 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
         http_request_optstr.Printf("TIMEOUT=%d", m_parent_dataset->m_http_timeout);
         http_request_opts = CSLAddString(http_request_opts, http_request_optstr.c_str());
     }
+
+    if (m_parent_dataset->m_osUserAgent.size() != 0)
+    {
+        CPLString osUserAgentOptStr("USERAGENT=");
+        osUserAgentOptStr += m_parent_dataset->m_osUserAgent;
+        http_request_opts = CSLAddString(http_request_opts, osUserAgentOptStr.c_str());
+    }
+
     for (int iy = by0; iy <= by1; ++iy) {
         for (int ix = bx0; ix <= bx1; ++ix) {
             bool need_this_block = false;
