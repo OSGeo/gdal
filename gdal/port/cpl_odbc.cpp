@@ -716,6 +716,13 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         nRetCode = SQLGetData( m_hStmt, iCol + 1, nFetchType,
                                szWrkData, sizeof(szWrkData)-1, 
                                &cbDataLen );
+
+/* SQLGetData() is giving garbage values in the first 4 bytes of cbDataLen *
+ * in some architectures. Converting it to (int) discards the unnecessary  *
+ * bytes. This should not be a problem unless the buffer size reaches      *
+ * 2GB. (#3385)                                                            */
+        cbDataLen = (int) cbDataLen;
+
         if( Failed( nRetCode ) )
         {
             if ( nRetCode == SQL_NO_DATA )
