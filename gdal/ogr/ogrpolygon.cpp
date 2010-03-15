@@ -774,10 +774,14 @@ int OGRPolygon::Centroid( OGRPoint *poPoint ) const
     if( hThisGeosGeom != NULL )
     {
     	hOtherGeosGeom = GEOSGetCentroid( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+
+        if( hOtherGeosGeom == NULL )
+            return OGRERR_FAILURE;
+
         OGRPoint *poCentroid = (OGRPoint *) 
             OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
 
-        GEOSGeom_destroy( hThisGeosGeom );
         GEOSGeom_destroy( hOtherGeosGeom );
 
         if( poPoint == NULL 
@@ -851,10 +855,14 @@ int OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
     if( hThisGeosGeom != NULL )
     {
      	hOtherGeosGeom = GEOSPointOnSurface( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+
+        if( hOtherGeosGeom == NULL )
+            return OGRERR_FAILURE;
+
         OGRPoint *poInsidePoint = (OGRPoint *) 
             OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
  
-        GEOSGeom_destroy( hThisGeosGeom );
         GEOSGeom_destroy( hOtherGeosGeom );
  
         if( poPoint == NULL 
