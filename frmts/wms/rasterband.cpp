@@ -35,6 +35,7 @@ GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, d
     m_parent_dataset = parent_dataset;
     m_scale = scale;
     m_overview = -1;
+    m_color_interp = GCI_Undefined;
 
     poDS = parent_dataset;
     nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
@@ -591,4 +592,8 @@ CPLErr GDALWMSRasterBand::AdviseRead(int x0, int y0, int sx, int sy, int bsx, in
     int by1 = (y0 + sy - 1) / nBlockYSize;
 
     return ReadBlocks(0, 0, NULL, bx0, by0, bx1, by1, 1);
+}
+
+GDALColorInterp GDALWMSRasterBand::GetColorInterpretation() {
+    return m_color_interp;
 }
