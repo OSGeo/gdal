@@ -256,12 +256,14 @@ protected:
     CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read);
     CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
     CPLErr ReportWMSException(const char *file_name);
+    virtual GDALColorInterp GetColorInterpretation();
 
 protected:
     GDALWMSDataset *m_parent_dataset;
     double m_scale;
     std::vector<GDALWMSRasterBand *> m_overviews;
     int m_overview;
+    GDALColorInterp m_color_interp;
 };
 
 GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo);
