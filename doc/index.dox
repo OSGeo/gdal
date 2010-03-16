@@ -59,6 +59,23 @@ Download:
 <li> <a href="wince.html">GDAL for Windows CE</a>
 </ul>
 
+\section foss4g Conference 
+ 
+\htmlonly 
+<table border="0" cellspacing="4" cellpadding="4"> 
+ 
+<tr><td><a href="http://2010.foss4g.org/"> 
+<img src="http://2010.foss4g.org/images/logo_125x125.jpg" alt="" border="0" width="125" height="125"> 
+</a></td> 
+ 
+<td><a href="http://2010.foss4g.org">FOSS4G 2010</a> is the leading annual  
+conference for free and open source geospatial software.  It will include  
+workshops and presentations related to GDAL/OGR, and some of the GDAL/OGR  
+development community will be attending.  It is <i>the</i> event for those  
+interested in GDAL/OGR, other FOSS geospatial technologies and the community  
+around them.</td> 
+</table> 
+\endhtmlonly
 
 \section index_maillist Mailing List
 
