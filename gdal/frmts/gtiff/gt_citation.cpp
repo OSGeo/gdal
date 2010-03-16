@@ -194,7 +194,7 @@ char** CitationStringParse(const char* psCitation)
     OGRBoolean nameFound = FALSE;
     while((pStr-psCitation+1)< nCitationLen)
     {
-        if( (pDelimit = strstr(pStr, "|")) )
+        if( (pDelimit = strstr(pStr, "|")) != NULL )
         {
             osName = "";
             osName.append(pStr, pDelimit-pStr);
