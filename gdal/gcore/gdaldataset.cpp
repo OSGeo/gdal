@@ -1617,7 +1617,10 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         nLineSpace = nPixelSpace * nBufXSize;
     }
     
-    if( nBandSpace == 0 )
+    /* The nBandCount > 1 test is necessary to allow reading only */
+    /* one band, even if the nLineSpace would overflow, but as it */
+    /* is not used in that case, it can be left to 0 (#3481) */
+    if( nBandSpace == 0 && nBandCount > 1 )
     {
         if (nLineSpace > INT_MAX / nBufYSize)
         {
