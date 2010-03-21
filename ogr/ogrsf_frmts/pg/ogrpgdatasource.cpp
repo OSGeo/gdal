@@ -728,21 +728,21 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                 
                 osCommand.Printf("DECLARE mycursor CURSOR for "
                                  "SELECT c.relname, n.nspname, g.f_geometry_column FROM pg_class c, pg_namespace n, geometry_columns g "
-                                 "WHERE (c.relkind in (%s) AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                 "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid "
                                  "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)",
                                  pszAllowedRelations);
 
                 if (bHaveGeography)
                     osCommand += CPLString().Printf(
                                      "UNION SELECT c.relname, n.nspname, g.f_geography_column FROM pg_class c, pg_namespace n, geography_columns g "
-                                     "WHERE (c.relkind in (%s) AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                     "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid "
                                      "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)",
                                      pszAllowedRelations);
             }
             else
                 osCommand.Printf("DECLARE mycursor CURSOR for "
                                  "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n "
-                                 "WHERE (c.relkind in (%s) AND c.relname !~ '^pg' AND c.relnamespace=n.oid)",
+                                 "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid)",
                                  pszAllowedRelations);
                                 
             hResult = PQexec(hPGConn, osCommand.c_str());
@@ -825,7 +825,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                                 "FROM pg_class c1, pg_class c2, pg_namespace n, pg_inherits i "
                                 "WHERE i.inhparent = c2.oid AND i.inhrelid = c1.oid AND c1.relnamespace=n.oid "
                                 "AND c1.relkind in ('r', 'v') AND c1.relnamespace=n.oid AND c2.relkind in ('r','v') "
-                                "AND c2.relname !~ '^pg' AND c2.relnamespace=n.oid");
+                                "AND c2.relname !~ '^pg_' AND c2.relnamespace=n.oid");
 
             if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
             {
