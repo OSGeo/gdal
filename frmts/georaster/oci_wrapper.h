@@ -35,7 +35,6 @@
 
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "cpl_string.h"
 
 // Oracle Class Interface
 
@@ -86,7 +85,11 @@ const char*         OWReplaceString( const char* pszBaseString,
 #define TYPE_OWNER                  "MDSYS"
 #define SDO_GEOMETRY                TYPE_OWNER".SDO_GEOMETRY"
 #define SDO_GEORASTER               TYPE_OWNER".SDO_GEORASTER"
+#define SDO_PC                      TYPE_OWNER".SDO_PC"
 #define SDO_NUMBER_ARRAY            TYPE_OWNER".SDO_NUMBER_ARRAY"
+#define SDO_ORDINATE_ARRAY          TYPE_OWNER".SDO_ORDINATE_ARRAY"
+#define SDO_ELEM_INFO_ARRAY         TYPE_OWNER".SDO_ELEM_INFO_ARRAY"
+
 #define OW_XMLNS        "xmlns=\"http://xmlns.oracle.com/spatial/georaster\""
 
 /***************************************************************************/
@@ -97,6 +100,14 @@ typedef OCIRef SDO_GEORASTER_ref;
 typedef OCIRef SDO_GEOMETRY_ref;
 typedef OCIRef SDO_POINT_TYPE_ref;
 
+typedef OCIArray sdo_elem_info_array;
+typedef OCIArray sdo_ordinate_array;
+typedef OCIArray SDO_NUMBER_ARRAY_TYPE;
+
+/***************************************************************************/
+/*                            Point type                                   */
+/***************************************************************************/
+
 struct sdo_point_type
 {
     OCINumber x;
@@ -106,9 +117,19 @@ struct sdo_point_type
 
 typedef struct sdo_point_type sdo_point_type;
 
-typedef OCIArray sdo_elem_info_array;
-typedef OCIArray sdo_ordinate_array;
-typedef OCIArray SDO_NUMBER_ARRAY_TYPE;
+struct sdo_point_type_ind
+{
+    OCIInd      _atomic;
+    OCIInd      x;
+    OCIInd      y;
+    OCIInd      z;
+};
+
+typedef struct sdo_point_type_ind sdo_point_type_ind;
+
+/***************************************************************************/
+/*                            Geometry type                                */
+/***************************************************************************/
 
 struct sdo_geometry
 {
@@ -118,16 +139,8 @@ struct sdo_geometry
     OCIArray*       sdo_elem_info;
     OCIArray*       sdo_ordinates;
 };
-typedef struct sdo_geometry SDO_GEOMETRY_TYPE;
 
-struct sdo_point_type_ind
-{
-    OCIInd      _atomic;
-    OCIInd      x;
-    OCIInd      y;
-    OCIInd      z;
-};
-typedef struct sdo_point_type_ind sdo_point_type_ind;
+typedef struct sdo_geometry SDO_GEOMETRY_TYPE;
 
 struct sdo_geometry_ind
 {
@@ -138,7 +151,12 @@ struct sdo_geometry_ind
     OCIInd      sdo_elem_info;
     OCIInd      sdo_ordinates;
 };
+
 typedef struct SDO_GEOMETRY_ind SDO_GEOMETRY_ind;
+
+/***************************************************************************/
+/*                            GeoRaster type                               */
+/***************************************************************************/
 
 struct sdo_georaster
 {
@@ -148,6 +166,7 @@ struct sdo_georaster
     OCINumber          rasterid;
     void*              metadata;
 };
+
 typedef struct sdo_georaster SDO_GEORASTER_TYPE;
 
 struct sdo_georaster_ind
@@ -159,7 +178,77 @@ struct sdo_georaster_ind
     OCIInd            rasterid;
     OCIInd            metadata;
 };
+
 typedef struct sdo_georaster_ind SDO_GEORASTER_ind;
+
+/***************************************************************************/
+/*                            Point Cloud type                             */
+/***************************************************************************/
+
+struct sdo_mbr
+{
+   OCIArray*            lower_left;
+   OCIArray*            upper_right;
+};
+typedef struct sdo_mbr SDO_MBR_TYPE;
+
+struct sdo_mbr_ind
+{
+   OCIInd               _atomic;
+   OCIInd               lower_left;
+   OCIInd               upper_right;
+};
+typedef struct sdo_mbr_ind SDO_MBR_ind;
+
+struct sdo_orgscl_type
+{
+   SDO_MBR_TYPE         extent;
+   OCIArray*            scale;
+   OCIArray*            ord_cmp_type;
+};
+typedef struct sdo_orgscl_type SDO_ORGSCL_TYPE;
+
+struct sdo_orgscl_type_ind
+{
+   OCIInd               _atomic;
+   SDO_MBR_ind          extent;
+   OCIInd               scale;
+   OCIInd               ord_cmp_type;
+};
+typedef struct sdo_orgscl_type_ind SDO_ORGSCL_TYPE_ind;
+
+struct sdo_pointcloud
+{
+    OCIString*          base_table;
+    OCIString*          base_column;
+    OCINumber           pc_id;
+    OCIString*          blk_table;
+    OCIString*          ptn_params;
+    SDO_GEOMETRY_TYPE   pc_geometry;
+    OCINumber           pc_tol;
+    OCINumber           pc_tot_dimensions;
+    SDO_ORGSCL_TYPE     pc_domain;
+    OCIString*          pc_val_attr_tables;
+    void*               pc_other_attrs;
+};
+typedef struct sdo_pointcloud SDO_PC_TYPE;
+
+struct sdo_pc_ind
+{
+    OCIInd              _atomic;
+    OCIInd              base_table;
+    OCIInd              base_column;
+    OCIInd              pc_id;
+    OCIInd              blk_table;
+    OCIInd              ptn_params;
+    sdo_geometry_ind    pc_geometry;
+    OCIInd              pc_tol;
+    OCIInd              pc_tot_dimensions;
+    OCIInd              pc_domain;
+    OCIInd              pc_val_attr_tables;
+    OCIInd              pc_other_attrs;
+};
+typedef struct sdo_pointcloud_ind SDO_PC_ind;
 
 /***************************************************************************/
 /*                            Oracle class wrappers                        */
@@ -179,9 +268,9 @@ class OWConnection
 public:
 
                         OWConnection(
-                            const char* pszUser,
-                            const char* pszPassword,
-                            const char* pszServer );
+                            const char* pszUserIn,
+                            const char* pszPasswordIn,
+                            const char* pszServerIn );
     virtual            ~OWConnection();
 
 private:
@@ -198,13 +287,16 @@ private:
 
     bool                bSuceeeded;
 
-    CPLString           sUser;
-    CPLString           sPassword;
-    CPLString           sServer;
+    char*               pszUser;
+    char*               pszPassword;
+    char*               pszServer;
 
     OCIType*            hNumArrayTDO;
     OCIType*            hGeometryTDO;
     OCIType*            hGeoRasterTDO;
+    OCIType*            hPointCloudTDO;
+    OCIType*            hElemArrayTDO;
+    OCIType*            hOrdinateArrayTDO;
 
 public:
 
@@ -225,11 +317,15 @@ public:
 
     bool                Succeeded() { return bSuceeeded; };
 
-    const char*         GetUser() { return sUser.c_str(); };
-    const char*         GetPassword() { return sPassword.c_str(); };
-    const char*         GetServer() { return sServer.c_str(); };
+    char*               GetUser() { return pszUser; };
+    char*               GetPassword() { return pszPassword; };
+    char*               GetServer() { return pszServer; };
     int                 GetVersion () { return nVersion; };
     sb4                 GetCharSize () { return nCharSize; };
+
+    bool                Commit(); // OCITransCommit()
+    bool                StartTransaction(); //  //OCITransStart()
+    bool                EndTransaction() {return Commit(); }
 
 };
 
@@ -279,6 +375,7 @@ public:
     void                Define( OCIArray** pphData );
     void                Define( sdo_georaster** pphData );
     void                Define( sdo_geometry** pphData );
+    void                Define( sdo_pointcloud** pphData );
     void                Define( OCILobLocator** pphLocator, long nIterations );
     void                BindName( const char* pszName, int* pnData );
     void                BindName( const char* pszName, double* pnData );
