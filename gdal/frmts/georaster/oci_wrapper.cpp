@@ -28,10 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <string>
-#include <string.h>
-
-
 #include "oci_wrapper.h"
 
 static const OW_CellDepth ahOW_CellDepth[] = {
@@ -53,13 +49,13 @@ static const OW_CellDepth ahOW_CellDepth[] = {
 /*                            OWConnection                                   */
 /*****************************************************************************/
 
-OWConnection::OWConnection( const char* pszUser,
-                            const char* pszPassword,
-                            const char* pszServer )
+OWConnection::OWConnection( const char* pszUserIn,
+                            const char* pszPasswordIn,
+                            const char* pszServerIn )
 {
-    sUser           = pszUser;
-    sPassword       = pszPassword;
-    sServer         = pszServer;
+    pszUser         = CPLStrdup( pszUserIn );
+    pszPassword     = CPLStrdup( pszPasswordIn );
+    pszServer       = CPLStrdup( pszServerIn );
     hEnv            = NULL;
     hError          = NULL;
     hSvcCtx         = NULL;
@@ -230,6 +226,7 @@ OWConnection::OWConnection( const char* pszUser,
     hNumArrayTDO    = DescribeType( (char*) SDO_NUMBER_ARRAY );
     hGeometryTDO    = DescribeType( (char*) SDO_GEOMETRY );
     hGeoRasterTDO   = DescribeType( (char*) SDO_GEORASTER );
+    hPointCloudTDO  = DescribeType( (char*) SDO_PC );
 }
 
 OWConnection::~OWConnection()
@@ -458,6 +455,27 @@ bool OWConnection::GetNextField( OCIParam* phTable,
 
     return true;
 
+}
+
+bool OWConnection::StartTransaction()
+{
+    CheckError( OCITransStart (
+        hSvcCtx,
+        hError,
+        (uword) 30,
+        OCI_TRANS_NEW), hError );
+
+    return true;
+}
+
+bool OWConnection::Commit()
+{
+    CheckError( OCITransCommit (
+        hSvcCtx,
+        hError,
+        OCI_DEFAULT), hError );
+
+    return true;
 }
 
 /*****************************************************************************/
@@ -814,6 +832,33 @@ void OWStatement::Define( sdo_georaster** pphData )
 }
 
 void OWStatement::Define( sdo_geometry** pphData )
+{
+    OCIDefine* hDefine = NULL;
+
+    nNextCol++;
+
+    CheckError( OCIDefineByPos( hStmt,
+        &hDefine,
+        hError,
+        (ub4) nNextCol,
+        (dvoid*) NULL,
+        (sb4) 0,
+        (ub2) SQLT_NTY,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) OCI_DEFAULT ), hError );
+
+    CheckError( OCIDefineObject( hDefine,
+        hError,
+        poConnection->hGeometryTDO,
+        (dvoid**) pphData,
+        (ub4*) NULL,
+        (dvoid**) NULL,
+        (ub4*) NULL ), hError );
+}
+
+void OWStatement::Define( sdo_pointcloud** pphData )
 {
     OCIDefine* hDefine = NULL;
 
