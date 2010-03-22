@@ -31,6 +31,7 @@
 #include <utility>
 #include <vector>
 #include <cassert>
+#include <cstring>
 
 using namespace PCIDSK;
 
@@ -316,7 +317,6 @@ namespace {
                         std::string& utm_units)
 
     {
-#ifdef notdef
         proj_parms.clear();
         map_units.clear();
         utm_units.clear();
@@ -471,7 +471,6 @@ namespace {
         //ProjParms2Info(szTmp, APModel->sProjection);
         // Parse the Proj Params
     
-#endif
     }
 } // end anonymous namespace
 
