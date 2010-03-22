@@ -254,6 +254,9 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
 		unit_c[1] = '\0';
 		datum_c[1] = '\0';
         
+        unit_c[1] = '\0';
+        datum_c[1] = '\0';
+        
         // Write out elevation information
         pimpl_->seg_data.Put(unit_c, offset + 46, 1);
         pimpl_->seg_data.Put(datum_c, offset + 47, 1);

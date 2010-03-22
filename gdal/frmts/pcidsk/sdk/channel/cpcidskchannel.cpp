@@ -93,7 +93,7 @@ CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
 /*      No overviews for unassociated files, so just mark them as       */
 /*      initialized.                                                    */
 /* -------------------------------------------------------------------- */
-    overviews_initialized = channel_number == -1;
+    overviews_initialized = (channel_number == -1);
 }
 
 /************************************************************************/
@@ -127,6 +127,7 @@ void CPCIDSKChannel::InvalidateOverviewInfo()
 
     overview_infos.clear();
     overview_bands.clear();
+    overview_decimations.clear();
 
     overviews_initialized = false;
 }
@@ -155,6 +156,7 @@ void CPCIDSKChannel::EstablishOverviewInfo()
 
         overview_infos.push_back( value );
         overview_bands.push_back( NULL );
+        overview_decimations.push_back( atoi(keys[i].c_str()+10) );
     }
 }
 
@@ -196,6 +198,10 @@ PCIDSKChannel *CPCIDSKChannel::GetOverview( int overview_index )
 {
     EstablishOverviewInfo();
 
+    if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
+        ThrowPCIDSKException( "Non existant overview (%d) requested.", 
+                              overview_index );
+
     if( overview_bands[overview_index] == NULL )
     {
         PCIDSKBuffer image_header(1024), file_header(1024);
@@ -212,6 +218,87 @@ PCIDSKChannel *CPCIDSKChannel::GetOverview( int overview_index )
     }
 
     return overview_bands[overview_index];
+}
+
+/************************************************************************/
+/*                          IsOverviewValid()                           */
+/************************************************************************/
+
+bool CPCIDSKChannel::IsOverviewValid( int overview_index )
+
+{
+    EstablishOverviewInfo();
+
+    if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
+        ThrowPCIDSKException( "Non existant overview (%d) requested.", 
+                              overview_index );
+
+    int sis_id, validity=0;
+
+    sscanf( overview_infos[overview_index].c_str(), "%d %d", 
+            &sis_id, &validity );
+    
+    return validity != 0;
+}
+
+/************************************************************************/
+/*                       GetOverviewResampling()                        */
+/************************************************************************/
+
+std::string CPCIDSKChannel::GetOverviewResampling( int overview_index )
+
+{
+    EstablishOverviewInfo();
+
+    if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
+        ThrowPCIDSKException( "Non existant overview (%d) requested.", 
+                              overview_index );
+
+    int sis_id, validity=0;
+    char resampling[17];
+
+    sscanf( overview_infos[overview_index].c_str(), "%d %d %16s", 
+            &sis_id, &validity, &(resampling[0]) );
+    
+    return resampling;
+}
+
+/************************************************************************/
+/*                        SetOverviewValidity()                         */
+/************************************************************************/
+
+void CPCIDSKChannel::SetOverviewValidity( int overview_index, 
+                                          bool new_validity )
+
+{
+    EstablishOverviewInfo();
+
+    if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
+        ThrowPCIDSKException( "Non existant overview (%d) requested.", 
+                              overview_index );
+
+    int sis_id, validity=0;
+    char resampling[17];
+    
+    sscanf( overview_infos[overview_index].c_str(), "%d %d %16s", 
+            &sis_id, &validity, &(resampling[0]) );
+    
+    // are we already set to this value?
+    if( new_validity == (validity != 0) )
+        return;
+
+    char new_info[48];
+
+    sprintf( new_info, "%d %d %s", 
+             sis_id, (new_validity ? 1 : 0 ), resampling );
+
+    overview_infos[overview_index] = new_info;
+
+    // write back to metadata.
+    char key[20];
+    sprintf( key, "_Overview_%d", overview_decimations[overview_index] );
+
+    SetMetadataValue( key, new_info );
 }
 
 /************************************************************************/

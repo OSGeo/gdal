@@ -66,6 +66,9 @@ namespace PCIDSK
         virtual int WriteBlock( int block_index, void *buffer );
         virtual int GetOverviewCount();
         virtual PCIDSKChannel *GetOverview( int i );
+        virtual bool IsOverviewValid( int i );
+        virtual std::string GetOverviewResampling( int i );
+        virtual void SetOverviewValidity( int i, bool validity );
 
         virtual std::string GetMetadataValue( const std::string &key );
         virtual void SetMetadataValue( const std::string &key, const std::string &value );
