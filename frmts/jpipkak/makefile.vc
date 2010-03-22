@@ -1,0 +1,18 @@
+
+GDAL_ROOT	=	..\..
+
+OBJ	=	JPIPKAKDataset.obj 
+EXTRAFLAGS = 	-I$(KAKDIR)\apps\support\ -I$(KAKDIR)\apps\compressed_io\ -I$(KAKDIR)\coresys\common\ /DKDU_PENTIUM_MSVC /GX
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+default:	$(OBJ) kakinstall
+	xcopy /D  /Y *.obj ..\o
+    
+kakinstall:
+	copy $(KAKDIR)\obj\*.obj ..\o
+
+clean:
+	-del *.obj
+	-del *.dll
