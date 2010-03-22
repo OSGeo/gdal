@@ -8,7 +8,7 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdalmultidomainmetadata.obj gdalpamproxydb.obj \
 		gdalallvalidmaskband.obj gdalnodatamaskband.obj \
 		gdal_rpcimdio.obj gdalproxydataset.obj gdalproxypool.obj \
-		gdalnodatavaluesmaskband.obj
+		gdalnodatavaluesmaskband.obj gdaldefaultasync.obj 
 		
 
 RES	=	Version.res
