@@ -256,7 +256,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
                 win_xoff, win_yoff, win_xsize, win_ysize );
         }
 
-        wrk_buffer = (uint8 *) malloc(block_size);
+        wrk_buffer = (uint8 *) malloc((size_t) block_size);
         if( wrk_buffer == NULL )
             ThrowPCIDSKException( "Out of memory allocating %d bytes in CPCIDSKBitmap::ReadBlock()", 
                                   (int) block_size );
@@ -272,7 +272,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
     {
         uint64 short_block_size;
         
-        memset( buffer, 0, block_size );
+        memset( buffer, 0, (size_t) block_size );
         
         short_block_size = 
             ((height - block_index*block_height) * block_width + 7) / 8;
@@ -344,6 +344,35 @@ PCIDSKChannel *CPCIDSKBitmap::GetOverview( int i )
 {
     ThrowPCIDSKException("Non-existant overview %d requested on bitmap segment."); 
     return NULL;
+}
+
+/************************************************************************/
+/*                          IsOverviewValid()                           */
+/************************************************************************/
+
+bool CPCIDSKBitmap::IsOverviewValid( int i )
+
+{
+    return false;
+}
+
+/************************************************************************/
+/*                       GetOverviewResampling()                        */
+/************************************************************************/
+
+std::string CPCIDSKBitmap::GetOverviewResampling( int i )
+
+{
+    return "";
+}
+
+/************************************************************************/
+/*                        SetOverviewValidity()                         */
+/************************************************************************/
+
+void CPCIDSKBitmap::SetOverviewValidity( int i, bool validity )
+
+{
 }
 
 /************************************************************************/

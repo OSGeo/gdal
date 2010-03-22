@@ -68,6 +68,9 @@ namespace PCIDSK
 
         int       GetOverviewCount();
         PCIDSKChannel  *GetOverview( int i );
+        bool IsOverviewValid( int i );
+        void SetOverviewValidity( int i, bool validity );
+        std::string GetOverviewResampling( int i );
 
         int         GetChannelNumber() { return channel_number; }
 
@@ -116,6 +119,7 @@ namespace PCIDSK
         bool                         overviews_initialized;
         std::vector<std::string>     overview_infos;
         std::vector<CTiledChannel *> overview_bands;
+        std::vector<int>             overview_decimations;
     };
 } // end namespace PCIDSK
 
