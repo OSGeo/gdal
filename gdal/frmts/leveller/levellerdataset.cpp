@@ -168,7 +168,7 @@ static const measurement_unit kUnits[] =
 	{ "%", 1.0, UNITLABEL_PERCENT }, // not actually used
 
 	{ "rad", 1.0, UNITLABEL_RADIAN },
-	{ "°", kPI / 180.0, UNITLABEL_DEGREE },
+	{ "\xB0", kPI / 180.0, UNITLABEL_DEGREE }, // \xB0 is Unicode degree symbol 
 	{ "d", kPI / 180.0, UNITLABEL_DEGREE },
 	{ "deg", kPI / 180.0, UNITLABEL_DEGREE },
 	{ "'", kPI / (60.0 * 180.0), UNITLABEL_ARCMINUTE },
