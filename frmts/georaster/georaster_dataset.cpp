@@ -1390,14 +1390,15 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     if( poGRW->sTable.empty() &&
         poGRW->sColumn.empty() )
     {
-        poStmt = poConnection->CreateStatement( CPLSPrintf(
-            "SELECT   DISTINCT TABLE_NAME FROM ALL_SDO_GEOR_SYSDATA\n"
-            "  WHERE  OWNER = UPPER('%s')\n"
-            "  ORDER  BY TABLE_NAME ASC", poGRW->sOwner.c_str() ) );
+        poStmt = poConnection->CreateStatement( 
+            "SELECT   DISTINCT TABLE_NAME, OWNER FROM ALL_SDO_GEOR_SYSDATA\n"
+            "  ORDER  BY TABLE_NAME ASC" );
         
         char szTable[OWNAME];
+        char szOwner[OWNAME];
 
         poStmt->Define( szTable );
+        poStmt->Define( szOwner );
 
         if( poStmt->Execute() )
         {
@@ -1407,13 +1408,13 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
             {
                 papszSubdatasets = CSLSetNameValue( papszSubdatasets,
                     CPLSPrintf( "SUBDATASET_%d_NAME", nCount ),
-                    CPLSPrintf( "geor:%s/%s@%s,%s",
+                    CPLSPrintf( "geor:%s/%s@%s,%s.%s",
                         poConnection->GetUser(), poConnection->GetPassword(),
-                        poConnection->GetServer(), szTable ) );
+                        poConnection->GetServer(), szOwner, szTable ) );
 
                 papszSubdatasets = CSLSetNameValue( papszSubdatasets,
                     CPLSPrintf( "SUBDATASET_%d_DESC", nCount ),
-                    CPLSPrintf( "Table=%s", szTable ) );
+                    CPLSPrintf( "%s.Table=%s", szOwner, szTable ) );
 
                 nCount++;
             }
@@ -1430,14 +1431,16 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
           poGRW->sColumn.empty() )
     {
         poStmt = poConnection->CreateStatement( CPLSPrintf(
-            "SELECT   DISTINCT COLUMN_NAME FROM ALL_SDO_GEOR_SYSDATA\n"
-            "  WHERE  OWNER = UPPER('%s') AND TABLE_NAME = UPPER('%s')\n"
+            "SELECT   DISTINCT COLUMN_NAME, OWNER FROM ALL_SDO_GEOR_SYSDATA\n"
+            "  WHERE  TABLE_NAME = UPPER('%s')\n"
             "  ORDER  BY COLUMN_NAME ASC",
-                poGRW->sOwner.c_str(), poGRW->sTable.c_str() ) );
+                poGRW->sTable.c_str() ) );
 
         char szColumn[OWNAME];
+        char szOwner[OWNAME];
 
         poStmt->Define( szColumn );
+        poStmt->Define( szOwner );
         
         if( poStmt->Execute() )
         {
@@ -1447,14 +1450,14 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
             {
                 papszSubdatasets = CSLSetNameValue( papszSubdatasets,
                     CPLSPrintf( "SUBDATASET_%d_NAME", nCount ),
-                    CPLSPrintf( "geor:%s/%s@%s,%s%s,%s",
+                    CPLSPrintf( "geor:%s/%s@%s,%s.%s,%s",
                         poConnection->GetUser(), poConnection->GetPassword(),
-                        poConnection->GetServer(), poGRW->sSchema.c_str(),
+                        poConnection->GetServer(), szOwner,
                         poGRW->sTable.c_str(), szColumn ) );
 
                 papszSubdatasets = CSLSetNameValue( papszSubdatasets,
                     CPLSPrintf( "SUBDATASET_%d_DESC", nCount ),
-                    CPLSPrintf( "Table=%s%s Column=%s", poGRW->sSchema.c_str(),
+                    CPLSPrintf( "Table=%s.%s Column=%s", szOwner,
                         poGRW->sTable.c_str(), szColumn ) );
 
                 nCount++;
