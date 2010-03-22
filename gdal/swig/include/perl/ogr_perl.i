@@ -835,7 +835,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $self = shift;
 	    delete $Geo::OGR::Feature::GEOMETRIES{$self};
 	}
-	sub create { # alternative constructor since swig created new can't be overridden(?)
+	sub create { # alternative constructor since swig created new cannot be overridden(?)
 	    my $pkg = shift;
 	    my($type, $wkt, $wkb, $gml, $json, $srs, $points);
 	    if (@_ == 1) {
@@ -1005,6 +1005,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	*AsBinary = *ExportToWkb;
 	*AsGML = *ExportToGML;
 	*AsKML = *ExportToKML;
+	*Equals = *Equal;
+	*Intersects = *Intersect;
     }
     sub GeometryType {
 	my($type_or_name) = @_;
