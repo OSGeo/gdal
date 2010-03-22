@@ -34,6 +34,19 @@
 
 CPL_CVSID("$Id$");
 
+CPL_C_START
+GDALAsyncReader *
+GDALGetDefaultAsyncReader( GDALDataset *poDS,
+                             int nXOff, int nYOff,
+                             int nXSize, int nYSize,
+                             void *pBuf,
+                             int nBufXSize, int nBufYSize,
+                             GDALDataType eBufType,
+                             int nBandCount, int* panBandMap,
+                             int nPixelSpace, int nLineSpace,
+                             int nBandSpace, char **papszOptions);
+CPL_C_END
+
 typedef struct
 {
     /* PID of the thread that mark the dataset as shared */
@@ -2422,5 +2435,160 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
     {
         return 0;
     }
+}
+
+/************************************************************************/
+/*                        BeginAsyncReader()                          */
+/************************************************************************/
+
+/**
+ * \brief Sets up an asynchronous data request
+ *
+ * This method establish an asynchronous raster read request for the
+ * indicated window on the dataset into the indicated buffer.  The parameters
+ * for windowing, buffer size, buffer type and buffer organization are similar
+ * to those for GDALDataset::RasterIO(); however, this call only launches
+ * the request and filling the buffer is accomplished via calls to 
+ * GetNextUpdatedRegion() on the return GDALAsyncReader session object.
+ * 
+ * Once all processing for the created session is complete, or if no further
+ * refinement of the request is required, the GDALAsyncReader object should
+ * be destroyed with the GDALDataset::EndAsyncReader() method. 
+ * 
+ * Note that the data buffer (pData) will potentially continue to be 
+ * updated as long as the session lives, but it is not deallocated when
+ * the session (GDALAsyncReader) is destroyed with EndAsyncReader().  It
+ * should be deallocated by the application at that point. 
+ *
+ * Additional information on asynchronous IO in GDAL may be found at: 
+ *   http://trac.osgeo.org/gdal/wiki/rfc24_progressive_data_support
+ * 
+ * This method is the same as the C GDALBeginAsyncReader() function.
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param pBuf The buffer into which the data should be read. This buffer must 
+ * contain at least nBufXSize * nBufYSize * nBandCount words of type eBufType.  
+ * It is organized in left to right,top to bottom pixel order.  Spacing is 
+ * controlled by the nPixelSpace, and nLineSpace parameters.
+ *
+ * @param nBufXSize the width of the buffer image into which the desired region
+ * is to be read, or from which it is to be written.
+ *
+ * @param nBufYSize the height of the buffer image into which the desired
+ * region is to be read, or from which it is to be written.
+ *
+ * @param eBufType the type of the pixel values in the pData data buffer.  The
+ * pixel values will automatically be translated to/from the GDALRasterBand
+ * data type as needed.
+ *
+ * @param nBandCount the number of bands being read or written. 
+ *
+ * @param panBandMap the list of nBandCount band numbers being read/written.
+ * Note band numbers are 1 based.   This may be NULL to select the first 
+ * nBandCount bands.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in
+ * pData to the start of the next pixel value within a scanline.  If defaulted
+ * (0) the size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in
+ * pData to the start of the next.  If defaulted the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @param nBandSpace the byte offset from the start of one bands data to the
+ * start of the next.  If defaulted (zero) the value will be 
+ * nLineSpace * nBufYSize implying band sequential organization
+ * of the data buffer. 
+ *
+ * @param papszOptions Driver specific control options in a string list or NULL.
+ * Consult driver documentation for options supported.
+ * 
+ * @return The GDALAsyncReader object representing the request.
+ */
+
+GDALAsyncReader* 
+GDALDataset::BeginAsyncReader(int nXOff, int nYOff,
+                              int nXSize, int nYSize,
+                              void *pBuf,
+                              int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType,
+                              int nBandCount, int* panBandMap,
+                              int nPixelSpace, int nLineSpace,
+                              int nBandSpace, char **papszOptions)
+{
+    // See gdaldefaultasync.cpp
+
+    return
+        GDALGetDefaultAsyncReader( this, 
+                                     nXOff, nYOff, nXSize, nYSize,
+                                     pBuf, nBufXSize, nBufYSize, eBufType,
+                                     nBandCount, panBandMap,
+                                     nPixelSpace, nLineSpace, nBandSpace,
+                                     papszOptions );
+}
+
+/************************************************************************/
+/*                        GDALBeginAsyncReader()                      */
+/************************************************************************/
+
+GDALAsyncReaderH CPL_STDCALL 
+GDALBeginAsyncReader(GDALDatasetH hDS, int xOff, int yOff,
+                       int xSize, int ySize,
+                       void *pBuf,
+                       int bufXSize, int bufYSize,
+                       GDALDataType bufType,
+                       int nBandCount, int* bandMap,
+                       int nPixelSpace, int nLineSpace,
+                       int nBandSpace,
+                       char **papszOptions)
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDataset", NULL );
+    return (GDALAsyncReaderH)((GDALDataset *) hDS)->
+        BeginAsyncReader(xOff, yOff,
+                           xSize, ySize,
+                           pBuf, bufXSize, bufYSize,
+                           bufType, nBandCount, bandMap,
+                           nPixelSpace, nLineSpace,
+                           nBandSpace, papszOptions);
+}
+
+/************************************************************************/
+/*                        EndAsyncReader()                            */
+/************************************************************************/
+
+/**
+ * End asynchronous request.
+ *
+ * This method destroys an asynchronous io request and recovers all 
+ * resources associated with it.
+ * 
+ * This method is the same as the C function GDALEndAsyncReader(). 
+ *
+ * @param poARIO pointer to a GDALAsyncReader
+ */
+
+void GDALDataset::EndAsyncReader(GDALAsyncReader *poARIO )
+{
+    delete poARIO;
+}
+
+/************************************************************************/
+/*                        GDALEndAsyncReader()                        */
+/************************************************************************/
+void CPL_STDCALL GDALEndAsyncReader(GDALDatasetH hDS, GDALAsyncReaderH hAsyncReaderH)
+{
+    VALIDATE_POINTER0( hDS, "GDALDataset" );
+    VALIDATE_POINTER0( hAsyncReaderH, "GDALAsyncReader" );
+    ((GDALDataset *) hDS) -> EndAsyncReader((GDALAsyncReader *)hAsyncReaderH);	
 }
 

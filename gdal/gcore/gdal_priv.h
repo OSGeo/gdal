@@ -42,6 +42,7 @@ class GDALDriver;
 class GDALRasterAttributeTable;
 class GDALProxyDataset;
 class GDALProxyRasterBand;
+class GDALAsyncReader;
 
 /* -------------------------------------------------------------------- */
 /*      Pull in the public declarations.  This gets the C apis, and     */
@@ -287,6 +288,15 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                char **papszOptions );
 
     virtual CPLErr          CreateMaskBand( int nFlags );
+
+    virtual GDALAsyncReader* 
+        BeginAsyncReader(int nXOff, int nYOff, int nXSize, int nYSize,
+                         void *pBuf, int nBufXSize, int nBufYSize,
+                         GDALDataType eBufType,
+                         int nBandCount, int* panBandMap,
+                         int nPixelSpace, int nLineSpace, int nBandSpace,
+                         char **papszOptions);
+    virtual void EndAsyncReader(GDALAsyncReader *);
 
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
@@ -739,6 +749,68 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     void        SetHome( const char * );
 };
 
+CPL_C_START
+GDALDriverManager CPL_DLL * GetGDALDriverManager( void );
+CPL_C_END
+
+/* ******************************************************************** */
+/*                          GDALAsyncReader                             */
+/* ******************************************************************** */
+
+/**
+ * Class used as a session object for asynchronous requests.  They are
+ * created with GDALDataset::BeginAsyncReader(), and destroyed with
+ * GDALDataset::EndAsyncReader().
+ */
+class CPL_DLL GDALAsyncReader
+{
+  protected:
+    GDALDataset* poDS;
+    int          nXOff;
+    int          nYOff;
+    int          nXSize;
+    int          nYSize;
+    void *       pBuf;
+    int          nBufXSize;
+    int          nBufYSize;
+    GDALDataType eBufType;
+    int          nBandCount;
+    int*         panBandMap;
+    int          nPixelSpace;
+    int          nLineSpace;
+    int          nBandSpace;
+
+  public:
+    GDALAsyncReader();
+    virtual ~GDALAsyncReader();
+
+    GDALDataset* GetGDALDataset() {return poDS;}
+    int GetXOffset() {return nXOff;}
+    int GetYOffset() {return nYOff;}
+    int GetXSize() {return nXSize;}
+    int GetYSize() {return nYSize;}
+    void * GetBuffer() {return pBuf;}
+    int GetBufferXSize() {return nBufXSize;}
+    int GetBufferYSize() {return nBufYSize;}
+    GDALDataType GetBufferType() {return eBufType;}
+    int GetBandCount() {return nBandCount;}
+    int* GetBandMap() {return panBandMap;}
+    int GetPixelSpace() {return nPixelSpace;}
+    int GetLineSpace() {return nLineSpace;}
+    int GetBandSpace() {return nBandSpace;}
+
+    virtual GDALAsyncStatusType 
+        GetNextUpdatedRegion(double dfTimeout,
+                             int* pnBufXOff, int* pnBufYOff,
+                             int* pnBufXSize, int* pnBufYSize) = 0;
+    virtual int LockBuffer( double dfTimeout = -1.0 );
+    virtual void UnlockBuffer();
+};
+
+/* ==================================================================== */
+/*      An assortment of overview related stuff.                        */
+/* ==================================================================== */
+
 /* Not a public symbol for the moment */
 CPLErr 
 GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
@@ -746,14 +818,6 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                                  GDALRasterBand*** papapoOverviewBands,
                                  const char * pszResampling, 
                                  GDALProgressFunc pfnProgress, void * pProgressData );
-
-CPL_C_START
-GDALDriverManager CPL_DLL * GetGDALDriverManager( void );
-CPL_C_END
-
-/* ==================================================================== */
-/*      An assortment of overview related stuff.                        */
-/* ==================================================================== */
 
 CPL_C_START
 

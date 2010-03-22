@@ -52,16 +52,31 @@ typedef struct {
 
 /*! Describe the result of a CPLHTTPFetch() call */
 typedef struct {
-    /*! HTTP status code : 200=success, value < 0 if request failed */ int     nStatus;
-    /*! Content-Type of the response */                                char    *pszContentType;
-    /*! Error message from curl, or NULL */                            char    *pszErrBuf;
+    /*! HTTP status code : 200=success, value < 0 if request failed */ 
+    int     nStatus;
 
-    /*! Length of the pabyData buffer */                               int     nDataLen;
-                                                                       int     nDataAlloc;
-    /*! Buffer with downloaded data */                                 GByte   *pabyData;
+    /*! Content-Type of the response */                                
+    char    *pszContentType;
 
-    /*! Number of parts in a multipart message */                      int     nMimePartCount;
-    /*! Array of parts (resolved by CPLHTTPParseMultipartMime()) */    CPLMimePart *pasMimePart;
+    /*! Error message from curl, or NULL */                            
+    char    *pszErrBuf;
+
+    /*! Length of the pabyData buffer */                               
+    int     nDataLen;
+    int     nDataAlloc;
+
+    /*! Buffer with downloaded data */                                 
+    GByte   *pabyData;
+
+    /*! Headers returned */
+    char    **papszHeaders;
+
+    /*! Number of parts in a multipart message */                      
+    int     nMimePartCount;
+
+    /*! Array of parts (resolved by CPLHTTPParseMultipartMime()) */    
+    CPLMimePart *pasMimePart;
+
 } CPLHTTPResult;
 
 int CPL_DLL   CPLHTTPEnabled( void );

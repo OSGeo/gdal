@@ -27,14 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
+#include <map>
 #include "cpl_http.h"
+#include "cpl_multiproc.h"
 
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
 #endif
 
 CPL_CVSID("$Id$");
+
+// list of named persistent http sessions 
+
+#ifdef HAVE_CURL
+static std::map<CPLString,CURL*> oSessionMap;
+static void *hSessionMapMutex = NULL;
+#endif
 
 /************************************************************************/
 /*                            CPLWriteFct()                             */
@@ -77,6 +85,24 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 
     return nmemb;
 }
+
+/************************************************************************/
+/*                           CPLHdrWriteFct()                           */
+/************************************************************************/
+static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
+{
+    CPLHTTPResult *psResult = (CPLHTTPResult *) reqInfo;
+    // copy the buffer to a char* and initialize with zeros (zero terminate as well)
+    char* pszHdr = (char*)CPLCalloc(nmemb + 1, size);
+    CPLPrintString(pszHdr, (char *)buffer, nmemb * size);
+    char *pszKey = NULL;
+    const char *pszValue = CPLParseNameValue(pszHdr, &pszKey );
+    psResult->papszHeaders = CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
+    CPLFree(pszHdr);
+    CPLFree(pszKey);
+    return nmemb; 
+}
+
 #endif /* def HAVE_CURL */
 
 /************************************************************************/
@@ -108,17 +134,46 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
               "GDAL/OGR not compiled with libcurl support, remote requests not supported." );
     return NULL;
 #else
-    CURL *http_handle;
+/* -------------------------------------------------------------------- */
+/*      Are we using a persistent named session?  If so, search for     */
+/*      or create it.                                                   */
+/*                                                                      */
+/*      Currently this code does not attempt to protect against         */
+/*      multiple threads asking for the same named session.  If that    */
+/*      occurs it will be in use in multiple threads at once which      */
+/*      might have bad consequences depending on what guarantees        */
+/*      libcurl gives - which I have not investigated.                  */
+/* -------------------------------------------------------------------- */
+    CURL *http_handle = NULL;
+
+    const char *pszPersistent = CSLFetchNameValue( papszOptions, "PERSISTENT" );
+    if (pszPersistent)
+    {
+        CPLString osSessionName = pszPersistent;
+        CPLMutexHolder oHolder( &hSessionMapMutex );
+
+        if( oSessionMap.count( osSessionName ) == 0 )
+        {
+            oSessionMap[osSessionName] = curl_easy_init();
+            CPLDebug( "HTTP", "Establish persistent session named '%s'.",
+                      osSessionName.c_str() );
+        }
+
+        http_handle = oSessionMap[osSessionName];
+    }
+    else
+        http_handle = curl_easy_init();
+
+/* -------------------------------------------------------------------- */
+/*      Setup the request.                                              */
+/* -------------------------------------------------------------------- */
     char szCurlErrBuf[CURL_ERROR_SIZE+1];
     CPLHTTPResult *psResult;
     struct curl_slist *headers=NULL; 
 
-
     CPLDebug( "HTTP", "Fetch(%s)", pszURL );
 
     psResult = (CPLHTTPResult *) CPLCalloc(1,sizeof(CPLHTTPResult));
-
-    http_handle = curl_easy_init();
 
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
@@ -154,6 +209,9 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     if( pszUserPwd != NULL )
         curl_easy_setopt(http_handle, CURLOPT_USERPWD, pszUserPwd );
 
+    // turn off SSL verification, accept all servers with ssl
+    curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, FALSE);
+
     /* Enable following redirections.  Requires libcurl 7.10.1 at least */
     curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
     curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
@@ -180,6 +238,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
 #endif
 
+    // capture response headers
+    curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, psResult);
+    curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
+ 
     curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, psResult );
     curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, CPLWriteFct );
 
@@ -187,6 +249,9 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
+/* -------------------------------------------------------------------- */
+/*      Execute the request, waiting for results.                       */
+/* -------------------------------------------------------------------- */
     psResult->nStatus = (int) curl_easy_perform( http_handle );
 
 /* -------------------------------------------------------------------- */
@@ -210,7 +275,9 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
                   "%s", szCurlErrBuf );
     }
 
-    curl_easy_cleanup( http_handle );
+    if (!pszPersistent)
+        curl_easy_cleanup( http_handle );
+
     curl_slist_free_all(headers);
 
     return psResult;
@@ -248,8 +315,24 @@ int CPLHTTPEnabled()
 void CPLHTTPCleanup()
 
 {
-    /* nothing for now, but if we use the more complicated api later, 
-       we will need to do cleanup, like mapserver maphttp.c does. */
+#ifdef HAVE_CURL
+    if( !hSessionMapMutex )
+        return;
+
+    {
+        CPLMutexHolder oHolder( &hSessionMapMutex );
+        std::map<CPLString,CURL*>::iterator oIt;
+
+        for( oIt=oSessionMap.begin(); oIt != oSessionMap.end(); oIt++ )
+            curl_easy_cleanup( oIt->second );
+
+        oSessionMap.clear();
+    }
+
+    // not quite a safe sequence. 
+    CPLDestroyMutex( hSessionMapMutex );
+    hSessionMapMutex = NULL;
+#endif
 }
 
 /************************************************************************/
@@ -269,6 +352,7 @@ void CPLHTTPDestroyResult( CPLHTTPResult *psResult )
         CPLFree( psResult->pabyData );
         CPLFree( psResult->pszErrBuf );
         CPLFree( psResult->pszContentType );
+        CSLDestroy( psResult->papszHeaders );
         CPLFree( psResult );
     }
 }

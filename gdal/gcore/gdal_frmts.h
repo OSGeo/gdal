@@ -58,6 +58,7 @@ void CPL_DLL GDALRegister_PNG(void);
 void CPL_DLL GDALRegister_JPEG(void);
 void CPL_DLL GDALRegister_JPEG2000(void);
 void CPL_DLL GDALRegister_JP2KAK(void);
+void CPL_DLL GDALRegister_JPIPKAK(void);
 void CPL_DLL GDALRegister_MEM(void);
 void CPL_DLL GDALRegister_JDEM(void);
 void CPL_DLL GDALRegister_GRASS(void);
