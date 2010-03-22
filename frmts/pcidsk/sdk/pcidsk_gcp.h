@@ -40,7 +40,7 @@ namespace PCIDSK {
             raster_error_[1] = line_err;
             raster_error_[0] = pix_err;
             
-            std::strncpy(gcp_id_, gcp_id.c_str(), 
+            std::strncpy(gcp_id_, gcp_id.c_str(),
                          gcp_id.size() > 64 ? 64 : gcp_id.size());
             gcp_id_[64] = '\0';
             
@@ -137,7 +137,9 @@ namespace PCIDSK {
             this->map_units_ = gcp.map_units_;
             this->iscp_ = gcp.iscp_;
             
-            std::strncpy(this->gcp_id_, gcp.gcp_id_, 65);
+            std::strncpy(this->gcp_id_, gcp.gcp_id_, 64);
+            
+            this->gcp_id_[64] = '\0';
             
             this->elevation_unit_ = gcp.elevation_unit_;
             this->elevation_datum_ = gcp.elevation_datum_;
