@@ -18,6 +18,7 @@ KAK_APPS_OBJ =	\
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\roi_sources.obj \
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\palette.obj \
 	     $(OBJ_PREFIX)\buffered_expand\$(OBJ_CONFIG)\kdu_stripe_decompressor.obj \
+	     $(OBJ_PREFIX)\render\$(OBJ_CONFIG)\kdu_region_decompressor.obj \
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\kdu_tiff.obj \
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\jpx.obj
 
