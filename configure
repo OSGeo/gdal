@@ -23534,7 +23534,7 @@ build directory.  Note that Kakadu is *not* free software." >&2;}
    { (exit 1); exit 1; }; }
 else
   KAKDIR=$with_kakadu
-  OPT_GDAL_FORMATS="jp2kak $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="jp2kak jpipkak $OPT_GDAL_FORMATS"
   LIBS="$LIBS -L$with_kakadu/lib -lkdu"
   { echo "$as_me:$LINENO: result: requested." >&5
 echo "${ECHO_T}requested." >&6; }
@@ -28349,18 +28349,7 @@ print sys.version[:3]'`"
 echo "${ECHO_T}found" >&6; }
 
 
-        { echo "$as_me:$LINENO: checking for top-level Makefile for Python" >&5
-echo $ECHO_N "checking for top-level Makefile for Python... $ECHO_C" >&6; }
-        py_mf=$python_execprefix/$PYLIB/python${python_version}/config/Makefile
-        if test -f $py_mf ; then
-            { echo "$as_me:$LINENO: result: found" >&5
-echo "${ECHO_T}found" >&6; }
-        else
-            { echo "$as_me:$LINENO: result: missing, Old-gen Python disabled." >&5
-echo "${ECHO_T}missing, Old-gen Python disabled." >&6; }
-            PYTHON=no
-        fi
-    else
+                                                                    else
                 pythondir='$(prefix)/lib/site-python'
         pyexecdir='$(exec_prefix)/lib/site-python'
     fi

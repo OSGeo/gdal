@@ -8,7 +8,7 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdaljp2metadata.o gdaljp2box.o gdalmultidomainmetadata.o \
 		gdal_rat.o gdalgmlcoverage.o gdalpamproxydb.o \
 		gdalallvalidmaskband.o gdalnodatamaskband.o gdal_rpcimdio.o \
- 		gdalproxydataset.o gdalproxypool.o \
+ 		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
 		gdalnodatavaluesmaskband.o
 
 # Enable the following if you want to use MITAB's code to convert
