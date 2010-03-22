@@ -370,6 +370,76 @@ GDALDataType CPL_STDCALL GDALGetDataTypeByName( const char *pszName )
 }
 
 /************************************************************************/
+/*                        GDALGetAsyncStatusTypeByName()                */
+/************************************************************************/
+/**
+ * Get AsyncStatusType by symbolic name.
+ *
+ * Returns a data type corresponding to the given symbolic name. This
+ * function is opposite to the GDALGetAsyncStatusTypeName().
+ *
+ * @param pszName string containing the symbolic name of the type.
+ * 
+ * @return GDAL AsyncStatus type.
+ */
+GDALAsyncStatusType CPL_DLL CPL_STDCALL GDALGetAsyncStatusTypeByName( const char *pszName )
+{
+	VALIDATE_POINTER1( pszName, "GDALGetAsyncStatusTypeByName", GARIO_ERROR);
+
+    int	iType;
+
+	for( iType = 1; iType < GARIO_TypeCount; iType++ )
+    {
+        if( GDALGetAsyncStatusTypeName((GDALAsyncStatusType)iType) != NULL
+            && EQUAL(GDALGetAsyncStatusTypeName((GDALAsyncStatusType)iType), pszName) )
+        {
+            return (GDALAsyncStatusType)iType;
+        }
+    }
+
+	return GARIO_ERROR;
+}
+
+
+/************************************************************************/
+/*                        GDALGetAsyncStatusTypeName()                 */
+/************************************************************************/
+
+/**
+ * Get name of AsyncStatus data type.
+ *
+ * Returns a symbolic name for the AsyncStatus data type.  This is essentially the
+ * the enumerated item name with the GARIO_ prefix removed.  So GARIO_COMPLETE returns
+ * "COMPLETE".  The returned strings are static strings and should not be modified
+ * or freed by the application.  These strings are useful for reporting
+ * datatypes in debug statements, errors and other user output. 
+ *
+ * @param eAsyncStatusType type to get name of.
+ * @return string corresponding to type.
+ */
+
+ const char * CPL_STDCALL GDALGetAsyncStatusTypeName( GDALAsyncStatusType eAsyncStatusType )
+
+{
+    switch( eAsyncStatusType )
+    {
+      case GARIO_PENDING:
+        return "PENDING";
+
+      case GARIO_UPDATE:
+        return "UPDATE";
+
+      case GARIO_ERROR:
+        return "ERROR";
+
+      case GARIO_COMPLETE:
+        return "COMPLETE";
+      default:
+        return NULL;
+    }
+}
+
+/************************************************************************/
 /*                  GDALGetPaletteInterpretationName()                  */
 /************************************************************************/
 

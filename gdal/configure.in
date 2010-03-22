@@ -1460,7 +1460,7 @@ For JPEG2000 support using Kakadu you need provide the path to the Kakadu
 build directory.  Note that Kakadu is *not* free software.])
 else
   KAKDIR=$with_kakadu
-  OPT_GDAL_FORMATS="jp2kak $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="jp2kak jpipkak $OPT_GDAL_FORMATS"
   LIBS="$LIBS -L$with_kakadu/lib -lkdu"
   AC_MSG_RESULT([requested.])
   HAVE_KAKADU=yes

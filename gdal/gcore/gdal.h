@@ -71,6 +71,21 @@ const char CPL_DLL * CPL_STDCALL GDALGetDataTypeName( GDALDataType );
 GDALDataType CPL_DLL CPL_STDCALL GDALGetDataTypeByName( const char * );
 GDALDataType CPL_DLL CPL_STDCALL GDALDataTypeUnion( GDALDataType, GDALDataType );
 
+/**
+* status of the asynchronous stream
+*/
+typedef enum 
+{	
+	GARIO_PENDING = 0,
+	GARIO_UPDATE = 1,
+	GARIO_ERROR = 2,
+	GARIO_COMPLETE = 3,
+	GARIO_TypeCount = 4
+} GDALAsyncStatusType;
+
+const char CPL_DLL * CPL_STDCALL GDALGetAsyncStatusTypeName( GDALAsyncStatusType );
+GDALAsyncStatusType CPL_DLL CPL_STDCALL GDALGetAsyncStatusTypeByName( const char * );
+
 /*! Flag indicating read/write, or read-only access to data. */
 typedef enum {
     /*! Read only (no update) access */ GA_ReadOnly = 0,
@@ -159,6 +174,9 @@ typedef void *GDALColorTableH;
 
 /** Opaque type used for the C bindings of the C++ GDALRasterAttributeTable class */
 typedef void *GDALRasterAttributeTableH;
+
+/** Opaque type used for the C bindings of the C++ GDALAsyncReader class */
+typedef void *GDALAsyncReaderH;
 
 /* -------------------------------------------------------------------- */
 /*      Callback "progress" function.                                   */
@@ -498,6 +516,33 @@ CPLErr CPL_DLL CPL_STDCALL
 #define GMF_PER_DATASET   0x02
 #define GMF_ALPHA         0x04
 #define GMF_NODATA        0x08
+
+/* ==================================================================== */
+/*     GDALAsyncReader                                                  */
+/* ==================================================================== */
+  GDALDatasetH CPL_DLL CPL_STDCALL GDALGetGDALDataset(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetXOffset(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetYOffset(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetXSize(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetYSize(GDALAsyncReaderH hARIO);
+  void CPL_DLL * CPL_STDCALL GDALGetBuffer(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetBufferXSize(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetBufferYSize(GDALAsyncReaderH hARIO);
+  GDALDataType CPL_DLL CPL_STDCALL GDALGetBufferType(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetBandCount(GDALAsyncReaderH hARIO);
+  int CPL_DLL * CPL_STDCALL GDALGetBandMap(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetPixelSpace(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetLineSpace(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetBandSpace(GDALAsyncReaderH hARIO);
+  int CPL_DLL CPL_STDCALL GDALGetNDataRead(GDALAsyncReaderH hARIO);
+
+GDALAsyncStatusType CPL_DLL CPL_STDCALL 
+GDALGetNextUpdatedRegion(GDALAsyncReaderH hARIO, int nTimeout,
+                         int* pnXBufOff, int* pnYBufOff, 
+                         int* pnXBufSize, int* pnYBufSize );
+void CPL_DLL CPL_STDCALL GDALLockBuffer(GDALAsyncReaderH hARIO,
+                                        double dfTimeout);
+void CPL_DLL CPL_STDCALL GDALUnlockBuffer(GDALAsyncReaderH hARIO); 
 
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
