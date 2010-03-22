@@ -331,7 +331,7 @@ void SysVirtualFile::WriteBlocks(int first_block,
         uint64 write_cur = write_start * block_size;
         unsigned int count_to_write = 1;
         while (write_cur + block_size ==
-            (uint64)block_index[count_to_write + current_first_block] * block_size &&
+            (uint64)block_index[count_to_write + current_first_block - 1] * block_size &&
             count_to_write < (cur_block - current_first_block))
         {
             write_cur += block_size;

@@ -47,6 +47,7 @@
 #include "segment/cpcidskgcp2segment.h"
 #include "segment/cpcidskbitmap.h"
 #include "segment/cpcidsk_tex.h"
+#include "segment/cpcidskapmodel.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -260,6 +261,9 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
       case SEG_BIN:
         if (!strncmp(segment_pointer + 4, "RFMODEL ", 8))
             segobj = new CPCIDSKRPCModelSegment( this, segment, segment_pointer );
+        else if (!strncmp(segment_pointer + 4, "APMODEL ", 8)) {
+            segobj = new CPCIDSKAPModelSegment(this, segment, segment_pointer);
+        }
         break;
         
     }

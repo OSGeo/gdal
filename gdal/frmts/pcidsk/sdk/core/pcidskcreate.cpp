@@ -79,7 +79,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
     if( channel_types == NULL )
     {
-        default_channel_types.resize( channel_count, CHN_8U );
+        default_channel_types.resize( channel_count+1, CHN_8U );
         channel_types = &(default_channel_types[0]);
     }
    

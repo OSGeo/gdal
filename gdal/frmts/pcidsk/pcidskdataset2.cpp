@@ -1194,7 +1194,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
 /*      representative.                                                 */
 /* -------------------------------------------------------------------- */
     int   i, nNewOverviews, *panNewOverviewList = NULL;
-    GDALRasterBand *poBand = GetRasterBand( panBandList[0] );
+    PCIDSK2Band *poBand = (PCIDSK2Band*) GetRasterBand( panBandList[0] );
 
     nNewOverviews = 0;
     panNewOverviewList = (int *) CPLCalloc(sizeof(int),nOverviews);
@@ -1245,7 +1245,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
     int iBand;
     for( iBand = 0; iBand < nListBands; iBand++ )
     {
-        poBand = GetRasterBand( panBandList[iBand] );
+        poBand = (PCIDSK2Band *) GetRasterBand( panBandList[iBand] );
         ((PCIDSK2Band *) poBand)->RefreshOverviewList();
     }
 
@@ -1254,6 +1254,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
     GDALRasterBand **papoOverviewBands;
     CPLErr eErr = CE_None;
+    std::vector<int> anRegenLevels;
 
     papoOverviewBands = (GDALRasterBand **) 
         CPLCalloc(sizeof(void*),nOverviews);
@@ -1262,7 +1263,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
     {
         nNewOverviews = 0;
 
-        poBand = GetRasterBand( panBandList[iBand] );
+        poBand = (PCIDSK2Band*) GetRasterBand( panBandList[iBand] );
 
         for( i = 0; i < nOverviews && poBand != NULL; i++ )
         {
@@ -1281,6 +1282,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                                                        poBand->GetXSize() ) )
                 {
                     papoOverviewBands[nNewOverviews++] = poOverview;
+                    anRegenLevels.push_back( j );
                     break;
                 }
             }
@@ -1293,6 +1295,11 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                                             (GDALRasterBandH*)papoOverviewBands,
                                             pszResampling, 
                                             pfnProgress, pProgressData );
+
+            // Mark the regenerated overviews as valid.
+            for( i = 0; i < (int) anRegenLevels.size(); i++ )
+                poBand->poChannel->SetOverviewValidity( anRegenLevels[i], 
+                                                        true );
         }
     }
 

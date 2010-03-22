@@ -54,9 +54,9 @@ namespace PCIDSK {
             
         // Set the RPC offset/scale Coefficients
         virtual void SetRPCTranslationCoeffs(const double xoffset, const double xscale,
-            const double yoffset, const double yscale, 
+            const double yoffset, const double yscale,
             const double zoffset, const double zscale,
-            const double pixoffset, const double pixscale, 
+            const double pixoffset, const double pixscale,
             const double lineoffset, const double linescale) = 0;
 
         // Get the adjusted X values
