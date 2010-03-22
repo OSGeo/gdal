@@ -464,14 +464,14 @@ print sys.version[:3]'`"
 
         dnl Verify that we have the makefile needed later.
     
-        AC_MSG_CHECKING([for top-level Makefile for Python])
-        py_mf=$python_execprefix/$PYLIB/python${python_version}/config/Makefile
-        if test -f $py_mf ; then
-            AC_MSG_RESULT(found)
-        else
-            AC_MSG_RESULT([missing, Old-gen Python disabled.])
-            PYTHON=no
-        fi
+        dnl AC_MSG_CHECKING([for top-level Makefile for Python])
+        dnl py_mf=$python_execprefix/$PYLIB/python${python_version}/config/Makefile
+        dnl if test -f $py_mf ; then
+        dnl     AC_MSG_RESULT(found)
+        dnl else
+        dnl     AC_MSG_RESULT([missing, Old-gen Python disabled.])
+        dnl     PYTHON=no
+        dnl fi
     else
         dnl These defaults are version independent
         pythondir='$(prefix)/lib/site-python'
