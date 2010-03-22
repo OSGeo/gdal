@@ -158,15 +158,6 @@ char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
         CSLDestroy( papszFirst2 );
     }
 
-    // --------------------------------------------------------------------
-    // Assume a default database
-    // --------------------------------------------------------------------
-
-    if( CSLCount( papszParam ) == 2 )
-    {
-        papszParam = CSLAddString( papszParam, "" );
-    }
-
     return papszParam;
 
 }
@@ -185,29 +176,9 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
 
     int nArgc = CSLCount( papszParam );
 
-    if( nArgc < 3 )
+    for( ; nArgc < 3; nArgc++ )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-        "Incorrect number of parameters (%d)\n"
-        "Usage:\n"
-        "    {georaster/geor}:<user>{,/}<pwd>{,@}[db],[schema.][table],"
-        "[column],[where]\n"
-        "    {georaster/geor}:<user>{,/}<pwd>{,@}[db],<rdt>:<rid>\n"
-        "    user   - user's login\n"
-        "    pwd    - user's password\n"
-        "    db     - connection string ( default is $ORACLE_SID )\n"
-        "    schema - name of a schema\n"
-        "    table  - name of a georaster table\n"
-        "    column - name of a georaster column\n"
-        "    where  - simple where clause\n"
-        "    rdt    - raster data table name\n"
-        "    rid    - georaster numeric identification\n"
-        "Examples:\n"
-        "    geor:scott/tiger@demodb,table,column,id=1\n"
-        "    geor:scott/tiger@server.company.com:1521/survey,table,column,id=1\n"
-        "    \"georaster:scott,tiger,demodb,table,column,city='london'\"\n"
-        "    georaster:scott,tiger,,rdt_10$,10\n", nArgc );
-        return NULL;
+        papszParam = CSLAddString( papszParam, "" );
     }
 
     //  ---------------------------------------------------------------
