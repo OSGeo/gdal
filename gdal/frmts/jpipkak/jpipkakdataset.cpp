@@ -558,15 +558,16 @@ int JPIPKAKDataset::Initialise(char* pszUrl)
     //nBands = poCodestream->get_num_components();
 
     // Establish the datatype - we will use the same datatype for
-    // all bands based on the first.
-    if( poCodestream->get_bit_depth(0) == 16
+    // all bands based on the first.  This really doesn't do something
+    // great for >16 bit images.
+    if( poCodestream->get_bit_depth(0) > 8 
+        && poCodestream->get_bit_depth(0) <= 16
         && poCodestream->get_signed(0) )
         eDT = GDT_Int16;
-    else if( poCodestream->get_bit_depth(0) == 16
-        && !poCodestream->get_signed(0) )
+    else if( poCodestream->get_bit_depth(0) > 8
+             && poCodestream->get_bit_depth(0) <= 16
+             && !poCodestream->get_signed(0) )
         eDT = GDT_UInt16;
-//    else if( poCodestream->get_bit_depth(0) == 32 )
-//        eDT = GDT_Float32;
     else
         this->eDT = GDT_Byte;
 
