@@ -5,7 +5,8 @@ OBJ	=	jpipkakdataset.o kdu_cache.o
 
 KAKINC = -I$(KAKDIR)/coresys/common -I$(KAKDIR)/apps/compressed_io \
 	-I$(KAKDIR)/apps/jp2 -I$(KAKDIR)/apps/image -I$(KAKDIR)/apps/args \
-	-I$(KAKDIR)/apps/support -I$(KAKDIR)/apps/kdu_compress
+	-I$(KAKDIR)/apps/support -I$(KAKDIR)/apps/kdu_compress \
+	-I$(KAKDIR)/apps/caching_sources
 
 APPOBJ  = $(KAK_OBJ)
 

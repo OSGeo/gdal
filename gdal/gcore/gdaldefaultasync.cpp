@@ -150,10 +150,10 @@ int GDALAsyncReader::LockBuffer( double dfTimeout )
 /************************************************************************/
 /*                           GDALLockBuffer()                           */
 /************************************************************************/
-void CPL_STDCALL GDALLockBuffer(GDALAsyncReaderH hARIO, double dfTimeout )
+int CPL_STDCALL GDALLockBuffer(GDALAsyncReaderH hARIO, double dfTimeout )
 {
-    VALIDATE_POINTER0(hARIO, "GDALLockBuffer");
-    ((GDALAsyncReader *)hARIO)->LockBuffer( dfTimeout );
+    VALIDATE_POINTER1(hARIO, "GDALLockBuffer",FALSE);
+    return ((GDALAsyncReader *)hARIO)->LockBuffer( dfTimeout );
 }
 
 /************************************************************************/
