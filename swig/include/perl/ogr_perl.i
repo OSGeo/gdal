@@ -859,11 +859,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    $type = $TYPE_STRING2INT{$type} if defined $type and exists $TYPE_STRING2INT{$type};
 	    my $self;
-	    if (defined $type) {
-		croak "unknown GeometryType: $type" unless 
-		    exists($TYPE_STRING2INT{$type}) or exists($TYPE_INT2STRING{$type});
-		$self = Geo::OGRc::new_Geometry($type);
-	    } elsif (defined $wkt) {
+	    if (defined $wkt) {
 		$self = Geo::OGRc::CreateGeometryFromWkt($wkt, $srs);
 	    } elsif (defined $wkb) {
 		$self = Geo::OGRc::CreateGeometryFromWkb($wkb, $srs);
@@ -871,6 +867,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$self = Geo::OGRc::CreateGeometryFromGML($gml);
 	    } elsif (defined $json) {
 		$self = Geo::OGRc::CreateGeometryFromJson($json);
+	    } elsif (defined $type) {
+		croak "unknown GeometryType: $type" unless 
+		    exists($TYPE_STRING2INT{$type}) or exists($TYPE_INT2STRING{$type});
+		$self = Geo::OGRc::new_Geometry($type);
 	    } else {
 		croak "missing GeometryType, WKT, WKB, GML, or GeoJSON parameter in Geo::OGR::Geometry::create";
 	    }
