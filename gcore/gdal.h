@@ -327,6 +327,17 @@ GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetRasterBand( GDALDatasetH, int );
 CPLErr CPL_DLL  CPL_STDCALL GDALAddBand( GDALDatasetH hDS, GDALDataType eType, 
                              char **papszOptions );
 
+GDALAsyncReaderH CPL_DLL CPL_STDCALL 
+GDALBeginAsyncReader(GDALDatasetH hDS, int nXOff, int nYOff,
+                     int nXSize, int nYSize,
+                     void *pBuf, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount, int* panBandMap,
+                     int nPixelSpace, int nLineSpace, int nBandSpace,
+                     char **papszOptions);
+
+void  CPL_DLL CPL_STDCALL 
+GDALEndAsyncReader(GDALDatasetH hDS, GDALAsyncReaderH hAsynchReaderH);
+
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIO( 
     GDALDatasetH hDS, GDALRWFlag eRWFlag,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
@@ -537,10 +548,10 @@ CPLErr CPL_DLL CPL_STDCALL
   int CPL_DLL CPL_STDCALL GDALGetNDataRead(GDALAsyncReaderH hARIO);
 
 GDALAsyncStatusType CPL_DLL CPL_STDCALL 
-GDALGetNextUpdatedRegion(GDALAsyncReaderH hARIO, int nTimeout,
+GDALGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
                          int* pnXBufOff, int* pnYBufOff, 
                          int* pnXBufSize, int* pnYBufSize );
-void CPL_DLL CPL_STDCALL GDALLockBuffer(GDALAsyncReaderH hARIO,
+int CPL_DLL CPL_STDCALL GDALLockBuffer(GDALAsyncReaderH hARIO,
                                         double dfTimeout);
 void CPL_DLL CPL_STDCALL GDALUnlockBuffer(GDALAsyncReaderH hARIO); 
 
