@@ -1061,6 +1061,20 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
         nBandSpace = nLineSpace * bufYSize;
     
 /* -------------------------------------------------------------------- */
+/*      check we have sensible values for windowing.                    */
+/* -------------------------------------------------------------------- */
+    if (xOff > GetRasterXSize()
+        || yOff > GetRasterYSize()
+        || (xOff + xSize) > GetRasterXSize()
+        || (yOff + ySize) > GetRasterYSize() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Requested window (%d,%d %dx%d) off dataset.",
+                  xOff, yOff, xSize, ySize );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Record request information.                                     */
 /* -------------------------------------------------------------------- */
     JPIPKAKAsyncReader* ario = new JPIPKAKAsyncReader();
@@ -1069,6 +1083,10 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
     ario->nBufYSize = bufYSize;
     ario->eBufType = bufType;
     ario->nBandCount = nBandCount;
+    ario->nXOff = xOff;
+    ario->nYOff = yOff;
+    ario->nXSize = xSize;
+    ario->nYSize = ySize;
 
     ario->panBandMap = new int[nBandCount];
     if (pBandMap)
@@ -1118,26 +1136,6 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
         ario->nAppLineSpace = ario->nLineSpace = nLineSpace;
         ario->nAppBandSpace = ario->nBandSpace = nBandSpace;
     }
-
-/* -------------------------------------------------------------------- */
-/*      check we have sensible values for windowing.                    */
-/* -------------------------------------------------------------------- */
-    if (xOff > GetRasterXSize())
-        xOff = GetRasterXSize();
-
-    if (yOff > GetRasterYSize())
-        yOff = GetRasterYSize();
-
-    if ((xOff + xSize) > GetRasterXSize())
-        xSize = GetRasterXSize() - xOff;
-
-    if ((yOff + ySize) > GetRasterYSize())
-        ySize = GetRasterYSize() - yOff;
-
-    ario->nXOff = xOff;
-    ario->nYOff = yOff;
-    ario->nXSize = xSize;
-    ario->nYSize = ySize;
 
     // parse options
     const char* pszLevel = CSLFetchNameValue(papszOptions, "LEVEL");
@@ -1461,7 +1459,6 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         clock_t end_wait = 0;
 
         end_wait = clock() + (int) (dfTimeout * CLOCKS_PER_SEC); 
-		
         while ((nSize == 0) && ((bHighPriority && poJDS->bHighThreadRunning) ||
                                 (!bHighPriority && poJDS->bLowThreadRunning)))
         {

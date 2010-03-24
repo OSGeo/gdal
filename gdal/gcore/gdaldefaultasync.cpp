@@ -108,15 +108,15 @@ GDALAsyncReader::~GDALAsyncReader()
  */
 
 /************************************************************************/
-/*                      GDALGetNextUpdatedRegion()                      */
+/*                     GDALARGetNextUpdatedRegion()                     */
 /************************************************************************/
 
 GDALAsyncStatusType CPL_STDCALL 
-GDALGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double timeout,
-                         int* pnxbufoff, int* pnybufoff, 
-                         int* pnxbufsize, int* pnybufsize)
+GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double timeout,
+                           int* pnxbufoff, int* pnybufoff, 
+                           int* pnxbufsize, int* pnybufsize)
 {
-    VALIDATE_POINTER1(hARIO, "GDALGetNextUpdatedRegion", GARIO_ERROR);
+    VALIDATE_POINTER1(hARIO, "GDALARGetNextUpdatedRegion", GARIO_ERROR);
     return ((GDALAsyncReader *)hARIO)->GetNextUpdatedRegion(
         timeout, pnxbufoff, pnybufoff, pnxbufsize, pnybufsize);
 }
@@ -148,11 +148,11 @@ int GDALAsyncReader::LockBuffer( double dfTimeout )
 
 
 /************************************************************************/
-/*                           GDALLockBuffer()                           */
+/*                          GDALARLockBuffer()                          */
 /************************************************************************/
-int CPL_STDCALL GDALLockBuffer(GDALAsyncReaderH hARIO, double dfTimeout )
+int CPL_STDCALL GDALARLockBuffer(GDALAsyncReaderH hARIO, double dfTimeout )
 {
-    VALIDATE_POINTER1(hARIO, "GDALLockBuffer",FALSE);
+    VALIDATE_POINTER1(hARIO, "GDALARLockBuffer",FALSE);
     return ((GDALAsyncReader *)hARIO)->LockBuffer( dfTimeout );
 }
 
@@ -172,11 +172,11 @@ void GDALAsyncReader::UnlockBuffer()
 }
 
 /************************************************************************/
-/*                          GDALUnlockBuffer()                          */
+/*                          GDALARUnlockBuffer()                          */
 /************************************************************************/
-void CPL_STDCALL GDALUnlockBuffer(GDALAsyncReaderH hARIO)
+void CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO)
 {
-    VALIDATE_POINTER0(hARIO, "GDALUnlockBuffer");
+    VALIDATE_POINTER0(hARIO, "GDALARUnlockBuffer");
     ((GDALAsyncReader *)hARIO)->UnlockBuffer();
 }
 
