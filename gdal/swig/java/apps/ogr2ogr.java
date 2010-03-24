@@ -712,10 +712,10 @@ public class ogr2ogr
         if( pszNewLayerName == null )
             pszNewLayerName = poSrcLayer.GetLayerDefn().GetName();
     
-        /*if( wkbFlatten(eGType) == ogr.wkbPolygon )
+        if( (eGType & (~ogrConstants.wkb25DBit)) == ogr.wkbPolygon )
             bForceToPolygon = true;
-        else if( wkbFlatten(eGType) == ogr.wkbMultiPolygon )
-            bForceToMultiPolygon = true;*/
+        else if( (eGType & (~ogrConstants.wkb25DBit)) == ogr.wkbMultiPolygon )
+            bForceToMultiPolygon = true;
     
     /* -------------------------------------------------------------------- */
     /*      Setup coordinate transformation if we need it.                  */
@@ -977,19 +977,15 @@ public class ogr2ogr
                 }
             }
     
-            /*
             if( poDstFeature.GetGeometryRef() != null && bForceToPolygon )
             {
-                poDstFeature.SetGeometry( 
-                    OGRGeometryFactory::forceToPolygon(poDstFeature ) );
+                poDstFeature.SetGeometryDirectly(ogr.ForceToPolygon(poDstFeature.GetGeometryRef()));
             }
                         
             if( poDstFeature.GetGeometryRef() != null && bForceToMultiPolygon )
             {
-                poDstFeature.SetGeometry( 
-                    OGRGeometryFactory::forceToMultiPolygon(
-                        poDstFeature ) );
-            }*/
+                poDstFeature.SetGeometryDirectly(ogr.ForceToMultiPolygon(poDstFeature.GetGeometryRef()));
+            }
                         
             poFeature.delete();
             poFeature = null;
