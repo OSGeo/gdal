@@ -1313,34 +1313,46 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 %}
 
 %newobject ForceToPolygon;
-%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom_in};
+/* Contrary to the C/C++ method, the passed geometry is preserved */
+/* This avoids dirty trick for Java */
 %inline %{
 OGRGeometryShadow* ForceToPolygon( OGRGeometryShadow *geom_in ) {
- return OGR_G_ForceToPolygon( geom_in );
+ if (geom_in == NULL)
+     return NULL;
+ return OGR_G_ForceToPolygon( OGR_G_Clone(geom_in) );
 }
 %}
 
 %newobject ForceToMultiPolygon;
-%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom_in};
+/* Contrary to the C/C++ method, the passed geometry is preserved */
+/* This avoids dirty trick for Java */
 %inline %{
 OGRGeometryShadow* ForceToMultiPolygon( OGRGeometryShadow *geom_in ) {
- return OGR_G_ForceToMultiPolygon( geom_in );
+ if (geom_in == NULL)
+     return NULL;
+ return OGR_G_ForceToMultiPolygon( OGR_G_Clone(geom_in) );
 }
 %}
 
 %newobject ForceToMultiPoint;
-%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom_in};
+/* Contrary to the C/C++ method, the passed geometry is preserved */
+/* This avoids dirty trick for Java */
 %inline %{
 OGRGeometryShadow* ForceToMultiPoint( OGRGeometryShadow *geom_in ) {
- return OGR_G_ForceToMultiPoint( geom_in );
+ if (geom_in == NULL)
+     return NULL;
+ return OGR_G_ForceToMultiPoint( OGR_G_Clone(geom_in) );
 }
 %}
 
 %newobject ForceToMultiLineString;
-%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom_in};
+/* Contrary to the C/C++ method, the passed geometry is preserved */
+/* This avoids dirty trick for Java */
 %inline %{
 OGRGeometryShadow* ForceToMultiLineString( OGRGeometryShadow *geom_in ) {
- return OGR_G_ForceToMultiLineString( geom_in );
+ if (geom_in == NULL)
+     return NULL;
+ return OGR_G_ForceToMultiLineString( OGR_G_Clone(geom_in) );
 }
 %}
 
