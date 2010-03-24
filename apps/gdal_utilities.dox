@@ -664,6 +664,7 @@ Example:
 gdalbuildvrt doq_index.vrt doq/*.tif
 gdalbuildvrt -input_file_list my_liste.txt doq_index.vrt
 gdalbuildvrt -separate rgb.vrt red.tif green.tif blue.tif
+gdalbuildvrt -hidenodata -vrtnodata "0 0 255" doq_index.vrt doq/*.tif
 \endverbatim
 
 \if man
@@ -1161,7 +1162,7 @@ color table.
 <dt> <b>-n</b> <i>nodata_value</i>:</dt><dd> 
 Ignore pixels from files being merged in with this pixel value. 
 </dd>
-<dt> <b>-init</b> <i>value</i>:</dt><dd> 
+<dt> <b>-init</b> <i>"value(s)"</i>:</dt><dd> 
 Pre-initialize the output image bands with these values.  However, it is not
 marked as the nodata value in the output file.  If only one value is given, the
 same value is used in all the bands. 
@@ -1174,6 +1175,21 @@ image data is copied into it.
 
 NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
 with Python support.
+
+\section example EXAMPLE
+
+Create an image with the pixels in all bands initialized to 255.
+
+\verbatim
+% gdal_merge.py -init 255 -o out.tif in1.tif in2.tif
+\endverbatim
+
+Create an RGB image that shows blue in pixels with no data. The first two bands
+will be initialized to 0 and the third band will be initalized to 255.
+
+\verbatim
+% gdal_merge.py -init "0 0 255" -o out.tif in1.tif in2.tif
+\endverbatim
 
 \if man
 \section gauthor AUTHORS
