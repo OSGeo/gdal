@@ -321,6 +321,22 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   }
 }
 
+/* required for GDALAsyncReader */
+%typemap(in,numinputs=0) (int *nLength, char **pBuffer ) ( int nLen = 0, char *pBuf = 0 )
+{
+  /* %typemap(in,numinputs=0) (int *nLength, char **pBuffer ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+%typemap(freearg) (int *nLength, char **pBuffer )
+{
+  /* %typemap(freearg) (int *nLen, char **pBuf ) */
+  if( *$1 ) {
+    free( *$2 );
+  }
+}
+
+/* end of required for GDALAsyncReader */
 
 /*
  * Typemap argout used in Feature::GetFieldAsIntegerList()

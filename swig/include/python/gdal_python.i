@@ -188,6 +188,18 @@
                               sd['SUBDATASET_'+str(i)+'_DESC'] ) )
             i = i + 1
         return sd_list
+
+    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=[]):
+        if band_list is None:
+            band_list = range(1, self.RasterCount + 1)
+        if buf_xsize is None:
+            buf_xsize = 0;
+        if buf_ysize is None:
+            buf_ysize = 0;
+        if buf_type is None:
+            buf_type = GDT_Byte
+        
+        return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)            
 }
 }
 
@@ -266,4 +278,5 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     return bContinue;    
 }
 %}
+
 %import typemaps_python.i

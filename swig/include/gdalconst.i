@@ -178,3 +178,8 @@
 %constant GMF_ALPHA               = 0x04;
 %constant GMF_NODATA              = 0x08;
 
+// GDALAsyncStatusType
+%constant GARIO_PENDING = GARIO_PENDING;
+%constant GARIO_UPDATE = GARIO_UPDATE;
+%constant GARIO_ERROR = GARIO_ERROR;
+%constant GARIO_COMPLETE = GARIO_COMPLETE;

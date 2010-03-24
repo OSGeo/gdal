@@ -163,6 +163,40 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
 
 //************************************************************************
 //
+// Define the extensions for GDALAsyncReader (nee GDALAsyncReaderShadow)
+//
+//************************************************************************
+%rename (AsyncReader) GDALAsyncReaderShadow;
+
+class GDALAsyncReaderShadow {
+private:
+  GDALAsyncReaderShadow();
+  ~GDALAsyncReaderShadow(){}
+public:
+%extend {
+
+    %apply (int *OUTPUT){int *xoff, int *yoff, int *buf_xsize, int *buf_ysize}
+    GDALAsyncStatusType GetNextUpdatedRegion(double timeout, int* xoff, int* yoff, int* buf_xsize, int* buf_ysize )
+    {
+        return GDALARGetNextUpdatedRegion(self, timeout, xoff, yoff, buf_xsize, buf_ysize );
+    }
+    %clear (int *xoff, int *yoff, int *buf_xsize, int *buf_ysize);
+    
+    int LockBuffer( double timeout )
+    {
+        return GDALARLockBuffer(self,timeout);
+    }
+    
+    void UnlockBuffer()
+    {
+        GDALARUnlockBuffer(self);
+    }
+
+    } /* extend */
+}; /* GDALAsyncReaderShadow */ 
+
+//************************************************************************
+//
 // Define the extensions for Dataset (nee GDALDatasetShadow)
 //
 //************************************************************************
@@ -417,6 +451,99 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 /* AdviseRead */
 /* ReadRaster */
   
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+%feature("kwargs") BeginAsyncReader;
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+%apply (int *nLength, char **pBuffer ) { (int *buf_len, char **buf ) };
+%apply(int *optional_int) { (int*) };  
+  GDALAsyncReaderShadow* BeginAsyncReader( \
+       int xOff, int yOff, int xSize, int ySize, int *buf_len, char **buf, \
+       int buf_xsize, int buf_ysize, GDALDataType bufType = (GDALDataType)0, \
+       int band_list = 0, int *pband_list = 0, int nPixelSpace = 0, \
+       int nLineSpace = 0, int nBandSpace = 0, char **options = 0)  {
+    
+    if ((options != NULL) && (buf_xsize ==0) && (buf_ysize == 0))
+    {
+        // calculate an appropriate buffer size
+        const char* pszLevel = CSLFetchNameValue(options, "LEVEL");
+        if (pszLevel)
+        {
+            // round up
+            int nLevel = atoi(pszLevel);
+            int nRes = 2 << (nLevel - 1);
+            buf_xsize = ceil(xSize / (1.0 * nRes));
+            buf_ysize = ceil(ySize / (1.0 * nRes));
+        }
+    }
+    
+    int nxsize = (buf_xsize == 0) ? xSize : buf_xsize;
+    int nysize = (buf_ysize == 0) ? ySize : buf_ysize;
+    
+    GDALDataType ntype;
+    if (bufType != 0) {
+        ntype = (GDALDataType) bufType;
+    } 
+    else {
+        ntype = GDT_Byte;
+    }
+    
+    bool myBandList = false;
+    int nBCount;
+    int* pBandList;
+    
+    if (band_list != 0){
+        myBandList = false;
+        nBCount = band_list;
+        pBandList = pband_list;
+    }        
+    else
+    {
+        myBandList = true;
+        nBCount = GDALGetRasterCount(self);
+        pBandList = (int*)CPLMalloc(sizeof(int) * nBCount);
+        for (int i = 0; i < nBCount; ++i) {
+            pBandList[i] = i;
+        }
+    }
+    
+    // for python bindings create buffer 
+    if (*buf == NULL)
+    {
+        // calculate buffer size
+        // if type is byte typeSize is GDT_Int32 (4) since these are packed into an int (BGRA)
+        if (ntype == GDT_Byte)
+            *buf = (char*) VSIMalloc( nxsize * nysize * (int)GDALGetDataTypeSize(GDT_Int32) );
+        else
+            *buf = (char*) VSIMalloc( nxsize * nysize *  (int)GDALGetDataTypeSize(ntype)); 
+    }
+        
+    // check we were able to create the buffer
+    if (*buf)
+    {
+        return (GDALAsyncReader*) GDALBeginAsyncReader(self, xOff, yOff, xSize, ySize, (void*) *buf, nxsize, nysize, ntype, nBCount, pBandList, nPixelSpace, nLineSpace,
+        nBandSpace, options);
+    }
+    else
+    {
+        *buf = 0;
+        return NULL;
+    }
+    
+    if ( myBandList ) {
+       CPLFree( pBandList );
+    }
+
+  }
+
+  %clear(int nBands, int *pband_list);
+  %clear(int *buf_len, char **buf);
+  %clear(int*);
+#endif  
+
+  void EndAsyncReader(GDALAsyncReaderShadow* ario){
+    GDALEndAsyncReader(self, (GDALAsyncReaderH) ario);
+  }
+
 } /* extend */
 }; /* GDALDatasetShadow */
 
@@ -431,3 +558,4 @@ int GDALDatasetShadow_RasterCount_get( GDALDatasetShadow *h ) {
   return GDALGetRasterCount( h );
 }
 %}
+
