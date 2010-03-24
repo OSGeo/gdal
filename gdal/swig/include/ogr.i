@@ -1312,6 +1312,37 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
   }
 %}
 
+%newobject ForceToPolygon;
+%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom_in};
+%inline %{
+OGRGeometryShadow* ForceToPolygon( OGRGeometryShadow *geom_in ) {
+ return OGR_G_ForceToPolygon( geom_in );
+}
+%}
+
+%newobject ForceToMultiPolygon;
+%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom_in};
+%inline %{
+OGRGeometryShadow* ForceToMultiPolygon( OGRGeometryShadow *geom_in ) {
+ return OGR_G_ForceToMultiPolygon( geom_in );
+}
+%}
+
+%newobject ForceToMultiPoint;
+%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom_in};
+%inline %{
+OGRGeometryShadow* ForceToMultiPoint( OGRGeometryShadow *geom_in ) {
+ return OGR_G_ForceToMultiPoint( geom_in );
+}
+%}
+
+%newobject ForceToMultiLineString;
+%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom_in};
+%inline %{
+OGRGeometryShadow* ForceToMultiLineString( OGRGeometryShadow *geom_in ) {
+ return OGR_G_ForceToMultiLineString( geom_in );
+}
+%}
 
 
 /************************************************************************/
