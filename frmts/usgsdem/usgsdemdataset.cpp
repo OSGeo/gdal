@@ -395,6 +395,7 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
 /*      Collect the spatial reference system.                           */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference sr;
+    int bNAD83 =TRUE;
 
     // OLD format header ends at byte 864
     if (bNewFormat)
@@ -422,6 +423,7 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
         {
           case 1:
             sr.SetWellKnownGeogCS( "NAD27" );
+            bNAD83 = FALSE;
             break;
 
           case 2:
@@ -442,10 +444,22 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
         }
     }
     else
+    {
         sr.SetWellKnownGeogCS( "NAD27" );
+        bNAD83 = FALSE;
+    }
 
     if (nCoordSystem == 1)	// UTM
         sr.SetUTM( iUTMZone, TRUE );
+
+    else if (nCoordSystem == 2)	// state plane
+    {
+        if( nGUnit == 1 )
+            sr.SetStatePlane( iUTMZone, bNAD83,
+                              "Foot", CPLAtof(SRS_UL_US_FOOT_CONV) );
+        else
+            sr.SetStatePlane( iUTMZone, bNAD83 );
+    }
 
     sr.exportToWkt( &pszProjection );
 
@@ -455,7 +469,7 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
 /*      pixels and lines, but we have to make the anchors be modulus    */
 /*      the pixel size which what really gets used.                     */
 /* -------------------------------------------------------------------- */
-    if (nCoordSystem == 1)	// UTM
+    if (nCoordSystem == 1 || nCoordSystem == 2 )	// UTM or State Plane
     {
         int	njunk;
         double  dxStart;
