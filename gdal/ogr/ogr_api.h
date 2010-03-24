@@ -84,6 +84,11 @@ OGR_G_ApproximateArcAngles(
     double dfStartAngle, double dfEndAngle,
     double dfMaxAngleStepSizeDegrees );
 
+OGRGeometryH CPL_DLL OGR_G_ForceToPolygon( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_ForceToMultiPolygon( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_ForceToMultiPoint( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_ForceToMultiLineString( OGRGeometryH );
+
 int    CPL_DLL OGR_G_GetDimension( OGRGeometryH );
 int    CPL_DLL OGR_G_GetCoordinateDimension( OGRGeometryH );
 void   CPL_DLL OGR_G_SetCoordinateDimension( OGRGeometryH, int );

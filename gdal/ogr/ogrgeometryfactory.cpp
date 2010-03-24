@@ -479,6 +479,7 @@ void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
  * this just effects a change on multipolygons.  The passed in geometry is
  * consumed and a new one returned (or potentially the same one). 
  * 
+ * @param poGeom the input geometry - ownership is passed to the method.
  * @return new geometry.
  */
 
@@ -489,7 +490,7 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         return NULL;
 
     if( wkbFlatten(poGeom->getGeometryType()) != wkbGeometryCollection
-        || wkbFlatten(poGeom->getGeometryType()) != wkbMultiPolygon )
+        && wkbFlatten(poGeom->getGeometryType()) != wkbMultiPolygon )
         return poGeom;
 
     // build an aggregated polygon from all the polygon rings in the container.
@@ -515,6 +516,27 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
     delete poGC;
 
     return poPolygon;
+}
+
+/************************************************************************/
+/*                        OGR_G_ForceToPolygon()                        */
+/************************************************************************/
+
+/**
+ * \brief change to polygon.
+ *
+ * This function is the same as the C++ method 
+ * OGRGeometryFactory::forceToPolygon().
+ *
+ * @param hGeom handle to the geometry to convert (ownership surrendered).
+ * @return the converted geometry (ownership to caller). 
+ */
+
+OGRGeometryH OGR_G_ForceToPolygon( OGRGeometryH hGeom )
+
+{
+    return (OGRGeometryH) 
+        OGRGeometryFactory::forceToPolygon( (OGRGeometry *) hGeom );
 }
 
 /************************************************************************/
@@ -584,6 +606,27 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 }
 
 /************************************************************************/
+/*                     OGR_G_ForceToMultiPolygon()                      */
+/************************************************************************/
+
+/**
+ * \brief change to multipolygon.
+ *
+ * This function is the same as the C++ method 
+ * OGRGeometryFactory::forceToMultiPolygon().
+ *
+ * @param hGeom handle to the geometry to convert (ownership surrendered).
+ * @return the converted geometry (ownership to caller). 
+ */
+
+OGRGeometryH OGR_G_ForceToMultiPolygon( OGRGeometryH hGeom )
+
+{
+    return (OGRGeometryH) 
+        OGRGeometryFactory::forceToMultiPolygon( (OGRGeometry *) hGeom );
+}
+
+/************************************************************************/
 /*                        forceToMultiPoint()                           */
 /************************************************************************/
 
@@ -643,6 +686,27 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
     poMP->addGeometryDirectly( poGeom );
 
     return poMP;
+}
+
+/************************************************************************/
+/*                      OGR_G_ForceToMultiPoint()                       */
+/************************************************************************/
+
+/**
+ * \brief change to multipoint.
+ *
+ * This function is the same as the C++ method 
+ * OGRGeometryFactory::forceToMultiPoint().
+ *
+ * @param hGeom handle to the geometry to convert (ownership surrendered).
+ * @return the converted geometry (ownership to caller). 
+ */
+
+OGRGeometryH OGR_G_ForceToMultiPoint( OGRGeometryH hGeom )
+
+{
+    return (OGRGeometryH) 
+        OGRGeometryFactory::forceToMultiPoint( (OGRGeometry *) hGeom );
 }
 
 /************************************************************************/
@@ -776,6 +840,27 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     }
 
     return poGeom;
+}
+
+/************************************************************************/
+/*                    OGR_G_ForceToMultiLineString()                    */
+/************************************************************************/
+
+/**
+ * \brief change to multilinestring.
+ *
+ * This function is the same as the C++ method 
+ * OGRGeometryFactory::forceToMultiLineString().
+ *
+ * @param hGeom handle to the geometry to convert (ownership surrendered).
+ * @return the converted geometry (ownership to caller). 
+ */
+
+OGRGeometryH OGR_G_ForceToMultiLineString( OGRGeometryH hGeom )
+
+{
+    return (OGRGeometryH) 
+        OGRGeometryFactory::forceToMultiLineString( (OGRGeometry *) hGeom );
 }
 
 /************************************************************************/
