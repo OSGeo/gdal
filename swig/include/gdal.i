@@ -68,6 +68,7 @@ typedef void GDALRasterBandShadow;
 typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
+typedef void GDALAsyncReaderShadow;
 
 typedef int FALSE_IS_ERR;
 
@@ -86,6 +87,7 @@ typedef int GDALAccess;
 typedef int GDALDataType;
 typedef int CPLErr;
 typedef int GDALResampleAlg;
+typedef int GDALAsyncStatusType;
 #else
 /*! Pixel data types */
 %rename (DataType) GDALDataType;
@@ -161,6 +163,14 @@ typedef enum {
   /*! Cubic Convolution Approximation (4x4 kernel) */  GRA_Cubic=2,
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
 } GDALResampleAlg;
+
+%rename (AsyncStatusType) GDALAsyncStatusType;
+typedef enum {
+	GARIO_PENDING = 0,
+	GARIO_UPDATE = 1,
+	GARIO_ERROR = 2,
+	GARIO_COMPLETE = 3
+} GDALAsyncStatusType;
 #endif
 
 #if defined(SWIGPYTHON)
