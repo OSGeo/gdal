@@ -8978,6 +8978,67 @@ public class ogr:public static void RegisterAll()
   */
 public class ogr:public static int SetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER) 
 
+/**
+ * Convert to polygon.
+ *
+ * Tries to force the provided geometry to be a polygon.  Currently
+ * this just effects a change on multipolygons.
+ *
+ * Note: contrary to the C/C++ method, a new object is returned.
+ * 
+ * @param geom the input geometry
+ * @return new geometry.
+ * @since Java bindings 1.8.0
+ */
+public class ogr:public static Geometry ForceToPolygon(Geometry geom)
+
+/**
+ * Convert to multipolygon.
+ *
+ * Tries to force the provided geometry to be a multipolygon.  Currently
+ * this just effects a change on polygons.
+ *
+ * Note: contrary to the C/C++ method, a new object is returned.
+ * 
+ * @param geom the input geometry
+ * @return new geometry.
+ * @since Java bindings 1.8.0
+ */
+public class ogr:public static Geometry ForceToMultiPolygon(Geometry geom)
+
+/**
+ * Convert to multipoint.
+ *
+ * Tries to force the provided geometry to be a multipoint.  Currently
+ * this just effects a change on points.
+ *
+ * Note: contrary to the C/C++ method, a new object is returned.
+ * 
+ * @param geom the input geometry
+ * @return new geometry.
+ * @since Java bindings 1.8.0
+ */
+public class ogr:public static Geometry ForceToMultiPoint(Geometry geom)
+
+/**
+ * Convert to multilinestring.
+ *
+ * Tries to force the provided geometry to be a multilinestring.
+ * <ul>
+ * <li>linestrings are placed in a multilinestring.
+ * <li>geometry collections will be converted to multilinestring if they only 
+ * contain linestrings.
+ * <li>polygons will be changed to a collection of linestrings (one per ring).
+ * </ul>
+ *
+ * Note: contrary to the C/C++ method, a new object is returned.
+ * 
+ * @param geom the input geometry
+ * @return new geometry.
+ * @since Java bindings 1.8.0
+ */
+public class ogr:public static Geometry ForceToMultiLineString(Geometry geom)
+
 /* Class SpatialReference */
 
 /**

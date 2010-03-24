@@ -15,7 +15,7 @@ cp gdal-package-info.java org_patched/org/gdal/gdal/package-info.java
 cp gdalconst-package-info.java org_patched/org/gdal/gdalconst/package-info.java
 cp ogr-package-info.java org_patched/org/gdal/ogr/package-info.java
 cp osr-package-info.java org_patched/org/gdal/osr/package-info.java
-javadoc -overview overview.html -public -d ./java -sourcepath org_patched -subpackages org.gdal -link http://java.sun.com/javase/6/docs/api -windowtitle "GDAL/OGR 1.7.0 Java bindings API"
+javadoc -overview overview.html -public -d ./java -sourcepath org_patched -subpackages org.gdal -link http://java.sun.com/javase/6/docs/api -windowtitle "GDAL/OGR 1.8.0 Java bindings API"
 
 # Create a zip with the Javadoc
 rm -f javadoc.zip
