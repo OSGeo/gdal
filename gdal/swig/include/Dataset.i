@@ -175,12 +175,12 @@ private:
 public:
 %extend {
 
-    %apply (int *OUTPUT){int *xoff, int *yoff, int *buf_xsize, int *buf_ysize}
+    %apply (int *OUTPUT) {(int *)};
     GDALAsyncStatusType GetNextUpdatedRegion(double timeout, int* xoff, int* yoff, int* buf_xsize, int* buf_ysize )
     {
         return GDALARGetNextUpdatedRegion(self, timeout, xoff, yoff, buf_xsize, buf_ysize );
     }
-    %clear (int *xoff, int *yoff, int *buf_xsize, int *buf_ysize);
+    %clear (int *);
     
     int LockBuffer( double timeout )
     {
@@ -439,6 +439,8 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     return eErr;
 }
   
+%clear (GDALDataType *buf_type);
+%clear (int band_list, int *pband_list );
 %clear (int *buf_len, char **buf );
 %clear (int*);
 #endif
@@ -455,7 +457,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 %feature("kwargs") BeginAsyncReader;
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
 %apply (int *nLength, char **pBuffer ) { (int *buf_len, char **buf ) };
-%apply(int *optional_int) { (int*) };  
+%apply (int *optional_int) { (int*) };  
   GDALAsyncReaderShadow* BeginAsyncReader( \
        int xOff, int yOff, int xSize, int ySize, int *buf_len, char **buf, \
        int buf_xsize, int buf_ysize, GDALDataType bufType = (GDALDataType)0, \
@@ -535,9 +537,9 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
   }
 
-  %clear(int nBands, int *pband_list);
-  %clear(int *buf_len, char **buf);
-  %clear(int*);
+%clear(int band_list, int *pband_list);
+%clear(int *buf_len, char **buf);
+%clear(int*);
 #endif  
 
   void EndAsyncReader(GDALAsyncReaderShadow* ario){
