@@ -531,29 +531,14 @@ CPLErr CPL_DLL CPL_STDCALL
 /* ==================================================================== */
 /*     GDALAsyncReader                                                  */
 /* ==================================================================== */
-  GDALDatasetH CPL_DLL CPL_STDCALL GDALGetGDALDataset(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetXOffset(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetYOffset(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetXSize(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetYSize(GDALAsyncReaderH hARIO);
-  void CPL_DLL * CPL_STDCALL GDALGetBuffer(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetBufferXSize(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetBufferYSize(GDALAsyncReaderH hARIO);
-  GDALDataType CPL_DLL CPL_STDCALL GDALGetBufferType(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetBandCount(GDALAsyncReaderH hARIO);
-  int CPL_DLL * CPL_STDCALL GDALGetBandMap(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetPixelSpace(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetLineSpace(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetBandSpace(GDALAsyncReaderH hARIO);
-  int CPL_DLL CPL_STDCALL GDALGetNDataRead(GDALAsyncReaderH hARIO);
 
 GDALAsyncStatusType CPL_DLL CPL_STDCALL 
-GDALGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
+GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
                          int* pnXBufOff, int* pnYBufOff, 
                          int* pnXBufSize, int* pnYBufSize );
-int CPL_DLL CPL_STDCALL GDALLockBuffer(GDALAsyncReaderH hARIO,
+int CPL_DLL CPL_STDCALL GDALARLockBuffer(GDALAsyncReaderH hARIO,
                                         double dfTimeout);
-void CPL_DLL CPL_STDCALL GDALUnlockBuffer(GDALAsyncReaderH hARIO); 
+void CPL_DLL CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO); 
 
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
