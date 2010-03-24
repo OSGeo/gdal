@@ -489,7 +489,7 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         return NULL;
 
     if( wkbFlatten(poGeom->getGeometryType()) != wkbGeometryCollection
-        || wkbFlatten(poGeom->getGeometryType()) != wkbMultiPolygon )
+        && wkbFlatten(poGeom->getGeometryType()) != wkbMultiPolygon )
         return poGeom;
 
     // build an aggregated polygon from all the polygon rings in the container.
