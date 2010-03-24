@@ -969,7 +969,7 @@ def ogr_spatialite_3():
         return 'fail'
 
 ###############################################################################
-# Test updating a spatialite DB (#3471)
+# Test updating a spatialite DB (#3471 and #3474)
 
 def ogr_spatialite_4():
 
@@ -977,6 +977,14 @@ def ogr_spatialite_4():
         return 'skip'
 
     ds = ogr.Open( 'tmp/spatialite_test.db', update = 1  )
+
+    lyr = ds.ExecuteSQL('SELECT * FROM sqlite_master')
+    nb_sqlite_master_objects_before = lyr.GetFeatureCount()
+    ds.ReleaseResultSet(lyr)
+
+    lyr = ds.ExecuteSQL('SELECT * FROM idx_geomspatialite_GEOMETRY')
+    nb_idx_before = lyr.GetFeatureCount()
+    ds.ReleaseResultSet(lyr)
 
     lyr = ds.GetLayerByName('geomspatialite')
     lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
@@ -989,6 +997,31 @@ def ogr_spatialite_4():
         return 'fail'
     feat.Destroy()
     ds.ReleaseResultSet(lyr)
+
+    # Check that triggers and index are restored (#3474)
+    lyr = ds.ExecuteSQL('SELECT * FROM sqlite_master')
+    nb_sqlite_master_objects_after = lyr.GetFeatureCount()
+    ds.ReleaseResultSet(lyr)
+
+    if nb_sqlite_master_objects_before != nb_sqlite_master_objects_after:
+        print('nb_sqlite_master_objects_before=%d, nb_sqlite_master_objects_after=%d' % (nb_sqlite_master_objects_before, nb_sqlite_master_objects_after))
+        return 'fail'
+
+    # Add new feature
+    lyr = ds.GetLayerByName('geomspatialite')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(100 -100)'))
+    lyr.CreateFeature(feat)
+    feat.Destroy()
+
+    # Check that the trigger is functionnal (#3474)
+    lyr = ds.ExecuteSQL('SELECT * FROM idx_geomspatialite_GEOMETRY')
+    nb_idx_after = lyr.GetFeatureCount()
+    ds.ReleaseResultSet(lyr)
+
+    if nb_idx_before + 1 != nb_idx_after:
+        print('nb_idx_before=%d, nb_idx_after=%d' % (nb_idx_before, nb_idx_after))
+        return 'fail'
 
     return 'success'
 
