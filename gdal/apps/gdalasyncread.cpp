@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdal_translate.cpp 15640 2008-10-29 20:19:56Z rouault $
+ * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL Async Image Reader, primarily for testing async api.
