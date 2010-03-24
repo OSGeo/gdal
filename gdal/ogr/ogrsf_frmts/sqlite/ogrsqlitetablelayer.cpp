@@ -566,13 +566,27 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     poDS->SoftStartTransaction();
 
 /* -------------------------------------------------------------------- */
-/*      Make a backup of the table.                                     */
+/*      Save existing related triggers and index                        */
 /* -------------------------------------------------------------------- */
     int rc;
     char *pszErrMsg = NULL;
     sqlite3 *hDB = poDS->GetDB();
-    
-    rc = sqlite3_exec( hDB, 
+    CPLString osSQL;
+
+    osSQL.Printf( "SELECT sql FROM sqlite_master WHERE type IN ('trigger','index') AND tbl_name='%s'", 
+                   poFeatureDefn->GetName() );
+
+    int nRowTriggerIndexCount, nColTriggerIndexCount;
+    char **papszTriggerIndexResult = NULL;
+    rc = sqlite3_get_table( hDB, osSQL.c_str(), &papszTriggerIndexResult, 
+                            &nRowTriggerIndexCount, &nColTriggerIndexCount, &pszErrMsg );
+
+/* -------------------------------------------------------------------- */
+/*      Make a backup of the table.                                     */
+/* -------------------------------------------------------------------- */
+
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, 
                        CPLSPrintf( "CREATE TEMPORARY TABLE t1_back(%s)",
                                    pszOldFieldList ),
                        NULL, NULL, &pszErrMsg );
@@ -630,8 +644,28 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
                            NULL, NULL, &pszErrMsg );
 
 /* -------------------------------------------------------------------- */
+/*      Recreate existing related tables, triggers and index            */
+/* -------------------------------------------------------------------- */
+
+    if( rc == SQLITE_OK )
+    {
+        int i;
+
+        for(i = 1; i <= nRowTriggerIndexCount && nColTriggerIndexCount == 1 && rc == SQLITE_OK; i++)
+        {
+            if (papszTriggerIndexResult[i] != NULL && papszTriggerIndexResult[i][0] != '\0')
+                rc = sqlite3_exec( hDB, 
+                            papszTriggerIndexResult[i],
+                            NULL, NULL, &pszErrMsg );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      COMMIT on success or ROLLBACK on failuire.                      */
 /* -------------------------------------------------------------------- */
+
+    sqlite3_free_table( papszTriggerIndexResult );
+
     if( rc == SQLITE_OK )
     {
         poDS->SoftCommit();
