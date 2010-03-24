@@ -107,7 +107,7 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
             /* because the pointer is used directly by putenv in old glibc */
             putenv( pszEnvIni );
 
-            CPLDebug( "ODBC", pszEnvIni );
+            CPLDebug( "ODBC", "%s", pszEnvIni );
         }
 
         // Try to install ODBC driver in new location
@@ -675,7 +675,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         {
             if ( nRetCode != SQL_NO_DATA )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
             }
             return FALSE;
@@ -688,7 +688,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         {
             if ( nRetCode == SQL_NO_DATA )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
             }
             return FALSE;
@@ -727,7 +727,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         {
             if ( nRetCode == SQL_NO_DATA )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
             }
             return FALSE;
@@ -768,7 +768,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
                 if( Failed( nRetCode ) )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
+                    CPLError( CE_Failure, CPLE_AppDefined, "%s",
                               m_poSession->GetLastError() );
                     return FALSE;
                 }
