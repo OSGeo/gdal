@@ -752,51 +752,13 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                 osCommand.Printf("SELECT CreateSpatialIndex('%s', '%s')",
                                  pszLayerName, pszGeomCol);
 
-            /* -------------------------------------------------------------------- */
-            /*      Prepare statement.                                              */
-            /* -------------------------------------------------------------------- */
-                int rc;
-                sqlite3_stmt *hSQLStmt = NULL;
-
-                rc = sqlite3_prepare( GetDB(), osCommand, strlen(osCommand),
-                                      &hSQLStmt, NULL );
-
+                rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
                 if( rc != SQLITE_OK )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
-                            "In CreateLayer(): sqlite3_prepare(%s):\n  %s", 
-                            osCommand.c_str(), sqlite3_errmsg(GetDB()) );
-                }
-                else
-                {
-                    /* -------------------------------------------------------------------- */
-                    /*      Do we get a resultset?                                          */
-                    /* -------------------------------------------------------------------- */
-                    rc = sqlite3_step( hSQLStmt );
-                    if( rc != SQLITE_ROW )
-                    {
-                        if ( rc != SQLITE_DONE )
-                        {
-                            CPLError( CE_Failure, CPLE_AppDefined, 
-                                "In CreateLayer(): sqlite3_step(%s):\n  %s", 
-                                osCommand.c_str(), sqlite3_errmsg(GetDB()) );
-                        }
-                    }
-                    else
-                    {
-                        if (sqlite3_column_count(hSQLStmt) != 1 &&
-                            sqlite3_column_int(hSQLStmt, 0) != 1)
-                        {
-                            CPLError( CE_Failure, CPLE_AppDefined, 
-                                "In CreateLayer(): sqlite3_step(%s): did not get expected result", 
-                                osCommand.c_str() );
-                        }
-                    }
-                }
-
-                if( hSQLStmt != NULL )
-                {
-                    sqlite3_finalize( hSQLStmt );
+                            "Unable to create spatial index:\n%s", pszErrMsg );
+                    sqlite3_free( pszErrMsg );
+                    return FALSE;
                 }
             }
         }
