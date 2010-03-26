@@ -3,7 +3,7 @@
 include ../../../GDALmake.opt
 
 OBJ	=	ogrsqlitedatasource.o ogrsqlitelayer.o ogrsqlitedriver.o \
-		ogrsqlitetablelayer.o ogrsqliteselectlayer.o
+		ogrsqlitetablelayer.o ogrsqliteselectlayer.o ogrsqlitesinglefeaturelayer.o
 
 ifeq ($(HAVE_SPATIALITE),yes)
 CPPFLAGS +=  -DHAVE_SPATIALITE
