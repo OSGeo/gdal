@@ -206,6 +206,28 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
 };
 
 /************************************************************************/
+/*                   OGRSQLiteSingleFeatureLayer                        */
+/************************************************************************/
+
+class OGRSQLiteSingleFeatureLayer : public OGRLayer
+{
+  private:
+    int                 nVal;
+    OGRFeatureDefn     *poFeatureDefn;
+    int                 iNextShapeId;
+
+  public:
+                        OGRSQLiteSingleFeatureLayer( const char* pszLayerName,
+                                                     int nVal );
+                        ~OGRSQLiteSingleFeatureLayer();
+
+    virtual void        ResetReading();
+    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual int         TestCapability( const char * );
+};
+
+/************************************************************************/
 /*                         OGRSQLiteDataSource                          */
 /************************************************************************/
 

@@ -437,6 +437,17 @@ OGRLayer *OGRSQLiteDataSource::GetLayer( int iLayer )
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
+static const char* apszSpatialiteFuncs[] =
+{
+    "InitSpatialMetaData",
+    "AddGeometryColumn",
+    "RecoverGeometryColumn",
+    "DiscardGeometryColumn",
+    "CreateSpatialIndex",
+    "CreateMbrCache",
+    "DisableSpatialIndex"
+};
+
 OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           OGRGeometry *poSpatialFilter,
                                           const char *pszDialect )
@@ -500,6 +511,34 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
         return NULL;
     }
     
+/* -------------------------------------------------------------------- */
+/*      Special case for some spatialite functions which must be run    */
+/*      only once                                                       */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"SELECT ",7) &&
+        bIsSpatiaLite && bSpatialiteLoaded )
+    {
+        unsigned int i;
+        for(i=0;i<sizeof(apszSpatialiteFuncs)/
+                  sizeof(apszSpatialiteFuncs[0]);i++)
+        {
+            if( EQUALN(apszSpatialiteFuncs[i], pszSQLCommand + 7,
+                       strlen(apszSpatialiteFuncs[i])) )
+            {
+                if (sqlite3_column_count( hSQLStmt ) == 1 &&
+                    sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_INTEGER )
+                {
+                    int ret = sqlite3_column_int( hSQLStmt, 0 );
+
+                    sqlite3_finalize( hSQLStmt );
+
+                    return new OGRSQLiteSingleFeatureLayer
+                                        ( apszSpatialiteFuncs[i], ret );
+                }
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
