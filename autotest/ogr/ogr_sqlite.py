@@ -912,7 +912,15 @@ def ogr_spatialite_2():
 
     # Remove spatial index
     sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('test_spatialfilter', 'Geometry')")
+    sql_lyr.GetFeatureCount()
+    feat = sql_lyr.GetNextFeature()
+    ret = feat.GetFieldAsInteger(0)
     ds.ReleaseResultSet(sql_lyr)
+
+    if ret != 1:
+        gdaltest.post_reason('DisableSpatialIndex failed')
+        return 'fail'
+
     ds.ExecuteSQL("VACUUM")
 
     ds.Destroy()
