@@ -67,7 +67,7 @@ def ogr_factory_2():
     dst_geom = ogr.ForceToPolygon( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
     
     return 'success'
@@ -84,7 +84,7 @@ def ogr_factory_3():
     dst_geom = ogr.ForceToMultiPolygon( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
     
     src_wkt = 'GEOMETRYCOLLECTION(POLYGON((0 0,100 0,100 100,0 0)))'
@@ -94,7 +94,7 @@ def ogr_factory_3():
     dst_geom = ogr.ForceToMultiPolygon( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
     
     return 'success'
@@ -111,7 +111,7 @@ def ogr_factory_4():
     dst_geom = ogr.ForceToMultiPoint( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
 
     src_wkt = 'GEOMETRYCOLLECTION(POINT(2 5 3),POINT(4 5 5))'
@@ -121,7 +121,7 @@ def ogr_factory_4():
     dst_geom = ogr.ForceToMultiPoint( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
     
     return 'success'
@@ -138,7 +138,7 @@ def ogr_factory_5():
     dst_geom = ogr.ForceToMultiLineString( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
     
     src_wkt = 'GEOMETRYCOLLECTION(LINESTRING(2 5,10 20),LINESTRING(0 0,10 10))'
@@ -148,7 +148,7 @@ def ogr_factory_5():
     dst_geom = ogr.ForceToMultiLineString( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
     
     src_wkt = 'POLYGON((2 5,10 20),(0 0,10 10))'
@@ -158,7 +158,7 @@ def ogr_factory_5():
     dst_geom = ogr.ForceToMultiLineString( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
     
     src_wkt = 'MULTIPOLYGON(((2 5,10 20),(0 0,10 10)),((2 5,10 20)))'
@@ -168,7 +168,7 @@ def ogr_factory_5():
     dst_geom = ogr.ForceToMultiLineString( src_geom )
 
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
-        print dst_geom.ExportToWkt()
+        print(dst_geom.ExportToWkt())
         return 'fail'
     return 'success'
 
