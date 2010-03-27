@@ -305,7 +305,7 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
         if( eErr == CE_None
-            && !pfnProgress( (nNewLine+1) / (double) nYSize+nIterations, 
+            && !pfnProgress( (nNewLine+1) / (double) (nYSize+nIterations), 
                              "Smoothing Filter...", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -422,6 +422,9 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
     if( hMaskBand == NULL )
         hMaskBand = GDALGetMaskBand( hTargetBand );
+
+    /* If there are smoothing iterations, reserve 10% of the progress for them */
+    double dfProgressRatio = (nSmoothingIterations > 0) ? 0.9 : 1.0;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize progress counter.                                    */
@@ -605,7 +608,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /*      report progress.                                                */
 /* -------------------------------------------------------------------- */
         if( eErr == CE_None
-            && !pfnProgress( 0.5*(iY+1) / (double)nYSize, 
+            && !pfnProgress( dfProgressRatio * (0.5*(iY+1) / (double)nYSize), 
                              "Filling...", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -788,7 +791,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /*      report progress.                                                */
 /* -------------------------------------------------------------------- */
         if( eErr == CE_None
-            && !pfnProgress( 0.5+0.5*(nYSize-iY) / (double)nYSize, 
+            && !pfnProgress( dfProgressRatio*(0.5+0.5*(nYSize-iY) / (double)nYSize), 
                              "Filling...", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -806,9 +809,15 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         // force masks to be to flushed and recomputed.
         GDALFlushRasterCache( hMaskBand );
 
+        void *pScaledProgress;
+        pScaledProgress =
+            GDALCreateScaledProgress( dfProgressRatio, 1.0, pfnProgress, NULL );
+
         eErr = GDALMultiFilter( hTargetBand, hMaskBand, hFiltMaskBand, 
                                 nSmoothingIterations,
-                                pfnProgress, pProgressArg );
+                                GDALScaledProgress, pScaledProgress );
+
+        GDALDestroyScaledProgress( pScaledProgress );
     }
 
 /* -------------------------------------------------------------------- */
