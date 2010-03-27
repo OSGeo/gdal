@@ -506,6 +506,9 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
 
         OGRPolygon *poOldPoly = (OGRPolygon *) poGC->getGeometryRef(iGeom);
         int   iRing;
+        
+        if( poOldPoly->getExteriorRing() == NULL )
+            continue;
 
         poPolygon->addRing( poOldPoly->getExteriorRing() );
 
@@ -792,9 +795,16 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             OGRLineString *poNewLS, *poLR;
 
             if( iRing == 0 )
+            {
                 poLR = poPoly->getExteriorRing();
+                if( poLR == NULL )
+                    break;
+            }
             else
                 poLR = poPoly->getInteriorRing(iRing-1);
+
+            if (poLR == NULL || poLR->getNumPoints() == 0)
+                continue;
 
             poNewLS = new OGRLineString();
             poNewLS->addSubLineString( poLR );
@@ -825,9 +835,16 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
                 OGRLineString *poNewLS, *poLR;
                 
                 if( iRing == 0 )
+                {
                     poLR = poPoly->getExteriorRing();
+                    if( poLR == NULL )
+                        break;
+                }
                 else
                     poLR = poPoly->getInteriorRing(iRing-1);
+    
+                if (poLR == NULL || poLR->getNumPoints() == 0)
+                    continue;
                 
                 poNewLS = new OGRLineString();
                 poNewLS->addSubLineString( poLR );
