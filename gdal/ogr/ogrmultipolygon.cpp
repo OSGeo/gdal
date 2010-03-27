@@ -242,6 +242,18 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
         {
             int     nPoints = 0;
 
+            const char* pszNext = OGRWktReadToken( pszInput, szToken );
+            if (EQUAL(szToken,"EMPTY"))
+            {
+                poPolygon->addRingDirectly( new OGRLinearRing() );
+
+                pszInput = OGRWktReadToken( pszNext, szToken );
+                if ( !EQUAL(szToken, ",") )
+                    break;
+
+                continue;
+            }
+
 /* -------------------------------------------------------------------- */
 /*      Read points for one line from input.                            */
 /* -------------------------------------------------------------------- */
