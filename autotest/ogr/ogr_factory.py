@@ -151,6 +151,25 @@ def ogr_factory_5():
         print dst_geom.ExportToWkt()
         return 'fail'
     
+    src_wkt = 'POLYGON((2 5,10 20),(0 0,10 10))'
+    exp_wkt = 'MULTILINESTRING((2 5,10 20),(0 0,10 10))'
+
+    src_geom = ogr.CreateGeometryFromWkt( src_wkt )
+    dst_geom = ogr.ForceToMultiLineString( src_geom )
+
+    if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
+        print dst_geom.ExportToWkt()
+        return 'fail'
+    
+    src_wkt = 'MULTIPOLYGON(((2 5,10 20),(0 0,10 10)),((2 5,10 20)))'
+    exp_wkt = 'MULTILINESTRING((2 5,10 20),(0 0,10 10),(2 5,10 20))'
+
+    src_geom = ogr.CreateGeometryFromWkt( src_wkt )
+    dst_geom = ogr.ForceToMultiLineString( src_geom )
+
+    if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
+        print dst_geom.ExportToWkt()
+        return 'fail'
     return 'success'
 
 
