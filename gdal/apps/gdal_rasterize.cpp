@@ -38,6 +38,29 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                            ArgIsNumeric()                            */
+/************************************************************************/
+
+static int ArgIsNumeric( const char *pszArg )
+
+{
+    if( pszArg[0] == '-' )
+        pszArg++;
+
+    if( *pszArg == '\0' )
+        return FALSE;
+
+    while( *pszArg != '\0' )
+    {
+        if( (*pszArg < '0' || *pszArg > '9') && *pszArg != '.' )
+            return FALSE;
+        pszArg++;
+    }
+        
+    return TRUE;
+}
+
+/************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
@@ -45,11 +68,14 @@ static void Usage()
 
 {
     printf( 
-        "Usage: gdal_rasterize [-b band] [-i] [-at]\n"
-        "       [-burn value] | [-a attribute_name] [-3d]\n"
-//      "       [-of format_driver] [-co key=value]\n"       
-//      "       [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
+        "Usage: gdal_rasterize [-b band]* [-i] [-at]\n"
+        "       [-burn value]* | [-a attribute_name] [-3d]\n"
         "       [-l layername]* [-where expression] [-sql select_statement]\n"
+        "       [-of format] [-a_srs srs_def] [-co \"NAME=VALUE\"]*\n"
+        "       [-a_nodata value] [-init value]*\n"
+        "       [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
+        "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
+        "             CInt16/CInt32/CFloat32/CFloat64}] [-q]\n"
         "       <src_datasource> <dst_filename>\n" );
     exit( 1 );
 }
@@ -127,56 +153,61 @@ static void InvertGeometries( GDALDatasetH hDstDS,
 /************************************************************************/
 
 static void ProcessLayer( 
-    OGRLayerH hSrcLayer, 
+    OGRLayerH hSrcLayer, int bSRSIsSet, 
     GDALDatasetH hDstDS, std::vector<int> anBandList,
     std::vector<double> &adfBurnValues, int b3D, int bInverse,
-    const char *pszBurnAttribute, char **papszRasterizeOptions )
+    const char *pszBurnAttribute, char **papszRasterizeOptions,
+    GDALProgressFunc pfnProgress, void* pProgressData )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Checkout that SRS are the same.                                 */
+/*      If -a_srs is specified, skip the test                           */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReferenceH  hDstSRS = NULL;
-    if( GDALGetProjectionRef( hDstDS ) != NULL )
+    if (!bSRSIsSet)
     {
-        char *pszProjection;
-
-        pszProjection = (char *) GDALGetProjectionRef( hDstDS );
-
-        hDstSRS = OSRNewSpatialReference(NULL);
-        if( OSRImportFromWkt( hDstSRS, &pszProjection ) != CE_None )
+        OGRSpatialReferenceH  hDstSRS = NULL;
+        if( GDALGetProjectionRef( hDstDS ) != NULL )
         {
-            OSRDestroySpatialReference(hDstSRS);
-            hDstSRS = NULL;
+            char *pszProjection;
+    
+            pszProjection = (char *) GDALGetProjectionRef( hDstDS );
+    
+            hDstSRS = OSRNewSpatialReference(NULL);
+            if( OSRImportFromWkt( hDstSRS, &pszProjection ) != CE_None )
+            {
+                OSRDestroySpatialReference(hDstSRS);
+                hDstSRS = NULL;
+            }
         }
-    }
-
-    OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hSrcLayer);
-    if( hDstSRS != NULL && hSrcSRS != NULL )
-    {
-        if( OSRIsSame(hSrcSRS, hDstSRS) == FALSE )
+    
+        OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hSrcLayer);
+        if( hDstSRS != NULL && hSrcSRS != NULL )
+        {
+            if( OSRIsSame(hSrcSRS, hDstSRS) == FALSE )
+            {
+                fprintf(stderr,
+                        "Warning : the output raster dataset and the input vector layer do not have the same SRS.\n"
+                        "Results might be incorrect (no on-the-fly reprojection of input data).\n");
+            }
+        }
+        else if( hDstSRS != NULL && hSrcSRS == NULL )
         {
             fprintf(stderr,
-                    "Warning : the output raster dataset and the input vector layer do not have the same SRS.\n"
-                    "Results might be incorrect (no on-the-fly reprojection of input data).\n");
+                    "Warning : the output raster dataset has a SRS, but the input vector layer SRS is unknown.\n"
+                    "Ensure input vector has the same SRS, otherwise results might be incorrect.\n");
         }
-    }
-    else if( hDstSRS != NULL && hSrcSRS == NULL )
-    {
-        fprintf(stderr,
-                "Warning : the output raster dataset has a SRS, but the input vector layer SRS is unknown.\n"
-                "Ensure input vector has the same SRS, otherwise results might be incorrect.\n");
-    }
-    else if( hDstSRS == NULL && hSrcLayer != NULL )
-    {
-        fprintf(stderr,
-                "Warning : the input vector layer has a SRS, but the output raster dataset SRS is unknown.\n"
-                "Ensure output raster dataset has the same SRS, otherwise results might be incorrect.\n");
-    }
-
-    if( hDstSRS != NULL )
-    {
-        OSRDestroySpatialReference(hDstSRS);
+        else if( hDstSRS == NULL && hSrcLayer != NULL )
+        {
+            fprintf(stderr,
+                    "Warning : the input vector layer has a SRS, but the output raster dataset SRS is unknown.\n"
+                    "Ensure output raster dataset has the same SRS, otherwise results might be incorrect.\n");
+        }
+    
+        if( hDstSRS != NULL )
+        {
+            OSRDestroySpatialReference(hDstSRS);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -263,7 +294,7 @@ static void ProcessLayer(
                              ahGeometries.size(), &(ahGeometries[0]), 
                              NULL, NULL, &(adfFullBurnValues[0]), 
                              papszRasterizeOptions,
-                             GDALTermProgress, NULL );
+                             pfnProgress, pProgressData );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup geometries.                                             */
@@ -272,6 +303,138 @@ static void ProcessLayer(
 
     for( iGeom = ahGeometries.size()-1; iGeom >= 0; iGeom-- )
         OGR_G_DestroyGeometry( ahGeometries[iGeom] );
+}
+
+/************************************************************************/
+/*                  CreateOutputDataset()                               */
+/************************************************************************/
+
+static
+GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
+                                 OGRSpatialReferenceH hSRS,
+                                 int bGotBounds, OGREnvelope sEnvelop,
+                                 GDALDriverH hDriver, const char* pszDstFilename,
+                                 int nXSize, int nYSize, double dfXRes, double dfYRes,
+                                 int nBandCount, GDALDataType eOutputType,
+                                 char** papszCreateOptions, std::vector<double> adfInitVals,
+                                 int bNoDataSet, double dfNoData)
+{
+    int bFirstLayer = TRUE;
+    char* pszWKT = NULL;
+    GDALDatasetH hDstDS = NULL;
+    unsigned int i;
+
+    for( i = 0; i < ahLayers.size(); i++ )
+    {
+        OGRLayerH hLayer = ahLayers[i];
+
+        if (!bGotBounds)
+        {
+            OGREnvelope sLayerEnvelop;
+
+            if (OGR_L_GetExtent(hLayer, &sLayerEnvelop, FALSE) != OGRERR_NONE)
+            {
+                fprintf(stderr, "Cannot get layer extent\n");
+                exit(2);
+            }
+
+            if (bFirstLayer)
+            {
+                sEnvelop.MinX = sLayerEnvelop.MinX;
+                sEnvelop.MinY = sLayerEnvelop.MinY;
+                sEnvelop.MaxX = sLayerEnvelop.MaxX;
+                sEnvelop.MaxY = sLayerEnvelop.MaxY;
+
+                if (hSRS == NULL)
+                    hSRS = OGR_L_GetSpatialRef(hLayer);
+
+                bFirstLayer = FALSE;
+            }
+            else
+            {
+                sEnvelop.MinX = MIN(sEnvelop.MinX, sLayerEnvelop.MinX);
+                sEnvelop.MinY = MIN(sEnvelop.MinY, sLayerEnvelop.MinY);
+                sEnvelop.MaxX = MAX(sEnvelop.MaxX, sLayerEnvelop.MaxX);
+                sEnvelop.MaxY = MAX(sEnvelop.MaxY, sLayerEnvelop.MaxY);
+            }
+        }
+        else
+        {
+            if (bFirstLayer)
+            {
+                if (hSRS == NULL)
+                    hSRS = OGR_L_GetSpatialRef(hLayer);
+
+                bFirstLayer = FALSE;
+            }
+        }
+    }
+
+    double adfProjection[6];
+    if (dfXRes == 0 && dfYRes == 0)
+    {
+        dfXRes = (sEnvelop.MaxX - sEnvelop.MinX) / nXSize;
+        dfYRes = (sEnvelop.MaxY - sEnvelop.MinY) / nYSize;
+    }
+
+    adfProjection[0] = sEnvelop.MinX;
+    adfProjection[1] = dfXRes;
+    adfProjection[2] = 0;
+    adfProjection[3] = sEnvelop.MaxY;
+    adfProjection[4] = 0;
+    adfProjection[5] = -dfYRes;
+
+    if (nXSize == 0 && nYSize == 0)
+    {
+        nXSize = (int)(0.5 + (sEnvelop.MaxX - sEnvelop.MinX) / dfXRes);
+        nYSize = (int)(0.5 + (sEnvelop.MaxY - sEnvelop.MinY) / dfYRes);
+    }
+
+    hDstDS = GDALCreate(hDriver, pszDstFilename, nXSize, nYSize,
+                        nBandCount, eOutputType, papszCreateOptions);
+    if (hDstDS == NULL)
+    {
+        fprintf(stderr, "Cannot create %s\n", pszDstFilename);
+        exit(2);
+    }
+
+    GDALSetGeoTransform(hDstDS, adfProjection);
+
+    if (hSRS)
+        OSRExportToWkt(hSRS, &pszWKT);
+    if (pszWKT)
+        GDALSetProjection(hDstDS, pszWKT);
+    CPLFree(pszWKT);
+
+    int iBand;
+    /*if( nBandCount == 3 || nBandCount == 4 )
+    {
+        for(iBand = 0; iBand < nBandCount; iBand++)
+        {
+            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
+            GDALSetRasterColorInterpretation(hBand, (GDALColorInterp)(GCI_RedBand + iBand));
+        }
+    }*/
+
+    if (bNoDataSet)
+    {
+        for(iBand = 0; iBand < nBandCount; iBand++)
+        {
+            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
+            GDALSetRasterNoDataValue(hBand, dfNoData);
+        }
+    }
+
+    if (adfInitVals.size() != 0)
+    {
+        for(iBand = 0; iBand < MIN(nBandCount,(int)adfInitVals.size()); iBand++)
+        {
+            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
+            GDALFillRaster(hBand, adfInitVals[iBand], 0);
+        }
+    }
+
+    return hDstDS;
 }
 
 /************************************************************************/
@@ -292,6 +455,22 @@ int main( int argc, char ** argv )
     std::vector<int> anBandList;
     std::vector<double> adfBurnValues;
     char **papszRasterizeOptions = NULL;
+    double dfXRes = 0, dfYRes = 0;
+    int bCreateOutput = FALSE;
+    const char* pszFormat = "GTiff";
+    char **papszCreateOptions = NULL;
+    GDALDriverH hDriver = NULL;
+    GDALDataType eOutputType = GDT_Float64;
+    std::vector<double> adfInitVals;
+    int bNoDataSet = FALSE;
+    double dfNoData = 0;
+    OGREnvelope sEnvelop;
+    int bGotBounds = FALSE;
+    int nXSize = 0, nYSize = 0;
+    int bQuiet = FALSE;
+    GDALProgressFunc pfnProgress = GDALTermProgress;
+    OGRSpatialReferenceH hSRS = NULL;
+    
 
     /* Check that we are running against at least GDAL 1.4 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -320,13 +499,37 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
+        else if( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
+        {
+            bQuiet = TRUE;
+            pfnProgress = GDALDummyProgress;
+        }
         else if( EQUAL(argv[i],"-a") && i < argc-1 )
         {
             pszBurnAttribute = argv[++i];
         }
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
         {
-            anBandList.push_back( atoi(argv[++i]) );
+            if (strchr(argv[i+1], ' '))
+            {
+                char** papszTokens = CSLTokenizeString( argv[i+1] );
+                char** papszIter = papszTokens;
+                while(papszIter && *papszIter)
+                {
+                    anBandList.push_back(atoi(*papszIter));
+                    papszIter ++;
+                }
+                CSLDestroy(papszTokens);
+                i += 1;
+            }
+            else
+            {
+                while(i < argc-1 && ArgIsNumeric(argv[i+1]))
+                {
+                    anBandList.push_back(atoi(argv[i+1]));
+                    i += 1;
+                }
+            }
         }
         else if( EQUAL(argv[i],"-3d")  )
         {
@@ -345,7 +548,26 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-burn") && i < argc-1 )
         {
-            adfBurnValues.push_back( atof(argv[++i]) );
+            if (strchr(argv[i+1], ' '))
+            {
+                char** papszTokens = CSLTokenizeString( argv[i+1] );
+                char** papszIter = papszTokens;
+                while(papszIter && *papszIter)
+                {
+                    adfBurnValues.push_back(atof(*papszIter));
+                    papszIter ++;
+                }
+                CSLDestroy(papszTokens);
+                i += 1;
+            }
+            else
+            {
+                while(i < argc-1 && ArgIsNumeric(argv[i+1]))
+                {
+                    adfBurnValues.push_back(atof(argv[i+1]));
+                    i += 1;
+                }
+            }
         }
         else if( EQUAL(argv[i],"-where") && i < argc-1 )
         {
@@ -359,6 +581,129 @@ int main( int argc, char ** argv )
         {
             pszSQL = argv[++i];
         }
+        else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        {
+            pszFormat = argv[++i];
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-init") && i < argc - 1 )
+        {
+            if (strchr(argv[i+1], ' '))
+            {
+                char** papszTokens = CSLTokenizeString( argv[i+1] );
+                char** papszIter = papszTokens;
+                while(papszIter && *papszIter)
+                {
+                    adfInitVals.push_back(atof(*papszIter));
+                    papszIter ++;
+                }
+                CSLDestroy(papszTokens);
+                i += 1;
+            }
+            else
+            {
+                while(i < argc-1 && ArgIsNumeric(argv[i+1]))
+                {
+                    adfInitVals.push_back(atof(argv[i+1]));
+                    i += 1;
+                }
+            }
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-a_nodata") && i < argc - 1 )
+        {
+            dfNoData = atof(argv[i+1]);
+            bNoDataSet = TRUE;
+            i += 1;
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-a_srs") && i < argc-1 )
+        {
+            hSRS = OSRNewSpatialReference( NULL );
+
+            if( OSRSetFromUserInput(hSRS, argv[i+1]) != OGRERR_NONE )
+            {
+                fprintf( stderr, "Failed to process SRS definition: %s\n", 
+                         argv[i+1] );
+                exit( 1 );
+            }
+
+            i++;
+            bCreateOutput = TRUE;
+        }   
+
+        else if( EQUAL(argv[i],"-te") && i < argc - 4 )
+        {
+            sEnvelop.MinX = atof(argv[++i]);
+            sEnvelop.MinY = atof(argv[++i]);
+            sEnvelop.MaxX = atof(argv[++i]);
+            sEnvelop.MaxY = atof(argv[++i]);
+            bGotBounds = TRUE;
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-a_ullr") && i < argc - 4 )
+        {
+            sEnvelop.MinX = atof(argv[++i]);
+            sEnvelop.MaxY = atof(argv[++i]);
+            sEnvelop.MaxX = atof(argv[++i]);
+            sEnvelop.MinY = atof(argv[++i]);
+            bGotBounds = TRUE;
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        {
+            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-ot") && i < argc-1 )
+        {
+            int	iType;
+            
+            for( iType = 1; iType < GDT_TypeCount; iType++ )
+            {
+                if( GDALGetDataTypeName((GDALDataType)iType) != NULL
+                    && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
+                             argv[i+1]) )
+                {
+                    eOutputType = (GDALDataType) iType;
+                }
+            }
+
+            if( eOutputType == GDT_Unknown )
+            {
+                printf( "Unknown output pixel type: %s\n", argv[i+1] );
+                Usage();
+                GDALDestroyDriverManager();
+                exit( 2 );
+            }
+            i++;
+            bCreateOutput = TRUE;
+        }
+        else if( (EQUAL(argv[i],"-ts") || EQUAL(argv[i],"-outsize")) && i < argc-2 )
+        {
+            nXSize = atoi(argv[++i]);
+            nYSize = atoi(argv[++i]);
+            if (nXSize <= 0 || nYSize <= 0)
+            {
+                printf( "Wrong value for -outsize parameters\n");
+                Usage();
+                exit( 2 );
+            }
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-tr") && i < argc-2 )
+        {
+            dfXRes = atof(argv[++i]);
+            dfYRes = fabs(atof(argv[++i]));
+            if( dfXRes == 0 || dfYRes == 0 )
+            {
+                printf( "Wrong value for -tr parameters\n");
+                Usage();
+                exit( 2 );
+            }
+            bCreateOutput = TRUE;
+        }
+
         else if( pszSrcFilename == NULL )
         {
             pszSrcFilename = argv[i];
@@ -389,8 +734,43 @@ int main( int argc, char ** argv )
         Usage();
     }
 
-    if( anBandList.size() == 0 )
-        anBandList.push_back( 1 );
+    if( bCreateOutput )
+    {
+        if( dfXRes == 0 && dfYRes == 0 && nXSize == 0 && nYSize == 0 )
+        {
+            fprintf( stderr, "'-tr xres yes' or '-ts xsize ysize' is required.\n\n" );
+            Usage();
+        }
+
+        if( anBandList.size() != 0 )
+        {
+            fprintf( stderr, "-b option cannot be used when creating a GDAL dataset.\n\n" );
+            Usage();
+        }
+
+        int nBandCount = 1;
+
+        if (adfBurnValues.size() != 0)
+            nBandCount = adfBurnValues.size();
+
+        if ((int)adfInitVals.size() > nBandCount)
+            nBandCount = adfInitVals.size();
+
+        if (adfInitVals.size() == 1)
+        {
+            for(i=1;i<=nBandCount - 1;i++)
+                adfInitVals.push_back( adfInitVals[0] );
+        }
+
+        int i;
+        for(i=1;i<=nBandCount;i++)
+            anBandList.push_back( i );
+    }
+    else
+    {
+        if( anBandList.size() == 0 )
+            anBandList.push_back( 1 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open source vector dataset.                                     */
@@ -409,11 +789,45 @@ int main( int argc, char ** argv )
 /*      Open target raster file.  Eventually we will add optional       */
 /*      creation.                                                       */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hDstDS;
+    GDALDatasetH hDstDS = NULL;
 
-    hDstDS = GDALOpen( pszDstFilename, GA_Update );
-    if( hDstDS == NULL )
-        exit( 2 );
+    if (bCreateOutput)
+    {
+/* -------------------------------------------------------------------- */
+/*      Find the output driver.                                         */
+/* -------------------------------------------------------------------- */
+        hDriver = GDALGetDriverByName( pszFormat );
+        if( hDriver == NULL 
+            || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL )
+        {
+            int	iDr;
+
+            printf( "Output driver `%s' not recognised or does not support\n", 
+                    pszFormat );
+            printf( "direct output file creation.  The following format drivers are configured\n"
+                    "and support direct output:\n" );
+
+            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+            {
+                GDALDriverH hDriver = GDALGetDriver(iDr);
+
+                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL) != NULL )
+                {
+                    printf( "  %s: %s\n",
+                            GDALGetDriverShortName( hDriver  ),
+                            GDALGetDriverLongName( hDriver ) );
+                }
+            }
+            printf( "\n" );
+            exit( 1 );
+        }
+    }
+    else
+    {
+        hDstDS = GDALOpen( pszDstFilename, GA_Update );
+        if( hDstDS == NULL )
+            exit( 2 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Process SQL request.                                            */
@@ -425,16 +839,60 @@ int main( int argc, char ** argv )
         hLayer = OGR_DS_ExecuteSQL( hSrcDS, pszSQL, NULL, NULL ); 
         if( hLayer != NULL )
         {
-            ProcessLayer( hLayer, hDstDS, anBandList, 
+            if (bCreateOutput)
+            {
+                std::vector<OGRLayerH> ahLayers;
+                ahLayers.push_back(hLayer);
+
+                hDstDS = CreateOutputDataset(ahLayers, hSRS,
+                                 bGotBounds, sEnvelop,
+                                 hDriver, pszDstFilename,
+                                 nXSize, nYSize, dfXRes, dfYRes,
+                                 anBandList.size(), eOutputType,
+                                 papszCreateOptions, adfInitVals,
+                                 bNoDataSet, dfNoData);
+            }
+
+            ProcessLayer( hLayer, hSRS != NULL, hDstDS, anBandList, 
                           adfBurnValues, b3D, bInverse, pszBurnAttribute,
-                          papszRasterizeOptions );
+                          papszRasterizeOptions, pfnProgress, NULL );
+
+            OGR_DS_ReleaseResultSet( hSrcDS, hLayer );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create output file if necessary.                                */
+/* -------------------------------------------------------------------- */
+    int nLayerCount = CSLCount(papszLayers);
+
+    if (bCreateOutput && hDstDS == NULL)
+    {
+        std::vector<OGRLayerH> ahLayers;
+
+        for( i = 0; i < nLayerCount; i++ )
+        {
+            OGRLayerH hLayer = OGR_DS_GetLayerByName( hSrcDS, papszLayers[i] );
+            if( hLayer == NULL )
+            {
+                continue;
+            }
+            ahLayers.push_back(hLayer);
+        }
+
+        hDstDS = CreateOutputDataset(ahLayers, hSRS,
+                                bGotBounds, sEnvelop,
+                                hDriver, pszDstFilename,
+                                nXSize, nYSize, dfXRes, dfYRes,
+                                anBandList.size(), eOutputType,
+                                papszCreateOptions, adfInitVals,
+                                bNoDataSet, dfNoData);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Process each layer.                                             */
 /* -------------------------------------------------------------------- */
-    int nLayerCount = CSLCount(papszLayers);
+
     for( i = 0; i < nLayerCount; i++ )
     {
         OGRLayerH hLayer = OGR_DS_GetLayerByName( hSrcDS, papszLayers[i] );
@@ -451,9 +909,16 @@ int main( int argc, char ** argv )
                 break;
         }
 
-        ProcessLayer( hLayer, hDstDS, anBandList, 
+        void *pScaledProgress;
+        pScaledProgress =
+            GDALCreateScaledProgress( 0.0, 1.0 * (i + 1) / nLayerCount,
+                                      pfnProgress, NULL );
+
+        ProcessLayer( hLayer, hSRS != NULL, hDstDS, anBandList, 
                       adfBurnValues, b3D, bInverse, pszBurnAttribute,
-                      papszRasterizeOptions );
+                      papszRasterizeOptions, GDALScaledProgress, pScaledProgress );
+
+        GDALDestroyScaledProgress( pScaledProgress );
     }
 
 /* -------------------------------------------------------------------- */
@@ -463,9 +928,12 @@ int main( int argc, char ** argv )
     OGR_DS_Destroy( hSrcDS );
     GDALClose( hDstDS );
 
+    OSRDestroySpatialReference(hSRS);
+
     CSLDestroy( argv );
     CSLDestroy( papszRasterizeOptions );
     CSLDestroy( papszLayers );
+    CSLDestroy( papszCreateOptions );
     
     GDALDestroyDriverManager();
     OGRCleanupAll();
