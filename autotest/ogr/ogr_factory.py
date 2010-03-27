@@ -159,7 +159,8 @@ def ogr_factory_5():
 
 def ogr_factory_6():
 
-    src_wkt_list = [ 'POINT EMPTY',
+    src_wkt_list = [ None,
+                     'POINT EMPTY',
                      'LINESTRING EMPTY',
                      'POLYGON EMPTY',
                      'MULTIPOINT EMPTY',
@@ -186,7 +187,10 @@ def ogr_factory_6():
                       ]
 
     for src_wkt in src_wkt_list:
-        src_geom = ogr.CreateGeometryFromWkt( src_wkt )
+        if src_wkt is None:
+            src_geom = None
+        else:
+            src_geom = ogr.CreateGeometryFromWkt( src_wkt )
         dst_geom1 = ogr.ForceToPolygon( src_geom )
         dst_geom2 = ogr.ForceToMultiPolygon( src_geom )
         dst_geom3 = ogr.ForceToMultiPoint( src_geom )
