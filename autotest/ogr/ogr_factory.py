@@ -154,12 +154,54 @@ def ogr_factory_5():
     return 'success'
 
 
+###############################################################################
+# Test robustness of forceToXXX() primitives with various inputs (#3504)
+
+def ogr_factory_6():
+
+    src_wkt_list = [ 'POINT EMPTY',
+                     'LINESTRING EMPTY',
+                     'POLYGON EMPTY',
+                     'MULTIPOINT EMPTY',
+                     'MULTILINESTRING EMPTY',
+                     'MULTIPOLYGON EMPTY',
+                     'GEOMETRYCOLLECTION EMPTY',
+                     'POINT(0 0)',
+                     'LINESTRING(0 0)',
+                     'POLYGON((0 0))',
+                     'POLYGON(EMPTY,(0 0),EMPTY,(1 1))',
+                     'MULTIPOINT(EMPTY,(0 0),EMPTY,(1 1))',
+                     'MULTILINESTRING(EMPTY,(0 0),EMPTY,(1 1))',
+                     'MULTIPOLYGON(((0 0),EMPTY,(1 1)),EMPTY,((2 2)))',
+                     'GEOMETRYCOLLECTION(POINT EMPTY)',
+                     'GEOMETRYCOLLECTION(LINESTRING EMPTY)',
+                     'GEOMETRYCOLLECTION(POLYGON EMPTY)',
+                     'GEOMETRYCOLLECTION(MULTIPOINT EMPTY)',
+                     'GEOMETRYCOLLECTION(MULTILINESTRING EMPTY)',
+                     'GEOMETRYCOLLECTION(MULTIPOLYGON EMPTY)',
+                     'GEOMETRYCOLLECTION(GEOMETRYCOLLECTION EMPTY)',
+                     'GEOMETRYCOLLECTION(POINT(0 0))',
+                     'GEOMETRYCOLLECTION(LINESTRING(0 0),LINESTRING(1 1))',
+                     'GEOMETRYCOLLECTION(POLYGON((0 0),EMPTY,(2 2)), POLYGON((1 1)))',
+                      ]
+
+    for src_wkt in src_wkt_list:
+        src_geom = ogr.CreateGeometryFromWkt( src_wkt )
+        dst_geom1 = ogr.ForceToPolygon( src_geom )
+        dst_geom2 = ogr.ForceToMultiPolygon( src_geom )
+        dst_geom3 = ogr.ForceToMultiPoint( src_geom )
+        dst_geom4 = ogr.ForceToMultiLineString( src_geom )
+        #print(src_geom.ExportToWkt(), dst_geom1.ExportToWkt(), dst_geom2.ExportToWkt(), dst_geom3.ExportToWkt(), dst_geom4.ExportToWkt())
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_factory_1,
     ogr_factory_2,
     ogr_factory_3,
     ogr_factory_4,
     ogr_factory_5,
+    ogr_factory_6,
     ]
 
 if __name__ == '__main__':
