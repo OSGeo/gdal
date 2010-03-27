@@ -158,6 +158,92 @@ def test_gdal_rasterize_2():
 
     return 'success'
 
+###############################################################################
+# Test creating an output file
+
+def test_gdal_rasterize_3():
+
+    if test_cli_utilities.get_gdal_contour_path() is None:
+        return 'skip'
+
+    if test_cli_utilities.get_gdal_rasterize_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d')
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' -3d tmp/n43dt0.shp tmp/n43dt0.tif -l n43dt0 -ts 121 121 -a_nodata 0 -q')
+
+    ds_ref = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.Open('tmp/n43dt0.tif')
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 0.0:
+        gdaltest.post_reason('did not get expected nodata value')
+        return 'fail'
+
+    if ds.RasterXSize != 121 or ds.RasterYSize != 121:
+        gdaltest.post_reason('did not get expected dimensions')
+        return 'fail'
+
+    gt_ref = ds_ref.GetGeoTransform()
+    gt = ds.GetGeoTransform()
+    for i in range(6):
+        if (abs(gt[i]-gt_ref[i])>1e-6):
+            gdaltest.post_reason('did not get expected geotransform')
+            print(gt)
+            print(gt_ref)
+            return 'fail'
+
+    wkt = ds.GetProjectionRef()
+    if wkt.find("WGS_1984") == -1:
+        gdaltest.post_reason('did not get expected SRS')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Same but with -tr argument
+
+def test_gdal_rasterize_4():
+
+    if test_cli_utilities.get_gdal_contour_path() is None:
+        return 'skip'
+
+    if test_cli_utilities.get_gdal_rasterize_path() is None:
+        return 'skip'
+
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/n43dt0.tif' )
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' -3d tmp/n43dt0.shp tmp/n43dt0.tif -l n43dt0 -tr 0.008333333333333  0.008333333333333 -a_nodata 0 -a_srs EPSG:4326')
+
+    ds_ref = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.Open('tmp/n43dt0.tif')
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 0.0:
+        gdaltest.post_reason('did not get expected nodata value')
+        return 'fail'
+
+    if ds.RasterXSize != 121 or ds.RasterYSize != 121:
+        gdaltest.post_reason('did not get expected dimensions')
+        return 'fail'
+
+    gt_ref = ds_ref.GetGeoTransform()
+    gt = ds.GetGeoTransform()
+    for i in range(6):
+        if (abs(gt[i]-gt_ref[i])>1e-6):
+            gdaltest.post_reason('did not get expected geotransform')
+            print(gt)
+            print(gt_ref)
+            return 'fail'
+
+    wkt = ds.GetProjectionRef()
+    if wkt.find("WGS_1984") == -1:
+        gdaltest.post_reason('did not get expected SRS')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 ###########################################
 def test_gdal_rasterize_cleanup():
 
@@ -169,11 +255,16 @@ def test_gdal_rasterize_cleanup():
 
     gdal.GetDriverByName('GTiff').Delete( 'tmp/rast2.tif' )
 
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( 'tmp/n43dt0.shp' )
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/n43dt0.tif' )
+
     return 'success'
 
 gdaltest_list = [
     test_gdal_rasterize_1,
     test_gdal_rasterize_2,
+    test_gdal_rasterize_3,
+    test_gdal_rasterize_4,
     test_gdal_rasterize_cleanup
     ]
 
