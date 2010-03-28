@@ -143,12 +143,12 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 
         osCommand = 
             "CREATE TABLE geometry_columns ("
-            "     f_table_name VARCHAR, "
-            "     f_geometry_column VARCHAR, "
-            "     type VARCHAR, "
-            "     coord_dimension INTEGER, "
+            "     f_table_name VARCHAR NOT NULL, "
+            "     f_geometry_column VARCHAR NOT NULL, "
+            "     type VARCHAR NOT NULL, "
+            "     coord_dimension INTEGER NOT NULL, "
             "     srid INTEGER,"
-            "     spatial_index_enabled INTEGER )";
+            "     spatial_index_enabled INTEGER NOT NULL)";
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
@@ -161,11 +161,11 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 
         osCommand = 
             "CREATE TABLE spatial_ref_sys        ("
-            "     srid INTEGER UNIQUE,"
-            "     auth_name VARCHAR,"
-            "     auth_srid INTEGER,"
+            "     srid INTEGER NOT NULL PRIMARY KEY,"
+            "     auth_name VARCHAR NOT NULL,"
+            "     auth_srid INTEGER NOT NULL,"
             "     ref_sys_name VARCHAR,"
-            "     proj4text VARCHAR )";
+            "     proj4text VARCHAR NOT NULL)";
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {

@@ -1078,7 +1078,19 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( poSRS == NULL )
         return -1;
 
-    pszAuthorityName = poSRS->GetAuthorityName(NULL);
+    OGRSpatialReference oSRS(*poSRS);
+    poSRS = NULL;
+
+    pszAuthorityName = oSRS.GetAuthorityName(NULL);
+
+    if( pszAuthorityName == NULL || strlen(pszAuthorityName) == 0 )
+    {
+/* -------------------------------------------------------------------- */
+/*      Try to identify an EPSG code                                    */
+/* -------------------------------------------------------------------- */
+        oSRS.AutoIdentifyEPSG();
+        pszAuthorityName = oSRS.GetAuthorityName(NULL);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check whether the EPSG authority code is already mapped to a    */
@@ -1086,7 +1098,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     if( pszAuthorityName != NULL && strlen(pszAuthorityName) > 0 )
     {
-        pszAuthorityCode = poSRS->GetAuthorityCode(NULL);
+        pszAuthorityCode = oSRS.GetAuthorityCode(NULL);
 
         if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
         {
@@ -1139,7 +1151,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
             if( rc == SQLITE_OK && nRowCount == 1 )
             {
-                nSRSId = atoi(papszResult[1]);
+                nSRSId = (papszResult[1] != NULL) ? atoi(papszResult[1]) : -1;
                 sqlite3_free_table(papszResult);
                 return nSRSId;
             }
@@ -1160,7 +1172,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
         char    *pszWKT = NULL;
 
-        if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
+        if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
             return -1;
 
         osSRS = pszWKT;
@@ -1183,7 +1195,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         }
         else if( nRowCount == 1 )
         {
-            nSRSId = atoi(papszResult[1]);
+            nSRSId = (papszResult[1] != NULL) ? atoi(papszResult[1]) : -1;
             sqlite3_free_table(papszResult);
             return nSRSId;
         }
@@ -1200,7 +1212,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
         char    *pszProj4 = NULL;
 
-        if( poSRS->exportToProj4( &pszProj4 ) != OGRERR_NONE )
+        if( oSRS.exportToProj4( &pszProj4 ) != OGRERR_NONE )
             return -1;
 
         osSRS = pszProj4;
@@ -1225,7 +1237,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         }
         else if( nRowCount == 1 )
         {
-            nSRSId = atoi(papszResult[1]);
+            nSRSId = (papszResult[1] != NULL) ? atoi(papszResult[1]) : -1;
             sqlite3_free_table(papszResult);
             return nSRSId;
         }
@@ -1301,7 +1313,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                 "INSERT INTO spatial_ref_sys (srid,srtext,auth_name,auth_srid) "
                 "                     VALUES (%d, '%s', '%s', '%s')",
                 nSRSId, osSRS.c_str(), 
-                pszAuthorityName, poSRS->GetAuthorityCode(NULL) );
+                pszAuthorityName, pszAuthorityCode );
         }
         else
         {
@@ -1313,7 +1325,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
     else
     {
-        const char  *pszProjCS = poSRS->GetAttrValue("PROJCS");
+        const char  *pszProjCS = oSRS.GetAttrValue("PROJCS");
 
         if( pszAuthorityName != NULL )
         {
@@ -1323,27 +1335,29 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                     "(srid, auth_name, auth_srid, ref_sys_name, proj4text) "
                     "VALUES (%d, '%s', '%s', '%s', '%s')",
                     nSRSId, pszAuthorityName,
-                    poSRS->GetAuthorityCode(NULL), pszProjCS, osSRS.c_str() );
+                    pszAuthorityCode, pszProjCS, osSRS.c_str() );
             else
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
                     "(srid, auth_name, auth_srid, proj4text) "
                     "VALUES (%d, '%s', '%s', '%s')",
                     nSRSId, pszAuthorityName,
-                    poSRS->GetAuthorityCode(NULL), osSRS.c_str() );
+                    pszAuthorityCode, osSRS.c_str() );
         }
         else
         {
+            /* SpatiaLite spatial_ref_sys auth_name and auth_srid columns must be NOT NULL */
+            /* so insert within a fake OGR "authority" */
             if ( pszProjCS )
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
-                    "(srid, ref_sys_name, proj4text) VALUES (%d, '%s', '%s')",
-                    nSRSId, pszProjCS, osSRS.c_str() );
+                    "(srid, auth_name, auth_srid, ref_sys_name, proj4text) VALUES (%d, '%s', %d, '%s', '%s')",
+                    nSRSId, "OGR", nSRSId, pszProjCS, osSRS.c_str() );
             else
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
-                    "(srid, proj4text) VALUES (%d, '%s')",
-                    nSRSId, osSRS.c_str() );
+                    "(srid, auth_name, auth_srid, proj4text) VALUES (%d, '%s', %d, '%s')",
+                    nSRSId, "OGR", nSRSId, osSRS.c_str() );
         }
     }
 
@@ -1409,18 +1423,21 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
         }
 
         char** papszRow = papszResult + nColCount;
-        CPLString osWKT = papszRow[0];
-        
+        if (papszRow[0] != NULL)
+        {
+            CPLString osWKT = papszRow[0];
+
 /* -------------------------------------------------------------------- */
 /*      Translate into a spatial reference.                             */
 /* -------------------------------------------------------------------- */
-        char *pszWKT = (char *) osWKT.c_str();
+            char *pszWKT = (char *) osWKT.c_str();
 
-        poSRS = new OGRSpatialReference();
-        if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
-        {
-            delete poSRS;
-            poSRS = NULL;
+            poSRS = new OGRSpatialReference();
+            if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+            {
+                delete poSRS;
+                poSRS = NULL;
+            }
         }
 
         sqlite3_free_table(papszResult);
@@ -1451,25 +1468,29 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
 /*      Translate into a spatial reference.                             */
 /* -------------------------------------------------------------------- */
-            poSRS = new OGRSpatialReference();
-            
             char** papszRow = papszResult + nColCount;
-            
+
             const char* pszProj4Text = papszRow[0];
-            const char* pszAuthName = papszRow[1];
-            int nAuthSRID = atoi(papszRow[2]);
-            
-            /* Try first from EPSG code */
-            if (EQUAL(pszAuthName, "EPSG") &&
-                poSRS->importFromEPSG( nAuthSRID ) == OGRERR_NONE)
+            if (pszProj4Text != NULL)
             {
-                /* Do nothing */
-            }
-            /* Then from Proj4 string */
-            else if( poSRS->importFromProj4( pszProj4Text ) != OGRERR_NONE )
-            {
-                delete poSRS;
-                poSRS = NULL;
+                const char* pszAuthName = papszRow[1];
+                int nAuthSRID = (papszRow[2] != NULL) ? atoi(papszRow[2]) : 0;
+
+                poSRS = new OGRSpatialReference();
+
+                /* Try first from EPSG code */
+                if (pszAuthName != NULL &&
+                    EQUAL(pszAuthName, "EPSG") &&
+                    poSRS->importFromEPSG( nAuthSRID ) == OGRERR_NONE)
+                {
+                    /* Do nothing */
+                }
+                /* Then from Proj4 string */
+                else if( poSRS->importFromProj4( pszProj4Text ) != OGRERR_NONE )
+                {
+                    delete poSRS;
+                    poSRS = NULL;
+                }
             }
 
             sqlite3_free_table(papszResult);
