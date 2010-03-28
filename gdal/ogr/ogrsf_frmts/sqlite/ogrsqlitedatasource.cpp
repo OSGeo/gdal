@@ -1199,7 +1199,10 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         char    *pszWKT = NULL;
 
         if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
+        {
+            CPLFree(pszWKT);
             return -1;
+        }
 
         osSRS = pszWKT;
         CPLFree( pszWKT );
@@ -1208,24 +1211,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Try to find based on the WKT match.                             */
 /* -------------------------------------------------------------------- */
-        osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
-                          osSRS.c_str());
-        
-        rc = sqlite3_get_table( hDB, osCommand, &papszResult,
-                                &nRowCount, &nColCount, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Search for existing SRS by WKT failed: %s", pszErrMsg );
-            sqlite3_free( pszErrMsg );
-        }
-        else if( nRowCount == 1 )
-        {
-            nSRSId = (papszResult[1] != NULL) ? atoi(papszResult[1]) : -1;
-            sqlite3_free_table(papszResult);
-            return nSRSId;
-        }
-        sqlite3_free_table(papszResult);
+        osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE srtext = ?");
     }
 
 /* -------------------------------------------------------------------- */
@@ -1239,43 +1225,53 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         char    *pszProj4 = NULL;
 
         if( oSRS.exportToProj4( &pszProj4 ) != OGRERR_NONE )
+        {
+            CPLFree(pszProj4);
             return -1;
+        }
 
         osSRS = pszProj4;
         CPLFree( pszProj4 );
         pszProj4 = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Try to find based on the WKT match.                             */
+/*      Try to find based on the PROJ.4 match.                          */
 /* -------------------------------------------------------------------- */
         osCommand.Printf(
-            "SELECT srid FROM spatial_ref_sys WHERE proj4text = '%s'",
-            osSRS.c_str());
-        
-        rc = sqlite3_get_table( hDB, osCommand, &papszResult,
-                                &nRowCount, &nColCount, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Search for existing SRS by PROJ.4 string failed: %s",
-                      pszErrMsg );
-            sqlite3_free( pszErrMsg );
-        }
-        else if( nRowCount == 1 )
-        {
-            nSRSId = (papszResult[1] != NULL) ? atoi(papszResult[1]) : -1;
-            sqlite3_free_table(papszResult);
-            return nSRSId;
-        }
-        sqlite3_free_table(papszResult);
+            "SELECT srid FROM spatial_ref_sys WHERE proj4text = ?");
+    }
+
+    sqlite3_stmt *hSelectStmt = NULL;
+    rc = sqlite3_prepare( hDB, osCommand, -1, &hSelectStmt, NULL );
+
+    if( rc == SQLITE_OK)
+        rc = sqlite3_bind_text( hSelectStmt, 1, osSRS.c_str(), -1, SQLITE_STATIC );
+
+    if( rc == SQLITE_OK)
+        rc = sqlite3_step( hSelectStmt );
+
+    if (rc == SQLITE_ROW)
+    {
+        if (sqlite3_column_type( hSelectStmt, 0 ) == SQLITE_INTEGER)
+            nSRSId = sqlite3_column_int( hSelectStmt, 0 );
+        else
+            nSRSId = -1;
+
+        sqlite3_finalize( hSelectStmt );
+        return nSRSId;
     }
 
 /* -------------------------------------------------------------------- */
 /*      If the command actually failed, then the metadata table is      */
 /*      likely missing, so we give up.                                  */
 /* -------------------------------------------------------------------- */
-    if( rc != SQLITE_OK )
+    if (rc != SQLITE_DONE && rc != SQLITE_ROW)
+    {
+        sqlite3_finalize( hSelectStmt );
         return -1;
+    }
+
+    sqlite3_finalize( hSelectStmt );
 
 /* -------------------------------------------------------------------- */
 /*      If we have an authority code try to assign SRS ID the same      */
@@ -1331,22 +1327,28 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Try adding the SRS to the SRS table.                            */
 /* -------------------------------------------------------------------- */
+
+    const char* apszToInsert[] = { NULL, NULL, NULL, NULL, NULL };
+
     if ( !bIsSpatiaLite )
     {
         if( pszAuthorityName != NULL )
         {
             osCommand.Printf(
                 "INSERT INTO spatial_ref_sys (srid,srtext,auth_name,auth_srid) "
-                "                     VALUES (%d, '%s', '%s', '%s')",
-                nSRSId, osSRS.c_str(), 
-                pszAuthorityName, pszAuthorityCode );
+                "                     VALUES (%d, ?, ?, ?)",
+                nSRSId );
+            apszToInsert[0] = osSRS.c_str();
+            apszToInsert[1] = pszAuthorityName;
+            apszToInsert[2] = pszAuthorityCode;
         }
         else
         {
             osCommand.Printf(
                 "INSERT INTO spatial_ref_sys (srid,srtext) "
-                "                     VALUES (%d, '%s')",
-                nSRSId, osSRS.c_str() );
+                "                     VALUES (%d, ?)",
+                nSRSId );
+            apszToInsert[0] = osSRS.c_str();
         }
     }
     else
@@ -1358,46 +1360,77 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         if( pszAuthorityName != NULL )
         {
             if ( pszProjCS )
+            {
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
                     "(srid, auth_name, auth_srid, ref_sys_name, proj4text) "
-                    "VALUES (%d, '%s', '%s', '%s', '%s')",
-                    nSRSId, pszAuthorityName,
-                    pszAuthorityCode, pszProjCS, osSRS.c_str() );
+                    "VALUES (%d, ?, ?, ?, ?)",
+                    nSRSId );
+                apszToInsert[0] = pszAuthorityName;
+                apszToInsert[1] = pszAuthorityCode;
+                apszToInsert[2] = pszProjCS;
+                apszToInsert[3] = osSRS.c_str();
+            }
             else
+            {
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
                     "(srid, auth_name, auth_srid, proj4text) "
-                    "VALUES (%d, '%s', '%s', '%s')",
-                    nSRSId, pszAuthorityName,
-                    pszAuthorityCode, osSRS.c_str() );
+                    "VALUES (%d, ?, ?, ?)",
+                    nSRSId );
+                apszToInsert[0] = pszAuthorityName;
+                apszToInsert[1] = pszAuthorityCode;
+                apszToInsert[2] = osSRS.c_str();
+            }
         }
         else
         {
             /* SpatiaLite spatial_ref_sys auth_name and auth_srid columns must be NOT NULL */
             /* so insert within a fake OGR "authority" */
             if ( pszProjCS )
+            {
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
-                    "(srid, auth_name, auth_srid, ref_sys_name, proj4text) VALUES (%d, '%s', %d, '%s', '%s')",
-                    nSRSId, "OGR", nSRSId, pszProjCS, osSRS.c_str() );
+                    "(srid, auth_name, auth_srid, ref_sys_name, proj4text) VALUES (%d, 'OGR', %d, ?, ?)",
+                    nSRSId, nSRSId );
+                apszToInsert[0] = pszProjCS;
+                apszToInsert[1] = osSRS.c_str();
+            }
             else
+            {
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
-                    "(srid, auth_name, auth_srid, proj4text) VALUES (%d, '%s', %d, '%s')",
-                    nSRSId, "OGR", nSRSId, osSRS.c_str() );
+                    "(srid, auth_name, auth_srid, proj4text) VALUES (%d, 'OGR', %d, ?)",
+                    nSRSId, nSRSId );
+                apszToInsert[0] = osSRS.c_str();
+            }
         }
     }
 
-    rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-    if( rc != SQLITE_OK )
+    sqlite3_stmt *hInsertStmt = NULL;
+    rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
+
+    int i;
+    for(i=0;apszToInsert[i]!=NULL;i++)
+    {
+        if( rc == SQLITE_OK)
+            rc = sqlite3_bind_text( hInsertStmt, i+1, apszToInsert[i], -1, SQLITE_STATIC );
+    }
+
+    if( rc == SQLITE_OK)
+        rc = sqlite3_step( hInsertStmt );
+
+    if( rc != SQLITE_OK && rc != SQLITE_DONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to insert SRID (%s): %s",
-                  osCommand.c_str(), pszErrMsg );
-        sqlite3_free( pszErrMsg );
+                  osCommand.c_str(), sqlite3_errmsg(hDB) );
+
+        sqlite3_finalize( hInsertStmt );
         return FALSE;
     }
+
+    sqlite3_finalize( hInsertStmt );
 
     return nSRSId;
 }
