@@ -1102,7 +1102,20 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      Try to identify an EPSG code                                    */
 /* -------------------------------------------------------------------- */
         oSRS.AutoIdentifyEPSG();
+
         pszAuthorityName = oSRS.GetAuthorityName(NULL);
+        if (pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG"))
+        {
+            pszAuthorityCode = oSRS.GetAuthorityCode(NULL);
+            if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
+            {
+                /* Import 'clean' SRS */
+                oSRS.importFromEPSG( atoi(pszAuthorityCode) );
+
+                pszAuthorityName = oSRS.GetAuthorityName(NULL);
+                pszAuthorityCode = oSRS.GetAuthorityCode(NULL);
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1339,6 +1352,8 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     else
     {
         const char  *pszProjCS = oSRS.GetAttrValue("PROJCS");
+        if (pszProjCS == NULL)
+            pszProjCS = oSRS.GetAttrValue("GEOGCS");
 
         if( pszAuthorityName != NULL )
         {
