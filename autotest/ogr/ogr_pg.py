@@ -902,6 +902,9 @@ def ogr_pg_20():
     for i in range(len(geometries)):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
+        if geom is None:
+            gdaltest.post_reason( 'did not get geometry, expected %s' % geometries[i][1] )
+            return 'fail'
         wkt = geom.ExportToWkt()
         feat.Destroy()
         feat = None
@@ -1368,7 +1371,7 @@ def ogr_pg_31():
     return 'success'
 
 ###############################################################################
-# Test approximate srtext (#2123)
+# Test approximate srtext (#2123, #3508)
 
 def ogr_pg_32():
 
@@ -1387,6 +1390,8 @@ def ogr_pg_32():
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
     feat = sql_lyr.GetNextFeature()
     if  feat.count != 1:
+        gdaltest.post_reason('did not get expected count after step (1)')
+        feat.DumpReadable()
         return 'fail'
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
@@ -1401,6 +1406,58 @@ def ogr_pg_32():
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
     feat = sql_lyr.GetNextFeature()
     if  feat.count != 1:
+        gdaltest.post_reason('did not get expected count after step (2)')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    ######################################################
+    # Create third layer with very approximative EPSG:4326 but without authority
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]""")
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext3', srs = srs);
+
+    # Must still be 1
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    feat = sql_lyr.GetNextFeature()
+    if  feat.count != 1:
+        gdaltest.post_reason('did not get expected count after step (3)')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    ######################################################
+    # Create Layer with EPSG:26632
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 26632 )
+
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext4', srs = srs);
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    feat = sql_lyr.GetNextFeature()
+    # Must be 2 now
+    if  feat.count != 2:
+        gdaltest.post_reason('did not get expected count after step (4)')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    ######################################################
+    # Create Layer with non EPSG SRS
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('+proj=vandg')
+
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext5', srs = srs);
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    feat = sql_lyr.GetNextFeature()
+    # Must be 3 now
+    if  feat.count != 3:
+        gdaltest.post_reason('did not get expected count after step (5)')
+        feat.DumpReadable()
         return 'fail'
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
@@ -2309,6 +2366,9 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext2' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext3' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext4' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext5' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testoverflows' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table36_inherited2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table36_inherited' )
