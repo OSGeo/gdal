@@ -1682,8 +1682,31 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( poSRS == NULL )
         return -1;
 
-    pszAuthorityName = poSRS->GetAuthorityName(NULL);
+    OGRSpatialReference oSRS(*poSRS);
+    poSRS = NULL;
 
+    pszAuthorityName = oSRS.GetAuthorityName(NULL);
+
+    if( pszAuthorityName == NULL || strlen(pszAuthorityName) == 0 )
+    {
+/* -------------------------------------------------------------------- */
+/*      Try to identify an EPSG code                                    */
+/* -------------------------------------------------------------------- */
+        oSRS.AutoIdentifyEPSG();
+
+        pszAuthorityName = oSRS.GetAuthorityName(NULL);
+        if (pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG"))
+        {
+            const char* pszAuthorityCode = oSRS.GetAuthorityCode(NULL);
+            if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
+            {
+                /* Import 'clean' SRS */
+                oSRS.importFromEPSG( atoi(pszAuthorityCode) );
+
+                pszAuthorityName = oSRS.GetAuthorityName(NULL);
+            }
+        }
+    }
 /* -------------------------------------------------------------------- */
 /*      Check whether the EPSG authority code is already mapped to a    */
 /*      SRS ID.                                                         */
@@ -1695,7 +1718,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
-        nAuthorityCode = atoi( poSRS->GetAuthorityCode(NULL) );
+        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
 
         osCommand.Printf("SELECT srid FROM spatial_ref_sys WHERE "
                          "auth_name = '%s' AND auth_srid = %d",
@@ -1719,8 +1742,11 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Translate SRS to WKT.                                           */
 /* -------------------------------------------------------------------- */
-    if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
+    if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        CPLFree(pszWKT);
         return -1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing table.                              */
@@ -1728,9 +1754,10 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     hResult = PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
 
+    CPLString osWKT = OGRPGEscapeString(hPGConn, pszWKT, -1, "srtext");
     osCommand.Printf(
-             "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
-             pszWKT );
+             "SELECT srid FROM spatial_ref_sys WHERE srtext = %s",
+             osWKT.c_str() );
     hResult = PQexec(hPGConn, osCommand.c_str() );
     CPLFree( pszWKT );  // CM:  Added to prevent mem leaks
     pszWKT = NULL;      // CM:  Added
@@ -1792,37 +1819,32 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Try adding the SRS to the SRS table.                            */
 /* -------------------------------------------------------------------- */
-    if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
+    char    *pszProj4 = NULL;
+    if( oSRS.exportToProj4( &pszProj4 ) != OGRERR_NONE )
     {
+        CPLFree( pszProj4 );
         return -1;
     }
 
-    char    *pszProj4 = NULL;
-    if( poSRS->exportToProj4( &pszProj4 ) != OGRERR_NONE )
-    {
-        CPLFree( pszWKT );  // Prevent mem leaks
-        pszWKT = NULL;
-		
-        return -1;
-    }
+    CPLString osProj4 = OGRPGEscapeString(hPGConn, pszProj4, -1, "proj4text");
 
     if( pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG") )
     {
         int             nAuthorityCode;
 
-        nAuthorityCode = atoi( poSRS->GetAuthorityCode(NULL) );
+        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
 
         osCommand.Printf(
                  "INSERT INTO spatial_ref_sys (srid,srtext,proj4text,auth_name,auth_srid) "
-                 "VALUES (%d, '%s', '%s', '%s', %d)",
-                 nSRSId, pszWKT, pszProj4, pszAuthorityName,
-                 nAuthorityCode );
+                 "VALUES (%d, %s, %s, '%s', %d)",
+                 nSRSId, osWKT.c_str(), osProj4.c_str(),
+                 pszAuthorityName, nAuthorityCode );
     }
     else
     {
         osCommand.Printf(
-                 "INSERT INTO spatial_ref_sys (srid,srtext,proj4text) VALUES (%d,'%s','%s')",
-                 nSRSId, pszWKT, pszProj4 );
+                 "INSERT INTO spatial_ref_sys (srid,srtext,proj4text) VALUES (%d,%s,%s)",
+                 nSRSId, osWKT.c_str(), osProj4.c_str() );
     }
 
     // Free everything that was allocated.
