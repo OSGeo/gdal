@@ -219,6 +219,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
             OGRwkbGeometryType eGeomType = wkbUnknown;
             int nSRID = 0;
 
+            if (papszRow[0] == NULL ||
+                papszRow[1] == NULL ||
+                papszRow[2] == NULL ||
+                papszRow[3] == NULL)
+                continue;
+
             eGeomType = (OGRwkbGeometryType) atoi(papszRow[2]);
 
             if( atoi(papszRow[3]) > 2 )
@@ -268,6 +274,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
             OGRwkbGeometryType eGeomType;
             int nSRID = 0;
             int bHasSpatialIndex = FALSE;
+
+            if (papszRow[0] == NULL ||
+                papszRow[1] == NULL ||
+                papszRow[2] == NULL ||
+                papszRow[3] == NULL)
+                continue;
 
             eGeomType = SpatiaLiteToOGRGeomType(papszRow[2]);
 
