@@ -812,7 +812,7 @@ def ogr_sqlite_17():
 
     ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
     srs = osr.SpatialReference()
-    srs.SetFromUserInput('EPSG:4326')
+    srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]""")
     lyr = ds.CreateLayer( 'geomspatialite', srs = srs )
 
     geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
@@ -833,9 +833,58 @@ def ogr_sqlite_17():
         return 'fail'
     feat_read.Destroy()
 
-    sql_lyr = ds.ExecuteSQL( "select proj4text from spatial_ref_sys" )
+    sql_lyr = ds.ExecuteSQL( "select * from spatial_ref_sys" )
     feat = sql_lyr.GetNextFeature()
+    # Check that the SRS has been correctly identified as EPSG:4326 (#3506)
+    if feat.GetFieldAsInteger('srid') != 4326:
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetFieldAsString('auth_name') != 'EPSG':
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetFieldAsString('auth_srid') != '4326':
+        feat.DumpReadable()
+        return 'fail'
     if feat.GetFieldAsString('proj4text').find('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs') == -1:
+        feat.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Create a layer with a non EPSG SRS into a SPATIALITE DB (#3506)
+
+def ogr_sqlite_18():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('+proj=vandg')
+    lyr = ds.CreateLayer( 'nonepsgsrs', srs = srs )
+
+    ######################################################
+    # Reopen DB
+    ds.Destroy()
+    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+
+    sql_lyr = ds.ExecuteSQL( "select * from spatial_ref_sys where srid = 4327" )
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetFieldAsInteger('srid') != 4327:
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetFieldAsString('auth_name') != 'OGR':
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetFieldAsString('auth_srid') != '4327':
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetFieldAsString('proj4text').find('+proj=vandg +lon_0=0 +x_0=0 +y_0=0 +R_A +ellps=WGS84 +units=m +no_defs') == -1:
+        feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet( sql_lyr )
 
@@ -1083,6 +1132,7 @@ gdaltest_list = [
     ogr_sqlite_15,
     ogr_sqlite_16,
     ogr_sqlite_17,
+    ogr_sqlite_18,
     ogr_spatialite_1,
     ogr_spatialite_2,
     ogr_spatialite_3,
