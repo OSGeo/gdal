@@ -1222,13 +1222,22 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
         return OGRERR_UNSUPPORTED_SRS;
 
     if( !EPSGGetPMInfo( nPMCode, &pszPMName, &dfPMOffset ) )
+    {
+        CPLFree( pszDatumName );
+        CPLFree( pszGeogCSName );
         return OGRERR_UNSUPPORTED_SRS;
+    }
 
     OGREPSGDatumNameMassage( &pszDatumName );
 
     if( OSRGetEllipsoidInfo( nEllipsoidCode, &pszEllipsoidName, 
                              &dfSemiMajor, &dfInvFlattening ) != OGRERR_NONE )
+    {
+        CPLFree( pszDatumName );
+        CPLFree( pszGeogCSName );
+        CPLFree( pszPMName );
         return OGRERR_UNSUPPORTED_SRS;
+    }
 
     if( !EPSGGetUOMAngleInfo( nUOMAngle, &pszAngleName, &dfAngleInDegrees ) )
     {
