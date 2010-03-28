@@ -271,7 +271,7 @@ CPLErr HFABand::LoadOverviews()
 /*      overviews within the same layer, as occurs in floodplain.img    */
 /*      for instance, or in the not-referenced rrd mentioned in #3463.  */
 /* -------------------------------------------------------------------- */
-    if( nOverviews == 0 )
+    if( nOverviews == 0 && poBandProxyNode != NULL )
     {
         HFAEntry	*poChild;
 
