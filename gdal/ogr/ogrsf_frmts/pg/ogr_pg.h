@@ -73,6 +73,10 @@ PGresult *OGRPG_PQexec_dbg(PGconn *conn, const char *query);
 #define TIMESTAMPTZOID	        1184
 #define NUMERICOID              1700
 
+CPLString OGRPGEscapeString(PGconn *hPGConn,
+                            const char* pszStrValue, int nMaxLength,
+                            const char* pszFieldName);
+
 /************************************************************************/
 /*                            OGRPGLayer                                */
 /************************************************************************/
