@@ -226,15 +226,50 @@ CPLErr JPIPKAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLDebug( "JPIPKAK", "IReadBlock(%d,%d) on band %d.", 
               nBlockXOff, nBlockYOff, nBand );
 
-    int xOff = nBlockXOff * nBlockXSize;
-    int yOff = nBlockYOff * nBlockYSize;
+/* -------------------------------------------------------------------- */
+/*      Fix the buffer layer.                                           */
+/* -------------------------------------------------------------------- */
+    int nPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
+    int nLineSpace = nPixelSpace * nBlockXSize;
+    int nBandSpace = nLineSpace * nBlockYSize;
 
-    // TODO: Handle overviews properly.
+/* -------------------------------------------------------------------- */
+/*      Zoom up file window based on overview level so we are           */
+/*      referring to the full res image.                                */
+/* -------------------------------------------------------------------- */
+    int nZoom = 1 << nDiscardLevels;
 
+    int xOff = nBlockXOff * nBlockXSize * nZoom;
+    int yOff = nBlockYOff * nBlockYSize * nZoom;
+    int xSize = nBlockXSize * nZoom;
+    int ySize = nBlockYSize * nZoom;
+
+    int nBufXSize = nBlockXSize;
+    int nBufYSize = nBlockYSize;
+
+/* -------------------------------------------------------------------- */
+/*      Make adjustments for partial blocks on right and bottom.        */
+/* -------------------------------------------------------------------- */
+    if( xOff + xSize > poBaseDS->GetRasterXSize() )
+    {
+        xSize = poBaseDS->GetRasterXSize() - xOff;
+        nBufXSize= MAX(xSize/nZoom,1);
+    }
+    
+    if( yOff + ySize > poBaseDS->GetRasterYSize() )
+    {
+        ySize = poBaseDS->GetRasterYSize() - yOff;
+        nBufYSize = MAX(ySize/nZoom,1);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Start the reader and run till complete.                         */
+/* -------------------------------------------------------------------- */
     GDALAsyncReader* ario = poBaseDS->
-        BeginAsyncReader(xOff, yOff, nBlockXSize, nBlockYSize, 
-                           pImage, nBlockXSize, nBlockYSize, 
-                           eDataType, 1, &nBand, 0, 0, 0, NULL);
+        BeginAsyncReader(xOff, yOff, xSize, ySize,
+                         pImage, nBufXSize,nBufYSize,
+                         eDataType, 1, &nBand, 
+                         nPixelSpace, nLineSpace, nBandSpace, NULL);
 
     if( ario == NULL )
         return CE_Failure;
