@@ -38,9 +38,6 @@ CPL_CVSID("$Id$");
 #define USE_COPY_UNSET  -10
 static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
                                        char** papszItems, int bForInsertOrUpdate);
-static CPLString OGRPGEscapeString(PGconn *hPGConn,
-                                   const char* pszStrValue, int nMaxLength,
-                                   const char* pszFieldName);
 
 /************************************************************************/
 /*                          OGRPGTableLayer()                           */
@@ -1154,12 +1151,12 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                             EscapeString( )                          */
+/*                         OGRPGEscapeString( )                         */
 /************************************************************************/
 
-static CPLString OGRPGEscapeString(PGconn *hPGConn,
-                                   const char* pszStrValue, int nMaxLength,
-                                   const char* pszFieldName)
+CPLString OGRPGEscapeString(PGconn *hPGConn,
+                            const char* pszStrValue, int nMaxLength,
+                            const char* pszFieldName)
 {
     CPLString osCommand;
 
