@@ -845,6 +845,9 @@ def ogr_sqlite_17():
     if feat.GetFieldAsString('auth_srid') != '4326':
         feat.DumpReadable()
         return 'fail'
+    if feat.GetFieldAsString('ref_sys_name') != 'WGS 84':
+        feat.DumpReadable()
+        return 'fail'
     if feat.GetFieldAsString('proj4text').find('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs') == -1:
         feat.DumpReadable()
         return 'fail'
@@ -889,6 +892,72 @@ def ogr_sqlite_18():
     ds.ReleaseResultSet( sql_lyr )
 
     ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Create a SpatiaLite DB with INIT_WITH_EPSG=YES
+
+def ogr_sqlite_19():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test_with_epsg.db', options = ['SPATIALITE=YES', 'INIT_WITH_EPSG=YES'] )
+
+    # EPSG:26632 has a ' character in it's WKT representation
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:26632')
+    lyr = ds.CreateLayer( 'test', srs = srs )
+
+    ds.Destroy()
+    ds = ogr.Open('tmp/spatialite_test_with_epsg.db')
+
+    sql_lyr = ds.ExecuteSQL( "select count(*) from spatial_ref_sys" )
+    feat = sql_lyr.GetNextFeature()
+    nb_srs = feat.GetFieldAsInteger(0)
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds.Destroy()
+
+    # Currently the injection of the EPSG DB as proj.4 strings adds 3915 entries
+    if nb_srs < 3915:
+        gdaltest.post_reason('did not get expected SRS count')
+        print(nb_srs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Create a regular DB with INIT_WITH_EPSG=YES
+
+def ogr_sqlite_20():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/non_spatialite_test_with_epsg.db', options = ['INIT_WITH_EPSG=YES'] )
+
+    # EPSG:26632 has a ' character in it's WKT representation
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:26632')
+    lyr = ds.CreateLayer( 'test', srs = srs )
+
+    ds.Destroy()
+    ds = ogr.Open('tmp/non_spatialite_test_with_epsg.db')
+
+    sql_lyr = ds.ExecuteSQL( "select count(*) from spatial_ref_sys" )
+    feat = sql_lyr.GetNextFeature()
+    nb_srs = feat.GetFieldAsInteger(0)
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds.Destroy()
+
+    # Currently the injection of the EPSG DB as proj.4 strings adds 3945 entries
+    if nb_srs < 3945:
+        gdaltest.post_reason('did not get expected SRS count')
+        print(nb_srs)
+        return 'fail'
 
     return 'success'
 
@@ -1112,6 +1181,16 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/spatialite_test_with_epsg.db' )
+    except:
+        pass
+
+    try:
+        os.remove( 'tmp/non_spatialite_test_with_epsg.db' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -1133,6 +1212,8 @@ gdaltest_list = [
     ogr_sqlite_16,
     ogr_sqlite_17,
     ogr_sqlite_18,
+    ogr_sqlite_19,
+    ogr_sqlite_20,
     ogr_spatialite_1,
     ogr_spatialite_2,
     ogr_spatialite_3,
