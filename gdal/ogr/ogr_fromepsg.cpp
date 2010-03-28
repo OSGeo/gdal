@@ -1392,7 +1392,10 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 
     if( !EPSGGetPCSInfo( nPCSCode, &pszPCSName, &nUOMLength, &nUOMAngleCode,
                          &nGCSCode, &nTRFCode, &nCSC ) )
+    {
+        CPLFree(pszPCSName);
         return OGRERR_UNSUPPORTED_SRS;
+    }
 
     poSRS->SetNode( "PROJCS", pszPCSName );
     
@@ -1401,7 +1404,10 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /* -------------------------------------------------------------------- */
     nErr = SetEPSGGeogCS( poSRS, nGCSCode );
     if( nErr != OGRERR_NONE )
+    {
+        CPLFree(pszPCSName);
         return nErr;
+    }
 
     dfFromGreenwich = poSRS->GetPrimeMeridian();
 
@@ -1409,7 +1415,10 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /*      Set linear units.                                               */
 /* -------------------------------------------------------------------- */
     if( !EPSGGetUOMLengthInfo( nUOMLength, &pszUOMLengthName, &dfInMeters ) )
+    {
+        CPLFree(pszPCSName);
         return OGRERR_UNSUPPORTED_SRS;
+    }
 
     poSRS->SetLinearUnits( pszUOMLengthName, dfInMeters );
     poSRS->SetAuthority( "PROJCS|UNIT", "EPSG", nUOMLength );
