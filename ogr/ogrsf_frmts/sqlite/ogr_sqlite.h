@@ -304,6 +304,9 @@ class OGRSQLiteDataSource : public OGRDataSource
 
 class OGRSQLiteDriver : public OGRSFDriver
 {
+  private:
+    static int          InitWithEPSG(sqlite3* hDB, int bSpatialite);
+
   public:
                 ~OGRSQLiteDriver();
                 
